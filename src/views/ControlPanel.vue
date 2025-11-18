@@ -115,11 +115,7 @@ export default {
 		),
 	},
 	computed: {
-		...mapState(useBaseStore, [
-			'nodes',
-			'zwave',
-			'controllerNode',
-		]),
+		...mapState(useBaseStore, ['nodes', 'zwave', 'controllerNode']),
 		fabItems() {
 			const items = []
 

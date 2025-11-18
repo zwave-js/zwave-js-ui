@@ -1810,10 +1810,7 @@ app.post(
 				jsonStore.get(store.settings) || ({} as Settings)
 			const originalLogLevel = settings.gateway?.logLevel || 'info'
 
-			await debugManager.startSession(
-				gw.zwave,
-				originalLogLevel,
-			)
+			await debugManager.startSession(gw.zwave, originalLogLevel)
 
 			res.json({
 				success: true,

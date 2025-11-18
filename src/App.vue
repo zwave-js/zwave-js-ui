@@ -648,18 +648,18 @@ export default {
 			const confirmed = await this.app.confirm(
 				'Start Debug Capture',
 				'<p>This wizard will help you collect a complete debug package.</p>' +
-				'<p><strong>When you start the capture:</strong></p>' +
-				'<ul style="margin-left: 20px;">' +
-				'<li>Log levels will be automatically set to debug</li>' +
-				'<li>All logs will be captured to temporary files</li>' +
-				'<li>The system will continue running normally</li>' +
-				'</ul>' +
-				'<p><strong>Next steps:</strong></p>' +
-				'<ul style="margin-left: 20px;">' +
-				'<li>After starting, reproduce the issue you want to debug</li>' +
-				'<li>Click the debug indicator in the top bar when you\'re done</li>' +
-				'<li>Select which devices to include in the package</li>' +
-				'</ul>',
+					'<p><strong>When you start the capture:</strong></p>' +
+					'<ul style="margin-left: 20px;">' +
+					'<li>Log levels will be automatically set to debug</li>' +
+					'<li>All logs will be captured to temporary files</li>' +
+					'<li>The system will continue running normally</li>' +
+					'</ul>' +
+					'<p><strong>Next steps:</strong></p>' +
+					'<ul style="margin-left: 20px;">' +
+					'<li>After starting, reproduce the issue you want to debug</li>' +
+					"<li>Click the debug indicator in the top bar when you're done</li>" +
+					'<li>Select which devices to include in the package</li>' +
+					'</ul>',
 				'info',
 				{
 					confirmText: 'Start Capture',
@@ -675,28 +675,34 @@ export default {
 			try {
 				// Start debug capture
 				await ConfigApis.startDebugCapture()
-				
+
 				// Update store state
 				const store = useBaseStore()
 				store.debugCaptureActive = true
 
 				// Show success message
-				this.showSnackbar('Debug capture started! Reproduce the issue, then click the debug icon to finish.')
+				this.showSnackbar(
+					'Debug capture started! Reproduce the issue, then click the debug icon to finish.',
+				)
 			} catch (error) {
-				this.showSnackbar(`Failed to start debug capture: ${error.message}`)
+				this.showSnackbar(
+					`Failed to start debug capture: ${error.message}`,
+				)
 			}
 		},
 		async finishDebugCapture() {
 			const store = useBaseStore()
-			
+
 			// Get nodes for selection
-			const nodes = store.nodes.filter(n => n.id !== store.controllerNode?.id)
-			
+			const nodes = store.nodes.filter(
+				(n) => n.id !== store.controllerNode?.id,
+			)
+
 			// Show finish dialog with device selection using app.confirm
 			const result = await this.app.confirm(
 				'Finish Debug Capture',
 				'<p>✅ Debug capture completed!</p>' +
-				'<p>Select the devices you want to include node dumps for. This will add detailed device information to the debug package.</p>',
+					'<p>Select the devices you want to include node dumps for. This will add detailed device information to the debug package.</p>',
 				'success',
 				{
 					confirmText: 'Download',
@@ -709,7 +715,7 @@ export default {
 							label: 'Devices',
 							multiple: true,
 							autocomplete: true,
-							items: nodes.map(node => ({
+							items: nodes.map((node) => ({
 								title: node.name || `Node ${node.id}`,
 								value: node.id,
 							})),
@@ -739,7 +745,9 @@ export default {
 						store.debugCaptureActive = false
 						this.showSnackbar('Debug capture cancelled')
 					} catch (error) {
-						this.showSnackbar(`Failed to cancel debug capture: ${error.message}`)
+						this.showSnackbar(
+							`Failed to cancel debug capture: ${error.message}`,
+						)
 					}
 				} else {
 					// Go back to finish dialog
@@ -751,17 +759,18 @@ export default {
 			// Download debug package
 			try {
 				const nodeIds = result.nodeIds || []
-				
+
 				// Show loading
 				this.dialogLoader = true
 				this.loaderTitle = 'Generating Debug Package'
-				this.loaderText = 'Please wait while we collect logs and node dumps...'
+				this.loaderText =
+					'Please wait while we collect logs and node dumps...'
 				this.loaderProgress = -1
 				this.loaderIndeterminate = true
 
 				// Stop capture and get download URL
 				const response = await ConfigApis.stopDebugCapture(nodeIds)
-				
+
 				// Close loader
 				this.dialogLoader = false
 
@@ -781,7 +790,9 @@ export default {
 			} catch (error) {
 				this.dialogLoader = false
 				store.debugCaptureActive = false
-				this.showSnackbar(`Failed to generate debug package: ${error.message}`)
+				this.showSnackbar(
+					`Failed to generate debug package: ${error.message}`,
+				)
 			}
 		},
 		verifyRoute() {
@@ -1286,10 +1297,13 @@ export default {
 			})
 			// convert node values in array
 			this.initNodes(data.nodes)
-			
+
 			// Handle debug capture state persistence
 			const store = useBaseStore()
-			if (data.info && typeof data.info.debugCaptureActive === 'boolean') {
+			if (
+				data.info &&
+				typeof data.info.debugCaptureActive === 'boolean'
+			) {
 				store.debugCaptureActive = data.info.debugCaptureActive
 			}
 		},

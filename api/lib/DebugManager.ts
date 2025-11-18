@@ -244,9 +244,7 @@ class DebugManager {
 	/**
 	 * Cancel the current debug session without generating a package
 	 */
-	async cancelSession(
-		zwaveClient: ZWaveClient,
-	): Promise<void> {
+	async cancelSession(zwaveClient: ZWaveClient): Promise<void> {
 		if (!this.session) {
 			throw new Error('No active debug session')
 		}
