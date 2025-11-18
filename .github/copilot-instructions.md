@@ -24,6 +24,36 @@ Z-Wave JS UI is a full-featured Z-Wave Control Panel and MQTT Gateway built with
 -   Descriptions should clearly explain the changes and their impact
 -   Include issue references (e.g., "Fixes #1234")
 
+## Code Quality and Design Patterns
+
+### Always Follow DRY (Don't Repeat Yourself)
+
+**CRITICAL**: Eliminate code duplication by extracting repeated logic into reusable functions.
+
+- If you see the same code pattern multiple times, extract it into a helper function
+- Common patterns to refactor: file operations, validation logic, state updates
+- Example: Instead of repeating driver log level restoration code, create a `restoreDriverLogLevel()` method
+
+### Import Statements Best Practices
+
+**Use dynamic imports only for heavy modules used in one place:**
+
+- Move lightweight modules (like `fs`, `path`) to top-level imports
+- Use dynamic imports (`await import()`) only for:
+  - Large libraries loaded conditionally
+  - Modules used in only one specific function
+  - Frontend code-splitting scenarios
+
+**Backend code doesn't benefit from tree-shaking or code-splitting, so prefer top-level imports**
+
+### Keep Code Slim, Clean, and Readable
+
+- Write concise, self-documenting code
+- Use meaningful variable and function names
+- Avoid unnecessary complexity
+- Keep functions focused on a single responsibility
+- Add comments only when the code's purpose isn't obvious
+
 ## Frontend Development Patterns
 
 ### Using app.confirm for Forms Instead of Creating Dialog Components
@@ -123,6 +153,34 @@ async editItem(existingItem) {
   }],
 }
 ```
+
+### UI Consistency Guidelines
+
+**CRITICAL**: Always maintain consistency with existing UI components and patterns.
+
+#### Dialog Components
+
+- **Use Confirm dialog** (`app.confirm`) for most dialogs with forms or simple user input
+- Only create custom dialog components when absolutely necessary (e.g., QR code scanning, complex multi-step wizards)
+- Study existing dialogs before creating new ones:
+  - Changelog dialog: Uses app.confirm for display
+  - Statistics dialog: Uses app.confirm for display
+  - SmartStart dialog: Uses app.confirm for forms
+
+#### Global Features
+
+- **Place global features in App.vue**, not in page-specific components like ControlPanel.vue
+- Examples: notifications, session management, persistent indicators
+- This ensures features are accessible from any page and survive navigation
+
+#### Vue 3 and Vuetify 3
+
+**ALWAYS use Vue 3 Composition API patterns and Vuetify 3 components:**
+
+- Use `<script setup>` or Options API consistently with the rest of the codebase
+- Use Vuetify 3 component names and props (not Vuetify 2)
+- Use Pinia for state management (not Vuex)
+- No Vue 2 event bus patterns (`$root.$emit`, `$root.$on`)
 
 ## Bootstrap and Development Setup
 
@@ -396,6 +454,7 @@ npm run pkg
 -   **ALWAYS validate manually** after making changes - start servers and test functionality
 -   **ALWAYS run linting** before committing: `npm run lint-fix && npm run lint`
 -   **ALWAYS run tests** before committing: `npm run test`
+-   **ALWAYS keep instructions up-to-date** - update this file when making code changes that affect these patterns
 -   Set timeouts of 60+ minutes for build commands, 30+ minutes for tests
 -   The application serves as both Z-Wave control panel and MQTT gateway
 -   Z-Wave functionality requires hardware OR mock-stick for testing
