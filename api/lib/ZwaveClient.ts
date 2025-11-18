@@ -3390,7 +3390,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 	/**
 	 * Check for firmware updates on a specific node
-	 * This ensures the availableFirmwareUpdates is refreshed and cleared if no updates remain
+	 * Called after firmware updates, node interviews, and node additions to refresh availableFirmwareUpdates
 	 */
 	private async _checkNodeFirmwareUpdates(nodeId: number) {
 		if (!this.driverReady) {
