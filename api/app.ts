@@ -1811,7 +1811,6 @@ app.post(
 			const originalLogLevel = settings.gateway?.logLevel || 'info'
 
 			await debugManager.startSession(
-				logContainer,
 				gw.zwave,
 				originalLogLevel,
 			)
@@ -1846,7 +1845,6 @@ app.post(
 			const nodeIds: number[] = req.body.nodeIds || []
 
 			const { archive, cleanup } = await debugManager.stopSession(
-				logContainer,
 				gw.zwave,
 				nodeIds,
 			)
@@ -1884,7 +1882,7 @@ app.post(
 				})
 			}
 
-			await debugManager.cancelSession(logContainer, gw.zwave)
+			await debugManager.cancelSession(gw.zwave)
 
 			res.json({
 				success: true,

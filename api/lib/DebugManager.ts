@@ -1,5 +1,5 @@
 import type winston from 'winston'
-import { customFormat } from './logger.ts'
+import { customFormat, logContainer } from './logger.ts'
 import archiver from 'archiver'
 import type ZWaveClient from './ZwaveClient.ts'
 import { joinPath, pathExists } from './utils.ts'
@@ -42,7 +42,6 @@ class DebugManager {
 	 * Start a debug capture session
 	 */
 	async startSession(
-		logContainer: winston.Container,
 		zwaveClient: ZWaveClient,
 		originalLogLevel: string,
 	): Promise<void> {
@@ -117,7 +116,6 @@ class DebugManager {
 	 * Stop the debug session and generate a zip file with logs and node dumps
 	 */
 	async stopSession(
-		logContainer: winston.Container,
 		zwaveClient: ZWaveClient,
 		nodeIds: number[],
 	): Promise<{
@@ -247,7 +245,6 @@ class DebugManager {
 	 * Cancel the current debug session without generating a package
 	 */
 	async cancelSession(
-		logContainer: winston.Container,
 		zwaveClient: ZWaveClient,
 	): Promise<void> {
 		if (!this.session) {
