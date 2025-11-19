@@ -743,29 +743,25 @@ export default {
 				this.loaderIndeterminate = true
 
 				// Stop capture and get download URL
-				const response = await ConfigApis.stopDebugCapture(nodeIds)
+				await ConfigApis.stopDebugCapture(nodeIds)
 
 				// Close loader
 				this.dialogLoader = false
-
-				const fileName = extractFileNameFromResponse(
-					response,
-					`debug_capture_${uuid()}.zip`,
-				)
-
-				// Download file
-				download(response.data, fileName)
 
 				// Update store state
 				store.debugCaptureActive = false
 
 				// Show success message
-				this.showSnackbar('Debug package downloaded successfully!')
+				this.showSnackbar(
+					'Debug package downloaded successfully!',
+					'success',
+				)
 			} catch (error) {
 				this.dialogLoader = false
 				store.debugCaptureActive = false
 				this.showSnackbar(
 					`Failed to generate debug package: ${error.message}`,
+					'error',
 				)
 			}
 		},

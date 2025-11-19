@@ -175,13 +175,29 @@ export default {
 			responseType: 'blob',
 		})
 
+		// try parsing response as json to check for errors
+		try {
+			const text = await response.data.text()
+			const data = JSON.parse(text)
+			// if we get here, the response was json and thus an error
+			log.error('Error during debug capture:', data)
+			throw new Error(
+				data.message || 'An error occurred during debug capture',
+			)
+		} catch (error) {
+			// only ignore json parse errors, rethrow everything else
+			if (!(error instanceof SyntaxError)) {
+				throw error
+			}
+		}
+
 		// Trigger download
 		const url = window.URL.createObjectURL(new Blob([response.data]))
 
 		// Get filename from Content-Disposition header
 		const fileName = extractFileNameFromResponse(
 			response,
-			'debug_capture.zip',
+			`debug-capture_${new Date().toISOString()}.zip`,
 		)
 
 		download(url, fileName)

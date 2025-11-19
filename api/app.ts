@@ -1841,6 +1841,13 @@ app.post(
 
 			const nodeIds: number[] = req.body.nodeIds || []
 
+			if (nodeIds.length === 0) {
+				return res.json({
+					success: false,
+					message: 'No node IDs provided',
+				})
+			}
+
 			const { archive, cleanup } = await debugManager.stopSession(
 				gw.zwave,
 				nodeIds,
