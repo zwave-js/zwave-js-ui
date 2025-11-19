@@ -5351,6 +5351,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		await writeFile(utils.joinPath(nvmBackupsDir, fileName + '.bin'), data)
 
+		this._updateControllerStatus('NVM backup completed successfully')
+
 		return { data: Buffer.from(data.buffer), fileName }
 	}
 
@@ -5376,6 +5378,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				this._onRestoreNVMProgress.bind(this),
 			)
 		}
+
+		this._updateControllerStatus('NVM restore completed successfully')
 	}
 
 	private _onConvertNVMProgress(bytesRead: number, totalBytes: number) {
