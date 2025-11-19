@@ -5202,7 +5202,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	) {
 		const toRebuild = [...progress.values()]
 		const rebuiltNodes = toRebuild.filter((v) => v !== 'pending')
-		const message = `Rebuild Routes process IN PROGRESS. Healed ${rebuiltNodes.length} nodes`
+		const allDone = toRebuild.every((v) => v !== 'pending')
+		const status = allDone ? 'COMPLETED' : 'IN PROGRESS'
+		const message = `Rebuild Routes process ${status}. Healed ${rebuiltNodes.length} nodes`
 		this._updateControllerStatus(message)
 		this.sendToSocket(socketEvents.rebuildRoutesProgress, [
 			...progress.entries(),
