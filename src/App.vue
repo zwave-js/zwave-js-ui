@@ -644,8 +644,7 @@ export default {
 	},
 	methods: {
 		async startDebugCapture() {
-			// Show start dialog using app.confirm
-			const confirmed = await this.app.confirm(
+			const confirmed = await this.confirm(
 				'Start Debug Capture',
 				'<p>This wizard will help you collect a complete debug package.</p>' +
 					'<p><strong>When you start the capture:</strong></p>' +
@@ -699,7 +698,7 @@ export default {
 			)
 
 			// Show finish dialog with device selection using app.confirm
-			const result = await this.app.confirm(
+			const result = await this.confirm(
 				'Finish Debug Capture',
 				'<p>✅ Debug capture completed!</p>' +
 					'<p>Select the devices you want to include node dumps for. This will add detailed device information to the debug package.</p>',
@@ -729,7 +728,7 @@ export default {
 			// Check if user cancelled
 			if (Object.keys(result).length === 0) {
 				// User cancelled - ask if they want to cancel the whole capture
-				const cancelCapture = await this.app.confirm(
+				const cancelCapture = await this.confirm(
 					'Cancel Debug Capture?',
 					'Do you want to cancel the debug capture session? This will discard all captured logs.',
 					'warning',
