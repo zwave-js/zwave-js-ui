@@ -1299,12 +1299,7 @@ export default {
 
 			// Handle debug capture state persistence
 			const store = useBaseStore()
-			if (
-				data.info &&
-				typeof data.info.debugCaptureActive === 'boolean'
-			) {
-				store.debugCaptureActive = data.info.debugCaptureActive
-			}
+			store.debugCaptureActive = data.debugCaptureActive
 		},
 		async startSocket() {
 			if (
