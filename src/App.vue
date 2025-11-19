@@ -726,9 +726,6 @@ export default {
 							`Failed to cancel debug capture: ${error.message}`,
 						)
 					}
-				} else {
-					// Go back to finish dialog
-					this.finishDebugCapture()
 				}
 				return
 			}
