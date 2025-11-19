@@ -758,7 +758,6 @@ export default {
 				)
 			} catch (error) {
 				this.dialogLoader = false
-				store.debugCaptureActive = false
 				this.showSnackbar(
 					`Failed to generate debug package: ${error.message}`,
 					'error',
