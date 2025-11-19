@@ -6,6 +6,7 @@ import { joinPath, pathExists } from './utils.ts'
 import { storeDir } from '../config/app.ts'
 import { rm, mkdir } from 'node:fs/promises'
 import { createWriteStream } from 'node:fs'
+import { setTimeout } from 'node:timers/promises'
 
 const debugTempDir = joinPath(storeDir, '.debug-temp')
 
@@ -163,7 +164,7 @@ class DebugManager {
 		}
 
 		// Wait a bit to ensure all logs are flushed to disk
-		await new Promise((resolve) => setTimeout(resolve, 100))
+		await setTimeout(100)
 
 		// Create archive
 		const archive = archiver('zip', {
