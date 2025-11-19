@@ -124,20 +124,6 @@
 					{{ inclusionState.icon }}
 				</v-icon>
 
-				<!-- Debug Capture Indicator -->
-				<v-btn
-					v-if="debugCaptureActive"
-					icon
-					class="mr-3"
-					color="error"
-					v-tooltip:bottom="
-						'Debug capture in progress - Click to finish'
-					"
-					@click="finishDebugCapture"
-				>
-					<v-icon>troubleshoot</v-icon>
-				</v-btn>
-
 				<!-- Websocket status -->
 				<v-icon
 					class="mr-3 ml-3"
@@ -213,6 +199,7 @@
 							@click="item.func"
 							:title="item.tooltip"
 							:prepend-icon="item.icon"
+							:color="item.color || 'primary'"
 						>
 						</v-list-item>
 					</v-list>
@@ -231,8 +218,8 @@
 								class="mr-2"
 								v-bind="props"
 								v-tooltip:bottom="item.tooltip"
-								color="primary"
 								:icon="item.icon"
+								:color="item.color || 'primary'"
 								@click="item.func"
 							>
 							</v-btn>
@@ -351,20 +338,6 @@
 			:node="firmwareUpdateNode"
 			:socket="socket"
 		/>
-
-		<!-- Debug Capture FAB -->
-		<v-fab
-			v-if="debugCaptureActive"
-			location="bottom end"
-			appear
-			color="error"
-			icon="troubleshoot"
-			@click="finishDebugCapture"
-		>
-			<template v-slot:tooltip>
-				<span>Debug capture in progress - Click to finish</span>
-			</template>
-		</v-fab>
 	</v-app>
 </template>
 
@@ -457,8 +430,13 @@ export default {
 			const items = [
 				{
 					icon: 'troubleshoot',
-					func: this.startDebugCapture,
-					tooltip: 'Debug Capture',
+					color: this.debugCaptureActive ? 'error' : 'primary',
+					func: this.debugCaptureActive
+						? this.finishDebugCapture
+						: this.startDebugCapture,
+					tooltip: this.debugCaptureActive
+						? 'Finish Debug Capture'
+						: 'Start Debug Capture',
 				},
 				{
 					icon: 'lock',
