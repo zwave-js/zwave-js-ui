@@ -2,6 +2,7 @@ import axios from 'axios'
 import loadProgressBar from '../lib/axios-progress-bar'
 import Router from '../router'
 import logger from '../lib/logger'
+import { download, extractFileNameFromResponse } from '../lib/utils'
 
 const log = logger.get('ConfigApis')
 
@@ -176,26 +177,14 @@ export default {
 
 		// Trigger download
 		const url = window.URL.createObjectURL(new Blob([response.data]))
-		const link = document.createElement('a')
-		link.href = url
 
 		// Get filename from Content-Disposition header
-		const contentDisposition = response.headers['content-disposition']
-		let filename = 'zwave-debug.zip'
-		if (contentDisposition) {
-			const matches = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/.exec(
-				contentDisposition,
-			)
-			if (matches != null && matches[1]) {
-				filename = matches[1].replace(/['"]/g, '')
-			}
-		}
+		const fileName = extractFileNameFromResponse(
+			response,
+			'debug_capture.zip',
+		)
 
-		link.setAttribute('download', filename)
-		document.body.appendChild(link)
-		link.click()
-		link.remove()
-		window.URL.revokeObjectURL(url)
+		download(url, fileName)
 
 		return { success: true }
 	},

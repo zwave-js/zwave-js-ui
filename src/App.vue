@@ -392,7 +392,7 @@ import { FirmwareUpdateStatus } from '@zwave-js/cc'
 import { SecurityBootstrapFailure, InclusionState } from 'zwave-js'
 import DialogNodesManager from '@/components/dialogs/DialogNodesManager.vue'
 import DialogFirmwareUpdate from '@/components/dialogs/DialogFirmwareUpdate.vue'
-import { uuid } from './lib/utils'
+import { download, extractFileNameFromResponse, uuid } from './lib/utils'
 import Logo from '@/components/Logo.vue'
 
 let socketQueue = []
@@ -748,13 +748,13 @@ export default {
 				// Close loader
 				this.dialogLoader = false
 
+				const fileName = extractFileNameFromResponse(
+					response,
+					`debug_capture_${uuid()}.zip`,
+				)
+
 				// Download file
-				const link = document.createElement('a')
-				link.href = response.data
-				link.download = `debug-package-${new Date().toISOString().replace(/[:.]/g, '-')}.zip`
-				document.body.appendChild(link)
-				link.click()
-				document.body.removeChild(link)
+				download(response.data, fileName)
 
 				// Update store state
 				store.debugCaptureActive = false
