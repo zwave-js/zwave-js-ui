@@ -324,7 +324,7 @@
 			:indeterminate="loaderIndeterminate"
 		></LoaderDialog>
 
-		<VSonner position="top-right" :duration="5000" offset="50px" />
+		<VSonner position="top-right" :duration="5000" />
 
 		<DialogNodesManager
 			@open="nodesManagerDialog = true"
@@ -1824,7 +1824,8 @@ export default {
 	min-width: 60px;
 }
 
-:deep(.v-snack) {
-	top: 65px;
+:deep(:where([data-sonner-toaster][data-y-position='top'])) {
+	top: 90px !important;
+	right: -30px !important;
 }
 </style>
