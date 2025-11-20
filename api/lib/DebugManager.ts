@@ -233,10 +233,11 @@ class DebugManager {
 			logger.level = session.originalLogLevel
 		})
 
-		// Close the file transport
-		if (typeof session.transport.close === 'function') {
-			session.transport.close()
-		}
+		// wait for transport to close properly
+		await new Promise<void>((resolve) => {
+			session.transport.on('finish', () => resolve())
+			session.transport.end()
+		})
 
 		// Restore original driver log level
 		await this.restoreDriverLogLevel(

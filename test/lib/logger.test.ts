@@ -69,7 +69,8 @@ describe('logger.js', () => {
 		it('should have a cfg function', () =>
 			expect(typeof logger1.setup).to.equal('function'))
 		it('should have logging enabled by default', () =>
-			expect(logger1.silent).to.be.false)
+			expect(logger1.transports.every((t) => t.silent === false)).to.be
+				.true)
 		it('should have the default log level', () =>
 			expect(logger1.level).to.equal('info'))
 		it('should have one transport only', () =>
@@ -89,7 +90,9 @@ describe('logger.js', () => {
 			expect(logger1).to.be.equal(logger2))
 		it('should set the module name', () =>
 			expect(logger1.module).to.equal('bar'))
-		it('should disable logging', () => expect(logger1.silent).to.be.true)
+		it('should disable logging', () =>
+			expect(logger1.transports.every((t) => t.silent === true)).to.be
+				.true)
 		it('should change the log level', () =>
 			expect(logger1.level).to.equal('warn'))
 		it('should have 2 transports', () =>
