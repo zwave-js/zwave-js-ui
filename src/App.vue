@@ -682,7 +682,7 @@ export default {
 							chips: true,
 							autocomplete: true,
 							items: nodes.map((node) => ({
-								title: `Node ${node.id}${node.manufacturer ? ` - ${node.manufacturer}` : ''}${node.product ? ` ${node.product}` : ''}${node.name && node.name !== `Node ${node.id}` ? ` (${node.name})` : ''}`,
+								title: `Node ${node.id}${node.manufacturer ? ` - ${node.manufacturer}` : ''}${node.productLabel || node.productDescription || node.product ? ` ${node.productLabel || node.productDescription || node.product}` : ''}${node.name && node.name !== `Node ${node.id}` ? ` (${node.name})` : ''}`,
 								value: node.id,
 							})),
 							default: [],
