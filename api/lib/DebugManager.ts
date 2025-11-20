@@ -17,6 +17,7 @@ export interface DebugSession {
 	transport: winston.transport
 	originalLogLevel: string
 	driverDebugTransport?: any
+	driverLogStream?: NodeJS.WritableStream
 }
 
 class DebugManager {
@@ -77,6 +78,7 @@ class DebugManager {
 
 		// Update driver log level to debug using updateLogConfig
 		let driverDebugTransport: any = undefined
+		let driverLogStream: NodeJS.WritableStream | undefined = undefined
 		if (zwaveClient.driverReady) {
 			const { createDefaultTransportFormat } = await import(
 				'@zwave-js/core/bindings/log/node'
@@ -89,7 +91,7 @@ class DebugManager {
 			debugTransport.format = createDefaultTransportFormat(false, true)
 
 			// Write driver logs to file
-			const driverLogStream = createWriteStream(driverLogFilePath)
+			driverLogStream = createWriteStream(driverLogFilePath)
 			debugTransport.stream.on('data', (data) => {
 				driverLogStream.write(data.message.toString() + '\n')
 			})
@@ -110,6 +112,7 @@ class DebugManager {
 			transport,
 			originalLogLevel,
 			driverDebugTransport,
+			driverLogStream,
 		}
 	}
 
@@ -161,10 +164,18 @@ class DebugManager {
 			if (session.driverDebugTransport.stream) {
 				session.driverDebugTransport.stream.destroy()
 			}
+
+			// Close driver log stream properly
+			if (session.driverLogStream) {
+				await new Promise<void>((resolve, reject) => {
+					session.driverLogStream.end(() => resolve())
+					session.driverLogStream.on('error', reject)
+				})
+			}
 		}
 
 		// Wait a bit to ensure all logs are flushed to disk
-		await setTimeout(100)
+		await setTimeout(200)
 
 		// Create archive
 		const archive = archiver('zip', {
@@ -268,6 +279,7 @@ class DebugManager {
 			zwaveClient,
 			session.originalLogLevel,
 			session.driverDebugTransport,
+			session.driverLogStream,
 		)
 
 		// Clean up temp files
@@ -287,6 +299,7 @@ class DebugManager {
 		zwaveClient: ZWaveClient,
 		originalLogLevel: string,
 		driverDebugTransport: any,
+		driverLogStream?: NodeJS.WritableStream,
 	): Promise<void> {
 		if (zwaveClient.driverReady && driverDebugTransport) {
 			const { createDefaultTransportFormat } = await import(
@@ -307,6 +320,14 @@ class DebugManager {
 			// Clean up debug transport
 			if (driverDebugTransport.stream) {
 				driverDebugTransport.stream.destroy()
+			}
+
+			// Close driver log stream properly
+			if (driverLogStream) {
+				await new Promise<void>((resolve, reject) => {
+					driverLogStream.end(() => resolve())
+					driverLogStream.on('error', reject)
+				})
 			}
 		}
 	}

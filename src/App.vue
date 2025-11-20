@@ -305,6 +305,17 @@
 			</v-main>
 		</main>
 
+		<!-- Debug Capture FAB -->
+		<v-fab
+			v-if="debugCaptureActive"
+			location="bottom end"
+			size="large"
+			color="error"
+			icon="mdi-bug"
+			@click="finishDebugCapture"
+			v-tooltip:left="'Debug capture in progress - Click to finish'"
+		></v-fab>
+
 		<PasswordDialog
 			@updatePassword="updatePassword()"
 			@close="closePasswordDialog()"
@@ -625,23 +636,15 @@ export default {
 			const confirmed = await this.confirm(
 				'Start Debug Capture',
 				'<p>This wizard will help you collect a complete debug package.</p>' +
-					'<p><strong>When you start the capture:</strong></p>' +
-					'<ul style="margin-left: 20px;">' +
-					'<li>Log levels will be automatically set to debug</li>' +
-					'<li>All logs will be captured to temporary files</li>' +
-					'<li>The system will continue running normally</li>' +
-					'</ul>' +
-					'<p><strong>Next steps:</strong></p>' +
 					'<ul style="margin-left: 20px;">' +
 					'<li>After starting, reproduce the issue you want to debug</li>' +
 					"<li>Click the debug indicator in the top bar when you're done</li>" +
-					'<li>Select which devices to include in the package</li>' +
 					'</ul>',
 				'info',
 				{
 					confirmText: 'Start Capture',
 					cancelText: 'Cancel',
-					width: 600,
+					width: 500,
 				},
 			)
 
@@ -657,10 +660,7 @@ export default {
 				const store = useBaseStore()
 				store.debugCaptureActive = true
 
-				// Show success message
-				this.showSnackbar(
-					'Debug capture started! Reproduce the issue, then click the debug icon to finish.',
-				)
+				// Don't show redundant toast - user just saw instructions in dialog
 			} catch (error) {
 				this.showSnackbar(
 					`Failed to start debug capture: ${error.message}`,
@@ -675,28 +675,27 @@ export default {
 				(n) => n.id !== store.controllerNode?.id,
 			)
 
-			// Show finish dialog with device selection using app.confirm
+			// Show finish dialog with device selection using confirm
 			const result = await this.confirm(
 				'Finish Debug Capture',
-				'<p>✅ Debug capture completed!</p>' +
-					'<p>Select the devices you want to include node dumps for. This will add detailed device information to the debug package.</p>',
+				'Select which devices to include detailed debug info for (optional):',
 				'success',
 				{
 					confirmText: 'Download',
 					cancelText: 'Cancel',
-					width: 800,
+					width: 600,
 					inputs: [
 						{
 							type: 'list',
 							key: 'nodeIds',
 							label: 'Devices',
 							multiple: true,
+							chips: true,
 							autocomplete: true,
 							items: nodes.map((node) => ({
-								title: node.name || `Node ${node.id}`,
+								title: `Node ${node.id}${node.manufacturer ? ` - ${node.manufacturer}` : ''}${node.product ? ` ${node.product}` : ''}${node.name && node.name !== `Node ${node.id}` ? ` (${node.name})` : ''}`,
 								value: node.id,
 							})),
-							hint: 'Select devices to include detailed dumps for (optional)',
 							default: [],
 						},
 					],
@@ -731,22 +730,30 @@ export default {
 			}
 
 			// Download debug package
-			try {
-				const nodeIds = result.nodeIds || []
+			const nodeIds = result.nodeIds || []
 
-				// Show loading
+			// Show loading dialog after a small delay for better UX
+			// Only show if the operation takes longer than 500ms
+			let showLoader = false
+			const loaderTimeout = setTimeout(() => {
+				showLoader = true
 				this.dialogLoader = true
 				this.loaderTitle = 'Generating Debug Package'
 				this.loaderText =
 					'Please wait while we collect logs and node dumps...'
 				this.loaderProgress = -1
 				this.loaderIndeterminate = true
+			}, 500)
 
+			try {
 				// Stop capture and get download URL
 				await ConfigApis.stopDebugCapture(nodeIds)
 
-				// Close loader
-				this.dialogLoader = false
+				// Clear timeout and close loader if it was shown
+				clearTimeout(loaderTimeout)
+				if (showLoader) {
+					this.dialogLoader = false
+				}
 
 				// Update store state
 				store.debugCaptureActive = false
@@ -757,7 +764,11 @@ export default {
 					'success',
 				)
 			} catch (error) {
-				this.dialogLoader = false
+				// Clear timeout and close loader on error
+				clearTimeout(loaderTimeout)
+				if (showLoader) {
+					this.dialogLoader = false
+				}
 				this.showSnackbar(
 					`Failed to generate debug package: ${error.message}`,
 					'error',
