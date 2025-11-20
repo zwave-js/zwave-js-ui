@@ -1825,7 +1825,7 @@ export default {
 }
 
 :deep(:where([data-sonner-toaster][data-y-position='top'])) {
-	top: 90px !important;
+	top: 80px !important;
 	right: -30px !important;
 }
 </style>
