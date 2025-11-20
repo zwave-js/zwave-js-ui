@@ -392,7 +392,7 @@ import { FirmwareUpdateStatus } from '@zwave-js/cc'
 import { SecurityBootstrapFailure, InclusionState } from 'zwave-js'
 import DialogNodesManager from '@/components/dialogs/DialogNodesManager.vue'
 import DialogFirmwareUpdate from '@/components/dialogs/DialogFirmwareUpdate.vue'
-import { download, extractFileNameFromResponse, uuid } from './lib/utils'
+import { download, extractFileNameFromResponse, uuid, wait } from './lib/utils'
 import Logo from '@/components/Logo.vue'
 
 let socketQueue = []
@@ -645,6 +645,8 @@ export default {
 				// Start debug capture
 				await ConfigApis.startDebugCapture()
 
+				this.showSnackbar('Debug capture started.', 'success')
+
 				// Update store state
 				const store = useBaseStore()
 				store.debugCaptureActive = true
@@ -721,43 +723,19 @@ export default {
 			// Download debug package
 			const nodeIds = result.nodeIds || []
 
-			// Show loading dialog after a small delay for better UX
-			// Only show if the operation takes longer than 500ms
-			let showLoader = false
-			const loaderTimeout = setTimeout(() => {
-				showLoader = true
-				this.dialogLoader = true
-				this.loaderTitle = 'Generating Debug Package'
-				this.loaderText =
-					'Please wait while we collect logs and node dumps...'
-				this.loaderProgress = -1
-				this.loaderIndeterminate = true
-			}, 500)
-
 			try {
 				// Stop capture and get download URL
-				await ConfigApis.stopDebugCapture(nodeIds)
+				const promise = ConfigApis.stopDebugCapture(nodeIds)
 
-				// Clear timeout and close loader if it was shown
-				clearTimeout(loaderTimeout)
-				if (showLoader) {
-					this.dialogLoader = false
-				}
+				await this.showLoadingSnack(promise, {
+					loading: 'Generating debug package, please wait...',
+					successText: 'Debug package generated successfully!',
+					errorText: 'Failed to generate debug package',
+				})
 
 				// Update store state
 				store.debugCaptureActive = false
-
-				// Show success message
-				this.showSnackbar(
-					'Debug package downloaded successfully!',
-					'success',
-				)
 			} catch (error) {
-				// Clear timeout and close loader on error
-				clearTimeout(loaderTimeout)
-				if (showLoader) {
-					this.dialogLoader = false
-				}
 				this.showSnackbar(
 					`Failed to generate debug package: ${error.message}`,
 					'error',
@@ -970,17 +948,16 @@ export default {
 			return toast.toastOriginal.promise(promise, {
 				loading: options.loading || 'Loading...',
 				success: (data) => {
-					this.showSnackbar(options.successText || data, 'success')
-					return data
+					return options.successText || data
 				},
 				error: (data) => {
-					this.showSnackbar(options.errorText || data, 'error')
-					return data
+					return options.errorText || data
 				},
-				action: {
-					label: 'Close',
-					onClick: () => {},
-				},
+				richColors: true,
+				// action: {
+				// 	label: 'Close',
+				// 	onClick: () => {},
+				// },
 			})
 		},
 		apiRequest(
