@@ -203,9 +203,6 @@ class DebugManager {
 			)
 		}
 
-		// Clear session
-		this.session = null
-
 		return { archive, cleanup }
 	}
 
