@@ -1367,6 +1367,10 @@ app.post(
 
 			restarting = true
 
+			if (debugManager.isSessionActive()) {
+				await debugManager.cancelSession(gw.zwave)
+			}
+
 			// Close gateway and restart
 			await gw.close()
 			await destroyPlugins()
