@@ -392,7 +392,7 @@ import { FirmwareUpdateStatus } from '@zwave-js/cc'
 import { SecurityBootstrapFailure, InclusionState } from 'zwave-js'
 import DialogNodesManager from '@/components/dialogs/DialogNodesManager.vue'
 import DialogFirmwareUpdate from '@/components/dialogs/DialogFirmwareUpdate.vue'
-import { uuid, wait } from './lib/utils'
+import { uuid } from './lib/utils'
 import Logo from '@/components/Logo.vue'
 
 let socketQueue = []
@@ -725,12 +725,9 @@ export default {
 				// Stop capture and get download URL
 				const promise = ConfigApis.stopDebugCapture(nodeIds)
 
-				await this.showLoadingSnack(
-					wait(5000).then(() => promise),
-					{
-						loading: 'Generating debug package, please wait...',
-					},
-				)
+				await this.showLoadingSnack(promise, {
+					loading: 'Generating debug package, please wait...',
+				})
 
 				this.showSnackbar(
 					'Debug package generated and download started.',
