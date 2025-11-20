@@ -378,7 +378,7 @@ import LoaderDialog from '@/components/dialogs/DialogLoader.vue'
 
 import { Routes } from '@/router'
 
-import { mapActions, mapState } from 'pinia'
+import { mapActions, mapState, mapWritableState } from 'pinia'
 import useBaseStore from './stores/base.js'
 import { manager, instances } from './lib/instanceManager'
 import logger from './lib/logger'
@@ -392,7 +392,7 @@ import { FirmwareUpdateStatus } from '@zwave-js/cc'
 import { SecurityBootstrapFailure, InclusionState } from 'zwave-js'
 import DialogNodesManager from '@/components/dialogs/DialogNodesManager.vue'
 import DialogFirmwareUpdate from '@/components/dialogs/DialogFirmwareUpdate.vue'
-import { download, extractFileNameFromResponse, uuid, wait } from './lib/utils'
+import { uuid } from './lib/utils'
 import Logo from '@/components/Logo.vue'
 
 let socketQueue = []
@@ -420,12 +420,13 @@ export default {
 			'zwave',
 			'znifferState',
 			'inited',
-			'debugCaptureActive',
+			'nodes',
 		]),
 		...mapState(useBaseStore, {
 			darkMode: (store) => store.uiState.darkMode,
 			navTabs: (store) => store.ui.navTabs,
 		}),
+		...mapWritableState(useBaseStore, ['debugCaptureActive']),
 		menuItems() {
 			const items = [
 				{
@@ -648,8 +649,7 @@ export default {
 				this.showSnackbar('Debug capture started.', 'success')
 
 				// Update store state
-				const store = useBaseStore()
-				store.debugCaptureActive = true
+				this.debugCaptureActive = true
 
 				// Don't show redundant toast - user just saw instructions in dialog
 			} catch (error) {
@@ -659,11 +659,9 @@ export default {
 			}
 		},
 		async finishDebugCapture() {
-			const store = useBaseStore()
-
 			// Get nodes for selection
-			const nodes = store.nodes.filter(
-				(n) => n.id !== store.controllerNode?.id,
+			const nodes = this.nodes.filter(
+				(n) => n.id !== this.controllerNode?.id,
 			)
 
 			// Show finish dialog with device selection using confirm
@@ -709,7 +707,7 @@ export default {
 				if (cancelCapture) {
 					try {
 						await ConfigApis.cancelDebugCapture()
-						store.debugCaptureActive = false
+						this.debugCaptureActive = false
 						this.showSnackbar('Debug capture cancelled')
 					} catch (error) {
 						this.showSnackbar(
@@ -734,7 +732,7 @@ export default {
 				})
 
 				// Update store state
-				store.debugCaptureActive = false
+				this.debugCaptureActive = false
 			} catch (error) {
 				this.showSnackbar(
 					`Failed to generate debug package: ${error.message}`,
@@ -1149,6 +1147,10 @@ export default {
 				try {
 					const data = await ConfigApis.restartGateway()
 
+					if (data.success) {
+						this.debugCaptureActive = false
+					}
+
 					this.showSnackbar(
 						data.message,
 						data.success ? 'success' : 'error',
@@ -1245,8 +1247,7 @@ export default {
 			this.initNodes(data.nodes)
 
 			// Handle debug capture state persistence
-			const store = useBaseStore()
-			store.debugCaptureActive = data.debugCaptureActive
+			this.debugCaptureActive = data.debugCaptureActive
 		},
 		async startSocket() {
 			if (
