@@ -126,53 +126,9 @@ class DebugManager {
 		archive: NodeJS.ReadableStream
 		cleanup: () => Promise<void>
 	}> {
-		if (!this.session) {
-			throw new Error('No active debug session')
-		}
-
 		const session = this.session
 
-		// Remove the debug transport from all loggers and restore log level
-		logContainer.loggers.forEach((logger: winston.Logger) => {
-			logger.remove(session.transport)
-			logger.level = session.originalLogLevel
-		})
-
-		// Close the file transport to flush any remaining logs
-		if (typeof session.transport.close === 'function') {
-			session.transport.close()
-		}
-
-		// Restore original driver log level
-		if (zwaveClient.driverReady && session.driverDebugTransport) {
-			const { createDefaultTransportFormat } = await import(
-				'@zwave-js/core/bindings/log/node'
-			)
-			const { JSONTransport } = await import(
-				'@zwave-js/log-transport-json'
-			)
-
-			const logTransport = new JSONTransport()
-			logTransport.format = createDefaultTransportFormat(true, false)
-
-			zwaveClient.driver.updateLogConfig({
-				level: session.originalLogLevel as any,
-				transports: [logTransport],
-			})
-
-			// Clean up debug transport
-			if (session.driverDebugTransport.stream) {
-				session.driverDebugTransport.stream.destroy()
-			}
-
-			// Close driver log stream properly
-			if (session.driverLogStream) {
-				await new Promise<void>((resolve, reject) => {
-					session.driverLogStream.end(() => resolve())
-					session.driverLogStream.on('error', reject)
-				})
-			}
-		}
+		await this.restoreSession(zwaveClient)
 
 		// Wait a bit to ensure all logs are flushed to disk
 		await setTimeout(200)
@@ -257,6 +213,17 @@ class DebugManager {
 	 * Cancel the current debug session without generating a package
 	 */
 	async cancelSession(zwaveClient: ZWaveClient): Promise<void> {
+		const session = this.session
+		await this.restoreSession(zwaveClient)
+
+		// Clean up temp files
+		await this.cleanupTempFiles(
+			session.logFilePath,
+			session.driverLogFilePath,
+		)
+	}
+
+	private async restoreSession(zwaveClient: ZWaveClient): Promise<void> {
 		if (!this.session) {
 			throw new Error('No active debug session')
 		}
@@ -280,12 +247,6 @@ class DebugManager {
 			session.originalLogLevel,
 			session.driverDebugTransport,
 			session.driverLogStream,
-		)
-
-		// Clean up temp files
-		await this.cleanupTempFiles(
-			session.logFilePath,
-			session.driverLogFilePath,
 		)
 
 		// Clear session
