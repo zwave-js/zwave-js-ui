@@ -193,7 +193,7 @@ const useBaseStore = defineStore('base', {
 			}
 		},
 
-		showSnackbar(text, color = 'info', timeout = 3000) {
+		showSnackbar(text, color = 'info', options = { timeout: 3000 }) {
 			// empty mutation, will be caught in App.vue $onAction
 		},
 

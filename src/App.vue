@@ -392,7 +392,7 @@ import { FirmwareUpdateStatus } from '@zwave-js/cc'
 import { SecurityBootstrapFailure, InclusionState } from 'zwave-js'
 import DialogNodesManager from '@/components/dialogs/DialogNodesManager.vue'
 import DialogFirmwareUpdate from '@/components/dialogs/DialogFirmwareUpdate.vue'
-import { uuid } from './lib/utils'
+import { uuid, wait } from './lib/utils'
 import Logo from '@/components/Logo.vue'
 
 let socketQueue = []
@@ -725,12 +725,17 @@ export default {
 				// Stop capture and get download URL
 				const promise = ConfigApis.stopDebugCapture(nodeIds)
 
-				await this.showLoadingSnack(promise, {
-					loading: 'Generating debug package, please wait...',
-					successText: 'Debug package generated successfully!',
-					errorText: 'Failed to generate debug package',
-				})
+				await this.showLoadingSnack(
+					wait(5000).then(() => promise),
+					{
+						loading: 'Generating debug package, please wait...',
+					},
+				)
 
+				this.showSnackbar(
+					'Debug package generated and download started.',
+					'success',
+				)
 				// Update store state
 				this.debugCaptureActive = false
 			} catch (error) {
@@ -913,9 +918,10 @@ export default {
 
 			return this.$refs.confirm2.open(title, text, options)
 		},
-		showSnackbar(text, color, timeout = 3000) {
+		showSnackbar(text, color, options = { timeout: 3000 }) {
+			const { timeout, ...rest } = options
 			const toastOptions = {
-				duration: timeout,
+				duration: timeout || 3000,
 				progressBar: true,
 				cardProps: {
 					color: 'info',
@@ -929,6 +935,7 @@ export default {
 					},
 					onClick: () => {},
 				},
+				...rest,
 			}
 
 			const iconMap = {
@@ -940,23 +947,53 @@ export default {
 			toastOptions.cardProps.color = color || 'info'
 			toastOptions.prependIcon = iconMap[color] || 'info'
 
-			toast(text, toastOptions)
+			return toast(text, toastOptions)
 		},
 		showLoadingSnack(promise, options) {
-			return toast.toastOriginal.promise(promise, {
-				loading: options.loading || 'Loading...',
-				success: (data) => {
-					return options.successText || data
+			// return toast.toastOriginal.promise(promise, {
+			// 	loading: options.loading || 'Loading...',
+			// 	success: (data) => {
+			// 		return options.successText || data
+			// 	},
+			// 	error: (data) => {
+			// 		return options.errorText || data
+			// 	},
+			// 	richColors: true,
+			// 	// action: {
+			// 	// 	label: 'Close',
+			// 	// 	onClick: () => {},
+			// 	// },
+			// })
+
+			const loaderToastId = this.showSnackbar(
+				options.loading || 'Loading...',
+				'info',
+				{
+					timeout: Number.POSITIVE_INFINITY,
+					loading: true, // indeterminate progress bar
 				},
-				error: (data) => {
-					return options.errorText || data
-				},
-				richColors: true,
-				// action: {
-				// 	label: 'Close',
-				// 	onClick: () => {},
-				// },
-			})
+			)
+
+			return promise
+				.then((data) => {
+					if (options.successText) {
+						this.showSnackbar(options.successText, 'success')
+					}
+					return data
+				})
+				.catch((error) => {
+					if (options.errorText) {
+						this.showSnackbar(
+							`${options.errorText}: ${error.message}`,
+							'error',
+						)
+					}
+					throw error
+				})
+				.finally(() => {
+					// Dismiss loader toast
+					toast.dismiss(loaderToastId)
+				})
 		},
 		apiRequest(
 			apiName,
@@ -1826,6 +1863,6 @@ export default {
 
 :deep(:where([data-sonner-toaster][data-y-position='top'])) {
 	top: 80px !important;
-	right: -30px !important;
+	right: 10px !important;
 }
 </style>
