@@ -305,17 +305,6 @@
 			</v-main>
 		</main>
 
-		<!-- Debug Capture FAB -->
-		<v-fab
-			v-if="debugCaptureActive"
-			location="bottom end"
-			size="large"
-			color="error"
-			icon="mdi-bug"
-			@click="finishDebugCapture"
-			v-tooltip:left="'Debug capture in progress - Click to finish'"
-		></v-fab>
-
 		<PasswordDialog
 			@updatePassword="updatePassword()"
 			@close="closePasswordDialog()"
