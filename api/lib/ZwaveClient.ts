@@ -119,12 +119,12 @@ import {
 	BatteryReplacementStatus,
 } from 'zwave-js'
 import { getEnumMemberName, parseQRCodeString } from 'zwave-js/Utils'
-import { configDbDir, logsDir, nvmBackupsDir, storeDir } from '../config/app.js'
-import type { Group } from '../config/store.js'
-import store from '../config/store.js'
-import jsonStore from './jsonStore.js'
-import * as LogManager from './logger.js'
-import * as utils from './utils.js'
+import { configDbDir, logsDir, nvmBackupsDir, storeDir } from '../config/app.ts'
+import type { Group } from '../config/store.ts'
+import store from '../config/store.ts'
+import jsonStore from './jsonStore.ts'
+import * as LogManager from './logger.ts'
+import * as utils from './utils.ts'
 
 import { serverVersion, ZwavejsServer } from '@zwave-js/server'
 import type { Server as SocketServer } from 'socket.io'
@@ -993,10 +993,16 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 	/**
 	 * Returns the driver ZWaveNode object, or multicast group/broadcast node for virtual nodes (nodeId > 0xfff)
+	 * @param nodeId - The ID of the node to retrieve
+	 * @param options - Optional settings
+	 * @param options.noVirtual - If true, throws an error when nodeId is for a virtual node (nodeId > 0xfff)
 	 */
-	getNode(nodeId: number): any {
-		// For virtual nodes (multicast groups and broadcast nodes), return the stored multicast group instance
+	getNode(nodeId: number, options?: { noVirtual?: boolean }): any {
+		// For virtual nodes (multicast groups and broadcast nodes), either return them or throw error
 		if (nodeId > 0xfff) {
+			if (options?.noVirtual) {
+				throw new Error(`Node ${nodeId} not found or is a virtual node`)
+			}
 			return this._multicastGroups.get(nodeId) || null
 		}
 		return this._driver.controller.nodes.get(nodeId)
@@ -4418,9 +4424,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		rounds = 5,
 	): Promise<LifelineHealthCheckSummary & { targetNodeId: number }> {
 		if (this.driverReady) {
-			const zwaveNode = this.getNode(nodeId)
-			if (!zwaveNode || nodeId > 0xfff) {
-				throw new Error(`Node ${nodeId} not found or is a virtual node`)
+			const zwaveNode = this.getNode(nodeId, { noVirtual: true })
+			if (!zwaveNode) {
+				throw new Error(`Node ${nodeId} not found`)
 			}
 			const result = await zwaveNode.checkLifelineHealth(
 				rounds,
@@ -4440,9 +4446,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		options: any,
 	): Promise<LinkReliabilityCheckResult> {
 		if (this.driverReady) {
-			const zwaveNode = this.getNode(nodeId)
-			if (!zwaveNode || nodeId > 0xfff) {
-				throw new Error(`Node ${nodeId} not found or is a virtual node`)
+			const zwaveNode = this.getNode(nodeId, { noVirtual: true })
+			if (!zwaveNode) {
+				throw new Error(`Node ${nodeId} not found`)
 			}
 			const result = await zwaveNode.checkLinkReliability({
 				...options,
@@ -4458,9 +4464,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 	abortLinkReliabilityCheck(nodeId: number): void {
 		if (this.driverReady) {
-			const zwaveNode = this.getNode(nodeId)
-			if (!zwaveNode || nodeId > 0xfff) {
-				throw new Error(`Node ${nodeId} not found or is a virtual node`)
+			const zwaveNode = this.getNode(nodeId, { noVirtual: true })
+			if (!zwaveNode) {
+				throw new Error(`Node ${nodeId} not found`)
 			}
 			zwaveNode.abortLinkReliabilityCheck()
 			return
