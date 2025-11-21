@@ -36,15 +36,47 @@ Z-Wave JS UI is a full-featured Z-Wave Control Panel and MQTT Gateway built with
 
 ### Import Statements Best Practices
 
-**Use dynamic imports only for heavy modules used in one place:**
+**CRITICAL: Backend vs Frontend Import Patterns**
 
-- Move lightweight modules (like `fs`, `path`) to top-level imports
-- Use dynamic imports (`await import()`) only for:
-  - Large libraries loaded conditionally
-  - Modules used in only one specific function
-  - Frontend code-splitting scenarios
+**Backend (api/ directory):**
+- **NEVER use `await import()` or dynamic imports in backend code**
+- **ALWAYS place all imports at the top of the file**
+- Backend doesn't benefit from tree-shaking or code-splitting
+- All modules are loaded at startup anyway in Node.js
+- Dynamic imports add unnecessary complexity and runtime overhead
 
-**Backend code doesn't benefit from tree-shaking or code-splitting, so prefer top-level imports**
+**Frontend (src/ directory):**
+- Use dynamic imports for code-splitting and lazy loading
+- **Vue Components**: Use `defineAsyncComponent(() => import('./Component.vue'))`
+- **Libraries**: Use `await import('library-name')` for heavy libraries loaded conditionally
+- Helps reduce initial bundle size
+
+**Example - Backend:**
+```typescript
+// ✅ CORRECT - All imports at top
+import { transports } from 'winston'
+import { JSONTransport } from '@zwave-js/log-transport-json'
+
+// ❌ WRONG - Never do this in backend
+const { transports } = await import('winston')
+```
+
+**Example - Frontend Components:**
+```typescript
+// ✅ CORRECT - Lazy load Vue components
+const HeavyChart = defineAsyncComponent(() => import('./components/HeavyChart.vue'))
+const DebugDialog = defineAsyncComponent(() => import('./dialogs/DebugDialog.vue'))
+```
+
+**Example - Frontend Libraries:**
+```typescript
+// ✅ CORRECT - Lazy load heavy libraries
+async function initNetwork() {
+  const { Network } = await import('vis-network')
+  const { DataSet } = await import('vis-data')
+  // Use the libraries...
+}
+```
 
 ### Keep Code Slim, Clean, and Readable
 
@@ -181,6 +213,23 @@ async editItem(existingItem) {
 - Use Vuetify 3 component names and props (not Vuetify 2)
 - Use Pinia for state management (not Vuex)
 - No Vue 2 event bus patterns (`$root.$emit`, `$root.$on`)
+
+**CRITICAL: Use Vuetify MCP for Documentation**
+
+When making UI changes or working with Vuetify components:
+- **ALWAYS consult the Vuetify MCP server** for the latest component documentation
+- The MCP server provides up-to-date API documentation for Vuetify 3.9.2 (current version)
+- Check component props, events, slots, and best practices before implementation
+- Use MCP tools to:
+  - Get component API documentation
+  - Find directive usage patterns
+  - Understand feature guides (theming, layouts, etc.)
+  - Check installation and configuration options
+
+Example MCP queries:
+- "What are the props for v-data-table in Vuetify 3?"
+- "How to use v-dialog with persistent prop?"
+- "Show me v-select API documentation"
 
 ## Bootstrap and Development Setup
 

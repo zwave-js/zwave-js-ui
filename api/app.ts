@@ -1368,7 +1368,7 @@ app.post(
 			restarting = true
 
 			if (debugManager.isSessionActive()) {
-				await debugManager.cancelSession(gw.zwave)
+				await debugManager.cancelSession()
 			}
 
 			// Close gateway and restart
@@ -1845,10 +1845,7 @@ app.post(
 
 			const nodeIds: number[] = req.body.nodeIds || []
 
-			const { archive, cleanup } = await debugManager.stopSession(
-				gw.zwave,
-				nodeIds,
-			)
+			const { archive, cleanup } = await debugManager.stopSession(nodeIds)
 
 			const timestamp = new Date().toISOString().replace(/[:.]/g, '-')
 			res.attachment(`zwave-debug-${timestamp}.zip`)
@@ -1883,7 +1880,7 @@ app.post(
 				})
 			}
 
-			await debugManager.cancelSession(gw.zwave)
+			await debugManager.cancelSession()
 
 			res.json({
 				success: true,

@@ -1,4 +1,5 @@
 import type winston from 'winston'
+import { transports } from 'winston'
 import { customFormat, logContainer } from './logger.ts'
 import archiver from 'archiver'
 import type ZWaveClient from './ZwaveClient.ts'
@@ -7,6 +8,8 @@ import { storeDir } from '../config/app.ts'
 import { rm, mkdir } from 'node:fs/promises'
 import { createWriteStream } from 'node:fs'
 import { setTimeout } from 'node:timers/promises'
+import { createDefaultTransportFormat } from '@zwave-js/core/bindings/log/node'
+import { JSONTransport } from '@zwave-js/log-transport-json'
 
 const debugTempDir = joinPath(storeDir, '.debug-temp')
 
@@ -18,6 +21,7 @@ export interface DebugSession {
 	originalLogLevel: string
 	driverDebugTransport?: any
 	driverLogStream?: NodeJS.WritableStream
+	zwaveClient: ZWaveClient
 }
 
 class DebugManager {
@@ -62,7 +66,6 @@ class DebugManager {
 		)
 
 		// Create a file transport to capture UI logs
-		const { transports } = await import('winston')
 		const transport = new transports.File({
 			filename: logFilePath,
 			format: customFormat(true),
@@ -80,13 +83,6 @@ class DebugManager {
 		let driverDebugTransport: any = undefined
 		let driverLogStream: NodeJS.WritableStream | undefined = undefined
 		if (zwaveClient.driverReady) {
-			const { createDefaultTransportFormat } = await import(
-				'@zwave-js/core/bindings/log/node'
-			)
-			const { JSONTransport } = await import(
-				'@zwave-js/log-transport-json'
-			)
-
 			const debugTransport = new JSONTransport()
 			debugTransport.format = createDefaultTransportFormat(false, true)
 
@@ -113,22 +109,20 @@ class DebugManager {
 			originalLogLevel,
 			driverDebugTransport,
 			driverLogStream,
+			zwaveClient,
 		}
 	}
 
 	/**
 	 * Stop the debug session and generate a zip file with logs and node dumps
 	 */
-	async stopSession(
-		zwaveClient: ZWaveClient,
-		nodeIds: number[],
-	): Promise<{
+	async stopSession(nodeIds: number[]): Promise<{
 		archive: NodeJS.ReadableStream
 		cleanup: () => Promise<void>
 	}> {
 		const session = this.session
 
-		await this.restoreSession(zwaveClient)
+		await this.restoreSession(session)
 
 		// Wait a bit to ensure all logs are flushed to disk
 		await setTimeout(200)
@@ -155,15 +149,15 @@ class DebugManager {
 		// Add node dumps to archive
 		for (const nodeId of nodeIds) {
 			try {
-				const driverDump = zwaveClient.dumpNode(nodeId)
+				const driverDump = session.zwaveClient.dumpNode(nodeId)
 				archive.append(JSON.stringify(driverDump, null, 2), {
 					name: `node-${nodeId}-driver-dump.json`,
 				})
 
 				// Get node from client for UI dump
-				const node = zwaveClient.getNode(nodeId)
+				const node = session.zwaveClient.getNode(nodeId)
 				if (node) {
-					const uiDump = zwaveClient.nodes.get(nodeId)
+					const uiDump = session.zwaveClient.nodes.get(nodeId)
 					if (uiDump) {
 						archive.append(JSON.stringify(uiDump, null, 2), {
 							name: `node-${nodeId}-ui-dump.json`,
@@ -209,9 +203,9 @@ class DebugManager {
 	/**
 	 * Cancel the current debug session without generating a package
 	 */
-	async cancelSession(zwaveClient: ZWaveClient): Promise<void> {
+	async cancelSession(): Promise<void> {
 		const session = this.session
-		await this.restoreSession(zwaveClient)
+		await this.restoreSession(session)
 
 		// Clean up temp files
 		await this.cleanupTempFiles(
@@ -220,12 +214,10 @@ class DebugManager {
 		)
 	}
 
-	private async restoreSession(zwaveClient: ZWaveClient): Promise<void> {
+	private async restoreSession(session: DebugSession): Promise<void> {
 		if (!this.session) {
 			throw new Error('No active debug session')
 		}
-
-		const session = this.session
 
 		// Remove the debug transport from all loggers and restore log level
 		logContainer.loggers.forEach((logger: winston.Logger) => {
@@ -240,12 +232,7 @@ class DebugManager {
 		})
 
 		// Restore original driver log level
-		await this.restoreDriverLogLevel(
-			zwaveClient,
-			session.originalLogLevel,
-			session.driverDebugTransport,
-			session.driverLogStream,
-		)
+		await this.restoreDriverLogLevel(session)
 
 		// Clear session
 		this.session = null
@@ -254,38 +241,26 @@ class DebugManager {
 	/**
 	 * Restore the driver log level after a debug session
 	 */
-	private async restoreDriverLogLevel(
-		zwaveClient: ZWaveClient,
-		originalLogLevel: string,
-		driverDebugTransport: any,
-		driverLogStream?: NodeJS.WritableStream,
-	): Promise<void> {
-		if (zwaveClient.driverReady && driverDebugTransport) {
-			const { createDefaultTransportFormat } = await import(
-				'@zwave-js/core/bindings/log/node'
-			)
-			const { JSONTransport } = await import(
-				'@zwave-js/log-transport-json'
-			)
-
+	private async restoreDriverLogLevel(session: DebugSession): Promise<void> {
+		if (session.zwaveClient.driverReady && session.driverDebugTransport) {
 			const logTransport = new JSONTransport()
 			logTransport.format = createDefaultTransportFormat(true, false)
 
-			zwaveClient.driver.updateLogConfig({
-				level: originalLogLevel as any,
+			session.zwaveClient.driver.updateLogConfig({
+				level: session.originalLogLevel as any,
 				transports: [logTransport],
 			})
 
 			// Clean up debug transport
-			if (driverDebugTransport.stream) {
-				driverDebugTransport.stream.destroy()
+			if (session.driverDebugTransport.stream) {
+				session.driverDebugTransport.stream.destroy()
 			}
 
 			// Close driver log stream properly
-			if (driverLogStream) {
+			if (session.driverLogStream) {
 				await new Promise<void>((resolve, reject) => {
-					driverLogStream.end(() => resolve())
-					driverLogStream.on('error', reject)
+					session.driverLogStream.end(() => resolve())
+					session.driverLogStream.on('error', reject)
 				})
 			}
 		}
