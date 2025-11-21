@@ -22,14 +22,17 @@ commands:
   lint: npm run lint-fix && npm run lint
 boundaries:
   always:
-    - Use Vue 3 Composition API or Options API consistently
+    - Use Vue 3 Options API (NOT Composition API)
     - Use Vuetify 3 components for all UI elements
     - Use app.confirm for simple forms instead of creating dialog components
+    - Check src/lib/utils.js for existing utility functions before writing new ones
     - Use Pinia for state management
     - Follow conventional commit format
     - Test with both dev server and production build
   never:
+    - Use Composition API (project uses Options API only)
     - Create new dialog components when app.confirm can be used
+    - Add duplicated code that already exists as a utility function
     - Modify backend code (api/**)
     - Hardcode API URLs (use proxy configuration)
     - Skip accessibility considerations
@@ -91,9 +94,38 @@ src/
 │   └── Confirm.vue      # Confirmation dialog system
 ├── apis/
 │   └── ConfigApis.js    # API client
-└── lib/
-    └── utils.js         # Frontend utilities
+├── lib/
+│   └── utils.js         # Frontend utilities
+└── mixins/
+    └── InstancesMixin.js # Provides app computed property
 ```
+
+## Code Sharing Between Frontend and Backend
+
+Some code can be shared between frontend (`src/`) and backend (`api/`):
+
+**Example: Socket Events**
+```javascript
+// Backend defines events in api/lib/SocketEvents.ts
+export enum socketEvents {
+  init = 'INIT',
+  nodeUpdated = 'NODE_UPDATED',
+  valueUpdated = 'VALUE_UPDATED',
+  // ...
+}
+
+// Frontend imports and uses the same events
+import { socketEvents } from '@server/lib/SocketEvents'
+
+this.socket.on(socketEvents.nodeUpdated, this.handleNodeUpdate)
+```
+
+**Always check for existing utilities:**
+- **Frontend utils**: `src/lib/utils.js` - UI utilities, data formatting
+- **Backend utils**: `api/lib/utils.ts` - Server utilities, file operations
+- **Shared code**: Can import from `@server/` in frontend when appropriate
+
+**NEVER duplicate code** that already exists as a utility function in either location.
 
 ## Code Style Examples
 
@@ -101,8 +133,21 @@ src/
 
 **ALWAYS use app.confirm for simple forms. DO NOT create separate dialog components.**
 
+**Important**: 
+- To use `app.confirm`, your component must include the `InstancesMixin` mixin
+- In `App.vue`, use `this.confirm` directly (not `this.app.confirm`)
+- The mixin provides the `app` computed property that gives access to the App instance
+
 ```javascript
-// Good - Use app.confirm with inputs
+// In any component (not App.vue) - requires InstancesMixin
+import InstancesMixin from '@/mixins/InstancesMixin'
+
+export default {
+  mixins: [InstancesMixin],
+  // ...
+}
+
+// Good - Use app.confirm with inputs (in components with InstancesMixin)
 async editDevice(device) {
   const result = await this.app.confirm(
     device ? 'Edit Device' : 'Add Device',
@@ -156,6 +201,23 @@ async editDevice(device) {
   
   // Process result
   await this.updateDevice(result)
+}
+
+// In App.vue - use this.confirm directly (NOT this.app.confirm)
+export default {
+  methods: {
+    async someMethod() {
+      const result = await this.confirm(
+        'Confirm Action',
+        'Are you sure?',
+        'warning'
+      )
+      
+      if (result) {
+        // User confirmed
+      }
+    }
+  }
 }
 
 // Bad - Don't create separate dialog component for simple forms

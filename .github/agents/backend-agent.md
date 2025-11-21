@@ -27,10 +27,12 @@ boundaries:
     - Use Socket.IO for real-time communication
     - Store configuration in api/config/
     - Place utilities in api/lib/
+    - Check api/lib/utils.ts for existing utility functions before writing new ones
     - Follow conventional commit format
     - Run tests before committing
   never:
     - Use callbacks instead of async/await
+    - Add duplicated code that already exists as a utility function
     - Hardcode configuration values
     - Commit secrets or credentials
     - Modify frontend code (src/**)
@@ -80,8 +82,35 @@ api/
 │   ├── app.ts          # Application configuration
 │   └── store.ts        # Data store configuration
 └── lib/
-    └── utils.ts        # Backend utilities
+    ├── utils.ts        # Backend utilities
+    ├── SocketEvents.ts # Socket event definitions (shared with frontend)
+    └── shared.ts       # Code shared between backend and frontend
 ```
+
+## Code Sharing Between Frontend and Backend
+
+Some code can be shared between backend (`api/`) and frontend (`src/`):
+
+**Example: Socket Events**
+```typescript
+// Define once in backend: api/lib/SocketEvents.ts
+export enum socketEvents {
+  init = 'INIT',
+  nodeUpdated = 'NODE_UPDATED',
+  valueUpdated = 'VALUE_UPDATED',
+  // ...
+}
+
+// Frontend imports using @server alias
+import { socketEvents } from '@server/lib/SocketEvents'
+```
+
+**Always check for existing utilities:**
+- **Backend utils**: `api/lib/utils.ts` - File operations, crypto, path handling
+- **Frontend utils**: `src/lib/utils.js` - UI utilities, data formatting
+- **Shared code**: Use `api/lib/shared.ts` or similar for code used by both
+
+**NEVER duplicate code** that already exists as a utility function. Check `api/lib/utils.ts` before writing new utility functions.
 
 ## Code Style Examples
 
