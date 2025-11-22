@@ -81,22 +81,29 @@ async function main(param) {
             const lines = releaseNotes.split('\n');
 
             for (const line of lines) {
-                const potentialChunk = currentChunk + (currentChunk ? '\n' : '') + line;
-                if (potentialChunk.length > MAX_EMBED_LENGTH) {
+                // Check if adding this line would exceed the limit
+                const separator = currentChunk ? '\n' : '';
+                const potentialChunk = currentChunk + separator + line;
+                
+                if (potentialChunk.length <= MAX_EMBED_LENGTH) {
+                    // Line fits in current chunk
+                    currentChunk = potentialChunk;
+                } else {
+                    // Line doesn't fit, save current chunk if not empty
                     if (currentChunk) {
                         chunks.push(currentChunk);
                         currentChunk = '';
                     }
-                    // If a single line is too long, split it into smaller pieces
+                    
+                    // If this single line is too long, split it
                     if (line.length > MAX_EMBED_LENGTH) {
                         for (let i = 0; i < line.length; i += MAX_EMBED_LENGTH) {
                             chunks.push(line.substring(i, i + MAX_EMBED_LENGTH));
                         }
                     } else {
+                        // Line fits on its own, start new chunk with it
                         currentChunk = line;
                     }
-                } else {
-                    currentChunk = potentialChunk;
                 }
             }
             if (currentChunk) {
@@ -104,11 +111,16 @@ async function main(param) {
             }
 
             // Discord allows up to 10 embeds per message
-            const embeds = chunks.slice(0, 10).map((chunk, index) => ({
-                description: chunk,
-                color: 0x0099ff,
-                ...(index === 0 && { title: 'Release Notes' })
-            }));
+            const embeds = chunks.slice(0, 10).map((chunk, index) => {
+                const embed = {
+                    description: chunk,
+                    color: 0x0099ff
+                };
+                if (index === 0) {
+                    embed.title = 'Release Notes';
+                }
+                return embed;
+            });
 
             payload = { embeds };
 
