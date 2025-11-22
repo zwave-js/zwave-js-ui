@@ -125,7 +125,7 @@ async function main(param) {
             payload = { embeds };
 
             if (chunks.length > 10) {
-                console.warn(`Release notes too long, truncated to 10 embeds (${chunks.length} total chunks)`);
+                console.warn(`Release notes exceed Discord's 10 embed limit (${chunks.length} total chunks). Only the first 10 embeds will be posted; remaining content is lost.`);
             }
         }
 
