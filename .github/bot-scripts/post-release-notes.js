@@ -22,13 +22,29 @@ async function main(param) {
         releaseBody = context.payload.release.body;
     } else {
         // Triggered by workflow_dispatch, fetch the latest release
-        console.log('Fetching latest release...');
-        const { data: latestRelease } = await github.rest.repos.getLatestRelease({
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-        });
-        releaseBody = latestRelease.body;
-        console.log(`Found latest release: ${latestRelease.name || latestRelease.tag_name}`);
+        try {
+            console.log('Fetching latest release...');
+            const { data: latestRelease } = await github.rest.repos.getLatestRelease({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+            });
+            
+            if (!latestRelease || !latestRelease.body) {
+                console.error('No release body found in latest release');
+                return;
+            }
+            
+            releaseBody = latestRelease.body;
+            console.log(`Found latest release: ${latestRelease.name || latestRelease.tag_name}`);
+        } catch (error) {
+            console.error('Failed to fetch latest release:', error);
+            return;
+        }
+    }
+
+    if (!releaseBody) {
+        console.error('No release body available to post');
+        return;
     }
 
     // remove multiple spaces and put links between < > to prevent embeds
