@@ -167,6 +167,9 @@ export function customTransports(config: LoggerConfig): winston.transport[] {
 	// increeasing the default limit of 100 prevents warnings
 	transportsList.forEach((t) => {
 		t.setMaxListeners(100)
+		if (t !== streamTransport) {
+			t.silent = config.enabled === false
+		}
 	})
 
 	return transportsList
@@ -193,7 +196,6 @@ export function setupLogger(
 			format.errors({ stack: true }),
 			format.json(),
 		), // to correctly parse errors
-		silent: !sanitized.enabled,
 		level: sanitized.level,
 		transports: customTransports(sanitized),
 	})
@@ -378,5 +380,7 @@ export function stopCleanJob() {
 		cleanJob = undefined
 	}
 }
+
+export { logContainer }
 
 export default logContainer.loggers

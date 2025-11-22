@@ -199,6 +199,7 @@
 							@click="item.func"
 							:title="item.tooltip"
 							:prepend-icon="item.icon"
+							:color="item.color || 'primary'"
 						>
 						</v-list-item>
 					</v-list>
@@ -217,8 +218,8 @@
 								class="mr-2"
 								v-bind="props"
 								v-tooltip:bottom="item.tooltip"
-								color="primary"
 								:icon="item.icon"
+								:color="item.color || 'primary'"
 								@click="item.func"
 							>
 							</v-btn>
@@ -323,7 +324,7 @@
 			:indeterminate="loaderIndeterminate"
 		></LoaderDialog>
 
-		<VSonner position="top-right" :duration="5000" offset="50px" />
+		<VSonner position="top-right" :duration="5000" />
 
 		<DialogNodesManager
 			@open="nodesManagerDialog = true"
@@ -377,7 +378,7 @@ import LoaderDialog from '@/components/dialogs/DialogLoader.vue'
 
 import { Routes } from '@/router'
 
-import { mapActions, mapState } from 'pinia'
+import { mapActions, mapState, mapWritableState } from 'pinia'
 import useBaseStore from './stores/base.js'
 import { manager, instances } from './lib/instanceManager'
 import logger from './lib/logger'
@@ -419,13 +420,25 @@ export default {
 			'zwave',
 			'znifferState',
 			'inited',
+			'nodes',
 		]),
 		...mapState(useBaseStore, {
 			darkMode: (store) => store.uiState.darkMode,
 			navTabs: (store) => store.ui.navTabs,
 		}),
+		...mapWritableState(useBaseStore, ['debugCaptureActive']),
 		menuItems() {
 			const items = [
+				{
+					icon: 'troubleshoot',
+					color: this.debugCaptureActive ? 'error' : 'primary',
+					func: this.debugCaptureActive
+						? this.finishDebugCapture
+						: this.startDebugCapture,
+					tooltip: this.debugCaptureActive
+						? 'Finish Debug Capture'
+						: 'Start Debug Capture',
+				},
 				{
 					icon: 'lock',
 					authOnly: true,
@@ -609,6 +622,126 @@ export default {
 		}
 	},
 	methods: {
+		async startDebugCapture() {
+			const confirmed = await this.confirm(
+				'Start Debug Capture',
+				'<p>This wizard will help you collect a complete debug package.</p>' +
+					'<ul style="margin-left: 20px;">' +
+					'<li>After starting, reproduce the issue you want to debug</li>' +
+					"<li>Click the debug indicator in the top bar when you're done</li>" +
+					'</ul>',
+				'info',
+				{
+					confirmText: 'Start Capture',
+					cancelText: 'Cancel',
+					width: 500,
+				},
+			)
+
+			if (!confirmed) {
+				return
+			}
+
+			try {
+				// Start debug capture
+				await ConfigApis.startDebugCapture()
+
+				this.showSnackbar('Debug capture started.', 'success')
+
+				// Update store state
+				this.debugCaptureActive = true
+
+				// Don't show redundant toast - user just saw instructions in dialog
+			} catch (error) {
+				this.showSnackbar(
+					`Failed to start debug capture: ${error.message}`,
+				)
+			}
+		},
+		async finishDebugCapture() {
+			// Get nodes for selection
+			const nodes = this.nodes.filter(
+				(n) => n.id !== this.controllerNode?.id,
+			)
+
+			// Show finish dialog with device selection using confirm
+			const result = await this.confirm(
+				'Finish Debug Capture',
+				'Select which devices to include detailed debug info for (optional):',
+				'success',
+				{
+					confirmText: 'Download',
+					cancelText: 'Cancel',
+					width: 600,
+					inputs: [
+						{
+							type: 'list',
+							key: 'nodeIds',
+							label: 'Devices',
+							multiple: true,
+							chips: true,
+							autocomplete: true,
+							items: nodes.map((node) => ({
+								title: `Node ${node.id}${node.manufacturer ? ` - ${node.manufacturer}` : ''}${node.productLabel || node.productDescription || node.product ? ` ${node.productLabel || node.productDescription || node.product}` : ''}${node.name && node.name !== `Node ${node.id}` ? ` (${node.name})` : ''}`,
+								value: node.id,
+							})),
+							default: [],
+						},
+					],
+				},
+			)
+
+			// Check if user cancelled
+			if (Object.keys(result).length === 0) {
+				// User cancelled - ask if they want to cancel the whole capture
+				const cancelCapture = await this.confirm(
+					'Cancel Debug Capture?',
+					'Do you want to cancel the debug capture session? This will discard all captured logs.',
+					'warning',
+					{
+						confirmText: 'Yes, Cancel',
+						cancelText: 'No, Go Back',
+					},
+				)
+
+				if (cancelCapture) {
+					try {
+						await ConfigApis.cancelDebugCapture()
+						this.debugCaptureActive = false
+						this.showSnackbar('Debug capture cancelled')
+					} catch (error) {
+						this.showSnackbar(
+							`Failed to cancel debug capture: ${error.message}`,
+						)
+					}
+				}
+				return
+			}
+
+			// Download debug package
+			const nodeIds = result.nodeIds || []
+
+			try {
+				// Stop capture and get download URL
+				const promise = ConfigApis.stopDebugCapture(nodeIds)
+
+				await this.showLoadingSnack(promise, {
+					loading: 'Generating debug package, please wait...',
+				})
+
+				this.showSnackbar(
+					'Debug package generated and download started.',
+					'success',
+				)
+				// Update store state
+				this.debugCaptureActive = false
+			} catch (error) {
+				this.showSnackbar(
+					`Failed to generate debug package: ${error.message}`,
+					'error',
+				)
+			}
+		},
 		verifyRoute() {
 			// ensure the actual route is available in pages otherwise redirect to the first one
 			if (
@@ -782,9 +915,10 @@ export default {
 
 			return this.$refs.confirm2.open(title, text, options)
 		},
-		showSnackbar(text, color, timeout = 3000) {
+		showSnackbar(text, color, options = { timeout: 3000 }) {
+			const { timeout, ...rest } = options
 			const toastOptions = {
-				duration: timeout,
+				duration: timeout || 3000,
 				progressBar: true,
 				cardProps: {
 					color: 'info',
@@ -798,6 +932,7 @@ export default {
 					},
 					onClick: () => {},
 				},
+				...rest,
 			}
 
 			const iconMap = {
@@ -809,24 +944,53 @@ export default {
 			toastOptions.cardProps.color = color || 'info'
 			toastOptions.prependIcon = iconMap[color] || 'info'
 
-			toast(text, toastOptions)
+			return toast(text, toastOptions)
 		},
 		showLoadingSnack(promise, options) {
-			return toast.toastOriginal.promise(promise, {
-				loading: options.loading || 'Loading...',
-				success: (data) => {
-					this.showSnackbar(options.successText || data, 'success')
+			// return toast.toastOriginal.promise(promise, {
+			// 	loading: options.loading || 'Loading...',
+			// 	success: (data) => {
+			// 		return options.successText || data
+			// 	},
+			// 	error: (data) => {
+			// 		return options.errorText || data
+			// 	},
+			// 	richColors: true,
+			// 	// action: {
+			// 	// 	label: 'Close',
+			// 	// 	onClick: () => {},
+			// 	// },
+			// })
+
+			const loaderToastId = this.showSnackbar(
+				options.loading || 'Loading...',
+				'info',
+				{
+					timeout: Number.POSITIVE_INFINITY,
+					loading: true, // indeterminate progress bar
+				},
+			)
+
+			return promise
+				.then((data) => {
+					if (options.successText) {
+						this.showSnackbar(options.successText, 'success')
+					}
 					return data
-				},
-				error: (data) => {
-					this.showSnackbar(options.errorText || data, 'error')
-					return data
-				},
-				action: {
-					label: 'Close',
-					onClick: () => {},
-				},
-			})
+				})
+				.catch((error) => {
+					if (options.errorText) {
+						this.showSnackbar(
+							`${options.errorText}: ${error.message}`,
+							'error',
+						)
+					}
+					throw error
+				})
+				.finally(() => {
+					// Dismiss loader toast
+					toast.dismiss(loaderToastId)
+				})
 		},
 		apiRequest(
 			apiName,
@@ -1017,6 +1181,10 @@ export default {
 				try {
 					const data = await ConfigApis.restartGateway()
 
+					if (data.success) {
+						this.debugCaptureActive = false
+					}
+
 					this.showSnackbar(
 						data.message,
 						data.success ? 'success' : 'error',
@@ -1111,6 +1279,9 @@ export default {
 			})
 			// convert node values in array
 			this.initNodes(data.nodes)
+
+			// Handle debug capture state persistence
+			this.debugCaptureActive = data.debugCaptureActive
 		},
 		async startSocket() {
 			if (
@@ -1687,7 +1858,8 @@ export default {
 	min-width: 60px;
 }
 
-:deep(.v-snack) {
-	top: 65px;
+:deep(:where([data-sonner-toaster][data-y-position='top'])) {
+	top: 80px !important;
+	right: 10px !important;
 }
 </style>

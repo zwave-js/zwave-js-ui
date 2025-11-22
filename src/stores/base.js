@@ -25,6 +25,7 @@ const useBaseStore = defineStore('base', {
 		user: {},
 		tz: Intl.DateTimeFormat().resolvedOptions().timeZone,
 		locale: undefined, // uses default browser locale
+		debugCaptureActive: false, // Track if debug capture is active
 		preferences: settings.load('preferences', {
 			eventsList: {},
 			smartStartTable: {},
@@ -192,7 +193,7 @@ const useBaseStore = defineStore('base', {
 			}
 		},
 
-		showSnackbar(text, color = 'info', timeout = 3000) {
+		showSnackbar(text, color = 'info', options = { timeout: 3000 }) {
 			// empty mutation, will be caught in App.vue $onAction
 		},
 

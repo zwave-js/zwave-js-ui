@@ -244,6 +244,7 @@ import useBaseStore from '../stores/base.js'
 import logger from '../lib/logger.js'
 import InstancesMixin from '../mixins/InstancesMixin.js'
 import { defineAsyncComponent } from 'vue'
+import { download, extractFileNameFromResponse } from '../lib/utils.js'
 
 const log = logger.get('Store')
 
@@ -395,10 +396,8 @@ export default {
 			}
 		},
 		async downloadZip(response, defaultName) {
-			const regExp = /filename="([^"]+){1}"/g
-			const fileName =
-				regExp.exec(response.headers['content-disposition'])[1] ||
-				defaultName
+			const fileName = extractFileNameFromResponse(response, defaultName)
+
 			if (window.navigator && window.navigator.msSaveOrOpenBlob) {
 				// IE variant
 				window.navigator.msSaveOrOpenBlob(
@@ -413,11 +412,7 @@ export default {
 						type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
 					}),
 				)
-				const link = document.createElement('a')
-				link.href = url
-				link.setAttribute('download', fileName)
-				document.body.appendChild(link)
-				link.click()
+				download(url, fileName)
 			}
 		},
 		async downloadFile() {
