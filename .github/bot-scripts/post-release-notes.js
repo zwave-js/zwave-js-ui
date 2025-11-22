@@ -54,18 +54,83 @@ async function main(param) {
         console.log('Posting release notes to Discord...');
         console.log(releaseNotes);
 
+        // Discord webhook limits:
+        // - content field: 2000 characters
+        // - embed description: 4096 characters
+        // - total embeds: 10 per message
+        const MAX_CONTENT_LENGTH = 2000;
+        const MAX_EMBED_LENGTH = 4096;
+
+        let payload;
+
+        if (releaseNotes.length <= MAX_CONTENT_LENGTH) {
+            // Short message - use content field directly
+            payload = { content: releaseNotes };
+        } else if (releaseNotes.length <= MAX_EMBED_LENGTH) {
+            // Medium message - use embed with description
+            payload = {
+                embeds: [{
+                    description: releaseNotes,
+                    color: 0x0099ff
+                }]
+            };
+        } else {
+            // Long message - split into multiple embeds
+            const chunks = [];
+            let currentChunk = '';
+            const lines = releaseNotes.split('\n');
+
+            for (const line of lines) {
+                const potentialChunk = currentChunk + (currentChunk ? '\n' : '') + line;
+                if (potentialChunk.length > MAX_EMBED_LENGTH) {
+                    if (currentChunk) {
+                        chunks.push(currentChunk);
+                        currentChunk = '';
+                    }
+                    // If a single line is too long, split it into smaller pieces
+                    if (line.length > MAX_EMBED_LENGTH) {
+                        for (let i = 0; i < line.length; i += MAX_EMBED_LENGTH) {
+                            chunks.push(line.substring(i, i + MAX_EMBED_LENGTH));
+                        }
+                    } else {
+                        currentChunk = line;
+                    }
+                } else {
+                    currentChunk = potentialChunk;
+                }
+            }
+            if (currentChunk) {
+                chunks.push(currentChunk);
+            }
+
+            // Discord allows up to 10 embeds per message
+            const embeds = chunks.slice(0, 10).map((chunk, index) => ({
+                description: chunk,
+                color: 0x0099ff,
+                ...(index === 0 && { title: 'Release Notes' })
+            }));
+
+            payload = { embeds };
+
+            if (chunks.length > 10) {
+                console.warn(`Release notes too long, truncated to 10 embeds (${chunks.length} total chunks)`);
+            }
+        }
+
         const response = await fetch(discordWebhookUrl, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ content: releaseNotes }),
+            body: JSON.stringify(payload),
         });
 
         if (response.ok) {
             console.log('Release notes posted to Discord successfully.');
         } else {
+            const responseText = await response.text();
             console.error('Failed to post release notes to Discord:', response.status, response.statusText);
+            console.error('Response body:', responseText);
         }
     } catch (error) {
         console.error('Error posting release notes to Discord:', error);
