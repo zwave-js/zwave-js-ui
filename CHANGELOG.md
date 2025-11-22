@@ -1,5 +1,23 @@
 
 
+# [11.8.0](https://github.com/zwave-js/zwave-js-ui/compare/v11.7.0...v11.8.0) (2025-11-22)
+
+
+### Bug Fixes
+
+* defer firmware update check until after re-interview completes ([#4462](https://github.com/zwave-js/zwave-js-ui/issues/4462)) ([f1cfadc](https://github.com/zwave-js/zwave-js-ui/commit/f1cfadcb38d359d0c82f5692c92c9bc2ffecbaa2)), closes [zwave-js/zwave-js-ui#4461](https://github.com/zwave-js/zwave-js-ui/issues/4461)
+* error `require is not defined` when calling driver function ([#4459](https://github.com/zwave-js/zwave-js-ui/issues/4459)) ([26b67b6](https://github.com/zwave-js/zwave-js-ui/commit/26b67b66a44a6e07d461d5a51e8f85f80640cca2))
+* improve automatic firmware update checks ([#4463](https://github.com/zwave-js/zwave-js-ui/issues/4463)) ([28e5c6e](https://github.com/zwave-js/zwave-js-ui/commit/28e5c6e15ab323b3b76550100f8835827ddb71da))
+* **pwa:** prevent cache mismatch errors after updates ([#4452](https://github.com/zwave-js/zwave-js-ui/issues/4452)) ([f99ff73](https://github.com/zwave-js/zwave-js-ui/commit/f99ff737531c5db06250d2026789f46c65e9b759)), closes [#4216](https://github.com/zwave-js/zwave-js-ui/issues/4216) [/github.com/zwave-js/zwave-js-ui/issues/4216#issuecomment-2862668953](https://github.com//github.com/zwave-js/zwave-js-ui/issues/4216/issues/issuecomment-2862668953) [/github.com/zwave-js/zwave-js-ui/issues/4216#issuecomment-2864940117](https://github.com//github.com/zwave-js/zwave-js-ui/issues/4216/issues/issuecomment-2864940117) [zwave-js/zwave-js-ui#4228](https://github.com/zwave-js/zwave-js-ui/issues/4228)
+* refresh firmware update availability after update completes ([#4457](https://github.com/zwave-js/zwave-js-ui/issues/4457)) ([eb955af](https://github.com/zwave-js/zwave-js-ui/commit/eb955afe59ba73bc6960328fbdaf10087da490ef)), closes [zwave-js/zwave-js-ui#4456](https://github.com/zwave-js/zwave-js-ui/issues/4456)
+
+
+### Features
+
+* add completion status messages for task operations ([#4465](https://github.com/zwave-js/zwave-js-ui/issues/4465)) ([8640285](https://github.com/zwave-js/zwave-js-ui/commit/8640285f50e171189e3f4f9145dac9ab3ecb18ec)), closes [zwave-js/zwave-js-ui#4464](https://github.com/zwave-js/zwave-js-ui/issues/4464) [zwave-js/zwave-js-ui#4464](https://github.com/zwave-js/zwave-js-ui/issues/4464)
+* add wizard to collect debug information ([#4460](https://github.com/zwave-js/zwave-js-ui/issues/4460)) ([a2ad097](https://github.com/zwave-js/zwave-js-ui/commit/a2ad09746b5dfa595420e566900344fac7927c44)), closes [zwave-js/zwave-js-ui#4213](https://github.com/zwave-js/zwave-js-ui/issues/4213) [zwave-js/zwave-js-ui#4213](https://github.com/zwave-js/zwave-js-ui/issues/4213)
+* bump zwave-js@15.17.0 ([#4468](https://github.com/zwave-js/zwave-js-ui/issues/4468)) ([c93c161](https://github.com/zwave-js/zwave-js-ui/commit/c93c16193a78f2bd4b4e8e3105a09f9ca3a8600c))
+
 # [11.7.0](https://github.com/zwave-js/zwave-js-ui/compare/v11.6.1...v11.7.0) (2025-11-12)
 
 
