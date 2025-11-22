@@ -33,5 +33,5 @@ async function main(param) {
         console.error('Error posting release notes to Discord:', error);
     }
 }
-module.exports = main;
+export default main;
 
