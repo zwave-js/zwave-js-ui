@@ -10,12 +10,29 @@
  * @param {{github: Github, context: Context, fetch: Fetch }} param
  */
 async function main(param) {
-	const { context, fetch } = param;
+	const { github, context, fetch } = param;
 
     const discordWebhookUrl = process.env.DISCORD_WEBHOOK_URL || '';
 
+    let releaseBody;
+    
+    // Check if this is a release event or manual workflow dispatch
+    if (context.payload.release) {
+        // Triggered by release event
+        releaseBody = context.payload.release.body;
+    } else {
+        // Triggered by workflow_dispatch, fetch the latest release
+        console.log('Fetching latest release...');
+        const { data: latestRelease } = await github.rest.repos.getLatestRelease({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+        });
+        releaseBody = latestRelease.body;
+        console.log(`Found latest release: ${latestRelease.name || latestRelease.tag_name}`);
+    }
+
     // remove multiple spaces and put links between < > to prevent embeds
-    const releaseNotes = context.payload.release.body.replace(/(\r\n+|\n+|\r+)/gm, '\n').replace(/(https:\/\/[^)]+)/g, '<$1>');
+    const releaseNotes = releaseBody.replace(/(\r\n+|\n+|\r+)/gm, '\n').replace(/(https:\/\/[^)]+)/g, '<$1>');
 
     try {
         console.log('Posting release notes to Discord...');
