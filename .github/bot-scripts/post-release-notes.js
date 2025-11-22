@@ -1,6 +1,11 @@
 /// <reference path="types.d.ts" />
 // @ts-check
 
+// Note: This script uses ESM exports (export default) because it's used with
+// actions/github-script@v8 which runs in ESM context. Other bot scripts use
+// CommonJS (module.exports) because they're used with older github-script
+// versions (v3, v7) that support CommonJS.
+
 /**
  * @param {{github: Github, context: Context, fetch: Fetch }} param
  */
