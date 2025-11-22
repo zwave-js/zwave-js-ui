@@ -1,4 +1,5 @@
 import path from 'path'
+import { fileURLToPath } from 'url'
 import vue from '@vitejs/plugin-vue'
 import { defineConfig, loadEnv } from 'vite'
 import { VitePWA } from 'vite-plugin-pwa'
@@ -6,6 +7,10 @@ import vuetify, { transformAssetUrls } from 'vite-plugin-vuetify'
 import * as pkgJson from './package.json'
 
 import { globSync } from 'glob'
+
+// Get __dirname equivalent for ESM
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
 
 const vuetifyComponents = globSync(
 	'node_modules/vuetify/lib/components/V*',

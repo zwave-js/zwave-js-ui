@@ -553,7 +553,7 @@ app.use(function (req, res, next) {
 app.use(
 	history({
 		index: '/',
-	}),
+	}) as unknown as express.RequestHandler,
 )
 
 // fix back compatibility with old history mode after switching to hash mode
@@ -878,7 +878,7 @@ app.get('/api/auth-enabled', apisLimiter, function (req, res) {
 app.post(
 	'/api/authenticate',
 	loginLimiter,
-	csrfProtection,
+	csrfProtection as unknown as express.RequestHandler,
 	async function (req, res) {
 		const token = req.body.token
 		let user: User
@@ -974,7 +974,7 @@ app.get('/api/logout', apisLimiter, isAuthenticated, function (req, res) {
 app.put(
 	'/api/password',
 	apisLimiter,
-	csrfProtection,
+	csrfProtection as unknown as express.RequestHandler,
 	isAuthenticated,
 	async function (req, res) {
 		try {
