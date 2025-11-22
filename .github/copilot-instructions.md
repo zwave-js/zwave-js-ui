@@ -25,6 +25,68 @@ Z-Wave JS UI is a full-featured Z-Wave Control Panel and MQTT Gateway built with
 -   Descriptions should clearly explain the changes and their impact
 -   Include issue references (e.g., "Fixes #1234")
 
+## Code Quality and Design Patterns
+
+### Always Follow DRY (Don't Repeat Yourself)
+
+**CRITICAL**: Eliminate code duplication by extracting repeated logic into reusable functions.
+
+- If you see the same code pattern multiple times, extract it into a helper function
+- Common patterns to refactor: file operations, validation logic, state updates
+- Example: Instead of repeating driver log level restoration code, create a `restoreDriverLogLevel()` method
+
+### Import Statements Best Practices
+
+**CRITICAL: Backend vs Frontend Import Patterns**
+
+**Backend (api/ directory):**
+- **NEVER use `await import()` or dynamic imports in backend code**
+- **ALWAYS place all imports at the top of the file**
+- Backend doesn't benefit from tree-shaking or code-splitting
+- All modules are loaded at startup anyway in Node.js
+- Dynamic imports add unnecessary complexity and runtime overhead
+
+**Frontend (src/ directory):**
+- Use dynamic imports for code-splitting and lazy loading
+- **Vue Components**: Use `defineAsyncComponent(() => import('./Component.vue'))`
+- **Libraries**: Use `await import('library-name')` for heavy libraries loaded conditionally
+- Helps reduce initial bundle size
+
+**Example - Backend:**
+```typescript
+// ✅ CORRECT - All imports at top
+import { transports } from 'winston'
+import { JSONTransport } from '@zwave-js/log-transport-json'
+
+// ❌ WRONG - Never do this in backend
+const { transports } = await import('winston')
+```
+
+**Example - Frontend Components:**
+```typescript
+// ✅ CORRECT - Lazy load Vue components
+const HeavyChart = defineAsyncComponent(() => import('./components/HeavyChart.vue'))
+const DebugDialog = defineAsyncComponent(() => import('./dialogs/DebugDialog.vue'))
+```
+
+**Example - Frontend Libraries:**
+```typescript
+// ✅ CORRECT - Lazy load heavy libraries
+async function initNetwork() {
+  const { Network } = await import('vis-network')
+  const { DataSet } = await import('vis-data')
+  // Use the libraries...
+}
+```
+
+### Keep Code Slim, Clean, and Readable
+
+- Write concise, self-documenting code
+- Use meaningful variable and function names
+- Avoid unnecessary complexity
+- Keep functions focused on a single responsibility
+- Add comments only when the code's purpose isn't obvious
+
 ## Frontend Development Patterns
 
 ### Using app.confirm for Forms Instead of Creating Dialog Components
@@ -125,105 +187,50 @@ async editItem(existingItem) {
 }
 ```
 
-## Frontend Development Patterns
+### UI Consistency Guidelines
 
-### Using app.confirm for Forms Instead of Creating Dialog Components
+**CRITICAL**: Always maintain consistency with existing UI components and patterns.
 
-**ALWAYS use app.confirm with inputs instead of creating dedicated dialog components for simple forms.**
+#### Dialog Components
 
-The `app.confirm` method supports form inputs and should be used instead of creating new Vue dialog components. Check `src/components/Confirm.vue` for supported input types.
+- **Use Confirm dialog** (`app.confirm`) for most dialogs with forms or simple user input
+- Only create custom dialog components when absolutely necessary (e.g., QR code scanning, complex multi-step wizards)
+- Study existing dialogs before creating new ones:
+  - Changelog dialog: Uses app.confirm for display
+  - Statistics dialog: Uses app.confirm for display
+  - SmartStart dialog: Uses app.confirm for forms
 
-#### Supported Input Types:
-- `text` - Text field
-- `number` - Number input 
-- `boolean` - Switch input
-- `checkbox` - Checkbox input
-- `list` - Select/Autocomplete/Combobox (supports `multiple: true`)
-- `array` - Complex list inputs
+#### Global Features
 
-#### Example Usage (from SmartStart.vue):
-```javascript
-async editItem(existingItem) {
-  let inputs = [
-    {
-      type: 'text',
-      label: 'Name',
-      required: true,
-      key: 'name',
-      hint: 'The node name',
-      default: existingItem ? existingItem.name : '',
-    },
-    {
-      type: 'list',
-      label: 'Protocol',
-      required: true,
-      key: 'protocol',
-      items: protocolsItems,
-      hint: 'Inclusion protocol to use',
-      default: existingItem ? existingItem.protocol : Protocols.ZWave,
-    },
-    {
-      type: 'checkbox',
-      label: 'S2 Access Control',
-      key: 's2AccessControl',
-      default: existingItem ? existingItem.securityClasses.s2AccessControl : false,
-    },
-  ]
+- **Place global features in App.vue**, not in page-specific components like ControlPanel.vue
+- Examples: notifications, session management, persistent indicators
+- This ensures features are accessible from any page and survive navigation
 
-  let result = await this.app.confirm(
-    (existingItem ? 'Update' : 'New') + ' entry',
-    '',
-    'info',
-    {
-      confirmText: existingItem ? 'Update' : 'Add',
-      width: 500,
-      inputs,
-    },
-  )
+#### Vue 3 and Vuetify 3
 
-  // cancelled
-  if (Object.keys(result).length === 0) {
-    return
-  }
+**ALWAYS use Vue 3 Composition API patterns and Vuetify 3 components:**
 
-  // Handle result...
-}
-```
+- Use `<script setup>` or Options API consistently with the rest of the codebase
+- Use Vuetify 3 component names and props (not Vuetify 2)
+- Use Pinia for state management (not Vuex)
+- No Vue 2 event bus patterns (`$root.$emit`, `$root.$on`)
 
-#### Input Configuration Options:
-- `type`: Input type (required)
-- `label`: Field label (required)  
-- `key`: Property key for result object (required)
-- `required`: Whether field is required
-- `default`: Default value
-- `hint`: Help text shown below field
-- `rules`: Array of validation functions
-- `disabled`: Whether field is disabled
-- `multiple`: For list types, allows multiple selection
-- `items`: For list types, array of options with `title`/`value` properties
+**CRITICAL: Use Vuetify MCP for Documentation**
 
-#### Multiple Selection Example (Groups.vue):
-```javascript
-{
-  type: 'list',
-  label: 'Nodes',
-  required: true,
-  key: 'nodeIds',
-  multiple: true,
-  items: this.physicalNodes.map(node => ({
-    title: node.name || `Node ${node.id}`,
-    value: node.id
-  })),
-  hint: 'Select at least 1 node for the multicast group',
-  default: existingGroup ? existingGroup.nodeIds : [],
-  rules: [(value) => {
-    if (!value || value.length === 0) {
-      return 'Please select at least one node'
-    }
-    return true
-  }],
-}
-```
+When making UI changes or working with Vuetify components:
+- **ALWAYS consult the Vuetify MCP server** for the latest component documentation
+- The MCP server provides up-to-date API documentation for Vuetify 3.9.2 (current version)
+- Check component props, events, slots, and best practices before implementation
+- Use MCP tools to:
+  - Get component API documentation
+  - Find directive usage patterns
+  - Understand feature guides (theming, layouts, etc.)
+  - Check installation and configuration options
+
+Example MCP queries:
+- "What are the props for v-data-table in Vuetify 3?"
+- "How to use v-dialog with persistent prop?"
+- "Show me v-select API documentation"
 
 ## Bootstrap and Development Setup
 
@@ -497,6 +504,7 @@ npm run pkg
 -   **ALWAYS validate manually** after making changes - start servers and test functionality
 -   **ALWAYS run linting** before committing: `npm run lint-fix && npm run lint`
 -   **ALWAYS run tests** before committing: `npm run test`
+-   **ALWAYS keep instructions up-to-date** - update this file when making code changes that affect these patterns
 -   Set timeouts of 60+ minutes for build commands, 30+ minutes for tests
 -   The application serves as both Z-Wave control panel and MQTT gateway
 -   Z-Wave functionality requires hardware OR mock-stick for testing

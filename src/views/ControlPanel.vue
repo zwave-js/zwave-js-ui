@@ -173,7 +173,6 @@ export default {
 			}`
 		},
 	},
-	watch: {},
 	data() {
 		return {
 			fab: false,

@@ -382,6 +382,12 @@ export default {
 			return highlight(code, languages.js) // returns html
 		},
 		open(title, message, options) {
+			if (this.closeTimeout) {
+				clearTimeout(this.closeTimeout)
+				this.closeTimeout = null
+				this.reset()
+			}
+
 			this.dialog = true
 			this.title = title
 			this.message = message
@@ -390,9 +396,19 @@ export default {
 			Object.assign(this.options, options)
 
 			return new Promise((resolve, reject) => {
-				this.resolve = resolve
-				this.reject = reject
+				this.resolve = this.beforeClose(resolve)
+				this.reject = this.beforeClose(reject)
 			})
+		},
+		/** Util function to prevent changing options while dialog is still shown */
+		beforeClose(fn) {
+			return (...args) => {
+				fn(...args)
+				this.closeTimeout = setTimeout(() => {
+					this.reset()
+					this.closeTimeout = null
+				}, 500)
+			}
 		},
 		async agree() {
 			if (this.options.inputs) {
@@ -400,18 +416,15 @@ export default {
 				if (result.valid) {
 					this.dialog = false
 					this.resolve(this.values)
-					this.reset()
 				}
 			} else {
 				this.dialog = false
 				this.resolve(true)
-				this.reset()
 			}
 		},
 		cancel() {
 			this.dialog = false
 			this.resolve(this.options.inputs ? {} : false)
-			this.reset()
 		},
 		reset() {
 			this.options = Object.assign({}, this.defaultOptions)

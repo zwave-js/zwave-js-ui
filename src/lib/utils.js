@@ -310,6 +310,30 @@ export function openInWindow(title, height = 800, width = 600) {
 	}
 }
 
+export function extractFileNameFromResponse(response, defaultName) {
+	const contentDisposition = response.headers['content-disposition']
+	let filename = defaultName
+	if (contentDisposition) {
+		const matches = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/.exec(
+			contentDisposition,
+		)
+		if (matches != null && matches[1]) {
+			filename = matches[1].replace(/['"]/g, '')
+		}
+	}
+	return filename
+}
+
+export function download(url, fileName) {
+	const link = document.createElement('a')
+	link.href = url
+	link.setAttribute('download', fileName)
+	document.body.appendChild(link)
+	link.click()
+	link.remove()
+	window.URL.revokeObjectURL(url)
+}
+
 export function isPopupWindow() {
 	return window.opener !== null && window.opener !== window
 }
