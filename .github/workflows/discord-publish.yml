@@ -4,6 +4,7 @@ on:
   release:
     types:
       - published
+  workflow_dispatch:
 
 jobs:
   post-release-notes:
@@ -19,5 +20,5 @@ jobs:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
         with:
           script: |
-            const script = require('./.github/bot-scripts/post-release-notes.js')
-            script({github, context, fetch})
+            const { default: script } = await import('file://${{ github.workspace }}/.github/bot-scripts/post-release-notes.js')
+            await script({github, context, fetch})
