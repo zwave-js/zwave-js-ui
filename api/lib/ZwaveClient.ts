@@ -3052,6 +3052,138 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	}
 
 	/**
+	 * Update broadcast node values based on defined value IDs
+	 */
+	private _updateBroadcastNodeValues(): void {
+		if (!this.driverReady) return
+
+		const broadcastNodeIds = [NODE_ID_BROADCAST, NODE_ID_BROADCAST_LR]
+
+		for (const nodeId of broadcastNodeIds) {
+			try {
+				const broadcastInstance = this._multicastGroups.get(nodeId)
+				const virtualNode = this._nodes.get(nodeId)
+
+				if (!broadcastInstance || !virtualNode) continue
+
+				// Get all defined value IDs from the broadcast node instance
+				const definedValueIds = broadcastInstance.getDefinedValueIDs()
+
+				if (!definedValueIds || definedValueIds.length === 0) continue
+
+				// Populate virtual node values based on defined value IDs
+				for (const zwaveValue of definedValueIds) {
+					try {
+						// Get metadata for the value
+						const zwaveValueMeta =
+							broadcastInstance.getValueMetadata(zwaveValue)
+
+						if (!zwaveValueMeta) continue
+
+						// Create a proper ZUIValueId with metadata
+						const valueId: ZUIValueId = {
+							id: this._getValueID(
+								{ ...zwaveValue, nodeId },
+								true,
+							),
+							nodeId,
+							toUpdate: false,
+							commandClass: zwaveValue.commandClass,
+							commandClassName: zwaveValue.commandClassName,
+							endpoint: zwaveValue.endpoint,
+							property: zwaveValue.property,
+							propertyName: zwaveValue.propertyName,
+							propertyKey: zwaveValue.propertyKey,
+							propertyKeyName: zwaveValue.propertyKeyName,
+							type: zwaveValueMeta.type,
+							readable: zwaveValueMeta.readable,
+							writeable: zwaveValueMeta.writeable,
+							description: zwaveValueMeta.description,
+							label:
+								zwaveValueMeta.label ||
+								zwaveValue.propertyName + ' (property)',
+							default: zwaveValueMeta.default,
+							ccSpecific: zwaveValueMeta.ccSpecific,
+							stateless: false,
+							value: undefined, // Broadcast values are write-only
+							lastUpdate: Date.now(),
+						}
+
+						// Add numeric metadata if applicable
+						if (zwaveValueMeta.type === 'number') {
+							valueId.min = (
+								zwaveValueMeta as ValueMetadataNumeric
+							).min
+							valueId.max = (
+								zwaveValueMeta as ValueMetadataNumeric
+							).max
+							valueId.step = (
+								zwaveValueMeta as ValueMetadataNumeric
+							).steps
+							valueId.unit = (
+								zwaveValueMeta as ValueMetadataNumeric
+							).unit
+						} else if (zwaveValueMeta.type === 'string') {
+							valueId.minLength = (
+								zwaveValueMeta as ValueMetadataString
+							).minLength
+							valueId.maxLength = (
+								zwaveValueMeta as ValueMetadataString
+							).maxLength
+						}
+
+						// Add states if present
+						if (
+							(zwaveValueMeta as ValueMetadataNumeric).states &&
+							Object.keys(
+								(zwaveValueMeta as ValueMetadataNumeric).states,
+							).length > 0
+						) {
+							valueId.list = true
+							valueId.allowManualEntry = (
+								zwaveValueMeta as ConfigurationMetadata
+							).allowManualEntry
+							valueId.states = []
+							for (const k in (
+								zwaveValueMeta as ValueMetadataNumeric
+							).states) {
+								valueId.states.push({
+									text: (
+										zwaveValueMeta as ValueMetadataNumeric
+									).states[k],
+									value:
+										zwaveValueMeta.type === 'number'
+											? parseInt(k)
+											: zwaveValueMeta.type === 'boolean'
+												? k === 'true'
+												: k,
+								})
+							}
+						} else {
+							valueId.list = false
+						}
+
+						const vID = this._getValueID(valueId)
+						if (!virtualNode.values) virtualNode.values = {}
+						virtualNode.values[vID] = valueId
+					} catch (error) {
+						logger.error(
+							`Error updating broadcast node ${nodeId} value ${zwaveValue.property}: ${error.message}`,
+						)
+					}
+				}
+
+				// Emit node update to notify frontend
+				this.sendToSocket(socketEvents.nodeUpdated, virtualNode)
+			} catch (error) {
+				logger.error(
+					`Error updating broadcast node ${nodeId} values: ${error.message}`,
+				)
+			}
+		}
+	}
+
+	/**
 	 * Create broadcast nodes
 	 */
 	private _createBroadcastNodes(): void {
@@ -3093,6 +3225,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 			this._nodes.set(NODE_ID_BROADCAST_LR, broadcastLRVirtualNode)
 			this.sendToSocket(socketEvents.nodeAdded, broadcastLRVirtualNode)
+
+			// Populate broadcast node values
+			this._updateBroadcastNodeValues()
 		} catch (error) {
 			logger.error(`Error creating broadcast nodes: ${error.message}`)
 		}
@@ -3117,6 +3252,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				this.sendToSocket(socketEvents.nodeUpdated, virtualNode)
 			}
 		}
+
+		// Also update broadcast nodes since their capabilities depend on all network nodes
+		this._updateBroadcastNodeValues()
 	}
 
 	/**
@@ -5465,6 +5603,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			}
 
 			this.sendToSocket(socketEvents.nodeAdded, { node, result })
+
+			// Update broadcast nodes with new capabilities
+			this._updateBroadcastNodeValues()
 		}
 
 		const security =
@@ -5502,6 +5643,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		)
 
 		this._removeNode(zwaveNode.id)
+
+		// Update broadcast nodes after node removal
+		this._updateBroadcastNodeValues()
 	}
 
 	/**
@@ -6035,6 +6179,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			this.getCustomSUCReturnRoute(zwaveNode.id)
 			this.getPrioritySUCReturnRoute(zwaveNode.id)
 		}
+
+		// Update broadcast nodes when a node becomes ready
+		this._updateBroadcastNodeValues()
 	}
 
 	/**
