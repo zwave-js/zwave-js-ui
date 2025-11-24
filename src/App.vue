@@ -623,7 +623,7 @@ export default {
 	},
 	methods: {
 		async startDebugCapture() {
-			const confirmed = await this.confirm(
+			const result = await this.confirm(
 				'Start Debug Capture',
 				'<p>This wizard will help you collect a complete debug package.</p>' +
 					'<ul style="margin-left: 20px;">' +
@@ -635,16 +635,26 @@ export default {
 					confirmText: 'Start Capture',
 					cancelText: 'Cancel',
 					width: 500,
+					inputs: [
+						{
+							type: 'checkbox',
+							key: 'restartDriver',
+							label: 'Restart driver to capture startup logs',
+							hint: 'Enable this to capture logs from the driver startup process',
+							default: false,
+						},
+					],
 				},
 			)
 
-			if (!confirmed) {
+			if (Object.keys(result).length === 0) {
 				return
 			}
 
 			try {
-				// Start debug capture
-				await ConfigApis.startDebugCapture()
+				// Start debug capture with optional driver restart
+				const restartDriver = result.restartDriver || false
+				await ConfigApis.startDebugCapture(restartDriver)
 
 				this.showSnackbar('Debug capture started.', 'success')
 
