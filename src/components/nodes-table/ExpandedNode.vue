@@ -12,6 +12,7 @@
 					>{{ node.virtual ? 'Virtual Node' : 'Device' }}
 				</span>
 				<br />
+				<!-- Don't show hex ID for virtual nodes -->
 				<span
 					class="subtitle font-weight-bold font-monospace"
 					v-if="!node.virtual"
@@ -158,6 +159,7 @@
 					text="Firmware Updates"
 				/>
 				<v-tab
+					v-if="!node.virtual"
 					prepend-icon="list_alt"
 					value="events"
 					class="justify-start"
@@ -265,8 +267,9 @@
 					<OTWUpdates :node="node" :socket="socket" />
 				</v-tabs-window-item>
 
-				<!-- TAB EVENTS -->
+				<!-- TAB EVENTS - Hidden for virtual nodes -->
 				<v-tabs-window-item
+					v-if="!node.virtual"
 					value="events"
 					transition="slide-y-transition"
 				>

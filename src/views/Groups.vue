@@ -6,21 +6,13 @@
 					Export
 					<v-icon end color="primary">file_download</v-icon>
 				</v-btn>
-			</v-col>
-
-			<v-col cols="12" sm="6">
-				<v-text-field
-					label="Group Name"
-					v-model.trim="newGroupName"
-				></v-text-field>
-			</v-col>
-
-			<v-col cols="12" sm="6">
 				<v-btn
 					color="primary"
-					variant="text"
+					variant="flat"
+					size="large"
 					@click="editItem()"
-					:disabled="!newGroupName"
+					prepend-icon="add"
+					class="ml-2"
 				>
 					Create Group
 				</v-btn>
@@ -85,7 +77,6 @@ export default {
 	data() {
 		return {
 			groups: [],
-			newGroupName: '',
 			headers_groups: [
 				{ title: 'ID', key: 'id' },
 				{ title: 'Name', key: 'name' },
@@ -125,7 +116,7 @@ export default {
 					required: true,
 					key: 'name',
 					hint: 'Enter a descriptive name for this multicast group',
-					default: isEdit ? existingGroup.name : this.newGroupName,
+					default: isEdit ? existingGroup.name : '',
 				},
 				{
 					type: 'list',
@@ -137,12 +128,12 @@ export default {
 						title: node.name || `Node ${node.id}`,
 						value: node.id,
 					})),
-					hint: 'Select at least 1 node for the multicast group',
+					hint: 'Select at least 2 nodes for the multicast group',
 					default: isEdit ? existingGroup.nodeIds : [],
 					rules: [
 						(value) => {
-							if (!value || value.length === 0) {
-								return 'Please select at least one node'
+							if (!value || value.length < 2) {
+								return 'Please select at least 2 nodes'
 							}
 							return true
 						},
@@ -151,7 +142,7 @@ export default {
 			]
 
 			let result = await this.app.confirm(
-				isEdit ? 'Edit Group' : 'New Group',
+				isEdit ? 'Edit Group' : 'Create Group',
 				'',
 				'info',
 				{
@@ -167,13 +158,9 @@ export default {
 			}
 
 			// Validate inputs
-			if (
-				!result.name ||
-				!result.nodeIds ||
-				result.nodeIds.length === 0
-			) {
+			if (!result.name || !result.nodeIds || result.nodeIds.length < 2) {
 				this.showSnackbar(
-					'Please provide a name and select at least one node',
+					'Please provide a name and select at least 2 nodes',
 					'error',
 				)
 				return
@@ -199,10 +186,6 @@ export default {
 				const action = isEdit ? 'updated' : 'created'
 				this.showSnackbar(`Group ${action}`, 'success')
 				this.refreshGroups()
-				// Clear the input field after successful creation
-				if (!isEdit) {
-					this.newGroupName = ''
-				}
 			}
 		},
 		async deleteItem(group) {

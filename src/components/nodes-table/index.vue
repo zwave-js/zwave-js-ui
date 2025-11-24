@@ -147,15 +147,28 @@
 			</tr>
 		</template>
 		<template #[`item.id`]="{ item }">
-			<div class="d-flex">
-				<v-chip>{{ item.id.toString().padStart(3, '0') }}</v-chip>
+			<div class="d-flex align-center">
+				<!-- Broadcast nodes: show icon instead of ID -->
+				<v-icon
+					v-if="item.virtual && (item.id === 255 || item.id === 4095)"
+					color="purple"
+					v-tooltip:bottom="item.name"
+				>
+					sensors
+				</v-icon>
+				<!-- Regular nodes: show ID chip -->
+				<v-chip v-else>{{
+					item.id.toString().padStart(3, '0')
+				}}</v-chip>
 
 				<reinterview-badge
+					v-if="!item.virtual"
 					class="ml-1"
 					:node="item"
 				></reinterview-badge>
 
 				<firmware-update-badge
+					v-if="!item.virtual"
 					class="ml-1"
 					:node="item"
 				></firmware-update-badge>
@@ -165,7 +178,13 @@
 			<rich-value :value="richValue(item, 'minBatteryLevel')" />
 		</template>
 		<template #[`item.manufacturer`]="{ item }">
-			{{ item.manufacturer }}
+			<!-- For broadcast nodes, show the name here instead -->
+			<span v-if="item.virtual && (item.id === 255 || item.id === 4095)">
+				{{ item.name }}
+			</span>
+			<span v-else>
+				{{ item.manufacturer }}
+			</span>
 		</template>
 		<template #[`item.productDescription`]="{ item }">
 			{{ item.productDescription }}
@@ -175,7 +194,18 @@
 		</template>
 		<template #[`item.name`]="{ item }">
 			<div class="d-flex align-center">
-				<span>{{ item.virtual ? item.name : item.name || '' }}</span>
+				<!-- For broadcast nodes, don't show name (it's in manufacturer column) -->
+				<span
+					v-if="item.virtual && (item.id === 255 || item.id === 4095)"
+				>
+					<!-- Empty for broadcast nodes -->
+				</span>
+				<!-- For multicast groups, show the name -->
+				<span v-else-if="item.virtual">
+					{{ item.name }}
+				</span>
+				<!-- For physical nodes, show name or empty -->
+				<span v-else>{{ item.name || '' }}</span>
 				<v-chip
 					v-if="item.virtual"
 					size="x-small"
@@ -194,48 +224,49 @@
 		</template>
 		<template #[`item.security`]="{ item }">
 			<rich-value
-				v-if="!item.isControllerNode"
+				v-if="!item.isControllerNode && !item.virtual"
 				:value="richValue(item, 'security')"
 			/>
 			<div v-else></div>
 		</template>
 		<template #[`item.supportsBeaming`]="{ item }">
 			<rich-value
-				v-if="!item.isControllerNode"
+				v-if="!item.isControllerNode && !item.virtual"
 				:value="richValue(item, 'supportsBeaming')"
 			/>
 			<div v-else></div>
 		</template>
 		<template #[`item.zwavePlusVersion`]="{ item }">
 			<rich-value
-				v-if="!item.isControllerNode"
+				v-if="!item.isControllerNode && !item.virtual"
 				:value="richValue(item, 'zwavePlusVersion')"
 			/>
 			<div v-else></div>
 		</template>
 		<template #[`item.protocol`]="{ item }">
 			<rich-value
-				v-if="!item.isControllerNode"
+				v-if="!item.isControllerNode && !item.virtual"
 				:value="richValue(item, 'protocol')"
 			/>
-			<div class="d-flex" v-else>
+			<div class="d-flex" v-else-if="item.isControllerNode">
 				<rich-value class="mr-1" :value="getProtocolIcon(false)" />
 				<rich-value
 					v-if="item.supportsLongRange"
 					:value="getProtocolIcon(true)"
 				/>
 			</div>
+			<div v-else></div>
 		</template>
 		<template #[`item.failed`]="{ item }">
 			<rich-value
-				v-if="!item.isControllerNode"
+				v-if="!item.isControllerNode && !item.virtual"
 				:value="richValue(item, 'failed')"
 			/>
 			<div v-else></div>
 		</template>
 		<template #[`item.status`]="{ item }">
 			<rich-value
-				v-if="!item.isControllerNode"
+				v-if="!item.isControllerNode && !item.virtual"
 				:value="richValue(item, 'status')"
 			/>
 			<div v-else></div>
@@ -269,7 +300,7 @@
 		</template>
 		<template #[`item.interviewStage`]="{ item }">
 			<div
-				v-if="!item.isControllerNode"
+				v-if="!item.isControllerNode && !item.virtual"
 				class="d-flex flex-column align-center pa-1"
 			>
 				<v-chip
@@ -323,7 +354,11 @@
 			</div>
 		</template>
 		<template #[`item.lastActive`]="{ item }">
-			<statistics-arrows :node="item"></statistics-arrows>
+			<statistics-arrows
+				v-if="!item.virtual"
+				:node="item"
+			></statistics-arrows>
+			<div v-else></div>
 		</template>
 		<template #[`expanded-row`]="{ columns: headers, item }">
 			<td :colspan="$vuetify.display.xs ? 1 : headers.length">
