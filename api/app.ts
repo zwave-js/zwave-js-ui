@@ -551,6 +551,7 @@ app.use(function (req, res, next) {
 })
 
 app.use(
+	// @ts-expect-error types not matching
 	history({
 		index: '/',
 	}),
@@ -878,6 +879,7 @@ app.get('/api/auth-enabled', apisLimiter, function (req, res) {
 app.post(
 	'/api/authenticate',
 	loginLimiter,
+	// @ts-expect-error types not matching
 	csrfProtection,
 	async function (req, res) {
 		const token = req.body.token
@@ -974,6 +976,7 @@ app.get('/api/logout', apisLimiter, isAuthenticated, function (req, res) {
 app.put(
 	'/api/password',
 	apisLimiter,
+	// @ts-expect-error types not matching
 	csrfProtection,
 	isAuthenticated,
 	async function (req, res) {
