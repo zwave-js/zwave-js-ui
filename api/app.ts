@@ -551,9 +551,10 @@ app.use(function (req, res, next) {
 })
 
 app.use(
+	// @ts-expect-error types not matching
 	history({
 		index: '/',
-	}) as unknown as express.RequestHandler,
+	}),
 )
 
 // fix back compatibility with old history mode after switching to hash mode
@@ -878,7 +879,8 @@ app.get('/api/auth-enabled', apisLimiter, function (req, res) {
 app.post(
 	'/api/authenticate',
 	loginLimiter,
-	csrfProtection as unknown as express.RequestHandler,
+	// @ts-expect-error types not matching
+	csrfProtection,
 	async function (req, res) {
 		const token = req.body.token
 		let user: User
@@ -974,7 +976,8 @@ app.get('/api/logout', apisLimiter, isAuthenticated, function (req, res) {
 app.put(
 	'/api/password',
 	apisLimiter,
-	csrfProtection as unknown as express.RequestHandler,
+	// @ts-expect-error types not matching
+	csrfProtection,
 	isAuthenticated,
 	async function (req, res) {
 		try {
