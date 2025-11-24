@@ -2999,55 +2999,80 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	}
 
 	/**
-	 * Update virtual node values based on member node values
+	 * Update virtual node values using getDefinedValueIDs from multicast group
 	 */
 	private _updateVirtualNodeValues(group: Group): void {
 		const virtualNode = this._nodes.get(group.id)
 		if (!virtualNode) return
 
-		// Get all member nodes
-		const memberNodes = group.nodeIds
-			.map((id) => this._nodes.get(id))
-			.filter(Boolean)
+		// Get the multicast group instance
+		const multicastGroup = this._multicastGroups.get(group.id)
+		if (!multicastGroup) return
 
-		if (memberNodes.length === 0) return
+		try {
+			// Use getDefinedValueIDs to get accurate value IDs from the multicast group
+			const definedValueIDs = multicastGroup.getDefinedValueIDs()
 
-		// Collect all unique value IDs from member nodes
-		const allValueIds = new Set<string>()
-		for (const node of memberNodes) {
-			if (node.values) {
-				Object.keys(node.values).forEach((vId) => allValueIds.add(vId))
+			// Clear existing values
+			virtualNode.values = {}
+
+			// Create ZUIValueId for each defined value
+			for (const valueId of definedValueIDs) {
+				const vId = this._getValueID(valueId as unknown as ZUIValueId)
+
+				// Get all member nodes
+				const memberNodes = group.nodeIds
+					.map((id) => this._nodes.get(id))
+					.filter(Boolean)
+
+				// Get values from member nodes for this specific value ID
+				const memberValues = memberNodes
+					.map((node) => node.values?.[vId]?.value)
+					.filter((value) => value !== undefined)
+
+				// If all values are the same, use that value; otherwise undefined
+				const firstValue = memberValues[0]
+				const allSame =
+					memberValues.length > 0 &&
+					memberValues.every((value) => value === firstValue)
+				const virtualValue = allSame ? firstValue : undefined
+
+				// Create virtual value ID with full metadata
+				const virtualValueId: ZUIValueId = {
+					id: vId,
+					nodeId: group.id,
+					commandClass: valueId.commandClass,
+					commandClassName: valueId.commandClassName,
+					endpoint: valueId.endpoint,
+					property: valueId.property,
+					propertyKey: valueId.propertyKey,
+					propertyName: valueId.propertyName,
+					propertyKeyName: valueId.propertyKeyName,
+					type: valueId.metadata?.type,
+					readable: valueId.metadata?.readable ?? false,
+					writeable: valueId.metadata?.writeable ?? false,
+					label: valueId.metadata?.label,
+					default: valueId.metadata?.default,
+					stateless: false,
+					ccSpecific: valueId.metadata?.ccSpecific || {},
+					min: valueId.metadata?.min,
+					max: valueId.metadata?.max,
+					unit: valueId.metadata?.unit,
+					states: valueId.metadata?.states,
+					ccVersion: valueId.ccVersion,
+					value: virtualValue,
+					lastUpdate: Date.now(),
+				} as ZUIValueId
+
+				virtualNode.values[vId] = virtualValueId
 			}
-		}
 
-		// For each value ID, determine the virtual value
-		for (const vId of allValueIds) {
-			const memberValues = memberNodes
-				.map((node) => node.values?.[vId]?.value)
-				.filter((value) => value !== undefined)
-
-			if (memberValues.length === 0) continue
-
-			// If all values are the same, use that value; otherwise undefined
-			const firstValue = memberValues[0]
-			const allSame = memberValues.every((value) => value === firstValue)
-			const virtualValue = allSame ? firstValue : undefined
-
-			// Get value metadata from first member node
-			const sampleValueId = memberNodes.find((node) => node.values?.[vId])
-				?.values?.[vId]
-			if (!sampleValueId) continue
-
-			// Create virtual value ID
-			const virtualValueId: ZUIValueId = {
-				...sampleValueId,
-				nodeId: group.id,
-				value: virtualValue,
-				lastUpdate: Date.now(),
-			}
-
-			if (!virtualNode.values) virtualNode.values = {}
-			virtualNode.values[vId] = virtualValueId
+			// Emit update
+			this.emitNodeUpdate(virtualNode, { values: virtualNode.values })
+		} catch (error) {
+			logger.error(
+				`Error updating virtual node values for group ${group.id}: ${error.message}`,
+			)
 		}
 	}
 

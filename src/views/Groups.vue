@@ -1,37 +1,35 @@
 <template>
 	<v-container grid-list-md>
-		<v-row>
-			<v-col cols="12">
-				<v-btn variant="text" @click="exportGroups">
-					Export
-					<v-icon end color="primary">file_download</v-icon>
-				</v-btn>
-				<v-btn
-					color="primary"
-					variant="flat"
-					size="large"
-					@click="editItem()"
-					prepend-icon="add"
-					class="ml-2"
-				>
-					Create Group
-				</v-btn>
-			</v-col>
-		</v-row>
-
 		<v-data-table
 			:headers="headers_groups"
 			:items="groups"
 			class="elevation-1"
 		>
 			<template #top>
-				<div class="d-flex flex-row">
+				<div class="d-flex flex-row pa-2">
 					<v-btn
 						color="primary"
 						variant="text"
 						@click="refreshGroups"
+						prepend-icon="refresh"
 					>
 						Refresh
+					</v-btn>
+					<v-btn
+						variant="text"
+						@click="exportGroups"
+						prepend-icon="file_download"
+					>
+						Export
+					</v-btn>
+					<v-spacer></v-spacer>
+					<v-btn
+						color="primary"
+						variant="flat"
+						@click="editItem()"
+						prepend-icon="add"
+					>
+						Create Group
 					</v-btn>
 				</div>
 			</template>
@@ -109,6 +107,11 @@ export default {
 		async editItem(existingGroup) {
 			const isEdit = !!existingGroup
 
+			// Filter out controller node (ID 1) and virtual nodes
+			const availableNodes = this.physicalNodes.filter(
+				(node) => node.id !== 1 && !node.isControllerNode,
+			)
+
 			let inputs = [
 				{
 					type: 'text',
@@ -124,11 +127,22 @@ export default {
 					required: true,
 					key: 'nodeIds',
 					multiple: true,
-					items: this.physicalNodes.map((node) => ({
-						title: node.name || `Node ${node.id}`,
-						value: node.id,
-					})),
-					hint: 'Select at least 2 nodes for the multicast group',
+					items: availableNodes.map((node) => {
+						// Format: "Node [id] - [manufacturer] [product]"
+						const manufacturer = node.manufacturer || ''
+						const product =
+							node.productDescription || node.productLabel || ''
+						const deviceLabel = manufacturer
+							? `${manufacturer}${product ? ' ' + product : ''}`
+							: product
+						return {
+							title: deviceLabel
+								? `Node ${node.id} - ${deviceLabel}`
+								: node.name || `Node ${node.id}`,
+							value: node.id,
+						}
+					}),
+					hint: 'Select at least 2 nodes for the multicast group (controller excluded)',
 					default: isEdit ? existingGroup.nodeIds : [],
 					rules: [
 						(value) => {

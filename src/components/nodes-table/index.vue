@@ -148,7 +148,7 @@
 		</template>
 		<template #[`item.id`]="{ item }">
 			<div class="d-flex align-center">
-				<!-- Broadcast nodes: show icon instead of ID -->
+				<!-- Broadcast nodes: show purple sensors icon instead of ID -->
 				<v-icon
 					v-if="item.virtual && (item.id === 255 || item.id === 4095)"
 					color="purple"
@@ -156,7 +156,15 @@
 				>
 					sensors
 				</v-icon>
-				<!-- Regular nodes: show ID chip -->
+				<!-- Multicast groups: show purple more_horiz icon instead of ID -->
+				<v-icon
+					v-else-if="item.virtual && item.id > 4095"
+					color="purple"
+					v-tooltip:bottom="item.name"
+				>
+					more_horiz
+				</v-icon>
+				<!-- Regular physical nodes: show ID chip -->
 				<v-chip v-else>{{
 					item.id.toString().padStart(3, '0')
 				}}</v-chip>
@@ -175,13 +183,24 @@
 			</div>
 		</template>
 		<template #[`item.minBatteryLevel`]="{ item }">
-			<rich-value :value="richValue(item, 'minBatteryLevel')" />
+			<!-- Don't show battery indicator for virtual nodes -->
+			<rich-value
+				v-if="!item.virtual"
+				:value="richValue(item, 'minBatteryLevel')"
+			/>
+			<div v-else></div>
 		</template>
 		<template #[`item.manufacturer`]="{ item }">
-			<!-- For broadcast nodes, show the name here instead -->
-			<span v-if="item.virtual && (item.id === 255 || item.id === 4095)">
-				{{ item.name }}
+			<!-- For broadcast nodes, show "Broadcast" / "Broadcast LR" here -->
+			<span v-if="item.virtual && item.id === 255">Broadcast</span>
+			<span v-else-if="item.virtual && item.id === 4095"
+				>Broadcast LR</span
+			>
+			<!-- For multicast groups, show "Multicast: [name]" -->
+			<span v-else-if="item.virtual && item.id > 4095">
+				Multicast: {{ item.name }}
 			</span>
+			<!-- For physical nodes, show manufacturer -->
 			<span v-else>
 				{{ item.manufacturer }}
 			</span>
@@ -194,26 +213,12 @@
 		</template>
 		<template #[`item.name`]="{ item }">
 			<div class="d-flex align-center">
-				<!-- For broadcast nodes, don't show name (it's in manufacturer column) -->
-				<span
-					v-if="item.virtual && (item.id === 255 || item.id === 4095)"
-				>
-					<!-- Empty for broadcast nodes -->
-				</span>
-				<!-- For multicast groups, show the name -->
-				<span v-else-if="item.virtual">
-					{{ item.name }}
-				</span>
+				<!-- For broadcast nodes, name is shown in manufacturer column -->
+				<!-- For multicast groups, name is shown in manufacturer column -->
+				<!-- Virtual nodes don't show name in this column -->
+				<span v-if="item.virtual"></span>
 				<!-- For physical nodes, show name or empty -->
 				<span v-else>{{ item.name || '' }}</span>
-				<v-chip
-					v-if="item.virtual"
-					size="x-small"
-					color="purple"
-					class="ml-2"
-				>
-					VIRTUAL
-				</v-chip>
 			</div>
 		</template>
 		<template #[`item.virtual`]="{ item }">
