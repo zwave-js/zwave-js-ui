@@ -68,7 +68,7 @@ jobs:
         uses: docker/build-push-action@v6
         timeout-minutes: 120
         with:
-          platforms: linux/arm64,linux/amd64,linux/arm/v6,linux/arm/v7
+          platforms: linux/arm64,linux/amd64,linux/arm/v7
           file: docker/Dockerfile
           context: . # without this it will use master instead of the selected branch
           cache-from: type=gha
