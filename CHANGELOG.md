@@ -1,5 +1,45 @@
 
 
+## [11.8.1](https://github.com/zwave-js/zwave-js-ui/compare/v11.8.0...v11.8.1) (2025-11-25)
+
+
+### ✨ Features
+
+* add workflow_dispatch trigger to post release notes manually ([0eb70ad](https://github.com/zwave-js/zwave-js-ui/commit/0eb70ad81884d3682391f66beb4382c97ab644d6))
+* bump zwave-js@15.17.1 ([a5f4018](https://github.com/zwave-js/zwave-js-ui/commit/a5f401895db29c57cc9e0d35642b299b1c11b80f))
+* migrate to Vite 7 and bump Vue/Vuetify deps ([4243387](https://github.com/zwave-js/zwave-js-ui/commit/4243387924663a9633831107ce573d4b1fe9e9bd))
+
+
+### 🐛 Bug Fixes
+
+* add error handling for workflow_dispatch release fetch ([128f281](https://github.com/zwave-js/zwave-js-ui/commit/128f2812d9243a1c0ffc96936a0e82904e490863))
+* convert discord-publish workflow to use ESM imports ([12d6886](https://github.com/zwave-js/zwave-js-ui/commit/12d6886132e0ae4651a1903942d5130ade164cfb))
+* handle Discord webhook 2000 char limit with embeds ([b5dd000](https://github.com/zwave-js/zwave-js-ui/commit/b5dd00090ef6d7f1d8f0198df9569dac81abf852))
+* resolve TypeScript build errors in backend ([166f04b](https://github.com/zwave-js/zwave-js-ui/commit/166f04bbdfe511db1dcd45140f51ae77dc8f7094))
+* resolve TypeScript type errors and remove deprecated extract-zip types ([0169c1e](https://github.com/zwave-js/zwave-js-ui/commit/0169c1ebc625e2314fb6c71a058a3df552ea61a4))
+* update vite.config.mjs for Vite 7 ESM compatibility ([15aa85f](https://github.com/zwave-js/zwave-js-ui/commit/15aa85ffa8ce420b72344bd6423397f0a9126d50))
+
+
+### 🔧 Chores
+
+* **docker:** bump Node.js from 20 to 24.11.1 ([e402783](https://github.com/zwave-js/zwave-js-ui/commit/e402783f32b7eb41fea07a53b2bd247c6a2b2b3b))
+* downgrade Node.js version to 22.20.0 in Dockerfiles and restore armv6 ([2c157f5](https://github.com/zwave-js/zwave-js-ui/commit/2c157f587c1f9761ec85135d2b897de575db1670))
+* drop armv6 support on docker ([6c2ac94](https://github.com/zwave-js/zwave-js-ui/commit/6c2ac94e286c4a0627fdcd58e2f7d2fef3693193))
+* improve warning message clarity for truncated content ([1069754](https://github.com/zwave-js/zwave-js-ui/commit/10697545a6cd2148a30b34839123394a39c9e955))
+* update .nvmrc to Node.js 24.11.1 ([6db2938](https://github.com/zwave-js/zwave-js-ui/commit/6db293843efb811128df821adbe33d70023f7b9b))
+* update release-it configuration to use conventional commits preset ([eb8607b](https://github.com/zwave-js/zwave-js-ui/commit/eb8607bdcebcf79b2d760bbae4a48e0eb8f84bae))
+
+
+### 📚 Documentation
+
+* add comment explaining ESM vs CommonJS in bot scripts ([06a2945](https://github.com/zwave-js/zwave-js-ui/commit/06a29459e017a20545aca16cd2e1249280282363))
+
+
+### ♻️ Code Refactoring
+
+* always use embeds for release notes on discord ([5fb0554](https://github.com/zwave-js/zwave-js-ui/commit/5fb0554085e22f0a4b0f2c84875ded9cc0230c6f))
+* improve readability of Discord message splitting logic ([fcb4334](https://github.com/zwave-js/zwave-js-ui/commit/fcb4334b43a036d01d885b9acd789c5fbf0c8d6d))
+
 # [11.8.0](https://github.com/zwave-js/zwave-js-ui/compare/v11.7.0...v11.8.0) (2025-11-22)
 
 
