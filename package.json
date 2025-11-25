@@ -133,7 +133,7 @@
     "@babel/register": "^7.24.6",
     "@eslint/eslintrc": "^3.3.1",
     "@eslint/js": "^9.37.0",
-    "@release-it/conventional-changelog": "^8.0.1",
+    "@release-it/conventional-changelog": "^10.0.2",
     "@tsconfig/node22": "^22.0.2",
     "@types/archiver": "^6.0.2",
     "@types/chai": "^4.3.16",
