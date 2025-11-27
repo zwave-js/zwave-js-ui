@@ -369,6 +369,7 @@ code {
 <script>
 // https://github.com/socketio/socket.io-client/blob/master/docs/API.md
 import io from 'socket.io-client'
+import 'vuetify-sonner/style.css'
 import { toast, VSonner } from 'vuetify-sonner'
 
 import ConfigApis from '@/apis/ConfigApis'
@@ -1859,7 +1860,13 @@ export default {
 }
 
 :deep(:where([data-sonner-toaster][data-y-position='top'])) {
-	top: 80px !important;
+	top: 70px !important;
 	right: 10px !important;
+}
+
+@media (max-width: 600px) {
+	:deep(:where([data-sonner-toaster][data-y-position='top'])) {
+		top: 10px !important;
+	}
 }
 </style>
