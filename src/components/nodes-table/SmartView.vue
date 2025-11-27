@@ -388,10 +388,12 @@ export default {
 	computed: {
 		...mapState(useBaseStore, ['nodes']),
 		sortingRules() {
-			return {
-				key: this.sortBy.toLowerCase(),
-				order: this.sortDesc ? 'desc' : 'asc',
-			}
+			return [
+				{
+					key: this.sortBy.toLowerCase(),
+					order: this.sortDesc ? 'desc' : 'asc',
+				},
+			]
 		},
 	},
 	data() {
