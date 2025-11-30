@@ -237,13 +237,14 @@
 
 			<!-- On/Off Input -->
 			<div
+				class="mt-4"
 				v-else-if="
 					modelValue.type === 'boolean' &&
 					((modelValue.writeable && modelValue.readable) ||
 						(modelValue.states && modelValue.states.length === 2))
 				"
 			>
-				<v-btn-group class="my-2" rounded="xl">
+				<v-btn-group rounded="xl">
 					<v-btn
 						:variant="
 							modelValue.newValue === true ? 'flat' : 'outlined'
