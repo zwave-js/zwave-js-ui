@@ -515,6 +515,12 @@ export default {
 					path: Routes.scenes,
 				})
 
+				pages.splice(4, 0, {
+					icon: 'group_work',
+					title: 'Groups',
+					path: Routes.groups,
+				})
+
 				pages.push({
 					icon: 'share',
 					title: 'Network graph',

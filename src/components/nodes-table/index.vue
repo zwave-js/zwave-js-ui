@@ -147,25 +147,63 @@
 			</tr>
 		</template>
 		<template #[`item.id`]="{ item }">
-			<div class="d-flex">
-				<v-chip>{{ item.id.toString().padStart(3, '0') }}</v-chip>
+			<div class="d-flex align-center">
+				<!-- Broadcast nodes: show purple sensors icon instead of ID -->
+				<v-icon
+					v-if="item.virtual && (item.id === 255 || item.id === 4095)"
+					color="purple"
+					v-tooltip:bottom="item.name"
+				>
+					sensors
+				</v-icon>
+				<!-- Multicast groups: show purple more_horiz icon instead of ID -->
+				<v-icon
+					v-else-if="item.virtual && item.id > 4095"
+					color="purple"
+					v-tooltip:bottom="item.name"
+				>
+					more_horiz
+				</v-icon>
+				<!-- Regular physical nodes: show ID chip -->
+				<v-chip v-else>{{
+					item.id.toString().padStart(3, '0')
+				}}</v-chip>
 
 				<reinterview-badge
+					v-if="!item.virtual"
 					class="ml-1"
 					:node="item"
 				></reinterview-badge>
 
 				<firmware-update-badge
+					v-if="!item.virtual"
 					class="ml-1"
 					:node="item"
 				></firmware-update-badge>
 			</div>
 		</template>
 		<template #[`item.minBatteryLevel`]="{ item }">
-			<rich-value :value="richValue(item, 'minBatteryLevel')" />
+			<!-- Don't show battery indicator for virtual nodes -->
+			<rich-value
+				v-if="!item.virtual"
+				:value="richValue(item, 'minBatteryLevel')"
+			/>
+			<div v-else></div>
 		</template>
 		<template #[`item.manufacturer`]="{ item }">
-			{{ item.manufacturer }}
+			<!-- For broadcast nodes, show "Broadcast" / "Broadcast LR" here -->
+			<span v-if="item.virtual && item.id === 255">Broadcast</span>
+			<span v-else-if="item.virtual && item.id === 4095"
+				>Broadcast LR</span
+			>
+			<!-- For multicast groups, show "Multicast: [name]" -->
+			<span v-else-if="item.virtual && item.id > 4095">
+				Multicast: {{ item.name }}
+			</span>
+			<!-- For physical nodes, show manufacturer -->
+			<span v-else>
+				{{ item.manufacturer }}
+			</span>
 		</template>
 		<template #[`item.productDescription`]="{ item }">
 			{{ item.productDescription }}
@@ -174,55 +212,66 @@
 			{{ item.productLabel }}
 		</template>
 		<template #[`item.name`]="{ item }">
-			{{ item.name || '' }}
+			<div class="d-flex align-center">
+				<!-- For broadcast nodes, name is shown in manufacturer column -->
+				<!-- For multicast groups, name is shown in manufacturer column -->
+				<!-- Virtual nodes don't show name in this column -->
+				<span v-if="item.virtual"></span>
+				<!-- For physical nodes, show name or empty -->
+				<span v-else>{{ item.name || '' }}</span>
+			</div>
+		</template>
+		<template #[`item.virtual`]="{ item }">
+			<rich-value :value="richValue(item, 'virtual')" />
 		</template>
 		<template #[`item.loc`]="{ item }">
 			{{ item.loc || '' }}
 		</template>
 		<template #[`item.security`]="{ item }">
 			<rich-value
-				v-if="!item.isControllerNode"
+				v-if="!item.isControllerNode && !item.virtual"
 				:value="richValue(item, 'security')"
 			/>
 			<div v-else></div>
 		</template>
 		<template #[`item.supportsBeaming`]="{ item }">
 			<rich-value
-				v-if="!item.isControllerNode"
+				v-if="!item.isControllerNode && !item.virtual"
 				:value="richValue(item, 'supportsBeaming')"
 			/>
 			<div v-else></div>
 		</template>
 		<template #[`item.zwavePlusVersion`]="{ item }">
 			<rich-value
-				v-if="!item.isControllerNode"
+				v-if="!item.isControllerNode && !item.virtual"
 				:value="richValue(item, 'zwavePlusVersion')"
 			/>
 			<div v-else></div>
 		</template>
 		<template #[`item.protocol`]="{ item }">
 			<rich-value
-				v-if="!item.isControllerNode"
+				v-if="!item.isControllerNode && !item.virtual"
 				:value="richValue(item, 'protocol')"
 			/>
-			<div class="d-flex" v-else>
+			<div class="d-flex" v-else-if="item.isControllerNode">
 				<rich-value class="mr-1" :value="getProtocolIcon(false)" />
 				<rich-value
 					v-if="item.supportsLongRange"
 					:value="getProtocolIcon(true)"
 				/>
 			</div>
+			<div v-else></div>
 		</template>
 		<template #[`item.failed`]="{ item }">
 			<rich-value
-				v-if="!item.isControllerNode"
+				v-if="!item.isControllerNode && !item.virtual"
 				:value="richValue(item, 'failed')"
 			/>
 			<div v-else></div>
 		</template>
 		<template #[`item.status`]="{ item }">
 			<rich-value
-				v-if="!item.isControllerNode"
+				v-if="!item.isControllerNode && !item.virtual"
 				:value="richValue(item, 'status')"
 			/>
 			<div v-else></div>
@@ -256,7 +305,7 @@
 		</template>
 		<template #[`item.interviewStage`]="{ item }">
 			<div
-				v-if="!item.isControllerNode"
+				v-if="!item.isControllerNode && !item.virtual"
 				class="d-flex flex-column align-center pa-1"
 			>
 				<v-chip
@@ -310,7 +359,11 @@
 			</div>
 		</template>
 		<template #[`item.lastActive`]="{ item }">
-			<statistics-arrows :node="item"></statistics-arrows>
+			<statistics-arrows
+				v-if="!item.virtual"
+				:node="item"
+			></statistics-arrows>
+			<div v-else></div>
 		</template>
 		<template #[`expanded-row`]="{ columns: headers, item }">
 			<td :colspan="$vuetify.display.xs ? 1 : headers.length">
