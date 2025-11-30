@@ -1,21 +1,19 @@
 # Changelog
 
-## [11.8.2](///compare/v11.8.1...v11.8.2) (2025-11-30)
+## [11.8.2](https://github.com/zwave-js/zwave-js-ui/compare/v11.8.1...v11.8.2) (2025-11-30)
 
-### Bug Fixes
+### 🐛 Bug Fixes
 
-* **ui:** snackbar messages style issues 60741b0, closes #4487
-* **ui:** sorting error 9d60bc7
+* **ui:** snackbar messages style issues ([60741b0](https://github.com/zwave-js/zwave-js-ui/commit/60741b04d85d86de6892ebb9a8634b0d820d575b)), closes [#4487](https://github.com/zwave-js/zwave-js-ui/issues/4487)
+* **ui:** sorting error ([9d60bc7](https://github.com/zwave-js/zwave-js-ui/commit/9d60bc7190f72f01c783fd4136a40638f77d6909))
 
 ## [11.8.1](https://github.com/zwave-js/zwave-js-ui/compare/v11.8.0...v11.8.1) (2025-11-25)
-
 
 ### ✨ Features
 
 * add workflow_dispatch trigger to post release notes manually ([0eb70ad](https://github.com/zwave-js/zwave-js-ui/commit/0eb70ad81884d3682391f66beb4382c97ab644d6))
 * bump zwave-js@15.17.1 ([a5f4018](https://github.com/zwave-js/zwave-js-ui/commit/a5f401895db29c57cc9e0d35642b299b1c11b80f))
 * migrate to Vite 7 and bump Vue/Vuetify deps ([4243387](https://github.com/zwave-js/zwave-js-ui/commit/4243387924663a9633831107ce573d4b1fe9e9bd))
-
 
 ### 🐛 Bug Fixes
 
@@ -26,7 +24,6 @@
 * resolve TypeScript type errors and remove deprecated extract-zip types ([0169c1e](https://github.com/zwave-js/zwave-js-ui/commit/0169c1ebc625e2314fb6c71a058a3df552ea61a4))
 * update vite.config.mjs for Vite 7 ESM compatibility ([15aa85f](https://github.com/zwave-js/zwave-js-ui/commit/15aa85ffa8ce420b72344bd6423397f0a9126d50))
 
-
 ### 🔧 Chores
 
 * **docker:** bump Node.js from 20 to 24.11.1 ([e402783](https://github.com/zwave-js/zwave-js-ui/commit/e402783f32b7eb41fea07a53b2bd247c6a2b2b3b))
@@ -36,11 +33,9 @@
 * update .nvmrc to Node.js 24.11.1 ([6db2938](https://github.com/zwave-js/zwave-js-ui/commit/6db293843efb811128df821adbe33d70023f7b9b))
 * update release-it configuration to use conventional commits preset ([eb8607b](https://github.com/zwave-js/zwave-js-ui/commit/eb8607bdcebcf79b2d760bbae4a48e0eb8f84bae))
 
-
 ### 📚 Documentation
 
 * add comment explaining ESM vs CommonJS in bot scripts ([06a2945](https://github.com/zwave-js/zwave-js-ui/commit/06a29459e017a20545aca16cd2e1249280282363))
-
 
 ### ♻️ Code Refactoring
 
@@ -48,7 +43,6 @@
 * improve readability of Discord message splitting logic ([fcb4334](https://github.com/zwave-js/zwave-js-ui/commit/fcb4334b43a036d01d885b9acd789c5fbf0c8d6d))
 
 # [11.8.0](https://github.com/zwave-js/zwave-js-ui/compare/v11.7.0...v11.8.0) (2025-11-22)
-
 
 ### Bug Fixes
 
@@ -58,7 +52,6 @@
 * **pwa:** prevent cache mismatch errors after updates ([#4452](https://github.com/zwave-js/zwave-js-ui/issues/4452)) ([f99ff73](https://github.com/zwave-js/zwave-js-ui/commit/f99ff737531c5db06250d2026789f46c65e9b759)), closes [#4216](https://github.com/zwave-js/zwave-js-ui/issues/4216) [/github.com/zwave-js/zwave-js-ui/issues/4216#issuecomment-2862668953](https://github.com//github.com/zwave-js/zwave-js-ui/issues/4216/issues/issuecomment-2862668953) [/github.com/zwave-js/zwave-js-ui/issues/4216#issuecomment-2864940117](https://github.com//github.com/zwave-js/zwave-js-ui/issues/4216/issues/issuecomment-2864940117) [zwave-js/zwave-js-ui#4228](https://github.com/zwave-js/zwave-js-ui/issues/4228)
 * refresh firmware update availability after update completes ([#4457](https://github.com/zwave-js/zwave-js-ui/issues/4457)) ([eb955af](https://github.com/zwave-js/zwave-js-ui/commit/eb955afe59ba73bc6960328fbdaf10087da490ef)), closes [zwave-js/zwave-js-ui#4456](https://github.com/zwave-js/zwave-js-ui/issues/4456)
 
-
 ### Features
 
 * add completion status messages for task operations ([#4465](https://github.com/zwave-js/zwave-js-ui/issues/4465)) ([8640285](https://github.com/zwave-js/zwave-js-ui/commit/8640285f50e171189e3f4f9145dac9ab3ecb18ec)), closes [zwave-js/zwave-js-ui#4464](https://github.com/zwave-js/zwave-js-ui/issues/4464) [zwave-js/zwave-js-ui#4464](https://github.com/zwave-js/zwave-js-ui/issues/4464)
@@ -67,7 +60,6 @@
 
 # [11.7.0](https://github.com/zwave-js/zwave-js-ui/compare/v11.6.1...v11.7.0) (2025-11-12)
 
-
 ### Bug Fixes
 
 * changedZwaveKeys incorrectly includes UI defaults as changes ([#4454](https://github.com/zwave-js/zwave-js-ui/issues/4454)) ([371032c](https://github.com/zwave-js/zwave-js-ui/commit/371032c6768ad06deff874259d04e4eb6f65dd97)), closes [#4413](https://github.com/zwave-js/zwave-js-ui/issues/4413) [zwave-js/zwave-js-ui#4453](https://github.com/zwave-js/zwave-js-ui/issues/4453)
@@ -75,13 +67,11 @@
 * refresh node neighbors on panel open for all node types ([3d2addc](https://github.com/zwave-js/zwave-js-ui/commit/3d2addc255f60472fa0f867f35a6083499818fc6))
 * **ui:** add null check in setRoute to handle cancelled dialog ([#4450](https://github.com/zwave-js/zwave-js-ui/issues/4450)) ([b472afc](https://github.com/zwave-js/zwave-js-ui/commit/b472afc5d498d426cfb24f8cee755de1bd937d5f))
 
-
 ### Features
 
 * bump zwave-js@15.16.0 ([#4448](https://github.com/zwave-js/zwave-js-ui/issues/4448)) ([6d7fca0](https://github.com/zwave-js/zwave-js-ui/commit/6d7fca0907839f16b0a804c733759e0a54554647))
 
 ## [11.6.1](https://github.com/zwave-js/zwave-js-ui/compare/v11.6.0...v11.6.1) (2025-10-29)
-
 
 ### Bug Fixes
 
@@ -89,12 +79,10 @@
 
 # [11.6.0](https://github.com/zwave-js/zwave-js-ui/compare/v11.5.2...v11.6.0) (2025-10-29)
 
-
 ### Bug Fixes
 
 * refresh route data after rebuilding node routes to update UI ([#4422](https://github.com/zwave-js/zwave-js-ui/issues/4422)) ([de64c22](https://github.com/zwave-js/zwave-js-ui/commit/de64c222d50805782ec5815421229961cbf4554d)), closes [zwave-js/zwave-js-ui#4295](https://github.com/zwave-js/zwave-js-ui/issues/4295) [zwave-js/zwave-js-ui#4295](https://github.com/zwave-js/zwave-js-ui/issues/4295)
 * update plugin import to use dynamic import syntax ([#4429](https://github.com/zwave-js/zwave-js-ui/issues/4429)) ([9ad1318](https://github.com/zwave-js/zwave-js-ui/commit/9ad13183df32e741dad98117fdaf3c56be399bf8)), closes [#4427](https://github.com/zwave-js/zwave-js-ui/issues/4427)
-
 
 ### Features
 
@@ -105,7 +93,6 @@
 
 ## [11.5.2](https://github.com/zwave-js/zwave-js-ui/compare/v11.5.1...v11.5.2) (2025-10-17)
 
-
 ### Bug Fixes
 
 * log store path during application startup ([44338d7](https://github.com/zwave-js/zwave-js-ui/commit/44338d7f7191a734e7f445a2727dae20a6cc12b9))
@@ -114,18 +101,15 @@
 
 ## [11.5.1](https://github.com/zwave-js/zwave-js-ui/compare/v11.5.0...v11.5.1) (2025-10-17)
 
-
 ### Bug Fixes
 
 * move patch-package to deps to fix npm issue ([d08e0f4](https://github.com/zwave-js/zwave-js-ui/commit/d08e0f41ef0fd06e6e34b7088b7693624732cfe3))
 
 # [11.5.0](https://github.com/zwave-js/zwave-js-ui/compare/v11.4.1...v11.5.0) (2025-10-15)
 
-
 ### Bug Fixes
 
 * **ui:** refresh node neighbors when opening node panel in zwave graph ([#4416](https://github.com/zwave-js/zwave-js-ui/issues/4416)) ([800dff9](https://github.com/zwave-js/zwave-js-ui/commit/800dff92475d6b0f4f0bb30ad9bac4d3497f4e72)), closes [#4409](https://github.com/zwave-js/zwave-js-ui/issues/4409) [#4409](https://github.com/zwave-js/zwave-js-ui/issues/4409) [/github.com/zwave-js/zwave-js-ui/discussions/4409#discussioncomment-14623043](https://github.com//github.com/zwave-js/zwave-js-ui/discussions/4409/issues/discussioncomment-14623043) [zwave-js/zwave-js-ui#4412](https://github.com/zwave-js/zwave-js-ui/issues/4412)
-
 
 ### Features
 
@@ -135,20 +119,17 @@
 
 ## [11.4.1](https://github.com/zwave-js/zwave-js-ui/compare/v11.4.0...v11.4.1) (2025-10-07)
 
-
 ### Bug Fixes
 
 * restore commonjs build ([#4405](https://github.com/zwave-js/zwave-js-ui/issues/4405)) ([f9e51ad](https://github.com/zwave-js/zwave-js-ui/commit/f9e51ad2d0f9c39b465acae65a028249c125868f)), closes [#4401](https://github.com/zwave-js/zwave-js-ui/issues/4401)
 
 # [11.4.0](https://github.com/zwave-js/zwave-js-ui/compare/v11.3.1...v11.4.0) (2025-10-06)
 
-
 ### Bug Fixes
 
 * refresh normal powerlevel after region change in auto mode ([#4391](https://github.com/zwave-js/zwave-js-ui/issues/4391)) ([81f4848](https://github.com/zwave-js/zwave-js-ui/commit/81f48486f05ff8b8e2357fb11a129454e652a881))
 * **ui:** prevent "undefined" text in parameter chips with manual entry ([#4388](https://github.com/zwave-js/zwave-js-ui/issues/4388)) ([defef2c](https://github.com/zwave-js/zwave-js-ui/commit/defef2c1fb8361888d6759ae3289dc6234a404d7)), closes [#4354](https://github.com/zwave-js/zwave-js-ui/issues/4354)
 * **ui:** prevent replace failed node without selecting a node ([#4380](https://github.com/zwave-js/zwave-js-ui/issues/4380)) ([a2ae434](https://github.com/zwave-js/zwave-js-ui/commit/a2ae4345ffb35a15568aded22c0bb03040b0b3ba)), closes [#4379](https://github.com/zwave-js/zwave-js-ui/issues/4379)
-
 
 ### Features
 
@@ -157,12 +138,10 @@
 
 ## [11.3.1](https://github.com/zwave-js/zwave-js-ui/compare/v11.3.0...v11.3.1) (2025-09-24)
 
-
 ### Bug Fixes
 
 * **ui:** remove useless refresh neighbors call when opening mesh graph ([#4372](https://github.com/zwave-js/zwave-js-ui/issues/4372)) ([aff315d](https://github.com/zwave-js/zwave-js-ui/commit/aff315d500b48ea3cd4a07a69ab477186bbc6732))
 * **ui:** use a v-number-input for colume input ([fb03fb9](https://github.com/zwave-js/zwave-js-ui/commit/fb03fb9d8816b69860338385db482ab583174fe6)), closes [#4387](https://github.com/zwave-js/zwave-js-ui/issues/4387)
-
 
 ### Features
 
@@ -170,11 +149,9 @@
 
 # [11.3.0](https://github.com/zwave-js/zwave-js-ui/compare/v11.2.1...v11.3.0) (2025-09-16)
 
-
 ### Bug Fixes
 
 * **ui:** cleaner label for `Force security` checkbox ([42a28e9](https://github.com/zwave-js/zwave-js-ui/commit/42a28e9662633fc52cb6030dba82ad10ac0b6bdd)), closes [#4363](https://github.com/zwave-js/zwave-js-ui/issues/4363)
-
 
 ### Features
 
@@ -183,13 +160,11 @@
 
 ## [11.2.1](https://github.com/zwave-js/zwave-js-ui/compare/v11.2.0...v11.2.1) (2025-08-27)
 
-
 ### Bug Fixes
 
 * **ui:** reinterview badge visibility ([1ab4ee5](https://github.com/zwave-js/zwave-js-ui/commit/1ab4ee548516eb28e16aba620c0bd4ed38e5fbae))
 
 # [11.2.0](https://github.com/zwave-js/zwave-js-ui/compare/v11.1.0...v11.2.0) (2025-08-27)
-
 
 ### Bug Fixes
 
@@ -199,7 +174,6 @@
 * **ui:** unable to set `Force security` in nodes manager dialog ([07059be](https://github.com/zwave-js/zwave-js-ui/commit/07059bef80c8660a381b1a941732f8308926c988)), closes [#4329](https://github.com/zwave-js/zwave-js-ui/issues/4329)
 * **ui:** value id labels should not be ellipsed ([7b4a55a](https://github.com/zwave-js/zwave-js-ui/commit/7b4a55a6bc6fc3e379f7e68ef3ad96a53f7856b3)), closes [#4339](https://github.com/zwave-js/zwave-js-ui/issues/4339)
 
-
 ### Features
 
 * bump zwave-js@15.11.0 ([#4330](https://github.com/zwave-js/zwave-js-ui/issues/4330)) ([a984133](https://github.com/zwave-js/zwave-js-ui/commit/a984133d6b51c3ecc1caa3a9501f3a20e9063329))
@@ -208,20 +182,17 @@
 
 # [11.1.0](https://github.com/zwave-js/zwave-js-ui/compare/v11.0.1...v11.1.0) (2025-08-07)
 
-
 ### Bug Fixes
 
 * **ui:** cancel editing in smart start still triggers an undate ([87bae75](https://github.com/zwave-js/zwave-js-ui/commit/87bae75ad4e9163a77a0d68a317d468b330076e1))
 * **ui:** importing QR code not working ([dfc1f0f](https://github.com/zwave-js/zwave-js-ui/commit/dfc1f0f9f98a4a7437e7ec1922a6100862555292)), closes [#4324](https://github.com/zwave-js/zwave-js-ui/issues/4324)
 * **ui:** unable to change some configuration values ([cb098e1](https://github.com/zwave-js/zwave-js-ui/commit/cb098e16b7be1fc2456c0758d3d1796669ce3847)), closes [#4322](https://github.com/zwave-js/zwave-js-ui/issues/4322)
 
-
 ### Features
 
 * **ui:** add tooltip for default value indication in ValueId component ([facd64c](https://github.com/zwave-js/zwave-js-ui/commit/facd64ccadee03635850c2877060be779fbff586)), closes [#4313](https://github.com/zwave-js/zwave-js-ui/issues/4313)
 
 ## [11.0.1](https://github.com/zwave-js/zwave-js-ui/compare/v11.0.0...v11.0.1) (2025-08-01)
-
 
 ### Bug Fixes
 
@@ -232,18 +203,15 @@
 * **ui:** priority routes select menu not visible ([ba925ec](https://github.com/zwave-js/zwave-js-ui/commit/ba925ec6beb52c09a616931f2fe452210bcbd493)), closes [#4311](https://github.com/zwave-js/zwave-js-ui/issues/4311)
 * **ui:** sticky to default scrollbars ([87657b4](https://github.com/zwave-js/zwave-js-ui/commit/87657b44ae2e08ec649dad52f0234776e86a25ff)), closes [#4316](https://github.com/zwave-js/zwave-js-ui/issues/4316)
 
-
 ### Features
 
 * **ci:** add GitHub Actions workflow for testing application with fake Z-Wave stick ([#4314](https://github.com/zwave-js/zwave-js-ui/issues/4314)) ([1933677](https://github.com/zwave-js/zwave-js-ui/commit/19336772b3f1fb920a4586852451d7d66e17cedd))
 
 # [11.0.0](https://github.com/zwave-js/zwave-js-ui/compare/v10.11.0...v11.0.0) (2025-07-30)
 
-
 ### Bug Fixes
 
 * **ui:** nodes manager name/location step disabled next ([ac7dc4d](https://github.com/zwave-js/zwave-js-ui/commit/ac7dc4d445ae18c41be1d89ee517ea2041a80249))
-
 
 ### Features
 
@@ -252,7 +220,6 @@
 
 # [10.11.0](https://github.com/zwave-js/zwave-js-ui/compare/v10.10.0...v10.11.0) (2025-07-29)
 
-
 ### Features
 
 * bump @zwave-js/server@3.2.1 ([#4302](https://github.com/zwave-js/zwave-js-ui/issues/4302)) ([5a4324a](https://github.com/zwave-js/zwave-js-ui/commit/5a4324a10ad719fd7aef0469c43be32d95c2792f))
@@ -260,11 +227,9 @@
 
 # [10.10.0](https://github.com/zwave-js/zwave-js-ui/compare/v10.9.0...v10.10.0) (2025-07-24)
 
-
 ### Bug Fixes
 
 * region check for OTA updates ([#4299](https://github.com/zwave-js/zwave-js-ui/issues/4299)) ([4c8cae9](https://github.com/zwave-js/zwave-js-ui/commit/4c8cae9c21c325025d6f979d0ac82f7fa4712d9c))
-
 
 ### Features
 
@@ -272,7 +237,6 @@
 * **ui:** validate number inputs against min/max from config ([#4288](https://github.com/zwave-js/zwave-js-ui/issues/4288)) ([6e71238](https://github.com/zwave-js/zwave-js-ui/commit/6e7123827cbb3c261790f0d10db766e8c671904d)), closes [#4285](https://github.com/zwave-js/zwave-js-ui/issues/4285)
 
 # [10.9.0](https://github.com/zwave-js/zwave-js-ui/compare/v10.8.0...v10.9.0) (2025-07-11)
-
 
 ### Features
 
@@ -284,13 +248,11 @@
 
 # [10.8.0](https://github.com/zwave-js/zwave-js-ui/compare/v10.7.0...v10.8.0) (2025-07-07)
 
-
 ### Bug Fixes
 
 * **ui:** correct template syntax for total frames display in Zniffer component ([6e5f0a4](https://github.com/zwave-js/zwave-js-ui/commit/6e5f0a4a97edd2afe27729352ad0747b5b4d7b95))
 * **ui:** enhance theme handling and protocol color management ([d0efbb1](https://github.com/zwave-js/zwave-js-ui/commit/d0efbb105cccd5e4faa875b40251e7240bda1a95))
 * **ui:** typo in restart prompt ([#4263](https://github.com/zwave-js/zwave-js-ui/issues/4263)) ([9e4bc7e](https://github.com/zwave-js/zwave-js-ui/commit/9e4bc7efa202167faca5a3cbb2186b1f2ba6a506))
-
 
 ### Features
 
@@ -301,7 +263,6 @@
 
 # [10.7.0](https://github.com/zwave-js/zwave-js-ui/compare/v10.6.1...v10.7.0) (2025-06-18)
 
-
 ### Features
 
 * bump zwave-js@15.7.0 ([#4261](https://github.com/zwave-js/zwave-js-ui/issues/4261)) ([328b1f1](https://github.com/zwave-js/zwave-js-ui/commit/328b1f131a1ce2e586fef79a08ff147fdbd05fc8))
@@ -309,18 +270,15 @@
 
 ## [10.6.1](https://github.com/zwave-js/zwave-js-ui/compare/v10.6.0...v10.6.1) (2025-05-29)
 
-
 ### Features
 
 * add support for `disableOptimisticValueUpdate` driver option ([081ed29](https://github.com/zwave-js/zwave-js-ui/commit/081ed2977827b6fe19c5140d24c9aacf35b18cfc)), closes [#4247](https://github.com/zwave-js/zwave-js-ui/issues/4247)
 
 # [10.6.0](https://github.com/zwave-js/zwave-js-ui/compare/v10.5.1...v10.6.0) (2025-05-28)
 
-
 ### Bug Fixes
 
 * **discovery:** set unit_of_measurement to null for power_factor meter ([f6b55ae](https://github.com/zwave-js/zwave-js-ui/commit/f6b55ae9b5936fdc7ce34b6c0b15433be519dc9b)), closes [#4220](https://github.com/zwave-js/zwave-js-ui/issues/4220)
-
 
 ### Features
 
@@ -329,19 +287,16 @@
 
 ## [10.5.1](https://github.com/zwave-js/zwave-js-ui/compare/v10.5.0...v10.5.1) (2025-05-15)
 
-
 ### Bug Fixes
 
 * **discovery:** override unit_of_measurement for power_factor meter discovery ([e093382](https://github.com/zwave-js/zwave-js-ui/commit/e0933825aa46da637c50ff1cb8a43ca378c18909)), closes [#4220](https://github.com/zwave-js/zwave-js-ui/issues/4220)
 * otw update and node firmware update progress hangs on finish ([#4229](https://github.com/zwave-js/zwave-js-ui/issues/4229)) ([5f36bc9](https://github.com/zwave-js/zwave-js-ui/commit/5f36bc95d63d8bcb4ef6476a596313814b557527))
-
 
 ### Features
 
 * bump zwave-js@15.4.2 ([#4239](https://github.com/zwave-js/zwave-js-ui/issues/4239)) ([9c1311a](https://github.com/zwave-js/zwave-js-ui/commit/9c1311ae02a7555f451e9800d435c41b26753e8f))
 
 # [10.5.0](https://github.com/zwave-js/zwave-js-ui/compare/v10.4.2...v10.5.0) (2025-05-14)
-
 
 ### Bug Fixes
 
@@ -350,7 +305,6 @@
 * **nodes-table:** disable RF Region selection when not supported ([cf88c28](https://github.com/zwave-js/zwave-js-ui/commit/cf88c28b03e407817f29eb9e4edab60eef41da19)), closes [#4235](https://github.com/zwave-js/zwave-js-ui/issues/4235)
 * update vite-plugin-pwa to version 1.0.0 and remove service worker file ([18ba316](https://github.com/zwave-js/zwave-js-ui/commit/18ba316ea271340559f027188aba2e7bf9c988db))
 
-
 ### Features
 
 * bump zwave-js@15.4.1 ([#4236](https://github.com/zwave-js/zwave-js-ui/issues/4236)) ([361f54d](https://github.com/zwave-js/zwave-js-ui/commit/361f54d512dda2578c4da15e212a0d2dd0892024))
@@ -358,13 +312,11 @@
 
 ## [10.4.2](https://github.com/zwave-js/zwave-js-ui/compare/v10.4.1...v10.4.2) (2025-05-08)
 
-
 ### Bug Fixes
 
 * bump Z-Wave JS Server to 3.0.2 ([#4227](https://github.com/zwave-js/zwave-js-ui/issues/4227)) ([f349990](https://github.com/zwave-js/zwave-js-ui/commit/f34999065997e8c418f7c404c6a7a9d8777a626e))
 
 ## [10.4.1](https://github.com/zwave-js/zwave-js-ui/compare/v10.4.0...v10.4.1) (2025-05-07)
-
 
 ### Features
 
@@ -372,16 +324,13 @@
 
 # [10.4.0](https://github.com/zwave-js/zwave-js-ui/compare/v10.3.3...v10.4.0) (2025-05-05)
 
-
 ### Bug Fixes
 
 * correct serialization of Uint8Array in MQTT messages ([#4215](https://github.com/zwave-js/zwave-js-ui/issues/4215)) ([d2c182d](https://github.com/zwave-js/zwave-js-ui/commit/d2c182d7ba1317060d2936fc07689e873a790a11))
 
-
 ### Features
 
 * update zwave-js to 15.3.0, always add event handlers after `driver ready` event ([#4219](https://github.com/zwave-js/zwave-js-ui/issues/4219)) ([64ae6b4](https://github.com/zwave-js/zwave-js-ui/commit/64ae6b4fd5290e592839049c5bf884bfed38d0e2))
-
 
 ### Performance Improvements
 
@@ -389,13 +338,11 @@
 
 ## [10.3.3](https://github.com/zwave-js/zwave-js-ui/compare/v10.3.2...v10.3.3) (2025-04-26)
 
-
 ### Features
 
 * bump zwave-js@15.1.3 ([#4212](https://github.com/zwave-js/zwave-js-ui/issues/4212)) ([9a8bd58](https://github.com/zwave-js/zwave-js-ui/commit/9a8bd581c1dc03f0ec603f7c3ca1f08b372bf582))
 
 ## [10.3.2](https://github.com/zwave-js/zwave-js-ui/compare/v10.3.1...v10.3.2) (2025-04-26)
-
 
 ### Bug Fixes
 
@@ -403,18 +350,15 @@
 
 ## [10.3.1](https://github.com/zwave-js/zwave-js-ui/compare/v10.3.0...v10.3.1) (2025-04-24)
 
-
 ### Features
 
 * bump zwave-js@15.1.0 ([#4208](https://github.com/zwave-js/zwave-js-ui/issues/4208)) ([97683f2](https://github.com/zwave-js/zwave-js-ui/commit/97683f286630616ab575a3ff21cfbdbf3e2cb610))
 
 # [10.3.0](https://github.com/zwave-js/zwave-js-ui/compare/v10.2.0...v10.3.0) (2025-04-22)
 
-
 ### Bug Fixes
 
 * ignore messages from non-matching Z-UI clients in MQTT handling ([0e08e3a](https://github.com/zwave-js/zwave-js-ui/commit/0e08e3a79e02656f47dc5b058ec08c02bbf6d90f)), closes [#4196](https://github.com/zwave-js/zwave-js-ui/issues/4196)
-
 
 ### Features
 
@@ -422,11 +366,9 @@
 
 # [10.2.0](https://github.com/zwave-js/zwave-js-ui/compare/v10.1.5...v10.2.0) (2025-04-14)
 
-
 ### Bug Fixes
 
 * refresh LR powerlevel, not region after setting LR powerlevel ([#4198](https://github.com/zwave-js/zwave-js-ui/issues/4198)) ([741878a](https://github.com/zwave-js/zwave-js-ui/commit/741878a41dfb6763b98a2dc9f2ccd98235ccdffa))
-
 
 ### Features
 
@@ -434,11 +376,9 @@
 
 ## [10.1.5](https://github.com/zwave-js/zwave-js-ui/compare/v10.1.4...v10.1.5) (2025-04-07)
 
-
 ### Bug Fixes
 
 * config path resolution inside pkg on Windows ([#4190](https://github.com/zwave-js/zwave-js-ui/issues/4190)) ([8a8847a](https://github.com/zwave-js/zwave-js-ui/commit/8a8847a43c56b4a94bb39ac0b6583e2e27b06c0f))
-
 
 ### Features
 
@@ -446,13 +386,11 @@
 
 ## [10.1.4](https://github.com/zwave-js/zwave-js-ui/compare/v10.1.3...v10.1.4) (2025-04-02)
 
-
 ### Features
 
 * bump zwave-js@15.0.4 ([#4185](https://github.com/zwave-js/zwave-js-ui/issues/4185)) ([90faddc](https://github.com/zwave-js/zwave-js-ui/commit/90faddc2a617ff7c77f578527a1d4481604b6aa3))
 
 ## [10.1.3](https://github.com/zwave-js/zwave-js-ui/compare/v10.1.2...v10.1.3) (2025-03-27)
-
 
 ### Bug Fixes
 
@@ -462,11 +400,9 @@
 
 ## [10.1.2](https://github.com/zwave-js/zwave-js-ui/compare/v10.1.1...v10.1.2) (2025-03-25)
 
-
 ### Bug Fixes
 
 * remove leftover `console.log` statement ([#4171](https://github.com/zwave-js/zwave-js-ui/issues/4171)) ([b93c4da](https://github.com/zwave-js/zwave-js-ui/commit/b93c4da672ecf375d6fe332cfc2c1ee670ad8d2f))
-
 
 ### Features
 
@@ -474,13 +410,11 @@
 
 ## [10.1.1](https://github.com/zwave-js/zwave-js-ui/compare/v10.1.0...v10.1.1) (2025-03-24)
 
-
 ### Bug Fixes
 
 * normalize paths for pkg on Windows ([#4168](https://github.com/zwave-js/zwave-js-ui/issues/4168)) ([c1d935b](https://github.com/zwave-js/zwave-js-ui/commit/c1d935bb25bad0494a936c02f1834c0b8b187629))
 
 # [10.1.0](https://github.com/zwave-js/zwave-js-ui/compare/v10.0.3...v10.1.0) (2025-03-21)
-
 
 ### Features
 
@@ -489,20 +423,17 @@
 
 ## [10.0.3](https://github.com/zwave-js/zwave-js-ui/compare/v10.0.2...v10.0.3) (2025-03-20)
 
-
 ### Bug Fixes
 
 * config sync inside `pkg` binaries ([#4159](https://github.com/zwave-js/zwave-js-ui/issues/4159)) ([3ca34f6](https://github.com/zwave-js/zwave-js-ui/commit/3ca34f60778b1054e0cfcf27201b2a9c09ba9710))
 
 ## [10.0.2](https://github.com/zwave-js/zwave-js-ui/compare/v10.0.1...v10.0.2) (2025-03-19)
 
-
 ### Bug Fixes
 
 * update Dockerfile to use Node.js 20 and streamline Alpine base image ([#4154](https://github.com/zwave-js/zwave-js-ui/issues/4154)) ([caf9f14](https://github.com/zwave-js/zwave-js-ui/commit/caf9f14d5d2fb7d76ecbb90491e2054e3e0b3de7))
 
 ## [10.0.1](https://github.com/zwave-js/zwave-js-ui/compare/v10.0.0...v10.0.1) (2025-03-19)
-
 
 ### Bug Fixes
 
@@ -512,14 +443,12 @@
 
 ## [9.33.1](https://github.com/zwave-js/zwave-js-ui/compare/v9.33.0...v9.33.1) (2025-03-18)
 
-
 ### Bug Fixes
 
 * add type annotation for info parameter in customFormat logger ([24aca53](https://github.com/zwave-js/zwave-js-ui/commit/24aca5374d710663eb649f972efb58db9469aa49))
 * explicitly add @zwave-js/core and @zwave-js/shared deps ([7522c29](https://github.com/zwave-js/zwave-js-ui/commit/7522c293b38f35d906ec69e07b91509f113183c2)), closes [#4145](https://github.com/zwave-js/zwave-js-ui/issues/4145)
 
 # [9.33.0](https://github.com/zwave-js/zwave-js-ui/compare/v9.32.0...v9.33.0) (2025-03-12)
-
 
 ### Features
 
@@ -528,7 +457,6 @@
 
 # [9.32.0](https://github.com/zwave-js/zwave-js-ui/compare/v9.31.0...v9.32.0) (2025-03-10)
 
-
 ### Features
 
 * bump zwave-js@14.3.11 ([#4141](https://github.com/zwave-js/zwave-js-ui/issues/4141)) ([ce645d9](https://github.com/zwave-js/zwave-js-ui/commit/ce645d9dc7cacc1c9bbd62e66b4ad057677cc501))
@@ -536,14 +464,12 @@
 
 # [9.31.0](https://github.com/zwave-js/zwave-js-ui/compare/v9.30.1...v9.31.0) (2025-02-27)
 
-
 ### Bug Fixes
 
 * **logger:** ensure maxFiles validation checks for valid format ([3d36c39](https://github.com/zwave-js/zwave-js-ui/commit/3d36c3915c814121376bb99c1d7bf43d1e062f69))
 * **ui:** pressing save on settings on initial load could lead to clear actual settings ([65d1362](https://github.com/zwave-js/zwave-js-ui/commit/65d136259ba6da688873e262e531b60bb56e7745)), closes [#4128](https://github.com/zwave-js/zwave-js-ui/issues/4128)
 * **ui:** sanitize search function to convert assignment to comparison in zniffer ([6a9b851](https://github.com/zwave-js/zwave-js-ui/commit/6a9b851ded4e22d437cc25d11260ecb6f5e52583)), closes [#4117](https://github.com/zwave-js/zwave-js-ui/issues/4117)
 * **ui:** sort filtered nodes by name ([ca07b5d](https://github.com/zwave-js/zwave-js-ui/commit/ca07b5d3b9bd7cfcd757261547c2421b960a59b2)), closes [#4114](https://github.com/zwave-js/zwave-js-ui/issues/4114)
-
 
 ### Features
 
@@ -554,13 +480,11 @@
 
 ## [9.30.1](https://github.com/zwave-js/zwave-js-ui/compare/v9.30.0...v9.30.1) (2025-01-28)
 
-
 ### Features
 
 * bump zwave-js@14.3.8 ([#4108](https://github.com/zwave-js/zwave-js-ui/issues/4108)) ([8b8837e](https://github.com/zwave-js/zwave-js-ui/commit/8b8837ecb53a932b4f923e80219799dcb69473f5))
 
 # [9.30.0](https://github.com/zwave-js/zwave-js-ui/compare/v9.29.1...v9.30.0) (2025-01-27)
-
 
 ### Bug Fixes
 
@@ -571,14 +495,12 @@
 * **ui:** move rebuild routes back to general actions ([c5d9691](https://github.com/zwave-js/zwave-js-ui/commit/c5d96914ebf2aafed52f675288b7ee15693647d9)), closes [#3559](https://github.com/zwave-js/zwave-js-ui/issues/3559)
 * use `uncaughtException` to catch missing exceptions ([4905e0c](https://github.com/zwave-js/zwave-js-ui/commit/4905e0c2c64f8c7c60bf456cbae611ff16f99200)), closes [#4098](https://github.com/zwave-js/zwave-js-ui/issues/4098)
 
-
 ### Features
 
 * bump @kvaster/zwavejs-prom plugin to 0.0.3 ([c373290](https://github.com/zwave-js/zwave-js-ui/commit/c373290a949122624307debe189d935af9de1acd)), closes [#4096](https://github.com/zwave-js/zwave-js-ui/issues/4096)
 * **mqtt-discovery:** gateway values setting to enable by default Configuration CC entities ([#4106](https://github.com/zwave-js/zwave-js-ui/issues/4106)) ([81ebd61](https://github.com/zwave-js/zwave-js-ui/commit/81ebd61d6204f707f4628512b05dfe953e0796ed))
 
 ## [9.29.1](https://github.com/zwave-js/zwave-js-ui/compare/v9.29.0...v9.29.1) (2025-01-16)
-
 
 ### Bug Fixes
 
@@ -590,13 +512,11 @@
 
 # [9.29.0](https://github.com/zwave-js/zwave-js-ui/compare/v9.28.0...v9.29.0) (2024-12-20)
 
-
 ### Bug Fixes
 
 * increase key size to 2048 for certificate generation ([4222d04](https://github.com/zwave-js/zwave-js-ui/commit/4222d040e7e060ea7d24da257e51a1369ff48854))
 * **ui:** cleanup CRC error frames apperance ([75fc924](https://github.com/zwave-js/zwave-js-ui/commit/75fc9246d50484e7192bec4f143b70e4960ef0a2))
 * **ui:** remove unnecessary validation rule for config priority directory ([655fc92](https://github.com/zwave-js/zwave-js-ui/commit/655fc927900f0ee7e6276661a4465386c43d5d50))
-
 
 ### Features
 
@@ -604,12 +524,10 @@
 
 # [9.28.0](https://github.com/zwave-js/zwave-js-ui/compare/v9.27.8...v9.28.0) (2024-12-11)
 
-
 ### Bug Fixes
 
 * **ui:** correctly display CRC errors on zniffer ([#4039](https://github.com/zwave-js/zwave-js-ui/issues/4039)) ([f868b69](https://github.com/zwave-js/zwave-js-ui/commit/f868b694c8dfdcf5e2957a7db9bde39c2d99ca24))
 * **ui:** typo on NodeDetails.vue ([#4052](https://github.com/zwave-js/zwave-js-ui/issues/4052)) ([9a22a9e](https://github.com/zwave-js/zwave-js-ui/commit/9a22a9e684a7baeffafb12f886b7295437f809bc))
-
 
 ### Features
 
@@ -617,12 +535,10 @@
 
 ## [9.27.8](https://github.com/zwave-js/zwave-js-ui/compare/v9.27.7...v9.27.8) (2024-12-03)
 
-
 ### Bug Fixes
 
 * hide rf region select when it's known ([a1e23bc](https://github.com/zwave-js/zwave-js-ui/commit/a1e23bcc4b637d58165665847fd8968e6c87c069)), closes [#4045](https://github.com/zwave-js/zwave-js-ui/issues/4045)
 * wrong log module on log messages ([db352cb](https://github.com/zwave-js/zwave-js-ui/commit/db352cbeb8154d20eb2bb4982aec0a0caaede310))
-
 
 ### Features
 
@@ -630,13 +546,11 @@
 
 ## [9.27.7](https://github.com/zwave-js/zwave-js-ui/compare/v9.27.6...v9.27.7) (2024-11-22)
 
-
 ### Features
 
 * bump zwave-js@14.3.6 ([#4032](https://github.com/zwave-js/zwave-js-ui/issues/4032)) ([6f8b617](https://github.com/zwave-js/zwave-js-ui/commit/6f8b617b07b09d59cb476e62751a53e8bb2108aa))
 
 ## [9.27.6](https://github.com/zwave-js/zwave-js-ui/compare/v9.27.5...v9.27.6) (2024-11-22)
-
 
 ### Features
 
@@ -644,13 +558,11 @@
 
 ## [9.27.5](https://github.com/zwave-js/zwave-js-ui/compare/v9.27.4...v9.27.5) (2024-11-22)
 
-
 ### Bug Fixes
 
 * missing @zwave-js/server package.json in bundle ([a0f9e0c](https://github.com/zwave-js/zwave-js-ui/commit/a0f9e0caddc012e476bbf7fbd45b6688cf67bd8c)), closes [#4027](https://github.com/zwave-js/zwave-js-ui/issues/4027)
 
 ## [9.27.4](https://github.com/zwave-js/zwave-js-ui/compare/v9.27.3...v9.27.4) (2024-11-21)
-
 
 ### Bug Fixes
 
@@ -658,7 +570,6 @@
 * **ui:** vertical scrollbars not visible ([db1b647](https://github.com/zwave-js/zwave-js-ui/commit/db1b64727294cb482a5f9c7fb4ccaaabe8920328)), closes [#4014](https://github.com/zwave-js/zwave-js-ui/issues/4014)
 
 ## [9.27.3](https://github.com/zwave-js/zwave-js-ui/compare/v9.27.2...v9.27.3) (2024-11-20)
-
 
 ### Bug Fixes
 
@@ -670,7 +581,6 @@
 
 ## [9.27.1](https://github.com/zwave-js/zwave-js-ui/compare/v9.27.0...v9.27.1) (2024-11-12)
 
-
 ### Bug Fixes
 
 * bump zwave-js to 14.3.2 ([#4000](https://github.com/zwave-js/zwave-js-ui/issues/4000)) ([db86eb9](https://github.com/zwave-js/zwave-js-ui/commit/db86eb9dc5403bd3b537da237e9677a34693eef0))
@@ -678,11 +588,9 @@
 
 # [9.27.0](https://github.com/zwave-js/zwave-js-ui/compare/v9.26.0...v9.27.0) (2024-11-12)
 
-
 ### Bug Fixes
 
 * **ui:** add support for `step` on value ids inputs ([1107718](https://github.com/zwave-js/zwave-js-ui/commit/1107718f674e222aa1b4efdfe4a397b68c37341d))
-
 
 ### Features
 
@@ -694,7 +602,6 @@
 
 # [9.26.0](https://github.com/zwave-js/zwave-js-ui/compare/v9.25.0...v9.26.0) (2024-10-30)
 
-
 ### Features
 
 * bump @zwave-js/server@1.39.0 ([#3970](https://github.com/zwave-js/zwave-js-ui/issues/3970)) ([ab24962](https://github.com/zwave-js/zwave-js-ui/commit/ab2496231ff3e8403d5b06e5f92df24b908781d6))
@@ -703,7 +610,6 @@
 
 # [9.25.0](https://github.com/zwave-js/zwave-js-ui/compare/v9.24.0...v9.25.0) (2024-10-25)
 
-
 ### Features
 
 * bump zwave-js@13.10.0 ([#3962](https://github.com/zwave-js/zwave-js-ui/issues/3962)) ([1f40beb](https://github.com/zwave-js/zwave-js-ui/commit/1f40beb44d5133a95b0b7cb3d95373559322bc93))
@@ -711,14 +617,12 @@
 
 # [9.24.0](https://github.com/zwave-js/zwave-js-ui/compare/v9.23.0...v9.24.0) (2024-10-17)
 
-
 ### Bug Fixes
 
 * re-use file transport instance when setup loggers ([#3928](https://github.com/zwave-js/zwave-js-ui/issues/3928)) ([ded941b](https://github.com/zwave-js/zwave-js-ui/commit/ded941bb6c28bc0947cf991cd72be173cb6e996e))
 * remove OTA firmware update lock, allow parallel fw updates ([f929686](https://github.com/zwave-js/zwave-js-ui/commit/f9296865273497195444337f2e5772df2852c8c1)), closes [#3936](https://github.com/zwave-js/zwave-js-ui/issues/3936)
 * **ui:** scanning of small QR codes ([#3946](https://github.com/zwave-js/zwave-js-ui/issues/3946)) ([6420ee4](https://github.com/zwave-js/zwave-js-ui/commit/6420ee4f0ee69549a55009c704641d1e7ef10120))
 * **ui:** typo on NLWR, it's "next to last working route" ([#3951](https://github.com/zwave-js/zwave-js-ui/issues/3951)) ([b4baf4a](https://github.com/zwave-js/zwave-js-ui/commit/b4baf4af232db69f7017b0546cfb987355649a35))
-
 
 ### Features
 
@@ -729,19 +633,16 @@
 
 # [9.23.0](https://github.com/zwave-js/zwave-js-ui/compare/v9.22.0...v9.23.0) (2024-10-14)
 
-
 ### Features
 
 * bump zwave-js@13.9.0 ([#3948](https://github.com/zwave-js/zwave-js-ui/issues/3948)) ([d61e6ef](https://github.com/zwave-js/zwave-js-ui/commit/d61e6ef8b497b7e7b6d0026d743d27a0314824fd))
 
 # [9.22.0](https://github.com/zwave-js/zwave-js-ui/compare/v9.21.1...v9.22.0) (2024-10-11)
 
-
 ### Bug Fixes
 
 * add controller status changes to controller events ([#3932](https://github.com/zwave-js/zwave-js-ui/issues/3932)) ([3f95e30](https://github.com/zwave-js/zwave-js-ui/commit/3f95e3083bd7ebef284a42a0a0327d3cc124e209))
 * translate removal reason enum value to its name ([18bddac](https://github.com/zwave-js/zwave-js-ui/commit/18bddac35c48f94a4358fe9160fe01eb8d8ea66e)), closes [#3927](https://github.com/zwave-js/zwave-js-ui/issues/3927)
-
 
 ### Features
 
@@ -751,7 +652,6 @@
 
 ## [9.21.1](https://github.com/zwave-js/zwave-js-ui/compare/v9.21.0...v9.21.1) (2024-10-02)
 
-
 ### Bug Fixes
 
 * **discovery:** correctly handle up/down commands for covers ([#3916](https://github.com/zwave-js/zwave-js-ui/issues/3916)) ([1582b2a](https://github.com/zwave-js/zwave-js-ui/commit/1582b2ad5eabcc9dae21e67257560d42f092f758))
@@ -759,11 +659,9 @@
 
 # [9.21.0](https://github.com/zwave-js/zwave-js-ui/compare/v9.20.0...v9.21.0) (2024-09-27)
 
-
 ### Bug Fixes
 
 * **ui:** ui settings not persisted ([#3914](https://github.com/zwave-js/zwave-js-ui/issues/3914)) ([1bea0e7](https://github.com/zwave-js/zwave-js-ui/commit/1bea0e7fd44fff0bd0b33186b6850decb07c14f9))
-
 
 ### Features
 
@@ -772,7 +670,6 @@
 
 # [9.20.0](https://github.com/zwave-js/zwave-js-ui/compare/v9.19.0...v9.20.0) (2024-09-23)
 
-
 ### Bug Fixes
 
 * **discovery:** define units for scene and configuration values ([#3905](https://github.com/zwave-js/zwave-js-ui/issues/3905)) ([27c5e80](https://github.com/zwave-js/zwave-js-ui/commit/27c5e80b013a51d1e4e1bfbbccf0f8a172dc0183))
@@ -780,13 +677,11 @@
 * **ui:** debug log text-area not fully visible ([5eda3b7](https://github.com/zwave-js/zwave-js-ui/commit/5eda3b7902ddac2e876cd4305922d94983578e74))
 * **ui:** increese debug logs window height ([4c76e61](https://github.com/zwave-js/zwave-js-ui/commit/4c76e61cabb8930d248224f81cd8ab7e0a748638)), closes [#3908](https://github.com/zwave-js/zwave-js-ui/issues/3908)
 
-
 ### Features
 
 * make default credentials for auth customizable ([#3902](https://github.com/zwave-js/zwave-js-ui/issues/3902)) ([572035a](https://github.com/zwave-js/zwave-js-ui/commit/572035ae2a106bb4bda9a9ca88401f177955e498))
 
 # [9.19.0](https://github.com/zwave-js/zwave-js-ui/compare/v9.18.1...v9.19.0) (2024-09-17)
-
 
 ### Bug Fixes
 
@@ -796,7 +691,6 @@
 * **ui:** improve network graph popup visibility ([#3896](https://github.com/zwave-js/zwave-js-ui/issues/3896)) ([ca84d51](https://github.com/zwave-js/zwave-js-ui/commit/ca84d5168ea8288d5c0c68566eead426f0d21cf0))
 * **ui:** improve node route rebuilding description ([8d1957b](https://github.com/zwave-js/zwave-js-ui/commit/8d1957b2b008f05ba58235a951a5037ed0112e91)), closes [#3898](https://github.com/zwave-js/zwave-js-ui/issues/3898)
 * **ui:** routed ack frames row style ([#3893](https://github.com/zwave-js/zwave-js-ui/issues/3893)) ([6e93060](https://github.com/zwave-js/zwave-js-ui/commit/6e93060c52caa0907720fb07b54e95ac03043bac))
-
 
 ### Features
 
@@ -808,18 +702,15 @@
 
 ## [9.18.1](https://github.com/zwave-js/zwave-js-ui/compare/v9.18.0...v9.18.1) (2024-09-06)
 
-
 ### Bug Fixes
 
 * **discovery:** use valueId endpoint device class for multilevel switch CC discovery ([#3877](https://github.com/zwave-js/zwave-js-ui/issues/3877)) ([a467854](https://github.com/zwave-js/zwave-js-ui/commit/a4678543e3b2ff3bb70f43aa2a5e88deb18428c2))
 
 # [9.18.0](https://github.com/zwave-js/zwave-js-ui/compare/v9.17.0...v9.18.0) (2024-08-30)
 
-
 ### Bug Fixes
 
 * **ui:** allow to perform OTW update from controller advanced actions ([5e06fee](https://github.com/zwave-js/zwave-js-ui/commit/5e06fee50f2a9381422f62654f38082db52e7a49)), closes [#3844](https://github.com/zwave-js/zwave-js-ui/issues/3844)
-
 
 ### Features
 
@@ -830,7 +721,6 @@
 
 # [9.17.0](https://github.com/zwave-js/zwave-js-ui/compare/v9.16.4...v9.17.0) (2024-08-07)
 
-
 ### Features
 
 * bump zwave-js@13.0.3 ([#3832](https://github.com/zwave-js/zwave-js-ui/issues/3832)) ([2aa3adc](https://github.com/zwave-js/zwave-js-ui/commit/2aa3adc743cccb8b0474e6f64d306183ab379c2d))
@@ -839,13 +729,11 @@
 
 ## [9.16.4](https://github.com/zwave-js/zwave-js-ui/compare/v9.16.3...v9.16.4) (2024-07-30)
 
-
 ### Bug Fixes
 
 * **ui:** log nodes rules to allow ids up to 4k ([942df8b](https://github.com/zwave-js/zwave-js-ui/commit/942df8b92c7cfcad8a5b8acae618dec0c13718ce)), closes [#3827](https://github.com/zwave-js/zwave-js-ui/issues/3827)
 
 ## [9.16.3](https://github.com/zwave-js/zwave-js-ui/compare/v9.16.2...v9.16.3) (2024-07-26)
-
 
 ### Bug Fixes
 
@@ -856,7 +744,6 @@
 
 ## [9.16.2](https://github.com/zwave-js/zwave-js-ui/compare/v9.16.1...v9.16.2) (2024-07-22)
 
-
 ### Bug Fixes
 
 * **ui:** loading animation stay infinitely on ([3bcbd8b](https://github.com/zwave-js/zwave-js-ui/commit/3bcbd8b6c9e642828fec6aa38ecb467ae9448fcb)), closes [#3791](https://github.com/zwave-js/zwave-js-ui/issues/3791)
@@ -864,20 +751,17 @@
 * **ui:** unable to add association ([903ed58](https://github.com/zwave-js/zwave-js-ui/commit/903ed5802ecd279cc86f8c29a2ce637245061ba6)), closes [#3822](https://github.com/zwave-js/zwave-js-ui/issues/3822)
 * **ui:** use inverted checkbox to clarify settings ([#3823](https://github.com/zwave-js/zwave-js-ui/issues/3823)) ([7b48ad9](https://github.com/zwave-js/zwave-js-ui/commit/7b48ad9eb33dd4b6729fca269f2874d5eb226a7f))
 
-
 ### Features
 
 * support link check modifications in zwave-js 13.0.2 ([#3824](https://github.com/zwave-js/zwave-js-ui/issues/3824)) ([0eb63a7](https://github.com/zwave-js/zwave-js-ui/commit/0eb63a71c4f1794a2ebf5a62494e720088947578))
 
 ## [9.16.1](https://github.com/zwave-js/zwave-js-ui/compare/v9.16.0...v9.16.1) (2024-07-19)
 
-
 ### Features
 
 * bump zwave-js@13.0.1 ([#3818](https://github.com/zwave-js/zwave-js-ui/issues/3818)) ([044ddbf](https://github.com/zwave-js/zwave-js-ui/commit/044ddbf72d9905873de60d670164f3053e0267ec))
 
 # [9.16.0](https://github.com/zwave-js/zwave-js-ui/compare/v9.15.0...v9.16.0) (2024-07-18)
-
 
 ### Features
 
@@ -886,12 +770,10 @@
 
 # [9.15.0](https://github.com/zwave-js/zwave-js-ui/compare/v9.14.6...v9.15.0) (2024-07-17)
 
-
 ### Bug Fixes
 
 * **ui:** do not allow to call `rebuildNodeRoutes` to multiple nodes ([9c80bd3](https://github.com/zwave-js/zwave-js-ui/commit/9c80bd30e322e7bdbe8de17d4a214c706b2eb28d)), closes [#3559](https://github.com/zwave-js/zwave-js-ui/issues/3559)
 * **ui:** validate timezone on ui ([1c315ea](https://github.com/zwave-js/zwave-js-ui/commit/1c315ea34a6dc9a7dd1b87fc727e90ff04263b77)), closes [#3807](https://github.com/zwave-js/zwave-js-ui/issues/3807)
-
 
 ### Features
 
@@ -901,13 +783,11 @@
 
 ## [9.14.6](https://github.com/zwave-js/zwave-js-ui/compare/v9.14.5...v9.14.6) (2024-07-11)
 
-
 ### Features
 
 * bump zwave-js@12.12.4 ([#3806](https://github.com/zwave-js/zwave-js-ui/issues/3806)) ([5078b55](https://github.com/zwave-js/zwave-js-ui/commit/5078b55b38823e533763265188bbfa1bf2fcc2ad))
 
 ## [9.14.5](https://github.com/zwave-js/zwave-js-ui/compare/v9.14.4...v9.14.5) (2024-07-09)
-
 
 ### Features
 
@@ -915,11 +795,9 @@
 
 ## [9.14.4](https://github.com/zwave-js/zwave-js-ui/compare/v9.14.3...v9.14.4) (2024-06-26)
 
-
 ### Bug Fixes
 
 * **ui:** hide open in new window inside popup window ([28dc90b](https://github.com/zwave-js/zwave-js-ui/commit/28dc90badc2355c49c7294a8fe83fa8559b3808e))
-
 
 ### Features
 
@@ -927,11 +805,9 @@
 
 ## [9.14.3](https://github.com/zwave-js/zwave-js-ui/compare/v9.14.2...v9.14.3) (2024-06-25)
 
-
 ### Bug Fixes
 
 * **ui:** configuration CC `Reset` button spacing ([f386c4f](https://github.com/zwave-js/zwave-js-ui/commit/f386c4f94c4727578919c2277a81f47b62ed6155))
-
 
 ### Features
 
@@ -940,20 +816,17 @@
 
 ## [9.14.2](https://github.com/zwave-js/zwave-js-ui/compare/v9.14.1...v9.14.2) (2024-06-22)
 
-
 ### Features
 
 * bump zwave-js@12.11.2 ([#3782](https://github.com/zwave-js/zwave-js-ui/issues/3782)) ([e68e0cc](https://github.com/zwave-js/zwave-js-ui/commit/e68e0cce80be9fdd2036f06cadbad12552eea788))
 
 ## [9.14.1](https://github.com/zwave-js/zwave-js-ui/compare/v9.14.0...v9.14.1) (2024-06-19)
 
-
 ### Bug Fixes
 
 * inclusion state not updating ([5a9a0f0](https://github.com/zwave-js/zwave-js-ui/commit/5a9a0f0f9cc6c48efeff3e71da4bba4ef1b542ac))
 * **ui:** clarify export json options ([ed77c68](https://github.com/zwave-js/zwave-js-ui/commit/ed77c688feaed2f0a84aeec35e1c42dd8422ae34))
 * **zniffer:** route display for inbound frames, show failed hop ([#3774](https://github.com/zwave-js/zwave-js-ui/issues/3774)) ([107f147](https://github.com/zwave-js/zwave-js-ui/commit/107f147f7fb8d958dc7d57a291dfbd703d6760d4))
-
 
 ### Features
 
@@ -962,13 +835,11 @@
 
 # [9.14.0](https://github.com/zwave-js/zwave-js-ui/compare/v9.13.4...v9.14.0) (2024-06-17)
 
-
 ### Bug Fixes
 
 * do not remove controller event listeners ([#3767](https://github.com/zwave-js/zwave-js-ui/issues/3767)) ([9478c29](https://github.com/zwave-js/zwave-js-ui/commit/9478c298f4e44211159a9859ea93533ca817784c))
 * ensure driver is ready in inclusion state interval ([628e49a](https://github.com/zwave-js/zwave-js-ui/commit/628e49add061f3c2d1550ff95b4ce5d9da0d5f7a))
 * setting default region to EU ([#3756](https://github.com/zwave-js/zwave-js-ui/issues/3756)) ([247534b](https://github.com/zwave-js/zwave-js-ui/commit/247534bae2861ba3df084c4867db7d5193a50aac))
-
 
 ### Features
 
@@ -979,18 +850,15 @@
 
 ## [9.13.4](https://github.com/zwave-js/zwave-js-ui/compare/v9.13.3...v9.13.4) (2024-06-05)
 
-
 ### Bug Fixes
 
 * set up events before calling `Zniffer.init()` ([#3745](https://github.com/zwave-js/zwave-js-ui/issues/3745)) ([66ff0e3](https://github.com/zwave-js/zwave-js-ui/commit/66ff0e3403a1db5e561bb198a01056f66b4979b5))
-
 
 ### Features
 
 * bump zwave-js@12.10.0 ([#3752](https://github.com/zwave-js/zwave-js-ui/issues/3752)) ([184db69](https://github.com/zwave-js/zwave-js-ui/commit/184db696f63aa217d6d4e262497c21398f3d983d))
 
 ## [9.13.3](https://github.com/zwave-js/zwave-js-ui/compare/v9.13.2...v9.13.3) (2024-06-03)
-
 
 ### Bug Fixes
 
@@ -999,13 +867,11 @@
 
 ## [9.13.2](https://github.com/zwave-js/zwave-js-ui/compare/v9.13.1...v9.13.2) (2024-05-31)
 
-
 ### Bug Fixes
 
 * **ui:** frames table style optimizations ([73e6713](https://github.com/zwave-js/zwave-js-ui/commit/73e671310408de7fda2a1480df8d98a36f305ce5)), closes [#3732](https://github.com/zwave-js/zwave-js-ui/issues/3732)
 * **ui:** hide protocol selection when editing smart start entry that doesn't support long range ([b939f97](https://github.com/zwave-js/zwave-js-ui/commit/b939f979a72242ab2da7106cc052c1943300b507)), closes [#3735](https://github.com/zwave-js/zwave-js-ui/issues/3735)
 * **ui:** tz not fetched correctly ([a603a22](https://github.com/zwave-js/zwave-js-ui/commit/a603a22a7a981659bb06f7efdf1d6a0e7fb8ead0))
-
 
 ### Features
 
@@ -1014,7 +880,6 @@
 
 ## [9.13.1](https://github.com/zwave-js/zwave-js-ui/compare/v9.13.0...v9.13.1) (2024-05-30)
 
-
 ### Bug Fixes
 
 * **ui:** serial port validation ([f7f846e](https://github.com/zwave-js/zwave-js-ui/commit/f7f846e28f2f9d368f9c690d208df89a56cde717)), closes [#3728](https://github.com/zwave-js/zwave-js-ui/issues/3728)
@@ -1022,13 +887,11 @@
 
 # [9.13.0](https://github.com/zwave-js/zwave-js-ui/compare/v9.12.0...v9.13.0) (2024-05-30)
 
-
 ### Bug Fixes
 
 * **ui:** cleaner rebuild routes hint ([e51cf52](https://github.com/zwave-js/zwave-js-ui/commit/e51cf52bea1d1795f75fdf68abfbe9568131cfaf))
 * **ui:** groups associations for LR nodes ([#3702](https://github.com/zwave-js/zwave-js-ui/issues/3702)) ([3b9505b](https://github.com/zwave-js/zwave-js-ui/commit/3b9505b91db14749a7379df090dba4a6c5907f6c))
 * **ui:** move valueId spinner after control ([efbfe13](https://github.com/zwave-js/zwave-js-ui/commit/efbfe1386495d9e22413c3542a6249ed42353d71)), closes [#3726](https://github.com/zwave-js/zwave-js-ui/issues/3726)
-
 
 ### Features
 
@@ -1042,7 +905,6 @@
 
 # [9.12.0](https://github.com/zwave-js/zwave-js-ui/compare/v9.11.1...v9.12.0) (2024-04-29)
 
-
 ### Bug Fixes
 
 * **ui:** add offset to smart start hover menu ([9f72cf3](https://github.com/zwave-js/zwave-js-ui/commit/9f72cf3625b2d0078e5d718fc8c9c736a2ca1b1c)), closes [#3688](https://github.com/zwave-js/zwave-js-ui/issues/3688)
@@ -1055,7 +917,6 @@
 * **ui:** use different dialog for node added popup ([2affdce](https://github.com/zwave-js/zwave-js-ui/commit/2affdcee295f75b60ee56a2b25e8c02bb88fa1f7)), closes [#3690](https://github.com/zwave-js/zwave-js-ui/issues/3690)
 * **ui:** use vuetify's material design palette colors for protocol color ([#3692](https://github.com/zwave-js/zwave-js-ui/issues/3692)) ([2df5105](https://github.com/zwave-js/zwave-js-ui/commit/2df5105afda0dc879bd2231e9d02cb314f7f783a))
 
-
 ### Features
 
 * bump zwave-js@12.5.6 ([#3683](https://github.com/zwave-js/zwave-js-ui/issues/3683)) ([1b0e49d](https://github.com/zwave-js/zwave-js-ui/commit/1b0e49d826a59115edb12842c66c1f9d3ecd9a56))
@@ -1063,19 +924,16 @@
 
 ## [9.11.1](https://github.com/zwave-js/zwave-js-ui/compare/v9.11.0...v9.11.1) (2024-04-19)
 
-
 ### Bug Fixes
 
 * **ui:** add missing channel 3 serie to bgRssi chart ([3961d53](https://github.com/zwave-js/zwave-js-ui/commit/3961d537bb1a121ae204f4790bbde339ca9ce339))
 
 # [9.11.0](https://github.com/zwave-js/zwave-js-ui/compare/v9.10.3...v9.11.0) (2024-04-19)
 
-
 ### Bug Fixes
 
 * **ui:** do not disable `active` field in smart start table ([eccd132](https://github.com/zwave-js/zwave-js-ui/commit/eccd1326086cbc41169160ec6adbe82d35780bc0))
 * **ui:** ensure nodes manager events are not binded twice ([#3665](https://github.com/zwave-js/zwave-js-ui/issues/3665)) ([02f5227](https://github.com/zwave-js/zwave-js-ui/commit/02f5227025fd40b42b1f3d9e45a0b102fef8ba77))
-
 
 ### Features
 
@@ -1084,12 +942,10 @@
 
 ## [9.10.3](https://github.com/zwave-js/zwave-js-ui/compare/v9.10.2...v9.10.3) (2024-04-12)
 
-
 ### Bug Fixes
 
 * **ui:** downgrades show empty changelogs ([ee50c0e](https://github.com/zwave-js/zwave-js-ui/commit/ee50c0e8594e01d8f22a75b59806e39d1fc40622)), closes [#3663](https://github.com/zwave-js/zwave-js-ui/issues/3663)
 * **ui:** typo in info message on node added ([a8aecb7](https://github.com/zwave-js/zwave-js-ui/commit/a8aecb782938e02bd65cd4acadecf0c2ff56f9b1))
-
 
 ### Features
 
@@ -1098,11 +954,9 @@
 
 ## [9.10.2](https://github.com/zwave-js/zwave-js-ui/compare/v9.10.1...v9.10.2) (2024-04-04)
 
-
 ### Bug Fixes
 
 * **discovery:** add `DISCOVERY_DISABLE_CC_CONFIGURATION` env var ([52241db](https://github.com/zwave-js/zwave-js-ui/commit/52241db40fe47e4ae06e8af218923a3e0fbc981f)), closes [#3571](https://github.com/zwave-js/zwave-js-ui/issues/3571)
-
 
 ### Features
 
@@ -1110,25 +964,21 @@
 
 ## [9.10.1](https://github.com/zwave-js/zwave-js-ui/compare/v9.10.0...v9.10.1) (2024-04-03)
 
-
 ### Features
 
 * bump zwave-js@12.5.1 ([#3654](https://github.com/zwave-js/zwave-js-ui/issues/3654)) ([f7ceb63](https://github.com/zwave-js/zwave-js-ui/commit/f7ceb634019109e932a0d27077b5d9c7c3e7cc7d))
 
 # [9.10.0](https://github.com/zwave-js/zwave-js-ui/compare/v9.9.1...v9.10.0) (2024-04-03)
 
-
 ### Bug Fixes
 
 * set driver ready to false immediatly on driver error ([9693ba5](https://github.com/zwave-js/zwave-js-ui/commit/9693ba57c1e3c00aa53dabc4e585c5b0788725c3)), closes [#3647](https://github.com/zwave-js/zwave-js-ui/issues/3647)
-
 
 ### Features
 
 * long range support zwave-js@12.5.0 ([#3545](https://github.com/zwave-js/zwave-js-ui/issues/3545)) ([bbf5ee6](https://github.com/zwave-js/zwave-js-ui/commit/bbf5ee604a9b1df2d9f296d30deaadb69c42d036))
 
 ## [9.9.1](https://github.com/zwave-js/zwave-js-ui/compare/v9.9.0...v9.9.1) (2024-03-04)
-
 
 ### Bug Fixes
 
@@ -1138,12 +988,10 @@
 
 # [9.9.0](https://github.com/zwave-js/zwave-js-ui/compare/v9.8.3...v9.9.0) (2024-02-15)
 
-
 ### Bug Fixes
 
 * keep node name and location in sync ([#3592](https://github.com/zwave-js/zwave-js-ui/issues/3592)) ([697967b](https://github.com/zwave-js/zwave-js-ui/commit/697967bcf9270657dab71b8e9d7d7e46fdaaa298))
 * **ui:** scrollbars size ([ff5875d](https://github.com/zwave-js/zwave-js-ui/commit/ff5875d9ebec2bd5ddb1b866bb978cabbe0f2967))
-
 
 ### Features
 
@@ -1152,7 +1000,6 @@
 
 ## [9.8.3](https://github.com/zwave-js/zwave-js-ui/compare/v9.8.2...v9.8.3) (2024-02-06)
 
-
 ### Bug Fixes
 
 * **discovery:** revert "improve MQTT discovery for scene CC" ([#3583](https://github.com/zwave-js/zwave-js-ui/issues/3583)) ([16b8c1f](https://github.com/zwave-js/zwave-js-ui/commit/16b8c1fc82bfb5ce99c7e0bf2bd1e78fa4161fa7))
@@ -1160,18 +1007,15 @@
 * **ui:** misleading `unconnected` label changed to `unknown` ([beaa1a2](https://github.com/zwave-js/zwave-js-ui/commit/beaa1a2090fdc017cff1c1d62850001a05392ef1)), closes [#3562](https://github.com/zwave-js/zwave-js-ui/issues/3562)
 * **ui:** show nlwr route when lwr is unknown in overview ([#3584](https://github.com/zwave-js/zwave-js-ui/issues/3584)) ([a1f8cc2](https://github.com/zwave-js/zwave-js-ui/commit/a1f8cc2a9343b4eb6179f85033215d9d69f29a6e))
 
-
 ### Features
 
 * **mqtt:** allow to set options in multicast/broadcast requests ([#3573](https://github.com/zwave-js/zwave-js-ui/issues/3573)) ([9ba5886](https://github.com/zwave-js/zwave-js-ui/commit/9ba5886bea16228921e0e545721f5d0d6a5bb922))
 
 ## [9.8.2](https://github.com/zwave-js/zwave-js-ui/compare/v9.8.1...v9.8.2) (2024-01-29)
 
-
 ### Bug Fixes
 
 * **mqtt:** handel numbers to bool coerce and value conf on current value ([49ac0a3](https://github.com/zwave-js/zwave-js-ui/commit/49ac0a30e56cd780684414b32890772fd904b7f9))
-
 
 ### Features
 
@@ -1180,13 +1024,11 @@
 
 ## [9.8.1](https://github.com/zwave-js/zwave-js-ui/compare/v9.8.0...v9.8.1) (2024-01-25)
 
-
 ### Bug Fixes
 
 * auth check api not working with proxy ([366b8dc](https://github.com/zwave-js/zwave-js-ui/commit/366b8dcb056fee10c1d32e9311a8161047f1fe10)), closes [#3553](https://github.com/zwave-js/zwave-js-ui/issues/3553)
 
 # [9.8.0](https://github.com/zwave-js/zwave-js-ui/compare/v9.7.1...v9.8.0) (2024-01-24)
-
 
 ### Bug Fixes
 
@@ -1199,7 +1041,6 @@
 * **ui:** power level and measured power at 0 dbm limits ([#3548](https://github.com/zwave-js/zwave-js-ui/issues/3548)) ([ae57c72](https://github.com/zwave-js/zwave-js-ui/commit/ae57c721525d6fe88a4dba105139261c72789ef6))
 * **ui:** remove duplicated target in link ([76802d5](https://github.com/zwave-js/zwave-js-ui/commit/76802d575081127ec02f3860b22efbc1d73a01d4))
 
-
 ### Features
 
 * add `TRUST_PROXY` env var ([3035d65](https://github.com/zwave-js/zwave-js-ui/commit/3035d653ebb25f7578219f3821d3f4f21b95c4dc)), closes [#3506](https://github.com/zwave-js/zwave-js-ui/issues/3506)
@@ -1210,7 +1051,6 @@
 
 ## [9.7.1](https://github.com/zwave-js/zwave-js-ui/compare/v9.7.0...v9.7.1) (2024-01-16)
 
-
 ### Bug Fixes
 
 * **ui:** ensure all changelog links open on new tab ([#3521](https://github.com/zwave-js/zwave-js-ui/issues/3521)) ([51c53a1](https://github.com/zwave-js/zwave-js-ui/commit/51c53a1c9aeb76a0b3f8a6879b2b601f63f41bb2))
@@ -1218,11 +1058,9 @@
 
 # [9.7.0](https://github.com/zwave-js/zwave-js-ui/compare/v9.6.2...v9.7.0) (2024-01-15)
 
-
 ### Bug Fixes
 
 * **ui:** preferred scales alignment ([#3494](https://github.com/zwave-js/zwave-js-ui/issues/3494)) ([74d7c31](https://github.com/zwave-js/zwave-js-ui/commit/74d7c313b516b9dcae82f8a90275c1a14b2f461a))
-
 
 ### Features
 
@@ -1231,13 +1069,11 @@
 
 ## [9.6.2](https://github.com/zwave-js/zwave-js-ui/compare/v9.6.1...v9.6.2) (2023-12-22)
 
-
 ### Bug Fixes
 
 * ignore `build` dir in NPM publish ([af5c542](https://github.com/zwave-js/zwave-js-ui/commit/af5c542b4b287051792da9f0a0eec7a11a6a0cd5))
 
 ## [9.6.1](https://github.com/zwave-js/zwave-js-ui/compare/v9.6.0...v9.6.1) (2023-12-22)
-
 
 ### Bug Fixes
 
@@ -1245,12 +1081,10 @@
 
 # [9.6.0](https://github.com/zwave-js/zwave-js-ui/compare/v9.5.1...v9.6.0) (2023-12-14)
 
-
 ### Bug Fixes
 
 * check for undefined driver ([#3464](https://github.com/zwave-js/zwave-js-ui/issues/3464)) ([f499d5b](https://github.com/zwave-js/zwave-js-ui/commit/f499d5b4069074a6ecb5c3d8f4fef45ee39b8cee))
 * **ui:** open in new window ([c618fd1](https://github.com/zwave-js/zwave-js-ui/commit/c618fd10cd5c5f5e2444ed097c64dcc9e7f4aa73))
-
 
 ### Features
 
@@ -1260,18 +1094,15 @@
 
 ## [9.5.1](https://github.com/zwave-js/zwave-js-ui/compare/v9.5.0...v9.5.1) (2023-12-01)
 
-
 ### Bug Fixes
 
 * pkg missing `axios` exec ([4856efd](https://github.com/zwave-js/zwave-js-ui/commit/4856efd3af76c50b5096b6a8bdf833bf3f7ee376)), closes [#3458](https://github.com/zwave-js/zwave-js-ui/issues/3458)
 
 # [9.5.0](https://github.com/zwave-js/zwave-js-ui/compare/v9.4.1...v9.5.0) (2023-11-30)
 
-
 ### Bug Fixes
 
 * **ui:** open ota link in new page ([d7621c1](https://github.com/zwave-js/zwave-js-ui/commit/d7621c15dc0eecd91043fa2160d2fbd6bdf6a860)), closes [#3446](https://github.com/zwave-js/zwave-js-ui/issues/3446)
-
 
 ### Features
 
@@ -1281,13 +1112,11 @@
 
 ## [9.4.1](https://github.com/zwave-js/zwave-js-ui/compare/v9.4.0...v9.4.1) (2023-11-27)
 
-
 ### Bug Fixes
 
 * **docker:** skip install when node_modules is present ([#3429](https://github.com/zwave-js/zwave-js-ui/issues/3429)) ([65fe9a4](https://github.com/zwave-js/zwave-js-ui/commit/65fe9a4efffa9653b10225556c76b8edc96dc502))
 * **docker:** try using custom alpine ([#3443](https://github.com/zwave-js/zwave-js-ui/issues/3443)) ([400cb4f](https://github.com/zwave-js/zwave-js-ui/commit/400cb4fcd97e0367d4b9fe5a22cb441574a9cae5))
 * don't create `STORE_DIR/logs` if `ZWAVEJS_LOGS_DIR` is setted ([#3439](https://github.com/zwave-js/zwave-js-ui/issues/3439)) ([46773f7](https://github.com/zwave-js/zwave-js-ui/commit/46773f7c5a1447b490fe902657139f46b17761ff))
-
 
 ### Features
 
@@ -1295,14 +1124,12 @@
 
 # [9.4.0](https://github.com/zwave-js/zwave-js-ui/compare/v9.3.2...v9.4.0) (2023-11-16)
 
-
 ### Bug Fixes
 
 * **ui:** inconsistency in ota popup warning ([8378946](https://github.com/zwave-js/zwave-js-ui/commit/8378946ee7e6699007d4815369c4450cc8b198ee))
 * **ui:** make versions tooltip above snackbar ([91376a3](https://github.com/zwave-js/zwave-js-ui/commit/91376a3a1c1c4fd2da1e9196282de8408ba6fc7a)), closes [#3416](https://github.com/zwave-js/zwave-js-ui/issues/3416)
 * **ui:** prevent fab to overlap table pagination ([9dbe5bf](https://github.com/zwave-js/zwave-js-ui/commit/9dbe5bff0526c87c6e37729a2e5e420b0d051540)), closes [#3426](https://github.com/zwave-js/zwave-js-ui/issues/3426)
 * user callbacks not working with MQTT ([#3424](https://github.com/zwave-js/zwave-js-ui/issues/3424)) ([3f630fd](https://github.com/zwave-js/zwave-js-ui/commit/3f630fd40e2e45bf554952727225947f73bd4571))
-
 
 ### Features
 
@@ -1312,19 +1139,16 @@
 
 ## [9.3.2](https://github.com/zwave-js/zwave-js-ui/compare/v9.3.1...v9.3.2) (2023-11-09)
 
-
 ### Bug Fixes
 
 * scheduled jobs not running when mqtt disabled ([#3409](https://github.com/zwave-js/zwave-js-ui/issues/3409)) ([c3d00e6](https://github.com/zwave-js/zwave-js-ui/commit/c3d00e62551e654d2e3ac0aea5e9ba75f7c986ba))
 * **ui:** add wakeup help ([9b3b766](https://github.com/zwave-js/zwave-js-ui/commit/9b3b766bf0d66373c6e381141d358f389150acd5)), closes [#3395](https://github.com/zwave-js/zwave-js-ui/issues/3395)
-
 
 ### Features
 
 * bump zwave-js@12.3.0 ([#3396](https://github.com/zwave-js/zwave-js-ui/issues/3396)) ([49ccf97](https://github.com/zwave-js/zwave-js-ui/commit/49ccf974d414cbc3d3485b85140ec0c8f7330a7a))
 
 ## [9.3.1](https://github.com/zwave-js/zwave-js-ui/compare/v9.3.0...v9.3.1) (2023-10-30)
-
 
 ### Bug Fixes
 
@@ -1334,11 +1158,9 @@
 
 # [9.3.0](https://github.com/zwave-js/zwave-js-ui/compare/v9.2.3...v9.3.0) (2023-10-26)
 
-
 ### Bug Fixes
 
 * **ui:** make topbar and actions sticky on popups ([87e88ef](https://github.com/zwave-js/zwave-js-ui/commit/87e88ef2a7ca3ff63d0b073e087022829da82fb6)), closes [#3372](https://github.com/zwave-js/zwave-js-ui/issues/3372)
-
 
 ### Features
 
@@ -1347,11 +1169,9 @@
 
 ## [9.2.3](https://github.com/zwave-js/zwave-js-ui/compare/v9.2.2...v9.2.3) (2023-10-20)
 
-
 ### Bug Fixes
 
 * add all `EventListener` methods to `TypedEventEmitter` interface ([6e8a6ca](https://github.com/zwave-js/zwave-js-ui/commit/6e8a6caa60deace2fd96cd68390f6d3238e66047))
-
 
 ### Features
 
@@ -1360,13 +1180,11 @@
 
 ## [9.2.2](https://github.com/zwave-js/zwave-js-ui/compare/v9.2.1...v9.2.2) (2023-10-19)
 
-
 ### Bug Fixes
 
 * set default host to undefined ([#3362](https://github.com/zwave-js/zwave-js-ui/issues/3362)) ([6a30ab0](https://github.com/zwave-js/zwave-js-ui/commit/6a30ab066a964b111283db4d44819bb59089102d))
 
 ## [9.2.1](https://github.com/zwave-js/zwave-js-ui/compare/v9.2.0...v9.2.1) (2023-10-18)
-
 
 ### Bug Fixes
 
@@ -1377,14 +1195,12 @@
 
 # [9.2.0](https://github.com/zwave-js/zwave-js-ui/compare/v9.1.2...v9.2.0) (2023-10-18)
 
-
 ### Bug Fixes
 
 * set default host to `::` ([#3348](https://github.com/zwave-js/zwave-js-ui/issues/3348)) ([68cc58e](https://github.com/zwave-js/zwave-js-ui/commit/68cc58e1f330681e691d390459eafa5f58a9e655))
 * **ui:** firmware update OTA result not shown ([#3346](https://github.com/zwave-js/zwave-js-ui/issues/3346)) ([1406015](https://github.com/zwave-js/zwave-js-ui/commit/140601501dd38692e1eadba302c7ac79c0cf695d))
 * **ui:** formatting in debug window ([#3344](https://github.com/zwave-js/zwave-js-ui/issues/3344)) ([cfd1dea](https://github.com/zwave-js/zwave-js-ui/commit/cfd1dea302b493747b1c5e659ff1c1c725378e06))
 * **ui:** hide OTA downgrades by default and fix icon ([#3345](https://github.com/zwave-js/zwave-js-ui/issues/3345)) ([82f5ee4](https://github.com/zwave-js/zwave-js-ui/commit/82f5ee41b209e6c3661efa490eb6e83a86322177))
-
 
 ### Features
 
@@ -1396,13 +1212,11 @@
 
 ## [9.1.2](https://github.com/zwave-js/zwave-js-ui/compare/v9.1.1...v9.1.2) (2023-10-10)
 
-
 ### Features
 
 * add setting to enable new version notification ([#3332](https://github.com/zwave-js/zwave-js-ui/issues/3332)) ([7e00e02](https://github.com/zwave-js/zwave-js-ui/commit/7e00e02ada3c5140a2f09533b2a79f8f8df988e5))
 
 ## [9.1.1](https://github.com/zwave-js/zwave-js-ui/compare/v9.1.0...v9.1.1) (2023-10-09)
-
 
 ### Bug Fixes
 
@@ -1412,19 +1226,16 @@
 * **ui:** cleanup device id display ([fa5a8e9](https://github.com/zwave-js/zwave-js-ui/commit/fa5a8e941e359d0f890aa8aed66f0d2d49ca1d60)), closes [#3314](https://github.com/zwave-js/zwave-js-ui/issues/3314)
 * **ui:** typo on pinia store ([5b3a205](https://github.com/zwave-js/zwave-js-ui/commit/5b3a20569c60463bf545c3df5a1cf1bb47380978)), closes [#3327](https://github.com/zwave-js/zwave-js-ui/issues/3327)
 
-
 ### Features
 
 * bump zwave-js@12.0.4 ([#3331](https://github.com/zwave-js/zwave-js-ui/issues/3331)) ([1f0dc2f](https://github.com/zwave-js/zwave-js-ui/commit/1f0dc2f5c40f3bcc7d6fe32f9c26e1cb2bacdcf4))
 
 # [9.1.0](https://github.com/zwave-js/zwave-js-ui/compare/v9.0.3...v9.1.0) (2023-10-06)
 
-
 ### Bug Fixes
 
 * issue when header not present in request ([ba835a7](https://github.com/zwave-js/zwave-js-ui/commit/ba835a7ee2b57728c6843336c1bd79ddabeda8a9))
 * **ui:** missing `Heal` references in control panel ([#3318](https://github.com/zwave-js/zwave-js-ui/issues/3318)) ([a13d26f](https://github.com/zwave-js/zwave-js-ui/commit/a13d26f5869acf76fdfd15d2986ca58eb47d8380))
-
 
 ### Features
 
@@ -1434,13 +1245,11 @@
 
 ## [9.0.3](https://github.com/zwave-js/zwave-js-ui/compare/v9.0.2...v9.0.3) (2023-09-29)
 
-
 ### Features
 
 * bump zwave-js@12.0.2 ([#3312](https://github.com/zwave-js/zwave-js-ui/issues/3312)) ([f3e4c22](https://github.com/zwave-js/zwave-js-ui/commit/f3e4c2269e0494745e316cb4d9f657b577dc0438))
 
 ## [9.0.2](https://github.com/zwave-js/zwave-js-ui/compare/v9.0.1...v9.0.2) (2023-09-29)
-
 
 ### Bug Fixes
 
@@ -1448,13 +1257,11 @@
 
 ## [9.0.1](https://github.com/zwave-js/zwave-js-ui/compare/v9.0.0...v9.0.1) (2023-09-27)
 
-
 ### Bug Fixes
 
 * bump @zwave-js/server to 1.32.1 ([#3305](https://github.com/zwave-js/zwave-js-ui/issues/3305)) ([70cbd7a](https://github.com/zwave-js/zwave-js-ui/commit/70cbd7abc876517d922cbca3cf87561f2c3b6006))
 
 # [9.0.0](https://github.com/zwave-js/zwave-js-ui/compare/v8.26.0...v9.0.0) (2023-09-27)
-
 
 ### Bug Fixes
 
@@ -1463,11 +1270,9 @@
 
 # [8.26.0](https://github.com/zwave-js/zwave-js-ui/compare/v8.25.1...v8.26.0) (2023-09-21)
 
-
 ### Bug Fixes
 
 * add missing return in `getNodeNeighbors` api ([e38b13f](https://github.com/zwave-js/zwave-js-ui/commit/e38b13fea8fb637f072771b31a71ec8e703964b7)), closes [#3276](https://github.com/zwave-js/zwave-js-ui/issues/3276)
-
 
 ### Features
 
@@ -1476,11 +1281,9 @@
 
 ## [8.25.1](https://github.com/zwave-js/zwave-js-ui/compare/v8.25.0...v8.25.1) (2023-09-11)
 
-
 ### Bug Fixes
 
 * **ui:** add missing webmanifest link in head ([40b25e9](https://github.com/zwave-js/zwave-js-ui/commit/40b25e96e73d3a88a603fa48e1f23b6a45a12e96))
-
 
 ### Features
 
@@ -1488,11 +1291,9 @@
 
 # [8.25.0](https://github.com/zwave-js/zwave-js-ui/compare/v8.24.2...v8.25.0) (2023-09-06)
 
-
 ### Bug Fixes
 
 * **ui:** prevent undefined error in settings ([92c3623](https://github.com/zwave-js/zwave-js-ui/commit/92c36236424f5aa4dc745c4d0c136702b207175f)), closes [#3262](https://github.com/zwave-js/zwave-js-ui/issues/3262)
-
 
 ### Features
 
@@ -1500,11 +1301,9 @@
 
 ## [8.24.2](https://github.com/zwave-js/zwave-js-ui/compare/v8.24.1...v8.24.2) (2023-09-04)
 
-
 ### Bug Fixes
 
 * **ui:** better re-discover tooltip ([1e04cab](https://github.com/zwave-js/zwave-js-ui/commit/1e04cab0e551a9996081a94fe81e1545d614f656))
-
 
 ### Features
 
@@ -1512,11 +1311,9 @@
 
 ## [8.24.1](https://github.com/zwave-js/zwave-js-ui/compare/v8.24.0...v8.24.1) (2023-09-04)
 
-
 ### Bug Fixes
 
 * **ui:** hide config update badge after re-interview ([#3260](https://github.com/zwave-js/zwave-js-ui/issues/3260)) ([94fc10e](https://github.com/zwave-js/zwave-js-ui/commit/94fc10e2f932cb6574041430a88613ecd11c3ee4))
-
 
 ### Features
 
@@ -1524,13 +1321,11 @@
 
 # [8.24.0](https://github.com/zwave-js/zwave-js-ui/compare/v8.23.2...v8.24.0) (2023-08-31)
 
-
 ### Bug Fixes
 
 * **ui:** advanced actions colors ([77afac4](https://github.com/zwave-js/zwave-js-ui/commit/77afac40acdd42b573653e007daf19243ffda826)), closes [#3242](https://github.com/zwave-js/zwave-js-ui/issues/3242)
 * **ui:** make rf region setting clearable ([58c24d4](https://github.com/zwave-js/zwave-js-ui/commit/58c24d4b5c04a7d87daf07b709f04b05019712cc)), closes [#3241](https://github.com/zwave-js/zwave-js-ui/issues/3241)
 * **ui:** remove controller default powerlevel message ([#3244](https://github.com/zwave-js/zwave-js-ui/issues/3244)) ([88555cd](https://github.com/zwave-js/zwave-js-ui/commit/88555cd2ff351b8aad2e62a45da112423bb47d88))
-
 
 ### Features
 
@@ -1540,20 +1335,17 @@
 
 ## [8.23.1](https://github.com/zwave-js/zwave-js-ui/compare/v8.23.0...v8.23.1) (2023-08-22)
 
-
 ### Features
 
 * bump zwave-js@11.13.0 ([#3240](https://github.com/zwave-js/zwave-js-ui/issues/3240)) ([5066c85](https://github.com/zwave-js/zwave-js-ui/commit/5066c85d899aaa59b106e95b51903b80979f6ca1))
 
 # [8.23.0](https://github.com/zwave-js/zwave-js-ui/compare/v8.22.3...v8.23.0) (2023-08-17)
 
-
 ### Bug Fixes
 
 * prevent to throw when setting `rf` options ([c838698](https://github.com/zwave-js/zwave-js-ui/commit/c8386982417dea662be7448965adcb3d3bcbd494))
 * **ui:** remove controller from replace nodes list ([1a43b0a](https://github.com/zwave-js/zwave-js-ui/commit/1a43b0abbec4d035480036aa61c858401167bc16)), closes [#3223](https://github.com/zwave-js/zwave-js-ui/issues/3223)
 * **ui:** soft reset hint ([a69139f](https://github.com/zwave-js/zwave-js-ui/commit/a69139f518f5069b95e918fda30f428aa50d65ca))
-
 
 ### Features
 
@@ -1565,13 +1357,11 @@
 
 ## [8.22.3](https://github.com/zwave-js/zwave-js-ui/compare/v8.22.2...v8.22.3) (2023-08-08)
 
-
 ### Bug Fixes
 
 * scheduler not synced correctly ([#3176](https://github.com/zwave-js/zwave-js-ui/issues/3176)) ([5de915e](https://github.com/zwave-js/zwave-js-ui/commit/5de915e7d4813c4cd7d06bc8baa9600363f61c3f))
 
 ## [8.22.2](https://github.com/zwave-js/zwave-js-ui/compare/v8.22.1...v8.22.2) (2023-08-08)
-
 
 ### Features
 
@@ -1579,12 +1369,10 @@
 
 ## [8.22.1](https://github.com/zwave-js/zwave-js-ui/compare/v8.22.0...v8.22.1) (2023-08-07)
 
-
 ### Bug Fixes
 
 * **mqtt:** mqtt throws error on connect ([483d858](https://github.com/zwave-js/zwave-js-ui/commit/483d85818a8d64f6d7f7404cf2c1dbf6f4fcdbb3)), closes [#3206](https://github.com/zwave-js/zwave-js-ui/issues/3206)
 * **ui:** persist node panel position when dragged ([cdddb33](https://github.com/zwave-js/zwave-js-ui/commit/cdddb33a0afda314b0b63766d155e13157ae245a)), closes [#3191](https://github.com/zwave-js/zwave-js-ui/issues/3191)
-
 
 ### Features
 
@@ -1595,13 +1383,11 @@
 
 # [8.22.0](https://github.com/zwave-js/zwave-js-ui/compare/v8.21.2...v8.22.0) (2023-07-31)
 
-
 ### Bug Fixes
 
 * **ui:** hide lastSeen from statistics arrows tooltip ([7859795](https://github.com/zwave-js/zwave-js-ui/commit/78597959cb3993e2a80829a258030300780747d7))
 * **ui:** remove `check` action for failed nodes ([#3200](https://github.com/zwave-js/zwave-js-ui/issues/3200)) ([d6fc4d1](https://github.com/zwave-js/zwave-js-ui/commit/d6fc4d16c9c76a644d9b7062868f9cd140991331))
 * **ui:** return routes set not working without a priority route ([#3188](https://github.com/zwave-js/zwave-js-ui/issues/3188)) ([be2ece4](https://github.com/zwave-js/zwave-js-ui/commit/be2ece42968127d33488642121a6d3314b499d81))
-
 
 ### Features
 
@@ -1610,11 +1396,9 @@
 
 ## [8.21.2](https://github.com/zwave-js/zwave-js-ui/compare/v8.21.1...v8.21.2) (2023-07-25)
 
-
 ### Bug Fixes
 
 * typo on log ([1f01867](https://github.com/zwave-js/zwave-js-ui/commit/1f018677a512124e74fc9f5a4f0feaf83e9f07df))
-
 
 ### Features
 
@@ -1622,12 +1406,10 @@
 
 ## [8.21.1](https://github.com/zwave-js/zwave-js-ui/compare/v8.21.0...v8.21.1) (2023-07-21)
 
-
 ### Bug Fixes
 
 * misleading controller OTW error message ([1b7eadb](https://github.com/zwave-js/zwave-js-ui/commit/1b7eadbf40129dea92543951b45c49e191ae4575)), closes [#3181](https://github.com/zwave-js/zwave-js-ui/issues/3181)
 * prevent edge case on zwave client restart ([#3180](https://github.com/zwave-js/zwave-js-ui/issues/3180)) ([01dd87b](https://github.com/zwave-js/zwave-js-ui/commit/01dd87ba70999fb192748965e859a5ce57c0bffb))
-
 
 ### Features
 
@@ -1636,7 +1418,6 @@
 
 # [8.21.0](https://github.com/zwave-js/zwave-js-ui/compare/v8.20.0...v8.21.0) (2023-07-18)
 
-
 ### Bug Fixes
 
 * add `destroyed` flag to client to prevent edge case on reconnect ([e83b146](https://github.com/zwave-js/zwave-js-ui/commit/e83b1464fefc33dae13ccaf7e994d44a04c009c1))
@@ -1644,7 +1425,6 @@
 * **ui:** cleaner alert message on NVM backup ([52d7766](https://github.com/zwave-js/zwave-js-ui/commit/52d7766432304470a1fb6f0105322462f65c0d62))
 * **ui:** warn user before healing a node ([edc0125](https://github.com/zwave-js/zwave-js-ui/commit/edc0125800d97d31a996b0903de2e610d172f32f)), closes [#3175](https://github.com/zwave-js/zwave-js-ui/issues/3175)
 * user callbacks on the server are set too early when recovering from a serial disconnect ([2a8bf03](https://github.com/zwave-js/zwave-js-ui/commit/2a8bf03334a0e6fa468190b509edfbaa80eefb8b)), closes [#3174](https://github.com/zwave-js/zwave-js-ui/issues/3174)
-
 
 ### Features
 
@@ -1655,12 +1435,10 @@
 
 # [8.20.0](https://github.com/zwave-js/zwave-js-ui/compare/v8.19.0...v8.20.0) (2023-07-12)
 
-
 ### Bug Fixes
 
 * **ui:** distinguish unknown/missing values ([5ea53a6](https://github.com/zwave-js/zwave-js-ui/commit/5ea53a605828006cad29b731e48c9477d381ee30)), closes [#3153](https://github.com/zwave-js/zwave-js-ui/issues/3153)
 * **ui:** refresh schedule confirmation dialog is confusing ([3d528b1](https://github.com/zwave-js/zwave-js-ui/commit/3d528b17ef1b90068ad239feb20340c6131441eb)), closes [#3161](https://github.com/zwave-js/zwave-js-ui/issues/3161)
-
 
 ### Features
 
@@ -1673,7 +1451,6 @@
 
 # [8.19.0](https://github.com/zwave-js/zwave-js-ui/compare/v8.18.1...v8.19.0) (2023-06-20)
 
-
 ### Bug Fixes
 
 * authentication flow for JWT tokens ([#3140](https://github.com/zwave-js/zwave-js-ui/issues/3140)) ([6758a53](https://github.com/zwave-js/zwave-js-ui/commit/6758a53318f270ff1d4de070af33bc10ac473601))
@@ -1682,14 +1459,12 @@
 * **ui:** next page button behind fab in control panel ([1415037](https://github.com/zwave-js/zwave-js-ui/commit/1415037240ad827c2de27d59148cc42b88ca29ee)), closes [#3147](https://github.com/zwave-js/zwave-js-ui/issues/3147)
 * **ui:** use humburger button for SS fab ([8ffa0be](https://github.com/zwave-js/zwave-js-ui/commit/8ffa0be2ea3cc64c39bdcf2f42a62e85895b2a46))
 
-
 ### Features
 
 * bump zwave-js@10.23.5 ([#3144](https://github.com/zwave-js/zwave-js-ui/issues/3144)) ([7b05851](https://github.com/zwave-js/zwave-js-ui/commit/7b05851892fa8b16c7831e8e1bf6e45234c7f84d))
 * zwave-js v11 improvements ([#3143](https://github.com/zwave-js/zwave-js-ui/issues/3143)) ([652b08b](https://github.com/zwave-js/zwave-js-ui/commit/652b08beffff4febec2d6f14d7e96c4ea941016e))
 
 ## [8.18.1](https://github.com/zwave-js/zwave-js-ui/compare/v8.18.0...v8.18.1) (2023-06-12)
-
 
 ### Bug Fixes
 
@@ -1703,14 +1478,12 @@
 * **ui:** sync time action never visible on nodes ([9395466](https://github.com/zwave-js/zwave-js-ui/commit/939546627102fced961343fc8bec8fc92c6b0369))
 * **ui:** use humburger button for control panel fab ([5c12eae](https://github.com/zwave-js/zwave-js-ui/commit/5c12eae71ba2e83456b93a12420eebad633a31f1))
 
-
 ### Features
 
 * bump zwave-js@10.23.2 ([3565dfc](https://github.com/zwave-js/zwave-js-ui/commit/3565dfcb560b810ec3c2d5be35e82e9ef6e3ea11))
 * **discovery:** add `state_class: measurement` to sensors ([#3139](https://github.com/zwave-js/zwave-js-ui/issues/3139)) ([e07078a](https://github.com/zwave-js/zwave-js-ui/commit/e07078a3e17c2cfe8d346e462bfd1d6421134756))
 
 # [8.18.0](https://github.com/zwave-js/zwave-js-ui/compare/v8.17.1...v8.18.0) (2023-06-01)
-
 
 ### Bug Fixes
 
@@ -1721,7 +1494,6 @@
 * **ui:** ping node show error when ping fails ([ef7fe17](https://github.com/zwave-js/zwave-js-ui/commit/ef7fe17b981c9adf49ba99902b24e7228666806a)), closes [#3099](https://github.com/zwave-js/zwave-js-ui/issues/3099)
 * **ui:** prevent kepress listener to trigger when dialog not opened ([3a2998d](https://github.com/zwave-js/zwave-js-ui/commit/3a2998dec85d5bad6904d772e985a4a58a1d4aa2))
 
-
 ### Features
 
 * bump zwave-js@10.22.3 ([#3114](https://github.com/zwave-js/zwave-js-ui/issues/3114)) ([92ff545](https://github.com/zwave-js/zwave-js-ui/commit/92ff545ed763f3ae244299fcb7f75e0c13c95025))
@@ -1731,18 +1503,15 @@
 
 ## [8.17.1](https://github.com/zwave-js/zwave-js-ui/compare/v8.17.0...v8.17.1) (2023-05-25)
 
-
 ### Bug Fixes
 
 * **ui:** mesh graph styles ([94c3b67](https://github.com/zwave-js/zwave-js-ui/commit/94c3b67528a54108e044e2dcd6720b5560971267))
-
 
 ### Features
 
 * bump zwave-js@10.22.2 ([#3102](https://github.com/zwave-js/zwave-js-ui/issues/3102)) ([410baf6](https://github.com/zwave-js/zwave-js-ui/commit/410baf64fed29159bb631c344471c281d1f1481e))
 
 # [8.17.0](https://github.com/zwave-js/zwave-js-ui/compare/v8.16.2...v8.17.0) (2023-05-24)
-
 
 ### Bug Fixes
 
@@ -1751,7 +1520,6 @@
 * **ui:** improve keyboard navigation in nodes manager ([42baeff](https://github.com/zwave-js/zwave-js-ui/commit/42baeff17a5cce33a44a540655663b3cba1af5e6)), closes [#3079](https://github.com/zwave-js/zwave-js-ui/issues/3079)
 * **ui:** schedule refresh message is backward ([1342a69](https://github.com/zwave-js/zwave-js-ui/commit/1342a698a5290e70f8c405051d5727ad95b193a7)), closes [#3093](https://github.com/zwave-js/zwave-js-ui/issues/3093)
 * use isUnsupervisedOrSucceeded util ([e7cfc48](https://github.com/zwave-js/zwave-js-ui/commit/e7cfc488037ffffe5c3f62904fcab360e7c82dc8))
-
 
 ### Features
 
@@ -1762,19 +1530,16 @@
 
 ## [8.16.2](https://github.com/zwave-js/zwave-js-ui/compare/v8.16.1...v8.16.2) (2023-05-19)
 
-
 ### Bug Fixes
 
 * **ui:** boolean valueId may fail to set value ([c6a36e3](https://github.com/zwave-js/zwave-js-ui/commit/c6a36e3b8743f2e03c5633ea2c5ea0a6e0ef8190))
 * **ui:** ensure mode is set when no one is enabled ([4a48b1f](https://github.com/zwave-js/zwave-js-ui/commit/4a48b1fcddd6dddc3d81179502cbdb736563a9ac))
-
 
 ### Features
 
 * bump zwave-js@10.21.0 ([#3090](https://github.com/zwave-js/zwave-js-ui/issues/3090)) ([f8a681d](https://github.com/zwave-js/zwave-js-ui/commit/f8a681de979a56efc69279656f0e68308eae4667))
 
 ## [8.16.1](https://github.com/zwave-js/zwave-js-ui/compare/v8.16.0...v8.16.1) (2023-05-15)
-
 
 ### Bug Fixes
 
@@ -1784,7 +1549,6 @@
 
 # [8.16.0](https://github.com/zwave-js/zwave-js-ui/compare/v8.15.0...v8.16.0) (2023-05-15)
 
-
 ### Features
 
 * bump zwave-js@10.18.0 ([#3081](https://github.com/zwave-js/zwave-js-ui/issues/3081)) ([2311e70](https://github.com/zwave-js/zwave-js-ui/commit/2311e709315f61cba2c1bae35272c60b1e9bb6ac))
@@ -1793,11 +1557,9 @@
 
 # [8.15.0](https://github.com/zwave-js/zwave-js-ui/compare/v8.14.2...v8.15.0) (2023-05-04)
 
-
 ### Bug Fixes
 
 * **ui:** show missing props on user codes ([a2f071a](https://github.com/zwave-js/zwave-js-ui/commit/a2f071a2cf1f4bf8505a2919d8f37385110d0114))
-
 
 ### Features
 
@@ -1808,12 +1570,10 @@
 
 ## [8.14.2](https://github.com/zwave-js/zwave-js-ui/compare/v8.14.1...v8.14.2) (2023-04-26)
 
-
 ### Bug Fixes
 
 * **ui:** add device info in expanded node compat view ([726c383](https://github.com/zwave-js/zwave-js-ui/commit/726c383478a5394aa478b4286d21b0324decf733)), closes [#3060](https://github.com/zwave-js/zwave-js-ui/issues/3060)
 * **ui:** make login form pass manager friendly ([5a95b7b](https://github.com/zwave-js/zwave-js-ui/commit/5a95b7be95cd8e4df807fe956af9e0db2cbca5bd)), closes [#3053](https://github.com/zwave-js/zwave-js-ui/issues/3053)
-
 
 ### Features
 
@@ -1822,13 +1582,11 @@
 
 ## [8.14.1](https://github.com/zwave-js/zwave-js-ui/compare/v8.14.0...v8.14.1) (2023-04-19)
 
-
 ### Bug Fixes
 
 * **ui:** set value not working ([f3e57e1](https://github.com/zwave-js/zwave-js-ui/commit/f3e57e14a4583572f590f6f2cc9e9cc9c8dc8b15)), closes [#3055](https://github.com/zwave-js/zwave-js-ui/issues/3055)
 
 # [8.14.0](https://github.com/zwave-js/zwave-js-ui/compare/v8.13.1...v8.14.0) (2023-04-17)
-
 
 ### Bug Fixes
 
@@ -1836,7 +1594,6 @@
 * **ui:** prefill targets in fw update ([9c35a8d](https://github.com/zwave-js/zwave-js-ui/commit/9c35a8d4240aca5af853d6f8d5cebe74832e8932))
 * undefined CC version after re-interview/refresh values ([#3050](https://github.com/zwave-js/zwave-js-ui/issues/3050))Co-authored-by: AlCalzone <d.griesel@gmx.net> ([c3d8432](https://github.com/zwave-js/zwave-js-ui/commit/c3d8432f31cbce95527f12d7bd6053c7a11120c9)), closes [#3045](https://github.com/zwave-js/zwave-js-ui/issues/3045)
 * valueId metadata out of sync with ui ([#3040](https://github.com/zwave-js/zwave-js-ui/issues/3040)) ([ff0e12b](https://github.com/zwave-js/zwave-js-ui/commit/ff0e12bd032140c33e17bc8db6a20fd5066c3c3e))
-
 
 ### Features
 
@@ -1846,11 +1603,9 @@
 
 ## [8.13.1](https://github.com/zwave-js/zwave-js-ui/compare/v8.13.0...v8.13.1) (2023-04-07)
 
-
 ### Bug Fixes
 
 * **ui:** ignore rssi error on chart ([67cce90](https://github.com/zwave-js/zwave-js-ui/commit/67cce90c61338b7dce9b8214702f091c612a5ca9))
-
 
 ### Features
 
@@ -1858,11 +1613,9 @@
 
 # [8.13.0](https://github.com/zwave-js/zwave-js-ui/compare/v8.12.0...v8.13.0) (2023-04-05)
 
-
 ### Bug Fixes
 
 * **discovery:** door state binary sensor ([90316f4](https://github.com/zwave-js/zwave-js-ui/commit/90316f4ca6e6b8d8f638878b3236eaff5a7eece1)), closes [#3003](https://github.com/zwave-js/zwave-js-ui/issues/3003)
-
 
 ### Features
 
@@ -1871,7 +1624,6 @@
 * bump zwave-js@10.13.0 ([d5f2920](https://github.com/zwave-js/zwave-js-ui/commit/d5f2920a398dd7e6f170deadf6c57d2f4e33a9d6))
 
 # [8.12.0](https://github.com/zwave-js/zwave-js-ui/compare/v8.11.1...v8.12.0) (2023-04-03)
-
 
 ### Bug Fixes
 
@@ -1882,7 +1634,6 @@
 * **ui:** hide manage nodes when there are selected ones ([be89889](https://github.com/zwave-js/zwave-js-ui/commit/be89889b7ef49e310aa2ff4dd03b145e3ef0d030))
 * **ui:** otw update not working in bootloader only mode ([89bb3e2](https://github.com/zwave-js/zwave-js-ui/commit/89bb3e2d3859d383f656a35eef490b81693e91ba)), closes [#3023](https://github.com/zwave-js/zwave-js-ui/issues/3023)
 
-
 ### Features
 
 * **ui:** allow to send actions to selected nodes in table ([9806539](https://github.com/zwave-js/zwave-js-ui/commit/980653973e29e40f17f5b248da60693bb37e234a))
@@ -1890,18 +1641,15 @@
 
 ## [8.11.1](https://github.com/zwave-js/zwave-js-ui/compare/v8.11.0...v8.11.1) (2023-03-24)
 
-
 ### Features
 
 * bump zwave-js-server@1.27.0 ([#3018](https://github.com/zwave-js/zwave-js-ui/issues/3018)) ([0349aed](https://github.com/zwave-js/zwave-js-ui/commit/0349aedcc967a74ee3ea1f6a1b0f322b10ff7946))
 
 # [8.11.0](https://github.com/zwave-js/zwave-js-ui/compare/v8.10.1...v8.11.0) (2023-03-17)
 
-
 ### Bug Fixes
 
 * **ui:** correctly print driver function result ([d6f42d7](https://github.com/zwave-js/zwave-js-ui/commit/d6f42d75aaf1d377fe52e13d9ec8c0f9b7b5ea93))
-
 
 ### Features
 
@@ -1915,19 +1663,16 @@
 
 ## [8.10.1](https://github.com/zwave-js/zwave-js-ui/compare/v8.10.0...v8.10.1) (2023-03-09)
 
-
 ### Bug Fixes
 
 * broken inclusion process ([#2995](https://github.com/zwave-js/zwave-js-ui/issues/2995) ([51b806d](https://github.com/zwave-js/zwave-js-ui/commit/51b806de972a52aa042bd74d4a1965e8397984af)), closes [#2993](https://github.com/zwave-js/zwave-js-ui/issues/2993)
 * possible issue on startup `cb` is not a function ([4f12e5e](https://github.com/zwave-js/zwave-js-ui/commit/4f12e5e4ab7f1750650c6b90788176bdc6627672)), closes [#2994](https://github.com/zwave-js/zwave-js-ui/issues/2994)
-
 
 ### Features
 
 * **ui:** improve smart view for smaller screens ([2a77652](https://github.com/zwave-js/zwave-js-ui/commit/2a77652268f66d7a6f2fd9d3311eaef53d40eec5))
 
 # [8.10.0](https://github.com/zwave-js/zwave-js-ui/compare/v8.9.0...v8.10.0) (2023-03-08)
-
 
 ### Bug Fixes
 
@@ -1936,18 +1681,15 @@
 * toSubscribe being set to bool instead of map ([#2985](https://github.com/zwave-js/zwave-js-ui/issues/2985)) ([f6e3338](https://github.com/zwave-js/zwave-js-ui/commit/f6e333898bab88eb44d27e84aff2b7ea93106b91))
 * **ui:** heal network action not working ([3e4df63](https://github.com/zwave-js/zwave-js-ui/commit/3e4df63075c973d12dd4928a6d054c0000969727)), closes [#2987](https://github.com/zwave-js/zwave-js-ui/issues/2987)
 
-
 ### Features
 
 * bump zwave-js@10.11.0 ([e7556b4](https://github.com/zwave-js/zwave-js-ui/commit/e7556b4bb177a5271dd84d4f4f6d94804c551b6d))
 
 # [8.9.0](https://github.com/zwave-js/zwave-js-ui/compare/v8.8.6...v8.9.0) (2023-02-24)
 
-
 ### Bug Fixes
 
 * **ui:** prevent error on expanded node ([8377e60](https://github.com/zwave-js/zwave-js-ui/commit/8377e600938e368eff77e0fce1c7ab9c54b8e1e9))
-
 
 ### Features
 
@@ -1955,11 +1697,9 @@
 
 ## [8.8.6](https://github.com/zwave-js/zwave-js-ui/compare/v8.8.5...v8.8.6) (2023-02-21)
 
-
 ### Bug Fixes
 
 * create symlink to current UI logfile ([#2959](https://github.com/zwave-js/zwave-js-ui/issues/2959)) ([e77346b](https://github.com/zwave-js/zwave-js-ui/commit/e77346bbe746036407a511af6912f5fa5cf97ce5))
-
 
 ### Features
 
@@ -1967,7 +1707,6 @@
 * **discovery:** danfoss thermostat support ([de7ab08](https://github.com/zwave-js/zwave-js-ui/commit/de7ab0859e4a51b07b883c5c32bdf1edb717cca1)), closes [#2834](https://github.com/zwave-js/zwave-js-ui/issues/2834)
 
 ## [8.8.5](https://github.com/zwave-js/zwave-js-ui/compare/v8.8.4...v8.8.5) (2023-02-09)
-
 
 ### Bug Fixes
 
@@ -1977,13 +1716,11 @@
 * **ui:** only open first level on store ([5e7df02](https://github.com/zwave-js/zwave-js-ui/commit/5e7df02bade54a8cebf3a58178c954547fcae9c8)), closes [#2950](https://github.com/zwave-js/zwave-js-ui/issues/2950)
 * **ui:** prismjs editor line numbers ([#2947](https://github.com/zwave-js/zwave-js-ui/issues/2947) ([d091834](https://github.com/zwave-js/zwave-js-ui/commit/d091834ad7512bf9be2b6c99051dcd09b6b8a864)), closes [#2945](https://github.com/zwave-js/zwave-js-ui/issues/2945)
 
-
 ### Features
 
 * bump zwave-js@10.10.0 ([#2954](https://github.com/zwave-js/zwave-js-ui/issues/2954)) ([e0cf08c](https://github.com/zwave-js/zwave-js-ui/commit/e0cf08c3be2dd3bb758fa5a64914840bd424a8ee))
 
 ## [8.8.4](https://github.com/zwave-js/zwave-js-ui/compare/v8.8.3...v8.8.4) (2023-02-07)
-
 
 ### Bug Fixes
 
@@ -1994,7 +1731,6 @@
 * **ui:** save button not visible on smartphones ([1d4e3bc](https://github.com/zwave-js/zwave-js-ui/commit/1d4e3bc04548e5a9f93de8b990e84be24f8258f9)), closes [#2944](https://github.com/zwave-js/zwave-js-ui/issues/2944)
 * **ui:** visualization issues with custom configuration parameter setting ([0551c81](https://github.com/zwave-js/zwave-js-ui/commit/0551c8173c6d4e2703ce9ffa540b551846d04714)), closes [#2940](https://github.com/zwave-js/zwave-js-ui/issues/2940)
 
-
 ### Features
 
 * add logins logs ([b1dc1a4](https://github.com/zwave-js/zwave-js-ui/commit/b1dc1a4f535fbba65020d8e45943bb1c8e7e4e33)), closes [#2933](https://github.com/zwave-js/zwave-js-ui/issues/2933)
@@ -2003,13 +1739,11 @@
 
 ## [8.8.3](https://github.com/zwave-js/zwave-js-ui/compare/v8.8.2...v8.8.3) (2023-01-31)
 
-
 ### Bug Fixes
 
 * **mqtt:** set correct `device_class` on gas sensor ([892e49a](https://github.com/zwave-js/zwave-js-ui/commit/892e49a4bc2ec3012ff216d357456dca2b8355c9)), closes [#2930](https://github.com/zwave-js/zwave-js-ui/issues/2930)
 * stopping network heal does not clear healing progress in ui ([6cddde3](https://github.com/zwave-js/zwave-js-ui/commit/6cddde35947d674584e7b017136f21ca2eac5f93)), closes [#2926](https://github.com/zwave-js/zwave-js-ui/issues/2926)
 * **ui:** typo in smart start tab ([c0dd46c](https://github.com/zwave-js/zwave-js-ui/commit/c0dd46cc07f5f409208fb000966e398983f528f1)), closes [#2925](https://github.com/zwave-js/zwave-js-ui/issues/2925)
-
 
 ### Features
 
@@ -2018,7 +1752,6 @@
 
 ## [8.8.2](https://github.com/zwave-js/zwave-js-ui/compare/v8.8.1...v8.8.2) (2023-01-29)
 
-
 ### Features
 
 * bump zwave-js-server@1.25.0 ([#2917](https://github.com/zwave-js/zwave-js-ui/issues/2917)) ([c391e1a](https://github.com/zwave-js/zwave-js-ui/commit/c391e1a1a76826a5ea7a1a2d7d78457ca360ebfb))
@@ -2026,7 +1759,6 @@
 * intercept zwave-js server `hard reset` event ([#2879](https://github.com/zwave-js/zwave-js-ui/issues/2879)) ([8501609](https://github.com/zwave-js/zwave-js-ui/commit/8501609007ce8847baf5673ee96f044c6a81a469))
 
 ## [8.8.1](https://github.com/zwave-js/zwave-js-ui/compare/v8.8.0...v8.8.1) (2023-01-26)
-
 
 ### Bug Fixes
 
@@ -2037,13 +1769,11 @@
 * **ui:** prevent showing empty controller update result ([8ef4ab7](https://github.com/zwave-js/zwave-js-ui/commit/8ef4ab71c6b6df4cbcd82a4ff5e831c6d4836dff))
 * **ui:** show different color for S0 security ([85b0371](https://github.com/zwave-js/zwave-js-ui/commit/85b0371c617ede5debbac7aa4d54468ebe8058ca)), closes [#2894](https://github.com/zwave-js/zwave-js-ui/issues/2894)
 
-
 ### Features
 
 * bump zwave-js@10.5.0 ([#2913](https://github.com/zwave-js/zwave-js-ui/issues/2913)) ([bf7d623](https://github.com/zwave-js/zwave-js-ui/commit/bf7d623e2535dcfc2cc37cb0f771756bacece916))
 
 # [8.8.0](https://github.com/zwave-js/zwave-js-ui/compare/v8.7.0...v8.8.0) (2023-01-23)
-
 
 ### Bug Fixes
 
@@ -2051,7 +1781,6 @@
 * **ui:** checkbox in columns not working ([26c423e](https://github.com/zwave-js/zwave-js-ui/commit/26c423e17d0b7b913e4d78eab115bc79069e5064)), closes [#2890](https://github.com/zwave-js/zwave-js-ui/issues/2890)
 * **ui:** doubled scrollbars dimensions ([dda1dd4](https://github.com/zwave-js/zwave-js-ui/commit/dda1dd48e0b2668795a606de4aebdccb848f71cc)), closes [#2899](https://github.com/zwave-js/zwave-js-ui/issues/2899)
 * **ui:** hide inclusion stopped alert on grant security classes ([2dee8de](https://github.com/zwave-js/zwave-js-ui/commit/2dee8de5dd41e4230c101fc743fa056755b5b7c7))
-
 
 ### Features
 
@@ -2064,11 +1793,9 @@
 
 # [8.7.0](https://github.com/zwave-js/zwave-js-ui/compare/v8.6.3...v8.7.0) (2023-01-16)
 
-
 ### Bug Fixes
 
 * **mqtt:** lock error when persistent store is enabled ([082209b](https://github.com/zwave-js/zwave-js-ui/commit/082209bb6ac84dc8573a13bca28fdfe2b49009e2))
-
 
 ### Features
 
@@ -2076,7 +1803,6 @@
 * scheduled jobs ([#2882](https://github.com/zwave-js/zwave-js-ui/issues/2882)) ([c9cabbb](https://github.com/zwave-js/zwave-js-ui/commit/c9cabbb8c2f3cd1a3c0cb1d3f472951e24d5a53c))
 
 ## [8.6.3](https://github.com/zwave-js/zwave-js-ui/compare/v8.6.2...v8.6.3) (2023-01-10)
-
 
 ### Bug Fixes
 
@@ -2088,12 +1814,10 @@
 
 ## [8.6.1](https://github.com/zwave-js/zwave-js-ui/compare/v8.6.0...v8.6.1) (2022-12-16)
 
-
 ### Bug Fixes
 
 * **ui:** controller as default target in healthcheck ([1df4afb](https://github.com/zwave-js/zwave-js-ui/commit/1df4afb521dd81a774f7f22e43091ef7583ec3c5)), closes [#2842](https://github.com/zwave-js/zwave-js-ui/issues/2842)
 * **ui:** progress bar never hides in healthcheck dialog ([01c659b](https://github.com/zwave-js/zwave-js-ui/commit/01c659bd33dbb3152880c9d749c17af4adc876f4)), closes [#2841](https://github.com/zwave-js/zwave-js-ui/issues/2841)
-
 
 ### Features
 
@@ -2101,13 +1825,11 @@
 
 # [8.6.0](https://github.com/zwave-js/zwave-js-ui/compare/v8.5.1...v8.6.0) (2022-12-09)
 
-
 ### Features
 
 * **ui:** add value format to Custom ConfigCC ([#2837](https://github.com/zwave-js/zwave-js-ui/issues/2837)) ([11dc84d](https://github.com/zwave-js/zwave-js-ui/commit/11dc84dc36c5b5873153dcdd044dfc8e0248d2ea))
 
 ## [8.5.1](https://github.com/zwave-js/zwave-js-ui/compare/v8.5.0...v8.5.1) (2022-11-25)
-
 
 ### Bug Fixes
 
@@ -2115,11 +1837,9 @@
 
 # [8.5.0](https://github.com/zwave-js/zwave-js-ui/compare/v8.4.1...v8.5.0) (2022-11-18)
 
-
 ### Bug Fixes
 
 * correctly update node `last seen` ([b97dd0d](https://github.com/zwave-js/zwave-js-ui/commit/b97dd0d30de2a106eb8c68fa326d9a48db27fd11)), closes [#2800](https://github.com/zwave-js/zwave-js-ui/issues/2800)
-
 
 ### Features
 
@@ -2129,13 +1849,11 @@
 
 ## [8.4.1](https://github.com/zwave-js/zwave-js-ui/compare/v8.4.0...v8.4.1) (2022-11-08)
 
-
 ### Bug Fixes
 
 * **mqtt:** possible circular reference error in publish ([#2792](https://github.com/zwave-js/zwave-js-ui/issues/2792)) ([1424dd4](https://github.com/zwave-js/zwave-js-ui/commit/1424dd400ea99647cee1b4109a41e28f38542db6))
 
 # [8.4.0](https://github.com/zwave-js/zwave-js-ui/compare/v8.3.0...v8.4.0) (2022-11-08)
-
 
 ### Bug Fixes
 
@@ -2143,20 +1861,17 @@
 * **ui:** filter mains powered devices ([#2788](https://github.com/zwave-js/zwave-js-ui/issues/2788)) ([e16225c](https://github.com/zwave-js/zwave-js-ui/commit/e16225c1f0723a441519a57eea43f10ab66bdeed)), closes [#2761](https://github.com/zwave-js/zwave-js-ui/issues/2761)
 * **ui:** valueId button text overlaps ([33d1cf5](https://github.com/zwave-js/zwave-js-ui/commit/33d1cf524096449799f9a557541b5cba177f2ebb)), closes [#2780](https://github.com/zwave-js/zwave-js-ui/issues/2780)
 
-
 ### Features
 
 * **ui:** show loader when value is waiting an update ([#2791](https://github.com/zwave-js/zwave-js-ui/issues/2791)) ([ff2396b](https://github.com/zwave-js/zwave-js-ui/commit/ff2396b0d48b7a77de9ce503395db29bd12ddf52)), closes [/github.com/zwave-js/zwave-js-ui/issues/188#issuecomment-1295987999](https://github.com//github.com/zwave-js/zwave-js-ui/issues/188/issues/issuecomment-1295987999)
 
 # [8.3.0](https://github.com/zwave-js/zwave-js-ui/compare/v8.2.2...v8.3.0) (2022-11-02)
 
-
 ### Bug Fixes
 
 * catch zwave js server errors ([#2754](https://github.com/zwave-js/zwave-js-ui/issues/2754)) ([af754ad](https://github.com/zwave-js/zwave-js-ui/commit/af754ad6b5c9b015f2179025fd222abb03499628)), closes [#782](https://github.com/zwave-js/zwave-js-ui/issues/782)
 * **ui:** typo in fw update dialog title ([#2764](https://github.com/zwave-js/zwave-js-ui/issues/2764)) ([044d543](https://github.com/zwave-js/zwave-js-ui/commit/044d543ed963445d33cf5bbaa9d8bfa25816ecaf))
 * **ui:** update favicons ([a16b670](https://github.com/zwave-js/zwave-js-ui/commit/a16b670419be4866dfa1b411a5822bdf33e07682))
-
 
 ### Features
 
@@ -2165,13 +1880,11 @@
 
 ## [8.2.2](https://github.com/zwave-js/zwave-js-ui/compare/v8.2.1...v8.2.2) (2022-10-25)
 
-
 ### Bug Fixes
 
 * **ui:** better firmware update progress ([#2755](https://github.com/zwave-js/zwave-js-ui/issues/2755)) ([d6c7867](https://github.com/zwave-js/zwave-js-ui/commit/d6c78679d650b60e0234403d865f90fc433908d6))
 * **ui:** nodes manager dialog improvements ([#2747](https://github.com/zwave-js/zwave-js-ui/issues/2747)) ([fe152d9](https://github.com/zwave-js/zwave-js-ui/commit/fe152d921fba4b960e4b55c8ee022733c345cbdd)), closes [#2079](https://github.com/zwave-js/zwave-js-ui/issues/2079) [#2746](https://github.com/zwave-js/zwave-js-ui/issues/2746) [#2735](https://github.com/zwave-js/zwave-js-ui/issues/2735)
 * **ui:** show warning if `manualDiscovery` is enabled ([bbb16db](https://github.com/zwave-js/zwave-js-ui/commit/bbb16db4b23fe7264c4a3ac3bd0e96b0e819eb76)), closes [#2733](https://github.com/zwave-js/zwave-js-ui/issues/2733)
-
 
 ### Features
 
@@ -2179,18 +1892,15 @@
 
 ## [8.2.1](https://github.com/zwave-js/zwave-js-ui/compare/v8.2.0...v8.2.1) (2022-10-12)
 
-
 ### Bug Fixes
 
 * **ui:** add back target selection to firmware update dialog ([#2726](https://github.com/zwave-js/zwave-js-ui/issues/2726)) ([c3c6c1c](https://github.com/zwave-js/zwave-js-ui/commit/c3c6c1c902971b35149948a211562e12d09dc5f0))
 
 # [8.2.0](https://github.com/zwave-js/zwave-js-ui/compare/v8.1.0...v8.2.0) (2022-10-11)
 
-
 ### Bug Fixes
 
 * **mqtt:** possible write fails when publishing to `/set` ([#2720](https://github.com/zwave-js/zwave-js-ui/issues/2720)) ([03fa9ee](https://github.com/zwave-js/zwave-js-ui/commit/03fa9ee7a9b19887ed2d7974d953b0d73998448c))
-
 
 ### Features
 
@@ -2199,7 +1909,6 @@
 
 # [8.1.0](https://github.com/zwave-js/zwave-js-ui/compare/v8.0.3...v8.1.0) (2022-10-04)
 
-
 ### Features
 
 * **pkg:** add windows build to release assets ([abb7ca9](https://github.com/zwave-js/zwave-js-ui/commit/abb7ca9e8471a25f5643f876b0bd0ebd0e90f87d))
@@ -2207,13 +1916,11 @@
 
 ## [8.0.3](https://github.com/zwave-js/zwave-js-ui/compare/v8.0.2...v8.0.3) (2022-10-03)
 
-
 ### Features
 
 * add `UID_DISCOVERY_PREFIX` env var ([#2698](https://github.com/zwave-js/zwave-js-ui/issues/2698)) ([93c16af](https://github.com/zwave-js/zwave-js-ui/commit/93c16af9f2ed6413d1ee11c6ed40f16cdbf31d0c))
 
 ## [8.0.2](https://github.com/zwave-js/zwave-js-ui/compare/v8.0.1...v8.0.2) (2022-09-29)
-
 
 ### Bug Fixes
 
@@ -2222,18 +1929,15 @@
 * revert mqtt discovery `unique_id` prefix change ([2fc3850](https://github.com/zwave-js/zwave-js-ui/commit/2fc3850ed9f4edd4ae64563ce18af16693303e85))
 * startup ASCII logo not escaped ([dc1ce1d](https://github.com/zwave-js/zwave-js-ui/commit/dc1ce1d6daa8f6d9ff3cf36dcbe48f23025a5351))
 
-
 ### Features
 
 * bump @zwave-js/server@1.23.1 ([#2689](https://github.com/zwave-js/zwave-js-ui/issues/2689)) ([ee339d3](https://github.com/zwave-js/zwave-js-ui/commit/ee339d388be073df19b4cc0655885db672e3a2ee))
 
 ## [8.0.1](https://github.com/zwave-js/zwave-js-ui/compare/v8.0.0...v8.0.1) (2022-09-26)
 
-
 ### Bug Fixes
 
 * possible delays in slower systems ([3021f91](https://github.com/zwave-js/zwave-js-ui/commit/3021f914c071947fbd203b3a510abab902e839ac)), closes [#2676](https://github.com/zwave-js/zwave-js-ui/issues/2676)
-
 
 ### Features
 
@@ -2241,13 +1945,11 @@
 
 # [8.0.0](https://github.com/zwave-js/zwave-js-ui/compare/v7.2.0...v8.0.0) (2022-09-21)
 
-
 ### Features
 
 * bump zwave-js@10.2.0 ([#2666](https://github.com/zwave-js/zwave-js-ui/issues/2666)) ([fe51581](https://github.com/zwave-js/zwave-js-ui/commit/fe5158130c29742617f8240b92f22a5a0af8fbc4))
 
 # [7.2.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v7.1.0...v7.2.0) (2022-09-19)
-
 
 ### Features
 
@@ -2258,7 +1960,6 @@
 * set zwave-js `userAgent` option ([#2644](https://github.com/zwave-js/zwavejs2mqtt/issues/2644)) ([e3e7f67](https://github.com/zwave-js/zwavejs2mqtt/commit/e3e7f67babb5a8b841cf227c190d0d5ad6eeecbe)), closes [#2636](https://github.com/zwave-js/zwavejs2mqtt/issues/2636)
 
 # [7.1.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v7.0.0...v7.1.0) (2022-09-06)
-
 
 ### Bug Fixes
 
@@ -2271,7 +1972,6 @@
 * **ui:** get/set configuration CC ([#2627](https://github.com/zwave-js/zwavejs2mqtt/issues/2627)) ([984e613](https://github.com/zwave-js/zwavejs2mqtt/commit/984e613fc79e3b927c066df20713e9cceb755fca))
 * **ui:** healthcheck results not showing correctly ([bd09413](https://github.com/zwave-js/zwavejs2mqtt/commit/bd094138e2cacd24e3f1d13906427a35fde237ca))
 
-
 ### Features
 
 * add '@kvaster/zwavejs-prom' plugin ([a55f847](https://github.com/zwave-js/zwavejs2mqtt/commit/a55f8476504d725bdf7e38f66b751c70d99f28b4)), closes [#2604](https://github.com/zwave-js/zwavejs2mqtt/issues/2604)
@@ -2283,14 +1983,12 @@
 
 # [7.0.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v6.16.0...v7.0.0) (2022-09-01)
 
-
 ### Features
 
 * bump zwave-js@10.0.3 ([a4b6027](https://github.com/zwave-js/zwavejs2mqtt/commit/a4b6027eb8dcc56a316e33e89b4e2640f0330fab))
 * zwave-js v10 support ([#2542](https://github.com/zwave-js/zwavejs2mqtt/issues/2542)) ([f51d17e](https://github.com/zwave-js/zwavejs2mqtt/commit/f51d17e22329e6ad1892fc9ba447c942f9df1055))
 
 # [6.16.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v6.15.2...v6.16.0) (2022-08-29)
-
 
 ### Bug Fixes
 
@@ -2303,13 +2001,11 @@
 * **ui:** including a node shows security class twice ([1178e16](https://github.com/zwave-js/zwavejs2mqtt/commit/1178e16926e3d56930846c17d925b2b0aa18d597)), closes [#2321](https://github.com/zwave-js/zwavejs2mqtt/issues/2321)
 * **ui:** refreshing RF region results in empty field ([#2588](https://github.com/zwave-js/zwavejs2mqtt/issues/2588)) ([84c878d](https://github.com/zwave-js/zwavejs2mqtt/commit/84c878db91ed4f832220ad0888e676fc6d3e91d6)), closes [#2585](https://github.com/zwave-js/zwavejs2mqtt/issues/2585)
 
-
 ### Features
 
 * move logs to `logs` folder in store ([#2610](https://github.com/zwave-js/zwavejs2mqtt/issues/2610)) ([61bd39f](https://github.com/zwave-js/zwavejs2mqtt/commit/61bd39ff4538d2fa5fc1bd1382896193ad49b6de)), closes [#2600](https://github.com/zwave-js/zwavejs2mqtt/issues/2600)
 
 ## [6.15.2](https://github.com/zwave-js/zwavejs2mqtt/compare/v6.15.1...v6.15.2) (2022-08-05)
-
 
 ### Bug Fixes
 
@@ -2318,13 +2014,11 @@
 
 ## [6.15.1](https://github.com/zwave-js/zwavejs2mqtt/compare/v6.15.0...v6.15.1) (2022-08-02)
 
-
 ### Bug Fixes
 
 * icons not diaplaying correctly ([935a18d](https://github.com/zwave-js/zwavejs2mqtt/commit/935a18d977d63087f4dcc6c6fd5a9d4e815e1e41)), closes [#2564](https://github.com/zwave-js/zwavejs2mqtt/issues/2564)
 
 # [6.15.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v6.14.1...v6.15.0) (2022-08-02)
-
 
 ### Features
 
@@ -2332,11 +2026,9 @@
 
 ## [6.14.1](https://github.com/zwave-js/zwavejs2mqtt/compare/v6.14.0...v6.14.1) (2022-07-27)
 
-
 ### Bug Fixes
 
 * typos in code ([#2544](https://github.com/zwave-js/zwavejs2mqtt/issues/2544)) ([e7e397b](https://github.com/zwave-js/zwavejs2mqtt/commit/e7e397b9f9feff25c31bdfe0cbb03b82af9b715f))
-
 
 ### Features
 
@@ -2344,13 +2036,11 @@
 
 # [6.14.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v6.13.0...v6.14.0) (2022-07-22)
 
-
 ### Bug Fixes
 
 * issues with controller powerlevel settings ([#2541](https://github.com/zwave-js/zwavejs2mqtt/issues/2541)) ([02e5f2b](https://github.com/zwave-js/zwavejs2mqtt/commit/02e5f2b6409a4c673340113e345e487cc22c7e83))
 * **ui:** diaplay issue with healthckeck dialog on smartphones ([af954e9](https://github.com/zwave-js/zwavejs2mqtt/commit/af954e978873903a61c27b7a9d55d2f8ba524557)), closes [#2513](https://github.com/zwave-js/zwavejs2mqtt/issues/2513)
 * **ui:** nvm backup alert ([d49dad8](https://github.com/zwave-js/zwavejs2mqtt/commit/d49dad8b1b44f2058e0d926deb92a34a63ba4db2))
-
 
 ### Features
 
@@ -2361,7 +2051,6 @@
 
 # [6.13.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v6.12.1...v6.13.0) (2022-06-28)
 
-
 ### Features
 
 * backup restore ([#2469](https://github.com/zwave-js/zwavejs2mqtt/issues/2469)) ([b34cde4](https://github.com/zwave-js/zwavejs2mqtt/commit/b34cde43be9a4b536be3cf1acd81e04f8966100d)), closes [#2068](https://github.com/zwave-js/zwavejs2mqtt/issues/2068)
@@ -2371,13 +2060,11 @@
 
 ## [6.12.1](https://github.com/zwave-js/zwavejs2mqtt/compare/v6.12.0...v6.12.1) (2022-06-24)
 
-
 ### Bug Fixes
 
 * log rotation ([#2476](https://github.com/zwave-js/zwavejs2mqtt/issues/2476)) ([a24f1b5](https://github.com/zwave-js/zwavejs2mqtt/commit/a24f1b5e7c1f46390d5a20fd1f810dcd740d3a8e))
 * show commit sha whitout using git ([#2458](https://github.com/zwave-js/zwavejs2mqtt/issues/2458)) ([10fb994](https://github.com/zwave-js/zwavejs2mqtt/commit/10fb994aca8bad73e45f29922497388da8a35d1b))
 * **ui:** disable mqtt hass discovery by default ([17faaad](https://github.com/zwave-js/zwavejs2mqtt/commit/17faaad03d26d42d1032dfc410d9900bbc08778e))
-
 
 ### Features
 
@@ -2388,13 +2075,11 @@
 
 # [6.12.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v6.11.0...v6.12.0) (2022-06-07)
 
-
 ### Bug Fixes
 
 * smart start inclusion forgets node name and loc ([33167ec](https://github.com/zwave-js/zwavejs2mqtt/commit/33167ecad5a34a30da23eb8d4bd2ab4be97a5ef8)), closes [#2447](https://github.com/zwave-js/zwavejs2mqtt/issues/2447)
 * typo in the storeLimiter error message ([#2448](https://github.com/zwave-js/zwavejs2mqtt/issues/2448)) ([943aee9](https://github.com/zwave-js/zwavejs2mqtt/commit/943aee95dc0ffaae3abd735df7f9deaa087c69e6))
 * **ui:** advanced button overflow in  expanded node ([80fec3a](https://github.com/zwave-js/zwavejs2mqtt/commit/80fec3a9115020a8664ef364c59321751ac4b37c))
-
 
 ### Features
 
@@ -2404,19 +2089,16 @@
 
 # [6.11.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v6.10.0...v6.11.0) (2022-05-27)
 
-
 ### Bug Fixes
 
 * disable colors also in HTTP logging ([#2438](https://github.com/zwave-js/zwavejs2mqtt/issues/2438)) ([a7fea38](https://github.com/zwave-js/zwavejs2mqtt/commit/a7fea38427baa984b2afe87d8bdf5e39a13d8938))
 * **ui:** show warning when zwave or general logs are disabled ([#2443](https://github.com/zwave-js/zwavejs2mqtt/issues/2443)) ([ef2740a](https://github.com/zwave-js/zwavejs2mqtt/commit/ef2740a0364d57fef045606527f3b2367f4bd472))
-
 
 ### Features
 
 * **ui:** node events logs queue ([#2439](https://github.com/zwave-js/zwavejs2mqtt/issues/2439)) ([daea2eb](https://github.com/zwave-js/zwavejs2mqtt/commit/daea2eb625f6b3cd2bbbd569ac6422ecbb8c9ac7))
 
 # [6.10.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v6.9.1...v6.10.0) (2022-05-24)
-
 
 ### Features
 
@@ -2426,13 +2108,11 @@
 
 ## [6.9.1](https://github.com/zwave-js/zwavejs2mqtt/compare/v6.9.0...v6.9.1) (2022-05-12)
 
-
 ### Bug Fixes
 
 * avoid showing git error on startup ([#2418](https://github.com/zwave-js/zwavejs2mqtt/issues/2418)) ([0d44081](https://github.com/zwave-js/zwavejs2mqtt/commit/0d44081f8359ff447d452c2d6271919640b637f6))
 * correctly parse buffers in MQTT payload ([#2412](https://github.com/zwave-js/zwavejs2mqtt/issues/2412)) ([36db245](https://github.com/zwave-js/zwavejs2mqtt/commit/36db245929b66581406ffcd876bacc0564375c45)), closes [#2303](https://github.com/zwave-js/zwavejs2mqtt/issues/2303)
 * **ui:** table sorting/grouping with undefined values ([#2414](https://github.com/zwave-js/zwavejs2mqtt/issues/2414)) ([28021d7](https://github.com/zwave-js/zwavejs2mqtt/commit/28021d73759fb76737d628ea252a07f28d33cb97))
-
 
 ### Features
 
@@ -2440,11 +2120,9 @@
 
 # [6.9.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v6.8.1...v6.9.0) (2022-05-05)
 
-
 ### Bug Fixes
 
 * **ui:** current action null in nodes manager ([#2406](https://github.com/zwave-js/zwavejs2mqtt/issues/2406)) ([30c28e0](https://github.com/zwave-js/zwavejs2mqtt/commit/30c28e09a58975fb2a8ed7b568ca8dfa50fcfcf5))
-
 
 ### Features
 
@@ -2454,11 +2132,9 @@
 
 ## [6.8.1](https://github.com/zwave-js/zwavejs2mqtt/compare/v6.8.0...v6.8.1) (2022-05-02)
 
-
 ### Bug Fixes
 
 * **ui:** local settings not correctly updated after submit ([14d5b46](https://github.com/zwave-js/zwavejs2mqtt/commit/14d5b46f3a651ed00b7d20265be6f363c5036e8f)), closes [#2401](https://github.com/zwave-js/zwavejs2mqtt/issues/2401)
-
 
 ### Features
 
@@ -2467,13 +2143,11 @@
 
 # [6.8.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v6.7.4...v6.8.0) (2022-04-28)
 
-
 ### Bug Fixes
 
 * inclusion via QR forgets name/location ([#2391](https://github.com/zwave-js/zwavejs2mqtt/issues/2391)) ([c05863f](https://github.com/zwave-js/zwavejs2mqtt/commit/c05863fcff15ed5cdc3e6c778e848b1a4b2d3388)), closes [#2389](https://github.com/zwave-js/zwavejs2mqtt/issues/2389)
 * **ui:** allow to display comments with line break ([2ea8193](https://github.com/zwave-js/zwavejs2mqtt/commit/2ea8193509b315dd0ceea90182ae87512bcb92b7))
 * **ui:** use types and utils from zwave-js ([#2383](https://github.com/zwave-js/zwavejs2mqtt/issues/2383)) ([20bbfa3](https://github.com/zwave-js/zwavejs2mqtt/commit/20bbfa3bcd114ec4862eedbda78092aff0126a67))
-
 
 ### Features
 
@@ -2484,11 +2158,9 @@
 
 ## [6.7.4](https://github.com/zwave-js/zwavejs2mqtt/compare/v6.7.3...v6.7.4) (2022-04-22)
 
-
 ### Bug Fixes
 
 * correctly parse MultilevelSwitchCC notifications ([#2386](https://github.com/zwave-js/zwavejs2mqtt/issues/2386)) ([9cc840f](https://github.com/zwave-js/zwavejs2mqtt/commit/9cc840f5d6c1693c1f34f67b0769cfd390cace60)), closes [#2382](https://github.com/zwave-js/zwavejs2mqtt/issues/2382)
-
 
 ### Features
 
@@ -2496,11 +2168,9 @@
 
 ## [6.7.3](https://github.com/zwave-js/zwavejs2mqtt/compare/v6.7.2...v6.7.3) (2022-04-20)
 
-
 ### Bug Fixes
 
 * **ui:** correct misspelling ([#2378](https://github.com/zwave-js/zwavejs2mqtt/issues/2378)) ([ec4431b](https://github.com/zwave-js/zwavejs2mqtt/commit/ec4431be1499212d82007bf73ef0efd9fccdca70))
-
 
 ### Features
 
@@ -2508,13 +2178,11 @@
 
 ## [6.7.2](https://github.com/zwave-js/zwavejs2mqtt/compare/v6.7.1...v6.7.2) (2022-04-19)
 
-
 ### Bug Fixes
 
 * ensure device config priority dir exists ([f266328](https://github.com/zwave-js/zwavejs2mqtt/commit/f266328e2e813bc111f8bf0eda80694d3988a508)), closes [#2374](https://github.com/zwave-js/zwavejs2mqtt/issues/2374)
 
 ## [6.7.1](https://github.com/zwave-js/zwavejs2mqtt/compare/v6.7.0...v6.7.1) (2022-04-14)
-
 
 ### Bug Fixes
 
@@ -2522,13 +2190,11 @@
 * **ui:** group association dialog check max nodes and disable add ([6d234ca](https://github.com/zwave-js/zwavejs2mqtt/commit/6d234caea8fa7b8a3815959a9b72575ee7b28c2d))
 * **ui:** hide target node when group is full ([#2359](https://github.com/zwave-js/zwavejs2mqtt/issues/2359)) ([fd10576](https://github.com/zwave-js/zwavejs2mqtt/commit/fd105769be01de8439da4517da362981ef776c4b))
 
-
 ### Features
 
 * bump zwave-js@9.0.2 ([#2373](https://github.com/zwave-js/zwavejs2mqtt/issues/2373)) ([2775ecb](https://github.com/zwave-js/zwavejs2mqtt/commit/2775ecbe6ac84f22761f4ee9894d06983e6ef717))
 
 # [6.7.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v6.6.2...v6.7.0) (2022-04-05)
-
 
 ### Bug Fixes
 
@@ -2538,18 +2204,15 @@
 * **ui:** hint to on-screen keyboards that DSK pin is numeric ([#2343](https://github.com/zwave-js/zwavejs2mqtt/issues/2343)) ([15caab7](https://github.com/zwave-js/zwavejs2mqtt/commit/15caab771f723e3b137a932a87de6fd40959fdcb))
 * **ui:** setting hint ([1e776cd](https://github.com/zwave-js/zwavejs2mqtt/commit/1e776cdec9c60974388bc6842e23305e3375382f))
 
-
 ### Features
 
 * bump zwave-js@9 and @zwave-js/server@1.16.0 and fix breaking changes ([#2294](https://github.com/zwave-js/zwavejs2mqtt/issues/2294)) ([#2294](https://github.com/zwave-js/zwavejs2mqtt/issues/2294)) ([519dee8](https://github.com/zwave-js/zwavejs2mqtt/commit/519dee8fe4d531b2ae9ad453d2d448257c9a76aa)), closes [#2337](https://github.com/zwave-js/zwavejs2mqtt/issues/2337)
 
 ## [6.6.2](https://github.com/zwave-js/zwavejs2mqtt/compare/v6.6.1...v6.6.2) (2022-03-25)
 
-
 ### Bug Fixes
 
 * **ui:** remove messages from stats of non-controller nodes ([3d483ff](https://github.com/zwave-js/zwavejs2mqtt/commit/3d483ff84cf8023e6be7103f4d49fb41f314b869))
-
 
 ### Features
 
@@ -2557,13 +2220,11 @@
 
 ## [6.6.1](https://github.com/zwave-js/zwavejs2mqtt/compare/v6.6.0...v6.6.1) (2022-03-24)
 
-
 ### Bug Fixes
 
 * **ui:** initialize darkMode at startup ([#2333](https://github.com/zwave-js/zwavejs2mqtt/issues/2333)) ([132a65e](https://github.com/zwave-js/zwavejs2mqtt/commit/132a65ef0866a435f8696ba6d1d64789ab72590f))
 
 # [6.6.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v6.5.2...v6.6.0) (2022-03-23)
-
 
 ### Bug Fixes
 
@@ -2572,7 +2233,6 @@
 * **docker:** update Dockerfile.contrib to include nvmedit package ([#2290](https://github.com/zwave-js/zwavejs2mqtt/issues/2290)) ([ec6b2f6](https://github.com/zwave-js/zwavejs2mqtt/commit/ec6b2f6d62209360ef45b5fa5d68db67cf3fa1c6))
 * **hass:** support for Multi Level Switch Start and Stop CC ([#2315](https://github.com/zwave-js/zwavejs2mqtt/issues/2315)) ([254d1e3](https://github.com/zwave-js/zwavejs2mqtt/commit/254d1e390092ed9f21e108aaffd5cbad09b2f60c))
 * **ui:** tx/rx arrows bug ([777725f](https://github.com/zwave-js/zwavejs2mqtt/commit/777725f10e5d028d620dd2fbe33c9cd32c6f52b2))
-
 
 ### Features
 
@@ -2583,11 +2243,9 @@
 
 ## [6.5.2](https://github.com/zwave-js/zwavejs2mqtt/compare/v6.5.1...v6.5.2) (2022-02-18)
 
-
 ### Bug Fixes
 
 * **ui:** pressing enter reloads page ([8360ee7](https://github.com/zwave-js/zwavejs2mqtt/commit/8360ee767f212482addc227fea7c45e9bc204a6b)), closes [#2256](https://github.com/zwave-js/zwavejs2mqtt/issues/2256)
-
 
 ### Features
 
@@ -2597,14 +2255,12 @@
 
 ## [6.5.1](https://github.com/zwave-js/zwavejs2mqtt/compare/v6.5.0...v6.5.1) (2022-02-08)
 
-
 ### Bug Fixes
 
 * inclusion with name and location not working sometimes ([#2247](https://github.com/zwave-js/zwavejs2mqtt/issues/2247)) ([e2071fe](https://github.com/zwave-js/zwavejs2mqtt/commit/e2071fef2f91fd7510564aeed1a5fd8b1dadaa2c)), closes [#2210](https://github.com/zwave-js/zwavejs2mqtt/issues/2210)
 * set max healthcheck rounds ([4d775c7](https://github.com/zwave-js/zwavejs2mqtt/commit/4d775c7c792e87072c05c185ec97ce0a48691011)), closes [#2234](https://github.com/zwave-js/zwavejs2mqtt/issues/2234)
 * **ui:** prevent refresh neighbors automatically on mesh ([6c37bf6](https://github.com/zwave-js/zwavejs2mqtt/commit/6c37bf6c2418d8c274e14a804aab4a3890e4137b))
 * **ui:** remove `custom` text in values ([b684ba9](https://github.com/zwave-js/zwavejs2mqtt/commit/b684ba9583f757fdab903cc487d245e6fe554636))
-
 
 ### Features
 
@@ -2614,13 +2270,11 @@
 
 # [6.5.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v6.4.1...v6.5.0) (2022-01-31)
 
-
 ### Bug Fixes
 
 * **ui:** name and location validation ([c0eb937](https://github.com/zwave-js/zwavejs2mqtt/commit/c0eb93705f61e71afd1ee2bd2a158296683fa87e))
 * **ui:** skip node name/loc validation when mqtt is disabled ([e6d0435](https://github.com/zwave-js/zwavejs2mqtt/commit/e6d043543732fa94b4fbd67781d53fbea6dc6e0b))
 * prevent replaceFailed resetting node name/loc ([f8a4b12](https://github.com/zwave-js/zwavejs2mqtt/commit/f8a4b1263ba311f71dc6ed2a9cd070e6151537db))
-
 
 ### Features
 
@@ -2629,7 +2283,6 @@
 
 ## [6.4.1](https://github.com/zwave-js/zwavejs2mqtt/compare/v6.4.0...v6.4.1) (2022-01-18)
 
-
 ### Features
 
 * bump zwave-js@8.11.1 ([#2193](https://github.com/zwave-js/zwavejs2mqtt/issues/2193)) ([d1332ea](https://github.com/zwave-js/zwavejs2mqtt/commit/d1332ea5bc94a78a7b6df931dee82f6858707b4d))
@@ -2637,11 +2290,9 @@
 
 # [6.4.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v6.3.1...v6.4.0) (2022-01-14)
 
-
 ### Bug Fixes
 
 * **ui:** hidden custom configuration ([ab5a488](https://github.com/zwave-js/zwavejs2mqtt/commit/ab5a488cef4f2428c5409f5b283d6734e968a6e5)), closes [#2175](https://github.com/zwave-js/zwavejs2mqtt/issues/2175)
-
 
 ### Features
 
@@ -2650,13 +2301,11 @@
 
 ## [6.3.1](https://github.com/zwave-js/zwavejs2mqtt/compare/v6.3.0...v6.3.1) (2022-01-11)
 
-
 ### Bug Fixes
 
 * **ui:** disable security classes not requested ([fce70c6](https://github.com/zwave-js/zwavejs2mqtt/commit/fce70c6a5f960367bc4b7d56ef08497b92677da6))
 * **ui:** visualization issue on mobile ([c91708c](https://github.com/zwave-js/zwavejs2mqtt/commit/c91708c0791344967cd5e87e53f1fcfdb3143850))
 * ensure node is ready before getting cc version ([#2168](https://github.com/zwave-js/zwavejs2mqtt/issues/2168)) ([835e2e0](https://github.com/zwave-js/zwavejs2mqtt/commit/835e2e06722c2d254a61f4cda7af4248feb63254)), closes [#2162](https://github.com/zwave-js/zwavejs2mqtt/issues/2162)
-
 
 ### Features
 
@@ -2665,7 +2314,6 @@
 * bump @zwave-js/server@1.14.1 ([#2167](https://github.com/zwave-js/zwavejs2mqtt/issues/2167)) ([2a3e0d4](https://github.com/zwave-js/zwavejs2mqtt/commit/2a3e0d4308b2376364c750b609bbcfdcd0eadb32))
 
 # [6.3.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v6.2.0...v6.3.0) (2022-01-10)
-
 
 ### Bug Fixes
 
@@ -2676,7 +2324,6 @@
 * **ui:** move firmware update to fw version column ([fb59d33](https://github.com/zwave-js/zwavejs2mqtt/commit/fb59d334b38bfe31f9e225de4237f19d87b53104))
 * add missing origin to call api result ([5c8a1c0](https://github.com/zwave-js/zwavejs2mqtt/commit/5c8a1c0a48469a964feab9a1a33f28e3e8ced305)), closes [#278](https://github.com/zwave-js/zwavejs2mqtt/issues/278)
 * **hass:** thermostat mode mapping ([#2109](https://github.com/zwave-js/zwavejs2mqtt/issues/2109)) ([9b23c1f](https://github.com/zwave-js/zwavejs2mqtt/commit/9b23c1f6139bbd7a34b7be76b004e62f03a12123))
-
 
 ### Features
 
@@ -2689,14 +2336,12 @@
 
 # [6.2.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v6.1.1...v6.2.0) (2021-12-23)
 
-
 ### Bug Fixes
 
 * set zwave logs enabled by default ([#2092](https://github.com/zwave-js/zwavejs2mqtt/issues/2092)) ([4eb9726](https://github.com/zwave-js/zwavejs2mqtt/commit/4eb9726c270ae665c0cbf8459c0c5d7b5d12a62e))
 * **ui:** battery and main icons ([c361667](https://github.com/zwave-js/zwavejs2mqtt/commit/c36166733a2b4551ab2b9fe4017e824eb2378a22))
 * **ui:** use monospace in debug ([8caf502](https://github.com/zwave-js/zwavejs2mqtt/commit/8caf50269e6cb7eef4de31d760146da76f1ba68c))
 * use `isListening` node prop to distinguish battery from mains ([22a3620](https://github.com/zwave-js/zwavejs2mqtt/commit/22a3620bfa761483edc3b485ac794a4298516c6a)), closes [#2071](https://github.com/zwave-js/zwavejs2mqtt/issues/2071)
-
 
 ### Features
 
@@ -2707,7 +2352,6 @@
 * show driver errors on UI and prevent restart when zwave options are not valid ([#2069](https://github.com/zwave-js/zwavejs2mqtt/issues/2069)) ([e1e3172](https://github.com/zwave-js/zwavejs2mqtt/commit/e1e317205061a66c7c84a79e11776c53a9b13117))
 
 ## [6.1.1](https://github.com/zwave-js/zwavejs2mqtt/compare/v6.1.0...v6.1.1) (2021-12-16)
-
 
 ### Features
 
@@ -2721,12 +2365,10 @@
 
 ## [6.0.3](https://github.com/zwave-js/zwavejs2mqtt/compare/v6.0.2...v6.0.3) (2021-12-03)
 
-
 ### Bug Fixes
 
 * endpointGroups is not iterable and other possible null pointer errors ([6886825](https://github.com/zwave-js/zwavejs2mqtt/commit/68868255ec5d8d3c12d4de543a2c2596856607e3)), closes [#2012](https://github.com/zwave-js/zwavejs2mqtt/issues/2012)
 * **ui:** typo in dialog ([#2001](https://github.com/zwave-js/zwavejs2mqtt/issues/2001)) ([0255fdc](https://github.com/zwave-js/zwavejs2mqtt/commit/0255fdc16bdeed58b68b92f89a2028bf90dc8058))
-
 
 ### Features
 
@@ -2735,20 +2377,17 @@
 
 ## [6.0.2](https://github.com/zwave-js/zwavejs2mqtt/compare/v6.0.1...v6.0.2) (2021-11-26)
 
-
 ### Features
 
 * bump zwave-js@8.8.2 ([#1998](https://github.com/zwave-js/zwavejs2mqtt/issues/1998)) ([c6719ca](https://github.com/zwave-js/zwavejs2mqtt/commit/c6719ca853a2416714dac1adb2c10fca429e24e1))
 
 ## [6.0.1](https://github.com/zwave-js/zwavejs2mqtt/compare/v6.0.0...v6.0.1) (2021-11-25)
 
-
 ### Features
 
 * bump zwave-js@8.8.1 ([#1993](https://github.com/zwave-js/zwavejs2mqtt/issues/1993)) ([6a62b63](https://github.com/zwave-js/zwavejs2mqtt/commit/6a62b63849378397ff8458e9ac5d6fd039ee3412))
 
 # [6.0.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v5.12.0...v6.0.0) (2021-11-25)
-
 
 ### Bug Fixes
 
@@ -2757,14 +2396,12 @@
 * https log ([af8009a](https://github.com/zwave-js/zwavejs2mqtt/commit/af8009aac6c3f47c7f20ca15ff9e068d1259e025))
 * value not updating after set ([#1972](https://github.com/zwave-js/zwavejs2mqtt/issues/1972)) ([035975a](https://github.com/zwave-js/zwavejs2mqtt/commit/035975a83ec2a856c8ce49052eaa3d8b973ad360)), closes [#1971](https://github.com/zwave-js/zwavejs2mqtt/issues/1971)
 
-
 ### Features
 
 * bump @zwave-js/server@1.12.0 ([#1987](https://github.com/zwave-js/zwavejs2mqtt/issues/1987)) ([5057281](https://github.com/zwave-js/zwavejs2mqtt/commit/50572817c456f0c08c9d47b6c9d8a2ae11dd2b22))
 * bump zwave-js@8.7.7 ([#1974](https://github.com/zwave-js/zwavejs2mqtt/issues/1974)) ([95a419e](https://github.com/zwave-js/zwavejs2mqtt/commit/95a419e03c289abf1fe32ec9511d6f456b9cc188))
 * bump zwave-js@8.8.0 ([#1991](https://github.com/zwave-js/zwavejs2mqtt/issues/1991)) ([913ea34](https://github.com/zwave-js/zwavejs2mqtt/commit/913ea344eb7d5aa356821a03da78dc89df3cf1f6))
 * optimize socket events and mqtt disabled events ([#1970](https://github.com/zwave-js/zwavejs2mqtt/issues/1970)) ([b18067a](https://github.com/zwave-js/zwavejs2mqtt/commit/b18067abf095b12f6262b673210fc469c1f87362))
-
 
 ### BREAKING CHANGES
 
@@ -2788,12 +2425,10 @@
 
 # [5.12.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v5.11.0...v5.12.0) (2021-11-16)
 
-
 ### Bug Fixes
 
 * **ui:** provisioning info lost when editing an entry ([#1954](https://github.com/zwave-js/zwavejs2mqtt/issues/1954)) ([1fd057f](https://github.com/zwave-js/zwavejs2mqtt/commit/1fd057f2cab079149185e55a93bb9680dd51eab9)), closes [#1938](https://github.com/zwave-js/zwavejs2mqtt/issues/1938)
 * correctly set node name and location when present on provisioning ([#1953](https://github.com/zwave-js/zwavejs2mqtt/issues/1953)) ([9459a56](https://github.com/zwave-js/zwavejs2mqtt/commit/9459a56f364028d6f18077b40b17165292120459)), closes [#1943](https://github.com/zwave-js/zwavejs2mqtt/issues/1943)
-
 
 ### Features
 
@@ -2804,7 +2439,6 @@
 
 # [5.11.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v5.10.1...v5.11.0) (2021-11-05)
 
-
 ### Bug Fixes
 
 * **mqtt:** disable persistent mqtt storage that could prevent mqtt message to be published ([97af78b](https://github.com/zwave-js/zwavejs2mqtt/commit/97af78bf7cc974ef0051c871693daaf54687ce74))
@@ -2812,7 +2446,6 @@
 * **ui:** fix typo on add/remove dialog ([#1924](https://github.com/zwave-js/zwavejs2mqtt/issues/1924)) ([dfe9f54](https://github.com/zwave-js/zwavejs2mqtt/commit/dfe9f547aa6bf46d10b1667fbd35bd1760d20764))
 * **ui:** make provisioning list table full width ([cee836f](https://github.com/zwave-js/zwavejs2mqtt/commit/cee836fb2a58a5319ccdcb0afb26252d20f55763))
 * **ui:** missing security keys check ([#1898](https://github.com/zwave-js/zwavejs2mqtt/issues/1898)) ([520d8fb](https://github.com/zwave-js/zwavejs2mqtt/commit/520d8fb794fb5271019bb09136b3aa854ee8736b)), closes [#1896](https://github.com/zwave-js/zwavejs2mqtt/issues/1896)
-
 
 ### Features
 
@@ -2823,18 +2456,15 @@
 
 ## [5.10.1](https://github.com/zwave-js/zwavejs2mqtt/compare/v5.10.0...v5.10.1) (2021-10-26)
 
-
 ### Bug Fixes
 
 * wrong security description in table ([#1888](https://github.com/zwave-js/zwavejs2mqtt/issues/1888)) ([1cc5b17](https://github.com/zwave-js/zwavejs2mqtt/commit/1cc5b17ffd0f441bebccbd1548bb7109ac0308c1))
-
 
 ### Features
 
 * bump zwave-js@8.6.1 ([#1891](https://github.com/zwave-js/zwavejs2mqtt/issues/1891)) ([bcc9ef4](https://github.com/zwave-js/zwavejs2mqtt/commit/bcc9ef4cf9475e00434593075f0167a453e94bb2))
 
 # [5.10.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v5.9.0...v5.10.0) (2021-10-25)
-
 
 ### Bug Fixes
 
@@ -2843,7 +2473,6 @@
 * docker contrib ([#1841](https://github.com/zwave-js/zwavejs2mqtt/issues/1841)) ([d8a1b0d](https://github.com/zwave-js/zwavejs2mqtt/commit/d8a1b0d336eb1639a242bf4bddc31a39b2f29383))
 * make `enableSoftReset` option enabled by default ([#1864](https://github.com/zwave-js/zwavejs2mqtt/issues/1864)) ([8839162](https://github.com/zwave-js/zwavejs2mqtt/commit/8839162c055a31c97b2b363d65d58a74b9d4ce4c))
 * race condition with node.batteryLevels ([#1845](https://github.com/zwave-js/zwavejs2mqtt/issues/1845)) ([63d8193](https://github.com/zwave-js/zwavejs2mqtt/commit/63d819349525ecedb77ef55573bc6a12c7ab2a39))
-
 
 ### Features
 
@@ -2855,7 +2484,6 @@
 
 # [5.9.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v5.8.0...v5.9.0) (2021-10-14)
 
-
 ### Bug Fixes
 
 * mqtt store ([#1833](https://github.com/zwave-js/zwavejs2mqtt/issues/1833)) ([fb1fb32](https://github.com/zwave-js/zwavejs2mqtt/commit/fb1fb3212d0080d7b4946822ae4b1af89cf8226a))
@@ -2866,7 +2494,6 @@
 * **ui:** mesh forward check ([33137ac](https://github.com/zwave-js/zwavejs2mqtt/commit/33137ac94986cce240adc0a23ee9293b791a26aa))
 * remove `binary` encoding when creating NVM backup ([f999ecb](https://github.com/zwave-js/zwavejs2mqtt/commit/f999ecbe5f89db0742dd6601e2475dd23a2a3ece))
 
-
 ### Features
 
 * allow to load security keys from env ([#1797](https://github.com/zwave-js/zwavejs2mqtt/issues/1797)) ([fc00320](https://github.com/zwave-js/zwavejs2mqtt/commit/fc00320669a8e1efda83349170d5fdaf3282a447)), closes [#1757](https://github.com/zwave-js/zwavejs2mqtt/issues/1757)
@@ -2875,7 +2502,6 @@
 
 # [5.8.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v5.7.3...v5.8.0) (2021-10-08)
 
-
 ### Features
 
 * backup/restore NVM ([#1795](https://github.com/zwave-js/zwavejs2mqtt/issues/1795)) ([ac84133](https://github.com/zwave-js/zwavejs2mqtt/commit/ac84133cb3245559da5536e46176f89e449bac02))
@@ -2883,11 +2509,9 @@
 
 ## [5.7.3](https://github.com/zwave-js/zwavejs2mqtt/compare/v5.7.2...v5.7.3) (2021-10-04)
 
-
 ### Bug Fixes
 
 * ignore ZWAVEJS_EXTERNAL_CONFIG folder ([#1766](https://github.com/zwave-js/zwavejs2mqtt/issues/1766)) ([1b881e0](https://github.com/zwave-js/zwavejs2mqtt/commit/1b881e0a503c7b76ecd8764b6ab086c966c677de)), closes [#1762](https://github.com/zwave-js/zwavejs2mqtt/issues/1762)
-
 
 ### Features
 
@@ -2895,11 +2519,9 @@
 
 ## [5.7.2](https://github.com/zwave-js/zwavejs2mqtt/compare/v5.7.1...v5.7.2) (2021-09-29)
 
-
 ### Bug Fixes
 
 * correctly parse valueMetadata `states` when not defined ([4e8f61b](https://github.com/zwave-js/zwavejs2mqtt/commit/4e8f61b8fab58f6e42fe3f896783196d89a99502)), closes [#1758](https://github.com/zwave-js/zwavejs2mqtt/issues/1758)
-
 
 ### Features
 
@@ -2907,18 +2529,15 @@
 
 ## [5.7.1](https://github.com/zwave-js/zwavejs2mqtt/compare/v5.7.0...v5.7.1) (2021-09-27)
 
-
 ### Features
 
 * add `DISABLE_LOG_ROTATION` env var to disable log rotation ([#1755](https://github.com/zwave-js/zwavejs2mqtt/issues/1755)) ([29f8f29](https://github.com/zwave-js/zwavejs2mqtt/commit/29f8f29f84ae546ca08dfa1b373bbddfb4186802))
 
 # [5.7.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v5.6.2...v5.7.0) (2021-09-27)
 
-
 ### Bug Fixes
 
 * **ui:** hide download/save button when file is not supported ([6b7d63e](https://github.com/zwave-js/zwavejs2mqtt/commit/6b7d63ebdf4013e10d9135d7610422616a71b5e8))
-
 
 ### Features
 
@@ -2930,20 +2549,17 @@
 
 ## [5.6.2](https://github.com/zwave-js/zwavejs2mqtt/compare/v5.6.1...v5.6.2) (2021-09-25)
 
-
 ### Bug Fixes
 
 * icons are no longer displayed after css-loader major upgrade ([#1729](https://github.com/zwave-js/zwavejs2mqtt/issues/1729)) ([b38caa2](https://github.com/zwave-js/zwavejs2mqtt/commit/b38caa2437ed6402a0f62f831aa02e51be868b6b))
 
 ## [5.6.1](https://github.com/zwave-js/zwavejs2mqtt/compare/v5.6.0...v5.6.1) (2021-09-24)
 
-
 ### Bug Fixes
 
 * another try to workaround pkg bug ([#1727](https://github.com/zwave-js/zwavejs2mqtt/issues/1727)) ([81a0a7f](https://github.com/zwave-js/zwavejs2mqtt/commit/81a0a7f2af01baf36396229e90b8488cc765002f))
 * workaround for pkg bug ([#1726](https://github.com/zwave-js/zwavejs2mqtt/issues/1726)) ([7d0bd6c](https://github.com/zwave-js/zwavejs2mqtt/commit/7d0bd6c23c46a46300d97d894e27d20f2acdf64d))
 * **ui:** better check for forwarding nodes in mesh graph ([e5cf151](https://github.com/zwave-js/zwavejs2mqtt/commit/e5cf1515903adf3d4c6374e86efebe5509d0bf26))
-
 
 ### Features
 
@@ -2952,11 +2568,9 @@
 
 # [5.6.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v5.5.4...v5.6.0) (2021-09-15)
 
-
 ### Bug Fixes
 
 * **ui:** make manage nodes dialog persistent and timoeut label ([#1688](https://github.com/zwave-js/zwavejs2mqtt/issues/1688)) ([75728a8](https://github.com/zwave-js/zwavejs2mqtt/commit/75728a8e9e22a72174013a2ca96194cd8f3e95b8))
-
 
 ### Features
 
@@ -2966,19 +2580,16 @@
 * **ui:** auto-format OZW keys when pasted into security keys ([#1685](https://github.com/zwave-js/zwavejs2mqtt/issues/1685)) ([8dea0da](https://github.com/zwave-js/zwavejs2mqtt/commit/8dea0da3ab08a076d8403ef1fb63919fe1e190ee))
 * **ui:** show warning when security keys are missing ([39c40c8](https://github.com/zwave-js/zwavejs2mqtt/commit/39c40c8eab684cb20f3903eb4713438f3be5c8cf)), closes [#1687](https://github.com/zwave-js/zwavejs2mqtt/issues/1687)
 
-
 ### Reverts
 
 * Revert "Release 5.6.0" ([21294f2](https://github.com/zwave-js/zwavejs2mqtt/commit/21294f27386346a7d82ac0320ee5de1cb38f9312))
 
 ## [5.5.4](https://github.com/zwave-js/zwavejs2mqtt/compare/v5.5.3...v5.5.4) (2021-09-10)
 
-
 ### Bug Fixes
 
 * better topic subscribe handling ([#1671](https://github.com/zwave-js/zwavejs2mqtt/issues/1671)) ([c27611e](https://github.com/zwave-js/zwavejs2mqtt/commit/c27611e4a76372a5e5369be9222711c79cfd87f9))
 * user friendly firmware update errors ([c461f62](https://github.com/zwave-js/zwavejs2mqtt/commit/c461f62ee844a429b0225e18a33be4a7de10007a))
-
 
 ### Features
 
@@ -2987,7 +2598,6 @@
 
 ## [5.5.3](https://github.com/zwave-js/zwavejs2mqtt/compare/v5.5.2...v5.5.3) (2021-09-03)
 
-
 ### Features
 
 * **ui:** support for S0 only inclusion ([48deb0b](https://github.com/zwave-js/zwavejs2mqtt/commit/48deb0b3e7014d1522cc09fbcefc85f68ee11826)), closes [#1645](https://github.com/zwave-js/zwavejs2mqtt/issues/1645)
@@ -2995,11 +2605,9 @@
 
 ## [5.5.2](https://github.com/zwave-js/zwavejs2mqtt/compare/v5.5.1...v5.5.2) (2021-08-30)
 
-
 ### Bug Fixes
 
 * **ui:** dsk pin display error on small screens ([1398394](https://github.com/zwave-js/zwavejs2mqtt/commit/139839413403f304f0dd9637fc716713fe6476a6)), closes [#1417](https://github.com/zwave-js/zwavejs2mqtt/issues/1417)
-
 
 ### Features
 
@@ -3009,13 +2617,11 @@
 
 ## [5.5.1](https://github.com/zwave-js/zwavejs2mqtt/compare/v5.5.0...v5.5.1) (2021-08-25)
 
-
 ### Features
 
 * zwave-js@8.2.1 ([6e6a74e](https://github.com/zwave-js/zwavejs2mqtt/commit/6e6a74ec7986b126218be547e3fa088ebc0b8e3a))
 
 # [5.5.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v5.4.6...v5.5.0) (2021-08-25)
-
 
 ### Bug Fixes
 
@@ -3023,7 +2629,6 @@
 * **ui:** handle replaceFailedNode errors ([22a5f1d](https://github.com/zwave-js/zwavejs2mqtt/commit/22a5f1d32ee55a7b937f3ea02bfae9758164c6cc))
 * lookup manufacturer when unknown ([b436c4c](https://github.com/zwave-js/zwavejs2mqtt/commit/b436c4c4b1f60a360392bdd2f58416b757db57b0)), closes [#1571](https://github.com/zwave-js/zwavejs2mqtt/issues/1571)
 * **hass:** mode_state_template quotes ([1e47d90](https://github.com/zwave-js/zwavejs2mqtt/commit/1e47d9058ec23faf0f05c421874c5f5879acfc45)), closes [#1578](https://github.com/zwave-js/zwavejs2mqtt/issues/1578)
-
 
 ### Features
 
@@ -3034,18 +2639,15 @@
 
 ## [5.4.6](https://github.com/zwave-js/zwavejs2mqtt/compare/v5.4.5...v5.4.6) (2021-08-17)
 
-
 ### Bug Fixes
 
 * use different icon for node name/location reset ([0b8e165](https://github.com/zwave-js/zwavejs2mqtt/commit/0b8e165f2e5853a4d5db832594ace696a86ca801)), closes [#1542](https://github.com/zwave-js/zwavejs2mqtt/issues/1542)
 
 ## [5.4.5](https://github.com/zwave-js/zwavejs2mqtt/compare/v5.4.4...v5.4.5) (2021-08-05)
 
-
 ### Bug Fixes
 
 * **hass:** discovery of Barrier State CC ([#1538](https://github.com/zwave-js/zwavejs2mqtt/issues/1538)) ([15c870a](https://github.com/zwave-js/zwavejs2mqtt/commit/15c870a6ea082106397be5e15e3fd19147976f1e)), closes [#1363](https://github.com/zwave-js/zwavejs2mqtt/issues/1363)
-
 
 ### Features
 
@@ -3053,11 +2655,9 @@
 
 ## [5.4.4](https://github.com/zwave-js/zwavejs2mqtt/compare/v5.4.3...v5.4.4) (2021-08-02)
 
-
 ### Bug Fixes
 
 * catch "controller not ready" error in statistics event handler ([#1523](https://github.com/zwave-js/zwavejs2mqtt/issues/1523)) ([d3125c1](https://github.com/zwave-js/zwavejs2mqtt/commit/d3125c1824a0aaa1a8698b1f60f266d42d492b47))
-
 
 ### Features
 
@@ -3065,13 +2665,11 @@
 
 ## [5.4.3](https://github.com/zwave-js/zwavejs2mqtt/compare/v5.4.2...v5.4.3) (2021-07-30)
 
-
 ### Bug Fixes
 
 * **hass:** barrier operator CC MQTT discovery ([#1485](https://github.com/zwave-js/zwavejs2mqtt/issues/1485)) ([45e07a6](https://github.com/zwave-js/zwavejs2mqtt/commit/45e07a620b39532e01d4fbbd9dd771b71f4faf17)), closes [#1363](https://github.com/zwave-js/zwavejs2mqtt/issues/1363)
 * **ui:** typo in settings view ([#1483](https://github.com/zwave-js/zwavejs2mqtt/issues/1483)) ([ada0f65](https://github.com/zwave-js/zwavejs2mqtt/commit/ada0f65325966ea3f494513724e1252eaf505d23))
 * change the GE/Jasco 14314 to use the fan dimmer hass discovery ([#1476](https://github.com/zwave-js/zwavejs2mqtt/issues/1476)) ([44ba47f](https://github.com/zwave-js/zwavejs2mqtt/commit/44ba47fdb2eaf6b88d7b91513cb7cebfee7be211))
-
 
 ### Features
 
@@ -3081,13 +2679,11 @@
 
 ## [5.4.2](https://github.com/zwave-js/zwavejs2mqtt/compare/v5.4.1...v5.4.2) (2021-07-22)
 
-
 ### Features
 
 * zwave-js@8.0.5 ([55059c5](https://github.com/zwave-js/zwavejs2mqtt/commit/55059c524b180abcd7099e433e26fe71f5eb810b))
 
 ## [5.4.1](https://github.com/zwave-js/zwavejs2mqtt/compare/v5.4.0...v5.4.1) (2021-07-22)
-
 
 ### Features
 
@@ -3095,11 +2691,9 @@
 
 # [5.4.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v5.3.0...v5.4.0) (2021-07-21)
 
-
 ### Bug Fixes
 
 * ensure subscribe to topics ([#1466](https://github.com/zwave-js/zwavejs2mqtt/issues/1466)) ([3cb8130](https://github.com/zwave-js/zwavejs2mqtt/commit/3cb8130207a29d1d2af3aac5f44e23aa99b75727)), closes [#1464](https://github.com/zwave-js/zwavejs2mqtt/issues/1464) [#1322](https://github.com/zwave-js/zwavejs2mqtt/issues/1322)
-
 
 ### Features
 
@@ -3107,11 +2701,9 @@
 
 # [5.3.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v5.2.2...v5.3.0) (2021-07-20)
 
-
 ### Bug Fixes
 
 * **ui:** removed missing debugger ([698958e](https://github.com/zwave-js/zwavejs2mqtt/commit/698958e55413af49f00ad93ec41b9612f7d20743))
-
 
 ### Features
 
@@ -3119,11 +2711,9 @@
 
 ## [5.2.2](https://github.com/zwave-js/zwavejs2mqtt/compare/v5.2.1...v5.2.2) (2021-07-14)
 
-
 ### Bug Fixes
 
 * **hass:** revert [#1360](https://github.com/zwave-js/zwavejs2mqtt/issues/1360) "make dimmers turn on to previous brightness" ([#1399](https://github.com/zwave-js/zwavejs2mqtt/issues/1399)) ([1487e1f](https://github.com/zwave-js/zwavejs2mqtt/commit/1487e1f676df8eacd9b018e2940707e2d1a4fa93))
-
 
 ### Features
 
@@ -3132,19 +2722,16 @@
 
 ## [5.2.1](https://github.com/zwave-js/zwavejs2mqtt/compare/v5.2.0...v5.2.1) (2021-06-30)
 
-
 ### Bug Fixes
 
 * **ui:** change CAN color ([#1395](https://github.com/zwave-js/zwavejs2mqtt/issues/1395)) ([7e30131](https://github.com/zwave-js/zwavejs2mqtt/commit/7e30131fad5d25cfb2376f9a3108895b1b217d1d))
 * check updates after driver is ready ([#1394](https://github.com/zwave-js/zwavejs2mqtt/issues/1394)) ([374d004](https://github.com/zwave-js/zwavejs2mqtt/commit/374d0041c2a5dd3ebba72496c06cee8c7bd1a7da))
-
 
 ### Features
 
 * zwave-js@7.10.1 ([f0e53e4](https://github.com/zwave-js/zwavejs2mqtt/commit/f0e53e4d1d12040a446074767b1c890c0be1d7fe))
 
 # [5.2.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v5.1.0...v5.2.0) (2021-06-29)
-
 
 ### Bug Fixes
 
@@ -3154,7 +2741,6 @@
 * send heal node status when healing single node ([#1377](https://github.com/zwave-js/zwavejs2mqtt/issues/1377)) ([23daffa](https://github.com/zwave-js/zwavejs2mqtt/commit/23daffae2940a22f097339697f63e27187fcb90e)), closes [#1375](https://github.com/zwave-js/zwavejs2mqtt/issues/1375)
 * sending 'start' or 'stop' MultilevelSwitchCC not working ([#1379](https://github.com/zwave-js/zwavejs2mqtt/issues/1379)) ([5c5dbdc](https://github.com/zwave-js/zwavejs2mqtt/commit/5c5dbdccab5e6517a3b936a5844d544c0b358194)), closes [#1372](https://github.com/zwave-js/zwavejs2mqtt/issues/1372)
 
-
 ### Features
 
 * controller statistics ([#1393](https://github.com/zwave-js/zwavejs2mqtt/issues/1393)) ([f5bf037](https://github.com/zwave-js/zwavejs2mqtt/commit/f5bf037dcb3b4d69c103456f8d94852eba995351)), closes [#1376](https://github.com/zwave-js/zwavejs2mqtt/issues/1376)
@@ -3163,12 +2749,10 @@
 
 # [5.1.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v5.0.4...v5.1.0) (2021-06-24)
 
-
 ### Bug Fixes
 
 * **hass:** make dimmers turn on to previous brightness ([#1360](https://github.com/zwave-js/zwavejs2mqtt/issues/1360)) ([d7a3845](https://github.com/zwave-js/zwavejs2mqtt/commit/d7a3845c799e2c3d59d6159afff7376baf5fe803))
 * add Z2MClientStatus type ([#1357](https://github.com/zwave-js/zwavejs2mqtt/issues/1357)) ([ee4343f](https://github.com/zwave-js/zwavejs2mqtt/commit/ee4343f17dca3f7b01ceee77ae46f9879ba2e10e))
-
 
 ### Features
 
@@ -3183,11 +2767,9 @@
 
 ## [5.0.3](https://github.com/zwave-js/zwavejs2mqtt/compare/v5.0.2...v5.0.3) (2021-06-17)
 
-
 ### Bug Fixes
 
 * **hass:** remove state_topic from covers ([#1348](https://github.com/zwave-js/zwavejs2mqtt/issues/1348)) ([d1159c3](https://github.com/zwave-js/zwavejs2mqtt/commit/d1159c3fc5fc72542af69c6cc65dc301fa3deee1)), closes [#1343](https://github.com/zwave-js/zwavejs2mqtt/issues/1343)
-
 
 ### Features
 
@@ -3195,20 +2777,17 @@
 
 ## [5.0.2](https://github.com/zwave-js/zwavejs2mqtt/compare/v5.0.1...v5.0.2) (2021-06-14)
 
-
 ### Bug Fixes
 
 * entry in hass/devices.ts for cover discovery ([#1336](https://github.com/zwave-js/zwavejs2mqtt/issues/1336)) ([a5b444a](https://github.com/zwave-js/zwavejs2mqtt/commit/a5b444a06afff5077c5434dbd15705d0b60fdb12))
 * force allowed apis to be a valid method of ZwaveClient ([#1328](https://github.com/zwave-js/zwavejs2mqtt/issues/1328)) ([16eb768](https://github.com/zwave-js/zwavejs2mqtt/commit/16eb768987bf09dd256d6d70a446556ed0771f37))
 * place plugins route before history middleware ([#1339](https://github.com/zwave-js/zwavejs2mqtt/issues/1339)) ([c223331](https://github.com/zwave-js/zwavejs2mqtt/commit/c22333129db66a78fb7152e45b2ebd911a8f0d93))
 
-
 ### Features
 
 * bump zwave-js@7.7.4 ([51cb50c](https://github.com/zwave-js/zwavejs2mqtt/commit/51cb50c201bd26c764c90aa8f1cf5a6d427ec4b4))
 
 ## [5.0.1](https://github.com/zwave-js/zwavejs2mqtt/compare/v5.0.0...v5.0.1) (2021-06-11)
-
 
 ### Bug Fixes
 
@@ -3219,13 +2798,11 @@
 
 # [5.0.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v4.5.2...v5.0.0) (2021-06-10)
 
-
 ### Bug Fixes
 
 * driver ready error and ts improvments ([#1323](https://github.com/zwave-js/zwavejs2mqtt/issues/1323)) ([f5832b9](https://github.com/zwave-js/zwavejs2mqtt/commit/f5832b9a90c9629fad0b9c941d2a7817ef816a6c)), closes [#1309](https://github.com/zwave-js/zwavejs2mqtt/issues/1309)
 * plugins router must be recreated on restart ([#1321](https://github.com/zwave-js/zwavejs2mqtt/issues/1321)) ([6d40bdd](https://github.com/zwave-js/zwavejs2mqtt/commit/6d40bddbd2ad4af41423cd3098141189897cec20))
 * **ui:** use strict check in toggle button ([#1320](https://github.com/zwave-js/zwavejs2mqtt/issues/1320)) ([130bbd7](https://github.com/zwave-js/zwavejs2mqtt/commit/130bbd770c44512887700aa765f176c7c8a1c4b6)), closes [#1065](https://github.com/zwave-js/zwavejs2mqtt/issues/1065)
-
 
 ### Features
 
@@ -3233,11 +2810,9 @@
 
 ## [4.5.2](https://github.com/zwave-js/zwavejs2mqtt/compare/v4.5.1...v4.5.2) (2021-06-07)
 
-
 ### Bug Fixes
 
 * bump socket.io client and server ([a9d577c](https://github.com/zwave-js/zwavejs2mqtt/commit/a9d577c0459f3be2df25749b9cd8269f8f5d1909)), closes [#1300](https://github.com/zwave-js/zwavejs2mqtt/issues/1300)
-
 
 ### Features
 
@@ -3245,11 +2820,9 @@
 
 ## [4.5.1](https://github.com/zwave-js/zwavejs2mqtt/compare/v4.5.0...v4.5.1) (2021-05-31)
 
-
 ### Bug Fixes
 
 * put deviceConfigPriorityDir where it belongs ([#1294](https://github.com/zwave-js/zwavejs2mqtt/issues/1294)) ([e60f7f4](https://github.com/zwave-js/zwavejs2mqtt/commit/e60f7f48c98db3a2544fed7036655d85aaea0537))
-
 
 ### Features
 
@@ -3257,12 +2830,10 @@
 
 # [4.5.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v4.4.0...v4.5.0) (2021-05-27)
 
-
 ### Bug Fixes
 
 * don't query neighbors on node ready event ([#1279](https://github.com/zwave-js/zwavejs2mqtt/issues/1279)) ([9a1ab96](https://github.com/zwave-js/zwavejs2mqtt/commit/9a1ab96e86adef551bb8227ca7435024aa8c8b58))
 * stop RF when requesting neighbors ([#1283](https://github.com/zwave-js/zwavejs2mqtt/issues/1283)) ([1a35379](https://github.com/zwave-js/zwavejs2mqtt/commit/1a35379bb733abfa1132a9dd894bc70d11b3afdd))
-
 
 ### Features
 
@@ -3273,11 +2844,9 @@
 
 # [4.4.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v4.3.1...v4.4.0) (2021-05-25)
 
-
 ### Bug Fixes
 
 * change default zwavejs log file name ([#1267](https://github.com/zwave-js/zwavejs2mqtt/issues/1267)) ([1a13e60](https://github.com/zwave-js/zwavejs2mqtt/commit/1a13e601a8b1b8188c583367e43177c85e6b46ea))
-
 
 ### Features
 
@@ -3286,13 +2855,11 @@
 
 ## [4.3.1](https://github.com/zwave-js/zwavejs2mqtt/compare/v4.3.0...v4.3.1) (2021-05-24)
 
-
 ### Bug Fixes
 
 * add `zwaveClient` and `require` to `driverFunction` context ([#1256](https://github.com/zwave-js/zwavejs2mqtt/issues/1256)) ([592e5aa](https://github.com/zwave-js/zwavejs2mqtt/commit/592e5aab7cad040050aacfc78536e3834ec9e5e9))
 * better restarts ([#1266](https://github.com/zwave-js/zwavejs2mqtt/issues/1266)) ([70c018b](https://github.com/zwave-js/zwavejs2mqtt/commit/70c018be4024255430bf1a1ed490672dc555a043)), closes [#1246](https://github.com/zwave-js/zwavejs2mqtt/issues/1246)
 * detect driver failed and restart ([#1259](https://github.com/zwave-js/zwavejs2mqtt/issues/1259)) ([2ae945e](https://github.com/zwave-js/zwavejs2mqtt/commit/2ae945e18f3b41828082279ce071746cc15ab9cd)), closes [#1246](https://github.com/zwave-js/zwavejs2mqtt/issues/1246)
-
 
 ### Features
 
@@ -3300,7 +2867,6 @@
 * ping node ([#1255](https://github.com/zwave-js/zwavejs2mqtt/issues/1255)) ([2fc61ef](https://github.com/zwave-js/zwavejs2mqtt/commit/2fc61efc87834ef37d1d1311b4b0be8bf797a15c)), closes [#1253](https://github.com/zwave-js/zwavejs2mqtt/issues/1253)
 
 # [4.3.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v4.2.1...v4.3.0) (2021-05-19)
-
 
 ### Bug Fixes
 
@@ -3311,20 +2877,17 @@
 * allow `sendCommand` to accept string command classes ([#1230](https://github.com/zwave-js/zwavejs2mqtt/issues/1230)) ([a2e704c](https://github.com/zwave-js/zwavejs2mqtt/commit/a2e704c10465ad2a0064854d738e7d66abd2a1ec)), closes [#1219](https://github.com/zwave-js/zwavejs2mqtt/issues/1219)
 * better types and checks for sendCommand CC ([#1234](https://github.com/zwave-js/zwavejs2mqtt/issues/1234)) ([6df119c](https://github.com/zwave-js/zwavejs2mqtt/commit/6df119cc9537992bfe3881e4b7d19c96ea43b312))
 
-
 ### Features
 
 * **zwave-js:** bump zwave-js@7.5.0 ([#1237](https://github.com/zwave-js/zwavejs2mqtt/issues/1237)) ([7f2d7ea](https://github.com/zwave-js/zwavejs2mqtt/commit/7f2d7ea2554c630c778187e423d5a305002276ec))
 
 ## [4.2.1](https://github.com/zwave-js/zwavejs2mqtt/compare/v4.2.0...v4.2.1) (2021-05-12)
 
-
 ### Bug Fixes
 
 * battery devices not ready ([#1195](https://github.com/zwave-js/zwavejs2mqtt/issues/1195)) ([78dec83](https://github.com/zwave-js/zwavejs2mqtt/commit/78dec83a4df22718c5161a17353b1c2f1e48c869))
 
 # [4.2.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v4.0.1...v4.2.0) (2021-05-11)
-
 
 ### Bug Fixes
 
@@ -3333,31 +2896,23 @@
 * **hass:** sending `true` to MultilevelSwitchCC doesn't restore old level ([#1134](https://github.com/zwave-js/zwavejs2mqtt/issues/1134)) ([13afb0a](https://github.com/zwave-js/zwavejs2mqtt/commit/13afb0a40b845c3afbae21708e24d06f5e6cc498))
 * **ui:** typo in copy-able versions info ([#1135](https://github.com/zwave-js/zwavejs2mqtt/issues/1135)) ([8e2ccc0](https://github.com/zwave-js/zwavejs2mqtt/commit/8e2ccc0d88d826bb5155879d155c8c656c546594))
 
-
 ### Features
 
 * **docker:** push image to ghcr ([#1136](https://github.com/zwave-js/zwavejs2mqtt/issues/1136)) ([ae3af3c](https://github.com/zwave-js/zwavejs2mqtt/commit/ae3af3c2b2e60054be094e2627832f042f7a0644))
 
-
-
 ## [4.0.1](https://github.com/zwave-js/zwavejs2mqtt/compare/v4.0.0...v4.0.1) (2021-05-03)
-
 
 ### Bug Fixes
 
 * **docker:** config update not working ([#1128](https://github.com/zwave-js/zwavejs2mqtt/issues/1128)) ([6fccb01](https://github.com/zwave-js/zwavejs2mqtt/commit/6fccb0183a63f1b7c5fa83346022e70051f73e37)), closes [#1122](https://github.com/zwave-js/zwavejs2mqtt/issues/1122)
 * **ui:** pretty json exports ([#1129](https://github.com/zwave-js/zwavejs2mqtt/issues/1129)) ([94e9f9c](https://github.com/zwave-js/zwavejs2mqtt/commit/94e9f9c6fa1c1cd00d1f239a83fbc39abf55b5fb)), closes [#1119](https://github.com/zwave-js/zwavejs2mqtt/issues/1119)
 
-
-
 # [4.0.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v3.5.0...v4.0.0) (2021-04-30)
-
 
 ### Bug Fixes
 
 * **ui:** hide hass tab when gw is disabled ([#1117](https://github.com/zwave-js/zwavejs2mqtt/issues/1117)) ([7116911](https://github.com/zwave-js/zwavejs2mqtt/commit/711691191dcc7447a9283717fd3239b381e58bbc)), closes [#1102](https://github.com/zwave-js/zwavejs2mqtt/issues/1102)
 * **ui:** valueid label color ([#1097](https://github.com/zwave-js/zwavejs2mqtt/issues/1097)) ([9acbcad](https://github.com/zwave-js/zwavejs2mqtt/commit/9acbcad3c531429a3770299c22dd4124afae2aaa)), closes [#1094](https://github.com/zwave-js/zwavejs2mqtt/issues/1094)
-
 
 ### Features
 
@@ -3365,29 +2920,21 @@
 * support managing associations on endpoints ([#1095](https://github.com/zwave-js/zwavejs2mqtt/issues/1095)) ([4230b64](https://github.com/zwave-js/zwavejs2mqtt/commit/4230b641eff5242859bf9468d334690b68bf8080))
 * zwave-js config updates ([#1115](https://github.com/zwave-js/zwavejs2mqtt/issues/1115)) ([0a65549](https://github.com/zwave-js/zwavejs2mqtt/commit/0a65549d395f3c1cc6d5c58738a8367864db7cbc))
 
-
 ### BREAKING CHANGES
 
 * Signature of methods `getAssociations`, `addAssociations` and `removeAssociations` have changed. This will have no effect on normal users but for the ones that are using those apis via MQTT remember to check the changes in signature, now you also have to specify source endpoint instead of just the nodeId to refer to an association
 
-
-
 # [3.5.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v3.4.0...v3.5.0) (2021-04-20)
-
 
 ### Bug Fixes
 
 * update node groups on node ready ([#1076](https://github.com/zwave-js/zwavejs2mqtt/issues/1076)) ([f7f960c](https://github.com/zwave-js/zwavejs2mqtt/commit/f7f960c50b141468e60a36dcc946236ab6f41e74)), closes [#1072](https://github.com/zwave-js/zwavejs2mqtt/issues/1072)
 
-
 ### Features
 
 * **ui:** create new directory/files in store ([#1083](https://github.com/zwave-js/zwavejs2mqtt/issues/1083)) ([0f8a3bc](https://github.com/zwave-js/zwavejs2mqtt/commit/0f8a3bc7506631a1ea7ec93245c6bc6d1a68e77a))
 
-
-
 # [3.4.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v3.3.0...v3.4.0) (2021-04-17)
-
 
 ### Bug Fixes
 
@@ -3395,16 +2942,12 @@
 * prevent 404 errors in store when using nginx ([#1060](https://github.com/zwave-js/zwavejs2mqtt/issues/1060)) ([b8dd575](https://github.com/zwave-js/zwavejs2mqtt/commit/b8dd57519b98c7f09405791ed20e88b6b367ee9f))
 * store sessions in a dedicated folder in store ([#1067](https://github.com/zwave-js/zwavejs2mqtt/issues/1067)) ([2f2c947](https://github.com/zwave-js/zwavejs2mqtt/commit/2f2c9470914d2d934768d328f747bf8e165f7a41))
 
-
 ### Features
 
 * allow to send a custom function to driver ([#1063](https://github.com/zwave-js/zwavejs2mqtt/issues/1063)) ([79e50fd](https://github.com/zwave-js/zwavejs2mqtt/commit/79e50fd3c28ff47a30548b62f01f2234c1342795))
 * allow to send custom Config CC get/set commands ([#1064](https://github.com/zwave-js/zwavejs2mqtt/issues/1064)) ([96e0662](https://github.com/zwave-js/zwavejs2mqtt/commit/96e06620dcf826a4724c0249471d0b24f738c48a))
 
-
-
 # [3.3.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v3.2.1...v3.3.0) (2021-04-13)
-
 
 ### Bug Fixes
 
@@ -3413,24 +2956,17 @@
 * **ui:** assume controller always forwards in mesh graph ([#1038](https://github.com/zwave-js/zwavejs2mqtt/issues/1038)) ([aca4af3](https://github.com/zwave-js/zwavejs2mqtt/commit/aca4af3f897f5244e7b0380870055e11761d82e0)), closes [#1034](https://github.com/zwave-js/zwavejs2mqtt/issues/1034) [#739](https://github.com/zwave-js/zwavejs2mqtt/issues/739)
 * **ui-mesh:** better labels color based on current theme ([#1050](https://github.com/zwave-js/zwavejs2mqtt/issues/1050)) ([2bf47d8](https://github.com/zwave-js/zwavejs2mqtt/commit/2bf47d8ca741462b05c63f6721dc85535348e489)), closes [#1010](https://github.com/zwave-js/zwavejs2mqtt/issues/1010)
 
-
 ### Features
 
 * **ui:** refresh CC values ([#1051](https://github.com/zwave-js/zwavejs2mqtt/issues/1051)) ([b3ad1a3](https://github.com/zwave-js/zwavejs2mqtt/commit/b3ad1a3625b35f3cad963a0aa3ca50f1a342ffe6))
 
-
-
 ## [3.2.1](https://github.com/zwave-js/zwavejs2mqtt/compare/v3.2.0...v3.2.1) (2021-04-11)
-
 
 ### Bug Fixes
 
 * this.stopExclusion is undefined ([#1036](https://github.com/zwave-js/zwavejs2mqtt/issues/1036)) ([58f4368](https://github.com/zwave-js/zwavejs2mqtt/commit/58f4368fa83751eb06056c783acaff973fa66770)), closes [#1031](https://github.com/zwave-js/zwavejs2mqtt/issues/1031)
 
-
-
 # [3.2.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v3.1.0...v3.2.0) (2021-04-07)
-
 
 ### Bug Fixes
 
@@ -3438,15 +2974,11 @@
 * allow accent chars in topics ([#1007](https://github.com/zwave-js/zwavejs2mqtt/issues/1007)) ([79cf699](https://github.com/zwave-js/zwavejs2mqtt/commit/79cf69910e9a40ee8e00f5b2ecc3cd1ae6f57ba8)), closes [#1003](https://github.com/zwave-js/zwavejs2mqtt/issues/1003)
 * applicationName used in statistics ([ada8abb](https://github.com/zwave-js/zwavejs2mqtt/commit/ada8abb24ce7edf6c61d87901e1908a4f628cbe8))
 
-
 ### Features
 
 * make usage statistics opt-in ([#1002](https://github.com/zwave-js/zwavejs2mqtt/issues/1002)) ([9b75833](https://github.com/zwave-js/zwavejs2mqtt/commit/9b758336b1a060e01147833ef5c59f8d61f20cce))
 
-
-
 # [3.1.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v3.0.3...v3.1.0) (2021-04-06)
-
 
 ### Bug Fixes
 
@@ -3454,15 +2986,11 @@
 * statistics and new node interview events ([#997](https://github.com/zwave-js/zwavejs2mqtt/issues/997)) ([707230e](https://github.com/zwave-js/zwavejs2mqtt/commit/707230e4df8d7a146993db090c4faf18cd064461))
 * **ui:** prevent sending removeFailed to sleeping nodes in broadcast ([#988](https://github.com/zwave-js/zwavejs2mqtt/issues/988)) ([7750cca](https://github.com/zwave-js/zwavejs2mqtt/commit/7750cca9ad0f3f1bbacd12d3af4c62b775760c33)), closes [#983](https://github.com/zwave-js/zwavejs2mqtt/issues/983)
 
-
 ### Features
 
 * usage statistics ([#989](https://github.com/zwave-js/zwavejs2mqtt/issues/989)) ([22b0379](https://github.com/zwave-js/zwavejs2mqtt/commit/22b03799b67c7f8101ea9723d127ba87b3e8c0d0))
 
-
-
 ## [3.0.3](https://github.com/zwave-js/zwavejs2mqtt/compare/v3.0.2...v3.0.3) (2021-04-01)
-
 
 ### Bug Fixes
 
@@ -3470,47 +2998,35 @@
 * correctly show heal process complete ([#980](https://github.com/zwave-js/zwavejs2mqtt/issues/980)) ([f2efd4e](https://github.com/zwave-js/zwavejs2mqtt/commit/f2efd4e96e38da0d1c3af43a8314226bafae0e2b)), closes [#969](https://github.com/zwave-js/zwavejs2mqtt/issues/969)
 * prevent stopInclusion/Exclusion to throw ([#979](https://github.com/zwave-js/zwavejs2mqtt/issues/979)) ([6055834](https://github.com/zwave-js/zwavejs2mqtt/commit/6055834f341997b39560051d8c7cdcefa8649d1a)), closes [#959](https://github.com/zwave-js/zwavejs2mqtt/issues/959)
 
-
-
 ## [3.0.2](https://github.com/zwave-js/zwavejs2mqtt/compare/v3.0.1...v3.0.2) (2021-03-26)
-
 
 ### Bug Fixes
 
 * revert PR [#920](https://github.com/zwave-js/zwavejs2mqtt/issues/920) "use prefixed node.id in mqtt discovery topic" ([#951](https://github.com/zwave-js/zwavejs2mqtt/issues/951)) ([2595701](https://github.com/zwave-js/zwavejs2mqtt/commit/2595701ca933c16247b0057d500805b209651344))
 * undefined propertyName in notifications ([#950](https://github.com/zwave-js/zwavejs2mqtt/issues/950)) ([da63912](https://github.com/zwave-js/zwavejs2mqtt/commit/da63912fdb68d83fe5946eeef5cb752a3b7e06ef)), closes [#948](https://github.com/zwave-js/zwavejs2mqtt/issues/948)
 
-
-
 ## [3.0.1](https://github.com/zwave-js/zwavejs2mqtt/compare/v3.0.0...v3.0.1) (2021-03-25)
-
 
 ### Bug Fixes
 
 * **ui:** control panel table not rendered ([#944](https://github.com/zwave-js/zwavejs2mqtt/issues/944)) ([73a6631](https://github.com/zwave-js/zwavejs2mqtt/commit/73a66315fdd8abb6842716cb264d5ff3ea3ccb18)), closes [#940](https://github.com/zwave-js/zwavejs2mqtt/issues/940)
 
-
-
 # [3.0.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v2.4.1...v3.0.0) (2021-03-24)
-
 
 ### Features
 
 * move to zwavejs 7 ([#864](https://github.com/zwave-js/zwavejs2mqtt/issues/864)) ([0bff7a7](https://github.com/zwave-js/zwavejs2mqtt/commit/0bff7a7798e877f86ed158c60b0938a1f960800e))
 
-
 ### BREAKING CHANGES
 
 * Most changes are already documented [here](https://zwave-js.github.io/node-zwave-js/#/getting-started/migrating-to-v7):
+
 - Corrected parsing of Node Information Frames (NIF), reworked node properties
-- No automatic query of all node values when restarting from cache, `interview completed` event is no longer emitted on startup
-- Reworked "notification" event, node notifications are mapped to mqtt using a different topic/payload
-- This version is incompatible with HA versions before 2021.4.x
-
-
+* No automatic query of all node values when restarting from cache, `interview completed` event is no longer emitted on startup
+* Reworked "notification" event, node notifications are mapped to mqtt using a different topic/payload
+* This version is incompatible with HA versions before 2021.4.x
 
 ## [2.4.1](https://github.com/zwave-js/zwavejs2mqtt/compare/v2.4.0...v2.4.1) (2021-03-22)
-
 
 ### Bug Fixes
 
@@ -3519,25 +3035,18 @@
 * **ui:** units in selects and selects always sending 0 ([#925](https://github.com/zwave-js/zwavejs2mqtt/issues/925)) ([6162933](https://github.com/zwave-js/zwavejs2mqtt/commit/616293308cc2f1c6bb5d1a67fb75dc448ae6ceab))
 * use prefixed node.id in mqtt discovery topic ([#920](https://github.com/zwave-js/zwavejs2mqtt/issues/920)) ([2c8bccb](https://github.com/zwave-js/zwavejs2mqtt/commit/2c8bccb4caec55e7bc9f1a596dd746969dcd3119))
 
-
-
 # [2.4.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v2.3.0...v2.4.0) (2021-03-18)
-
 
 ### Bug Fixes
 
 * **ui:** broken edit of scene values ([#898](https://github.com/zwave-js/zwavejs2mqtt/issues/898)) ([ed2d639](https://github.com/zwave-js/zwavejs2mqtt/commit/ed2d6390d1db4c1fd89880526cc93d8e617636b7))
 * allow spaces in name and location ([#897](https://github.com/zwave-js/zwavejs2mqtt/issues/897)) ([18d6023](https://github.com/zwave-js/zwavejs2mqtt/commit/18d602341664229a9f78c2c44660d7b74d7df751)), closes [#877](https://github.com/zwave-js/zwavejs2mqtt/issues/877)
 
-
 ### Features
 
 * **ui:** improved control panel ([#900](https://github.com/zwave-js/zwavejs2mqtt/issues/900)) ([3b3785e](https://github.com/zwave-js/zwavejs2mqtt/commit/3b3785eabe6a911710d1cefa371d3afd429eb196))
 
-
-
 # [2.3.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v2.2.0...v2.3.0) (2021-03-15)
-
 
 ### Bug Fixes
 
@@ -3548,15 +3057,11 @@
 * **ui:** zwave graph when controller id != 1 ([#863](https://github.com/zwave-js/zwavejs2mqtt/issues/863)) ([74fb920](https://github.com/zwave-js/zwavejs2mqtt/commit/74fb920c0dd1421895b5f0f5fbdf2deb0adefd15)), closes [#862](https://github.com/zwave-js/zwavejs2mqtt/issues/862)
 * better payload parsing ([#861](https://github.com/zwave-js/zwavejs2mqtt/issues/861)) ([199c558](https://github.com/zwave-js/zwavejs2mqtt/commit/199c5587e07f0ba31546daa7f9aa533be465c852))
 
-
 ### Features
 
 * multicast/broadcast apis ([#25](https://github.com/zwave-js/zwavejs2mqtt/issues/25)) ([98e145d](https://github.com/zwave-js/zwavejs2mqtt/commit/98e145db9dcead56839147c9fc20bbbcac1e8f5d))
 
-
-
 # [2.2.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v2.1.2...v2.2.0) (2021-03-09)
-
 
 ### Bug Fixes
 
@@ -3564,16 +3069,12 @@
 * **ui:** show custom values and better read-only style ([#853](https://github.com/zwave-js/zwavejs2mqtt/issues/853)) ([bcd4554](https://github.com/zwave-js/zwavejs2mqtt/commit/bcd4554b3c9d02ca302ad83e4ad2bf1bb7c7d697)), closes [#844](https://github.com/zwave-js/zwavejs2mqtt/issues/844)
 * **ui:** user friendlier list values management ([#843](https://github.com/zwave-js/zwavejs2mqtt/issues/843)) ([fb202db](https://github.com/zwave-js/zwavejs2mqtt/commit/fb202db128dd0c919b959efc622c908002f73b3b))
 
-
 ### Features
 
 * **hass:** added `manual discovery` setting ([#851](https://github.com/zwave-js/zwavejs2mqtt/issues/851)) ([255e9b3](https://github.com/zwave-js/zwavejs2mqtt/commit/255e9b3327d4c350adc61ad63adc944c95e011dc)), closes [#819](https://github.com/zwave-js/zwavejs2mqtt/issues/819)
 * **ui:** debug window ([#852](https://github.com/zwave-js/zwavejs2mqtt/issues/852)) ([42b2826](https://github.com/zwave-js/zwavejs2mqtt/commit/42b28269b54ed1de63c7c72ddd38849fdcf3e253))
 
-
-
 ## [2.1.2](https://github.com/zwave-js/zwavejs2mqtt/compare/v2.1.1...v2.1.2) (2021-03-08)
-
 
 ### Bug Fixes
 
@@ -3581,10 +3082,7 @@
 * prevent reset poll timers on node status updates ([#827](https://github.com/zwave-js/zwavejs2mqtt/issues/827)) ([c5c96bd](https://github.com/zwave-js/zwavejs2mqtt/commit/c5c96bdc039bb5385dd69bd5bae0f781792f9d68)), closes [#826](https://github.com/zwave-js/zwavejs2mqtt/issues/826)
 * show hex number along with the `unknown` strings ([#801](https://github.com/zwave-js/zwavejs2mqtt/issues/801)) ([056bc80](https://github.com/zwave-js/zwavejs2mqtt/commit/056bc8065722f2847a41dde2b0356994f8d53a94))
 
-
-
 ## [2.1.1](https://github.com/zwave-js/zwavejs2mqtt/compare/v2.1.0...v2.1.1) (2021-03-04)
-
 
 ### Bug Fixes
 
@@ -3594,10 +3092,7 @@
 * assume controller always as listening ([#796](https://github.com/zwave-js/zwavejs2mqtt/issues/796)) ([d4f7780](https://github.com/zwave-js/zwavejs2mqtt/commit/d4f7780ac351b0dde2f8367beb7c203e3203985a)), closes [#739](https://github.com/zwave-js/zwavejs2mqtt/issues/739)
 * read/parse buffers as hex strings ([#797](https://github.com/zwave-js/zwavejs2mqtt/issues/797)) ([521d2d2](https://github.com/zwave-js/zwavejs2mqtt/commit/521d2d2dd115f4c25b3f8f58db6328617f17d006))
 
-
-
 # [2.1.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v2.0.1...v2.1.0) (2021-03-02)
-
 
 ### Bug Fixes
 
@@ -3606,15 +3101,11 @@
 * **ui:** show debug feedback ([714702c](https://github.com/zwave-js/zwavejs2mqtt/commit/714702c60e8df12f18456da68ba9bbf5f43908a2))
 * **ui:** show scrollbars ([#792](https://github.com/zwave-js/zwavejs2mqtt/issues/792)) ([e974db2](https://github.com/zwave-js/zwavejs2mqtt/commit/e974db24f622aa78f475bfb5324e51abc6036518)), closes [#784](https://github.com/zwave-js/zwavejs2mqtt/issues/784)
 
-
 ### Features
 
 * **ui:** allow to export nodes dump ([8a4a958](https://github.com/zwave-js/zwavejs2mqtt/commit/8a4a958795eb2cc317fcc99a6edab36a0cd07a65))
 
-
-
 ## [2.0.1](https://github.com/zwave-js/zwavejs2mqtt/compare/v2.0.0...v2.0.1) (2021-03-01)
-
 
 ### Bug Fixes
 
@@ -3622,21 +3113,16 @@
 * bug when importing nodes.json ([#768](https://github.com/zwave-js/zwavejs2mqtt/issues/768)) ([84550f2](https://github.com/zwave-js/zwavejs2mqtt/commit/84550f27da2d31ba5299cfb054c6f48aea1d527a))
 * use node `available` in node status ([#762](https://github.com/zwave-js/zwavejs2mqtt/issues/762)) ([d4972e8](https://github.com/zwave-js/zwavejs2mqtt/commit/d4972e88a0170823ae9adc7755936e07bdce24c9))
 
-
-
 # [2.0.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v1.4.0...v2.0.0) (2021-02-26)
-
 
 ### Code Refactoring
 
 * make nodes a map instead of an array ([#710](https://github.com/zwave-js/zwavejs2mqtt/issues/710)) ([5a43abd](https://github.com/zwave-js/zwavejs2mqtt/commit/5a43abd94373d74095dc9afd596a66b7e27b608b))
 
-
 ### Features
 
 * correctly parse `currentColor` value and improve rgb discovery ([#568](https://github.com/zwave-js/zwavejs2mqtt/issues/568)) ([7bedd3b](https://github.com/zwave-js/zwavejs2mqtt/commit/7bedd3b36403ff470a5e7317db68555b9edc4616))
 * plugins improved support ([#688](https://github.com/zwave-js/zwavejs2mqtt/issues/688)) ([a213b25](https://github.com/zwave-js/zwavejs2mqtt/commit/a213b25cc340a9bd8c69dcf7a027662e3811081d))
-
 
 ### BREAKING CHANGES
 
@@ -3646,24 +3132,17 @@
 node removed socket event now returns the node removed
 renamed `setNodeName` and `setNodeLocation` apis (removed the leading `_`) as now them also store the value to controller
 
-
-
 # [1.4.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v1.3.0...v1.4.0) (2021-02-24)
-
 
 ### Bug Fixes
 
 * **hass:** inovelli lzw42 multi color bulb discovery update ([#690](https://github.com/zwave-js/zwavejs2mqtt/issues/690)) ([9669cce](https://github.com/zwave-js/zwavejs2mqtt/commit/9669cce977e1412023c7bc9b53c9981ded1f225f))
 
-
 ### Features
 
 * zwavejs@6.5.0 and nodeFilter setting support ([#728](https://github.com/zwave-js/zwavejs2mqtt/issues/728)) ([3f12c2a](https://github.com/zwave-js/zwavejs2mqtt/commit/3f12c2ab9a65f701458334b3f5db1183ae742f3c))
 
-
-
 # [1.3.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v1.2.3...v1.3.0) (2021-02-23)
-
 
 ### Bug Fixes
 
@@ -3671,16 +3150,12 @@ renamed `setNodeName` and `setNodeLocation` apis (removed the leading `_`) as no
 * **ui:** node details in mobile devices ([9fcc8e0](https://github.com/zwave-js/zwavejs2mqtt/commit/9fcc8e03cb93355266f0c5402f3b2848e30c4b9a))
 * **ui:** overflow of tabs in mobile devices ([6806907](https://github.com/zwave-js/zwavejs2mqtt/commit/6806907bac52f60386545cb81733517107241ea1))
 
-
 ### Features
 
 * **ui:** add link to zwavejs devices db ([#708](https://github.com/zwave-js/zwavejs2mqtt/issues/708)) ([ebb5036](https://github.com/zwave-js/zwavejs2mqtt/commit/ebb50364e9c8660b39bf2d2f8ec29f2859de4a9f))
 * **ui:** update topics and clear retained functions ([246c078](https://github.com/zwave-js/zwavejs2mqtt/commit/246c0784196e29a98ea47ab22fad5e1306eab616))
 
-
-
 ## [1.2.3](https://github.com/zwave-js/zwavejs2mqtt/compare/v1.2.2...v1.2.3) (2021-02-22)
-
 
 ### Bug Fixes
 
@@ -3692,20 +3167,14 @@ renamed `setNodeName` and `setNodeLocation` apis (removed the leading `_`) as no
 * propertyKey may be zero ([#674](https://github.com/zwave-js/zwavejs2mqtt/issues/674)) ([c60a640](https://github.com/zwave-js/zwavejs2mqtt/commit/c60a6404732e24f4cc166e058ac71d7c43b23d86))
 * **ui:** typo groups associations ([#650](https://github.com/zwave-js/zwavejs2mqtt/issues/650)) ([80163d1](https://github.com/zwave-js/zwavejs2mqtt/commit/80163d1b0de11f83007acc99f6a4f5c8366a8f5b))
 
-
-
 ## [1.2.2](https://github.com/zwave-js/zwavejs2mqtt/compare/v1.2.1...v1.2.2) (2021-02-19)
-
 
 ### Bug Fixes
 
 * better app shutdown detection ([#639](https://github.com/zwave-js/zwavejs2mqtt/issues/639)) ([31477cc](https://github.com/zwave-js/zwavejs2mqtt/commit/31477ccaef3b56e0fe86bdc2d6cc173bfabd5713)), closes [#506](https://github.com/zwave-js/zwavejs2mqtt/issues/506)
 * **ui:** set Control Panel as main page ([#640](https://github.com/zwave-js/zwavejs2mqtt/issues/640)) ([bbf6864](https://github.com/zwave-js/zwavejs2mqtt/commit/bbf6864576bdf46e4e35f74226f3846ad15b4d4a))
 
-
-
 ## [1.2.1](https://github.com/zwave-js/zwavejs2mqtt/compare/v1.1.1...v1.2.1) (2021-02-18)
-
 
 ### Bug Fixes
 
@@ -3715,16 +3184,12 @@ renamed `setNodeName` and `setNodeLocation` apis (removed the leading `_`) as no
 * start zwavejs server when driver is ready ([#605](https://github.com/zwave-js/zwavejs2mqtt/issues/605)) ([aebd890](https://github.com/zwave-js/zwavejs2mqtt/commit/aebd8903d5c99ab51f5ee5f30e26258c375ae795)), closes [#602](https://github.com/zwave-js/zwavejs2mqtt/issues/602)
 * **ui:** battery powered devices shown as main ([#590](https://github.com/zwave-js/zwavejs2mqtt/issues/590)) ([0235011](https://github.com/zwave-js/zwavejs2mqtt/commit/02350114292cd7ba163653076b6f54e6ec8c9662)), closes [#546](https://github.com/zwave-js/zwavejs2mqtt/issues/546)
 
-
 ### Features
 
 * **ui:** authentication ([#591](https://github.com/zwave-js/zwavejs2mqtt/issues/591)) ([7eef6c5](https://github.com/zwave-js/zwavejs2mqtt/commit/7eef6c5aa75c93d4c26caf6c99ab6f5090b013b0))
 * bump zwavejs server beta 7 and show version on ui ([#609](https://github.com/zwave-js/zwavejs2mqtt/issues/609)) ([bb255db](https://github.com/zwave-js/zwavejs2mqtt/commit/bb255dba6b318c6aa04d39f5a7ead10352968a28))
 
-
-
 ## [1.1.1](https://github.com/zwave-js/zwavejs2mqtt/compare/v1.1.0...v1.1.1) (2021-02-10)
-
 
 ### Bug Fixes
 
@@ -3733,16 +3198,12 @@ renamed `setNodeName` and `setNodeLocation` apis (removed the leading `_`) as no
 * **ui:** no secure nodes shown as secure ([#523](https://github.com/zwave-js/zwavejs2mqtt/issues/523)) ([fd9ac7b](https://github.com/zwave-js/zwavejs2mqtt/commit/fd9ac7bce7fa46791848e41682e6fff6b45c0e2e)), closes [#522](https://github.com/zwave-js/zwavejs2mqtt/issues/522)
 * lint issues ([08c1578](https://github.com/zwave-js/zwavejs2mqtt/commit/08c1578cfbaa1b9a46e683614f71572caacd4596))
 
-
 ### Features
 
 * https support ([#535](https://github.com/zwave-js/zwavejs2mqtt/issues/535)) ([346d638](https://github.com/zwave-js/zwavejs2mqtt/commit/346d638a5c2de39780b337b21687105759c71d5c))
 * **ui:** rearrange table columns ([#534](https://github.com/zwave-js/zwavejs2mqtt/issues/534)) ([d6cd9ec](https://github.com/zwave-js/zwavejs2mqtt/commit/d6cd9ece8853c74019a68e983f39bd3c86570eb4)), closes [#484](https://github.com/zwave-js/zwavejs2mqtt/issues/484)
 
-
-
 # [1.1.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v1.0.5...v1.1.0) (2021-02-08)
-
 
 ### Bug Fixes
 
@@ -3756,7 +3217,6 @@ renamed `setNodeName` and `setNodeLocation` apis (removed the leading `_`) as no
 * **ui:** disable Gateway label ([#482](https://github.com/zwave-js/zwavejs2mqtt/issues/482)) ([d69560f](https://github.com/zwave-js/zwavejs2mqtt/commit/d69560f2dd113f9fd72d6efeff6b40de967586bd)), closes [#471](https://github.com/zwave-js/zwavejs2mqtt/issues/471)
 * **ui:** settings refactor, fix mesh node names ([#456](https://github.com/zwave-js/zwavejs2mqtt/issues/456)) ([24f9daa](https://github.com/zwave-js/zwavejs2mqtt/commit/24f9daa88fbf0e0e581d8e06a82664135ebee5b6)), closes [#455](https://github.com/zwave-js/zwavejs2mqtt/issues/455)
 
-
 ### Features
 
 * allow to specify custom qos and retain ([#502](https://github.com/zwave-js/zwavejs2mqtt/issues/502)) ([4055c68](https://github.com/zwave-js/zwavejs2mqtt/commit/4055c6869d8a5f3322215e4ebdbe3469198cb4d7)), closes [#311](https://github.com/zwave-js/zwavejs2mqtt/issues/311)
@@ -3765,19 +3225,13 @@ renamed `setNodeName` and `setNodeLocation` apis (removed the leading `_`) as no
 * custom plugins loader ([#478](https://github.com/zwave-js/zwavejs2mqtt/issues/478)) ([020f82b](https://github.com/zwave-js/zwavejs2mqtt/commit/020f82b43476049e2fce116f3df88d3677863466))
 * **ui:** add node debug info tab ([#462](https://github.com/zwave-js/zwavejs2mqtt/issues/462)) ([56e1c62](https://github.com/zwave-js/zwavejs2mqtt/commit/56e1c6272ab56fb46333607b862d857f04a28998))
 
-
-
 ## [1.0.5](https://github.com/zwave-js/zwavejs2mqtt/compare/v1.0.4...v1.0.5) (2021-02-04)
-
 
 ### Bug Fixes
 
 * **ui:** better ui add/remove dialog feedback ([#451](https://github.com/zwave-js/zwavejs2mqtt/issues/451)) ([325be03](https://github.com/zwave-js/zwavejs2mqtt/commit/325be0394671deeef83de6e79794331846012862))
 
-
-
 ## [1.0.4](https://github.com/zwave-js/zwavejs2mqtt/compare/v1.0.3...v1.0.4) (2021-02-03)
-
 
 ### Bug Fixes
 
@@ -3786,49 +3240,35 @@ renamed `setNodeName` and `setNodeLocation` apis (removed the leading `_`) as no
 * improve binary sensor code - add more sensors ([#433](https://github.com/zwave-js/zwavejs2mqtt/issues/433)) ([ed6fbe3](https://github.com/zwave-js/zwavejs2mqtt/commit/ed6fbe3796a1a7a4566500dadde43af7b48f6e65))
 * **ui:** labels and mobile view ([#413](https://github.com/zwave-js/zwavejs2mqtt/issues/413)) ([cb2d735](https://github.com/zwave-js/zwavejs2mqtt/commit/cb2d73555e01ea5b175ecfd73f08e0eca257f59c))
 
-
 ### Features
 
 * **ui:** improved add remove device UX ([#419](https://github.com/zwave-js/zwavejs2mqtt/issues/419)) ([e3e57b6](https://github.com/zwave-js/zwavejs2mqtt/commit/e3e57b6a56d2589a5d27a8d67647767f94d36078))
 
-
-
 ## [1.0.3](https://github.com/zwave-js/zwavejs2mqtt/compare/v1.0.2...v1.0.3) (2021-02-02)
-
 
 ### Features
 
 * **ui:** show/hide node table columns ([#407](https://github.com/zwave-js/zwavejs2mqtt/issues/407)) ([56b0c1c](https://github.com/zwave-js/zwavejs2mqtt/commit/56b0c1cf67fa30d4094a6c6c1fb13f54628b3c9e))
 
-
-
 ## [1.0.2](https://github.com/zwave-js/zwavejs2mqtt/compare/v1.0.1...v1.0.2) (2021-02-01)
-
 
 ### Bug Fixes
 
 * climate discovery without mode CC ([#408](https://github.com/zwave-js/zwavejs2mqtt/issues/408)) ([0cb5d5c](https://github.com/zwave-js/zwavejs2mqtt/commit/0cb5d5cbd8f649a7a0c8b826455cba67bf5c892b)), closes [#400](https://github.com/zwave-js/zwavejs2mqtt/issues/400)
 * **ui:** use `No` instead of `Cancel` in broadcast popup ([#410](https://github.com/zwave-js/zwavejs2mqtt/issues/410)) ([4b868f6](https://github.com/zwave-js/zwavejs2mqtt/commit/4b868f63d0c842c5e7e5c09c3d05a024d75b179d))
 
-
 ### Features
 
 * **hass:** use binary sensors when notifications has only two states ([#396](https://github.com/zwave-js/zwavejs2mqtt/issues/396)) ([557ec80](https://github.com/zwave-js/zwavejs2mqtt/commit/557ec801979a001209fea5d3d32a66421798a0b0))
 
-
-
 ## [1.0.1](https://github.com/zwave-js/zwavejs2mqtt/compare/v1.0.0...v1.0.1) (2021-01-29)
-
 
 ### Bug Fixes
 
 * **security:** better path sanitize on store ([9403cb1](https://github.com/zwave-js/zwavejs2mqtt/commit/9403cb1ec8614f845ced8894ac04efea182f1e0a))
 * **security:** throw if path is not safe ([f69d2bb](https://github.com/zwave-js/zwavejs2mqtt/commit/f69d2bb80ba875947bd273c599ae53d554075975))
 
-
-
 # [1.0.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v1.0.0-rc.1...v1.0.0) (2021-01-29)
-
 
 ### Bug Fixes
 
@@ -3848,7 +3288,6 @@ renamed `setNodeName` and `setNodeLocation` apis (removed the leading `_`) as no
 * **ui:** unable to add values to gateway values table ([af67ac9](https://github.com/zwave-js/zwavejs2mqtt/commit/af67ac9a99736f7ec71dffdeb1f20d07a9d16828))
 * **ui:** undefined scene value with booleans ([cd11214](https://github.com/zwave-js/zwavejs2mqtt/commit/cd11214073d224281658c155cab94c4dd5b4950e)), closes [#320](https://github.com/zwave-js/zwavejs2mqtt/issues/320)
 
-
 ### Features
 
 * add pollValue api ([#343](https://github.com/zwave-js/zwavejs2mqtt/issues/343)) ([2356de9](https://github.com/zwave-js/zwavejs2mqtt/commit/2356de99eb25b8f0320999ac4b96348e6949d706)), closes [#309](https://github.com/zwave-js/zwavejs2mqtt/issues/309)
@@ -3859,10 +3298,7 @@ renamed `setNodeName` and `setNodeLocation` apis (removed the leading `_`) as no
 * env var STORE_DIR and renamed OZW_NETWORK_KEY to NETWORK_KEY ([#308](https://github.com/zwave-js/zwavejs2mqtt/issues/308)) ([58c2cb9](https://github.com/zwave-js/zwavejs2mqtt/commit/58c2cb9541058f09011df0febc87f567f03abe0f)), closes [#85](https://github.com/zwave-js/zwavejs2mqtt/issues/85)
 * node table UI optimizations ([#332](https://github.com/zwave-js/zwavejs2mqtt/issues/332)) ([ccd606e](https://github.com/zwave-js/zwavejs2mqtt/commit/ccd606e2875399887379a7b14edc20e93524b4c8)), closes [#342](https://github.com/zwave-js/zwavejs2mqtt/issues/342)
 
-
-
 # [1.0.0-rc.1](https://github.com/zwave-js/zwavejs2mqtt/compare/v1.0.0-rc.0...v1.0.0-rc.1) (2021-01-21)
-
 
 ### Bug Fixes
 
@@ -3871,15 +3307,11 @@ renamed `setNodeName` and `setNodeLocation` apis (removed the leading `_`) as no
 * remove markNodeAsFailed api ([#289](https://github.com/zwave-js/zwavejs2mqtt/issues/289)) ([3c6b99e](https://github.com/zwave-js/zwavejs2mqtt/commit/3c6b99ec307f09924a962c4bdfc29d0509a95462))
 * topics and hass ids/names fixes ([#247](https://github.com/zwave-js/zwavejs2mqtt/issues/247)) ([a072c73](https://github.com/zwave-js/zwavejs2mqtt/commit/a072c7325e8dd030d2aa375a84a82d16a160c378)), closes [#239](https://github.com/zwave-js/zwavejs2mqtt/issues/239) [#232](https://github.com/zwave-js/zwavejs2mqtt/issues/232)
 
-
 ### Features
 
 * **hass:** create discovery for CC basic 0x20 ([#250](https://github.com/zwave-js/zwavejs2mqtt/issues/250)) ([7d2d667](https://github.com/zwave-js/zwavejs2mqtt/commit/7d2d667653eeb37f423ca1cffb530a1b095b372d))
 
-
-
 # [1.0.0-rc.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v1.0.0-beta.0...v1.0.0-rc.0) (2021-01-20)
-
 
 ### Bug Fixes
 
@@ -3897,7 +3329,6 @@ renamed `setNodeName` and `setNodeLocation` apis (removed the leading `_`) as no
 * **ui:** inconsistent, unsorted node selection ([#258](https://github.com/zwave-js/zwavejs2mqtt/issues/258)) ([f8042ed](https://github.com/zwave-js/zwavejs2mqtt/commit/f8042ed605b70558d08b49685d5e78870ee251e9))
 * notification log ([193deb9](https://github.com/zwave-js/zwavejs2mqtt/commit/193deb96553498052e061fed57ff2089cfbad932))
 
-
 ### Features
 
 * markNodeAsFailed api ([#263](https://github.com/zwave-js/zwavejs2mqtt/issues/263)) ([c00f50a](https://github.com/zwave-js/zwavejs2mqtt/commit/c00f50a323c60e0d49656faac89e734fbee53f06))
@@ -3907,10 +3338,7 @@ renamed `setNodeName` and `setNodeLocation` apis (removed the leading `_`) as no
 * **docker:** Improve documentation by linking to the readme ([#274](https://github.com/zwave-js/zwavejs2mqtt/issues/274)) ([cec2d0d](https://github.com/zwave-js/zwavejs2mqtt/commit/cec2d0d3bafe908af74ca852aac68c305833656c))
 * ui and hass discovery rgb valueId support ([#238](https://github.com/zwave-js/zwavejs2mqtt/issues/238)) ([a56f044](https://github.com/zwave-js/zwavejs2mqtt/commit/a56f044f4abd24d4bb9937485c6fb3c510e7906c)), closes [#78](https://github.com/zwave-js/zwavejs2mqtt/issues/78)
 
-
-
 # [1.0.0-beta.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v1.0.0-alpha.2...v1.0.0-beta.0) (2021-01-13)
-
 
 ### Bug Fixes
 
@@ -3936,7 +3364,6 @@ renamed `setNodeName` and `setNodeLocation` apis (removed the leading `_`) as no
 * **hass:** lock payload and state ([#168](https://github.com/zwave-js/zwavejs2mqtt/issues/168)) ([04952ea](https://github.com/zwave-js/zwavejs2mqtt/commit/04952ea13414e6a2d075dc2e07ec610ff4f066fc))
 * **ui:** use buttons for boolean valueIds ([#151](https://github.com/zwave-js/zwavejs2mqtt/issues/151)) ([6da9a58](https://github.com/zwave-js/zwavejs2mqtt/commit/6da9a58df3a84082b1aa29195835547ff7b4e268)), closes [#133](https://github.com/zwave-js/zwavejs2mqtt/issues/133)
 
-
 ### Features
 
 * add directions to access the UI from within HA ([#205](https://github.com/zwave-js/zwavejs2mqtt/issues/205)) ([51f715c](https://github.com/zwave-js/zwavejs2mqtt/commit/51f715cf9d9528bf883668aada587266d49170fa))
@@ -3947,10 +3374,7 @@ renamed `setNodeName` and `setNodeLocation` apis (removed the leading `_`) as no
 * expose node info under topic /nodeinfo ([#159](https://github.com/zwave-js/zwavejs2mqtt/issues/159)) ([8f326de](https://github.com/zwave-js/zwavejs2mqtt/commit/8f326de2a8c4f6dcce49180c7b8c6d772128558b))
 * move docs to github pages using docsify ([#122](https://github.com/zwave-js/zwavejs2mqtt/issues/122)) ([3e9425d](https://github.com/zwave-js/zwavejs2mqtt/commit/3e9425d9396e6a8451080b798c06ea7d134c9f8e))
 
-
-
 # [1.0.0-alpha.2](https://github.com/zwave-js/zwavejs2mqtt/compare/v1.0.0-alpha.1...v1.0.0-alpha.2) (2020-12-29)
-
 
 ### Bug Fixes
 
@@ -3967,7 +3391,6 @@ renamed `setNodeName` and `setNodeLocation` apis (removed the leading `_`) as no
 * **ui:** remove empty layout ([ffa300b](https://github.com/zwave-js/zwavejs2mqtt/commit/ffa300bf77fefa150d5a07ac2b2c0b61325d29ff))
 * startup error in setupLogging() ([#96](https://github.com/zwave-js/zwavejs2mqtt/issues/96)) ([1b5c880](https://github.com/zwave-js/zwavejs2mqtt/commit/1b5c88093fb97bae2e80d384945f29a11516d218))
 
-
 ### Features
 
 * **hass:** translate Notification CC values to string ([#105](https://github.com/zwave-js/zwavejs2mqtt/issues/105)) ([0bc3d5e](https://github.com/zwave-js/zwavejs2mqtt/commit/0bc3d5e0c9b43bbf9c09ee2d36e7507f9dca2150))
@@ -3976,17 +3399,13 @@ renamed `setNodeName` and `setNodeLocation` apis (removed the leading `_`) as no
 * **docker:** allow to update devices of driver during build ([#86](https://github.com/zwave-js/zwavejs2mqtt/issues/86)) ([e7ad93b](https://github.com/zwave-js/zwavejs2mqtt/commit/e7ad93b804471b3db17fd3ac0d71db8ccc9e82b4))
 * **ui:** group values by command classes ([#103](https://github.com/zwave-js/zwavejs2mqtt/issues/103)) ([306b380](https://github.com/zwave-js/zwavejs2mqtt/commit/306b3803d31e13e6dbdd8c0780740552135497b1))
 
-
 ### BREAKING CHANGES
 
 * **hass:** Hass entities ids will change
 Co-authored-by: V Aretakis <vassilis@aretakis.eu>
 * **hass:** entities names could change
 
-
-
 # [1.0.0-alpha.1](https://github.com/zwave-js/zwavejs2mqtt/compare/v1.0.0-alpha.0...v1.0.0-alpha.1) (2020-12-18)
-
 
 ### Bug Fixes
 
@@ -3999,7 +3418,6 @@ Co-authored-by: V Aretakis <vassilis@aretakis.eu>
 * replace `read_only` with `writable` ([b9a6315](https://github.com/zwave-js/zwavejs2mqtt/commit/b9a6315becfab23221428c47c81b5ac27926fed1))
 * socket events constants ([5619cb3](https://github.com/zwave-js/zwavejs2mqtt/commit/5619cb3edef8c5e46b36f5b75fe62130bfea90d7))
 
-
 ### Features
 
 * move to winston logger ([#67](https://github.com/zwave-js/zwavejs2mqtt/issues/67)) ([023fccf](https://github.com/zwave-js/zwavejs2mqtt/commit/023fccfa27353796396fdc1328396e4f15ecf2a4))
@@ -4007,10 +3425,7 @@ Co-authored-by: V Aretakis <vassilis@aretakis.eu>
 * add node Location and node Name to mqtt payload ([#57](https://github.com/zwave-js/zwavejs2mqtt/issues/57)) ([0d65ed6](https://github.com/zwave-js/zwavejs2mqtt/commit/0d65ed64d3e558163edc94fc193b127fa7bb1730))
 * publish app version to mqtt [#53](https://github.com/zwave-js/zwavejs2mqtt/issues/53) ([2f051a2](https://github.com/zwave-js/zwavejs2mqtt/commit/2f051a2e09600428db36dad6b4b0c8d277c70b52))
 
-
-
 # [1.0.0-alpha.0](https://github.com/zwave-js/zwavejs2mqtt/compare/f70724f109153aa9776347c7610f4d8a03d64ad1...v1.0.0-alpha.0) (2020-12-04)
-
 
 ### Bug Fixes
 
@@ -4125,7 +3540,6 @@ Co-authored-by: V Aretakis <vassilis@aretakis.eu>
 * Validation of node names and location to match hass requirements [#344](https://github.com/zwave-js/zwavejs2mqtt/issues/344) ([fa0af36](https://github.com/zwave-js/zwavejs2mqtt/commit/fa0af3684d8937176084c29141d10bcbc7b0fb04))
 * Watch for file changes when using customDevices.json ([ba5f150](https://github.com/zwave-js/zwavejs2mqtt/commit/ba5f150b9b30427ecf004146fec325f149213d5b))
 
-
 ### Features
 
 * allow a zwave plugin to be defined exposing the zwave client to external js ([#364](https://github.com/zwave-js/zwavejs2mqtt/issues/364)) ([ea5442d](https://github.com/zwave-js/zwavejs2mqtt/commit/ea5442d5ac7b4a9ad0f8d5a2f2ab5bd176dac8b6))
@@ -4156,7 +3570,7 @@ Co-authored-by: V Aretakis <vassilis@aretakis.eu>
 * show version in log output ([#485](https://github.com/zwave-js/zwavejs2mqtt/issues/485)) ([7c9d556](https://github.com/zwave-js/zwavejs2mqtt/commit/7c9d556eececddeebe4f2be33641bd8250cb15e2))
 * support more ENV VARS for configuration ([#788](https://github.com/zwave-js/zwavejs2mqtt/issues/788)) ([d7bdb2c](https://github.com/zwave-js/zwavejs2mqtt/commit/d7bdb2c430775b22d355990fb29c9862c1e3d0c8))
 * **hass:** adding CT100 using 2GIG template ([#776](https://github.com/zwave-js/zwavejs2mqtt/issues/776)) ([3c7e7c5](https://github.com/zwave-js/zwavejs2mqtt/commit/3c7e7c5c5935d074a5919a65e5958a5ed608f1bc))
-*  Show device id on node tab ([80103f4](https://github.com/zwave-js/zwavejs2mqtt/commit/80103f4f48a969f6d4ac4a420ae8951262c0ab5b))
+* Show device id on node tab ([80103f4](https://github.com/zwave-js/zwavejs2mqtt/commit/80103f4f48a969f6d4ac4a420ae8951262c0ab5b))
 * Add args to apis response [#301](https://github.com/zwave-js/zwavejs2mqtt/issues/301) ([0635ece](https://github.com/zwave-js/zwavejs2mqtt/commit/0635ece9ff994c7307415b16594812342997ab8c))
 * Add getInfo api fix [#297](https://github.com/zwave-js/zwavejs2mqtt/issues/297) ([b57fb82](https://github.com/zwave-js/zwavejs2mqtt/commit/b57fb827da34ba873196d46d4efa3893b834b552))
 * Add location to names in control panel associations ([fe9511e](https://github.com/zwave-js/zwavejs2mqtt/commit/fe9511e0da043b29e9a3561b43b4acf2f1575f5a))
@@ -4193,7 +3607,6 @@ Co-authored-by: V Aretakis <vassilis@aretakis.eu>
 * Support for fans in climate and better sensor multilevel discovery based on units [#218](https://github.com/zwave-js/zwavejs2mqtt/issues/218) [#213](https://github.com/zwave-js/zwavejs2mqtt/issues/213) ([e2bf5b0](https://github.com/zwave-js/zwavejs2mqtt/commit/e2bf5b065447f4fdef41857e40305a17d7b6ee93))
 * Travis support ([ac6d8be](https://github.com/zwave-js/zwavejs2mqtt/commit/ac6d8be728d6ee742b5dc8cf2661227f5df2862d))
 * update docker to ozw 1.6.240 ([#673](https://github.com/zwave-js/zwavejs2mqtt/issues/673)) ([9000f2e](https://github.com/zwave-js/zwavejs2mqtt/commit/9000f2e64897d4a29dd491925566d99d6d91c79a))
-
 
 ### BREAKING CHANGES
 
