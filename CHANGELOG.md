@@ -1,4 +1,11 @@
+# Changelog
 
+## [11.8.2](///compare/v11.8.1...v11.8.2) (2025-11-30)
+
+### Bug Fixes
+
+* **ui:** snackbar messages style issues 60741b0, closes #4487
+* **ui:** sorting error 9d60bc7
 
 ## [11.8.1](https://github.com/zwave-js/zwave-js-ui/compare/v11.8.0...v11.8.1) (2025-11-25)
 
