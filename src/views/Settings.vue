@@ -59,6 +59,14 @@
 									v-model="internalCompactMode"
 								></v-switch>
 							</v-col>
+							<v-col cols="12" sm="6">
+								<v-text-field
+									hint="Customize the browser tab title (useful when managing multiple hubs)"
+									persistent-hint
+									label="Browser title"
+									v-model="internalBrowserTitle"
+								></v-text-field>
+							</v-col>
 						</v-row>
 					</v-expansion-panel-text>
 					<v-divider />
@@ -2164,6 +2172,14 @@ export default {
 				this.setCompactMode(value)
 			},
 		},
+		internalBrowserTitle: {
+			get() {
+				return this.ui.browserTitle || 'Z-Wave JS UI'
+			},
+			set(value) {
+				this.setBrowserTitle(value)
+			},
+		},
 		settingsChanged() {
 			if (!deepEqual(this.newMqtt, this.mqtt)) return true
 			if (!deepEqual(this.newGateway, this.gateway)) return true
@@ -2417,6 +2433,7 @@ export default {
 			'setNavTabs',
 			'setStreamerMode',
 			'setCompactMode',
+			'setBrowserTitle',
 			'initSettings',
 			'init',
 			'showSnackbar',
@@ -2795,6 +2812,9 @@ export default {
 			this.internalNavTabs = uiState.navTabs
 			this.internalStreamerMode = uiState.streamerMode
 			this.internalCompactMode = uiState.compactMode
+			if (uiState.browserTitle) {
+				this.internalBrowserTitle = uiState.browserTitle
+			}
 		},
 		async getConfig() {
 			try {
