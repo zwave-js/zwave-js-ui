@@ -523,7 +523,7 @@ const useBaseStore = defineStore('base', {
 				Object.assign(this.gateway, conf.gateway || {})
 				Object.assign(this.backup, conf.backup || {})
 				Object.assign(this.ui, conf.ui || {})
-				
+
 				// Update browser title if set in settings
 				if (this.ui.browserTitle) {
 					document.title = this.ui.browserTitle
