@@ -1,7 +1,7 @@
 {
   "name": "zwave-js-ui",
   "type": "module",
-  "version": "11.8.1",
+  "version": "11.8.2",
   "description": "Z-Wave Control Panel and MQTT Gateway",
   "keywords": [
     "mqtt",
@@ -133,7 +133,7 @@
     "@babel/register": "^7.24.6",
     "@eslint/eslintrc": "^3.3.1",
     "@eslint/js": "^9.37.0",
-    "@release-it/conventional-changelog": "^10.0.2",
+    "@release-it/conventional-changelog": "^10.0.1",
     "@tsconfig/node22": "^22.0.2",
     "@types/archiver": "^6.0.2",
     "@types/chai": "^4.3.16",
@@ -198,6 +198,9 @@
   },
   "engines": {
     "node": ">= 20.19"
+  },
+  "publishConfig": {
+    "provenance": true
   },
   "pkg": {
     "scripts": [
