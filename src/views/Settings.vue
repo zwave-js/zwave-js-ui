@@ -2812,9 +2812,7 @@ export default {
 			this.internalNavTabs = uiState.navTabs
 			this.internalStreamerMode = uiState.streamerMode
 			this.internalCompactMode = uiState.compactMode
-			if (uiState.browserTitle) {
-				this.internalBrowserTitle = uiState.browserTitle
-			}
+			this.internalBrowserTitle = uiState.browserTitle
 		},
 		async getConfig() {
 			try {
