@@ -12,6 +12,9 @@ on:
         default: 'patch'
 jobs:
   release-it:
+    permissions:
+      contents: write
+      id-token: write
     if: github.actor == 'robertsLando' || github.actor == 'chrisns' || github.actor == 'AlCalzone'
     runs-on: [ubuntu-latest]
     strategy:

@@ -199,6 +199,9 @@
   "engines": {
     "node": ">= 20.19"
   },
+  "publishConfig": {
+    "provenance": true
+  },
   "pkg": {
     "scripts": [
       "server/**/*",
