@@ -1,6 +1,7 @@
 <template>
 	<v-container fluid>
-		<v-row>
+		<!-- Hide Name and Location fields for broadcast nodes (255, 4095) -->
+		<v-row v-if="!isBroadcastNode">
 			<v-col cols="12" sm="6" style="max-width: 300px">
 				<v-text-field
 					label="Name"
@@ -528,6 +529,10 @@ export default {
 	},
 	computed: {
 		...mapState(useBaseStore, ['mqtt', 'zwave']),
+		isBroadcastNode() {
+			// Broadcast nodes are node IDs 255 and 4095
+			return this.node && (this.node.id === 255 || this.node.id === 4095)
+		},
 		regionSupportsAutoPowerlevel() {
 			return regionSupportsAutoPowerlevel(this.node?.RFRegion)
 		},
