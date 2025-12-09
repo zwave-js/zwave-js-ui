@@ -153,6 +153,7 @@ const useBaseStore = defineStore('base', {
 			navTabs: settings.load('navTabs', false),
 			compactMode: settings.load('compact', false),
 			streamerMode: settings.load('streamerMode', false),
+			browserTitle: 'Z-Wave JS UI',
 		},
 		uiState: {
 			darkMode: colorSchemeToDarkMode(loadColorScheme(settings)),
@@ -522,6 +523,11 @@ const useBaseStore = defineStore('base', {
 				Object.assign(this.gateway, conf.gateway || {})
 				Object.assign(this.backup, conf.backup || {})
 				Object.assign(this.ui, conf.ui || {})
+				
+				// Update browser title if set in settings
+				if (this.ui.browserTitle) {
+					document.title = this.ui.browserTitle
+				}
 			}
 		},
 		/**
@@ -644,6 +650,10 @@ const useBaseStore = defineStore('base', {
 		setCompactMode(value) {
 			settings.store('compact', value)
 			this.ui.compactMode = value
+		},
+		setBrowserTitle(value) {
+			this.ui.browserTitle = value || 'Z-Wave JS UI'
+			document.title = this.ui.browserTitle
 		},
 		getPreference(key, defaultValue) {
 			return {
