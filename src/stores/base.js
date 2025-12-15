@@ -636,8 +636,12 @@ const useBaseStore = defineStore('base', {
 				'meta[name=msapplication-TileColor]',
 			)
 
-			metaThemeColor.setAttribute('content', value ? '#000' : '#fff')
-			metaThemeColor2.setAttribute('content', value ? '#000' : '#fff')
+			if (metaThemeColor) {
+				metaThemeColor.setAttribute('content', value ? '#000' : '#fff')
+			}
+			if (metaThemeColor2) {
+				metaThemeColor2.setAttribute('content', value ? '#000' : '#fff')
+			}
 		},
 		setNavTabs(value) {
 			settings.store('navTabs', value)
