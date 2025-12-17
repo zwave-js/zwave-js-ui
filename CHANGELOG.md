@@ -1,5 +1,17 @@
 # Changelog
 
+## [11.9.0](///compare/v11.8.2...v11.9.0) (2025-12-17)
+
+### Features
+
+* **ui:** add browser title customization option in settings f244ed2
+
+### Bug Fixes
+
+* add missing UI config properties to UiConfig interface 4fbfcb2
+* add null checks for metaThemeColor attributes in base store 0cb96e7, closes #4497
+* **ui:** ui settings not persisted on save 116b409, closes #4333
+
 ## [11.8.2](https://github.com/zwave-js/zwave-js-ui/compare/v11.8.1...v11.8.2) (2025-11-30)
 
 ### 🐛 Bug Fixes
