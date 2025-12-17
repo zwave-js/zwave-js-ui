@@ -2729,6 +2729,8 @@ export default {
 					)
 
 					this.initSettings(data.data)
+					// Update prevUi to the new saved values
+					this.prevUi = copy(this.ui)
 					this.resetConfig()
 
 					// If restart is required, ask user
