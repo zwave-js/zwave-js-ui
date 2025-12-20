@@ -1,5 +1,16 @@
 # Changelog
 
+## [11.9.1](https://github.com/zwave-js/zwave-js-ui/compare/v11.9.0...v11.9.1) (2025-12-20)
+
+### ✨ Features
+
+* bump @release-it/conventional-changelog@10.0.4 ([#4499](https://github.com/zwave-js/zwave-js-ui/issues/4499)) ([6e3d9ec](https://github.com/zwave-js/zwave-js-ui/commit/6e3d9ecb22f33061bb43097e7f845d87b3829a95))
+* bump zwave-js@15.18.0 ([112eba7](https://github.com/zwave-js/zwave-js-ui/commit/112eba75c3245d9a3bdb0445daf823e3a9438e83))
+
+### 🐛 Bug Fixes
+
+* npm release persisted "update available" popup ([03fe3ae](https://github.com/zwave-js/zwave-js-ui/commit/03fe3ae862aabae70a7b6f678cb4b1dc77b974cc)), closes [#4489](https://github.com/zwave-js/zwave-js-ui/issues/4489)
+
 ## [11.9.0](///compare/v11.8.2...v11.9.0) (2025-12-17)
 
 ### Features
