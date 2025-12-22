@@ -1077,66 +1077,73 @@ app.get('/version', apisLimiter, function (req, res) {
 })
 
 // get settings
+app.get('/api/settings', apisLimiter, isAuthenticated, function (req, res) {
+	const allSensors = getAllSensors()
+	const namedScaleGroups = getAllNamedScaleGroups()
+
+	const scales: ZwaveConfig['scales'] = []
+
+	for (const group of namedScaleGroups) {
+		for (const scale of Object.values(group.scales)) {
+			scales.push({
+				key: group.name,
+				sensor: group.name,
+				unit: scale.unit,
+				label: scale.label,
+				description: scale.description,
+			})
+		}
+	}
+
+	for (const sensor of allSensors) {
+		for (const scale of Object.values(sensor.scales)) {
+			scales.push({
+				key: sensor.key,
+				sensor: sensor.label,
+				label: scale.label,
+				unit: scale.unit,
+				description: scale.description,
+			})
+		}
+	}
+
+	const settings = jsonStore.get(store.settings)
+
+	const data = {
+		success: true,
+		settings,
+		devices: gw?.zwave?.devices ?? {},
+		scales: scales,
+		sslDisabled: sslDisabled(),
+		tz: process.env.TZ,
+		locale: process.env.LOCALE,
+		deprecationWarning: process.env.TAG_NAME === 'zwavejs2mqtt',
+	}
+
+	res.json(data)
+})
+
+// get serial ports
 app.get(
-	'/api/settings',
+	'/api/serial-ports',
 	apisLimiter,
 	isAuthenticated,
 	async function (req, res) {
-		const allSensors = getAllSensors()
-		const namedScaleGroups = getAllNamedScaleGroups()
-
-		const scales: ZwaveConfig['scales'] = []
-
-		for (const group of namedScaleGroups) {
-			for (const scale of Object.values(group.scales)) {
-				scales.push({
-					key: group.name,
-					sensor: group.name,
-					unit: scale.unit,
-					label: scale.label,
-					description: scale.description,
-				})
-			}
-		}
-
-		for (const sensor of allSensors) {
-			for (const scale of Object.values(sensor.scales)) {
-				scales.push({
-					key: sensor.key,
-					sensor: sensor.label,
-					label: scale.label,
-					unit: scale.unit,
-					description: scale.description,
-				})
-			}
-		}
-
-		const settings = jsonStore.get(store.settings)
-
-		const data = {
-			success: true,
-			settings,
-			devices: gw?.zwave?.devices ?? {},
-			serial_ports: [],
-			scales: scales,
-			sslDisabled: sslDisabled(),
-			tz: process.env.TZ,
-			locale: process.env.LOCALE,
-			deprecationWarning: process.env.TAG_NAME === 'zwavejs2mqtt',
-		}
+		let serial_ports = []
 
 		if (process.platform !== 'sunos') {
 			try {
-				data.serial_ports = await Driver.enumerateSerialPorts({
+				serial_ports = await Driver.enumerateSerialPorts({
 					local: true,
 					remote: true,
 				})
 			} catch (error) {
 				logger.error(error)
-				data.serial_ports = []
+				res.json({ success: false, serial_ports })
 			}
-			res.json(data)
-		} else res.json(data)
+		}
+
+		res.json({ success: true, serial_ports })
 	},
 )
 

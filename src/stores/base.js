@@ -609,7 +609,10 @@ const useBaseStore = defineStore('base', {
 
 				this.initSettings(data.settings)
 				this.initColorScheme()
-				this.initPorts(data.serial_ports)
+				// serial_ports loaded separately now
+				if (data.serial_ports) {
+					this.initPorts(data.serial_ports)
+				}
 				this.initScales(data.scales)
 				this.initDevices(data.devices)
 
