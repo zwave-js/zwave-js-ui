@@ -3,6 +3,7 @@ import express from 'express'
 import history from 'connect-history-api-fallback'
 import cors from 'cors'
 import csrf from 'csurf'
+import compression from 'compression'
 import morgan from 'morgan'
 import type { Settings, User } from './config/store.ts'
 import store from './config/store.ts'
@@ -531,6 +532,13 @@ app.use(
 			stream: { write: (msg: string) => logger.info(msg.trimEnd()) },
 		},
 	) as RequestHandler,
+)
+// Enable compression for all responses
+app.use(
+	compression({
+		threshold: 1024, // Only compress responses larger than 1KB
+		level: 6, // Balanced compression level (0-9, higher = more compression but slower)
+	}),
 )
 app.use(express.json({ limit: '50mb' }) as RequestHandler)
 app.use(
