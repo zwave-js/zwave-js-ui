@@ -2818,6 +2818,7 @@ export default {
 		},
 		async getConfig() {
 			try {
+				// Load settings first (fast)
 				const data = await ConfigApis.getConfig()
 				if (!data.success) {
 					this.showSnackbar(
@@ -2825,14 +2826,28 @@ export default {
 						'error',
 					)
 					log.error(data)
-				} else {
-					this.init(data)
-					this.sslDisabled = data.sslDisabled
-					this.resetConfig()
+					return
 				}
+
+				this.init(data)
+				this.sslDisabled = data.sslDisabled
+				this.resetConfig()
+
+				// Load serial ports separately (slow, but doesn't block settings page)
+				this.loadSerialPorts()
 			} catch (error) {
 				this.showSnackbar(error.message, 'error')
 				log.error(error)
+			}
+		},
+		async loadSerialPorts() {
+			try {
+				const data = await ConfigApis.getSerialPorts()
+				if (data.success && data.serial_ports) {
+					useBaseStore().initPorts(data.serial_ports)
+				}
+			} catch (error) {
+				log.error('Failed to load serial ports:', error)
 			}
 		},
 	},
