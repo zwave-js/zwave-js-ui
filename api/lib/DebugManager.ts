@@ -50,6 +50,7 @@ class DebugManager {
 	async startSession(
 		zwaveClient: ZWaveClient,
 		originalLogLevel: string,
+		restartDriver = false,
 	): Promise<void> {
 		if (this.session) {
 			throw new Error('A debug session is already active')
@@ -110,6 +111,11 @@ class DebugManager {
 			driverDebugTransport,
 			driverLogStream,
 			zwaveClient,
+		}
+
+		// Restart driver if requested to capture startup logs
+		if (restartDriver && zwaveClient.driverReady) {
+			await zwaveClient.restart()
 		}
 	}
 
