@@ -1,5 +1,42 @@
 # Changelog
 
+## [11.9.1](https://github.com/zwave-js/zwave-js-ui/compare/v11.9.0...v11.9.1) (2025-12-20)
+
+### ✨ Features
+
+* bump @release-it/conventional-changelog@10.0.4 ([#4499](https://github.com/zwave-js/zwave-js-ui/issues/4499)) ([6e3d9ec](https://github.com/zwave-js/zwave-js-ui/commit/6e3d9ecb22f33061bb43097e7f845d87b3829a95))
+* bump zwave-js@15.18.0 ([112eba7](https://github.com/zwave-js/zwave-js-ui/commit/112eba75c3245d9a3bdb0445daf823e3a9438e83))
+
+### 🐛 Bug Fixes
+
+* npm release persisted "update available" popup ([03fe3ae](https://github.com/zwave-js/zwave-js-ui/commit/03fe3ae862aabae70a7b6f678cb4b1dc77b974cc)), closes [#4489](https://github.com/zwave-js/zwave-js-ui/issues/4489)
+
+## [11.9.0](https://github.com/zwave-js/zwave-js-ui/compare/v11.8.2...v11.9.0) (2025-12-17)
+
+### ✨ Features
+
+* **ui:** add browser title customization option in settings ([36378a1](https://github.com/zwave-js/zwave-js-ui/commit/36378a19))
+
+### 🐛 Bug Fixes
+
+* **ui:** ui settings not persisted on save ([116b409](https://github.com/zwave-js/zwave-js-ui/commit/116b4092)), closes [#4333](https://github.com/zwave-js/zwave-js-ui/issues/4333)
+* add null checks for metaThemeColor attributes in base store ([4fbfcb2](https://github.com/zwave-js/zwave-js-ui/commit/4fbfcb28)), closes [#4497](https://github.com/zwave-js/zwave-js-ui/issues/4497)
+* add missing UI config properties to UiConfig interface ([1ec8d28](https://github.com/zwave-js/zwave-js-ui/commit/1ec8d28d))
+
+### 🔧 Chores
+
+* add npm provenance and trust publish ([4345674](https://github.com/zwave-js/zwave-js-ui/commit/4345674d))
+* downgrade conventional changlog plugin ([9a0b3bf](https://github.com/zwave-js/zwave-js-ui/commit/9a0b3bfe))
+
+### 📚 Documentation
+
+* add screenshots and complete testing documentation ([cd301f5](https://github.com/zwave-js/zwave-js-ui/commit/cd301f50))
+* fix broken 11.8.2 changelog ([f244ed2](https://github.com/zwave-js/zwave-js-ui/commit/f244ed2d))
+
+### ♻️ Code Refactoring
+
+* improve browserTitle persistence and consistency ([cd301f5](https://github.com/zwave-js/zwave-js-ui/commit/cd301f50))
+
 ## [11.8.2](https://github.com/zwave-js/zwave-js-ui/compare/v11.8.1...v11.8.2) (2025-11-30)
 
 ### 🐛 Bug Fixes
@@ -3021,7 +3058,8 @@
 
 * Most changes are already documented [here](https://zwave-js.github.io/node-zwave-js/#/getting-started/migrating-to-v7):
 
-- Corrected parsing of Node Information Frames (NIF), reworked node properties
+* Corrected parsing of Node Information Frames (NIF), reworked node properties
+
 * No automatic query of all node values when restarting from cache, `interview completed` event is no longer emitted on startup
 * Reworked "notification" event, node notifications are mapped to mqtt using a different topic/payload
 * This version is incompatible with HA versions before 2021.4.x

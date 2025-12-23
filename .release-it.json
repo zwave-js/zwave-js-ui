@@ -9,7 +9,7 @@
     "requireBranch": "master"
   },
   "hooks": {
-    "before:init": [
+    "after:bump": [
       "npm run build"
     ]
   },
