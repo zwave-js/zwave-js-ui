@@ -2101,7 +2101,6 @@
 import { defineAsyncComponent } from 'vue'
 import { mapActions, mapState } from 'pinia'
 import ConfigApis from '@/apis/ConfigApis'
-import { parse } from 'native-url'
 import { wait, copy, isUndef, deepEqual } from '../lib/utils'
 import {
 	settingsRfRegions,
@@ -2213,9 +2212,17 @@ export default {
 		},
 		secure() {
 			if (!this.newMqtt.host) return false
-			const parsed = parse(this.newMqtt.host)
 
-			const secure = ['mqtts:', 'tls:'].indexOf(parsed.protocol) >= 0
+			let protocol = ''
+			try {
+				const parsed = new URL(this.newMqtt.host)
+				protocol = parsed.protocol
+			} catch {
+				// If parsing fails, not a valid URL, assume not secure
+				protocol = ''
+			}
+
+			const secure = ['mqtts:', 'tls:'].indexOf(protocol) >= 0
 
 			if (!secure) {
 				this.newMqtt.key =
