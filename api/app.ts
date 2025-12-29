@@ -2,7 +2,8 @@ import type { Request, RequestHandler, Response, Router } from 'express'
 import express from 'express'
 import history from 'connect-history-api-fallback'
 import cors from 'cors'
-import csrf from 'csurf'
+import cookieParser from 'cookie-parser'
+import { doubleCsrf } from 'csrf-csrf'
 import morgan from 'morgan'
 import type { Settings, User } from './config/store.ts'
 import store from './config/store.ts'
@@ -532,6 +533,7 @@ app.use(
 		},
 	) as RequestHandler,
 )
+app.use(cookieParser())
 app.use(express.json({ limit: '50mb' }) as RequestHandler)
 app.use(
 	express.urlencoded({
@@ -609,10 +611,20 @@ app.use(
 	}),
 )
 
-// Node.js CSRF protection middleware.
-// Requires either a session middleware or cookie-parser to be initialized first.
-const csrfProtection = csrf({
-	value: (req) => req.csrfToken(),
+// Node.js CSRF protection middleware using the Double Submit Cookie pattern.
+// Requires cookie-parser to be initialized first.
+const { doubleCsrfProtection } = doubleCsrf({
+	getSecret: () => sessionSecret,
+	getSessionIdentifier: (req) => req.session?.user?.username || '',
+	cookieName: '__Host-psifi.x-csrf-token',
+	cookieOptions: {
+		sameSite: 'strict',
+		path: '/',
+		secure: !!process.env.HTTPS || !!process.env.USE_SECURE_COOKIE,
+		httpOnly: true,
+	},
+	size: 64,
+	ignoredMethods: ['GET', 'HEAD', 'OPTIONS'],
 })
 
 // ### SOCKET SETUP
@@ -879,8 +891,7 @@ app.get('/api/auth-enabled', apisLimiter, function (req, res) {
 app.post(
 	'/api/authenticate',
 	loginLimiter,
-	// @ts-expect-error types not matching
-	csrfProtection,
+	doubleCsrfProtection,
 	async function (req, res) {
 		const token = req.body.token
 		let user: User
@@ -976,8 +987,7 @@ app.get('/api/logout', apisLimiter, isAuthenticated, function (req, res) {
 app.put(
 	'/api/password',
 	apisLimiter,
-	// @ts-expect-error types not matching
-	csrfProtection,
+	doubleCsrfProtection,
 	isAuthenticated,
 	async function (req, res) {
 		try {

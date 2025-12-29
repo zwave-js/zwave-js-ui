@@ -20,7 +20,6 @@ import { storeDir } from '../config/app.ts'
 import { ensureDir } from './utils.ts'
 import { Manager } from 'mqtt-jsonl-store'
 import { join } from 'node:path'
-import url from 'native-url'
 
 const logger = module('Mqtt')
 
@@ -351,10 +350,21 @@ class MqttClient extends TypedEventEmitter<MqttClientEventCallbacks> {
 			MqttClient.NAME_PREFIX + (process.env.MQTT_NAME || config.name),
 		)
 
-		const parsed = url.parse(config.host || '')
+		let parsed: URL | null = null
 		let protocol = 'mqtt'
+		let hostname = config.host
 
-		if (parsed.protocol) protocol = parsed.protocol.replace(/:$/, '')
+		// Try to parse as URL if it contains a protocol
+		try {
+			parsed = new URL(config.host || '')
+			if (parsed.protocol) {
+				protocol = parsed.protocol.replace(/:$/, '')
+				hostname = parsed.hostname
+			}
+		} catch {
+			// If parsing fails, treat as hostname without protocol
+			hostname = config.host
+		}
 
 		const options: IClientOptions = {
 			clientId: this._clientID,
@@ -397,9 +407,7 @@ class MqttClient extends TypedEventEmitter<MqttClientEventCallbacks> {
 		}
 
 		try {
-			const serverUrl = `${protocol}://${
-				parsed.hostname || config.host
-			}:${config.port}`
+			const serverUrl = `${protocol}://${hostname || config.host}:${config.port}`
 			logger.info(`Connecting to ${serverUrl}`)
 
 			const client = connect(serverUrl, options)
