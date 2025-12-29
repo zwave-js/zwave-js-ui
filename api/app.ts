@@ -3,7 +3,7 @@ import express from 'express'
 import history from 'connect-history-api-fallback'
 import cors from 'cors'
 import cookieParser from 'cookie-parser'
-import { doubleCsrf } from 'csrf-csrf'
+import { csrfSync } from 'csrf-sync'
 import morgan from 'morgan'
 import type { Settings, User } from './config/store.ts'
 import store from './config/store.ts'
@@ -543,6 +543,33 @@ app.use(
 	}) as RequestHandler,
 )
 
+// enable sessions management - must be before history middleware for CSRF to work
+app.use(
+	session({
+		name: 'zwave-js-ui-session',
+		secret: sessionSecret,
+		resave: false,
+		saveUninitialized: true, // Required for CSRF protection to work
+		store: new FileStore({
+			path: path.join(storeDir, 'sessions'),
+			logFn: (...args: any[]) => {
+				// skip ENOENT errors
+				if (
+					args &&
+					args.filter((a) => a.indexOf('ENOENT') >= 0).length === 0
+				) {
+					logger.debug(args[0])
+				}
+			},
+		}),
+		cookie: {
+			secure: !!process.env.HTTPS || !!process.env.USE_SECURE_COOKIE,
+			httpOnly: true, // prevents cookie to be sent by client javascript
+			maxAge: 24 * 60 * 60 * 1000, // one day
+		},
+	}),
+)
+
 // must be placed before history middleware
 app.use(function (req, res, next) {
 	if (pluginsRouter !== undefined) {
@@ -550,6 +577,17 @@ app.use(function (req, res, next) {
 	} else {
 		next()
 	}
+})
+
+// CSRF token endpoint - must be before history middleware, placed here as a route
+// Session middleware will have run by the time this route is matched
+app.get('/api/csrf-token', apisLimiter, function (req, res) {
+	// Ensure session exists before generating token
+	if (!req.session) {
+		return res.status(500).json({ error: 'Session not initialized' })
+	}
+	const token = generateToken(req)
+	res.json({ token })
 })
 
 app.use(
@@ -584,47 +622,13 @@ app.use('/', express.static(utils.joinPath(false, 'dist')))
 
 app.use(cors({ credentials: true, origin: true }))
 
-// enable sessions management
-app.use(
-	session({
-		name: 'zwave-js-ui-session',
-		secret: sessionSecret,
-		resave: false,
-		saveUninitialized: false,
-		store: new FileStore({
-			path: path.join(storeDir, 'sessions'),
-			logFn: (...args: any[]) => {
-				// skip ENOENT errors
-				if (
-					args &&
-					args.filter((a) => a.indexOf('ENOENT') >= 0).length === 0
-				) {
-					logger.debug(args[0])
-				}
-			},
-		}),
-		cookie: {
-			secure: !!process.env.HTTPS || !!process.env.USE_SECURE_COOKIE,
-			httpOnly: true, // prevents cookie to be sent by client javascript
-			maxAge: 24 * 60 * 60 * 1000, // one day
-		},
-	}),
-)
-
-// Node.js CSRF protection middleware using the Double Submit Cookie pattern.
-// Requires cookie-parser to be initialized first.
-const { doubleCsrfProtection } = doubleCsrf({
-	getSecret: () => sessionSecret,
-	getSessionIdentifier: (req) => req.session?.user?.username || '',
-	cookieName: '__Host-psifi.x-csrf-token',
-	cookieOptions: {
-		sameSite: 'strict',
-		path: '/',
-		secure: !!process.env.HTTPS || !!process.env.USE_SECURE_COOKIE,
-		httpOnly: true,
+// Node.js CSRF protection middleware using the Synchronizer Token pattern.
+// This is more appropriate for session-based authentication than Double Submit Cookie.
+const { csrfSynchronisedProtection, generateToken } = csrfSync({
+	getTokenFromRequest: (req) => {
+		// Check multiple possible locations for the token
+		return req.body._csrf || req.query._csrf || req.headers['x-csrf-token']
 	},
-	size: 64,
-	ignoredMethods: ['GET', 'HEAD', 'OPTIONS'],
 })
 
 // ### SOCKET SETUP
@@ -891,7 +895,7 @@ app.get('/api/auth-enabled', apisLimiter, function (req, res) {
 app.post(
 	'/api/authenticate',
 	loginLimiter,
-	doubleCsrfProtection,
+	csrfSynchronisedProtection,
 	async function (req, res) {
 		const token = req.body.token
 		let user: User
@@ -987,7 +991,7 @@ app.get('/api/logout', apisLimiter, isAuthenticated, function (req, res) {
 app.put(
 	'/api/password',
 	apisLimiter,
-	doubleCsrfProtection,
+	csrfSynchronisedProtection,
 	isAuthenticated,
 	async function (req, res) {
 		try {

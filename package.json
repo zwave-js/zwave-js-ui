@@ -34,7 +34,6 @@
     "README.md"
   ],
   "scripts": {
-    "postinstall": "patch-package",
     "dev": "vite",
     "dev-https": "SERVER_SSL='true' npm run dev",
     "dev:server": "nodemon",
@@ -89,7 +88,7 @@
     "cors": "^2.8.5",
     "croner": "^8.0.2",
     "cronstrue": "^2.50.0",
-    "csrf-csrf": "^4.0.3",
+    "csrf-sync": "^4.2.1",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
     "express-rate-limit": "^7.3.1",
@@ -105,7 +104,6 @@
     "mqtt-jsonl-store": "^0.3.1",
     "multer": "^2.0.2",
     "nprogress": "^0.2.0",
-    "patch-package": "^8.0.1",
     "pinia": "^3.0.4",
     "prismjs": "^1.29.0",
     "qr-scanner": "^1.4.2",

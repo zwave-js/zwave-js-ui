@@ -8,6 +8,67 @@ const log = logger.get('ConfigApis')
 
 axios.defaults.baseURL = `./api`
 
+// CSRF token storage
+let csrfToken = null
+
+// Function to get CSRF token
+async function getCsrfToken() {
+	if (!csrfToken) {
+		try {
+			const response = await axios.get('/csrf-token')
+			csrfToken = response.data.token
+		} catch (error) {
+			log.error('Failed to get CSRF token', error)
+		}
+	}
+	return csrfToken
+}
+
+// Add request interceptor to include CSRF token in requests
+axios.interceptors.request.use(
+	async (config) => {
+		// Only add CSRF token for state-changing requests
+		if (
+			['post', 'put', 'delete', 'patch'].includes(
+				config.method.toLowerCase(),
+			)
+		) {
+			const token = await getCsrfToken()
+			if (token) {
+				config.headers['x-csrf-token'] = token
+			}
+		}
+		return config
+	},
+	(error) => {
+		return Promise.reject(error)
+	},
+)
+
+// Add response interceptor to refresh token on 403 (invalid CSRF)
+axios.interceptors.response.use(
+	(response) => response,
+	async (error) => {
+		if (
+			error.response?.status === 403 &&
+			error.response?.data?.code === 'EBADCSRFTOKEN'
+		) {
+			// Clear cached token and retry
+			csrfToken = null
+			const originalRequest = error.config
+			if (!originalRequest._retry) {
+				originalRequest._retry = true
+				const token = await getCsrfToken()
+				if (token) {
+					originalRequest.headers['x-csrf-token'] = token
+					return axios(originalRequest)
+				}
+			}
+		}
+		return Promise.reject(error)
+	},
+)
+
 function responseHandler(response) {
 	log.debug('Response', response)
 	if (response.data && response.data.code === 3) {
