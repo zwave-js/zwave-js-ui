@@ -173,7 +173,7 @@
     "eslint-plugin-vuetify": "^2.5.3",
     "esmock": "^2.7.3",
     "globals": "^16.4.0",
-    "markdownlint-cli": "^0.41.0",
+    "markdownlint-cli": "^0.47.0",
     "material-design-icons-iconfont": "^6.7.0",
     "mocha": "^10.4.0",
     "nodemon": "^3.1.3",
