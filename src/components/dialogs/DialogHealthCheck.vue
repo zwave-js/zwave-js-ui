@@ -162,14 +162,14 @@
 											)
 										"
 										>{{
-											item.failedPingsController === 0
-												? 'no'
-												: item.failedPingsController
+											getFailedPingsText(
+												item.failedPingsController,
+											)
 										}}
 										failed ping{{
-											item.failedPingsController === 1
-												? ''
-												: 's'
+											getFailedPingsPluralSuffix(
+												item.failedPingsController,
+											)
 										}}</strong
 									>
 									@
@@ -341,7 +341,7 @@ export default {
 					{ title: 'Route Changes', key: 'routeChanges' },
 					{ title: 'SNR margin', key: 'snrMargin' },
 					{
-						title: `Min powerlevel ${this.resultsTargetNode} → ${this.activeNode?.id || ''}`,
+						title: `Min powerlevel ${this.activeNode?.id || ''} → ${this.resultsTargetNode}`,
 						key: 'minPowerlevel',
 					},
 					{ title: 'Rating', key: 'rating' },
@@ -413,6 +413,15 @@ export default {
 			} else {
 				return 'text-error'
 			}
+		},
+		getFailedPingsText(count) {
+			if (count === 0) {
+				return 'no'
+			}
+			return count
+		},
+		getFailedPingsPluralSuffix(count) {
+			return count === 1 ? '' : 's'
 		},
 		getRatingColor(rating) {
 			if (rating === undefined) {
