@@ -157,6 +157,7 @@ export default {
 			this.$refs.form && this.$refs.form.resetValidation()
 			this.resetGroup()
 			this.associationError = ''
+			this.associationCheckResult = null
 			this.forceAssociation = false
 		},
 		group: {
@@ -220,10 +221,12 @@ export default {
 		},
 		isSecurityError() {
 			// Check if the error is related to security class mismatch
+			// These are the only two security-related association check results
 			return (
-				this.associationError &&
-				(this.associationError.includes('security class') ||
-					this.associationError.includes('Security'))
+				this.associationCheckResult ===
+					AssociationCheckResult.Forbidden_SecurityClassMismatch ||
+				this.associationCheckResult ===
+					AssociationCheckResult.Forbidden_DestinationSecurityClassNotGranted
 			)
 		},
 		_value: {
@@ -240,6 +243,7 @@ export default {
 			valid: true,
 			group: {},
 			associationError: '',
+			associationCheckResult: null,
 			forceAssociation: false,
 			defaultGroup: { endpoint: null },
 			required: (v) => !!v || 'This field is required',
@@ -296,6 +300,9 @@ export default {
 
 			if (response.success) {
 				const checkResult = response.result
+
+				// Store the check result for isSecurityError computed property
+				this.associationCheckResult = checkResult
 
 				if (checkResult === AssociationCheckResult.OK) {
 					this.associationError = ''

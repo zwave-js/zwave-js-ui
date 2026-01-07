@@ -1828,12 +1828,18 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			result.push(checkResult)
 
 			if (checkResult === AssociationCheckResult.OK || force) {
+				const isForcedAdd =
+					force && checkResult !== AssociationCheckResult.OK
+				const logLevel = isForcedAdd ? 'warn' : 'info'
+				const action = isForcedAdd ? 'Force adding' : 'Adding'
+				const bypassInfo = isForcedAdd
+					? ` (bypassing check: ${getEnumMemberName(AssociationCheckResult, checkResult)})`
+					: ''
+
 				this.logNode(
 					zwaveNode,
-					force && checkResult !== AssociationCheckResult.OK
-						? 'warn'
-						: 'info',
-					`${force && checkResult !== AssociationCheckResult.OK ? 'Force adding' : 'Adding'} Node ${a.nodeId} to Group ${groupId} of ${sourceMsg}${force && checkResult !== AssociationCheckResult.OK ? ` (bypassing check: ${getEnumMemberName(AssociationCheckResult, checkResult)})` : ''}`,
+					logLevel,
+					`${action} Node ${a.nodeId} to Group ${groupId} of ${sourceMsg}${bypassInfo}`,
 				)
 
 				await this._driver.controller.addAssociations(
