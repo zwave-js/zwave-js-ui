@@ -385,7 +385,6 @@
 
 		<v-dialog
 			fullscreen
-			persistent
 			@keydown.esc="showFullscreen = false"
 			z-index="9999"
 			v-model="showFullscreen"
