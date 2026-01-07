@@ -97,6 +97,15 @@
 									>
 										{{ associationError }}
 									</v-alert>
+									<v-checkbox
+										v-if="isSecurityError"
+										v-model="forceAssociation"
+										label="I know what I'm doing - bypass security check"
+										density="compact"
+										color="warning"
+										hint="Warning: This association may not work correctly"
+										persistent-hint
+									></v-checkbox>
 								</v-col>
 							</v-col>
 						</v-row>
@@ -115,7 +124,10 @@
 				<v-btn
 					color="blue-darken-1"
 					variant="text"
-					:disabled="nodesInGroup >= maxNodes || !!associationError"
+					:disabled="
+						nodesInGroup >= maxNodes ||
+						(!!associationError && !forceAssociation)
+					"
 					@click="handleAdd"
 					>ADD</v-btn
 				>
@@ -145,12 +157,14 @@ export default {
 			this.$refs.form && this.$refs.form.resetValidation()
 			this.resetGroup()
 			this.associationError = ''
+			this.forceAssociation = false
 		},
 		group: {
 			deep: true,
 			async handler() {
 				const result = await this.$refs.form?.validate()
 				if (result?.valid) {
+					this.forceAssociation = false
 					this.allowedAssociation()
 				}
 			},
@@ -204,6 +218,14 @@ export default {
 
 			return groups
 		},
+		isSecurityError() {
+			// Check if the error is related to security class mismatch
+			return (
+				this.associationError &&
+				(this.associationError.includes('security class') ||
+					this.associationError.includes('Security'))
+			)
+		},
 		_value: {
 			get() {
 				return this.modelValue
@@ -218,6 +240,7 @@ export default {
 			valid: true,
 			group: {},
 			associationError: '',
+			forceAssociation: false,
 			defaultGroup: { endpoint: null },
 			required: (v) => !!v || 'This field is required',
 		}
@@ -227,7 +250,7 @@ export default {
 		async handleAdd() {
 			const result = await this.$refs.form.validate()
 			if (result.valid) {
-				this.$emit('add', this.group)
+				this.$emit('add', this.group, this.forceAssociation)
 			}
 		},
 		async allowedAssociation() {

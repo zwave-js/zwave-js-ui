@@ -1802,6 +1802,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		source: AssociationAddress,
 		groupId: number,
 		associations: AssociationAddress[],
+		options?: { force?: boolean },
 	) {
 		const zwaveNode = this.getNode(source.nodeId)
 
@@ -1815,6 +1816,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		}
 
 		const result: AssociationCheckResult[] = []
+		const force = options?.force ?? false
 
 		for (const a of associations) {
 			const checkResult = this._driver.controller.checkAssociation(
@@ -1825,16 +1827,21 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 			result.push(checkResult)
 
-			if (checkResult === AssociationCheckResult.OK) {
+			if (checkResult === AssociationCheckResult.OK || force) {
 				this.logNode(
 					zwaveNode,
-					'info',
-					`Adding Node ${a.nodeId} to Group ${groupId} of ${sourceMsg}`,
+					force && checkResult !== AssociationCheckResult.OK
+						? 'warn'
+						: 'info',
+					`${force && checkResult !== AssociationCheckResult.OK ? 'Force adding' : 'Adding'} Node ${a.nodeId} to Group ${groupId} of ${sourceMsg}${force && checkResult !== AssociationCheckResult.OK ? ` (bypassing check: ${getEnumMemberName(AssociationCheckResult, checkResult)})` : ''}`,
 				)
 
-				await this._driver.controller.addAssociations(source, groupId, [
-					a,
-				])
+				await this._driver.controller.addAssociations(
+					source,
+					groupId,
+					[a],
+					{ force },
+				)
 			} else {
 				this.logNode(
 					zwaveNode,
