@@ -162,12 +162,7 @@
 											)
 										"
 										>{{
-											getFailedPingsText(
-												item.failedPingsController,
-											)
-										}}
-										failed ping{{
-											getFailedPingsPluralSuffix(
+											formatFailedPingsPhrase(
 												item.failedPingsController,
 											)
 										}}</strong
@@ -332,16 +327,18 @@ export default {
 		},
 		headers() {
 			if (this.mode === 'Lifeline') {
+				const targetId = this.resultsTargetNode || ''
+				const activeId = this.activeNode?.id || ''
 				return [
 					{ title: 'Max latency', key: 'latency' },
 					{
-						title: `Failed pings ${this.resultsTargetNode} → ${this.activeNode?.id || ''}`,
+						title: `Failed pings ${targetId} → ${activeId}`,
 						key: 'failedPingsNode',
 					},
 					{ title: 'Route Changes', key: 'routeChanges' },
 					{ title: 'SNR margin', key: 'snrMargin' },
 					{
-						title: `Min powerlevel ${this.activeNode?.id || ''} → ${this.resultsTargetNode}`,
+						title: `Min powerlevel ${activeId} → ${targetId}`,
 						key: 'minPowerlevel',
 					},
 					{ title: 'Rating', key: 'rating' },
@@ -422,6 +419,11 @@ export default {
 		},
 		getFailedPingsPluralSuffix(count) {
 			return count === 1 ? '' : 's'
+		},
+		formatFailedPingsPhrase(count) {
+			const text = this.getFailedPingsText(count)
+			const suffix = this.getFailedPingsPluralSuffix(count)
+			return `${text} failed ping${suffix}`
 		},
 		getRatingColor(rating) {
 			if (rating === undefined) {
