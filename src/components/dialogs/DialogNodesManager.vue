@@ -3,7 +3,7 @@
 		v-model="isOpen"
 		@keydown.esc="close()"
 		max-width="1000px"
-		persistent
+		:persistent="loading || state === 'start'"
 	>
 		<v-card :loading="loading">
 			<v-card-title>

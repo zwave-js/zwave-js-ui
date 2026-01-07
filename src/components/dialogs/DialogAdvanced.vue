@@ -1,10 +1,5 @@
 <template>
-	<v-dialog
-		@keydown.esc="$emit('close')"
-		v-model="_value"
-		persistent
-		max-width="800"
-	>
+	<v-dialog @keydown.esc="$emit('close')" v-model="_value" max-width="800">
 		<v-card>
 			<v-card-title>
 				<v-row class="pa-3" align="center">
