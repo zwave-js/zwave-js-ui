@@ -6135,13 +6135,6 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			case CommandClasses['Battery']:
 				valueId.property = args.eventType
 				data = getEnumMemberName(BatteryReplacementStatus, args.urgency)
-				// Set battery replacement status on the node
-				if (node) {
-					node.batteryReplacementStatus = data
-					this.emitNodeUpdate(node, {
-						batteryReplacementStatus: data,
-					})
-				}
 				break
 			default:
 				this.logNode(
@@ -6166,6 +6159,14 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		)
 
 		const node = this._nodes.get(zwaveNode.id)
+
+		// Set battery replacement status on the node if this is a battery notification
+		if (ccId === CommandClasses['Battery'] && node) {
+			node.batteryReplacementStatus = data
+			this.emitNodeUpdate(node, {
+				batteryReplacementStatus: data,
+			})
+		}
 
 		this.emit('notification', node, valueId as ZUIValueId, data)
 
