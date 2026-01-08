@@ -98,9 +98,9 @@
 										{{ associationError }}
 									</v-alert>
 									<v-checkbox
-										v-if="isSecurityError"
+										v-if="canForceAssociation"
 										v-model="forceAssociation"
-										label="I know what I'm doing - bypass security check"
+										label="I know what I'm doing - bypass this check"
 										density="compact"
 										color="warning"
 										hint="Warning: This association may not work correctly"
@@ -219,14 +219,16 @@ export default {
 
 			return groups
 		},
-		isSecurityError() {
-			// Check if the error is related to security class mismatch
-			// These are the only two security-related association check results
+		canForceAssociation() {
+			// Check if the error can be bypassed with force option
+			// Includes security class mismatches and unsupported command classes
 			return (
 				this.associationCheckResult ===
 					AssociationCheckResult.Forbidden_SecurityClassMismatch ||
 				this.associationCheckResult ===
-					AssociationCheckResult.Forbidden_DestinationSecurityClassNotGranted
+					AssociationCheckResult.Forbidden_DestinationSecurityClassNotGranted ||
+				this.associationCheckResult ===
+					AssociationCheckResult.Forbidden_NoSupportedCCs
 			)
 		},
 		_value: {
