@@ -340,20 +340,22 @@ export default {
 						'Battery needs replacement soon. Click to dismiss this warning.'
 				} else {
 					// Normal battery level display
-					label = `${level}%`
-					description = getBatteryDescription(node)
-					if (level <= 10) {
-						icon = mdiBatteryAlertVariantOutline
-						iconStyle = `color: ${this.currentTheme.error}`
-					} else if (level <= 30) {
-						icon = mdiBattery20
-						iconStyle = `color: ${this.currentTheme.warning}`
-					} else if (level <= 70) {
-						icon = mdiBattery50
-					} else if (level <= 90) {
-						icon = mdiBattery80
-					} else if (level > 90) {
-						icon = mdiBattery
+					if (level !== undefined && level !== null) {
+						label = `${level}%`
+						description = getBatteryDescription(node)
+						if (level <= 10) {
+							icon = mdiBatteryAlertVariantOutline
+							iconStyle = `color: ${this.currentTheme.error}`
+						} else if (level <= 30) {
+							icon = mdiBattery20
+							iconStyle = `color: ${this.currentTheme.warning}`
+						} else if (level <= 70) {
+							icon = mdiBattery50
+						} else if (level <= 90) {
+							icon = mdiBattery80
+						} else if (level > 90) {
+							icon = mdiBattery
+						}
 					} else {
 						icon = mdiBatteryUnknown
 						description = 'Battery level: unknown'

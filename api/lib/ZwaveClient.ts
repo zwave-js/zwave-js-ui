@@ -283,7 +283,11 @@ const observedCCProps: {
 				minBatteryLevel: node.minBatteryLevel,
 			}
 
-			if (node.batteryReplacementStatus && node.minBatteryLevel > 90) {
+			if (
+				(node.batteryReplacementStatus === 'Soon' ||
+					node.batteryReplacementStatus === 'Now') &&
+				node.minBatteryLevel > 90
+			) {
 				node.batteryReplacementStatus = null
 				updateProps.batteryReplacementStatus = null
 			}
@@ -3334,7 +3338,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 */
 	dismissBatteryReplacementStatus(nodeId: number) {
 		const node = this._nodes.get(nodeId)
-		if (node) {
+		if (node && node.batteryReplacementStatus) {
 			node.batteryReplacementStatus = null
 
 			// Emit update to frontend
