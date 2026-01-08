@@ -219,6 +219,7 @@ export const allowedApis = validateMethods([
 	'getAllAvailableFirmwareUpdates',
 	'checkAllNodesFirmwareUpdates',
 	'dismissFirmwareUpdate',
+	'dismissBatteryReplacementStatus',
 	'getNodeFirmwareUpdates',
 	'firmwareUpdateOTA',
 	'sendCommand',
@@ -276,10 +277,18 @@ const observedCCProps: {
 			node.batteryLevels = levels
 			node.minBatteryLevel = Math.min(...Object.values(levels))
 
-			this.emitNodeUpdate(node, {
+			// Clear battery replacement status if level goes above 90%
+			const updateProps: any = {
 				batteryLevels: levels,
 				minBatteryLevel: node.minBatteryLevel,
-			})
+			}
+
+			if (node.batteryReplacementStatus && node.minBatteryLevel > 90) {
+				node.batteryReplacementStatus = null
+				updateProps.batteryReplacementStatus = null
+			}
+
+			this.emitNodeUpdate(node, updateProps)
 		},
 	},
 	[CommandClasses['User Code']]: {
@@ -588,6 +597,7 @@ export type ZUINode = {
 	availableFirmwareUpdates?: FirmwareUpdateInfo[]
 	firmwareUpdatesDismissed?: { [version: string]: boolean }
 	lastFirmwareUpdateCheck?: number
+	batteryReplacementStatus?: 'Soon' | 'Now' | null
 }
 
 export type NodeEvent = {
@@ -3317,6 +3327,28 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		logger.info(`Dismissed firmware update ${version} for node ${nodeId}`)
 
 		return true
+	}
+
+	/**
+	 * Dismiss battery replacement status notification for a node
+	 */
+	dismissBatteryReplacementStatus(nodeId: number) {
+		const node = this._nodes.get(nodeId)
+		if (node) {
+			node.batteryReplacementStatus = null
+
+			// Emit update to frontend
+			this.emitNodeUpdate(node, {
+				batteryReplacementStatus: null,
+			})
+
+			logger.info(
+				`Dismissed battery replacement status for node ${nodeId}`,
+			)
+			return true
+		}
+
+		return false
 	}
 
 	/**
@@ -6103,6 +6135,13 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			case CommandClasses['Battery']:
 				valueId.property = args.eventType
 				data = getEnumMemberName(BatteryReplacementStatus, args.urgency)
+				// Set battery replacement status on the node
+				if (node) {
+					node.batteryReplacementStatus = data
+					this.emitNodeUpdate(node, {
+						batteryReplacementStatus: data,
+					})
+				}
 				break
 			default:
 				this.logNode(
