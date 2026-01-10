@@ -1816,8 +1816,13 @@ app.post(
 			const settings: Settings =
 				jsonStore.get(store.settings) || ({} as Settings)
 			const originalLogLevel = settings.gateway?.logLevel || 'info'
+			const restartDriver = req.body.restartDriver || false
 
-			await debugManager.startSession(gw.zwave, originalLogLevel)
+			await debugManager.startSession(
+				gw.zwave,
+				originalLogLevel,
+				restartDriver,
+			)
 
 			res.json({
 				success: true,
