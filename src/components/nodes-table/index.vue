@@ -16,6 +16,9 @@
 		show-select
 		return-object
 		:search="search"
+		fixed-footer
+		fixed-header
+		height="calc(100vh - 400px)"
 		style="margin-bottom: 50px; padding-bottom: 0 !important"
 	>
 		<template #top>
