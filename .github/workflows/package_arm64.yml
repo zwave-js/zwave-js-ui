@@ -24,7 +24,7 @@ jobs:
 
       - name: Install and pre-build
         run: |
-          npm ci
+          npm ci --force
           npm run build
 
       - name: Build for arm64
