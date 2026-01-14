@@ -1,5 +1,26 @@
 # Changelog
 
+## [11.10.0](https://github.com/zwave-js/zwave-js-ui/compare/v11.9.1...v11.10.0) (2026-01-14)
+
+### ✨ Features
+
+* add bypass option for association restrictions ([#4512](https://github.com/zwave-js/zwave-js-ui/issues/4512)) ([c1289e5](https://github.com/zwave-js/zwave-js-ui/commit/c1289e567e96b64736d24565c1351c4e4b248ff7)), closes [zwave-js/zwave-js-ui#4493](https://github.com/zwave-js/zwave-js-ui/issues/4493)
+* bump zwave-js@15.19.0 ([#4507](https://github.com/zwave-js/zwave-js-ui/issues/4507)) ([5d6ba80](https://github.com/zwave-js/zwave-js-ui/commit/5d6ba802eb1023105ba6ba4eaccc21fa2498b237))
+
+### 🐛 Bug Fixes
+
+* **markdownlint:** ensure MD059 rule is explicitly set to false ([b0c6de2](https://github.com/zwave-js/zwave-js-ui/commit/b0c6de290a80a7063b4642f91a7f0080e48718dd))
+* **ui:** dialogs with close button should be closed on click outside ([#4511](https://github.com/zwave-js/zwave-js-ui/issues/4511)) ([bb9bebf](https://github.com/zwave-js/zwave-js-ui/commit/bb9bebfde1478caee2275c3acad72ab78308bd53)), closes [#3237](https://github.com/zwave-js/zwave-js-ui/issues/3237)
+
+### 🔧 Chores
+
+* **deps:** bump qs from 6.13.0 to 6.14.1 in the npm_and_yarn group across 1 directory ([#4506](https://github.com/zwave-js/zwave-js-ui/issues/4506)) ([add283d](https://github.com/zwave-js/zwave-js-ui/commit/add283d71ca92b33f6cc5a7211362994b06e6f60))
+* update jws to version 3.2.3 and jwa to version 1.4.2 in package-lock.json ([1f9b866](https://github.com/zwave-js/zwave-js-ui/commit/1f9b8669666b9bc8dbee028f7fb5ed4403064521))
+
+### 📚 Documentation
+
+* update changelog formatting and correct links for version 11.9.0 ([b264c4b](https://github.com/zwave-js/zwave-js-ui/commit/b264c4b0cf173f39fba5e76b354040cc2542356f))
+
 ## [11.9.1](https://github.com/zwave-js/zwave-js-ui/compare/v11.9.0...v11.9.1) (2025-12-20)
 
 ### ✨ Features
