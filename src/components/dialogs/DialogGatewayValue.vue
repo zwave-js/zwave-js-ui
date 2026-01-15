@@ -404,8 +404,9 @@ export default {
 </script>
 
 <style scoped>
-/* optional class for removing the outline */
+/* Custom focus indicator for better accessibility */
 .prism-editor__textarea:focus {
-	outline: none;
+	outline: 2px solid #1976d2;
+	outline-offset: 2px;
 }
 </style>
