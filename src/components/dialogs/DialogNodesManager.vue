@@ -10,7 +10,11 @@
 				<v-row class="pa-2" align="center">
 					<span class="text-h5">Nodes Manager</span>
 					<v-spacer></v-spacer>
-					<v-btn icon="clear" @click="close()" />
+					<v-btn
+						icon="clear"
+						aria-label="Close dialog"
+						@click="close()"
+					/>
 				</v-row>
 			</v-card-title>
 

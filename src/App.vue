@@ -187,7 +187,12 @@
 				<!-- Show more button on smaller screens -->
 				<v-menu v-if="$vuetify.display.xs" location="bottom left">
 					<template #activator="{ props }">
-						<v-btn size="small" v-bind="props" icon>
+						<v-btn
+							size="small"
+							v-bind="props"
+							icon
+							aria-label="More options"
+						>
 							<v-icon size="large">more_vert</v-icon>
 						</v-btn>
 					</template>
