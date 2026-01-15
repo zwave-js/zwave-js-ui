@@ -5,7 +5,11 @@
 				<v-row class="pa-3" align="center">
 					<span class="text-h5">{{ title }}</span>
 					<v-spacer></v-spacer>
-					<v-btn icon="close" @click="$emit('close')" />
+					<v-btn
+						icon="close"
+						aria-label="Close dialog"
+						@click="$emit('close')"
+					/>
 				</v-row>
 			</v-card-title>
 

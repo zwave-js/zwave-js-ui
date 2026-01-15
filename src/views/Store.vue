@@ -179,9 +179,10 @@
 	</v-container>
 </template>
 <style scoped>
-/* optional class for removing the outline */
+/* Custom focus indicator for better accessibility */
 .prism-editor-wrapper :deep(.prism-editor__textarea:focus) {
-	outline: none !important;
+	outline: 2px solid #1976d2 !important;
+	outline-offset: 2px;
 }
 
 .prism-editor-wrapper :deep(.prism-editor__editor) {
