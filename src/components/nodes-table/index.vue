@@ -152,7 +152,11 @@
 					<v-btn
 						size="x-small"
 						icon
-						aria-label="Close group"
+						:aria-label="
+							isGroupOpen(item)
+								? 'Collapse group'
+								: 'Expand group'
+						"
 						@click="toggleGroup(item)"
 						><v-icon>close</v-icon></v-btn
 					>
