@@ -1,5 +1,12 @@
 # Changelog
 
+## [11.10.1](https://github.com/zwave-js/zwave-js-ui/compare/v11.10.0...v11.10.1) (2026-01-15)
+
+### ✨ Features
+
+* **a11y:** comprehensive accessibility improvements for screen readers and keyboard users ([#4518](https://github.com/zwave-js/zwave-js-ui/issues/4518)) ([eeba598](https://github.com/zwave-js/zwave-js-ui/commit/eeba5983daaddeaef7d9418ad6c0611849c84f3e)), closes [#1976d2](https://github.com/zwave-js/zwave-js-ui/issues/1976d2) [zwave-js/zwave-js-ui#4292](https://github.com/zwave-js/zwave-js-ui/issues/4292)
+* bump zwave-js@15.20.0 ([#4519](https://github.com/zwave-js/zwave-js-ui/issues/4519)) ([2240fd6](https://github.com/zwave-js/zwave-js-ui/commit/2240fd6f6d9ab643834436771b30d6b659a43b91))
+
 ## [11.10.0](https://github.com/zwave-js/zwave-js-ui/compare/v11.9.1...v11.10.0) (2026-01-14)
 
 ### ✨ Features
