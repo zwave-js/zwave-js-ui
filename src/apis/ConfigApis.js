@@ -88,6 +88,10 @@ export default {
 		const response = await request.get('/settings')
 		return response.data
 	},
+	async getSerialPorts() {
+		const response = await request.get('/serial-ports')
+		return response.data
+	},
 	async updateConfig(data) {
 		const response = await request.post('/settings', data)
 		return response.data
