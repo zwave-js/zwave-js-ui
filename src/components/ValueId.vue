@@ -243,7 +243,7 @@
 						(modelValue.states && modelValue.states.length === 2))
 				"
 			>
-				<v-btn-group class="my-2" rounded="xl">
+				<v-btn-group class="mt-4 my-2" rounded="xl">
 					<v-btn
 						:variant="
 							modelValue.newValue === true ? 'flat' : 'outlined'
@@ -306,7 +306,7 @@
 						v-bind="props"
 						color="primary"
 						@click="updateValue(modelValue)"
-						class="mb-2 mt-2"
+						class="mb-2 mt-4"
 						>{{
 							trueLabel || falseLabel || modelValue.label
 						}}</v-btn
