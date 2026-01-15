@@ -178,6 +178,7 @@
 						icon="history"
 						color="primary"
 						density="compact"
+						aria-label="Check for updates"
 						@click="showUpdateDialog"
 					>
 					</v-btn>
