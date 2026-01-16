@@ -504,7 +504,11 @@
 										@click.stop
 										label="Enabled"
 										v-model="newZwave.enabled"
-										:disabled="isSettingManagedExternally('zwave.enabled')"
+										:disabled="
+											isSettingManagedExternally(
+												'zwave.enabled',
+											)
+										"
 									></v-checkbox>
 								</v-row>
 							</v-col>
@@ -531,7 +535,9 @@
 											v-model="newZwave.port"
 											label="Serial Port"
 											:hint="
-												isSettingManagedExternally('zwave.port')
+												isSettingManagedExternally(
+													'zwave.port',
+												)
 													? 'Port is controlled by ZWAVE_PORT environment variable'
 													: 'Ex /dev/ttyUSB0. If your port is not listed here just write the port path here'
 											"
@@ -543,7 +549,9 @@
 											required
 											:items="serial_ports"
 											:disabled="
-												isSettingManagedExternally('zwave.port')
+												isSettingManagedExternally(
+													'zwave.port',
+												)
 											"
 										></v-combobox>
 									</v-col>
