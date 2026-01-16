@@ -596,7 +596,18 @@ export default {
 
 			let item = await this.app.confirm(
 				(existingItem ? 'Update' : 'New') + ' entry',
-				'',
+				`
+					<div role="alert" class="v-alert mb-0 v-sheet theme--dark v-alert--text info--text">
+						<div class="v-alert__wrapper">
+							<i aria-hidden="true" class="v-icon notranslate v-alert__icon material-icons theme--dark info--text">info</i>
+							<div class="v-alert__content">
+								<small class="pb-2">
+									If you are using Home Assistant (or other integrations) note that provisioning entries "name" and "location" will be shared with the integration. Leave them empty if you want to configure them manually in the integration.
+								</small>
+							</div>
+						</div>
+					</div>
+				`,
 				'info',
 				{
 					confirmText: existingItem ? 'Update' : 'Add',
