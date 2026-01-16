@@ -149,42 +149,45 @@
 						</template>
 
 						<template #[`item.minPowerlevel`]="{ item }">
-							<strong
-								:class="getPowerLevelColor(item.minPowerlevel)"
-								v-if="item.minPowerlevel !== undefined"
-								>{{ getPowerLevel(item.minPowerlevel) }}</strong
-							>
+							<span v-if="item.minPowerlevel !== undefined">
+								<span
+									v-if="
+										item.failedPingsController !== undefined
+									"
+								>
+									<strong
+										:class="
+											getFailedPingsColor(
+												item.failedPingsController,
+											)
+										"
+										>{{
+											formatFailedPingsPhrase(
+												item.failedPingsController,
+											)
+										}}</strong
+									>
+									@
+								</span>
+								<strong
+									:class="
+										getPowerLevelColor(item.minPowerlevel)
+									"
+									>{{
+										getPowerLevel(item.minPowerlevel)
+									}}</strong
+								>
+							</span>
 						</template>
 
 						<template #[`item.failedPingsNode`]="{ item }">
-							<p
-								class="mb-0"
+							<strong
 								v-if="item.failedPingsNode !== undefined"
+								:class="
+									getFailedPingsColor(item.failedPingsNode)
+								"
+								>{{ item.failedPingsNode }}/10</strong
 							>
-								{{ resultsTargetNode }} → {{ activeNode.id }}:
-								<strong
-									:class="
-										getFailedPingsColor(
-											item.failedPingsNode,
-										)
-									"
-									>{{ item.failedPingsNode }}/10</strong
-								>
-							</p>
-							<p
-								class="mb-0"
-								v-if="item.failedPingsController !== undefined"
-							>
-								{{ resultsTargetNode }} ← {{ activeNode.id }}:
-								<strong
-									:class="
-										getFailedPingsColor(
-											item.failedPingsController,
-										)
-									"
-									>{{ item.failedPingsController }}/10</strong
-								>
-							</p>
 						</template>
 
 						<template #[`item.failedPingsToSource`]="{ item }">
@@ -324,13 +327,18 @@ export default {
 		},
 		headers() {
 			if (this.mode === 'Lifeline') {
+				const targetId = this.resultsTargetNode || ''
+				const activeId = this.activeNode?.id || ''
 				return [
 					{ title: 'Max latency', key: 'latency' },
-					{ title: 'Failed pings', key: 'failedPingsNode' },
+					{
+						title: `Failed pings ${targetId} → ${activeId}`,
+						key: 'failedPingsNode',
+					},
 					{ title: 'Route Changes', key: 'routeChanges' },
 					{ title: 'SNR margin', key: 'snrMargin' },
 					{
-						title: 'Min power level w/o errors',
+						title: `Min powerlevel ${activeId} → ${targetId}`,
 						key: 'minPowerlevel',
 					},
 					{ title: 'Rating', key: 'rating' },
@@ -402,6 +410,20 @@ export default {
 			} else {
 				return 'text-error'
 			}
+		},
+		getFailedPingsText(count) {
+			if (count === 0) {
+				return 'no'
+			}
+			return count
+		},
+		getFailedPingsPluralSuffix(count) {
+			return count === 1 ? '' : 's'
+		},
+		formatFailedPingsPhrase(count) {
+			const text = this.getFailedPingsText(count)
+			const suffix = this.getFailedPingsPluralSuffix(count)
+			return `${text} failed ping${suffix}`
 		},
 		getRatingColor(rating) {
 			if (rating === undefined) {
