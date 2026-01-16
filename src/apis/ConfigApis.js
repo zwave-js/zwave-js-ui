@@ -163,8 +163,8 @@ export default {
 		const response = await request.get('/debug/status')
 		return response.data
 	},
-	async startDebugCapture() {
-		const response = await request.post('/debug/start')
+	async startDebugCapture(restartDriver = false) {
+		const response = await request.post('/debug/start', { restartDriver })
 		return response.data
 	},
 	async stopDebugCapture(nodeIds = []) {
