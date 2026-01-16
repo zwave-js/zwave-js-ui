@@ -426,9 +426,7 @@ function hasDockerCGroup() {
 let isDockerCached: boolean
 
 export function isDocker(): boolean {
-	// TODO: Use `??=` when targeting Node.js 16.
 	isDockerCached ??= hasDockerEnv() || hasDockerCGroup()
-
 	return isDockerCached
 }
 

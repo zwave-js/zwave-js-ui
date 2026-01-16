@@ -529,7 +529,9 @@
 										<v-combobox
 											v-model="newZwave.port"
 											label="Serial Port"
-											hint="Ex /dev/ttyUSB0. If your port is not listed here just write the port path here"
+											:hint="zwavePortManagedExternally
+												? 'Port is controlled by ZWAVE_PORT environment variable'
+												: 'Ex /dev/ttyUSB0. If your port is not listed here just write the port path here'"
 											persistent-hint
 											:rules="[
 												rules.required,
@@ -537,6 +539,7 @@
 											]"
 											required
 											:items="serial_ports"
+											:disabled="zwavePortManagedExternally"
 										></v-combobox>
 									</v-col>
 									<v-col cols="12" sm="6">
@@ -2267,6 +2270,7 @@ export default {
 			'backup',
 			'devices',
 			'serial_ports',
+			'zwavePortManagedExternally',
 			'scales',
 			'ui',
 		]),
