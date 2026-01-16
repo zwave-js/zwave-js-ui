@@ -1105,6 +1105,12 @@ app.get(
 
 		const settings = jsonStore.get(store.settings)
 
+		const managedExternally = []
+		if (process.env.ZWAVE_PORT) {
+			managedExternally.push('zwave.port')
+			managedExternally.push('zwave.enabled')
+		}
+
 		const data = {
 			success: true,
 			settings,
@@ -1112,12 +1118,14 @@ app.get(
 			serial_ports: [],
 			scales: scales,
 			sslDisabled: sslDisabled(),
+			managedExternally,
 			tz: process.env.TZ,
 			locale: process.env.LOCALE,
 			deprecationWarning: process.env.TAG_NAME === 'zwavejs2mqtt',
 		}
 
-		if (process.platform !== 'sunos') {
+		// Only enumerate serial ports if ZWAVE_PORT is not set via env var
+		if (process.platform !== 'sunos' && !process.env.ZWAVE_PORT) {
 			try {
 				data.serial_ports = await Driver.enumerateSerialPorts({
 					local: true,
@@ -1127,8 +1135,9 @@ app.get(
 				logger.error(error)
 				data.serial_ports = []
 			}
-			res.json(data)
-		} else res.json(data)
+		}
+
+		res.json(data)
 	},
 )
 

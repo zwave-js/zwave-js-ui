@@ -19,6 +19,7 @@ const useBaseStore = defineStore('base', {
 		auth: undefined,
 		controllerId: undefined,
 		serial_ports: [],
+		managedExternally: [],
 		scales: [],
 		nodes: [],
 		nodesMap: new Map(),
@@ -165,6 +166,11 @@ const useBaseStore = defineStore('base', {
 		},
 		settings() {
 			return settings
+		},
+		isSettingManagedExternally() {
+			return (settingPath) => {
+				return this.managedExternally.includes(settingPath)
+			}
 		},
 	},
 	actions: {
@@ -612,6 +618,7 @@ const useBaseStore = defineStore('base', {
 				this.initPorts(data.serial_ports)
 				this.initScales(data.scales)
 				this.initDevices(data.devices)
+				this.managedExternally = data.managedExternally || []
 
 				this.inited = true
 			}

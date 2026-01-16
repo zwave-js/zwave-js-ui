@@ -504,6 +504,11 @@
 										@click.stop
 										label="Enabled"
 										v-model="newZwave.enabled"
+										:disabled="
+											isSettingManagedExternally(
+												'zwave.enabled',
+											)
+										"
 									></v-checkbox>
 								</v-row>
 							</v-col>
@@ -529,7 +534,13 @@
 										<v-combobox
 											v-model="newZwave.port"
 											label="Serial Port"
-											hint="Ex /dev/ttyUSB0. If your port is not listed here just write the port path here"
+											:hint="
+												isSettingManagedExternally(
+													'zwave.port',
+												)
+													? 'Port is controlled by ZWAVE_PORT environment variable'
+													: 'Ex /dev/ttyUSB0. If your port is not listed here just write the port path here'
+											"
 											persistent-hint
 											:rules="[
 												rules.required,
@@ -537,6 +548,11 @@
 											]"
 											required
 											:items="serial_ports"
+											:disabled="
+												isSettingManagedExternally(
+													'zwave.port',
+												)
+											"
 										></v-combobox>
 									</v-col>
 									<v-col cols="12" sm="6">
@@ -2269,6 +2285,7 @@ export default {
 			'serial_ports',
 			'scales',
 			'ui',
+			'isSettingManagedExternally',
 		]),
 		...mapState(useBaseStore, {
 			colorScheme: (store) => store.ui.colorScheme,
