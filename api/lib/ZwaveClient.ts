@@ -2178,7 +2178,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		}
 
 		// Prefer env variable over config file for the port setting
-		this.cfg.port = process.env.ZWAVEJS_PORT || this.cfg.port
+		this.cfg.port = process.env.ZWAVE_PORT || this.cfg.port
 
 		if (!this.cfg?.port) {
 			logger.warn('Z-Wave driver not inited, no port configured')
