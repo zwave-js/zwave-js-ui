@@ -2162,6 +2162,12 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 * Method used to start Z-Wave connection using configuration `port`
 	 */
 	async connect() {
+		// When ZWAVE_PORT env var is set, force enable and override port
+		if (process.env.ZWAVE_PORT) {
+			this.cfg.enabled = true
+			this.cfg.port = process.env.ZWAVE_PORT
+		}
+
 		if (this.cfg.enabled === false) {
 			logger.info('Z-Wave driver DISABLED')
 			return
@@ -2176,9 +2182,6 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		if (this.closed || this.checkIfDestroyed()) {
 			return
 		}
-
-		// Prefer env variable over config file for the port setting
-		this.cfg.port = process.env.ZWAVE_PORT || this.cfg.port
 
 		if (!this.cfg?.port) {
 			logger.warn('Z-Wave driver not inited, no port configured')

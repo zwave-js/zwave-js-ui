@@ -1105,6 +1105,12 @@ app.get(
 
 		const settings = jsonStore.get(store.settings)
 
+		const managedExternally = []
+		if (process.env.ZWAVE_PORT) {
+			managedExternally.push('zwave.port')
+			managedExternally.push('zwave.enabled')
+		}
+
 		const data = {
 			success: true,
 			settings,
@@ -1112,7 +1118,7 @@ app.get(
 			serial_ports: [],
 			scales: scales,
 			sslDisabled: sslDisabled(),
-			zwavePortManagedExternally: !!process.env.ZWAVE_PORT,
+			managedExternally,
 			tz: process.env.TZ,
 			locale: process.env.LOCALE,
 			deprecationWarning: process.env.TAG_NAME === 'zwavejs2mqtt',
