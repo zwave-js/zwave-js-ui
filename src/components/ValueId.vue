@@ -537,19 +537,21 @@ export default {
 
 			this.polling = true
 
-			const response = await app.apiRequest(
-				'pollValue',
-				[this.modelValue],
-				{
-					infoSnack: false,
-					errorSnack: true,
-				},
-			)
+			try {
+				const response = await app.apiRequest(
+					'pollValue',
+					[this.modelValue],
+					{
+						infoSnack: false,
+						errorSnack: true,
+					},
+				)
 
-			this.polling = false
-
-			if (response.success) {
-				useBaseStore().showSnackbar('Value refreshed', 'success')
+				if (response.success) {
+					useBaseStore().showSnackbar('Value refreshed', 'success')
+				}
+			} finally {
+				this.polling = false
 			}
 		},
 		async resetConfig() {
