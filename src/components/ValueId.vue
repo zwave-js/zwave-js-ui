@@ -4,6 +4,18 @@
 			{{ label }}
 			<v-btn
 				class="ml-2 mb-1"
+				@click="pollValue"
+				v-if="!disable_send"
+				v-tooltip:bottom="'Refresh this value'"
+				size="x-small"
+				variant="text"
+				icon
+				:loading="polling"
+			>
+				<v-icon size="small">refresh</v-icon>
+			</v-btn>
+			<v-btn
+				class="ml-2 mb-1"
 				@click="resetConfig"
 				v-if="canResetConfiguration"
 				size="x-small"
@@ -374,6 +386,7 @@ export default {
 			durations: ['seconds', 'minutes'],
 			showMenu: false,
 			error: null,
+			polling: false,
 		}
 	},
 	computed: {
@@ -519,6 +532,26 @@ export default {
 		},
 	},
 	methods: {
+		async pollValue() {
+			const app = manager.getInstance(instances.APP)
+
+			this.polling = true
+
+			const response = await app.apiRequest(
+				'pollValue',
+				[this.modelValue],
+				{
+					infoSnack: false,
+					errorSnack: true,
+				},
+			)
+
+			this.polling = false
+
+			if (response.success) {
+				useBaseStore().showSnackbar('Value refreshed', 'success')
+			}
+		},
 		async resetConfig() {
 			const app = manager.getInstance(instances.APP)
 
