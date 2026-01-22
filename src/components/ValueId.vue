@@ -60,24 +60,20 @@
 				:hint="help"
 				v-model="modelValue.newValue"
 				@click:append="updateValue(modelValue)"
-			></v-text-field>
-			<v-btn
-				v-if="
-					!modelValue.list &&
-					(modelValue.type === 'string' ||
-						modelValue.type === 'buffer') &&
-					canPollValue
-				"
-				@click="pollValue"
-				v-tooltip:bottom="'Refresh this value'"
-				size="small"
-				variant="text"
-				icon
-				:loading="polling"
-				class="ml-2"
 			>
-				<v-icon>refresh</v-icon>
-			</v-btn>
+				<template #append-inner v-if="canPollValue">
+					<v-btn
+						@click="pollValue"
+						v-tooltip:bottom="'Refresh this value'"
+						size="small"
+						variant="text"
+						icon
+						:loading="polling"
+					>
+						<v-icon>refresh</v-icon>
+					</v-btn>
+				</template>
+			</v-text-field>
 
 			<!-- Number Input -->
 			<v-text-field
@@ -100,23 +96,20 @@
 				"
 				v-model.number="modelValue.newValue"
 				@click:append="!numberOutOfRange && updateValue(modelValue)"
-			></v-text-field>
-			<v-btn
-				v-if="
-					!modelValue.list &&
-					modelValue.type === 'number' &&
-					canPollValue
-				"
-				@click="pollValue"
-				v-tooltip:bottom="'Refresh this value'"
-				size="small"
-				variant="text"
-				icon
-				:loading="polling"
-				class="ml-2"
 			>
-				<v-icon>refresh</v-icon>
-			</v-btn>
+				<template #append-inner v-if="canPollValue">
+					<v-btn
+						@click="pollValue"
+						v-tooltip:bottom="'Refresh this value'"
+						size="small"
+						variant="text"
+						icon
+						:loading="polling"
+					>
+						<v-icon>refresh</v-icon>
+					</v-btn>
+				</template>
+			</v-text-field>
 
 			<!-- Object Input -->
 			<v-text-field
@@ -129,23 +122,20 @@
 				:hint="help"
 				v-model="parsedValue"
 				@click:append="updateValue(modelValue)"
-			></v-text-field>
-			<v-btn
-				v-if="
-					!modelValue.list &&
-					modelValue.type === 'any' &&
-					canPollValue
-				"
-				@click="pollValue"
-				v-tooltip:bottom="'Refresh this value'"
-				size="small"
-				variant="text"
-				icon
-				:loading="polling"
-				class="ml-2"
 			>
-				<v-icon>refresh</v-icon>
-			</v-btn>
+				<template #append-inner v-if="canPollValue">
+					<v-btn
+						@click="pollValue"
+						v-tooltip:bottom="'Refresh this value'"
+						size="small"
+						variant="text"
+						icon
+						:loading="polling"
+					>
+						<v-icon>refresh</v-icon>
+					</v-btn>
+				</template>
+			</v-text-field>
 
 			<!-- Duration Input -->
 			<div
@@ -174,19 +164,20 @@
 					persistent-hint
 					:append-icon="!disable_send ? 'send' : null"
 					@click:append="updateValue(modelValue)"
-				></v-select>
-				<v-btn
-					v-if="canPollValue"
-					@click="pollValue"
-					v-tooltip:bottom="'Refresh this value'"
-					size="small"
-					variant="text"
-					icon
-					:loading="polling"
-					class="ml-2"
 				>
-					<v-icon>refresh</v-icon>
-				</v-btn>
+					<template #append-inner v-if="canPollValue">
+						<v-btn
+							@click="pollValue"
+							v-tooltip:bottom="'Refresh this value'"
+							size="small"
+							variant="text"
+							icon
+							:loading="polling"
+						>
+							<v-icon>refresh</v-icon>
+						</v-btn>
+					</template>
+				</v-select>
 			</div>
 
 			<!-- Color Input -->
@@ -201,6 +192,18 @@
 				:hint="help"
 				@click:append="updateValue(modelValue)"
 			>
+				<template #append-inner v-if="canPollValue">
+					<v-btn
+						@click="pollValue"
+						v-tooltip:bottom="'Refresh this value'"
+						size="small"
+						variant="text"
+						icon
+						:loading="polling"
+					>
+						<v-icon>refresh</v-icon>
+					</v-btn>
+				</template>
 				<template #append>
 					<v-menu
 						v-model="showMenu"
@@ -226,18 +229,6 @@
 					</v-menu>
 				</template>
 			</v-text-field>
-			<v-btn
-				v-if="modelValue.type === 'color' && canPollValue"
-				@click="pollValue"
-				v-tooltip:bottom="'Refresh this value'"
-				size="small"
-				variant="text"
-				icon
-				:loading="polling"
-				class="ml-2"
-			>
-				<v-icon>refresh</v-icon>
-			</v-btn>
 
 			<!-- Select Input -->
 			<v-select
@@ -269,24 +260,19 @@
 						{{ itemText(selectedItem || item) }}
 					</span>
 				</template>
+				<template #append-inner v-if="canPollValue">
+					<v-btn
+						@click="pollValue"
+						v-tooltip:bottom="'Refresh this value'"
+						size="small"
+						variant="text"
+						icon
+						:loading="polling"
+					>
+						<v-icon>refresh</v-icon>
+					</v-btn>
+				</template>
 			</v-select>
-			<v-btn
-				v-if="
-					modelValue.list &&
-					!modelValue.allowManualEntry &&
-					modelValue.type !== 'boolean' &&
-					canPollValue
-				"
-				@click="pollValue"
-				v-tooltip:bottom="'Refresh this value'"
-				size="small"
-				variant="text"
-				icon
-				:loading="polling"
-				class="ml-2"
-			>
-				<v-icon>refresh</v-icon>
-			</v-btn>
 
 			<!-- Select Input with Manual Entry -->
 			<v-combobox
@@ -323,24 +309,19 @@
 						</span>
 					</v-chip>
 				</template>
+				<template #append-inner v-if="canPollValue">
+					<v-btn
+						@click="pollValue"
+						v-tooltip:bottom="'Refresh this value'"
+						size="small"
+						variant="text"
+						icon
+						:loading="polling"
+					>
+						<v-icon>refresh</v-icon>
+					</v-btn>
+				</template>
 			</v-combobox>
-			<v-btn
-				v-if="
-					modelValue.list &&
-					modelValue.allowManualEntry &&
-					modelValue.type !== 'boolean' &&
-					canPollValue
-				"
-				@click="pollValue"
-				v-tooltip:bottom="'Refresh this value'"
-				size="small"
-				variant="text"
-				icon
-				:loading="polling"
-				class="ml-2"
-			>
-				<v-icon>refresh</v-icon>
-			</v-btn>
 
 			<!-- On/Off Input -->
 			<div
