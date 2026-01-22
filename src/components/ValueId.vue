@@ -4,18 +4,6 @@
 			{{ label }}
 			<v-btn
 				class="ml-2 mb-1"
-				@click="pollValue"
-				v-if="!disable_send"
-				v-tooltip:bottom="'Refresh this value'"
-				size="x-small"
-				variant="text"
-				icon
-				:loading="polling"
-			>
-				<v-icon size="small">refresh</v-icon>
-			</v-btn>
-			<v-btn
-				class="ml-2 mb-1"
 				@click="resetConfig"
 				v-if="canResetConfiguration"
 				size="x-small"
@@ -73,6 +61,23 @@
 				v-model="modelValue.newValue"
 				@click:append="updateValue(modelValue)"
 			></v-text-field>
+			<v-btn
+				v-if="
+					!modelValue.list &&
+					(modelValue.type === 'string' ||
+						modelValue.type === 'buffer') &&
+					canPollValue
+				"
+				@click="pollValue"
+				v-tooltip:bottom="'Refresh this value'"
+				size="small"
+				variant="text"
+				icon
+				:loading="polling"
+				class="ml-2"
+			>
+				<v-icon>refresh</v-icon>
+			</v-btn>
 
 			<!-- Number Input -->
 			<v-text-field
@@ -96,6 +101,22 @@
 				v-model.number="modelValue.newValue"
 				@click:append="!numberOutOfRange && updateValue(modelValue)"
 			></v-text-field>
+			<v-btn
+				v-if="
+					!modelValue.list &&
+					modelValue.type === 'number' &&
+					canPollValue
+				"
+				@click="pollValue"
+				v-tooltip:bottom="'Refresh this value'"
+				size="small"
+				variant="text"
+				icon
+				:loading="polling"
+				class="ml-2"
+			>
+				<v-icon>refresh</v-icon>
+			</v-btn>
 
 			<!-- Object Input -->
 			<v-text-field
@@ -109,6 +130,22 @@
 				v-model="parsedValue"
 				@click:append="updateValue(modelValue)"
 			></v-text-field>
+			<v-btn
+				v-if="
+					!modelValue.list &&
+					modelValue.type === 'any' &&
+					canPollValue
+				"
+				@click="pollValue"
+				v-tooltip:bottom="'Refresh this value'"
+				size="small"
+				variant="text"
+				icon
+				:loading="polling"
+				class="ml-2"
+			>
+				<v-icon>refresh</v-icon>
+			</v-btn>
 
 			<!-- Duration Input -->
 			<div
@@ -138,6 +175,18 @@
 					:append-icon="!disable_send ? 'send' : null"
 					@click:append="updateValue(modelValue)"
 				></v-select>
+				<v-btn
+					v-if="canPollValue"
+					@click="pollValue"
+					v-tooltip:bottom="'Refresh this value'"
+					size="small"
+					variant="text"
+					icon
+					:loading="polling"
+					class="ml-2"
+				>
+					<v-icon>refresh</v-icon>
+				</v-btn>
 			</div>
 
 			<!-- Color Input -->
@@ -177,6 +226,18 @@
 					</v-menu>
 				</template>
 			</v-text-field>
+			<v-btn
+				v-if="modelValue.type === 'color' && canPollValue"
+				@click="pollValue"
+				v-tooltip:bottom="'Refresh this value'"
+				size="small"
+				variant="text"
+				icon
+				:loading="polling"
+				class="ml-2"
+			>
+				<v-icon>refresh</v-icon>
+			</v-btn>
 
 			<!-- Select Input -->
 			<v-select
@@ -209,6 +270,23 @@
 					</span>
 				</template>
 			</v-select>
+			<v-btn
+				v-if="
+					modelValue.list &&
+					!modelValue.allowManualEntry &&
+					modelValue.type !== 'boolean' &&
+					canPollValue
+				"
+				@click="pollValue"
+				v-tooltip:bottom="'Refresh this value'"
+				size="small"
+				variant="text"
+				icon
+				:loading="polling"
+				class="ml-2"
+			>
+				<v-icon>refresh</v-icon>
+			</v-btn>
 
 			<!-- Select Input with Manual Entry -->
 			<v-combobox
@@ -246,6 +324,23 @@
 					</v-chip>
 				</template>
 			</v-combobox>
+			<v-btn
+				v-if="
+					modelValue.list &&
+					modelValue.allowManualEntry &&
+					modelValue.type !== 'boolean' &&
+					canPollValue
+				"
+				@click="pollValue"
+				v-tooltip:bottom="'Refresh this value'"
+				size="small"
+				variant="text"
+				icon
+				:loading="polling"
+				class="ml-2"
+			>
+				<v-icon>refresh</v-icon>
+			</v-btn>
 
 			<!-- On/Off Input -->
 			<div
@@ -300,6 +395,18 @@
 						>
 					</v-btn>
 				</v-btn-group>
+				<v-btn
+					v-if="canPollValue"
+					@click="pollValue"
+					v-tooltip:bottom="'Refresh this value'"
+					size="small"
+					variant="text"
+					icon
+					:loading="polling"
+					class="ml-2"
+				>
+					<v-icon>refresh</v-icon>
+				</v-btn>
 				<div v-if="help" class="text-caption mt-2 help">{{ help }}</div>
 			</div>
 
@@ -442,6 +549,12 @@ export default {
 				this.modelValue.commandClass === 112 &&
 				this.modelValue.commandClassVersion > 3
 			)
+		},
+		canPollValue() {
+			// Only show poll button for readable values (not write-only)
+			if (!this.modelValue || this.disable_send) return false
+
+			return this.modelValue.readable
 		},
 		items() {
 			if (this.selectedItem) {
