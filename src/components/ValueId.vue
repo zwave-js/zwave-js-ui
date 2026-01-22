@@ -37,6 +37,12 @@
 					color="primary"
 					>Idle</v-btn
 				>
+
+				<PollValueButton
+					v-if="canPollValue"
+					:model-value="modelValue"
+					class="ml-2"
+				/>
 			</div>
 
 			<div v-if="help" class="text-caption mt-1 help">
@@ -62,16 +68,7 @@
 				@click:append="updateValue(modelValue)"
 			>
 				<template #append-inner v-if="canPollValue">
-					<v-btn
-						@click="pollValue"
-						v-tooltip:bottom="'Refresh this value'"
-						size="small"
-						variant="text"
-						icon
-						:loading="polling"
-					>
-						<v-icon>refresh</v-icon>
-					</v-btn>
+					<PollValueButton :model-value="modelValue" />
 				</template>
 			</v-text-field>
 
@@ -98,16 +95,7 @@
 				@click:append="!numberOutOfRange && updateValue(modelValue)"
 			>
 				<template #append-inner v-if="canPollValue">
-					<v-btn
-						@click="pollValue"
-						v-tooltip:bottom="'Refresh this value'"
-						size="small"
-						variant="text"
-						icon
-						:loading="polling"
-					>
-						<v-icon>refresh</v-icon>
-					</v-btn>
+					<PollValueButton :model-value="modelValue" />
 				</template>
 			</v-text-field>
 
@@ -124,16 +112,7 @@
 				@click:append="updateValue(modelValue)"
 			>
 				<template #append-inner v-if="canPollValue">
-					<v-btn
-						@click="pollValue"
-						v-tooltip:bottom="'Refresh this value'"
-						size="small"
-						variant="text"
-						icon
-						:loading="polling"
-					>
-						<v-icon>refresh</v-icon>
-					</v-btn>
+					<PollValueButton :model-value="modelValue" />
 				</template>
 			</v-text-field>
 
@@ -166,16 +145,7 @@
 					@click:append="updateValue(modelValue)"
 				>
 					<template #append-inner v-if="canPollValue">
-						<v-btn
-							@click="pollValue"
-							v-tooltip:bottom="'Refresh this value'"
-							size="small"
-							variant="text"
-							icon
-							:loading="polling"
-						>
-							<v-icon>refresh</v-icon>
-						</v-btn>
+						<PollValueButton :model-value="modelValue" />
 					</template>
 				</v-select>
 			</div>
@@ -193,16 +163,7 @@
 				@click:append="updateValue(modelValue)"
 			>
 				<template #append-inner v-if="canPollValue">
-					<v-btn
-						@click="pollValue"
-						v-tooltip:bottom="'Refresh this value'"
-						size="small"
-						variant="text"
-						icon
-						:loading="polling"
-					>
-						<v-icon>refresh</v-icon>
-					</v-btn>
+					<PollValueButton :model-value="modelValue" />
 				</template>
 				<template #append>
 					<v-menu
@@ -261,16 +222,7 @@
 					</span>
 				</template>
 				<template #append-inner v-if="canPollValue">
-					<v-btn
-						@click="pollValue"
-						v-tooltip:bottom="'Refresh this value'"
-						size="small"
-						variant="text"
-						icon
-						:loading="polling"
-					>
-						<v-icon>refresh</v-icon>
-					</v-btn>
+					<PollValueButton :model-value="modelValue" />
 				</template>
 			</v-select>
 
@@ -310,16 +262,7 @@
 					</v-chip>
 				</template>
 				<template #append-inner v-if="canPollValue">
-					<v-btn
-						@click="pollValue"
-						v-tooltip:bottom="'Refresh this value'"
-						size="small"
-						variant="text"
-						icon
-						:loading="polling"
-					>
-						<v-icon>refresh</v-icon>
-					</v-btn>
+					<PollValueButton :model-value="modelValue" />
 				</template>
 			</v-combobox>
 
@@ -376,18 +319,11 @@
 						>
 					</v-btn>
 				</v-btn-group>
-				<v-btn
+				<PollValueButton
 					v-if="canPollValue"
-					@click="pollValue"
-					v-tooltip:bottom="'Refresh this value'"
-					size="small"
-					variant="text"
-					icon
-					:loading="polling"
+					:model-value="modelValue"
 					class="ml-2"
-				>
-					<v-icon>refresh</v-icon>
-				</v-btn>
+				/>
 				<div v-if="help" class="text-caption mt-2 help">{{ help }}</div>
 			</div>
 
@@ -456,8 +392,12 @@
 <script>
 import { manager, instances } from '../lib/instanceManager'
 import useBaseStore from '../stores/base.js'
+import PollValueButton from './PollValueButton.vue'
 
 export default {
+	components: {
+		PollValueButton,
+	},
 	props: {
 		modelValue: {
 			type: Object,
@@ -474,7 +414,6 @@ export default {
 			durations: ['seconds', 'minutes'],
 			showMenu: false,
 			error: null,
-			polling: false,
 		}
 	},
 	computed: {
@@ -626,28 +565,6 @@ export default {
 		},
 	},
 	methods: {
-		async pollValue() {
-			const app = manager.getInstance(instances.APP)
-
-			this.polling = true
-
-			try {
-				const response = await app.apiRequest(
-					'pollValue',
-					[this.modelValue],
-					{
-						infoSnack: false,
-						errorSnack: true,
-					},
-				)
-
-				if (response.success) {
-					useBaseStore().showSnackbar('Value refreshed', 'success')
-				}
-			} finally {
-				this.polling = false
-			}
-		},
 		async resetConfig() {
 			const app = manager.getInstance(instances.APP)
 
