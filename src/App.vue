@@ -1,5 +1,7 @@
 <template>
 	<v-app>
+		<!-- Skip to main content link for keyboard accessibility -->
+		<a href="#main-content" class="skip-link">Skip to main content</a>
 		<div
 			v-if="$route.meta.requiresAuth && auth !== undefined && !hideTopbar"
 		>
@@ -178,6 +180,7 @@
 						icon="history"
 						color="primary"
 						density="compact"
+						aria-label="Check for updates"
 						@click="showUpdateDialog"
 					>
 					</v-btn>
@@ -187,7 +190,12 @@
 				<!-- Show more button on smaller screens -->
 				<v-menu v-if="$vuetify.display.xs" location="bottom left">
 					<template #activator="{ props }">
-						<v-btn size="small" v-bind="props" icon>
+						<v-btn
+							size="small"
+							v-bind="props"
+							icon
+							aria-label="More options"
+						>
 							<v-icon size="large">more_vert</v-icon>
 						</v-btn>
 					</template>
@@ -238,7 +246,7 @@
 				</span>
 			</v-app-bar>
 		</div>
-		<main style="height: 100%">
+		<main id="main-content" style="height: 100%">
 			<v-main style="height: 100%">
 				<template v-if="auth !== undefined">
 					<router-view v-if="inited || !skeletons" :socket="socket" />
@@ -1855,6 +1863,23 @@ export default {
 </script>
 
 <style scoped>
+/* Skip link for keyboard accessibility */
+.skip-link {
+	position: absolute;
+	top: -40px;
+	left: 0;
+	background: #1976d2;
+	color: white;
+	padding: 8px 16px;
+	text-decoration: none;
+	z-index: 9999;
+	border-radius: 0 0 4px 0;
+}
+
+.skip-link:focus {
+	top: 0;
+}
+
 .v-tabs :deep(.smaller-min-width-tabs) {
 	min-width: 60px;
 }
