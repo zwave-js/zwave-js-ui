@@ -259,6 +259,22 @@ Start development environment with these commands:
 
     - Starts on tcp://localhost:5555
     - Provides mock Z-Wave device for testing
+    - Uses `mock-server-configs/general.cjs` by default
+    
+    **Custom Mock Configurations:**
+    
+    You can create additional mock configuration files in the `mock-server-configs/` folder to emulate specific Z-Wave behaviors needed for UI testing. Each configuration file should export a default object with nodes and their capabilities.
+    
+    Example: To test battery notifications, use:
+    ```bash
+    npx mock-server -- -c mock-server-configs/battery_simulation.cjs
+    ```
+    
+    When creating new mock configs:
+    - Use `.cjs` extension for CommonJS format
+    - Follow the pattern in existing files (e.g., `general.cjs`, `battery_simulation.cjs`)
+    - Define Z-Wave command classes and capabilities needed for your test scenario
+    - Update the mock server port in Z-Wave settings to `tcp://localhost:5555`
 
 2. **Backend Development Server**:
 
@@ -422,7 +438,10 @@ After making changes, ALWAYS test these complete user scenarios:
 -   **vite.config.mjs**: Frontend build configuration
 -   **nodemon.json**: Backend development server configuration
 -   **.mocharc.yml**: Test configuration
--   **server_config.js**: Mock Z-Wave controller configuration
+-   **mock-server-configs/**: Mock Z-Wave controller configurations
+    -   **general.cjs**: Default mock configuration (used by `npm run fake-stick`)
+    -   **battery_simulation.cjs**: Example mock for testing battery notifications
+    -   Add custom `.cjs` files here to emulate specific Z-Wave behaviors for testing
 
 ## Environment Configuration
 

@@ -13,7 +13,7 @@ stack:
 applyTo:
   - api/**
   - esbuild.js
-  - server_config.js
+  - mock-server-configs/**
 commands:
   build: npm run build:server
   dev: npm run dev:server
@@ -217,7 +217,7 @@ describe('retryOperation', () => {
    npm run fake-stick
    ```
    - Listens on tcp://localhost:5555
-   - Configured in server_config.js
+   - Configured in mock-server-configs/general.cjs
 
 2. **Start Backend Dev Server**:
    ```bash
