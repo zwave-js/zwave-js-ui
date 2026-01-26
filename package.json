@@ -34,7 +34,7 @@
     "README.md"
   ],
   "scripts": {
-    "postinstall": "patch-package",
+    "postinstall": "npx patch-package",
     "dev": "vite",
     "dev-https": "SERVER_SSL='true' npm run dev",
     "dev:server": "nodemon",
