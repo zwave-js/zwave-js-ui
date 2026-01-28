@@ -2,8 +2,9 @@
 	<v-btn
 		@click="pollValue"
 		v-tooltip:bottom="'Refresh this value'"
-		size="small"
+		size="x-small"
 		variant="text"
+		style="margin-top: -3px"
 		icon
 		:loading="polling"
 		v-bind="$attrs"
