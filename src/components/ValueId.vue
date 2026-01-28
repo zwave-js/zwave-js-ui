@@ -68,7 +68,10 @@
 				@click:append="updateValue(modelValue)"
 			>
 				<template #append-inner v-if="canPollValue">
-					<PollValueButton :model-value="modelValue" />
+					<PollValueButton
+						style="margin-top: -3px"
+						:model-value="modelValue"
+					/>
 				</template>
 			</v-text-field>
 
@@ -95,7 +98,10 @@
 				@click:append="!numberOutOfRange && updateValue(modelValue)"
 			>
 				<template #append-inner v-if="canPollValue">
-					<PollValueButton :model-value="modelValue" />
+					<PollValueButton
+						style="margin-top: -3px"
+						:model-value="modelValue"
+					/>
 				</template>
 			</v-text-field>
 
@@ -112,7 +118,10 @@
 				@click:append="updateValue(modelValue)"
 			>
 				<template #append-inner v-if="canPollValue">
-					<PollValueButton :model-value="modelValue" />
+					<PollValueButton
+						style="margin-top: -3px"
+						:model-value="modelValue"
+					/>
 				</template>
 			</v-text-field>
 
@@ -145,7 +154,10 @@
 					@click:append="updateValue(modelValue)"
 				>
 					<template #append-inner v-if="canPollValue">
-						<PollValueButton :model-value="modelValue" />
+						<PollValueButton
+							style="margin-top: -3px"
+							:model-value="modelValue"
+						/>
 					</template>
 				</v-select>
 			</div>
@@ -222,7 +234,10 @@
 					</span>
 				</template>
 				<template #append-inner v-if="canPollValue">
-					<PollValueButton :model-value="modelValue" />
+					<PollValueButton
+						style="margin-top: -3px"
+						:model-value="modelValue"
+					/>
 				</template>
 			</v-select>
 
@@ -262,7 +277,10 @@
 					</v-chip>
 				</template>
 				<template #append-inner v-if="canPollValue">
-					<PollValueButton :model-value="modelValue" />
+					<PollValueButton
+						style="margin-top: -3px"
+						:model-value="modelValue"
+					/>
 				</template>
 			</v-combobox>
 
