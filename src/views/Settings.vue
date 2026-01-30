@@ -814,112 +814,122 @@
 									<!-- END: SECURITY KEYS -->
 
 									<!-- RADIO CONFIGURATION -->
-									<v-row class="mt-0">
-										<v-col cols="12" class="mb-n8">
-											<v-list-subheader
-												class="font-weight-bold text-primary mb-0"
-											>
-												Default Radio configuration
-											</v-list-subheader>
-										</v-col>
-										<v-col
-											cols="6"
-											v-if="
-												!isSettingManagedExternally(
-													'zwave.rf.region',
-												)
-											"
-										>
-											<v-select
-												label="RF Region"
-												persistent-hint
-												hint="Will be used to automatically configure your controller for the region you are in. Not all controllers support changing the RF region."
-												:items="rfRegions"
-												:rules="[rules.required]"
-												required
-												v-model="newZwave.rf.region"
-											>
-											</v-select>
-										</v-col>
-										<v-col
-											cols="6"
-											v-if="
-												!isSettingManagedExternally(
-													'zwave.rf.autoPowerlevels',
-												)
-											"
-										>
-											<v-switch
-												hint="When enabled, both normal and LR power levels will be automatically set to legal limits based on the RF region whenever the region is changed. Only supported for Europe and USA regions."
-												persistent-hint
-												label="Automatic Power Level"
-												v-model="
-													newZwave.rf.autoPowerlevels
-												"
-											></v-switch>
-										</v-col>
-									</v-row>
-									<v-row class="mt-0">
-										<v-col cols="12" sm="6">
-											<v-text-field
+									<template
+										v-if="!allRfSettingsManagedExternally"
+									>
+										<v-row class="mt-0">
+											<v-col cols="12" class="mb-n8">
+												<v-list-subheader
+													class="font-weight-bold text-primary mb-0"
+												>
+													Default Radio configuration
+												</v-list-subheader>
+											</v-col>
+											<v-col
+												cols="6"
 												v-if="
-													!newZwave.rf.autoPowerlevels
+													!isSettingManagedExternally(
+														'zwave.rf.region',
+													)
 												"
-												label="Normal Power Level"
-												v-model.number="
-													newZwave.rf.txPower
-														.powerlevel
+											>
+												<v-select
+													label="RF Region"
+													persistent-hint
+													hint="Will be used to automatically configure your controller for the region you are in. Not all controllers support changing the RF region."
+													:items="rfRegions"
+													:rules="[rules.required]"
+													required
+													v-model="newZwave.rf.region"
+												>
+												</v-select>
+											</v-col>
+											<v-col
+												cols="6"
+												v-if="
+													!isSettingManagedExternally(
+														'zwave.rf.autoPowerlevels',
+													)
 												"
-												persistent-hint
-												:min="-10"
-												:max="20"
-												:step="0.1"
-												hint="Power level in dBm. Min -10, Max +14 or +20, depending on the Z-Wave chip. Will be applied on every startup if the current setting of your Z-Wave controller differs. Not all controllers support changing the powerlevel."
-												suffix="dBm"
-												type="number"
-												:rules="[validTxPower]"
-											></v-text-field>
-										</v-col>
-										<v-col cols="12" sm="6">
-											<v-text-field
-												label="Measured output power at 0 dBm"
-												persistent-hint
-												v-model.number="
-													newZwave.rf.txPower
-														.measured0dBm
-												"
-												:min="-10"
-												:max="10"
-												:step="0.1"
-												hint="Measured output power at 0 dBm in dBm. Min -10, Max +10. Will be applied on every startup if the current setting of your Z-Wave controller differs. Not all controllers support changing the powerlevel."
-												suffix="dBm"
-												type="number"
-												:rules="[validTxPower]"
-											></v-text-field>
-										</v-col>
+											>
+												<v-switch
+													hint="When enabled, both normal and LR power levels will be automatically set to legal limits based on the RF region whenever the region is changed. Only supported for Europe and USA regions."
+													persistent-hint
+													label="Automatic Power Level"
+													v-model="
+														newZwave.rf
+															.autoPowerlevels
+													"
+												></v-switch>
+											</v-col>
+										</v-row>
+										<v-row class="mt-0">
+											<v-col cols="12" sm="6">
+												<v-text-field
+													v-if="
+														!newZwave.rf
+															.autoPowerlevels
+													"
+													label="Normal Power Level"
+													v-model.number="
+														newZwave.rf.txPower
+															.powerlevel
+													"
+													persistent-hint
+													:min="-10"
+													:max="20"
+													:step="0.1"
+													hint="Power level in dBm. Min -10, Max +14 or +20, depending on the Z-Wave chip. Will be applied on every startup if the current setting of your Z-Wave controller differs. Not all controllers support changing the powerlevel."
+													suffix="dBm"
+													type="number"
+													:rules="[validTxPower]"
+												></v-text-field>
+											</v-col>
+											<v-col cols="12" sm="6">
+												<v-text-field
+													label="Measured output power at 0 dBm"
+													persistent-hint
+													v-model.number="
+														newZwave.rf.txPower
+															.measured0dBm
+													"
+													:min="-10"
+													:max="10"
+													:step="0.1"
+													hint="Measured output power at 0 dBm in dBm. Min -10, Max +10. Will be applied on every startup if the current setting of your Z-Wave controller differs. Not all controllers support changing the powerlevel."
+													suffix="dBm"
+													type="number"
+													:rules="[validTxPower]"
+												></v-text-field>
+											</v-col>
 
-										<v-col cols="12" sm="6">
-											<v-select
-												label="Maximum LR Power Level"
-												v-if="
-													!newZwave.rf.autoPowerlevels
-												"
-												persistent-hint
-												hint="The maximum power level to be used by the dynamic power algorithm of Z-Wave LR. Will be applied on every startup if the current setting of your Z-Wave controller differs. Only LR-capable controllers support this setting."
-												:items="maxLRPowerLevels"
-												clearable
-												v-model="
-													newZwave.rf
-														.maxLongRangePowerlevel
-												"
-											>
-											</v-select>
-										</v-col>
-									</v-row>
+											<v-col cols="12" sm="6">
+												<v-select
+													label="Maximum LR Power Level"
+													v-if="
+														!newZwave.rf
+															.autoPowerlevels
+													"
+													persistent-hint
+													hint="The maximum power level to be used by the dynamic power algorithm of Z-Wave LR. Will be applied on every startup if the current setting of your Z-Wave controller differs. Only LR-capable controllers support this setting."
+													:items="maxLRPowerLevels"
+													clearable
+													v-model="
+														newZwave.rf
+															.maxLongRangePowerlevel
+													"
+												>
+												</v-select>
+											</v-col>
+										</v-row>
+									</template>
 									<!-- END: RADIO CONFIGURATION -->
 
 									<!-- DRIVER LOGS -->
-									<v-row class="mt-0">
+									<v-row
+										class="mt-0"
+										v-if="!allLogSettingsManagedExternally"
+									>
 										<v-col cols="12" class="mb-n8">
 											<v-list-subheader
 												class="font-weight-bold text-primary mb-0"
@@ -2359,6 +2369,20 @@ export default {
 				this.isSettingManagedExternally(
 					'zwave.securityKeysLongRange.S2_AccessControl',
 				)
+			)
+		},
+		allRfSettingsManagedExternally() {
+			return (
+				this.isSettingManagedExternally('zwave.rf.region') &&
+				this.isSettingManagedExternally('zwave.rf.autoPowerlevels')
+			)
+		},
+		allLogSettingsManagedExternally() {
+			return (
+				this.isSettingManagedExternally('zwave.logEnabled') &&
+				this.isSettingManagedExternally('zwave.logLevel') &&
+				this.isSettingManagedExternally('zwave.logToFile') &&
+				this.isSettingManagedExternally('zwave.maxFiles')
 			)
 		},
 		...mapState(useBaseStore, {
