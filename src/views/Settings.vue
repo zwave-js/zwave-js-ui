@@ -499,16 +499,16 @@
 								<v-row align-self="center">
 									<span class="my-auto ml-3"> Z-Wave </span>
 									<v-checkbox
+										v-if="
+											!isSettingManagedExternally(
+												'zwave.enabled',
+											)
+										"
 										class="mt-0 ml-2"
 										hide-details
 										@click.stop
 										label="Enabled"
 										v-model="newZwave.enabled"
-										:disabled="
-											isSettingManagedExternally(
-												'zwave.enabled',
-											)
-										"
 									></v-checkbox>
 								</v-row>
 							</v-col>
@@ -530,17 +530,19 @@
 						<v-card flat>
 							<v-card-text>
 								<v-row>
-									<v-col cols="12" sm="6">
+									<v-col
+										cols="12"
+										sm="6"
+										v-if="
+											!isSettingManagedExternally(
+												'zwave.port',
+											)
+										"
+									>
 										<v-combobox
 											v-model="newZwave.port"
 											label="Serial Port"
-											:hint="
-												isSettingManagedExternally(
-													'zwave.port',
-												)
-													? 'Port is controlled by ZWAVE_PORT environment variable'
-													: 'Ex /dev/ttyUSB0. If your port is not listed here just write the port path here'
-											"
+											hint="Ex /dev/ttyUSB0. If your port is not listed here just write the port path here"
 											persistent-hint
 											:rules="[
 												rules.required,
@@ -548,11 +550,6 @@
 											]"
 											required
 											:items="serial_ports"
-											:disabled="
-												isSettingManagedExternally(
-													'zwave.port',
-												)
-											"
 										></v-combobox>
 									</v-col>
 									<v-col cols="12" sm="6">
@@ -825,7 +822,14 @@
 												Default Radio configuration
 											</v-list-subheader>
 										</v-col>
-										<v-col cols="6">
+										<v-col
+											cols="6"
+											v-if="
+												!isSettingManagedExternally(
+													'zwave.rf.region',
+												)
+											"
+										>
 											<v-select
 												label="RF Region"
 												persistent-hint
@@ -834,26 +838,23 @@
 												:rules="[rules.required]"
 												required
 												v-model="newZwave.rf.region"
-												:disabled="
-													isSettingManagedExternally(
-														'zwave.rf.region',
-													)
-												"
 											>
 											</v-select>
 										</v-col>
-										<v-col cols="6">
+										<v-col
+											cols="6"
+											v-if="
+												!isSettingManagedExternally(
+													'zwave.rf.autoPowerlevels',
+												)
+											"
+										>
 											<v-switch
 												hint="When enabled, both normal and LR power levels will be automatically set to legal limits based on the RF region whenever the region is changed. Only supported for Europe and USA regions."
 												persistent-hint
 												label="Automatic Power Level"
 												v-model="
 													newZwave.rf.autoPowerlevels
-												"
-												:disabled="
-													isSettingManagedExternally(
-														'zwave.rf.autoPowerlevels',
-													)
 												"
 											></v-switch>
 										</v-col>
@@ -927,21 +928,29 @@
 											</v-list-subheader>
 										</v-col>
 
-										<v-col cols="12" sm="6">
+										<v-col
+											cols="12"
+											sm="6"
+											v-if="
+												!isSettingManagedExternally(
+													'zwave.logEnabled',
+												)
+											"
+										>
 											<v-switch
 												hint="Required for debugging issue reports"
 												persistent-hint
 												label="Enable driver logs"
 												v-model="newZwave.logEnabled"
-												:disabled="
-													isSettingManagedExternally(
-														'zwave.logEnabled',
-													)
-												"
 											></v-switch>
 										</v-col>
 										<v-col
-											v-if="newZwave.logEnabled"
+											v-if="
+												newZwave.logEnabled &&
+												!isSettingManagedExternally(
+													'zwave.logLevel',
+												)
+											"
 											cols="12"
 											sm="6"
 										>
@@ -949,15 +958,15 @@
 												:items="logLevels"
 												v-model="newZwave.logLevel"
 												label="Log Level"
-												:disabled="
-													isSettingManagedExternally(
-														'zwave.logLevel',
-													)
-												"
 											></v-select>
 										</v-col>
 										<v-col
-											v-if="newZwave.logEnabled"
+											v-if="
+												newZwave.logEnabled &&
+												!isSettingManagedExternally(
+													'zwave.logToFile',
+												)
+											"
 											cols="12"
 											sm="6"
 										>
@@ -966,17 +975,17 @@
 												persistent-hint
 												label="Log to file"
 												v-model="newZwave.logToFile"
-												:disabled="
-													isSettingManagedExternally(
-														'zwave.logToFile',
-													)
-												"
 											></v-switch>
 										</v-col>
 										<v-col
 											cols="12"
 											sm="6"
-											v-if="newZwave.logEnabled"
+											v-if="
+												newZwave.logEnabled &&
+												!isSettingManagedExternally(
+													'zwave.maxFiles',
+												)
+											"
 										>
 											<v-text-field
 												v-model.number="
@@ -988,11 +997,6 @@
 												persistent-hint
 												hint="Maximum number of log files to keep"
 												type="number"
-												:disabled="
-													isSettingManagedExternally(
-														'zwave.maxFiles',
-													)
-												"
 											></v-text-field>
 										</v-col>
 										<v-col
@@ -1027,18 +1031,21 @@
 											</v-list-subheader>
 										</v-col>
 
-										<v-col cols="12" sm="6">
+										<v-col
+											cols="12"
+											sm="6"
+											v-if="
+												!isSettingManagedExternally(
+													'zwave.enableSoftReset',
+												)
+											"
+										>
 											<v-switch
 												label="Soft Reset"
 												hint="Soft Reset is required after some commands like changing the RF region or restoring an NVM backup. Because it may cause problems in Docker containers with certain Z-Wave sticks, this functionality may be disabled. NB: Disabling this functionality only affects 500 series and older controllers"
 												persistent-hint
 												v-model="
 													newZwave.enableSoftReset
-												"
-												:disabled="
-													isSettingManagedExternally(
-														'zwave.enableSoftReset',
-													)
 												"
 											></v-switch>
 										</v-col>
