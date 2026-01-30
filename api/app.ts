@@ -43,6 +43,7 @@ import { createPlugin } from './lib/CustomPlugin.ts'
 import { inboundEvents, socketEvents } from './lib/SocketEvents.ts'
 import * as utils from './lib/utils.ts'
 import backupManager from './lib/BackupManager.ts'
+import { getExternallyManagedPaths } from './lib/externalSettings.ts'
 import {
 	readFile,
 	realpath,
@@ -1105,11 +1106,13 @@ app.get(
 
 		const settings = jsonStore.get(store.settings)
 
-		const managedExternally = []
+		const managedExternally: string[] = []
 		if (process.env.ZWAVE_PORT) {
 			managedExternally.push('zwave.port')
 			managedExternally.push('zwave.enabled')
 		}
+		// Add paths from external settings file
+		managedExternally.push(...getExternallyManagedPaths())
 
 		const data = {
 			success: true,

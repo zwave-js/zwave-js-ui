@@ -569,7 +569,10 @@
 									<!-- SECURITY KEYS -->
 									<v-row
 										class="mt-0"
-										v-if="newZwave.securityKeys"
+										v-if="
+											newZwave.securityKeys &&
+											!allClassicSecurityKeysManagedExternally
+										"
 									>
 										<v-col cols="12">
 											<v-list-subheader
@@ -723,7 +726,10 @@
 									</v-row>
 									<v-row
 										class="mt-0"
-										v-if="newZwave.securityKeysLongRange"
+										v-if="
+											newZwave.securityKeysLongRange &&
+											!allLRSecurityKeysManagedExternally
+										"
 									>
 										<v-col cols="12">
 											<v-list-subheader
@@ -828,6 +834,11 @@
 												:rules="[rules.required]"
 												required
 												v-model="newZwave.rf.region"
+												:disabled="
+													isSettingManagedExternally(
+														'zwave.rf.region',
+													)
+												"
 											>
 											</v-select>
 										</v-col>
@@ -838,6 +849,11 @@
 												label="Automatic Power Level"
 												v-model="
 													newZwave.rf.autoPowerlevels
+												"
+												:disabled="
+													isSettingManagedExternally(
+														'zwave.rf.autoPowerlevels',
+													)
 												"
 											></v-switch>
 										</v-col>
@@ -917,6 +933,11 @@
 												persistent-hint
 												label="Enable driver logs"
 												v-model="newZwave.logEnabled"
+												:disabled="
+													isSettingManagedExternally(
+														'zwave.logEnabled',
+													)
+												"
 											></v-switch>
 										</v-col>
 										<v-col
@@ -928,6 +949,11 @@
 												:items="logLevels"
 												v-model="newZwave.logLevel"
 												label="Log Level"
+												:disabled="
+													isSettingManagedExternally(
+														'zwave.logLevel',
+													)
+												"
 											></v-select>
 										</v-col>
 										<v-col
@@ -940,6 +966,11 @@
 												persistent-hint
 												label="Log to file"
 												v-model="newZwave.logToFile"
+												:disabled="
+													isSettingManagedExternally(
+														'zwave.logToFile',
+													)
+												"
 											></v-switch>
 										</v-col>
 										<v-col
@@ -957,6 +988,11 @@
 												persistent-hint
 												hint="Maximum number of log files to keep"
 												type="number"
+												:disabled="
+													isSettingManagedExternally(
+														'zwave.maxFiles',
+													)
+												"
 											></v-text-field>
 										</v-col>
 										<v-col
@@ -998,6 +1034,11 @@
 												persistent-hint
 												v-model="
 													newZwave.enableSoftReset
+												"
+												:disabled="
+													isSettingManagedExternally(
+														'zwave.enableSoftReset',
+													)
 												"
 											></v-switch>
 										</v-col>
@@ -2287,6 +2328,32 @@ export default {
 			'ui',
 			'isSettingManagedExternally',
 		]),
+		allClassicSecurityKeysManagedExternally() {
+			return (
+				this.isSettingManagedExternally(
+					'zwave.securityKeys.S0_Legacy',
+				) &&
+				this.isSettingManagedExternally(
+					'zwave.securityKeys.S2_Unauthenticated',
+				) &&
+				this.isSettingManagedExternally(
+					'zwave.securityKeys.S2_Authenticated',
+				) &&
+				this.isSettingManagedExternally(
+					'zwave.securityKeys.S2_AccessControl',
+				)
+			)
+		},
+		allLRSecurityKeysManagedExternally() {
+			return (
+				this.isSettingManagedExternally(
+					'zwave.securityKeysLongRange.S2_Authenticated',
+				) &&
+				this.isSettingManagedExternally(
+					'zwave.securityKeysLongRange.S2_AccessControl',
+				)
+			)
+		},
 		...mapState(useBaseStore, {
 			colorScheme: (store) => store.ui.colorScheme,
 			darkMode: (store) => store.uiState.darkMode,
