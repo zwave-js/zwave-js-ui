@@ -42,6 +42,12 @@ export interface ExternalZwaveSettings {
 	// Features
 	enableSoftReset?: boolean
 
+	// Home Assistant / Z-Wave JS Server settings
+	serverEnabled?: boolean
+	serverPort?: number
+	serverHost?: string
+	serverServiceDiscoveryDisabled?: boolean
+
 	// Presets (array of preset names from driverPresets, e.g. ["BATTERY_SAVE"])
 	presets?: string[]
 }
@@ -109,6 +115,13 @@ export function getExternallyManagedPaths(): string[] {
 	// Features
 	if (settings.enableSoftReset !== undefined)
 		paths.push('zwave.enableSoftReset')
+
+	// Home Assistant / Z-Wave JS Server settings
+	if (settings.serverEnabled !== undefined) paths.push('zwave.serverEnabled')
+	if (settings.serverPort !== undefined) paths.push('zwave.serverPort')
+	if (settings.serverHost !== undefined) paths.push('zwave.serverHost')
+	if (settings.serverServiceDiscoveryDisabled !== undefined)
+		paths.push('zwave.serverServiceDiscoveryDisabled')
 
 	// Presets (driver-only, no UI mapping)
 

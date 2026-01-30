@@ -1973,8 +1973,16 @@
 					<v-expansion-panel-text>
 						<v-card flat>
 							<v-card-text>
-								<v-row>
-									<v-col cols="12" sm="6">
+								<v-row v-if="!allHassSettingsManagedExternally">
+									<v-col
+										cols="12"
+										sm="6"
+										v-if="
+											!isSettingManagedExternally(
+												'zwave.serverEnabled',
+											)
+										"
+									>
 										<v-switch
 											hint="Enable Z-Wave JS websocket server. This can be used with Home Assistant Z-Wave JS integration to discover entities"
 											persistent-hint
@@ -1983,7 +1991,12 @@
 										></v-switch>
 									</v-col>
 									<v-col
-										v-if="newZwave.serverEnabled"
+										v-if="
+											newZwave.serverEnabled &&
+											!isSettingManagedExternally(
+												'zwave.serverPort',
+											)
+										"
 										cols="6"
 									>
 										<v-text-field
@@ -2002,7 +2015,12 @@
 										/>
 									</v-col>
 									<v-col
-										v-if="newZwave.serverEnabled"
+										v-if="
+											newZwave.serverEnabled &&
+											!isSettingManagedExternally(
+												'zwave.serverHost',
+											)
+										"
 										cols="6"
 									>
 										<v-text-field
@@ -2012,7 +2030,12 @@
 										></v-text-field>
 									</v-col>
 									<v-col
-										v-if="newZwave.serverEnabled"
+										v-if="
+											newZwave.serverEnabled &&
+											!isSettingManagedExternally(
+												'zwave.serverServiceDiscoveryDisabled',
+											)
+										"
 										cols="6"
 									>
 										<inverted-checkbox
@@ -2383,6 +2406,16 @@ export default {
 				this.isSettingManagedExternally('zwave.logLevel') &&
 				this.isSettingManagedExternally('zwave.logToFile') &&
 				this.isSettingManagedExternally('zwave.maxFiles')
+			)
+		},
+		allHassSettingsManagedExternally() {
+			return (
+				this.isSettingManagedExternally('zwave.serverEnabled') &&
+				this.isSettingManagedExternally('zwave.serverPort') &&
+				this.isSettingManagedExternally('zwave.serverHost') &&
+				this.isSettingManagedExternally(
+					'zwave.serverServiceDiscoveryDisabled',
+				)
 			)
 		},
 		...mapState(useBaseStore, {
