@@ -22,7 +22,7 @@ import {
 	extractFirmware,
 } from '@zwave-js/core'
 import { createDefaultTransportFormat } from '@zwave-js/core/bindings/log/node'
-import { applyExternalSettings } from './externalSettings.ts'
+import { applyExternalDriverSettings } from './externalSettings.ts'
 import { JSONTransport } from '@zwave-js/log-transport-json'
 import type {
 	AssociationAddress,
@@ -2334,8 +2334,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		utils.parseSecurityKeys(this.cfg, zwaveOptions)
 
-		// Apply external settings (takes precedence over config file)
-		applyExternalSettings(zwaveOptions)
+		// Apply driver-only external settings (storage, presets, logFilename, forceConsole).
+		// These are not in ZwaveConfig/settings.json, so they must be applied directly to driver options.
+		applyExternalDriverSettings(zwaveOptions)
 
 		const logTransport = new JSONTransport()
 		logTransport.format = createDefaultTransportFormat(true, false)

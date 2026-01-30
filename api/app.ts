@@ -43,7 +43,11 @@ import { createPlugin } from './lib/CustomPlugin.ts'
 import { inboundEvents, socketEvents } from './lib/SocketEvents.ts'
 import * as utils from './lib/utils.ts'
 import backupManager from './lib/BackupManager.ts'
-import { getExternallyManagedPaths } from './lib/externalSettings.ts'
+import {
+	getExternallyManagedPaths,
+	loadExternalSettings,
+	mergeExternalSettings,
+} from './lib/externalSettings.ts'
 import {
 	readFile,
 	realpath,
@@ -186,6 +190,12 @@ export async function startServer(port: number | string, host?: string) {
 	let server: HttpServer
 
 	const settings = jsonStore.get(store.settings)
+
+	// Merge external settings into zwave config (if external settings exist)
+	if (loadExternalSettings()) {
+		settings.zwave ??= {}
+		mergeExternalSettings(settings.zwave as Record<string, unknown>)
+	}
 
 	// as the really first thing setup loggers so all logs will go to file if specified in settings
 	setupLogging(settings)
