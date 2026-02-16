@@ -6,7 +6,12 @@ import type { ZnifferConfig } from '../lib/ZnifferManager.ts'
 import type { ZwaveConfig } from '../lib/ZwaveClient.ts'
 import { deviceConfigPriorityDir } from '../lib/Constants.ts'
 
-export type StoreKeys = 'settings' | 'scenes' | 'nodes' | 'users'
+export type StoreKeys =
+	| 'settings'
+	| 'scenes'
+	| 'nodes'
+	| 'users'
+	| 'configurationTemplates'
 
 export interface StoreFile {
 	file: string
@@ -48,6 +53,10 @@ const store: Record<StoreKeys, StoreFile> = {
 	scenes: { file: 'scenes.json', default: [] },
 	nodes: { file: 'nodes.json', default: {} },
 	users: { file: 'users.json', default: [] },
+	configurationTemplates: {
+		file: 'configurationTemplates.json',
+		default: [],
+	},
 }
 
 export default store

@@ -891,6 +891,49 @@ export default {
 				)
 			}
 		},
+		async onTemplateMatch({ nodeId, templates }) {
+			if (!templates || templates.length === 0) return
+
+			const items = templates.map((t) => ({
+				title: t.name,
+				value: t.id,
+			}))
+
+			const result = await this.confirm(
+				'Configuration Template Match',
+				`A configuration template matches node ${nodeId}. Would you like to apply it?`,
+				'info',
+				{
+					confirmText: 'Apply',
+					cancelText: 'Skip',
+					inputs: [
+						{
+							type: 'list',
+							label: 'Template',
+							required: true,
+							key: 'templateId',
+							items,
+							default: items[0]?.value,
+						},
+					],
+				},
+			)
+
+			if (!result || !result.templateId) return
+
+			try {
+				const response = await ConfigApis.applyConfigurationTemplate(
+					result.templateId,
+					nodeId,
+				)
+				this.showSnackbar(
+					response.message,
+					response.success ? 'success' : 'error',
+				)
+			} catch (error) {
+				this.showSnackbar(error.message, 'error')
+			}
+		},
 		toggleDrawer() {
 			if (['xs', 'sm', 'md'].indexOf(this.$vuetify.display.name) >= 0) {
 				this.mini = false
@@ -1378,6 +1421,10 @@ export default {
 			this.socket.on(socketEvents.nodeUpdated, this.updateNode.bind(this))
 			this.socket.on(socketEvents.nodeRemoved, this.removeNode.bind(this))
 			this.socket.on(socketEvents.nodeAdded, this.onNodeAdded.bind(this))
+			this.socket.on(
+				socketEvents.templateMatch,
+				this.onTemplateMatch.bind(this),
+			)
 
 			this.socket.on(
 				socketEvents.valueRemoved,

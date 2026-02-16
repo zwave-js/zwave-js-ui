@@ -23,6 +23,7 @@ export enum socketEvents {
 	znifferState = 'ZNIFFER_STATE',
 	linkReliability = 'LINK_RELIABILITY',
 	otwFirmwareUpdate = 'OTW_FIRMWARE_UPDATE',
+	templateMatch = 'TEMPLATE_MATCH',
 }
 
 // events from client ---> server

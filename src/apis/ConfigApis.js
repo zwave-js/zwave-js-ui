@@ -208,4 +208,41 @@ export default {
 		const response = await request.post('/debug/cancel')
 		return response.data
 	},
+	// ---- CONFIGURATION TEMPLATES -----
+	async getConfigurationTemplates() {
+		const response = await request.get('/configuration-templates')
+		return response.data
+	},
+	async createConfigurationTemplate(data) {
+		const response = await request.post('/configuration-templates', data)
+		return response.data
+	},
+	async updateConfigurationTemplate(id, data) {
+		const response = await request.put(
+			`/configuration-templates/${id}`,
+			data,
+		)
+		return response.data
+	},
+	async deleteConfigurationTemplate(id) {
+		const response = await request.delete(`/configuration-templates/${id}`)
+		return response.data
+	},
+	async applyConfigurationTemplate(id, nodeId) {
+		const response = await request.post(
+			`/configuration-templates/${id}/apply`,
+			{ nodeId },
+		)
+		return response.data
+	},
+	async exportConfigurationTemplates() {
+		const response = await request.get('/configuration-templates/export')
+		return response.data
+	},
+	async importConfigurationTemplates(data) {
+		const response = await request.post('/configuration-templates/import', {
+			data,
+		})
+		return response.data
+	},
 }

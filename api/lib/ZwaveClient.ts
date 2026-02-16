@@ -255,6 +255,12 @@ export const allowedApis = validateMethods([
 	'cancelGetSchedule',
 	'setSchedule',
 	'setEnabledSchedule',
+	'getConfigurationTemplates',
+	'createConfigurationTemplate',
+	'updateConfigurationTemplate',
+	'deleteConfigurationTemplate',
+	'applyConfigurationTemplate',
+	'importConfigurationTemplates',
 ] as const)
 
 export type ZwaveNodeEvents = ZWaveNodeEvents | 'statistics updated'
@@ -398,6 +404,31 @@ export type ZUIScene = {
 	sceneid: number
 	label: string
 	values: ZUIValueIdScene[]
+}
+
+export type ZUIConfigurationTemplateValue = {
+	property: number
+	propertyKey?: number | null
+	endpoint: number
+	value: unknown
+	label?: string
+	description?: string
+}
+
+export type ZUIConfigurationTemplate = {
+	id: number
+	name: string
+	deviceId: string
+	manufacturerId?: number
+	productId?: number
+	productType?: number
+	manufacturer?: string
+	productLabel?: string
+	minFirmwareVersion?: string
+	values: ZUIConfigurationTemplateValue[]
+	autoApply: boolean
+	createdAt: string
+	updatedAt: string
 }
 
 export type ZUIDeviceClass = {
@@ -706,6 +737,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	private destroyed = false
 	private _driverReady: boolean
 	private scenes: ZUIScene[]
+	private _configTemplates: ZUIConfigurationTemplate[]
 	private _nodes: Map<number, ZUINode>
 	private storeNodes: Record<number, Partial<ZUINode>>
 	private _devices: Record<string, Partial<ZUINode>>
@@ -831,6 +863,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		this.closed = false
 		this.driverReady = false
 		this.scenes = jsonStore.get(store.scenes)
+		this._configTemplates = jsonStore.get(store.configurationTemplates)
 
 		this._nodes = new Map()
 
@@ -2850,6 +2883,283 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		}
 
 		return true
+	}
+
+	// ------------ CONFIGURATION TEMPLATES MANAGEMENT -----------------------------------
+
+	/**
+	 * Get all configuration templates
+	 */
+	getConfigurationTemplates(): ZUIConfigurationTemplate[] {
+		return this._configTemplates
+	}
+
+	/**
+	 * Create a configuration template from a node's CC 112 values
+	 */
+	async createConfigurationTemplate(
+		nodeId: number,
+		name: string,
+		autoApply = false,
+	): Promise<ZUIConfigurationTemplate> {
+		const node = this._nodes.get(nodeId)
+
+		if (!node) {
+			throw Error(`Node ${nodeId} not found`)
+		}
+
+		if (!node.ready) {
+			throw Error(`Node ${nodeId} is not ready`)
+		}
+
+		// Extract CC 112 (Configuration) writeable values
+		const configValues: ZUIConfigurationTemplateValue[] = []
+
+		for (const id in node.values) {
+			const v = node.values[id]
+			if (
+				v.commandClass === CommandClasses.Configuration &&
+				v.writeable
+			) {
+				configValues.push({
+					property: v.property as number,
+					propertyKey:
+						v.propertyKey != null
+							? (v.propertyKey as number)
+							: null,
+					endpoint: v.endpoint || 0,
+					value: v.value,
+					label: v.label,
+					description: v.description,
+				})
+			}
+		}
+
+		if (configValues.length === 0) {
+			throw Error(
+				`Node ${nodeId} has no writeable Configuration CC values`,
+			)
+		}
+
+		const id =
+			this._configTemplates.length > 0
+				? this._configTemplates[this._configTemplates.length - 1].id + 1
+				: 1
+
+		const now = new Date().toISOString()
+
+		const template: ZUIConfigurationTemplate = {
+			id,
+			name,
+			deviceId: node.deviceId,
+			manufacturerId: node.manufacturerId,
+			productId: node.productId,
+			productType: node.productType,
+			manufacturer: node.manufacturer,
+			productLabel: node.productLabel,
+			minFirmwareVersion: node.firmwareVersion || '0.0',
+			values: configValues,
+			autoApply,
+			createdAt: now,
+			updatedAt: now,
+		}
+
+		this._configTemplates.push(template)
+		await jsonStore.put(store.configurationTemplates, this._configTemplates)
+
+		return template
+	}
+
+	/**
+	 * Update an existing configuration template
+	 */
+	async updateConfigurationTemplate(
+		id: number,
+		updates: {
+			name?: string
+			autoApply?: boolean
+			minFirmwareVersion?: string
+		},
+	): Promise<ZUIConfigurationTemplate> {
+		const template = this._configTemplates.find((t) => t.id === id)
+
+		if (!template) {
+			throw Error(`Template ${id} not found`)
+		}
+
+		if (updates.name !== undefined) template.name = updates.name
+		if (updates.autoApply !== undefined)
+			template.autoApply = updates.autoApply
+		if (updates.minFirmwareVersion !== undefined)
+			template.minFirmwareVersion = updates.minFirmwareVersion
+
+		template.updatedAt = new Date().toISOString()
+
+		await jsonStore.put(store.configurationTemplates, this._configTemplates)
+
+		return template
+	}
+
+	/**
+	 * Delete a configuration template
+	 */
+	async deleteConfigurationTemplate(id: number): Promise<boolean> {
+		const index = this._configTemplates.findIndex((t) => t.id === id)
+
+		if (index < 0) {
+			throw Error(`Template ${id} not found`)
+		}
+
+		this._configTemplates.splice(index, 1)
+		await jsonStore.put(store.configurationTemplates, this._configTemplates)
+
+		return true
+	}
+
+	/**
+	 * Apply a configuration template to a node
+	 */
+	async applyConfigurationTemplate(
+		templateId: number,
+		nodeId: number,
+	): Promise<{ success: number; failed: number; errors: string[] }> {
+		const template = this._configTemplates.find((t) => t.id === templateId)
+
+		if (!template) {
+			throw Error(`Template ${templateId} not found`)
+		}
+
+		const node = this._nodes.get(nodeId)
+
+		if (!node) {
+			throw Error(`Node ${nodeId} not found`)
+		}
+
+		if (!node.ready) {
+			throw Error(`Node ${nodeId} is not ready`)
+		}
+
+		const results = { success: 0, failed: 0, errors: [] as string[] }
+
+		for (const tv of template.values) {
+			try {
+				await this.writeValue(
+					{
+						nodeId,
+						commandClass: CommandClasses.Configuration,
+						endpoint: tv.endpoint,
+						property: tv.property,
+						propertyKey: tv.propertyKey,
+					} as ZUIValueId,
+					tv.value,
+				)
+				results.success++
+			} catch (error) {
+				results.failed++
+				results.errors.push(
+					`Parameter ${tv.property}: ${error.message}`,
+				)
+			}
+		}
+
+		logger.info(
+			`Applied template "${template.name}" to node ${nodeId}: ${results.success} OK, ${results.failed} failed`,
+		)
+
+		return results
+	}
+
+	/**
+	 * Import configuration templates (replaces all existing templates)
+	 */
+	async importConfigurationTemplates(
+		templates: ZUIConfigurationTemplate[],
+	): Promise<ZUIConfigurationTemplate[]> {
+		this._configTemplates = templates
+		await jsonStore.put(store.configurationTemplates, this._configTemplates)
+
+		return this._configTemplates
+	}
+
+	/**
+	 * Get templates matching a node's device type and firmware version
+	 */
+	private _getMatchingTemplates(node: ZUINode): ZUIConfigurationTemplate[] {
+		if (!node.deviceId) return []
+
+		return this._configTemplates.filter((t) => {
+			if (t.deviceId !== node.deviceId) return false
+
+			// Check firmware version if specified
+			if (t.minFirmwareVersion && node.firmwareVersion) {
+				if (
+					this._compareFirmwareVersions(
+						node.firmwareVersion,
+						t.minFirmwareVersion,
+					) < 0
+				) {
+					return false
+				}
+			}
+
+			return true
+		})
+	}
+
+	/**
+	 * Compare firmware version strings (e.g. "2.15" vs "1.13")
+	 * Returns negative if a < b, 0 if equal, positive if a > b
+	 */
+	private _compareFirmwareVersions(a: string, b: string): number {
+		const aParts = a.split('.').map(Number)
+		const bParts = b.split('.').map(Number)
+
+		const len = Math.max(aParts.length, bParts.length)
+		for (let i = 0; i < len; i++) {
+			const aVal = aParts[i] || 0
+			const bVal = bParts[i] || 0
+			if (aVal !== bVal) return aVal - bVal
+		}
+		return 0
+	}
+
+	/**
+	 * Check and auto-apply matching configuration templates for a node
+	 */
+	private _checkConfigurationTemplates(node: ZUINode, zwaveNode: ZWaveNode) {
+		const matching = this._getMatchingTemplates(node)
+
+		if (matching.length === 0) return
+
+		const autoApplyTemplates = matching.filter((t) => t.autoApply)
+
+		if (autoApplyTemplates.length > 0) {
+			// Auto-apply the first matching template
+			const template = autoApplyTemplates[0]
+			this.logNode(
+				zwaveNode,
+				'info',
+				`Auto-applying configuration template "${template.name}"`,
+			)
+			this.applyConfigurationTemplate(template.id, node.id).catch(
+				(error) => {
+					this.logNode(
+						zwaveNode,
+						'error',
+						`Failed to auto-apply template "${template.name}": ${error.message}`,
+					)
+				},
+			)
+		} else {
+			// Notify frontend about matching templates (user can choose to apply)
+			this.sendToSocket(socketEvents.templateMatch, {
+				nodeId: node.id,
+				templates: matching.map((t) => ({
+					id: t.id,
+					name: t.name,
+				})),
+			})
+		}
 	}
 
 	/**
@@ -5703,6 +6013,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		this.getGroups(zwaveNode.id, true)
 
 		this._onNodeStatus(zwaveNode)
+
+		// Check for matching configuration templates
+		this._checkConfigurationTemplates(node, zwaveNode)
 
 		this.emit(
 			'event',

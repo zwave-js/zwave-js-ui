@@ -369,6 +369,7 @@ import { defineAsyncComponent } from 'vue'
 import { jsonToList } from '@/lib/utils'
 import { mapActions, mapState } from 'pinia'
 import useBaseStore from '../../stores/base.js'
+import ConfigApis from '../../apis/ConfigApis.js'
 import { inboundEvents as socketActions } from '@server/lib/SocketEvents'
 import InstancesMixin from '../../mixins/InstancesMixin.js'
 
@@ -587,6 +588,22 @@ export default {
 
 			return [
 				{
+					text: 'Configuration Templates',
+					options: [
+						{
+							name: 'Create Template',
+							action: 'createTemplate',
+						},
+						{
+							name: 'Apply Template',
+							action: 'applyTemplate',
+						},
+					],
+					icon: 'content_copy',
+					color: 'primary',
+					desc: 'Create or apply configuration parameter templates for this device type',
+				},
+				{
 					text: 'Export json',
 					options: [
 						{ name: 'UI', action: 'exportNode' },
@@ -779,6 +796,10 @@ export default {
 		nodeAction(action, args = {}) {
 			if (action === 'exportNode') {
 				this.exportNode()
+			} else if (action === 'createTemplate') {
+				this.createTemplate()
+			} else if (action === 'applyTemplate') {
+				this.applyTemplate()
 			} else if (args.mqtt) {
 				this.sendMqttAction(action, args.confirm)
 			} else {
@@ -791,6 +812,105 @@ export default {
 				'node_' + this.node.id,
 				'json',
 			)
+		},
+		async createTemplate() {
+			const result = await this.app.confirm(
+				'Create Configuration Template',
+				`Create a template from node ${this.node.id} (${this.node.productLabel || this.node.productDescription || ''}) configuration parameters`,
+				'info',
+				{
+					confirmText: 'Create',
+					inputs: [
+						{
+							type: 'text',
+							label: 'Template name',
+							required: true,
+							key: 'name',
+							default:
+								this.node.productLabel ||
+								this.node.productDescription ||
+								`Node ${this.node.id} template`,
+						},
+						{
+							type: 'checkbox',
+							label: 'Auto-apply to new matching devices',
+							key: 'autoApply',
+							default: false,
+						},
+					],
+				},
+			)
+
+			if (!result || !result.name) return
+
+			try {
+				const response = await ConfigApis.createConfigurationTemplate({
+					nodeId: this.node.id,
+					name: result.name,
+					autoApply: result.autoApply || false,
+				})
+				this.showSnackbar(
+					response.message,
+					response.success ? 'success' : 'error',
+				)
+			} catch (error) {
+				this.showSnackbar(error.message, 'error')
+			}
+		},
+		async applyTemplate() {
+			try {
+				const response = await ConfigApis.getConfigurationTemplates()
+				if (!response.success || !response.data?.length) {
+					this.showSnackbar(
+						'No configuration templates available',
+						'warning',
+					)
+					return
+				}
+
+				// Filter templates matching this device type
+				const matching = response.data.filter(
+					(t) => t.deviceId === this.node.deviceId,
+				)
+				const templates = matching.length > 0 ? matching : response.data
+
+				const result = await this.app.confirm(
+					'Apply Configuration Template',
+					matching.length > 0
+						? `Found ${matching.length} template(s) matching this device type`
+						: 'No templates match this device type. Showing all templates:',
+					'info',
+					{
+						confirmText: 'Apply',
+						inputs: [
+							{
+								type: 'list',
+								label: 'Template',
+								required: true,
+								key: 'templateId',
+								items: templates.map((t) => ({
+									title: `${t.name} (${t.deviceId})`,
+									value: t.id,
+								})),
+							},
+						],
+					},
+				)
+
+				if (!result || !result.templateId) return
+
+				const applyResponse =
+					await ConfigApis.applyConfigurationTemplate(
+						result.templateId,
+						this.node.id,
+					)
+				this.showSnackbar(
+					applyResponse.message,
+					applyResponse.success ? 'success' : 'error',
+				)
+			} catch (error) {
+				this.showSnackbar(error.message, 'error')
+			}
 		},
 		async sendMqttAction(action, confirmMessage) {
 			if (this.node) {

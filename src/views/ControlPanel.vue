@@ -190,6 +190,25 @@ export default {
 					desc: 'Save or load `nodes.json` file with names and locations',
 				},
 				{
+					text: 'Configuration Templates',
+					options: [
+						{
+							name: 'Manage',
+							action: 'manageTemplates',
+						},
+						{
+							name: 'Import',
+							action: 'importTemplates',
+						},
+						{
+							name: 'Export',
+							action: 'exportTemplates',
+						},
+					],
+					icon: 'content_copy',
+					desc: 'Manage, import, or export device configuration templates',
+				},
+				{
 					text: 'Dump',
 					options: [{ name: 'Export', action: 'exportDump' }],
 					icon: 'bug_report',
@@ -436,6 +455,12 @@ export default {
 				this.exportConfiguration()
 			} else if (action === 'exportDump') {
 				this.exportDump()
+			} else if (action === 'manageTemplates') {
+				this.manageTemplates()
+			} else if (action === 'importTemplates') {
+				this.importTemplates()
+			} else if (action === 'exportTemplates') {
+				this.exportTemplatesAction()
 			} else {
 				this.sendAction(action, { ...args, nodes: this.selected })
 			}
@@ -478,6 +503,111 @@ export default {
 		},
 		exportDump() {
 			this.app.exportConfiguration(this.nodes, 'nodes_dump', 'json')
+		},
+		async manageTemplates() {
+			try {
+				const response = await ConfigApis.getConfigurationTemplates()
+				if (!response.success) {
+					this.showSnackbar(response.message, 'error')
+					return
+				}
+
+				const templates = response.data || []
+				if (templates.length === 0) {
+					this.showSnackbar(
+						"No configuration templates found. Create one from a node's Advanced dialog.",
+						'info',
+					)
+					return
+				}
+
+				const result = await this.app.confirm(
+					'Configuration Templates',
+					templates
+						.map(
+							(t) =>
+								`<b>${t.name}</b> - Device: ${t.deviceId}, Auto-apply: ${t.autoApply ? 'Yes' : 'No'}, Values: ${t.values.length}`,
+						)
+						.join('<br>'),
+					'info',
+					{
+						confirmText: 'Delete Selected',
+						cancelText: 'Close',
+						width: 700,
+						inputs: [
+							{
+								type: 'list',
+								label: 'Select template to delete',
+								key: 'templateId',
+								items: templates.map((t) => ({
+									title: `${t.name} (${t.deviceId})`,
+									value: t.id,
+								})),
+							},
+						],
+					},
+				)
+
+				if (result && result.templateId) {
+					if (
+						await this.app.confirm(
+							'Confirm Delete',
+							'Are you sure you want to delete this template?',
+							'warning',
+						)
+					) {
+						const deleteResponse =
+							await ConfigApis.deleteConfigurationTemplate(
+								result.templateId,
+							)
+						this.showSnackbar(
+							deleteResponse.message,
+							deleteResponse.success ? 'success' : 'error',
+						)
+					}
+				}
+			} catch (error) {
+				log.error(error)
+			}
+		},
+		async importTemplates() {
+			if (
+				await this.app.confirm(
+					'Attention',
+					'This will replace all existing configuration templates',
+					'alert',
+				)
+			) {
+				try {
+					const { data } = await this.app.importFile('json')
+					const response =
+						await ConfigApis.importConfigurationTemplates(data)
+					this.showSnackbar(
+						response.message,
+						response.success ? 'success' : 'error',
+					)
+				} catch (error) {
+					log.error(error)
+				}
+			}
+		},
+		async exportTemplatesAction() {
+			try {
+				const response = await ConfigApis.exportConfigurationTemplates()
+				if (response.success) {
+					this.app.exportConfiguration(
+						response.data,
+						'configuration_templates',
+						'json',
+					)
+				}
+				this.showSnackbar(
+					response.message,
+					response.success ? 'success' : 'error',
+				)
+			} catch (error) {
+				log.error(error)
+			}
 		},
 		toggleControllerStatistics() {
 			this.showControllerStatistics = !this.showControllerStatistics
