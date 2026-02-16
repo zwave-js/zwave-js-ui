@@ -1,6 +1,19 @@
 <template>
 	<v-container grid-list-md>
 		<v-row justify="center" class="pa-5">
+			<v-alert
+				v-if="showAssociationWarning"
+				type="warning"
+				variant="tonal"
+				class="mb-4"
+				closable
+			>
+				<template #title>
+					<strong>Limited Association Support</strong>
+				</template>
+				{{ associationWarningMessage }}
+			</v-alert>
+
 			<v-data-table
 				:headers="headers"
 				:items="associations"
@@ -88,6 +101,7 @@ import { getEnumMemberName } from '@zwave-js/shared'
 import { AssociationCheckResult } from '@zwave-js/cc'
 import { getAssociationAddress } from '../../lib/utils'
 import { defineAsyncComponent } from 'vue'
+import { Protocols } from '@zwave-js/core'
 
 export default {
 	components: {
@@ -114,6 +128,25 @@ export default {
 	},
 	computed: {
 		...mapState(useBaseStore, ['nodes', 'nodesMap']),
+		isLongRange() {
+			return this.node?.protocol === Protocols.ZWaveLongRange
+		},
+		hasBeamingDisabled() {
+			return this.node?.supportsBeaming === false
+		},
+		showAssociationWarning() {
+			return this.isLongRange || this.hasBeamingDisabled
+		},
+		associationWarningMessage() {
+			if (this.isLongRange && this.hasBeamingDisabled) {
+				return 'This Z-Wave Long Range node with beaming disabled only supports lifeline associations. Non-lifeline associations may not function correctly.'
+			} else if (this.isLongRange) {
+				return 'This Z-Wave Long Range node only supports lifeline associations. Non-lifeline associations may not function correctly.'
+			} else if (this.hasBeamingDisabled) {
+				return 'This node has beaming disabled and only supports lifeline associations. Non-lifeline associations may not function correctly.'
+			}
+			return ''
+		},
 	},
 	mounted() {
 		this.getAssociations()
