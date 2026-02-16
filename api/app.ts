@@ -1657,14 +1657,17 @@ app.post(
 	async function (req, res) {
 		try {
 			const templates = req.body.data
+			const mode = req.body.mode || 'replace'
 			if (!Array.isArray(templates)) {
 				return res.json({
 					success: false,
 					message: 'data must be an array of templates',
 				})
 			}
-			const result =
-				await gw.zwave.importConfigurationTemplates(templates)
+			const result = await gw.zwave.importConfigurationTemplates(
+				templates,
+				mode,
+			)
 			res.json({
 				success: true,
 				data: result,

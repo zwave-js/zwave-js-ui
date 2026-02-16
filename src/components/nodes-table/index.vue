@@ -176,6 +176,8 @@
 					class="ml-1"
 					:node="item"
 				></firmware-update-badge>
+
+				<template-badge class="ml-1" :node="item"></template-badge>
 			</div>
 		</template>
 		<template #[`item.minBatteryLevel`]="{ item }">

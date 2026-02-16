@@ -56,6 +56,9 @@ export default {
 		FirmwareUpdateBadge: defineAsyncComponent(
 			() => import('@/components/custom/FirmwareUpdateBadge.vue'),
 		),
+		TemplateBadge: defineAsyncComponent(
+			() => import('@/components/custom/TemplateBadge.vue'),
+		),
 	},
 	watch: {
 		'managedNodes.selected': function (val) {

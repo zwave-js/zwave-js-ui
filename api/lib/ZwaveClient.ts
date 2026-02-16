@@ -588,6 +588,7 @@ export type ZUINode = {
 	hassDevices?: { [key: string]: HassDevice }
 	deviceId?: string
 	hasDeviceConfigChanged?: boolean
+	pendingConfigTemplates?: { id: number; name: string }[]
 	hexId?: string
 	values?: { [key: string]: ZUIValueId }
 	groups?: ZUINodeGroups[]
@@ -3070,12 +3071,28 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	}
 
 	/**
-	 * Import configuration templates (replaces all existing templates)
+	 * Import configuration templates
+	 * @param mode - 'replace' overwrites all, 'extend' merges with existing
 	 */
 	async importConfigurationTemplates(
 		templates: ZUIConfigurationTemplate[],
+		mode: 'replace' | 'extend' = 'replace',
 	): Promise<ZUIConfigurationTemplate[]> {
-		this._configTemplates = templates
+		if (mode === 'extend') {
+			// assign new IDs to avoid conflicts
+			let maxId =
+				this._configTemplates.length > 0
+					? Math.max(...this._configTemplates.map((t) => t.id))
+					: 0
+
+			for (const t of templates) {
+				t.id = ++maxId
+				this._configTemplates.push(t)
+			}
+		} else {
+			this._configTemplates = templates
+		}
+
 		await jsonStore.put(store.configurationTemplates, this._configTemplates)
 
 		return this._configTemplates
@@ -3129,7 +3146,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	private _checkConfigurationTemplates(node: ZUINode, zwaveNode: ZWaveNode) {
 		const matching = this._getMatchingTemplates(node)
 
-		if (matching.length === 0) return
+		if (matching.length === 0) {
+			node.pendingConfigTemplates = undefined
+			return
+		}
 
 		const autoApplyTemplates = matching.filter((t) => t.autoApply)
 
@@ -3141,24 +3161,23 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				'info',
 				`Auto-applying configuration template "${template.name}"`,
 			)
-			this.applyConfigurationTemplate(template.id, node.id).catch(
-				(error) => {
+			this.applyConfigurationTemplate(template.id, node.id)
+				.then(() => {
+					node.pendingConfigTemplates = undefined
+				})
+				.catch((error) => {
 					this.logNode(
 						zwaveNode,
 						'error',
 						`Failed to auto-apply template "${template.name}": ${error.message}`,
 					)
-				},
-			)
+				})
 		} else {
-			// Notify frontend about matching templates (user can choose to apply)
-			this.sendToSocket(socketEvents.templateMatch, {
-				nodeId: node.id,
-				templates: matching.map((t) => ({
-					id: t.id,
-					name: t.name,
-				})),
-			})
+			// Store pending templates on the node so the UI can show a badge
+			node.pendingConfigTemplates = matching.map((t) => ({
+				id: t.id,
+				name: t.name,
+			}))
 		}
 	}
 
