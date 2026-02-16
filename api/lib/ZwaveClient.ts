@@ -135,6 +135,7 @@ import { readFile, writeFile } from 'node:fs/promises'
 import backupManager, { NVM_BACKUP_PREFIX } from './BackupManager.ts'
 import { socketEvents } from './SocketEvents.ts'
 import { isUint8Array } from 'node:util/types'
+import { coerce as semverCoerce, gte as semverGte } from 'semver'
 import { PkgFsBindings } from './PkgFsBindings.ts'
 import { regionSupportsAutoPowerlevel } from './shared.ts'
 import { deviceConfigPriorityDir } from './Constants.ts'
@@ -3108,36 +3109,21 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			if (t.deviceId !== node.deviceId) return false
 
 			// Check firmware version if specified
-			if (t.minFirmwareVersion && node.firmwareVersion) {
-				if (
-					this._compareFirmwareVersions(
-						node.firmwareVersion,
-						t.minFirmwareVersion,
-					) < 0
-				) {
+			if (t.minFirmwareVersion) {
+				if (!node.firmwareVersion) {
+					return false
+				}
+
+				const nodeFw = semverCoerce(node.firmwareVersion)
+				const minFw = semverCoerce(t.minFirmwareVersion)
+
+				if (nodeFw && minFw && !semverGte(nodeFw, minFw)) {
 					return false
 				}
 			}
 
 			return true
 		})
-	}
-
-	/**
-	 * Compare firmware version strings (e.g. "2.15" vs "1.13")
-	 * Returns negative if a < b, 0 if equal, positive if a > b
-	 */
-	private _compareFirmwareVersions(a: string, b: string): number {
-		const aParts = a.split('.').map(Number)
-		const bParts = b.split('.').map(Number)
-
-		const len = Math.max(aParts.length, bParts.length)
-		for (let i = 0; i < len; i++) {
-			const aVal = aParts[i] || 0
-			const bVal = bParts[i] || 0
-			if (aVal !== bVal) return aVal - bVal
-		}
-		return 0
 	}
 
 	/**

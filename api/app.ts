@@ -1664,6 +1664,16 @@ app.post(
 					message: 'data must be an array of templates',
 				})
 			}
+			// Validate each template has required fields
+			for (const t of templates) {
+				if (!t.name || !t.deviceId || !Array.isArray(t.values)) {
+					return res.json({
+						success: false,
+						message:
+							'Each template must have name, deviceId, and values array',
+					})
+				}
+			}
 			const result = await gw.zwave.importConfigurationTemplates(
 				templates,
 				mode,
@@ -1687,6 +1697,12 @@ app.put(
 	async function (req, res) {
 		try {
 			const id = parseInt(req.params.id)
+			if (isNaN(id)) {
+				return res.json({
+					success: false,
+					message: 'Invalid template ID',
+				})
+			}
 			const template = await gw.zwave.updateConfigurationTemplate(
 				id,
 				req.body,
@@ -1710,6 +1726,12 @@ app.delete(
 	async function (req, res) {
 		try {
 			const id = parseInt(req.params.id)
+			if (isNaN(id)) {
+				return res.json({
+					success: false,
+					message: 'Invalid template ID',
+				})
+			}
 			await gw.zwave.deleteConfigurationTemplate(id)
 			res.json({
 				success: true,
@@ -1729,6 +1751,12 @@ app.post(
 	async function (req, res) {
 		try {
 			const id = parseInt(req.params.id)
+			if (isNaN(id)) {
+				return res.json({
+					success: false,
+					message: 'Invalid template ID',
+				})
+			}
 			const { nodeId } = req.body
 			if (!nodeId) {
 				return res.json({
