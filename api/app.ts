@@ -44,6 +44,11 @@ import { inboundEvents, socketEvents } from './lib/SocketEvents.ts'
 import * as utils from './lib/utils.ts'
 import backupManager from './lib/BackupManager.ts'
 import {
+	getExternallyManagedPaths,
+	loadExternalSettings,
+	mergeExternalSettings,
+} from './lib/externalSettings.ts'
+import {
 	readFile,
 	realpath,
 	readdir,
@@ -185,6 +190,12 @@ export async function startServer(port: number | string, host?: string) {
 	let server: HttpServer
 
 	const settings = jsonStore.get(store.settings)
+
+	// Merge external settings into zwave config (if external settings exist)
+	if (loadExternalSettings()) {
+		settings.zwave ??= {}
+		mergeExternalSettings(settings.zwave as Record<string, unknown>)
+	}
 
 	// as the really first thing setup loggers so all logs will go to file if specified in settings
 	setupLogging(settings)
@@ -1105,6 +1116,14 @@ app.get(
 
 		const settings = jsonStore.get(store.settings)
 
+		const managedExternally: string[] = []
+		if (process.env.ZWAVE_PORT) {
+			managedExternally.push('zwave.port')
+			managedExternally.push('zwave.enabled')
+		}
+		// Add paths from external settings file
+		managedExternally.push(...getExternallyManagedPaths())
+
 		const data = {
 			success: true,
 			settings,
@@ -1112,12 +1131,14 @@ app.get(
 			serial_ports: [],
 			scales: scales,
 			sslDisabled: sslDisabled(),
+			managedExternally,
 			tz: process.env.TZ,
 			locale: process.env.LOCALE,
 			deprecationWarning: process.env.TAG_NAME === 'zwavejs2mqtt',
 		}
 
-		if (process.platform !== 'sunos') {
+		// Only enumerate serial ports if ZWAVE_PORT is not set via env var
+		if (process.platform !== 'sunos' && !process.env.ZWAVE_PORT) {
 			try {
 				data.serial_ports = await Driver.enumerateSerialPorts({
 					local: true,
@@ -1127,8 +1148,9 @@ app.get(
 				logger.error(error)
 				data.serial_ports = []
 			}
-			res.json(data)
-		} else res.json(data)
+		}
+
+		res.json(data)
 	},
 )
 

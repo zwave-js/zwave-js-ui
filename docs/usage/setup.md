@@ -267,3 +267,159 @@ Once finished press `SAVE` and the gateway will start a Z-Wave Network Scan.
 ## Backing Up Settings
 
 Settings, scenes and the Z-Wave configuration are stored in `JSON` files under the project `store` folder. It is a good idea to backup those files, which can be done by backing up the `store` or using the **import/export** buttons.
+
+## Embedding Z-Wave JS UI
+
+Z-Wave JS UI can be embedded in other software (e.g., Home Assistant add-ons) where certain settings are managed externally. When running in embedded mode, externally managed settings are hidden from the UI and controlled through environment variables and configuration files.
+
+### Controller Port Override
+
+Use the `ZWAVE_PORT` environment variable to force-enable the Z-Wave controller and override the configured serial port:
+
+```bash
+ZWAVE_PORT=/dev/ttyUSB0
+# or for TCP connections:
+ZWAVE_PORT=tcp://192.168.1.100:5555
+```
+
+When `ZWAVE_PORT` is set:
+
+- The Z-Wave controller is automatically enabled
+- The configured port is overridden with the value from the environment variable
+- Serial port enumeration and selection are disabled in the UI
+- The UI displays a message indicating the port is controlled by the environment variable
+
+### External Settings Management
+
+Use the `ZWAVE_EXTERNAL_SETTINGS` environment variable to provide a path to a JSON file containing externally managed driver and server settings:
+
+```bash
+ZWAVE_EXTERNAL_SETTINGS=/path/to/external-settings.json
+```
+
+When `ZWAVE_EXTERNAL_SETTINGS` is set:
+
+- Settings in the external file override those in `settings.json`
+- UI controls for externally managed settings are hidden
+- The external settings file is loaded once at startup and cached
+
+#### External Settings File Format
+
+The external settings file should be a JSON file with the following structure:
+
+```json
+{
+  "logEnabled": true,
+  "logLevel": "info",
+  "logToFile": true,
+  "maxFiles": 7,
+  "rf": {
+    "region": 0,
+    "autoPowerlevels": true
+  },
+  "securityKeys": {
+    "S0_Legacy": "0102030405060708090A0B0C0D0E0F10",
+    "S2_Unauthenticated": "1112131415161718191A1B1C1D1E1F20",
+    "S2_Authenticated": "2122232425262728292A2B2C2D2E2F30",
+    "S2_AccessControl": "3132333435363738393A3B3C3D3E3F40"
+  },
+  "securityKeysLongRange": {
+    "S2_Authenticated": "4142434445464748494A4B4C4D4E4F50",
+    "S2_AccessControl": "5152535455565758595A5B5C5D5E5F60"
+  },
+  "enableSoftReset": true,
+  "serverEnabled": true,
+  "serverPort": 3000,
+  "serverHost": "0.0.0.0",
+  "serverServiceDiscoveryDisabled": false
+}
+```
+
+#### Supported External Settings
+
+**Logging Settings** (configurable in UI):
+
+- `logEnabled` (boolean): Enable Z-Wave JS logging
+- `logLevel` (string): Log level (error, warn, info, verbose, debug, silly)
+- `logToFile` (boolean): Enable logging to file
+- `maxFiles` (number): Maximum number of log files to keep
+
+**Logging Settings** (driver-only, no UI configuration):
+
+- `logFilename` (string): Custom log filename
+- `forceConsole` (boolean): Force console logging even when logging to file
+
+**RF Settings**:
+
+- `rf.region` (number): RF region code
+- `rf.autoPowerlevels` (boolean): Enable automatic TX power level adjustment
+
+**Storage Settings** (driver-only):
+
+- `storage.cacheDir` (string): Custom cache directory path
+- `storage.throttle` (string): Storage throttle mode (normal, slow, fast)
+
+**Security Keys**:
+
+- `securityKeys.S0_Legacy` (string): Legacy S0 key (32 hex characters)
+- `securityKeys.S2_Unauthenticated` (string): S2 Unauthenticated key
+- `securityKeys.S2_Authenticated` (string): S2 Authenticated key
+- `securityKeys.S2_AccessControl` (string): S2 Access Control key
+- `securityKeysLongRange.S2_Authenticated` (string): Long Range S2 Authenticated key
+- `securityKeysLongRange.S2_AccessControl` (string): Long Range S2 Access Control key
+
+**Features**:
+
+- `enableSoftReset` (boolean): Enable soft reset functionality
+
+**Z-Wave JS Server Settings**:
+
+- `serverEnabled` (boolean): Enable Z-Wave JS websocket server
+- `serverPort` (number): Websocket server port
+- `serverHost` (string): Websocket server host
+- `serverServiceDiscoveryDisabled` (boolean): Disable DNS service discovery
+
+**Driver Presets** (driver-only):
+
+- `presets` (string[]): Array of preset names to apply (e.g., `["zniffer"]`)
+
+> [!NOTE]
+> Settings marked as "driver-only" are passed directly to the Z-Wave JS driver and have no corresponding UI configuration. They can only be configured through the external settings file.
+
+#### Example: Home Assistant Add-on Configuration
+
+When embedding Z-Wave JS UI in a Home Assistant add-on, you might use:
+
+```bash
+# Force controller port
+ZWAVE_PORT=/dev/serial/by-id/usb-0658_0200-if00
+
+# External settings for security keys and server config
+ZWAVE_EXTERNAL_SETTINGS=/config/zwave-external-settings.json
+```
+
+With an external settings file like:
+
+```json
+{
+  "logEnabled": true,
+  "logLevel": "info",
+  "logToFile": false,
+  "securityKeys": {
+    "S0_Legacy": "<generated-by-addon>",
+    "S2_Unauthenticated": "<generated-by-addon>",
+    "S2_Authenticated": "<generated-by-addon>",
+    "S2_AccessControl": "<generated-by-addon>"
+  },
+  "serverEnabled": true,
+  "serverPort": 3000,
+  "serverHost": "0.0.0.0"
+}
+```
+
+This configuration allows the add-on to:
+
+- Control the Z-Wave controller port
+- Manage security keys without exposing them in the UI
+- Configure the websocket server for Home Assistant integration
+- Hide these settings from users to prevent accidental changes

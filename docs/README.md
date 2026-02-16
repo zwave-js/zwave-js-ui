@@ -49,3 +49,4 @@ Full featured Z-Wave **Control Panel** and MQTT **Gateway**.
 - [OpenHAB](https://www.openhab.org/): using MQTT Discovery. See [docs](https://community.openhab.org/t/zwave-js-ui-in-place-of-oh-zwave-binding/150007/102)
 - [Jeedom](https://www.jeedom.com/en/): using official Z-Wave JS [plugin](https://doc.jeedom.com/en_US/plugins/automation%20protocol/zwavejs/beta/)
 - [HomeSeer](https://homeseer.com/): Using [Z-Wave Plus Plugin](https://docs.homeseer.com/products/setting-up-the-z-wave-plus-plugin)
+- [Homebridge](https://homebridge.io/): Using [homebridge-zwave-usb plugin](https://github.com/sapireli/homebridge-zwave-usb)

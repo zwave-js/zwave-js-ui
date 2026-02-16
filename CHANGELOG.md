@@ -1,5 +1,30 @@
 # Changelog
 
+## [11.11.0](https://github.com/zwave-js/zwave-js-ui/compare/v11.10.1...v11.11.0) (2026-02-03)
+
+### ✨ Features
+
+* bump zwave-js@15.20.1 ([#4527](https://github.com/zwave-js/zwave-js-ui/issues/4527)) ([cf9dec4](https://github.com/zwave-js/zwave-js-ui/commit/cf9dec463f3be6f782cd9e3263c3c13285990eef))
+* support embedding Z-Wave JS UI in other software ([#4520](https://github.com/zwave-js/zwave-js-ui/issues/4520)) ([9b081cc](https://github.com/zwave-js/zwave-js-ui/commit/9b081cc396c3270c4ad8118edf79b49055e01427))
+
+### 🐛 Bug Fixes
+
+* correct JSON template syntax in color temperature command ([ceabeae](https://github.com/zwave-js/zwave-js-ui/commit/ceabeaead4e1fa8a90879d1ffc296900ea48bd1a)), closes [#4528](https://github.com/zwave-js/zwave-js-ui/issues/4528)
+
+### 🔧 Chores
+
+* add NPM version verification and update step in release workflow ([d864664](https://github.com/zwave-js/zwave-js-ui/commit/d864664074dafb521ce3a46adf8e9ae62b02cc07))
+* add registry URL to Node.js setup in release workflow ([f3e74d2](https://github.com/zwave-js/zwave-js-ui/commit/f3e74d231f6b741f7d402bea19530c4efe629b1c))
+* add registry URL to Node.js setup in release workflow ([89e5ecd](https://github.com/zwave-js/zwave-js-ui/commit/89e5ecdcef931cd1b1e271d7b930bcde18272742))
+* add skipChecks option to npm configuration in release-it setup ([43a86e1](https://github.com/zwave-js/zwave-js-ui/commit/43a86e1e370ce8ba8e181e110c071e6458d54ba0))
+* enable npm provenance ([13ed900](https://github.com/zwave-js/zwave-js-ui/commit/13ed900f6465d3a586c23aff450ec9b6ee999bc1))
+* remove registry URL from Node.js setup in release workflow ([fbe735e](https://github.com/zwave-js/zwave-js-ui/commit/fbe735ee58dcef9a8bb68da7683b61ba4ba21c20))
+* remove registry URL from Node.js setup in release workflow ([c4a1673](https://github.com/zwave-js/zwave-js-ui/commit/c4a16736b37221b6154bad6111429bc00f226210))
+* simplify npm upgrade step in release workflow ([afb6d07](https://github.com/zwave-js/zwave-js-ui/commit/afb6d0745acdc975849cf8f8be23adaed010e81c))
+* update Node.js version to 22.x in release workflow ([dc9a3b7](https://github.com/zwave-js/zwave-js-ui/commit/dc9a3b7306c1262254fdd4b5fe87d84a6c10e2c8))
+* update release-it version to 19.2.4 in package.json and package-lock.json ([3628cc4](https://github.com/zwave-js/zwave-js-ui/commit/3628cc4f84da19f823d1121e44ebca6a5e98cbdc))
+* update repository URL format and restructure bin entry in package.json ([d4f7c6a](https://github.com/zwave-js/zwave-js-ui/commit/d4f7c6a8096bdc168de6324328f6c6c6d3196cd3))
+
 ## [11.10.1](https://github.com/zwave-js/zwave-js-ui/compare/v11.10.0...v11.10.1) (2026-01-15)
 
 ### ✨ Features

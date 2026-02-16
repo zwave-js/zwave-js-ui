@@ -22,6 +22,7 @@ import {
 	extractFirmware,
 } from '@zwave-js/core'
 import { createDefaultTransportFormat } from '@zwave-js/core/bindings/log/node'
+import { applyExternalDriverSettings } from './externalSettings.ts'
 import { JSONTransport } from '@zwave-js/log-transport-json'
 import type {
 	AssociationAddress,
@@ -2162,6 +2163,12 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 * Method used to start Z-Wave connection using configuration `port`
 	 */
 	async connect() {
+		// When ZWAVE_PORT env var is set, force enable and override port
+		if (process.env.ZWAVE_PORT) {
+			this.cfg.enabled = true
+			this.cfg.port = process.env.ZWAVE_PORT
+		}
+
 		if (this.cfg.enabled === false) {
 			logger.info('Z-Wave driver DISABLED')
 			return
@@ -2326,6 +2333,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		}
 
 		utils.parseSecurityKeys(this.cfg, zwaveOptions)
+
+		// Apply driver-only external settings (storage, presets, logFilename, forceConsole).
+		// These are not in ZwaveConfig/settings.json, so they must be applied directly to driver options.
+		applyExternalDriverSettings(zwaveOptions)
 
 		const logTransport = new JSONTransport()
 		logTransport.format = createDefaultTransportFormat(true, false)
