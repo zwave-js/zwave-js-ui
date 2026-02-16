@@ -1,5 +1,5 @@
 <template>
-	<v-container grid-list-md>
+	<v-container fluid class="pa-4">
 		<v-data-table
 			:headers="headers"
 			:items="templates"
@@ -7,29 +7,42 @@
 			class="elevation-1"
 		>
 			<template #top>
-				<v-toolbar flat>
-					<v-text-field
-						v-model="search"
-						append-icon="search"
-						label="Search"
-						class="ml-2"
-						single-line
-						hide-details
-						density="compact"
-						variant="outlined"
-						style="max-width: 300px"
-						clearable
-					></v-text-field>
-					<v-spacer></v-spacer>
-					<v-btn variant="text" @click="importTemplates">
-						Import
-						<v-icon end color="primary">file_upload</v-icon>
-					</v-btn>
-					<v-btn variant="text" @click="exportTemplates">
-						Export
-						<v-icon end color="primary">file_download</v-icon>
-					</v-btn>
-				</v-toolbar>
+				<v-col class="pt-0">
+					<v-row>
+						<v-col cols="12" sm="6">
+							<v-text-field
+								v-model="search"
+								clearable
+								flat
+								variant="outlined"
+								hide-details
+								single-line
+								class="ma-2"
+								style="max-width: 300px; min-width: 250px"
+								prepend-inner-icon="search"
+								label="Search"
+								append-icon="refresh"
+								@click:append="refreshTemplates"
+							></v-text-field>
+						</v-col>
+						<v-col
+							cols="12"
+							sm="6"
+							class="d-flex align-center justify-end"
+						>
+							<v-btn variant="text" @click="importTemplates">
+								Import
+								<v-icon end color="primary">file_upload</v-icon>
+							</v-btn>
+							<v-btn variant="text" @click="exportTemplates">
+								Export
+								<v-icon end color="primary"
+									>file_download</v-icon
+								>
+							</v-btn>
+						</v-col>
+					</v-row>
+				</v-col>
 			</template>
 
 			<template #[`item.autoApply`]="{ item }">
