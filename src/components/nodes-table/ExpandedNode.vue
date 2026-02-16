@@ -591,11 +591,11 @@ export default {
 					text: 'Configuration Templates',
 					options: [
 						{
-							name: 'Create Template',
+							name: 'Create',
 							action: 'createTemplate',
 						},
 						{
-							name: 'Apply Template',
+							name: 'Apply',
 							action: 'applyTemplate',
 						},
 					],
@@ -820,6 +820,7 @@ export default {
 				'info',
 				{
 					confirmText: 'Create',
+					width: 500,
 					inputs: [
 						{
 							type: 'text',

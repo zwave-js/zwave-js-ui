@@ -1,18 +1,5 @@
 <template>
 	<v-container grid-list-md>
-		<v-row>
-			<v-col cols="12">
-				<v-btn variant="text" @click="importTemplates">
-					Import
-					<v-icon end color="primary">file_upload</v-icon>
-				</v-btn>
-				<v-btn variant="text" @click="exportTemplates">
-					Export
-					<v-icon end color="primary">file_download</v-icon>
-				</v-btn>
-			</v-col>
-		</v-row>
-
 		<v-data-table
 			:headers="headers"
 			:items="templates"
@@ -21,12 +8,11 @@
 		>
 			<template #top>
 				<v-toolbar flat>
-					<v-toolbar-title>Configuration Templates</v-toolbar-title>
-					<v-spacer></v-spacer>
 					<v-text-field
 						v-model="search"
 						append-icon="search"
 						label="Search"
+						class="ml-2"
 						single-line
 						hide-details
 						density="compact"
@@ -34,6 +20,15 @@
 						style="max-width: 300px"
 						clearable
 					></v-text-field>
+					<v-spacer></v-spacer>
+					<v-btn variant="text" @click="importTemplates">
+						Import
+						<v-icon end color="primary">file_upload</v-icon>
+					</v-btn>
+					<v-btn variant="text" @click="exportTemplates">
+						Export
+						<v-icon end color="primary">file_download</v-icon>
+					</v-btn>
 				</v-toolbar>
 			</template>
 
