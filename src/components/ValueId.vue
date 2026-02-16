@@ -2,15 +2,39 @@
 	<div class="valueid-slot">
 		<div class="valueid-label text-subtitle-2">
 			{{ label }}
-			<v-btn
-				class="ml-2 mb-1"
-				@click="resetConfig"
-				v-if="canResetConfiguration"
-				size="x-small"
-				variant="outlined"
-				color="error"
-				>Reset</v-btn
-			>
+
+			<v-menu location="bottom">
+				<template #activator="{ props }">
+					<v-btn
+						v-if="canPollValue || canResetConfiguration"
+						v-bind="props"
+						class="ml-1 mb-1"
+						size="x-small"
+						variant="text"
+						icon
+						:loading="polling"
+					>
+						<v-icon>more_vert</v-icon>
+					</v-btn>
+				</template>
+				<v-list density="compact" class="py-0">
+					<v-list-item
+						v-if="canPollValue"
+						prepend-icon="refresh"
+						title="Refresh"
+						base-color="primary"
+						@click="pollValue"
+					/>
+					<v-list-item
+						v-if="canResetConfiguration"
+						prepend-icon="restart_alt"
+						title="Reset"
+						density="compact"
+						@click="resetConfig"
+						base-color="error"
+					/>
+				</v-list>
+			</v-menu>
 
 			<v-chip
 				v-if="isDefault"
@@ -37,12 +61,6 @@
 					color="primary"
 					>Idle</v-btn
 				>
-
-				<PollValueButton
-					v-if="canPollValue"
-					:model-value="modelValue"
-					class="ml-2"
-				/>
 			</div>
 
 			<div v-if="help" class="text-caption mt-1 help">
@@ -67,12 +85,6 @@
 				v-model="modelValue.newValue"
 				@click:append="updateValue(modelValue)"
 			>
-				<template #append-inner v-if="canPollValue">
-					<PollValueButton
-						style="margin-top: -3px"
-						:model-value="modelValue"
-					/>
-				</template>
 			</v-text-field>
 
 			<!-- Number Input -->
@@ -97,12 +109,6 @@
 				v-model.number="modelValue.newValue"
 				@click:append="!numberOutOfRange && updateValue(modelValue)"
 			>
-				<template #append-inner v-if="canPollValue">
-					<PollValueButton
-						style="margin-top: -3px"
-						:model-value="modelValue"
-					/>
-				</template>
 			</v-text-field>
 
 			<!-- Object Input -->
@@ -117,12 +123,6 @@
 				v-model="parsedValue"
 				@click:append="updateValue(modelValue)"
 			>
-				<template #append-inner v-if="canPollValue">
-					<PollValueButton
-						style="margin-top: -3px"
-						:model-value="modelValue"
-					/>
-				</template>
 			</v-text-field>
 
 			<!-- Duration Input -->
@@ -153,12 +153,6 @@
 					:append-icon="!disable_send ? 'send' : null"
 					@click:append="updateValue(modelValue)"
 				>
-					<template #append-inner v-if="canPollValue">
-						<PollValueButton
-							style="margin-top: -3px"
-							:model-value="modelValue"
-						/>
-					</template>
 				</v-select>
 			</div>
 
@@ -174,9 +168,6 @@
 				:hint="help"
 				@click:append="updateValue(modelValue)"
 			>
-				<template #append-inner v-if="canPollValue">
-					<PollValueButton :model-value="modelValue" />
-				</template>
 				<template #append>
 					<v-menu
 						v-model="showMenu"
@@ -233,12 +224,6 @@
 						{{ itemText(selectedItem || item) }}
 					</span>
 				</template>
-				<template #append-inner v-if="canPollValue">
-					<PollValueButton
-						style="margin-top: -3px"
-						:model-value="modelValue"
-					/>
-				</template>
 			</v-select>
 
 			<!-- Select Input with Manual Entry -->
@@ -275,12 +260,6 @@
 							{{ itemText(selectedItem || item) }}
 						</span>
 					</v-chip>
-				</template>
-				<template #append-inner v-if="canPollValue">
-					<PollValueButton
-						style="margin-top: -3px"
-						:model-value="modelValue"
-					/>
 				</template>
 			</v-combobox>
 
@@ -337,11 +316,6 @@
 						>
 					</v-btn>
 				</v-btn-group>
-				<PollValueButton
-					v-if="canPollValue"
-					:model-value="modelValue"
-					class="ml-2"
-				/>
 				<div v-if="help" class="text-caption mt-2 help">{{ help }}</div>
 			</div>
 
@@ -410,12 +384,8 @@
 <script>
 import { manager, instances } from '../lib/instanceManager'
 import useBaseStore from '../stores/base.js'
-import PollValueButton from './PollValueButton.vue'
 
 export default {
-	components: {
-		PollValueButton,
-	},
 	props: {
 		modelValue: {
 			type: Object,
@@ -432,6 +402,7 @@ export default {
 			durations: ['seconds', 'minutes'],
 			showMenu: false,
 			error: null,
+			polling: false,
 		}
 	},
 	computed: {
@@ -583,6 +554,28 @@ export default {
 		},
 	},
 	methods: {
+		async pollValue() {
+			const app = manager.getInstance(instances.APP)
+
+			this.polling = true
+
+			try {
+				const response = await app.apiRequest(
+					'pollValue',
+					[this.modelValue],
+					{
+						infoSnack: false,
+						errorSnack: true,
+					},
+				)
+
+				if (response.success) {
+					useBaseStore().showSnackbar('Value refreshed', 'success')
+				}
+			} finally {
+				this.polling = false
+			}
+		},
 		async resetConfig() {
 			const app = manager.getInstance(instances.APP)
 
