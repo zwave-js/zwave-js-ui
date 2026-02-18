@@ -106,13 +106,6 @@
 						style="align-self: center"
 					></v-progress-circular>
 				</div>
-				<base-fab
-					v-model="fab"
-					location="bottom end"
-					icon-open="settings"
-					icon-close="close"
-					:items="fabItems"
-				/>
 			</v-col>
 
 			<v-divider class="mx-0" vertical></v-divider>
@@ -176,6 +169,14 @@
 				</div>
 			</v-col>
 		</v-row>
+
+		<base-fab
+			v-model="fab"
+			location="bottom end"
+			icon-open="settings"
+			icon-close="close"
+			:items="fabItems"
+		/>
 	</v-container>
 </template>
 <style scoped>
