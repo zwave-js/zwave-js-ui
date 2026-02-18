@@ -15,6 +15,7 @@
 					:items="items"
 					activatable
 					selectable
+					select-strategy="leaf"
 					item-value="path"
 					v-model:opened="openFolders"
 					:load-children="getFolderItems"
