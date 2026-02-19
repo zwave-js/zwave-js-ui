@@ -13,9 +13,11 @@
 				density="compact"
 				flat
 			>
-				<v-toolbar-title class="text-white">{{
-					title
-				}}</v-toolbar-title>
+				<v-toolbar-title
+					class="text-white"
+					style="margin-inline-start: 16px"
+					>{{ title }}</v-toolbar-title
+				>
 			</v-toolbar>
 			<v-card-text
 				v-show="!!message"
@@ -23,7 +25,7 @@
 				class="px-4 pt-4"
 			></v-card-text>
 			<v-card-text v-if="options.inputs" class="px-4">
-				<v-container grid-list-md>
+				<v-container grid-list-md class="pa-0">
 					<v-form
 						v-model="valid"
 						ref="form"
@@ -209,7 +211,7 @@
 					:rules="[validQR]"
 				></qr-reader>
 			</v-card-text>
-			<v-card-actions class="sticky-actions pt-0">
+			<v-card-actions class="sticky-actions pt-0 px-4">
 				<v-spacer></v-spacer>
 				<v-btn
 					v-if="!options.qrScan"
