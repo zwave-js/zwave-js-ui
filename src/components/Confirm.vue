@@ -454,4 +454,22 @@ export default {
 	bottom: 0;
 	background-color: inherit;
 }
+
+/* Vuetify 3 global reset (`* { padding: 0; margin: 0 }`) strips default
+   browser spacing from HTML elements rendered via v-html in the message slot.
+   Restore sensible defaults for common block-level elements. */
+.v-card-text :deep(ul),
+.v-card-text :deep(ol) {
+	padding-inline-start: 24px;
+}
+
+.v-card-text :deep(h1),
+.v-card-text :deep(h2),
+.v-card-text :deep(h3),
+.v-card-text :deep(h4),
+.v-card-text :deep(h5),
+.v-card-text :deep(h6),
+.v-card-text :deep(p) {
+	margin-block: 0.5em;
+}
 </style>

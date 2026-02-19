@@ -635,7 +635,7 @@ export default {
 			const confirmed = await this.confirm(
 				'Start Debug Capture',
 				'<p>This wizard will help you collect a complete debug package.</p>' +
-					'<ul style="margin-left: 20px;">' +
+					'<ul>' +
 					'<li>After starting, reproduce the issue you want to debug</li>' +
 					"<li>Click the debug indicator in the top bar when you're done</li>" +
 					'</ul>',
