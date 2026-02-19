@@ -2,7 +2,6 @@ import type { Request, RequestHandler, Response, Router } from 'express'
 import express from 'express'
 import history from 'connect-history-api-fallback'
 import cors from 'cors'
-import csrf from 'csurf'
 import compression from 'compression'
 import morgan from 'morgan'
 import type { Settings, User } from './config/store.ts'
@@ -628,12 +627,6 @@ app.use(
 	}),
 )
 
-// Node.js CSRF protection middleware.
-// Requires either a session middleware or cookie-parser to be initialized first.
-const csrfProtection = csrf({
-	value: (req) => req.csrfToken(),
-})
-
 // ### SOCKET SETUP
 
 const noop = () => {}
@@ -898,8 +891,6 @@ app.get('/api/auth-enabled', apisLimiter, function (req, res) {
 app.post(
 	'/api/authenticate',
 	loginLimiter,
-	// @ts-expect-error types not matching
-	csrfProtection,
 	async function (req, res) {
 		const token = req.body.token
 		let user: User
@@ -995,8 +986,6 @@ app.get('/api/logout', apisLimiter, isAuthenticated, function (req, res) {
 app.put(
 	'/api/password',
 	apisLimiter,
-	// @ts-expect-error types not matching
-	csrfProtection,
 	isAuthenticated,
 	async function (req, res) {
 		try {
