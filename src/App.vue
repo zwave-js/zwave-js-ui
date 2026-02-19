@@ -1623,6 +1623,12 @@ export default {
 			const settings = useBaseStore().gateway
 
 			const versions = settings?.versions
+
+			// Skip GitHub API call if both features are disabled
+			if (!settings.notifyNewVersions && settings?.disableChangelog) {
+				return
+			}
+
 			// get changelog from github latest release
 			try {
 				const latest = await this.getRelease('zwave-js-ui', 'latest')
