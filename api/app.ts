@@ -1160,7 +1160,7 @@ app.get(
 				})
 			} catch (error) {
 				logger.error(error)
-				res.json({ success: false, serial_ports })
+				return res.json({ success: false, serial_ports })
 			}
 		}
 
