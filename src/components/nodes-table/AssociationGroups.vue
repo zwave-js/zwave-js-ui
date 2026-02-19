@@ -163,7 +163,7 @@ export default {
 				this.showSnackbar('Associations updated', 'success')
 			}
 		},
-		async addAssociation(association) {
+		async addAssociation(association, force = false) {
 			const target = !isNaN(association.target)
 				? parseInt(association.target)
 				: association.target.id
@@ -183,6 +183,7 @@ export default {
 				}),
 				group.value,
 				[toAdd],
+				force ? { force: true } : undefined,
 			]
 
 			const response = await this.app.apiRequest('addAssociations', args)
@@ -190,7 +191,7 @@ export default {
 			if (response.success) {
 				const checkResult = response.result[0]
 
-				if (checkResult === AssociationCheckResult.OK) {
+				if (checkResult === AssociationCheckResult.OK || force) {
 					this.showSnackbar('Association added', 'success')
 					this.getAssociations()
 				} else {

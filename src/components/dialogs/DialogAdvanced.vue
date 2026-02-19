@@ -1,16 +1,15 @@
 <template>
-	<v-dialog
-		@keydown.esc="$emit('close')"
-		v-model="_value"
-		persistent
-		max-width="800"
-	>
+	<v-dialog @keydown.esc="$emit('close')" v-model="_value" max-width="800">
 		<v-card>
 			<v-card-title>
 				<v-row class="pa-3" align="center">
 					<span class="text-h5">{{ title }}</span>
 					<v-spacer></v-spacer>
-					<v-btn icon="close" @click="$emit('close')" />
+					<v-btn
+						icon="close"
+						aria-label="Close dialog"
+						@click="$emit('close')"
+					/>
 				</v-row>
 			</v-card-title>
 

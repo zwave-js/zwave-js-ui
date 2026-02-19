@@ -309,7 +309,6 @@
 			:fullscreen="$vuetify.display.xs"
 			max-width="1200px"
 			v-model="expandedNodeDialog"
-			persistent
 			@keydown.exit="closeDialog()"
 		>
 			<v-card min-height="90vh">
