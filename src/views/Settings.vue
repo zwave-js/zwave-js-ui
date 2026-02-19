@@ -550,6 +550,10 @@
 											]"
 											required
 											:items="serial_ports"
+											:loading="loadingSerialPorts"
+											@focus="loadSerialPorts"
+											append-icon="refresh"
+											@click:append="refreshSerialPorts"
 										></v-combobox>
 									</v-col>
 									<v-col cols="12" sm="6">
@@ -1297,6 +1301,10 @@
 											]"
 											required
 											:items="serial_ports"
+											:loading="loadingSerialPorts"
+											@focus="loadSerialPorts"
+											append-icon="refresh"
+											@click:append="refreshSerialPorts"
 										></v-combobox>
 									</v-col>
 									<v-row
@@ -2440,6 +2448,8 @@ export default {
 			dialogValue: false,
 			sslDisabled: false,
 			saving: false,
+			loadingSerialPorts: false,
+			serialPortsFetched: false,
 			prevUi: null,
 			newGateway: {},
 			newMqtt: {},
@@ -2966,6 +2976,7 @@ export default {
 		},
 		async getConfig() {
 			try {
+				// Load settings first (fast)
 				const data = await ConfigApis.getConfig()
 				if (!data.success) {
 					this.showSnackbar(
@@ -2973,14 +2984,40 @@ export default {
 						'error',
 					)
 					log.error(data)
-				} else {
-					this.init(data)
-					this.sslDisabled = data.sslDisabled
-					this.resetConfig()
+					return
 				}
+
+				this.init(data)
+				this.sslDisabled = data.sslDisabled
+				this.resetConfig()
+
+				// Serial ports are loaded lazily when the input is focused
 			} catch (error) {
 				this.showSnackbar(error.message, 'error')
 				log.error(error)
+			}
+		},
+		async loadSerialPorts() {
+			if (this.serialPortsFetched || this.loadingSerialPorts) return
+			await this.fetchSerialPorts()
+		},
+		async refreshSerialPorts() {
+			if (this.loadingSerialPorts) return
+			this.serialPortsFetched = false
+			await this.fetchSerialPorts()
+		},
+		async fetchSerialPorts() {
+			this.loadingSerialPorts = true
+			try {
+				const data = await ConfigApis.getSerialPorts()
+				if (data.success && data.serial_ports) {
+					useBaseStore().initPorts(data.serial_ports)
+				}
+				this.serialPortsFetched = true
+			} catch (error) {
+				log.error('Failed to load serial ports:', error)
+			} finally {
+				this.loadingSerialPorts = false
 			}
 		},
 	},
