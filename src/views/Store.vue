@@ -107,13 +107,6 @@
 						style="align-self: center"
 					></v-progress-circular>
 				</div>
-				<base-fab
-					v-model="fab"
-					location="bottom end"
-					icon-open="settings"
-					icon-close="close"
-					:items="fabItems"
-				/>
 			</v-col>
 
 			<v-divider class="mx-0" vertical></v-divider>
@@ -153,7 +146,7 @@
 							:highlight="highlighter"
 						></prism-editor>
 					</div>
-					<div class="sticky-bottom pa-0" v-if="!notSupported">
+					<div class="sticky-bottom" v-if="!notSupported">
 						<v-toolbar>
 							<v-spacer></v-spacer>
 							<v-btn
@@ -177,6 +170,15 @@
 				</div>
 			</v-col>
 		</v-row>
+
+		<base-fab
+			v-model="fab"
+			style="margin-bottom: 65px"
+			location="bottom end"
+			icon-open="settings"
+			icon-close="close"
+			:items="fabItems"
+		/>
 	</v-container>
 </template>
 <style scoped>
