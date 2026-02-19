@@ -131,21 +131,11 @@ export default {
 		isLongRange() {
 			return this.node?.protocol === Protocols.ZWaveLongRange
 		},
-		hasBeamingDisabled() {
-			return this.node?.supportsBeaming === false
-		},
 		showAssociationWarning() {
-			return this.isLongRange || this.hasBeamingDisabled
+			return this.isLongRange
 		},
 		associationWarningMessage() {
-			if (this.isLongRange && this.hasBeamingDisabled) {
-				return 'This Z-Wave Long Range node with beaming disabled only supports lifeline associations. Non-lifeline associations may not function correctly.'
-			} else if (this.isLongRange) {
-				return 'This Z-Wave Long Range node only supports lifeline associations. Non-lifeline associations may not function correctly.'
-			} else if (this.hasBeamingDisabled) {
-				return 'This node has beaming disabled and only supports lifeline associations. Non-lifeline associations may not function correctly.'
-			}
-			return ''
+			return 'This Z-Wave Long Range node only supports lifeline associations. Non-lifeline associations may not function correctly.'
 		},
 	},
 	mounted() {
