@@ -888,88 +888,81 @@ app.get('/api/auth-enabled', apisLimiter, function (req, res) {
 })
 
 // api to authenticate user
-app.post(
-	'/api/authenticate',
-	loginLimiter,
-	async function (req, res) {
-		const token = req.body.token
-		let user: User
+app.post('/api/authenticate', loginLimiter, async function (req, res) {
+	const token = req.body.token
+	let user: User
 
-		try {
-			// token auth, mostly used to restore sessions when user refresh the page
-			if (token) {
-				const decoded = await verifyJWT(token, sessionSecret)
+	try {
+		// token auth, mostly used to restore sessions when user refresh the page
+		if (token) {
+			const decoded = await verifyJWT(token, sessionSecret)
 
-				// Successfully authenticated, token is valid and the user _id of its content
-				// is the same of the current session
-				const users = jsonStore.get(store.users) as User[]
+			// Successfully authenticated, token is valid and the user _id of its content
+			// is the same of the current session
+			const users = jsonStore.get(store.users) as User[]
 
-				user = users.find((u) => u.username === decoded.username)
-			} else {
-				// credentials auth
-				const users = jsonStore.get(store.users) as User[]
+			user = users.find((u) => u.username === decoded.username)
+		} else {
+			// credentials auth
+			const users = jsonStore.get(store.users) as User[]
 
-				const username = req.body.username
-				const password = req.body.password
+			const username = req.body.username
+			const password = req.body.password
 
-				user = users.find((u) => u.username === username)
+			user = users.find((u) => u.username === username)
 
-				if (
-					user &&
-					!(await utils.verifyPsw(password, user.passwordHash))
-				) {
-					user = null
-				}
+			if (user && !(await utils.verifyPsw(password, user.passwordHash))) {
+				user = null
 			}
+		}
 
-			const result = {
-				success: !!user,
-				code: undefined,
-				message: '',
-				user: undefined,
-			}
+		const result = {
+			success: !!user,
+			code: undefined,
+			message: '',
+			user: undefined,
+		}
 
-			if (result.success) {
-				// don't edit the original user object, remove the password from jwt payload
-				const userData: User = Object.assign({}, user)
-				delete userData.passwordHash
+		if (result.success) {
+			// don't edit the original user object, remove the password from jwt payload
+			const userData: User = Object.assign({}, user)
+			delete userData.passwordHash
 
-				const token = jwt.sign(userData, sessionSecret, {
-					expiresIn: '1d',
-				})
-				userData.token = token
-				req.session.user = userData
-				result.user = userData
-				loginLimiter.resetKey(req.ip)
-				logger.info(
-					`User ${user.username} logged in successfully from ${req.ip}`,
-				)
-			} else {
-				result.code = 3
-				result.message = RESPONSE_CODES.GENERAL_ERROR
-				logger.error(
-					`User ${
-						user?.username || req.body.username
-					} failed to login from ${req.ip}: wrong credentials`,
-				)
-			}
-
-			res.json(result)
-		} catch (error) {
-			res.json({
-				success: false,
-				message: 'Authentication failed',
-				code: 3,
+			const token = jwt.sign(userData, sessionSecret, {
+				expiresIn: '1d',
 			})
-
+			userData.token = token
+			req.session.user = userData
+			result.user = userData
+			loginLimiter.resetKey(req.ip)
+			logger.info(
+				`User ${user.username} logged in successfully from ${req.ip}`,
+			)
+		} else {
+			result.code = 3
+			result.message = RESPONSE_CODES.GENERAL_ERROR
 			logger.error(
 				`User ${
 					user?.username || req.body.username
-				} failed to login from ${req.ip}: ${error.message}`,
+				} failed to login from ${req.ip}: wrong credentials`,
 			)
 		}
-	},
-)
+
+		res.json(result)
+	} catch (error) {
+		res.json({
+			success: false,
+			message: 'Authentication failed',
+			code: 3,
+		})
+
+		logger.error(
+			`User ${
+				user?.username || req.body.username
+			} failed to login from ${req.ip}: ${error.message}`,
+		)
+	}
+})
 
 // logout the user
 app.get('/api/logout', apisLimiter, isAuthenticated, function (req, res) {
