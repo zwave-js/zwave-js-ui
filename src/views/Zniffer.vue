@@ -548,6 +548,8 @@ export default {
 		},
 	},
 	mounted() {
+		this.socket.emit('SUBSCRIBE', { channels: ['zniffer'] })
+
 		this.socket.on(socketEvents.znifferFrame, this.addFrame)
 
 		this.onWindowResize = () => {
@@ -578,6 +580,7 @@ export default {
 			// unbind events
 			this.socket.off(socketEvents.znifferFrame)
 			this.socket.off('connect', this.onConnnect)
+			this.socket.emit('UNSUBSCRIBE', { channels: ['zniffer'] })
 		}
 
 		if (this.timeoutScroll) {

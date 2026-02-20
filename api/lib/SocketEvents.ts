@@ -23,6 +23,7 @@ export enum socketEvents {
 	znifferState = 'ZNIFFER_STATE',
 	linkReliability = 'LINK_RELIABILITY',
 	otwFirmwareUpdate = 'OTW_FIRMWARE_UPDATE',
+	subscribed = 'SUBSCRIBED',
 }
 
 // events from client ---> server
@@ -32,4 +33,50 @@ export enum inboundEvents {
 	hass = 'HASS_API', // call an hass api
 	mqtt = 'MQTT_API', // call an mqtt api
 	zniffer = 'ZNIFFER_API', // call a zniffer api
+	subscribe = 'SUBSCRIBE',
+	unsubscribe = 'UNSUBSCRIBE',
 }
+
+/** Channel-to-events mapping for room-based Socket.IO filtering */
+export const channelMap: Record<string, socketEvents[]> = {
+	controller: [
+		socketEvents.controller,
+		socketEvents.connected,
+		socketEvents.info,
+	],
+	nodes: [
+		socketEvents.nodeFound,
+		socketEvents.nodeAdded,
+		socketEvents.nodeRemoved,
+		socketEvents.nodeUpdated,
+		socketEvents.nodeEvent,
+		socketEvents.grantSecurityClasses,
+		socketEvents.validateDSK,
+		socketEvents.inclusionAborted,
+	],
+	values: [
+		socketEvents.valueUpdated,
+		socketEvents.valueRemoved,
+		socketEvents.metadataUpdated,
+	],
+	statistics: [socketEvents.statistics],
+	firmware: [socketEvents.otwFirmwareUpdate],
+	debug: [socketEvents.debug],
+	zniffer: [socketEvents.znifferFrame, socketEvents.znifferState],
+	rebuild: [socketEvents.rebuildRoutesProgress],
+	diagnostics: [
+		socketEvents.healthCheckProgress,
+		socketEvents.linkReliability,
+	],
+}
+
+/** Reverse lookup: event name → channel */
+export const eventToChannel: Record<string, string> = {}
+for (const [channel, events] of Object.entries(channelMap)) {
+	for (const evt of events) {
+		eventToChannel[evt] = channel
+	}
+}
+
+/** All available channel names */
+export const ALL_CHANNELS = Object.keys(channelMap)

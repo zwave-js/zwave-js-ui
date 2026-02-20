@@ -133,7 +133,7 @@ import type { DeviceConfig } from '@zwave-js/config'
 import { ConfigManager } from '@zwave-js/config'
 import { readFile, writeFile } from 'node:fs/promises'
 import backupManager, { NVM_BACKUP_PREFIX } from './BackupManager.ts'
-import { socketEvents } from './SocketEvents.ts'
+import { eventToChannel, socketEvents } from './SocketEvents.ts'
 import { isUint8Array } from 'node:util/types'
 import { PkgFsBindings } from './PkgFsBindings.ts'
 import { regionSupportsAutoPowerlevel } from './shared.ts'
@@ -2480,7 +2480,12 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		if (this.socket) {
 			// break the sync loop to let the event loop continue #2676
 			process.nextTick(() => {
-				this.socket.emit(evtName, data, ...args)
+				const channel = eventToChannel[evtName]
+				if (channel) {
+					this.socket.to(channel).emit(evtName, data, ...args)
+				} else {
+					this.socket.emit(evtName, data, ...args)
+				}
 			})
 		}
 	}

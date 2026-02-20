@@ -305,6 +305,7 @@ export default {
 			if (open) {
 				this.activeNode = copy(this.node)
 
+				this.subscribeChannels(['diagnostics'])
 				this.bindEvent('linkReliability', this.onProgress.bind(this))
 			} else if (open === false) {
 				this.unbindEvents()

@@ -40,7 +40,12 @@ import {
 } from './config/app.ts'
 import type { CustomPlugin, PluginConstructor } from './lib/CustomPlugin.ts'
 import { createPlugin } from './lib/CustomPlugin.ts'
-import { inboundEvents, socketEvents } from './lib/SocketEvents.ts'
+import {
+	ALL_CHANNELS,
+	channelMap,
+	inboundEvents,
+	socketEvents,
+} from './lib/SocketEvents.ts'
 import * as utils from './lib/utils.ts'
 import backupManager from './lib/BackupManager.ts'
 import {
@@ -469,7 +474,7 @@ async function destroyPlugins() {
 function setupInterceptor() {
 	// intercept logs and redirect them to socket
 	loggers.logStream.on('data', (chunk) => {
-		socketManager.io.emit(socketEvents.debug, chunk.toString())
+		socketManager.io.to('debug').emit(socketEvents.debug, chunk.toString())
 	})
 }
 
@@ -759,6 +764,46 @@ function setupSocket(server: HttpServer) {
 			}
 
 			cb(result)
+		})
+
+		socket.on(inboundEvents.subscribe, (data, cb = noop) => {
+			const channels: string[] = Array.isArray(data?.channels)
+				? data.channels
+				: []
+
+			const isAll = channels.includes('all')
+			const validChannels = isAll
+				? ALL_CHANNELS
+				: channels.filter((c) => c in channelMap)
+
+			for (const channel of validChannels) {
+				void socket.join(channel)
+			}
+
+			// report current subscriptions (exclude socket's auto-joined room)
+			const subscribed = [...socket.rooms].filter(
+				(r) => r !== socket.id && r in channelMap,
+			)
+			socket.emit(socketEvents.subscribed, { channels: subscribed })
+			cb({ channels: subscribed })
+		})
+
+		socket.on(inboundEvents.unsubscribe, (data, cb = noop) => {
+			const channels: string[] = Array.isArray(data?.channels)
+				? data.channels
+				: []
+
+			for (const channel of channels) {
+				if (channel in channelMap) {
+					void socket.leave(channel)
+				}
+			}
+
+			const subscribed = [...socket.rooms].filter(
+				(r) => r !== socket.id && r in channelMap,
+			)
+			socket.emit(socketEvents.subscribed, { channels: subscribed })
+			cb({ channels: subscribed })
 		})
 
 		socket.on(inboundEvents.zniffer, async (data, cb = noop) => {

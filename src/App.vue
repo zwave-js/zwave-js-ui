@@ -1320,6 +1320,17 @@ export default {
 			this.socket.on('connect', () => {
 				this.updateStatus('Connected', 'success')
 				log.info('Socket connected')
+
+				this.socket.emit('SUBSCRIBE', {
+					channels: [
+						'controller',
+						'nodes',
+						'values',
+						'statistics',
+						'firmware',
+					],
+				})
+
 				this.socket.emit(
 					socketActions.init,
 					true,

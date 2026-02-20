@@ -33,6 +33,29 @@ export default {
 			}
 
 			this.bindedSocketEvents = {}
+
+			if (
+				this._subscribedChannels &&
+				this._subscribedChannels.length > 0
+			) {
+				this.socket.emit('UNSUBSCRIBE', {
+					channels: this._subscribedChannels,
+				})
+				this._subscribedChannels = []
+			}
+		},
+		subscribeChannels(channels) {
+			this.socket.emit('SUBSCRIBE', { channels })
+			this._subscribedChannels = [
+				...(this._subscribedChannels || []),
+				...channels,
+			]
+		},
+		unsubscribeChannels(channels) {
+			this.socket.emit('UNSUBSCRIBE', { channels })
+			this._subscribedChannels = (this._subscribedChannels || []).filter(
+				(c) => !channels.includes(c),
+			)
 		},
 		async pingNode(node) {
 			const response = await this.app.apiRequest('pingNode', [node.id], {

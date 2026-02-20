@@ -185,6 +185,8 @@ export default {
 			this.hideTopbar = true
 		}
 
+		this.socket.emit('SUBSCRIBE', { channels: ['debug'] })
+
 		this.socket.on(socketEvents.debug, (data) => {
 			if (this.debugActive) {
 				data = ansiUp.ansi_to_html(data)
@@ -210,6 +212,7 @@ export default {
 		if (this.socket) {
 			// unbind events
 			this.socket.off(socketEvents.debug)
+			this.socket.emit('UNSUBSCRIBE', { channels: ['debug'] })
 		}
 	},
 }
