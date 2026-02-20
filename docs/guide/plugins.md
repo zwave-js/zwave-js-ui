@@ -4,22 +4,41 @@ Plugins are NodeJS packages that can be integrated into Z-Wave JS UI in order to
 
 ## Usage
 
-A plugin is imported in Z-Wave JS UI using `require(pluginName)(context)` where the context provides access to these elements:
+A plugin is loaded using ES dynamic `import()` and must export a **default class** whose constructor receives a `PluginContext` object:
 
 - `zwave`: Z-Wave client
 - `mqtt`: MQTT client
-- `app`: Express instance
+- `app`: Express router (scoped to the plugin)
 - `logger`: A logger instance to log things in console/file based on logger general settings
 
-In order to add a plugin you have to specify the absolute/relative path to it or, if it is available as an npm package, you can install it using the command:
+To add a plugin, go to the UI **Settings -> General -> Plugins** and enter either:
 
-```bash
-npm i my-awesome-plugin
+- An **absolute path** to a local plugin directory (e.g. `/usr/src/app/store/plugins/my-plugin`)
+- A **package name** if the plugin is installed as an npm package
+
+## Plugin Interface
+
+Every plugin must be an ES module that **default-exports a class** implementing the [`CustomPlugin`](https://github.com/zwave-js/zwave-js-ui/blob/master/api/lib/CustomPlugin.ts) interface:
+
+```ts
+interface PluginContext {
+  zwave: ZwaveClient
+  mqtt: MqttClient
+  app: Router       // Express router
+  logger: ModuleLogger
+}
+
+interface CustomPlugin extends PluginContext {
+  name: string
+  destroy(): Promise<void>
+}
 ```
 
-## Developing custom Plugins
+- The **constructor** receives a `PluginContext` and should store references to the clients it needs.
+- The **`destroy()`** method is called when the application shuts down or settings are updated. Use it to clean up event listeners, intervals, or any other state.
+- The `name` property is set automatically by the application.
 
-In order to implement a plugin, you need to create a class with a constructor that accepts a single parameter that is the context we spoke in [usage](#usage) section and a `destroy` function that will be called when application is closed or settings updated.
+## Developing custom Plugins
 
 Here is a minimal example of a custom plugin:
 
@@ -38,12 +57,51 @@ export default class MyPlugin {
   }
 
   async destroy() {
-    // clean up the state
+    // clean up event listeners, intervals, etc.
   }
 }
 ```
 
-Types and interfaces are available [here](https://github.com/zwave-js/zwave-js-ui/blob/master/api/lib/CustomPlugin.ts)
+## Docker Plugins
+
+When running Z-Wave JS UI in Docker, the working directory is `/usr/src/app`. Plugins stored under the `store` directory persist across container restarts.
+
+### Using a local plugin
+
+1. Create a `plugins` directory inside your store volume:
+
+```bash
+mkdir -p /path/to/your/store/plugins
+```
+
+2. Clone or copy your plugin into that directory:
+
+```bash
+cd /path/to/your/store/plugins
+git clone https://github.com/kvaster/zwavejs-prom.git
+cd zwavejs-prom
+npm install
+```
+
+3. In the UI, go to **Settings -> General -> Plugins** and enter the path as it appears **inside the container**:
+
+```text
+/usr/src/app/store/plugins/zwavejs-prom
+```
+
+4. Press **SAVE** to store the new settings and the plugin will be loaded.
+
+### Using a separate volume for third-party plugins
+
+If you prefer to keep plugins separate from the main store, mount an additional volume:
+
+```yaml
+volumes:
+  - ./store:/usr/src/app/store
+  - ./plugins:/usr/src/app/plugins
+```
+
+Then reference the plugin path as `/usr/src/app/plugins/my-plugin` in the settings.
 
 ## Available plugins
 
@@ -51,16 +109,3 @@ Here is a list of currently available plugins:
 
 - [Prometheus metrics plugin](https://github.com/kvaster/zwavejs-prom)
 - [Telegram alert plugin](https://github.com/kvaster/zwavejs-alert)
-- [Prometheus exporter](https://github.com/billiaz/zj2m-prom-exporter)
-
-## Example usage
-
-For plugins that are not available on npm you could create a `plugins` directory on application `store` and inside this directory you can install the plugin:
-
-```bash
-git clone https://github.com/kvaster/zwavejs-prom.git
-cd zwavejs-prom
-npm install
-```
-
-Now go to UI, Settings tab, General section and under plugins write the path to that folder (better if using a absolute path, for example `/usr/app/store/plugins/zwavejs-prom`). Press on `SAVE` to store the new settings and your plugin is ready.
