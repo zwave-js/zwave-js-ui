@@ -3,14 +3,18 @@
 		v-model="isOpen"
 		@keydown.esc="close()"
 		max-width="1000px"
-		persistent
+		:persistent="loading || state === 'start'"
 	>
 		<v-card :loading="loading">
 			<v-card-title>
 				<v-row class="pa-2" align="center">
 					<span class="text-h5">Nodes Manager</span>
 					<v-spacer></v-spacer>
-					<v-btn icon="clear" @click="close()" />
+					<v-btn
+						icon="clear"
+						aria-label="Close dialog"
+						@click="close()"
+					/>
 				</v-row>
 			</v-card-title>
 

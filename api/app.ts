@@ -2,7 +2,7 @@ import type { Request, RequestHandler, Response, Router } from 'express'
 import express from 'express'
 import history from 'connect-history-api-fallback'
 import cors from 'cors'
-import csrf from 'csurf'
+import compression from 'compression'
 import morgan from 'morgan'
 import type { Settings, User } from './config/store.ts'
 import store from './config/store.ts'
@@ -43,6 +43,11 @@ import { createPlugin } from './lib/CustomPlugin.ts'
 import { inboundEvents, socketEvents } from './lib/SocketEvents.ts'
 import * as utils from './lib/utils.ts'
 import backupManager from './lib/BackupManager.ts'
+import {
+	getExternallyManagedPaths,
+	loadExternalSettings,
+	mergeExternalSettings,
+} from './lib/externalSettings.ts'
 import {
 	readFile,
 	realpath,
@@ -185,6 +190,12 @@ export async function startServer(port: number | string, host?: string) {
 	let server: HttpServer
 
 	const settings = jsonStore.get(store.settings)
+
+	// Merge external settings into zwave config (if external settings exist)
+	if (loadExternalSettings()) {
+		settings.zwave ??= {}
+		mergeExternalSettings(settings.zwave as Record<string, unknown>)
+	}
 
 	// as the really first thing setup loggers so all logs will go to file if specified in settings
 	setupLogging(settings)
@@ -532,6 +543,13 @@ app.use(
 		},
 	) as RequestHandler,
 )
+// Enable compression for all responses
+app.use(
+	compression({
+		threshold: 1024, // Only compress responses larger than 1KB
+		level: 6, // Balanced compression level (0-9, higher = more compression but slower)
+	}),
+)
 app.use(express.json({ limit: '50mb' }) as RequestHandler)
 app.use(
 	express.urlencoded({
@@ -608,12 +626,6 @@ app.use(
 		},
 	}),
 )
-
-// Node.js CSRF protection middleware.
-// Requires either a session middleware or cookie-parser to be initialized first.
-const csrfProtection = csrf({
-	value: (req) => req.csrfToken(),
-})
 
 // ### SOCKET SETUP
 
@@ -876,90 +888,81 @@ app.get('/api/auth-enabled', apisLimiter, function (req, res) {
 })
 
 // api to authenticate user
-app.post(
-	'/api/authenticate',
-	loginLimiter,
-	// @ts-expect-error types not matching
-	csrfProtection,
-	async function (req, res) {
-		const token = req.body.token
-		let user: User
+app.post('/api/authenticate', loginLimiter, async function (req, res) {
+	const token = req.body.token
+	let user: User
 
-		try {
-			// token auth, mostly used to restore sessions when user refresh the page
-			if (token) {
-				const decoded = await verifyJWT(token, sessionSecret)
+	try {
+		// token auth, mostly used to restore sessions when user refresh the page
+		if (token) {
+			const decoded = await verifyJWT(token, sessionSecret)
 
-				// Successfully authenticated, token is valid and the user _id of its content
-				// is the same of the current session
-				const users = jsonStore.get(store.users) as User[]
+			// Successfully authenticated, token is valid and the user _id of its content
+			// is the same of the current session
+			const users = jsonStore.get(store.users) as User[]
 
-				user = users.find((u) => u.username === decoded.username)
-			} else {
-				// credentials auth
-				const users = jsonStore.get(store.users) as User[]
+			user = users.find((u) => u.username === decoded.username)
+		} else {
+			// credentials auth
+			const users = jsonStore.get(store.users) as User[]
 
-				const username = req.body.username
-				const password = req.body.password
+			const username = req.body.username
+			const password = req.body.password
 
-				user = users.find((u) => u.username === username)
+			user = users.find((u) => u.username === username)
 
-				if (
-					user &&
-					!(await utils.verifyPsw(password, user.passwordHash))
-				) {
-					user = null
-				}
+			if (user && !(await utils.verifyPsw(password, user.passwordHash))) {
+				user = null
 			}
+		}
 
-			const result = {
-				success: !!user,
-				code: undefined,
-				message: '',
-				user: undefined,
-			}
+		const result = {
+			success: !!user,
+			code: undefined,
+			message: '',
+			user: undefined,
+		}
 
-			if (result.success) {
-				// don't edit the original user object, remove the password from jwt payload
-				const userData: User = Object.assign({}, user)
-				delete userData.passwordHash
+		if (result.success) {
+			// don't edit the original user object, remove the password from jwt payload
+			const userData: User = Object.assign({}, user)
+			delete userData.passwordHash
 
-				const token = jwt.sign(userData, sessionSecret, {
-					expiresIn: '1d',
-				})
-				userData.token = token
-				req.session.user = userData
-				result.user = userData
-				loginLimiter.resetKey(req.ip)
-				logger.info(
-					`User ${user.username} logged in successfully from ${req.ip}`,
-				)
-			} else {
-				result.code = 3
-				result.message = RESPONSE_CODES.GENERAL_ERROR
-				logger.error(
-					`User ${
-						user?.username || req.body.username
-					} failed to login from ${req.ip}: wrong credentials`,
-				)
-			}
-
-			res.json(result)
-		} catch (error) {
-			res.json({
-				success: false,
-				message: 'Authentication failed',
-				code: 3,
+			const token = jwt.sign(userData, sessionSecret, {
+				expiresIn: '1d',
 			})
-
+			userData.token = token
+			req.session.user = userData
+			result.user = userData
+			loginLimiter.resetKey(req.ip)
+			logger.info(
+				`User ${user.username} logged in successfully from ${req.ip}`,
+			)
+		} else {
+			result.code = 3
+			result.message = RESPONSE_CODES.GENERAL_ERROR
 			logger.error(
 				`User ${
 					user?.username || req.body.username
-				} failed to login from ${req.ip}: ${error.message}`,
+				} failed to login from ${req.ip}: wrong credentials`,
 			)
 		}
-	},
-)
+
+		res.json(result)
+	} catch (error) {
+		res.json({
+			success: false,
+			message: 'Authentication failed',
+			code: 3,
+		})
+
+		logger.error(
+			`User ${
+				user?.username || req.body.username
+			} failed to login from ${req.ip}: ${error.message}`,
+		)
+	}
+})
 
 // logout the user
 app.get('/api/logout', apisLimiter, isAuthenticated, function (req, res) {
@@ -976,8 +979,6 @@ app.get('/api/logout', apisLimiter, isAuthenticated, function (req, res) {
 app.put(
 	'/api/password',
 	apisLimiter,
-	// @ts-expect-error types not matching
-	csrfProtection,
 	isAuthenticated,
 	async function (req, res) {
 		try {
@@ -1069,66 +1070,83 @@ app.get('/version', apisLimiter, function (req, res) {
 })
 
 // get settings
+app.get('/api/settings', apisLimiter, isAuthenticated, function (req, res) {
+	const allSensors = getAllSensors()
+	const namedScaleGroups = getAllNamedScaleGroups()
+
+	const scales: ZwaveConfig['scales'] = []
+
+	for (const group of namedScaleGroups) {
+		for (const scale of Object.values(group.scales)) {
+			scales.push({
+				key: group.name,
+				sensor: group.name,
+				unit: scale.unit,
+				label: scale.label,
+				description: scale.description,
+			})
+		}
+	}
+
+	for (const sensor of allSensors) {
+		for (const scale of Object.values(sensor.scales)) {
+			scales.push({
+				key: sensor.key,
+				sensor: sensor.label,
+				label: scale.label,
+				unit: scale.unit,
+				description: scale.description,
+			})
+		}
+	}
+
+	const settings = jsonStore.get(store.settings)
+
+	const managedExternally: string[] = []
+	if (process.env.ZWAVE_PORT) {
+		managedExternally.push('zwave.port')
+		managedExternally.push('zwave.enabled')
+	}
+	// Add paths from external settings file
+	managedExternally.push(...getExternallyManagedPaths())
+
+	const data = {
+		success: true,
+		settings,
+		devices: gw?.zwave?.devices ?? {},
+		scales: scales,
+		sslDisabled: sslDisabled(),
+		managedExternally,
+		tz: process.env.TZ,
+		locale: process.env.LOCALE,
+		deprecationWarning: process.env.TAG_NAME === 'zwavejs2mqtt',
+	}
+
+	res.json(data)
+})
+
+// get serial ports
 app.get(
-	'/api/settings',
+	'/api/serial-ports',
 	apisLimiter,
 	isAuthenticated,
 	async function (req, res) {
-		const allSensors = getAllSensors()
-		const namedScaleGroups = getAllNamedScaleGroups()
+		let serial_ports = []
 
-		const scales: ZwaveConfig['scales'] = []
-
-		for (const group of namedScaleGroups) {
-			for (const scale of Object.values(group.scales)) {
-				scales.push({
-					key: group.name,
-					sensor: group.name,
-					unit: scale.unit,
-					label: scale.label,
-					description: scale.description,
-				})
-			}
-		}
-
-		for (const sensor of allSensors) {
-			for (const scale of Object.values(sensor.scales)) {
-				scales.push({
-					key: sensor.key,
-					sensor: sensor.label,
-					label: scale.label,
-					unit: scale.unit,
-					description: scale.description,
-				})
-			}
-		}
-
-		const settings = jsonStore.get(store.settings)
-
-		const data = {
-			success: true,
-			settings,
-			devices: gw?.zwave?.devices ?? {},
-			serial_ports: [],
-			scales: scales,
-			sslDisabled: sslDisabled(),
-			tz: process.env.TZ,
-			locale: process.env.LOCALE,
-			deprecationWarning: process.env.TAG_NAME === 'zwavejs2mqtt',
-		}
-
-		if (process.platform !== 'sunos') {
+		// Only enumerate serial ports if ZWAVE_PORT is not set via env var
+		if (process.platform !== 'sunos' && !process.env.ZWAVE_PORT) {
 			try {
-				data.serial_ports = await Driver.enumerateSerialPorts({
+				serial_ports = await Driver.enumerateSerialPorts({
 					local: true,
 					remote: true,
 				})
 			} catch (error) {
 				logger.error(error)
-				data.serial_ports = []
+				return res.json({ success: false, serial_ports })
 			}
-			res.json(data)
-		} else res.json(data)
+		}
+
+		res.json({ success: true, serial_ports })
 	},
 )
 

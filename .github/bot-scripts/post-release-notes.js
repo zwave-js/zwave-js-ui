@@ -55,21 +55,17 @@ async function main(param) {
         console.log(releaseNotes);
 
         // Discord webhook limits:
-        // - content field: 2000 characters
         // - embed description: 4096 characters
         // - total embeds: 10 per message
-        const MAX_CONTENT_LENGTH = 2000;
         const MAX_EMBED_LENGTH = 4096;
 
         let payload;
 
-        if (releaseNotes.length <= MAX_CONTENT_LENGTH) {
-            // Short message - use content field directly
-            payload = { content: releaseNotes };
-        } else if (releaseNotes.length <= MAX_EMBED_LENGTH) {
-            // Medium message - use embed with description
+        if (releaseNotes.length <= MAX_EMBED_LENGTH) {
+            // Single embed - use embed with description
             payload = {
                 embeds: [{
+                    title: 'Release Notes',
                     description: releaseNotes,
                     color: 0x0099ff
                 }]
@@ -111,16 +107,11 @@ async function main(param) {
             }
 
             // Discord allows up to 10 embeds per message
-            const embeds = chunks.slice(0, 10).map((chunk, index) => {
-                const embed = {
-                    description: chunk,
-                    color: 0x0099ff
-                };
-                if (index === 0) {
-                    embed.title = 'Release Notes';
-                }
-                return embed;
-            });
+            const embeds = chunks.slice(0, 10).map((chunk, index) => ({
+                title: index === 0 ? 'Release Notes' : undefined,
+                description: chunk,
+                color: 0x0099ff
+            }));
 
             payload = { embeds };
 
