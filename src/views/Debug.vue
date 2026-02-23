@@ -58,6 +58,7 @@ import { socketEvents } from '@server/lib/SocketEvents'
 import { AnsiUp } from 'ansi_up'
 import { mapActions } from 'pinia'
 import useBaseStore from '../stores/base.js'
+import InstancesMixin from '../mixins/InstancesMixin.js'
 import { isPopupWindow, openInWindow } from '../lib/utils'
 import { nextTick } from 'vue'
 
@@ -67,6 +68,7 @@ const MAX_DEBUG_LINES = 500
 
 export default {
 	name: 'Debug',
+	mixins: [InstancesMixin],
 	props: {
 		socket: Object,
 	},
@@ -185,12 +187,7 @@ export default {
 			this.hideTopbar = true
 		}
 
-		this.socket.emit('SUBSCRIBE', { channels: ['debug'] })
-		// Re-subscribe on reconnect
-		this._onConnect = () => {
-			this.socket.emit('SUBSCRIBE', { channels: ['debug'] })
-		}
-		this.socket.on('connect', this._onConnect)
+		this.subscribeChannels(['debug'])
 
 		this.socket.on(socketEvents.debug, (data) => {
 			if (this.debugActive) {
@@ -217,8 +214,7 @@ export default {
 		if (this.socket) {
 			// unbind events
 			this.socket.off(socketEvents.debug)
-			this.socket.off('connect', this._onConnect)
-			this.socket.emit('UNSUBSCRIBE', { channels: ['debug'] })
+			this.unsubscribeChannels(['debug'])
 		}
 	},
 }

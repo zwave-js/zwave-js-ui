@@ -1328,6 +1328,7 @@ export default {
 						'values',
 						'statistics',
 						'firmware',
+						'zniffer',
 					],
 				})
 

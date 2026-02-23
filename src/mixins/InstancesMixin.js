@@ -13,20 +13,25 @@ const log = logger.get('InstancesMixin')
 // last component that needed it has unmounted.
 const channelRefCounts = new Map() // channel → count
 let _managedSocket = null
+let _reconnectHandler = null
 
 function getChannelManager(socket) {
 	// If the socket instance changed (e.g. after logout), reset state
 	if (_managedSocket !== socket) {
+		if (_managedSocket && _reconnectHandler) {
+			_managedSocket.off('connect', _reconnectHandler)
+		}
 		channelRefCounts.clear()
 		_managedSocket = socket
-		socket.on('connect', () => {
+		_reconnectHandler = () => {
 			const active = [...channelRefCounts.entries()]
 				.filter(([, n]) => n > 0)
 				.map(([c]) => c)
 			if (active.length > 0) {
 				socket.emit('SUBSCRIBE', { channels: active })
 			}
-		})
+		}
+		socket.on('connect', _reconnectHandler)
 	}
 
 	return {
@@ -94,10 +99,9 @@ export default {
 		},
 		subscribeChannels(channels) {
 			getChannelManager(this.socket).subscribe(channels)
-			this._subscribedChannels = [
-				...(this._subscribedChannels || []),
-				...channels,
-			]
+			const existing = this._subscribedChannels || []
+			const newChannels = channels.filter((c) => !existing.includes(c))
+			this._subscribedChannels = [...existing, ...newChannels]
 		},
 		unsubscribeChannels(channels) {
 			getChannelManager(this.socket).unsubscribe(channels)

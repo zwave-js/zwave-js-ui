@@ -2344,7 +2344,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		zwaveOptions.logConfig.transports = [logTransport]
 
 		logTransport.stream.on('data', (data) => {
-			this.socket.emit(socketEvents.debug, data.message.toString())
+			this.socket
+				.to('debug')
+				.emit(socketEvents.debug, data.message.toString())
 		})
 
 		try {
