@@ -2,6 +2,16 @@
 
 To configure Z-Wave JS UI, you must access it via your web browser at <http://localhost:8091> on the machine on which it was run, or at the IP address of your remote installation on port 8091.
 
+## UI
+
+These settings control the appearance and behavior of the Z-Wave JS UI interface:
+
+- **Color Scheme**: Select the color theme for the UI
+- **Use tabs for navigation**: Enable this to use tabs in the top bar instead of a left menu for navigation (useful when integrated in Home Assistant)
+- **Streamer mode**: Enable this to hide sensitive information from the UI
+- **Compact view by default**: Enable this to use compact view by default in the Control Panel (can be toggled with the Compact button)
+- **Browser title**: Customize the browser tab title (useful when managing multiple hubs)
+
 ## General
 
 - **Auth**: Enable this to password protect your application. Default credentials are:
@@ -74,6 +84,8 @@ NVM:
   - **S2 Unauthenticated**: Like S2 Authenticated, but without verification that the correct device is included (skip DSK verification step)
   - **S2 Authenticated**: Security systems, sensors, lighting, etc.
   - **S2 AccessControl** (highest): Used for Door locks, garage doors, etc.
+  - **S2 Authenticated (Long Range)**: Long Range S2 Authenticated key
+  - **S2 Access Control (Long Range)**: Long Range S2 Access Control key
 
 > [!NOTE]
 >
@@ -84,7 +96,6 @@ NVM:
 > - **Backup these keys!**
 
 - **Enable statistics**: Please enable usage statistics! More info [here](/usage_stats)
-- **Soft reset**: Soft Reset is required after some commands like changing the RF region or restoring an NVM backup. Because it may cause problems in Docker containers with certain Z-Wave sticks, this functionality may be disabled.
 - **Preferred scales**: Choose preferred sensor scales
 - **Log enabled**: Enable logging for Z-Wave JS websocket server
 - **Log level**: Set the log level (Error, Warn, Info, Verbose, Debug, Silly)
@@ -92,6 +103,24 @@ NVM:
 - **Log nodes**: Filter Z-Wave JS logs to log just this nodes
 - **Inclusion/Exclusion timeout**: Seconds to wait before automatically stopping inclusion/exclusion
 - **Node events queue**: Maximum number of events to queue in memory for each node.
+- **Max log files**: Maximum number of Z-Wave JS log files to keep
+- **Response timeout**: How long to wait for a controller response in milliseconds. Leave blank to use the default (10000ms)
+- **Send to sleep timeout**: How long to wait without pending commands before sending a node back to sleep in milliseconds. Leave blank to use the default (250ms)
+- **Increase node report timeout**: This can help with the inclusion or interview of some devices, but can also slow down communication
+- **Soft reset**: Soft Reset is required after some commands like changing the RF region or restoring an NVM backup. Because it may cause problems in Docker containers with certain Z-Wave sticks, this functionality may be disabled
+- **Controller recovery**: When disabled, commands will simply fail when the controller is unresponsive and nodes may get randomly marked as dead until the controller recovers on its own
+- **Watchdog**: Controllers of the 700 series and newer have a hardware watchdog that can be enabled to automatically reset the chip in case it becomes unresponsive
+- **Bootloader only**: Enable this to start the driver in bootloader-only mode, useful to recover sticks when a firmware upgrade fails. When enabled, the stick will NOT be able to communicate with the network
+- **Disable optimistic value updates**: Some SET-type commands optimistically update the current value to match the target value when the device acknowledges the command. While this generally makes UIs feel more responsive, it is not necessary for devices which report their status on their own and can lead to confusing behavior when dealing with slow devices like blinds
+- **Disable automatic firmware update checks**: When enabled, the application will not automatically check for firmware updates in the background. You can still manually check for updates from the node's firmware update tab
+
+### RF Configuration
+
+- **Automatic Power Level**: When enabled, both normal and Long Range power levels will be automatically set to legal limits based on the RF region whenever the region is changed. Only supported for Europe and USA regions
+- **Normal Power Level**: Power level in dBm (range: -10 to +20, depending on the Z-Wave chip). Applied on every startup if the current setting differs. Not all controllers support changing the power level
+- **Measured output power at 0 dBm**: Measured output power at 0 dBm in dBm (range: -10 to +10). Applied on every startup if the current setting differs
+- **Maximum LR Power Level**: The maximum power level to be used by the dynamic power algorithm of Z-Wave Long Range. Applied on every startup if the current setting differs. Only LR-capable controllers support this setting
+
 - **Hidden settings**: Advanced settings not visible to the user interface, you can edit these by setting in the `settings.json` file you fins in store directory
   - `zwave.options` overrides options passed to the Z-Wave JS Driver constructor [ZWaveOptions](https://zwave-js.github.io/node-zwave-js/#/api/driver?id=zwaveoptions)
 
@@ -267,6 +296,20 @@ Once finished press `SAVE` and the gateway will start a Z-Wave Network Scan.
 ## Backing Up Settings
 
 Settings, scenes and the Z-Wave configuration are stored in `JSON` files under the project `store` folder. It is a good idea to backup those files, which can be done by backing up the `store` or using the **import/export** buttons.
+
+## Zniffer
+
+The Zniffer feature allows you to use a second Z-Wave controller as a packet sniffer for debugging and analysis:
+
+- **Enabled**: Enable the Zniffer packet capture
+- **Serial port**: The serial port of the Zniffer controller (must be a separate controller from the main one)
+- **Security Keys**: Security keys for decrypting captured packets. Same format as the main Z-Wave security keys (S0_Legacy, S2_Unauthenticated, S2_Authenticated, S2_AccessControl) and Long Range keys (S2_Authenticated, S2_AccessControl)
+- **Convert RSSI**: Convert RSSI values to dBm
+- **Default Frequency**: Default frequency for the Zniffer
+- **Log enabled**: Enable logging for the Zniffer
+- **Log level**: Set the Zniffer log level
+- **Log to file**: Enable this to store Zniffer logs to a file
+- **Log nodes filter**: Choose which nodes to log. Leave empty to log all nodes
 
 ## Embedding Z-Wave JS UI
 
