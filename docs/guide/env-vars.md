@@ -37,3 +37,5 @@ This is the list of the supported environment variables:
 - `TZ`: Set this env var to the timezone you want to use on UI. Default to browser TZ.
 - `LOCALE`: Set this env var to the locale you want to use on UI. Default to browser locale.
 - `DISCOVERY_DISABLE_CC_CONFIGURATION`: Set this env var to `'true'` to disable Configuration CC MQTT Discovery.
+- `ZWAVE_PORT`: Forces a specific serial port for the Z-Wave stick, overriding the port configured in the UI. When set, Z-Wave is also automatically enabled.
+- `ZWAVE_EXTERNAL_SETTINGS`: Absolute path to an external JSON file containing Z-Wave settings overrides. Useful for managing settings outside the application store.

@@ -53,7 +53,7 @@ If you are getting this error on startup:
 
 You have 2 options:
 
-1. Upgrade to Raspbian __Bullseye__ (Reccomended, check guide [here](https://www.tomshardware.com/how-to/upgrade-raspberry-pi-os-to-bullseye-from-buster)). You can find out your distribution by executing `grep "PRETTY_NAME" /etc/os-release`)
+1. Upgrade to the latest Raspberry Pi OS release (Reccomended). The current stable release is __Bookworm__. You can find out your distribution by executing `grep "PRETTY_NAME" /etc/os-release`. If you are still on Buster, you can follow [this guide](https://www.tomshardware.com/how-to/upgrade-raspberry-pi-os-to-bullseye-from-buster) to upgrade to Bullseye first, then upgrade to Bookworm.
 2. If you are running Raspbian __Buster__  you need to install `libseccomp2`, this can be done by executing the following commands:
 
 ```bash
