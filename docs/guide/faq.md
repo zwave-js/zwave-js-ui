@@ -15,11 +15,3 @@
 > A: How do I backup my configuration?
 
 **B: Go to Settings -> General -> Backup & Restore and click the backup button. This creates a zip file containing all your settings, network keys, and node configurations. You can also simply back up your entire `store` directory. It is strongly recommended to keep a backup of your security keys separately.**
-
-> A: Where are my security keys stored and how do I manage them?
-
-**B: Security keys are stored in the `store/settings.json` file. You can view and edit them in the UI under Settings -> Z-Wave -> Security Keys. You should always have both S0 and S2 keys defined, even if you are not yet using S2 devices. Make sure to back up these keys — if they are lost, secure devices will need to be re-included.**
-
-> A: How do I use plugins with Docker?
-
-**B: Create a `plugins` directory inside your store volume, clone or install the plugin there, and then enter the path as it appears inside the container (e.g. `/usr/src/app/store/plugins/my-plugin`) in Settings -> General -> Plugins. See the [plugins guide](guide/plugins.md) for more details.**
