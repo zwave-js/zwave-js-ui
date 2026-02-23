@@ -1412,7 +1412,7 @@ export default {
 				doneStep.text = `Node ${
 					this.nodeFound.id
 				} added with security ${this.nodeFound.security || 'None'}`
-				doneStep.error = result.lowSecurityReason
+				doneStep.error = result && result.lowSecurityReason
 					? this.getSecurityBootstrapError(result.lowSecurityReason)
 					: false
 				doneStep.success = !(result && result.lowSecurity)
