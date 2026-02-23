@@ -118,15 +118,32 @@
 											hint="You can select a plugin from the list or write the path to your custom plugin and press enter"
 											persistent-hint
 											label="Plugins"
-											:items="[
-												'@varet/zj2m-prom-exporter',
-												'@kvaster/zwavejs-prom',
-											]"
+											:items="pluginRegistry"
+											item-title="label"
+											item-value="name"
 											multiple
 											chips
 											closable-chips
 											v-model="newGateway.plugins"
 										></v-combobox>
+									</v-col>
+									<v-col
+										cols="12"
+										sm="6"
+										md="4"
+										class="d-flex align-center"
+									>
+										<v-btn
+											color="primary"
+											:loading="updatingPlugins"
+											:disabled="
+												!newGateway.plugins ||
+												newGateway.plugins.length === 0
+											"
+											@click="updatePlugins"
+										>
+											Update Plugins
+										</v-btn>
 									</v-col>
 									<v-col cols="12" sm="6" md="4">
 										<v-switch
@@ -2374,6 +2391,7 @@ export default {
 			'serial_ports',
 			'scales',
 			'ui',
+			'pluginRegistry',
 			'isSettingManagedExternally',
 		]),
 		allClassicSecurityKeysManagedExternally() {
@@ -2448,6 +2466,7 @@ export default {
 			dialogValue: false,
 			sslDisabled: false,
 			saving: false,
+			updatingPlugins: false,
 			loadingSerialPorts: false,
 			serialPortsFetched: false,
 			prevUi: null,
@@ -2596,6 +2615,22 @@ export default {
 			'init',
 			'showSnackbar',
 		]),
+		async updatePlugins() {
+			this.updatingPlugins = true
+			try {
+				const response = await ConfigApis.updatePlugins()
+				this.showSnackbar(
+					response.message || 'Plugins updated',
+					response.success ? 'success' : 'error',
+				)
+			} catch (error) {
+				this.showSnackbar(
+					error.message || 'Failed to update plugins',
+					'error',
+				)
+			}
+			this.updatingPlugins = false
+		},
 		copyKeysZniffer() {
 			this.newZniffer.securityKeys = copy(this.newZwave.securityKeys)
 			this.newZniffer.securityKeysLongRange = copy(

@@ -43,6 +43,8 @@ import { createPlugin } from './lib/CustomPlugin.ts'
 import { inboundEvents, socketEvents } from './lib/SocketEvents.ts'
 import * as utils from './lib/utils.ts'
 import backupManager from './lib/BackupManager.ts'
+import pluginManager from './lib/PluginManager.ts'
+import { pluginRegistry } from './lib/PluginRegistry.ts'
 import {
 	getExternallyManagedPaths,
 	loadExternalSettings,
@@ -420,10 +422,16 @@ async function startGateway(settings: Settings) {
 	const pluginsConfig = settings.gateway?.plugins ?? null
 	pluginsRouter = express.Router()
 
+	await pluginManager.init()
+
 	// load custom plugins
 	if (pluginsConfig && Array.isArray(pluginsConfig)) {
 		for (const plugin of pluginsConfig) {
 			try {
+				// Auto-install npm plugins on-demand
+				await pluginManager.install(plugin)
+
+				const resolvedPath = pluginManager.resolvePlugin(plugin)
 				const pluginName = path.basename(plugin)
 				const pluginsContext = {
 					zwave,
@@ -431,7 +439,7 @@ async function startGateway(settings: Settings) {
 					app: pluginsRouter,
 					logger: loggers.module(pluginName),
 				}
-				const constructor = (await import(plugin))
+				const constructor = (await import(resolvedPath))
 					.default as PluginConstructor
 				const instance = createPlugin(
 					constructor,
@@ -1113,6 +1121,7 @@ app.get('/api/settings', apisLimiter, isAuthenticated, function (req, res) {
 	const data = {
 		success: true,
 		settings,
+		pluginRegistry,
 		devices: gw?.zwave?.devices ?? {},
 		scales: scales,
 		sslDisabled: sslDisabled(),
@@ -1366,6 +1375,54 @@ app.post(
 		} catch (error) {
 			restarting = false
 			logger.error(error)
+			res.json({ success: false, message: error.message })
+		}
+	},
+)
+
+// update plugins
+app.post(
+	'/api/plugins/update',
+	apisLimiter,
+	isAuthenticated,
+	async function (req, res) {
+		try {
+			const { name } = req.body || {}
+			await pluginManager.update(name || undefined)
+			res.json({
+				success: true,
+				message: name
+					? `Plugin ${name} updated successfully`
+					: 'All plugins updated successfully',
+			})
+		} catch (error) {
+			logger.error('Plugin update failed', error)
+			res.json({ success: false, message: error.message })
+		}
+	},
+)
+
+// uninstall plugin
+app.post(
+	'/api/plugins/uninstall',
+	apisLimiter,
+	isAuthenticated,
+	async function (req, res) {
+		try {
+			const { name } = req.body || {}
+			if (!name) {
+				return res.json({
+					success: false,
+					message: 'Plugin name is required',
+				})
+			}
+			await pluginManager.uninstall(name)
+			res.json({
+				success: true,
+				message: `Plugin ${name} uninstalled successfully`,
+			})
+		} catch (error) {
+			logger.error('Plugin uninstall failed', error)
 			res.json({ success: false, message: error.message })
 		}
 	},

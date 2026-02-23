@@ -212,4 +212,13 @@ export default {
 		const response = await request.post('/debug/cancel')
 		return response.data
 	},
+	// ---- PLUGINS -----
+	async updatePlugins(name) {
+		const response = await request.post('/plugins/update', { name })
+		return response.data
+	},
+	async uninstallPlugin(name) {
+		const response = await request.post('/plugins/uninstall', { name })
+		return response.data
+	},
 }

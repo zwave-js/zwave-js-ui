@@ -11,10 +11,16 @@ A plugin is loaded using ES dynamic `import()` and must export a **default class
 - `app`: Express router (scoped to the plugin)
 - `logger`: A logger instance to log things in console/file based on logger general settings
 
-To add a plugin, go to the UI **Settings -> General -> Plugins** and enter either:
+To add a plugin, go to the UI **Settings -> General -> Plugins** and either:
 
-- An **absolute path** to a local plugin directory (e.g. `/usr/src/app/store/plugins/my-plugin`)
-- A **package name** if the plugin is installed as an npm package
+- Select an **npm plugin** from the dropdown (it will be auto-installed on save)
+- Type an **absolute path** to a local plugin directory (e.g. `/usr/src/app/store/plugins/my-plugin`) and press enter
+
+When you save settings, npm plugins are automatically installed into the `store/.plugins` directory. This keeps plugins separate from the app's own `node_modules`.
+
+### Updating plugins
+
+Click the **Update Plugins** button next to the plugin selector in Settings to update all installed npm plugins to their latest versions.
 
 ## Plugin Interface
 
@@ -66,6 +72,14 @@ export default class MyPlugin {
 
 When running Z-Wave JS UI in Docker, the working directory is `/usr/src/app`. Plugins stored under the `store` directory persist across container restarts.
 
+### Using npm plugins
+
+npm plugins are automatically installed into `store/.plugins` when selected in the UI and saved. No manual installation is needed. You can also pre-install plugins at build time using the `plugins` Docker build argument:
+
+```bash
+docker build --build-arg plugins="@kvaster/zwavejs-prom @ongit/zwavejsui-prom-exporter" -f docker/Dockerfile -t zwavejs/zwave-js-ui .
+```
+
 ### Using a local plugin
 
 1. Create a `plugins` directory inside your store volume:
@@ -107,5 +121,6 @@ Then reference the plugin path as `/usr/src/app/plugins/my-plugin` in the settin
 
 Here is a list of currently available plugins:
 
-- [Prometheus metrics plugin](https://github.com/kvaster/zwavejs-prom)
+- [`@ongit/zwavejsui-prom-exporter`](https://www.npmjs.com/package/@ongit/zwavejsui-prom-exporter) - Prometheus metrics exporter for Z-Wave JS UI
+- [`@kvaster/zwavejs-prom`](https://github.com/kvaster/zwavejs-prom) - Prometheus metrics for Z-Wave JS
 - [Telegram alert plugin](https://github.com/kvaster/zwavejs-alert)
