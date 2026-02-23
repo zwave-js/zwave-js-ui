@@ -1299,8 +1299,12 @@ export default {
 			// convert node values in array
 			this.initNodes(data.nodes)
 
-			// Handle debug capture state persistence
-			this.debugCaptureActive = data.debugCaptureActive
+			// Handle debug capture state persistence — only update when
+			// explicitly provided (server-pushed inits from ZwaveClient
+			// don't include this field, so avoid resetting it to undefined)
+			if (data.debugCaptureActive !== undefined) {
+				this.debugCaptureActive = data.debugCaptureActive
+			}
 		},
 		async startSocket() {
 			if (
