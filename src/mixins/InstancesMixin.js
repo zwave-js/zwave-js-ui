@@ -7,6 +7,57 @@ import { mapState } from 'pinia'
 
 const log = logger.get('InstancesMixin')
 
+// Module-level reference counting for socket channel subscriptions.
+// Maps channel name → number of active component subscribers.
+// This ensures a channel is only unsubscribed from the server when the
+// last component that needed it has unmounted.
+const channelRefCounts = new Map() // channel → count
+let _managedSocket = null
+
+function getChannelManager(socket) {
+	// If the socket instance changed (e.g. after logout), reset state
+	if (_managedSocket !== socket) {
+		channelRefCounts.clear()
+		_managedSocket = socket
+		socket.on('connect', () => {
+			const active = [...channelRefCounts.entries()]
+				.filter(([, n]) => n > 0)
+				.map(([c]) => c)
+			if (active.length > 0) {
+				socket.emit('SUBSCRIBE', { channels: active })
+			}
+		})
+	}
+
+	return {
+		subscribe(channels) {
+			const toSubscribe = []
+			// Subscribe only if the channel was not subscribed before
+			for (const ch of channels) {
+				const prev = channelRefCounts.get(ch) ?? 0
+				channelRefCounts.set(ch, prev + 1)
+				if (prev === 0) toSubscribe.push(ch)
+			}
+			if (toSubscribe.length > 0) {
+				socket.emit('SUBSCRIBE', { channels: toSubscribe })
+			}
+		},
+		unsubscribe(channels) {
+			const toUnsubscribe = []
+			// Unsubscribe from channels that have no more subscribers
+			for (const ch of channels) {
+				const prev = channelRefCounts.get(ch) ?? 0
+				const next = Math.max(0, prev - 1)
+				channelRefCounts.set(ch, next)
+				if (next === 0) toUnsubscribe.push(ch)
+			}
+			if (toUnsubscribe.length > 0) {
+				socket.emit('UNSUBSCRIBE', { channels: toUnsubscribe })
+			}
+		},
+	}
+}
+
 export default {
 	data() {
 		return {
@@ -34,25 +85,22 @@ export default {
 
 			this.bindedSocketEvents = {}
 
-			if (
-				this._subscribedChannels &&
-				this._subscribedChannels.length > 0
-			) {
-				this.socket.emit('UNSUBSCRIBE', {
-					channels: this._subscribedChannels,
-				})
+			if (this._subscribedChannels?.length > 0) {
+				getChannelManager(this.socket).unsubscribe(
+					this._subscribedChannels,
+				)
 				this._subscribedChannels = []
 			}
 		},
 		subscribeChannels(channels) {
-			this.socket.emit('SUBSCRIBE', { channels })
+			getChannelManager(this.socket).subscribe(channels)
 			this._subscribedChannels = [
 				...(this._subscribedChannels || []),
 				...channels,
 			]
 		},
 		unsubscribeChannels(channels) {
-			this.socket.emit('UNSUBSCRIBE', { channels })
+			getChannelManager(this.socket).unsubscribe(channels)
 			this._subscribedChannels = (this._subscribedChannels || []).filter(
 				(c) => !channels.includes(c),
 			)

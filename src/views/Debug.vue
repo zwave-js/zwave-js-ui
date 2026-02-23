@@ -186,6 +186,11 @@ export default {
 		}
 
 		this.socket.emit('SUBSCRIBE', { channels: ['debug'] })
+		// Re-subscribe on reconnect
+		this._onConnect = () => {
+			this.socket.emit('SUBSCRIBE', { channels: ['debug'] })
+		}
+		this.socket.on('connect', this._onConnect)
 
 		this.socket.on(socketEvents.debug, (data) => {
 			if (this.debugActive) {
@@ -212,6 +217,7 @@ export default {
 		if (this.socket) {
 			// unbind events
 			this.socket.off(socketEvents.debug)
+			this.socket.off('connect', this._onConnect)
 			this.socket.emit('UNSUBSCRIBE', { channels: ['debug'] })
 		}
 	},
