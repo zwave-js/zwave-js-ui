@@ -1,5 +1,7 @@
 <template>
 	<v-app>
+		<!-- Skip to main content link for keyboard accessibility -->
+		<a href="#main-content" class="skip-link">Skip to main content</a>
 		<div
 			v-if="$route.meta.requiresAuth && auth !== undefined && !hideTopbar"
 		>
@@ -178,6 +180,7 @@
 						icon="history"
 						color="primary"
 						density="compact"
+						aria-label="Check for updates"
 						@click="showUpdateDialog"
 					>
 					</v-btn>
@@ -187,7 +190,12 @@
 				<!-- Show more button on smaller screens -->
 				<v-menu v-if="$vuetify.display.xs" location="bottom left">
 					<template #activator="{ props }">
-						<v-btn size="small" v-bind="props" icon>
+						<v-btn
+							size="small"
+							v-bind="props"
+							icon
+							aria-label="More options"
+						>
 							<v-icon size="large">more_vert</v-icon>
 						</v-btn>
 					</template>
@@ -238,7 +246,7 @@
 				</span>
 			</v-app-bar>
 		</div>
-		<main style="height: 100%">
+		<main id="main-content" style="height: 100%">
 			<v-main style="height: 100%">
 				<template v-if="auth !== undefined">
 					<router-view v-if="inited || !skeletons" :socket="socket" />
@@ -369,6 +377,7 @@ code {
 <script>
 // https://github.com/socketio/socket.io-client/blob/master/docs/API.md
 import io from 'socket.io-client'
+import 'vuetify-sonner/style.css'
 import { toast, VSonner } from 'vuetify-sonner'
 
 import ConfigApis from '@/apis/ConfigApis'
@@ -629,10 +638,10 @@ export default {
 	},
 	methods: {
 		async startDebugCapture() {
-			const confirmed = await this.confirm(
+			const result = await this.confirm(
 				'Start Debug Capture',
 				'<p>This wizard will help you collect a complete debug package.</p>' +
-					'<ul style="margin-left: 20px;">' +
+					'<ul>' +
 					'<li>After starting, reproduce the issue you want to debug</li>' +
 					"<li>Click the debug indicator in the top bar when you're done</li>" +
 					'</ul>',
@@ -641,16 +650,26 @@ export default {
 					confirmText: 'Start Capture',
 					cancelText: 'Cancel',
 					width: 500,
+					inputs: [
+						{
+							type: 'checkbox',
+							key: 'restartDriver',
+							label: 'Restart driver to capture startup logs',
+							hint: 'Enable this to capture logs from the driver startup process',
+							default: false,
+						},
+					],
 				},
 			)
 
-			if (!confirmed) {
+			if (Object.keys(result).length === 0) {
 				return
 			}
 
 			try {
-				// Start debug capture
-				await ConfigApis.startDebugCapture()
+				// Start debug capture with optional driver restart
+				const restartDriver = result.restartDriver || false
+				await ConfigApis.startDebugCapture(restartDriver)
 
 				this.showSnackbar('Debug capture started.', 'success')
 
@@ -1286,8 +1305,12 @@ export default {
 			// convert node values in array
 			this.initNodes(data.nodes)
 
-			// Handle debug capture state persistence
-			this.debugCaptureActive = data.debugCaptureActive
+			// Handle debug capture state persistence — only update when
+			// explicitly provided (server-pushed inits from ZwaveClient
+			// don't include this field, so avoid resetting it to undefined)
+			if (data.debugCaptureActive !== undefined) {
+				this.debugCaptureActive = data.debugCaptureActive
+			}
 		},
 		async startSocket() {
 			if (
@@ -1620,6 +1643,12 @@ export default {
 			const settings = useBaseStore().gateway
 
 			const versions = settings?.versions
+
+			// Skip GitHub API call if both features are disabled
+			if (!settings.notifyNewVersions && settings?.disableChangelog) {
+				return
+			}
+
 			// get changelog from github latest release
 			try {
 				const latest = await this.getRelease('zwave-js-ui', 'latest')
@@ -1860,12 +1889,35 @@ export default {
 </script>
 
 <style scoped>
+/* Skip link for keyboard accessibility */
+.skip-link {
+	position: absolute;
+	top: -40px;
+	left: 0;
+	background: #1976d2;
+	color: white;
+	padding: 8px 16px;
+	text-decoration: none;
+	z-index: 9999;
+	border-radius: 0 0 4px 0;
+}
+
+.skip-link:focus {
+	top: 0;
+}
+
 .v-tabs :deep(.smaller-min-width-tabs) {
 	min-width: 60px;
 }
 
 :deep(:where([data-sonner-toaster][data-y-position='top'])) {
-	top: 80px !important;
+	top: 70px !important;
 	right: 10px !important;
+}
+
+@media (max-width: 600px) {
+	:deep(:where([data-sonner-toaster][data-y-position='top'])) {
+		top: 10px !important;
+	}
 }
 </style>

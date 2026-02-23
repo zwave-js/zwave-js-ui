@@ -13,9 +13,11 @@
 				density="compact"
 				flat
 			>
-				<v-toolbar-title class="text-white">{{
-					title
-				}}</v-toolbar-title>
+				<v-toolbar-title
+					class="text-white"
+					style="margin-inline-start: 16px"
+					>{{ title }}</v-toolbar-title
+				>
 			</v-toolbar>
 			<v-card-text
 				v-show="!!message"
@@ -23,7 +25,7 @@
 				class="px-4 pt-4"
 			></v-card-text>
 			<v-card-text v-if="options.inputs" class="px-4">
-				<v-container grid-list-md>
+				<v-container grid-list-md class="pa-0">
 					<v-form
 						v-model="valid"
 						ref="form"
@@ -209,7 +211,7 @@
 					:rules="[validQR]"
 				></qr-reader>
 			</v-card-text>
-			<v-card-actions class="sticky-actions pt-0">
+			<v-card-actions class="sticky-actions pt-0 px-4">
 				<v-spacer></v-spacer>
 				<v-btn
 					v-if="!options.qrScan"
@@ -451,5 +453,23 @@ export default {
 	z-index: 3;
 	bottom: 0;
 	background-color: inherit;
+}
+
+/* Vuetify 3 global reset (`* { padding: 0; margin: 0 }`) strips default
+   browser spacing from HTML elements rendered via v-html in the message slot.
+   Restore sensible defaults for common block-level elements. */
+.v-card-text :deep(ul),
+.v-card-text :deep(ol) {
+	padding-inline-start: 24px;
+}
+
+.v-card-text :deep(h1),
+.v-card-text :deep(h2),
+.v-card-text :deep(h3),
+.v-card-text :deep(h4),
+.v-card-text :deep(h5),
+.v-card-text :deep(h6),
+.v-card-text :deep(p) {
+	margin-block: 0.5em;
 }
 </style>

@@ -25,11 +25,20 @@ export interface Group {
 	nodeIds: number[]
 }
 
+export interface UiConfig {
+	colorScheme?: string
+	navTabs?: boolean
+	compactMode?: boolean
+	streamerMode?: boolean
+	browserTitle?: string
+}
+
 export interface Settings {
 	mqtt?: MqttConfig
 	zwave?: ZwaveConfig
 	gateway?: GatewayConfig
 	zniffer?: ZnifferConfig
+	ui?: UiConfig
 }
 
 const store: Record<StoreKeys, StoreFile> = {

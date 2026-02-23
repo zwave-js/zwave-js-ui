@@ -1,5 +1,12 @@
 <template>
-	<v-fab :location="location" :color="color" app icon :size="size">
+	<v-fab
+		:location="location"
+		:color="color"
+		app
+		icon
+		:size="size"
+		:aria-label="_value ? 'Close menu' : 'Open menu'"
+	>
 		<v-icon color="white">{{ _value ? iconClose : iconOpen }}</v-icon>
 
 		<v-speed-dial
@@ -31,6 +38,7 @@
 							? 'x-small'
 							: undefined
 				"
+				:aria-label="item.tooltip"
 				@click.stop="item.action"
 			/>
 		</v-speed-dial>

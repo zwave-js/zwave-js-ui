@@ -19,6 +19,7 @@ const useBaseStore = defineStore('base', {
 		auth: undefined,
 		controllerId: undefined,
 		serial_ports: [],
+		managedExternally: [],
 		scales: [],
 		nodes: [],
 		nodesMap: new Map(),
@@ -153,6 +154,7 @@ const useBaseStore = defineStore('base', {
 			navTabs: settings.load('navTabs', false),
 			compactMode: settings.load('compact', false),
 			streamerMode: settings.load('streamerMode', false),
+			browserTitle: settings.load('browserTitle', 'Z-Wave JS UI'),
 		},
 		uiState: {
 			darkMode: colorSchemeToDarkMode(loadColorScheme(settings)),
@@ -164,6 +166,11 @@ const useBaseStore = defineStore('base', {
 		},
 		settings() {
 			return settings
+		},
+		isSettingManagedExternally() {
+			return (settingPath) => {
+				return this.managedExternally.includes(settingPath)
+			}
 		},
 	},
 	actions: {
@@ -522,6 +529,11 @@ const useBaseStore = defineStore('base', {
 				Object.assign(this.gateway, conf.gateway || {})
 				Object.assign(this.backup, conf.backup || {})
 				Object.assign(this.ui, conf.ui || {})
+
+				// Update browser title if set in settings
+				if (this.ui.browserTitle) {
+					document.title = this.ui.browserTitle
+				}
 			}
 		},
 		/**
@@ -603,9 +615,13 @@ const useBaseStore = defineStore('base', {
 
 				this.initSettings(data.settings)
 				this.initColorScheme()
-				this.initPorts(data.serial_ports)
+				// serial_ports loaded separately now
+				if (data.serial_ports) {
+					this.initPorts(data.serial_ports)
+				}
 				this.initScales(data.scales)
 				this.initDevices(data.devices)
+				this.managedExternally = data.managedExternally || []
 
 				this.inited = true
 			}
@@ -630,8 +646,12 @@ const useBaseStore = defineStore('base', {
 				'meta[name=msapplication-TileColor]',
 			)
 
-			metaThemeColor.setAttribute('content', value ? '#000' : '#fff')
-			metaThemeColor2.setAttribute('content', value ? '#000' : '#fff')
+			if (metaThemeColor) {
+				metaThemeColor.setAttribute('content', value ? '#000' : '#fff')
+			}
+			if (metaThemeColor2) {
+				metaThemeColor2.setAttribute('content', value ? '#000' : '#fff')
+			}
 		},
 		setNavTabs(value) {
 			settings.store('navTabs', value)
@@ -644,6 +664,12 @@ const useBaseStore = defineStore('base', {
 		setCompactMode(value) {
 			settings.store('compact', value)
 			this.ui.compactMode = value
+		},
+		setBrowserTitle(value) {
+			const title = value || 'Z-Wave JS UI'
+			settings.store('browserTitle', title)
+			this.ui.browserTitle = title
+			document.title = title
 		},
 		getPreference(key, defaultValue) {
 			return {

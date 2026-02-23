@@ -134,13 +134,30 @@
 		>
 			<tr>
 				<td :colspan="columns.length">
-					<v-btn @click="toggleGroup(item)" size="x-small" icon>
+					<v-btn
+						@click="toggleGroup(item)"
+						size="x-small"
+						icon
+						:aria-label="
+							isGroupOpen(item)
+								? 'Collapse group'
+								: 'Expand group'
+						"
+					>
 						<v-icon>{{
 							isGroupOpen(item) ? 'remove' : 'add'
 						}}</v-icon>
 					</v-btn>
 					<span>{{ groupValue(item) }}</span>
-					<v-btn size="x-small" icon @click="toggleGroup(item)"
+					<v-btn
+						size="x-small"
+						icon
+						:aria-label="
+							isGroupOpen(item)
+								? 'Collapse group'
+								: 'Expand group'
+						"
+						@click="toggleGroup(item)"
 						><v-icon>close</v-icon></v-btn
 					>
 				</td>

@@ -11,7 +11,12 @@
 			:disabled="disabled"
 			ref="fileTextField"
 		></v-text-field>
-		<v-btn style="margin: 0" icon="clear" @click.stop="clearInput()" />
+		<v-btn
+			style="margin: 0"
+			icon="clear"
+			aria-label="Clear file input"
+			@click.stop="clearInput()"
+		/>
 		<input
 			style="position: absolute; left: -99999px"
 			type="file"

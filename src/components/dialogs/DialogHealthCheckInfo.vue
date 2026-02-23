@@ -4,7 +4,12 @@
 			<!-- Add close button on top right -->
 			<v-row>
 				<v-spacer></v-spacer>
-				<v-btn class="ma-3" icon @click="_value = false">
+				<v-btn
+					class="ma-3"
+					icon
+					aria-label="Close dialog"
+					@click="_value = false"
+				>
 					<v-icon>close</v-icon>
 				</v-btn>
 			</v-row>

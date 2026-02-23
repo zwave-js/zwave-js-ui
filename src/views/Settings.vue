@@ -59,6 +59,14 @@
 									v-model="internalCompactMode"
 								></v-switch>
 							</v-col>
+							<v-col cols="12" sm="6">
+								<v-text-field
+									hint="Customize the browser tab title (useful when managing multiple hubs)"
+									persistent-hint
+									label="Browser title"
+									v-model="internalBrowserTitle"
+								></v-text-field>
+							</v-col>
 						</v-row>
 					</v-expansion-panel-text>
 					<v-divider />
@@ -491,6 +499,11 @@
 								<v-row align-self="center">
 									<span class="my-auto ml-3"> Z-Wave </span>
 									<v-checkbox
+										v-if="
+											!isSettingManagedExternally(
+												'zwave.enabled',
+											)
+										"
 										class="mt-0 ml-2"
 										hide-details
 										@click.stop
@@ -517,7 +530,15 @@
 						<v-card flat>
 							<v-card-text>
 								<v-row>
-									<v-col cols="12" sm="6">
+									<v-col
+										cols="12"
+										sm="6"
+										v-if="
+											!isSettingManagedExternally(
+												'zwave.port',
+											)
+										"
+									>
 										<v-combobox
 											v-model="newZwave.port"
 											label="Serial Port"
@@ -529,6 +550,10 @@
 											]"
 											required
 											:items="serial_ports"
+											:loading="loadingSerialPorts"
+											@focus="loadSerialPorts"
+											append-icon="refresh"
+											@click:append="refreshSerialPorts"
 										></v-combobox>
 									</v-col>
 									<v-col cols="12" sm="6">
@@ -545,7 +570,10 @@
 									<!-- SECURITY KEYS -->
 									<v-row
 										class="mt-0"
-										v-if="newZwave.securityKeys"
+										v-if="
+											newZwave.securityKeys &&
+											!allClassicSecurityKeysManagedExternally
+										"
 									>
 										<v-col cols="12">
 											<v-list-subheader
@@ -699,7 +727,10 @@
 									</v-row>
 									<v-row
 										class="mt-0"
-										v-if="newZwave.securityKeysLongRange"
+										v-if="
+											newZwave.securityKeysLongRange &&
+											!allLRSecurityKeysManagedExternally
+										"
 									>
 										<v-col cols="12">
 											<v-list-subheader
@@ -787,98 +818,122 @@
 									<!-- END: SECURITY KEYS -->
 
 									<!-- RADIO CONFIGURATION -->
-									<v-row class="mt-0">
-										<v-col cols="12" class="mb-n8">
-											<v-list-subheader
-												class="font-weight-bold text-primary mb-0"
-											>
-												Default Radio configuration
-											</v-list-subheader>
-										</v-col>
-										<v-col cols="6">
-											<v-select
-												label="RF Region"
-												persistent-hint
-												hint="Will be used to automatically configure your controller for the region you are in. Not all controllers support changing the RF region."
-												:items="rfRegions"
-												:rules="[rules.required]"
-												required
-												v-model="newZwave.rf.region"
-											>
-											</v-select>
-										</v-col>
-										<v-col cols="6">
-											<v-switch
-												hint="When enabled, both normal and LR power levels will be automatically set to legal limits based on the RF region whenever the region is changed. Only supported for Europe and USA regions."
-												persistent-hint
-												label="Automatic Power Level"
-												v-model="
-													newZwave.rf.autoPowerlevels
-												"
-											></v-switch>
-										</v-col>
-									</v-row>
-									<v-row class="mt-0">
-										<v-col cols="12" sm="6">
-											<v-text-field
+									<template
+										v-if="!allRfSettingsManagedExternally"
+									>
+										<v-row class="mt-0">
+											<v-col cols="12" class="mb-n8">
+												<v-list-subheader
+													class="font-weight-bold text-primary mb-0"
+												>
+													Default Radio configuration
+												</v-list-subheader>
+											</v-col>
+											<v-col
+												cols="6"
 												v-if="
-													!newZwave.rf.autoPowerlevels
+													!isSettingManagedExternally(
+														'zwave.rf.region',
+													)
 												"
-												label="Normal Power Level"
-												v-model.number="
-													newZwave.rf.txPower
-														.powerlevel
+											>
+												<v-select
+													label="RF Region"
+													persistent-hint
+													hint="Will be used to automatically configure your controller for the region you are in. Not all controllers support changing the RF region."
+													:items="rfRegions"
+													:rules="[rules.required]"
+													required
+													v-model="newZwave.rf.region"
+												>
+												</v-select>
+											</v-col>
+											<v-col
+												cols="6"
+												v-if="
+													!isSettingManagedExternally(
+														'zwave.rf.autoPowerlevels',
+													)
 												"
-												persistent-hint
-												:min="-10"
-												:max="20"
-												:step="0.1"
-												hint="Power level in dBm. Min -10, Max +14 or +20, depending on the Z-Wave chip. Will be applied on every startup if the current setting of your Z-Wave controller differs. Not all controllers support changing the powerlevel."
-												suffix="dBm"
-												type="number"
-												:rules="[validTxPower]"
-											></v-text-field>
-										</v-col>
-										<v-col cols="12" sm="6">
-											<v-text-field
-												label="Measured output power at 0 dBm"
-												persistent-hint
-												v-model.number="
-													newZwave.rf.txPower
-														.measured0dBm
-												"
-												:min="-10"
-												:max="10"
-												:step="0.1"
-												hint="Measured output power at 0 dBm in dBm. Min -10, Max +10. Will be applied on every startup if the current setting of your Z-Wave controller differs. Not all controllers support changing the powerlevel."
-												suffix="dBm"
-												type="number"
-												:rules="[validTxPower]"
-											></v-text-field>
-										</v-col>
+											>
+												<v-switch
+													hint="When enabled, both normal and LR power levels will be automatically set to legal limits based on the RF region whenever the region is changed. Only supported for Europe and USA regions."
+													persistent-hint
+													label="Automatic Power Level"
+													v-model="
+														newZwave.rf
+															.autoPowerlevels
+													"
+												></v-switch>
+											</v-col>
+										</v-row>
+										<v-row class="mt-0">
+											<v-col cols="12" sm="6">
+												<v-text-field
+													v-if="
+														!newZwave.rf
+															.autoPowerlevels
+													"
+													label="Normal Power Level"
+													v-model.number="
+														newZwave.rf.txPower
+															.powerlevel
+													"
+													persistent-hint
+													:min="-10"
+													:max="20"
+													:step="0.1"
+													hint="Power level in dBm. Min -10, Max +14 or +20, depending on the Z-Wave chip. Will be applied on every startup if the current setting of your Z-Wave controller differs. Not all controllers support changing the powerlevel."
+													suffix="dBm"
+													type="number"
+													:rules="[validTxPower]"
+												></v-text-field>
+											</v-col>
+											<v-col cols="12" sm="6">
+												<v-text-field
+													label="Measured output power at 0 dBm"
+													persistent-hint
+													v-model.number="
+														newZwave.rf.txPower
+															.measured0dBm
+													"
+													:min="-10"
+													:max="10"
+													:step="0.1"
+													hint="Measured output power at 0 dBm in dBm. Min -10, Max +10. Will be applied on every startup if the current setting of your Z-Wave controller differs. Not all controllers support changing the powerlevel."
+													suffix="dBm"
+													type="number"
+													:rules="[validTxPower]"
+												></v-text-field>
+											</v-col>
 
-										<v-col cols="12" sm="6">
-											<v-select
-												label="Maximum LR Power Level"
-												v-if="
-													!newZwave.rf.autoPowerlevels
-												"
-												persistent-hint
-												hint="The maximum power level to be used by the dynamic power algorithm of Z-Wave LR. Will be applied on every startup if the current setting of your Z-Wave controller differs. Only LR-capable controllers support this setting."
-												:items="maxLRPowerLevels"
-												clearable
-												v-model="
-													newZwave.rf
-														.maxLongRangePowerlevel
-												"
-											>
-											</v-select>
-										</v-col>
-									</v-row>
+											<v-col cols="12" sm="6">
+												<v-select
+													label="Maximum LR Power Level"
+													v-if="
+														!newZwave.rf
+															.autoPowerlevels
+													"
+													persistent-hint
+													hint="The maximum power level to be used by the dynamic power algorithm of Z-Wave LR. Will be applied on every startup if the current setting of your Z-Wave controller differs. Only LR-capable controllers support this setting."
+													:items="maxLRPowerLevels"
+													clearable
+													v-model="
+														newZwave.rf
+															.maxLongRangePowerlevel
+													"
+												>
+												</v-select>
+											</v-col>
+										</v-row>
+									</template>
 									<!-- END: RADIO CONFIGURATION -->
 
 									<!-- DRIVER LOGS -->
-									<v-row class="mt-0">
+									<v-row
+										class="mt-0"
+										v-if="!allLogSettingsManagedExternally"
+									>
 										<v-col cols="12" class="mb-n8">
 											<v-list-subheader
 												class="font-weight-bold text-primary mb-0"
@@ -887,7 +942,15 @@
 											</v-list-subheader>
 										</v-col>
 
-										<v-col cols="12" sm="6">
+										<v-col
+											cols="12"
+											sm="6"
+											v-if="
+												!isSettingManagedExternally(
+													'zwave.logEnabled',
+												)
+											"
+										>
 											<v-switch
 												hint="Required for debugging issue reports"
 												persistent-hint
@@ -896,7 +959,12 @@
 											></v-switch>
 										</v-col>
 										<v-col
-											v-if="newZwave.logEnabled"
+											v-if="
+												newZwave.logEnabled &&
+												!isSettingManagedExternally(
+													'zwave.logLevel',
+												)
+											"
 											cols="12"
 											sm="6"
 										>
@@ -907,7 +975,12 @@
 											></v-select>
 										</v-col>
 										<v-col
-											v-if="newZwave.logEnabled"
+											v-if="
+												newZwave.logEnabled &&
+												!isSettingManagedExternally(
+													'zwave.logToFile',
+												)
+											"
 											cols="12"
 											sm="6"
 										>
@@ -921,7 +994,12 @@
 										<v-col
 											cols="12"
 											sm="6"
-											v-if="newZwave.logEnabled"
+											v-if="
+												newZwave.logEnabled &&
+												!isSettingManagedExternally(
+													'zwave.maxFiles',
+												)
+											"
 										>
 											<v-text-field
 												v-model.number="
@@ -967,7 +1045,15 @@
 											</v-list-subheader>
 										</v-col>
 
-										<v-col cols="12" sm="6">
+										<v-col
+											cols="12"
+											sm="6"
+											v-if="
+												!isSettingManagedExternally(
+													'zwave.enableSoftReset',
+												)
+											"
+										>
 											<v-switch
 												label="Soft Reset"
 												hint="Soft Reset is required after some commands like changing the RF region or restoring an NVM backup. Because it may cause problems in Docker containers with certain Z-Wave sticks, this functionality may be disabled. NB: Disabling this functionality only affects 500 series and older controllers"
@@ -1215,6 +1301,10 @@
 											]"
 											required
 											:items="serial_ports"
+											:loading="loadingSerialPorts"
+											@focus="loadSerialPorts"
+											append-icon="refresh"
+											@click:append="refreshSerialPorts"
 										></v-combobox>
 									</v-col>
 									<v-row
@@ -1891,8 +1981,16 @@
 					<v-expansion-panel-text>
 						<v-card flat>
 							<v-card-text>
-								<v-row>
-									<v-col cols="12" sm="6">
+								<v-row v-if="!allHassSettingsManagedExternally">
+									<v-col
+										cols="12"
+										sm="6"
+										v-if="
+											!isSettingManagedExternally(
+												'zwave.serverEnabled',
+											)
+										"
+									>
 										<v-switch
 											hint="Enable Z-Wave JS websocket server. This can be used with Home Assistant Z-Wave JS integration to discover entities"
 											persistent-hint
@@ -1901,7 +1999,12 @@
 										></v-switch>
 									</v-col>
 									<v-col
-										v-if="newZwave.serverEnabled"
+										v-if="
+											newZwave.serverEnabled &&
+											!isSettingManagedExternally(
+												'zwave.serverPort',
+											)
+										"
 										cols="6"
 									>
 										<v-text-field
@@ -1920,7 +2023,12 @@
 										/>
 									</v-col>
 									<v-col
-										v-if="newZwave.serverEnabled"
+										v-if="
+											newZwave.serverEnabled &&
+											!isSettingManagedExternally(
+												'zwave.serverHost',
+											)
+										"
 										cols="6"
 									>
 										<v-text-field
@@ -1930,7 +2038,12 @@
 										></v-text-field>
 									</v-col>
 									<v-col
-										v-if="newZwave.serverEnabled"
+										v-if="
+											newZwave.serverEnabled &&
+											!isSettingManagedExternally(
+												'zwave.serverServiceDiscoveryDisabled',
+											)
+										"
 										cols="6"
 									>
 										<inverted-checkbox
@@ -2164,6 +2277,14 @@ export default {
 				this.setCompactMode(value)
 			},
 		},
+		internalBrowserTitle: {
+			get() {
+				return this.ui.browserTitle || 'Z-Wave JS UI'
+			},
+			set(value) {
+				this.setBrowserTitle(value)
+			},
+		},
 		settingsChanged() {
 			if (!deepEqual(this.newMqtt, this.mqtt)) return true
 			if (!deepEqual(this.newGateway, this.gateway)) return true
@@ -2253,7 +2374,58 @@ export default {
 			'serial_ports',
 			'scales',
 			'ui',
+			'isSettingManagedExternally',
 		]),
+		allClassicSecurityKeysManagedExternally() {
+			return (
+				this.isSettingManagedExternally(
+					'zwave.securityKeys.S0_Legacy',
+				) &&
+				this.isSettingManagedExternally(
+					'zwave.securityKeys.S2_Unauthenticated',
+				) &&
+				this.isSettingManagedExternally(
+					'zwave.securityKeys.S2_Authenticated',
+				) &&
+				this.isSettingManagedExternally(
+					'zwave.securityKeys.S2_AccessControl',
+				)
+			)
+		},
+		allLRSecurityKeysManagedExternally() {
+			return (
+				this.isSettingManagedExternally(
+					'zwave.securityKeysLongRange.S2_Authenticated',
+				) &&
+				this.isSettingManagedExternally(
+					'zwave.securityKeysLongRange.S2_AccessControl',
+				)
+			)
+		},
+		allRfSettingsManagedExternally() {
+			return (
+				this.isSettingManagedExternally('zwave.rf.region') &&
+				this.isSettingManagedExternally('zwave.rf.autoPowerlevels')
+			)
+		},
+		allLogSettingsManagedExternally() {
+			return (
+				this.isSettingManagedExternally('zwave.logEnabled') &&
+				this.isSettingManagedExternally('zwave.logLevel') &&
+				this.isSettingManagedExternally('zwave.logToFile') &&
+				this.isSettingManagedExternally('zwave.maxFiles')
+			)
+		},
+		allHassSettingsManagedExternally() {
+			return (
+				this.isSettingManagedExternally('zwave.serverEnabled') &&
+				this.isSettingManagedExternally('zwave.serverPort') &&
+				this.isSettingManagedExternally('zwave.serverHost') &&
+				this.isSettingManagedExternally(
+					'zwave.serverServiceDiscoveryDisabled',
+				)
+			)
+		},
 		...mapState(useBaseStore, {
 			colorScheme: (store) => store.ui.colorScheme,
 			darkMode: (store) => store.uiState.darkMode,
@@ -2276,6 +2448,8 @@ export default {
 			dialogValue: false,
 			sslDisabled: false,
 			saving: false,
+			loadingSerialPorts: false,
+			serialPortsFetched: false,
 			prevUi: null,
 			newGateway: {},
 			newMqtt: {},
@@ -2417,6 +2591,7 @@ export default {
 			'setNavTabs',
 			'setStreamerMode',
 			'setCompactMode',
+			'setBrowserTitle',
 			'initSettings',
 			'init',
 			'showSnackbar',
@@ -2712,6 +2887,8 @@ export default {
 					)
 
 					this.initSettings(data.data)
+					// Update prevUi to the new saved values
+					this.prevUi = copy(this.ui)
 					this.resetConfig()
 
 					// If restart is required, ask user
@@ -2795,9 +2972,11 @@ export default {
 			this.internalNavTabs = uiState.navTabs
 			this.internalStreamerMode = uiState.streamerMode
 			this.internalCompactMode = uiState.compactMode
+			this.internalBrowserTitle = uiState.browserTitle
 		},
 		async getConfig() {
 			try {
+				// Load settings first (fast)
 				const data = await ConfigApis.getConfig()
 				if (!data.success) {
 					this.showSnackbar(
@@ -2805,14 +2984,40 @@ export default {
 						'error',
 					)
 					log.error(data)
-				} else {
-					this.init(data)
-					this.sslDisabled = data.sslDisabled
-					this.resetConfig()
+					return
 				}
+
+				this.init(data)
+				this.sslDisabled = data.sslDisabled
+				this.resetConfig()
+
+				// Serial ports are loaded lazily when the input is focused
 			} catch (error) {
 				this.showSnackbar(error.message, 'error')
 				log.error(error)
+			}
+		},
+		async loadSerialPorts() {
+			if (this.serialPortsFetched || this.loadingSerialPorts) return
+			await this.fetchSerialPorts()
+		},
+		async refreshSerialPorts() {
+			if (this.loadingSerialPorts) return
+			this.serialPortsFetched = false
+			await this.fetchSerialPorts()
+		},
+		async fetchSerialPorts() {
+			this.loadingSerialPorts = true
+			try {
+				const data = await ConfigApis.getSerialPorts()
+				if (data.success && data.serial_ports) {
+					useBaseStore().initPorts(data.serial_ports)
+				}
+				this.serialPortsFetched = true
+			} catch (error) {
+				log.error('Failed to load serial ports:', error)
+			} finally {
+				this.loadingSerialPorts = false
 			}
 		},
 	},

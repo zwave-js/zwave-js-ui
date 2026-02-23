@@ -1,6 +1,19 @@
 <template>
 	<v-container grid-list-md>
 		<v-row justify="center" class="pa-5">
+			<v-alert
+				v-if="showAssociationWarning"
+				type="warning"
+				variant="tonal"
+				class="mb-4"
+				closable
+			>
+				<template #title>
+					<strong>Limited Association Support</strong>
+				</template>
+				{{ associationWarningMessage }}
+			</v-alert>
+
 			<v-data-table
 				:headers="headers"
 				:items="associations"
@@ -88,6 +101,7 @@ import { getEnumMemberName } from '@zwave-js/shared'
 import { AssociationCheckResult } from '@zwave-js/cc'
 import { getAssociationAddress } from '../../lib/utils'
 import { defineAsyncComponent } from 'vue'
+import { Protocols } from '@zwave-js/core'
 
 export default {
 	components: {
@@ -114,6 +128,15 @@ export default {
 	},
 	computed: {
 		...mapState(useBaseStore, ['nodes', 'nodesMap']),
+		isLongRange() {
+			return this.node?.protocol === Protocols.ZWaveLongRange
+		},
+		showAssociationWarning() {
+			return this.isLongRange
+		},
+		associationWarningMessage() {
+			return 'This Z-Wave Long Range node only supports lifeline associations. Non-lifeline associations may not function correctly.'
+		},
 	},
 	mounted() {
 		this.getAssociations()
@@ -163,7 +186,7 @@ export default {
 				this.showSnackbar('Associations updated', 'success')
 			}
 		},
-		async addAssociation(association) {
+		async addAssociation(association, force = false) {
 			const target = !isNaN(association.target)
 				? parseInt(association.target)
 				: association.target.id
@@ -183,6 +206,7 @@ export default {
 				}),
 				group.value,
 				[toAdd],
+				force ? { force: true } : undefined,
 			]
 
 			const response = await this.app.apiRequest('addAssociations', args)
@@ -190,7 +214,7 @@ export default {
 			if (response.success) {
 				const checkResult = response.result[0]
 
-				if (checkResult === AssociationCheckResult.OK) {
+				if (checkResult === AssociationCheckResult.OK || force) {
 					this.showSnackbar('Association added', 'success')
 					this.getAssociations()
 				} else {
