@@ -745,6 +745,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 	private driverFunctionCache: utils.Snippet[] = []
 
+	private _extraLogTransports: any[] = []
+
 	// Foreach valueId, we store a callback function to be called when the value changes
 	private valuesObservers: Record<string, ValueIdObserver> = {}
 
@@ -849,6 +851,39 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		await this.close(true)
 		this.init()
 		await this.connect()
+	}
+
+	/**
+	 * Register an extra log transport that persists across driver restarts.
+	 * If the driver is already running, the transport is applied immediately.
+	 */
+	addExtraLogTransport(transport: any, level?: string): void {
+		this._extraLogTransports.push(transport)
+		if (this._driver && this._driverReady) {
+			const config: any = {
+				transports: [transport],
+			}
+			if (level) {
+				config.level = level
+			}
+			this._driver.updateLogConfig(config)
+		}
+	}
+
+	/**
+	 * Remove a previously registered extra log transport.
+	 * If the driver is running, the transport is detached immediately.
+	 */
+	removeExtraLogTransport(transport: any): void {
+		const idx = this._extraLogTransports.indexOf(transport)
+		if (idx !== -1) {
+			this._extraLogTransports.splice(idx, 1)
+		}
+		if (this._driver && this._driverReady) {
+			this._driver.updateLogConfig({
+				transports: [],
+			})
+		}
 	}
 
 	backoffRestart(): void {
@@ -2341,7 +2376,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		const logTransport = new JSONTransport()
 		logTransport.format = createDefaultTransportFormat(true, false)
 
-		zwaveOptions.logConfig.transports = [logTransport]
+		zwaveOptions.logConfig.transports = [
+			logTransport,
+			...this._extraLogTransports,
+		]
 
 		logTransport.stream.on('data', (data) => {
 			this.socket.emit(socketEvents.debug, data.message.toString())
