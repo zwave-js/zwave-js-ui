@@ -361,6 +361,7 @@ export default {
 
 		this.refreshItems()
 
+		this.subscribeChannels(['nodes'])
 		this.bindEvent(socketEvents.nodeAdded, () => {
 			this.refreshItems()
 		})

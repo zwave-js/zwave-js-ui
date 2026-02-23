@@ -1305,6 +1305,7 @@ export default {
 			}
 
 			if (bind && Object.keys(this.bindedSocketEvents).length === 0) {
+				this.subscribeChannels(['nodes'])
 				this.bindEvent(
 					'grantSecurityClasses',
 					this.onGrantSecurityCC.bind(this),
