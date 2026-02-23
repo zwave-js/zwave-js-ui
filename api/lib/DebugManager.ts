@@ -80,27 +80,23 @@ class DebugManager {
 			logger.level = 'debug'
 		})
 
-		// Update driver log level to debug using updateLogConfig
+		// Set up driver debug transport that persists across restarts
 		let driverDebugTransport: any = undefined
 		let driverLogStream: NodeJS.WritableStream | undefined = undefined
-		if (zwaveClient.driverReady) {
-			const debugTransport = new JSONTransport()
-			debugTransport.format = createDefaultTransportFormat(false, true)
 
-			// Write driver logs to file
-			driverLogStream = createWriteStream(driverLogFilePath)
-			debugTransport.stream.on('data', (data) => {
-				driverLogStream.write(data.message.toString() + '\n')
-			})
+		const debugTransport = new JSONTransport()
+		debugTransport.format = createDefaultTransportFormat(false, true)
 
-			driverDebugTransport = debugTransport
+		// Write driver logs to file
+		driverLogStream = createWriteStream(driverLogFilePath)
+		debugTransport.stream.on('data', (data) => {
+			driverLogStream.write(data.message.toString() + '\n')
+		})
 
-			// Update log config to debug level with new transport
-			zwaveClient.driver.updateLogConfig({
-				level: 'debug',
-				transports: [debugTransport],
-			})
-		}
+		driverDebugTransport = debugTransport
+
+		// Register transport so it persists across driver restarts
+		zwaveClient.addExtraLogTransport(debugTransport, 'debug')
 
 		this.session = {
 			startTime: new Date(),
@@ -248,14 +244,18 @@ class DebugManager {
 	 * Restore the driver log level after a debug session
 	 */
 	private async restoreDriverLogLevel(session: DebugSession): Promise<void> {
-		if (session.zwaveClient.driverReady && session.driverDebugTransport) {
-			const logTransport = new JSONTransport()
-			logTransport.format = createDefaultTransportFormat(true, false)
+		if (session.driverDebugTransport) {
+			// Remove extra transport (works even if driver was restarted)
+			session.zwaveClient.removeExtraLogTransport(
+				session.driverDebugTransport,
+			)
 
-			session.zwaveClient.driver.updateLogConfig({
-				level: session.originalLogLevel as any,
-				transports: [logTransport],
-			})
+			// Restore original log level if driver is still running
+			if (session.zwaveClient.driverReady) {
+				session.zwaveClient.driver.updateLogConfig({
+					level: session.originalLogLevel as any,
+				})
+			}
 
 			// Clean up debug transport
 			if (session.driverDebugTransport.stream) {
