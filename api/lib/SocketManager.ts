@@ -76,9 +76,15 @@ class SocketManager extends TypedEventEmitter<SocketManagerEventCallbacks> {
 		this.emit('clients', 'connection', this.activeSockets)
 
 		// register inbound events from this socket
+		// subscribe/unsubscribe are handled directly in app.ts, skip them here
 		for (const k in inboundEvents) {
-			const eventName = inboundEvents[k]
-			// pass socket reference as first parameter
+			const eventName = inboundEvents[k] as inboundEvents
+			if (
+				eventName === inboundEvents.subscribe ||
+				eventName === inboundEvents.unsubscribe
+			) {
+				continue
+			}
 			socket.on(eventName, this._emitEvent.bind(this, eventName, socket))
 		}
 
@@ -94,7 +100,11 @@ class SocketManager extends TypedEventEmitter<SocketManagerEventCallbacks> {
 	 * Logs and emits the `eventName` with `socket` and `args` as parameters
 	 *
 	 */
-	private _emitEvent(eventName: inboundEvents, socket: Socket, data: any) {
+	private _emitEvent(
+		eventName: SocketManagerEvents,
+		socket: Socket,
+		data: any,
+	) {
 		logger.debug(`Event ${eventName} emitted to ${socket.id}`)
 		this.emit(eventName, socket, data)
 	}
