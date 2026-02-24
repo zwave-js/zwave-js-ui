@@ -45,6 +45,15 @@
 							</v-col>
 							<v-col cols="12" sm="6">
 								<v-switch
+									hint="Show labels under all navigation tabs (only when tabs for navigation is enabled)"
+									persistent-hint
+									label="Show labels on all tabs"
+									:disabled="!internalNavTabs"
+									v-model="internalShowTabLabels"
+								></v-switch>
+							</v-col>
+							<v-col cols="12" sm="6">
+								<v-switch
 									hint="Enable this to hide sensitive informations from the UI"
 									persistent-hint
 									label="Streamer mode"
@@ -2261,6 +2270,14 @@ export default {
 				this.setNavTabs(value)
 			},
 		},
+		internalShowTabLabels: {
+			get() {
+				return this.showTabLabels
+			},
+			set(value) {
+				this.setShowTabLabels(value)
+			},
+		},
 		internalStreamerMode: {
 			get() {
 				return this.streamerMode
@@ -2430,6 +2447,7 @@ export default {
 			colorScheme: (store) => store.ui.colorScheme,
 			darkMode: (store) => store.uiState.darkMode,
 			navTabs: (store) => store.ui.navTabs,
+			showTabLabels: (store) => store.ui.showTabLabels,
 			streamerMode: (store) => store.ui.streamerMode,
 			compactMode: (store) => store.ui.compactMode,
 		}),
@@ -2589,6 +2607,7 @@ export default {
 		...mapActions(useBaseStore, [
 			'setColorScheme',
 			'setNavTabs',
+			'setShowTabLabels',
 			'setStreamerMode',
 			'setCompactMode',
 			'setBrowserTitle',

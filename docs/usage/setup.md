@@ -8,6 +8,7 @@ These settings control the appearance and behavior of the Z-Wave JS UI interface
 
 - **Color Scheme**: Select the color theme for the UI
 - **Use tabs for navigation**: Enable this to use tabs in the top bar instead of a left menu for navigation (useful when integrated in Home Assistant)
+- **Show labels on all tabs**: Show labels under all navigation tabs (only when tabs for navigation is enabled)
 - **Streamer mode**: Enable this to hide sensitive information from the UI
 - **Compact view by default**: Enable this to use compact view by default in the Control Panel (can be toggled with the Compact button)
 - **Browser title**: Customize the browser tab title (useful when managing multiple hubs)

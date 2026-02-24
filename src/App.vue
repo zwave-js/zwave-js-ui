@@ -65,7 +65,7 @@
 							class="smaller-min-width-tabs"
 						>
 							<v-icon
-								:start="item.path === $route.path"
+								:start="item.path === $route.path || showTabLabels"
 								:size="
 									item.path === $route.path
 										? 'small'
@@ -75,7 +75,7 @@
 								{{ item.icon }}
 							</v-icon>
 							<span
-								v-if="item.path === $route.path"
+								v-if="item.path === $route.path || showTabLabels"
 								class="text-subtitle-2"
 							>
 								{{ item.title }}
@@ -434,6 +434,7 @@ export default {
 		...mapState(useBaseStore, {
 			darkMode: (store) => store.uiState.darkMode,
 			navTabs: (store) => store.ui.navTabs,
+			showTabLabels: (store) => store.ui.showTabLabels,
 		}),
 		...mapWritableState(useBaseStore, ['debugCaptureActive']),
 		menuItems() {
