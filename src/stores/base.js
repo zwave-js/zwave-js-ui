@@ -152,6 +152,7 @@ const useBaseStore = defineStore('base', {
 		ui: {
 			colorScheme: loadColorScheme(settings),
 			navTabs: settings.load('navTabs', false),
+			showTabLabels: settings.load('showTabLabels', false),
 			compactMode: settings.load('compact', false),
 			streamerMode: settings.load('streamerMode', false),
 			browserTitle: settings.load('browserTitle', 'Z-Wave JS UI'),
@@ -656,6 +657,10 @@ const useBaseStore = defineStore('base', {
 		setNavTabs(value) {
 			settings.store('navTabs', value)
 			this.ui.navTabs = value
+		},
+		setShowTabLabels(value) {
+			settings.store('showTabLabels', value)
+			this.ui.showTabLabels = value
 		},
 		setStreamerMode(value) {
 			settings.store('streamerMode', value)
