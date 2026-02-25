@@ -53,8 +53,6 @@
 	</v-container>
 </template>
 <script>
-import { socketEvents } from '@server/lib/SocketEvents'
-
 import { AnsiUp } from 'ansi_up'
 import { mapActions } from 'pinia'
 import useBaseStore from '../stores/base.js'
@@ -189,7 +187,7 @@ export default {
 
 		this.subscribeChannels(['debug'])
 
-		this.socket.on(socketEvents.debug, (data) => {
+		this.bindEvent('debug', (data) => {
 			if (this.debugActive) {
 				data = ansiUp.ansi_to_html(data)
 				data = data.replace(/\n/g, '</br>')
@@ -212,9 +210,7 @@ export default {
 	},
 	beforeUnmount() {
 		if (this.socket) {
-			// unbind events
-			this.socket.off(socketEvents.debug)
-			this.unsubscribeChannels(['debug'])
+			this.unbindEvents()
 		}
 	},
 }

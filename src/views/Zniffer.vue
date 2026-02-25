@@ -370,7 +370,6 @@
 import { defineAsyncComponent, nextTick } from 'vue'
 import { ZWaveFrameType, LongRangeFrameType } from 'zwave-js'
 import { Protocols, RFRegion } from '@zwave-js/core'
-import { socketEvents } from '@server/lib/SocketEvents'
 
 import { mapState, mapActions } from 'pinia'
 import useBaseStore from '../stores/base.js'
@@ -550,7 +549,7 @@ export default {
 	mounted() {
 		this.subscribeChannels(['znifferFrames'])
 
-		this.socket.on(socketEvents.znifferFrame, this.addFrame)
+		this.bindEvent('znifferFrame', this.addFrame)
 
 		this.onWindowResize = () => {
 			this.topPaneHeight = window.innerHeight / 2
@@ -577,10 +576,8 @@ export default {
 		}
 
 		if (this.socket) {
-			// unbind events
-			this.socket.off(socketEvents.znifferFrame)
+			this.unbindEvents()
 			this.socket.off('connect', this.onConnnect)
-			this.unsubscribeChannels(['znifferFrames'])
 		}
 
 		if (this.timeoutScroll) {
