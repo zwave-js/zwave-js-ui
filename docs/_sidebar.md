@@ -32,6 +32,10 @@
 
   - [Using MQTT](guide/mqtt.md)
 
+- Socket.IO
+
+  - [Socket.IO API](guide/socket-api.md)
+
 - Miscellaneous
 
   - [Healthcheck](guide/healthcheck.md)

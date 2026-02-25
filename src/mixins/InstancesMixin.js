@@ -7,6 +7,71 @@ import { mapState } from 'pinia'
 
 const log = logger.get('InstancesMixin')
 
+// Module-level reference counting for socket channel subscriptions.
+// Maps channel name → number of active component subscribers.
+// This ensures a channel is only unsubscribed from the server when the
+// last component that needed it has unmounted.
+const channelRefCounts = new Map() // channel → count
+let _managedSocket = null
+let _reconnectHandler = null
+let _hasConnectedOnce = false
+
+function getChannelManager(socket) {
+	if (!socket) return null
+
+	// If the socket instance changed (e.g. after logout), reset state
+	if (_managedSocket !== socket) {
+		if (_managedSocket && _reconnectHandler) {
+			_managedSocket.off('connect', _reconnectHandler)
+		}
+		channelRefCounts.clear()
+		_managedSocket = socket
+		_hasConnectedOnce = false
+		_reconnectHandler = () => {
+			// skip first connect — subscribeChannels already emits SUBSCRIBE
+			if (!_hasConnectedOnce) {
+				_hasConnectedOnce = true
+				return
+			}
+			const active = [...channelRefCounts.entries()]
+				.filter(([, n]) => n > 0)
+				.map(([c]) => c)
+			if (active.length > 0) {
+				socket.emit('SUBSCRIBE', { channels: active })
+			}
+		}
+		socket.on('connect', _reconnectHandler)
+	}
+
+	return {
+		subscribe(channels) {
+			const toSubscribe = []
+			// Subscribe only if the channel was not subscribed before
+			for (const ch of channels) {
+				const prev = channelRefCounts.get(ch) ?? 0
+				channelRefCounts.set(ch, prev + 1)
+				if (prev === 0) toSubscribe.push(ch)
+			}
+			if (toSubscribe.length > 0) {
+				socket.emit('SUBSCRIBE', { channels: toSubscribe })
+			}
+		},
+		unsubscribe(channels) {
+			const toUnsubscribe = []
+			// Unsubscribe from channels that have no more subscribers
+			for (const ch of channels) {
+				const prev = channelRefCounts.get(ch) ?? 0
+				const next = Math.max(0, prev - 1)
+				channelRefCounts.set(ch, next)
+				if (next === 0) toUnsubscribe.push(ch)
+			}
+			if (toUnsubscribe.length > 0) {
+				socket.emit('UNSUBSCRIBE', { channels: toUnsubscribe })
+			}
+		},
+	}
+}
+
 export default {
 	data() {
 		return {
@@ -33,6 +98,35 @@ export default {
 			}
 
 			this.bindedSocketEvents = {}
+
+			if (this._subscribedChannels?.length > 0) {
+				getChannelManager(this.socket)?.unsubscribe(
+					this._subscribedChannels,
+				)
+				this._subscribedChannels = []
+			}
+		},
+		subscribeChannels(channels) {
+			const existing = this._subscribedChannels || []
+			const newChannels = channels.filter((c) => !existing.includes(c))
+
+			if (newChannels.length > 0) {
+				getChannelManager(this.socket)?.subscribe(newChannels)
+				this._subscribedChannels = [...existing, ...newChannels]
+			} else if (!this._subscribedChannels) {
+				this._subscribedChannels = existing
+			}
+		},
+		unsubscribeChannels(channels) {
+			const existing = this._subscribedChannels || []
+			const toUnsubscribe = channels.filter((c) => existing.includes(c))
+
+			if (toUnsubscribe.length > 0) {
+				getChannelManager(this.socket)?.unsubscribe(toUnsubscribe)
+				this._subscribedChannels = existing.filter(
+					(c) => !toUnsubscribe.includes(c),
+				)
+			}
 		},
 		async pingNode(node) {
 			const response = await this.app.apiRequest('pingNode', [node.id], {

@@ -53,11 +53,10 @@
 	</v-container>
 </template>
 <script>
-import { socketEvents } from '@server/lib/SocketEvents'
-
 import { AnsiUp } from 'ansi_up'
 import { mapActions } from 'pinia'
 import useBaseStore from '../stores/base.js'
+import InstancesMixin from '../mixins/InstancesMixin.js'
 import { isPopupWindow, openInWindow } from '../lib/utils'
 import { nextTick } from 'vue'
 
@@ -67,6 +66,7 @@ const MAX_DEBUG_LINES = 500
 
 export default {
 	name: 'Debug',
+	mixins: [InstancesMixin],
 	props: {
 		socket: Object,
 	},
@@ -185,7 +185,9 @@ export default {
 			this.hideTopbar = true
 		}
 
-		this.socket.on(socketEvents.debug, (data) => {
+		this.subscribeChannels(['debug'])
+
+		this.bindEvent('debug', (data) => {
 			if (this.debugActive) {
 				data = ansiUp.ansi_to_html(data)
 				data = data.replace(/\n/g, '</br>')
@@ -208,8 +210,7 @@ export default {
 	},
 	beforeUnmount() {
 		if (this.socket) {
-			// unbind events
-			this.socket.off(socketEvents.debug)
+			this.unbindEvents()
 		}
 	},
 }

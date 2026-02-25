@@ -27,6 +27,7 @@ export interface User {
 export interface UiConfig {
 	colorScheme?: string
 	navTabs?: boolean
+	showTabLabels?: boolean
 	compactMode?: boolean
 	streamerMode?: boolean
 	browserTitle?: string

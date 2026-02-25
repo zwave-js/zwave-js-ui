@@ -1,5 +1,31 @@
 # Changelog
 
+## [11.12.0](https://github.com/zwave-js/zwave-js-ui/compare/v11.11.0...v11.12.0) (2026-02-19)
+
+### ✨ Features
+
+* add compression middleware and optimize serial port loading ([#4501](https://github.com/zwave-js/zwave-js-ui/issues/4501)) ([9ad02f7](https://github.com/zwave-js/zwave-js-ui/commit/9ad02f7ed1ffe0625c4d81533d9c9fdbf8c17df5)), closes [/#diff-fe6a6140f19ab1b0dd1e7eac27de4a8366de9b7c0da27d292f99ba219e5a3e97R6](https://github.com/zwave-js///issues/diff-fe6a6140f19ab1b0dd1e7eac27de4a8366de9b7c0da27d292f99ba219e5a3e97R6) [/#diff-fe6a6140f19ab1b0dd1e7eac27de4a8366de9b7c0da27d292f99ba219e5a3e97R536-R542](https://github.com/zwave-js///issues/diff-fe6a6140f19ab1b0dd1e7eac27de4a8366de9b7c0da27d292f99ba219e5a3e97R536-R542) [/#diff-7ae45ad102eab3b6d7e7896acd08c427a9b25b346470d7bc6507b6481575d519R87](https://github.com/zwave-js///issues/diff-7ae45ad102eab3b6d7e7896acd08c427a9b25b346470d7bc6507b6481575d519R87) [/#diff-fe6a6140f19ab1b0dd1e7eac27de4a8366de9b7c0da27d292f99ba219e5a3e97L1072-R1080](https://github.com/zwave-js///issues/diff-fe6a6140f19ab1b0dd1e7eac27de4a8366de9b7c0da27d292f99ba219e5a3e97L1072-R1080) [/#diff-fe6a6140f19ab1b0dd1e7eac27de4a8366de9b7c0da27d292f99ba219e5a3e97L1112-R1146](https://github.com/zwave-js///issues/diff-fe6a6140f19ab1b0dd1e7eac27de4a8366de9b7c0da27d292f99ba219e5a3e97L1112-R1146) [/#diff-817427b0a52f22c1023629bd0728cd3102a9dd01cb780ef55f79d99ec24c23e6R2821-R2852](https://github.com/zwave-js///issues/diff-817427b0a52f22c1023629bd0728cd3102a9dd01cb780ef55f79d99ec24c23e6R2821-R2852) [/#diff-6ad84c78d30f1774ed1f8c9c53029ada807229738141c1803a29a032771a75b4R612-R615](https://github.com/zwave-js///issues/diff-6ad84c78d30f1774ed1f8c9c53029ada807229738141c1803a29a032771a75b4R612-R615)
+* add individual value polling button to UI ([#4525](https://github.com/zwave-js/zwave-js-ui/issues/4525)) ([3bdf5c9](https://github.com/zwave-js/zwave-js-ui/commit/3bdf5c9cd47a42a886df109ba2d78d9c2d6a0c40)), closes [#append-inner](https://github.com/zwave-js/zwave-js-ui/issues/append-inner) [zwave-js/zwave-js-ui#4521](https://github.com/zwave-js/zwave-js-ui/issues/4521)
+* bump zwave-js@15.21.0 ([#4543](https://github.com/zwave-js/zwave-js-ui/issues/4543)) ([2a15f80](https://github.com/zwave-js/zwave-js-ui/commit/2a15f80e3928b350d0e3cd68fd4c952f8d872d2a))
+
+### 🐛 Bug Fixes
+
+* **ui:** align dialog margins consistently in Confirm component ([#4553](https://github.com/zwave-js/zwave-js-ui/issues/4553)) ([b01255b](https://github.com/zwave-js/zwave-js-ui/commit/b01255bb677f05160dcc437727c091a72b701973)), closes [#4467](https://github.com/zwave-js/zwave-js-ui/issues/4467)
+* **ui:** correct FAB z-index layering in Store view ([#4549](https://github.com/zwave-js/zwave-js-ui/issues/4549)) ([4f65ca6](https://github.com/zwave-js/zwave-js-ui/commit/4f65ca67a02febf0c4d5126a259b24ba1433fffe)), closes [zwave-js/zwave-js-ui#4548](https://github.com/zwave-js/zwave-js-ui/issues/4548)
+* **ui:** enable multiple file selection in Store view ([#4550](https://github.com/zwave-js/zwave-js-ui/issues/4550)) ([93880e9](https://github.com/zwave-js/zwave-js-ui/commit/93880e929142eed85e56ae1fc552d2e989849b62)), closes [zwave-js/zwave-js-ui#4547](https://github.com/zwave-js/zwave-js-ui/issues/4547)
+* **ui:** skip GitHub release API call when both features are disabled ([#4552](https://github.com/zwave-js/zwave-js-ui/issues/4552)) ([3523098](https://github.com/zwave-js/zwave-js-ui/commit/3523098785449f470e199d655a39901af5f33675)), closes [zwave-js/zwave-js-ui#4551](https://github.com/zwave-js/zwave-js-ui/issues/4551)
+
+### 🔧 Chores
+
+* **docker:** upgrade Alpine Linux to 3.22 ([#4537](https://github.com/zwave-js/zwave-js-ui/issues/4537)) ([fee28f9](https://github.com/zwave-js/zwave-js-ui/commit/fee28f9c880e3742c924e5783d9c6abe7f5fe9dd))
+* replace CLAUDE.md with references to shared .github instructions ([#4542](https://github.com/zwave-js/zwave-js-ui/issues/4542)) ([d9b8539](https://github.com/zwave-js/zwave-js-ui/commit/d9b8539d0349334a1f0e5319d16dc50332fdc85a))
+* upgrade actions/checkout and actions/setup-node to v6 ([2ca176a](https://github.com/zwave-js/zwave-js-ui/commit/2ca176a08cc61c66afd1fe5f00d92854da132691))
+
+### 📚 Documentation
+
+* add Homebridge to compatible platforms list in readme ([#4540](https://github.com/zwave-js/zwave-js-ui/issues/4540)) ([dc76109](https://github.com/zwave-js/zwave-js-ui/commit/dc76109691975d80f99aa51ce6da8baae9954e27))
+* added homebridge-zwave-usb to readme ([#4539](https://github.com/zwave-js/zwave-js-ui/issues/4539)) ([cbc1849](https://github.com/zwave-js/zwave-js-ui/commit/cbc18498901b8f9da1652eed08abfb03ead851a7))
+
 ## [11.11.0](https://github.com/zwave-js/zwave-js-ui/compare/v11.10.1...v11.11.0) (2026-02-03)
 
 ### ✨ Features

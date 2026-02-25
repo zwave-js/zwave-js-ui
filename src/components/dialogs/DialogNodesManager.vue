@@ -1305,6 +1305,7 @@ export default {
 			}
 
 			if (bind && Object.keys(this.bindedSocketEvents).length === 0) {
+				this.subscribeChannels(['nodes'])
 				this.bindEvent(
 					'grantSecurityClasses',
 					this.onGrantSecurityCC.bind(this),
@@ -1412,9 +1413,12 @@ export default {
 				doneStep.text = `Node ${
 					this.nodeFound.id
 				} added with security ${this.nodeFound.security || 'None'}`
-				doneStep.error = result.lowSecurityReason
-					? this.getSecurityBootstrapError(result.lowSecurityReason)
-					: false
+				doneStep.error =
+					result && result.lowSecurityReason
+						? this.getSecurityBootstrapError(
+								result.lowSecurityReason,
+							)
+						: false
 				doneStep.success = !(result && result.lowSecurity)
 				this.pushStep(doneStep)
 			}

@@ -484,6 +484,7 @@ export default {
 		},
 	},
 	mounted() {
+		this.subscribeChannels(['rebuild'])
 		this.bindEvent(
 			'rebuildRoutesProgress',
 			this.setRebuildRoutesProgress.bind(this),

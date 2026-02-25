@@ -241,7 +241,6 @@ import {
 import useBaseStore from '../stores/base.js'
 import InstancesMixin from '../mixins/InstancesMixin.js'
 import { protocolsItems } from '../lib/items.js'
-import { socketEvents } from '@server/lib/SocketEvents'
 
 export default {
 	name: 'SmartStart',
@@ -361,7 +360,8 @@ export default {
 
 		this.refreshItems()
 
-		this.bindEvent(socketEvents.nodeAdded, () => {
+		this.subscribeChannels(['nodes'])
+		this.bindEvent('nodeAdded', () => {
 			this.refreshItems()
 		})
 	},

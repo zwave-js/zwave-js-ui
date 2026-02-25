@@ -111,13 +111,17 @@ export default class ZnifferManager extends TypedEventEmitter<ZnifferManagerEven
 		this.zniffer.on('frame', (frame, rawData) => {
 			const socketFrame = this.parseFrame(frame, rawData)
 
-			this.socket.emit(socketEvents.znifferFrame, socketFrame)
+			this.socket
+				.to('znifferFrames')
+				.emit(socketEvents.znifferFrame, socketFrame)
 		})
 
 		this.zniffer.on('corrupted frame', (frame, rawData) => {
 			const socketFrame = this.parseFrame(frame, rawData)
 
-			this.socket.emit(socketEvents.znifferFrame, socketFrame)
+			this.socket
+				.to('znifferFrames')
+				.emit(socketEvents.znifferFrame, socketFrame)
 		})
 
 		this.zniffer.on('ready', () => {
@@ -172,7 +176,9 @@ export default class ZnifferManager extends TypedEventEmitter<ZnifferManagerEven
 	}
 
 	private onStateChange() {
-		this.socket.emit(socketEvents.znifferState, this.status())
+		this.socket
+			.to('znifferState')
+			.emit(socketEvents.znifferState, this.status())
 	}
 
 	private checkReady() {

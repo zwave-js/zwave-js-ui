@@ -65,7 +65,9 @@
 							class="smaller-min-width-tabs"
 						>
 							<v-icon
-								:start="item.path === $route.path"
+								:start="
+									item.path === $route.path || showTabLabels
+								"
 								:size="
 									item.path === $route.path
 										? 'small'
@@ -75,7 +77,9 @@
 								{{ item.icon }}
 							</v-icon>
 							<span
-								v-if="item.path === $route.path"
+								v-if="
+									item.path === $route.path || showTabLabels
+								"
 								class="text-subtitle-2"
 							>
 								{{ item.title }}
@@ -402,6 +406,7 @@ import { SecurityBootstrapFailure, InclusionState } from 'zwave-js'
 import DialogNodesManager from '@/components/dialogs/DialogNodesManager.vue'
 import DialogFirmwareUpdate from '@/components/dialogs/DialogFirmwareUpdate.vue'
 import { uuid } from './lib/utils'
+import InstancesMixin from './mixins/InstancesMixin.js'
 import Logo from '@/components/Logo.vue'
 
 let socketQueue = []
@@ -418,6 +423,7 @@ export default {
 		VSonner,
 		Logo,
 	},
+	mixins: [InstancesMixin],
 	name: 'app',
 	computed: {
 		...mapState(useBaseStore, [
@@ -434,6 +440,7 @@ export default {
 		...mapState(useBaseStore, {
 			darkMode: (store) => store.uiState.darkMode,
 			navTabs: (store) => store.ui.navTabs,
+			showTabLabels: (store) => store.ui.showTabLabels,
 		}),
 		...mapWritableState(useBaseStore, ['debugCaptureActive']),
 		menuItems() {
@@ -638,7 +645,7 @@ export default {
 	},
 	methods: {
 		async startDebugCapture() {
-			const confirmed = await this.confirm(
+			const result = await this.confirm(
 				'Start Debug Capture',
 				'<p>This wizard will help you collect a complete debug package.</p>' +
 					'<ul>' +
@@ -650,16 +657,26 @@ export default {
 					confirmText: 'Start Capture',
 					cancelText: 'Cancel',
 					width: 500,
+					inputs: [
+						{
+							type: 'checkbox',
+							key: 'restartDriver',
+							label: 'Restart driver to capture startup logs',
+							hint: 'Enable this to capture logs from the driver startup process',
+							default: false,
+						},
+					],
 				},
 			)
 
-			if (!confirmed) {
+			if (Object.keys(result).length === 0) {
 				return
 			}
 
 			try {
-				// Start debug capture
-				await ConfigApis.startDebugCapture()
+				// Start debug capture with optional driver restart
+				const restartDriver = result.restartDriver || false
+				await ConfigApis.startDebugCapture(restartDriver)
 
 				this.showSnackbar('Debug capture started.', 'success')
 
@@ -1295,8 +1312,12 @@ export default {
 			// convert node values in array
 			this.initNodes(data.nodes)
 
-			// Handle debug capture state persistence
-			this.debugCaptureActive = data.debugCaptureActive
+			// Handle debug capture state persistence — only update when
+			// explicitly provided (server-pushed inits from ZwaveClient
+			// don't include this field, so avoid resetting it to undefined)
+			if (data.debugCaptureActive !== undefined) {
+				this.debugCaptureActive = data.debugCaptureActive
+			}
 		},
 		async startSocket() {
 			if (
@@ -1313,19 +1334,29 @@ export default {
 				return
 			}
 
-			const query = this.auth ? { token: this.user.token } : undefined
+			const auth = this.auth ? { token: this.user.token } : undefined
 
 			this.socket = io('/', {
 				path: location.pathname
 					? location.pathname + 'socket.io'
 					: undefined,
-				query: query,
+				auth: auth,
 				rejectUnauthorized: false,
 			})
+
+			this.subscribeChannels([
+				'controller',
+				'nodes',
+				'values',
+				'statistics',
+				'firmware',
+				'znifferState',
+			])
 
 			this.socket.on('connect', () => {
 				this.updateStatus('Connected', 'success')
 				log.info('Socket connected')
+
 				this.socket.emit(
 					socketActions.init,
 					true,
