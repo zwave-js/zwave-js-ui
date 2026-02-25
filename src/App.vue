@@ -406,6 +406,7 @@ import { SecurityBootstrapFailure, InclusionState } from 'zwave-js'
 import DialogNodesManager from '@/components/dialogs/DialogNodesManager.vue'
 import DialogFirmwareUpdate from '@/components/dialogs/DialogFirmwareUpdate.vue'
 import { uuid } from './lib/utils'
+import InstancesMixin from './mixins/InstancesMixin.js'
 import Logo from '@/components/Logo.vue'
 
 let socketQueue = []
@@ -422,6 +423,7 @@ export default {
 		VSonner,
 		Logo,
 	},
+	mixins: [InstancesMixin],
 	name: 'app',
 	computed: {
 		...mapState(useBaseStore, [
@@ -1326,19 +1328,29 @@ export default {
 				return
 			}
 
-			const query = this.auth ? { token: this.user.token } : undefined
+			const auth = this.auth ? { token: this.user.token } : undefined
 
 			this.socket = io('/', {
 				path: location.pathname
 					? location.pathname + 'socket.io'
 					: undefined,
-				query: query,
+				auth: auth,
 				rejectUnauthorized: false,
 			})
+
+			this.subscribeChannels([
+				'controller',
+				'nodes',
+				'values',
+				'statistics',
+				'firmware',
+				'znifferState',
+			])
 
 			this.socket.on('connect', () => {
 				this.updateStatus('Connected', 'success')
 				log.info('Socket connected')
+
 				this.socket.emit(
 					socketActions.init,
 					true,

@@ -438,6 +438,7 @@ export default {
 				this.selectedNode = this.filteredNodes[0]
 					? this.filteredNodes[0].id
 					: null
+				this.subscribeChannels(['diagnostics'])
 				this.bindEvent(
 					'healthCheckProgress',
 					this.onHealthCheckProgress.bind(this),

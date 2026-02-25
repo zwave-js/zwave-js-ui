@@ -40,7 +40,12 @@ import {
 } from './config/app.ts'
 import type { CustomPlugin, PluginConstructor } from './lib/CustomPlugin.ts'
 import { createPlugin } from './lib/CustomPlugin.ts'
-import { inboundEvents, socketEvents } from './lib/SocketEvents.ts'
+import {
+	ALL_CHANNELS,
+	channelMap,
+	inboundEvents,
+	socketEvents,
+} from './lib/SocketEvents.ts'
 import * as utils from './lib/utils.ts'
 import backupManager from './lib/BackupManager.ts'
 import {
@@ -158,16 +163,14 @@ socketManager.authMiddleware = function (
 ) {
 	if (!isAuthEnabled()) {
 		next()
-	} else if (socket.handshake.query && socket.handshake.query.token) {
-		jwt.verify(
-			socket.handshake.query.token as string,
-			sessionSecret,
-			function (err, decoded: User) {
-				if (err) return next(new Error('Authentication error'))
-				socket.user = decoded
-				next()
-			},
-		)
+	} else if (socket.handshake.auth?.token || socket.handshake.query?.token) {
+		const token = (socket.handshake.auth?.token ||
+			socket.handshake.query.token) as string
+		jwt.verify(token, sessionSecret, function (err, decoded: User) {
+			if (err) return next(new Error('Authentication error'))
+			socket.user = decoded
+			next()
+		})
 	} else {
 		next(new Error('Authentication error'))
 	}
@@ -469,7 +472,7 @@ async function destroyPlugins() {
 function setupInterceptor() {
 	// intercept logs and redirect them to socket
 	loggers.logStream.on('data', (chunk) => {
-		socketManager.io.emit(socketEvents.debug, chunk.toString())
+		socketManager.io.to('debug').emit(socketEvents.debug, chunk.toString())
 	})
 }
 
@@ -759,6 +762,46 @@ function setupSocket(server: HttpServer) {
 			}
 
 			cb(result)
+		})
+
+		socket.on(inboundEvents.subscribe, async (data, cb = noop) => {
+			const channels: string[] = Array.isArray(data?.channels)
+				? data.channels.filter((c: unknown) => typeof c === 'string')
+				: []
+
+			const isAll = channels.includes('all')
+			const validChannels = isAll
+				? ALL_CHANNELS
+				: channels.filter((c) => Object.hasOwn(channelMap, c))
+
+			for (const channel of validChannels) {
+				await socket.join(channel)
+			}
+
+			// report current subscriptions (exclude socket's auto-joined room)
+			const subscribed = [...socket.rooms].filter(
+				(r) => r !== socket.id && Object.hasOwn(channelMap, r),
+			)
+			cb({ channels: subscribed })
+		})
+
+		socket.on(inboundEvents.unsubscribe, async (data, cb = noop) => {
+			const channels: string[] = Array.isArray(data?.channels)
+				? data.channels.filter((c: unknown) => typeof c === 'string')
+				: []
+
+			const validChannels = channels.filter((c) =>
+				Object.hasOwn(channelMap, c),
+			)
+
+			for (const channel of validChannels) {
+				await socket.leave(channel)
+			}
+
+			const subscribed = [...socket.rooms].filter(
+				(r) => r !== socket.id && Object.hasOwn(channelMap, r),
+			)
+			cb({ channels: subscribed })
 		})
 
 		socket.on(inboundEvents.zniffer, async (data, cb = noop) => {
