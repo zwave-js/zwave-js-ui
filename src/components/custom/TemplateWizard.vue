@@ -299,20 +299,23 @@ export default {
 				(n) => n && n.ready && n.deviceId === item.deviceId && n.values,
 			)
 
-			// Build a lookup map of CC 112 values keyed by property-propertyKey-endpoint
+			// Build a lookup map of CC 112 values keyed by endpoint-property[-propertyKey]
 			const configMap = new Map()
 			if (matchingNode) {
+				const prefix = `${matchingNode.id}-112-`
 				for (const id in matchingNode.values) {
-					const nv = matchingNode.values[id]
-					if (nv.commandClass === 112) {
-						const key = `${nv.property}-${nv.propertyKey ?? 'null'}-${nv.endpoint || 0}`
-						configMap.set(key, nv)
+					if (id.startsWith(prefix)) {
+						// Strip "nodeId-112-" to get "endpoint-property[-propertyKey]"
+						configMap.set(
+							id.substring(prefix.length),
+							matchingNode.values[id],
+						)
 					}
 				}
 			}
 
 			this.nodeParams = item.values.map((v, i) => {
-				const key = `${v.property}-${v.propertyKey ?? 'null'}-${v.endpoint || 0}`
+				const key = `${v.endpoint || 0}-${v.property}${v.propertyKey != null ? '-' + v.propertyKey : ''}`
 				const nv = configMap.get(key)
 
 				return {
