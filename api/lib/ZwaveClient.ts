@@ -256,12 +256,6 @@ export const allowedApis = validateMethods([
 	'cancelGetSchedule',
 	'setSchedule',
 	'setEnabledSchedule',
-	'getConfigurationTemplates',
-	'createConfigurationTemplate',
-	'updateConfigurationTemplate',
-	'deleteConfigurationTemplate',
-	'applyConfigurationTemplate',
-	'importConfigurationTemplates',
 ] as const)
 
 export type ZwaveNodeEvents = ZWaveNodeEvents | 'statistics updated'
@@ -3003,7 +2997,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		const id =
 			this._configTemplates.length > 0
-				? this._configTemplates[this._configTemplates.length - 1].id + 1
+				? Math.max(...this._configTemplates.map((t) => t.id)) + 1
 				: 1
 
 		const now = new Date().toISOString()
@@ -3085,6 +3079,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	async applyConfigurationTemplate(
 		templateId: number,
 		nodeId: number,
+		force = false,
 	): Promise<{ success: number; failed: number; errors: string[] }> {
 		const template = this._configTemplates.find((t) => t.id === templateId)
 
@@ -3100,6 +3095,17 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		if (!node.ready) {
 			throw Error(`Node ${nodeId} is not ready`)
+		}
+
+		if (
+			!force &&
+			template.deviceId &&
+			node.deviceId &&
+			template.deviceId !== node.deviceId
+		) {
+			throw Error(
+				`Template device type "${template.deviceId}" does not match node device type "${node.deviceId}". Use force to override.`,
+			)
 		}
 
 		const results = { success: 0, failed: 0, errors: [] as string[] }
@@ -3178,7 +3184,12 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				const nodeFw = semverCoerce(node.firmwareVersion)
 				const minFw = semverCoerce(t.minFirmwareVersion)
 
-				if (nodeFw && minFw && !semverGte(nodeFw, minFw)) {
+				// If either version can't be parsed, skip this template
+				if (!nodeFw || !minFw) {
+					return false
+				}
+
+				if (!semverGte(nodeFw, minFw)) {
 					return false
 				}
 			}
@@ -3215,7 +3226,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				'info',
 				`Auto-applying configuration template "${template.name}"`,
 			)
-			this.applyConfigurationTemplate(template.id, node.id)
+			this.applyConfigurationTemplate(template.id, node.id, true)
 				.then((result) => {
 					if (result.failed > 0) {
 						this.logNode(

@@ -247,6 +247,10 @@
 													top: '0',
 													left: '77px',
 												}"
+												@applied="
+													item.raw.pendingConfigTemplates =
+														undefined
+												"
 											></template-badge>
 										</div>
 									</v-badge>

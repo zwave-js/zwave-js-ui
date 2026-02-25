@@ -21,6 +21,7 @@ import useBaseStore from '../../stores/base.js'
 
 export default {
 	mixins: [InstancesMixin],
+	emits: ['applied'],
 	props: {
 		node: {
 			type: Object,
@@ -91,7 +92,9 @@ export default {
 					this.node.id,
 				)
 				if (response.success) {
-					this.node.pendingConfigTemplates = undefined
+					// Optimistic update — the server will also clear this
+					// on the next node update via _checkConfigurationTemplates
+					this.$emit('applied')
 				}
 				this.showSnackbar(
 					response.message,

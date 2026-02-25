@@ -294,19 +294,46 @@ export default {
 			this.templateFirmware = item.minFirmwareVersion || ''
 			this.templateAutoApply = item.autoApply
 
-			this.nodeParams = item.values.map((v, i) => ({
-				id: i,
-				property: v.property,
-				propertyKey: v.propertyKey,
-				endpoint: v.endpoint,
-				label: v.label || `Parameter ${v.property}`,
-				description: v.description || '',
-				currentValue: v.value,
-				templateValue: v.value,
-				states: null,
-				min: undefined,
-				max: undefined,
-			}))
+			// Try to find a matching node to recover states/min/max metadata
+			const matchingNode = this.nodes.find(
+				(n) => n && n.ready && n.deviceId === item.deviceId && n.values,
+			)
+			const nodeValues = matchingNode ? matchingNode.values : {}
+
+			this.nodeParams = item.values.map((v, i) => {
+				// Look up the node's current value for this param to get states
+				let states = null
+				let min
+				let max
+				for (const id in nodeValues) {
+					const nv = nodeValues[id]
+					if (
+						nv.commandClass === 112 &&
+						nv.property === v.property &&
+						nv.propertyKey == v.propertyKey &&
+						(nv.endpoint || 0) === (v.endpoint || 0)
+					) {
+						states = nv.states || null
+						min = nv.min
+						max = nv.max
+						break
+					}
+				}
+
+				return {
+					id: i,
+					property: v.property,
+					propertyKey: v.propertyKey,
+					endpoint: v.endpoint,
+					label: v.label || `Parameter ${v.property}`,
+					description: v.description || '',
+					currentValue: v.value,
+					templateValue: v.value,
+					states,
+					min,
+					max,
+				}
+			})
 			this.selectedParams = [...this.nodeParams]
 			this.step = 2
 		},

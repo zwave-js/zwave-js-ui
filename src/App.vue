@@ -1900,6 +1900,7 @@ export default {
 		})
 	},
 	beforeUnmount() {
+		this.unbindEvents()
 		if (this.socket) this.socket.close()
 	},
 }

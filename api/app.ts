@@ -1745,10 +1745,13 @@ app.put(
 					message: 'Invalid template ID',
 				})
 			}
-			const template = await gw.zwave.updateConfigurationTemplate(
-				id,
-				req.body,
-			)
+			const { name, autoApply, minFirmwareVersion, values } = req.body
+			const template = await gw.zwave.updateConfigurationTemplate(id, {
+				name,
+				autoApply,
+				minFirmwareVersion,
+				values,
+			})
 			res.json({
 				success: true,
 				data: template,
@@ -1799,14 +1802,18 @@ app.post(
 					message: 'Invalid template ID',
 				})
 			}
-			const { nodeId } = req.body
+			const { nodeId, force } = req.body
 			if (!nodeId) {
 				return res.json({
 					success: false,
 					message: 'nodeId is required',
 				})
 			}
-			const result = await gw.zwave.applyConfigurationTemplate(id, nodeId)
+			const result = await gw.zwave.applyConfigurationTemplate(
+				id,
+				nodeId,
+				!!force,
+			)
 			res.json({
 				success: true,
 				data: result,
