@@ -298,27 +298,22 @@ export default {
 			const matchingNode = this.nodes.find(
 				(n) => n && n.ready && n.deviceId === item.deviceId && n.values,
 			)
-			const nodeValues = matchingNode ? matchingNode.values : {}
 
-			this.nodeParams = item.values.map((v, i) => {
-				// Look up the node's current value for this param to get states
-				let states = null
-				let min
-				let max
-				for (const id in nodeValues) {
-					const nv = nodeValues[id]
-					if (
-						nv.commandClass === 112 &&
-						nv.property === v.property &&
-						nv.propertyKey == v.propertyKey &&
-						(nv.endpoint || 0) === (v.endpoint || 0)
-					) {
-						states = nv.states || null
-						min = nv.min
-						max = nv.max
-						break
+			// Build a lookup map of CC 112 values keyed by property-propertyKey-endpoint
+			const configMap = new Map()
+			if (matchingNode) {
+				for (const id in matchingNode.values) {
+					const nv = matchingNode.values[id]
+					if (nv.commandClass === 112) {
+						const key = `${nv.property}-${nv.propertyKey ?? 'null'}-${nv.endpoint || 0}`
+						configMap.set(key, nv)
 					}
 				}
+			}
+
+			this.nodeParams = item.values.map((v, i) => {
+				const key = `${v.property}-${v.propertyKey ?? 'null'}-${v.endpoint || 0}`
+				const nv = configMap.get(key)
 
 				return {
 					id: i,
@@ -329,9 +324,9 @@ export default {
 					description: v.description || '',
 					currentValue: v.value,
 					templateValue: v.value,
-					states,
-					min,
-					max,
+					states: nv?.states || null,
+					min: nv?.min,
+					max: nv?.max,
 				}
 			})
 			this.selectedParams = [...this.nodeParams]
