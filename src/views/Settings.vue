@@ -565,7 +565,15 @@
 											@click:append="refreshSerialPorts"
 										></v-combobox>
 									</v-col>
-									<v-col cols="12" sm="6">
+									<v-col
+										v-if="
+											!isSettingManagedExternally(
+												'zwave.deviceConfigPriorityDir',
+											)
+										"
+										cols="12"
+										sm="6"
+									>
 										<v-text-field
 											v-model.trim="
 												newZwave.deviceConfigPriorityDir

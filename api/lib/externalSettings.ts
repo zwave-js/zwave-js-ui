@@ -40,6 +40,9 @@ export interface ExternalZwaveSettings {
 		S2_AccessControl?: string
 	}
 
+	// Device config
+	deviceConfigPriorityDir?: string
+
 	// Features
 	enableSoftReset?: boolean
 
@@ -116,6 +119,10 @@ export function getExternallyManagedPaths(): string[] {
 	// Features
 	if (settings.enableSoftReset !== undefined)
 		paths.push('zwave.enableSoftReset')
+
+	// Device config
+	if (settings.deviceConfigPriorityDir !== undefined)
+		paths.push('zwave.deviceConfigPriorityDir')
 
 	// Home Assistant / Z-Wave JS Server settings
 	if (settings.serverEnabled !== undefined) paths.push('zwave.serverEnabled')
@@ -229,4 +236,8 @@ export function mergeExternalSettings(
 	// Features
 	if (settings.enableSoftReset !== undefined)
 		zwaveConfig.enableSoftReset = settings.enableSoftReset
+
+	// Device config
+	if (settings.deviceConfigPriorityDir !== undefined)
+		zwaveConfig.deviceConfigPriorityDir = settings.deviceConfigPriorityDir
 }
