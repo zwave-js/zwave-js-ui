@@ -2903,6 +2903,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		nodeId: number,
 		name: string,
 		autoApply = false,
+		values?: ZUIConfigurationTemplateValue[],
 	): Promise<ZUIConfigurationTemplate> {
 		const node = this._nodes.get(nodeId)
 
@@ -2914,26 +2915,33 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			throw Error(`Node ${nodeId} is not ready`)
 		}
 
-		// Extract CC 112 (Configuration) writeable values
-		const configValues: ZUIConfigurationTemplateValue[] = []
+		let configValues: ZUIConfigurationTemplateValue[]
 
-		for (const id in node.values) {
-			const v = node.values[id]
-			if (
-				v.commandClass === CommandClasses.Configuration &&
-				v.writeable
-			) {
-				configValues.push({
-					property: v.property as number,
-					propertyKey:
-						v.propertyKey != null
-							? (v.propertyKey as number)
-							: null,
-					endpoint: v.endpoint || 0,
-					value: v.value,
-					label: v.label,
-					description: v.description,
-				})
+		if (values && values.length > 0) {
+			// Use custom values provided by the wizard
+			configValues = values
+		} else {
+			// Extract CC 112 (Configuration) writeable values
+			configValues = []
+
+			for (const id in node.values) {
+				const v = node.values[id]
+				if (
+					v.commandClass === CommandClasses.Configuration &&
+					v.writeable
+				) {
+					configValues.push({
+						property: v.property as number,
+						propertyKey:
+							v.propertyKey != null
+								? (v.propertyKey as number)
+								: null,
+						endpoint: v.endpoint || 0,
+						value: v.value,
+						label: v.label,
+						description: v.description,
+					})
+				}
 			}
 		}
 
@@ -2981,6 +2989,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			name?: string
 			autoApply?: boolean
 			minFirmwareVersion?: string
+			values?: ZUIConfigurationTemplateValue[]
 		},
 	): Promise<ZUIConfigurationTemplate> {
 		const template = this._configTemplates.find((t) => t.id === id)
@@ -2994,6 +3003,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			template.autoApply = updates.autoApply
 		if (updates.minFirmwareVersion !== undefined)
 			template.minFirmwareVersion = updates.minFirmwareVersion
+		if (updates.values !== undefined) template.values = updates.values
 
 		template.updatedAt = new Date().toISOString()
 

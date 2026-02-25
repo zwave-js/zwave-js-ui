@@ -591,17 +591,13 @@ export default {
 					text: 'Configuration Templates',
 					options: [
 						{
-							name: 'Create',
-							action: 'createTemplate',
-						},
-						{
 							name: 'Apply',
 							action: 'applyTemplate',
 						},
 					],
 					icon: 'content_copy',
 					color: 'primary',
-					desc: 'Create or apply configuration parameter templates for this device type',
+					desc: 'Apply a configuration parameter template to this device',
 				},
 				{
 					text: 'Export json',
@@ -796,8 +792,6 @@ export default {
 		nodeAction(action, args = {}) {
 			if (action === 'exportNode') {
 				this.exportNode()
-			} else if (action === 'createTemplate') {
-				this.createTemplate()
 			} else if (action === 'applyTemplate') {
 				this.applyTemplate()
 			} else if (args.mqtt) {
@@ -812,51 +806,6 @@ export default {
 				'node_' + this.node.id,
 				'json',
 			)
-		},
-		async createTemplate() {
-			const result = await this.app.confirm(
-				'Create Configuration Template',
-				`Create a template from node ${this.node.id} (${this.node.productLabel || this.node.productDescription || ''}) configuration parameters`,
-				'info',
-				{
-					confirmText: 'Create',
-					width: 500,
-					inputs: [
-						{
-							type: 'text',
-							label: 'Template name',
-							required: true,
-							key: 'name',
-							default:
-								this.node.productLabel ||
-								this.node.productDescription ||
-								`Node ${this.node.id} template`,
-						},
-						{
-							type: 'checkbox',
-							label: 'Auto-apply to new matching devices',
-							key: 'autoApply',
-							default: false,
-						},
-					],
-				},
-			)
-
-			if (!result || !result.name) return
-
-			try {
-				const response = await ConfigApis.createConfigurationTemplate({
-					nodeId: this.node.id,
-					name: result.name,
-					autoApply: result.autoApply || false,
-				})
-				this.showSnackbar(
-					response.message,
-					response.success ? 'success' : 'error',
-				)
-			} catch (error) {
-				this.showSnackbar(error.message, 'error')
-			}
 		},
 		async applyTemplate() {
 			try {
