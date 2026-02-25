@@ -1621,7 +1621,8 @@ app.post(
 	isAuthenticated,
 	async function (req, res) {
 		try {
-			const { nodeId, name, autoApply, values } = req.body
+			const { nodeId, name, autoApply, values, minFirmwareVersion } =
+				req.body
 			if (!nodeId || !name) {
 				return res.json({
 					success: false,
@@ -1633,6 +1634,7 @@ app.post(
 				name,
 				autoApply,
 				values,
+				minFirmwareVersion,
 			)
 			res.json({
 				success: true,

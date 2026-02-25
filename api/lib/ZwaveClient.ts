@@ -2904,6 +2904,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		name: string,
 		autoApply = false,
 		values?: ZUIConfigurationTemplateValue[],
+		minFirmwareVersion?: string,
 	): Promise<ZUIConfigurationTemplate> {
 		const node = this._nodes.get(nodeId)
 
@@ -2967,7 +2968,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			productType: node.productType,
 			manufacturer: node.manufacturer,
 			productLabel: node.productLabel,
-			minFirmwareVersion: node.firmwareVersion || '0.0',
+			minFirmwareVersion:
+				minFirmwareVersion || node.firmwareVersion || '0.0',
 			values: configValues,
 			autoApply,
 			createdAt: now,
