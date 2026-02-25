@@ -590,6 +590,7 @@ export type ZUINode = {
 	deviceId?: string
 	hasDeviceConfigChanged?: boolean
 	pendingConfigTemplates?: { id: number; name: string }[]
+	_autoApplyingTemplate?: boolean
 	hexId?: string
 	values?: { [key: string]: ZUIValueId }
 	groups?: ZUINodeGroups[]
@@ -3200,15 +3201,29 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		const autoApplyTemplates = matching.filter((t) => t.autoApply)
 
 		if (autoApplyTemplates.length > 0) {
+			// Skip if already auto-applying (node ready can fire multiple times)
+			if (node._autoApplyingTemplate) {
+				return
+			}
+
 			// Auto-apply the first matching template
 			const template = autoApplyTemplates[0]
+			node._autoApplyingTemplate = true
+
 			this.logNode(
 				zwaveNode,
 				'info',
 				`Auto-applying configuration template "${template.name}"`,
 			)
 			this.applyConfigurationTemplate(template.id, node.id)
-				.then(() => {
+				.then((result) => {
+					if (result.failed > 0) {
+						this.logNode(
+							zwaveNode,
+							'warn',
+							`Template "${template.name}" partially applied: ${result.success} OK, ${result.failed} failed`,
+						)
+					}
 					node.pendingConfigTemplates = undefined
 				})
 				.catch((error) => {
@@ -3217,6 +3232,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 						'error',
 						`Failed to auto-apply template "${template.name}": ${error.message}`,
 					)
+				})
+				.finally(() => {
+					node._autoApplyingTemplate = false
 				})
 		} else {
 			// Store pending templates on the node so the UI can show a badge
