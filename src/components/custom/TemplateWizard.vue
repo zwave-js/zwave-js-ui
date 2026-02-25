@@ -191,7 +191,7 @@ import ConfigApis from '@/apis/ConfigApis'
 import { mapActions, mapState } from 'pinia'
 import useBaseStore from '../../stores/base.js'
 
-const FIRMWARE_REGEX = /^\d+\.\d+$/
+const FIRMWARE_REGEX = /^\d+(\.\d+)+$/
 
 export default {
 	name: 'TemplateWizard',
@@ -274,7 +274,10 @@ export default {
 		...mapActions(useBaseStore, ['showSnackbar']),
 		firmwareRule(v) {
 			if (!v) return true
-			return FIRMWARE_REGEX.test(v) || 'Must be in format X.Y (e.g. 1.0)'
+			return (
+				FIRMWARE_REGEX.test(v) ||
+				'Must be in format X.Y or X.Y.Z (e.g. 1.0)'
+			)
 		},
 		initCreate() {
 			this.selectedNodeId = null
@@ -321,6 +324,8 @@ export default {
 				return
 			}
 
+			// Guard against concurrent selections
+			const requestedId = nodeId
 			this.loadingParams = true
 			try {
 				const node = this.nodes.find((n) => n && n.id === nodeId)
@@ -353,6 +358,9 @@ export default {
 						})
 					}
 				}
+
+				// Discard results if user selected a different node while loading
+				if (this.selectedNodeId !== requestedId) return
 
 				if (params.length === 0) {
 					this.showSnackbar(
@@ -389,7 +397,7 @@ export default {
 					value:
 						p.states && p.states.length > 0
 							? p.templateValue
-							: Number(p.templateValue),
+							: Number(p.templateValue) || 0,
 					label: p.label,
 					description: p.description,
 				}))
