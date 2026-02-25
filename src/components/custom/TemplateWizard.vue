@@ -224,12 +224,10 @@ export default {
 				{
 					title: 'Current Value',
 					key: 'currentValue',
-					width: '150px',
 				},
 				{
 					title: 'Template Value',
 					key: 'templateValue',
-					width: '200px',
 					sortable: false,
 				},
 			],
