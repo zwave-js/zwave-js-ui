@@ -145,8 +145,8 @@
 									v-model="templateFirmware"
 									label="Min firmware version"
 									variant="outlined"
-									hint="Optional"
-									persistent-hint
+									placeholder="e.g. 1.0"
+									:rules="[firmwareRule]"
 								></v-text-field>
 							</v-col>
 							<v-col cols="12" sm="6">
@@ -173,9 +173,7 @@
 						<v-btn variant="text" @click="step = 2"> Back </v-btn>
 						<v-btn
 							color="primary"
-							:disabled="
-								!templateName || selectedParams.length === 0
-							"
+							:disabled="!canSave"
 							:loading="saving"
 							@click="save"
 						>
@@ -192,6 +190,8 @@
 import ConfigApis from '@/apis/ConfigApis'
 import { mapActions, mapState } from 'pinia'
 import useBaseStore from '../../stores/base.js'
+
+const FIRMWARE_REGEX = /^\d+\.\d+$/
 
 export default {
 	name: 'TemplateWizard',
@@ -252,6 +252,13 @@ export default {
 			)
 			return item ? item.text : ''
 		},
+		canSave() {
+			return (
+				this.templateName &&
+				this.selectedParams.length > 0 &&
+				this.firmwareRule(this.templateFirmware) === true
+			)
+		},
 	},
 	watch: {
 		template: {
@@ -267,6 +274,10 @@ export default {
 	},
 	methods: {
 		...mapActions(useBaseStore, ['showSnackbar']),
+		firmwareRule(v) {
+			if (!v) return true
+			return FIRMWARE_REGEX.test(v) || 'Must be in format X.Y (e.g. 1.0)'
+		},
 		initCreate() {
 			this.selectedNodeId = null
 			this.nodeParams = []
@@ -361,6 +372,11 @@ export default {
 						node.productDescription ||
 						`Node ${node.id} template`
 				}
+
+				// Pre-populate firmware version from the node
+				if (!this.templateFirmware) {
+					this.templateFirmware = node.firmwareVersion || ''
+				}
 			} finally {
 				this.loadingParams = false
 			}
@@ -396,6 +412,7 @@ export default {
 					response = await ConfigApis.createConfigurationTemplate({
 						nodeId: this.selectedNodeId,
 						name: this.templateName,
+						minFirmwareVersion: this.templateFirmware || undefined,
 						autoApply: this.templateAutoApply,
 						values,
 					})
