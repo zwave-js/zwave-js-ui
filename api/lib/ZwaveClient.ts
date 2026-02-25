@@ -131,7 +131,7 @@ import type { GatewayValue } from './Gateway.ts'
 
 import type { DeviceConfig } from '@zwave-js/config'
 import { ConfigManager } from '@zwave-js/config'
-import { createHash, randomBytes } from 'node:crypto'
+import { createHash } from 'node:crypto'
 import { readFile, writeFile } from 'node:fs/promises'
 import backupManager, { NVM_BACKUP_PREFIX } from './BackupManager.ts'
 import { eventToChannel, socketEvents } from './SocketEvents.ts'
@@ -3000,7 +3000,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			)
 		}
 
-		const id = randomBytes(6).toString('hex')
+		const id = utils.generateId()
 
 		const now = new Date().toISOString()
 
@@ -3226,12 +3226,12 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		if (mode === 'extend') {
 			for (const t of templates) {
-				t.id = randomBytes(6).toString('hex')
+				t.id = utils.generateId()
 				this._configTemplates.push(t)
 			}
 		} else {
 			for (const t of templates) {
-				t.id = randomBytes(6).toString('hex')
+				t.id = utils.generateId()
 			}
 			this._configTemplates = templates
 		}
