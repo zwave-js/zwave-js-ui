@@ -2524,9 +2524,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				if (channel) {
 					this.socket.to(channel).emit(evtName, data, ...args)
 				} else {
-					logger.error(
-						`No channel mapping for event ${evtName}, skipping broadcast`,
+					logger.warn(
+						`No channel mapping for event ${evtName}, broadcasting to all clients`,
 					)
+					this.socket.emit(evtName, data, ...args)
 				}
 			})
 		}
