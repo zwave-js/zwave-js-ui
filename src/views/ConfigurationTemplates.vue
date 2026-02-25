@@ -11,12 +11,10 @@
 		<!-- TABLE MODE -->
 		<v-data-table
 			v-else
-			v-model:expanded="expanded"
 			:headers="headers"
 			:items="templates"
 			:search="search"
 			class="elevation-1"
-			show-expand
 		>
 			<template #top>
 				<v-col class="pt-0">
@@ -87,12 +85,6 @@
 				{{ item.values.length }} parameter(s)
 			</template>
 
-			<template #[`item.devices`]="{ item }">
-				<v-chip size="small" variant="tonal">
-					{{ getMatchingNodes(item).length }}
-				</v-chip>
-			</template>
-
 			<template #[`item.createdAt`]="{ item }">
 				{{ formatDate(item.createdAt) }}
 			</template>
@@ -125,47 +117,6 @@
 					delete
 				</v-icon>
 			</template>
-
-			<template #expanded-row="{ columns, item }">
-				<tr>
-					<td :colspan="columns.length" class="pa-4">
-						<div
-							v-if="getMatchingNodes(item).length === 0"
-							class="text-medium-emphasis"
-						>
-							No matching devices found
-						</div>
-						<v-list v-else density="compact" class="pa-0">
-							<v-list-item
-								v-for="node in getMatchingNodes(item)"
-								:key="node.id"
-								class="px-2"
-							>
-								<v-list-item-title>
-									Node {{ node.id }} —
-									{{
-										[node.manufacturer, node.productLabel]
-											.filter(Boolean)
-											.join(' ') ||
-										node._name ||
-										'Unknown'
-									}}
-								</v-list-item-title>
-								<template #append>
-									<v-btn
-										size="small"
-										variant="tonal"
-										color="primary"
-										@click="applyToNode(item.id, node.id)"
-									>
-										Apply
-									</v-btn>
-								</template>
-							</v-list-item>
-						</v-list>
-					</td>
-				</tr>
-			</template>
 		</v-data-table>
 	</v-container>
 </template>
@@ -188,7 +139,6 @@ export default {
 		return {
 			templates: [],
 			search: '',
-			expanded: [],
 			headers: [
 				{ title: 'Name', key: 'name' },
 				{ title: 'Device', key: 'device', sortable: false },
@@ -199,11 +149,6 @@ export default {
 				},
 				{ title: 'Values', key: 'values', sortable: false },
 				{ title: 'Auto-Apply', key: 'autoApply' },
-				{
-					title: 'Devices',
-					key: 'devices',
-					sortable: false,
-				},
 				{ title: 'Created', key: 'createdAt' },
 				{
 					title: 'Actions',
@@ -288,30 +233,14 @@ export default {
 				}
 			}
 		},
-		async applyToNode(templateId, nodeId) {
-			try {
-				const response = await ConfigApis.applyConfigurationTemplate(
-					templateId,
-					nodeId,
-				)
-				this.showSnackbar(
-					response.message,
-					response.success ? 'success' : 'error',
-				)
-			} catch (error) {
-				this.showSnackbar(error.message, 'error')
-			}
-		},
 		async applyTemplate(item) {
-			const targetNodes = this.nodes
-				.filter((n) => n && !n.isControllerNode && n.ready)
-				.map((n) => ({
-					title: `Node ${n.id} - ${[n.manufacturer, n.productLabel].filter(Boolean).join(' ') || n._name || 'Unknown'}${n.deviceId === item.deviceId ? ' (matching device)' : ''}`,
-					value: n.id,
-				}))
+			const targetNodes = this.getMatchingNodes(item).map((n) => ({
+				title: `Node ${n.id} - ${[n.manufacturer, n.productLabel].filter(Boolean).join(' ') || n._name || 'Unknown'}`,
+				value: n.id,
+			}))
 
 			if (targetNodes.length === 0) {
-				this.showSnackbar('No ready nodes available', 'warning')
+				this.showSnackbar('No matching devices found', 'warning')
 				return
 			}
 
