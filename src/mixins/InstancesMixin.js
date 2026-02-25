@@ -14,6 +14,7 @@ const log = logger.get('InstancesMixin')
 const channelRefCounts = new Map() // channel → count
 let _managedSocket = null
 let _reconnectHandler = null
+let _hasConnectedOnce = false
 
 function getChannelManager(socket) {
 	if (!socket) return null
@@ -25,7 +26,13 @@ function getChannelManager(socket) {
 		}
 		channelRefCounts.clear()
 		_managedSocket = socket
+		_hasConnectedOnce = false
 		_reconnectHandler = () => {
+			// skip first connect — subscribeChannels already emits SUBSCRIBE
+			if (!_hasConnectedOnce) {
+				_hasConnectedOnce = true
+				return
+			}
 			const active = [...channelRefCounts.entries()]
 				.filter(([, n]) => n > 0)
 				.map(([c]) => c)

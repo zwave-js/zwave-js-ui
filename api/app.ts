@@ -766,7 +766,7 @@ function setupSocket(server: HttpServer) {
 
 		socket.on(inboundEvents.subscribe, async (data, cb = noop) => {
 			const channels: string[] = Array.isArray(data?.channels)
-				? data.channels
+				? data.channels.filter((c: unknown) => typeof c === 'string')
 				: []
 
 			const isAll = channels.includes('all')
@@ -782,13 +782,12 @@ function setupSocket(server: HttpServer) {
 			const subscribed = [...socket.rooms].filter(
 				(r) => r !== socket.id && Object.hasOwn(channelMap, r),
 			)
-			socket.emit(socketEvents.subscribed, { channels: subscribed })
 			cb({ channels: subscribed })
 		})
 
 		socket.on(inboundEvents.unsubscribe, async (data, cb = noop) => {
 			const channels: string[] = Array.isArray(data?.channels)
-				? data.channels
+				? data.channels.filter((c: unknown) => typeof c === 'string')
 				: []
 
 			const validChannels = channels.filter((c) =>
@@ -802,7 +801,6 @@ function setupSocket(server: HttpServer) {
 			const subscribed = [...socket.rooms].filter(
 				(r) => r !== socket.id && Object.hasOwn(channelMap, r),
 			)
-			socket.emit(socketEvents.subscribed, { channels: subscribed })
 			cb({ channels: subscribed })
 		})
 

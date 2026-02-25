@@ -28,10 +28,10 @@ Send a `SUBSCRIBE` event with an array of channel names:
 socket.emit("SUBSCRIBE", { channels: ["nodes", "values"] });
 ```
 
-The server responds with a `SUBSCRIBED` event confirming the current set of active subscriptions:
+Use the acknowledgement callback to get the current set of active subscriptions:
 
 ```js
-socket.on("SUBSCRIBED", (data) => {
+socket.emit("SUBSCRIBE", { channels: ["nodes", "values"] }, (data) => {
   console.log("Subscribed to:", data.channels);
   // e.g. ['nodes', 'values']
 });
@@ -53,7 +53,7 @@ Send an `UNSUBSCRIBE` event to remove specific channels:
 socket.emit("UNSUBSCRIBE", { channels: ["statistics"] });
 ```
 
-The server responds with an updated `SUBSCRIBED` event.
+The acknowledgement callback returns the updated subscription list.
 
 ### Subscribe to all channels
 
@@ -141,5 +141,5 @@ The callback receives the result directly &mdash; no subscription is needed for 
 | Full node monitoring (names, values, battery) | `nodes`, `values` |
 | Dashboard (all live data) | `controller`, `nodes`, `values`, `statistics` |
 | Debugging | `debug` |
-| RF analysis | `zniffer` |
+| RF analysis | `znifferFrames`, `znifferState` |
 | Everything (same as the web UI) | `all` |
