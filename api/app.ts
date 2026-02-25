@@ -1698,7 +1698,7 @@ app.post(
 	async function (req, res) {
 		try {
 			const templates = req.body.data
-			const mode = req.body.mode || 'replace'
+			const mode = req.body.mode === 'extend' ? 'extend' : 'replace'
 			if (!Array.isArray(templates)) {
 				return res.json({
 					success: false,
@@ -1737,8 +1737,8 @@ app.put(
 	isAuthenticated,
 	async function (req, res) {
 		try {
-			const id = parseInt(req.params.id)
-			if (isNaN(id)) {
+			const id = req.params.id
+			if (!id) {
 				return res.json({
 					success: false,
 					message: 'Invalid template ID',
@@ -1769,8 +1769,8 @@ app.delete(
 	isAuthenticated,
 	async function (req, res) {
 		try {
-			const id = parseInt(req.params.id)
-			if (isNaN(id)) {
+			const id = req.params.id
+			if (!id) {
 				return res.json({
 					success: false,
 					message: 'Invalid template ID',
@@ -1794,8 +1794,8 @@ app.post(
 	isAuthenticated,
 	async function (req, res) {
 		try {
-			const id = parseInt(req.params.id)
-			if (isNaN(id)) {
+			const id = req.params.id
+			if (!id) {
 				return res.json({
 					success: false,
 					message: 'Invalid template ID',

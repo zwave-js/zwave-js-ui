@@ -131,7 +131,7 @@ import type { GatewayValue } from './Gateway.ts'
 
 import type { DeviceConfig } from '@zwave-js/config'
 import { ConfigManager } from '@zwave-js/config'
-import { createHash } from 'node:crypto'
+import { createHash, randomBytes } from 'node:crypto'
 import { readFile, writeFile } from 'node:fs/promises'
 import backupManager, { NVM_BACKUP_PREFIX } from './BackupManager.ts'
 import { eventToChannel, socketEvents } from './SocketEvents.ts'
@@ -416,7 +416,7 @@ export type ZUIConfigurationTemplateValue = {
 }
 
 export type ZUIConfigurationTemplate = {
-	id: number
+	id: string
 	name: string
 	deviceId: string
 	manufacturerId?: number
@@ -3000,10 +3000,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			)
 		}
 
-		const id =
-			this._configTemplates.length > 0
-				? Math.max(...this._configTemplates.map((t) => t.id)) + 1
-				: 1
+		const id = randomBytes(6).toString('hex')
 
 		const now = new Date().toISOString()
 
@@ -3044,7 +3041,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 * Update an existing configuration template
 	 */
 	async updateConfigurationTemplate(
-		id: number,
+		id: string,
 		updates: {
 			name?: string
 			autoApply?: boolean
@@ -3090,7 +3087,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	/**
 	 * Delete a configuration template
 	 */
-	async deleteConfigurationTemplate(id: number): Promise<boolean> {
+	async deleteConfigurationTemplate(id: string): Promise<boolean> {
 		const index = this._configTemplates.findIndex((t) => t.id === id)
 
 		if (index < 0) {
@@ -3120,7 +3117,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 * Apply a configuration template to a node
 	 */
 	async applyConfigurationTemplate(
-		templateId: number,
+		templateId: string,
 		nodeId: number,
 		force = false,
 	): Promise<{ success: number; failed: number; errors: string[] }> {
@@ -3228,21 +3225,26 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		}
 
 		if (mode === 'extend') {
-			// assign new IDs to avoid conflicts
-			let maxId =
-				this._configTemplates.length > 0
-					? Math.max(...this._configTemplates.map((t) => t.id))
-					: 0
-
 			for (const t of templates) {
-				t.id = ++maxId
+				t.id = randomBytes(6).toString('hex')
 				this._configTemplates.push(t)
 			}
 		} else {
+			for (const t of templates) {
+				t.id = randomBytes(6).toString('hex')
+			}
 			this._configTemplates = templates
 		}
 
 		await jsonStore.put(store.configurationTemplates, this._configTemplates)
+
+		// After replace, clean up stale applied hashes on all nodes
+		if (mode === 'replace') {
+			for (const [, node] of this._nodes) {
+				// eslint-disable-next-line @typescript-eslint/no-floating-promises
+				this._cleanupAppliedTemplateHashes(node)
+			}
+		}
 
 		return this._configTemplates
 	}
@@ -3254,8 +3256,16 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		values: ZUIConfigurationTemplateValue[],
 		firmwareRange?: { min?: string; max?: string },
 	): string {
+		// Normalize values to ensure deterministic key ordering across
+		// different code paths (create vs import)
+		const normalized = values.map((v) => ({
+			property: v.property,
+			propertyKey: v.propertyKey ?? null,
+			endpoint: v.endpoint,
+			value: v.value,
+		}))
 		return createHash('sha256')
-			.update(JSON.stringify({ values, firmwareRange }))
+			.update(JSON.stringify({ values: normalized, firmwareRange }))
 			.digest('hex')
 			.slice(0, 12)
 	}
@@ -3287,6 +3297,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 * Auto-apply a template to all matching ready nodes that haven't received it yet
 	 */
 	private _autoApplyTemplateToNodes(template: ZUIConfigurationTemplate) {
+		if (!this._driver?.controller) return
+
 		for (const [, node] of this._nodes) {
 			if (!node.ready || !node.deviceId) continue
 

@@ -299,7 +299,8 @@ export default {
 			this.nodeParams = []
 			this.selectedParams = []
 			this.templateName = ''
-			this.templateFirmware = ''
+			this.templateFirmwareMin = ''
+			this.templateFirmwareMax = ''
 			this.templateAutoApply = false
 			this.step = 1
 		},
