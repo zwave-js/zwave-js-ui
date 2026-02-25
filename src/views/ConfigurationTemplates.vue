@@ -250,6 +250,7 @@ export default {
 				'info',
 				{
 					confirmText: 'Apply',
+					width: 500,
 					inputs: [
 						{
 							type: 'list',
