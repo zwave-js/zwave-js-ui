@@ -243,10 +243,9 @@ export default {
 		const response = await request.get('/configuration-templates/export')
 		return response.data
 	},
-	async importConfigurationTemplates(data, mode = 'replace') {
+	async importConfigurationTemplates(data) {
 		const response = await request.post('/configuration-templates/import', {
 			data,
-			mode,
 		})
 		return response.data
 	},

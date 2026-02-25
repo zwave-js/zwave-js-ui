@@ -261,6 +261,12 @@ export const allowedApis = validateMethods([
 	'cancelGetSchedule',
 	'setSchedule',
 	'setEnabledSchedule',
+	'getConfigurationTemplates',
+	'createConfigurationTemplate',
+	'updateConfigurationTemplate',
+	'deleteConfigurationTemplate',
+	'applyConfigurationTemplate',
+	'importConfigurationTemplates',
 ] as const)
 
 export type ZwaveNodeEvents = ZWaveNodeEvents | 'statistics updated'
@@ -3194,8 +3200,14 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				this.storeNodes[nodeId].appliedTemplateContentHashes =
 					node.appliedTemplateContentHashes
 
-				// eslint-disable-next-line @typescript-eslint/no-floating-promises
-				this.updateStoreNodes(false)
+				this.throttle(
+					'applyTemplate_storeNodes',
+					() => {
+						// eslint-disable-next-line @typescript-eslint/no-floating-promises
+						this.updateStoreNodes(false)
+					},
+					1000,
+				)
 			}
 		}
 
@@ -3203,12 +3215,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	}
 
 	/**
-	 * Import configuration templates
-	 * @param mode - 'replace' overwrites all, 'extend' merges with existing
+	 * Import configuration templates (extends existing templates)
 	 */
 	async importConfigurationTemplates(
 		templates: ZUIConfigurationTemplate[],
-		mode: 'replace' | 'extend' = 'replace',
 	): Promise<ZUIConfigurationTemplate[]> {
 		// Migrate legacy minFirmwareVersion to firmwareRange
 		for (const t of templates) {
@@ -3216,35 +3226,17 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				t.firmwareRange = { min: (t as any).minFirmwareVersion }
 				delete (t as any).minFirmwareVersion
 			}
+			t.id = utils.generateId()
 			if (!t.contentHash) {
 				t.contentHash = this._generateTemplateContentHash(
 					t.values,
 					t.firmwareRange,
 				)
 			}
-		}
-
-		if (mode === 'extend') {
-			for (const t of templates) {
-				t.id = utils.generateId()
-				this._configTemplates.push(t)
-			}
-		} else {
-			for (const t of templates) {
-				t.id = utils.generateId()
-			}
-			this._configTemplates = templates
+			this._configTemplates.push(t)
 		}
 
 		await jsonStore.put(store.configurationTemplates, this._configTemplates)
-
-		// After replace, clean up stale applied hashes on all nodes
-		if (mode === 'replace') {
-			for (const [, node] of this._nodes) {
-				// eslint-disable-next-line @typescript-eslint/no-floating-promises
-				this._cleanupAppliedTemplateHashes(node)
-			}
-		}
 
 		return this._configTemplates
 	}

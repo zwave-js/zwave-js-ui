@@ -1698,7 +1698,6 @@ app.post(
 	async function (req, res) {
 		try {
 			const templates = req.body.data
-			const mode = req.body.mode === 'extend' ? 'extend' : 'replace'
 			if (!Array.isArray(templates)) {
 				return res.json({
 					success: false,
@@ -1715,10 +1714,8 @@ app.post(
 					})
 				}
 			}
-			const result = await gw.zwave.importConfigurationTemplates(
-				templates,
-				mode,
-			)
+			const result =
+				await gw.zwave.importConfigurationTemplates(templates)
 			res.json({
 				success: true,
 				data: result,

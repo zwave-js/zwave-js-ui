@@ -85,6 +85,10 @@
 				{{ item.values.length }} parameter(s)
 			</template>
 
+			<template #[`item.devices`]="{ item }">
+				{{ getMatchingNodes(item).length }}
+			</template>
+
 			<template #[`item.createdAt`]="{ item }">
 				{{ formatDate(item.createdAt) }}
 			</template>
@@ -149,6 +153,11 @@ export default {
 				},
 				{ title: 'Values', key: 'values', sortable: false },
 				{ title: 'Auto-Apply', key: 'autoApply' },
+				{
+					title: 'Devices',
+					key: 'devices',
+					sortable: false,
+				},
 				{ title: 'Created', key: 'createdAt' },
 				{
 					title: 'Actions',
@@ -293,45 +302,14 @@ export default {
 			)
 		},
 		async importTemplates() {
-			const mode = await this.app.confirm(
-				'Import Templates',
-				'How should imported templates be handled?',
-				'info',
-				{
-					confirmText: 'Import',
-					inputs: [
-						{
-							type: 'list',
-							label: 'Import mode',
-							key: 'mode',
-							items: [
-								{
-									title: 'Extend (add to existing)',
-									value: 'extend',
-								},
-								{
-									title: 'Replace (overwrite all)',
-									value: 'replace',
-								},
-							],
-							default: 'extend',
-						},
-					],
-				},
-			)
-
-			if (!mode || !mode.mode) return
-
 			try {
 				const { data } = await this.app.importFile('json')
 				if (!Array.isArray(data)) {
 					this.showSnackbar('Imported file is not valid', 'error')
 					return
 				}
-				const response = await ConfigApis.importConfigurationTemplates(
-					data,
-					mode.mode,
-				)
+				const response =
+					await ConfigApis.importConfigurationTemplates(data)
 				if (response.success) {
 					this.refreshTemplates()
 				}
