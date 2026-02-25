@@ -16,6 +16,8 @@ let _managedSocket = null
 let _reconnectHandler = null
 
 function getChannelManager(socket) {
+	if (!socket) return null
+
 	// If the socket instance changed (e.g. after logout), reset state
 	if (_managedSocket !== socket) {
 		if (_managedSocket && _reconnectHandler) {
@@ -91,23 +93,33 @@ export default {
 			this.bindedSocketEvents = {}
 
 			if (this._subscribedChannels?.length > 0) {
-				getChannelManager(this.socket).unsubscribe(
+				getChannelManager(this.socket)?.unsubscribe(
 					this._subscribedChannels,
 				)
 				this._subscribedChannels = []
 			}
 		},
 		subscribeChannels(channels) {
-			getChannelManager(this.socket).subscribe(channels)
 			const existing = this._subscribedChannels || []
 			const newChannels = channels.filter((c) => !existing.includes(c))
-			this._subscribedChannels = [...existing, ...newChannels]
+
+			if (newChannels.length > 0) {
+				getChannelManager(this.socket)?.subscribe(newChannels)
+				this._subscribedChannels = [...existing, ...newChannels]
+			} else if (!this._subscribedChannels) {
+				this._subscribedChannels = existing
+			}
 		},
 		unsubscribeChannels(channels) {
-			getChannelManager(this.socket).unsubscribe(channels)
-			this._subscribedChannels = (this._subscribedChannels || []).filter(
-				(c) => !channels.includes(c),
-			)
+			const existing = this._subscribedChannels || []
+			const toUnsubscribe = channels.filter((c) => existing.includes(c))
+
+			if (toUnsubscribe.length > 0) {
+				getChannelManager(this.socket)?.unsubscribe(toUnsubscribe)
+				this._subscribedChannels = existing.filter(
+					(c) => !toUnsubscribe.includes(c),
+				)
+			}
 		},
 		async pingNode(node) {
 			const response = await this.app.apiRequest('pingNode', [node.id], {

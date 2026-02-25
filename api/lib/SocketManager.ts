@@ -78,14 +78,21 @@ class SocketManager extends TypedEventEmitter<SocketManagerEventCallbacks> {
 		// register inbound events from this socket
 		// subscribe/unsubscribe are handled directly in app.ts, skip them here
 		for (const k in inboundEvents) {
-			const eventName = inboundEvents[k] as inboundEvents
+			const eventName = inboundEvents[k]
 			if (
 				eventName === inboundEvents.subscribe ||
 				eventName === inboundEvents.unsubscribe
 			) {
 				continue
 			}
-			socket.on(eventName, this._emitEvent.bind(this, eventName, socket))
+			socket.on(
+				eventName,
+				this._emitEvent.bind(
+					this,
+					eventName as SocketManagerEvents,
+					socket,
+				),
+			)
 		}
 
 		// https://socket.io/docs/v4/server-socket-instance/#events

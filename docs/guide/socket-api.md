@@ -10,7 +10,7 @@ import { io } from "socket.io-client";
 const socket = io("http://localhost:8091", {
   path: "/socket.io",
   // if authentication is enabled:
-  query: { token: "your-jwt-token" },
+  auth: { token: "your-jwt-token" },
 });
 ```
 
@@ -73,7 +73,8 @@ socket.emit("SUBSCRIBE", { channels: ["all"] });
 | `statistics` | `STATISTICS` | Node and driver communication statistics |
 | `firmware` | `OTW_FIRMWARE_UPDATE` | Over-the-wire firmware update progress |
 | `debug` | `DEBUG` | Debug log stream (high volume) |
-| `zniffer` | `ZNIFFER_FRAME`, `ZNIFFER_STATE` | Z-Wave RF frame capture (very high volume) |
+| `znifferFrames` | `ZNIFFER_FRAME` | Z-Wave RF frame capture (very high volume) |
+| `znifferState` | `ZNIFFER_STATE` | Zniffer state changes (low volume) |
 | `rebuild` | `REBUILD_ROUTES_PROGRESS` | Network route rebuild progress |
 | `diagnostics` | `HEALTH_CHECK_PROGRESS`, `LINK_RELIABILITY` | Node health check and link reliability test progress |
 
@@ -83,7 +84,7 @@ These events are always delivered directly to the requesting socket and do not r
 
 | Event | Description |
 | --- | --- |
-| `INIT` | Initial state sent per-socket on connection |
+| `INIT` | Initial state event; not guaranteed on every connection. Use the `INITED` acknowledgement callback to reliably fetch the initial snapshot. |
 | `API_RETURN` | Response to a `ZWAVE_API` call (delivered via callback) |
 
 ## Example: minimal external client

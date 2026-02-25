@@ -548,7 +548,7 @@ export default {
 		},
 	},
 	mounted() {
-		this.subscribeChannels(['zniffer'])
+		this.subscribeChannels(['znifferFrames'])
 
 		this.socket.on(socketEvents.znifferFrame, this.addFrame)
 
@@ -580,7 +580,7 @@ export default {
 			// unbind events
 			this.socket.off(socketEvents.znifferFrame)
 			this.socket.off('connect', this.onConnnect)
-			this.unsubscribeChannels(['zniffer'])
+			this.unsubscribeChannels(['znifferFrames'])
 		}
 
 		if (this.timeoutScroll) {

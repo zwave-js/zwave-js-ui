@@ -163,16 +163,14 @@ socketManager.authMiddleware = function (
 ) {
 	if (!isAuthEnabled()) {
 		next()
-	} else if (socket.handshake.query && socket.handshake.query.token) {
-		jwt.verify(
-			socket.handshake.query.token as string,
-			sessionSecret,
-			function (err, decoded: User) {
-				if (err) return next(new Error('Authentication error'))
-				socket.user = decoded
-				next()
-			},
-		)
+	} else if (socket.handshake.auth?.token || socket.handshake.query?.token) {
+		const token = (socket.handshake.auth?.token ||
+			socket.handshake.query.token) as string
+		jwt.verify(token, sessionSecret, function (err, decoded: User) {
+			if (err) return next(new Error('Authentication error'))
+			socket.user = decoded
+			next()
+		})
 	} else {
 		next(new Error('Authentication error'))
 	}
@@ -766,7 +764,7 @@ function setupSocket(server: HttpServer) {
 			cb(result)
 		})
 
-		socket.on(inboundEvents.subscribe, (data, cb = noop) => {
+		socket.on(inboundEvents.subscribe, async (data, cb = noop) => {
 			const channels: string[] = Array.isArray(data?.channels)
 				? data.channels
 				: []
@@ -774,33 +772,35 @@ function setupSocket(server: HttpServer) {
 			const isAll = channels.includes('all')
 			const validChannels = isAll
 				? ALL_CHANNELS
-				: channels.filter((c) => c in channelMap)
+				: channels.filter((c) => Object.hasOwn(channelMap, c))
 
 			for (const channel of validChannels) {
-				void socket.join(channel)
+				await socket.join(channel)
 			}
 
 			// report current subscriptions (exclude socket's auto-joined room)
 			const subscribed = [...socket.rooms].filter(
-				(r) => r !== socket.id && r in channelMap,
+				(r) => r !== socket.id && Object.hasOwn(channelMap, r),
 			)
 			socket.emit(socketEvents.subscribed, { channels: subscribed })
 			cb({ channels: subscribed })
 		})
 
-		socket.on(inboundEvents.unsubscribe, (data, cb = noop) => {
+		socket.on(inboundEvents.unsubscribe, async (data, cb = noop) => {
 			const channels: string[] = Array.isArray(data?.channels)
 				? data.channels
 				: []
 
-			for (const channel of channels) {
-				if (channel in channelMap) {
-					void socket.leave(channel)
-				}
+			const validChannels = channels.filter((c) =>
+				Object.hasOwn(channelMap, c),
+			)
+
+			for (const channel of validChannels) {
+				await socket.leave(channel)
 			}
 
 			const subscribed = [...socket.rooms].filter(
-				(r) => r !== socket.id && r in channelMap,
+				(r) => r !== socket.id && Object.hasOwn(channelMap, r),
 			)
 			socket.emit(socketEvents.subscribed, { channels: subscribed })
 			cb({ channels: subscribed })

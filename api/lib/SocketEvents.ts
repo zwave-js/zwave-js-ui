@@ -62,7 +62,8 @@ export const channelMap: Record<string, socketEvents[]> = {
 	statistics: [socketEvents.statistics],
 	firmware: [socketEvents.otwFirmwareUpdate],
 	debug: [socketEvents.debug],
-	zniffer: [socketEvents.znifferFrame, socketEvents.znifferState],
+	znifferFrames: [socketEvents.znifferFrame],
+	znifferState: [socketEvents.znifferState],
 	rebuild: [socketEvents.rebuildRoutesProgress],
 	diagnostics: [
 		socketEvents.healthCheckProgress,

@@ -1328,13 +1328,13 @@ export default {
 				return
 			}
 
-			const query = this.auth ? { token: this.user.token } : undefined
+			const auth = this.auth ? { token: this.user.token } : undefined
 
 			this.socket = io('/', {
 				path: location.pathname
 					? location.pathname + 'socket.io'
 					: undefined,
-				query: query,
+				auth: auth,
 				rejectUnauthorized: false,
 			})
 
@@ -1344,7 +1344,7 @@ export default {
 				'values',
 				'statistics',
 				'firmware',
-				'zniffer',
+				'znifferState',
 			])
 
 			this.socket.on('connect', () => {
