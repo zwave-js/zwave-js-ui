@@ -176,12 +176,6 @@
 					class="ml-1"
 					:node="item"
 				></firmware-update-badge>
-
-				<template-badge
-					class="ml-1"
-					:node="item"
-					@applied="item.pendingConfigTemplates = undefined"
-				></template-badge>
 			</div>
 		</template>
 		<template #[`item.minBatteryLevel`]="{ item }">

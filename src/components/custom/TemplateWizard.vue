@@ -140,12 +140,25 @@
 									:rules="[(v) => !!v || 'Name is required']"
 								></v-text-field>
 							</v-col>
-							<v-col cols="12" sm="6">
+							<v-col cols="12" sm="3">
 								<v-text-field
-									v-model="templateFirmware"
-									label="Min firmware version"
+									v-model="templateFirmwareMin"
+									label="Min firmware"
 									variant="outlined"
 									placeholder="e.g. 1.0"
+									hint="Optional"
+									persistent-hint
+									:rules="[firmwareRule]"
+								></v-text-field>
+							</v-col>
+							<v-col cols="12" sm="3">
+								<v-text-field
+									v-model="templateFirmwareMax"
+									label="Max firmware"
+									variant="outlined"
+									placeholder="e.g. 3.0"
+									hint="Optional"
+									persistent-hint
 									:rules="[firmwareRule]"
 								></v-text-field>
 							</v-col>
@@ -214,7 +227,8 @@ export default {
 			nodeParams: [],
 			selectedParams: [],
 			templateName: '',
-			templateFirmware: '',
+			templateFirmwareMin: '',
+			templateFirmwareMax: '',
 			templateAutoApply: false,
 			loadingParams: false,
 			saving: false,
@@ -254,7 +268,8 @@ export default {
 			return (
 				this.templateName &&
 				this.selectedParams.length > 0 &&
-				this.firmwareRule(this.templateFirmware) === true
+				this.firmwareRule(this.templateFirmwareMin) === true &&
+				this.firmwareRule(this.templateFirmwareMax) === true
 			)
 		},
 	},
@@ -291,7 +306,8 @@ export default {
 		initEdit(item) {
 			this.selectedNodeId = null
 			this.templateName = item.name
-			this.templateFirmware = item.minFirmwareVersion || ''
+			this.templateFirmwareMin = item.firmwareRange?.min || ''
+			this.templateFirmwareMax = item.firmwareRange?.max || ''
 			this.templateAutoApply = item.autoApply
 
 			// Try to find a matching node to recover states/min/max metadata
@@ -403,11 +419,6 @@ export default {
 						node.productDescription ||
 						`Node ${node.id} template`
 				}
-
-				// Pre-populate firmware version from the node
-				if (!this.templateFirmware) {
-					this.templateFirmware = node.firmwareVersion || ''
-				}
 			} finally {
 				this.loadingParams = false
 			}
@@ -428,13 +439,20 @@ export default {
 				}))
 
 				let response
+				const firmwareRange =
+					this.templateFirmwareMin || this.templateFirmwareMax
+						? {
+								min: this.templateFirmwareMin || undefined,
+								max: this.templateFirmwareMax || undefined,
+							}
+						: undefined
+
 				if (this.template) {
 					response = await ConfigApis.updateConfigurationTemplate(
 						this.template.id,
 						{
 							name: this.templateName,
-							minFirmwareVersion:
-								this.templateFirmware || undefined,
+							firmwareRange,
 							autoApply: this.templateAutoApply,
 							values,
 						},
@@ -443,7 +461,7 @@ export default {
 					response = await ConfigApis.createConfigurationTemplate({
 						nodeId: this.selectedNodeId,
 						name: this.templateName,
-						minFirmwareVersion: this.templateFirmware || undefined,
+						firmwareRange,
 						autoApply: this.templateAutoApply,
 						values,
 					})

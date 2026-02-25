@@ -131,11 +131,16 @@ import type { GatewayValue } from './Gateway.ts'
 
 import type { DeviceConfig } from '@zwave-js/config'
 import { ConfigManager } from '@zwave-js/config'
+import { createHash } from 'node:crypto'
 import { readFile, writeFile } from 'node:fs/promises'
 import backupManager, { NVM_BACKUP_PREFIX } from './BackupManager.ts'
 import { eventToChannel, socketEvents } from './SocketEvents.ts'
 import { isUint8Array } from 'node:util/types'
-import { coerce as semverCoerce, gte as semverGte } from 'semver'
+import {
+	coerce as semverCoerce,
+	gte as semverGte,
+	lte as semverLte,
+} from 'semver'
 import { PkgFsBindings } from './PkgFsBindings.ts'
 import { regionSupportsAutoPowerlevel } from './shared.ts'
 import { deviceConfigPriorityDir } from './Constants.ts'
@@ -419,9 +424,10 @@ export type ZUIConfigurationTemplate = {
 	productType?: number
 	manufacturer?: string
 	productLabel?: string
-	minFirmwareVersion?: string
+	firmwareRange?: { min?: string; max?: string }
 	values: ZUIConfigurationTemplateValue[]
 	autoApply: boolean
+	contentHash: string
 	createdAt: string
 	updatedAt: string
 }
@@ -583,8 +589,7 @@ export type ZUINode = {
 	hassDevices?: { [key: string]: HassDevice }
 	deviceId?: string
 	hasDeviceConfigChanged?: boolean
-	pendingConfigTemplates?: { id: number; name: string }[]
-	_autoApplyingTemplate?: boolean
+	appliedTemplateContentHashes?: string[]
 	hexId?: string
 	values?: { [key: string]: ZUIValueId }
 	groups?: ZUINodeGroups[]
@@ -2947,7 +2952,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		name: string,
 		autoApply = false,
 		values?: ZUIConfigurationTemplateValue[],
-		minFirmwareVersion?: string,
+		firmwareRange?: { min?: string; max?: string },
 	): Promise<ZUIConfigurationTemplate> {
 		const node = this._nodes.get(nodeId)
 
@@ -3011,16 +3016,26 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			productType: node.productType,
 			manufacturer: node.manufacturer,
 			productLabel: node.productLabel,
-			minFirmwareVersion:
-				minFirmwareVersion || node.firmwareVersion || '0.0',
+			firmwareRange:
+				firmwareRange?.min || firmwareRange?.max
+					? firmwareRange
+					: undefined,
 			values: configValues,
 			autoApply,
+			contentHash: this._generateTemplateContentHash(
+				configValues,
+				firmwareRange,
+			),
 			createdAt: now,
 			updatedAt: now,
 		}
 
 		this._configTemplates.push(template)
 		await jsonStore.put(store.configurationTemplates, this._configTemplates)
+
+		if (autoApply) {
+			this._autoApplyTemplateToNodes(template)
+		}
 
 		return template
 	}
@@ -3033,7 +3048,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		updates: {
 			name?: string
 			autoApply?: boolean
-			minFirmwareVersion?: string
+			firmwareRange?: { min?: string; max?: string }
 			values?: ZUIConfigurationTemplateValue[]
 		},
 	): Promise<ZUIConfigurationTemplate> {
@@ -3046,13 +3061,28 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		if (updates.name !== undefined) template.name = updates.name
 		if (updates.autoApply !== undefined)
 			template.autoApply = updates.autoApply
-		if (updates.minFirmwareVersion !== undefined)
-			template.minFirmwareVersion = updates.minFirmwareVersion
+
+		const contentChanged =
+			updates.firmwareRange !== undefined || updates.values !== undefined
+
+		if (updates.firmwareRange !== undefined)
+			template.firmwareRange = updates.firmwareRange
 		if (updates.values !== undefined) template.values = updates.values
+
+		if (contentChanged) {
+			template.contentHash = this._generateTemplateContentHash(
+				template.values,
+				template.firmwareRange,
+			)
+		}
 
 		template.updatedAt = new Date().toISOString()
 
 		await jsonStore.put(store.configurationTemplates, this._configTemplates)
+
+		if (template.autoApply && contentChanged) {
+			this._autoApplyTemplateToNodes(template)
+		}
 
 		return template
 	}
@@ -3067,8 +3097,21 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			throw Error(`Template ${id} not found`)
 		}
 
+		const deletedHash = this._configTemplates[index].contentHash
+
 		this._configTemplates.splice(index, 1)
 		await jsonStore.put(store.configurationTemplates, this._configTemplates)
+
+		// Cleanup the deleted template's hash from all nodes
+		if (deletedHash) {
+			for (const [, node] of this._nodes) {
+				const hashes = node.appliedTemplateContentHashes
+				if (hashes && hashes.includes(deletedHash)) {
+					// _cleanupAppliedTemplateHashes removes any hash not matching an existing template
+					await this._cleanupAppliedTemplateHashes(node)
+				}
+			}
+		}
 
 		return true
 	}
@@ -3135,6 +3178,30 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			`Applied template "${template.name}" to node ${nodeId}: ${results.success} OK, ${results.failed} failed`,
 		)
 
+		// Record content hash if any values were applied successfully
+		if (results.success > 0 && template.contentHash) {
+			if (!node.appliedTemplateContentHashes) {
+				node.appliedTemplateContentHashes = []
+			}
+
+			if (
+				!node.appliedTemplateContentHashes.includes(
+					template.contentHash,
+				)
+			) {
+				node.appliedTemplateContentHashes.push(template.contentHash)
+
+				if (!this.storeNodes[nodeId]) {
+					this.storeNodes[nodeId] = {} as any
+				}
+				this.storeNodes[nodeId].appliedTemplateContentHashes =
+					node.appliedTemplateContentHashes
+
+				// eslint-disable-next-line @typescript-eslint/no-floating-promises
+				this.updateStoreNodes(false)
+			}
+		}
+
 		return results
 	}
 
@@ -3146,6 +3213,20 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		templates: ZUIConfigurationTemplate[],
 		mode: 'replace' | 'extend' = 'replace',
 	): Promise<ZUIConfigurationTemplate[]> {
+		// Migrate legacy minFirmwareVersion to firmwareRange
+		for (const t of templates) {
+			if ((t as any).minFirmwareVersion && !t.firmwareRange) {
+				t.firmwareRange = { min: (t as any).minFirmwareVersion }
+				delete (t as any).minFirmwareVersion
+			}
+			if (!t.contentHash) {
+				t.contentHash = this._generateTemplateContentHash(
+					t.values,
+					t.firmwareRange,
+				)
+			}
+		}
+
 		if (mode === 'extend') {
 			// assign new IDs to avoid conflicts
 			let maxId =
@@ -3167,6 +3248,87 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	}
 
 	/**
+	 * Generate a short content hash for a template based on its applied values
+	 */
+	private _generateTemplateContentHash(
+		values: ZUIConfigurationTemplateValue[],
+		firmwareRange?: { min?: string; max?: string },
+	): string {
+		return createHash('sha256')
+			.update(JSON.stringify({ values, firmwareRange }))
+			.digest('hex')
+			.slice(0, 12)
+	}
+
+	/**
+	 * Remove applied template hashes that no longer match any existing template
+	 */
+	private async _cleanupAppliedTemplateHashes(node: ZUINode) {
+		const hashes = node.appliedTemplateContentHashes
+		if (!hashes || hashes.length === 0) return
+
+		const validHashes = new Set(
+			this._configTemplates.map((t) => t.contentHash),
+		)
+		const cleaned = hashes.filter((h) => validHashes.has(h))
+
+		if (cleaned.length !== hashes.length) {
+			node.appliedTemplateContentHashes = cleaned
+
+			if (!this.storeNodes[node.id]) {
+				this.storeNodes[node.id] = {} as any
+			}
+			this.storeNodes[node.id].appliedTemplateContentHashes = cleaned
+			await this.updateStoreNodes(false)
+		}
+	}
+
+	/**
+	 * Auto-apply a template to all matching ready nodes that haven't received it yet
+	 */
+	private _autoApplyTemplateToNodes(template: ZUIConfigurationTemplate) {
+		for (const [, node] of this._nodes) {
+			if (!node.ready || !node.deviceId) continue
+
+			const matching = this._getMatchingTemplates(node)
+			if (!matching.some((t) => t.id === template.id)) continue
+
+			const hashes = node.appliedTemplateContentHashes || []
+			if (hashes.includes(template.contentHash)) continue
+
+			const zwaveNode = this._driver.controller.nodes.get(node.id)
+
+			if (zwaveNode) {
+				this.logNode(
+					zwaveNode,
+					'info',
+					`Auto-applying configuration template "${template.name}"`,
+				)
+			}
+
+			this.applyConfigurationTemplate(template.id, node.id, true)
+				.then((result) => {
+					if (result.failed > 0 && zwaveNode) {
+						this.logNode(
+							zwaveNode,
+							'warn',
+							`Template "${template.name}" partially applied: ${result.success} OK, ${result.failed} failed`,
+						)
+					}
+				})
+				.catch((error) => {
+					if (zwaveNode) {
+						this.logNode(
+							zwaveNode,
+							'error',
+							`Failed to auto-apply template "${template.name}": ${error.message}`,
+						)
+					}
+				})
+		}
+	}
+
+	/**
 	 * Get templates matching a node's device type and firmware version
 	 */
 	private _getMatchingTemplates(node: ZUINode): ZUIConfigurationTemplate[] {
@@ -3175,22 +3337,27 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		return this._configTemplates.filter((t) => {
 			if (t.deviceId !== node.deviceId) return false
 
-			// Check firmware version if specified
-			if (t.minFirmwareVersion) {
+			// Check firmware version range if specified
+			if (t.firmwareRange?.min || t.firmwareRange?.max) {
 				if (!node.firmwareVersion) {
 					return false
 				}
 
 				const nodeFw = semverCoerce(node.firmwareVersion)
-				const minFw = semverCoerce(t.minFirmwareVersion)
+				if (!nodeFw) return false
 
-				// If either version can't be parsed, skip this template
-				if (!nodeFw || !minFw) {
-					return false
+				if (t.firmwareRange.min) {
+					const minFw = semverCoerce(t.firmwareRange.min)
+					if (!minFw || !semverGte(nodeFw, minFw)) {
+						return false
+					}
 				}
 
-				if (!semverGte(nodeFw, minFw)) {
-					return false
+				if (t.firmwareRange.max) {
+					const maxFw = semverCoerce(t.firmwareRange.max)
+					if (!maxFw || !semverLte(nodeFw, maxFw)) {
+						return false
+					}
 				}
 			}
 
@@ -3202,25 +3369,27 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 * Check and auto-apply matching configuration templates for a node
 	 */
 	private _checkConfigurationTemplates(node: ZUINode, zwaveNode: ZWaveNode) {
+		// Cleanup stale applied hashes on node ready
+		// eslint-disable-next-line @typescript-eslint/no-floating-promises
+		this._cleanupAppliedTemplateHashes(node)
+
 		const matching = this._getMatchingTemplates(node)
 
 		if (matching.length === 0) {
-			node.pendingConfigTemplates = undefined
 			return
 		}
 
-		const autoApplyTemplates = matching.filter((t) => t.autoApply)
+		const appliedHashes = node.appliedTemplateContentHashes || []
 
-		if (autoApplyTemplates.length > 0) {
-			// Skip if already auto-applying (node ready can fire multiple times)
-			if (node._autoApplyingTemplate) {
-				return
-			}
+		// Filter auto-apply templates that haven't been applied yet
+		const autoApplyTemplates = matching.filter(
+			(t) =>
+				t.autoApply &&
+				t.contentHash &&
+				!appliedHashes.includes(t.contentHash),
+		)
 
-			// Auto-apply the first matching template
-			const template = autoApplyTemplates[0]
-			node._autoApplyingTemplate = true
-
+		for (const template of autoApplyTemplates) {
 			this.logNode(
 				zwaveNode,
 				'info',
@@ -3235,7 +3404,6 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 							`Template "${template.name}" partially applied: ${result.success} OK, ${result.failed} failed`,
 						)
 					}
-					node.pendingConfigTemplates = undefined
 				})
 				.catch((error) => {
 					this.logNode(
@@ -3244,15 +3412,6 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 						`Failed to auto-apply template "${template.name}": ${error.message}`,
 					)
 				})
-				.finally(() => {
-					node._autoApplyingTemplate = false
-				})
-		} else {
-			// Store pending templates on the node so the UI can show a badge
-			node.pendingConfigTemplates = matching.map((t) => ({
-				id: t.id,
-				name: t.name,
-			}))
 		}
 	}
 
@@ -6829,6 +6988,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				this.storeNodes[nodeId]?.firmwareUpdatesDismissed || {},
 			lastFirmwareUpdateCheck:
 				this.storeNodes[nodeId]?.lastFirmwareUpdateCheck || 0,
+			appliedTemplateContentHashes:
+				this.storeNodes[nodeId]?.appliedTemplateContentHashes || [],
 		}
 
 		this._nodes.set(nodeId, node)

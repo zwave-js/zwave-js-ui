@@ -239,19 +239,6 @@
 													left: '54px',
 												}"
 											></firmware-update-badge>
-
-											<template-badge
-												:node="item.raw"
-												:b-style="{
-													position: 'absolute',
-													top: '0',
-													left: '77px',
-												}"
-												@applied="
-													item.raw.pendingConfigTemplates =
-														undefined
-												"
-											></template-badge>
 										</div>
 									</v-badge>
 
@@ -390,9 +377,6 @@ export default {
 		),
 		FirmwareUpdateBadge: defineAsyncComponent(
 			() => import('@/components/custom/FirmwareUpdateBadge.vue'),
-		),
-		TemplateBadge: defineAsyncComponent(
-			() => import('@/components/custom/TemplateBadge.vue'),
 		),
 	},
 	watch: {

@@ -11,10 +11,12 @@
 		<!-- TABLE MODE -->
 		<v-data-table
 			v-else
+			v-model:expanded="expanded"
 			:headers="headers"
 			:items="templates"
 			:search="search"
 			class="elevation-1"
+			show-expand
 		>
 			<template #top>
 				<v-col class="pt-0">
@@ -67,6 +69,10 @@
 				}}
 			</template>
 
+			<template #[`item.firmwareRange`]="{ item }">
+				{{ formatFirmwareRange(item.firmwareRange) }}
+			</template>
+
 			<template #[`item.autoApply`]="{ item }">
 				<v-switch
 					:model-value="item.autoApply"
@@ -79,6 +85,12 @@
 
 			<template #[`item.values`]="{ item }">
 				{{ item.values.length }} parameter(s)
+			</template>
+
+			<template #[`item.devices`]="{ item }">
+				<v-chip size="small" variant="tonal">
+					{{ getMatchingNodes(item).length }}
+				</v-chip>
 			</template>
 
 			<template #[`item.createdAt`]="{ item }">
@@ -113,6 +125,47 @@
 					delete
 				</v-icon>
 			</template>
+
+			<template #expanded-row="{ columns, item }">
+				<tr>
+					<td :colspan="columns.length" class="pa-4">
+						<div
+							v-if="getMatchingNodes(item).length === 0"
+							class="text-medium-emphasis"
+						>
+							No matching devices found
+						</div>
+						<v-list v-else density="compact" class="pa-0">
+							<v-list-item
+								v-for="node in getMatchingNodes(item)"
+								:key="node.id"
+								class="px-2"
+							>
+								<v-list-item-title>
+									Node {{ node.id }} —
+									{{
+										[node.manufacturer, node.productLabel]
+											.filter(Boolean)
+											.join(' ') ||
+										node._name ||
+										'Unknown'
+									}}
+								</v-list-item-title>
+								<template #append>
+									<v-btn
+										size="small"
+										variant="tonal"
+										color="primary"
+										@click="applyToNode(item.id, node.id)"
+									>
+										Apply
+									</v-btn>
+								</template>
+							</v-list-item>
+						</v-list>
+					</td>
+				</tr>
+			</template>
 		</v-data-table>
 	</v-container>
 </template>
@@ -135,12 +188,22 @@ export default {
 		return {
 			templates: [],
 			search: '',
+			expanded: [],
 			headers: [
 				{ title: 'Name', key: 'name' },
 				{ title: 'Device', key: 'device', sortable: false },
-				{ title: 'Min Firmware', key: 'minFirmwareVersion' },
+				{
+					title: 'Firmware Range',
+					key: 'firmwareRange',
+					sortable: false,
+				},
 				{ title: 'Values', key: 'values', sortable: false },
 				{ title: 'Auto-Apply', key: 'autoApply' },
+				{
+					title: 'Devices',
+					key: 'devices',
+					sortable: false,
+				},
 				{ title: 'Created', key: 'createdAt' },
 				{
 					title: 'Actions',
@@ -160,6 +223,19 @@ export default {
 		formatDate(dateStr) {
 			if (!dateStr) return ''
 			return new Date(dateStr).toLocaleDateString()
+		},
+		formatFirmwareRange(range) {
+			if (!range) return '\u2014'
+			const { min, max } = range
+			if (min && max) return `${min} \u2013 ${max}`
+			if (min) return `\u2265 ${min}`
+			if (max) return `\u2264 ${max}`
+			return '\u2014'
+		},
+		getMatchingNodes(template) {
+			return this.nodes.filter(
+				(n) => n && n.ready && n.deviceId === template.deviceId,
+			)
 		},
 		// ---- TABLE ACTIONS ----
 		async refreshTemplates() {
@@ -212,6 +288,20 @@ export default {
 				}
 			}
 		},
+		async applyToNode(templateId, nodeId) {
+			try {
+				const response = await ConfigApis.applyConfigurationTemplate(
+					templateId,
+					nodeId,
+				)
+				this.showSnackbar(
+					response.message,
+					response.success ? 'success' : 'error',
+				)
+			} catch (error) {
+				this.showSnackbar(error.message, 'error')
+			}
+		},
 		async applyTemplate(item) {
 			const targetNodes = this.nodes
 				.filter((n) => n && !n.isControllerNode && n.ready)
@@ -239,6 +329,7 @@ export default {
 							items: targetNodes,
 							multiple: true,
 							required: true,
+							autocomplete: true,
 						},
 					],
 				},

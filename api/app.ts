@@ -1646,8 +1646,7 @@ app.post(
 	isAuthenticated,
 	async function (req, res) {
 		try {
-			const { nodeId, name, autoApply, values, minFirmwareVersion } =
-				req.body
+			const { nodeId, name, autoApply, values, firmwareRange } = req.body
 			if (!nodeId || !name) {
 				return res.json({
 					success: false,
@@ -1659,7 +1658,7 @@ app.post(
 				name,
 				autoApply,
 				values,
-				minFirmwareVersion,
+				firmwareRange,
 			)
 			res.json({
 				success: true,
@@ -1745,11 +1744,11 @@ app.put(
 					message: 'Invalid template ID',
 				})
 			}
-			const { name, autoApply, minFirmwareVersion, values } = req.body
+			const { name, autoApply, firmwareRange, values } = req.body
 			const template = await gw.zwave.updateConfigurationTemplate(id, {
 				name,
 				autoApply,
-				minFirmwareVersion,
+				firmwareRange,
 				values,
 			})
 			res.json({
