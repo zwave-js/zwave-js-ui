@@ -267,6 +267,7 @@ export const allowedApis = validateMethods([
 	'deleteConfigurationTemplate',
 	'applyConfigurationTemplate',
 	'importConfigurationTemplates',
+	'getDeviceConfigurationParams',
 ] as const)
 
 export type ZwaveNodeEvents = ZWaveNodeEvents | 'statistics updated'
@@ -2948,6 +2949,74 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 */
 	getConfigurationTemplates(): ZUIConfigurationTemplate[] {
 		return this._configTemplates
+	}
+
+	/**
+	 * Get configuration parameter definitions from the zwave-js config DB
+	 * for a device identified by its deviceId (manufacturerId-productId-productType)
+	 */
+	async getDeviceConfigurationParams(
+		deviceId: string,
+	): Promise<Partial<ZUIValueId>[]> {
+		const parts = deviceId.split('-')
+		if (parts.length !== 3) {
+			throw new Error(
+				'Invalid deviceId format, expected manufacturerId-productId-productType',
+			)
+		}
+
+		const manufacturerId = parseInt(parts[0], 10)
+		const productId = parseInt(parts[1], 10)
+		const productType = parseInt(parts[2], 10)
+
+		if (isNaN(manufacturerId) || isNaN(productId) || isNaN(productType)) {
+			throw new Error('Invalid deviceId: non-numeric components')
+		}
+
+		await configManager.loadDeviceIndex()
+
+		const device = await configManager.lookupDevice(
+			manufacturerId,
+			productType,
+			productId,
+		)
+
+		if (!device || !device.paramInformation) {
+			return []
+		}
+
+		const result: Partial<ZUIValueId>[] = []
+
+		for (const [key, param] of device.paramInformation.entries()) {
+			const propertyKey = key.valueBitMask
+			const id = `0-112-0-${key.parameter}${propertyKey != null ? '-' + propertyKey : ''}`
+
+			result.push({
+				id,
+				commandClass: 112,
+				property: key.parameter,
+				propertyKey: propertyKey,
+				endpoint: 0,
+				type: 'number',
+				readable: true,
+				writeable: !param.readOnly,
+				label: param.label,
+				description: param.description,
+				min: param.minValue,
+				max: param.maxValue,
+				default: param.defaultValue,
+				unit: param.unit,
+				list: param.options?.length > 0,
+				allowManualEntry: param.allowManualEntry,
+				states: param.options?.map((o) => ({
+					text: o.label,
+					value: o.value,
+				})),
+				newValue: param.defaultValue,
+			} as any)
+		}
+
+		return result
 	}
 
 	/**

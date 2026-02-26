@@ -73,36 +73,13 @@
 										: ''
 								}}
 							</template>
-							<template #[`item.currentValue`]="{ item: param }">
-								{{
-									formatParamValue(param, param.currentValue)
-								}}
-							</template>
-							<template #[`item.templateValue`]="{ item: param }">
-								<v-select
-									v-if="
-										param.states && param.states.length > 0
-									"
-									v-model="param.templateValue"
-									:items="param.states"
-									item-title="text"
-									item-value="value"
-									density="compact"
-									variant="outlined"
-									hide-details
-									style="min-width: 150px"
-								></v-select>
-								<v-text-field
-									v-else
-									v-model="param.templateValue"
-									type="number"
-									density="compact"
-									variant="outlined"
-									hide-details
-									:min="param.min"
-									:max="param.max"
-									style="min-width: 100px"
-								></v-text-field>
+							<template #[`item.newValue`]="{ item: param }">
+								<ValueId
+									:model-value="param"
+									:disable_send="true"
+									hide-label
+									compact
+								/>
 							</template>
 						</v-data-table>
 					</v-card-text>
@@ -201,6 +178,7 @@
 
 <script>
 import ConfigApis from '@/apis/ConfigApis'
+import { defineAsyncComponent } from 'vue'
 import { mapActions, mapState } from 'pinia'
 import useBaseStore from '../../stores/base.js'
 
@@ -208,6 +186,9 @@ const FIRMWARE_REGEX = /^\d+(\.\d+)+$/
 
 export default {
 	name: 'TemplateWizard',
+	components: {
+		ValueId: defineAsyncComponent(() => import('../ValueId.vue')),
+	},
 	props: {
 		template: {
 			type: Object,
@@ -236,12 +217,8 @@ export default {
 				{ title: 'Parameter', key: 'property', width: '100px' },
 				{ title: 'Label', key: 'label' },
 				{
-					title: 'Current Value',
-					key: 'currentValue',
-				},
-				{
 					title: 'Template Value',
-					key: 'templateValue',
+					key: 'newValue',
 					sortable: false,
 				},
 			],
@@ -294,6 +271,55 @@ export default {
 				'Must be in format X.Y or X.Y.Z (e.g. 1.0)'
 			)
 		},
+		buildValueIdParam(v, currentValue) {
+			return {
+				id: `0-112-0-${v.property}${v.propertyKey != null ? '-' + v.propertyKey : ''}`,
+				commandClass: 112,
+				property: v.property,
+				propertyKey: v.propertyKey != null ? v.propertyKey : null,
+				endpoint: v.endpoint || 0,
+				type: 'number',
+				readable: true,
+				writeable: true,
+				label: v.label || `Parameter ${v.property}`,
+				description: v.description || '',
+				currentValue,
+				min: v.min,
+				max: v.max,
+				default: v.default,
+				list: !!(v.states && v.states.length > 0),
+				allowManualEntry:
+					v.allowManualEntry != null ? v.allowManualEntry : true,
+				states: v.states || null,
+				newValue: currentValue,
+			}
+		},
+		enrichWithConfigDb(params, configDbParams) {
+			if (!configDbParams || !configDbParams.length) return
+
+			const dbMap = new Map()
+			for (const cp of configDbParams) {
+				const key = `${cp.endpoint || 0}-${cp.property}${cp.propertyKey != null ? '-' + cp.propertyKey : ''}`
+				dbMap.set(key, cp)
+			}
+
+			for (const p of params) {
+				const key = `${p.endpoint || 0}-${p.property}${p.propertyKey != null ? '-' + p.propertyKey : ''}`
+				const db = dbMap.get(key)
+				if (!db) continue
+
+				if (!p.states && db.states && db.states.length > 0) {
+					p.states = db.states
+					p.list = true
+				}
+				if (p.min == null && db.min != null) p.min = db.min
+				if (p.max == null && db.max != null) p.max = db.max
+				if (p.default == null && db.default != null)
+					p.default = db.default
+				if (p.allowManualEntry == null && db.allowManualEntry != null)
+					p.allowManualEntry = db.allowManualEntry
+			}
+		},
 		initCreate() {
 			this.selectedNodeId = null
 			this.nodeParams = []
@@ -304,25 +330,38 @@ export default {
 			this.templateAutoApply = false
 			this.step = 1
 		},
-		initEdit(item) {
+		async initEdit(item) {
 			this.selectedNodeId = null
 			this.templateName = item.name
 			this.templateFirmwareMin = item.firmwareRange?.min || ''
 			this.templateFirmwareMax = item.firmwareRange?.max || ''
 			this.templateAutoApply = item.autoApply
 
-			// Try to find a matching node to recover states/min/max metadata
+			// Fetch config DB params for metadata (works without a live node)
+			let configDbParams = []
+			if (item.deviceId) {
+				try {
+					const res = await ConfigApis.getDeviceConfigurationParams(
+						item.deviceId,
+					)
+					if (res.success) {
+						configDbParams = res.data
+					}
+				} catch {
+					// Config DB not available, fall back to live node
+				}
+			}
+
+			// Also try matching live node for current values
 			const matchingNode = this.nodes.find(
 				(n) => n && n.ready && n.deviceId === item.deviceId && n.values,
 			)
 
-			// Build a lookup map of CC 112 values keyed by endpoint-property[-propertyKey]
 			const configMap = new Map()
 			if (matchingNode) {
 				const prefix = `${matchingNode.id}-112-`
 				for (const id in matchingNode.values) {
 					if (id.startsWith(prefix)) {
-						// Strip "nodeId-112-" to get "endpoint-property[-propertyKey]"
 						configMap.set(
 							id.substring(prefix.length),
 							matchingNode.values[id],
@@ -331,33 +370,32 @@ export default {
 				}
 			}
 
-			this.nodeParams = item.values.map((v, i) => {
+			this.nodeParams = item.values.map((v) => {
 				const key = `${v.endpoint || 0}-${v.property}${v.propertyKey != null ? '-' + v.propertyKey : ''}`
 				const nv = configMap.get(key)
 
-				return {
-					id: i,
-					property: v.property,
-					propertyKey: v.propertyKey,
-					endpoint: v.endpoint,
-					label: v.label || `Parameter ${v.property}`,
-					description: v.description || '',
-					currentValue: v.value,
-					templateValue: v.value,
-					states: nv?.states || null,
-					min: nv?.min,
-					max: nv?.max,
-				}
+				return this.buildValueIdParam(
+					{
+						property: v.property,
+						propertyKey: v.propertyKey,
+						endpoint: v.endpoint,
+						label: v.label || nv?.label,
+						description: v.description || nv?.description,
+						states: nv?.states || null,
+						min: nv?.min,
+						max: nv?.max,
+						default: nv?.default,
+						allowManualEntry: nv?.allowManualEntry,
+					},
+					v.value,
+				)
 			})
+
+			// Enrich with config DB metadata
+			this.enrichWithConfigDb(this.nodeParams, configDbParams)
+
 			this.selectedParams = [...this.nodeParams]
 			this.step = 2
-		},
-		formatParamValue(param, value) {
-			if (param.states && param.states.length > 0) {
-				const state = param.states.find((s) => s.value === value)
-				if (state) return `${state.text} (${value})`
-			}
-			return value != null ? String(value) : ''
 		},
 		async onNodeSelected(nodeId) {
 			if (!nodeId) {
@@ -380,24 +418,25 @@ export default {
 				}
 
 				const params = []
-				let idx = 0
 				for (const id in node.values) {
 					const v = node.values[id]
 					if (v.commandClass === 112 && v.writeable) {
-						params.push({
-							id: idx++,
-							property: v.property,
-							propertyKey:
-								v.propertyKey != null ? v.propertyKey : null,
-							endpoint: v.endpoint || 0,
-							label: v.label || `Parameter ${v.property}`,
-							description: v.description || '',
-							currentValue: v.value,
-							templateValue: v.value,
-							states: v.states || null,
-							min: v.min,
-							max: v.max,
-						})
+						params.push(this.buildValueIdParam(v, v.value))
+					}
+				}
+
+				// Enrich with config DB metadata
+				if (node.deviceId) {
+					try {
+						const res =
+							await ConfigApis.getDeviceConfigurationParams(
+								node.deviceId,
+							)
+						if (res.success) {
+							this.enrichWithConfigDb(params, res.data)
+						}
+					} catch {
+						// Config DB not available, node values are sufficient
 					}
 				}
 
@@ -432,10 +471,10 @@ export default {
 					propertyKey: p.propertyKey,
 					endpoint: p.endpoint,
 					value:
-						p.states && p.states.length > 0
-							? p.templateValue
-							: p.templateValue !== '' && p.templateValue != null
-								? Number(p.templateValue)
+						p.list && p.states && p.states.length > 0
+							? p.newValue
+							: p.newValue !== '' && p.newValue != null
+								? Number(p.newValue)
 								: 0,
 					label: p.label,
 					description: p.description,

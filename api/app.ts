@@ -1727,6 +1727,23 @@ app.post(
 	},
 )
 
+// get device configuration params from zwave-js config DB
+app.get(
+	'/api/configuration-templates/device-params/:deviceId',
+	apisLimiter,
+	isAuthenticated,
+	async function (req, res) {
+		try {
+			const params = await gw.zwave.getDeviceConfigurationParams(
+				req.params.deviceId,
+			)
+			res.json({ success: true, data: params })
+		} catch (error) {
+			res.json({ success: false, message: error.message })
+		}
+	},
+)
+
 // update a configuration template
 app.put(
 	'/api/configuration-templates/:id',

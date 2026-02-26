@@ -249,4 +249,10 @@ export default {
 		})
 		return response.data
 	},
+	async getDeviceConfigurationParams(deviceId) {
+		const response = await request.get(
+			`/configuration-templates/device-params/${deviceId}`,
+		)
+		return response.data
+	},
 }
