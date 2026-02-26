@@ -131,6 +131,9 @@ import ConfigApis from '@/apis/ConfigApis'
 import { mapActions, mapState } from 'pinia'
 import useBaseStore from '../stores/base.js'
 import InstancesMixin from '../mixins/InstancesMixin.js'
+import logger from '../lib/logger'
+
+const log = logger.get('ConfigurationTemplates')
 export default {
 	name: 'ConfigurationTemplates',
 	components: {
@@ -291,8 +294,13 @@ export default {
 					} else {
 						failed++
 					}
-				} catch {
+				} catch (error) {
 					failed++
+					log.error('Failed to apply configuration template', {
+						templateId: item.id,
+						nodeId,
+						error,
+					})
 				}
 			}
 

@@ -434,7 +434,9 @@ export default {
 					value:
 						p.states && p.states.length > 0
 							? p.templateValue
-							: Number(p.templateValue) || 0,
+							: p.templateValue !== '' && p.templateValue != null
+								? Number(p.templateValue)
+								: 0,
 					label: p.label,
 					description: p.description,
 				}))
