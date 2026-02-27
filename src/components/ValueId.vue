@@ -101,11 +101,7 @@
 				:max="modelValue.min != modelValue.max ? modelValue.max : null"
 				:hint="help"
 				:error="numberOutOfRange"
-				:error-messages="
-					numberOutOfRange
-						? `Value must be between ${modelValue.min} and ${modelValue.max}`
-						: ''
-				"
+				:error-messages="numberErrorMessage"
 				v-model.number="modelValue.newValue"
 				@click:append="!numberOutOfRange && updateValue(modelValue)"
 			>
@@ -419,13 +415,53 @@ export default {
 			)
 		},
 		numberOutOfRange() {
+			if (this.modelValue.type !== 'number') {
+				return false
+			}
+
+			// If allowed values are defined, validate against them
+			if (
+				this.modelValue.allowed &&
+				Array.isArray(this.modelValue.allowed)
+			) {
+				return !this.isValueAllowed(this.modelValue.newValue)
+			}
+
+			// Otherwise, validate against min/max
 			const min = this.modelValue.min ?? -Infinity
 			const max = this.modelValue.max ?? Infinity
 			return (
-				this.modelValue.type === 'number' &&
-				(this.modelValue.newValue < min ||
-					this.modelValue.newValue > max)
+				this.modelValue.newValue < min || this.modelValue.newValue > max
 			)
+		},
+		numberErrorMessage() {
+			if (!this.numberOutOfRange) {
+				return ''
+			}
+
+			// If allowed values are defined, generate appropriate message
+			if (
+				this.modelValue.allowed &&
+				Array.isArray(this.modelValue.allowed)
+			) {
+				const allowedDesc = this.modelValue.allowed
+					.map((allowed) => {
+						if ('value' in allowed) {
+							return allowed.value
+						} else if ('from' in allowed && 'to' in allowed) {
+							const step = allowed.step
+								? ` (step: ${allowed.step})`
+								: ''
+							return `${allowed.from}-${allowed.to}${step}`
+						}
+						return ''
+					})
+					.join(', ')
+				return `Value must be one of: ${allowedDesc}`
+			}
+
+			// Otherwise, use min/max message
+			return `Value must be between ${this.modelValue.min} and ${this.modelValue.max}`
 		},
 		falseLabel() {
 			return this.modelValue.type === 'boolean' &&
@@ -554,6 +590,37 @@ export default {
 		},
 	},
 	methods: {
+		isValueAllowed(value) {
+			// If no allowed field is defined, all values are allowed
+			if (
+				!this.modelValue.allowed ||
+				!Array.isArray(this.modelValue.allowed)
+			) {
+				return true
+			}
+
+			// Check if value matches any of the allowed values/ranges
+			for (const allowed of this.modelValue.allowed) {
+				if ('value' in allowed) {
+					// Single value
+					if (value === allowed.value) {
+						return true
+					}
+				} else if ('from' in allowed && 'to' in allowed) {
+					// Range
+					const step = allowed.step || 1
+					if (value >= allowed.from && value <= allowed.to) {
+						// Check if value aligns with step
+						const offset = (value - allowed.from) % step
+						if (offset === 0) {
+							return true
+						}
+					}
+				}
+			}
+
+			return false
+		},
 		async pollValue() {
 			const app = manager.getInstance(instances.APP)
 
