@@ -3227,7 +3227,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		for (const tv of template.values) {
 			try {
-				await this.writeValue(
+				const result = await this.writeValue(
 					{
 						nodeId,
 						commandClass: CommandClasses.Configuration,
@@ -3237,7 +3237,15 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 					} as ZUIValueId,
 					tv.value,
 				)
-				results.success++
+
+				if (setValueFailed(result)) {
+					results.failed++
+					results.errors.push(
+						`Parameter ${tv.property}: ${result.message || getEnumMemberName(SetValueStatus, result.status)}`,
+					)
+				} else {
+					results.success++
+				}
 			} catch (error) {
 				results.failed++
 				results.errors.push(
