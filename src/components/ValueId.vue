@@ -445,17 +445,7 @@ export default {
 				Array.isArray(this.modelValue.allowed)
 			) {
 				const allowedDesc = this.modelValue.allowed
-					.map((allowed) => {
-						if ('value' in allowed) {
-							return allowed.value
-						} else if ('from' in allowed && 'to' in allowed) {
-							const step = allowed.step
-								? ` (step: ${allowed.step})`
-								: ''
-							return `${allowed.from}-${allowed.to}${step}`
-						}
-						return ''
-					})
+					.map((allowed) => this.formatAllowedValue(allowed))
 					.join(', ')
 				return `Value must be one of: ${allowedDesc}`
 			}
@@ -590,6 +580,15 @@ export default {
 		},
 	},
 	methods: {
+		formatAllowedValue(allowed) {
+			if ('value' in allowed) {
+				return allowed.value
+			} else if ('from' in allowed && 'to' in allowed) {
+				const step = allowed.step ? ` (step: ${allowed.step})` : ''
+				return `${allowed.from}-${allowed.to}${step}`
+			}
+			return ''
+		},
 		isValueAllowed(value) {
 			// If no allowed field is defined, all values are allowed
 			if (
