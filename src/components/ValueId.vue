@@ -580,6 +580,11 @@ export default {
 		},
 	},
 	methods: {
+		/**
+		 * Formats an allowed value from Z-Wave JS config for display
+		 * @param {Object} allowed - The allowed value object
+		 * @returns {string} Formatted string representation (e.g., "10" or "0-100 (step: 5)")
+		 */
 		formatAllowedValue(allowed) {
 			if ('value' in allowed) {
 				return allowed.value
@@ -589,6 +594,11 @@ export default {
 			}
 			return ''
 		},
+		/**
+		 * Validates if a number value is within the allowed values/ranges
+		 * @param {number} value - The value to validate
+		 * @returns {boolean} True if the value is allowed, false otherwise
+		 */
 		isValueAllowed(value) {
 			// If no allowed field is defined, all values are allowed
 			if (
