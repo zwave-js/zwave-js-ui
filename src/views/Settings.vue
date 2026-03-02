@@ -542,22 +542,26 @@
 									<v-col
 										cols="12"
 										sm="6"
-										v-if="
-											!isSettingManagedExternally(
-												'zwave.port',
-											)
-										"
 									>
 										<v-combobox
 											v-model="newZwave.port"
 											label="Serial Port"
-											hint="Ex /dev/ttyUSB0. If your port is not listed here just write the port path here"
+											:hint="
+												isPortManagedExternally
+													? 'Port is controlled externally through the ZWAVE_PORT env variable'
+													: 'Ex /dev/ttyUSB0. If your port is not listed here just write the port path here'
+											"
 											persistent-hint
-											:rules="[
-												rules.required,
-												differentPorts,
-											]"
-											required
+											:rules="
+												isPortManagedExternally
+													? []
+													: [
+															rules.required,
+															differentPorts,
+														]
+											"
+											:required="!isPortManagedExternally"
+											:disabled="isPortManagedExternally"
 											:items="serial_ports"
 											:loading="loadingSerialPorts"
 											@focus="loadSerialPorts"
@@ -2450,6 +2454,9 @@ export default {
 					'zwave.serverServiceDiscoveryDisabled',
 				)
 			)
+		},
+		isPortManagedExternally() {
+			return this.isSettingManagedExternally('zwave.port')
 		},
 		...mapState(useBaseStore, {
 			colorScheme: (store) => store.ui.colorScheme,
