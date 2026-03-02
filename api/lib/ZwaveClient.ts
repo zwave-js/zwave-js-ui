@@ -13,6 +13,8 @@ import {
 	dskToString,
 	Duration,
 	isUnsupervisedOrSucceeded,
+	NODE_ID_BROADCAST,
+	NODE_ID_BROADCAST_LR,
 	RouteKind,
 	SecurityClass,
 	SupervisionStatus,
@@ -119,6 +121,7 @@ import {
 } from 'zwave-js'
 import { getEnumMemberName, parseQRCodeString } from 'zwave-js/Utils'
 import { configDbDir, nvmBackupsDir, storeDir } from '../config/app.ts'
+import type { Group } from '../config/store.ts'
 import store from '../config/store.ts'
 import jsonStore from './jsonStore.ts'
 import * as LogManager from './logger.ts'
@@ -167,6 +170,10 @@ export const allowedApis = validateMethods([
 	'_addSceneValue',
 	'_removeSceneValue',
 	'_activateScene',
+	'_createGroup',
+	'_updateGroup',
+	'_deleteGroup',
+	'_getGroups',
 	'refreshNeighbors',
 	'getNodeNeighbors',
 	'discoverNodeNeighbors',
@@ -586,6 +593,7 @@ export type ZUINode = {
 	defaultVolume?: number
 	protocol?: Protocols
 	supportsLongRange?: boolean
+	virtual?: boolean
 	availableFirmwareUpdates?: FirmwareUpdateInfo[]
 	firmwareUpdatesDismissed?: { [version: string]: boolean }
 	lastFirmwareUpdateCheck?: number
@@ -706,7 +714,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	private destroyed = false
 	private _driverReady: boolean
 	private scenes: ZUIScene[]
+	private groups: Group[]
 	private _nodes: Map<number, ZUINode>
+	private _multicastGroups: Map<number, any>
 	private storeNodes: Record<number, Partial<ZUINode>>
 	private _devices: Record<string, Partial<ZUINode>>
 	private driverInfo: ZUIDriverInfo
@@ -833,8 +843,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		this.closed = false
 		this.driverReady = false
 		this.scenes = jsonStore.get(store.scenes)
+		this.groups = jsonStore.get(store.groups)
 
 		this._nodes = new Map()
+		this._multicastGroups = new Map()
 
 		this._devices = {}
 		this.driverInfo = {}
@@ -1016,10 +1028,24 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	}
 
 	/**
-	 * Returns the driver ZWaveNode object
+	 * Check if a nodeId belongs to a virtual node (broadcast or multicast group)
+	 */
+	isVirtualNode(nodeId: number): boolean {
+		return this._multicastGroups.has(nodeId)
+	}
+
+	/**
+	 * Returns the driver ZWaveNode object for physical nodes
 	 */
 	getNode(nodeId: number): ZWaveNode {
 		return this._driver.controller.nodes.get(nodeId)
+	}
+
+	/**
+	 * Returns the virtual node instance (multicast group or broadcast node)
+	 */
+	getVirtualNode(nodeId: number): any {
+		return this._multicastGroups.get(nodeId) || null
 	}
 
 	setUserCallbacks() {
@@ -2554,6 +2580,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		this.sendToSocket(socketEvents.valueUpdated, valueId)
 
 		this.emit('valueChanged', valueId, node, changed)
+
+		// Update virtual nodes that contain this node
+		this._updateVirtualNodesForNode(valueId.nodeId)
 	}
 
 	public emitStatistics(
@@ -2898,6 +2927,464 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		}
 
 		return true
+	}
+
+	// === GROUPS MANAGEMENT ===
+
+	/**
+	 * Get next available group ID (above 0xfff)
+	 */
+	private _getNextGroupId(): number {
+		const existingIds = this.groups.map((g) => g.id)
+		const minId = 0xfff
+		let nextId = minId + 1
+		while (existingIds.includes(nextId)) {
+			nextId++
+		}
+		return nextId
+	}
+
+	/**
+	 * Create a new group
+	 */
+	async _createGroup(name: string, nodeIds: number[]): Promise<Group> {
+		const id = this._getNextGroupId()
+		const group: Group = { id, name, nodeIds }
+
+		this.groups.push(group)
+		await jsonStore.put(store.groups, this.groups)
+
+		// Create virtual multicast node
+		this._createVirtualNode(group)
+
+		return group
+	}
+
+	/**
+	 * Update an existing group
+	 */
+	async _updateGroup(
+		id: number,
+		name: string,
+		nodeIds: number[],
+	): Promise<Group | null> {
+		const groupIndex = this.groups.findIndex((g) => g.id === id)
+		if (groupIndex === -1) {
+			return null
+		}
+
+		this.groups[groupIndex].name = name
+		this.groups[groupIndex].nodeIds = nodeIds
+
+		await jsonStore.put(store.groups, this.groups)
+
+		// Recreate the multicast group instance with the new node list
+		if (this.driverReady) {
+			try {
+				const multicastGroup =
+					this._driver.controller.getMulticastGroup(nodeIds)
+				this._multicastGroups.set(id, multicastGroup)
+			} catch (error) {
+				logger.error(
+					`Error refreshing multicast group ${id}: ${error.message}`,
+				)
+			}
+		}
+
+		// Update virtual multicast node
+		this._updateVirtualNode(this.groups[groupIndex])
+
+		return this.groups[groupIndex]
+	}
+
+	/**
+	 * Delete a group
+	 */
+	async _deleteGroup(id: number): Promise<boolean> {
+		const groupIndex = this.groups.findIndex((g) => g.id === id)
+		if (groupIndex === -1) {
+			return false
+		}
+
+		// Remove virtual node
+		this._nodes.delete(id)
+
+		// Remove stored multicast group instance
+		this._multicastGroups.delete(id)
+
+		this.groups.splice(groupIndex, 1)
+		await jsonStore.put(store.groups, this.groups)
+
+		// Emit node removed event
+		this.sendToSocket(socketEvents.nodeRemoved, { id })
+
+		return true
+	}
+
+	/**
+	 * Get all groups
+	 */
+	_getGroups(): Group[] {
+		return this.groups
+	}
+
+	/**
+	 * Create virtual node for multicast group
+	 */
+	private _createVirtualNode(group: Group): void {
+		if (!this.driverReady) return
+
+		try {
+			// Create and store the multicast group instance
+			const multicastGroup = this._driver.controller.getMulticastGroup(
+				group.nodeIds,
+			)
+			this._multicastGroups.set(group.id, multicastGroup)
+
+			const virtualNode: ZUINode = {
+				id: group.id,
+				name: group.name,
+				virtual: true,
+				ready: true,
+				available: true,
+				failed: false,
+				inited: true,
+				values: {},
+				eventsQueue: [],
+			}
+
+			this._nodes.set(group.id, virtualNode)
+
+			// Emit node added event
+			this.sendToSocket(socketEvents.nodeAdded, virtualNode)
+
+			// Update virtual node values based on member nodes
+			this._updateVirtualNodeValues(group)
+		} catch (error) {
+			logger.error(
+				`Error creating virtual node for group ${group.id}: ${error.message}`,
+			)
+		}
+	}
+
+	/**
+	 * Update virtual node for multicast group
+	 */
+	private _updateVirtualNode(group: Group): void {
+		const virtualNode = this._nodes.get(group.id)
+		if (!virtualNode) {
+			// Create if doesn't exist
+			this._createVirtualNode(group)
+			return
+		}
+
+		virtualNode.name = group.name
+
+		// Update virtual node values based on member nodes
+		this._updateVirtualNodeValues(group)
+
+		// Emit node updated event
+		this.emitNodeUpdate(virtualNode, { name: virtualNode.name })
+	}
+
+	/**
+	 * Update virtual node values using getDefinedValueIDs from multicast group
+	 */
+	private _updateVirtualNodeValues(group: Group): void {
+		const virtualNode = this._nodes.get(group.id)
+		if (!virtualNode) return
+
+		// Get the multicast group instance
+		const multicastGroup = this._multicastGroups.get(group.id)
+		if (!multicastGroup) return
+
+		try {
+			// Use getDefinedValueIDs to get accurate value IDs from the multicast group
+			const definedValueIDs = multicastGroup.getDefinedValueIDs()
+
+			// Clear existing values
+			virtualNode.values = {}
+
+			// Create ZUIValueId for each defined value
+			for (const valueId of definedValueIDs) {
+				const vId = this._getValueID(valueId as unknown as ZUIValueId)
+
+				// Get all member nodes
+				const memberNodes = group.nodeIds
+					.map((id) => this._nodes.get(id))
+					.filter(Boolean)
+
+				// Get values from member nodes for this specific value ID
+				const memberValues = memberNodes
+					.map((node) => node.values?.[vId]?.value)
+					.filter((value) => value !== undefined)
+
+				// If all values are the same, use that value; otherwise undefined
+				const firstValue = memberValues[0]
+				const allSame =
+					memberValues.length > 0 &&
+					memberValues.every((value) => value === firstValue)
+				const virtualValue = allSame ? firstValue : undefined
+
+				// Create virtual value ID with full metadata
+				const virtualValueId: ZUIValueId = {
+					id: vId,
+					nodeId: group.id,
+					commandClass: valueId.commandClass,
+					commandClassName: valueId.commandClassName,
+					endpoint: valueId.endpoint,
+					property: valueId.property,
+					propertyKey: valueId.propertyKey,
+					propertyName: valueId.propertyName,
+					propertyKeyName: valueId.propertyKeyName,
+					type: valueId.metadata?.type,
+					readable: valueId.metadata?.readable ?? false,
+					writeable: valueId.metadata?.writeable ?? false,
+					label: valueId.metadata?.label,
+					default: valueId.metadata?.default,
+					stateless: false,
+					ccSpecific: valueId.metadata?.ccSpecific || {},
+					min: valueId.metadata?.min,
+					max: valueId.metadata?.max,
+					unit: valueId.metadata?.unit,
+					states: valueId.metadata?.states,
+					ccVersion: valueId.ccVersion,
+					value: virtualValue,
+					lastUpdate: Date.now(),
+				} as ZUIValueId
+
+				virtualNode.values[vId] = virtualValueId
+			}
+
+			// Emit update
+			this.emitNodeUpdate(virtualNode, { values: virtualNode.values })
+		} catch (error) {
+			logger.error(
+				`Error updating virtual node values for group ${group.id}: ${error.message}`,
+			)
+		}
+	}
+
+	/**
+	 * Update broadcast node values based on defined value IDs
+	 */
+	private _updateBroadcastNodeValues(): void {
+		if (!this.driverReady) return
+
+		const broadcastNodeIds = [NODE_ID_BROADCAST, NODE_ID_BROADCAST_LR]
+
+		for (const nodeId of broadcastNodeIds) {
+			try {
+				const broadcastInstance = this._multicastGroups.get(nodeId)
+				const virtualNode = this._nodes.get(nodeId)
+
+				if (!broadcastInstance || !virtualNode) continue
+
+				// Get all defined value IDs from the broadcast node instance
+				const definedValueIds = broadcastInstance.getDefinedValueIDs()
+
+				if (!definedValueIds || definedValueIds.length === 0) continue
+
+				// Populate virtual node values based on defined value IDs
+				for (const zwaveValue of definedValueIds) {
+					try {
+						// Get metadata for the value
+						const zwaveValueMeta =
+							broadcastInstance.getValueMetadata(zwaveValue)
+
+						if (!zwaveValueMeta) continue
+
+						// Create a proper ZUIValueId with metadata
+						const valueId: ZUIValueId = {
+							id: this._getValueID(
+								{ ...zwaveValue, nodeId },
+								true,
+							),
+							nodeId,
+							toUpdate: false,
+							commandClass: zwaveValue.commandClass,
+							commandClassName: zwaveValue.commandClassName,
+							endpoint: zwaveValue.endpoint,
+							property: zwaveValue.property,
+							propertyName: zwaveValue.propertyName,
+							propertyKey: zwaveValue.propertyKey,
+							propertyKeyName: zwaveValue.propertyKeyName,
+							type: zwaveValueMeta.type,
+							readable: zwaveValueMeta.readable,
+							writeable: zwaveValueMeta.writeable,
+							description: zwaveValueMeta.description,
+							label:
+								zwaveValueMeta.label ||
+								zwaveValue.propertyName + ' (property)',
+							default: zwaveValueMeta.default,
+							ccSpecific: zwaveValueMeta.ccSpecific,
+							stateless: false,
+							value: undefined, // Broadcast values are write-only
+							lastUpdate: Date.now(),
+						}
+
+						// Add numeric metadata if applicable
+						if (zwaveValueMeta.type === 'number') {
+							valueId.min = (
+								zwaveValueMeta as ValueMetadataNumeric
+							).min
+							valueId.max = (
+								zwaveValueMeta as ValueMetadataNumeric
+							).max
+							valueId.step = (
+								zwaveValueMeta as ValueMetadataNumeric
+							).steps
+							valueId.unit = (
+								zwaveValueMeta as ValueMetadataNumeric
+							).unit
+						} else if (zwaveValueMeta.type === 'string') {
+							valueId.minLength = (
+								zwaveValueMeta as ValueMetadataString
+							).minLength
+							valueId.maxLength = (
+								zwaveValueMeta as ValueMetadataString
+							).maxLength
+						}
+
+						// Add states if present
+						if (
+							(zwaveValueMeta as ValueMetadataNumeric).states &&
+							Object.keys(
+								(zwaveValueMeta as ValueMetadataNumeric).states,
+							).length > 0
+						) {
+							valueId.list = true
+							valueId.allowManualEntry = (
+								zwaveValueMeta as ConfigurationMetadata
+							).allowManualEntry
+							valueId.states = []
+							for (const k in (
+								zwaveValueMeta as ValueMetadataNumeric
+							).states) {
+								valueId.states.push({
+									text: (
+										zwaveValueMeta as ValueMetadataNumeric
+									).states[k],
+									value:
+										zwaveValueMeta.type === 'number'
+											? parseInt(k)
+											: zwaveValueMeta.type === 'boolean'
+												? k === 'true'
+												: k,
+								})
+							}
+						} else {
+							valueId.list = false
+						}
+
+						const vID = this._getValueID(valueId)
+						if (!virtualNode.values) virtualNode.values = {}
+						virtualNode.values[vID] = valueId
+					} catch (error) {
+						logger.error(
+							`Error updating broadcast node ${nodeId} value ${zwaveValue.property}: ${error.message}`,
+						)
+					}
+				}
+
+				// Emit node update to notify frontend
+				this.sendToSocket(socketEvents.nodeUpdated, virtualNode)
+			} catch (error) {
+				logger.error(
+					`Error updating broadcast node ${nodeId} values: ${error.message}`,
+				)
+			}
+		}
+	}
+
+	/**
+	 * Create broadcast nodes
+	 */
+	private _createBroadcastNodes(): void {
+		if (!this.driverReady) return
+
+		try {
+			// Create and store standard broadcast node
+			const broadcastNode = this._driver.controller.getBroadcastNode()
+			this._multicastGroups.set(NODE_ID_BROADCAST, broadcastNode)
+
+			const broadcastVirtualNode: ZUINode = {
+				id: NODE_ID_BROADCAST,
+				name: 'Broadcast',
+				virtual: true,
+				ready: true,
+				available: true,
+				failed: false,
+				inited: true,
+				values: {},
+				eventsQueue: [],
+			}
+
+			this._nodes.set(NODE_ID_BROADCAST, broadcastVirtualNode)
+			this.sendToSocket(socketEvents.nodeAdded, broadcastVirtualNode)
+
+			// Create LR broadcast node
+			try {
+				const broadcastNodeLR =
+					this._driver.controller.getBroadcastNodeLR()
+				this._multicastGroups.set(NODE_ID_BROADCAST_LR, broadcastNodeLR)
+
+				const broadcastLRVirtualNode: ZUINode = {
+					id: NODE_ID_BROADCAST_LR,
+					name: 'Broadcast LR',
+					virtual: true,
+					ready: true,
+					available: true,
+					failed: false,
+					inited: true,
+					values: {},
+					eventsQueue: [],
+				}
+
+				this._nodes.set(NODE_ID_BROADCAST_LR, broadcastLRVirtualNode)
+				this.sendToSocket(
+					socketEvents.nodeAdded,
+					broadcastLRVirtualNode,
+				)
+			} catch (error) {
+				logger.warn(`LR broadcast node not available: ${error.message}`)
+			}
+
+			// Populate broadcast node values
+			this._updateBroadcastNodeValues()
+		} catch (error) {
+			logger.error(`Error creating broadcast nodes: ${error.message}`)
+		}
+	}
+
+	/**
+	 * Update virtual nodes when a member node's value changes.
+	 * Throttled to avoid excessive rebuilds on frequent value updates.
+	 */
+	private _updateVirtualNodesForNode(nodeId: number): void {
+		// Find all groups that contain this node
+		const groupsWithNode = this.groups.filter((group) =>
+			group.nodeIds.includes(nodeId),
+		)
+
+		// Throttle updates per group to avoid rebuilding on every value change
+		for (const group of groupsWithNode) {
+			this.throttle(
+				`virtual_node_update_${group.id}`,
+				() => {
+					this._updateVirtualNodeValues(group)
+
+					const virtualNode = this._nodes.get(group.id)
+					if (virtualNode) {
+						this.sendToSocket(socketEvents.nodeUpdated, virtualNode)
+					}
+				},
+				1000,
+			)
+		}
+		// Note: broadcast node values are not updated here because they are
+		// write-only and don't need to reflect individual node value changes.
+		// They are rebuilt when nodes are added/removed or become ready.
 	}
 
 	/**
@@ -4205,6 +4692,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		rounds = 5,
 	): Promise<LifelineHealthCheckSummary & { targetNodeId: number }> {
 		if (this.driverReady) {
+			if (this.isVirtualNode(nodeId)) {
+				throw new Error(`Node ${nodeId} is a virtual node`)
+			}
 			const result = await this.getNode(nodeId).checkLifelineHealth(
 				rounds,
 				this._onHealthCheckProgress.bind(this, {
@@ -4223,6 +4713,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		options: any,
 	): Promise<LinkReliabilityCheckResult> {
 		if (this.driverReady) {
+			if (this.isVirtualNode(nodeId)) {
+				throw new Error(`Node ${nodeId} is a virtual node`)
+			}
 			const result = await this.getNode(nodeId).checkLinkReliability({
 				...options,
 				onProgress: (progress) =>
@@ -4237,6 +4730,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 	abortLinkReliabilityCheck(nodeId: number): void {
 		if (this.driverReady) {
+			if (this.isVirtualNode(nodeId)) {
+				throw new Error(`Node ${nodeId} is a virtual node`)
+			}
 			this.getNode(nodeId).abortLinkReliabilityCheck()
 			return
 		}
@@ -4893,6 +5389,14 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		// needs home hex to be set
 		await this.getStoreNodes()
 
+		// Create broadcast nodes and recreate virtual nodes for groups
+		this._createBroadcastNodes()
+
+		// Recreate virtual nodes for existing groups
+		for (const group of this.groups) {
+			this._createVirtualNode(group)
+		}
+
 		for (const [, node] of this._driver.controller.nodes) {
 			// node added will not be triggered if the node is in cache
 			this._createNode(node.id)
@@ -5069,11 +5573,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		}
 
 		this._updateControllerStatus(message)
-		this._onNodeEvent(
-			'status changed',
-			this.getNode(this.driver.controller.ownNodeId),
-			status,
-		)
+		const controllerNode = this.getNode(this.driver.controller.ownNodeId)
+		if (controllerNode) {
+			this._onNodeEvent('status changed', controllerNode, status)
+		}
 		this.emit('event', EventSource.CONTROLLER, 'status changed', status)
 	}
 
@@ -5227,6 +5730,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			}
 
 			this.sendToSocket(socketEvents.nodeAdded, { node, result })
+
+			// Update broadcast nodes with new capabilities
+			this._updateBroadcastNodeValues()
 		}
 
 		const security =
@@ -5264,6 +5770,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		)
 
 		this._removeNode(zwaveNode.id)
+
+		// Update broadcast nodes after node removal
+		this._updateBroadcastNodeValues()
 	}
 
 	/**
@@ -5797,6 +6306,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			this.getCustomSUCReturnRoute(zwaveNode.id)
 			this.getPrioritySUCReturnRoute(zwaveNode.id)
 		}
+
+		// Update broadcast nodes when a node becomes ready
+		this._updateBroadcastNodeValues()
 	}
 
 	/**

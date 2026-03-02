@@ -8,13 +8,20 @@
 	>
 		<v-row class="mt-2" align="center">
 			<v-col style="min-width: 200px" class="ml-4">
-				<span class="text-h6 text-grey">Device </span>
+				<span class="text-h6 text-grey"
+					>{{ node.virtual ? 'Virtual Node' : 'Device' }}
+				</span>
 				<br />
-				<span class="subtitle font-weight-bold font-monospace">
+				<!-- Don't show hex ID for virtual nodes -->
+				<span
+					class="subtitle font-weight-bold font-monospace"
+					v-if="!node.virtual"
+				>
 					{{ node.hexId }}
 				</span>
 
 				<v-icon
+					v-if="!node.virtual"
 					@click="openLink(node.dbLink)"
 					class="ml-2"
 					v-tooltip:bottom="'See device config'"
@@ -23,7 +30,7 @@
 				</v-icon>
 				<br />
 				<span
-					v-if="$vuetify.display.smAndDown"
+					v-if="$vuetify.display.smAndDown && !node.virtual"
 					class="comment font-weight-bold text-primary"
 				>
 					{{
@@ -38,7 +45,7 @@
 			<v-col
 				:class="$vuetify.display.smAndDown ? 'text-center' : 'text-end'"
 			>
-				<v-btn-group class="ml-2" multiple>
+				<v-btn-group v-if="!node.virtual" class="ml-2" multiple>
 					<v-btn
 						color="primary"
 						variant="outlined"
@@ -110,28 +117,28 @@
 					text="Node"
 				/>
 				<v-tab
-					v-if="nodeMetadata"
+					v-if="nodeMetadata && !node.virtual"
 					prepend-icon="help"
 					value="manual"
 					class="justify-start"
 					text="Help"
-					W
 				/>
 				<v-tab
-					v-if="showHass"
+					v-if="showHass && !node.virtual"
 					prepend-icon="home"
 					value="homeassistant"
 					class="justify-start"
 					text="Home Assistant"
 				/>
 				<v-tab
+					v-if="!node.virtual"
 					prepend-icon="device_hub"
 					value="groups"
 					class="justify-start"
 					text="Groups"
 				/>
 				<v-tab
-					v-if="node.schedule"
+					v-if="node.schedule && !node.virtual"
 					prepend-icon="group"
 					value="users"
 					class="justify-start"
@@ -139,19 +146,20 @@
 				/>
 				<v-tab
 					value="ota"
-					v-if="!node.isControllerNode"
+					v-if="!node.isControllerNode && !node.virtual"
 					prepend-icon="auto_mode"
 					class="justify-start"
 					text="OTA Updates"
 				/>
 				<v-tab
 					value="otw"
-					v-if="node.isControllerNode"
+					v-if="node.isControllerNode && !node.virtual"
 					prepend-icon="auto_mode"
 					class="justify-start"
 					text="Firmware Updates"
 				/>
 				<v-tab
+					v-if="!node.virtual"
 					prepend-icon="list_alt"
 					value="events"
 					class="justify-start"
@@ -259,8 +267,9 @@
 					<OTWUpdates :node="node" :socket="socket" />
 				</v-tabs-window-item>
 
-				<!-- TAB EVENTS -->
+				<!-- TAB EVENTS - Hidden for virtual nodes -->
 				<v-tabs-window-item
+					v-if="!node.virtual"
 					value="events"
 					transition="slide-y-transition"
 				>
