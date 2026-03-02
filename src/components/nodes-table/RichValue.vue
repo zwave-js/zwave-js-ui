@@ -1,5 +1,9 @@
 <template>
-	<div v-tooltip:bottom="value.description">
+	<div
+		v-tooltip:bottom="value.description"
+		:style="value.onClick ? 'cursor: pointer;' : ''"
+		@click="handleClick"
+	>
 		<span
 			v-if="value !== undefined && value.icon === ''"
 			:style="'padding-top: 4px; ' + value.displayStyle"
@@ -51,12 +55,20 @@ export default {
 					displayStyle: '',
 					description: '',
 					rawValue: undefined,
+					onClick: null,
 				}
 			},
 		},
 	},
 	components: {
 		SvgIcon,
+	},
+	methods: {
+		handleClick() {
+			if (this.value.onClick) {
+				this.value.onClick()
+			}
+		},
 	},
 }
 </script>

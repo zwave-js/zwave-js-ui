@@ -5,6 +5,8 @@ import { ManagedItems } from '@/modules/ManagedItems'
 import { mapState } from 'pinia'
 import {
 	mdiBatteryAlertVariantOutline,
+	mdiBatteryAlert,
+	mdiBatteryOutline,
 	mdiBattery20,
 	mdiBattery50,
 	mdiBattery80,
@@ -241,6 +243,23 @@ export default {
 		}
 	},
 	methods: {
+		async dismissBatteryReplacementStatus(nodeId) {
+			try {
+				await this.app.apiRequest('dismissBatteryReplacementStatus', [
+					nodeId,
+				])
+			} catch (error) {
+				console.error(
+					'Error dismissing battery replacement status:',
+					error,
+				)
+				this.app.showSnackbar(
+					'Failed to dismiss battery replacement status: ' +
+						error.message,
+					'error',
+				)
+			}
+		},
 		getProgress(node) {
 			return node.firmwareUpdate
 				? Math.round(
@@ -306,25 +325,43 @@ export default {
 				icon = mdiPowerPlug
 				description = 'mains-powered'
 			} else {
-				label = `${level}%`
-				description = getBatteryDescription(node)
-				if (level <= 10) {
+				// Check for battery replacement status first
+				if (node.batteryReplacementStatus === 'Now') {
 					icon = mdiBatteryAlertVariantOutline
 					iconStyle = `color: ${this.currentTheme.error}`
-				} else if (level <= 30) {
-					icon = mdiBattery20
+					label = level !== undefined ? `${level}%` : ''
+					description =
+						'Battery needs replacement NOW! Click to dismiss this warning.'
+				} else if (node.batteryReplacementStatus === 'Soon') {
+					icon = mdiBatteryAlert
 					iconStyle = `color: ${this.currentTheme.warning}`
-				} else if (level <= 70) {
-					icon = mdiBattery50
-				} else if (level <= 90) {
-					icon = mdiBattery80
-				} else if (level > 90) {
-					icon = mdiBattery
+					label = level !== undefined ? `${level}%` : ''
+					description =
+						'Battery needs replacement soon. Click to dismiss this warning.'
 				} else {
-					icon = mdiBatteryUnknown
-					description = 'Battery level: unknown'
-					iconStyle = `color: ${colors.grey.base}`
-					label = ''
+					// Normal battery level display
+					if (level !== undefined && level !== null) {
+						label = `${level}%`
+						description = getBatteryDescription(node)
+						if (level <= 10) {
+							icon = mdiBatteryAlertVariantOutline
+							iconStyle = `color: ${this.currentTheme.error}`
+						} else if (level <= 30) {
+							icon = mdiBattery20
+							iconStyle = `color: ${this.currentTheme.warning}`
+						} else if (level <= 70) {
+							icon = mdiBattery50
+						} else if (level <= 90) {
+							icon = mdiBattery80
+						} else if (level > 90) {
+							icon = mdiBattery
+						}
+					} else {
+						icon = mdiBatteryUnknown
+						description = 'Battery level: unknown'
+						iconStyle = `color: ${colors.grey.base}`
+						label = ''
+					}
 				}
 			}
 			return {
@@ -335,6 +372,9 @@ export default {
 				displayStyle: '',
 				description: description,
 				rawValue: level,
+				onClick: node.batteryReplacementStatus
+					? () => this.dismissBatteryReplacementStatus(node.id)
+					: null,
 			}
 		},
 		powerSort(sortDesc, nodeA, nodeB) {
