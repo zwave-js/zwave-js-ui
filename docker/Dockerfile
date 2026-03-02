@@ -54,8 +54,11 @@ RUN npm prune --omit=dev && \
 
 # add plugin support, space separated
 ARG plugins
-RUN if [ ! -z "$plugins" ]; \
-    then echo "Installing plugins ${plugins}"; npm install ${plugins} ; fi
+RUN if [ ! -z "$plugins" ]; then \
+    mkdir -p store/.plugins && \
+    cd store/.plugins && \
+    echo '{"name":"zwavejsui-plugins","private":true}' > package.json && \
+    npm install ${plugins}; fi
 
 # when update devices arg is set update config files from zwavejs repo
 ARG updateDevices

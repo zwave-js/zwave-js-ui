@@ -114,6 +114,7 @@ const useBaseStore = defineStore('base', {
 			convertRSSI: false,
 			defaultFrequency: undefined,
 		},
+		pluginRegistry: [],
 		devices: [],
 		gateway: {
 			type: 0,
@@ -623,6 +624,7 @@ const useBaseStore = defineStore('base', {
 				this.initScales(data.scales)
 				this.initDevices(data.devices)
 				this.managedExternally = data.managedExternally || []
+				this.pluginRegistry = data.pluginRegistry || []
 
 				this.inited = true
 			}
