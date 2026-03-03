@@ -324,30 +324,36 @@ export default {
 
 			const hasFailed = nodeResults.some((r) => r.failed > 0)
 
-			let html = ''
-			for (const r of nodeResults) {
-				const icon = r.failed === 0 ? '✅' : '⚠️'
-				html += `<p>${icon} <strong>Node ${r.nodeId}:</strong> ${r.success} OK, ${r.failed} failed</p>`
-				if (r.errors?.length > 0) {
-					html += '<ul>'
-					for (const e of r.errors) {
-						html += `<li>${e}</li>`
+			if (!hasFailed) {
+				const totalSuccess = nodeResults.reduce(
+					(sum, r) => sum + r.success,
+					0,
+				)
+				this.showSnackbar(
+					`Template applied successfully (${totalSuccess} value(s) across ${nodeResults.length} node(s))`,
+					'success',
+				)
+			} else {
+				let html = ''
+				for (const r of nodeResults) {
+					const icon = r.failed === 0 ? '✅' : '⚠️'
+					html += `<p>${icon} <strong>Node ${r.nodeId}:</strong> ${r.success} OK, ${r.failed} failed</p>`
+					if (r.errors?.length > 0) {
+						html += '<ul>'
+						for (const e of r.errors) {
+							html += `<li>${e}</li>`
+						}
+						html += '</ul>'
 					}
-					html += '</ul>'
 				}
-			}
 
-			this.app.confirm(
-				'Apply Template Results',
-				html,
-				hasFailed ? 'warning' : 'info',
-				{
+				this.app.confirm('Apply Template Results', html, 'warning', {
 					confirmText: 'Close',
 					noCancel: true,
 					width: 500,
-					color: hasFailed ? 'warning' : 'success',
-				},
-			)
+					color: 'warning',
+				})
+			}
 		},
 		async importTemplates() {
 			try {
