@@ -593,7 +593,11 @@ export default {
 				description = 'Main power source'
 			} else {
 				description = getBatteryDescription(node)
-				if (level <= 10) {
+				if (level == null) {
+					icon = mdiBatteryUnknown
+					description = 'Battery level: unknown'
+					iconStyle = `color: ${colors.grey.base}`
+				} else if (level <= 10) {
 					icon = mdiBatteryAlertVariantOutline
 					iconStyle = `color: ${colors.red.base}`
 				} else if (level <= 30) {
@@ -603,12 +607,8 @@ export default {
 					icon = mdiBattery50
 				} else if (level <= 90) {
 					icon = mdiBattery80
-				} else if (level > 90) {
-					icon = mdiBattery
 				} else {
-					icon = mdiBatteryUnknown
-					description = 'Battery level: unknown'
-					iconStyle = `color: ${colors.grey.base}`
+					icon = mdiBattery
 				}
 			}
 			return {
