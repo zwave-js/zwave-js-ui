@@ -369,7 +369,6 @@ import { defineAsyncComponent } from 'vue'
 import { jsonToList } from '@/lib/utils'
 import { mapActions, mapState } from 'pinia'
 import useBaseStore from '../../stores/base.js'
-import ConfigApis from '../../apis/ConfigApis.js'
 import { inboundEvents as socketActions } from '@server/lib/SocketEvents'
 import InstancesMixin from '../../mixins/InstancesMixin.js'
 
@@ -588,18 +587,6 @@ export default {
 
 			return [
 				{
-					text: 'Configuration Templates',
-					options: [
-						{
-							name: 'Apply',
-							action: 'applyTemplate',
-						},
-					],
-					icon: 'content_copy',
-					color: 'primary',
-					desc: 'Apply a configuration parameter template to this device',
-				},
-				{
 					text: 'Export json',
 					options: [
 						{ name: 'UI', action: 'exportNode' },
@@ -806,97 +793,6 @@ export default {
 				'node_' + this.node.id,
 				'json',
 			)
-		},
-		async applyTemplate() {
-			try {
-				const response = await ConfigApis.getConfigurationTemplates()
-				if (!response.success || !response.data?.length) {
-					this.showSnackbar(
-						'No configuration templates available',
-						'warning',
-					)
-					return
-				}
-
-				// Filter templates matching this device type
-				const matching = response.data.filter(
-					(t) => t.deviceId === this.node.deviceId,
-				)
-				const templates = matching.length > 0 ? matching : response.data
-
-				const result = await this.app.confirm(
-					'Apply Configuration Template',
-					matching.length > 0
-						? `Found ${matching.length} template(s) matching this device type`
-						: 'No templates match this device type. Showing all templates:',
-					'info',
-					{
-						confirmText: 'Apply',
-						inputs: [
-							{
-								type: 'list',
-								label: 'Template',
-								required: true,
-								key: 'templateId',
-								items: templates.map((t) => ({
-									title: `${t.name} (${t.deviceId})`,
-									value: t.id,
-								})),
-							},
-						],
-					},
-				)
-
-				if (!result || !result.templateId) return
-
-				const toastId = 'apply-template'
-
-				this.showSnackbar(
-					'Applying configuration template...',
-					'info',
-					{
-						timeout: Number.POSITIVE_INFINITY,
-						loading: true,
-						id: toastId,
-					},
-				)
-
-				const applyResponse =
-					await ConfigApis.applyConfigurationTemplate(
-						result.templateId,
-						this.node.id,
-					)
-
-				// dismiss loading toast
-				this.showSnackbar('', 'info', {
-					id: toastId,
-					timeout: 1,
-				})
-
-				const data = applyResponse.data
-				const hasFailed = data.failed > 0
-				const lines = [
-					`**Success:** ${data.success} parameter(s)`,
-					`**Failed:** ${data.failed} parameter(s)`,
-				]
-				if (data.errors?.length > 0) {
-					lines.push('', '**Errors:**')
-					lines.push(...data.errors.map((e) => `- ${e}`))
-				}
-
-				this.app.confirm(
-					'Apply Template Result',
-					lines.join('\n'),
-					hasFailed ? 'warning' : 'info',
-					{
-						confirmText: 'Close',
-						noCancel: true,
-						color: hasFailed ? 'warning' : 'success',
-					},
-				)
-			} catch (error) {
-				this.showSnackbar(error.message, 'error')
-			}
 		},
 		async sendMqttAction(action, confirmMessage) {
 			if (this.node) {
