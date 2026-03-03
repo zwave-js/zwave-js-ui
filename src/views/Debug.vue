@@ -54,8 +54,6 @@
 </template>
 <script>
 import { AnsiUp } from 'ansi_up'
-import { mapActions } from 'pinia'
-import useBaseStore from '../stores/base.js'
 import InstancesMixin from '../mixins/InstancesMixin.js'
 import { isPopupWindow, openInWindow } from '../lib/utils'
 import { nextTick } from 'vue'
@@ -140,7 +138,6 @@ export default {
 		}
 	},
 	methods: {
-		...mapActions(useBaseStore, ['showSnackbar']),
 		toggleDebug(v) {
 			this.debugActive = v
 			this.showSnackbar('Debug ' + (v ? 'activated' : 'disabled'))

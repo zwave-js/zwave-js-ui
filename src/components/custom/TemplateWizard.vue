@@ -179,13 +179,15 @@
 <script>
 import ConfigApis from '@/apis/ConfigApis'
 import { defineAsyncComponent } from 'vue'
-import { mapActions, mapState } from 'pinia'
+import { mapState } from 'pinia'
 import useBaseStore from '../../stores/base.js'
+import InstancesMixin from '../../mixins/InstancesMixin.js'
 
 const FIRMWARE_REGEX = /^\d+(\.\d+)+$/
 
 export default {
 	name: 'TemplateWizard',
+	mixins: [InstancesMixin],
 	components: {
 		ValueId: defineAsyncComponent(() => import('../ValueId.vue')),
 	},
@@ -263,7 +265,6 @@ export default {
 		},
 	},
 	methods: {
-		...mapActions(useBaseStore, ['showSnackbar']),
 		firmwareRule(v) {
 			if (!v) return true
 			return (

@@ -93,7 +93,7 @@
 </template>
 
 <script>
-import { mapState, mapActions } from 'pinia'
+import { mapState } from 'pinia'
 
 import useBaseStore from '../../stores/base.js'
 import InstancesMixin from '../../mixins/InstancesMixin.js'
@@ -142,7 +142,6 @@ export default {
 		this.getAssociations()
 	},
 	methods: {
-		...mapActions(useBaseStore, ['showSnackbar']),
 		getAssociationAddress,
 		getNodeName(nodeId) {
 			const node = this.nodes[this.nodesMap.get(nodeId)]

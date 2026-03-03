@@ -129,7 +129,7 @@
 <script>
 import { defineAsyncComponent } from 'vue'
 import ConfigApis from '@/apis/ConfigApis'
-import { mapActions, mapState } from 'pinia'
+import { mapState } from 'pinia'
 import useBaseStore from '../stores/base.js'
 import InstancesMixin from '../mixins/InstancesMixin.js'
 import logger from '../lib/logger'
@@ -178,7 +178,6 @@ export default {
 		...mapState(useBaseStore, ['nodes']),
 	},
 	methods: {
-		...mapActions(useBaseStore, ['showSnackbar']),
 		formatDate(dateStr) {
 			if (!dateStr) return ''
 			return new Date(dateStr).toLocaleDateString()
@@ -321,27 +320,31 @@ export default {
 
 			this.applyingTemplate = false
 
-			// dismiss loading toast
-			this.showSnackbar('', 'info', { id: toastId, timeout: 1 })
+			this.dismissSnackbar(toastId)
 
 			const hasFailed = nodeResults.some((r) => r.failed > 0)
-			const lines = []
+
+			let html = ''
 			for (const r of nodeResults) {
-				lines.push(
-					`**Node ${r.nodeId}:** ${r.success} OK, ${r.failed} failed`,
-				)
+				const icon = r.failed === 0 ? '✅' : '⚠️'
+				html += `<p>${icon} <strong>Node ${r.nodeId}:</strong> ${r.success} OK, ${r.failed} failed</p>`
 				if (r.errors?.length > 0) {
-					lines.push(...r.errors.map((e) => `  - ${e}`))
+					html += '<ul>'
+					for (const e of r.errors) {
+						html += `<li>${e}</li>`
+					}
+					html += '</ul>'
 				}
 			}
 
 			this.app.confirm(
 				'Apply Template Results',
-				lines.join('\n'),
+				html,
 				hasFailed ? 'warning' : 'info',
 				{
 					confirmText: 'Close',
 					noCancel: true,
+					width: 500,
 					color: hasFailed ? 'warning' : 'success',
 				},
 			)

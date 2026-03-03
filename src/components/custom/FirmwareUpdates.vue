@@ -205,7 +205,7 @@
 
 <script>
 import useBaseStore from '../../stores/base.js'
-import { mapActions, mapState } from 'pinia'
+import { mapState } from 'pinia'
 import InstancesMixin from '../../mixins/InstancesMixin.js'
 import { RFRegion } from '@zwave-js/core'
 
@@ -263,7 +263,6 @@ export default {
 		this.checkUpdates()
 	},
 	methods: {
-		...mapActions(useBaseStore, ['showSnackbar']),
 		async dismissUpdate(update) {
 			const confirmed = await this.app.confirm(
 				'Dismiss firmware update',

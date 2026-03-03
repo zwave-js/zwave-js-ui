@@ -111,7 +111,7 @@
 	</v-container>
 </template>
 <script>
-import { mapState, mapActions } from 'pinia'
+import { mapState } from 'pinia'
 import useBaseStore from '../stores/base.js'
 import InstancesMixin from '../mixins/InstancesMixin.js'
 import { defineAsyncComponent } from 'vue'
@@ -165,7 +165,6 @@ export default {
 		}
 	},
 	methods: {
-		...mapActions(useBaseStore, ['showSnackbar']),
 		async importScenes() {
 			if (
 				await this.app.confirm(

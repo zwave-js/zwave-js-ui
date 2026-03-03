@@ -947,6 +947,9 @@ export default {
 
 			return this.$refs.confirm2.open(title, text, options)
 		},
+		dismissSnackbar(toastId) {
+			toast.dismiss(toastId)
+		},
 		showSnackbar(text, color, options = { timeout: 3000 }) {
 			const { timeout, ...rest } = options
 			const toastOptions = {
@@ -1889,15 +1892,6 @@ export default {
 		// this will be overriden by settings value once `initSettings`
 		// base store method is called
 		this.$vuetify.theme.change(darkMode ? 'dark' : 'light')
-
-		useBaseStore().$onAction(({ name, args }) => {
-			if (name === 'showSnackbar') {
-				this.showSnackbar(...args)
-			} else if (name === 'initSettings') {
-				// check if auth is changed in settings
-				this.checkAuth()
-			}
-		})
 	},
 	beforeUnmount() {
 		this.unbindEvents()

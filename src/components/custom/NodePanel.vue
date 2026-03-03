@@ -428,7 +428,7 @@ import draggable from 'vuedraggable'
 
 import { Routes } from '../../router/index.js'
 import InstancesMixin from '../../mixins/InstancesMixin.js'
-import { mapActions, mapState } from 'pinia'
+import { mapState } from 'pinia'
 import useBaseStore from '../../stores/base.js'
 import { copy, getProtocol } from '../../lib/utils'
 
@@ -563,7 +563,6 @@ export default {
 		},
 	},
 	methods: {
-		...mapActions(useBaseStore, ['showSnackbar']),
 		getProtocol,
 		zwaveDataRateToString,
 		async refreshNodeNeighbors() {

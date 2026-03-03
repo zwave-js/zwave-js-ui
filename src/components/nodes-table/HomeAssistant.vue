@@ -165,7 +165,7 @@
 
 <script>
 import { inboundEvents as socketActions } from '@server/lib/SocketEvents'
-import { mapActions, mapState } from 'pinia'
+import { mapState } from 'pinia'
 import useBaseStore from '../../stores/base'
 import InstancesMixin from '../../mixins/InstancesMixin'
 
@@ -214,7 +214,6 @@ export default {
 		},
 	},
 	methods: {
-		...mapActions(useBaseStore, ['showSnackbar']),
 		async sendAction(data = {}) {
 			return new Promise((resolve) => {
 				if (this.socket.connected) {

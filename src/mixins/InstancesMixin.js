@@ -85,6 +85,12 @@ export default {
 		},
 	},
 	methods: {
+		showSnackbar(...args) {
+			return this.app.showSnackbar(...args)
+		},
+		dismissSnackbar(toastId) {
+			this.app.dismissSnackbar(toastId)
+		},
 		bindEvent(eventName, handler) {
 			this.socket.on(socketEvents[eventName], handler)
 			this.bindedSocketEvents[eventName] = handler
