@@ -3243,6 +3243,24 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 					results.errors.push(
 						`Parameter ${tv.property}: ${result.message || getEnumMemberName(SetValueStatus, result.status)}`,
 					)
+
+					// Fail + node is dead means no point continuing
+					if (
+						result.status === SetValueStatus.Fail &&
+						node.status === 'Dead'
+					) {
+						const remaining =
+							template.values.length -
+							results.success -
+							results.failed
+						if (remaining > 0) {
+							results.failed += remaining
+							results.errors.push(
+								`Aborted: ${remaining} remaining parameter(s) skipped, node is dead`,
+							)
+						}
+						break
+					}
 				} else {
 					results.success++
 				}

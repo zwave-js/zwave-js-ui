@@ -849,14 +849,50 @@ export default {
 
 				if (!result || !result.templateId) return
 
+				const toastId = 'apply-template'
+
+				this.showSnackbar(
+					'Applying configuration template...',
+					'info',
+					{
+						timeout: Number.POSITIVE_INFINITY,
+						loading: true,
+						id: toastId,
+					},
+				)
+
 				const applyResponse =
 					await ConfigApis.applyConfigurationTemplate(
 						result.templateId,
 						this.node.id,
 					)
-				this.showSnackbar(
-					applyResponse.message,
-					applyResponse.success ? 'success' : 'error',
+
+				// dismiss loading toast
+				this.showSnackbar('', 'info', {
+					id: toastId,
+					timeout: 1,
+				})
+
+				const data = applyResponse.data
+				const hasFailed = data.failed > 0
+				const lines = [
+					`**Success:** ${data.success} parameter(s)`,
+					`**Failed:** ${data.failed} parameter(s)`,
+				]
+				if (data.errors?.length > 0) {
+					lines.push('', '**Errors:**')
+					lines.push(...data.errors.map((e) => `- ${e}`))
+				}
+
+				this.app.confirm(
+					'Apply Template Result',
+					lines.join('\n'),
+					hasFailed ? 'warning' : 'info',
+					{
+						confirmText: 'Close',
+						noCancel: true,
+						color: hasFailed ? 'warning' : 'success',
+					},
 				)
 			} catch (error) {
 				this.showSnackbar(error.message, 'error')

@@ -98,6 +98,7 @@
 					size="small"
 					color="primary"
 					class="mr-2"
+					:disabled="applyingTemplate"
 					@click="applyTemplate(item)"
 					v-tooltip:bottom="'Apply to a node'"
 				>
@@ -170,6 +171,7 @@ export default {
 			],
 			wizardActive: false,
 			editingTemplate: null,
+			applyingTemplate: false,
 		}
 	},
 	computed: {
@@ -280,22 +282,35 @@ export default {
 			if (!result || !result.nodeIds || result.nodeIds.length === 0)
 				return
 
-			let success = 0
-			let failed = 0
-			for (const nodeId of result.nodeIds) {
+			this.applyingTemplate = true
+			const total = result.nodeIds.length
+			const toastId = 'apply-template'
+
+			const nodeResults = []
+			for (const [i, nodeId] of result.nodeIds.entries()) {
+				this.showSnackbar(
+					`Applying template to node ${nodeId} (${i + 1}/${total})...`,
+					'info',
+					{
+						timeout: Number.POSITIVE_INFINITY,
+						loading: true,
+						id: toastId,
+					},
+				)
 				try {
 					const response =
 						await ConfigApis.applyConfigurationTemplate(
 							item.id,
 							nodeId,
 						)
-					if (response.success) {
-						success++
-					} else {
-						failed++
-					}
+					nodeResults.push({ nodeId, ...response.data })
 				} catch (error) {
-					failed++
+					nodeResults.push({
+						nodeId,
+						success: 0,
+						failed: 1,
+						errors: [error.message],
+					})
 					log.error('Failed to apply configuration template', {
 						templateId: item.id,
 						nodeId,
@@ -304,9 +319,31 @@ export default {
 				}
 			}
 
-			this.showSnackbar(
-				`Template applied: ${success} succeeded, ${failed} failed`,
-				failed > 0 ? 'warning' : 'success',
+			this.applyingTemplate = false
+
+			// dismiss loading toast
+			this.showSnackbar('', 'info', { id: toastId, timeout: 1 })
+
+			const hasFailed = nodeResults.some((r) => r.failed > 0)
+			const lines = []
+			for (const r of nodeResults) {
+				lines.push(
+					`**Node ${r.nodeId}:** ${r.success} OK, ${r.failed} failed`,
+				)
+				if (r.errors?.length > 0) {
+					lines.push(...r.errors.map((e) => `  - ${e}`))
+				}
+			}
+
+			this.app.confirm(
+				'Apply Template Results',
+				lines.join('\n'),
+				hasFailed ? 'warning' : 'info',
+				{
+					confirmText: 'Close',
+					noCancel: true,
+					color: hasFailed ? 'warning' : 'success',
+				},
 			)
 		},
 		async importTemplates() {

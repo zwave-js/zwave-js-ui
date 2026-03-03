@@ -198,7 +198,7 @@ export default {
 	emits: ['cancel', 'saved'],
 	data() {
 		return {
-			step: 1,
+			step: this.template ? 2 : 1,
 			stepLabels: [
 				'Select Device',
 				'Select Parameters',
