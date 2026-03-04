@@ -329,12 +329,13 @@ export default {
 			} else {
 				let html = ''
 				for (const r of nodeResults) {
-					const icon = r.success === 0 ? '❌' : '⚠️'
-					if (r.success === 0) {
-						html += `<p>${icon} <strong>Node ${r.nodeId}:</strong> Failed</p>`
-					} else {
-						html += `<p>${icon} <strong>Node ${r.nodeId}:</strong> Partially applied</p>`
+					if (r.failed === 0) {
+						html += `<p>✅ <strong>Node ${r.nodeId}:</strong> Applied successfully</p>`
+						continue
 					}
+					const icon = r.success === 0 ? '❌' : '⚠️'
+					const label = r.success === 0 ? 'Failed' : 'Partially applied'
+					html += `<p>${icon} <strong>Node ${r.nodeId}:</strong> ${label}</p>`
 					if (r.errors?.length > 0) {
 						html += '<ul>'
 						for (const e of r.errors) {
