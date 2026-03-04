@@ -387,6 +387,7 @@ export type ZUIValueId = {
 	isCurrentValue?: boolean
 	conf?: GatewayValue
 	allowManualEntry?: boolean
+	destructive?: boolean
 	commandClassVersion?: number
 } & TranslatedValueID
 
@@ -6787,6 +6788,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			}
 		} else {
 			valueId.list = false
+		}
+
+		if ((zwaveValueMeta as ConfigurationMetadata).destructive) {
+			valueId.destructive = true
 		}
 
 		return valueId
