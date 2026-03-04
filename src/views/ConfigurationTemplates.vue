@@ -248,8 +248,13 @@ export default {
 		},
 		async applyTemplate(item) {
 			const targetNodes = this.getMatchingNodes(item).map((n) => ({
-				title: `Node ${n.id} - ${[n.manufacturer, n.productLabel].filter(Boolean).join(' ') || n._name || 'Unknown'}`,
+				title: n._name,
 				value: n.id,
+				props: {
+					subtitle: [n.manufacturer, n.productLabel]
+						.filter(Boolean)
+						.join(' - '),
+				},
 			}))
 
 			if (targetNodes.length === 0) {
@@ -335,9 +340,7 @@ export default {
 
 				for (const r of nodeResults) {
 					const node = this.nodes.find((n) => n.id === r.nodeId)
-					const name = node
-						? `Node ${r.nodeId} - ${[node.manufacturer, node.productLabel].filter(Boolean).join(' ') || node._name || 'Unknown'}`
-						: `Node ${r.nodeId}`
+					const name = node?._name || `NodeID_${r.nodeId}`
 					let icon, failedParams
 					if (r.failed === 0) {
 						icon = '✅'

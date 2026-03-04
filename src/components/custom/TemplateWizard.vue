@@ -232,8 +232,13 @@ export default {
 			return this.nodes
 				.filter((n) => n && !n.isControllerNode && n.ready)
 				.map((n) => ({
-					text: `Node ${n.id} - ${[n.manufacturer, n.productLabel].filter(Boolean).join(' ') || n._name || 'Unknown'}`,
+					text: n._name,
 					value: n.id,
+					props: {
+						subtitle: [n.manufacturer, n.productLabel]
+							.filter(Boolean)
+							.join(' - '),
+					},
 				}))
 		},
 		selectedNodeName() {

@@ -3237,6 +3237,12 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		for (const tv of template.values) {
 			try {
+				// skip writing `undefined` configuration values to prevent errors
+				if (tv.value === undefined) {
+					results.success++
+					continue
+				}
+
 				const result = await this.writeValue(
 					{
 						nodeId,
