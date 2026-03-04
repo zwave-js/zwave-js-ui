@@ -342,8 +342,8 @@ export default {
 						failedParams = ''
 					} else if (r.reason) {
 						// critical failure (e.g. node is dead)
-						icon = '❌'
-						failedParams = r.reason
+						icon = `❌ ${r.reason}`
+						failedParams = ''
 					} else {
 						// partial failure — show which parameters failed
 						icon = '⚠️'
@@ -352,7 +352,7 @@ export default {
 					html +=
 						`<tr>` +
 						`<td style="padding:4px 8px">${name}</td>` +
-						`<td style="padding:4px 8px;text-align:center">${icon}</td>` +
+						`<td style="padding:4px 8px;text-align:center;white-space:nowrap">${icon}</td>` +
 						`<td style="padding:4px 8px">${failedParams}</td>` +
 						`</tr>`
 				}
