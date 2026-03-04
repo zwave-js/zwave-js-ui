@@ -327,29 +327,39 @@ export default {
 			if (!hasFailed) {
 				this.showSnackbar('Template applied successfully', 'success')
 			} else {
-				let html = ''
+				let html =
+					'<table style="width:100%;border-collapse:collapse">' +
+					'<tr><th style="text-align:left;padding:4px 8px">Node</th>' +
+					'<th style="padding:4px 8px">Status</th>' +
+					'<th style="text-align:left;padding:4px 8px">Failed parameters</th></tr>'
+
 				for (const r of nodeResults) {
+					const node = this.nodes.find((n) => n.id === r.nodeId)
+					const name = node?._name || `Node ${r.nodeId}`
+					let icon, errors
 					if (r.failed === 0) {
-						html += `<p>✅ <strong>Node ${r.nodeId}:</strong> Applied successfully</p>`
-						continue
+						icon = '✅'
+						errors = ''
+					} else if (r.success === 0) {
+						icon = '❌'
+						errors = (r.errors || []).join('<br>')
+					} else {
+						icon = '⚠️'
+						errors = (r.errors || []).join('<br>')
 					}
-					const icon = r.success === 0 ? '❌' : '⚠️'
-					const label =
-						r.success === 0 ? 'Failed' : 'Partially applied'
-					html += `<p>${icon} <strong>Node ${r.nodeId}:</strong> ${label}</p>`
-					if (r.errors?.length > 0) {
-						html += '<ul>'
-						for (const e of r.errors) {
-							html += `<li>${e}</li>`
-						}
-						html += '</ul>'
-					}
+					html +=
+						`<tr>` +
+						`<td style="padding:4px 8px">${name}</td>` +
+						`<td style="padding:4px 8px;text-align:center">${icon}</td>` +
+						`<td style="padding:4px 8px">${errors}</td>` +
+						`</tr>`
 				}
+				html += '</table>'
 
 				this.app.confirm('Apply Template Results', html, 'warning', {
 					confirmText: 'Close',
 					noCancel: true,
-					width: 500,
+					width: 600,
 					color: 'warning',
 				})
 			}
