@@ -129,25 +129,43 @@
 									nodeResults[item.id].result.errors?.length
 								"
 								variant="accordion"
-								density="compact"
+								flat
 								class="mt-1"
 							>
 								<v-expansion-panel>
 									<v-expansion-panel-title
-										class="py-1 text-caption"
+										class="pa-0 min-height-0 text-caption"
+										style="min-height: 28px"
 									>
-										Failed parameters
+										Show details
 									</v-expansion-panel-title>
 									<v-expansion-panel-text>
-										<div
-											v-for="(err, idx) in nodeResults[
-												item.id
-											].result.errors"
-											:key="idx"
-											class="text-caption text-error"
-										>
-											{{ err }}
-										</div>
+										<v-list density="compact" class="pa-0">
+											<v-list-item
+												v-for="(
+													err, idx
+												) in nodeResults[item.id].result
+													.errors"
+												:key="idx"
+												class="px-0"
+												min-height="24"
+											>
+												<template #prepend>
+													<v-icon
+														size="x-small"
+														color="error"
+														class="mr-1"
+													>
+														close
+													</v-icon>
+												</template>
+												<v-list-item-title
+													class="text-caption text-error text-wrap"
+												>
+													{{ err }}
+												</v-list-item-title>
+											</v-list-item>
+										</v-list>
 									</v-expansion-panel-text>
 								</v-expansion-panel>
 							</v-expansion-panels>
