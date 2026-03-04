@@ -245,10 +245,14 @@
 				item-value="value"
 				:type="modelValue.type === 'number' ? 'number' : 'text'"
 				:return-object="false"
-				:append-icon="!disable_send ? 'send' : null"
+				:append-icon="
+					!disable_send && !numberOutOfRange ? 'send' : null
+				"
+				:error="numberOutOfRange"
+				:error-messages="numberErrorMessage"
 				v-model="modelValue.newValue"
 				ref="myCombo"
-				@click:append="updateValue(modelValue)"
+				@click:append="!numberOutOfRange && updateValue(modelValue)"
 			>
 				<template #chip="{ attrs, item, selected }">
 					<v-chip v-bind="attrs" :model-value="selected">
