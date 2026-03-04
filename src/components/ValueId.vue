@@ -51,7 +51,10 @@
 		<div v-if="!modelValue.writeable">
 			<div class="readonly mt-5">
 				{{
-					parsedValue + (modelValue.unit ? ' ' + modelValue.unit : '')
+					parsedValue == null
+						? 'unknown'
+						: parsedValue +
+							(modelValue.unit ? ' ' + modelValue.unit : '')
 				}}
 
 				<v-btn

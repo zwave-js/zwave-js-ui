@@ -306,25 +306,26 @@ export default {
 				icon = mdiPowerPlug
 				description = 'mains-powered'
 			} else {
-				label = `${level}%`
 				description = getBatteryDescription(node)
-				if (level <= 10) {
-					icon = mdiBatteryAlertVariantOutline
-					iconStyle = `color: ${this.currentTheme.error}`
-				} else if (level <= 30) {
-					icon = mdiBattery20
-					iconStyle = `color: ${this.currentTheme.warning}`
-				} else if (level <= 70) {
-					icon = mdiBattery50
-				} else if (level <= 90) {
-					icon = mdiBattery80
-				} else if (level > 90) {
-					icon = mdiBattery
-				} else {
+				if (level == null) {
 					icon = mdiBatteryUnknown
-					description = 'Battery level: unknown'
 					iconStyle = `color: ${colors.grey.base}`
-					label = ''
+					description = 'Battery level: unknown'
+				} else {
+					label = `${level}%`
+					if (level <= 10) {
+						icon = mdiBatteryAlertVariantOutline
+						iconStyle = `color: ${this.currentTheme.error}`
+					} else if (level <= 30) {
+						icon = mdiBattery20
+						iconStyle = `color: ${this.currentTheme.warning}`
+					} else if (level <= 70) {
+						icon = mdiBattery50
+					} else if (level <= 90) {
+						icon = mdiBattery80
+					} else {
+						icon = mdiBattery
+					}
 				}
 			}
 			return {
