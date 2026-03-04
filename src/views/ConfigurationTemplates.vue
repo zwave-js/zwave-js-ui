@@ -335,7 +335,9 @@ export default {
 
 				for (const r of nodeResults) {
 					const node = this.nodes.find((n) => n.id === r.nodeId)
-					const name = node?._name || `Node ${r.nodeId}`
+					const name = node
+						? `Node ${r.nodeId} - ${[node.manufacturer, node.productLabel].filter(Boolean).join(' ') || node._name || 'Unknown'}`
+						: `Node ${r.nodeId}`
 					let icon, failedParams
 					if (r.failed === 0) {
 						icon = '✅'
