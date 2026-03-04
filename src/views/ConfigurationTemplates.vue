@@ -334,7 +334,8 @@ export default {
 						continue
 					}
 					const icon = r.success === 0 ? '❌' : '⚠️'
-					const label = r.success === 0 ? 'Failed' : 'Partially applied'
+					const label =
+						r.success === 0 ? 'Failed' : 'Partially applied'
 					html += `<p>${icon} <strong>Node ${r.nodeId}:</strong> ${label}</p>`
 					if (r.errors?.length > 0) {
 						html += '<ul>'
