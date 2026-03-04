@@ -98,7 +98,6 @@
 					size="small"
 					color="primary"
 					class="mr-2"
-					:disabled="applyingTemplate"
 					@click="applyTemplate(item)"
 					v-tooltip:bottom="'Apply to a node'"
 				>
@@ -123,6 +122,12 @@
 				</v-icon>
 			</template>
 		</v-data-table>
+
+		<DialogApplyTemplate
+			v-if="showApplyDialog"
+			v-model="showApplyDialog"
+			:template="applyDialogTemplate"
+		/>
 	</v-container>
 </template>
 
@@ -132,14 +137,15 @@ import ConfigApis from '@/apis/ConfigApis'
 import { mapState } from 'pinia'
 import useBaseStore from '../stores/base.js'
 import InstancesMixin from '../mixins/InstancesMixin.js'
-import logger from '../lib/logger'
 
-const log = logger.get('ConfigurationTemplates')
 export default {
 	name: 'ConfigurationTemplates',
 	components: {
 		TemplateWizard: defineAsyncComponent(
 			() => import('../components/custom/TemplateWizard.vue'),
+		),
+		DialogApplyTemplate: defineAsyncComponent(
+			() => import('../components/dialogs/DialogApplyTemplate.vue'),
 		),
 	},
 	mixins: [InstancesMixin],
@@ -171,7 +177,8 @@ export default {
 			],
 			wizardActive: false,
 			editingTemplate: null,
-			applyingTemplate: false,
+			showApplyDialog: false,
+			applyDialogTemplate: null,
 		}
 	},
 	computed: {
@@ -246,130 +253,14 @@ export default {
 				}
 			}
 		},
-		async applyTemplate(item) {
-			const targetNodes = this.getMatchingNodes(item).map((n) => ({
-				title: n._name,
-				value: n.id,
-				props: {
-					subtitle: [n.manufacturer, n.productLabel]
-						.filter(Boolean)
-						.join(' - '),
-				},
-			}))
-
-			if (targetNodes.length === 0) {
+		applyTemplate(item) {
+			const matchingNodes = this.getMatchingNodes(item)
+			if (matchingNodes.length === 0) {
 				this.showSnackbar('No matching devices found', 'warning')
 				return
 			}
-
-			const result = await this.app.confirm(
-				'Apply Template',
-				`Apply "${item.name}" to one or more nodes`,
-				'info',
-				{
-					confirmText: 'Apply',
-					width: 500,
-					inputs: [
-						{
-							type: 'list',
-							label: 'Target nodes',
-							key: 'nodeIds',
-							items: targetNodes,
-							multiple: true,
-							required: true,
-							autocomplete: true,
-						},
-					],
-				},
-			)
-
-			if (!result || !result.nodeIds || result.nodeIds.length === 0)
-				return
-
-			this.applyingTemplate = true
-			const total = result.nodeIds.length
-			const toastId = 'apply-template'
-
-			const nodeResults = []
-			for (const [i, nodeId] of result.nodeIds.entries()) {
-				this.showSnackbar(
-					`Applying template to node ${nodeId} (${i + 1}/${total})...`,
-					'info',
-					{
-						timeout: Number.POSITIVE_INFINITY,
-						loading: true,
-						id: toastId,
-					},
-				)
-				try {
-					const response =
-						await ConfigApis.applyConfigurationTemplate(
-							item.id,
-							nodeId,
-						)
-					nodeResults.push({ nodeId, ...response.data })
-				} catch (error) {
-					nodeResults.push({
-						nodeId,
-						success: 0,
-						failed: 1,
-						errors: [error.message],
-					})
-					log.error('Failed to apply configuration template', {
-						templateId: item.id,
-						nodeId,
-						error,
-					})
-				}
-			}
-
-			this.applyingTemplate = false
-
-			this.dismissSnackbar(toastId)
-
-			const hasFailed = nodeResults.some((r) => r.failed > 0)
-
-			if (!hasFailed) {
-				this.showSnackbar('Template applied successfully', 'success')
-			} else {
-				let html =
-					'<table style="width:100%;border-collapse:collapse">' +
-					'<tr><th style="text-align:left;padding:4px 8px">Node</th>' +
-					'<th style="padding:4px 8px">Status</th>' +
-					'<th style="text-align:left;padding:4px 8px">Failed parameters</th></tr>'
-
-				for (const r of nodeResults) {
-					const node = this.nodes.find((n) => n.id === r.nodeId)
-					const name = node?._name || `NodeID_${r.nodeId}`
-					let icon, failedParams
-					if (r.failed === 0) {
-						icon = '✅'
-						failedParams = ''
-					} else if (r.reason) {
-						// critical failure (e.g. node is dead)
-						icon = `❌ ${r.reason}`
-						failedParams = ''
-					} else {
-						// partial failure — show which parameters failed
-						icon = '⚠️'
-						failedParams = (r.errors || []).join('<br>')
-					}
-					html +=
-						`<tr>` +
-						`<td style="padding:4px 8px">${name}</td>` +
-						`<td style="padding:4px 8px;text-align:center;white-space:nowrap">${icon}</td>` +
-						`<td style="padding:4px 8px">${failedParams}</td>` +
-						`</tr>`
-				}
-				html += '</table>'
-
-				this.app.confirm('Apply Template Results', html, 'warning', {
-					confirmText: 'Close',
-					noCancel: true,
-					width: 600,
-					color: 'warning',
-				})
-			}
+			this.applyDialogTemplate = item
+			this.showApplyDialog = true
 		},
 		async importTemplates() {
 			try {
