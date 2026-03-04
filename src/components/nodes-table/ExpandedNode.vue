@@ -791,6 +791,8 @@ export default {
 		nodeAction(action, args = {}) {
 			if (action === 'exportNode') {
 				this.exportNode()
+			} else if (action === 'applyTemplate') {
+				this.applyTemplate()
 			} else if (args.mqtt) {
 				this.sendMqttAction(action, args.confirm)
 			} else {

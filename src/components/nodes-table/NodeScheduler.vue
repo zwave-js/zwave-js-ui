@@ -80,9 +80,6 @@
 </template>
 
 <script>
-import { mapActions } from 'pinia'
-
-import useBaseStore from '../../stores/base.js'
 import InstancesMixin from '../../mixins/InstancesMixin.js'
 import { getEnumMemberName } from '@zwave-js/shared'
 import { ScheduleEntryLockWeekday } from '@zwave-js/cc'
@@ -298,7 +295,6 @@ export default {
 		this.mode = this.activeMode || 'daily'
 	},
 	methods: {
-		...mapActions(useBaseStore, ['showSnackbar']),
 		validSlot(v, values) {
 			return (
 				!this.items.some((i) => i.slotId === values.slotId) ||

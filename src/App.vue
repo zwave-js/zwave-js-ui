@@ -530,6 +530,12 @@ export default {
 					path: Routes.scenes,
 				})
 
+				pages.splice(4, 0, {
+					icon: 'content_copy',
+					title: 'Templates',
+					path: Routes.configurationTemplates,
+				})
+
 				pages.push({
 					icon: 'share',
 					title: 'Network graph',
@@ -940,6 +946,9 @@ export default {
 			options.color = options.color || levelMap[level] || 'primary'
 
 			return this.$refs.confirm2.open(title, text, options)
+		},
+		dismissSnackbar(toastId) {
+			toast.dismiss(toastId)
 		},
 		showSnackbar(text, color, options = { timeout: 3000 }) {
 			const { timeout, ...rest } = options
@@ -1883,17 +1892,9 @@ export default {
 		// this will be overriden by settings value once `initSettings`
 		// base store method is called
 		this.$vuetify.theme.change(darkMode ? 'dark' : 'light')
-
-		useBaseStore().$onAction(({ name, args }) => {
-			if (name === 'showSnackbar') {
-				this.showSnackbar(...args)
-			} else if (name === 'initSettings') {
-				// check if auth is changed in settings
-				this.checkAuth()
-			}
-		})
 	},
 	beforeUnmount() {
+		this.unbindEvents()
 		if (this.socket) this.socket.close()
 	},
 }

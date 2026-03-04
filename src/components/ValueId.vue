@@ -1,12 +1,14 @@
 <template>
 	<div class="valueid-slot">
-		<div class="valueid-label text-subtitle-2">
+		<div v-if="!hideLabel" class="valueid-label text-subtitle-2">
 			{{ label }}
 
 			<v-menu location="bottom">
 				<template #activator="{ props }">
 					<v-btn
-						v-if="canPollValue || canResetConfiguration"
+						v-if="
+							!compact && (canPollValue || canResetConfiguration)
+						"
 						v-bind="props"
 						class="ml-1 mb-1"
 						size="x-small"
@@ -37,7 +39,7 @@
 			</v-menu>
 
 			<v-chip
-				v-if="isDefault"
+				v-if="!compact && isDefault"
 				v-tooltip:bottom="'This value is set to its default'"
 				class="ml-2 mb-1"
 				size="x-small"
@@ -350,7 +352,7 @@
 
 			<!-- Suffix loader with tooltip -->
 			<v-progress-circular
-				v-if="modelValue.toUpdate"
+				v-if="!compact && modelValue.toUpdate"
 				v-tooltip:bottom="
 					node?.status === 'Asleep'
 						? 'Wake up your device in order to send commands'
@@ -398,6 +400,14 @@ export default {
 		},
 		node: {
 			type: Object,
+		},
+		hideLabel: {
+			type: Boolean,
+			default: false,
+		},
+		compact: {
+			type: Boolean,
+			default: false,
 		},
 	},
 	data() {

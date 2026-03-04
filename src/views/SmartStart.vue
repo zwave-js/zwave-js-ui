@@ -230,7 +230,6 @@
 <script>
 import { defineAsyncComponent } from 'vue'
 import { tryParseDSKFromQRCodeString, Protocols } from '@zwave-js/core'
-import { mapActions } from 'pinia'
 import {
 	parseSecurityClasses,
 	validDsk,
@@ -371,7 +370,6 @@ export default {
 		}
 	},
 	methods: {
-		...mapActions(useBaseStore, ['showSnackbar']),
 		onRowFocus(event, item) {
 			if (item.nodeId) {
 				// get mouse position

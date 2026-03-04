@@ -5,6 +5,7 @@ import {
 	prefersColorSchemeDark,
 } from '../lib/colorScheme'
 import { deepEqual } from '../lib/utils'
+import { manager, instances } from '../lib/instanceManager'
 import logger from '../lib/logger'
 
 import { Settings } from '../modules/Settings'
@@ -199,10 +200,6 @@ const useBaseStore = defineStore('base', {
 			} else {
 				return null
 			}
-		},
-
-		showSnackbar(text, color = 'info', options = { timeout: 3000 }) {
-			// empty mutation, will be caught in App.vue $onAction
 		},
 
 		updateMeshGraph(node) {
@@ -536,6 +533,12 @@ const useBaseStore = defineStore('base', {
 					document.title = this.ui.browserTitle
 				}
 			}
+
+			// check if auth is changed in settings
+			const app = manager.getInstance(instances.APP)
+			if (app) {
+				app.checkAuth()
+			}
 		},
 		/**
 		 * Initialize the color scheme by:
@@ -603,10 +606,13 @@ const useBaseStore = defineStore('base', {
 						this.tz = data.tz
 					} catch (e) {
 						log.error('Invalid timezone:', data.tz)
-						this.showSnackbar(
-							`Invalid timezone: ${data.tz}`,
-							'error',
-						)
+						const app = manager.getInstance(instances.APP)
+						if (app) {
+							app.showSnackbar(
+								`Invalid timezone: ${data.tz}`,
+								'error',
+							)
+						}
 					}
 				}
 

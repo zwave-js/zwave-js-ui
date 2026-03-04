@@ -371,7 +371,7 @@ import { defineAsyncComponent, nextTick } from 'vue'
 import { ZWaveFrameType, LongRangeFrameType } from 'zwave-js'
 import { Protocols, RFRegion } from '@zwave-js/core'
 
-import { mapState, mapActions } from 'pinia'
+import { mapState } from 'pinia'
 import useBaseStore from '../stores/base.js'
 import { inboundEvents as socketActions } from '@server/lib/SocketEvents'
 import InstancesMixin from '../mixins/InstancesMixin.js'
@@ -681,7 +681,6 @@ export default {
 		}
 	},
 	methods: {
-		...mapActions(useBaseStore, ['showSnackbar']),
 		openInWindow,
 		humanFriendlyNumber,
 		initializeViewState() {
