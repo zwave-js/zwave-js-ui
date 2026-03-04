@@ -336,22 +336,24 @@ export default {
 				for (const r of nodeResults) {
 					const node = this.nodes.find((n) => n.id === r.nodeId)
 					const name = node?._name || `Node ${r.nodeId}`
-					let icon, errors
+					let icon, failedParams
 					if (r.failed === 0) {
 						icon = '✅'
-						errors = ''
-					} else if (r.success === 0) {
+						failedParams = ''
+					} else if (r.reason) {
+						// critical failure (e.g. node is dead)
 						icon = '❌'
-						errors = (r.errors || []).join('<br>')
+						failedParams = r.reason
 					} else {
+						// partial failure — show which parameters failed
 						icon = '⚠️'
-						errors = (r.errors || []).join('<br>')
+						failedParams = (r.errors || []).join('<br>')
 					}
 					html +=
 						`<tr>` +
 						`<td style="padding:4px 8px">${name}</td>` +
 						`<td style="padding:4px 8px;text-align:center">${icon}</td>` +
-						`<td style="padding:4px 8px">${errors}</td>` +
+						`<td style="padding:4px 8px">${failedParams}</td>` +
 						`</tr>`
 				}
 				html += '</table>'

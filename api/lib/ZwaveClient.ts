@@ -3195,7 +3195,12 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		templateId: string,
 		nodeId: number,
 		force = false,
-	): Promise<{ success: number; failed: number; errors: string[] }> {
+	): Promise<{
+		success: number
+		failed: number
+		errors: string[]
+		reason?: string
+	}> {
 		const template = this._configTemplates.find((t) => t.id === templateId)
 
 		if (!template) {
@@ -3223,7 +3228,12 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			)
 		}
 
-		const results = { success: 0, failed: 0, errors: [] as string[] }
+		const results: {
+			success: number
+			failed: number
+			errors: string[]
+			reason?: string
+		} = { success: 0, failed: 0, errors: [] }
 
 		for (const tv of template.values) {
 			try {
@@ -3255,10 +3265,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 							results.failed
 						if (remaining > 0) {
 							results.failed += remaining
-							results.errors.push(
-								`Aborted: ${remaining} remaining parameter(s) skipped, node is dead`,
-							)
 						}
+						results.reason = 'Node is dead'
 						break
 					}
 				} else {
