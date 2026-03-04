@@ -325,19 +325,16 @@ export default {
 			const hasFailed = nodeResults.some((r) => r.failed > 0)
 
 			if (!hasFailed) {
-				const totalSuccess = nodeResults.reduce(
-					(sum, r) => sum + r.success,
-					0,
-				)
-				this.showSnackbar(
-					`Template applied successfully (${totalSuccess} value(s) across ${nodeResults.length} node(s))`,
-					'success',
-				)
+				this.showSnackbar('Template applied successfully', 'success')
 			} else {
 				let html = ''
 				for (const r of nodeResults) {
-					const icon = r.failed === 0 ? '✅' : '⚠️'
-					html += `<p>${icon} <strong>Node ${r.nodeId}:</strong> ${r.success} OK, ${r.failed} failed</p>`
+					const icon = r.success === 0 ? '❌' : '⚠️'
+					if (r.success === 0) {
+						html += `<p>${icon} <strong>Node ${r.nodeId}:</strong> Failed</p>`
+					} else {
+						html += `<p>${icon} <strong>Node ${r.nodeId}:</strong> Partially applied</p>`
+					}
 					if (r.errors?.length > 0) {
 						html += '<ul>'
 						for (const e of r.errors) {
