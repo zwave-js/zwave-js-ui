@@ -397,12 +397,7 @@
 						icon="close"
 						@click="showFullscreen = false"
 					/>
-					<bg-rssi-chart
-						v-if="showFullscreen"
-						class="mt-3"
-						:node="node"
-						fill-size
-					/>
+					<bg-rssi-chart class="mt-3" :node="node" fill-size />
 				</v-card-text>
 			</v-card>
 		</v-dialog>

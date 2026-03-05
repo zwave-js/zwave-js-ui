@@ -297,14 +297,14 @@ export default {
 				const container = this.getContainer()
 				const maxHeight = window.innerHeight - 200
 				const width = container.offsetWidth - 100
-				let height = container.offsetHeight - 100
+				// When fillSize=true the container height equals the chart
+				// height, causing an oscillating cascade that shrinks the
+				// chart until it disappears. Use viewport height directly.
+				let height = this.fillSize
+					? maxHeight
+					: container.offsetHeight - 100
 
-				if (width <= 0 || height <= 0) {
-					this.isLoading = false
-					return
-				}
-
-				if (height > maxHeight) {
+				if (!this.fillSize && height > maxHeight) {
 					height = maxHeight
 				}
 
@@ -327,6 +327,15 @@ export default {
 			}
 
 			const width = container.offsetWidth
+
+			// Fix a race condition causing the chart to have width=0 after opening it the second time
+			if (width === 0) {
+				this.resizeTimeout = setTimeout(() => {
+					this.resizeTimeout = null
+					if (this.$refs.chart) this.create()
+				}, 50)
+				return
+			}
 
 			const opts = {
 				title: 'Background RSSI',
