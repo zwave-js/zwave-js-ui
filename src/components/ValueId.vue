@@ -436,20 +436,24 @@ export default {
 				return false
 			}
 
+			// Coerce value to number (handles string inputs from v-combobox)
+			const numValue = Number(this.modelValue.newValue)
+			if (Number.isNaN(numValue)) {
+				return true // Invalid number is out of range
+			}
+
 			// If allowed values are defined, validate against them
 			if (
 				this.modelValue.allowed &&
 				Array.isArray(this.modelValue.allowed)
 			) {
-				return !this.isValueAllowed(this.modelValue.newValue)
+				return !this.isValueAllowed(numValue)
 			}
 
 			// Otherwise, validate against min/max
 			const min = this.modelValue.min ?? -Infinity
 			const max = this.modelValue.max ?? Infinity
-			return (
-				this.modelValue.newValue < min || this.modelValue.newValue > max
-			)
+			return numValue < min || numValue > max
 		},
 		numberErrorMessage() {
 			if (!this.numberOutOfRange) {
@@ -613,7 +617,7 @@ export default {
 		},
 		/**
 		 * Validates if a number value is within the allowed values/ranges
-		 * @param {number} value - The value to validate
+		 * @param {number|string} value - The value to validate (will be coerced to number)
 		 * @returns {boolean} True if the value is allowed, false otherwise
 		 */
 		isValueAllowed(value) {
@@ -625,19 +629,25 @@ export default {
 				return true
 			}
 
+			// Coerce value to number (handles string inputs from v-combobox)
+			const numValue = Number(value)
+			if (Number.isNaN(numValue)) {
+				return false
+			}
+
 			// Check if value matches any of the allowed values/ranges
 			for (const allowed of this.modelValue.allowed) {
 				if ('value' in allowed) {
 					// Single value
-					if (value === allowed.value) {
+					if (numValue === allowed.value) {
 						return true
 					}
 				} else if ('from' in allowed && 'to' in allowed) {
 					// Range
 					const step = allowed.step || 1
-					if (value >= allowed.from && value <= allowed.to) {
+					if (numValue >= allowed.from && numValue <= allowed.to) {
 						// Check if value aligns with step
-						const offset = (value - allowed.from) % step
+						const offset = (numValue - allowed.from) % step
 						if (offset === 0) {
 							return true
 						}
