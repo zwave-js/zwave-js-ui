@@ -298,6 +298,12 @@ export default {
 				const maxHeight = window.innerHeight - 200
 				const width = container.offsetWidth - 100
 				let height = container.offsetHeight - 100
+
+				if (width <= 0 || height <= 0) {
+					this.isLoading = false
+					return
+				}
+
 				if (height > maxHeight) {
 					height = maxHeight
 				}
