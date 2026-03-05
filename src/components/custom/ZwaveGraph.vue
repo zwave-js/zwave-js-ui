@@ -611,15 +611,27 @@ export default {
 
 				// update priorityEdges for removed edges that were priorities
 				for (const eId of edgesToRemove) {
-					const edgeId = this.getEdgeId(edges.get(eId))
-					if (allOtherEdges[edgeId]) {
-						this.priorityEdges[edgeId] = allOtherEdges[
-							edgeId
-						].reduce((prev, curr) =>
-							prev.protocolDataRate > curr.protocolDataRate
-								? prev
-								: curr,
-						)
+					const removedEdge = edges.get(eId)
+					if (!removedEdge) continue
+					const edgeId = this.getEdgeId(removedEdge)
+
+					// only recompute if the removed edge was the current priority
+					if (
+						this.priorityEdges[edgeId] &&
+						this.priorityEdges[edgeId].id === eId
+					) {
+						const candidates = allOtherEdges[edgeId]
+						if (candidates && candidates.length > 0) {
+							this.priorityEdges[edgeId] = candidates.reduce(
+								(prev, curr) =>
+									prev.protocolDataRate >
+									curr.protocolDataRate
+										? prev
+										: curr,
+							)
+						} else {
+							delete this.priorityEdges[edgeId]
+						}
 					}
 				}
 
@@ -628,10 +640,16 @@ export default {
 				edges.add(edgesToAdd)
 				nodes.update(result.node)
 
-				// node has no routes yet, request them
+				// node has no routes yet, request them (once per node)
 				const hadNoEdges = Object.keys(oldEdgesByKey).length === 0
 				if (hadNoEdges && result.edges.length === 0) {
-					this.$emit('node-added', node)
+					if (!this._routesFetchedFor) {
+						this._routesFetchedFor = new Set()
+					}
+					if (!this._routesFetchedFor.has(node.id)) {
+						this._routesFetchedFor.add(node.id)
+						this.$emit('node-added', node)
+					}
 				}
 
 				const params = {
@@ -681,6 +699,10 @@ export default {
 			edges.add(result.edges)
 
 			// notify parent to fetch routes for this node so edges can be rendered
+			if (!this._routesFetchedFor) {
+				this._routesFetchedFor = new Set()
+			}
+			this._routesFetchedFor.add(node.id)
 			this.$emit('node-added', node)
 			this.stabilizeGraph()
 		},
@@ -976,10 +998,17 @@ export default {
 				} else {
 					this.$emit('node-click', null)
 				}
-				// always sync graph visibility — the 'select' event
-				// doesn't fire when the selection hasn't changed
-				// (e.g. clicking an already-selected node after drag)
-				this.handleSelectNode(params)
+				// sync graph visibility when the 'select' event
+				// doesn't fire (e.g. clicking an already-selected
+				// node after drag). Skip when selection changed,
+				// since the 'select' event handler already covers it.
+				const clickedNodes = params.nodes || []
+				const selectionUnchanged =
+					clickedNodes.length === this.selectedNodes.length &&
+					clickedNodes.every((id, i) => id === this.selectedNodes[i])
+				if (selectionUnchanged) {
+					this.handleSelectNode(params, true)
+				}
 			}
 		},
 		parseRouteStats(
