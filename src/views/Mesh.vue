@@ -82,7 +82,7 @@ export default {
 		}
 	},
 	methods: {
-		...mapActions(useBaseStore, ['showSnackbar', 'setNeighbors']),
+		...mapActions(useBaseStore, ['setNeighbors']),
 		setInitialPosition(element) {
 			const windowHeight = window.innerHeight
 			const windowWidth = window.innerWidth

@@ -235,9 +235,6 @@
 
 <script>
 import { copy } from '@/lib/utils'
-import { mapActions } from 'pinia'
-
-import useBaseStore from '../../stores/base.js'
 import InstancesMixin from '../../mixins/InstancesMixin.js'
 
 export default {
@@ -284,7 +281,6 @@ export default {
 		}
 	},
 	methods: {
-		...mapActions(useBaseStore, ['showSnackbar']),
 		exportResults() {
 			this.app.exportConfiguration(
 				this.results,

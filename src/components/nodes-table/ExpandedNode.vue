@@ -714,6 +714,18 @@ export default {
 					v.newValue = customValue
 				}
 
+				if (v.destructive) {
+					const confirmed = await this.app.confirm(
+						'Warning',
+						'This is a destructive operation. The device may require manual intervention to recover. Are you sure you want to proceed?',
+						'alert',
+					)
+					if (!confirmed) {
+						v.toUpdate = false
+						return
+					}
+				}
+
 				// update the value in store
 				this.setValue(v)
 
@@ -779,6 +791,8 @@ export default {
 		nodeAction(action, args = {}) {
 			if (action === 'exportNode') {
 				this.exportNode()
+			} else if (action === 'applyTemplate') {
+				this.applyTemplate()
 			} else if (args.mqtt) {
 				this.sendMqttAction(action, args.confirm)
 			} else {
