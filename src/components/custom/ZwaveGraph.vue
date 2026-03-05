@@ -125,37 +125,7 @@
 								label="Show priority routes"
 								:disabled="selectedNodes.length === 0"
 							></v-checkbox>
-
-							<v-badge color="error" v-model="shouldReload">
-								<v-btn color="primary" @click="paintGraph">
-									Reload graph
-								</v-btn>
-							</v-badge>
-
-							<v-btn
-								class="ml-3"
-								:color="liveUpdate ? 'error' : 'success'"
-								@click="toggleLive()"
-							>
-								Live
-								<v-icon>{{
-									liveUpdate ? 'pause' : 'play_arrow'
-								}}</v-icon>
-							</v-btn>
 						</v-col>
-
-						<!-- <v-col>
-							<v-list-subheader>Grouping</v-list-subheader>
-
-							<v-radio-group v-model="grouping">
-								<v-radio
-									v-for="(item, i) in groupingLegend"
-									:key="i"
-									:label="item.text"
-									:value="item.value"
-								></v-radio>
-							</v-radio-group>
-						</v-col> -->
 					</v-row>
 				</v-expansion-panel-text>
 			</v-expansion-panel>
@@ -352,13 +322,10 @@ export default {
 			menuY: 0,
 			showMenu: false,
 			hoverNode: null,
-			liveUpdate: false,
-			shouldReload: false,
 			locationsFilter: [],
 			invertLocationsFilter: false,
 			nodesFilter: [],
 			invertNodesFilter: false,
-			// grouping: 'ungrouped',
 			refreshTimeout: null,
 			updateTimeout: null,
 			loading: false,
@@ -445,22 +412,9 @@ export default {
 					text: 'Unknown',
 				},
 			],
-			// groupingLegend: [
-			// 	{
-			// 		text: 'Z-Wave Locations',
-			// 		value: 'z-wave',
-			// 	},
-			// 	{
-			// 		text: 'Ungrouped',
-			// 		value: 'ungrouped',
-			// 	},
-			// ],
 		}
 	},
 	watch: {
-		grouping() {
-			this.debounceRefresh()
-		},
 		filteredNodes(val, oldVal) {
 			if (!arraysEqual(val, oldVal)) {
 				this.selectedNodes = val.map((n) => n.id)
@@ -517,25 +471,27 @@ export default {
 	mounted() {
 		this.paintGraph()
 
-		this.unsubscribeUpdate = useBaseStore().$onAction(({ name, args }) => {
-			if (name === 'updateMeshGraph') {
-				if (this.liveUpdate) {
+		this.unsubscribeUpdate = useBaseStore().$onAction(
+			({ name, args, after }) => {
+				if (name === 'updateMeshGraph') {
 					if (this.updateTimeout) {
 						clearTimeout(this.updateTimeout)
 					}
-
 					this.updateTimeout = setTimeout(
 						this.onNodeUpdate.bind(this, args[0]),
 						1000,
 					)
-				} else {
-					this.shouldReload = true
+				} else if (name === 'initNodes') {
+					this.debounceRefresh()
+				} else if (name === 'updateNode') {
+					after(() => {
+						this.onNodeUpdatedOrAdded(args[0])
+					})
+				} else if (name === 'removeNode') {
+					this.onNodeRemoved(args[0])
 				}
-			} else if (name === 'initNodes') {
-				// trick to prevent empty network when refreshing page
-				this.debounceRefresh()
-			}
-		})
+			},
+		)
 	},
 	beforeUnmount() {
 		if (this.refreshTimeout) {
@@ -565,16 +521,6 @@ export default {
 				this.containerHeight = maxHeight
 			}
 		},
-		toggleLive() {
-			this.liveUpdate = !this.liveUpdate
-
-			// if should reload is true it means we have some
-			// updates that were not applied, so we need to firstly
-			// reload the graph and then start the live update
-			if (this.liveUpdate && this.shouldReload) {
-				this.paintGraph()
-			}
-		},
 		destroyNetwork() {
 			if (this.network) {
 				this.network.destroy()
@@ -599,56 +545,182 @@ export default {
 			if (this.network && !this.loading) {
 				const { nodes, edges } = this.network.body.data
 
-				const edgesToRemove = []
-				const allEdges = {} // edgeId => [edge, edge, ...]
-				const removedIds = [] // removed edgeIds
+				// collect old edges for this node, keyed by signature
+				const oldEdgesByKey = {} // key => [edge, ...]
+				const allOtherEdges = {} // edgeId => [edge, ...]
 
 				edges.forEach((e) => {
-					const edgeId = this.getEdgeId(e)
-
 					if (e.routeOf === node.id) {
-						edgesToRemove.push(e.id)
-						if (this.priorityEdges[edgeId]?.id === e.id) {
-							delete this.priorityEdges[edgeId]
-							// we deleted the edge with the higher protocolDataRate
-							// keep track of it so we can update this later
-							removedIds.push(edgeId)
+						const key = `${e.from}-${e.to}-${e.routeKind}`
+						if (!oldEdgesByKey[key]) {
+							oldEdgesByKey[key] = []
 						}
-					} else if (allEdges[edgeId]) {
-						allEdges[edgeId].push(e)
+						oldEdgesByKey[key].push(e)
 					} else {
-						allEdges[edgeId] = [e]
+						const edgeId = this.getEdgeId(e)
+						if (allOtherEdges[edgeId]) {
+							allOtherEdges[edgeId].push(e)
+						} else {
+							allOtherEdges[edgeId] = [e]
+						}
 					}
 				})
 
-				// update the edge with hight protocolDataRate to prevent
-				// having unconneted nodes
-				for (const edgeId of removedIds) {
-					const edges = allEdges[edgeId]
-					if (edges) {
-						// set the edge with hight protocolDataRate
-						this.priorityEdges[edgeId] = edges.reduce(
-							(prev, curr) =>
-								prev.protocolDataRate > curr.protocolDataRate
-									? prev
-									: curr,
+				// clear priorityEdges for this node's old edges
+				for (const key in oldEdgesByKey) {
+					for (const e of oldEdgesByKey[key]) {
+						const edgeId = this.getEdgeId(e)
+						if (this.priorityEdges[edgeId]?.id === e.id) {
+							delete this.priorityEdges[edgeId]
+						}
+					}
+				}
+
+				// parse new edges
+				const result = this.parseNode(node)
+
+				// match new edges to old ones by signature, reuse IDs
+				const edgesToUpdate = []
+				const edgesToAdd = []
+				const usedOldIds = new Set()
+
+				for (const newEdge of result.edges) {
+					const key = `${newEdge.from}-${newEdge.to}-${newEdge.routeKind}`
+					const oldPool = oldEdgesByKey[key]
+					const oldEdge =
+						oldPool && oldPool.find((e) => !usedOldIds.has(e.id))
+
+					if (oldEdge) {
+						usedOldIds.add(oldEdge.id)
+						newEdge.id = oldEdge.id
+						edgesToUpdate.push(newEdge)
+					} else {
+						edgesToAdd.push(newEdge)
+					}
+				}
+
+				// remove unmatched old edges
+				const edgesToRemove = []
+				for (const key in oldEdgesByKey) {
+					for (const e of oldEdgesByKey[key]) {
+						if (!usedOldIds.has(e.id)) {
+							edgesToRemove.push(e.id)
+						}
+					}
+				}
+
+				// update priorityEdges for removed edges that were priorities
+				for (const eId of edgesToRemove) {
+					const edgeId = this.getEdgeId(edges.get(eId))
+					if (allOtherEdges[edgeId]) {
+						this.priorityEdges[edgeId] = allOtherEdges[
+							edgeId
+						].reduce((prev, curr) =>
+							prev.protocolDataRate > curr.protocolDataRate
+								? prev
+								: curr,
 						)
 					}
 				}
 
-				nodes.remove(node.id)
 				edges.remove(edgesToRemove)
-				const result = this.parseNode(node)
-				nodes.add(result.node)
-				edges.add(result.edges)
+				edges.update(edgesToUpdate)
+				edges.add(edgesToAdd)
+				nodes.update(result.node)
+
+				// node has no routes yet, request them
+				const hadNoEdges = Object.keys(oldEdgesByKey).length === 0
+				if (hadNoEdges && result.edges.length === 0) {
+					this.$emit('node-added', node)
+				}
 
 				const params = {
 					nodes: this.selectedNodes,
 				}
 
 				this.network.setSelection(params)
+				this.handleSelectNode(params, true)
+			}
+		},
+		stabilizeGraph() {
+			if (!this.network) return
+			this.network.setOptions({
+				physics: {
+					enabled: true,
+					stabilization: { fit: false },
+				},
+			})
+			this.network.once('stabilizationIterationsDone', () => {
+				this.network.setOptions({ physics: false })
+			})
+			this.network.stabilize()
+		},
+		onNodeUpdatedOrAdded(n) {
+			if (!this.network || this.loading) return
+
+			const { nodes, edges } = this.network.body.data
+
+			const node = useBaseStore().getNode(n.id)
+			if (!node) return
+
+			if (nodes.get(n.id)) {
+				// node already in graph — update its visual properties
+				// save/restore priorityEdges because parseNode calls
+				// parseRouteStats which overwrites entries with edge
+				// objects that are never added to the DataSet
+				const saved = { ...this.priorityEdges }
+				const result = this.parseNode(node)
+				this.priorityEdges = saved
+				nodes.update(result.node)
+				return
+			}
+
+			// new node — add it with edges and stabilize
+			const result = this.parseNode(node)
+			nodes.add(result.node)
+			edges.add(result.edges)
+
+			// notify parent to fetch routes for this node so edges can be rendered
+			this.$emit('node-added', node)
+			this.stabilizeGraph()
+		},
+		onNodeRemoved(n) {
+			if (!this.network || this.loading) return
+
+			const { nodes, edges } = this.network.body.data
+			if (!nodes.get(n.id)) return
+
+			const edgesToRemove = []
+			edges.forEach((e) => {
+				if (e.routeOf === n.id || e.from === n.id || e.to === n.id) {
+					edgesToRemove.push(e.id)
+				}
+			})
+
+			for (const eId of edgesToRemove) {
+				const edge = edges.get(eId)
+				if (edge) {
+					const edgeId = this.getEdgeId(edge)
+					if (this.priorityEdges[edgeId]?.id === eId) {
+						delete this.priorityEdges[edgeId]
+					}
+				}
+			}
+
+			edges.remove(edgesToRemove)
+			nodes.remove(n.id)
+
+			// deselect removed node and un-hide others
+			const idx = this.selectedNodes.indexOf(n.id)
+			if (idx !== -1) {
+				this.selectedNodes.splice(idx, 1)
+				const params = { nodes: this.selectedNodes }
+				this.network.setSelection(params)
 				this.handleSelectNode(params)
 			}
+
+			this.$emit('node-removed', n)
+			this.stabilizeGraph()
 		},
 		getEdgeId(edge) {
 			return `${edge.from}-${edge.to}`
@@ -665,6 +737,12 @@ export default {
 					return '#3F51B5'
 				default:
 					return '#666666'
+			}
+		},
+		clearSelection() {
+			if (this.network && !this.loading) {
+				this.network.unselectAll()
+				this.handleSelectNode({ nodes: [] })
 			}
 		},
 		setSelection() {
@@ -688,8 +766,6 @@ export default {
 			}
 		},
 		paintGraph() {
-			this.shouldReload = false
-
 			this.destroyNetwork()
 
 			this.priorityEdges = {}
@@ -732,7 +808,7 @@ export default {
 					// shadow: true,
 				},
 				physics: {
-					enabled: true, // enabling physics reduces performance a lot
+					enabled: true,
 					stabilization: {
 						enabled: true,
 						iterations: 50,
@@ -754,6 +830,7 @@ export default {
 			// https://visjs.github.io/vis-network/docs/network/#Events
 			this.network.once('stabilizationIterationsDone', () => {
 				this.loading = false
+				this.network.setOptions({ physics: false })
 				this.setSelection()
 			})
 
@@ -766,26 +843,8 @@ export default {
 			this.network.on('dragEnd', this.handleDragEnd.bind(this))
 
 			this.network.on('select', this.handleSelectNode.bind(this))
-
-			// this.network.on('hoverEdge', function (e) {
-			// 	this.body.data.edges.update({
-			// 		id: e.edge,
-			// 		font: {
-			// 			size: 12,
-			// 		},
-			// 	})
-			// })
-
-			// this.network.on('blurEdge', function (e) {
-			// 	this.body.data.edges.update({
-			// 		id: e.edge,
-			// 		font: {
-			// 			size: 0,
-			// 		},
-			// 	})
-			// })
 		},
-		handleSelectNode(params) {
+		handleSelectNode(params, skipFit = false) {
 			let { nodes: selectedNodes } = params
 
 			const { edges, nodes } = this.network.body.data
@@ -853,6 +912,7 @@ export default {
 			nodes.forEach((n) => {
 				const shouldBeHidden =
 					selectedNodes.length > 0 &&
+					!n.isControllerNode &&
 					!selectedNodes.includes(n.id) &&
 					!repeaters.includes(n.id)
 
@@ -867,13 +927,17 @@ export default {
 
 			nodes.update(nodesToUpdate)
 
-			this.network.fit()
+			if (!skipFit) {
+				this.network.fit()
+			}
 		},
 		handleDragStart() {
 			this.dragging = true
+			this.network.setOptions({ physics: true })
 		},
 		handleDragEnd() {
 			this.dragging = false
+			this.stabilizeGraph()
 		},
 		handleHoverNode(params) {
 			// show menu
@@ -1132,7 +1196,6 @@ export default {
 				entity.shape = 'hexagon'
 			} else {
 				entity.shape = 'square'
-				// entity.ctxRenderer = this.renderBattery
 			}
 
 			if (node.failed) {
@@ -1149,7 +1212,6 @@ export default {
 
 			if (hubNode === id) {
 				entity.label = 'Controller'
-				// entity.fixed = true
 			} else {
 				// parse application route
 				this.parseRouteStats(
