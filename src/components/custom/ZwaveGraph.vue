@@ -310,6 +310,7 @@ export default {
 	},
 	network: null, // do not make this reactive, see https://github.com/visjs/vis-network/issues/173#issuecomment-541435420
 	unsubscribeUpdate: null, // pinia update action unsubscribe function
+	_routesFetchedFor: new Set(), // de-duplicates route fetch requests per node
 	data() {
 		return {
 			openPanel: -1,
@@ -642,14 +643,13 @@ export default {
 
 				// node has no routes yet, request them (once per node)
 				const hadNoEdges = Object.keys(oldEdgesByKey).length === 0
-				if (hadNoEdges && result.edges.length === 0) {
-					if (!this._routesFetchedFor) {
-						this._routesFetchedFor = new Set()
-					}
-					if (!this._routesFetchedFor.has(node.id)) {
-						this._routesFetchedFor.add(node.id)
-						this.$emit('node-added', node)
-					}
+				if (
+					hadNoEdges &&
+					result.edges.length === 0 &&
+					!this._routesFetchedFor.has(node.id)
+				) {
+					this._routesFetchedFor.add(node.id)
+					this.$emit('node-added', node)
 				}
 
 				const params = {
@@ -699,9 +699,6 @@ export default {
 			edges.add(result.edges)
 
 			// notify parent to fetch routes for this node so edges can be rendered
-			if (!this._routesFetchedFor) {
-				this._routesFetchedFor = new Set()
-			}
 			this._routesFetchedFor.add(node.id)
 			this.$emit('node-added', node)
 			this.stabilizeGraph()
@@ -791,6 +788,7 @@ export default {
 			this.destroyNetwork()
 
 			this.priorityEdges = {}
+			this._routesFetchedFor = new Set()
 
 			this.loading = true
 
@@ -1003,9 +1001,10 @@ export default {
 				// node after drag). Skip when selection changed,
 				// since the 'select' event handler already covers it.
 				const clickedNodes = params.nodes || []
+				const selectedSet = new Set(this.selectedNodes)
 				const selectionUnchanged =
-					clickedNodes.length === this.selectedNodes.length &&
-					clickedNodes.every((id, i) => id === this.selectedNodes[i])
+					clickedNodes.length === selectedSet.size &&
+					clickedNodes.every((id) => selectedSet.has(id))
 				if (selectionUnchanged) {
 					this.handleSelectNode(params, true)
 				}
