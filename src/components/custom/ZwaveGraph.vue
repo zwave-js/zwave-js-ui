@@ -969,8 +969,6 @@ export default {
 		handleClick(params) {
 			if (params.event) {
 				params.event.preventDefault()
-				// https://visjs.github.io/vis-network/docs/network/#events
-				// Add interactivity
 				const nodeId = params.nodes[0]
 				if (nodeId) {
 					const node = this.allNodes.find((n) => n.id === nodeId)
@@ -978,6 +976,10 @@ export default {
 				} else {
 					this.$emit('node-click', null)
 				}
+				// always sync graph visibility — the 'select' event
+				// doesn't fire when the selection hasn't changed
+				// (e.g. clicking an already-selected node after drag)
+				this.handleSelectNode(params)
 			}
 		},
 		parseRouteStats(

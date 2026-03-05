@@ -192,9 +192,16 @@ export default {
 			])
 		},
 		async nodeClick(node) {
-			this.selectedNode = this.selectedNode === node ? null : node
-			this.showProperties = !!this.selectedNode
-			if (this.$vuetify.display.mdAndUp && this.showProperties) {
+			if (!node) {
+				// clicked empty space — return to overview
+				this.selectedNode = null
+				this.showProperties = false
+				return
+			}
+
+			this.selectedNode = node
+			this.showProperties = true
+			if (this.$vuetify.display.mdAndUp) {
 				await nextTick()
 				this.makeDivDraggable()
 			}
