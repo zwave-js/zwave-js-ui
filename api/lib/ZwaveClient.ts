@@ -1,4 +1,5 @@
 import type {
+	AllowedValue,
 	ConfigurationMetadata,
 	Firmware,
 	Route,
@@ -389,6 +390,7 @@ export type ZUIValueId = {
 	min?: number
 	max?: number
 	step?: number
+	allowed?: readonly AllowedValue[]
 	unit?: string
 	minLength?: number
 	maxLength?: number
@@ -7388,6 +7390,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			valueId.min = (zwaveValueMeta as ValueMetadataNumeric).min
 			valueId.max = (zwaveValueMeta as ValueMetadataNumeric).max
 			valueId.step = (zwaveValueMeta as ValueMetadataNumeric).steps
+			valueId.allowed = (zwaveValueMeta as ValueMetadataNumeric).allowed
 			valueId.unit = (zwaveValueMeta as ValueMetadataNumeric).unit
 		} else if (zwaveValueMeta.type === 'string') {
 			valueId.minLength = (
