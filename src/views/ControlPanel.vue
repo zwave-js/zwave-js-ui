@@ -421,10 +421,7 @@ export default {
 		}
 	},
 	methods: {
-		...mapActions(useBaseStore, [
-			'setRebuildRoutesProgress',
-			'showSnackbar',
-		]),
+		...mapActions(useBaseStore, ['setRebuildRoutesProgress']),
 		jsonToList,
 		showNodesManager() {
 			this.app.showNodesManager()

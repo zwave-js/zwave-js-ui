@@ -683,11 +683,7 @@ export default {
 		this.autoScroll = pref.autoScroll
 	},
 	methods: {
-		...mapActions(useBaseStore, [
-			'showSnackbar',
-			'setValue',
-			'getDateTimeString',
-		]),
+		...mapActions(useBaseStore, ['setValue', 'getDateTimeString']),
 		savePreferences() {
 			useBaseStore().savePreferences({
 				eventsList: {

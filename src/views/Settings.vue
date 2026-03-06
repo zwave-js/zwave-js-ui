@@ -2625,7 +2625,6 @@ export default {
 			'setBrowserTitle',
 			'initSettings',
 			'init',
-			'showSnackbar',
 		]),
 		copyKeysZniffer() {
 			this.newZniffer.securityKeys = copy(this.newZwave.securityKeys)
