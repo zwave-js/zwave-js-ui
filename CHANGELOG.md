@@ -1,5 +1,21 @@
 # Changelog
 
+## [11.14.0](https://github.com/zwave-js/zwave-js-ui/compare/v11.13.0...v11.14.0) (2026-03-06)
+
+### ✨ Features
+
+* make the network graph truly dynamic ([#4573](https://github.com/zwave-js/zwave-js-ui/issues/4573)) ([8685a5a](https://github.com/zwave-js/zwave-js-ui/commit/8685a5ad28b4e487a65785b5c3cd6e433f313f8f))
+* **ui:** validate number inputs against allowed values from config ([#4566](https://github.com/zwave-js/zwave-js-ui/issues/4566)) ([0c365d7](https://github.com/zwave-js/zwave-js-ui/commit/0c365d7c96830ecd1c5ccdb4adec4256f93767f7)), closes [#4561](https://github.com/zwave-js/zwave-js-ui/issues/4561) [zwave-js/zwave-js-ui#4288](https://github.com/zwave-js/zwave-js-ui/issues/4288) [zwave-js/zwave-js-ui#4323](https://github.com/zwave-js/zwave-js-ui/issues/4323) [zwave-js/zwave-js-ui#4561](https://github.com/zwave-js/zwave-js-ui/issues/4561)
+
+### 🐛 Bug Fixes
+
+* broken ui snackbar ([99dd3c2](https://github.com/zwave-js/zwave-js-ui/commit/99dd3c292794bb69cd38c384680950cda7c43637)), closes [#4574](https://github.com/zwave-js/zwave-js-ui/issues/4574)
+* **ui:** fix background RSSI chart showing blank on second open ([#4576](https://github.com/zwave-js/zwave-js-ui/issues/4576)) ([82b8e92](https://github.com/zwave-js/zwave-js-ui/commit/82b8e928a2ddedc7b63e6d740d572d273fa49324)), closes [zwave-js/zwave-js-ui#4575](https://github.com/zwave-js/zwave-js-ui/issues/4575)
+
+### 📚 Documentation
+
+* add configuration templates documentation ([#4578](https://github.com/zwave-js/zwave-js-ui/issues/4578)) ([88a3f91](https://github.com/zwave-js/zwave-js-ui/commit/88a3f91875f0da49427f133da654d54469491eba)), closes [#4541](https://github.com/zwave-js/zwave-js-ui/issues/4541)
+
 ## [11.13.0](https://github.com/zwave-js/zwave-js-ui/compare/v11.12.0...v11.13.0) (2026-03-04)
 
 ### ✨ Features
