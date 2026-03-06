@@ -223,6 +223,21 @@ export default {
 					}
 				}
 
+				if (action === 'pingNode') {
+					const nodesToPing =
+						nodes?.length > 0
+							? nodes
+							: nodeId !== undefined
+								? [{ id: nodeId }]
+								: []
+					if (nodesToPing.length > 0) {
+						await Promise.allSettled(
+							nodesToPing.map((node) => this.pingNode(node)),
+						)
+					}
+					return
+				}
+
 				if (nodes?.length > 0) {
 					const requests = nodes.map((node) =>
 						this.app.apiRequest(action, [node.id]),
