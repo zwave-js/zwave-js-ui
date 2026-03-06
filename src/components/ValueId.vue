@@ -552,7 +552,9 @@ export default {
 		},
 		parsedValue: {
 			get: function () {
-				if (typeof this.modelValue.newValue === 'object') {
+				if (this.modelValue.newValue === null) {
+					return null
+				} else if (typeof this.modelValue.newValue === 'object') {
 					return JSON.stringify(this.modelValue.newValue)
 				} else if (
 					this.modelValue.states &&
