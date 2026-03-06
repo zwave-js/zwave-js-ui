@@ -378,6 +378,11 @@ const useBaseStore = defineStore('base', {
 				let errorReceive = false
 				let errorTransmit = false
 
+				if (!node.statistics && data.statistics) {
+					// first statistics for this node, mesh graph needs update
+					emitMeshUpdate = true
+				}
+
 				if (node.statistics && data.statistics) {
 					if (node.isControllerNode) {
 						const prev = node.statistics
