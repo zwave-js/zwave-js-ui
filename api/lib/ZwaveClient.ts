@@ -7410,6 +7410,20 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			valueId.allowManualEntry = (
 				zwaveValueMeta as ConfigurationMetadata
 			).allowManualEntry
+			// If allowManualEntry is not explicitly set and the value has
+			// allowed ranges (not just single values), default to allowing
+			// manual entry. This supports the new value format in zwave-js
+			// v15.21.0+ where values like Wake Up Interval have named states
+			// (e.g., "Default", "Disabled") but also allow custom values
+			// within a range.
+			if (
+				valueId.allowManualEntry === undefined &&
+				valueId.allowed?.some(
+					(entry) => 'from' in entry && 'to' in entry,
+				)
+			) {
+				valueId.allowManualEntry = true
+			}
 			valueId.states = []
 			for (const k in (zwaveValueMeta as ValueMetadataNumeric).states) {
 				valueId.states.push({
