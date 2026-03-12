@@ -150,7 +150,7 @@ describe('logger.js', () => {
 			expect(logger2.transports.length).to.be.equal(2)
 			// Change logger configuration:
 			setupAll({
-				logEnabled: false,
+				logEnabled: true,
 				logLevel: 'error',
 				logToFile: true,
 			})
@@ -161,6 +161,27 @@ describe('logger.js', () => {
 			expect(logger2.module).to.equal('mod2')
 			expect(logger2.level).to.equal('error')
 			expect(logger2.transports.length).to.be.equal(3)
+		})
+		it('should not create file transport when logEnabled is false', () => {
+			logger1 = module('mod3').setup({
+				logEnabled: true,
+				logLevel: 'warn',
+				logToFile: true,
+			})
+			// Test pre-conditions:
+			expect(logger1.module).to.equal('mod3')
+			expect(logger1.level).to.equal('warn')
+			expect(logger1.transports.length).to.be.equal(3)
+			// Change logger configuration:
+			setupAll({
+				logEnabled: false,
+				logLevel: 'error',
+				logToFile: true,
+			})
+			// Test post-conditions: file transport should not be created when logEnabled is false
+			expect(logger1.module).to.equal('mod3')
+			expect(logger1.level).to.equal('error')
+			expect(logger1.transports.length).to.be.equal(2)
 		})
 		it('should not change the logger config of non-zwave-js-ui loggers', () => {
 			logger1 = module('mod1').setup({

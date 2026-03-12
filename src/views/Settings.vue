@@ -164,7 +164,7 @@
 										v-if="newGateway.logEnabled"
 									>
 										<v-switch
-											hint="Store logs in a file. Default: store/zwave-js-ui_%DATE%.log"
+											hint="Store logs in a file. Default: store/log/z-ui_%DATE%.log"
 											persistent-hint
 											label="Log to file"
 											v-model="newGateway.logToFile"
