@@ -131,7 +131,7 @@ export function customTransports(config: LoggerConfig): winston.transport[] {
 
 	transportsList.push(streamTransport)
 
-	if (config.logToFile && config.enabled) {
+	if (config.enabled && config.logToFile) {
 		let fileTransport: winston.transport
 
 		if (process.env.DISABLE_LOG_ROTATION === 'true') {
