@@ -3,7 +3,7 @@
 import { createVuetify } from 'vuetify'
 import 'vuetify/styles'
 import { aliases, md } from 'vuetify/iconsets/md'
-import 'material-design-icons-iconfont/dist/material-design-icons.css' // Ensure you are using css-loader
+import '@/assets/css/material-icons.css'
 
 const inputVariant = 'underlined'
 const defaultColor = 'primary'

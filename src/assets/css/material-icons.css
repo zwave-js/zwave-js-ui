@@ -1,0 +1,8 @@
+/* Wrap material-design-icons in a CSS layer so Vuetify component styles
+   (which are unlayered) always take precedence regardless of source order.
+   This prevents the .material-icons class from overriding Vuetify's icon
+   sizing (v-icon--size-*) and layout (display: inline-flex) in production
+   builds where CSS chunk ordering may differ from dev mode.
+   See: https://github.com/vitejs/vite/issues/21826 */
+@import 'material-design-icons-iconfont/dist/material-design-icons.css'
+	layer(icon-fonts);
