@@ -80,6 +80,8 @@ export default {
 
 .last-active-text {
 	white-space: nowrap;
-	font-size: 0.65rem;
+	font-size: 0.65rem !important;
+	text-overflow: ellipsis;
+	overflow: hidden;
 }
 </style>
