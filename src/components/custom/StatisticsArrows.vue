@@ -12,7 +12,7 @@
 					:activeColor="node.errorReceive ? 'error' : 'success'"
 					:active="now - node.lastReceive < 200"
 				/>
-				<div class="text-caption">
+				<div class="text-caption last-active-text">
 					<i
 						>{{
 							node.lastActive
@@ -76,5 +76,10 @@ export default {
 <style scoped>
 .center-content {
 	text-align: center;
+}
+
+.last-active-text {
+	white-space: nowrap;
+	font-size: 0.65rem;
 }
 </style>
