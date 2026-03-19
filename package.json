@@ -107,13 +107,13 @@
     "mqtt-jsonl-store": "^0.3.1",
     "multer": "^2.0.2",
     "native-url": "^0.3.4",
-    "semver": "^7.6.2",
     "nprogress": "^0.2.0",
     "patch-package": "^8.0.1",
     "pinia": "^3.0.4",
     "prismjs": "^1.29.0",
     "qr-scanner": "^1.4.2",
     "selfsigned": "^2.4.1",
+    "semver": "^7.6.2",
     "session-file-store": "^1.5.0",
     "socket.io": "^4.7.5",
     "socket.io-client": "^4.7.5",
@@ -128,7 +128,7 @@
     "vuetify-sonner": "^0.4.2",
     "winston": "^3.13.0",
     "winston-daily-rotate-file": "^5.0.0",
-    "zwave-js": "^15.21.1",
+    "zwave-js": "^15.22.0",
     "zxing-wasm": "^1.2.15"
   },
   "devDependencies": {
