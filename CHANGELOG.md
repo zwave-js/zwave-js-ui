@@ -1,5 +1,22 @@
 # Changelog
 
+## [11.15.0](https://github.com/zwave-js/zwave-js-ui/compare/v11.14.0...v11.15.0) (2026-03-20)
+
+### ✨ Features
+
+* bump zwave-js@15.22.0 ([#4596](https://github.com/zwave-js/zwave-js-ui/issues/4596)) ([c026c8f](https://github.com/zwave-js/zwave-js-ui/commit/c026c8febba1b5fae57ed271b40e54dae22fa943))
+
+### 🐛 Bug Fixes
+
+* **api:** enable manual entry for values with allowed ranges ([#4588](https://github.com/zwave-js/zwave-js-ui/issues/4588)) ([677605b](https://github.com/zwave-js/zwave-js-ui/commit/677605b949f63506c6cfef87a782b2c216c74158)), closes [zwave-js/zwave-js-ui#4587](https://github.com/zwave-js/zwave-js-ui/issues/4587)
+* prevent logging to file when log is disabled ([#4590](https://github.com/zwave-js/zwave-js-ui/issues/4590)) ([6335fe7](https://github.com/zwave-js/zwave-js-ui/commit/6335fe754b8fe0c778eb4f6608adfcd77da6d3c7)), closes [zwave-js/zwave-js-ui#4589](https://github.com/zwave-js/zwave-js-ui/issues/4589)
+* **ui:** display 'unknown' for CC values with null value ([#4582](https://github.com/zwave-js/zwave-js-ui/issues/4582)) ([f7f2f27](https://github.com/zwave-js/zwave-js-ui/commit/f7f2f27b6092dc482ec0e65cc722b99651c15775)), closes [zwave-js/zwave-js-ui#4581](https://github.com/zwave-js/zwave-js-ui/issues/4581)
+* **ui:** prevent last seen time from being cut off in compact view ([#4592](https://github.com/zwave-js/zwave-js-ui/issues/4592)) ([d573719](https://github.com/zwave-js/zwave-js-ui/commit/d573719b9c754141ccd48e613e2e9e7040212de2)), closes [zwave-js/zwave-js-ui#4494](https://github.com/zwave-js/zwave-js-ui/issues/4494)
+
+### 📚 Documentation
+
+* add ioBroker link in README.md ([#4584](https://github.com/zwave-js/zwave-js-ui/issues/4584)) ([747be5b](https://github.com/zwave-js/zwave-js-ui/commit/747be5ba0d5a5533a75e81d52ae47c0f9ddfd4a7))
+
 ## [11.14.0](https://github.com/zwave-js/zwave-js-ui/compare/v11.13.0...v11.14.0) (2026-03-06)
 
 ### ✨ Features
