@@ -21,7 +21,7 @@ This is the list of the supported environment variables:
 - `PORT`: The port to listen to for incoming requests. Default is `8091`
 - `HOST`: The host address to bind to. Keep it empty to bind to all interfaces both IPv4 and IPv6
 - `STORE_DIR`: The absolute path to the directory where all files will be stored. Default is `<path to your zui dir>/store`
-- `BACKUPS_DIR`: The absolute path to the directory where all backups files will be stored. Default is `<path to your zui dir>/store/backups`
+- `BACKUPS_DIR`: The absolute path to the directory where all backups files will be stored. Default is `<store_dir>/backups`
 - `ZWAVEJS_EXTERNAL_CONFIG`: It's the path to the folder used by Z-Wave JS to [store config database](https://zwave-js.github.io/node-zwave-js/#/usage/external-config?id=specifying-an-external-config-db-location), by default it is `<store_dir>/.config-db`.
 - `ZWAVEJS_LOGS_DIR`: The folder used to store Z-Wave JS logs if `Log to file` is selected in the Z-Wave settings. By default, this is the `store` folder.
 - `MQTT_NAME`: The name used as client name when connecting to the mqtt server. Overrides `mqtt.name` in `settings.json`
