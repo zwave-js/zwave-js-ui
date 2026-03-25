@@ -1374,7 +1374,10 @@ export default {
 				'znifferState',
 			])
 
+			let authErrors = 0
+
 			this.socket.on('connect', () => {
+				authErrors = 0
 				this.updateStatus('Connected', 'success')
 				log.info('Socket connected')
 
@@ -1404,11 +1407,16 @@ export default {
 			this.socket.on('connect_error', (err) => {
 				log.warn('Socket connect error', err.message)
 				if (err.message === 'Authentication error') {
-					this.socket.disconnect()
-					this.logout()
-				} else {
-					this.updateStatus('Reconnecting', 'warning')
+					authErrors++
+					// Only logout after 3 consecutive auth failures
+					// to avoid logging out on transient issues
+					if (authErrors >= 3) {
+						this.socket.disconnect()
+						this.logout()
+						return
+					}
 				}
+				this.updateStatus('Reconnecting', 'warning')
 			})
 
 			this.socket.on('error', (err) => {
