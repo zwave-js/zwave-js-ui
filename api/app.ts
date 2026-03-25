@@ -548,11 +548,12 @@ if (process.env.TRUST_PROXY) {
 } else {
 	// Auto-detect proxy: if the first request has X-Forwarded-For, enable trust proxy.
 	// This handles HA addon environments where users cannot set env vars.
-	app.use((_req, _res, next) => {
-		if (
-			_req.headers['x-forwarded-for'] &&
-			app.get('trust proxy') === false
-		) {
+	// Note: any client can send X-Forwarded-For, so in security-sensitive
+	// deployments set TRUST_PROXY explicitly instead of relying on auto-detection.
+	let proxyDetected = false
+	app.use((req, _res, next) => {
+		if (!proxyDetected && req.headers['x-forwarded-for']) {
+			proxyDetected = true
 			logger.info(
 				'Detected X-Forwarded-For header, auto-enabling trust proxy. ' +
 					'Set TRUST_PROXY env var for explicit control.',

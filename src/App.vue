@@ -1406,6 +1406,8 @@ export default {
 
 			this.socket.on('connect_error', (err) => {
 				log.warn('Socket connect error', err.message)
+				// Matches the error thrown by server auth middleware
+				// in api/app.ts socketManager.authMiddleware
 				if (err.message === 'Authentication error') {
 					authErrors++
 					// Only logout after 3 consecutive auth failures
