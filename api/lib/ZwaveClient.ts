@@ -2477,7 +2477,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				this.server = new ZwavejsServer(this._driver, {
 					port: this.cfg.serverPort || 3000,
 					host: this.cfg.serverHost,
-					logger: LogManager.module('Z-Wave-Server'),
+					logger: LogManager.wrapLoggerForServer(
+						LogManager.module('Z-Wave-Server'),
+					),
 					enableDNSServiceDiscovery:
 						!this.cfg.serverServiceDiscoveryDisabled,
 				})

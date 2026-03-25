@@ -10,6 +10,7 @@ import { readdir, stat, unlink } from 'node:fs/promises'
 import type { Stats } from 'node:fs'
 import escapeStringRegexp from '@esm2cjs/escape-string-regexp'
 import { PassThrough } from 'node:stream'
+import { ZWaveError, ZWaveErrorCodes } from 'zwave-js'
 
 const { format, transports, addColors } = winston
 const { combine, timestamp, printf, colorize, splat } = format
@@ -211,6 +212,63 @@ const logContainer = new winston.Container()
  */
 export function module(module: string): ModuleLogger {
 	return setupLogger(logContainer, module)
+}
+
+/**
+ * ZWave error codes that should not include stack traces in logs.
+ * These are informational errors where the stack trace adds no value.
+ */
+const suppressStackErrorCodes: Set<ZWaveErrorCodes> = new Set([
+	ZWaveErrorCodes.FWUpdateService_MissingInformation,
+])
+
+/**
+ * Check if an error should have its stack trace suppressed in logs.
+ * @param error The error to check
+ * @returns true if the stack trace should be suppressed
+ */
+function shouldSuppressStack(error: unknown): boolean {
+	return (
+		error instanceof ZWaveError && suppressStackErrorCodes.has(error.code)
+	)
+}
+
+/**
+ * Wrap a logger to suppress stack traces for specific ZWave error codes.
+ * This is useful for external libraries like @zwave-js/server that log
+ * errors with stack traces that don't provide useful information.
+ * @param logger The logger to wrap
+ * @returns A wrapped logger with the same interface
+ */
+export function wrapLoggerForServer(logger: ModuleLogger): ModuleLogger {
+	const wrappedError = (
+		message: string,
+		...args: unknown[]
+	): winston.Logger => {
+		// Check if any of the args is a ZWaveError that should have stack suppressed
+		const processedArgs = args.map((arg) => {
+			if (shouldSuppressStack(arg)) {
+				// Only log the error message, not the stack trace
+				return (arg as ZWaveError).message
+			}
+			return arg
+		})
+
+		return logger.error(message, ...processedArgs)
+	}
+
+	// Create a proxy that intercepts the error method.
+	// Only the 'get' trap is needed because we're only intercepting property access
+	// to replace the 'error' method with our wrapped version. All other logger
+	// operations (info, debug, warn, etc.) pass through unchanged.
+	return new Proxy(logger, {
+		get(target, prop) {
+			if (prop === 'error') {
+				return wrappedError
+			}
+			return target[prop as keyof typeof target]
+		},
+	})
 }
 
 /**

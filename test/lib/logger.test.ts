@@ -9,8 +9,10 @@ import {
 	module,
 	setupAll,
 	stopCleanJob,
+	wrapLoggerForServer,
 } from '../../api/lib/logger.ts'
 import winston from 'winston'
+import { ZWaveError, ZWaveErrorCodes } from 'zwave-js'
 
 function checkConfigDefaults(mod, cfg) {
 	expect(cfg.module).to.equal(mod)
@@ -203,6 +205,81 @@ describe('logger.js', () => {
 			// Test post-conditions:
 			expect(logger1.level).to.equal('error')
 			expect(logger2.level).to.equal('warn')
+		})
+	})
+
+	describe('wrapLoggerForServer()', () => {
+		/**
+		 * Helper function to create a mocked logger that captures error calls
+		 */
+		function createMockedLogger(moduleName: string): {
+			baseLogger: ModuleLogger
+			wrappedLogger: ModuleLogger
+			errorCalls: { message: string; args: unknown[] }[]
+		} {
+			const errorCalls: { message: string; args: unknown[] }[] = []
+			const baseLogger = module(moduleName)
+			const originalError = baseLogger.error.bind(baseLogger)
+			baseLogger.error = ((
+				message: string,
+				...args: unknown[]
+			): winston.Logger => {
+				errorCalls.push({ message, args })
+				return originalError(message, ...args)
+			}) as typeof baseLogger.error
+			const wrappedLogger = wrapLoggerForServer(baseLogger)
+			return { baseLogger, wrappedLogger, errorCalls }
+		}
+
+		it('should pass through non-ZWaveError errors unchanged', () => {
+			const { wrappedLogger, errorCalls } =
+				createMockedLogger('test-server-1')
+
+			const regularError = new Error('Regular error')
+			wrappedLogger.error('Test message', regularError)
+			expect(errorCalls).to.have.length(1)
+			expect(errorCalls[0].args[0]).to.equal(regularError)
+		})
+
+		it('should pass through ZWaveError with non-suppressed code unchanged', () => {
+			const { wrappedLogger, errorCalls } =
+				createMockedLogger('test-server-2')
+
+			const zwaveError = new ZWaveError(
+				'Driver failed',
+				ZWaveErrorCodes.Driver_Failed,
+			)
+			wrappedLogger.error('Test message', zwaveError)
+			expect(errorCalls).to.have.length(1)
+			expect(errorCalls[0].args[0]).to.equal(zwaveError)
+		})
+
+		it('should suppress stack for FWUpdateService_MissingInformation error', () => {
+			const { wrappedLogger, errorCalls } =
+				createMockedLogger('test-server-3')
+
+			const zwaveError = new ZWaveError(
+				'Cannot check for firmware updates for node 51: fingerprint or firmware version is unknown!',
+				ZWaveErrorCodes.FWUpdateService_MissingInformation,
+			)
+			wrappedLogger.error('Z-Wave error', zwaveError)
+			expect(errorCalls).to.have.length(1)
+			// The error should be converted to just the message string
+			expect(errorCalls[0].args[0]).to.equal(zwaveError.message)
+		})
+
+		it('should proxy other logger methods unchanged', () => {
+			const baseLogger = module('test-server-4')
+			const wrappedLogger = wrapLoggerForServer(baseLogger)
+			expect(wrappedLogger.info).to.be.a('function')
+			expect(wrappedLogger.debug).to.be.a('function')
+			expect(wrappedLogger.warn).to.be.a('function')
+		})
+
+		it('should preserve logger properties', () => {
+			const baseLogger = module('test-server-5')
+			const wrappedLogger = wrapLoggerForServer(baseLogger)
+			expect(wrappedLogger.module).to.equal('test-server-5')
 		})
 	})
 })
