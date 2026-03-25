@@ -1337,6 +1337,24 @@ export default {
 				return
 			}
 
+			// Check if JWT token is expired before attempting connection
+			if (this.auth && this.user?.token) {
+				try {
+					const payload = JSON.parse(
+						atob(this.user.token.split('.')[1]),
+					)
+					if (payload.exp && payload.exp * 1000 < Date.now()) {
+						log.warn('JWT token expired, logging out')
+						await this.logout()
+						return
+					}
+				} catch (e) {
+					log.warn('Invalid JWT token, logging out')
+					await this.logout()
+					return
+				}
+			}
+
 			const auth = this.auth ? { token: this.user.token } : undefined
 
 			this.socket = io('/', {
@@ -1381,6 +1399,16 @@ export default {
 			this.socket.on('disconnect', () => {
 				log.info('Socket disconnected')
 				this.updateStatus('Disconnected', 'error')
+			})
+
+			this.socket.on('connect_error', (err) => {
+				log.warn('Socket connect error', err.message)
+				if (err.message === 'Authentication error') {
+					this.socket.disconnect()
+					this.logout()
+				} else {
+					this.updateStatus('Reconnecting', 'warning')
+				}
 			})
 
 			this.socket.on('error', (err) => {
