@@ -20,7 +20,7 @@
 	>
 		<template #top>
 			<v-row
-				class="my-4 ml-1"
+				class="my-4 mx-1"
 				:justify="$vuetify.display.mdAndDown ? 'center' : 'start'"
 				:align="$vuetify.display.mdAndDown ? 'center' : undefined"
 			>
