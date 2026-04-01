@@ -348,15 +348,7 @@ export default {
 		availableNodes() {
 			return this.nodes
 				.filter((n) => n && !n.isControllerNode && n.ready)
-				.map((n) => ({
-					text: n._name,
-					value: n.id,
-					props: {
-						subtitle: [n.manufacturer, n.productLabel]
-							.filter(Boolean)
-							.join(' - '),
-					},
-				}))
+				.map(this.mapNodeToSelectOption)
 		},
 		matchingNodes() {
 			if (!this.template?.deviceId) return []
@@ -368,15 +360,7 @@ export default {
 						n.deviceId === this.template.deviceId &&
 						n.values,
 				)
-				.map((n) => ({
-					text: n._name,
-					value: n.id,
-					props: {
-						subtitle: [n.manufacturer, n.productLabel]
-							.filter(Boolean)
-							.join(' - '),
-					},
-				}))
+				.map(this.mapNodeToSelectOption)
 		},
 		selectedNodeName() {
 			if (!this.selectedNodeId) return ''
@@ -413,6 +397,17 @@ export default {
 				FIRMWARE_REGEX.test(v) ||
 				'Must be in format X.Y or X.Y.Z (e.g. 1.0)'
 			)
+		},
+		mapNodeToSelectOption(n) {
+			return {
+				text: n._name,
+				value: n.id,
+				props: {
+					subtitle: [n.manufacturer, n.productLabel]
+						.filter(Boolean)
+						.join(' - '),
+				},
+			}
 		},
 		buildValueIdParam(v, currentValue) {
 			return {
@@ -649,13 +644,18 @@ export default {
 						if (res.success) {
 							this.enrichWithConfigDb(params, res.data)
 						}
-					} catch {
+					} catch (error) {
 						// Config DB not available, node values are sufficient
+						console.debug(
+							'Config DB params not available:',
+							error.message,
+						)
 					}
 				}
 
 				this.additionalParams = params
-				this.selectedAdditionalParams = [...params]
+				// Don't auto-select all - let user explicitly choose
+				this.selectedAdditionalParams = []
 			} finally {
 				this.loadingDeviceParams = false
 			}
