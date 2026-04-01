@@ -3649,34 +3649,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			lastUpdate: Date.now(),
 		}
 
-		if (meta.type === 'number') {
-			valueId.min = meta.min
-			valueId.max = meta.max
-			valueId.step = meta.steps
-			valueId.unit = meta.unit
-		} else if (meta.type === 'string') {
-			valueId.minLength = meta.minLength
-			valueId.maxLength = meta.maxLength
-		}
-
-		if (meta.states && Object.keys(meta.states).length > 0) {
-			valueId.list = true
-			valueId.allowManualEntry = meta.allowManualEntry
-			valueId.states = []
-			for (const k in meta.states) {
-				valueId.states.push({
-					text: meta.states[k],
-					value:
-						meta.type === 'number'
-							? parseInt(k)
-							: meta.type === 'boolean'
-								? k === 'true'
-								: k,
-				})
-			}
-		} else {
-			valueId.list = false
-		}
+		this._applyValueMetadataFields(valueId, meta)
 
 		return valueId
 	}
@@ -7935,66 +7908,84 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			)
 		}
 
-		// Value types: https://github.com/zwave-js/node-zwave-js/blob/cb35157da5e95f970447a67cbb2792e364b9d1e1/packages/core/src/values/Metadata.ts#L28
-		if (zwaveValueMeta.type === 'number') {
-			valueId.min = (zwaveValueMeta as ValueMetadataNumeric).min
-			valueId.max = (zwaveValueMeta as ValueMetadataNumeric).max
-			valueId.step = (zwaveValueMeta as ValueMetadataNumeric).steps
-			valueId.allowed = (zwaveValueMeta as ValueMetadataNumeric).allowed
-			valueId.unit = (zwaveValueMeta as ValueMetadataNumeric).unit
-		} else if (zwaveValueMeta.type === 'string') {
-			valueId.minLength = (
-				zwaveValueMeta as ValueMetadataString
-			).minLength
-			valueId.maxLength = (
-				zwaveValueMeta as ValueMetadataString
-			).maxLength
-		}
+		this._applyValueMetadataFields(valueId, zwaveValueMeta)
 
-		if (
-			(zwaveValueMeta as ValueMetadataNumeric).states &&
-			Object.keys((zwaveValueMeta as ValueMetadataNumeric).states)
-				.length > 0
-		) {
-			valueId.list = true
-			valueId.allowManualEntry = (
-				zwaveValueMeta as ConfigurationMetadata
-			).allowManualEntry
-			// If allowManualEntry is not explicitly set and the value has
-			// allowed ranges (not just single values), default to allowing
-			// manual entry. This supports the new value format in zwave-js
-			// v15.21.0+ where values like Wake Up Interval have named states
-			// (e.g., "Default", "Disabled") but also allow custom values
-			// within a range.
-			if (
-				valueId.allowManualEntry === undefined &&
-				valueId.allowed?.some(
-					(entry) => 'from' in entry && 'to' in entry,
-				)
-			) {
-				valueId.allowManualEntry = true
+		return valueId
+	}
+
+	/**
+	 * Apply type-specific metadata fields (numeric, string, states, destructive)
+	 * to a ZUIValueId. Shared between physical and virtual node value creation.
+	 */
+	private _applyValueMetadataFields(
+		valueId: ZUIValueId,
+		meta: ValueMetadata,
+	): void {
+		if (meta.type === 'number') {
+			const numMeta = meta as ValueMetadataNumeric
+
+			valueId.min = numMeta.min
+			valueId.max = numMeta.max
+			valueId.step = numMeta.steps
+			valueId.allowed = numMeta.allowed
+			valueId.unit = numMeta.unit
+
+			if (numMeta.states && Object.keys(numMeta.states).length > 0) {
+				valueId.list = true
+				valueId.allowManualEntry = (
+					numMeta as ConfigurationMetadata
+				).allowManualEntry
+				// If allowManualEntry is not explicitly set and the value has
+				// allowed ranges (not just single values), default to allowing
+				// manual entry. This supports the new value format in zwave-js
+				// v15.21.0+ where values like Wake Up Interval have named states
+				// (e.g., "Default", "Disabled") but also allow custom values
+				// within a range.
+				if (
+					valueId.allowManualEntry === undefined &&
+					numMeta.allowed?.some(
+						(entry) => 'from' in entry && 'to' in entry,
+					)
+				) {
+					valueId.allowManualEntry = true
+				}
+				valueId.states = []
+				for (const k in numMeta.states) {
+					valueId.states.push({
+						text: numMeta.states[k],
+						value: parseInt(k),
+					})
+				}
+			} else {
+				valueId.list = false
 			}
-			valueId.states = []
-			for (const k in (zwaveValueMeta as ValueMetadataNumeric).states) {
-				valueId.states.push({
-					text: (zwaveValueMeta as ValueMetadataNumeric).states[k],
-					value:
-						zwaveValueMeta.type === 'number'
-							? parseInt(k)
-							: zwaveValueMeta.type === 'boolean'
-								? k === 'true'
-								: k,
-				})
+
+			if ((numMeta as ConfigurationMetadata).destructive) {
+				valueId.destructive = true
+			}
+		} else if (meta.type === 'string' || meta.type === 'color') {
+			const strMeta = meta as ValueMetadataString
+			valueId.minLength = strMeta.minLength
+			valueId.maxLength = strMeta.maxLength
+			valueId.list = false
+		} else if (meta.type === 'boolean') {
+			const boolStates = (meta as { states?: Record<string, string> })
+				.states
+			if (boolStates && Object.keys(boolStates).length > 0) {
+				valueId.list = true
+				valueId.states = []
+				for (const k in boolStates) {
+					valueId.states.push({
+						text: boolStates[k],
+						value: k === 'true',
+					})
+				}
+			} else {
+				valueId.list = false
 			}
 		} else {
 			valueId.list = false
 		}
-
-		if ((zwaveValueMeta as ConfigurationMetadata).destructive) {
-			valueId.destructive = true
-		}
-
-		return valueId
 	}
 
 	/**
