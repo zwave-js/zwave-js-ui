@@ -293,6 +293,10 @@ export function buffer2hex(buffer: Uint8Array): string {
 	return `0x${Buffer.from(buffer).toString('hex')}`
 }
 
+export function generateId(): string {
+	return crypto.randomBytes(6).toString('hex')
+}
+
 export function allSettled(promises: Promise<any>[]): Promise<any> {
 	const wrappedPromises = promises.map((p) =>
 		Promise.resolve(p).then(

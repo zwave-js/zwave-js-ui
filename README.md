@@ -50,6 +50,7 @@ Full featured Z-Wave **Control Panel** and MQTT **Gateway**.
 - [Jeedom](https://www.jeedom.com/en/): using official Z-Wave JS [plugin](https://doc.jeedom.com/en_US/plugins/automation%20protocol/zwavejs/beta/)
 - [HomeSeer](https://homeseer.com/): Using [Z-Wave Plus Plugin](https://docs.homeseer.com/products/setting-up-the-z-wave-plus-plugin)
 - [Homebridge](https://homebridge.io/): Using [homebridge-zwave-usb plugin](https://github.com/sapireli/homebridge-zwave-usb)
+- [ioBroker](https://iobroker.com): Using the offical adapter [ioBroker.zwave-ws](https://github.com/arteck/ioBroker.zwavews)
 
 ## Documentation
 

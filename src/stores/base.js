@@ -5,6 +5,7 @@ import {
 	prefersColorSchemeDark,
 } from '../lib/colorScheme'
 import { deepEqual } from '../lib/utils'
+import { manager, instances } from '../lib/instanceManager'
 import logger from '../lib/logger'
 
 import { Settings } from '../modules/Settings'
@@ -152,6 +153,7 @@ const useBaseStore = defineStore('base', {
 		ui: {
 			colorScheme: loadColorScheme(settings),
 			navTabs: settings.load('navTabs', false),
+			showTabLabels: settings.load('showTabLabels', false),
 			compactMode: settings.load('compact', false),
 			streamerMode: settings.load('streamerMode', false),
 			browserTitle: settings.load('browserTitle', 'Z-Wave JS UI'),
@@ -198,10 +200,6 @@ const useBaseStore = defineStore('base', {
 			} else {
 				return null
 			}
-		},
-
-		showSnackbar(text, color = 'info', options = { timeout: 3000 }) {
-			// empty mutation, will be caught in App.vue $onAction
 		},
 
 		updateMeshGraph(node) {
@@ -380,6 +378,11 @@ const useBaseStore = defineStore('base', {
 				let errorReceive = false
 				let errorTransmit = false
 
+				if (!node.statistics && data.statistics) {
+					// first statistics for this node, mesh graph needs update
+					emitMeshUpdate = true
+				}
+
 				if (node.statistics && data.statistics) {
 					if (node.isControllerNode) {
 						const prev = node.statistics
@@ -535,6 +538,12 @@ const useBaseStore = defineStore('base', {
 					document.title = this.ui.browserTitle
 				}
 			}
+
+			// check if auth is changed in settings
+			const app = manager.getInstance(instances.APP)
+			if (app) {
+				app.checkAuth()
+			}
 		},
 		/**
 		 * Initialize the color scheme by:
@@ -602,10 +611,13 @@ const useBaseStore = defineStore('base', {
 						this.tz = data.tz
 					} catch (e) {
 						log.error('Invalid timezone:', data.tz)
-						this.showSnackbar(
-							`Invalid timezone: ${data.tz}`,
-							'error',
-						)
+						const app = manager.getInstance(instances.APP)
+						if (app) {
+							app.showSnackbar(
+								`Invalid timezone: ${data.tz}`,
+								'error',
+							)
+						}
 					}
 				}
 
@@ -656,6 +668,10 @@ const useBaseStore = defineStore('base', {
 		setNavTabs(value) {
 			settings.store('navTabs', value)
 			this.ui.navTabs = value
+		},
+		setShowTabLabels(value) {
+			settings.store('showTabLabels', value)
+			this.ui.showTabLabels = value
 		},
 		setStreamerMode(value) {
 			settings.store('streamerMode', value)

@@ -230,7 +230,6 @@
 <script>
 import { defineAsyncComponent } from 'vue'
 import { tryParseDSKFromQRCodeString, Protocols } from '@zwave-js/core'
-import { mapActions } from 'pinia'
 import {
 	parseSecurityClasses,
 	validDsk,
@@ -241,7 +240,6 @@ import {
 import useBaseStore from '../stores/base.js'
 import InstancesMixin from '../mixins/InstancesMixin.js'
 import { protocolsItems } from '../lib/items.js'
-import { socketEvents } from '@server/lib/SocketEvents'
 
 export default {
 	name: 'SmartStart',
@@ -361,7 +359,8 @@ export default {
 
 		this.refreshItems()
 
-		this.bindEvent(socketEvents.nodeAdded, () => {
+		this.subscribeChannels(['nodes'])
+		this.bindEvent('nodeAdded', () => {
 			this.refreshItems()
 		})
 	},
@@ -371,7 +370,6 @@ export default {
 		}
 	},
 	methods: {
-		...mapActions(useBaseStore, ['showSnackbar']),
 		onRowFocus(event, item) {
 			if (item.nodeId) {
 				// get mouse position

@@ -6,7 +6,13 @@ import type { ZnifferConfig } from '../lib/ZnifferManager.ts'
 import type { ZwaveConfig } from '../lib/ZwaveClient.ts'
 import { deviceConfigPriorityDir } from '../lib/Constants.ts'
 
-export type StoreKeys = 'settings' | 'scenes' | 'nodes' | 'users' | 'groups'
+export type StoreKeys =
+	| 'settings'
+	| 'scenes'
+	| 'nodes'
+	| 'users'
+	| 'groups'
+	| 'configurationTemplates'
 
 export interface StoreFile {
 	file: string
@@ -28,6 +34,7 @@ export interface Group {
 export interface UiConfig {
 	colorScheme?: string
 	navTabs?: boolean
+	showTabLabels?: boolean
 	compactMode?: boolean
 	streamerMode?: boolean
 	browserTitle?: string
@@ -55,6 +62,10 @@ const store: Record<StoreKeys, StoreFile> = {
 	nodes: { file: 'nodes.json', default: {} },
 	users: { file: 'users.json', default: [] },
 	groups: { file: 'groups.json', default: [] },
+	configurationTemplates: {
+		file: 'configurationTemplates.json',
+		default: [],
+	},
 }
 
 export default store

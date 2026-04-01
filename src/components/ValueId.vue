@@ -1,12 +1,14 @@
 <template>
 	<div class="valueid-slot">
-		<div class="valueid-label text-subtitle-2">
+		<div v-if="!hideLabel" class="valueid-label text-subtitle-2">
 			{{ label }}
 
 			<v-menu location="bottom">
 				<template #activator="{ props }">
 					<v-btn
-						v-if="canPollValue || canResetConfiguration"
+						v-if="
+							!compact && (canPollValue || canResetConfiguration)
+						"
 						v-bind="props"
 						class="ml-1 mb-1"
 						size="x-small"
@@ -37,7 +39,7 @@
 			</v-menu>
 
 			<v-chip
-				v-if="isDefault"
+				v-if="!compact && isDefault"
 				v-tooltip:bottom="'This value is set to its default'"
 				class="ml-2 mb-1"
 				size="x-small"
@@ -51,7 +53,10 @@
 		<div v-if="!modelValue.writeable">
 			<div class="readonly mt-5">
 				{{
-					parsedValue + (modelValue.unit ? ' ' + modelValue.unit : '')
+					parsedValue == null
+						? 'unknown'
+						: parsedValue +
+							(modelValue.unit ? ' ' + modelValue.unit : '')
 				}}
 
 				<v-btn
@@ -101,11 +106,7 @@
 				:max="modelValue.min != modelValue.max ? modelValue.max : null"
 				:hint="help"
 				:error="numberOutOfRange"
-				:error-messages="
-					numberOutOfRange
-						? `Value must be between ${modelValue.min} and ${modelValue.max}`
-						: ''
-				"
+				:error-messages="numberErrorMessage"
 				v-model.number="modelValue.newValue"
 				@click:append="!numberOutOfRange && updateValue(modelValue)"
 			>
@@ -249,10 +250,14 @@
 				item-value="value"
 				:type="modelValue.type === 'number' ? 'number' : 'text'"
 				:return-object="false"
-				:append-icon="!disable_send ? 'send' : null"
+				:append-icon="
+					!disable_send && !numberOutOfRange ? 'send' : null
+				"
+				:error="numberOutOfRange"
+				:error-messages="numberErrorMessage"
 				v-model="modelValue.newValue"
 				ref="myCombo"
-				@click:append="updateValue(modelValue)"
+				@click:append="!numberOutOfRange && updateValue(modelValue)"
 			>
 				<template #chip="{ attrs, item, selected }">
 					<v-chip v-bind="attrs" :model-value="selected">
@@ -347,7 +352,7 @@
 
 			<!-- Suffix loader with tooltip -->
 			<v-progress-circular
-				v-if="modelValue.toUpdate"
+				v-if="!compact && modelValue.toUpdate"
 				v-tooltip:bottom="
 					node?.status === 'Asleep'
 						? 'Wake up your device in order to send commands'
@@ -396,6 +401,14 @@ export default {
 		node: {
 			type: Object,
 		},
+		hideLabel: {
+			type: Boolean,
+			default: false,
+		},
+		compact: {
+			type: Boolean,
+			default: false,
+		},
 	},
 	data() {
 		return {
@@ -419,13 +432,47 @@ export default {
 			)
 		},
 		numberOutOfRange() {
+			if (this.modelValue.type !== 'number') {
+				return false
+			}
+
+			// Coerce value to number (handles string inputs from v-combobox)
+			const numValue = Number(this.modelValue.newValue)
+			if (Number.isNaN(numValue)) {
+				return true // Invalid number is out of range
+			}
+
+			// If allowed values are defined, validate against them
+			if (
+				this.modelValue.allowed &&
+				Array.isArray(this.modelValue.allowed)
+			) {
+				return !this.isValueAllowed(numValue)
+			}
+
+			// Otherwise, validate against min/max
 			const min = this.modelValue.min ?? -Infinity
 			const max = this.modelValue.max ?? Infinity
-			return (
-				this.modelValue.type === 'number' &&
-				(this.modelValue.newValue < min ||
-					this.modelValue.newValue > max)
-			)
+			return numValue < min || numValue > max
+		},
+		numberErrorMessage() {
+			if (!this.numberOutOfRange) {
+				return ''
+			}
+
+			// If allowed values are defined, generate appropriate message
+			if (
+				this.modelValue.allowed &&
+				Array.isArray(this.modelValue.allowed)
+			) {
+				const allowedDesc = this.modelValue.allowed
+					.map((allowed) => this.formatAllowedValue(allowed))
+					.join(', ')
+				return `Value must be one of: ${allowedDesc}`
+			}
+
+			// Otherwise, use min/max message
+			return `Value must be between ${this.modelValue.min} and ${this.modelValue.max}`
 		},
 		falseLabel() {
 			return this.modelValue.type === 'boolean' &&
@@ -505,7 +552,9 @@ export default {
 		},
 		parsedValue: {
 			get: function () {
-				if (typeof this.modelValue.newValue === 'object') {
+				if (this.modelValue.newValue === null) {
+					return null
+				} else if (typeof this.modelValue.newValue === 'object') {
 					return JSON.stringify(this.modelValue.newValue)
 				} else if (
 					this.modelValue.states &&
@@ -554,6 +603,62 @@ export default {
 		},
 	},
 	methods: {
+		/**
+		 * Formats an allowed value from Z-Wave JS config for display
+		 * @param {Object} allowed - The allowed value object
+		 * @returns {string} Formatted string representation (e.g., "10" or "0-100 (step: 5)")
+		 */
+		formatAllowedValue(allowed) {
+			if ('value' in allowed) {
+				return allowed.value
+			} else if ('from' in allowed && 'to' in allowed) {
+				const step = allowed.step ? ` (step: ${allowed.step})` : ''
+				return `${allowed.from}-${allowed.to}${step}`
+			}
+			return ''
+		},
+		/**
+		 * Validates if a number value is within the allowed values/ranges
+		 * @param {number|string} value - The value to validate (will be coerced to number)
+		 * @returns {boolean} True if the value is allowed, false otherwise
+		 */
+		isValueAllowed(value) {
+			// If no allowed field is defined, all values are allowed
+			if (
+				!this.modelValue.allowed ||
+				!Array.isArray(this.modelValue.allowed)
+			) {
+				return true
+			}
+
+			// Coerce value to number (handles string inputs from v-combobox)
+			const numValue = Number(value)
+			if (Number.isNaN(numValue)) {
+				return false
+			}
+
+			// Check if value matches any of the allowed values/ranges
+			for (const allowed of this.modelValue.allowed) {
+				if ('value' in allowed) {
+					// Single value
+					if (numValue === allowed.value) {
+						return true
+					}
+				} else if ('from' in allowed && 'to' in allowed) {
+					// Range
+					const step = allowed.step || 1
+					if (numValue >= allowed.from && numValue <= allowed.to) {
+						// Check if value aligns with step
+						const offset = (numValue - allowed.from) % step
+						if (offset === 0) {
+							return true
+						}
+					}
+				}
+			}
+
+			return false
+		},
 		async pollValue() {
 			const app = manager.getInstance(instances.APP)
 

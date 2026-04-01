@@ -19,7 +19,11 @@
 		style="margin-bottom: 50px; padding-bottom: 0 !important"
 	>
 		<template #top>
-			<v-row class="my-4 ml-1" justify-start>
+			<v-row
+				class="my-4 mx-1"
+				:justify="$vuetify.display.mdAndDown ? 'center' : 'start'"
+				:align="$vuetify.display.mdAndDown ? 'center' : undefined"
+			>
 				<v-text-field
 					v-model="search"
 					clearable
@@ -106,6 +110,10 @@
 				>
 					Reset Table
 				</v-btn>
+
+				<v-spacer v-if="!$vuetify.display.mdAndDown"></v-spacer>
+
+				<v-data-table-footer />
 			</v-row>
 		</template>
 		<template

@@ -5,6 +5,8 @@
 			id="mesh"
 			:nodes="nodes"
 			@node-click="nodeClick"
+			@node-added="fetchNodeRoutes"
+			@node-removed="onNodeRemoved"
 		/>
 		<node-panel
 			v-if="$vuetify.display.mdAndUp"
@@ -81,8 +83,18 @@ export default {
 			showProperties: false,
 		}
 	},
+	watch: {
+		showProperties(v) {
+			// Return to overview map when closing the node properties dialog
+			// using the X in the top right corner
+			if (!v && this.selectedNode) {
+				this.selectedNode = null
+				this.$refs.mesh?.clearSelection()
+			}
+		},
+	},
 	methods: {
-		...mapActions(useBaseStore, ['showSnackbar', 'setNeighbors']),
+		...mapActions(useBaseStore, ['setNeighbors']),
 		setInitialPosition(element) {
 			const windowHeight = window.innerHeight
 			const windowWidth = window.innerWidth
@@ -165,10 +177,31 @@ export default {
 				document.onmousemove = null
 			}
 		},
+		onNodeRemoved(node) {
+			if (this.selectedNode && this.selectedNode.id === node.id) {
+				this.nodeClick(null)
+			}
+		},
+		async fetchNodeRoutes(node) {
+			if (!node || node.isControllerNode) return
+
+			await Promise.allSettled([
+				this.app.apiRequest('getPriorityRoute', [node.id]),
+				this.app.apiRequest('getCustomSUCReturnRoute', [node.id]),
+				this.app.apiRequest('getPrioritySUCReturnRoute', [node.id]),
+			])
+		},
 		async nodeClick(node) {
-			this.selectedNode = this.selectedNode === node ? null : node
-			this.showProperties = !!this.selectedNode
-			if (this.$vuetify.display.mdAndUp && this.showProperties) {
+			if (!node) {
+				// clicked empty space — return to overview
+				this.selectedNode = null
+				this.showProperties = false
+				return
+			}
+
+			this.selectedNode = node
+			this.showProperties = true
+			if (this.$vuetify.display.mdAndUp) {
 				await nextTick()
 				this.makeDivDraggable()
 			}

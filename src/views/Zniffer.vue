@@ -370,9 +370,8 @@
 import { defineAsyncComponent, nextTick } from 'vue'
 import { ZWaveFrameType, LongRangeFrameType } from 'zwave-js'
 import { Protocols, RFRegion } from '@zwave-js/core'
-import { socketEvents } from '@server/lib/SocketEvents'
 
-import { mapState, mapActions } from 'pinia'
+import { mapState } from 'pinia'
 import useBaseStore from '../stores/base.js'
 import { inboundEvents as socketActions } from '@server/lib/SocketEvents'
 import InstancesMixin from '../mixins/InstancesMixin.js'
@@ -548,7 +547,9 @@ export default {
 		},
 	},
 	mounted() {
-		this.socket.on(socketEvents.znifferFrame, this.addFrame)
+		this.subscribeChannels(['znifferFrames'])
+
+		this.bindEvent('znifferFrame', this.addFrame)
 
 		this.onWindowResize = () => {
 			this.topPaneHeight = window.innerHeight / 2
@@ -575,8 +576,7 @@ export default {
 		}
 
 		if (this.socket) {
-			// unbind events
-			this.socket.off(socketEvents.znifferFrame)
+			this.unbindEvents()
 			this.socket.off('connect', this.onConnnect)
 		}
 
@@ -681,7 +681,6 @@ export default {
 		}
 	},
 	methods: {
-		...mapActions(useBaseStore, ['showSnackbar']),
 		openInWindow,
 		humanFriendlyNumber,
 		initializeViewState() {

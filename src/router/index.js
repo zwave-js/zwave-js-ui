@@ -13,6 +13,8 @@ const ErrorPage = () => import('@/views/ErrorPage.vue')
 const SmartStart = () => import('@/views/SmartStart.vue')
 const ControllerChart = () => import('@/views/ControllerChart.vue')
 const Zniffer = () => import('@/views/Zniffer.vue')
+const ConfigurationTemplates = () =>
+	import('@/views/ConfigurationTemplates.vue')
 
 import ConfigApis from '../apis/ConfigApis'
 import useBaseStore from '../stores/base'
@@ -30,6 +32,7 @@ export const Routes = {
 	smartStart: '/smart-start',
 	controllerChart: '/controller-chart',
 	zniffer: '/zniffer',
+	configurationTemplates: '/configuration-templates',
 }
 
 Routes.main = Routes.controlPanel
@@ -96,6 +99,15 @@ const router = createRouter({
 			path: Routes.groups,
 			name: 'Groups',
 			component: Groups,
+			props: true,
+			meta: {
+				requiresAuth: true,
+			},
+		},
+		{
+			path: Routes.configurationTemplates,
+			name: 'Configuration Templates',
+			component: ConfigurationTemplates,
 			props: true,
 			meta: {
 				requiresAuth: true,

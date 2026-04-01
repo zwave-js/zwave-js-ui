@@ -483,7 +483,7 @@
 
 <script>
 import { defineAsyncComponent } from 'vue'
-import { mapState, mapActions } from 'pinia'
+import { mapState } from 'pinia'
 import { validTopic } from '../../lib/utils'
 import { maxLRPowerLevels } from '../../lib/items'
 import useBaseStore from '../../stores/base.js'
@@ -593,7 +593,6 @@ export default {
 		}
 	},
 	methods: {
-		...mapActions(useBaseStore, ['showSnackbar']),
 		async setDefaults(prop) {
 			let defaultProp = ''
 

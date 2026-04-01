@@ -277,7 +277,7 @@
 import { copy } from '@/lib/utils'
 import { getEnumMemberName } from '@zwave-js/shared'
 import { Powerlevel } from '@zwave-js/cc'
-import { mapActions, mapState } from 'pinia'
+import { mapState } from 'pinia'
 import { Protocols } from '@zwave-js/core'
 
 import useBaseStore from '../../stores/base.js'
@@ -361,7 +361,6 @@ export default {
 		}
 	},
 	methods: {
-		...mapActions(useBaseStore, ['showSnackbar']),
 		exportResults() {
 			this.app.exportConfiguration(
 				this.results,
@@ -438,6 +437,7 @@ export default {
 				this.selectedNode = this.filteredNodes[0]
 					? this.filteredNodes[0].id
 					: null
+				this.subscribeChannels(['diagnostics'])
 				this.bindEvent(
 					'healthCheckProgress',
 					this.onHealthCheckProgress.bind(this),

@@ -74,28 +74,54 @@
 								>
 
 								<v-spacer></v-spacer>
-								<v-btn
-									variant="outlined"
-									size="small"
-									color="error"
-									@click="dismissUpdate(u)"
-									icon="close"
-									v-tooltip:bottom="'Dismiss this update'"
-									aria-label="Dismiss this update"
-									class="mr-2"
-								>
-								</v-btn>
-								<v-btn
-									variant="outlined"
-									size="small"
-									:color="u.downgrade ? 'warning' : 'success'"
-									@click="handleUpdateFirmware(u)"
-									:prepend-icon="
-										u.downgrade ? 'download' : 'upload'
-									"
-								>
-									{{ u.downgrade ? 'Downgrade' : 'Update' }}
-								</v-btn>
+								<v-menu>
+									<template #activator="{ props }">
+										<v-btn
+											variant="outlined"
+											size="x-small"
+											icon="more_vert"
+											v-bind="props"
+										/>
+									</template>
+									<v-list density="compact" class="py-0">
+										<v-list-item
+											@click="handleUpdateFirmware(u)"
+										>
+											<template #prepend>
+												<v-icon
+													:color="
+														u.downgrade
+															? 'warning'
+															: 'success'
+													"
+												>
+													{{
+														u.downgrade
+															? 'download'
+															: 'upload'
+													}}
+												</v-icon>
+											</template>
+											<v-list-item-title>
+												{{
+													u.downgrade
+														? 'Downgrade'
+														: 'Update'
+												}}
+											</v-list-item-title>
+										</v-list-item>
+										<v-list-item @click="dismissUpdate(u)">
+											<template #prepend>
+												<v-icon color="error"
+													>close</v-icon
+												>
+											</template>
+											<v-list-item-title
+												>Dismiss</v-list-item-title
+											>
+										</v-list-item>
+									</v-list>
+								</v-menu>
 							</v-row>
 						</v-card-title>
 						<v-divider class="mx-4"></v-divider>
@@ -179,7 +205,7 @@
 
 <script>
 import useBaseStore from '../../stores/base.js'
-import { mapActions, mapState } from 'pinia'
+import { mapState } from 'pinia'
 import InstancesMixin from '../../mixins/InstancesMixin.js'
 import { RFRegion } from '@zwave-js/core'
 
@@ -237,7 +263,6 @@ export default {
 		this.checkUpdates()
 	},
 	methods: {
-		...mapActions(useBaseStore, ['showSnackbar']),
 		async dismissUpdate(update) {
 			const confirmed = await this.app.confirm(
 				'Dismiss firmware update',

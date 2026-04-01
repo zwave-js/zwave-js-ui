@@ -14,6 +14,7 @@
   - [Driver function](usage/driver_function.md)
   - [Nodes Healthcheck](usage/nodes_healthcheck.md)
   - [Zniffer](usage/zniffer.md)
+  - [Configuration Templates](usage/configuration-templates.md)
 
 - Device Support
   - [Supported and "Unknown" Devices](device-support/supported-unknown-devices.md)
@@ -31,6 +32,10 @@
 - MQTT
 
   - [Using MQTT](guide/mqtt.md)
+
+- Socket.IO
+
+  - [Socket.IO API](guide/socket-api.md)
 
 - Miscellaneous
 

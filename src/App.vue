@@ -65,7 +65,9 @@
 							class="smaller-min-width-tabs"
 						>
 							<v-icon
-								:start="item.path === $route.path"
+								:start="
+									item.path === $route.path || showTabLabels
+								"
 								:size="
 									item.path === $route.path
 										? 'small'
@@ -75,7 +77,9 @@
 								{{ item.icon }}
 							</v-icon>
 							<span
-								v-if="item.path === $route.path"
+								v-if="
+									item.path === $route.path || showTabLabels
+								"
 								class="text-subtitle-2"
 							>
 								{{ item.title }}
@@ -402,6 +406,7 @@ import { SecurityBootstrapFailure, InclusionState } from 'zwave-js'
 import DialogNodesManager from '@/components/dialogs/DialogNodesManager.vue'
 import DialogFirmwareUpdate from '@/components/dialogs/DialogFirmwareUpdate.vue'
 import { uuid } from './lib/utils'
+import InstancesMixin from './mixins/InstancesMixin.js'
 import Logo from '@/components/Logo.vue'
 
 let socketQueue = []
@@ -418,6 +423,7 @@ export default {
 		VSonner,
 		Logo,
 	},
+	mixins: [InstancesMixin],
 	name: 'app',
 	computed: {
 		...mapState(useBaseStore, [
@@ -434,6 +440,7 @@ export default {
 		...mapState(useBaseStore, {
 			darkMode: (store) => store.uiState.darkMode,
 			navTabs: (store) => store.ui.navTabs,
+			showTabLabels: (store) => store.ui.showTabLabels,
 		}),
 		...mapWritableState(useBaseStore, ['debugCaptureActive']),
 		menuItems() {
@@ -527,6 +534,12 @@ export default {
 					icon: 'group_work',
 					title: 'Groups',
 					path: Routes.groups,
+				})
+
+				pages.splice(5, 0, {
+					icon: 'content_copy',
+					title: 'Templates',
+					path: Routes.configurationTemplates,
 				})
 
 				pages.push({
@@ -940,6 +953,9 @@ export default {
 
 			return this.$refs.confirm2.open(title, text, options)
 		},
+		dismissSnackbar(toastId) {
+			toast.dismiss(toastId)
+		},
 		showSnackbar(text, color, options = { timeout: 3000 }) {
 			const { timeout, ...rest } = options
 			const toastOptions = {
@@ -1327,19 +1343,29 @@ export default {
 				return
 			}
 
-			const query = this.auth ? { token: this.user.token } : undefined
+			const auth = this.auth ? { token: this.user.token } : undefined
 
 			this.socket = io('/', {
 				path: location.pathname
 					? location.pathname + 'socket.io'
 					: undefined,
-				query: query,
+				auth: auth,
 				rejectUnauthorized: false,
 			})
+
+			this.subscribeChannels([
+				'controller',
+				'nodes',
+				'values',
+				'statistics',
+				'firmware',
+				'znifferState',
+			])
 
 			this.socket.on('connect', () => {
 				this.updateStatus('Connected', 'success')
 				log.info('Socket connected')
+
 				this.socket.emit(
 					socketActions.init,
 					true,
@@ -1872,17 +1898,9 @@ export default {
 		// this will be overriden by settings value once `initSettings`
 		// base store method is called
 		this.$vuetify.theme.change(darkMode ? 'dark' : 'light')
-
-		useBaseStore().$onAction(({ name, args }) => {
-			if (name === 'showSnackbar') {
-				this.showSnackbar(...args)
-			} else if (name === 'initSettings') {
-				// check if auth is changed in settings
-				this.checkAuth()
-			}
-		})
 	},
 	beforeUnmount() {
+		this.unbindEvents()
 		if (this.socket) this.socket.close()
 	},
 }

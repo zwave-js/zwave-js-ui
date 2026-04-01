@@ -1,5 +1,68 @@
 # Changelog
 
+## [11.15.1](https://github.com/zwave-js/zwave-js-ui/compare/v11.15.0...v11.15.1) (2026-03-23)
+
+### ✨ Features
+
+* bump zwave-js@15.22.1 ([#4598](https://github.com/zwave-js/zwave-js-ui/issues/4598)) ([aa88ac7](https://github.com/zwave-js/zwave-js-ui/commit/aa88ac73aba73b2d7c49ddafccd1b777262f8c8a))
+
+## [11.15.0](https://github.com/zwave-js/zwave-js-ui/compare/v11.14.0...v11.15.0) (2026-03-20)
+
+### ✨ Features
+
+* bump zwave-js@15.22.0 ([#4596](https://github.com/zwave-js/zwave-js-ui/issues/4596)) ([c026c8f](https://github.com/zwave-js/zwave-js-ui/commit/c026c8febba1b5fae57ed271b40e54dae22fa943))
+
+### 🐛 Bug Fixes
+
+* **api:** enable manual entry for values with allowed ranges ([#4588](https://github.com/zwave-js/zwave-js-ui/issues/4588)) ([677605b](https://github.com/zwave-js/zwave-js-ui/commit/677605b949f63506c6cfef87a782b2c216c74158)), closes [zwave-js/zwave-js-ui#4587](https://github.com/zwave-js/zwave-js-ui/issues/4587)
+* prevent logging to file when log is disabled ([#4590](https://github.com/zwave-js/zwave-js-ui/issues/4590)) ([6335fe7](https://github.com/zwave-js/zwave-js-ui/commit/6335fe754b8fe0c778eb4f6608adfcd77da6d3c7)), closes [zwave-js/zwave-js-ui#4589](https://github.com/zwave-js/zwave-js-ui/issues/4589)
+* **ui:** display 'unknown' for CC values with null value ([#4582](https://github.com/zwave-js/zwave-js-ui/issues/4582)) ([f7f2f27](https://github.com/zwave-js/zwave-js-ui/commit/f7f2f27b6092dc482ec0e65cc722b99651c15775)), closes [zwave-js/zwave-js-ui#4581](https://github.com/zwave-js/zwave-js-ui/issues/4581)
+* **ui:** prevent last seen time from being cut off in compact view ([#4592](https://github.com/zwave-js/zwave-js-ui/issues/4592)) ([d573719](https://github.com/zwave-js/zwave-js-ui/commit/d573719b9c754141ccd48e613e2e9e7040212de2)), closes [zwave-js/zwave-js-ui#4494](https://github.com/zwave-js/zwave-js-ui/issues/4494)
+
+### 📚 Documentation
+
+* add ioBroker link in README.md ([#4584](https://github.com/zwave-js/zwave-js-ui/issues/4584)) ([747be5b](https://github.com/zwave-js/zwave-js-ui/commit/747be5ba0d5a5533a75e81d52ae47c0f9ddfd4a7))
+
+## [11.14.0](https://github.com/zwave-js/zwave-js-ui/compare/v11.13.0...v11.14.0) (2026-03-06)
+
+### ✨ Features
+
+* make the network graph truly dynamic ([#4573](https://github.com/zwave-js/zwave-js-ui/issues/4573)) ([8685a5a](https://github.com/zwave-js/zwave-js-ui/commit/8685a5ad28b4e487a65785b5c3cd6e433f313f8f))
+* **ui:** validate number inputs against allowed values from config ([#4566](https://github.com/zwave-js/zwave-js-ui/issues/4566)) ([0c365d7](https://github.com/zwave-js/zwave-js-ui/commit/0c365d7c96830ecd1c5ccdb4adec4256f93767f7)), closes [#4561](https://github.com/zwave-js/zwave-js-ui/issues/4561) [zwave-js/zwave-js-ui#4288](https://github.com/zwave-js/zwave-js-ui/issues/4288) [zwave-js/zwave-js-ui#4323](https://github.com/zwave-js/zwave-js-ui/issues/4323) [zwave-js/zwave-js-ui#4561](https://github.com/zwave-js/zwave-js-ui/issues/4561)
+
+### 🐛 Bug Fixes
+
+* broken ui snackbar ([99dd3c2](https://github.com/zwave-js/zwave-js-ui/commit/99dd3c292794bb69cd38c384680950cda7c43637)), closes [#4574](https://github.com/zwave-js/zwave-js-ui/issues/4574)
+* **ui:** fix background RSSI chart showing blank on second open ([#4576](https://github.com/zwave-js/zwave-js-ui/issues/4576)) ([82b8e92](https://github.com/zwave-js/zwave-js-ui/commit/82b8e928a2ddedc7b63e6d740d572d273fa49324)), closes [zwave-js/zwave-js-ui#4575](https://github.com/zwave-js/zwave-js-ui/issues/4575)
+
+### 📚 Documentation
+
+* add configuration templates documentation ([#4578](https://github.com/zwave-js/zwave-js-ui/issues/4578)) ([88a3f91](https://github.com/zwave-js/zwave-js-ui/commit/88a3f91875f0da49427f133da654d54469491eba)), closes [#4541](https://github.com/zwave-js/zwave-js-ui/issues/4541)
+
+## [11.13.0](https://github.com/zwave-js/zwave-js-ui/compare/v11.12.0...v11.13.0) (2026-03-04)
+
+### ✨ Features
+
+* add configuration templates for device parameter management ([#4541](https://github.com/zwave-js/zwave-js-ui/issues/4541)) ([22e2ac4](https://github.com/zwave-js/zwave-js-ui/commit/22e2ac4ffd818db34e7c3124a1733f7fa7b7c4fc)), closes [#4516](https://github.com/zwave-js/zwave-js-ui/issues/4516)
+* add driver restart option to debug capture wizard ([#4481](https://github.com/zwave-js/zwave-js-ui/issues/4481)) ([aad2921](https://github.com/zwave-js/zwave-js-ui/commit/aad2921465f04331f79551e29d817601bf797e41)), closes [zwave-js/zwave-js-ui#4480](https://github.com/zwave-js/zwave-js-ui/issues/4480)
+* bump zwave-js@15.21.1 ([#4565](https://github.com/zwave-js/zwave-js-ui/issues/4565)) ([0559387](https://github.com/zwave-js/zwave-js-ui/commit/05593870450d96e17c921c4be5a100cbb693cc3c))
+* **settings:** hide `deviceConfigPriorityDir` when managed externally ([#4558](https://github.com/zwave-js/zwave-js-ui/issues/4558)) ([d3202bc](https://github.com/zwave-js/zwave-js-ui/commit/d3202bc9fa7ca6ed60ee557fa8617f1e769150e9))
+* split socket communication into channels ([#4555](https://github.com/zwave-js/zwave-js-ui/issues/4555)) ([a457d9a](https://github.com/zwave-js/zwave-js-ui/commit/a457d9a016e57bde77ebbdf449baac1d4a33f96e))
+* **ui:** add confirmation dialog for destructive configuration parameters ([#4572](https://github.com/zwave-js/zwave-js-ui/issues/4572)) ([f254ccb](https://github.com/zwave-js/zwave-js-ui/commit/f254ccbd2715f48175d890e5022b78eecde9a5e0)), closes [zwave-js/zwave-js-ui#4432](https://github.com/zwave-js/zwave-js-ui/issues/4432)
+* **ui:** add setting to show labels on all navigation tabs ([#4563](https://github.com/zwave-js/zwave-js-ui/issues/4563)) ([c6aa58d](https://github.com/zwave-js/zwave-js-ui/commit/c6aa58df62b39dda71400f9067b9663ebb3fa5ce)), closes [zwave-js/zwave-js-ui#4562](https://github.com/zwave-js/zwave-js-ui/issues/4562)
+
+### 🐛 Bug Fixes
+
+* check `result` exists before accessing `lowSecurityReason` ([#4560](https://github.com/zwave-js/zwave-js-ui/issues/4560)) ([da0f128](https://github.com/zwave-js/zwave-js-ui/commit/da0f128d4bad8d74106136b0596670f46039177a))
+* remove deprecated csurf and querystring packages ([#4554](https://github.com/zwave-js/zwave-js-ui/issues/4554)) ([de3eeaa](https://github.com/zwave-js/zwave-js-ui/commit/de3eeaaade20d1df46c2ef18f79d18b90eea4860)), closes [#4504](https://github.com/zwave-js/zwave-js-ui/issues/4504)
+* **ui:** show "unknown" for null/undefined values with units; fix battery level null display ([#4569](https://github.com/zwave-js/zwave-js-ui/issues/4569)) ([b152113](https://github.com/zwave-js/zwave-js-ui/commit/b152113178ac498adfe06d4a9af2e4215e2d91f6)), closes [zwave-js/zwave-js-ui#4445](https://github.com/zwave-js/zwave-js-ui/issues/4445)
+* **ui:** show port field as disabled when controlled by ZWAVE_PORT env var ([#4568](https://github.com/zwave-js/zwave-js-ui/issues/4568)) ([7bfec86](https://github.com/zwave-js/zwave-js-ui/commit/7bfec86d7f8053439227e47c899fb29413765eeb)), closes [zwave-js/zwave-js-ui#4567](https://github.com/zwave-js/zwave-js-ui/issues/4567)
+* **ui:** show warning on groups associations when node is a LR node ([#4545](https://github.com/zwave-js/zwave-js-ui/issues/4545)) ([f1745a0](https://github.com/zwave-js/zwave-js-ui/commit/f1745a06296b9b7ec9b12c7ae87d66d75f1084aa)), closes [zwave-js/zwave-js-ui#4544](https://github.com/zwave-js/zwave-js-ui/issues/4544)
+
+### 📚 Documentation
+
+* fix outdated content, dead links, and add missing settings ([#4556](https://github.com/zwave-js/zwave-js-ui/issues/4556)) ([5a66882](https://github.com/zwave-js/zwave-js-ui/commit/5a66882f363d7f77ba8df33e950b60f8ca8301f3))
+
 ## [11.12.0](https://github.com/zwave-js/zwave-js-ui/compare/v11.11.0...v11.12.0) (2026-02-19)
 
 ### ✨ Features
