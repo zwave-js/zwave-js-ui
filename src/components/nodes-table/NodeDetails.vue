@@ -488,7 +488,12 @@ import { validTopic } from '../../lib/utils'
 import { maxLRPowerLevels } from '../../lib/items'
 import useBaseStore from '../../stores/base.js'
 import InstancesMixin from '../../mixins/InstancesMixin.js'
-import { isUnsupervisedOrSucceeded, ConfigValueFormat } from '@zwave-js/core'
+import {
+	isUnsupervisedOrSucceeded,
+	ConfigValueFormat,
+	NODE_ID_BROADCAST,
+	NODE_ID_BROADCAST_LR,
+} from '@zwave-js/core'
 import { regionSupportsAutoPowerlevel } from '@server/lib/shared'
 
 export default {
@@ -530,8 +535,11 @@ export default {
 	computed: {
 		...mapState(useBaseStore, ['mqtt', 'zwave']),
 		isBroadcastNode() {
-			// Broadcast nodes are node IDs 255 and 4095
-			return this.node && (this.node.id === 255 || this.node.id === 4095)
+			return (
+				this.node &&
+				(this.node.id === NODE_ID_BROADCAST ||
+					this.node.id === NODE_ID_BROADCAST_LR)
+			)
 		},
 		regionSupportsAutoPowerlevel() {
 			return regionSupportsAutoPowerlevel(this.node?.RFRegion)

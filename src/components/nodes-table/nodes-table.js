@@ -1,5 +1,6 @@
 import draggable from 'vuedraggable'
 import colors from 'vuetify/util/colors'
+import { NODE_ID_BROADCAST, NODE_ID_BROADCAST_LR } from '@zwave-js/core'
 import { ManagedItems } from '@/modules/ManagedItems'
 
 import { mapState } from 'pinia'
@@ -73,6 +74,8 @@ export default {
 	},
 	data: function () {
 		return {
+			NODE_ID_BROADCAST,
+			NODE_ID_BROADCAST_LR,
 			search: '',
 			managedNodes: null,
 			nodesProps: {

@@ -2993,8 +2993,16 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 * Create a new group
 	 */
 	async _createGroup(name: string, nodeIds: number[]): Promise<Group> {
+		if (!name?.trim()) {
+			throw new Error('Group name is required')
+		}
+
+		if (!nodeIds || nodeIds.length < 2) {
+			throw new Error('At least 2 nodes are required for a group')
+		}
+
 		const id = this._getNextGroupId()
-		const group: Group = { id, name, nodeIds }
+		const group: Group = { id, name: name.trim(), nodeIds }
 
 		this.groups.push(group)
 		await jsonStore.put(store.groups, this.groups)
@@ -3013,12 +3021,20 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		name: string,
 		nodeIds: number[],
 	): Promise<Group | null> {
+		if (!name?.trim()) {
+			throw new Error('Group name is required')
+		}
+
+		if (!nodeIds || nodeIds.length < 2) {
+			throw new Error('At least 2 nodes are required for a group')
+		}
+
 		const groupIndex = this.groups.findIndex((g) => g.id === id)
 		if (groupIndex === -1) {
 			return null
 		}
 
-		this.groups[groupIndex].name = name
+		this.groups[groupIndex].name = name.trim()
 		this.groups[groupIndex].nodeIds = nodeIds
 
 		await jsonStore.put(store.groups, this.groups)
