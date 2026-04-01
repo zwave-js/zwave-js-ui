@@ -2977,6 +2977,28 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	// === GROUPS MANAGEMENT ===
 
 	/**
+	 * Filter and validate node IDs for group creation/update.
+	 * Removes duplicates, controller node, broadcast IDs, and non-numeric values.
+	 */
+	private _filterGroupNodeIds(nodeIds: number[]): number[] {
+		const ownNodeId = this._driver?.controller?.ownNodeId
+		const filtered = [...new Set(nodeIds)].filter(
+			(id) =>
+				typeof id === 'number' &&
+				id > 0 &&
+				id !== ownNodeId &&
+				id !== NODE_ID_BROADCAST &&
+				id !== NODE_ID_BROADCAST_LR,
+		)
+
+		if (filtered.length < 2) {
+			throw new Error('At least 2 valid nodes are required for a group')
+		}
+
+		return filtered
+	}
+
+	/**
 	 * Get next available group ID (above 0xfff)
 	 */
 	private _getNextGroupId(): number {
@@ -2997,12 +3019,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			throw new Error('Group name is required')
 		}
 
-		if (!nodeIds || nodeIds.length < 2) {
-			throw new Error('At least 2 nodes are required for a group')
-		}
+		const validNodeIds = this._filterGroupNodeIds(nodeIds)
 
 		const id = this._getNextGroupId()
-		const group: Group = { id, name: name.trim(), nodeIds }
+		const group: Group = { id, name: name.trim(), nodeIds: validNodeIds }
 
 		this.groups.push(group)
 		await jsonStore.put(store.groups, this.groups)
@@ -3025,9 +3045,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			throw new Error('Group name is required')
 		}
 
-		if (!nodeIds || nodeIds.length < 2) {
-			throw new Error('At least 2 nodes are required for a group')
-		}
+		const validNodeIds = this._filterGroupNodeIds(nodeIds)
 
 		const groupIndex = this.groups.findIndex((g) => g.id === id)
 		if (groupIndex === -1) {
@@ -3035,7 +3053,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		}
 
 		this.groups[groupIndex].name = name.trim()
-		this.groups[groupIndex].nodeIds = nodeIds
+		this.groups[groupIndex].nodeIds = validNodeIds
 
 		await jsonStore.put(store.groups, this.groups)
 
@@ -3856,12 +3874,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			this.throttle(
 				`virtual_node_update_${group.id}`,
 				() => {
+					// _updateVirtualNodeValues already emits valueChanged
+					// for each value and calls emitNodeUpdate
 					this._updateVirtualNodeValues(group)
-
-					const virtualNode = this._nodes.get(group.id)
-					if (virtualNode) {
-						this.sendToSocket(socketEvents.nodeUpdated, virtualNode)
-					}
 				},
 				1000,
 			)
