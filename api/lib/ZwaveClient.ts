@@ -3322,6 +3322,20 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	/**
 	 * Create virtual node for multicast group
 	 */
+	private _newVirtualZUINode(id: number, name: string): ZUINode {
+		return {
+			id,
+			name,
+			virtual: true,
+			ready: true,
+			available: true,
+			failed: false,
+			inited: true,
+			values: {},
+			eventsQueue: [],
+		}
+	}
+
 	private _createVirtualNode(group: Group): void {
 		if (!this.driverReady) return
 
@@ -3332,17 +3346,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			)
 			this._multicastGroups.set(group.id, multicastGroup)
 
-			const virtualNode: ZUINode = {
-				id: group.id,
-				name: group.name,
-				virtual: true,
-				ready: true,
-				available: true,
-				failed: false,
-				inited: true,
-				values: {},
-				eventsQueue: [],
-			}
+			const virtualNode = this._newVirtualZUINode(group.id, group.name)
 
 			this._nodes.set(group.id, virtualNode)
 
@@ -3690,10 +3694,11 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 					zwaveValue as unknown as ZUIValueId,
 				)
 
-				// Aggregate member node values: show value if all same, otherwise undefined
+				// Aggregate values from member nodes that support this CC.
+				// Show the value if all supporting members agree, otherwise undefined.
 				const memberValues = group.nodeIds
-					.map((id) => this._nodes.get(id)?.values?.[vId]?.value)
-					.filter((v) => v !== undefined)
+					.filter((id) => this._nodes.get(id)?.values?.[vId] != null)
+					.map((id) => this._nodes.get(id).values[vId].value)
 				const firstValue = memberValues[0]
 				const allSame =
 					memberValues.length > 0 &&
@@ -3780,17 +3785,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			const broadcastNode = this._driver.controller.getBroadcastNode()
 			this._multicastGroups.set(NODE_ID_BROADCAST, broadcastNode)
 
-			const broadcastVirtualNode: ZUINode = {
-				id: NODE_ID_BROADCAST,
-				name: 'Broadcast',
-				virtual: true,
-				ready: true,
-				available: true,
-				failed: false,
-				inited: true,
-				values: {},
-				eventsQueue: [],
-			}
+			const broadcastVirtualNode = this._newVirtualZUINode(
+				NODE_ID_BROADCAST,
+				'Broadcast',
+			)
 
 			this._nodes.set(NODE_ID_BROADCAST, broadcastVirtualNode)
 			this.sendToSocket(socketEvents.nodeUpdated, broadcastVirtualNode)
@@ -3805,17 +3803,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 						broadcastNodeLR,
 					)
 
-					const broadcastLRVirtualNode: ZUINode = {
-						id: NODE_ID_BROADCAST_LR,
-						name: 'Broadcast LR',
-						virtual: true,
-						ready: true,
-						available: true,
-						failed: false,
-						inited: true,
-						values: {},
-						eventsQueue: [],
-					}
+					const broadcastLRVirtualNode = this._newVirtualZUINode(
+						NODE_ID_BROADCAST_LR,
+						'Broadcast LR',
+					)
 
 					this._nodes.set(
 						NODE_ID_BROADCAST_LR,
@@ -5365,6 +5356,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		rounds = 5,
 	): Promise<RouteHealthCheckSummary & { targetNodeId: number }> {
 		if (this.driverReady) {
+			if (this.isVirtualNode(nodeId)) {
+				throw new Error(`Node ${nodeId} is a virtual node`)
+			}
 			const zwaveNode = this.getNode(nodeId)
 			const result = await zwaveNode.checkRouteHealth(
 				targetNodeId,

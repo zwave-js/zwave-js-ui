@@ -107,9 +107,9 @@ export default {
 		async editItem(existingGroup) {
 			const isEdit = !!existingGroup
 
-			// Filter out controller node (ID 1) and virtual nodes
+			// Filter out controller node and virtual nodes
 			const availableNodes = this.physicalNodes.filter(
-				(node) => node.id !== 1 && !node.isControllerNode,
+				(node) => !node.isControllerNode,
 			)
 
 			let inputs = [
