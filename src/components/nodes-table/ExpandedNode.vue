@@ -823,15 +823,18 @@ export default {
 						api: action,
 						args: args,
 					}
+					const nodeLabel = this.node.virtual
+						? this.node.name || 'Virtual Node'
+						: `Node ${this.node.id}`
 					this.socket.emit(socketActions.mqtt, data, (response) => {
 						if (response.success) {
 							this.showSnackbar(
-								`Node ${this.node.id}: ${action} successfully sent `,
+								`${nodeLabel}: ${action} successfully sent `,
 								'success',
 							)
 						} else {
 							this.showSnackbar(
-								`Error sending ${action} to node ${this.node.id}: ${response.message}`,
+								`Error sending ${action} to ${nodeLabel}: ${response.message}`,
 								'error',
 							)
 						}

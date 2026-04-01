@@ -341,7 +341,7 @@
 			<div v-else></div>
 		</template>
 		<template #[`item.firmwareVersion`]="{ item }">
-			<div style="text-align: center">
+			<div v-if="!item.virtual" style="text-align: center">
 				<div
 					v-if="item.firmwareUpdate && !item.isControllerNode"
 					class="d-flex flex-column align-center pa-1"
@@ -374,6 +374,7 @@
 					v-else
 				></div>
 			</div>
+			<div v-else></div>
 		</template>
 		<template #[`item.lastActive`]="{ item }">
 			<statistics-arrows
