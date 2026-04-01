@@ -54,6 +54,29 @@
 							Select which parameters to include and optionally
 							modify their values.
 						</p>
+						<v-btn
+							v-if="template && matchingNodes.length > 0"
+							color="primary"
+							variant="outlined"
+							size="small"
+							class="mb-4"
+							:loading="loadingDeviceParams"
+							@click="showAddParamsDialog = true"
+						>
+							<v-icon start>add</v-icon>
+							Add Parameters from Device
+						</v-btn>
+						<v-alert
+							v-if="template && matchingNodes.length === 0"
+							type="info"
+							variant="tonal"
+							density="compact"
+							class="mb-4"
+						>
+							No matching devices found to add parameters from.
+							Connect a device with the same model to add
+							additional parameters.
+						</v-alert>
 						<v-data-table
 							v-model="selectedParams"
 							:headers="paramHeaders"
@@ -173,6 +196,94 @@
 				</v-card>
 			</template>
 		</v-stepper>
+
+		<!-- Add Parameters Dialog -->
+		<v-dialog v-model="showAddParamsDialog" max-width="800" scrollable>
+			<v-card>
+				<v-toolbar color="primary" density="compact" flat>
+					<v-toolbar-title class="text-white"
+						>Add Parameters from Device</v-toolbar-title
+					>
+					<v-btn
+						icon
+						variant="text"
+						@click="showAddParamsDialog = false"
+					>
+						<v-icon color="white">close</v-icon>
+					</v-btn>
+				</v-toolbar>
+				<v-card-text class="pa-4">
+					<v-autocomplete
+						v-model="addParamsNodeId"
+						:items="matchingNodes"
+						item-title="text"
+						item-value="value"
+						label="Select a device"
+						variant="outlined"
+						density="comfortable"
+						:loading="loadingDeviceParams"
+						@update:model-value="onAddParamsNodeSelected"
+					></v-autocomplete>
+
+					<v-alert
+						v-if="
+							addParamsNodeId &&
+							!loadingDeviceParams &&
+							additionalParams.length === 0
+						"
+						type="info"
+						variant="tonal"
+						class="mt-2"
+					>
+						All parameters from this device are already in the
+						template.
+					</v-alert>
+
+					<v-data-table
+						v-if="additionalParams.length > 0"
+						v-model="selectedAdditionalParams"
+						:headers="paramHeaders"
+						:items="additionalParams"
+						show-select
+						item-value="id"
+						return-object
+						density="compact"
+						class="elevation-0 mt-2"
+						items-per-page="-1"
+					>
+						<template #[`item.property`]="{ item: param }">
+							{{ param.property
+							}}{{
+								param.propertyKey != null
+									? `[${param.propertyKey}]`
+									: ''
+							}}
+						</template>
+						<template #[`item.newValue`]="{ item: param }">
+							<ValueId
+								:model-value="param"
+								:disable_send="true"
+								hide-label
+								compact
+							/>
+						</template>
+					</v-data-table>
+				</v-card-text>
+				<v-card-actions class="px-4 pb-4">
+					<v-spacer></v-spacer>
+					<v-btn variant="text" @click="showAddParamsDialog = false">
+						Cancel
+					</v-btn>
+					<v-btn
+						color="primary"
+						:disabled="selectedAdditionalParams.length === 0"
+						@click="addSelectedParams"
+					>
+						Add {{ selectedAdditionalParams.length }} Parameter(s)
+					</v-btn>
+				</v-card-actions>
+			</v-card>
+		</v-dialog>
 	</v-card>
 </template>
 
@@ -224,6 +335,12 @@ export default {
 					sortable: false,
 				},
 			],
+			// Add parameters dialog state
+			showAddParamsDialog: false,
+			addParamsNodeId: null,
+			loadingDeviceParams: false,
+			additionalParams: [],
+			selectedAdditionalParams: [],
 		}
 	},
 	computed: {
@@ -231,6 +348,26 @@ export default {
 		availableNodes() {
 			return this.nodes
 				.filter((n) => n && !n.isControllerNode && n.ready)
+				.map((n) => ({
+					text: n._name,
+					value: n.id,
+					props: {
+						subtitle: [n.manufacturer, n.productLabel]
+							.filter(Boolean)
+							.join(' - '),
+					},
+				}))
+		},
+		matchingNodes() {
+			if (!this.template?.deviceId) return []
+			return this.nodes
+				.filter(
+					(n) =>
+						n &&
+						n.ready &&
+						n.deviceId === this.template.deviceId &&
+						n.values,
+				)
 				.map((n) => ({
 					text: n._name,
 					value: n.id,
@@ -468,6 +605,81 @@ export default {
 			} finally {
 				this.loadingParams = false
 			}
+		},
+		async onAddParamsNodeSelected(nodeId) {
+			if (!nodeId) {
+				this.additionalParams = []
+				this.selectedAdditionalParams = []
+				return
+			}
+
+			this.loadingDeviceParams = true
+			try {
+				const node = this.nodes.find((n) => n && n.id === nodeId)
+				if (!node || !node.values) {
+					this.showSnackbar(
+						'Node not found or has no values',
+						'error',
+					)
+					return
+				}
+
+				// Build a set of existing parameter IDs in the template
+				const existingIds = new Set(this.nodeParams.map((p) => p.id))
+
+				const params = []
+				for (const id in node.values) {
+					const v = node.values[id]
+					if (v.commandClass === 112 && v.writeable) {
+						const param = this.buildValueIdParam(v, v.value)
+						// Only include parameters not already in the template
+						if (!existingIds.has(param.id)) {
+							params.push(param)
+						}
+					}
+				}
+
+				// Enrich with config DB metadata
+				if (node.deviceId) {
+					try {
+						const res =
+							await ConfigApis.getDeviceConfigurationParams(
+								node.deviceId,
+							)
+						if (res.success) {
+							this.enrichWithConfigDb(params, res.data)
+						}
+					} catch {
+						// Config DB not available, node values are sufficient
+					}
+				}
+
+				this.additionalParams = params
+				this.selectedAdditionalParams = [...params]
+			} finally {
+				this.loadingDeviceParams = false
+			}
+		},
+		addSelectedParams() {
+			// Store the count before resetting
+			const addedCount = this.selectedAdditionalParams.length
+
+			// Add the selected additional params to nodeParams and selectedParams
+			for (const param of this.selectedAdditionalParams) {
+				this.nodeParams.push(param)
+				this.selectedParams.push(param)
+			}
+
+			// Reset dialog state and close
+			this.showAddParamsDialog = false
+			this.addParamsNodeId = null
+			this.additionalParams = []
+			this.selectedAdditionalParams = []
+
+			this.showSnackbar(
+				`Added ${addedCount} parameter(s) to template`,
+				'success',
+			)
 		},
 		async save() {
 			this.saving = true
