@@ -3703,6 +3703,17 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				virtualNode.values[vId] = valueId
 			}
 
+			// Emit valueChanged for each value so the MQTT gateway
+			// publishes them and registers topics for write-back
+			for (const vId in virtualNode.values) {
+				this.emit(
+					'valueChanged',
+					virtualNode.values[vId],
+					virtualNode,
+					true,
+				)
+			}
+
 			this.emitNodeUpdate(virtualNode, { values: virtualNode.values })
 		} catch (error) {
 			logger.error(
@@ -3747,6 +3758,17 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 					const vID = this._getValueID(valueId)
 					virtualNode.values[vID] = valueId
+				}
+
+				// Emit valueChanged for each value so the MQTT gateway
+				// publishes them and registers topics for write-back
+				for (const vID in virtualNode.values) {
+					this.emit(
+						'valueChanged',
+						virtualNode.values[vID],
+						virtualNode,
+						true,
+					)
 				}
 
 				this.sendToSocket(socketEvents.nodeUpdated, virtualNode)
