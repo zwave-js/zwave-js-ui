@@ -1515,8 +1515,7 @@ export default class Gateway {
 								break
 							case 'Water Alarm':
 								cfg = this._getBinarySensorConfig(
-									Constants.deviceClass.sensor_binary
-										.MOISTURE,
+									Constants.deviceClass.sensor_binary.MOISTURE,
 								)
 								break
 							// sensor status has multiple Properties. therefore is good to work
@@ -1525,14 +1524,12 @@ export default class Gateway {
 								switch (valueId.propertyName) {
 									case 'Smoke Alarm':
 										cfg = this._getBinarySensorConfig(
-											Constants.deviceClass.sensor_binary
-												.SMOKE,
+											Constants.deviceClass.sensor_binary.SMOKE,
 										)
 										break
 									case 'Water Alarm':
 										cfg = this._getBinarySensorConfig(
-											Constants.deviceClass.sensor_binary
-												.MOISTURE,
+											Constants.deviceClass.sensor_binary.MOISTURE,
 										)
 										break
 									default:
@@ -1569,6 +1566,20 @@ export default class Gateway {
 								valueId.states,
 								valueId.default,
 							)
+					} else if (
+						cmdClass === CommandClasses.Notification &&
+						valueId.stateless
+					) {
+						cfg = utils.copy(hassCfg.sensor_generic)
+						cfg.object_id = utils.joinProps(
+							'notification',
+							valueId.property,
+							valueId.propertyKey,
+						)
+						cfg.discovery_payload.icon = 'mdi:alarm-light'
+
+						cfg.discovery_payload.value_template =
+							"{{ value_json.value | default('') }}"
 					} else {
 						return
 					}
