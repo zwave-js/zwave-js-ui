@@ -19,7 +19,7 @@ jobs:
     runs-on: [ubuntu-latest]
     strategy:
       matrix:
-        node-version: [22.x]
+        node-version: [22.22.1]
     steps:
       - name: Checkout master
         uses: actions/checkout@v6
