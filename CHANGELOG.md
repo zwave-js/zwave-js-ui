@@ -1,5 +1,18 @@
 # Changelog
 
+## [11.16.0](https://github.com/zwave-js/zwave-js-ui/compare/v11.15.1...v11.16.0) (2026-04-13)
+
+### ✨ Features
+
+* bump zwave-js@15.22.2 ([#4600](https://github.com/zwave-js/zwave-js-ui/issues/4600)) ([1e66ea6](https://github.com/zwave-js/zwave-js-ui/commit/1e66ea693809a91090cf54b23b70ab89c94003e3))
+* bump zwave-js@15.23.0 ([#4613](https://github.com/zwave-js/zwave-js-ui/issues/4613)) ([802f564](https://github.com/zwave-js/zwave-js-ui/commit/802f56424d6b418406ba440fd6d36eb4cc7f2062))
+* **ui:** move pagination to top of nodes table ([#4605](https://github.com/zwave-js/zwave-js-ui/issues/4605)) ([08b46dc](https://github.com/zwave-js/zwave-js-ui/commit/08b46dc62780369a21b725f93451c1098cf72008)), closes [#3603](https://github.com/zwave-js/zwave-js-ui/issues/3603) [#4488](https://github.com/zwave-js/zwave-js-ui/issues/4488)
+
+### 🐛 Bug Fixes
+
+* **docs:** clarify default value of BACKUPS_DIR ([#4597](https://github.com/zwave-js/zwave-js-ui/issues/4597)) ([0224aca](https://github.com/zwave-js/zwave-js-ui/commit/0224aca52e2f784e2dbc3ce71e3f2adf07d24471))
+* specify exact Node.js version in release workflow ([c80566f](https://github.com/zwave-js/zwave-js-ui/commit/c80566f7d02136dbe65bc39ad57900a023b9e43a))
+
 ## [11.15.1](https://github.com/zwave-js/zwave-js-ui/compare/v11.15.0...v11.15.1) (2026-03-23)
 
 ### ✨ Features
