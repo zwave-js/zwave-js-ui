@@ -110,7 +110,6 @@ import {
 	setValueFailed,
 	SetValueStatus,
 	setValueWasUnsupervisedOrSucceeded,
-	UserCodeCC,
 	UserIDStatus,
 	ProvisioningEntryStatus,
 	AssociationCheckResult,
@@ -1351,10 +1350,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			const endpointIndex = 0
 			const endpoint = zwaveNode.getEndpoint(endpointIndex)
 
-			const userCodes = UserCodeCC.getSupportedUsersCached(
-				this.driver,
-				endpoint,
-			)
+			const userCodes =
+				endpoint.getUserCapabilitiesCached()?.maxUsers ?? 0
 
 			const numSlots = {
 				numWeekDaySlots: ScheduleEntryLockCC.getNumWeekDaySlotsCached(
@@ -1431,17 +1428,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			}
 
 			for (let i = 1; i <= userCodes; i++) {
-				const status = UserCodeCC.getUserIdStatusCached(
-					this.driver,
-					endpoint,
-					i,
-				)
+				const user = endpoint.getUserCached(i)
 
-				if (
-					status === undefined ||
-					status === UserIDStatus.Available ||
-					status === UserIDStatus.StatusNotAvailable
-				) {
+				if (!user) {
 					// skip query on not enabled userIds or empty codes
 					continue
 				}
@@ -1455,7 +1444,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 						i,
 					)
 
-				if (enabledUserId) {
+				if (enabledUserId || user.active) {
 					node.userCodes.enabled.push(i)
 				}
 
