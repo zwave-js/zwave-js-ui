@@ -1349,8 +1349,17 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			// TODO: should we check also other endpoints?
 			const endpointIndex = 0
 			const endpoint = zwaveNode.getEndpoint(endpointIndex)
+			const userCapabilities = endpoint.getUserCapabilitiesCached()
 
-			const maxUsers = endpoint.getUserCapabilitiesCached()?.maxUsers ?? 0
+			if (!userCapabilities) {
+				this.logNode(
+					zwaveNode,
+					'debug',
+					'User capabilities are not cached yet, skipping users cache scan',
+				)
+			}
+
+			const maxUsers = userCapabilities?.maxUsers ?? 0
 
 			const numSlots = {
 				numWeekDaySlots: ScheduleEntryLockCC.getNumWeekDaySlotsCached(
@@ -1430,7 +1439,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				const user = endpoint.getUserCached(i)
 
 				if (!user) {
-					// skip if this user slot is not configured in the cache
+					// skip if no cached user data is available for this slot
 					continue
 				}
 
@@ -1443,6 +1452,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 						i,
 					)
 
+				// keep schedule-enabled cache in sync and support unified user API active state
 				if (enabledUserId || user.active) {
 					node.userCodes.enabled.push(i)
 				}
