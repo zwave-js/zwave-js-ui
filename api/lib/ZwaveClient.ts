@@ -1350,8 +1350,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			const endpointIndex = 0
 			const endpoint = zwaveNode.getEndpoint(endpointIndex)
 
-			const userCodes =
-				endpoint.getUserCapabilitiesCached()?.maxUsers ?? 0
+			const maxUsers = endpoint.getUserCapabilitiesCached()?.maxUsers ?? 0
 
 			const numSlots = {
 				numWeekDaySlots: ScheduleEntryLockCC.getNumWeekDaySlotsCached(
@@ -1394,7 +1393,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			}
 
 			node.userCodes = {
-				total: userCodes,
+				total: maxUsers,
 				available: [],
 				enabled: [],
 			}
@@ -1427,11 +1426,11 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				}
 			}
 
-			for (let i = 1; i <= userCodes; i++) {
+			for (let i = 1; i <= maxUsers; i++) {
 				const user = endpoint.getUserCached(i)
 
 				if (!user) {
-					// skip query on not enabled userIds or empty codes
+					// skip if this user slot is not configured in the cache
 					continue
 				}
 
