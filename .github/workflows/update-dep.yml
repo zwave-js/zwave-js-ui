@@ -29,7 +29,11 @@ jobs:
 
       - name: Update dependency
         run: |
-          npm install ${{github.event.inputs.dep}}@${{github.event.inputs.version || 'latest'}}
+          if [ "${{ github.event.inputs.dep }}" = "zwave-js" ]; then
+            npm install --save-exact ${{github.event.inputs.dep}}@${{github.event.inputs.version || 'latest'}}
+          else
+            npm install ${{github.event.inputs.dep}}@${{github.event.inputs.version || 'latest'}}
+          fi
       - name: Check for changes
         id: check
         run: |
@@ -37,7 +41,7 @@ jobs:
           if ! git diff --quiet ; then
             echo "Has changes"
             echo "changed=true" >> $GITHUB_OUTPUT
-            VERSION=$(npm info ${{github.event.inputs.dep}} version)
+            VERSION=$(DEP="${{ github.event.inputs.dep }}" node -e "const fs = require('node:fs'); const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8')); const dep = process.env.DEP; const version = pkg.dependencies?.[dep] ?? pkg.devDependencies?.[dep] ?? pkg.optionalDependencies?.[dep] ?? ''; if (!version) process.exit(1); process.stdout.write(version.replace(/^[~^]/, ''));")
             echo "version=$VERSION" >> $GITHUB_OUTPUT
           else
             echo "No changes detected. Dependency already up to date"
