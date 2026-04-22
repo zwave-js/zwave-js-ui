@@ -41,7 +41,10 @@ jobs:
           if ! git diff --quiet ; then
             echo "Has changes"
             echo "changed=true" >> $GITHUB_OUTPUT
-            VERSION=$(DEP="${{ github.event.inputs.dep }}" node -e "const fs = require('node:fs'); const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8')); const dep = process.env.DEP; const version = pkg.dependencies?.[dep] ?? pkg.devDependencies?.[dep] ?? pkg.optionalDependencies?.[dep] ?? ''; if (!version) process.exit(1); process.stdout.write(version.replace(/^[~^]/, ''));")
+            VERSION="${{ github.event.inputs.version }}"
+            if [ -z "$VERSION" ]; then
+              VERSION=$(npm info "${{ github.event.inputs.dep }}" version)
+            fi
             echo "version=$VERSION" >> $GITHUB_OUTPUT
           else
             echo "No changes detected. Dependency already up to date"
