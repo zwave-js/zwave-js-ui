@@ -114,9 +114,16 @@ const logger = loggers.module('App')
 
 const verifyJWT = promisify(jwt.verify.bind(jwt))
 
+// When TRUST_PROXY is not explicitly set (e.g. HA addon behind ingress proxy),
+// disable xForwardedForHeader validation to prevent ERR_ERL_UNEXPECTED_X_FORWARDED_FOR errors
+const rateLimitValidate = process.env.TRUST_PROXY
+	? {}
+	: { xForwardedForHeader: false }
+
 const storeLimiter = rateLimit({
 	windowMs: 15 * 60 * 1000, // 15 minutes
 	max: 100,
+	validate: rateLimitValidate,
 	handler: function (req, res) {
 		res.json({
 			success: false,
@@ -129,6 +136,7 @@ const storeLimiter = rateLimit({
 const loginLimiter = rateLimit({
 	windowMs: 60 * 60 * 1000, // keep in memory for 1 hour
 	max: 5, // start blocking after 5 requests
+	validate: rateLimitValidate,
 	handler: function (req, res) {
 		res.json({ success: false, message: 'Max requests limit reached' })
 	},
@@ -137,6 +145,7 @@ const loginLimiter = rateLimit({
 const apisLimiter = rateLimit({
 	windowMs: 60 * 60 * 1000, // keep in memory for 1 hour
 	max: 500, // start blocking after 500 requests
+	validate: rateLimitValidate,
 	handler: function (req, res) {
 		res.json({ success: false, message: 'Max requests limit reached' })
 	},
@@ -536,6 +545,23 @@ if (process.env.TRUST_PROXY) {
 		'trust proxy',
 		process.env.TRUST_PROXY === 'true' ? true : process.env.TRUST_PROXY,
 	)
+} else {
+	// Auto-detect proxy: if the first request has X-Forwarded-For, enable trust proxy.
+	// This handles HA addon environments where users cannot set env vars.
+	// Note: any client can send X-Forwarded-For, so in security-sensitive
+	// deployments set TRUST_PROXY explicitly instead of relying on auto-detection.
+	let proxyDetected = false
+	app.use((req, _res, next) => {
+		if (!proxyDetected && req.headers['x-forwarded-for']) {
+			proxyDetected = true
+			logger.info(
+				'Detected X-Forwarded-For header, auto-enabling trust proxy. ' +
+					'Set TRUST_PROXY env var for explicit control.',
+			)
+			app.set('trust proxy', true)
+		}
+		next()
+	})
 }
 
 app.use(
