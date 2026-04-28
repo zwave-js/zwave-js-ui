@@ -39,13 +39,13 @@ const GATEWAY_TYPE = {
 	VALUEID: 0,
 	NAMED: 1,
 	MANUAL: 2,
-}
+} as const
 
 const PAYLOAD_TYPE = {
 	TIME_VALUE: 0,
 	VALUEID: 1,
 	RAW: 2,
-}
+} as const
 
 const CUSTOM_DEVICES = storeDir + '/customDevices'
 let allDevices = hassDevices // will contain customDevices + hassDevices
@@ -142,17 +142,11 @@ export function closeWatchers() {
 	}
 }
 
-export enum GatewayType {
-	VALUEID,
-	NAMED,
-	MANUAL,
-}
+export const GatewayType = GATEWAY_TYPE
+export type GatewayType = (typeof GATEWAY_TYPE)[keyof typeof GATEWAY_TYPE]
 
-export enum PayloadType {
-	JSON_TIME_VALUE,
-	VALUEID,
-	RAW,
-}
+export const PayloadType = PAYLOAD_TYPE
+export type PayloadType = (typeof PAYLOAD_TYPE)[keyof typeof PAYLOAD_TYPE]
 
 export type GatewayValue = {
 	device: string
@@ -1100,7 +1094,9 @@ export default class Gateway {
 				config.discovery_payload.mode_command_topic = modeId + '/set'
 
 				// [0, 1, 2 ... ] (['off', 'heat', 'cold', ...])
-				const availableModes = <number[]>mode.states.map((s) => s.value)
+				const availableModes = mode.states.map(
+					(s) => s.value,
+				) as number[]
 
 				// Hass accepted modes as per: https://www.home-assistant.io/integrations/climate.mqtt/#modes
 				const allowedModes = [
@@ -1186,9 +1182,9 @@ export default class Gateway {
 
 				const action = node.values[actionId]
 				// [0, 1, 2 ... ] list of value fields from objects in states list
-				const availableActions = <number[]>(
-					action.states.map((state) => state.value)
-				)
+				const availableActions = action.states.map(
+					(state) => state.value,
+				) as number[]
 				// Hass accepted actions as per https://www.home-assistant.io/integrations/climate.mqtt/#action_topic:
 				// ['off', 'heating', 'cooling', 'drying', 'idle', 'fan']
 				// Z-Wave actions/states: https://github.com/zwave-js/node-zwave-js/blob/master/packages/zwave-js/src/lib/commandclass/ThermostatOperatingStateCC.ts#L43
