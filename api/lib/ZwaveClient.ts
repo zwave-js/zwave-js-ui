@@ -534,11 +534,13 @@ export interface ZUIEndpoint {
 	}
 }
 
-export enum ZUIScheduleEntryLockMode {
-	DAILY = 'daily',
-	WEEKLY = 'weekly',
-	YEARLY = 'yearly',
-}
+export const ZUIScheduleEntryLockMode = {
+	DAILY: 'daily',
+	WEEKLY: 'weekly',
+	YEARLY: 'yearly',
+} as const
+export type ZUIScheduleEntryLockMode =
+	(typeof ZUIScheduleEntryLockMode)[keyof typeof ZUIScheduleEntryLockMode]
 
 export interface ZUISchedule {
 	[ZUIScheduleEntryLockMode.DAILY]: ZUIScheduleConfig<ScheduleEntryLockDailyRepeatingSchedule>
@@ -708,20 +710,23 @@ export type ZUIDriverInfo = {
 	newConfigVersion?: string | undefined
 }
 
-export enum ZwaveClientStatus {
-	CONNECTED = 'connected',
-	BOOTLOADER_READY = 'bootloader ready',
-	DRIVER_READY = 'driver ready',
-	SCAN_DONE = 'scan done',
-	DRIVER_FAILED = 'driver failed',
-	CLOSED = 'closed',
-}
+export const ZwaveClientStatus = {
+	CONNECTED: 'connected',
+	BOOTLOADER_READY: 'bootloader ready',
+	DRIVER_READY: 'driver ready',
+	SCAN_DONE: 'scan done',
+	DRIVER_FAILED: 'driver failed',
+	CLOSED: 'closed',
+} as const
+export type ZwaveClientStatus =
+	(typeof ZwaveClientStatus)[keyof typeof ZwaveClientStatus]
 
-export enum EventSource {
-	DRIVER = 'driver',
-	CONTROLLER = 'controller',
-	NODE = 'node',
-}
+export const EventSource = {
+	DRIVER: 'driver',
+	CONTROLLER: 'controller',
+	NODE: 'node',
+} as const
+export type EventSource = (typeof EventSource)[keyof typeof EventSource]
 
 export interface ZwaveClientEventCallbacks {
 	nodeStatus: (node: ZUINode) => void
@@ -1491,12 +1496,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 						}
 
 						const schedule = fromCache
-							? <ScheduleEntryLockWeekDaySchedule>(
-									getCached(
-										ScheduleEntryLockScheduleKind.WeekDay,
-										s,
-									)
-								)
+							? (getCached(
+									ScheduleEntryLockScheduleKind.WeekDay,
+									s,
+								) as ScheduleEntryLockWeekDaySchedule)
 							: await zwaveNode.commandClasses[
 									'Schedule Entry Lock'
 								].getWeekDaySchedule(slot)
@@ -1517,12 +1520,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 							slotId: s,
 						}
 						const schedule = fromCache
-							? <ScheduleEntryLockYearDaySchedule>(
-									getCached(
-										ScheduleEntryLockScheduleKind.YearDay,
-										s,
-									)
-								)
+							? (getCached(
+									ScheduleEntryLockScheduleKind.YearDay,
+									s,
+								) as ScheduleEntryLockYearDaySchedule)
 							: await zwaveNode.commandClasses[
 									'Schedule Entry Lock'
 								].getYearDaySchedule(slot)
@@ -1544,12 +1545,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 							slotId: s,
 						}
 						const schedule = fromCache
-							? <ScheduleEntryLockDailyRepeatingSchedule>(
-									getCached(
-										ScheduleEntryLockScheduleKind.DailyRepeating,
-										s,
-									)
-								)
+							? (getCached(
+									ScheduleEntryLockScheduleKind.DailyRepeating,
+									s,
+								) as ScheduleEntryLockDailyRepeatingSchedule)
 							: await zwaveNode.commandClasses[
 									'Schedule Entry Lock'
 								].getDailyRepeatingSchedule(slot)
