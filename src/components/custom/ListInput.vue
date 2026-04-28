@@ -191,3 +191,11 @@ export default {
 	},
 }
 </script>
+
+<style scoped>
+/* Force text wrapping for long node names instead of horizontal scrolling */
+.v-list-item {
+	overflow-wrap: break-word;
+	word-break: break-word;
+}
+</style>
