@@ -202,13 +202,6 @@ export type GatewayConfig = {
 	logFileName?: string
 	manualDiscovery?: boolean
 	authEnabled?: boolean
-	/**
-	 * Express `trust proxy` setting. Accepts a hop count (e.g. "1"),
-	 * a comma-separated list of trusted IPs/CIDRs, or one of the presets
-	 * `loopback`, `linklocal`, `uniquelocal`. Overridden by the
-	 * `TRUST_PROXY` env var when set.
-	 */
-	trustProxy?: string
 	versions?: {
 		driver?: string
 		app?: string

@@ -160,12 +160,11 @@ function parseTrustProxy(raw: string): boolean | number | string {
 }
 
 /**
- * Configure Express `trust proxy`. The `TRUST_PROXY` env var takes
- * precedence; otherwise fall back to `gateway.trustProxy` from settings.
- * An empty / unset value leaves the default (false) in place.
+ * Configure Express `trust proxy` from the `TRUST_PROXY` env var.
+ * An unset value leaves the default (false) in place.
  */
-function configureTrustProxy(settings: Settings) {
-	const raw = process.env.TRUST_PROXY ?? settings?.gateway?.trustProxy ?? ''
+function configureTrustProxy() {
+	const raw = process.env.TRUST_PROXY
 	if (!raw) return
 	const value = parseTrustProxy(raw)
 	app.set('trust proxy', value)
@@ -229,7 +228,7 @@ export async function startServer(port: number | string, host?: string) {
 	// as the really first thing setup loggers so all logs will go to file if specified in settings
 	setupLogging(settings)
 
-	configureTrustProxy(settings)
+	configureTrustProxy()
 
 	const httpsEnabled = process.env.HTTPS || settings?.gateway?.https
 
@@ -1170,9 +1169,6 @@ app.get('/api/settings', apisLimiter, isAuthenticated, function (req, res) {
 	if (process.env.ZWAVE_PORT) {
 		managedExternally.push('zwave.port')
 		managedExternally.push('zwave.enabled')
-	}
-	if (process.env.TRUST_PROXY) {
-		managedExternally.push('gateway.trustProxy')
 	}
 	// Add paths from external settings file
 	managedExternally.push(...getExternallyManagedPaths())

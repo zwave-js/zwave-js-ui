@@ -19,7 +19,6 @@ These settings control the appearance and behavior of the Z-Wave JS UI interface
   - Username:`admin`
   - Password: `zwave`
 - **HTTPS**: Enable this to serve the UI over HTTPS (Requires app reload). **Requires openssl to be installed on the machine.**
-- **Trust Proxy**: Configures Express's `trust proxy` setting when running behind a reverse proxy (Requires app reload). Accepts a hop count (e.g. `1`), a comma-separated list of trusted IPs/CIDRs, or one of the presets `loopback`/`linklocal`/`uniquelocal`. Leave empty to disable. Use this to silence the `ERR_ERL_UNEXPECTED_X_FORWARDED_FOR` warning and let the rate limiters key on the real client IP. The `TRUST_PROXY` env var (see [Environment variables](/guide/env-vars)) overrides this setting when set.
 - **Plugins**: List of plugins to use. If the plugin you want to use is not listed just write the name or the path to it and press enter. More about plugins [here](/guide/plugins)
 - **Log enabled**: Enable logging for Z-Wave JS UI
 - **Log level**: Set the log level (Error, Warn, Info, Verbose, Debug, Silly)
