@@ -9,7 +9,7 @@ Z-Wave supports sending commands to multiple nodes simultaneously using **broadc
 Broadcast nodes send commands to **every node** in the network at once. They are created automatically when the Z-Wave driver starts:
 
 - **Broadcast**: Sends to all standard Z-Wave nodes
-- **Broadcast LR**: Sends to all Long Range nodes (only shown when the controller supports Long Range)
+- **Broadcast LR**: Sends to all Long Range nodes (only shown when at least one Long Range node is present in the network)
 
 Broadcast commands are **write-only** — you can send commands but cannot read back the current state from a broadcast node.
 
@@ -22,7 +22,8 @@ Key behaviors:
 - Groups require at least **2 nodes**
 - The exposed values are the **union** of all writeable actuator command classes across all member nodes, plus Basic CC (always added so heterogeneous groups can be controlled together). Nodes that don't support a particular CC simply ignore the command.
 - **Value aggregation**: For each value, if all supporting member nodes have the same value, it is displayed. If values differ, it shows as undefined.
-- Group IDs are assigned automatically above `0xFFF` (4096+) and are internal — the UI identifies groups by name, not by ID.
+- Group IDs are assigned automatically and are internal — the UI identifies groups by name and never displays the numeric ID.
+- If a member node is later removed from the network, it is dropped from the group automatically. A group whose membership falls below the 2-node minimum is hidden from the Control Panel until you re-add nodes from the Groups page.
 
 ## Managing Groups
 
@@ -30,25 +31,23 @@ Navigate to the **Groups** page from the left sidebar menu.
 
 ### Creating a Group
 
-1. Click the **Add** button in the toolbar
-2. Enter a **group name**
-3. Select **2 or more nodes** from the dropdown (controller node is excluded automatically)
-4. Click **Confirm**
+1. Click the **Create Group** button in the table toolbar
+2. Enter a **group name** (max 64 characters)
+3. Select **2 or more nodes** from the dropdown (controller and other virtual nodes are excluded automatically)
+4. Click **Create**
 
 The group will appear in the table and a virtual node will be created in the Control Panel.
 
 ### Editing a Group
 
-1. Select the group row in the table
-2. Click the **Edit** button
-3. Modify the name or node selection
-4. Click **Confirm**
+1. Click the green **edit** icon on the group's row
+2. Modify the name or node selection
+3. Click **Update**
 
 ### Deleting a Group
 
-1. Select the group row in the table
-2. Click the **Delete** button
-3. Confirm the deletion
+1. Click the red **delete** icon on the group's row
+2. Confirm the deletion
 
 ### Exporting Groups
 

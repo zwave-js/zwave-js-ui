@@ -173,21 +173,19 @@
 		</template>
 		<template #[`item.id`]="{ item }">
 			<div class="d-flex align-center">
-				<!-- Broadcast nodes: show purple sensors icon instead of ID -->
+				<!-- Broadcast (standard or LR): purple sensors icon -->
 				<v-icon
 					v-if="
-						item.virtual &&
-						(item.id === NODE_ID_BROADCAST ||
-							item.id === NODE_ID_BROADCAST_LR)
+						item.kind === 'broadcast' || item.kind === 'broadcastLR'
 					"
 					color="purple"
 					v-tooltip:bottom="item.name"
 				>
 					sensors
 				</v-icon>
-				<!-- Multicast groups: show purple more_horiz icon instead of ID -->
+				<!-- Multicast groups: purple more_horiz icon -->
 				<v-icon
-					v-else-if="item.virtual && item.id > NODE_ID_BROADCAST_LR"
+					v-else-if="item.kind === 'multicast'"
 					color="purple"
 					v-tooltip:bottom="item.name"
 				>
@@ -220,18 +218,11 @@
 			<div v-else></div>
 		</template>
 		<template #[`item.manufacturer`]="{ item }">
-			<!-- For broadcast nodes, show "Broadcast" / "Broadcast LR" here -->
-			<span v-if="item.virtual && item.id === NODE_ID_BROADCAST"
-				>Broadcast</span
-			>
-			<span v-else-if="item.virtual && item.id === NODE_ID_BROADCAST_LR"
-				>Broadcast LR</span
-			>
-			<!-- For multicast groups, show "Multicast: [name]" -->
-			<span v-else-if="item.virtual && item.id > NODE_ID_BROADCAST_LR">
+			<span v-if="item.kind === 'broadcast'">Broadcast</span>
+			<span v-else-if="item.kind === 'broadcastLR'">Broadcast LR</span>
+			<span v-else-if="item.kind === 'multicast'">
 				Multicast: {{ item.name }}
 			</span>
-			<!-- For physical nodes, show manufacturer -->
 			<span v-else>
 				{{ item.manufacturer }}
 			</span>

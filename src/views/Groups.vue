@@ -76,7 +76,6 @@ export default {
 		return {
 			groups: [],
 			headers_groups: [
-				{ title: 'ID', key: 'id' },
 				{ title: 'Name', key: 'name' },
 				{ title: 'Nodes', key: 'nodeIds' },
 				{ title: 'Actions', key: 'actions', sortable: false },
