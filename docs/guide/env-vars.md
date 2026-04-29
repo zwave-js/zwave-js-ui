@@ -30,7 +30,7 @@ This is the list of the supported environment variables:
 - `ZUI_LOG_MAXSIZE`: The maximum size of a single log file. Default is `50m` (50MB)
 - `NO_LOG_COLORS`: Set this env var to `'true'` to disable application log colors also in the console.
 - `ZUI_NO_CONSOLE`: Set this env var to `'true'` to disable application log in the console.
-- `TRUST_PROXY`: Set this env in order to trust the proxy. See [express behind proxies](https://expressjs.com/en/guide/behind-proxies.html) for more info about allowed values.
+- `TRUST_PROXY`: Configures Express's `trust proxy` setting when running behind a reverse proxy. Accepts a hop count (e.g. `1`), `true`/`false`, a comma-separated list of trusted IPs/CIDRs, or one of the presets `loopback`/`linklocal`/`uniquelocal`. See [express behind proxies](https://expressjs.com/en/guide/behind-proxies.html) for the allowed values. When set, this overrides the **Trust Proxy** field in General settings. Setting this resolves the `ERR_ERL_UNEXPECTED_X_FORWARDED_FOR` warning emitted by `express-rate-limit` and ensures rate limiters use the real client IP. Note: setting it to `true` (or no value) is too permissive and triggers `ERR_ERL_PERMISSIVE_TRUST_PROXY` — prefer an explicit hop count or IP list.
 - `FORCE_DISABLE_SSL`: Set this env var to `'true'` to disable SSL.
 - `BASE_PATH`: Set this env var to the base path where the application is served. Default is `/`.
 - `UID_DISCOVERY_PREFIX`: Sets the prefix used for MQTT Discovery `unique_id` of entities. Default is `zwavejs2mqtt_`.
