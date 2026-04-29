@@ -1,0 +1,137 @@
+{
+	"defaults": {
+		"viewport": { "width": 1440, "height": 900 },
+		"themes": ["dark"],
+		"settleAfterRoute": 1200
+	},
+	"entries": [
+		{
+			"filename": "control_panel_dark.png",
+			"themes": ["dark", "light"],
+			"lightFilename": "control_panel.png",
+			"route": "/control-panel",
+			"preActions": [
+				{ "wait": "table tbody tr" },
+				{ "settle": 800 }
+			]
+		},
+		{
+			"filename": "settings_dark.png",
+			"themes": ["dark", "light"],
+			"lightFilename": "settings.png",
+			"route": "/settings",
+			"preActions": [
+				{ "wait": ".v-tabs" },
+				{ "click": ".v-tabs button:nth-child(1)" },
+				{ "settle": 600 }
+			]
+		},
+		{
+			"filename": "scenes.png",
+			"route": "/scenes",
+			"preActions": [
+				{ "wait": "table tbody tr" },
+				{ "click": "table tbody tr:first-child" },
+				{ "settle": 400 }
+			]
+		},
+		{
+			"filename": "mesh_diagram.png",
+			"route": "/mesh",
+			"preActions": [
+				{ "wait": "canvas" },
+				{ "settle": 2500 }
+			]
+		},
+		{
+			"filename": "mesh-selected.png",
+			"route": "/mesh",
+			"preActions": [
+				{ "wait": "canvas" },
+				{ "settle": 2500 },
+				{ "exec": "/* TODO: trigger node selection — see SKILL.md failure modes */ const el = document.querySelector('canvas'); const r = el.getBoundingClientRect(); el.dispatchEvent(new MouseEvent('click', { bubbles:true, clientX:r.left+r.width/2, clientY:r.top+r.height/2 }));" },
+				{ "settle": 600 }
+			]
+		},
+		{
+			"filename": "debug.png",
+			"route": "/debug",
+			"preActions": [
+				{ "wait": ".log-container, pre, code" },
+				{ "settle": 1500 }
+			]
+		},
+		{
+			"filename": "nodes_manager.png",
+			"route": "/control-panel",
+			"preActions": [
+				{ "wait": "table tbody tr" },
+				{ "click": "[data-test-id='manage-nodes-btn'], button:has-text('Manage nodes')" },
+				{ "wait": ".v-overlay--active" },
+				{ "settle": 600 }
+			]
+		},
+		{
+			"filename": "route_health_result.png",
+			"route": "/control-panel",
+			"preActions": [
+				{ "wait": "table tbody tr" },
+				{ "click": "table tbody tr[data-id='2'], table tbody tr:first-child" },
+				{ "settle": 600 },
+				{ "click": "button:has-text('Health Check')" },
+				{ "wait": ".health-check-result, .v-overlay--active" },
+				{ "settle": 800 }
+			]
+		},
+		{
+			"filename": "config_updates_icon.png",
+			"viewport": { "width": 320, "height": 96 },
+			"route": "/control-panel",
+			"preActions": [
+				{ "wait": "[data-test-id='config-updates-icon']" },
+				{ "exec": "const el = document.querySelector('[data-test-id=\"config-updates-icon\"]'); el?.scrollIntoView({block:'center'});" },
+				{ "settle": 300 }
+			]
+		},
+		{
+			"filename": "config_updates_dialog.png",
+			"route": "/control-panel",
+			"preActions": [
+				{ "click": "[data-test-id='config-updates-icon']" },
+				{ "wait": ".v-overlay--active" },
+				{ "settle": 600 }
+			]
+		},
+		{
+			"filename": "gateway_values_table.png",
+			"route": "/settings",
+			"preActions": [
+				{ "wait": ".v-tabs" },
+				{ "click": ".v-tabs button:has-text('Gateway')" },
+				{ "settle": 400 },
+				{ "scrollTo": ".gateway-values-table, table" },
+				{ "settle": 300 }
+			]
+		},
+		{
+			"filename": "edit_gateway_value.png",
+			"route": "/settings",
+			"preActions": [
+				{ "click": ".v-tabs button:has-text('Gateway')" },
+				{ "settle": 400 },
+				{ "click": ".gateway-values-table button:has-text('Edit'), table button:has-text('Edit')" },
+				{ "wait": ".v-overlay--active" },
+				{ "settle": 500 }
+			]
+		},
+		{
+			"filename": "unknown-device.png",
+			"route": "/control-panel",
+			"preActions": [
+				{ "wait": "table tbody tr" },
+				{ "exec": "/* Filter the table to a row labelled 'unknown'. The mock fleet doesn't ship one — manual prep needed. */" },
+				{ "settle": 400 }
+			]
+		}
+	]
+}
