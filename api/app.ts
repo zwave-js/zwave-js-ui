@@ -114,16 +114,9 @@ const logger = loggers.module('App')
 
 const verifyJWT = promisify(jwt.verify.bind(jwt))
 
-// When TRUST_PROXY is not explicitly set (e.g. HA addon behind ingress proxy),
-// disable xForwardedForHeader validation to prevent ERR_ERL_UNEXPECTED_X_FORWARDED_FOR errors
-const rateLimitValidate = process.env.TRUST_PROXY
-	? {}
-	: { xForwardedForHeader: false }
-
 const storeLimiter = rateLimit({
 	windowMs: 15 * 60 * 1000, // 15 minutes
 	max: 100,
-	validate: rateLimitValidate,
 	handler: function (req, res) {
 		res.json({
 			success: false,
@@ -136,7 +129,6 @@ const storeLimiter = rateLimit({
 const loginLimiter = rateLimit({
 	windowMs: 60 * 60 * 1000, // keep in memory for 1 hour
 	max: 5, // start blocking after 5 requests
-	validate: rateLimitValidate,
 	handler: function (req, res) {
 		res.json({ success: false, message: 'Max requests limit reached' })
 	},
@@ -145,7 +137,6 @@ const loginLimiter = rateLimit({
 const apisLimiter = rateLimit({
 	windowMs: 60 * 60 * 1000, // keep in memory for 1 hour
 	max: 500, // start blocking after 500 requests
-	validate: rateLimitValidate,
 	handler: function (req, res) {
 		res.json({ success: false, message: 'Max requests limit reached' })
 	},
@@ -153,6 +144,32 @@ const apisLimiter = rateLimit({
 
 function sslDisabled() {
 	return process.env.FORCE_DISABLE_SSL === 'true'
+}
+
+/**
+ * Coerce a raw trust-proxy value into the type Express expects.
+ * Accepts "true"/"false" (booleans), numeric strings (hop count),
+ * and any other string (IP/CIDR list or preset name) verbatim.
+ */
+function parseTrustProxy(raw: string): boolean | number | string {
+	const trimmed = raw.trim()
+	if (trimmed === 'true') return true
+	if (trimmed === 'false') return false
+	if (/^\d+$/.test(trimmed)) return parseInt(trimmed, 10)
+	return trimmed
+}
+
+/**
+ * Configure Express `trust proxy`. The `TRUST_PROXY` env var takes
+ * precedence; otherwise fall back to `gateway.trustProxy` from settings.
+ * An empty / unset value leaves the default (false) in place.
+ */
+function configureTrustProxy(settings: Settings) {
+	const raw = process.env.TRUST_PROXY ?? settings?.gateway?.trustProxy ?? ''
+	if (!raw) return
+	const value = parseTrustProxy(raw)
+	app.set('trust proxy', value)
+	logger.info(`Express 'trust proxy' set to: ${value}`)
 }
 
 // apis response codes
@@ -211,6 +228,8 @@ export async function startServer(port: number | string, host?: string) {
 
 	// as the really first thing setup loggers so all logs will go to file if specified in settings
 	setupLogging(settings)
+
+	configureTrustProxy(settings)
 
 	const httpsEnabled = process.env.HTTPS || settings?.gateway?.https
 
@@ -539,30 +558,6 @@ function sortStore(store: StoreFileEntry[]) {
 logger.info(`Version: ${utils.getVersion()}`)
 logger.info('Application path:' + utils.getPath(true))
 logger.info('Store path:' + storeDir)
-
-if (process.env.TRUST_PROXY) {
-	app.set(
-		'trust proxy',
-		process.env.TRUST_PROXY === 'true' ? true : process.env.TRUST_PROXY,
-	)
-} else {
-	// Auto-detect proxy: if the first request has X-Forwarded-For, enable trust proxy.
-	// This handles HA addon environments where users cannot set env vars.
-	// Note: any client can send X-Forwarded-For, so in security-sensitive
-	// deployments set TRUST_PROXY explicitly instead of relying on auto-detection.
-	let proxyDetected = false
-	app.use((req, _res, next) => {
-		if (!proxyDetected && req.headers['x-forwarded-for']) {
-			proxyDetected = true
-			logger.info(
-				'Detected X-Forwarded-For header, auto-enabling trust proxy. ' +
-					'Set TRUST_PROXY env var for explicit control.',
-			)
-			app.set('trust proxy', true)
-		}
-		next()
-	})
-}
 
 app.use(
 	morgan(
@@ -1175,6 +1170,9 @@ app.get('/api/settings', apisLimiter, isAuthenticated, function (req, res) {
 	if (process.env.ZWAVE_PORT) {
 		managedExternally.push('zwave.port')
 		managedExternally.push('zwave.enabled')
+	}
+	if (process.env.TRUST_PROXY) {
+		managedExternally.push('gateway.trustProxy')
 	}
 	// Add paths from external settings file
 	managedExternally.push(...getExternallyManagedPaths())

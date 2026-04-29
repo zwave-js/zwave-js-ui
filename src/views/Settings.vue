@@ -122,6 +122,24 @@
 											v-model="newGateway.https"
 										></v-switch>
 									</v-col>
+									<v-col
+										v-if="
+											!isSettingManagedExternally(
+												'gateway.trustProxy',
+											)
+										"
+										cols="12"
+										sm="6"
+										md="4"
+									>
+										<v-text-field
+											v-model="newGateway.trustProxy"
+											label="Trust Proxy"
+											hint="For reverse-proxy setups: hop count (e.g. '1'), comma-separated IPs/CIDRs, or 'loopback'/'linklocal'/'uniquelocal'. Leave empty to disable. REQUIRES APP RELOAD."
+											persistent-hint
+											clearable
+										></v-text-field>
+									</v-col>
 									<v-col cols="12" sm="6" md="4">
 										<v-combobox
 											hint="You can select a plugin from the list or write the path to your custom plugin and press enter"
