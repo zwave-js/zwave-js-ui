@@ -42,7 +42,7 @@ const GATEWAY_TYPE = {
 } as const
 
 const PAYLOAD_TYPE = {
-	TIME_VALUE: 0,
+	JSON_TIME_VALUE: 0,
 	VALUEID: 1,
 	RAW: 2,
 } as const
