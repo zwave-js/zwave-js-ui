@@ -15,7 +15,11 @@
     
     // Output directory
     "outDir": "server",
-    
+
+    // Forbid TS constructs that Node's --experimental-strip-types can't handle
+    // (enums, namespaces with runtime, parameter properties, decorators, etc.)
+    "erasableSyntaxOnly": true,
+
     // ESM compatibility
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,

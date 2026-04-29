@@ -172,13 +172,14 @@ function configureTrustProxy() {
 }
 
 // apis response codes
-enum RESPONSE_CODES {
-	OK = 'OK',
-	GENERAL_ERROR = 'General Error',
-	INVALID = 'Invalid data',
-	AUTH_FAILED = 'Authentication failed',
-	PERMISSION_ERROR = 'Insufficient permissions',
-}
+const RESPONSE_CODES = {
+	OK: 'OK',
+	GENERAL_ERROR: 'General Error',
+	INVALID: 'Invalid data',
+	AUTH_FAILED: 'Authentication failed',
+	PERMISSION_ERROR: 'Insufficient permissions',
+} as const
+type RESPONSE_CODES = (typeof RESPONSE_CODES)[keyof typeof RESPONSE_CODES]
 
 const socketManager = new SocketManager()
 
