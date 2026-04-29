@@ -350,9 +350,11 @@
 				}}</span>
 			</v-tooltip>
 
-			<!-- Suffix loader with tooltip -->
+			<!-- Suffix loader with tooltip. Virtual nodes (broadcast/multicast)
+			don't return device feedback, so showing a "waiting" spinner would
+			never resolve. -->
 			<v-progress-circular
-				v-if="!compact && modelValue.toUpdate"
+				v-if="!compact && modelValue.toUpdate && !node?.virtual"
 				v-tooltip:bottom="
 					node?.status === 'Asleep'
 						? 'Wake up your device in order to send commands'

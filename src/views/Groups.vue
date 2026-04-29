@@ -1,37 +1,48 @@
 <template>
-	<v-container grid-list-md>
+	<v-container fluid class="pa-4">
 		<v-data-table
 			:headers="headers_groups"
 			:items="groups"
+			:search="search"
 			class="elevation-1"
 		>
 			<template #top>
-				<div class="d-flex flex-row pa-2">
-					<v-btn
-						color="primary"
-						variant="text"
-						@click="refreshGroups"
-						prepend-icon="refresh"
-					>
-						Refresh
-					</v-btn>
-					<v-btn
-						variant="text"
-						@click="exportGroups"
-						prepend-icon="file_download"
-					>
-						Export
-					</v-btn>
-					<v-spacer></v-spacer>
-					<v-btn
-						color="primary"
-						variant="flat"
-						@click="editItem()"
-						prepend-icon="add"
-					>
-						Create Group
-					</v-btn>
-				</div>
+				<v-col class="pt-0">
+					<v-row>
+						<v-col cols="12" sm="6">
+							<v-text-field
+								v-model="search"
+								clearable
+								flat
+								variant="outlined"
+								hide-details
+								single-line
+								class="ma-2"
+								style="max-width: 300px; min-width: 250px"
+								prepend-inner-icon="search"
+								label="Search"
+								append-icon="refresh"
+								@click:append="refreshGroups"
+							></v-text-field>
+						</v-col>
+						<v-col
+							cols="12"
+							sm="6"
+							class="d-flex align-center justify-end"
+						>
+							<v-btn color="primary" @click="editItem()">
+								<v-icon start>add</v-icon>
+								Create Group
+							</v-btn>
+							<v-btn variant="text" @click="exportGroups">
+								Export
+								<v-icon end color="primary"
+									>file_download</v-icon
+								>
+							</v-btn>
+						</v-col>
+					</v-row>
+				</v-col>
 			</template>
 
 			<template #[`item.nodeIds`]="{ item }">
@@ -45,19 +56,23 @@
 					color="success"
 					class="mr-2"
 					@click="editItem(item)"
+					v-tooltip:bottom="'Edit'"
+					>edit</v-icon
 				>
-					edit
-				</v-icon>
-				<v-icon size="small" color="error" @click="deleteItem(item)">
-					delete
-				</v-icon>
+				<v-icon
+					size="small"
+					color="error"
+					@click="deleteItem(item)"
+					v-tooltip:bottom="'Delete'"
+					>delete</v-icon
+				>
 			</template>
 		</v-data-table>
 	</v-container>
 </template>
 
 <script>
-import { mapState, mapActions } from 'pinia'
+import { mapState } from 'pinia'
 import useBaseStore from '../stores/base.js'
 import InstancesMixin from '../mixins/InstancesMixin.js'
 
@@ -74,6 +89,7 @@ export default {
 	},
 	data() {
 		return {
+			search: '',
 			groups: [],
 			headers_groups: [
 				{ title: 'Name', key: 'name' },
@@ -83,7 +99,6 @@ export default {
 		}
 	},
 	methods: {
-		...mapActions(useBaseStore, ['showSnackbar']),
 		exportGroups() {
 			this.app.exportConfiguration(this.groups, 'groups')
 		},
@@ -195,10 +210,18 @@ export default {
 				])
 			}
 
-			if (response.success) {
-				const action = isEdit ? 'updated' : 'created'
-				this.showSnackbar(`Group ${action}`, 'success')
-				this.refreshGroups()
+			if (response.success && response.result) {
+				const updated = response.result
+				const index = this.groups.findIndex((g) => g.id === updated.id)
+				if (index >= 0) {
+					this.groups.splice(index, 1, updated)
+				} else {
+					this.groups.push(updated)
+				}
+				this.showSnackbar(
+					`Group ${isEdit ? 'updated' : 'created'}`,
+					'success',
+				)
 			}
 		},
 		async deleteItem(group) {
@@ -214,8 +237,13 @@ export default {
 				])
 
 				if (response.success) {
+					const index = this.groups.findIndex(
+						(g) => g.id === group.id,
+					)
+					if (index >= 0) {
+						this.groups.splice(index, 1)
+					}
 					this.showSnackbar('Group deleted', 'success')
-					this.refreshGroups()
 				}
 			}
 		},
