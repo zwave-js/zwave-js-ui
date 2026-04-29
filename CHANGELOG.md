@@ -1,5 +1,23 @@
 # Changelog
 
+## [11.16.2](https://github.com/zwave-js/zwave-js-ui/compare/v11.16.1...v11.16.2) (2026-04-27)
+
+### ✨ Features
+
+* bump @zwave-js/server@3.8.0 ([#4621](https://github.com/zwave-js/zwave-js-ui/issues/4621)) ([d6902dc](https://github.com/zwave-js/zwave-js-ui/commit/d6902dc946373e97f8444aa6bd234f4fa0ccbff1))
+* bump zwave-js@15.23.5 ([#4620](https://github.com/zwave-js/zwave-js-ui/issues/4620)) ([dd4bf1e](https://github.com/zwave-js/zwave-js-ui/commit/dd4bf1e90dffde0f04a3830e2235c4d22ffba7df))
+
+## [11.16.1](https://github.com/zwave-js/zwave-js-ui/compare/v11.16.0...v11.16.1) (2026-04-22)
+
+### ✨ Features
+
+* bump zwave-js@15.23.2 ([#4615](https://github.com/zwave-js/zwave-js-ui/issues/4615)) ([a21b2d8](https://github.com/zwave-js/zwave-js-ui/commit/a21b2d8be31ec701dfcb2fe3d7bdaabac479ed21))
+* bump zwave-js@15.23.4 ([#4618](https://github.com/zwave-js/zwave-js-ui/issues/4618)) ([d496275](https://github.com/zwave-js/zwave-js-ui/commit/d496275a2993457f772d4f93e3db6f6f7a561d00))
+
+### 🔧 Chores
+
+* **deps:** pin `zwave-js` dependency ([#4617](https://github.com/zwave-js/zwave-js-ui/issues/4617)) ([da840fe](https://github.com/zwave-js/zwave-js-ui/commit/da840feab7581409275389ec5bdcc579d33de7d1))
+
 ## [11.16.0](https://github.com/zwave-js/zwave-js-ui/compare/v11.15.1...v11.16.0) (2026-04-13)
 
 ### ✨ Features

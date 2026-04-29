@@ -419,6 +419,7 @@ After making changes, ALWAYS test these complete user scenarios:
 ### Important Files
 
 -   **package.json**: All npm scripts and dependencies
+-   **Dependency pin review note**: Keep `zwave-js` pinned to an exact version in `package.json` (no `^` or `~`) and review matching `package-lock.json` updates whenever that version changes
 -   **tsconfig.json**: TypeScript configuration (compiles api/ to server/)
 -   **vite.config.mjs**: Frontend build configuration
 -   **nodemon.json**: Backend development server configuration
