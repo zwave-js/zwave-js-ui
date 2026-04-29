@@ -146,6 +146,31 @@ function sslDisabled() {
 	return process.env.FORCE_DISABLE_SSL === 'true'
 }
 
+/**
+ * Coerce a raw trust-proxy value into the type Express expects.
+ * Accepts "true"/"false" (booleans), numeric strings (hop count),
+ * and any other string (IP/CIDR list or preset name) verbatim.
+ */
+function parseTrustProxy(raw: string): boolean | number | string {
+	const trimmed = raw.trim()
+	if (trimmed === 'true') return true
+	if (trimmed === 'false') return false
+	if (/^\d+$/.test(trimmed)) return parseInt(trimmed, 10)
+	return trimmed
+}
+
+/**
+ * Configure Express `trust proxy` from the `TRUST_PROXY` env var.
+ * An unset value leaves the default (false) in place.
+ */
+function configureTrustProxy() {
+	const raw = process.env.TRUST_PROXY
+	if (!raw) return
+	const value = parseTrustProxy(raw)
+	app.set('trust proxy', value)
+	logger.info(`Express 'trust proxy' set to: ${value}`)
+}
+
 // apis response codes
 enum RESPONSE_CODES {
 	OK = 'OK',
@@ -202,6 +227,8 @@ export async function startServer(port: number | string, host?: string) {
 
 	// as the really first thing setup loggers so all logs will go to file if specified in settings
 	setupLogging(settings)
+
+	configureTrustProxy()
 
 	const httpsEnabled = process.env.HTTPS || settings?.gateway?.https
 
@@ -530,13 +557,6 @@ function sortStore(store: StoreFileEntry[]) {
 logger.info(`Version: ${utils.getVersion()}`)
 logger.info('Application path:' + utils.getPath(true))
 logger.info('Store path:' + storeDir)
-
-if (process.env.TRUST_PROXY) {
-	app.set(
-		'trust proxy',
-		process.env.TRUST_PROXY === 'true' ? true : process.env.TRUST_PROXY,
-	)
-}
 
 app.use(
 	morgan(
