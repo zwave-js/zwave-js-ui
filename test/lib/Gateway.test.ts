@@ -74,4 +74,66 @@ describe('#Gateway', () => {
 			})
 		})
 	})
+
+	describe('#_deviceInfo()', () => {
+		beforeEach(() => {
+			gw['_zwave'] = { homeHex: 'abcdef01' } as any
+		})
+
+		const baseNode = {
+			id: 7,
+			manufacturer: 'Zooz',
+			productDescription: 'Dimmer Switch',
+			productLabel: 'ZEN77',
+			firmwareVersion: '1.2.3',
+		} as ZUINode
+
+		it('omits suggested_area by default', () => {
+			const deviceInfo = gw['_deviceInfo'](
+				{ ...baseNode, loc: 'Kitchen' },
+				'Kitchen Dimmer',
+			)
+
+			expect(deviceInfo).to.not.have.property('suggested_area')
+		})
+
+		it('sets suggested_area when enabled and location exists', () => {
+			const gwWithSuggestedArea = new Gateway(
+				{ type: 0, useLocationAsSuggestedArea: true },
+				null as any,
+				null as any,
+			)
+			gwWithSuggestedArea['_zwave'] = { homeHex: 'abcdef01' } as any
+
+			const deviceInfo = gwWithSuggestedArea['_deviceInfo'](
+				{ ...baseNode, loc: 'Kitchen' },
+				'Kitchen Dimmer',
+			)
+
+			expect(deviceInfo.suggested_area).to.equal('Kitchen')
+			closeWatchers()
+		})
+
+		it('trims suggested_area and omits blank locations', () => {
+			const gwWithSuggestedArea = new Gateway(
+				{ type: 0, useLocationAsSuggestedArea: true },
+				null as any,
+				null as any,
+			)
+			gwWithSuggestedArea['_zwave'] = { homeHex: 'abcdef01' } as any
+
+			const trimmed = gwWithSuggestedArea['_deviceInfo'](
+				{ ...baseNode, loc: '  Kitchen  ' },
+				'Kitchen Dimmer',
+			)
+			const blank = gwWithSuggestedArea['_deviceInfo'](
+				{ ...baseNode, loc: '   ' },
+				'Kitchen Dimmer',
+			)
+
+			expect(trimmed.suggested_area).to.equal('Kitchen')
+			expect(blank).to.not.have.property('suggested_area')
+			closeWatchers()
+		})
+	})
 })

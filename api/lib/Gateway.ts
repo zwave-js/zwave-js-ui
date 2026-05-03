@@ -187,6 +187,7 @@ export type GatewayConfig = {
 	entityTemplate?: string
 	hassDiscovery?: boolean
 	discoveryPrefix?: string
+	useLocationAsSuggestedArea?: boolean
 	logEnabled?: boolean
 	logLevel?: LogLevel
 	logToFile?: boolean
@@ -217,6 +218,7 @@ interface DeviceInfo {
 	model: string
 	name: string
 	sw_version: string
+	suggested_area?: string
 }
 
 export default class Gateway {
@@ -2496,7 +2498,7 @@ export default class Gateway {
 	 * Get the device Object to send in discovery payload
 	 */
 	private _deviceInfo(node: ZUINode, nodeName: string): DeviceInfo {
-		return {
+		const deviceInfo: DeviceInfo = {
 			identifiers: [
 				UID_DISCOVERY_PREFIX + this._zwave.homeHex + '_node' + node.id,
 			],
@@ -2505,6 +2507,13 @@ export default class Gateway {
 			name: nodeName,
 			sw_version: node.firmwareVersion || utils.getVersion(),
 		}
+
+		const suggestedArea = node.loc?.trim()
+		if (this.config.useLocationAsSuggestedArea && suggestedArea) {
+			deviceInfo.suggested_area = suggestedArea
+		}
+
+		return deviceInfo
 	}
 
 	private setDiscoveryAvailability(

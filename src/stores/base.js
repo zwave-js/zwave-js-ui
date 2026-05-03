@@ -124,6 +124,7 @@ const useBaseStore = defineStore('base', {
 			nodeNames: true,
 			hassDiscovery: false,
 			discoveryPrefix: 'homeassistant',
+			useLocationAsSuggestedArea: false,
 			logEnabled: false,
 			logLevel: 'debug',
 			logToFile: false,
