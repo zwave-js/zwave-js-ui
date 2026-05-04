@@ -794,7 +794,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 	private driverFunctionCache: utils.Snippet[] = []
 
-	private _extraLogTransports: any[] = []
+	private _extraLogTransports: Array<{ transport: any; level?: string }> = []
 
 	// Foreach valueId, we store a callback function to be called when the value changes
 	private valuesObservers: Record<string, ValueIdObserver> = {}
@@ -908,7 +908,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 * If the driver is already running, the transport is applied immediately.
 	 */
 	addExtraLogTransport(transport: any, level?: string): void {
-		this._extraLogTransports.push(transport)
+		this._extraLogTransports.push({ transport, level })
 		if (this._driver && this._driverReady) {
 			const config: any = {
 				transports: [transport],
@@ -925,7 +925,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 * If the driver is running, the transport is detached immediately.
 	 */
 	removeExtraLogTransport(transport: any): void {
-		const idx = this._extraLogTransports.indexOf(transport)
+		const idx = this._extraLogTransports.findIndex(
+			(e) => e.transport === transport,
+		)
 		if (idx !== -1) {
 			this._extraLogTransports.splice(idx, 1)
 		}
@@ -2422,8 +2424,32 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		zwaveOptions.logConfig.transports = [
 			logTransport,
-			...this._extraLogTransports,
+			...this._extraLogTransports.map((e) => e.transport),
 		]
+
+		// If any extra transport requires a more verbose log level, apply it.
+		// Use the most verbose (highest priority) level among all extra transports.
+		const logLevelOrder = [
+			'error',
+			'warn',
+			'info',
+			'verbose',
+			'debug',
+			'silly',
+		]
+		const extraLevel = this._extraLogTransports
+			.map((e) => e.level)
+			.filter(Boolean)
+			.reduce<string | undefined>((best, level) => {
+				if (!best) return level
+				return logLevelOrder.indexOf(level) >
+					logLevelOrder.indexOf(best)
+					? level
+					: best
+			}, undefined)
+		if (extraLevel) {
+			zwaveOptions.logConfig.level = extraLevel
+		}
 
 		logTransport.stream.on('data', (data) => {
 			this.socket
