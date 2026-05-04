@@ -83,6 +83,22 @@ describe('#Constants', () => {
 			})
 		})
 	})
+	describe('#deviceClass', () => {
+		it('sensor REACTIVE_POWER equals reactive_power', () =>
+			expect(mod.deviceClass.sensor.REACTIVE_POWER).to.equal(
+				'reactive_power',
+			))
+		it('sensor APPARENT_POWER equals apparent_power', () =>
+			expect(mod.deviceClass.sensor.APPARENT_POWER).to.equal(
+				'apparent_power',
+			))
+		it('sensor CARBON_DIOXIDE equals carbon_dioxide', () =>
+			expect(mod.deviceClass.sensor.CARBON_DIOXIDE).to.equal(
+				'carbon_dioxide',
+			))
+		it('existing POWER constant still present', () =>
+			expect(mod.deviceClass.sensor.POWER).to.equal('power'))
+	})
 	describe('#commandClass()', () => {
 		it('known', () => expect(mod.commandClass(0)).to.equal('no_operation'))
 		it('unknown', () =>
