@@ -155,6 +155,9 @@ const logger = LogManager.module('Z-Wave')
 
 const NEIGHBORS_LOCK_REFRESH = 60 * 1000
 
+// Ordered from least verbose to most verbose (matching winston/npm log levels)
+const LOG_LEVEL_ORDER = ['error', 'warn', 'info', 'verbose', 'debug', 'silly']
+
 function validateMethods<T extends readonly (keyof ZwaveClient)[]>(
 	methods: T,
 ): T {
@@ -2429,21 +2432,13 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		// If any extra transport requires a more verbose log level, apply it.
 		// Use the most verbose (highest priority) level among all extra transports.
-		const logLevelOrder = [
-			'error',
-			'warn',
-			'info',
-			'verbose',
-			'debug',
-			'silly',
-		]
 		const extraLevel = this._extraLogTransports
 			.map((e) => e.level)
 			.filter(Boolean)
 			.reduce<string | undefined>((best, level) => {
 				if (!best) return level
-				return logLevelOrder.indexOf(level) >
-					logLevelOrder.indexOf(best)
+				return LOG_LEVEL_ORDER.indexOf(level) >
+					LOG_LEVEL_ORDER.indexOf(best)
 					? level
 					: best
 			}, undefined)
