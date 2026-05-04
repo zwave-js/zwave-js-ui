@@ -2443,7 +2443,14 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 					: best
 			}, undefined)
 		if (extraLevel) {
-			zwaveOptions.logConfig.level = extraLevel
+			const currentLevel = zwaveOptions.logConfig.level
+			const currentIdx = currentLevel
+				? LOG_LEVEL_ORDER.indexOf(currentLevel)
+				: -1
+			const extraIdx = LOG_LEVEL_ORDER.indexOf(extraLevel)
+			if (extraIdx > currentIdx) {
+				zwaveOptions.logConfig.level = extraLevel
+			}
 		}
 
 		logTransport.stream.on('data', (data) => {
