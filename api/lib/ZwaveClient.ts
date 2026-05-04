@@ -2444,9 +2444,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			}, undefined)
 		if (extraLevel) {
 			const currentLevel = zwaveOptions.logConfig.level
-			const currentIdx = currentLevel
-				? LOG_LEVEL_ORDER.indexOf(currentLevel)
-				: -1
+			const currentIdx =
+				typeof currentLevel === 'string'
+					? LOG_LEVEL_ORDER.indexOf(currentLevel)
+					: -1
 			const extraIdx = LOG_LEVEL_ORDER.indexOf(extraLevel)
 			if (extraIdx > currentIdx) {
 				zwaveOptions.logConfig.level = extraLevel
