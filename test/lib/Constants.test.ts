@@ -52,6 +52,37 @@ describe('#Constants', () => {
 				props: {},
 			}))
 	})
+	describe('#meterType()', () => {
+		it('electric kWh → energy', () => {
+			const result = mod.meterType({ meterType: 0x01, scale: 0x00 })
+			expect(result.props).to.deep.equal({
+				state_class: 'total_increasing',
+				device_class: 'energy',
+			})
+		})
+		it('electric W → power', () => {
+			const result = mod.meterType({ meterType: 0x01, scale: 0x02 })
+			expect(result.props).to.deep.equal({
+				state_class: 'measurement',
+				device_class: 'power',
+			})
+		})
+		it('electric kVar → reactive_power', () => {
+			const result = mod.meterType({ meterType: 0x01, scale: 0x07 })
+			expect(result.props).to.deep.equal({
+				state_class: 'measurement',
+				device_class: 'reactive_power',
+			})
+		})
+		it('electric Power Factor → power_factor', () => {
+			const result = mod.meterType({ meterType: 0x01, scale: 0x06 })
+			expect(result.props).to.deep.equal({
+				state_class: 'measurement',
+				device_class: 'power_factor',
+				unit_of_measurement: null,
+			})
+		})
+	})
 	describe('#commandClass()', () => {
 		it('known', () => expect(mod.commandClass(0)).to.equal('no_operation'))
 		it('unknown', () =>
