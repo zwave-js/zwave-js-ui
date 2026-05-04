@@ -83,7 +83,7 @@ jobs:
               run: |
                   npm run build:server
                   nohup npm start > server.log 2>&1 &
-                  sleep 25
+                  sleep 45
             
             - name: Test MQTT write and read
               timeout-minutes: 1

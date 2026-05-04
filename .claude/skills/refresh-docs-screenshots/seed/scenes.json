@@ -1,0 +1,108 @@
+[
+	{
+		"sceneid": 1,
+		"label": "Movie Night",
+		"values": [
+			{
+				"id": "5-38-0-targetValue",
+				"nodeId": 5,
+				"commandClass": 38,
+				"commandClassName": "Multilevel Switch",
+				"endpoint": 0,
+				"property": "targetValue",
+				"propertyName": "targetValue",
+				"type": "number",
+				"readable": true,
+				"writeable": true,
+				"label": "Target value",
+				"stateless": false,
+				"min": 0,
+				"max": 99,
+				"list": false,
+				"newValue": 15,
+				"value": 0,
+				"timeout": 0
+			},
+			{
+				"id": "7-37-0-targetValue",
+				"nodeId": 7,
+				"commandClass": 37,
+				"commandClassName": "Binary Switch",
+				"endpoint": 0,
+				"property": "targetValue",
+				"propertyName": "targetValue",
+				"type": "boolean",
+				"readable": true,
+				"writeable": true,
+				"label": "Target value",
+				"stateless": false,
+				"list": false,
+				"newValue": false,
+				"value": false,
+				"timeout": 0
+			},
+			{
+				"id": "19-67-0-setpoint-1",
+				"nodeId": 19,
+				"commandClass": 67,
+				"commandClassName": "Thermostat Setpoint",
+				"endpoint": 0,
+				"property": "setpoint",
+				"propertyKey": 1,
+				"propertyName": "setpoint",
+				"propertyKeyName": "Heating",
+				"type": "number",
+				"readable": true,
+				"writeable": true,
+				"label": "Heating",
+				"stateless": false,
+				"list": false,
+				"newValue": 19,
+				"value": 21,
+				"timeout": 0
+			}
+		]
+	},
+	{
+		"sceneid": 2,
+		"label": "Goodnight",
+		"values": [
+			{
+				"id": "3-37-0-targetValue",
+				"nodeId": 3,
+				"commandClass": 37,
+				"commandClassName": "Binary Switch",
+				"endpoint": 0,
+				"property": "targetValue",
+				"propertyName": "targetValue",
+				"type": "boolean",
+				"readable": true,
+				"writeable": true,
+				"label": "Target value",
+				"stateless": false,
+				"list": false,
+				"newValue": false,
+				"value": false,
+				"timeout": 0
+			},
+			{
+				"id": "18-98-0-targetMode",
+				"nodeId": 18,
+				"commandClass": 98,
+				"commandClassName": "Door Lock",
+				"endpoint": 0,
+				"property": "targetMode",
+				"propertyName": "targetMode",
+				"type": "number",
+				"readable": true,
+				"writeable": true,
+				"label": "Target mode",
+				"stateless": false,
+				"list": true,
+				"newValue": 255,
+				"value": 0,
+				"timeout": 0
+			}
+		]
+	}
+]

@@ -423,7 +423,7 @@ After making changes, ALWAYS test these complete user scenarios:
 -   **vite.config.mjs**: Frontend build configuration
 -   **nodemon.json**: Backend development server configuration
 -   **.mocharc.yml**: Test configuration
--   **server_config.js**: Mock Z-Wave controller configuration
+-   **mock-server/**: Mock Z-Wave controller configuration (one `.cjs` file per device category, merged at startup)
 
 ## Environment Configuration
 
