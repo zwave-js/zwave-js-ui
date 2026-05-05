@@ -11,6 +11,7 @@ export type StoreKeys =
 	| 'scenes'
 	| 'nodes'
 	| 'users'
+	| 'groups'
 	| 'configurationTemplates'
 
 export interface StoreFile {
@@ -22,6 +23,12 @@ export interface User {
 	username: string
 	passwordHash: string
 	token?: string
+}
+
+export interface Group {
+	id: number
+	name: string
+	nodeIds: number[]
 }
 
 export interface UiConfig {
@@ -54,6 +61,7 @@ const store: Record<StoreKeys, StoreFile> = {
 	scenes: { file: 'scenes.json', default: [] },
 	nodes: { file: 'nodes.json', default: {} },
 	users: { file: 'users.json', default: [] },
+	groups: { file: 'groups.json', default: [] },
 	configurationTemplates: {
 		file: 'configurationTemplates.json',
 		default: [],
