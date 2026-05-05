@@ -1,5 +1,19 @@
 # Changelog
 
+## [11.17.0](https://github.com/zwave-js/zwave-js-ui/compare/v11.16.2...v11.17.0) (2026-05-05)
+
+### ✨ Features
+
+* **hass:** add suggested_area from node location ([#4627](https://github.com/zwave-js/zwave-js-ui/issues/4627)) ([b9544ec](https://github.com/zwave-js/zwave-js-ui/commit/b9544ecd21d005d5b35769cc245d17e8a01a2455))
+
+### 🐛 Bug Fixes
+
+* socket reconnection loop and trust proxy validation error ([#4604](https://github.com/zwave-js/zwave-js-ui/issues/4604)) ([aed2082](https://github.com/zwave-js/zwave-js-ui/commit/aed2082a6576576783d6264e755ce42d6580f218)), closes [#4564](https://github.com/zwave-js/zwave-js-ui/issues/4564) [#4535](https://github.com/zwave-js/zwave-js-ui/issues/4535) [home-assistant/addons#4597](https://github.com/home-assistant/addons/issues/4597) [#4535](https://github.com/zwave-js/zwave-js-ui/issues/4535)
+
+### 🔧 Chores
+
+* **deps:** move frontend-only deps out of runtime deps ([#4630](https://github.com/zwave-js/zwave-js-ui/issues/4630)) ([0ca1850](https://github.com/zwave-js/zwave-js-ui/commit/0ca1850792345fd88c0e623c8e00940433e2e37a))
+
 ## [11.16.2](https://github.com/zwave-js/zwave-js-ui/compare/v11.16.1...v11.16.2) (2026-04-27)
 
 ### ✨ Features
