@@ -2111,6 +2111,19 @@
 										v-if="newGateway.hassDiscovery"
 									>
 										<v-switch
+											label="Use node location as suggested area"
+											hint="Adds Home Assistant MQTT discovery device.suggested_area using the node Location field."
+											v-model="
+												newGateway.useLocationAsSuggestedArea
+											"
+											persistent-hint
+										></v-switch>
+									</v-col>
+									<v-col
+										cols="6"
+										v-if="newGateway.hassDiscovery"
+									>
+										<v-switch
 											label="Manual discovery"
 											hint="Don't automatically send the discovery payloads when a device is discovered"
 											v-model="newGateway.manualDiscovery"
