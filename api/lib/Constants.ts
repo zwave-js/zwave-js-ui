@@ -81,18 +81,45 @@ export const deviceClass: IHassClass = {
 		WINDOW: 'window',
 	},
 	sensor: {
+		APPARENT_POWER: 'apparent_power',
+		AQI: 'aqi',
+		ATMOSPHERIC_PRESSURE: 'atmospheric_pressure',
 		BATTERY: 'battery',
+		CARBON_DIOXIDE: 'carbon_dioxide',
+		CARBON_MONOXIDE: 'carbon_monoxide',
+		CURRENT: 'current',
+		DISTANCE: 'distance',
+		ENERGY: 'energy',
+		FREQUENCY: 'frequency',
+		GAS: 'gas',
 		HUMIDITY: 'humidity',
 		ILLUMINANCE: 'illuminance',
-		SIGNAL_STRENGTH: 'signal_strength',
-		TEMPERATURE: 'temperature',
+		IRRADIANCE: 'irradiance',
+		MOISTURE: 'moisture',
+		NITROGEN_DIOXIDE: 'nitrogen_dioxide',
+		NITROGEN_MONOXIDE: 'nitrogen_monoxide',
+		NITROUS_OXIDE: 'nitrous_oxide',
+		OZONE: 'ozone',
+		PM1: 'pm1',
+		PM10: 'pm10',
+		PM25: 'pm25',
 		POWER: 'power',
 		POWER_FACTOR: 'power_factor',
 		PRESSURE: 'pressure',
+		REACTIVE_POWER: 'reactive_power',
+		SIGNAL_STRENGTH: 'signal_strength',
+		SOUND_PRESSURE: 'sound_pressure',
+		SPEED: 'speed',
+		SULPHUR_DIOXIDE: 'sulphur_dioxide',
+		TEMPERATURE: 'temperature',
 		TIMESTAMP: 'timestamp',
-		CURRENT: 'current',
-		ENERGY: 'energy',
+		VOLATILE_ORGANIC_COMPOUNDS: 'volatile_organic_compounds',
+		VOLATILE_ORGANIC_COMPOUNDS_PARTS: 'volatile_organic_compounds_parts',
 		VOLTAGE: 'voltage',
+		VOLUME: 'volume',
+		WATER: 'water',
+		WEIGHT: 'weight',
+		WIND_SPEED: 'wind_speed',
 	},
 	cover: {
 		AWNING: 'awning',
@@ -160,6 +187,12 @@ export function meterType(ccSpecific: IMeterCCSpecific): any {
 						state_class: 'measurement',
 						device_class: 'power_factor',
 						unit_of_measurement: null, // https://github.com/home-assistant/core/blob/00627b82e0f791c01146f49c9e12e878395366f4/homeassistant/components/sensor/const.py#L314-L318
+					}
+					break
+				case 0x07: // kVar (reactive power)
+					cfg.props = {
+						state_class: 'measurement',
+						device_class: 'reactive_power',
 					}
 					break
 				default:
