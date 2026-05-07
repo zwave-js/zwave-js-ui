@@ -357,6 +357,7 @@ export default {
 					'power',
 					'power_factor',
 					'pressure',
+					'reactive_energy',
 					'reactive_power',
 					'signal_strength',
 					'sound_pressure',

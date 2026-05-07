@@ -106,6 +106,7 @@ export const deviceClass: IHassClass = {
 		POWER: 'power',
 		POWER_FACTOR: 'power_factor',
 		PRESSURE: 'pressure',
+		REACTIVE_ENERGY: 'reactive_energy',
 		REACTIVE_POWER: 'reactive_power',
 		SIGNAL_STRENGTH: 'signal_strength',
 		SOUND_PRESSURE: 'sound_pressure',
@@ -193,6 +194,12 @@ export function meterType(ccSpecific: IMeterCCSpecific): any {
 					cfg.props = {
 						state_class: 'measurement',
 						device_class: 'reactive_power',
+					}
+					break
+				case 0x08: // kVarh (reactive energy)
+					cfg.props = {
+						state_class: 'total_increasing',
+						device_class: 'reactive_energy',
 					}
 					break
 				default:
