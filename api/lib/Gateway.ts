@@ -1691,6 +1691,12 @@ export default class Gateway {
 							unit = 'min'
 						} else if (unit === 'hours') {
 							unit = 'h'
+						} else if (unit === 'kVar') {
+							// HA reactive_power device class requires lowercase unit
+							unit = 'kvar'
+						} else if (unit === 'kVarh') {
+							// Normalize reactive energy unit to lowercase
+							unit = 'kvarh'
 						}
 						cfg.discovery_payload.unit_of_measurement = unit
 					}
