@@ -1,5 +1,7 @@
-function isRecord(value: unknown): value is Record<string, any> {
-	return !!value && typeof value === 'object'
+type ImportedNodeConfig = Record<string, any>
+
+function isRecord(value: unknown): value is ImportedNodeConfig {
+	return !!value && typeof value === 'object' && !Array.isArray(value)
 }
 
 function isPositiveIntegerKey(value: string): boolean {
@@ -11,7 +13,7 @@ function isPositiveIntegerKey(value: string): boolean {
 	return Number.isInteger(number) && number > 0
 }
 
-function isHomeIdWrappedConfig(config: Record<string, any>): boolean {
+function isHomeIdWrappedConfig(config: ImportedNodeConfig): boolean {
 	const entries = Object.entries(config)
 	if (entries.length === 0) return false
 
@@ -27,18 +29,16 @@ function isHomeIdWrappedConfig(config: Record<string, any>): boolean {
 
 export function normalizeImportedNodesConfig(
 	config: unknown,
-): Record<string, any> {
+): Record<string, ImportedNodeConfig> {
 	if (Array.isArray(config)) {
-		const parsed: Record<string, any> = {}
+		const parsed: Record<string, ImportedNodeConfig> = {}
 
 		for (const [index, node] of config.entries()) {
 			if (!isRecord(node)) continue
 
 			const nodeId =
-				Number.isInteger(node.id) && node.id > 0 ? node.id : index
-			if (nodeId > 0) {
-				parsed[nodeId] = node
-			}
+				Number.isInteger(node.id) && node.id > 0 ? node.id : index + 1
+			parsed[nodeId] = node
 		}
 
 		return parsed
@@ -49,7 +49,7 @@ export function normalizeImportedNodesConfig(
 	}
 
 	if (isHomeIdWrappedConfig(config)) {
-		const parsed: Record<string, any> = {}
+		const parsed: Record<string, ImportedNodeConfig> = {}
 
 		for (const value of Object.values(config)) {
 			if (!isRecord(value)) continue
@@ -66,7 +66,7 @@ export function normalizeImportedNodesConfig(
 	return config
 }
 
-export function getImportedNodeLocation(node: Record<string, any>): string {
+export function getImportedNodeLocation(node: ImportedNodeConfig): string {
 	if (typeof node.loc === 'string') {
 		return node.loc
 	}
