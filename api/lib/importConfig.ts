@@ -5,6 +5,7 @@ function isHomeIdWrappedConfig(config: ImportedNodeConfig): boolean {
 	const entries = Object.entries(config)
 	if (entries.length === 0) return false
 
+	// Numeric-looking top-level keys indicate a direct node-id map, not a wrapped map.
 	if (entries.some(([key]) => utils.isPositiveIntegerString(key))) {
 		return false
 	}

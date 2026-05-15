@@ -1599,6 +1599,8 @@ app.post(
 				if (!utils.isPositiveIntegerString(nodeId)) {
 					continue
 				}
+
+				// All API calls expect nodeId to be a number, so convert it here.
 				const nodeIdNumber = Number(nodeId)
 
 				if (utils.hasProperty(node, 'name')) {
