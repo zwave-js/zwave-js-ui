@@ -108,6 +108,9 @@ describe('#utils', () => {
 		it('returns true for base-10 positive integer strings', () => {
 			expect(utils.isPositiveIntegerString('1')).to.equal(true)
 			expect(utils.isPositiveIntegerString('42')).to.equal(true)
+			expect(utils.isPositiveIntegerString('9007199254740991')).to.equal(
+				true,
+			)
 		})
 
 		it('returns false for non-decimal or non-positive values', () => {
@@ -126,6 +129,12 @@ describe('#utils', () => {
 			expect(utils.isPositiveIntegerString('9007199254740993')).to.equal(
 				false,
 			)
+		})
+
+		it('returns false for non-string values', () => {
+			expect(utils.isPositiveIntegerString(undefined)).to.equal(false)
+			expect(utils.isPositiveIntegerString(null)).to.equal(false)
+			expect(utils.isPositiveIntegerString(1)).to.equal(false)
 		})
 	})
 })

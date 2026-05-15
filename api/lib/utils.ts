@@ -238,7 +238,11 @@ export function isRecord(value: unknown): value is Record<string, any> {
 /**
  * Check if a value is a base-10 positive integer string
  */
-export function isPositiveIntegerString(value: string): boolean {
+export function isPositiveIntegerString(value: unknown): boolean {
+	if (typeof value !== 'string') {
+		return false
+	}
+
 	if (!/^\d+$/.test(value)) {
 		return false
 	}
