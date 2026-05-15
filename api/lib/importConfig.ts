@@ -1,4 +1,4 @@
-import * as utils from './utils.ts'
+import { isPositiveIntegerString, isRecord } from './utils.ts'
 type ImportedNodeConfig = Record<string, any>
 
 function isHomeIdWrappedConfig(config: ImportedNodeConfig): boolean {
@@ -6,13 +6,13 @@ function isHomeIdWrappedConfig(config: ImportedNodeConfig): boolean {
 	if (entries.length === 0) return false
 
 	// Numeric-looking top-level keys indicate a direct node-id map, not a wrapped map.
-	if (entries.some(([key]) => utils.isPositiveIntegerString(key))) {
+	if (entries.some(([key]) => isPositiveIntegerString(key))) {
 		return false
 	}
 
 	return entries.some(([, value]) => {
-		if (!utils.isRecord(value)) return false
-		return Object.keys(value).some(utils.isPositiveIntegerString)
+		if (!isRecord(value)) return false
+		return Object.keys(value).some(isPositiveIntegerString)
 	})
 }
 
@@ -37,11 +37,10 @@ export function normalizeImportedNodesConfig(
 ): Record<string, ImportedNodeConfig> {
 	if (Array.isArray(config)) {
 		const parsed: Record<string, ImportedNodeConfig> = {}
-		const isLegacyArrayFormat =
-			config[0] == null && utils.isRecord(config[1])
+		const isLegacyArrayFormat = config[0] == null && isRecord(config[1])
 
 		for (const [index, node] of config.entries()) {
-			if (!utils.isRecord(node)) continue
+			if (!isRecord(node)) continue
 
 			const nodeId = resolveArrayNodeId(index, node, isLegacyArrayFormat)
 			parsed[nodeId] = node
@@ -50,7 +49,7 @@ export function normalizeImportedNodesConfig(
 		return parsed
 	}
 
-	if (!utils.isRecord(config)) {
+	if (!isRecord(config)) {
 		return {}
 	}
 
@@ -58,10 +57,10 @@ export function normalizeImportedNodesConfig(
 		const parsed: Record<string, ImportedNodeConfig> = {}
 
 		for (const value of Object.values(config)) {
-			if (!utils.isRecord(value)) continue
+			if (!isRecord(value)) continue
 
 			for (const [nodeId, node] of Object.entries(value)) {
-				if (!utils.isRecord(node)) continue
+				if (!isRecord(node)) continue
 				parsed[nodeId] = node
 			}
 		}
