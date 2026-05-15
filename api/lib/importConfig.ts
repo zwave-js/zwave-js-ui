@@ -1,5 +1,5 @@
 import { isPositiveIntegerString, isRecord } from './utils.ts'
-type ImportedNodeConfig = Record<string, any>
+type ImportedNodeConfig = Record<string, unknown>
 
 function isHomeIdWrappedConfig(config: ImportedNodeConfig): boolean {
 	const entries = Object.entries(config)
@@ -21,8 +21,9 @@ function resolveArrayNodeId(
 	node: ImportedNodeConfig,
 	isLegacyArrayFormat: boolean,
 ): number {
-	if (Number.isInteger(node.id) && node.id > 0) {
-		return node.id
+	const nodeId = node.id
+	if (typeof nodeId === 'number' && Number.isInteger(nodeId) && nodeId > 0) {
+		return nodeId
 	}
 
 	if (isLegacyArrayFormat && index > 0) {
@@ -72,12 +73,14 @@ export function normalizeImportedNodesConfig(
 }
 
 export function getImportedNodeLocation(node: ImportedNodeConfig): string {
-	if (typeof node.loc === 'string') {
-		return node.loc
+	const loc = node.loc
+	if (typeof loc === 'string') {
+		return loc
 	}
 
-	if (typeof node.location === 'string') {
-		return node.location
+	const location = node.location
+	if (typeof location === 'string') {
+		return location
 	}
 
 	return ''
