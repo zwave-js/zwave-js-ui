@@ -69,6 +69,10 @@ import type { ZnifferConfig } from './lib/ZnifferManager.ts'
 import ZnifferManager from './lib/ZnifferManager.ts'
 import { getAllNamedScaleGroups, getAllSensors } from '@zwave-js/core'
 import debugManager from './lib/DebugManager.ts'
+import {
+	getImportedNodeLocation,
+	normalizeImportedNodesConfig,
+} from './lib/importConfig.ts'
 
 const createCertificate = promisify(generate)
 
@@ -1584,22 +1588,9 @@ app.post(
 	apisLimiter,
 	isAuthenticated,
 	async function (req, res) {
-		let config = req.body.data
+		const config = normalizeImportedNodesConfig(req.body.data)
 		try {
 			if (!gw.zwave) throw Error('Z-Wave client not inited')
-
-			// try convert to node object
-			if (Array.isArray(config)) {
-				const parsed = {}
-
-				for (let i = 0; i < config.length; i++) {
-					if (config[i]) {
-						parsed[i] = config[i]
-					}
-				}
-
-				config = parsed
-			}
 
 			for (const nodeId in config) {
 				const node = config[nodeId]
@@ -1607,6 +1598,10 @@ app.post(
 
 				// All API calls expect nodeId to be a number, so convert it here.
 				const nodeIdNumber = Number(nodeId)
+				if (!Number.isInteger(nodeIdNumber) || nodeIdNumber <= 0) {
+					continue
+				}
+
 				if (utils.hasProperty(node, 'name')) {
 					await gw.zwave.callApi(
 						'setNodeName',
@@ -1615,11 +1610,14 @@ app.post(
 					)
 				}
 
-				if (utils.hasProperty(node, 'loc')) {
+				if (
+					utils.hasProperty(node, 'loc') ||
+					utils.hasProperty(node, 'location')
+				) {
 					await gw.zwave.callApi(
 						'setNodeLocation',
 						nodeIdNumber,
-						node.loc || '',
+						getImportedNodeLocation(node),
 					)
 				}
 
