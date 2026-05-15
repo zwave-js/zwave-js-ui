@@ -89,6 +89,13 @@ describe('#utils', () => {
 			expect(utils.isRecord([])).to.equal(false)
 			expect(utils.isRecord(null)).to.equal(false)
 		})
+
+		it('returns false for non-object primitives', () => {
+			expect(utils.isRecord(undefined)).to.equal(false)
+			expect(utils.isRecord('value')).to.equal(false)
+			expect(utils.isRecord(1)).to.equal(false)
+			expect(utils.isRecord(true)).to.equal(false)
+		})
 	})
 
 	describe('#isPositiveIntegerString()', () => {
@@ -108,6 +115,17 @@ describe('#utils', () => {
 			expect(utils.isPositiveIntegerString('-1')).to.equal(false)
 			expect(utils.isPositiveIntegerString('0xd6aa1f93')).to.equal(false)
 			expect(utils.isPositiveIntegerString('2.5')).to.equal(false)
+		})
+
+		it('returns false for empty or whitespace values', () => {
+			expect(utils.isPositiveIntegerString('')).to.equal(false)
+			expect(utils.isPositiveIntegerString(' ')).to.equal(false)
+		})
+
+		it('returns false for numeric precision edge values', () => {
+			expect(utils.isPositiveIntegerString('9007199254740993')).to.equal(
+				false,
+			)
 		})
 	})
 })

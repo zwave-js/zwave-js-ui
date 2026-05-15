@@ -232,7 +232,7 @@ export function hasProperty(obj: Record<string, any>, prop: string): boolean {
  * Check if a value is a non-array object
  */
 export function isRecord(value: unknown): value is Record<string, any> {
-	return !!value && typeof value === 'object' && !Array.isArray(value)
+	return value !== null && typeof value === 'object' && !Array.isArray(value)
 }
 
 /**
@@ -244,7 +244,7 @@ export function isPositiveIntegerString(value: string): boolean {
 	}
 
 	const number = Number(value)
-	return Number.isInteger(number) && number > 0
+	return Number.isSafeInteger(number) && number > 0
 }
 
 /**
