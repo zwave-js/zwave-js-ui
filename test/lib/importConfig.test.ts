@@ -68,6 +68,19 @@ describe('importConfig', () => {
 				2: { name: 'Node 2', loc: 'Office' },
 			})
 		})
+
+		it('uses legacy array index format when index 0 is empty', () => {
+			const config = [
+				null,
+				{ name: 'Node 1', loc: 'Kitchen' },
+				{ name: 'Node 2', loc: 'Office' },
+			]
+
+			expect(normalizeImportedNodesConfig(config)).to.deep.equal({
+				1: { name: 'Node 1', loc: 'Kitchen' },
+				2: { name: 'Node 2', loc: 'Office' },
+			})
+		})
 	})
 
 	describe('#getImportedNodeLocation()', () => {

@@ -32,12 +32,18 @@ export function normalizeImportedNodesConfig(
 ): Record<string, ImportedNodeConfig> {
 	if (Array.isArray(config)) {
 		const parsed: Record<string, ImportedNodeConfig> = {}
+		const useLegacyIndex = config[0] == null && isRecord(config[1])
 
 		for (const [index, node] of config.entries()) {
 			if (!isRecord(node)) continue
 
-			const nodeId =
-				Number.isInteger(node.id) && node.id > 0 ? node.id : index + 1
+			let nodeId = index + 1
+			if (useLegacyIndex && index > 0) {
+				nodeId = index
+			}
+			if (Number.isInteger(node.id) && node.id > 0) {
+				nodeId = node.id
+			}
 			parsed[nodeId] = node
 		}
 
