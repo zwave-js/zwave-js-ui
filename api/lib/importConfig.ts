@@ -1,29 +1,17 @@
+import * as utils from './utils.ts'
 type ImportedNodeConfig = Record<string, any>
-
-function isRecord(value: unknown): value is ImportedNodeConfig {
-	return !!value && typeof value === 'object' && !Array.isArray(value)
-}
-
-function isPositiveIntegerKey(value: string): boolean {
-	if (!/^\d+$/.test(value)) {
-		return false
-	}
-
-	const number = Number(value)
-	return Number.isInteger(number) && number > 0
-}
 
 function isHomeIdWrappedConfig(config: ImportedNodeConfig): boolean {
 	const entries = Object.entries(config)
 	if (entries.length === 0) return false
 
-	if (entries.some(([key]) => isPositiveIntegerKey(key))) {
+	if (entries.some(([key]) => utils.isPositiveIntegerString(key))) {
 		return false
 	}
 
 	return entries.some(([, value]) => {
-		if (!isRecord(value)) return false
-		return Object.keys(value).some(isPositiveIntegerKey)
+		if (!utils.isRecord(value)) return false
+		return Object.keys(value).some(utils.isPositiveIntegerString)
 	})
 }
 
@@ -48,10 +36,11 @@ export function normalizeImportedNodesConfig(
 ): Record<string, ImportedNodeConfig> {
 	if (Array.isArray(config)) {
 		const parsed: Record<string, ImportedNodeConfig> = {}
-		const isLegacyArrayFormat = config[0] == null && isRecord(config[1])
+		const isLegacyArrayFormat =
+			config[0] == null && utils.isRecord(config[1])
 
 		for (const [index, node] of config.entries()) {
-			if (!isRecord(node)) continue
+			if (!utils.isRecord(node)) continue
 
 			const nodeId = resolveArrayNodeId(index, node, isLegacyArrayFormat)
 			parsed[nodeId] = node
@@ -60,7 +49,7 @@ export function normalizeImportedNodesConfig(
 		return parsed
 	}
 
-	if (!isRecord(config)) {
+	if (!utils.isRecord(config)) {
 		return {}
 	}
 
@@ -68,10 +57,10 @@ export function normalizeImportedNodesConfig(
 		const parsed: Record<string, ImportedNodeConfig> = {}
 
 		for (const value of Object.values(config)) {
-			if (!isRecord(value)) continue
+			if (!utils.isRecord(value)) continue
 
 			for (const [nodeId, node] of Object.entries(value)) {
-				if (!isRecord(node)) continue
+				if (!utils.isRecord(node)) continue
 				parsed[nodeId] = node
 			}
 		}

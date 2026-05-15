@@ -1596,15 +1596,10 @@ app.post(
 				const node = config[nodeId]
 				if (!node || typeof node !== 'object') continue
 
-				if (!/^\d+$/.test(nodeId)) {
+				if (!utils.isPositiveIntegerString(nodeId)) {
 					continue
 				}
-
-				// All API calls expect nodeId to be a number, so convert it here.
 				const nodeIdNumber = Number(nodeId)
-				if (!Number.isInteger(nodeIdNumber) || nodeIdNumber <= 0) {
-					continue
-				}
 
 				if (utils.hasProperty(node, 'name')) {
 					await gw.zwave.callApi(

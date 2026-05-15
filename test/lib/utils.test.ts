@@ -73,4 +73,41 @@ describe('#utils', () => {
 			)
 		})
 	})
+
+	describe('#isRecord()', () => {
+		let utils: any
+
+		before(async () => {
+			utils = await esmock('../../api/lib/utils.ts')
+		})
+
+		it('returns true for plain objects', () => {
+			expect(utils.isRecord({ key: 'value' })).to.equal(true)
+		})
+
+		it('returns false for arrays and null', () => {
+			expect(utils.isRecord([])).to.equal(false)
+			expect(utils.isRecord(null)).to.equal(false)
+		})
+	})
+
+	describe('#isPositiveIntegerString()', () => {
+		let utils: any
+
+		before(async () => {
+			utils = await esmock('../../api/lib/utils.ts')
+		})
+
+		it('returns true for base-10 positive integer strings', () => {
+			expect(utils.isPositiveIntegerString('1')).to.equal(true)
+			expect(utils.isPositiveIntegerString('42')).to.equal(true)
+		})
+
+		it('returns false for non-decimal or non-positive values', () => {
+			expect(utils.isPositiveIntegerString('0')).to.equal(false)
+			expect(utils.isPositiveIntegerString('-1')).to.equal(false)
+			expect(utils.isPositiveIntegerString('0xd6aa1f93')).to.equal(false)
+			expect(utils.isPositiveIntegerString('2.5')).to.equal(false)
+		})
+	})
 })

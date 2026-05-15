@@ -229,6 +229,25 @@ export function hasProperty(obj: Record<string, any>, prop: string): boolean {
 }
 
 /**
+ * Check if a value is a non-array object
+ */
+export function isRecord(value: unknown): value is Record<string, any> {
+	return !!value && typeof value === 'object' && !Array.isArray(value)
+}
+
+/**
+ * Check if a value is a base-10 positive integer string
+ */
+export function isPositiveIntegerString(value: string): boolean {
+	if (!/^\d+$/.test(value)) {
+		return false
+	}
+
+	const number = Number(value)
+	return Number.isInteger(number) && number > 0
+}
+
+/**
  * Gets the size in a human readable form starting from bytes
  */
 export function humanSize(bytes: number): string {
