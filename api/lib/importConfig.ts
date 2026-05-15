@@ -27,23 +27,33 @@ function isHomeIdWrappedConfig(config: ImportedNodeConfig): boolean {
 	})
 }
 
+function resolveArrayNodeId(
+	index: number,
+	node: ImportedNodeConfig,
+	isLegacyArrayFormat: boolean,
+): number {
+	if (Number.isInteger(node.id) && node.id > 0) {
+		return node.id
+	}
+
+	if (isLegacyArrayFormat && index > 0) {
+		return index
+	}
+
+	return index + 1
+}
+
 export function normalizeImportedNodesConfig(
 	config: unknown,
 ): Record<string, ImportedNodeConfig> {
 	if (Array.isArray(config)) {
 		const parsed: Record<string, ImportedNodeConfig> = {}
-		const useLegacyIndex = config[0] == null && isRecord(config[1])
+		const isLegacyArrayFormat = config[0] == null && isRecord(config[1])
 
 		for (const [index, node] of config.entries()) {
 			if (!isRecord(node)) continue
 
-			let nodeId = index + 1
-			if (useLegacyIndex && index > 0) {
-				nodeId = index
-			}
-			if (Number.isInteger(node.id) && node.id > 0) {
-				nodeId = node.id
-			}
+			const nodeId = resolveArrayNodeId(index, node, isLegacyArrayFormat)
 			parsed[nodeId] = node
 		}
 
