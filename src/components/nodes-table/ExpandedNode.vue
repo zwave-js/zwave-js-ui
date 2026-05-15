@@ -1,8 +1,11 @@
 <template>
 	<div
-		:style="`max-width: calc(100vw - ${
-			$vuetify.display.lgAndUp ? 120 : 70
-		}px)`"
+		style="
+			max-width: calc(
+				100vw - var(--v-layout-left, 0px) - var(--v-layout-right, 0px) -
+					16px
+			);
+		"
 		class="mx-2"
 		v-if="node"
 	>
