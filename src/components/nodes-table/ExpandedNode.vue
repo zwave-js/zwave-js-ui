@@ -6,7 +6,7 @@
 					16px
 			);
 		"
-		class="mx-2"
+		class="px-2"
 		v-if="node"
 	>
 		<v-row class="mt-2 mx-0" align="center">
