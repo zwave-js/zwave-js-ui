@@ -484,65 +484,55 @@
 					<span>Enroll {{ learnDialog.user?.userName || '' }}</span>
 				</v-card-title>
 				<v-card-text>
-					<div v-if="learnDialog.state === 'starting'">
-						<v-progress-circular indeterminate />
-						<div class="mt-2 text-medium-emphasis">
-							Submitted — waiting for the lock to acknowledge.
-						</div>
-					</div>
 					<div
-						v-else-if="learnDialog.state === 'waiting'"
+						v-if="
+							learnDialog.state === 'starting' ||
+							learnDialog.state === 'waiting'
+						"
 						class="text-center"
 					>
 						<v-progress-circular
-							:model-value="learnDialog.progress"
-							:indeterminate="learnDialog.totalSteps <= 1"
+							:model-value="
+								learnDialog.state === 'starting'
+									? 0
+									: learnDialog.progress
+							"
+							:indeterminate="
+								learnDialog.state === 'starting' ||
+								learnDialog.totalSteps <= 1
+							"
 							:size="120"
 							:width="8"
-							color="primary"
+							:color="
+								learnDialog.retryFlash ? 'error' : 'primary'
+							"
 						>
 							<div class="d-flex flex-column align-center">
-								<v-icon size="32" color="primary">
+								<v-icon
+									size="32"
+									:color="
+										learnDialog.retryFlash
+											? 'error'
+											: 'primary'
+									"
+								>
 									{{ credentialTypeIcon(learnDialog.type) }}
 								</v-icon>
 								<span
-									v-if="learnDialog.totalSteps > 1"
+									v-if="
+										learnDialog.state === 'waiting' &&
+										learnDialog.totalSteps > 1
+									"
 									class="text-caption mt-1"
 								>
-									{{ learnDialog.currentStep }} /
+									{{ learnDialog.completedSteps }} /
 									{{ learnDialog.totalSteps }}
 								</span>
 							</div>
 						</v-progress-circular>
-						<div
-							v-if="learnDialog.remainingSec > 0"
-							class="mt-3 text-caption text-medium-emphasis"
-						>
-							{{ learnDialog.remainingSec }}s remaining
-						</div>
-						<div class="mt-2">
-							<template v-if="learnDialog.retry">
-								The lock asked
-								<b>{{
-									learnDialog.user?.userName || 'the user'
-								}}</b>
-								to present the
-								<b>{{
-									credentialTypeLabel(learnDialog.type)
-								}}</b>
-								again — repeat this step.
-							</template>
-							<template v-else-if="learnDialog.totalSteps > 1">
-								Have
-								<b>{{
-									learnDialog.user?.userName || 'the user'
-								}}</b>
-								present their
-								<b>{{
-									credentialTypeLabel(learnDialog.type)
-								}}</b>
-								— step {{ learnDialog.currentStep }} of
-								{{ learnDialog.totalSteps }}.
+						<div class="mt-3">
+							<template v-if="learnDialog.state === 'starting'">
+								Waiting for the lock…
 							</template>
 							<template v-else>
 								Have
@@ -553,50 +543,54 @@
 								<b>{{
 									credentialTypeLabel(learnDialog.type)
 								}}</b>
-								to the lock.
+								<template
+									v-if="
+										learnDialog.retry ||
+										learnDialog.completedSteps > 0
+									"
+								>
+									again</template
+								>.
 							</template>
 						</div>
 					</div>
-					<div v-else-if="learnDialog.state === 'aborted'">
-						<v-icon color="warning" size="64">cancel</v-icon>
-						<div class="mt-2">
-							Enrollment aborted — the lock stopped responding
-							before a credential was captured.
-						</div>
-					</div>
-					<div v-else-if="learnDialog.state === 'success'">
-						<v-icon color="success" size="64">check_circle</v-icon>
-						<div class="mt-2">
-							<b>{{ credentialTypeLabel(learnDialog.type) }}</b>
-							bound to
-							<b>{{
-								learnDialog.user?.userName ||
-								`User ${learnDialog.userId}`
-							}}</b
-							>.
-						</div>
-					</div>
-					<div v-else-if="learnDialog.state === 'timeout'">
-						<v-icon color="warning" size="64"
-							>hourglass_disabled</v-icon
-						>
-						<div class="mt-2">
-							Timed out — the user did not present in time.
-						</div>
-					</div>
-					<div v-else-if="learnDialog.state === 'busy'">
-						<v-icon color="warning" size="64">block</v-icon>
-						<div class="mt-2">
-							Another enrollment is already running on the lock.
-						</div>
-					</div>
-					<div v-else-if="learnDialog.state === 'refused'">
-						<v-icon color="error" size="64">error</v-icon>
-						<div class="mt-2">
-							{{
-								learnDialog.message ||
-								'The lock refused the operation.'
-							}}
+					<div v-else-if="learnDialogResult.icon" class="text-center">
+						<v-icon :color="learnDialogResult.color" :size="120">
+							{{ learnDialogResult.icon }}
+						</v-icon>
+						<div class="mt-3">
+							<template v-if="learnDialog.state === 'success'">
+								<b>{{
+									credentialTypeLabel(learnDialog.type)
+								}}</b>
+								bound to
+								<b>{{
+									learnDialog.user?.userName ||
+									`User ${learnDialog.userId}`
+								}}</b
+								>.
+							</template>
+							<template
+								v-else-if="learnDialog.state === 'aborted'"
+							>
+								Enrollment aborted — the lock stopped responding
+								before a credential was captured.
+							</template>
+							<template
+								v-else-if="learnDialog.state === 'timeout'"
+							>
+								Timed out — the user did not present in time.
+							</template>
+							<template v-else-if="learnDialog.state === 'busy'">
+								Another enrollment is already running on the
+								lock.
+							</template>
+							<template v-else>
+								{{
+									learnDialog.message ||
+									'The lock refused the operation.'
+								}}
+							</template>
 						</div>
 					</div>
 				</v-card-text>
@@ -854,12 +848,12 @@ export default {
 				type: UserCredentialType.FingerBiometric,
 				slot: 1,
 				timeout: 0,
-				currentStep: 1,
+				completedSteps: 0,
 				totalSteps: 1,
 				progress: 0,
 				retry: false,
+				retryFlash: false,
 				message: '',
-				remainingSec: 0,
 			},
 			reassignDialog: {
 				show: false,
@@ -912,6 +906,22 @@ export default {
 					(t) => t.supportsCredentialLearn,
 				) ?? []
 			)
+		},
+		learnDialogResult() {
+			switch (this.learnDialog.state) {
+				case 'success':
+					return { icon: 'check_circle', color: 'success' }
+				case 'timeout':
+					return { icon: 'hourglass_disabled', color: 'warning' }
+				case 'aborted':
+					return { icon: 'cancel', color: 'warning' }
+				case 'busy':
+					return { icon: 'block', color: 'warning' }
+				case 'refused':
+					return { icon: 'error', color: 'error' }
+				default:
+					return { icon: '', color: '' }
+			}
 		},
 		directEntryTypeCaps() {
 			return (
@@ -1157,7 +1167,6 @@ export default {
 			return 1
 		},
 		async startLearn({ user, type, slot, timeout, totalSteps }) {
-			this.stopLearnTimer()
 			this.learnDialog = {
 				show: true,
 				state: 'starting',
@@ -1166,12 +1175,12 @@ export default {
 				type,
 				slot,
 				timeout: timeout || 0,
-				currentStep: 1,
+				completedSteps: 0,
 				totalSteps: totalSteps || 1,
 				progress: 0,
 				retry: false,
+				retryFlash: false,
 				message: '',
-				remainingSec: timeout || 0,
 			}
 			const res = await this.app.apiRequest(
 				'accessControlStartCredentialLearn',
@@ -1188,53 +1197,18 @@ export default {
 			if (!res.success) {
 				this.learnDialog.state = 'refused'
 				this.learnDialog.message = res.message
-			} else {
-				this.learnDialog.state = 'waiting'
-				this.startLearnTimer()
 			}
-		},
-		startLearnTimer() {
-			this.stopLearnTimer()
-			const seconds = this.learnDialog.timeout
-			if (!seconds || seconds <= 0) return
-			// Grace buffer for last-step event lag before declaring abort.
-			this.learnDeadline = Date.now() + (seconds + 5) * 1000
-			this.learnDialog.remainingSec = seconds
-			this.learnTimerHandle = setInterval(
-				() => this.tickLearnTimer(),
-				1000,
-			)
-		},
-		stopLearnTimer() {
-			if (this.learnTimerHandle) {
-				clearInterval(this.learnTimerHandle)
-				this.learnTimerHandle = null
-			}
-		},
-		tickLearnTimer() {
-			const ms = this.learnDeadline - Date.now()
-			if (ms <= 0) {
-				this.learnDialog.remainingSec = 0
-				this.stopLearnTimer()
-				if (['waiting', 'starting'].includes(this.learnDialog.state)) {
-					this.learnDialog.state = 'aborted'
-					this.app.apiRequest(
-						'accessControlCancelCredentialLearn',
-						[this.node.id, this.currentEndpoint.endpointIndex],
-						{ infoSnack: false, errorSnack: false },
-					)
-				}
-			} else {
-				this.learnDialog.remainingSec = Math.ceil(ms / 1000)
-			}
+			// Stay in 'starting' (indeterminate spinner) until the first
+			// learn-progress report arrives — handleLearnProgress flips
+			// state to 'waiting' once the lock acknowledges with steps.
 		},
 		async cancelLearn() {
-			this.stopLearnTimer()
 			await this.app.apiRequest(
 				'accessControlCancelCredentialLearn',
 				[this.node.id, this.currentEndpoint.endpointIndex],
 				{ infoSnack: false, errorSnack: false },
 			)
+			this._stopRetryFlash()
 			this.learnDialog.show = false
 		},
 		async cancelBusyAndRetry() {
@@ -1254,8 +1228,31 @@ export default {
 			})
 		},
 		closeLearn() {
-			this.stopLearnTimer()
+			this._stopRetryFlash()
 			this.learnDialog.show = false
+		},
+		_triggerRetryFlash() {
+			this._stopRetryFlash()
+			const step = 90
+			for (let i = 0; i < 3; i++) {
+				const onAt = i * 2 * step
+				const offAt = onAt + step
+				this._retryFlashTimers.push(
+					setTimeout(() => {
+						this.learnDialog.retryFlash = true
+					}, onAt),
+					setTimeout(() => {
+						this.learnDialog.retryFlash = false
+					}, offAt),
+				)
+			}
+		},
+		_stopRetryFlash() {
+			if (this._retryFlashTimers) {
+				for (const t of this._retryFlashTimers) clearTimeout(t)
+			}
+			this._retryFlashTimers = []
+			this.learnDialog.retryFlash = false
 		},
 		handleLearnProgress(args) {
 			if (!this.learnDialog.show) return
@@ -1266,18 +1263,21 @@ export default {
 			) {
 				return
 			}
-			this.learnDialog.retry =
-				args.status === UserCredentialLearnStatus.StepRetry
-			const remaining = args.stepsRemaining ?? 0
+			const isRetry = args.status === UserCredentialLearnStatus.StepRetry
+			this.learnDialog.retry = isRetry
+			if (isRetry) {
+				this._triggerRetryFlash()
+			}
 			const total = this.learnDialog.totalSteps || 1
-			this.learnDialog.currentStep = Math.max(1, total - remaining)
+			const remaining = Math.min(args.stepsRemaining ?? total, total)
+			const completed = Math.max(0, total - remaining)
+			this.learnDialog.completedSteps = completed
 			this.learnDialog.progress =
-				total > 1 ? ((total - remaining) / total) * 100 : 50
-			// Each progress event renews the per-step timeout budget.
-			if (this.learnDialog.timeout > 0) {
-				this.learnDeadline =
-					Date.now() + (this.learnDialog.timeout + 5) * 1000
-				this.learnDialog.remainingSec = this.learnDialog.timeout
+				total > 0 ? (completed / total) * 100 : 0
+			// `waiting` lets the user see the prompt even if the
+			// initial `starting` state never gets a sync ack.
+			if (this.learnDialog.state === 'starting') {
+				this.learnDialog.state = 'waiting'
 			}
 		},
 		handleLearnCompleted(args) {
@@ -1289,7 +1289,6 @@ export default {
 			) {
 				return
 			}
-			this.stopLearnTimer()
 			const status = args.status
 			if (args.success && status === UserCredentialLearnStatus.Success) {
 				this.learnDialog.state = 'success'
@@ -1614,12 +1613,10 @@ export default {
 		},
 	},
 	beforeUnmount() {
-		this.stopLearnTimer()
+		this._stopRetryFlash()
 	},
 	mounted() {
-		// Non-reactive: setInterval handle + deadline timestamp.
-		this.learnTimerHandle = null
-		this.learnDeadline = 0
+		this._retryFlashTimers = []
 		if (this.state?.primaryEndpoint != null) {
 			this.endpointIndex = this.state.primaryEndpoint
 		}

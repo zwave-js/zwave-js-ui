@@ -6853,7 +6853,11 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		zwaveNode: ZWaveNode,
 		...eventArgs: any[]
 	) {
-		const node = this._nodes.get(zwaveNode.id)
+		// Some CC events (User Credential CC, User Code CC) emit
+		// `(endpoint, payload)` — Endpoint has `nodeId` but not `id`.
+		// Regular node events emit `(node, ...args)` where `id === nodeId`.
+		const nodeId = zwaveNode?.nodeId ?? zwaveNode?.id
+		const node = this._nodes.get(nodeId)
 
 		if (node) {
 			const event: NodeEvent = {
