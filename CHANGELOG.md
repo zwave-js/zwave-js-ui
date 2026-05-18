@@ -1,5 +1,16 @@
 # Changelog
 
+## [11.18.0](https://github.com/zwave-js/zwave-js-ui/compare/v11.17.0...v11.18.0) (2026-05-18)
+
+### ✨ Features
+
+* bump zwave-js@15.24.0 ([#4634](https://github.com/zwave-js/zwave-js-ui/issues/4634)) ([6daab13](https://github.com/zwave-js/zwave-js-ui/commit/6daab1340d91636ed2f676c77d7a093c87f30ab3))
+* **hass:** add reactive_power/reactive_energy, expand HA sensor device classes, and fix unit casing ([#4629](https://github.com/zwave-js/zwave-js-ui/issues/4629)) ([7e61d4b](https://github.com/zwave-js/zwave-js-ui/commit/7e61d4b35435edf3c27e77a56f6bebec62aeccd7))
+
+### 🐛 Bug Fixes
+
+* **zwave:** restore debug log level on driver restart during capture session ([#4628](https://github.com/zwave-js/zwave-js-ui/issues/4628)) ([f6dc9f2](https://github.com/zwave-js/zwave-js-ui/commit/f6dc9f2488f857ccf204e92f54e4d6d5a42a19a1))
+
 ## [11.17.0](https://github.com/zwave-js/zwave-js-ui/compare/v11.16.2...v11.17.0) (2026-05-05)
 
 ### ✨ Features
