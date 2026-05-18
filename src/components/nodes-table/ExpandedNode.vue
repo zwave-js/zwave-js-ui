@@ -9,7 +9,7 @@
 		class="mx-2"
 		v-if="node"
 	>
-		<v-row class="mt-2" align="center">
+		<v-row class="mt-2 mx-0" align="center">
 			<v-col style="min-width: 200px" class="ml-4">
 				<span class="text-h6 text-grey">Device </span>
 				<br />
