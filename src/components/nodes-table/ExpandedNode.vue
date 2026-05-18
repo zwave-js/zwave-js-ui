@@ -41,7 +41,7 @@
 			<v-col
 				:class="$vuetify.display.smAndDown ? 'text-center' : 'text-end'"
 			>
-				<v-btn-group class="ml-2" multiple>
+				<v-btn-group class="ml-2 mr-1" multiple>
 					<v-btn
 						color="primary"
 						variant="outlined"
