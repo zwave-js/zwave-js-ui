@@ -72,6 +72,47 @@ export enum AssignCredentialResult {
 	Error_Unknown = 255,
 }
 
+export enum UserCredentialAdminCodeOperationResult {
+	Modified = 1,
+	Unmodified = 3,
+	ResponseToGet = 4,
+	FailDuplicateCredential = 7,
+	FailManufacturerSecurityRule = 8,
+	ErrorNotSupported = 13,
+	ErrorDisablingNotSupported = 14,
+	UnspecifiedNodeError = 15,
+}
+
+export function isAdminCodeSuccess(
+	r: UserCredentialAdminCodeOperationResult,
+): boolean {
+	return (
+		r === UserCredentialAdminCodeOperationResult.Modified ||
+		r === UserCredentialAdminCodeOperationResult.Unmodified
+	)
+}
+
+export function setAdminCodeResultMessage(
+	r: UserCredentialAdminCodeOperationResult,
+): string {
+	switch (r) {
+		case UserCredentialAdminCodeOperationResult.Modified:
+			return 'Admin code updated.'
+		case UserCredentialAdminCodeOperationResult.Unmodified:
+			return 'Admin code unchanged.'
+		case UserCredentialAdminCodeOperationResult.FailDuplicateCredential:
+			return 'This value is already in use as a user PIN.'
+		case UserCredentialAdminCodeOperationResult.FailManufacturerSecurityRule:
+			return 'The lock refused this value.'
+		case UserCredentialAdminCodeOperationResult.ErrorNotSupported:
+			return 'This lock does not support setting an admin code.'
+		case UserCredentialAdminCodeOperationResult.ErrorDisablingNotSupported:
+			return 'This lock does not support clearing the admin code.'
+		default:
+			return 'The lock did not confirm the change.'
+	}
+}
+
 export const userTypeLabels: Record<number, string> = {
 	[UserCredentialUserType.General]: 'General',
 	[UserCredentialUserType.Programming]: 'Programming',
@@ -215,7 +256,7 @@ export function setCredentialResultMessage(r: SetCredentialResult): string {
 		case SetCredentialResult.Error_ManufacturerSecurityRules:
 			return 'The lock refused this value.'
 		case SetCredentialResult.Error_DuplicateAdminPINCode:
-			return 'This value collides with the admin code.'
+			return 'This value is already in use elsewhere on the lock.'
 		case SetCredentialResult.Error_WrongUserUniqueIdentifier:
 			return 'That user does not exist.'
 		default:

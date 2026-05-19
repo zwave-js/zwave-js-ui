@@ -124,6 +124,8 @@ import {
 	SetUserResult,
 	SetCredentialResult,
 	UserCredentialType,
+	UserCredentialAdminCodeOperationResult,
+	UserCredentialCCAdminPinCodeReport,
 } from 'zwave-js'
 import type {
 	UserCapabilities,
@@ -1606,6 +1608,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			return { supported: false, endpoints: [] }
 		}
 		const primary = indices.includes(0) ? 0 : indices[0]
+		const prev = this._nodes.get(zwaveNode.id)?.accessControl
 		const endpoints: ZUIAccessControlEndpoint[] = []
 		for (const idx of indices) {
 			try {
@@ -1621,12 +1624,22 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				const credentials = accessControl
 					.getAllCredentialsCached()
 					.map((c) => this._mapCredentialData(c))
-				endpoints.push({
+				const endpoint: ZUIAccessControlEndpoint = {
 					endpointIndex: idx,
 					capabilities,
 					users,
 					credentials,
-				})
+				}
+				// Carry over the previously-known admin code — there is no
+				// cheap synchronous accessor for it, so a refresh would
+				// otherwise wipe the value the UI just learned via Get/Set.
+				const prevEp = prev?.endpoints.find(
+					(e) => e.endpointIndex === idx,
+				)
+				if (prevEp && 'adminCode' in prevEp) {
+					endpoint.adminCode = prevEp.adminCode
+				}
+				endpoints.push(endpoint)
 			} catch (e) {
 				logger.warn(
 					`Failed to read access control state for node ${zwaveNode.id} endpoint ${idx}: ${(e as Error).message}`,
@@ -1818,7 +1831,14 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			zwaveNode,
 			endpointIndex,
 		)
-		return accessControl.deleteAllUsers()
+		// zwave-js purges its cache silently here without emitting per-user
+		// `user deleted` / `credential deleted` events, so push a refresh so
+		// the UI catches up.
+		const result = await accessControl.deleteAllUsers()
+		if (result === SetUserResult.OK) {
+			this._refreshAccessControlState(zwaveNode)
+		}
+		return result
 	}
 
 	async accessControlSetCredential(
@@ -1863,7 +1883,13 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			zwaveNode,
 			endpointIndex,
 		)
-		return accessControl.deleteCredentials(options)
+		// U3C path emits no per-credential `credential deleted` events for the
+		// wildcard delete, so push a refresh so the UI catches up.
+		const result = await accessControl.deleteCredentials(options)
+		if (result === SetCredentialResult.OK) {
+			this._refreshAccessControlState(zwaveNode)
+		}
+		return result
 	}
 
 	async accessControlAssignCredential(
@@ -1938,13 +1964,86 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		nodeId: number,
 		endpointIndex: number | undefined,
 		code: string,
-	): Promise<void> {
+	): Promise<{ result: UserCredentialAdminCodeOperationResult }> {
 		const zwaveNode = this._requireNode(nodeId)
-		const { accessControl } = this._accessControlEndpoint(
+		const { endpoint, accessControl } = this._accessControlEndpoint(
 			zwaveNode,
 			endpointIndex,
 		)
-		await accessControl.setAdminCode(code)
+		const usesU3C = endpoint.supportsCC(CommandClasses['User Credential'])
+		// `accessControl.setAdminCode` uses supervision only and does not
+		// surface the AdminPinCodeReport's `operationResult` (e.g. the
+		// FailDuplicateCredential the lock sends when the code collides with
+		// an existing user PIN). Intercept the next AdminPinCodeReport via a
+		// scoped wrapper around `handleCommand` so the UI can react to it.
+		// The report may arrive after `setAdminCode` resolves (the supervision
+		// signal can race the application report), so we keep the listener
+		// installed until either the report lands or a short timeout elapses.
+		const REPORT_WAIT_MS = 2000
+		const originalHandleCommand = usesU3C
+			? (zwaveNode as any).handleCommand.bind(zwaveNode)
+			: undefined
+		let restore = () => {}
+		const reportPromise = usesU3C
+			? new Promise<UserCredentialCCAdminPinCodeReport | null>(
+					(resolve) => {
+						const timer = setTimeout(() => {
+							restore()
+							resolve(null)
+						}, REPORT_WAIT_MS)
+						restore = () => {
+							clearTimeout(timer)
+							;(zwaveNode as any).handleCommand =
+								originalHandleCommand
+						}
+						;(zwaveNode as any).handleCommand = async (
+							cmd: any,
+						) => {
+							const result = await originalHandleCommand(cmd)
+							if (
+								cmd instanceof
+								UserCredentialCCAdminPinCodeReport
+							) {
+								restore()
+								resolve(cmd)
+							}
+							return result
+						}
+					},
+				)
+			: Promise.resolve(null)
+		try {
+			await accessControl.setAdminCode(code)
+		} catch (e) {
+			restore()
+			throw e
+		}
+		const report = await reportPromise
+		const result: UserCredentialAdminCodeOperationResult =
+			report?.operationResult ??
+			UserCredentialAdminCodeOperationResult.Modified
+		const succeeded =
+			result === UserCredentialAdminCodeOperationResult.Modified ||
+			result === UserCredentialAdminCodeOperationResult.Unmodified
+		if (succeeded) {
+			// Reflect the new state immediately so the UI doesn't have to wait
+			// for a follow-up Get to round-trip the lock.
+			const node = this._nodes.get(nodeId)
+			if (node?.accessControl) {
+				const epEntry = node.accessControl.endpoints.find(
+					(e) =>
+						e.endpointIndex ===
+						(endpointIndex ?? node.accessControl.primaryEndpoint),
+				)
+				if (epEntry) {
+					epEntry.adminCode = code === '' ? null : code
+					this.emitNodeUpdate(node, {
+						accessControl: node.accessControl,
+					})
+				}
+			}
+		}
+		return { result }
 	}
 
 	private _requireNode(nodeId: number): ZWaveNode {
