@@ -1,19 +1,31 @@
 <template>
 	<div v-if="state && state.supported" class="pa-2 access-control-root">
-		<v-row align="center" no-gutters class="mb-2">
-			<v-col cols="12" md="6">
-				<div class="d-flex align-center flex-wrap">
-					<v-select
-						v-if="endpointChoices.length > 1"
-						v-model="endpointIndex"
-						:items="endpointChoices"
-						density="compact"
-						hide-details
-						style="max-width: 220px"
-					/>
-				</div>
-			</v-col>
-			<v-col cols="12" md="6" class="text-md-end">
+		<v-select
+			v-if="endpointChoices.length > 1"
+			v-model="endpointIndex"
+			:items="endpointChoices"
+			density="compact"
+			hide-details
+			class="mb-2"
+			style="max-width: 220px"
+		/>
+
+		<div class="d-flex align-center flex-wrap mb-2 access-control-toolbar">
+			<v-tabs v-model="tab" density="compact" class="flex-grow-1">
+				<v-tab value="users">
+					Users
+					<span class="ml-1 text-medium-emphasis">
+						({{
+							currentEndpoint ? currentEndpoint.users.length : 0
+						}})
+					</span>
+				</v-tab>
+				<v-tab value="activity">Activity</v-tab>
+				<v-tab v-if="hasLockSettings" value="lock-settings">
+					Lock settings
+				</v-tab>
+			</v-tabs>
+			<div class="d-flex align-center ml-auto">
 				<v-btn
 					color="primary"
 					prepend-icon="person_add"
@@ -53,87 +65,12 @@
 						</v-list-item>
 					</v-list>
 				</v-menu>
-			</v-col>
-		</v-row>
-
-		<v-tabs v-model="tab" density="compact" class="mb-2">
-			<v-tab value="users">
-				Users
-				<span class="ml-1 text-medium-emphasis">
-					({{ currentEndpoint ? currentEndpoint.users.length : 0 }})
-				</span>
-			</v-tab>
-			<v-tab value="activity">Activity</v-tab>
-		</v-tabs>
+			</div>
+		</div>
 
 		<v-tabs-window v-model="tab">
 			<!-- USERS TAB -->
 			<v-tabs-window-item value="users">
-				<!-- Admin code row -->
-				<v-card
-					v-if="
-						currentEndpoint &&
-						currentEndpoint.capabilities.supportsAdminCode
-					"
-					class="mb-2"
-					variant="tonal"
-				>
-					<v-card-text class="d-flex align-center flex-wrap">
-						<v-icon class="mr-3" color="primary"
-							>admin_panel_settings</v-icon
-						>
-						<div class="flex-grow-1">
-							<div class="text-subtitle-1">Admin code</div>
-							<div class="text-caption text-medium-emphasis">
-								On-device administrative actions
-							</div>
-							<div
-								v-if="adminCodeStatus"
-								class="text-caption text-medium-emphasis mt-1"
-							>
-								{{ adminCodeStatus }}
-								<v-btn
-									v-if="
-										adminCodeRevealable && !revealAdminCode
-									"
-									size="x-small"
-									variant="text"
-									@click="revealAdminCode = true"
-								>
-									Reveal
-								</v-btn>
-								<span
-									v-else-if="revealAdminCode"
-									class="font-monospace ml-2"
-								>
-									{{ currentEndpoint.adminCode }}
-								</span>
-							</div>
-						</div>
-						<v-btn
-							size="small"
-							variant="text"
-							color="primary"
-							@click="openAdminCodeDialog"
-						>
-							Edit
-						</v-btn>
-						<v-btn
-							v-if="
-								currentEndpoint.capabilities
-									.supportsAdminCodeDeactivation &&
-								currentEndpoint.adminCode
-							"
-							size="small"
-							variant="text"
-							color="error"
-							@click="clearAdminCode"
-						>
-							Clear
-						</v-btn>
-					</v-card-text>
-				</v-card>
-
 				<v-card v-if="filteredUsers.length === 0" variant="flat">
 					<v-card-text class="text-center text-medium-emphasis">
 						No users yet
@@ -455,6 +392,135 @@
 					</v-card-text>
 				</v-card>
 			</v-tabs-window-item>
+
+			<!-- LOCK SETTINGS TAB -->
+			<v-tabs-window-item v-if="hasLockSettings" value="lock-settings">
+				<v-card
+					v-if="supportsAdminCode"
+					flat
+					class="lock-settings-card"
+				>
+					<v-card-text>
+						<div class="text-subtitle-1 mb-1">Admin code</div>
+						<div class="text-body-2 text-medium-emphasis mb-4">
+							A PIN entered at the keypad that grants on-device
+							administrative actions like enrolling credentials
+							directly on the lock.
+						</div>
+
+						<!-- Inline edit -->
+						<div v-if="editingAdminPin" class="d-flex align-start">
+							<v-text-field
+								ref="adminPinField"
+								v-model="adminCodePinDraft"
+								type="text"
+								inputmode="numeric"
+								pattern="\d*"
+								maxlength="10"
+								label="New PIN"
+								:rules="adminPinRules"
+								:disabled="adminCodeSaving"
+								autocomplete="off"
+								autocorrect="off"
+								autocapitalize="off"
+								spellcheck="false"
+								name="zwave-admin-pin"
+								data-1p-ignore
+								data-1password-ignore
+								data-lpignore="true"
+								data-bwignore="true"
+								data-form-type="other"
+								density="compact"
+								hide-details="auto"
+								autofocus
+								placeholder="4–10 digits"
+								class="font-monospace admin-pin-field pin-masked"
+								@beforeinput="onDigitBeforeInput"
+								@keyup.enter="saveAdminCodeInline"
+								@keyup.esc="cancelAdminPinEdit"
+							/>
+							<v-spacer />
+							<v-btn
+								class="ml-2"
+								size="small"
+								variant="text"
+								:disabled="adminCodeSaving"
+								@click="cancelAdminPinEdit"
+							>
+								Cancel
+							</v-btn>
+							<v-btn
+								size="small"
+								variant="text"
+								color="primary"
+								:disabled="!adminPinValid"
+								:loading="adminCodeSaving"
+								@click="saveAdminCodeInline"
+							>
+								Save
+							</v-btn>
+						</div>
+
+						<!-- Set: admin code configured -->
+						<div
+							v-else-if="adminCodeState === 'set'"
+							class="d-flex align-center"
+						>
+							<div class="flex-grow-1">
+								<span class="set-indicator">
+									<span class="set-dot" />
+									Admin code is set
+								</span>
+								<div
+									v-if="!supportsAdminCodeDeactivation"
+									class="text-caption text-medium-emphasis mt-1"
+								>
+									Required by this lock
+								</div>
+							</div>
+							<v-btn
+								size="small"
+								variant="text"
+								color="primary"
+								@click="startAdminPinEdit"
+							>
+								Change
+							</v-btn>
+							<v-btn
+								v-if="supportsAdminCodeDeactivation"
+								size="small"
+								variant="text"
+								color="error"
+								@click="clearAdminCode"
+							>
+								Clear
+							</v-btn>
+						</div>
+
+						<!-- Off / not set -->
+						<div v-else class="d-flex align-center">
+							<div
+								class="flex-grow-1 text-caption text-medium-emphasis"
+							>
+								<template v-if="supportsAdminCodeDeactivation">
+									No admin code
+								</template>
+								<template v-else>
+									Required by this lock
+								</template>
+							</div>
+							<v-btn
+								size="small"
+								variant="text"
+								color="primary"
+								@click="startAdminPinEdit"
+							>
+								Set admin code
+							</v-btn>
+						</div>
+					</v-card-text>
+				</v-card>
+			</v-tabs-window-item>
 		</v-tabs-window>
 
 		<DialogAccessControlUser
@@ -674,7 +740,7 @@
 
 		<v-dialog v-model="bulkDeleteDialog.show" max-width="480">
 			<v-card>
-				<v-card-title>Delete credentials matching…</v-card-title>
+				<v-card-title>Delete credentials matching</v-card-title>
 				<v-card-text>
 					<v-select
 						v-model="bulkDeleteDialog.userId"
@@ -742,34 +808,6 @@
 				</v-card-actions>
 			</v-card>
 		</v-dialog>
-
-		<v-dialog v-model="adminCodeDialog.show" max-width="420">
-			<v-card>
-				<v-card-title>Admin code</v-card-title>
-				<v-card-text>
-					<v-text-field
-						v-model="adminCodeDialog.value"
-						label="New admin code"
-						type="text"
-						hide-details
-						class="font-monospace"
-					/>
-				</v-card-text>
-				<v-card-actions>
-					<v-spacer />
-					<v-btn variant="text" @click="adminCodeDialog.show = false">
-						Cancel
-					</v-btn>
-					<v-btn
-						color="primary"
-						:disabled="!adminCodeDialog.value"
-						@click="saveAdminCode"
-					>
-						Save
-					</v-btn>
-				</v-card-actions>
-			</v-card>
-		</v-dialog>
 	</div>
 </template>
 
@@ -793,6 +831,8 @@ import {
 	assignCredentialResultMessage,
 	learnStatusMessage,
 	userTypeTone,
+	isAdminCodeSuccess,
+	setAdminCodeResultMessage,
 } from '@/lib/accessControl.ts'
 
 const ACCESS_CONTROL_EVENTS = new Set([
@@ -828,7 +868,6 @@ export default {
 			endpointIndex: null,
 			refreshing: false,
 			revealedCredentials: new Set(),
-			revealAdminCode: false,
 			userDialog: {
 				show: false,
 				initial: null,
@@ -866,10 +905,12 @@ export default {
 				userId: 0,
 				type: 0,
 			},
-			adminCodeDialog: {
-				show: false,
-				value: '',
-			},
+			adminCodePinDraft: '',
+			adminCodeSaving: false,
+			editingAdminPin: false,
+			adminPinRules: [
+				(v) => /^\d{4,10}$/.test(v) || 'PIN must be 4–10 digits',
+			],
 			learnTypeDialog: {
 				show: false,
 				user: null,
@@ -985,17 +1026,27 @@ export default {
 						c.type === this.bulkDeleteDialog.type),
 			).length
 		},
-		adminCodeStatus() {
-			if (!this.currentEndpoint) return ''
-			const code = this.currentEndpoint.adminCode
-			if (code === null || code === undefined) return 'Not set'
-			return 'Set'
+		supportsAdminCode() {
+			return !!this.currentEndpoint?.capabilities.supportsAdminCode
 		},
-		adminCodeRevealable() {
-			return (
-				typeof this.currentEndpoint?.adminCode === 'string' &&
-				this.currentEndpoint.adminCode !== ''
-			)
+		supportsAdminCodeDeactivation() {
+			return !!this.currentEndpoint?.capabilities
+				.supportsAdminCodeDeactivation
+		},
+		adminCodeState() {
+			if (!this.supportsAdminCode) return 'unsupported'
+			const code = this.currentEndpoint?.adminCode
+			if (typeof code === 'string' && code.length > 0) return 'set'
+			return 'unset'
+		},
+		hasLockSettings() {
+			// Gate the tab on the union of every supported lock-level
+			// setting. For now, admin code is the only inhabitant; add more
+			// flags here as new settings move into this tab.
+			return this.supportsAdminCode
+		},
+		adminPinValid() {
+			return /^\d{4,10}$/.test(this.adminCodePinDraft)
 		},
 	},
 	methods: {
@@ -1525,33 +1576,47 @@ export default {
 				)
 			}
 		},
-		openAdminCodeDialog() {
-			this.adminCodeDialog = {
-				show: true,
-				value:
-					typeof this.currentEndpoint.adminCode === 'string'
-						? this.currentEndpoint.adminCode
-						: '',
+		startAdminPinEdit() {
+			this.adminCodePinDraft = ''
+			this.editingAdminPin = true
+		},
+		onDigitBeforeInput(e) {
+			// Block any non-digit insertion (typed or pasted).
+			if (e.data != null && !/^\d+$/.test(e.data)) {
+				e.preventDefault()
 			}
 		},
-		async saveAdminCode() {
-			const res = await this.app.apiRequest(
-				'accessControlSetAdminCode',
-				[
-					this.node.id,
-					this.currentEndpoint.endpointIndex,
-					this.adminCodeDialog.value,
-				],
-				{ infoSnack: false, errorSnack: true },
-			)
-			if (res.success) {
-				this.adminCodeDialog.show = false
-				this.showSnackbar('Admin code updated.', 'success')
-				await this.app.apiRequest(
-					'accessControlGetAdminCode',
-					[this.node.id, this.currentEndpoint.endpointIndex],
-					{ infoSnack: false, errorSnack: false },
+		cancelAdminPinEdit() {
+			this.editingAdminPin = false
+			this.adminCodePinDraft = ''
+		},
+		async saveAdminCodeInline() {
+			if (!this.adminPinValid || this.adminCodeSaving) return
+			this.adminCodeSaving = true
+			try {
+				const res = await this.app.apiRequest(
+					'accessControlSetAdminCode',
+					[
+						this.node.id,
+						this.currentEndpoint.endpointIndex,
+						this.adminCodePinDraft,
+					],
+					{ infoSnack: false, errorSnack: true },
 				)
+				if (!res.success) return
+				const result = res.result?.result
+				if (result != null && !isAdminCodeSuccess(result)) {
+					this.showSnackbar(
+						setAdminCodeResultMessage(result),
+						'error',
+					)
+					return
+				}
+				this.showSnackbar('Admin code updated.', 'success')
+				this.editingAdminPin = false
+				this.adminCodePinDraft = ''
+			} finally {
+				this.adminCodeSaving = false
 			}
 		},
 		async clearAdminCode() {
@@ -1561,20 +1626,20 @@ export default {
 				'warning',
 				{ confirmText: 'Clear', cancelText: 'Cancel' },
 			)
-			if (!ok) return
+			if (!ok) return false
 			const res = await this.app.apiRequest(
 				'accessControlSetAdminCode',
 				[this.node.id, this.currentEndpoint.endpointIndex, ''],
 				{ infoSnack: false, errorSnack: true },
 			)
-			if (res.success) {
-				this.showSnackbar('Admin code cleared.', 'success')
-				await this.app.apiRequest(
-					'accessControlGetAdminCode',
-					[this.node.id, this.currentEndpoint.endpointIndex],
-					{ infoSnack: false, errorSnack: false },
-				)
+			if (!res.success) return false
+			const result = res.result?.result
+			if (result != null && !isAdminCodeSuccess(result)) {
+				this.showSnackbar(setAdminCodeResultMessage(result), 'error')
+				return false
 			}
+			this.showSnackbar('Admin code cleared.', 'success')
+			return true
 		},
 		activityColor(event) {
 			if (event.includes('deleted')) return 'error'
@@ -1653,6 +1718,11 @@ export default {
 	min-width: 0;
 }
 
+.access-control-toolbar > .v-tabs {
+	min-width: 0;
+	flex: 1 1 auto;
+}
+
 .access-control-root :deep(.v-expansion-panel-title) {
 	flex-wrap: wrap;
 	row-gap: 4px;
@@ -1722,5 +1792,34 @@ export default {
 	:deep(.v-expansion-panel--active > .v-expansion-panel-title) {
 	border-bottom: 1px solid
 		rgba(var(--v-border-color), var(--v-border-opacity));
+}
+
+.lock-settings-card {
+	max-width: 560px;
+	border: 1px solid rgba(var(--v-border-color), 0.08);
+}
+
+.set-indicator {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	font-weight: 500;
+}
+
+.set-dot {
+	width: 8px;
+	height: 8px;
+	border-radius: 50%;
+	background-color: rgb(var(--v-theme-success));
+}
+
+.admin-pin-field {
+	max-width: 320px;
+}
+
+.pin-masked :deep(input) {
+	-webkit-text-security: disc;
+	-moz-text-security: disc;
+	text-security: disc;
 }
 </style>

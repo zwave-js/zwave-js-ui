@@ -55,6 +55,14 @@
 							persistent-hint
 							class="font-monospace"
 							:type="reveal ? 'text' : 'password'"
+							:inputmode="isPinType ? 'numeric' : undefined"
+							:pattern="isPinType ? '\\d*' : undefined"
+							:maxlength="
+								selectedTypeCap
+									? selectedTypeCap.maxCredentialLength
+									: undefined
+							"
+							@beforeinput="onCredentialBeforeInput"
 						>
 							<template #append-inner>
 								<v-btn
@@ -144,6 +152,9 @@ export default {
 			if (!cap) return ''
 			return `${cap.minCredentialLength}–${cap.maxCredentialLength} chars`
 		},
+		isPinType() {
+			return this.form.type === UserCredentialType.PINCode
+		},
 		canSave() {
 			if (!this.form.data || !this.form.userId) return false
 			const cap = this.selectedTypeCap
@@ -202,6 +213,12 @@ export default {
 	},
 	methods: {
 		typeLabel: credentialTypeLabel,
+		onCredentialBeforeInput(e) {
+			if (!this.isPinType) return
+			if (e.data != null && !/^\d+$/.test(e.data)) {
+				e.preventDefault()
+			}
+		},
 		close() {
 			this.show = false
 		},
