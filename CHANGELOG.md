@@ -1,5 +1,30 @@
 # Changelog
 
+## [11.18.0](https://github.com/zwave-js/zwave-js-ui/compare/v11.17.0...v11.18.0) (2026-05-18)
+
+### ✨ Features
+
+* bump zwave-js@15.24.0 ([#4634](https://github.com/zwave-js/zwave-js-ui/issues/4634)) ([6daab13](https://github.com/zwave-js/zwave-js-ui/commit/6daab1340d91636ed2f676c77d7a093c87f30ab3))
+* **hass:** add reactive_power/reactive_energy, expand HA sensor device classes, and fix unit casing ([#4629](https://github.com/zwave-js/zwave-js-ui/issues/4629)) ([7e61d4b](https://github.com/zwave-js/zwave-js-ui/commit/7e61d4b35435edf3c27e77a56f6bebec62aeccd7))
+
+### 🐛 Bug Fixes
+
+* **zwave:** restore debug log level on driver restart during capture session ([#4628](https://github.com/zwave-js/zwave-js-ui/issues/4628)) ([f6dc9f2](https://github.com/zwave-js/zwave-js-ui/commit/f6dc9f2488f857ccf204e92f54e4d6d5a42a19a1))
+
+## [11.17.0](https://github.com/zwave-js/zwave-js-ui/compare/v11.16.2...v11.17.0) (2026-05-05)
+
+### ✨ Features
+
+* **hass:** add suggested_area from node location ([#4627](https://github.com/zwave-js/zwave-js-ui/issues/4627)) ([b9544ec](https://github.com/zwave-js/zwave-js-ui/commit/b9544ecd21d005d5b35769cc245d17e8a01a2455))
+
+### 🐛 Bug Fixes
+
+* socket reconnection loop and trust proxy validation error ([#4604](https://github.com/zwave-js/zwave-js-ui/issues/4604)) ([aed2082](https://github.com/zwave-js/zwave-js-ui/commit/aed2082a6576576783d6264e755ce42d6580f218)), closes [#4564](https://github.com/zwave-js/zwave-js-ui/issues/4564) [#4535](https://github.com/zwave-js/zwave-js-ui/issues/4535) [home-assistant/addons#4597](https://github.com/home-assistant/addons/issues/4597) [#4535](https://github.com/zwave-js/zwave-js-ui/issues/4535)
+
+### 🔧 Chores
+
+* **deps:** move frontend-only deps out of runtime deps ([#4630](https://github.com/zwave-js/zwave-js-ui/issues/4630)) ([0ca1850](https://github.com/zwave-js/zwave-js-ui/commit/0ca1850792345fd88c0e623c8e00940433e2e37a))
+
 ## [11.16.2](https://github.com/zwave-js/zwave-js-ui/compare/v11.16.1...v11.16.2) (2026-04-27)
 
 ### ✨ Features

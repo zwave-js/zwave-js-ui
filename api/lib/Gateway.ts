@@ -187,6 +187,7 @@ export type GatewayConfig = {
 	entityTemplate?: string
 	hassDiscovery?: boolean
 	discoveryPrefix?: string
+	useLocationAsSuggestedArea?: boolean
 	logEnabled?: boolean
 	logLevel?: LogLevel
 	logToFile?: boolean
@@ -217,6 +218,7 @@ interface DeviceInfo {
 	model: string
 	name: string
 	sw_version: string
+	suggested_area?: string
 }
 
 export default class Gateway {
@@ -1689,6 +1691,12 @@ export default class Gateway {
 							unit = 'min'
 						} else if (unit === 'hours') {
 							unit = 'h'
+						} else if (unit === 'kVar') {
+							// HA reactive_power device class requires lowercase unit
+							unit = 'kvar'
+						} else if (unit === 'kVarh') {
+							// Normalize reactive energy unit to lowercase
+							unit = 'kvarh'
 						}
 						cfg.discovery_payload.unit_of_measurement = unit
 					}
@@ -2496,7 +2504,7 @@ export default class Gateway {
 	 * Get the device Object to send in discovery payload
 	 */
 	private _deviceInfo(node: ZUINode, nodeName: string): DeviceInfo {
-		return {
+		const deviceInfo: DeviceInfo = {
 			identifiers: [
 				UID_DISCOVERY_PREFIX + this._zwave.homeHex + '_node' + node.id,
 			],
@@ -2505,6 +2513,13 @@ export default class Gateway {
 			name: nodeName,
 			sw_version: node.firmwareVersion || utils.getVersion(),
 		}
+
+		const suggestedArea = node.loc?.trim()
+		if (this.config.useLocationAsSuggestedArea && suggestedArea) {
+			deviceInfo.suggested_area = suggestedArea
+		}
+
+		return deviceInfo
 	}
 
 	private setDiscoveryAvailability(
