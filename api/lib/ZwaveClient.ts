@@ -612,6 +612,7 @@ export type ZUINode = {
 	available: boolean
 	failed: boolean
 	lastActive?: number
+	lastAwake?: number
 	dbLink?: string
 	maxDataRate?: DataRate
 	interviewStage?: keyof typeof InterviewStage
@@ -6572,6 +6573,15 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		)
 
 		this._onNodeStatus(zwaveNode, true)
+
+		const node = this._nodes.get(zwaveNode.id)
+		if (node) {
+			node.lastAwake = Date.now()
+			this.emitNodeUpdate(node, {
+				lastAwake: node.lastAwake,
+			} as utils.DeepPartial<ZUINode>)
+		}
+
 		this.emit(
 			'event',
 			EventSource.NODE,
