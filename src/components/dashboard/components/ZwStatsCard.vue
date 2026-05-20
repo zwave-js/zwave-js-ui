@@ -1,0 +1,99 @@
+<template>
+	<section class="zw-sc">
+		<div class="zw-sc__title">{{ title }}</div>
+		<div
+			class="zw-sc__body"
+			:style="{ gridTemplateColumns: `repeat(auto-fit, minmax(${minCellWidth}px, 1fr))` }"
+		>
+			<div v-for="item in items" :key="item.label" class="zw-sc__cell">
+				<div class="zw-sc__label">{{ item.label }}</div>
+				<div
+					class="zw-sc__value"
+					:class="{ 'zw-sc__value--muted': isMuted(item) }"
+				>
+					{{ formatValue(item) }}
+				</div>
+			</div>
+		</div>
+	</section>
+</template>
+
+<script setup lang="ts">
+export type StatsItem = {
+	label: string
+	value: number | string
+}
+
+withDefaults(
+	defineProps<{
+		title: string
+		items: StatsItem[]
+		minCellWidth?: number
+	}>(),
+	{ minCellWidth: 96 },
+)
+
+function isMuted(item: StatsItem) {
+	return typeof item.value === 'number' && item.value === 0
+}
+
+function formatValue(item: StatsItem) {
+	if (typeof item.value === 'number') {
+		return item.value === 0 ? '—' : item.value.toLocaleString()
+	}
+	return item.value
+}
+</script>
+
+<style scoped>
+.zw-sc {
+	background: var(--zw-card);
+	border: 1px solid var(--zw-line);
+	border-radius: 6px;
+	overflow: hidden;
+	padding-bottom: 8px;
+}
+
+.zw-sc__title {
+	padding: 6px 10px;
+	font-family: var(--zw-mono);
+	font-size: 10px;
+	color: var(--zw-muted);
+	text-transform: uppercase;
+	letter-spacing: 0.6px;
+}
+
+.zw-sc__body {
+	display: grid;
+	gap: 1px;
+	background: var(--zw-line);
+}
+
+.zw-sc__cell {
+	display: flex;
+	flex-direction: column;
+	gap: 3px;
+	padding: 8px 10px;
+	background: var(--zw-card);
+}
+
+.zw-sc__label {
+	font-family: var(--zw-mono);
+	font-size: 10px;
+	color: var(--zw-muted);
+	text-transform: uppercase;
+	letter-spacing: 0.4px;
+}
+
+.zw-sc__value {
+	font-family: var(--zw-mono);
+	font-size: 15px;
+	font-weight: 500;
+	color: var(--zw-fg);
+	font-variant-numeric: tabular-nums;
+}
+
+.zw-sc__value--muted {
+	color: var(--zw-muted);
+}
+</style>
