@@ -1,0 +1,47 @@
+<template>
+	<div class="zw-pv-state">
+		<div class="zw-pv-state__value" :class="{ 'zw-pv-state__value--alert': isAlert }">
+			{{ pv.value }}
+		</div>
+		<div class="zw-pv-state__caption">{{ device.archetype.label }}</div>
+	</div>
+</template>
+
+<script setup lang="ts">
+import { computed } from 'vue'
+import type { Device, PrimaryValueState } from '@/lib/dashboard-types'
+
+const props = defineProps<{ device: Device; compact?: boolean }>()
+
+const pv = computed(() => props.device.primaryValue as PrimaryValueState)
+
+const isAlert = computed(() => {
+	const v = pv.value
+	if (!v) return false
+	return v.stateIdx === 1 && (v.colors[1] === 'red' || v.colors[1] === 'amber')
+})
+</script>
+
+<style scoped>
+.zw-pv-state {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+}
+
+.zw-pv-state__value {
+	font-size: 22px;
+	font-weight: 600;
+	color: var(--zw-fg);
+	line-height: 1.1;
+}
+
+.zw-pv-state__value--alert {
+	color: #a14b1f;
+}
+
+.zw-pv-state__caption {
+	font-size: 11px;
+	color: var(--zw-muted);
+}
+</style>
