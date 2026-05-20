@@ -340,22 +340,22 @@
 				Click any row to expand its inline node-details body.
 			</p>
 			<div class="table">
-				<ZwDeviceRow
-					v-for="d in devices"
-					:key="d.id"
-					:device="d"
-					:expanded="expandedId === d.id"
-					:columns="['transient', 'location', 'value', 'power', 'signal', 'lastSeen']"
-					:viewport="viewport"
-					@expand="onExpand"
-					@action="onAction"
-				/>
-				<ZwExpandedRow
-					v-if="expandedDevice"
-					:device="expandedDevice"
-					:viewport="viewport"
-					@action="onAction"
-				/>
+				<template v-for="d in devices" :key="d.id">
+					<ZwDeviceRow
+						:device="d"
+						:expanded="expandedId === d.id"
+						:columns="['transient', 'location', 'value', 'power', 'signal', 'lastSeen']"
+						:viewport="viewport"
+						@expand="onExpand"
+						@action="onAction"
+					/>
+					<ZwExpandedRow
+						v-if="expandedId === d.id"
+						:device="d"
+						:viewport="viewport"
+						@action="onAction"
+					/>
+				</template>
 			</div>
 		</section>
 
@@ -793,10 +793,6 @@ const SAMPLE_PROPS: [string, string | number][] = [
 const viewport = ref(window.innerWidth)
 const openDevice = ref<Device | null>(null)
 const expandedId = ref<Device['id'] | null>(null)
-
-const expandedDevice = computed(() =>
-	devices.find((d) => d.id === expandedId.value) ?? null,
-)
 
 function onOpen(d: Device) {
 	openDevice.value = d
