@@ -14,6 +14,7 @@ To enable this method, you must set the flag **MQTT Discovery** in the Home Assi
 Configuration steps:
 
 - In your **Z-Wave JS UI** settings, [Home Assistant](/usage/setup?id=home-assistant) section, enable the `MQTT discovery` flag and enable the **retain** flag in the [MQTT](/usage/setup?id=mqtt) section. That flag is suggested to ensure that, once discovered, each device has the last published value available on startup (otherwise you have to wait for a value change).
+- Optionally enable `Use node location as suggested area` if you want the Z-Wave node `Location` to be published as Home Assistant `device.suggested_area`.
 
 > [!NOTE]
 > Beginning with version `4.0.0`, the default birth/will topic is `homeassistant/status` in order to reflect the default birth/will of Home Assistant, which changed in version `0.113`.
@@ -52,6 +53,9 @@ The devices will loose all of customizations after a restart **unless** you stor
 ### Rediscover Node
 
 If you update the node name/location, you must also rediscover the values of this node to ensure they have the correct topics. To do this, press `REDISCOVER NODE` at the top of the **Home Assistant - Devices** table (check previous picture)
+
+> [!NOTE]
+> Home Assistant treats `suggested_area` as a discovery-time hint. Republishing discovery after changing a node location can update the MQTT payload, but Home Assistant may ignore the new `suggested_area` for devices that already exist or already have an assigned area.
 
 ### Edit existing component
 

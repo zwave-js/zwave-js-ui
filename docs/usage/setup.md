@@ -279,6 +279,7 @@ Enable this to use Z-Wave JS UI as only a Control Panel
 - **MQTT discovery**: Enable this to use MQTT discovery. This is an alternative to the official integration. (more about this [here](/guide/homeassistant))
 - **Discovery Prefix**: The prefix to use to send MQTT discovery messages to Home Assistant
 - **Retain Discovery**: Set retain flag to true in discovery messages
+- **Use node location as suggested area**: Adds the node `Location` to the Home Assistant MQTT discovery `device.suggested_area` field
 - **Manual Discovery**: Don't automatically send the discovery payloads when a device is discovered
 - **Entity name template**: Custom Entity name based on placeholders. Default is `%ln_%o`
   - `%ln`: Node location with name `<location-?><name>`
