@@ -1,6 +1,7 @@
 import { createApp } from 'vue'
 import pinia from './plugins/pinia'
-import vuetify from './plugins/vuetify' // path to vuetify export
+import vuetify0 from './plugins/vuetify0'
+import vuetify from './plugins/vuetify' // legacy — removed once Phase 6 lands
 import router from './router'
 import App from './App.vue'
 import { registerSW } from 'virtual:pwa-register'
@@ -41,6 +42,7 @@ const updateSW = registerSW({
 const app = createApp(App)
 
 app.use(pinia)
+vuetify0(app)
 app.use(vuetify)
 app.use(router)
 

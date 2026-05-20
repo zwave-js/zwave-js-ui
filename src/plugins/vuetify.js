@@ -12,48 +12,12 @@ import 'vuetify/styles'
 import { aliases, md } from 'vuetify/iconsets/md'
 import 'material-design-icons-iconfont/dist/material-design-icons.css'
 
-const lightColors = {
-	primary: '#1976D2',
-	'primary-darken-1': '#1565C0',
-	'primary-soft': '#E3F2FD',
-	secondary: '#1976D2',
-	success: '#43A047',
-	warning: '#FB8C00',
-	'warn-soft': '#FFF3E0',
-	error: '#E53935',
-	'danger-soft': '#FFEBEE',
-	info: '#1976D2',
-	asleep: '#9A8DB7',
-	surface: '#FFFFFF',
-	background: '#F5F5F5',
-	'background-soft': '#FAFAFA',
-	'on-surface': 'rgba(0,0,0,0.87)',
-	'on-surface-variant': 'rgba(0,0,0,0.54)',
-	// Kept for backwards compatibility with the legacy app.
-	purple: '#BA68C8',
-}
-
-// Dark palette is placeholder — full dark-mode design is a separate pass.
-// The keys MUST exist or Vuetify throws when a component asks for them.
-const darkColors = {
-	primary: '#1976D2',
-	'primary-darken-1': '#1565C0',
-	'primary-soft': '#0D2A3E',
-	secondary: '#1976D2',
-	success: '#43A047',
-	warning: '#FB8C00',
-	'warn-soft': '#3A2F18',
-	error: '#E53935',
-	'danger-soft': '#3A1F1F',
-	info: '#1976D2',
-	asleep: '#9A8DB7',
-	surface: '#1E1E1E',
-	background: '#121212',
-	'background-soft': '#1A1A1A',
-	'on-surface': 'rgba(255,255,255,0.87)',
-	'on-surface-variant': 'rgba(255,255,255,0.6)',
-	purple: '#BA68C8',
-}
+// Palette is shared with the V0 theme plugin via src/plugins/palette.ts.
+// Both `light` and `dark` keys must exist or Vuetify throws when a
+// component asks for a missing color. `on-surface` is intentionally pure
+// black / white so the design's alpha-stepped neutrals
+// (`rgba(0,0,0,0.87)`, …) presume an unmixed channel.
+import { lightColors, darkColors } from './palette'
 
 export default createVuetify({
 	icons: {

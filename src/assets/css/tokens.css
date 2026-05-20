@@ -1,40 +1,73 @@
 /* Z-Wave JS UI design tokens
-   Material palette + typography + radii + elevation + keyframes.
-   Authoritative reference: .design-handoff/project/design-system.jsx
-   and Dashboard merged.html. All tokens live on :root — no scope
-   classes. CSS ported from the handoff renames --a-* / --b-* to --zw-*. */
+   The --zw-* names stay stable as the dashboard's vocabulary; the
+   values read from Vuetify0's emitted theme variables so light/dark
+   theme switching cascades automatically. Authoritative palette lives
+   in src/plugins/palette.ts.
+
+   Vuetify0's stylesheet adapter (configured with `rgb: true`) emits
+   each registered theme color as decomposed RGB channels
+   (`--v0-primary: 25, 118, 210`) under a `[data-theme="<id>"]` scope,
+   so we wrap them in rgb()/rgba() here. Alpha-based neutrals
+   (--zw-fg, --zw-line, etc.) compose rgba() with --v0-on-surface,
+   which flips between black (light) and white (dark) on theme change.
+
+   Keyframes are theme-agnostic so they stay raw CSS. */
 
 :root {
 	/* ── Color · primary ─────────────────────────────────────── */
-	--zw-accent: #1976d2;
-	--zw-accent-dark: #1565c0;
-	--zw-accent-soft: #e3f2fd;
+	--zw-accent: rgb(var(--v0-primary));
+	--zw-accent-dark: rgb(var(--v0-primary-darken-1));
+	--zw-accent-soft: rgb(var(--v0-primary-soft));
 
 	/* ── Color · status ──────────────────────────────────────── */
-	--zw-ok: #43a047;
-	--zw-warning: #fb8c00;
-	--zw-warn-soft: #fff3e0;
-	--zw-danger: #e53935;
-	--zw-danger-soft: #ffebee;
-	--zw-asleep: #9a8db7;
+	--zw-ok: rgb(var(--v0-success));
+	--zw-warning: rgb(var(--v0-warning));
+	--zw-warn-soft: rgb(var(--v0-warn-soft));
+	--zw-danger: rgb(var(--v0-error));
+	--zw-danger-soft: rgb(var(--v0-danger-soft));
+	--zw-asleep: rgb(var(--v0-asleep));
 
 	/* ── Color · neutral ─────────────────────────────────────── */
-	--zw-bg: #f5f5f5;
-	--zw-bg-soft: #fafafa;
-	--zw-card: #ffffff;
-	--zw-fg: rgba(0, 0, 0, 0.87);
-	--zw-muted: rgba(0, 0, 0, 0.54);
-	--zw-fg-soft: rgba(0, 0, 0, 0.6);
-	--zw-line: rgba(0, 0, 0, 0.12);
-	--zw-line-soft: rgba(0, 0, 0, 0.08);
-	--zw-line2: rgba(0, 0, 0, 0.18);
-	--zw-chip-bg: rgba(0, 0, 0, 0.06);
-	--zw-chip-fg: rgba(0, 0, 0, 0.65);
-	--zw-row-hover: rgba(25, 118, 210, 0.04);
+	--zw-bg: rgb(var(--v0-background));
+	--zw-bg-soft: rgb(var(--v0-background-soft));
+	--zw-card: rgb(var(--v0-surface));
+
+	/* Alpha-based — on-surface is black in light theme, white in dark.
+	   These automatically flip when the user switches themes. */
+	--zw-fg: rgba(var(--v0-on-surface), 0.87);
+	--zw-muted: rgba(var(--v0-on-surface), 0.54);
+	--zw-fg-soft: rgba(var(--v0-on-surface), 0.6);
+	--zw-line: rgba(var(--v0-on-surface), 0.12);
+	--zw-line-soft: rgba(var(--v0-on-surface), 0.08);
+	--zw-line2: rgba(var(--v0-on-surface), 0.18);
+	--zw-chip-bg: rgba(var(--v0-on-surface), 0.06);
+	--zw-chip-fg: rgba(var(--v0-on-surface), 0.65);
+	--zw-row-hover: rgba(var(--v0-primary), 0.04);
 
 	/* ── Typography ──────────────────────────────────────────── */
 	--zw-font: 'Roboto', system-ui, sans-serif;
 	--zw-mono: 'Roboto Mono', ui-monospace, monospace;
+
+	/* Type-scale tokens (handoff: design-system.jsx:45-55).
+	   Composed as the `font` CSS shorthand — `<weight> <size> <family>`
+	   — so a consumer applies a whole role in one declaration. Notes:
+	   - line-height, letter-spacing, and text-transform are NOT
+	     included; the handoff doesn't specify line-heights and several
+	     roles override letter-spacing / text-transform per atom.
+	     Set those alongside the `font:` call where needed.
+	   - `font:` resets line-height to `normal` per spec, so add an
+	     explicit `line-height:` after the var() if a consumer needs one. */
+	--zw-text-h-l: 600 22px var(--zw-font); /* card primary value */
+	--zw-text-h-m: 600 16px var(--zw-font); /* drawer titles, page sections */
+	--zw-text-h-s: 600 15px var(--zw-font); /* card-grid section headers */
+	--zw-text-body: 500 14px var(--zw-font); /* device names, nav rows */
+	--zw-text-body-s: 400 13px var(--zw-font); /* search input, dense rows */
+	--zw-text-label: 600 12px var(--zw-font); /* buttons (upper), tab labels */
+	--zw-text-caption: 400 11px var(--zw-font); /* subtitles, hints, pills */
+	--zw-text-overline: 700 10px var(--zw-font); /* section overlines, table headers (UPPER) */
+	--zw-text-mono-mid: 500 12px var(--zw-mono); /* home IDs, counters */
+	--zw-text-mono-small: 500 11px var(--zw-mono); /* node IDs, footers */
+	--zw-text-mono-micro: 600 10px var(--zw-mono); /* pill text, column headers (UPPER) */
 
 	/* ── Radii ───────────────────────────────────────────────── */
 	--zw-radius-xs: 3px;
@@ -46,12 +79,70 @@
 	--zw-radius-pill: 999px;
 
 	/* ── Elevation ───────────────────────────────────────────── */
+	/* Shadow colour reads from --v0-on-surface so light-mode keeps the
+	   Material black drop-shadow and dark mode tints with the white
+	   on-surface channel — same role (visual lift) in either theme. */
 	--zw-e0: none;
-	--zw-e1: 0 1px 2px rgba(0, 0, 0, 0.04);
-	--zw-e2: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.08);
-	--zw-e4: 0 3px 6px rgba(0, 0, 0, 0.16), 0 3px 6px rgba(0, 0, 0, 0.1);
-	--zw-e8: 0 6px 20px rgba(0, 0, 0, 0.16), 0 2px 4px rgba(0, 0, 0, 0.08);
-	--zw-e-drawer: -12px 0 32px rgba(0, 0, 0, 0.12);
+	--zw-e1: 0 1px 2px rgba(var(--v0-on-surface), 0.04);
+	--zw-e2: 0 1px 3px rgba(var(--v0-on-surface), 0.12),
+		0 1px 2px rgba(var(--v0-on-surface), 0.08);
+	--zw-e4: 0 3px 6px rgba(var(--v0-on-surface), 0.16),
+		0 3px 6px rgba(var(--v0-on-surface), 0.1);
+	--zw-e8: 0 6px 20px rgba(var(--v0-on-surface), 0.16),
+		0 2px 4px rgba(var(--v0-on-surface), 0.08);
+	--zw-e-drawer: -12px 0 32px rgba(var(--v0-on-surface), 0.12);
+}
+
+/* ── Tone palette ────────────────────────────────────────────── */
+/* Each tone sets a (--tone-bg, --tone-fg) pair that ZwPill / ZwChip
+   read in their base rules. Keeps the seven-row tone table in one
+   place instead of repeating it per atom. */
+.zw-tone-neutral {
+	--tone-bg: var(--zw-chip-bg);
+	--tone-fg: var(--zw-chip-fg);
+}
+
+.zw-tone-accent {
+	--tone-bg: var(--zw-accent-soft);
+	--tone-fg: var(--zw-accent-dark);
+}
+
+.zw-tone-ok {
+	--tone-bg: rgba(var(--v0-success), 0.12);
+	--tone-fg: var(--zw-ok);
+}
+
+.zw-tone-warn {
+	--tone-bg: var(--zw-warn-soft);
+	--tone-fg: var(--zw-warning);
+}
+
+.zw-tone-danger {
+	--tone-bg: var(--zw-danger-soft);
+	--tone-fg: var(--zw-danger);
+}
+
+/* `info` mirrors `accent` per the handoff (PillA tone=info renders
+   with the accent tint at the atom level). Kept as a distinct class
+   so call sites can express intent and a future redesign can split
+   the two without touching consumers. */
+.zw-tone-info {
+	--tone-bg: var(--zw-accent-soft);
+	--tone-fg: var(--zw-accent-dark);
+}
+
+.zw-tone-asleep {
+	--tone-bg: rgba(var(--v0-asleep), 0.18);
+	--tone-fg: var(--zw-asleep);
+}
+
+/* ── Focus ring ─────────────────────────────────────────────── */
+/* Shared focus-visible treatment for interactive atoms. Override
+   --zw-focus-offset on the consumer when a different offset is
+   needed (ZwToggle uses 2px to clear the 999-px track). */
+.zw-focus-ring:focus-visible {
+	outline: 2px solid var(--zw-accent);
+	outline-offset: var(--zw-focus-offset, 1px);
 }
 
 /* ── Keyframes (semantic names, ported from --a-* / --b-* ───── */
