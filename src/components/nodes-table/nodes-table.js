@@ -235,6 +235,11 @@ export default {
 					label: 'Last Active',
 					groupable: false,
 				},
+				lastAwake: {
+					type: 'date',
+					label: 'Last Awake',
+					groupable: false,
+				},
 			},
 			expanded: [],
 			headersMenu: false,
