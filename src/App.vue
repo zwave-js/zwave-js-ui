@@ -950,6 +950,15 @@ export default {
 		dismissSnackbar(toastId) {
 			toast.dismiss(toastId)
 		},
+		/**
+		 * Dismiss every visible snackbar/toast at once. `toast.dismiss()` with
+		 * no id clears the whole stack. Wired to the `zwave:dismiss-snackbars`
+		 * DOM event in `mounted()` so automation (e.g. the docs-screenshot
+		 * capture script) can guarantee a toast-free frame before capturing.
+		 */
+		dismissAllSnackbars() {
+			toast.dismiss()
+		},
 		showSnackbar(text, color, options = { timeout: 3000 }) {
 			const { timeout, ...rest } = options
 			const toastOptions = {
@@ -1921,6 +1930,12 @@ export default {
 				})
 			},
 			{ once: true },
+		)
+
+		// Lets automation (docs-screenshot capture) clear all toasts on demand.
+		document.addEventListener(
+			'zwave:dismiss-snackbars',
+			this.dismissAllSnackbars,
 		)
 
 		// system dark mode

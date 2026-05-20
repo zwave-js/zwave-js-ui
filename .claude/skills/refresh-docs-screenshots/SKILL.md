@@ -192,6 +192,14 @@ Each entry in `manifest.json`:
 
 Theme handling lives outside `preActions`: capture.mjs sets `localStorage.colorScheme` via Playwright's `addInitScript` (runs before page scripts) **and** sets the BrowserContext's `colorScheme` (so `prefers-color-scheme` matches when the app falls back to `'system'`). Note: settings stores primitives as plain strings (`src/modules/Settings.js:65`); never `JSON.stringify` the theme value.
 
+### Toasts / snackbars are auto-dismissed
+
+`capture.mjs` clears **every** visible snackbar/toast immediately before each screenshot — `takeScreenshot()` calls `dismissToasts(page)` first. So manifest authors never need to account for transient toasts: the `API … called` info toast that fires on every socket request, one-off error toasts (e.g. `getNodeNeighbors` against a UI-only fake node), the "new version" snackbar, etc. all get swept before the shutter.
+
+Mechanism: capture.mjs dispatches a `zwave:dismiss-snackbars` DOM event; `src/App.vue` listens for it (registered in `mounted()`) and runs `dismissAllSnackbars()`, which calls `toast.dismiss()` with no id — vuetify-sonner clears the whole stack. capture.mjs then waits (≤2 s) for the `[data-sonner-toast]` nodes to leave the DOM, so the exit animation finishes before capture. If the running build predates the App.vue hook the event is a harmless no-op and capture continues.
+
+Do **not** add `preActions` that click toast close buttons — dismissal is centralized and runs for every shot.
+
 ### Clipping (partial-screen screenshots)
 
 Default behavior is a viewport-sized screenshot. To capture only part of the page, add a `clip` field to the entry:
@@ -269,6 +277,7 @@ After the loop:
 - **Sticky bottom detail panel ("Send Options", "Device …") on the Control Panel**: socket pushed a previously-selected node. Move `fakeNodes.json` aside *before* the backend starts; if it's already running, send `clearAppState` and re-navigate.
 - **Mesh diagram is empty even with `fakeNodes.json` seeded**: the canvas is rendered async after the WebSocket settles. Bump `settle` to 2500 ms+ for `mesh_*.png` entries. Also confirm `node.statistics.lwr.repeaters[]` exists in the seed — without it the graph has no edges.
 - **`mesh-selected.png` / `route_health_result.png` show the graph but no popup**: the test hook isn't loaded. capture.mjs sets `localStorage.exposeZwaveGraph='1'` before page load, but if the build is older than the source change in `ZwaveGraph.vue` that introduced the hook, `window.__zwGraph` won't exist. Run `npm run build:ui` to refresh `dist/`, then capture again. Don't fall back to coordinate-based canvas clicks — vis-network's physics layout is non-deterministic, and the click will land on empty space about half the time.
+- **A toast/snackbar still leaks into a shot**: capture.mjs dismisses toasts via the `zwave:dismiss-snackbars` event (see "Toasts / snackbars are auto-dismissed"). If one survives, the running build is older than the App.vue hook — rebuild with `npm run build:ui` and re-capture. A toast that *re-fires* after dismissal (a request completing between dismiss and shutter) is rare; add a short `{ "settle": 400 }` as the last preAction so the request settles first.
 - **`config_updates_*` shots show no badge**: the Pinia store mutation didn't take. Check that `document.querySelector('#app').__vue_app__` is non-null at exec time (i.e. `wait` for at least one app-rendered selector first). Pinia store id is `'base'`; `_s.get('base')` is the access path.
 - **Dialog screenshots show the page behind, not the dialog**: the click selector resolved but the modal hadn't transitioned. Add `{ "wait": ".v-overlay--active" }` after the click. Vuetify 3 uses `.v-overlay--active`, not `.v-dialog--active`.
 - **Backend serves blank or 404 for `/`**: bundle missing — run `npm run build:ui` once before starting `dev:server`.

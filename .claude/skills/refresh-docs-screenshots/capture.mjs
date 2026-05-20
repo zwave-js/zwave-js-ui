@@ -106,6 +106,7 @@ async function captureOne(entry, theme, outPath) {
 //                                                 overflow children (e.g. a v-badge
 //                                                 floating outside its wrapper).
 async function takeScreenshot(page, entry, outPath) {
+	await dismissToasts(page)
 	const clip = entry.clip
 	if (typeof clip === 'string') {
 		await page.locator(clip).first().screenshot({ path: outPath })
@@ -127,6 +128,23 @@ async function takeScreenshot(page, entry, outPath) {
 	} else {
 		await page.screenshot({ path: outPath })
 	}
+}
+
+// Clear any transient snackbar/toast before capturing. Stray "API … called"
+// info toasts and one-off error toasts (e.g. getNodeNeighbors against a UI-only
+// fake node) otherwise leak into shots. Fires the App.vue `zwave:dismiss-snackbars`
+// hook (→ dismissAllSnackbars), then waits for sonner's exit animation to remove
+// the toast nodes. The timeout+catch is a safety net — a missing hook (old build)
+// must not abort the capture.
+async function dismissToasts(page) {
+	await page.evaluate(() => {
+		document.dispatchEvent(new CustomEvent('zwave:dismiss-snackbars'))
+	})
+	await page
+		.waitForFunction(() => !document.querySelector('[data-sonner-toast]'), null, {
+			timeout: 2000,
+		})
+		.catch(() => {})
 }
 
 async function runAction(page, a) {
