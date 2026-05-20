@@ -14,6 +14,7 @@ const ControllerChart = () => import('@/views/ControllerChart.vue')
 const Zniffer = () => import('@/views/Zniffer.vue')
 const ConfigurationTemplates = () =>
 	import('@/views/ConfigurationTemplates.vue')
+const DashboardShowcase = () => import('@/views/DashboardShowcase.vue')
 
 import ConfigApis from '../apis/ConfigApis'
 import useBaseStore from '../stores/base'
@@ -31,6 +32,7 @@ export const Routes = {
 	controllerChart: '/controller-chart',
 	zniffer: '/zniffer',
 	configurationTemplates: '/configuration-templates',
+	dashboardShowcase: '/dashboard-showcase',
 }
 
 Routes.main = Routes.controlPanel
@@ -133,6 +135,15 @@ const router = createRouter({
 			path: Routes.controllerChart,
 			name: 'Controller Chart',
 			component: ControllerChart,
+			props: true,
+			meta: {
+				requiresAuth: true,
+			},
+		},
+		{
+			path: Routes.dashboardShowcase,
+			name: 'Dashboard Showcase',
+			component: DashboardShowcase,
 			props: true,
 			meta: {
 				requiresAuth: true,
