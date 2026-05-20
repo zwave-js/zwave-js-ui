@@ -1,0 +1,132 @@
+/* Z-Wave JS UI design tokens
+   Material palette + typography + radii + elevation + keyframes.
+   Authoritative reference: .design-handoff/project/design-system.jsx
+   and Dashboard merged.html. All tokens live on :root — no scope
+   classes. CSS ported from the handoff renames --a-* / --b-* to --zw-*. */
+
+:root {
+	/* ── Color · primary ─────────────────────────────────────── */
+	--zw-accent: #1976d2;
+	--zw-accent-dark: #1565c0;
+	--zw-accent-soft: #e3f2fd;
+
+	/* ── Color · status ──────────────────────────────────────── */
+	--zw-ok: #43a047;
+	--zw-warning: #fb8c00;
+	--zw-warn-soft: #fff3e0;
+	--zw-danger: #e53935;
+	--zw-danger-soft: #ffebee;
+	--zw-asleep: #9a8db7;
+
+	/* ── Color · neutral ─────────────────────────────────────── */
+	--zw-bg: #f5f5f5;
+	--zw-bg-soft: #fafafa;
+	--zw-card: #ffffff;
+	--zw-fg: rgba(0, 0, 0, 0.87);
+	--zw-muted: rgba(0, 0, 0, 0.54);
+	--zw-fg-soft: rgba(0, 0, 0, 0.6);
+	--zw-line: rgba(0, 0, 0, 0.12);
+	--zw-line-soft: rgba(0, 0, 0, 0.08);
+	--zw-line2: rgba(0, 0, 0, 0.18);
+	--zw-chip-bg: rgba(0, 0, 0, 0.06);
+	--zw-chip-fg: rgba(0, 0, 0, 0.65);
+	--zw-row-hover: rgba(25, 118, 210, 0.04);
+
+	/* ── Typography ──────────────────────────────────────────── */
+	--zw-font: 'Roboto', system-ui, sans-serif;
+	--zw-mono: 'Roboto Mono', ui-monospace, monospace;
+
+	/* ── Radii ───────────────────────────────────────────────── */
+	--zw-radius-xs: 3px;
+	--zw-radius-sm: 4px;
+	--zw-radius-md: 6px;
+	--zw-radius-lg: 8px;
+	--zw-radius-xl: 10px;
+	--zw-radius-xxl: 12px;
+	--zw-radius-pill: 999px;
+
+	/* ── Elevation ───────────────────────────────────────────── */
+	--zw-e0: none;
+	--zw-e1: 0 1px 2px rgba(0, 0, 0, 0.04);
+	--zw-e2: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.08);
+	--zw-e4: 0 3px 6px rgba(0, 0, 0, 0.16), 0 3px 6px rgba(0, 0, 0, 0.1);
+	--zw-e8: 0 6px 20px rgba(0, 0, 0, 0.16), 0 2px 4px rgba(0, 0, 0, 0.08);
+	--zw-e-drawer: -12px 0 32px rgba(0, 0, 0, 0.12);
+}
+
+/* ── Keyframes (semantic names, ported from --a-* / --b-* ───── */
+
+@keyframes zw-pulse {
+	0%, 100% {
+		opacity: 1;
+	}
+	50% {
+		opacity: 0.35;
+	}
+}
+
+@keyframes zw-fade-in {
+	from {
+		opacity: 0;
+	}
+	to {
+		opacity: 1;
+	}
+}
+
+@keyframes zw-slide-in-right {
+	from {
+		transform: translateX(20px);
+		opacity: 0;
+	}
+	to {
+		transform: none;
+		opacity: 1;
+	}
+}
+
+/* L→R shimmer over the filled portion of a progress bar.
+   The sweep takes ~1.3s of the 4s cycle; the rest of the cycle parks
+   it off-screen so the shimmer reads as an occasional pulse rather
+   than a continuous scroll. Ported from `b-row-shimmer`. */
+@keyframes zw-shimmer {
+	0% {
+		transform: translateX(0);
+	}
+	32% {
+		transform: translateX(350%);
+	}
+	100% {
+		transform: translateX(350%);
+	}
+}
+
+/* Card-view ring heartbeat that matches the row shimmer rhythm.
+   Ported from `b-ring-shimmer`. */
+@keyframes zw-ring-shimmer {
+	0% {
+		opacity: 1;
+	}
+	16% {
+		opacity: 0.45;
+	}
+	32% {
+		opacity: 1;
+	}
+	100% {
+		opacity: 1;
+	}
+}
+
+/* Body baseline — the canvas under the dashboard's chrome.
+   Vuetify scopes its font on `.v-application`; we set it on body too
+   so static pages and the legacy shell inherit the same baseline. */
+body {
+	font-family: var(--zw-font);
+	background: var(--zw-bg);
+}
+
+/* ── Utility class · monospace font ──────────────────────────── */
+.font-mono {
+	font-family: var(--zw-mono);
+}
