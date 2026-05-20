@@ -1,0 +1,97 @@
+<template>
+	<Button.Root
+		class="zw-update"
+		:class="{ 'zw-update--compact': compact }"
+		:aria-label="`Update available: ${current} → ${available}`"
+		@click="emit('click')"
+	>
+		<DownloadIcon :size="compact ? ICON_SIZE.button : ICON_SIZE.update" />
+		<span v-if="compact" class="zw-update__dot" />
+		<span v-else class="zw-update__body">
+			<span class="zw-update__title">Update available</span>
+			<span class="zw-update__versions">{{ current }} → {{ available }}</span>
+		</span>
+	</Button.Root>
+</template>
+
+<script setup lang="ts">
+import { Button } from '@vuetify/v0'
+import { DownloadIcon, ICON_SIZE } from '@/lib/icons'
+
+defineProps<{
+	current: string
+	available: string
+	compact?: boolean
+}>()
+
+const emit = defineEmits<{ click: [] }>()
+</script>
+
+<style>
+/* Unscoped — V0 primitives set inheritAttrs:false; .zw-update namespace
+   is unique to this atom. */
+.zw-update {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	padding: 6px 8px;
+	border: 1px solid rgba(var(--v0-primary), 0.3);
+	background: var(--zw-accent-soft);
+	border-radius: 6px;
+	color: var(--zw-accent-dark);
+	text-align: left;
+	cursor: pointer;
+	font-family: inherit;
+}
+
+.zw-update:hover:not([data-disabled='true']) {
+	background: rgba(var(--v0-primary-soft), 0.85);
+}
+
+.zw-update:focus-visible {
+	outline: 2px solid var(--zw-accent);
+	outline-offset: 1px;
+}
+
+.zw-update__body {
+	display: inline-flex;
+	flex-direction: column;
+	line-height: 1.2;
+}
+
+/* Title is an intermediate of Caption (11/400) and Label (12/600):
+   the handoff renders 11/600 at design-system.jsx:460, which is not
+   a tabled TYPE_SCALE row. Keep the explicit declarations rather
+   than picking a role that would shift the size or drop emphasis. */
+.zw-update__title {
+	font-size: 11px;
+	font-weight: 600;
+}
+
+/* Versions line is Mono Micro (handoff line 55 — "pill text"). */
+.zw-update__versions {
+	font: var(--zw-text-mono-micro);
+	color: var(--zw-fg-soft);
+}
+
+.zw-update--compact {
+	position: relative;
+	width: 32px;
+	height: 32px;
+	padding: 0;
+	justify-content: center;
+}
+
+.zw-update__dot {
+	position: absolute;
+	top: 4px;
+	right: 4px;
+	width: 7px;
+	height: 7px;
+	background: var(--zw-accent);
+	border-radius: 50%;
+	/* Ring matches the card background so the dot reads as floating over
+	   the surface in either theme — not a literal white halo. */
+	box-shadow: 0 0 0 1.5px var(--zw-card);
+}
+</style>
