@@ -1,7 +1,8 @@
 // @ts-check
-// Node 2 is pinned by the e2e workflow (.github/workflows/test-application.yml).
-// It must keep Window Covering CC parameter 3 supported, otherwise the MQTT
-// round-trip test (zwave/nodeID_2/106/0/targetValue/3) breaks.
+// Node 2 of the demo fleet — a Window Covering (blinds) device.
+// Note: the e2e MQTT round-trip in .github/workflows/test-application.yml runs
+// against the single-node `server_config.js` (npm run fake-stick), NOT this
+// fleet. Node 2 here is just a realistic blinds example for the dev fleet.
 const { CommandClasses } = require('@zwave-js/core')
 const { ccCaps } = require('@zwave-js/testing')
 const { WindowCoveringParameter } = require('zwave-js')

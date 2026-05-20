@@ -31,7 +31,8 @@ All development instructions are maintained in shared files under `.github/` so 
 # Development
 npm run dev            # Frontend dev server (port 8092)
 npm run dev:server     # Backend dev server (port 8091)
-npm run fake-stick     # Mock Z-Wave controller (port 5555)
+npm run fake-stick     # Mock Z-Wave controller — single node (port 5555)
+npm run fake-stick:fleet # Mock Z-Wave controller — 31-node demo fleet (port 5555)
 
 # Quality checks (always run before committing)
 npm run lint-fix       # Auto-fix lint issues
