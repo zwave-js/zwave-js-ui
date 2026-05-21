@@ -439,6 +439,40 @@
 			</div>
 
 			<div class="block">
+				<h3>ZwActivityStrip — live chips + hide button</h3>
+				<p class="muted">
+					Renders one chip per device with a running transient.
+					Strip collapses to nothing when the list is empty.
+				</p>
+				<div class="topbar-host">
+					<ZwActivityStrip
+						:transients="activityTransients"
+						:viewport="topbarViewport"
+						@hide="activityHidden = true"
+					/>
+				</div>
+				<div class="row" style="gap: 12px">
+					<ZwButton
+						variant="outline"
+						size="sm"
+						@click="addActivity"
+					>
+						Add transient
+					</ZwButton>
+					<ZwButton
+						variant="outline"
+						size="sm"
+						@click="activityTransientsCount = 0"
+					>
+						Clear all
+					</ZwButton>
+					<span class="muted">
+						strip hidden by user: <code>{{ activityHidden }}</code>
+					</span>
+				</div>
+			</div>
+
+			<div class="block">
 				<h3>ZwSidebar — wide / collapsed / mobile</h3>
 				<p class="muted">
 					Counts read from <code>useDashboardStore</code> (devices,
@@ -561,6 +595,7 @@ import ZwDeviceDrawer from '@/components/dashboard/layout/ZwDeviceDrawer.vue'
 import ZwSidebar, { type RowAction } from '@/components/dashboard/layout/ZwSidebar.vue'
 import ZwTopbar from '@/components/dashboard/layout/ZwTopbar.vue'
 import ZwDeviceListToolbar from '@/components/dashboard/layout/ZwDeviceListToolbar.vue'
+import ZwActivityStrip from '@/components/dashboard/layout/ZwActivityStrip.vue'
 import useDashboardStore from '@/stores/dashboard'
 
 import {
@@ -1006,6 +1041,28 @@ const toolbarView = ref<'cards' | 'table'>('cards')
 const toolbarCols = ref<Set<string>>(
 	new Set(['transient', 'location', 'value', 'power', 'lastSeen']),
 )
+
+// ── layout: activity strip preview state ─────────────────────
+
+const activityHidden = ref(false)
+const activityTransientsCount = ref(2)
+
+const activityTransients = computed<Device[]>(() => {
+	const transientDevices = devices.filter((d) => d.transient.length > 0)
+	const base = transientDevices.length > 0 ? transientDevices[0] : devices[0]
+	const labels = ['OTA update', 'Rebuilding routes', 'Interviewing', 'OTA update', 'Rebuilding routes', 'OTA update', 'OTA update', 'OTA update']
+	const names = ['Kitchen Switch', 'Living Room Dimmer', 'Hallway Plug', 'Bedside Bulb', 'Front Door Lock', 'Living Room Shade', 'Bedroom Thermostat', 'Office Plug']
+	return Array.from({ length: activityTransientsCount.value }, (_, i) => ({
+		...base,
+		id: `synth-${i}`,
+		name: names[i] ?? `Device ${i + 1}`,
+		transient: [{ type: 'ota' as const, label: labels[i] ?? 'OTA update', progress: 0.3 }],
+	}))
+})
+
+function addActivity() {
+	activityTransientsCount.value++
+}
 </script>
 
 <style scoped>
