@@ -16,7 +16,7 @@
 			:max="100"
 		>
 			<Progress.Fill as="span" class="zw-tx__fill">
-				<span v-if="variant === 'card'" class="zw-tx__shimmer" />
+				<span class="zw-tx__shimmer" />
 			</Progress.Fill>
 		</Progress.Root>
 		<span v-if="pct !== undefined" class="zw-tx__pct">{{ pct }}%</span>

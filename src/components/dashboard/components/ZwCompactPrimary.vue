@@ -14,13 +14,17 @@
 			</ZwChip>
 		</template>
 
-		<!-- dim — read-only thin fill in the row; editing happens in
-			 the expanded body / drawer. -->
+		<!-- dim — interactive small slider; same drag/click affordance as
+			 the drawer/card slider, just scaled down. -->
 		<template v-else-if="pv?.type === 'dim'">
-			<span class="zw-cp__bar">
-				<span
-					class="zw-cp__bar-fill"
-					:style="{ width: `${pv.level}%` }"
+			<span class="zw-cp__slider">
+				<ZwSlider
+					size="sm"
+					:model-value="pv.level"
+					@update:model-value="
+						(level) =>
+							emit('action', device, { type: 'dim', level })
+					"
 				/>
 			</span>
 			<span class="zw-cp__num">{{ pv.level }}%</span>
@@ -64,6 +68,7 @@
 import { computed } from 'vue'
 import ZwToggle from '@/components/dashboard/atoms/ZwToggle.vue'
 import ZwChip from '@/components/dashboard/atoms/ZwChip.vue'
+import ZwSlider from '@/components/dashboard/atoms/ZwSlider.vue'
 import { isStateAlert } from '@/lib/primaryValue'
 import type { Device, DeviceAction, PrimaryValue } from '@/lib/dashboard-types'
 
@@ -88,21 +93,10 @@ const stateChipTone = computed(() => {
 	white-space: nowrap;
 }
 
-.zw-cp__bar {
-	position: relative;
+.zw-cp__slider {
+	display: inline-block;
 	width: 100px;
 	max-width: 100%;
-	height: 4px;
-	background: var(--zw-line);
-	border-radius: 2px;
-	overflow: hidden;
-}
-
-.zw-cp__bar-fill {
-	position: absolute;
-	inset: 0;
-	background: var(--zw-accent);
-	border-radius: 2px;
 }
 
 .zw-cp__num {
