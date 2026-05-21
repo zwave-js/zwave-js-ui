@@ -1,6 +1,10 @@
 <template>
-	<div class="zw-table">
-		<!-- header row -->
+	<div
+		ref="rootRef"
+		class="zw-table"
+		:class="{ 'zw-table--has-header': !!headerCells }"
+		:style="{ '--zw-table-sbw': `${scrollbarW}px` }"
+	>
 		<div
 			v-if="headerCells"
 			class="zw-table__header"
@@ -35,54 +39,67 @@
 			</template>
 		</div>
 
-		<!-- body -->
-		<div class="zw-table__body">
-			<template v-for="[key, items] in sortedGroups" :key="key">
-				<div
-					class="zw-table__group-head"
-					@click="emit('toggleGroup', key)"
+		<DynamicScroller
+			ref="scrollerRef"
+			class="zw-table__body"
+			:items="flatItems"
+			:min-item-size="42"
+			key-field="id"
+			:buffer="600"
+		>
+			<template #default="{ item, active }">
+				<DynamicScrollerItem
+					:item="item"
+					:active="active"
+					:size-dependencies="[viewport, columns.length, item.kind === 'expanded' ? 1 : 0]"
 				>
-					<ChevronDownIcon
-						:size="ICON_SIZE.sortArrow"
-						class="zw-table__group-chev"
-						:class="{ 'zw-table__group-chev--collapsed': collapsedGroups.has(key) }"
-					/>
-					<span class="zw-table__group-name">
-						{{ key === '__controller' ? 'Controller' : key }}
-					</span>
-					<span
-						v-if="key !== '__controller'"
-						class="zw-table__group-count"
+					<div
+						v-if="item.kind === 'group-head'"
+						class="zw-table__group-head"
+						@click="emit('toggleGroup', item.key)"
 					>
-						{{ items.length }}
-					</span>
-				</div>
-				<template v-if="!collapsedGroups.has(key)">
-					<template v-for="d in items" :key="d.id">
-						<ZwDeviceRow
-							:device="d"
-							:expanded="expandedId === d.id"
-							:columns="columns as ToggleableCol[]"
-							:viewport="viewport"
-							@expand="(id) => emit('expand', id)"
-							@action="(dev, a) => emit('action', dev, a)"
+						<ChevronDownIcon
+							:size="ICON_SIZE.sortArrow"
+							class="zw-table__group-chev"
+							:class="{ 'zw-table__group-chev--collapsed': item.collapsed }"
 						/>
-						<ZwExpandedRow
-							v-if="expandedId === d.id"
-							:device="d"
-							:viewport="viewport"
-							@action="(dev, a) => emit('action', dev, a)"
-						/>
-					</template>
-				</template>
+						<span class="zw-table__group-name">
+							{{ item.key === '__controller' ? 'Controller' : item.key }}
+						</span>
+						<span
+							v-if="item.key !== '__controller'"
+							class="zw-table__group-count"
+						>
+							{{ item.count }}
+						</span>
+					</div>
+					<ZwDeviceRow
+						v-else-if="item.kind === 'row'"
+						:device="item.device"
+						:expanded="expandedId === item.device.id"
+						:columns="columns as ToggleableCol[]"
+						:viewport="viewport"
+						@expand="(id) => emit('expand', id)"
+						@action="(dev, a) => emit('action', dev, a)"
+					/>
+					<ZwExpandedRow
+						v-else
+						:device="item.device"
+						:viewport="viewport"
+						@action="(dev, a) => emit('action', dev, a)"
+					/>
+				</DynamicScrollerItem>
 			</template>
-			<ZwEmptyState v-if="sortedGroups.length === 0" />
-		</div>
+			<template #empty>
+				<ZwEmptyState />
+			</template>
+		</DynamicScroller>
 	</div>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { DynamicScroller, DynamicScrollerItem } from 'vue-virtual-scroller'
 import ZwDeviceRow from '@/components/dashboard/components/ZwDeviceRow.vue'
 import ZwExpandedRow from '@/components/dashboard/components/ZwExpandedRow.vue'
 import ZwEmptyState from '@/components/dashboard/components/ZwEmptyState.vue'
@@ -111,8 +128,21 @@ const TOGGLEABLE_COL_SET = new Set<ToggleableCol>([
 	'location',
 	'value',
 	'power',
+	'signal',
 	'lastSeen',
 ])
+
+type GroupHeadItem = {
+	id: string
+	kind: 'group-head'
+	key: string
+	count: number
+	collapsed: boolean
+}
+
+type RowItem = { id: string; kind: 'row'; device: Device }
+type ExpandedItem = { id: string; kind: 'expanded'; device: Device }
+type FlatItem = GroupHeadItem | RowItem | ExpandedItem
 
 const props = defineProps<{
 	groups: [string, Device[]][]
@@ -134,16 +164,13 @@ const emit = defineEmits<{
 const columns = computed<ToggleableCol[]>(() => {
 	let cap: ToggleableCol[]
 	const w = props.viewport
-	if (w >= 1280) {
+	if (w >= 1024) {
 		cap = ['activity', 'location', 'value', 'power', 'signal', 'lastSeen']
-	} else if (w >= 1024) {
-		cap = ['activity', 'location', 'value', 'power', 'lastSeen']
 	} else if (w >= 768) {
-		cap = ['location', 'value', 'power']
+		cap = ['location', 'value', 'power', 'signal']
 	} else {
 		cap = ['value']
 	}
-	// 'signal' is viewport-only, never user-toggleable.
 	return cap.filter(
 		(c) =>
 			!TOGGLEABLE_COL_SET.has(c) || props.visibleCols.has(c),
@@ -191,7 +218,7 @@ const headerCells = computed<HeaderCell[] | null>(() => {
 		cells.push({ label: 'Power', key: 'power' })
 	}
 	if (columns.value.includes('signal')) {
-		cells.push({ label: '', key: 'signal' })
+		cells.push({ label: 'Link', key: 'signal' })
 	}
 	if (columns.value.includes('lastSeen')) {
 		cells.push({ label: 'Last seen', key: 'lastSeen' })
@@ -238,6 +265,70 @@ const sortedGroups = computed<[string, Device[]][]>(() => {
 	}
 	return arr
 })
+
+const flatItems = computed<FlatItem[]>(() => {
+	const out: FlatItem[] = []
+	for (const [key, items] of sortedGroups.value) {
+		const collapsed = props.collapsedGroups.has(key)
+		out.push({
+			id: `head:${key}`,
+			kind: 'group-head',
+			key,
+			count: items.length,
+			collapsed,
+		})
+		if (collapsed) continue
+		for (const d of items) {
+			out.push({ id: `row:${d.id}`, kind: 'row', device: d })
+			if (props.expandedId === d.id) {
+				out.push({ id: `expanded:${d.id}`, kind: 'expanded', device: d })
+			}
+		}
+	}
+	return out
+})
+
+// ── scrollbar-width compensation ─────────────────────────────────
+// DynamicScroller owns the body scrollbar; the column header lives outside
+// the scroller so its width otherwise drifts when the scrollbar appears.
+// Measure once on mount and re-measure on resize / item-count changes.
+
+const rootRef = ref<HTMLElement | null>(null)
+const scrollerRef = ref<InstanceType<typeof DynamicScroller> | null>(null)
+const scrollbarW = ref(0)
+
+function measureScrollbar() {
+	const root = rootRef.value
+	if (!root) return
+	const scroller = root.querySelector(
+		'.zw-table__body',
+	) as HTMLElement | null
+	if (!scroller) return
+	scrollbarW.value = scroller.offsetWidth - scroller.clientWidth
+}
+
+let ro: ResizeObserver | null = null
+
+onMounted(() => {
+	measureScrollbar()
+	if (rootRef.value) {
+		ro = new ResizeObserver(() => measureScrollbar())
+		ro.observe(rootRef.value)
+	}
+})
+
+onBeforeUnmount(() => {
+	ro?.disconnect()
+	ro = null
+})
+
+watch(
+	() => flatItems.value.length,
+	() => {
+		// next tick to let the scroller size itself
+		setTimeout(measureScrollbar, 0)
+	},
+)
 </script>
 
 <style scoped>
@@ -253,6 +344,7 @@ const sortedGroups = computed<[string, Device[]][]>(() => {
 	display: grid;
 	column-gap: 8px;
 	padding: 8px 16px;
+	padding-right: calc(16px + var(--zw-table-sbw, 0px));
 	border-bottom: 1px solid var(--zw-line);
 	background: var(--zw-card);
 	font-family: var(--zw-mono);
@@ -262,6 +354,7 @@ const sortedGroups = computed<[string, Device[]][]>(() => {
 	color: var(--zw-fg-soft);
 	font-weight: 600;
 	flex-shrink: 0;
+	z-index: 2;
 }
 
 .zw-table__head-btn {
@@ -305,7 +398,6 @@ const sortedGroups = computed<[string, Device[]][]>(() => {
 
 .zw-table__body {
 	flex: 1;
-	overflow-y: auto;
 	background: var(--zw-card);
 }
 
@@ -317,9 +409,6 @@ const sortedGroups = computed<[string, Device[]][]>(() => {
 	background: var(--zw-bg-soft);
 	border-bottom: 1px solid var(--zw-line-soft);
 	cursor: pointer;
-	position: sticky;
-	top: 0;
-	z-index: 1;
 }
 
 .zw-table__group-chev {

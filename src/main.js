@@ -23,6 +23,7 @@ import '@fontsource/roboto-mono/600.css'
 // (imported transitively from ./plugins/vuetify) so our :root tokens win.
 import './assets/css/tokens.css'
 import './assets/css/main.css'
+import 'vue-virtual-scroller/dist/vue-virtual-scroller.css'
 
 const updateSW = registerSW({
 	onNeedRefresh() {
