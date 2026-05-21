@@ -536,14 +536,16 @@ function renderFooterRail() {
 	display: flex;
 	align-items: center;
 	gap: 10px;
-	padding: 14px 12px 14px 16px;
+	padding: 0 12px 0 16px;
 	border-bottom: 1px solid var(--zw-line-soft);
-	min-height: 56px;
+	box-sizing: border-box;
+	height: 57px;
+	flex-shrink: 0;
 }
 
 .zw-sb__brand--rail {
 	justify-content: center;
-	padding: 14px 0;
+	padding: 0;
 }
 
 .zw-sb__logo {

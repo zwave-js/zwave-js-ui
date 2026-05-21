@@ -31,6 +31,8 @@
 			/>
 		</div>
 
+		<span class="zw-topbar__spacer" />
+
 		<Button.Root
 			v-if="showActivityPill"
 			class="zw-topbar__activity"
@@ -48,7 +50,6 @@
 
 		<ZwAddDeviceSplitButton
 			class="zw-topbar__add"
-			:class="{ 'zw-topbar__add--has-pill': showActivityPill }"
 			:wide="viewport >= 1100"
 			:compact="compact"
 			@action="(a) => emit('addAction', a)"
@@ -128,17 +129,18 @@ const showActivityLabel = computed(() => props.viewport >= 760)
 	display: flex;
 	align-items: center;
 	gap: 10px;
-	padding: 12px 20px;
+	padding: 0 20px;
 	background: var(--zw-card);
 	border-bottom: 1px solid var(--zw-line-soft);
 	box-shadow: var(--zw-e1);
+	box-sizing: border-box;
 	flex-shrink: 0;
-	min-height: 56px;
+	height: 57px;
 	position: relative;
 }
 
 .zw-topbar--compact {
-	padding: 10px 12px;
+	padding: 0 12px;
 	gap: 6px;
 }
 
@@ -201,18 +203,17 @@ const showActivityLabel = computed(() => props.viewport >= 760)
 }
 
 .zw-topbar__search {
-	flex: 1;
+	flex: 0 1 420px;
 	min-width: 0;
-	max-width: 420px;
+}
+
+.zw-topbar__spacer {
+	flex: 1 1 0;
+	min-width: 0;
 }
 
 .zw-topbar__add {
 	flex-shrink: 0;
-	margin-left: auto;
-}
-
-.zw-topbar__add--has-pill {
-	margin-left: 8px;
 }
 
 .zw-topbar__activity {
@@ -232,7 +233,6 @@ const showActivityLabel = computed(() => props.viewport >= 760)
 	font-weight: 600;
 	letter-spacing: 0.2px;
 	flex-shrink: 0;
-	margin-left: auto;
 	position: relative;
 	transition: background 0.12s, border-color 0.12s, color 0.12s;
 }
