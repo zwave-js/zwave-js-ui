@@ -26,7 +26,7 @@
 			</span>
 		</span>
 
-		<!-- activity/activity -->
+		<!-- activity -->
 		<span
 			v-if="hasCol('activity') && viewport >= MOBILE_BREAKPOINT"
 			class="zw-row__cell"

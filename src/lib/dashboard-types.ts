@@ -124,13 +124,18 @@ export interface Archetype {
 	power: PowerType
 }
 
-// ── Activity ─────────────────────────────────────────────────
+// ── Activity ──────────────────────────────────────────────────
+//
+// In-flight long-running operations against a device: OTA firmware
+// updates, route rebuilds, interviews. The handoff calls these
+// "activity" (plan 72) — earlier scaffolding used "transient".
 
 export type ActivityType = 'ota' | 'rebuild' | 'interview'
 
 export interface Activity {
 	type: ActivityType
 	label: string
+	/** 0–100 integer percentage. Optional for indeterminate operations. */
 	progress?: number
 }
 

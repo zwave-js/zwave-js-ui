@@ -55,16 +55,6 @@
 				>
 					Dead
 				</ZwPill>
-				<ZwPill
-					v-else-if="
-						device.interviewState !== 'complete' &&
-						!device.isController
-					"
-					tone="info"
-					size="sm"
-				>
-					Interviewing
-				</ZwPill>
 				<ZwPill v-else-if="device.hasUpdate" tone="accent" size="sm">
 					<DownloadIcon :size="ICON_SIZE.pill" /> Update
 				</ZwPill>

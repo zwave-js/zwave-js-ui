@@ -615,6 +615,14 @@ export type ZUINode = {
 	dbLink?: string
 	maxDataRate?: DataRate
 	interviewStage?: keyof typeof InterviewStage
+	/**
+	 * 0–100 integer percentage synthesized from `interviewStage`. Plan 72
+	 * (UI rework — device activity) populates this so the dashboard can
+	 * render the interview as a progress activity instead of a static
+	 * pill. Replaced by a finer-grained signal when one becomes
+	 * available; the frontend contract stays the same.
+	 */
+	interviewProgress?: number
 	status?: keyof typeof NodeStatus
 	inited: boolean
 	rebuildRoutesProgress?: RebuildRoutesStatus | undefined
@@ -6254,6 +6262,14 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				zwaveNode.interviewStage
 			] as keyof typeof InterviewStage
 
+			// Plan 72: synthesize 0–100 interview progress from the stage
+			// enum so the frontend can render a unified activity readout.
+			// The enum has 6 values (None=0 … Complete=5); progress maps
+			// linearly so the bar feels continuous while the stage steps.
+			node.interviewProgress = Math.round(
+				(zwaveNode.interviewStage / InterviewStage.Complete) * 100,
+			)
+
 			if (zwaveNode.interviewStage === InterviewStage.Complete) {
 				node.hasDeviceConfigChanged = zwaveNode.hasDeviceConfigChanged()
 			}
@@ -6265,6 +6281,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 					status: node.status,
 					available: node.available,
 					interviewStage: node.interviewStage,
+					interviewProgress: node.interviewProgress,
 				}
 			}
 
