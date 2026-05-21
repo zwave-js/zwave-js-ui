@@ -13,6 +13,7 @@
 				<a href="#cards">DeviceCard variants</a>
 				<a href="#rows">DeviceRow variants</a>
 				<a href="#drawer">Drawer / Expanded</a>
+				<a href="#shell">Full shell</a>
 				<a href="#layout">Layout</a>
 			</nav>
 		</header>
@@ -360,9 +361,28 @@
 			</div>
 		</section>
 
+		<!-- ───────── FULL SHELL ───────── -->
+		<section id="shell" class="showcase__section">
+			<h2>ZwAppShell — full layout (live)</h2>
+			<p class="muted">
+				The same shell that mounts on <code>/control-panel</code> once
+				plan 70 lands. Hosted inside a fixed-height frame here so the
+				rest of the showcase stays scrollable. Sidebar, topbar,
+				activity strip, toolbar, cards / table bodies and the drawer
+				are wired together; nav, search, view switch, sort, expand,
+				and the Debug capture toggle all work locally.
+			</p>
+			<div class="shell-host">
+				<ZwAppShell
+					@action="(d, a) => onAction(d, a)"
+					@add-action="(a) => (lastAddAction = a)"
+				/>
+			</div>
+		</section>
+
 		<!-- ───────── LAYOUT ───────── -->
 		<section id="layout" class="showcase__section">
-			<h2>Layout pieces</h2>
+			<h2>Layout pieces (isolated)</h2>
 
 			<div class="block">
 				<h3>ZwTopbar — title / search / activity pill / add</h3>
@@ -650,6 +670,7 @@ import {
 	type SortKey,
 	type SortState,
 } from '@/components/dashboard/layout/table-sort'
+import ZwAppShell from '@/components/dashboard/layout/ZwAppShell.vue'
 import useDashboardStore from '@/stores/dashboard'
 
 import {
@@ -1315,6 +1336,14 @@ const cardsGroups = computed<[string, Device[]][]>(() => {
 
 .drawer-host__hint p {
 	margin: 0 0 12px;
+}
+
+.shell-host {
+	height: 720px;
+	border: 1px dashed var(--zw-line2);
+	border-radius: 6px;
+	overflow: hidden;
+	margin-top: 12px;
 }
 
 .cards-body-host {
