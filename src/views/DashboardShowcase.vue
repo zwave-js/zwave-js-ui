@@ -490,6 +490,35 @@
 			</div>
 
 			<div class="block">
+				<h3>ZwTableBody — sticky groups, sortable headers, expansion</h3>
+				<p class="muted">
+					Click a header to sort. Click a group header to collapse.
+					Click a row to expand its inline node-details body.
+				</p>
+				<div class="cards-body-host">
+					<ZwTableBody
+						:groups="cardsGroups"
+						:viewport="viewport"
+						:expanded-id="tableExpandedId"
+						:collapsed-groups="tableCollapsedGroups"
+						:visible-cols="toolbarCols"
+						:sort="tableSort"
+						grouping="location"
+						@expand="onTableExpand"
+						@toggle-group="onTableToggleGroup"
+						@sort="onTableSort"
+						@action="onAction"
+					/>
+				</div>
+				<div class="muted">
+					sort: <code>{{ tableSort.key }} / {{ tableSort.dir }}</code> ·
+					expanded: <code>{{ tableExpandedId ?? '∅' }}</code> ·
+					collapsed groups:
+					<code>{{ Array.from(tableCollapsedGroups).join(',') || '∅' }}</code>
+				</div>
+			</div>
+
+			<div class="block">
 				<h3>ZwSidebar — wide / collapsed / mobile</h3>
 				<p class="muted">
 					Counts read from <code>useDashboardStore</code> (devices,
@@ -614,6 +643,13 @@ import ZwTopbar from '@/components/dashboard/layout/ZwTopbar.vue'
 import ZwDeviceListToolbar from '@/components/dashboard/layout/ZwDeviceListToolbar.vue'
 import ZwActivityStrip from '@/components/dashboard/layout/ZwActivityStrip.vue'
 import ZwCardsBody from '@/components/dashboard/layout/ZwCardsBody.vue'
+import ZwTableBody from '@/components/dashboard/layout/ZwTableBody.vue'
+import {
+	DEFAULT_SORT,
+	nextSort,
+	type SortKey,
+	type SortState,
+} from '@/components/dashboard/layout/table-sort'
 import useDashboardStore from '@/stores/dashboard'
 
 import {
@@ -1083,6 +1119,27 @@ function addActivity() {
 }
 
 // ── layout: cards body preview state ─────────────────────────
+
+// ── layout: table body preview state ─────────────────────────
+
+const tableExpandedId = ref<Device['id'] | null>(null)
+const tableCollapsedGroups = ref<Set<string>>(new Set())
+const tableSort = ref<SortState>({ ...DEFAULT_SORT })
+
+function onTableExpand(id: Device['id']) {
+	tableExpandedId.value = tableExpandedId.value === id ? null : id
+}
+
+function onTableToggleGroup(key: string) {
+	const next = new Set(tableCollapsedGroups.value)
+	if (next.has(key)) next.delete(key)
+	else next.add(key)
+	tableCollapsedGroups.value = next
+}
+
+function onTableSort(key: SortKey) {
+	tableSort.value = nextSort(tableSort.value, key)
+}
 
 const cardsGroups = computed<[string, Device[]][]>(() => {
 	const byLocation = new Map<string, Device[]>()
