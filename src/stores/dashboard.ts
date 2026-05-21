@@ -1,42 +1,78 @@
 // src/stores/dashboard.ts
 //
-// Minimal placeholder for the dashboard's cross-cutting reactive state.
-// Plan 70 (device projection) replaces this with a full store backed by
-// the Z-Wave node socket layer. For now the layout plans (50-57) consume
-// `devices` and derived counts so the new shell, sidebar, and topbar can
-// stay free of prop-drilled counts (see plan 51's "Component contract").
+// Plan 70 — dashboard store. Single point that fans Z-Wave node data
+// out to every dashboard surface as projected `Device` records, plus
+// the derived counts the sidebar (plan 51) and topbar (plan 52) need
+// to read in sync without prop-drilling.
+//
+// The store does NOT own UI-local dashboard state (active scope, view,
+// query, selection). Those live in `ZwAppShell.vue` (plan 50).
+//
+// `setDevices()` remains as an escape hatch for the showcase fixture
+// (`src/views/DashboardShowcase.vue`) — when the showcase mounts it
+// pushes a static device list, bypassing the base-store projection.
+// Production callers should not call `setDevices`; let the projection
+// computed track the live `useBaseStore().nodes`.
 
+import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
-import type { Device } from '@/lib/dashboard-types'
+import useBaseStore from './base.js'
+import { projectDevices } from '../lib/deviceProjection.ts'
+import type { Device } from '../lib/dashboard-types.ts'
 
-interface DashboardState {
-	devices: Device[]
-}
+const useDashboardStore = defineStore('dashboard', () => {
+	const base = useBaseStore()
 
-const useDashboardStore = defineStore('dashboard', {
-	state: (): DashboardState => ({
-		devices: [],
-	}),
-	getters: {
-		deviceCount: (s) => s.devices.length,
-		attentionCount: (s) => s.devices.filter(deviceNeedsAttention).length,
-		activities: (s) =>
-			s.devices.filter((d) => (d.activity?.length ?? 0) > 0),
-		activityCount(): number {
-			return this.activities.length
-		},
-	},
-	actions: {
-		setDevices(devices: Device[]) {
-			this.devices = devices
-		},
-	},
+	// Showcase-only override. `null` means: project live nodes from
+	// the base store. Plan 70 acceptance: production never sets this.
+	const override = ref<Device[] | null>(null)
+
+	const projected = computed<Device[]>(() =>
+		projectDevices(
+			(base.nodes ?? []) as Parameters<typeof projectDevices>[0],
+		),
+	)
+
+	const devices = computed<Device[]>(() =>
+		override.value !== null ? override.value : projected.value,
+	)
+
+	const deviceCount = computed(
+		() => devices.value.filter((d) => !d.isController).length,
+	)
+
+	const attentionCount = computed(
+		() => devices.value.filter(deviceNeedsAttention).length,
+	)
+
+	const activities = computed(() =>
+		devices.value.filter((d) => (d.activity?.length ?? 0) > 0),
+	)
+
+	const activityCount = computed(() => activities.value.length)
+
+	function setDevices(d: Device[]) {
+		override.value = d
+	}
+
+	function clearOverride() {
+		override.value = null
+	}
+
+	return {
+		devices,
+		deviceCount,
+		attentionCount,
+		activities,
+		activityCount,
+		setDevices,
+		clearOverride,
+	}
 })
 
-// Mirrors `ZW.deviceNeedsAttention` from `.design-handoff/project/data.jsx`:
-// a device "needs attention" when it's dead, has a battery below 20%, or
-// the interview hasn't completed. Plan 73 replaces with the canonical
-// selector.
+// Plan 73 owns the canonical attention predicate (`src/lib/attention.ts`)
+// and replaces this stub. Mirrors the simplified rule the placeholder
+// store used since plan 50: dead, low battery, or not interview-complete.
 export function deviceNeedsAttention(d: Device): boolean {
 	if (d.isController) return false
 	if (d.status === 'dead') return true
