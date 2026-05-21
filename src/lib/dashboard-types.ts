@@ -81,21 +81,23 @@ export interface PowerInfo {
 
 export type DeviceStatus = 'alive' | 'awake' | 'asleep' | 'dead'
 
+// Plan 71 archetype set. The catalogue lives in `src/lib/archetypes.ts`.
 export type ArchetypeKind =
+	| 'controller'
+	| 'light'
 	| 'switch'
-	| 'dimmer'
-	| 'plug'
-	| 'thermostat'
+	| 'outlet'
+	| 'shade'
 	| 'lock'
 	| 'motion'
 	| 'contact'
-	| 'leak'
-	| 'tempsensor'
-	| 'shade'
-	| 'siren'
+	| 'smoke'
+	| 'water'
+	| 'climate'
+	| 'sensor'
+	| 'button'
 	| 'remote'
-	| 'rgb'
-	| 'controller'
+	| 'unknown'
 
 export interface Archetype {
 	kind: ArchetypeKind

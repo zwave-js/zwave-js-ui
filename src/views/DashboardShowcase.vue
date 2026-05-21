@@ -749,11 +749,11 @@ const viewSel = ref('cards')
 
 const TOGGLE_MENU_OPTIONS = [
 	{ id: 'switch', label: 'Switches', icon: SwitchIcon },
-	{ id: 'dimmer', label: 'Dimmers', icon: DimmerIcon },
+	{ id: 'light', label: 'Lights', icon: DimmerIcon },
 	{ id: 'lock', label: 'Locks', icon: LockIcon },
 	{ id: 'motion', label: 'Motion', icon: MotionIcon },
 ]
-const toggleMenuVal = ref<string[]>(['switch', 'dimmer'])
+const toggleMenuVal = ref<string[]>(['switch', 'light'])
 
 // ── columns menu ──
 
@@ -854,8 +854,8 @@ const devices: Device[] = [
 		id: 3,
 		name: 'Living Room Dimmer',
 		archetype: {
-			kind: 'dimmer',
-			label: 'Dimmer',
+			kind: 'light',
+			label: 'Light',
 			icon: DimmerIcon,
 			power: 'mains',
 		},
@@ -866,8 +866,8 @@ const devices: Device[] = [
 		name: 'Hallway Plug',
 		location: 'Hallway',
 		archetype: {
-			kind: 'plug',
-			label: 'Smart Plug',
+			kind: 'outlet',
+			label: 'Outlet',
 			icon: PlugIcon,
 			power: 'mains',
 		},
@@ -912,7 +912,7 @@ const devices: Device[] = [
 		name: 'Bedroom Thermostat',
 		location: 'Bedroom',
 		archetype: {
-			kind: 'thermostat',
+			kind: 'climate',
 			label: 'Thermostat',
 			icon: ThermostatIcon,
 			power: 'battery',
@@ -962,8 +962,8 @@ const devices: Device[] = [
 		name: 'Bedside Bulb',
 		location: 'Bedroom',
 		archetype: {
-			kind: 'rgb',
-			label: 'RGB Bulb',
+			kind: 'light',
+			label: 'Light',
 			icon: BulbIcon,
 			power: 'mains',
 		},
@@ -975,8 +975,8 @@ const devices: Device[] = [
 		name: 'Temp Sensor',
 		location: 'Basement',
 		archetype: {
-			kind: 'tempsensor',
-			label: 'Temp Sensor',
+			kind: 'sensor',
+			label: 'Sensor',
 			icon: TempIcon,
 			power: 'battery',
 		},
