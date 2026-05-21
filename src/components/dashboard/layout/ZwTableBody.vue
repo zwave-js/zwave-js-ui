@@ -22,7 +22,7 @@
 					:title="`Sort by ${cell.label || cell.key}`"
 					@click="emit('sort', cell.sortKey as SortKey)"
 				>
-					<span>{{ cell.label || (cell.key === 'transient' ? 'Activity' : cell.key) }}</span>
+					<span>{{ cell.label || (cell.key === 'activity' ? 'Activity' : cell.key) }}</span>
 					<component
 						:is="cell.active && sort.dir === 'desc' ? ArrowDownIcon : ArrowUpIcon"
 						:size="ICON_SIZE.sortArrow"
@@ -124,7 +124,7 @@ import type { Device, DeviceAction } from '@/lib/dashboard-types'
 type Grouping = 'location' | 'type' | 'all'
 
 const TOGGLEABLE_COL_SET = new Set<ToggleableCol>([
-	'transient',
+	'activity',
 	'location',
 	'value',
 	'power',
@@ -165,7 +165,7 @@ const columns = computed<ToggleableCol[]>(() => {
 	let cap: ToggleableCol[]
 	const w = props.viewport
 	if (w >= 1024) {
-		cap = ['transient', 'location', 'value', 'power', 'signal', 'lastSeen']
+		cap = ['activity', 'location', 'value', 'power', 'signal', 'lastSeen']
 	} else if (w >= 768) {
 		cap = ['location', 'value', 'power', 'signal']
 	} else {
@@ -195,7 +195,7 @@ const SORT_KEY_FOR_COL: Record<string, SortKey> = {
 	location: 'location',
 	power: 'power',
 	lastSeen: 'lastSeen',
-	transient: 'transient',
+	activity: 'activity',
 }
 
 const headerCells = computed<HeaderCell[] | null>(() => {
@@ -205,8 +205,8 @@ const headerCells = computed<HeaderCell[] | null>(() => {
 		{ label: '#', key: 'id' },
 		{ label: 'Device', key: 'name' },
 	]
-	if (columns.value.includes('transient')) {
-		cells.push({ label: 'Activity', key: 'transient' })
+	if (columns.value.includes('activity')) {
+		cells.push({ label: 'Activity', key: 'activity' })
 	}
 	if (columns.value.includes('location')) {
 		cells.push({ label: 'Location', key: 'location' })

@@ -14,20 +14,17 @@ import { CommandClasses } from '@zwave-js/core'
 import type { ZUINode, ZUIValueId } from '../../api/lib/ZwaveClient.ts'
 import { inferArchetype } from './archetypes.ts'
 import type {
+	Activity,
 	Device,
 	DeviceStatus,
 	PowerInfo,
 	PrimaryValue,
 	SecurityKey,
-	Transient,
 } from './dashboard-types.ts'
 
-// Plan 72 renames `Transient` → `Activity` (and `device.transient` →
-// `device.activity`) as a follow-up pass. Until then, this projection
-// populates the existing `transient` field; the rename is mechanical.
 export interface ProjectOptions {
 	now?: number
-	activitiesByNode?: Map<number, Transient[]>
+	activitiesByNode?: Map<number, Activity[]>
 }
 
 const SECURITY_CLASS_TO_KEY: Record<string, SecurityKey> = {
@@ -311,6 +308,78 @@ function labelsFor(kind: string): StateLabels {
 	}
 }
 
+/**
+ * Plan 72 — derive `device.activity[]` from existing node fields:
+ *   - `node.firmwareUpdate` (FirmwareUpdateProgress payload) → OTA
+ *   - `node.rebuildRoutesProgress` → rebuild
+ *   - `node.interviewStage !== 'Complete'` → interview (with
+ *     backend-synthesized `interviewProgress`)
+ *
+ * `activitiesByNode` is an optional escape hatch (showcase tests
+ * inject synthetic entries); when present its entries are appended.
+ */
+function projectActivities(
+	node: ZUINode,
+	override?: Map<number, Activity[]>,
+): Activity[] {
+	const out: Activity[] = []
+
+	const fw = (node as unknown as { firmwareUpdate?: unknown }).firmwareUpdate
+	if (fw && typeof fw === 'object') {
+		const f = fw as {
+			currentFile?: number
+			totalFiles?: number
+			sentFragments?: number
+			totalFragments?: number
+		}
+		const cur = f.currentFile ?? 1
+		const total = f.totalFiles ?? 1
+		const frag = f.sentFragments ?? 0
+		const tFrag = f.totalFragments ?? 1
+		const sent = (cur - 1) * tFrag + frag
+		const totalFrag = total * tFrag
+		const progress =
+			totalFrag > 0 ? Math.round((sent / totalFrag) * 100) : undefined
+		out.push({ type: 'ota', label: 'Updating firmware', progress })
+	}
+
+	const rebuild = node.rebuildRoutesProgress
+	if (rebuild) {
+		// rebuildRoutesProgress is a status enum string per node, not a
+		// percentage. Treat any non-terminal state as in-flight; the
+		// backend's own progress (when wired) replaces the placeholder.
+		const done =
+			(typeof rebuild === 'string' &&
+				(rebuild === 'done' || rebuild === 'failed')) ||
+			false
+		if (!done) {
+			out.push({
+				type: 'rebuild',
+				label: 'Rebuilding routes',
+				progress: typeof rebuild === 'number' ? rebuild : undefined,
+			})
+		}
+	}
+
+	if (node.interviewStage && node.interviewStage !== 'Complete') {
+		out.push({
+			type: 'interview',
+			label: 'Interviewing',
+			progress:
+				typeof (node as unknown as { interviewProgress?: number })
+					.interviewProgress === 'number'
+					? (node as unknown as { interviewProgress: number })
+							.interviewProgress
+					: 0,
+		})
+	}
+
+	const extra = override?.get(node.id)
+	if (extra && extra.length) out.push(...extra)
+
+	return out
+}
+
 function lastSeenLabel(now: number, lastActive?: number): string {
 	if (!lastActive) return 'never'
 	const secs = Math.max(0, Math.floor((now - lastActive) / 1000))
@@ -335,7 +404,7 @@ export function projectDevice(
 		Array.isArray(node.availableFirmwareUpdates) &&
 		node.availableFirmwareUpdates.length > 0
 
-	const activity = opts.activitiesByNode?.get(node.id) ?? []
+	const activity = projectActivities(node, opts.activitiesByNode)
 
 	return {
 		id: node.id,
@@ -361,7 +430,7 @@ export function projectDevice(
 		protocol: projectProtocol(node),
 		lastSeen: lastSeenLabel(now, node.lastActive),
 		primaryValue: projectPrimaryValue(node, archetype.kind),
-		transient: activity,
+		activity,
 		health: 'ok',
 		hasUpdate,
 		txPower:

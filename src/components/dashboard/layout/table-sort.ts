@@ -5,7 +5,7 @@
 import type { Device } from '@/lib/dashboard-types'
 
 export type SortDir = 'asc' | 'desc'
-export type SortKey = 'id' | 'location' | 'power' | 'lastSeen' | 'transient'
+export type SortKey = 'id' | 'location' | 'power' | 'lastSeen' | 'activity'
 
 export interface SortState {
 	key: SortKey
@@ -19,7 +19,7 @@ export const SORTABLE_KEYS: ReadonlySet<SortKey> = new Set<SortKey>([
 	'location',
 	'power',
 	'lastSeen',
-	'transient',
+	'activity',
 ])
 
 // Header click: switching to a new key starts ascending. Clicking the active
@@ -45,8 +45,8 @@ function sortValueFor(d: Device, key: SortKey): number | string {
 			// Smaller = more recent. The projection (plan 70) supplies
 			// `lastSeenSecs`; until then fall back to 0.
 			return (d as Device & { lastSeenSecs?: number }).lastSeenSecs ?? 0
-		case 'transient':
-			return (d.transient?.length ?? 0) > 0 ? 1 : 0
+		case 'activity':
+			return (d.activity?.length ?? 0) > 0 ? 1 : 0
 	}
 }
 

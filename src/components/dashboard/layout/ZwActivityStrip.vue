@@ -1,5 +1,5 @@
 <template>
-	<div v-if="transients.length > 0" class="zw-strip">
+	<div v-if="activities.length > 0" class="zw-strip">
 		<div
 			class="zw-strip__scroll"
 			:style="{ paddingLeft: padX + 'px' }"
@@ -7,15 +7,15 @@
 		>
 			<span class="zw-strip__label">Activity</span>
 			<span
-				v-for="d in visibleTransients"
+				v-for="d in visibleActivities"
 				:key="d.id"
 				class="zw-strip__chip"
 			>
 				<span class="zw-strip__pulse" />
-				{{ d.transient[0].label }} · {{ d.name || d.product }}
+				{{ d.activity[0].label }} · {{ d.name || d.product }}
 			</span>
-			<span v-if="transients.length > 6" class="zw-strip__more">
-				+{{ transients.length - 6 }} more
+			<span v-if="activities.length > 6" class="zw-strip__more">
+				+{{ activities.length - 6 }} more
 			</span>
 		</div>
 		<div class="zw-strip__hide" :style="{ paddingInline: padX - 6 + 'px' }">
@@ -38,7 +38,7 @@ import { XIcon } from '@/lib/icons'
 import type { Device } from '@/lib/dashboard-types'
 
 const props = defineProps<{
-	transients: Device[]
+	activities: Device[]
 	viewport: number
 }>()
 
@@ -46,7 +46,7 @@ const emit = defineEmits<{ hide: [] }>()
 
 const padX = computed(() => (props.viewport < 600 ? 12 : 20))
 
-const visibleTransients = computed(() => props.transients.slice(0, 6))
+const visibleActivities = computed(() => props.activities.slice(0, 6))
 </script>
 
 <style>

@@ -16,7 +16,7 @@
 import ZwToggleMenu from '@/components/dashboard/atoms/ZwToggleMenu.vue'
 
 type ToggleableCol =
-	| 'transient'
+	| 'activity'
 	| 'location'
 	| 'value'
 	| 'power'
@@ -33,7 +33,7 @@ const emit = defineEmits<{
 }>()
 
 const TOGGLEABLE_COLS = [
-	{ id: 'transient', label: 'Activity' },
+	{ id: 'activity', label: 'Activity' },
 	{ id: 'location', label: 'Location' },
 	{ id: 'value', label: 'State / Value' },
 	{ id: 'power', label: 'Power' },

@@ -5,7 +5,7 @@
 // Returns a string ready for `grid-template-columns`.
 
 export type ToggleableCol =
-	| 'transient'
+	| 'activity'
 	| 'location'
 	| 'value'
 	| 'power'
@@ -13,7 +13,7 @@ export type ToggleableCol =
 	| 'lastSeen'
 
 const WIDTHS: Record<ToggleableCol, string> = {
-	transient: '120px',
+	activity: '120px',
 	location: '1fr',
 	value: '1.4fr',
 	power: '72px',

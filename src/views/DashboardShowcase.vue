@@ -151,12 +151,12 @@
 			</div>
 
 			<div class="block">
-				<h3>ZwTransientReadout — table &amp; card variants</h3>
+				<h3>ZwActivityReadout — table &amp; card variants</h3>
 				<div class="row col">
 					<div class="row">
-						<ZwTransientReadout :transient="TRANSIENTS.ota" />
-						<ZwTransientReadout :transient="TRANSIENTS.rebuild" />
-						<ZwTransientReadout :transient="TRANSIENTS.interview" />
+						<ZwActivityReadout :activity="ACTIVITIES.ota" />
+						<ZwActivityReadout :activity="ACTIVITIES.rebuild" />
+						<ZwActivityReadout :activity="ACTIVITIES.interview" />
 					</div>
 					<div
 						style="
@@ -167,9 +167,9 @@
 							width: 280px;
 						"
 					>
-						<ZwTransientReadout
+						<ZwActivityReadout
 							variant="card"
-							:transient="TRANSIENTS.ota"
+							:activity="ACTIVITIES.ota"
 						/>
 					</div>
 				</div>
@@ -346,7 +346,7 @@
 					<ZwDeviceRow
 						:device="d"
 						:expanded="expandedId === d.id"
-						:columns="['transient', 'location', 'value', 'power', 'signal', 'lastSeen']"
+						:columns="['activity', 'location', 'value', 'power', 'signal', 'lastSeen']"
 						:viewport="viewport"
 						@expand="onExpand"
 						@action="onAction"
@@ -461,12 +461,12 @@
 			<div class="block">
 				<h3>ZwActivityStrip — live chips + hide button</h3>
 				<p class="muted">
-					Renders one chip per device with a running transient.
+					Renders one chip per device with a running activity.
 					Strip collapses to nothing when the list is empty.
 				</p>
 				<div class="topbar-host">
 					<ZwActivityStrip
-						:transients="activityTransients"
+						:activities="activityDevices"
 						:viewport="topbarViewport"
 						@hide="activityHidden = true"
 					/>
@@ -477,12 +477,12 @@
 						size="sm"
 						@click="addActivity"
 					>
-						Add transient
+						Add activity
 					</ZwButton>
 					<ZwButton
 						variant="outline"
 						size="sm"
-						@click="activityTransientsCount = 0"
+						@click="activityDevicesCount = 0"
 					>
 						Clear all
 					</ZwButton>
@@ -542,7 +542,7 @@
 				<h3>ZwSidebar — wide / collapsed / mobile</h3>
 				<p class="muted">
 					Counts read from <code>useDashboardStore</code> (devices,
-					attention = battery &lt; 20%, activity = transient ops in flight).
+					attention = battery &lt; 20%, activity = ops in flight).
 					Click the rail's chevron to expand, the wide sidebar's chevron
 					to collapse. Click "Open mobile sidebar" to test the V0 dialog.
 				</p>
@@ -643,7 +643,7 @@ import ZwSlider from '@/components/dashboard/atoms/ZwSlider.vue'
 import ZwSegmented from '@/components/dashboard/atoms/ZwSegmented.vue'
 import ZwSearchInput from '@/components/dashboard/atoms/ZwSearchInput.vue'
 import ZwUpdateNotifier from '@/components/dashboard/atoms/ZwUpdateNotifier.vue'
-import ZwTransientReadout from '@/components/dashboard/atoms/ZwTransientReadout.vue'
+import ZwActivityReadout from '@/components/dashboard/atoms/ZwActivityReadout.vue'
 import ZwButton from '@/components/dashboard/atoms/ZwButton.vue'
 import ZwToggleMenu from '@/components/dashboard/atoms/ZwToggleMenu.vue'
 
@@ -717,17 +717,17 @@ const CHIP_TONES = ['neutral', 'accent', 'ok', 'warn', 'danger', 'asleep'] as co
 
 const STATUSES = ['alive', 'awake', 'asleep', 'dead', 'controller'] as const
 
-const TRANSIENTS = {
-	ota: { type: 'ota' as const, label: 'OTA update', progress: 0.42 },
+const ACTIVITIES = {
+	ota: { type: 'ota' as const, label: 'OTA update', progress: 42 },
 	rebuild: {
 		type: 'rebuild' as const,
 		label: 'Rebuilding routes',
-		progress: 0.71,
+		progress: 71,
 	},
 	interview: {
 		type: 'interview' as const,
 		label: 'Interviewing',
-		progress: 0.08,
+		progress: 8,
 	},
 }
 
@@ -758,8 +758,8 @@ const toggleMenuVal = ref<string[]>(['switch', 'light'])
 // ── columns menu ──
 
 const columns = ref<
-	('transient' | 'location' | 'value' | 'power' | 'lastSeen')[]
->(['transient', 'location', 'value', 'power', 'lastSeen'])
+	('activity' | 'location' | 'value' | 'power' | 'lastSeen')[]
+>(['activity', 'location', 'value', 'power', 'lastSeen'])
 
 // ── action sink ──
 
@@ -800,7 +800,7 @@ const controller: Device = {
 	protocol: 'Z-Wave Plus v2',
 	lastSeen: 'just now',
 	primaryValue: null,
-	transient: [],
+	activity: [],
 	health: 'ok',
 	commStats: {
 		can: 0,
@@ -836,7 +836,7 @@ function makeDevice(o: Partial<Device> & { id: number; name: string }): Device {
 		firmware: { node: 'v1.61', sdk: 'v6.81' },
 		lastSeen: '2m ago',
 		primaryValue: { type: 'toggle', on: true, watts: 18 },
-		transient: [],
+		activity: [],
 		health: 'ok',
 		nodeId: o.id,
 		...o,
@@ -1014,7 +1014,7 @@ const devices: Device[] = [
 			power: 'mains',
 		},
 		primaryValue: { type: 'toggle', on: false, watts: 0 },
-		transient: [{ type: 'ota', label: 'OTA update', progress: 0.42 }],
+		activity: [{ type: 'ota', label: 'OTA update', progress: 42 }],
 		hasUpdate: true,
 	}),
 ]
@@ -1114,29 +1114,29 @@ const topbarLast = ref('')
 const toolbarGrouping = ref<'location' | 'type' | 'all'>('location')
 const toolbarView = ref<'cards' | 'table'>('cards')
 const toolbarCols = ref<Set<string>>(
-	new Set(['transient', 'location', 'value', 'power', 'signal', 'lastSeen']),
+	new Set(['activity', 'location', 'value', 'power', 'signal', 'lastSeen']),
 )
 
 // ── layout: activity strip preview state ─────────────────────
 
 const activityHidden = ref(false)
-const activityTransientsCount = ref(2)
+const activityDevicesCount = ref(2)
 
-const activityTransients = computed<Device[]>(() => {
-	const transientDevices = devices.filter((d) => d.transient.length > 0)
-	const base = transientDevices.length > 0 ? transientDevices[0] : devices[0]
+const activityDevices = computed<Device[]>(() => {
+	const inFlight = devices.filter((d) => d.activity.length > 0)
+	const base = inFlight.length > 0 ? inFlight[0] : devices[0]
 	const labels = ['OTA update', 'Rebuilding routes', 'Interviewing', 'OTA update', 'Rebuilding routes', 'OTA update', 'OTA update', 'OTA update']
 	const names = ['Kitchen Switch', 'Living Room Dimmer', 'Hallway Plug', 'Bedside Bulb', 'Front Door Lock', 'Living Room Shade', 'Bedroom Thermostat', 'Office Plug']
-	return Array.from({ length: activityTransientsCount.value }, (_, i) => ({
+	return Array.from({ length: activityDevicesCount.value }, (_, i) => ({
 		...base,
 		id: `synth-${i}`,
 		name: names[i] ?? `Device ${i + 1}`,
-		transient: [{ type: 'ota' as const, label: labels[i] ?? 'OTA update', progress: 0.3 }],
+		activity: [{ type: 'ota' as const, label: labels[i] ?? 'OTA update', progress: 30 }],
 	}))
 })
 
 function addActivity() {
-	activityTransientsCount.value++
+	activityDevicesCount.value++
 }
 
 // ── layout: cards body preview state ─────────────────────────

@@ -26,15 +26,15 @@
 			</span>
 		</span>
 
-		<!-- transient/activity -->
+		<!-- activity -->
 		<span
-			v-if="hasCol('transient') && viewport >= 600"
+			v-if="hasCol('activity') && viewport >= 600"
 			class="zw-row__cell"
 		>
-			<ZwTransientReadout
-				v-if="device.transient[0]"
+			<ZwActivityReadout
+				v-if="device.activity[0]"
 				variant="table"
-				:transient="device.transient[0]"
+				:activity="device.activity[0]"
 			/>
 			<ZwChip v-else-if="device.hasUpdate" tone="warn">
 				<DownloadIcon :size="ICON_SIZE.chip" /> UPDATE
@@ -107,7 +107,7 @@ import { computed } from 'vue'
 import ZwStatusDot from '@/components/dashboard/atoms/ZwStatusDot.vue'
 import ZwBatteryMini from '@/components/dashboard/atoms/ZwBatteryMini.vue'
 import ZwChip from '@/components/dashboard/atoms/ZwChip.vue'
-import ZwTransientReadout from '@/components/dashboard/atoms/ZwTransientReadout.vue'
+import ZwActivityReadout from '@/components/dashboard/atoms/ZwActivityReadout.vue'
 import ZwCompactPrimary from './ZwCompactPrimary.vue'
 import {
 	gridTemplateB,

@@ -209,6 +209,60 @@ describe('projectDevice', () => {
 		expect(d.interviewState).to.equal('interview')
 	})
 
+	it('derives OTA activity from node.firmwareUpdate', () => {
+		const d = projectDevice({
+			id: 30,
+			firmwareUpdate: {
+				currentFile: 2,
+				totalFiles: 4,
+				sentFragments: 50,
+				totalFragments: 100,
+			},
+			values: {},
+		})
+		// (2-1)*100 + 50 = 150 sent out of 400 total = 37.5 → 38
+		expect(d.activity[0]).to.deep.equal({
+			type: 'ota',
+			label: 'Updating firmware',
+			progress: 38,
+		})
+	})
+
+	it('derives rebuild activity from rebuildRoutesProgress', () => {
+		const d = projectDevice({
+			id: 31,
+			rebuildRoutesProgress: 'pending',
+			values: {},
+		})
+		expect(d.activity.find((a) => a.type === 'rebuild')).to.exist
+	})
+
+	it('derives interview activity with synthesized progress', () => {
+		const d = projectDevice({
+			id: 32,
+			interviewStage: 'CommandClasses',
+			interviewProgress: 60,
+			values: {},
+		})
+		const iv = d.activity.find((a) => a.type === 'interview')
+		expect(iv).to.deep.equal({
+			type: 'interview',
+			label: 'Interviewing',
+			progress: 60,
+		})
+	})
+
+	it('emits no interview activity once Complete', () => {
+		const d = projectDevice({
+			id: 33,
+			interviewStage: 'Complete',
+			values: {},
+		})
+		expect(d.activity.find((a) => a.type === 'interview')).to.equal(
+			undefined,
+		)
+	})
+
 	it('attaches activity entries from the registry', () => {
 		const map = new Map()
 		map.set(14, [{ type: 'ota', label: 'OTA', progress: 42 }])
@@ -216,8 +270,8 @@ describe('projectDevice', () => {
 			{ id: 14, values: {} },
 			{ activitiesByNode: map },
 		)
-		expect(d.transient).to.have.length(1)
-		expect(d.transient[0]).to.deep.equal({
+		expect(d.activity).to.have.length(1)
+		expect(d.activity[0]).to.deep.equal({
 			type: 'ota',
 			label: 'OTA',
 			progress: 42,

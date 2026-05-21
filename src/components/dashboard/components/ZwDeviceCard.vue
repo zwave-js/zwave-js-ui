@@ -31,10 +31,10 @@
 		</div>
 
 		<footer class="zw-card__foot">
-			<ZwTransientReadout
-				v-if="device.transient[0]"
+			<ZwActivityReadout
+				v-if="device.activity[0]"
 				variant="card"
-				:transient="device.transient[0]"
+				:activity="device.activity[0]"
 			/>
 			<template v-else>
 				<ZwBatteryMini
@@ -46,15 +46,6 @@
 				</ZwPill>
 				<ZwPill v-else-if="device.status === 'dead'" tone="danger" size="sm">
 					Dead
-				</ZwPill>
-				<ZwPill
-					v-else-if="
-						device.interviewState !== 'complete' && !device.isController
-					"
-					tone="info"
-					size="sm"
-				>
-					Interviewing
 				</ZwPill>
 				<ZwPill v-else-if="device.hasUpdate" tone="accent" size="sm">
 					<DownloadIcon :size="ICON_SIZE.pill" /> Update
@@ -69,7 +60,7 @@ import { computed } from 'vue'
 import ZwPrimaryDisplay from './ZwPrimaryDisplay.vue'
 import ZwPill from '@/components/dashboard/atoms/ZwPill.vue'
 import ZwBatteryMini from '@/components/dashboard/atoms/ZwBatteryMini.vue'
-import ZwTransientReadout from '@/components/dashboard/atoms/ZwTransientReadout.vue'
+import ZwActivityReadout from '@/components/dashboard/atoms/ZwActivityReadout.vue'
 import { DownloadIcon, ICON_SIZE, MoonIcon } from '@/lib/icons'
 import type {
 	Device,

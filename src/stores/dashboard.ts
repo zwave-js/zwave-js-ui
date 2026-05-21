@@ -45,11 +45,11 @@ const useDashboardStore = defineStore('dashboard', () => {
 		() => devices.value.filter(deviceNeedsAttention).length,
 	)
 
-	const transients = computed(() =>
-		devices.value.filter((d) => (d.transient?.length ?? 0) > 0),
+	const activities = computed(() =>
+		devices.value.filter((d) => (d.activity?.length ?? 0) > 0),
 	)
 
-	const activityCount = computed(() => transients.value.length)
+	const activityCount = computed(() => activities.value.length)
 
 	function setDevices(d: Device[]) {
 		override.value = d
@@ -63,7 +63,7 @@ const useDashboardStore = defineStore('dashboard', () => {
 		devices,
 		deviceCount,
 		attentionCount,
-		transients,
+		activities,
 		activityCount,
 		setDevices,
 		clearOverride,

@@ -44,7 +44,7 @@ import {
 
 type Grouping = 'location' | 'type' | 'all'
 type View = 'cards' | 'table'
-type ToggleableCol = 'transient' | 'location' | 'value' | 'power' | 'lastSeen'
+type ToggleableCol = 'activity' | 'location' | 'value' | 'power' | 'lastSeen'
 
 const props = defineProps<{
 	grouping: Grouping

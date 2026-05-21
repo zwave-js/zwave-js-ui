@@ -36,7 +36,7 @@
 
 			<ZwActivityStrip
 				v-if="!activityHidden"
-				:transients="transients"
+				:activities="activities"
 				:viewport="viewport"
 				@hide="activityHidden = true"
 			/>
@@ -201,7 +201,7 @@ const selectedId = ref<Device['id'] | null>(null)
 const expandedRowId = ref<Device['id'] | null>(null)
 const collapsedGroups = ref<Set<string>>(new Set())
 const visibleCols = ref<Set<string>>(
-	new Set(['transient', 'location', 'value', 'power', 'signal', 'lastSeen']),
+	new Set(['activity', 'location', 'value', 'power', 'signal', 'lastSeen']),
 )
 const sort = ref<SortState>({ ...DEFAULT_SORT })
 const capturing = ref(false)
@@ -225,7 +225,7 @@ const sidebarMode = computed<'wide' | 'collapsed' | 'mobile'>(() => {
 // ── store (plan 70 placeholder) ──────────────────────────────
 
 const store = useDashboardStore()
-const { devices, transients } = storeToRefs(store)
+const { devices, activities } = storeToRefs(store)
 
 // ── scoped + grouped device pool ─────────────────────────────
 
@@ -236,7 +236,7 @@ const scopedDevices = computed<Device[]>(() => {
 	if (active.value === 'attention') {
 		pool = pool.filter((d) => d.isController || deviceNeedsAttention(d))
 	} else if (active.value === 'activity') {
-		pool = pool.filter((d) => (d.transient?.length ?? 0) > 0)
+		pool = pool.filter((d) => (d.activity?.length ?? 0) > 0)
 	}
 	const q = query.value.toLowerCase().trim()
 	if (q) {
