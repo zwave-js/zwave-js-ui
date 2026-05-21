@@ -415,6 +415,30 @@
 			</div>
 
 			<div class="block">
+				<h3>ZwDeviceListToolbar — group + view + columns</h3>
+				<p class="muted">
+					Group + view segmented selectors; the columns menu only
+					renders in table view.
+				</p>
+				<div class="topbar-host">
+					<ZwDeviceListToolbar
+						:grouping="toolbarGrouping"
+						:view="toolbarView"
+						:viewport="topbarViewport"
+						:visible-cols="toolbarCols"
+						@grouping="toolbarGrouping = $event"
+						@view="toolbarView = $event"
+						@update:visible-cols="toolbarCols = $event"
+					/>
+				</div>
+				<div class="muted">
+					grouping: <code>{{ toolbarGrouping }}</code> · view:
+					<code>{{ toolbarView }}</code> · cols:
+					<code>{{ Array.from(toolbarCols).join(',') || '∅' }}</code>
+				</div>
+			</div>
+
+			<div class="block">
 				<h3>ZwSidebar — wide / collapsed / mobile</h3>
 				<p class="muted">
 					Counts read from <code>useDashboardStore</code> (devices,
@@ -536,6 +560,7 @@ import ZwAddDeviceSplitButton from '@/components/dashboard/components/ZwAddDevic
 import ZwDeviceDrawer from '@/components/dashboard/layout/ZwDeviceDrawer.vue'
 import ZwSidebar, { type RowAction } from '@/components/dashboard/layout/ZwSidebar.vue'
 import ZwTopbar from '@/components/dashboard/layout/ZwTopbar.vue'
+import ZwDeviceListToolbar from '@/components/dashboard/layout/ZwDeviceListToolbar.vue'
 import useDashboardStore from '@/stores/dashboard'
 
 import {
@@ -973,6 +998,14 @@ const topbarScope = ref('Overview')
 const topbarActivityHidden = ref(false)
 const topbarShowMenu = ref(false)
 const topbarLast = ref('')
+
+// ── layout: toolbar preview state ─────────────────────────────
+
+const toolbarGrouping = ref<'location' | 'type' | 'all'>('location')
+const toolbarView = ref<'cards' | 'table'>('cards')
+const toolbarCols = ref<Set<string>>(
+	new Set(['transient', 'location', 'value', 'power', 'lastSeen']),
+)
 </script>
 
 <style scoped>
