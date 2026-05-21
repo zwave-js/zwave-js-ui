@@ -72,8 +72,33 @@
 				</div>
 			</Tabs.Panel>
 
-			<Tabs.Panel value="events" class="zw-nd__content zw-nd__empty">
-				Recent events — wired up by plan 74 (activity feed).
+			<Tabs.Panel value="events" class="zw-nd__content zw-nd__events">
+				<template v-if="events.length === 0">
+					<div class="zw-nd__empty">No recent events</div>
+				</template>
+				<template v-else>
+					<div
+						v-for="(ev, i) in events"
+						:key="i"
+						class="zw-nd__event"
+					>
+						<span class="zw-nd__event-time">{{
+							relativeTime(toMs(ev.time), now)
+						}}</span>
+						<div class="zw-nd__event-body">
+							<div class="zw-nd__event-name">{{ ev.event }}</div>
+							<div v-if="eventDetail(ev)" class="zw-nd__event-detail">
+								{{ eventDetail(ev) }}
+							</div>
+						</div>
+					</div>
+					<div
+						v-if="totalEvents > MAX_EVENTS"
+						class="zw-nd__event-footer"
+					>
+						+{{ totalEvents - MAX_EVENTS }} earlier events
+					</div>
+				</template>
 			</Tabs.Panel>
 
 			<Tabs.Panel value="debug" class="zw-nd__content">
@@ -109,6 +134,8 @@ import ZwPropTable from './ZwPropTable.vue'
 import ZwSecurityPanel from './ZwSecurityPanel.vue'
 import ZwStatsCard, { type StatsItem } from './ZwStatsCard.vue'
 import type { Device, DeviceAction } from '@/lib/dashboard-types'
+import useBaseStore from '@/stores/base'
+import { relativeTime, useNow } from '@/lib/time'
 
 const props = defineProps<{ device: Device }>()
 const emit = defineEmits<{ action: [Device, DeviceAction] }>()
@@ -197,6 +224,69 @@ const debugRows = computed<[string, string | number][]>(() => [
 	['Wakeup interval', props.device.power.type === 'battery' ? '3600s' : '—'],
 	['Generic device class', props.device.archetype.label],
 ])
+
+// ── events tab (plan 74) ─────────────────────────────────────
+// Reuse `node.eventsQueue` from the base store verbatim — same data
+// the legacy events view consumes. The component looks the node up by
+// `device.nodeId` so it stays in sync with socket events without a
+// projection round-trip.
+const baseStore = useBaseStore()
+const now = useNow()
+const MAX_EVENTS = 50
+
+interface NodeEventEntry {
+	event: string
+	args?: unknown[]
+	time?: Date | string | number
+}
+
+const eventsQueue = computed<NodeEventEntry[]>(() => {
+	const node = baseStore.getNode(props.device.nodeId)
+	const q = node?.eventsQueue
+	return Array.isArray(q) ? (q as NodeEventEntry[]) : []
+})
+
+const totalEvents = computed(() => eventsQueue.value.length)
+
+const events = computed<NodeEventEntry[]>(() =>
+	eventsQueue.value.slice(-MAX_EVENTS).reverse(),
+)
+
+function toMs(t: NodeEventEntry['time']): number | undefined {
+	if (!t) return undefined
+	if (t instanceof Date) return t.getTime()
+	if (typeof t === 'number') return t
+	const d = new Date(t)
+	const n = d.getTime()
+	return Number.isNaN(n) ? undefined : n
+}
+
+function eventDetail(ev: NodeEventEntry): string {
+	// Args shape varies per event — match the legacy renderer's heuristic
+	// of "first arg is the new value when present" and stringify the rest
+	// for unknown events.
+	if (!Array.isArray(ev.args) || ev.args.length === 0) return ''
+	const first = ev.args[0] as unknown
+	if (first && typeof first === 'object') {
+		const o = first as { propertyName?: string; newValue?: unknown }
+		if (o.propertyName !== undefined && o.newValue !== undefined) {
+			return `${o.propertyName} → ${formatValue(o.newValue)}`
+		}
+	}
+	return ev.args.map((a) => formatValue(a)).join(' · ')
+}
+
+function formatValue(v: unknown): string {
+	if (v === null || v === undefined) return '—'
+	if (typeof v === 'object') {
+		try {
+			return JSON.stringify(v)
+		} catch {
+			return String(v)
+		}
+	}
+	return String(v)
+}
 
 const advancedCommands = computed<{ label: string; action: DeviceAction }[]>(
 	() =>
@@ -416,5 +506,57 @@ const advancedCommands = computed<{ label: string; action: DeviceAction }[]>(
 	.zw-nd__stats {
 		grid-template-columns: 1fr 1fr;
 	}
+}
+
+/* ── Events tab (plan 74) ───────────────────────────────────── */
+.zw-nd__events {
+	display: flex;
+	flex-direction: column;
+	gap: 0;
+}
+
+.zw-nd__event {
+	display: flex;
+	gap: 10px;
+	padding: 8px 0;
+	border-bottom: 1px dashed var(--zw-line);
+}
+
+.zw-nd__event:last-of-type {
+	border-bottom: none;
+}
+
+.zw-nd__event-time {
+	font-family: var(--zw-mono);
+	font-size: 11px;
+	color: var(--zw-muted);
+	width: 72px;
+	flex-shrink: 0;
+}
+
+.zw-nd__event-body {
+	min-width: 0;
+}
+
+.zw-nd__event-name {
+	font-size: 12px;
+	font-weight: 500;
+}
+
+.zw-nd__event-detail {
+	font-size: 11px;
+	color: var(--zw-muted);
+	margin-top: 2px;
+	word-break: break-word;
+}
+
+.zw-nd__event-footer {
+	margin-top: 8px;
+	padding-top: 8px;
+	border-top: 1px dashed var(--zw-line);
+	font-family: var(--zw-mono);
+	font-size: 11px;
+	color: var(--zw-muted);
+	text-align: center;
 }
 </style>
