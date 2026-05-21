@@ -365,6 +365,56 @@
 			<h2>Layout pieces</h2>
 
 			<div class="block">
+				<h3>ZwTopbar — title / search / activity pill / add</h3>
+				<p class="muted">
+					Badge counts come from the store. Toggle the activity-pill
+					button below to simulate <code>activityHidden</code>.
+				</p>
+				<div class="topbar-host">
+					<ZwTopbar
+						:query="topbarQuery"
+						:viewport="topbarViewport"
+						:scope-title="topbarScope"
+						:activity-hidden="topbarActivityHidden"
+						:show-menu-button="topbarShowMenu"
+						@query="topbarQuery = $event"
+						@menu="topbarLast = 'menu'"
+						@toggle-activity="topbarActivityHidden = !topbarActivityHidden"
+						@add-action="(a) => topbarLast = `add:${a}`"
+					/>
+				</div>
+				<div class="row" style="gap: 12px">
+					<ZwButton
+						variant="outline"
+						size="sm"
+						@click="topbarActivityHidden = !topbarActivityHidden"
+					>
+						Toggle activityHidden
+					</ZwButton>
+					<ZwButton
+						variant="outline"
+						size="sm"
+						@click="topbarShowMenu = !topbarShowMenu"
+					>
+						Toggle menu button
+					</ZwButton>
+					<ZwSegmented
+						v-model="topbarScope"
+						:options="[
+							{ value: 'Overview', label: 'Overview' },
+							{ value: 'Needs attention', label: 'Attention' },
+							{ value: 'Activity', label: 'Activity' },
+						]"
+						compact
+					/>
+					<span class="muted">
+						query: <code>{{ topbarQuery || '∅' }}</code> · last:
+						<code>{{ topbarLast || '—' }}</code>
+					</span>
+				</div>
+			</div>
+
+			<div class="block">
 				<h3>ZwSidebar — wide / collapsed / mobile</h3>
 				<p class="muted">
 					Counts read from <code>useDashboardStore</code> (devices,
@@ -485,6 +535,7 @@ import ZwAddDeviceSplitButton from '@/components/dashboard/components/ZwAddDevic
 
 import ZwDeviceDrawer from '@/components/dashboard/layout/ZwDeviceDrawer.vue'
 import ZwSidebar, { type RowAction } from '@/components/dashboard/layout/ZwSidebar.vue'
+import ZwTopbar from '@/components/dashboard/layout/ZwTopbar.vue'
 import useDashboardStore from '@/stores/dashboard'
 
 import {
@@ -913,6 +964,15 @@ function onSidebarRowAction(navId: string, actionId: string) {
 function onCollapseToggle() {
 	lastSidebarAction.value = 'collapse-toggle'
 }
+
+// ── layout: topbar preview state ─────────────────────────────
+
+const topbarQuery = ref('')
+const topbarViewport = ref(1280)
+const topbarScope = ref('Overview')
+const topbarActivityHidden = ref(false)
+const topbarShowMenu = ref(false)
+const topbarLast = ref('')
 </script>
 
 <style scoped>
@@ -1077,6 +1137,14 @@ function onCollapseToggle() {
 
 .drawer-host__hint p {
 	margin: 0 0 12px;
+}
+
+.topbar-host {
+	background: var(--zw-card);
+	border: 1px solid var(--zw-line);
+	border-radius: 6px;
+	overflow: hidden;
+	margin-bottom: 12px;
 }
 
 .layout-host {
