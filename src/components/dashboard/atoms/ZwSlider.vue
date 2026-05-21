@@ -1,6 +1,7 @@
 <template>
 	<Slider.Root
 		class="zw-slider"
+		:class="size === 'sm' ? 'zw-slider--sm' : null"
 		:model-value="modelValue"
 		:disabled="disabled"
 		:min="0"
@@ -18,10 +19,14 @@
 <script setup lang="ts">
 import { Slider } from '@vuetify/v0'
 
-defineProps<{
-	modelValue: number
-	disabled?: boolean
-}>()
+withDefaults(
+	defineProps<{
+		modelValue: number
+		disabled?: boolean
+		size?: 'md' | 'sm'
+	}>(),
+	{ size: 'md' },
+)
 
 const emit = defineEmits<{ 'update:modelValue': [number] }>()
 
@@ -43,6 +48,15 @@ function onUpdate(value: number | number[]): void {
 	align-items: center;
 	cursor: pointer;
 	touch-action: none;
+	--zw-slider-track: 6px;
+	--zw-slider-thumb: 14px;
+}
+
+/* sm variant: proportional 2.33× thumb:track scaled from 14×6 to 10×4. */
+.zw-slider--sm {
+	height: 10px;
+	--zw-slider-track: 4px;
+	--zw-slider-thumb: 10px;
 }
 
 .zw-slider[data-disabled='true'] {
@@ -67,7 +81,7 @@ function onUpdate(value: number | number[]): void {
 	top: 50%;
 	left: 0;
 	right: 0;
-	height: 6px;
+	height: var(--zw-slider-track);
 	transform: translateY(-50%);
 	background: var(--zw-line);
 	border-radius: var(--zw-radius-pill);
@@ -77,21 +91,22 @@ function onUpdate(value: number | number[]): void {
 	display: block;
 	position: absolute;
 	top: 50%;
-	height: 6px;
+	height: var(--zw-slider-track);
 	transform: translateY(-50%);
 	background: var(--zw-accent);
 	border-radius: var(--zw-radius-pill);
 	transition: width 0.05s;
 }
 
-/* 14-px solid accent disc. Drop-shadow at rest carries the "grabbable"
-   affordance; halo grows on hover and dragging. V0 sets inline
-   `left: <pct>%` so we translate(-50%) to center the disc on the value. */
+/* Solid accent disc whose size scales with the variant. Drop-shadow at
+   rest carries the "grabbable" affordance; halo grows on hover and
+   dragging. V0 sets inline `left: <pct>%` so we translate(-50%) to
+   center the disc on the value. */
 .zw-slider__thumb {
 	position: absolute;
 	top: 50%;
-	width: 14px;
-	height: 14px;
+	width: var(--zw-slider-thumb);
+	height: var(--zw-slider-thumb);
 	border-radius: 50%;
 	background: var(--zw-accent);
 	transform: translate(-50%, -50%);
