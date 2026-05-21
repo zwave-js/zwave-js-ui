@@ -108,6 +108,7 @@ import {
 	type SortState,
 } from './table-sort'
 import type { Device, DeviceAction } from '@/lib/dashboard-types'
+import { deviceNeedsAttention } from '@/lib/attention'
 
 type Scope = 'overview' | 'attention' | 'activity'
 type Grouping = 'location' | 'type' | 'all'
@@ -248,19 +249,6 @@ const scopedDevices = computed<Device[]>(() => {
 	}
 	return pool
 })
-
-function deviceNeedsAttention(d: Device): boolean {
-	if (d.isController) return false
-	if (d.status === 'dead') return true
-	if (
-		d.power.type === 'battery' &&
-		typeof d.power.battery === 'number' &&
-		d.power.battery < 20
-	)
-		return true
-	if (d.interviewState && d.interviewState !== 'complete') return true
-	return false
-}
 
 const groups = computed<[string, Device[]][]>(() => {
 	const pool = scopedDevices.value

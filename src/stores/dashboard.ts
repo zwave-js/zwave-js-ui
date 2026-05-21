@@ -18,6 +18,7 @@ import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
 import useBaseStore from './base.js'
 import { projectDevices } from '../lib/deviceProjection.ts'
+import { deviceNeedsAttention } from '../lib/attention.ts'
 import type { Device } from '../lib/dashboard-types.ts'
 
 const useDashboardStore = defineStore('dashboard', () => {
@@ -70,20 +71,9 @@ const useDashboardStore = defineStore('dashboard', () => {
 	}
 })
 
-// Plan 73 owns the canonical attention predicate (`src/lib/attention.ts`)
-// and replaces this stub. Mirrors the simplified rule the placeholder
-// store used since plan 50: dead, low battery, or not interview-complete.
-export function deviceNeedsAttention(d: Device): boolean {
-	if (d.isController) return false
-	if (d.status === 'dead') return true
-	if (
-		d.power.type === 'battery' &&
-		typeof d.power.battery === 'number' &&
-		d.power.battery < 20
-	)
-		return true
-	if (d.interviewState && d.interviewState !== 'complete') return true
-	return false
-}
+// Re-export so legacy call sites that imported `deviceNeedsAttention`
+// from this module keep working. Plan 73 owns the implementation in
+// `src/lib/attention.ts`.
+export { deviceNeedsAttention } from '../lib/attention.ts'
 
 export default useDashboardStore
