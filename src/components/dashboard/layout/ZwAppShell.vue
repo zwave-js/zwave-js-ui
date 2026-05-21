@@ -1,5 +1,5 @@
 <template>
-	<div class="zw-shell">
+	<div ref="shellRef" class="zw-shell">
 		<ZwSidebar
 			v-if="!isMobile"
 			:active="active"
@@ -153,17 +153,35 @@ const emit = defineEmits<{
 }>()
 
 // ── viewport ─────────────────────────────────────────────────
+// Deviates from plan 50 task 1 (which calls for window.innerWidth + resize).
+// ResizeObserver on the shell root makes the layout breakpoints respect the
+// shell's actual rendered width — required when the shell is embedded inside
+// a fixed-width host (e.g. the showcase frame) instead of reaching the page
+// edges. Behaviour is identical in production where the shell IS the window.
 
+const shellRef = ref<HTMLElement | null>(null)
 const viewport = ref(
 	typeof window !== 'undefined' ? window.innerWidth : 1280,
 )
 
-function onResize() {
-	viewport.value = window.innerWidth
-}
+let ro: ResizeObserver | null = null
 
-onMounted(() => window.addEventListener('resize', onResize))
-onBeforeUnmount(() => window.removeEventListener('resize', onResize))
+onMounted(() => {
+	if (shellRef.value) {
+		viewport.value = shellRef.value.clientWidth
+		ro = new ResizeObserver((entries) => {
+			for (const entry of entries) {
+				viewport.value = Math.round(entry.contentRect.width)
+			}
+		})
+		ro.observe(shellRef.value)
+	}
+})
+
+onBeforeUnmount(() => {
+	ro?.disconnect()
+	ro = null
+})
 
 const isMobile = computed(() => viewport.value < 760)
 const isCompact = computed(
@@ -183,7 +201,7 @@ const selectedId = ref<Device['id'] | null>(null)
 const expandedRowId = ref<Device['id'] | null>(null)
 const collapsedGroups = ref<Set<string>>(new Set())
 const visibleCols = ref<Set<string>>(
-	new Set(['activity', 'location', 'value', 'power', 'lastSeen']),
+	new Set(['activity', 'location', 'value', 'power', 'signal', 'lastSeen']),
 )
 const sort = ref<SortState>({ ...DEFAULT_SORT })
 const capturing = ref(false)
