@@ -1114,7 +1114,7 @@ const topbarLast = ref('')
 const toolbarGrouping = ref<'location' | 'type' | 'all'>('location')
 const toolbarView = ref<'cards' | 'table'>('cards')
 const toolbarCols = ref<Set<string>>(
-	new Set(['transient', 'location', 'value', 'power', 'lastSeen']),
+	new Set(['transient', 'location', 'value', 'power', 'signal', 'lastSeen']),
 )
 
 // ── layout: activity strip preview state ─────────────────────
