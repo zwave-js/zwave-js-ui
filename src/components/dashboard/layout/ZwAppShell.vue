@@ -103,12 +103,12 @@ import ZwTableBody from './ZwTableBody.vue'
 import ZwDeviceDrawer from './ZwDeviceDrawer.vue'
 import {
 	DEFAULT_SORT,
+	buildGroups,
 	nextSort,
 	type SortKey,
 	type SortState,
-} from './table-sort'
+} from '@/lib/deviceFilter'
 import type { Device, DeviceAction } from '@/lib/dashboard-types'
-import { deviceNeedsAttention } from '@/lib/attention'
 
 type Scope = 'overview' | 'attention' | 'activity'
 type Grouping = 'location' | 'type' | 'all'
@@ -232,52 +232,29 @@ const { devices, activities } = storeToRefs(store)
 
 const isDeviceListNav = computed(() => DEVICE_LIST_NAV.has(active.value))
 
-const scopedDevices = computed<Device[]>(() => {
-	let pool = devices.value
-	if (active.value === 'attention') {
-		pool = pool.filter((d) => d.isController || deviceNeedsAttention(d))
-	} else if (active.value === 'activity') {
-		pool = pool.filter((d) => (d.activity?.length ?? 0) > 0)
-	}
-	const q = query.value.toLowerCase().trim()
-	if (q) {
-		pool = pool.filter((d) =>
-			[d.name, d.location, d.product, d.manufacturer, String(d.nodeId)]
-				.filter(Boolean)
-				.some((s) => s!.toLowerCase().includes(q)),
-		)
-	}
-	return pool
+// Debounce the search input by ~100 ms so each keystroke doesn't run
+// the full filter pipeline. The atom is uncontrolled; the debounce
+// lives here (plan 75 task 4).
+const debouncedQuery = ref('')
+let queryTimer: ReturnType<typeof setTimeout> | null = null
+watch(query, (v) => {
+	if (queryTimer) clearTimeout(queryTimer)
+	queryTimer = setTimeout(() => {
+		debouncedQuery.value = v
+	}, 100)
+})
+onBeforeUnmount(() => {
+	if (queryTimer) clearTimeout(queryTimer)
 })
 
-const groups = computed<[string, Device[]][]>(() => {
-	const pool = scopedDevices.value
-	if (grouping.value === 'all') {
-		return [['All devices', pool]]
-	}
-	const map = new Map<string, Device[]>()
-	for (const d of pool) {
-		if (d.isController) {
-			if (!map.has('__controller')) map.set('__controller', [])
-			map.get('__controller')!.push(d)
-			continue
-		}
-		const key =
-			grouping.value === 'location'
-				? d.location || 'No location'
-				: d.archetype.label
-		if (!map.has(key)) map.set(key, [])
-		map.get(key)!.push(d)
-	}
-	// Pin controller group to the top.
-	const entries: [string, Device[]][] = []
-	if (map.has('__controller')) {
-		entries.push(['__controller', map.get('__controller')!])
-		map.delete('__controller')
-	}
-	for (const [k, v] of map) entries.push([k, v])
-	return entries
-})
+const groups = computed<[string, Device[]][]>(() =>
+	buildGroups(devices.value, {
+		scope: active.value as 'overview' | 'attention' | 'activity',
+		grouping: grouping.value,
+		query: debouncedQuery.value,
+		sort: sort.value,
+	}),
+)
 
 // ── selected device (drawer) ─────────────────────────────────
 
