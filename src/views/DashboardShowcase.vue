@@ -13,6 +13,7 @@
 				<a href="#cards">DeviceCard variants</a>
 				<a href="#rows">DeviceRow variants</a>
 				<a href="#drawer">Drawer / Expanded</a>
+				<a href="#layout">Layout</a>
 			</nav>
 		</header>
 
@@ -359,6 +360,70 @@
 			</div>
 		</section>
 
+		<!-- ───────── LAYOUT ───────── -->
+		<section id="layout" class="showcase__section">
+			<h2>Layout pieces</h2>
+
+			<div class="block">
+				<h3>ZwSidebar — wide / collapsed / mobile</h3>
+				<p class="muted">
+					Counts read from <code>useDashboardStore</code> (devices,
+					attention = battery &lt; 20%, activity = transient ops in flight).
+					Click the rail's chevron to expand, the wide sidebar's chevron
+					to collapse. Click "Open mobile sidebar" to test the V0 dialog.
+				</p>
+				<div class="layout-host">
+					<div class="layout-host__col">
+						<div class="layout-host__label">Wide (240)</div>
+						<div class="layout-host__frame layout-host__frame--wide">
+							<ZwSidebar
+								:active="sidebarActive"
+								mode="wide"
+								:row-actions="SIDEBAR_ROW_ACTIONS"
+								:show-collapse-toggle="false"
+								@select="onSidebarSelect"
+								@row-action="onSidebarRowAction"
+							/>
+						</div>
+					</div>
+					<div class="layout-host__col">
+						<div class="layout-host__label">Collapsed (56)</div>
+						<div class="layout-host__frame layout-host__frame--rail">
+							<ZwSidebar
+								:active="sidebarActive"
+								mode="collapsed"
+								:row-actions="SIDEBAR_ROW_ACTIONS"
+								:show-collapse-toggle="true"
+								@select="onSidebarSelect"
+								@toggle-collapse="onCollapseToggle"
+								@row-action="onSidebarRowAction"
+							/>
+						</div>
+					</div>
+					<div class="layout-host__col layout-host__col--narrow">
+						<div class="layout-host__label">Mobile (overlay)</div>
+						<div class="layout-host__frame layout-host__frame--rail">
+							<ZwButton variant="outline" size="sm" @click="mobileSidebarOpen = true">
+								Open mobile sidebar
+							</ZwButton>
+						</div>
+						<ZwSidebar
+							v-model:mobile-open="mobileSidebarOpen"
+							:active="sidebarActive"
+							mode="mobile"
+							:row-actions="SIDEBAR_ROW_ACTIONS"
+							@select="onSidebarSelect"
+							@row-action="onSidebarRowAction"
+						/>
+					</div>
+				</div>
+				<div class="muted">
+					active: <code>{{ sidebarActive }}</code> ·
+					last action: <code>{{ lastSidebarAction || '—' }}</code>
+				</div>
+			</div>
+		</section>
+
 		<!-- ───────── DRAWER HOST ───────── -->
 		<section id="drawer" class="showcase__section">
 			<h2>DeviceDrawer</h2>
@@ -419,6 +484,8 @@ import ZwColumnsMenu from '@/components/dashboard/components/ZwColumnsMenu.vue'
 import ZwAddDeviceSplitButton from '@/components/dashboard/components/ZwAddDeviceSplitButton.vue'
 
 import ZwDeviceDrawer from '@/components/dashboard/layout/ZwDeviceDrawer.vue'
+import ZwSidebar, { type RowAction } from '@/components/dashboard/layout/ZwSidebar.vue'
+import useDashboardStore from '@/stores/dashboard'
 
 import {
 	AddIcon,
@@ -808,6 +875,44 @@ function onResize() {
 
 onMounted(() => window.addEventListener('resize', onResize))
 onBeforeUnmount(() => window.removeEventListener('resize', onResize))
+
+// ── layout: sidebar preview state ─────────────────────────────
+
+const dashboardStore = useDashboardStore()
+dashboardStore.setDevices([controller, ...devices])
+
+const sidebarActive = ref('overview')
+const mobileSidebarOpen = ref(false)
+const capturing = ref(false)
+const lastSidebarAction = ref('')
+
+const SIDEBAR_ROW_ACTIONS = computed<RowAction[]>(() => [
+	{
+		navId: 'debug',
+		id: 'capture',
+		ariaLabel: capturing.value ? 'Stop debug capture' : 'Start debug capture',
+		icon: 'circle',
+		iconActive: 'square',
+		tone: 'danger',
+		active: capturing.value,
+	},
+])
+
+function onSidebarSelect(navId: string) {
+	sidebarActive.value = navId
+	lastSidebarAction.value = `select:${navId}`
+}
+
+function onSidebarRowAction(navId: string, actionId: string) {
+	lastSidebarAction.value = `row-action:${navId}:${actionId}`
+	if (navId === 'debug' && actionId === 'capture') {
+		capturing.value = !capturing.value
+	}
+}
+
+function onCollapseToggle() {
+	lastSidebarAction.value = 'collapse-toggle'
+}
 </script>
 
 <style scoped>
@@ -972,5 +1077,53 @@ onBeforeUnmount(() => window.removeEventListener('resize', onResize))
 
 .drawer-host__hint p {
 	margin: 0 0 12px;
+}
+
+.layout-host {
+	display: flex;
+	gap: 16px;
+	align-items: flex-start;
+	flex-wrap: wrap;
+	margin-bottom: 16px;
+}
+
+.layout-host__col {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+
+.layout-host__col--narrow {
+	min-width: 160px;
+}
+
+.layout-host__label {
+	font-family: var(--zw-mono);
+	font-size: 10px;
+	color: var(--zw-muted);
+	text-transform: uppercase;
+	letter-spacing: 0.6px;
+}
+
+.layout-host__frame {
+	height: 540px;
+	background: var(--zw-bg-soft);
+	border: 1px dashed var(--zw-line2);
+	border-radius: 6px;
+	overflow: hidden;
+	display: flex;
+}
+
+.layout-host__frame--wide {
+	width: 240px;
+}
+
+.layout-host__frame--rail {
+	width: 56px;
+}
+
+.layout-host__col--narrow .layout-host__frame {
+	width: 160px;
+	padding: 12px;
 }
 </style>
