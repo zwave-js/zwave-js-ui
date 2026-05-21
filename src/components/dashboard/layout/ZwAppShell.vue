@@ -109,6 +109,12 @@ import {
 	type SortState,
 } from '@/lib/deviceFilter'
 import type { Device, DeviceAction } from '@/lib/dashboard-types'
+import {
+	flushSave,
+	load as loadPrefs,
+	scheduleSave,
+	type DashboardPrefs,
+} from '@/lib/dashboardPrefs'
 
 type Scope = 'overview' | 'attention' | 'activity'
 type Grouping = 'location' | 'type' | 'all'
@@ -190,21 +196,27 @@ const isCompact = computed(
 )
 
 // ── ui state (AppShell-owned) ────────────────────────────────
+//
+// Plan 76: load persisted prefs synchronously before the first render
+// so users never see the default values flash to their saved values on
+// reload. `query`, `selectedId`, `expandedRowId`, `mobileSidebarOpen`
+// are intentionally NOT persisted (per plan 76's "ephemeral" list).
+const persisted = loadPrefs()
 
-const active = ref<string>(props.initialActive)
+const active = ref<string>(persisted.scope ?? props.initialActive)
 const mobileSidebarOpen = ref(false)
-const tabletExpanded = ref(false)
-const activityHidden = ref(false)
+const tabletExpanded = ref(persisted.tabletExpanded)
+const activityHidden = ref(persisted.activityHidden)
 const query = ref('')
-const grouping = ref<Grouping>(props.initialGrouping)
-const view = ref<View>(props.initialView)
+const grouping = ref<Grouping>(persisted.grouping ?? props.initialGrouping)
+const view = ref<View>(persisted.view ?? props.initialView)
 const selectedId = ref<Device['id'] | null>(null)
 const expandedRowId = ref<Device['id'] | null>(null)
-const collapsedGroups = ref<Set<string>>(new Set())
-const visibleCols = ref<Set<string>>(
-	new Set(['activity', 'location', 'value', 'power', 'signal', 'lastSeen']),
-)
-const sort = ref<SortState>({ ...DEFAULT_SORT })
+const collapsedGroups = ref<Set<string>>(new Set(persisted.collapsedGroups))
+const visibleCols = ref<Set<string>>(new Set(persisted.visibleCols))
+const sort = ref<SortState>({ ...(persisted.sort as SortState) } || {
+	...DEFAULT_SORT,
+})
 const capturing = ref(false)
 const triggerEl = ref<HTMLElement | null>(null)
 
@@ -215,6 +227,44 @@ watch(isMobile, (v) => {
 })
 watch(isCompact, (v) => {
 	if (!v) tabletExpanded.value = false
+})
+
+// ── persistence (plan 76) ────────────────────────────────────
+// Snapshot the persistable slice for the debounced writer. Watching
+// each ref individually would also work, but consolidating into one
+// computed lets us reuse the snapshot for the unmount flush.
+function snapshotPrefs(): DashboardPrefs {
+	return {
+		scope: active.value as DashboardPrefs['scope'],
+		grouping: grouping.value,
+		view: view.value,
+		sort: sort.value,
+		visibleCols: Array.from(visibleCols.value),
+		collapsedGroups: Array.from(collapsedGroups.value),
+		tabletExpanded: tabletExpanded.value,
+		activityHidden: activityHidden.value,
+	}
+}
+
+watch(
+	[
+		active,
+		grouping,
+		view,
+		sort,
+		visibleCols,
+		collapsedGroups,
+		tabletExpanded,
+		activityHidden,
+	],
+	() => {
+		scheduleSave(snapshotPrefs())
+	},
+	{ deep: true },
+)
+
+onBeforeUnmount(() => {
+	flushSave(snapshotPrefs())
 })
 
 const sidebarMode = computed<'wide' | 'collapsed' | 'mobile'>(() => {
