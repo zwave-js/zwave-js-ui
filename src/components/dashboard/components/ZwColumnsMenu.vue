@@ -15,7 +15,13 @@
 <script setup lang="ts">
 import ZwToggleMenu from '@/components/dashboard/atoms/ZwToggleMenu.vue'
 
-type ToggleableCol = 'transient' | 'location' | 'value' | 'power' | 'lastSeen'
+type ToggleableCol =
+	| 'transient'
+	| 'location'
+	| 'value'
+	| 'power'
+	| 'signal'
+	| 'lastSeen'
 
 defineProps<{
 	modelValue: readonly ToggleableCol[]
@@ -31,6 +37,7 @@ const TOGGLEABLE_COLS = [
 	{ id: 'location', label: 'Location' },
 	{ id: 'value', label: 'State / Value' },
 	{ id: 'power', label: 'Power' },
+	{ id: 'signal', label: 'Link' },
 	{ id: 'lastSeen', label: 'Last seen' },
 ]
 </script>
