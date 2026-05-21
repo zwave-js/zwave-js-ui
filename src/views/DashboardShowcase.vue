@@ -473,6 +473,23 @@
 			</div>
 
 			<div class="block">
+				<h3>ZwCardsBody — grouped responsive grid</h3>
+				<p class="muted">
+					Column count flips at the 480 / 760 / 1100 / 1380 breakpoints
+					(1 / 2 / 3 / 4 / 5 columns). Resize the host below to see the
+					grid reflow.
+				</p>
+				<div class="cards-body-host">
+					<ZwCardsBody
+						:groups="cardsGroups"
+						:viewport="viewport"
+						@open="onOpen"
+						@action="onAction"
+					/>
+				</div>
+			</div>
+
+			<div class="block">
 				<h3>ZwSidebar — wide / collapsed / mobile</h3>
 				<p class="muted">
 					Counts read from <code>useDashboardStore</code> (devices,
@@ -596,6 +613,7 @@ import ZwSidebar, { type RowAction } from '@/components/dashboard/layout/ZwSideb
 import ZwTopbar from '@/components/dashboard/layout/ZwTopbar.vue'
 import ZwDeviceListToolbar from '@/components/dashboard/layout/ZwDeviceListToolbar.vue'
 import ZwActivityStrip from '@/components/dashboard/layout/ZwActivityStrip.vue'
+import ZwCardsBody from '@/components/dashboard/layout/ZwCardsBody.vue'
 import useDashboardStore from '@/stores/dashboard'
 
 import {
@@ -1063,6 +1081,19 @@ const activityTransients = computed<Device[]>(() => {
 function addActivity() {
 	activityTransientsCount.value++
 }
+
+// ── layout: cards body preview state ─────────────────────────
+
+const cardsGroups = computed<[string, Device[]][]>(() => {
+	const byLocation = new Map<string, Device[]>()
+	byLocation.set('__controller', [controller])
+	for (const d of devices) {
+		const key = d.location || 'No location'
+		if (!byLocation.has(key)) byLocation.set(key, [])
+		byLocation.get(key)!.push(d)
+	}
+	return Array.from(byLocation.entries())
+})
 </script>
 
 <style scoped>
@@ -1227,6 +1258,16 @@ function addActivity() {
 
 .drawer-host__hint p {
 	margin: 0 0 12px;
+}
+
+.cards-body-host {
+	height: 540px;
+	border: 1px dashed var(--zw-line2);
+	border-radius: 6px;
+	overflow: hidden;
+	display: flex;
+	flex-direction: column;
+	margin-bottom: 12px;
 }
 
 .topbar-host {
