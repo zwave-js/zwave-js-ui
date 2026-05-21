@@ -34,7 +34,7 @@ const WIDTHS: Record<ToggleableCol, string> = {
 	location: '1fr',
 	value: '1.4fr',
 	power: '72px',
-	signal: '18px',
+	signal: '40px',
 	lastSeen: '88px',
 }
 
