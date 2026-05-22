@@ -5,9 +5,9 @@
 			:active="active"
 			:mode="sidebarMode"
 			:row-actions="rowActions"
-			:show-collapse-toggle="isCompact"
+			:show-collapse-toggle="true"
 			@select="onNavSelect"
-			@toggle-collapse="tabletExpanded = !tabletExpanded"
+			@toggle-collapse="onToggleCollapse"
 			@row-action="onSidebarRowAction"
 			@restart="emit('restart')"
 			@check-updates="emit('checkUpdates')"
@@ -211,7 +211,7 @@ const persisted = loadPrefs()
 
 const active = ref<string>(persisted.scope ?? props.initialActive)
 const mobileSidebarOpen = ref(false)
-const tabletExpanded = ref(persisted.tabletExpanded)
+const sidebarState = ref<'collapsed' | 'wide' | null>(null)
 const activityHidden = ref(persisted.activityHidden)
 const query = ref('')
 const grouping = ref<Grouping>(persisted.grouping ?? props.initialGrouping)
@@ -226,13 +226,9 @@ const sort = ref<SortState>({ ...(persisted.sort as SortState) } || {
 const capturing = ref(false)
 const triggerEl = ref<HTMLElement | null>(null)
 
-// Close mobile sidebar on viewport widen; collapse tabletExpanded once we
-// leave the compact range (mirrors `combined-dashboard.jsx:1402-1404`).
+// Close mobile sidebar on viewport widen.
 watch(isMobile, (v) => {
 	if (!v) mobileSidebarOpen.value = false
-})
-watch(isCompact, (v) => {
-	if (!v) tabletExpanded.value = false
 })
 
 // ── persistence (plan 76) ────────────────────────────────────
@@ -247,7 +243,6 @@ function snapshotPrefs(): DashboardPrefs {
 		sort: sort.value,
 		visibleCols: Array.from(visibleCols.value),
 		collapsedGroups: Array.from(collapsedGroups.value),
-		tabletExpanded: tabletExpanded.value,
 		activityHidden: activityHidden.value,
 	}
 }
@@ -260,7 +255,6 @@ watch(
 		sort,
 		visibleCols,
 		collapsedGroups,
-		tabletExpanded,
 		activityHidden,
 	],
 	() => {
@@ -275,9 +269,13 @@ onBeforeUnmount(() => {
 
 const sidebarMode = computed<'wide' | 'collapsed' | 'mobile'>(() => {
 	if (isMobile.value) return 'mobile'
-	if (isCompact.value && !tabletExpanded.value) return 'collapsed'
-	return 'wide'
+	if (sidebarState.value) return sidebarState.value
+	return isCompact.value ? 'collapsed' : 'wide'
 })
+
+function onToggleCollapse(): void {
+	sidebarState.value = sidebarMode.value === 'wide' ? 'collapsed' : 'wide'
+}
 
 // ── store (plan 70 placeholder) ──────────────────────────────
 
