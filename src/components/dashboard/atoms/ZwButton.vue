@@ -120,9 +120,7 @@ const emit = defineEmits<{ click: [MouseEvent] }>()
 	--btn-bg-hover: var(--zw-bg-soft);
 	--btn-color: var(--zw-fg);
 	--btn-border: var(--zw-line);
-	font-family: var(--zw-mono);
-	font-size: 11px;
-	font-weight: 500;
+	font: var(--zw-text-mono-small);
 	letter-spacing: 0.4px;
 }
 </style>

@@ -172,8 +172,7 @@ function onToggle(id: string): void {
 
 .zw-tm__header {
 	padding: 6px 10px 4px;
-	font-family: var(--zw-mono);
-	font-size: 10px;
+	font: var(--zw-text-mono-micro);
 	color: var(--zw-muted);
 	text-transform: uppercase;
 	letter-spacing: 0.6px;
