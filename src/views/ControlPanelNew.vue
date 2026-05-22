@@ -3,6 +3,8 @@
 		class="zw-cpn"
 		@action="onAction"
 		@add-action="onAddAction"
+		@restart="onRestart"
+		@check-updates="onCheckUpdates"
 	/>
 </template>
 
@@ -32,6 +34,8 @@ interface AppLike {
 		opts?: { infoSnack?: boolean; errorSnack?: boolean },
 	) => Promise<unknown>
 	showSnackbar: (msg: string, level?: string) => void
+	restart: () => Promise<void>
+	showUpdateDialog: () => Promise<void>
 }
 
 function appInstance(): AppLike | null {
@@ -64,6 +68,18 @@ function onAddAction(kind: 'include' | 'replace' | 'exclude') {
 				: 'startInclusion'
 	const args = kind === 'replace' ? ['replaceFailed'] : []
 	void app.apiRequest(api, args, { infoSnack: true, errorSnack: true })
+}
+
+function onRestart() {
+	const app = appInstance()
+	if (!app) return
+	void app.restart()
+}
+
+function onCheckUpdates() {
+	const app = appInstance()
+	if (!app) return
+	void app.showUpdateDialog()
 }
 </script>
 

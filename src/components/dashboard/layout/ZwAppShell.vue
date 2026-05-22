@@ -9,6 +9,8 @@
 			@select="onNavSelect"
 			@toggle-collapse="tabletExpanded = !tabletExpanded"
 			@row-action="onSidebarRowAction"
+			@restart="emit('restart')"
+			@check-updates="emit('checkUpdates')"
 		/>
 
 		<ZwSidebar
@@ -19,6 +21,8 @@
 			:row-actions="rowActions"
 			@select="onNavSelect"
 			@row-action="onSidebarRowAction"
+			@restart="emit('restart')"
+			@check-updates="emit('checkUpdates')"
 		/>
 
 		<main class="zw-shell__main">
@@ -157,6 +161,8 @@ const emit = defineEmits<{
 	addAction: [AddAction]
 	navigate: [string]
 	sidebarRowAction: [string, string]
+	restart: []
+	checkUpdates: []
 }>()
 
 // ── viewport ─────────────────────────────────────────────────

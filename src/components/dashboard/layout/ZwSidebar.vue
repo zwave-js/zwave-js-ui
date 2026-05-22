@@ -80,6 +80,8 @@ const emit = defineEmits<{
 	'update:mobileOpen': [boolean]
 	toggleCollapse: []
 	rowAction: [string, string]
+	restart: []
+	checkUpdates: []
 }>()
 
 const store = useDashboardStore()
@@ -431,6 +433,7 @@ function renderFooterWide() {
 							class: 'zw-sb__icon-btn zw-sb__icon-btn--tiny',
 							title: 'Check for updates',
 							'aria-label': 'Check for updates',
+							onClick: () => emit('checkUpdates'),
 						},
 						h(RefreshIcon, { size: 11 }),
 					),
@@ -458,6 +461,7 @@ function renderFooterWide() {
 					class: 'zw-sb__restart',
 					title: 'Restart Z-Wave JS UI',
 					'aria-label': 'Restart Z-Wave JS UI',
+					onClick: () => emit('restart'),
 				},
 				h(PowerIcon, { size: ICON_SIZE.button }),
 			),
