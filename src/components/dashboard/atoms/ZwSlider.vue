@@ -1,7 +1,7 @@
 <template>
 	<Slider.Root
 		class="zw-slider"
-		:class="size === 'sm' ? 'zw-slider--sm' : null"
+		:class="{ 'zw-slider--sm': size === 'sm' }"
 		:model-value="modelValue"
 		:disabled="disabled"
 		:min="0"
