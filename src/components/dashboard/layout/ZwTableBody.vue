@@ -39,23 +39,26 @@
 			</template>
 		</div>
 
-		<DynamicScroller
-			ref="scrollerRef"
+		<div
+			ref="bodyRef"
 			class="zw-table__body"
-			:items="flatItems"
-			:min-item-size="42"
-			key-field="id"
-			:buffer="600"
+			@scroll.passive="onScroll"
 		>
-			<template #default="{ item, active }">
-				<DynamicScrollerItem
-					:item="item"
-					:active="active"
-					:size-dependencies="[viewport, columns.length, item.kind === 'expanded' ? 1 : 0]"
+			<ZwEmptyState v-if="layoutItems.length === 0" />
+			<div
+				v-else
+				class="zw-table__inner"
+				:style="{ height: totalHeight + 'px' }"
+			>
+				<!-- Virtualized: rows and group-heads. Reused across scroll. -->
+				<template
+					v-for="item in visibleItems"
+					:key="item.id"
 				>
 					<div
 						v-if="item.kind === 'group-head'"
 						class="zw-table__group-head"
+						:style="absStyle(item)"
 						@click="emit('toggleGroup', item.key)"
 					>
 						<ChevronDownIcon
@@ -74,32 +77,39 @@
 						</span>
 					</div>
 					<ZwDeviceRow
-						v-else-if="item.kind === 'row'"
+						v-else
 						:device="item.device"
 						:expanded="expandedId === item.device.id"
 						:columns="columns as ToggleableCol[]"
 						:viewport="viewport"
+						:style="absStyle(item)"
 						@expand="(id) => emit('expand', id)"
 						@action="(dev, a) => emit('action', dev, a)"
 					/>
+				</template>
+
+				<!-- Persistent: the expanded body lives outside the virtualized
+				     loop so scrolling it out of view (or row-height churn from
+				     a tab switch) never tears it down. -->
+				<div
+					v-if="expandedDevice && expandedBodyTop != null"
+					ref="expandedHostRef"
+					class="zw-table__expanded-host"
+					:style="{ top: expandedBodyTop + 'px' }"
+				>
 					<ZwExpandedRow
-						v-else
-						:device="item.device"
+						:device="expandedDevice"
 						:viewport="viewport"
 						@action="(dev, a) => emit('action', dev, a)"
 					/>
-				</DynamicScrollerItem>
-			</template>
-			<template #empty>
-				<ZwEmptyState />
-			</template>
-		</DynamicScroller>
+				</div>
+			</div>
+		</div>
 	</div>
 </template>
 
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import { DynamicScroller, DynamicScrollerItem } from 'vue-virtual-scroller'
 import ZwDeviceRow from '@/components/dashboard/components/ZwDeviceRow.vue'
 import ZwExpandedRow from '@/components/dashboard/components/ZwExpandedRow.vue'
 import ZwEmptyState from '@/components/dashboard/components/ZwEmptyState.vue'
@@ -141,8 +151,15 @@ type GroupHeadItem = {
 }
 
 type RowItem = { id: string; kind: 'row'; device: Device }
-type ExpandedItem = { id: string; kind: 'expanded'; device: Device }
-type FlatItem = GroupHeadItem | RowItem | ExpandedItem
+type FlatItem = GroupHeadItem | RowItem
+type LayoutItem = FlatItem & { top: number; height: number }
+
+// Fixed sizes — must match the row/group-head CSS below. Keeping them
+// constants (instead of measuring) avoids the resize-feedback loop that
+// killed the DynamicScroller approach.
+const ROW_HEIGHT = 42
+const GROUP_HEAD_HEIGHT = 36
+const SCROLL_BUFFER = 240
 
 const props = defineProps<{
 	groups: [string, Device[]][]
@@ -280,55 +297,157 @@ const flatItems = computed<FlatItem[]>(() => {
 		if (collapsed) continue
 		for (const d of items) {
 			out.push({ id: `row:${d.id}`, kind: 'row', device: d })
-			if (props.expandedId === d.id) {
-				out.push({ id: `expanded:${d.id}`, kind: 'expanded', device: d })
-			}
 		}
 	}
 	return out
 })
 
+const expandedDevice = computed<Device | null>(() => {
+	if (props.expandedId == null) return null
+	for (const item of flatItems.value) {
+		if (item.kind === 'row' && item.device.id === props.expandedId) {
+			return item.device
+		}
+	}
+	return null
+})
+
+// ── manual virtualization ─────────────────────────────────────────
+// vue-virtual-scroller recycled DOM views across items, which tore
+// the expanded body's component state down on every tab switch.
+// We render only the rows in/near the viewport; the expanded body
+// lives outside this loop so it survives both scroll and row-height
+// churn.
+
+const bodyRef = ref<HTMLElement | null>(null)
+const expandedHostRef = ref<HTMLElement | null>(null)
+const scrollTop = ref(0)
+const viewportHeight = ref(0)
+const expandedBodyHeight = ref(0)
+
+const layout = computed<{ items: LayoutItem[]; total: number }>(() => {
+	const out: LayoutItem[] = []
+	let top = 0
+	const expanded = props.expandedId
+	for (const item of flatItems.value) {
+		const height =
+			item.kind === 'group-head' ? GROUP_HEAD_HEIGHT : ROW_HEIGHT
+		out.push({ ...item, top, height } as LayoutItem)
+		top += height
+		// Reserve space for the expanded body right after the row
+		// it belongs to. Using a layout-only gap (rather than a
+		// separate flatItems entry) lets us position the persistent
+		// expanded body without it ever entering the virtualized
+		// loop.
+		if (item.kind === 'row' && expanded != null && item.device.id === expanded) {
+			top += expandedBodyHeight.value
+		}
+	}
+	return { items: out, total: top }
+})
+
+const layoutItems = computed(() => layout.value.items)
+const totalHeight = computed(() => layout.value.total)
+
+const visibleItems = computed<LayoutItem[]>(() => {
+	const top = scrollTop.value - SCROLL_BUFFER
+	const bottom = scrollTop.value + viewportHeight.value + SCROLL_BUFFER
+	const arr = layoutItems.value
+	// Binary-ish narrow: items are top-sorted, so we could bisect, but
+	// a linear pass is plenty fast for 4000 entries and avoids a
+	// pre-built index that has to stay in sync.
+	const out: LayoutItem[] = []
+	for (const it of arr) {
+		if (it.top + it.height < top) continue
+		if (it.top > bottom) break
+		out.push(it)
+	}
+	return out
+})
+
+const expandedBodyTop = computed<number | null>(() => {
+	if (props.expandedId == null) return null
+	for (const it of layoutItems.value) {
+		if (it.kind === 'row' && it.device.id === props.expandedId) {
+			return it.top + ROW_HEIGHT
+		}
+	}
+	return null
+})
+
+function absStyle(item: LayoutItem) {
+	return {
+		position: 'absolute' as const,
+		top: `${item.top}px`,
+		left: 0,
+		right: 0,
+		height: `${item.height}px`,
+	}
+}
+
+function onScroll(e: Event) {
+	const t = e.target as HTMLElement
+	scrollTop.value = t.scrollTop
+}
+
 // ── scrollbar-width compensation ─────────────────────────────────
-// DynamicScroller owns the body scrollbar; the column header lives outside
-// the scroller so its width otherwise drifts when the scrollbar appears.
-// Measure once on mount and re-measure on resize / item-count changes.
+// The body owns its own scrollbar; the column header lives outside
+// it, so its width otherwise drifts when the scrollbar appears.
 
 const rootRef = ref<HTMLElement | null>(null)
-const scrollerRef = ref<InstanceType<typeof DynamicScroller> | null>(null)
 const scrollbarW = ref(0)
 
 function measureScrollbar() {
-	const root = rootRef.value
-	if (!root) return
-	const scroller = root.querySelector(
-		'.zw-table__body',
-	) as HTMLElement | null
-	if (!scroller) return
-	scrollbarW.value = scroller.offsetWidth - scroller.clientWidth
+	const body = bodyRef.value
+	if (!body) return
+	scrollbarW.value = body.offsetWidth - body.clientWidth
 }
 
-let ro: ResizeObserver | null = null
+let viewportObserver: ResizeObserver | null = null
+let expandedObserver: ResizeObserver | null = null
 
 onMounted(() => {
-	measureScrollbar()
-	if (rootRef.value) {
-		ro = new ResizeObserver(() => measureScrollbar())
-		ro.observe(rootRef.value)
+	if (bodyRef.value) {
+		viewportHeight.value = bodyRef.value.clientHeight
+		viewportObserver = new ResizeObserver(() => {
+			if (!bodyRef.value) return
+			viewportHeight.value = bodyRef.value.clientHeight
+			measureScrollbar()
+		})
+		viewportObserver.observe(bodyRef.value)
+		measureScrollbar()
 	}
 })
 
-onBeforeUnmount(() => {
-	ro?.disconnect()
-	ro = null
+// Track the persistent expanded body's height so we reserve the
+// right amount of space in the layout.
+watch(expandedHostRef, (el, _old, onCleanup) => {
+	if (expandedObserver) {
+		expandedObserver.disconnect()
+		expandedObserver = null
+	}
+	if (!el) {
+		expandedBodyHeight.value = 0
+		return
+	}
+	expandedBodyHeight.value = el.offsetHeight
+	expandedObserver = new ResizeObserver((entries) => {
+		const h = entries[0]?.contentRect.height
+		if (typeof h === 'number') expandedBodyHeight.value = h
+	})
+	expandedObserver.observe(el)
+	onCleanup(() => {
+		expandedObserver?.disconnect()
+		expandedObserver = null
+	})
 })
 
-watch(
-	() => flatItems.value.length,
-	() => {
-		// next tick to let the scroller size itself
-		setTimeout(measureScrollbar, 0)
-	},
-)
+onBeforeUnmount(() => {
+	viewportObserver?.disconnect()
+	viewportObserver = null
+	expandedObserver?.disconnect()
+	expandedObserver = null
+})
 </script>
 
 <style scoped>
@@ -399,16 +518,31 @@ watch(
 .zw-table__body {
 	flex: 1;
 	background: var(--zw-card);
+	overflow-y: auto;
+	min-height: 0;
+	position: relative;
+}
+
+.zw-table__inner {
+	position: relative;
+	width: 100%;
+}
+
+.zw-table__expanded-host {
+	position: absolute;
+	left: 0;
+	right: 0;
 }
 
 .zw-table__group-head {
 	display: flex;
 	align-items: center;
 	gap: 8px;
-	padding: 8px 16px;
+	padding: 0 16px;
 	background: var(--zw-bg-soft);
 	border-bottom: 1px solid var(--zw-line-soft);
 	cursor: pointer;
+	box-sizing: border-box;
 }
 
 .zw-table__group-chev {
