@@ -101,7 +101,7 @@
 				@click.stop="emit('open', device)"
 			>
 				<ChevronDownIcon
-					:size="ICON_SIZE.sortArrow"
+					:size="ICON_SIZE.caret"
 					class="zw-row__chev"
 					:class="{ 'zw-row__chev--open': expanded }"
 				/>

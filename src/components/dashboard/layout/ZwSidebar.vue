@@ -463,7 +463,7 @@ function renderFooterWide() {
 					'aria-label': 'Restart Z-Wave JS UI',
 					onClick: () => emit('restart'),
 				},
-				h(PowerIcon, { size: ICON_SIZE.button }),
+				h(PowerIcon, { size: ICON_SIZE.inline }),
 			),
 		]),
 	])

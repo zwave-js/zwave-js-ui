@@ -1,6 +1,6 @@
 <template>
 	<div class="zw-search">
-		<SearchIcon class="zw-search__icon" :size="ICON_SIZE.button" />
+		<SearchIcon class="zw-search__icon" :size="ICON_SIZE.inline" />
 		<input
 			type="search"
 			class="zw-search__input"

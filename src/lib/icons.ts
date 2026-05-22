@@ -2,7 +2,7 @@
 //
 // Central re-export of the dashboard's icon vocabulary. Each Lucide
 // glyph is aliased to a semantic name suffixed `Icon` so call sites
-// read `<AddIcon :size="ICON_SIZE.button" />`.
+// read `<AddIcon :size="ICON_SIZE.inline" />`.
 //
 // Call sites import directly:
 //   import { AddIcon, ICON_SIZE } from '@/lib/icons'
@@ -78,21 +78,27 @@ export {
 
 /**
  * Closed vocabulary of icon sizes used across the dashboard.
- * Call sites read `<AddIcon :size="ICON_SIZE.button" />` — numeric
- * literals should be avoided in dashboard components.
  *
- * Sharing a numeric value across aliases is fine (button covers three
- * surfaces); adding a new numeric value is a design decision.
+ * The five tabled sizes (chip / inline / nav / topbar / drawerHeader)
+ * come verbatim from the handoff's Iconography section
+ * (`.design-handoff/project/design-system.jsx:1206`); the three
+ * untabled sizes (pill / caret / dense) are implicit usages from the
+ * design's component code (e.g. PillA leading glyph at size=10,
+ * expandable section chevron at size=12, update-notifier at size=13).
+ *
+ * Call sites read `<AddIcon :size="ICON_SIZE.inline" />` — numeric
+ * literals should be avoided in dashboard components. Sharing a numeric
+ * value across aliases is fine; adding a new value is a design call.
  */
 export const ICON_SIZE = {
-	pill: 10, // pill leading glyph, popover check / chevron
-	chip: 11, // chip glyph, table-row inline icon, segmented glyph, columns-menu filter
-	sortArrow: 12, // header chevrons, sort-direction arrows
-	update: 13, // expanded update-notifier
-	button: 14, // primary button leading icon, table-row archetype glyph, search-input prepend
-	nav: 16, // sidebar nav row, top-bar search glyph
-	topbar: 18, // top-bar icon buttons, menu icon, status icons, drawer close button
-	drawerHeader: 22, // drawer header icon stamp
+	pill: 10, // pill leading glyph; popover-menu check / chevron
+	chip: 11, // chips
+	caret: 12, // expandable section chevron (sort / group headers)
+	dense: 13, // update notifier; dense action buttons (refresh / trash)
+	inline: 14, // table rows / inline
+	nav: 16, // nav rows
+	topbar: 18, // top bar / icon buttons
+	drawerHeader: 22, // drawer header
 } as const
 
 export type IconSize = (typeof ICON_SIZE)[keyof typeof ICON_SIZE]
