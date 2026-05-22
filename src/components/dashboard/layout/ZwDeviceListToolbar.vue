@@ -22,10 +22,10 @@
 
 		<ZwColumnsMenu
 			v-if="view === 'table'"
-			:model-value="visibleCols as Set<ToggleableCol>"
+			:model-value="visibleCols as ToggleableCol[]"
 			:trigger-label-hidden="viewport < 600"
 			@update:model-value="
-				(next) => emit('update:visibleCols', next as Set<ToggleableCol>)
+				(next) => emit('update:visibleCols', next)
 			"
 		/>
 	</div>
@@ -50,13 +50,13 @@ const props = defineProps<{
 	grouping: Grouping
 	view: View
 	viewport: number
-	visibleCols: Set<string>
+	visibleCols: readonly string[]
 }>()
 
 const emit = defineEmits<{
 	grouping: [Grouping]
 	view: [View]
-	'update:visibleCols': [Set<ToggleableCol>]
+	'update:visibleCols': [string[]]
 }>()
 
 const compact = computed(() => props.viewport < 600)

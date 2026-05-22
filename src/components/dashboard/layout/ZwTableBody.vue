@@ -166,7 +166,7 @@ const props = defineProps<{
 	viewport: number
 	expandedId: number | string | null
 	collapsedGroups: Set<string>
-	visibleCols: Set<string>
+	visibleCols: readonly string[]
 	sort: SortState
 	grouping: Grouping
 }>()
@@ -177,6 +177,11 @@ const emit = defineEmits<{
 	sort: [SortKey]
 	action: [Device, DeviceAction]
 }>()
+
+// Built once per visibleCols change so the per-column .has() in the
+// filter below doesn't pay a per-iteration O(n) walk against the
+// array form.
+const visibleColsSet = computed(() => new Set(props.visibleCols))
 
 const columns = computed<ToggleableCol[]>(() => {
 	let cap: ToggleableCol[]
@@ -190,7 +195,7 @@ const columns = computed<ToggleableCol[]>(() => {
 	}
 	return cap.filter(
 		(c) =>
-			!TOGGLEABLE_COL_SET.has(c) || props.visibleCols.has(c),
+			!TOGGLEABLE_COL_SET.has(c) || visibleColsSet.value.has(c),
 	)
 })
 

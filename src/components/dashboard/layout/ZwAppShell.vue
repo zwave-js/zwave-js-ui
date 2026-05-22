@@ -53,7 +53,7 @@
 				:visible-cols="visibleCols"
 				@grouping="grouping = $event"
 				@view="onViewChange"
-				@update:visible-cols="(v) => (visibleCols = v as Set<string>)"
+				@update:visible-cols="(v) => (visibleCols = v)"
 			/>
 
 			<div class="zw-shell__body">
@@ -219,7 +219,7 @@ const view = ref<View>(persisted.view ?? props.initialView)
 const selectedId = ref<Device['id'] | null>(null)
 const expandedRowId = ref<Device['id'] | null>(null)
 const collapsedGroups = ref<Set<string>>(new Set(persisted.collapsedGroups))
-const visibleCols = ref<Set<string>>(new Set(persisted.visibleCols))
+const visibleCols = ref<string[]>([...persisted.visibleCols])
 const sort = ref<SortState>({ ...(persisted.sort as SortState) } || {
 	...DEFAULT_SORT,
 })
@@ -241,7 +241,7 @@ function snapshotPrefs(): DashboardPrefs {
 		grouping: grouping.value,
 		view: view.value,
 		sort: sort.value,
-		visibleCols: Array.from(visibleCols.value),
+		visibleCols: [...visibleCols.value],
 		collapsedGroups: Array.from(collapsedGroups.value),
 		activityHidden: activityHidden.value,
 	}
