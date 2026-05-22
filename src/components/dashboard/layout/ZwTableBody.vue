@@ -25,7 +25,7 @@
 					<span>{{ cell.label || (cell.key === 'activity' ? 'Activity' : cell.key) }}</span>
 					<component
 						:is="cell.active && sort.dir === 'desc' ? ArrowDownIcon : ArrowUpIcon"
-						:size="ICON_SIZE.sortArrow"
+						:size="ICON_SIZE.caret"
 						:style="{ opacity: cell.active ? 1 : 0.28 }"
 					/>
 				</button>
@@ -62,7 +62,7 @@
 						@click="emit('toggleGroup', item.key)"
 					>
 						<ChevronDownIcon
-							:size="ICON_SIZE.sortArrow"
+							:size="ICON_SIZE.caret"
 							class="zw-table__group-chev"
 							:class="{ 'zw-table__group-chev--collapsed': item.collapsed }"
 						/>

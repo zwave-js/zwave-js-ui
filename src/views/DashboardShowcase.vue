@@ -179,13 +179,13 @@
 				<h3>ZwButton — 5 variants</h3>
 				<div class="row">
 					<ZwButton variant="primary">
-						<template #icon><AddIcon :size="ICON_SIZE.button" /></template>
+						<template #icon><AddIcon :size="ICON_SIZE.inline" /></template>
 						Add device
 					</ZwButton>
 					<ZwButton variant="outline">Cancel</ZwButton>
 					<ZwButton variant="destructive">Remove</ZwButton>
 					<ZwButton variant="ghost">
-						<template #icon><MoreIcon :size="ICON_SIZE.button" /></template>
+						<template #icon><MoreIcon :size="ICON_SIZE.inline" /></template>
 					</ZwButton>
 					<ZwButton variant="mono-outline">Interview</ZwButton>
 					<ZwButton variant="primary" size="sm">Small</ZwButton>

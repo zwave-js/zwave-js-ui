@@ -5,7 +5,7 @@
 		:aria-label="`Update available: ${current} → ${available}`"
 		@click="emit('click')"
 	>
-		<DownloadIcon :size="compact ? ICON_SIZE.button : ICON_SIZE.update" />
+		<DownloadIcon :size="compact ? ICON_SIZE.inline : ICON_SIZE.dense" />
 		<span v-if="compact" class="zw-update__dot" />
 		<span v-else class="zw-update__body">
 			<span class="zw-update__title">Update available</span>

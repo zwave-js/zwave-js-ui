@@ -6,7 +6,7 @@
 				:class="{ 'zw-asb__face--compact': compact }"
 				@click="onFaceClick"
 			>
-				<AddIcon :size="ICON_SIZE.button" />
+				<AddIcon :size="ICON_SIZE.inline" />
 				<span v-if="!compact">{{ wide ? 'Add device' : 'Add' }}</span>
 			</Button.Root>
 			<span class="zw-asb__divider" />
@@ -16,7 +16,7 @@
 				:class="{ 'zw-asb__chev--open': open }"
 				aria-haspopup="menu"
 			>
-				<ChevronDownIcon :size="ICON_SIZE.button" />
+				<ChevronDownIcon :size="ICON_SIZE.inline" />
 			</Popover.Activator>
 		</Button.Group>
 		<Popover.Content
@@ -39,7 +39,7 @@
 						'zw-asb__item-icon--destructive': item.destructive,
 					}"
 				>
-					<component :is="item.icon" :size="ICON_SIZE.button" />
+					<component :is="item.icon" :size="ICON_SIZE.inline" />
 				</span>
 				<span class="zw-asb__item-text">
 					<span class="zw-asb__item-title">{{ item.title }}</span>
