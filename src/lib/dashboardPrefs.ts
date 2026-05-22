@@ -27,7 +27,6 @@ export interface DashboardPrefs {
 	sort: SortPref
 	visibleCols: string[]
 	collapsedGroups: string[]
-	tabletExpanded: boolean
 	activityHidden: boolean
 }
 
@@ -56,7 +55,6 @@ export const DEFAULT_PREFS: DashboardPrefs = {
 		'lastSeen',
 	],
 	collapsedGroups: [],
-	tabletExpanded: false,
 	activityHidden: false,
 }
 
@@ -99,8 +97,6 @@ export function load(): DashboardPrefs {
 	if (isStringArray(raw.visibleCols)) safe.visibleCols = raw.visibleCols
 	if (isStringArray(raw.collapsedGroups))
 		safe.collapsedGroups = raw.collapsedGroups
-	if (typeof raw.tabletExpanded === 'boolean')
-		safe.tabletExpanded = raw.tabletExpanded
 	if (typeof raw.activityHidden === 'boolean')
 		safe.activityHidden = raw.activityHidden
 	return safe
