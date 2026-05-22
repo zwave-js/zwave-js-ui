@@ -15,6 +15,7 @@ const Zniffer = () => import('@/views/Zniffer.vue')
 const ConfigurationTemplates = () =>
 	import('@/views/ConfigurationTemplates.vue')
 const DashboardShowcase = () => import('@/views/DashboardShowcase.vue')
+const ControlPanelNew = () => import('@/views/ControlPanelNew.vue')
 
 import ConfigApis from '../apis/ConfigApis'
 import useBaseStore from '../stores/base'
@@ -23,6 +24,7 @@ export const Routes = {
 	login: '/',
 	error: '/error',
 	controlPanel: '/control-panel',
+	controlPanelNew: '/control-panel-new',
 	settings: '/settings',
 	scenes: '/scenes',
 	debug: '/debug',
@@ -147,6 +149,21 @@ const router = createRouter({
 			props: true,
 			meta: {
 				requiresAuth: true,
+			},
+		},
+		{
+			// Opt-in alternate dashboard route. Mounts the rework's
+			// ZwAppShell against the live websocket store. The legacy
+			// /control-panel keeps working untouched. `hideTopbar`
+			// suppresses App.vue's `<v-app-bar>` + `<v-navigation-drawer>`
+			// so the new shell renders full-bleed.
+			path: Routes.controlPanelNew,
+			name: 'Control Panel (new)',
+			component: ControlPanelNew,
+			props: true,
+			meta: {
+				requiresAuth: true,
+				hideTopbar: true,
 			},
 		},
 	],
