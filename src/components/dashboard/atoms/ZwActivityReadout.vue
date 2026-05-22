@@ -166,9 +166,7 @@ const title = computed(() =>
 }
 
 .zw-tx__pct {
-	font-family: var(--zw-mono);
-	font-size: 10px;
-	font-weight: 600;
+	font: var(--zw-text-mono-micro);
 	min-width: 26px;
 	text-align: right;
 	font-variant-numeric: tabular-nums;
