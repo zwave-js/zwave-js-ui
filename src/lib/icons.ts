@@ -85,7 +85,7 @@ export {
  * surfaces); adding a new numeric value is a design decision.
  */
 export const ICON_SIZE = {
-	pill: 10, // pill leading glyph
+	pill: 10, // pill leading glyph, popover check / chevron
 	chip: 11, // chip glyph, table-row inline icon, segmented glyph, columns-menu filter
 	sortArrow: 12, // header chevrons, sort-direction arrows
 	update: 13, // expanded update-notifier
