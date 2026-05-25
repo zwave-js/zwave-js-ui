@@ -5,24 +5,21 @@ FROM node:22.20.0-bookworm AS build-zui
 
 WORKDIR /usr/src/app
 
-RUN apt-get update && apt-get install -y \
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    apt-get update && apt-get install -y \
     jq \
-    python3 \
-    && rm -rf /var/lib/apt/lists/*
+    python3
 
-# set production env install will not install devDependencies
-ENV NODE_ENV=production
-
-COPY . .
-
-# if node_modules does not exist, run it, otherwise skip
-RUN [ -d 'node_modules' ] && echo "Skipping install" || npm ci
-
+# Cache dependency layer independently of source changes
+COPY --link package.json package-lock.json patches/ ./
+RUN npm ci
 # Fix issue with serialport bindings #2349
 RUN npm_config_build_from_source=true npm rebuild @serialport/bindings-cpp
 
-# Build back and frontend only when not existing
-RUN [ -d 'dist' ] && echo "Skipping build" || npm run build
+# Copy source and build (only these layers re-run on source-only changes)
+COPY --link . .
+RUN npm run build
 
 RUN npm prune --production && \
     rm -rf \
@@ -53,12 +50,13 @@ RUN if [ ! -z "$updateDevices"  ]; \
 # STEP: 2 (runtime)
 FROM node:22.20.0-bookworm-slim
 
-RUN apt-get update && apt-get install -y \
-    openssl \
-    && rm -rf /var/lib/apt/lists/*
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    apt-get update && apt-get install -y \
+    openssl
 
 # Copy files from the previous build stage
-COPY --from=build-zui /usr/src/app /usr/src/app
+COPY --link --from=build-zui /usr/src/app /usr/src/app
 
 ENV TAG_NAME=${image}
 

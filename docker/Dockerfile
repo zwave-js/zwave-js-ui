@@ -6,16 +6,17 @@ FROM node:${NODE_VERSION}-alpine${ALPINE_VERSION} AS node
 
 FROM alpine:${ALPINE_VERSION} AS base
 
-RUN apk add --no-cache \
+RUN --mount=type=cache,target=/var/cache/apk,sharing=locked \
+    apk add \
     openssl \
     libusb \
     tzdata \
     eudev
 
-COPY --from=node /usr/lib /usr/lib
-COPY --from=node /usr/local/lib /usr/local/lib
-COPY --from=node /usr/local/include /usr/local/include
-COPY --from=node /usr/local/bin /usr/local/bin
+COPY --link --from=node /usr/lib /usr/lib
+COPY --link --from=node /usr/local/lib /usr/local/lib
+COPY --link --from=node /usr/local/include /usr/local/include
+COPY --link --from=node /usr/local/bin /usr/local/bin
 
 # https://pkgs.alpinelinux.org/packages?name=nodejs&branch=edge&repo=&arch=&maintainer=
 
@@ -24,23 +25,22 @@ WORKDIR /usr/src/app
 # STEP: 1 build
 FROM base AS build-zui
 
-RUN \
-    apk add --no-cache --virtual .build-dependencies \
+RUN --mount=type=cache,target=/var/cache/apk,sharing=locked \
+    apk add --virtual .build-dependencies \
         jq \
         build-base \
         linux-headers \
         python3-dev
 
-COPY . .
-
-# if node_modules does not exist, install deps, if dist is missing, install also dev deps
-RUN [ -d 'node_modules' ] && echo "Skipping install" || npm ci $([ -d 'dist' ] && echo '--omit=dev' || echo '')
-
+# Cache dependency layer independently of source changes
+COPY --link package.json package-lock.json patches/ ./
+RUN npm ci
 # Fix issue with serialport bindings #2349
 RUN npm_config_build_from_source=true npm rebuild @serialport/bindings-cpp
 
-# Build back and frontend only when not existing
-RUN [ -d 'dist' ] && echo "Skipping build" || npm run build
+# Copy source and build (only these layers re-run on source-only changes)
+COPY --link . .
+RUN npm run build
 
 RUN npm prune --omit=dev && \
     find . -mindepth 1 -maxdepth 1 \
@@ -67,13 +67,13 @@ RUN if [ ! -z "$updateDevices"  ]; \
     node-zwave-js-master/packages/config/config/devices/ ;\
     fi
 
-RUN apk del --no-cache --purge .build-dependencies
+RUN apk del .build-dependencies
 
 # STEP: 2 (runtime)
 FROM base AS runtime
 
 # Copy files from previous build stage
-COPY --from=build-zui /usr/src/app /usr/src/app
+COPY --link --from=build-zui /usr/src/app /usr/src/app
 
 ENV TAG_NAME=${image}
 
