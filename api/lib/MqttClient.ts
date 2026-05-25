@@ -20,7 +20,7 @@ import { storeDir } from '../config/app.ts'
 import { ensureDir } from './utils.ts'
 import { Manager } from 'mqtt-jsonl-store'
 import { join } from 'node:path'
-import url from 'native-url'
+import url from 'node:url'
 
 const logger = module('Mqtt')
 
