@@ -60,15 +60,15 @@ const emit = defineEmits<{ click: [] }>()
 }
 
 /* Title is an intermediate of Caption (11/400) and Label (12/600):
-   the handoff renders 11/600 at design-system.jsx:460, which is not
-   a tabled TYPE_SCALE row. Keep the explicit declarations rather
-   than picking a role that would shift the size or drop emphasis. */
+   the design calls for 11/600, which is not a tabled type-scale
+   role. Keep the explicit declarations rather than picking a role
+   that would shift the size or drop emphasis. */
 .zw-update__title {
 	font-size: 11px;
 	font-weight: 600;
 }
 
-/* Versions line is Mono Micro (handoff line 55 — "pill text"). */
+/* Versions line is Mono Micro. */
 .zw-update__versions {
 	font: var(--zw-text-mono-micro);
 	color: var(--zw-fg-soft);

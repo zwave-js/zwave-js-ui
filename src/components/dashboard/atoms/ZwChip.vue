@@ -13,8 +13,7 @@ withDefaults(defineProps<{ tone?: ChipTone }>(), { tone: 'neutral' })
 <style scoped>
 /* Tone background / foreground come from the shared .zw-tone-<name>
    utility in tokens.css; this atom only owns shape, density, and the
-   accent variant's 1-px outline (per handoff). Type role is Mono
-   Micro (handoff design-system.jsx:55 — "pill text, column headers"). */
+   accent variant's 1-px outline. Type role is Mono Micro. */
 .zw-chip {
 	display: inline-flex;
 	align-items: center;

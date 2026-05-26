@@ -26,8 +26,7 @@ withDefaults(
 <style scoped>
 /* Tone background / foreground come from the shared .zw-tone-<name>
    utility in tokens.css; this atom only owns shape and density.
-   Type role is Caption (handoff design-system.jsx:51 lists "pills"
-   under Caption); the sm variant overrides the size to 10px. */
+   Type role is Caption; the sm variant overrides the size to 10px. */
 .zw-pill {
 	display: inline-flex;
 	align-items: center;

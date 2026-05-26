@@ -43,7 +43,7 @@ const sizeStyle = computed(() =>
 
 .zw-status-dot--awake {
 	background: var(--zw-ok);
-	/* Static halo — alpha 0x33 = 20% — matches direction-b.jsx. */
+	/* Static halo — alpha 0x33 = 20%. */
 	box-shadow: 0 0 0 3px rgba(var(--v0-success), 0.2);
 }
 
