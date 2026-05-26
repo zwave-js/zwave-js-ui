@@ -23,8 +23,8 @@ COPY --link --from=node /usr/local/bin /usr/local/bin
 
 WORKDIR /usr/src/app
 
-# STEP: 1 build
-FROM base AS build-zui
+# STEP: 1 - Build JS/TS artifacts once on native amd64 (dist/ and server/ are platform-agnostic)
+FROM --platform=linux/amd64 base AS build-js
 
 RUN --mount=type=cache,target=/var/cache/apk,sharing=locked \
     apk add --virtual .build-dependencies \
@@ -37,22 +37,34 @@ RUN --mount=type=cache,target=/var/cache/apk,sharing=locked \
 COPY --link package.json package-lock.json patches/ ./
 RUN --mount=type=cache,target=/root/.npm \
     npm ci
-# Fix issue with serialport bindings #2349
-RUN npm_config_build_from_source=true npm rebuild @serialport/bindings-cpp
 
 # Copy source and build (only these layers re-run on source-only changes)
 COPY --link . .
 RUN npm run build
 
-RUN npm prune --omit=dev && \
-    find . -mindepth 1 -maxdepth 1 \
-    ! -name "node_modules" \
-    ! -name "snippets" \
-    ! -name ".git" \
-    ! -name "package.json" \
-    ! -name "server" \
-    ! -name "dist" \
-    -exec rm -rf {} +
+RUN apk del .build-dependencies
+
+# STEP: 2 - Install platform-specific production dependencies and native addons
+FROM base AS build-native
+
+RUN --mount=type=cache,target=/var/cache/apk,sharing=locked \
+    apk add --virtual .build-dependencies \
+        jq \
+        build-base \
+        linux-headers \
+        python3-dev
+
+COPY --link package.json package-lock.json patches/ ./
+RUN --mount=type=cache,target=/root/.npm \
+    npm ci --omit=dev
+
+# Fix issue with serialport bindings #2349
+RUN npm_config_build_from_source=true npm rebuild @serialport/bindings-cpp
+
+# Copy platform-agnostic build artifacts from build-js
+COPY --link --from=build-js /usr/src/app/dist ./dist
+COPY --link --from=build-js /usr/src/app/server ./server
+COPY --link snippets ./snippets
 
 # add plugin support, space separated
 ARG plugins
@@ -64,19 +76,19 @@ RUN --mount=type=cache,target=/root/.npm \
 ARG updateDevices
 ARG zwavejs=https://github.com/zwave-js/node-zwave-js/archive/master.tar.gz
 
-RUN if [ ! -z "$updateDevices"  ]; \
+RUN if [ ! -z "$updateDevices" ]; \
     then curl -sL ${zwavejs} | \
     tar vxz --strip=5 -C ./node_modules/@zwave-js/config/config/devices \
-    node-zwave-js-master/packages/config/config/devices/ ;\
+    node-zwave-js-master/packages/config/config/devices/ ; \
     fi
 
 RUN apk del .build-dependencies
 
-# STEP: 2 (runtime)
+# STEP: 3 (runtime)
 FROM base AS runtime
 
 # Copy files from previous build stage
-COPY --link --from=build-zui /usr/src/app /usr/src/app
+COPY --link --from=build-native /usr/src/app /usr/src/app
 
 ENV TAG_NAME=${image}
 
