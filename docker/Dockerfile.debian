@@ -1,8 +1,9 @@
 # syntax=docker/dockerfile:1
 ARG image=zwave-js-ui
+ARG BUILDPLATFORM
 
 # STEP: 1 - Build JS/TS artifacts once on native amd64 (dist/ and server/ are platform-agnostic)
-FROM --platform=linux/amd64 node:22.20.0-bookworm AS build-js
+FROM --platform=$BUILDPLATFORM node:22.20.0-bookworm AS build-js
 
 WORKDIR /usr/src/app
 

@@ -2,6 +2,7 @@
 ARG image=zwave-js-ui
 ARG NODE_VERSION=22.20.0
 ARG ALPINE_VERSION=3.22
+ARG BUILDPLATFORM
 
 FROM node:${NODE_VERSION}-alpine${ALPINE_VERSION} AS node
 
@@ -24,7 +25,7 @@ COPY --link --from=node /usr/local/bin /usr/local/bin
 WORKDIR /usr/src/app
 
 # STEP: 1 - Build JS/TS artifacts once on native amd64 (dist/ and server/ are platform-agnostic)
-FROM --platform=linux/amd64 base AS build-js
+FROM --platform=$BUILDPLATFORM base AS build-js
 
 RUN --mount=type=cache,target=/var/cache/apk,sharing=locked \
     apk add --virtual .build-dependencies \
