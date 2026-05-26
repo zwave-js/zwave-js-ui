@@ -35,7 +35,8 @@ RUN --mount=type=cache,target=/var/cache/apk,sharing=locked \
 
 # Cache dependency layer independently of source changes
 COPY --link package.json package-lock.json patches/ ./
-RUN npm ci
+RUN --mount=type=cache,target=/root/.npm \
+    npm ci
 # Fix issue with serialport bindings #2349
 RUN npm_config_build_from_source=true npm rebuild @serialport/bindings-cpp
 
@@ -55,7 +56,8 @@ RUN npm prune --omit=dev && \
 
 # add plugin support, space separated
 ARG plugins
-RUN if [ ! -z "$plugins" ]; \
+RUN --mount=type=cache,target=/root/.npm \
+    if [ ! -z "$plugins" ]; \
     then echo "Installing plugins ${plugins}"; npm install ${plugins} ; fi
 
 # when update devices arg is set update config files from zwavejs repo
