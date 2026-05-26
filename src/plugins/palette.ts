@@ -10,10 +10,18 @@
 // inline them in either plugin file.
 
 // The handoff's colour tables (design-system.jsx:17-37) have no
-// `secondary` or `info` entry — the only "secondary" mentioned is the
-// muted FG ramp (already covered by --zw-fg-soft) and the info-toned
-// pill is implemented as an accent alias at the atom layer. Both keys
-// were dropped from this palette; no call site in src/ references them.
+// `secondary` entry — the only "secondary" mentioned is the muted FG
+// ramp, already covered by --zw-fg-soft. The key is omitted here.
+//
+// `info` is NOT in the handoff palette either — info-toned pills/badges
+// are implemented as an accent alias at the atom layer (see
+// .zw-tone-info in tokens.css). It is kept here purely for backwards
+// compatibility with the LEGACY dashboard, which still uses
+// `<v-alert type="info">` (FirmwareUpdates.vue, NodeDetails.vue,
+// TemplateWizard.vue, Zniffer.vue). Vuetify 3 maps an alert's `type`
+// onto the theme color of the same name, so dropping `info` would
+// break those alerts. REMOVE this key once dashboard-neo lands and
+// the legacy v-alert call sites are gone.
 export type Palette = Record<string, string> & {
 	primary: string
 	'primary-darken-1': string
@@ -34,6 +42,8 @@ export type Palette = Record<string, string> & {
 	// channel vars (e.g. `rgb(var(--v0-on-primary))`) and stay correct in
 	// dark mode — flipping to a literal `#fff` would defeat that.
 	'on-primary': string
+	// Legacy-only — see header comment. Remove with dashboard-neo.
+	info: string
 	// Kept for backwards compatibility with the legacy app.
 	purple: string
 }
@@ -55,6 +65,7 @@ export const lightColors: Palette = {
 	'on-surface': '#000000',
 	'on-background': '#000000',
 	'on-primary': '#FFFFFF',
+	info: '#1976D2',
 	purple: '#BA68C8',
 }
 
@@ -79,5 +90,6 @@ export const darkColors: Palette = {
 	'on-surface': '#FFFFFF',
 	'on-background': '#FFFFFF',
 	'on-primary': '#FFFFFF',
+	info: '#1976D2',
 	purple: '#BA68C8',
 }
