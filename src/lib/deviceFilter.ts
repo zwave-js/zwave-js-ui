@@ -3,11 +3,6 @@
 // Plan 75 — the device filter pipeline. Three ordered operations:
 //   scope → search → group, then sort within each group.
 //
-// Ported (with TS types) from the design handoff:
-//   - combined-dashboard.jsx:42–98  (sort + nextSort)
-//   - combined-dashboard.jsx:1407–1429 (filter pipeline)
-//   - data.jsx (`ZW.groupByRoom` / `ZW.groupByType`)
-//
 // Search uses plain case-insensitive substring matching for v1. Future
 // fuzzy multi-token support is documented in the plan; only this
 // function changes when it lands.

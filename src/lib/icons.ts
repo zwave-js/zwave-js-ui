@@ -79,13 +79,6 @@ export {
 /**
  * Closed vocabulary of icon sizes used across the dashboard.
  *
- * The five tabled sizes (chip / inline / nav / topbar / drawerHeader)
- * come verbatim from the handoff's Iconography section
- * (`.design-handoff/project/design-system.jsx:1206`); the three
- * untabled sizes (pill / caret / dense) are implicit usages from the
- * design's component code (e.g. PillA leading glyph at size=10,
- * expandable section chevron at size=12, update-notifier at size=13).
- *
  * Call sites read `<AddIcon :size="ICON_SIZE.inline" />` — numeric
  * literals should be avoided in dashboard components. Sharing a numeric
  * value across aliases is fine; adding a new value is a design call.

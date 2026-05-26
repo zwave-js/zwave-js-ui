@@ -127,8 +127,9 @@ export interface Archetype {
 // ── Activity ──────────────────────────────────────────────────
 //
 // In-flight long-running operations against a device: OTA firmware
-// updates, route rebuilds, interviews. The handoff calls these
-// "activity" (plan 72) — earlier scaffolding used "transient".
+// updates, route rebuilds, interviews. Earlier scaffolding called
+// these "transient"; the dashboard rework standardises on "activity"
+// (plan 72).
 
 export type ActivityType = 'ota' | 'rebuild' | 'interview'
 
