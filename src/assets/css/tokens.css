@@ -48,13 +48,12 @@
 	--zw-font: 'Roboto', system-ui, sans-serif;
 	--zw-mono: 'Roboto Mono', ui-monospace, monospace;
 
-	/* Type-scale tokens (handoff: design-system.jsx:45-55).
-	   Composed as the `font` CSS shorthand — `<weight> <size> <family>`
-	   — so a consumer applies a whole role in one declaration. Notes:
+	/* Type-scale tokens. Composed as the `font` CSS shorthand —
+	   `<weight> <size> <family>` — so a consumer applies a whole role
+	   in one declaration. Notes:
 	   - line-height, letter-spacing, and text-transform are NOT
-	     included; the handoff doesn't specify line-heights and several
-	     roles override letter-spacing / text-transform per atom.
-	     Set those alongside the `font:` call where needed.
+	     included; several roles override those per atom. Set them
+	     alongside the `font:` call where needed.
 	   - `font:` resets line-height to `normal` per spec, so add an
 	     explicit `line-height:` after the var() if a consumer needs one. */
 	--zw-text-h-l: 600 22px var(--zw-font); /* card primary value */
@@ -122,10 +121,10 @@
 	--tone-fg: var(--zw-danger);
 }
 
-/* `info` mirrors `accent` per the handoff (PillA tone=info renders
-   with the accent tint at the atom level). Kept as a distinct class
-   so call sites can express intent and a future redesign can split
-   the two without touching consumers. */
+/* `info` mirrors `accent` — info-toned surfaces render with the
+   accent tint. Kept as a distinct class so call sites can express
+   intent and a future redesign can split the two without touching
+   consumers. */
 .zw-tone-info {
 	--tone-bg: var(--zw-accent-soft);
 	--tone-fg: var(--zw-accent-dark);
