@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1
 ARG image=zwave-js-ui
 ARG NODE_VERSION=22.20.0
 ARG ALPINE_VERSION=3.22
