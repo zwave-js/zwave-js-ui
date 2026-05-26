@@ -61,9 +61,8 @@ function onSelect(value: unknown): void {
 	border: 1px solid var(--zw-line-soft);
 }
 
-/* Type role is Caption (handoff TYPE_SCALE at design-system.jsx:51);
-   the selected state pops weight to 600 — matching the design's
-   own segmented mock in design-system.jsx:118-140. */
+/* Type role is Caption; the selected state pops weight to 600 to
+   match the design's segmented control. */
 .zw-segmented__btn {
 	appearance: none;
 	background: transparent;

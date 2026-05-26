@@ -26,9 +26,8 @@ const level = computed<'low' | 'mid' | 'ok' | null>(() => {
 </script>
 
 <style scoped>
-/* Type role is Mono Micro (handoff TYPE_SCALE at
-   design-system.jsx:55 — "pill text, column headers"); the battery
-   readout is a dense column-style annotation. */
+/* Type role is Mono Micro — the battery readout is a dense
+   column-style annotation. */
 .zw-bat {
 	display: inline-flex;
 	align-items: center;

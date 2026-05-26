@@ -103,8 +103,7 @@ function onToggle(id: string): void {
 /* Styles unscoped — V0 primitives set inheritAttrs:false so Vue's scoped
    data-v-* hash does not reach the rendered elements. .zw-tm namespace is
    unique to this atom. */
-/* Trigger is a Caption-role row (handoff TYPE_SCALE at
-   design-system.jsx:51 — "Subtitles, hints"). */
+/* Trigger uses the Caption type role. */
 .zw-tm__trigger {
 	appearance: none;
 	background: var(--zw-card);
@@ -189,8 +188,7 @@ function onToggle(id: string): void {
 	letter-spacing: 0.6px;
 }
 
-/* Row text is Body S (handoff TYPE_SCALE at design-system.jsx:49 —
-   "Search input, dense rows"). */
+/* Row text uses the Body S type role. */
 .zw-tm__row {
 	display: flex;
 	align-items: center;
