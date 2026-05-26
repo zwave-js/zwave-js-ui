@@ -1,15 +1,15 @@
 // src/lib/icons.ts
 //
-// Central re-export of the dashboard's icon vocabulary.
-// One alias per handoff name (`.design-handoff/project/icons.jsx`),
-// suffixed `Icon` so call sites read `<AddIcon :size="ICON_SIZE.button" />`.
+// Central re-export of the dashboard's icon vocabulary. Each Lucide
+// glyph is aliased to a semantic name suffixed `Icon` so call sites
+// read `<AddIcon :size="ICON_SIZE.button" />`.
 //
 // Call sites import directly:
 //   import { AddIcon, ICON_SIZE } from '@/lib/icons'
 //
 // Lucide ships per-icon ESM entry points; Vite tree-shakes unused aliases.
 //
-// A few Lucide glyphs back two semantic roles in the handoff:
+// A few Lucide glyphs back two semantic roles:
 //   - Sun → DimmerIcon (dimmable lights) and SunIcon (weather/illuminance)
 //   - Thermometer → ThermostatIcon (climate device) and TempIcon (sensor)
 // Kept as distinct aliases so call sites express intent — a future swap
