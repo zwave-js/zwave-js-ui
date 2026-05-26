@@ -37,8 +37,8 @@
 					Controller exposes no command-class values.
 				</div>
 				<div v-else class="zw-nd__values-stub">
-					<!-- TODO: full ValuesView lands as a follow-up plan
-						 (handoff: values-view.jsx). Render a placeholder. -->
+					<!-- TODO: full ValuesView lands as a follow-up plan.
+						 Render a placeholder for now. -->
 					Values pane — full ValuesView ships with a follow-up plan.
 				</div>
 			</Tabs.Panel>
