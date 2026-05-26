@@ -77,7 +77,12 @@
   ],
   "dependencies": {
     "@esm2cjs/escape-string-regexp": "^5.0.0",
+    "@fontsource/roboto": "^5.2.10",
+    "@fontsource/roboto-mono": "^5.2.9",
+    "@floating-ui/dom": "^1.7.6",
     "@kvaster/zwavejs-prom": "^0.0.3",
+    "@vuetify/v0": "~1.0.0-alpha.5",
+    "@lucide/vue": "^1.16.0",
     "@zwave-js/log-transport-json": "^3.0.0",
     "@zwave-js/server": "^3.8.0",
     "archiver": "^7.0.1",

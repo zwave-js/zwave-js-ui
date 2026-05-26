@@ -1,0 +1,61 @@
+<template>
+	<span
+		class="zw-status-dot"
+		:class="`zw-status-dot--${status}`"
+		:style="sizeStyle"
+	/>
+</template>
+
+<script setup lang="ts">
+import { computed } from 'vue'
+
+type Status = 'alive' | 'awake' | 'asleep' | 'dead' | 'controller'
+
+const props = withDefaults(
+	defineProps<{
+		status: Status
+		size?: number
+	}>(),
+	{ size: 8 },
+)
+
+// Bind size through a single custom property so the style block owns
+// both width and height; skip the binding entirely when the caller
+// uses the default so the table's hundred-dot list allocates nothing
+// per row.
+const sizeStyle = computed(() =>
+	props.size === 8 ? undefined : { '--zw-status-dot-size': `${props.size}px` },
+)
+</script>
+
+<style scoped>
+.zw-status-dot {
+	display: inline-block;
+	width: var(--zw-status-dot-size, 8px);
+	height: var(--zw-status-dot-size, 8px);
+	border-radius: 50%;
+	vertical-align: middle;
+}
+
+.zw-status-dot--alive {
+	background: var(--zw-ok);
+}
+
+.zw-status-dot--awake {
+	background: var(--zw-ok);
+	/* Static halo — alpha 0x33 = 20%. */
+	box-shadow: 0 0 0 3px rgba(var(--v0-success), 0.2);
+}
+
+.zw-status-dot--asleep {
+	background: var(--zw-muted);
+}
+
+.zw-status-dot--dead {
+	background: var(--zw-danger);
+}
+
+.zw-status-dot--controller {
+	background: var(--zw-accent);
+}
+</style>
