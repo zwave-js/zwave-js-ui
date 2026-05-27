@@ -1,10 +1,27 @@
 import { createApp } from 'vue'
 import pinia from './plugins/pinia'
-import vuetify from './plugins/vuetify' // path to vuetify export
+import vuetify0 from './plugins/vuetify0'
+import vuetify from './plugins/vuetify' // legacy — removed once Phase 6 lands
 import router from './router'
 import App from './App.vue'
 import { registerSW } from 'virtual:pwa-register'
-// Custom assets CSS JS
+
+// Self-host the dashboard typography. Each @fontsource weight CSS ships
+// @font-face rules with unicode-range per subset (latin / latin-ext /
+// cyrillic / greek / vietnamese / math / symbols), so the browser only
+// downloads the WOFF2s that match the rendered glyphs — same lazy-subset
+// behaviour the Google Fonts CDN was providing, but bundled.
+import '@fontsource/roboto/400.css'
+import '@fontsource/roboto/500.css'
+import '@fontsource/roboto/600.css'
+import '@fontsource/roboto/700.css'
+import '@fontsource/roboto-mono/400.css'
+import '@fontsource/roboto-mono/500.css'
+import '@fontsource/roboto-mono/600.css'
+
+// Custom assets CSS JS — tokens.css must load after vuetify's stylesheet
+// (imported transitively from ./plugins/vuetify) so our :root tokens win.
+import './assets/css/tokens.css'
 import './assets/css/main.css'
 
 const updateSW = registerSW({
@@ -25,6 +42,7 @@ const updateSW = registerSW({
 const app = createApp(App)
 
 app.use(pinia)
+vuetify0(app)
 app.use(vuetify)
 app.use(router)
 
