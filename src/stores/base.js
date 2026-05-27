@@ -322,9 +322,11 @@ const useBaseStore = defineStore('base', {
 				this.controllerId = n.id
 			}
 
-			if (index >= 0) {
-				this.nodes.splice(index, 1, n)
-			} else {
+			// when the node already exists, Object.assign above mutated this.nodes[index]
+			// in place; Vue 3 reactivity propagates the per-field changes without us
+			// needing to splice the slot. Splicing would invalidate v-data-table's row
+			// tracking and drop the expanded-row state mid-edit (see #4639).
+			if (index === undefined) {
 				this.nodes.push(n)
 				this.nodesMap.set(n.id, this.nodes.length - 1)
 			}
