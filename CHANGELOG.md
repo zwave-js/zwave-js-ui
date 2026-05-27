@@ -1,5 +1,19 @@
 # Changelog
 
+## [11.19.0](https://github.com/zwave-js/zwave-js-ui/compare/v11.18.0...v11.19.0) (2026-05-27)
+
+### ✨ Features
+
+* **ui:** add Last Awake column for battery-powered nodes ([#4643](https://github.com/zwave-js/zwave-js-ui/issues/4643)) ([d417154](https://github.com/zwave-js/zwave-js-ui/commit/d417154cada86bc877dd1267a2e341888546d002))
+
+### 🐛 Bug Fixes
+
+* **ui:** reduce nodes-table re-render pressure and clear inclusion ghosts ([#4649](https://github.com/zwave-js/zwave-js-ui/issues/4649)) ([037d400](https://github.com/zwave-js/zwave-js-ui/commit/037d40023438e27bcbe151a2cea371fd6aa0e1eb)), closes [#4639](https://github.com/zwave-js/zwave-js-ui/issues/4639) [#4639](https://github.com/zwave-js/zwave-js-ui/issues/4639)
+
+### ♻️ Code Refactoring
+
+* **build:** improve Docker layer and GHA cache reuse ([#4648](https://github.com/zwave-js/zwave-js-ui/issues/4648)) ([de9acf1](https://github.com/zwave-js/zwave-js-ui/commit/de9acf1d2c6244251a697ffa4295ca0bcad6595e))
+
 ## [11.18.0](https://github.com/zwave-js/zwave-js-ui/compare/v11.17.0...v11.18.0) (2026-05-18)
 
 ### ✨ Features
