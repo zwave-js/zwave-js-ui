@@ -22,11 +22,6 @@ jobs:
           fetch-depth: 0 # fetch everything
           ref: ${{ github.event.inputs.branch }}
 
-      - uses: actions/setup-node@v5
-        with:
-          node-version: 20
-          cache: 'npm'
-
       - uses: docker/setup-buildx-action@v3
       - uses: docker/setup-qemu-action@v3
 
@@ -59,11 +54,6 @@ jobs:
             org.opencontainers.image.url=https://zwave-js.github.io/zwave-js-ui/#/
             maintainer=robertsLando
 
-      - name: Pre-build frontend and backend files
-        run: |
-          npm ci
-          npm run build
-
       - name: build+push
         uses: docker/build-push-action@v6
         timeout-minutes: 120
@@ -71,8 +61,8 @@ jobs:
           platforms: linux/arm64,linux/amd64,linux/arm/v7
           file: docker/Dockerfile
           context: . # without this it will use master instead of the selected branch
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=gha,scope=zwave-js-ui
+          cache-to: type=gha,mode=max,scope=zwave-js-ui
           push: true
           tags: ${{ steps.docker_meta.outputs.tags }}
           labels: ${{ steps.docker_meta.outputs.labels }}
