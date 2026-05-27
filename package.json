@@ -36,7 +36,6 @@
     "README.md"
   ],
   "scripts": {
-    "postinstall": "patch-package",
     "dev": "vite",
     "dev-https": "SERVER_SSL='true' npm run dev",
     "dev:server": "nodemon",
@@ -99,7 +98,6 @@
     "mqtt-jsonl-store": "^0.3.1",
     "multer": "^2.0.2",
     "native-url": "^0.3.4",
-    "patch-package": "^8.0.1",
     "selfsigned": "^2.4.1",
     "semver": "^7.6.2",
     "session-file-store": "^1.5.0",

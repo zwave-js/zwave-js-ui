@@ -35,7 +35,7 @@ RUN --mount=type=cache,target=/var/cache/apk,sharing=locked \
         python3-dev
 
 # Cache dependency layer independently of source changes
-COPY --link package.json package-lock.json patches/ ./
+COPY --link package.json package-lock.json ./
 RUN --mount=type=cache,target=/root/.npm \
     npm ci
 
@@ -55,7 +55,7 @@ RUN --mount=type=cache,target=/var/cache/apk,sharing=locked \
         linux-headers \
         python3-dev
 
-COPY --link package.json package-lock.json patches/ ./
+COPY --link package.json package-lock.json ./
 RUN --mount=type=cache,target=/root/.npm \
     npm ci --omit=dev
 
