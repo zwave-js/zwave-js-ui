@@ -337,6 +337,9 @@
 		<template #[`item.lastActive`]="{ item }">
 			<statistics-arrows :node="item"></statistics-arrows>
 		</template>
+		<template #[`item.lastAwake`]="{ item }">
+			{{ item.lastAwake ? getDateTimeString(item.lastAwake) : '' }}
+		</template>
 		<template #[`expanded-row`]="{ columns: headers, item }">
 			<td :colspan="$vuetify.display.xs ? 1 : headers.length">
 				<expanded-node

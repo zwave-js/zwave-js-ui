@@ -2,7 +2,7 @@ import draggable from 'vuedraggable'
 import colors from 'vuetify/util/colors'
 import { ManagedItems } from '@/modules/ManagedItems'
 
-import { mapState } from 'pinia'
+import { mapActions, mapState } from 'pinia'
 import {
 	mdiBatteryAlertVariantOutline,
 	mdiBattery20,
@@ -246,6 +246,7 @@ export default {
 		}
 	},
 	methods: {
+		...mapActions(useBaseStore, ['getDateTimeString']),
 		getProgress(node) {
 			return node.firmwareUpdate
 				? Math.round(
