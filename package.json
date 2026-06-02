@@ -78,7 +78,7 @@
     "@esm2cjs/escape-string-regexp": "^5.0.0",
     "@kvaster/zwavejs-prom": "^0.0.3",
     "@zwave-js/log-transport-json": "^3.0.0",
-    "@zwave-js/server": "^3.8.0",
+    "@zwave-js/server": "^3.9.0",
     "archiver": "^7.0.1",
     "compression": "^1.8.1",
     "connect-history-api-fallback": "2.0.0",
@@ -104,7 +104,7 @@
     "socket.io": "^4.7.5",
     "winston": "^3.13.0",
     "winston-daily-rotate-file": "^5.0.0",
-    "zwave-js": "15.24.0"
+    "zwave-js": "15.24.2"
   },
   "devDependencies": {
     "@actions/github": "^6.0.0",
