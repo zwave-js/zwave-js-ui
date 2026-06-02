@@ -1,5 +1,15 @@
 # Changelog
 
+## [11.19.1](https://github.com/zwave-js/zwave-js-ui/compare/v11.19.0...v11.19.1) (2026-06-02)
+
+### 🐛 Bug Fixes
+
+* **ui:** last Awake column as localized datetime ([#4652](https://github.com/zwave-js/zwave-js-ui/issues/4652)) ([63d3c7e](https://github.com/zwave-js/zwave-js-ui/commit/63d3c7e314566a719badf451a71d535186653473))
+
+### 🔧 Chores
+
+* bump Z-Wave JS to 15.24.2, Server to 3.9.0 ([#4655](https://github.com/zwave-js/zwave-js-ui/issues/4655)) ([118ccd7](https://github.com/zwave-js/zwave-js-ui/commit/118ccd744c692be18b9b6e0a04cc1e8bdfaa8ccb))
+
 ## [11.19.0](https://github.com/zwave-js/zwave-js-ui/compare/v11.18.0...v11.19.0) (2026-05-27)
 
 ### ✨ Features
