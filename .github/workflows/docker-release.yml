@@ -1,5 +1,13 @@
 name: Docker Release
 
+# A release fires two runs (the `release` event + the `push` of the version-bump
+# commit to master). Both export to the same GHA cache scope and push the same
+# `sha` tag, which races and intermittently fails one of them. Serialize them so
+# the second run waits and reuses the first run's warm cache instead of racing it.
+concurrency:
+  group: docker-release
+  cancel-in-progress: false
+
 on:
   push:
     branches:
