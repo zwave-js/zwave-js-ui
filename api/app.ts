@@ -1588,15 +1588,45 @@ app.post(
 	apisLimiter,
 	isAuthenticated,
 	async function (req, res) {
-		const config = normalizeImportedNodesConfig(req.body.data)
 		try {
 			if (!gw.zwave) throw Error('Z-Wave client not inited')
 
-			for (const nodeId in config) {
-				const node = config[nodeId]
+			const { nodes, selectedHomeId, skippedHomeIds } =
+				normalizeImportedNodesConfig(req.body.data, gw.zwave.homeHex, {
+					homeId:
+						typeof req.body.homeId === 'string'
+							? req.body.homeId
+							: undefined,
+					mergeAll: req.body.mergeAll === true,
+				})
+
+			if (skippedHomeIds.length > 0) {
+				logger.warn(
+					`Import: skipped nodes for home id(s) ${skippedHomeIds.join(
+						', ',
+					)}` +
+						(selectedHomeId
+							? `, imported ${selectedHomeId} (current controller)`
+							: ', none matched the current controller'),
+				)
+			}
+
+			if (!selectedHomeId && skippedHomeIds.length > 0) {
+				return res.json({
+					success: false,
+					message: `Import skipped: the backup contains nodes for home ids ${skippedHomeIds.join(
+						', ',
+					)}, none of which match the connected controller (${
+						gw.zwave.homeHex
+					}).`,
+				})
+			}
+
+			for (const nodeId in nodes) {
+				const node = nodes[nodeId]
 				if (!node || typeof node !== 'object') continue
 
-				if (!utils.isPositiveIntegerString(nodeId)) {
+				if (!utils.isValidNodeIdString(nodeId)) {
 					continue
 				}
 
@@ -1607,7 +1637,7 @@ app.post(
 					await gw.zwave.callApi(
 						'setNodeName',
 						nodeIdNumber,
-						node.name || '',
+						typeof node.name === 'string' ? node.name : '',
 					)
 				}
 
@@ -1622,7 +1652,7 @@ app.post(
 					)
 				}
 
-				if (node.hassDevices) {
+				if (utils.isRecord(node.hassDevices)) {
 					await gw.zwave.storeDevices(
 						node.hassDevices,
 						nodeIdNumber,
