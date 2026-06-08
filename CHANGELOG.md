@@ -1,5 +1,40 @@
 # Changelog
 
+## [11.19.1](https://github.com/zwave-js/zwave-js-ui/compare/v11.19.0...v11.19.1) (2026-06-02)
+
+### 🐛 Bug Fixes
+
+* **ui:** last Awake column as localized datetime ([#4652](https://github.com/zwave-js/zwave-js-ui/issues/4652)) ([63d3c7e](https://github.com/zwave-js/zwave-js-ui/commit/63d3c7e314566a719badf451a71d535186653473))
+
+### 🔧 Chores
+
+* bump Z-Wave JS to 15.24.2, Server to 3.9.0 ([#4655](https://github.com/zwave-js/zwave-js-ui/issues/4655)) ([118ccd7](https://github.com/zwave-js/zwave-js-ui/commit/118ccd744c692be18b9b6e0a04cc1e8bdfaa8ccb))
+
+## [11.19.0](https://github.com/zwave-js/zwave-js-ui/compare/v11.18.0...v11.19.0) (2026-05-27)
+
+### ✨ Features
+
+* **ui:** add Last Awake column for battery-powered nodes ([#4643](https://github.com/zwave-js/zwave-js-ui/issues/4643)) ([d417154](https://github.com/zwave-js/zwave-js-ui/commit/d417154cada86bc877dd1267a2e341888546d002))
+
+### 🐛 Bug Fixes
+
+* **ui:** reduce nodes-table re-render pressure and clear inclusion ghosts ([#4649](https://github.com/zwave-js/zwave-js-ui/issues/4649)) ([037d400](https://github.com/zwave-js/zwave-js-ui/commit/037d40023438e27bcbe151a2cea371fd6aa0e1eb)), closes [#4639](https://github.com/zwave-js/zwave-js-ui/issues/4639) [#4639](https://github.com/zwave-js/zwave-js-ui/issues/4639)
+
+### ♻️ Code Refactoring
+
+* **build:** improve Docker layer and GHA cache reuse ([#4648](https://github.com/zwave-js/zwave-js-ui/issues/4648)) ([de9acf1](https://github.com/zwave-js/zwave-js-ui/commit/de9acf1d2c6244251a697ffa4295ca0bcad6595e))
+
+## [11.18.0](https://github.com/zwave-js/zwave-js-ui/compare/v11.17.0...v11.18.0) (2026-05-18)
+
+### ✨ Features
+
+* bump zwave-js@15.24.0 ([#4634](https://github.com/zwave-js/zwave-js-ui/issues/4634)) ([6daab13](https://github.com/zwave-js/zwave-js-ui/commit/6daab1340d91636ed2f676c77d7a093c87f30ab3))
+* **hass:** add reactive_power/reactive_energy, expand HA sensor device classes, and fix unit casing ([#4629](https://github.com/zwave-js/zwave-js-ui/issues/4629)) ([7e61d4b](https://github.com/zwave-js/zwave-js-ui/commit/7e61d4b35435edf3c27e77a56f6bebec62aeccd7))
+
+### 🐛 Bug Fixes
+
+* **zwave:** restore debug log level on driver restart during capture session ([#4628](https://github.com/zwave-js/zwave-js-ui/issues/4628)) ([f6dc9f2](https://github.com/zwave-js/zwave-js-ui/commit/f6dc9f2488f857ccf204e92f54e4d6d5a42a19a1))
+
 ## [11.17.0](https://github.com/zwave-js/zwave-js-ui/compare/v11.16.2...v11.17.0) (2026-05-05)
 
 ### ✨ Features

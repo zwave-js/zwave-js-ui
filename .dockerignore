@@ -15,3 +15,7 @@ wallaby.js
 docker
 nodemon.json
 package.sh
+node_modules
+dist
+dev-dist
+server
