@@ -2010,7 +2010,13 @@ app.post(
 			const s = await lstat(f)
 			const name = f.replace(storeDir, '')
 			if (s.isFile()) {
-				archive.file(f, { name })
+				try {
+					// check path is secure, if so add it as file
+					getSafePath(f)
+					archive.file(f, { name })
+				} catch (e) {
+					// ignore
+				}
 			} else if (s.isSymbolicLink()) {
 				const targetPath = await realpath(f)
 				try {
