@@ -574,10 +574,10 @@ app.use(
 		level: 6, // Balanced compression level (0-9, higher = more compression but slower)
 	}),
 )
-app.use(express.json({ limit: '50mb' }) as RequestHandler)
+app.use(express.json({ limit: '5mb' }) as RequestHandler)
 app.use(
 	express.urlencoded({
-		limit: '50mb',
+		limit: '5mb',
 		extended: true,
 		parameterLimit: 50000,
 	}) as RequestHandler,
