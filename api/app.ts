@@ -2081,7 +2081,7 @@ app.post(
 	},
 )
 
-app.get('/api/snippet', apisLimiter, async function (req, res) {
+app.get('/api/snippet', apisLimiter, isAuthenticated, async function (req, res) {
 	try {
 		const snippets = await getSnippets()
 		res.json({ success: true, data: snippets })
