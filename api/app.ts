@@ -17,6 +17,7 @@ import type { CallAPIResult, ZwaveConfig } from './lib/ZwaveClient.ts'
 import ZWaveClient from './lib/ZwaveClient.ts'
 import multer, { diskStorage } from 'multer'
 import extract from 'extract-zip'
+import * as yauzl from 'yauzl'
 import { serverVersion } from '@zwave-js/server'
 import archiver from 'archiver'
 import rateLimit from 'express-rate-limit'
@@ -356,9 +357,109 @@ async function getSnippets() {
 }
 
 /**
- * Get the `path` param from a request. Throws if the path is not safe
+ * Scan a zip archive's central directory and reject it if any entry is not a
+ * regular file or directory (e.g. symlinks or device/special files). This is
+ * done before extraction because extract-zip materializes such entries
+ * verbatim, which could be abused to plant a link escaping `storeDir`.
  */
-function getSafePath(req: Request | string) {
+function assertArchiveHasNoLinks(zipPath: string): Promise<void> {
+	const IFMT = 0o170000
+	const IFDIR = 0o040000
+	const IFREG = 0o100000
+
+	return new Promise((resolve, reject) => {
+		yauzl.open(
+			zipPath,
+			{ lazyEntries: true },
+			(err, zipfile) => {
+				if (err || !zipfile) {
+					return reject(err ?? Error('Invalid archive'))
+				}
+
+				let settled = false
+				const fail = (e: Error) => {
+					if (settled) return
+					settled = true
+					zipfile.close()
+					reject(e)
+				}
+
+				zipfile.on('entry', (entry: yauzl.Entry) => {
+					// Convert the external file attributes into a unix stat mode
+					const mode = (entry.externalFileAttributes >>> 16) & 0xffff
+					const fmt = mode & IFMT
+
+					const isDir =
+						fmt === IFDIR || entry.fileName.endsWith('/')
+					// mode is 0 for archives created without unix attributes
+					// (e.g. plain Windows zips) - treat those as regular files
+					const isRegular = fmt === IFREG || mode === 0
+
+					if (!isDir && !isRegular) {
+						return fail(
+							Error(
+								`Restore archive contains an unsupported entry: ${entry.fileName}`,
+							),
+						)
+					}
+
+					zipfile.readEntry()
+				})
+
+				zipfile.on('end', () => {
+					if (settled) return
+					settled = true
+					zipfile.close()
+					resolve()
+				})
+
+				zipfile.on('error', fail)
+
+				zipfile.readEntry()
+			},
+		)
+	})
+}
+
+/**
+ * Resolve the real path of the nearest existing ancestor of `target` and
+ * ensure it is still confined within `storeDir`. This defeats symlinked
+ * path components (which a plain string prefix check is blind to) for both
+ * existing and not-yet-created paths.
+ */
+async function assertRealPathInStore(target: string) {
+	let current = target
+
+	// Walk up until we hit an existing ancestor (the target itself may be new)
+	// eslint-disable-next-line no-constant-condition
+	while (true) {
+		try {
+			const real = await realpath(current)
+			if (real !== storeDir && !real.startsWith(storeDir + path.sep)) {
+				throw Error('Path not allowed')
+			}
+			return
+		} catch (err) {
+			if (err?.code !== 'ENOENT') {
+				throw err
+			}
+			const parent = path.dirname(current)
+			if (parent === current) {
+				// reached filesystem root without finding an existing ancestor
+				throw Error('Path not allowed')
+			}
+			current = parent
+		}
+	}
+}
+
+/**
+ * Get the `path` param from a request. Throws if the path is not safe.
+ * Performs a string confinement check and, when `resolveReal` is set,
+ * additionally resolves the real path of the nearest existing ancestor to
+ * guard against symlinked components escaping `storeDir`.
+ */
+async function getSafePath(req: Request | string, resolveReal = true) {
 	let reqPath = typeof req === 'string' ? req : req.query.path
 
 	if (typeof reqPath !== 'string') {
@@ -367,8 +468,15 @@ function getSafePath(req: Request | string) {
 
 	reqPath = path.normalize(reqPath)
 
-	if (!reqPath.startsWith(storeDir) || reqPath === storeDir) {
+	if (
+		(!reqPath.startsWith(storeDir + path.sep) && reqPath !== storeDir) ||
+		reqPath === storeDir
+	) {
 		throw Error('Path not allowed')
+	}
+
+	if (resolveReal) {
+		await assertRealPathInStore(reqPath)
 	}
 
 	return reqPath
@@ -1873,14 +1981,14 @@ app.get('/api/store', storeLimiter, isAuthenticated, async function (req, res) {
 	try {
 		let data: StoreFileEntry[] | string
 		if (req.query.path) {
-			const reqPath = getSafePath(req)
+			const reqPath = await getSafePath(req)
 			// lgtm [js/path-injection]
 			let stat = await lstat(reqPath)
 
 			// check symlink is secure
 			if (stat.isSymbolicLink()) {
 				const realPath = await realpath(reqPath)
-				getSafePath(realPath)
+				await getSafePath(realPath)
 				stat = await lstat(realPath)
 			}
 
@@ -1912,7 +2020,7 @@ app.get('/api/store', storeLimiter, isAuthenticated, async function (req, res) {
 
 app.put('/api/store', storeLimiter, isAuthenticated, async function (req, res) {
 	try {
-		const reqPath = getSafePath(req)
+		const reqPath = await getSafePath(req)
 
 		const isNew = req.query.isNew === 'true'
 		const isDirectory = req.query.isDirectory === 'true'
@@ -1947,7 +2055,7 @@ app.delete(
 	isAuthenticated,
 	async function (req, res) {
 		try {
-			const reqPath = getSafePath(req)
+			const reqPath = await getSafePath(req)
 
 			// lgtm [js/path-injection]
 			await rm(reqPath, { recursive: true, force: true })
@@ -2021,7 +2129,7 @@ app.post(
 				const targetPath = await realpath(f)
 				try {
 					// check path is secure, if so add it as file
-					getSafePath(targetPath)
+					await getSafePath(targetPath)
 					archive.file(targetPath, { name })
 				} catch (e) {
 					// ignore
@@ -2069,9 +2177,13 @@ app.post(
 			}
 
 			if (isRestore) {
+				// Reject archives containing symlink/hardlink/device entries:
+				// extract-zip materializes them verbatim, which could plant a
+				// link escaping storeDir for a later write to follow.
+				await assertArchiveHasNoLinks(file.path)
 				await extract(file.path, { dir: storeDir })
 			} else {
-				const destinationPath = getSafePath(
+				const destinationPath = await getSafePath(
 					path.join(storeDir, folder, file.originalname),
 				)
 				await rename(file.path, destinationPath)
