@@ -1968,7 +1968,8 @@ app.put(
 		try {
 			const files = req.body.files || []
 			for (const f of files) {
-				await rm(f, { recursive: true, force: true })
+				// lgtm [js/path-injection]
+				await rm(getSafePath(f), { recursive: true, force: true })
 			}
 			res.json({ success: true })
 		} catch (error) {
