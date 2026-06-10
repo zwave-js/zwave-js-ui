@@ -425,12 +425,10 @@ async function startGateway(settings: Settings) {
 	let mqtt: MqttClient
 	let zwave: ZWaveClient
 
-	if (
-		isAuthEnabled() &&
-		sessionSecret === 'DEFAULT_SESSION_SECRET_CHANGE_ME'
-	) {
-		logger.error(
-			'Session secret is the default one. For security reasons you should change it by using SESSION_SECRET env var',
+	if (isAuthEnabled() && !process.env.SESSION_SECRET) {
+		logger.warn(
+			'SESSION_SECRET env var is not set; using an auto-generated secret persisted in the store. ' +
+				'Set SESSION_SECRET explicitly to control the secret across environments.',
 		)
 	}
 
