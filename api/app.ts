@@ -2077,7 +2077,7 @@ app.put(
 			const files = req.body.files || []
 			for (const f of files) {
 				// lgtm [js/path-injection]
-				await rm(getSafePath(f), { recursive: true, force: true })
+				await rm(await getSafePath(f), { recursive: true, force: true })
 			}
 			res.json({ success: true })
 		} catch (error) {
@@ -2120,7 +2120,7 @@ app.post(
 			if (s.isFile()) {
 				try {
 					// check path is secure, if so add it as file
-					getSafePath(f)
+					await getSafePath(f)
 					archive.file(f, { name })
 				} catch (e) {
 					// ignore
