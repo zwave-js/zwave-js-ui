@@ -9,6 +9,7 @@ import { mkdir, access } from 'node:fs/promises'
 import { fileURLToPath } from 'node:url'
 import { logsDir } from '../config/app.ts'
 import tripleBeam from 'triple-beam'
+import { MAX_NODES_LR } from '@zwave-js/core'
 
 const loglevels = tripleBeam.configs.npm.levels
 
@@ -226,6 +227,40 @@ export function removeSlash(str: string | number): string {
  */
 export function hasProperty(obj: Record<string, any>, prop: string): boolean {
 	return Object.prototype.hasOwnProperty.call(obj, prop)
+}
+
+/**
+ * Check if a value is a non-array object
+ */
+export function isRecord(value: unknown): value is Record<string, any> {
+	return value !== null && typeof value === 'object' && !Array.isArray(value)
+}
+
+/**
+ * Check if a value is a base-10 positive integer string
+ */
+export function isPositiveIntegerString(value: unknown): boolean {
+	if (typeof value !== 'string') {
+		return false
+	}
+
+	if (!/^\d+$/.test(value)) {
+		return false
+	}
+
+	const number = Number(value)
+	return Number.isSafeInteger(number) && number > 0
+}
+
+/**
+ * Check if a value is a string holding a valid Z-Wave node id, i.e. a positive
+ * integer within the addressable range (1..MAX_NODES_LR). Used to tell node-id
+ * keys apart from home-id keys when importing a `nodes.json` backup: node ids
+ * are at most 4 digits (Long Range tops out at 4000) while home ids are larger
+ * (8 hex digits, or a ~10-digit decimal).
+ */
+export function isValidNodeIdString(value: unknown): boolean {
+	return isPositiveIntegerString(value) && Number(value) <= MAX_NODES_LR
 }
 
 /**
