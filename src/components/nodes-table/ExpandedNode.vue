@@ -138,6 +138,13 @@
 					text="Users"
 				/>
 				<v-tab
+					v-if="node.accessControl && node.accessControl.supported"
+					prepend-icon="vpn_key"
+					value="access-control"
+					class="justify-start"
+					text="Access Control"
+				/>
+				<v-tab
 					value="ota"
 					v-if="!node.isControllerNode"
 					prepend-icon="auto_mode"
@@ -239,6 +246,15 @@
 					transition="slide-y-transition"
 				>
 					<user-code-table :node="node" @updateValue="updateValue" />
+				</v-tabs-window-item>
+
+				<!-- TAB ACCESS CONTROL -->
+				<v-tabs-window-item
+					v-if="node.accessControl && node.accessControl.supported"
+					value="access-control"
+					transition="slide-y-transition"
+				>
+					<access-control :node="node" />
 				</v-tabs-window-item>
 
 				<!-- TAB OTA UPDATES -->
@@ -410,6 +426,9 @@ export default {
 		OTWUpdates: defineAsyncComponent(() => import('./OTWUpdates.vue')),
 		UserCodeTable: defineAsyncComponent(
 			() => import('./UserCodeTable.vue'),
+		),
+		AccessControl: defineAsyncComponent(
+			() => import('./AccessControl.vue'),
 		),
 	},
 	computed: {
