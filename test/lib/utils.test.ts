@@ -166,4 +166,72 @@ describe('#utils', () => {
 			expect(utils.isValidNodeIdString(5)).to.equal(false)
 		})
 	})
+
+	describe('#isValidOperation()', () => {
+		let utilsModule: any
+
+		before(async () => {
+			utilsModule = await esmock('../../api/lib/utils.ts')
+		})
+
+		it('accepts a single operator and number', () => {
+			expect(utilsModule.isValidOperation('/10')).to.equal(true)
+			expect(utilsModule.isValidOperation('*100')).to.equal(true)
+			expect(utilsModule.isValidOperation('+20')).to.equal(true)
+			expect(utilsModule.isValidOperation('-5')).to.equal(true)
+		})
+		it('accepts decimals, a signed operand and surrounding spaces', () => {
+			expect(utilsModule.isValidOperation('/2.5')).to.equal(true)
+			expect(utilsModule.isValidOperation('*-2')).to.equal(true)
+			expect(utilsModule.isValidOperation(' / 10 ')).to.equal(true)
+		})
+		it('rejects empty, non-string and malformed operations', () => {
+			expect(utilsModule.isValidOperation('')).to.equal(false)
+			expect(utilsModule.isValidOperation(undefined)).to.equal(false)
+			expect(utilsModule.isValidOperation('10')).to.equal(false)
+			expect(utilsModule.isValidOperation('/')).to.equal(false)
+		})
+		it('rejects multiple operations and parentheses', () => {
+			expect(utilsModule.isValidOperation('/10+5')).to.equal(false)
+			expect(utilsModule.isValidOperation('(1+2)*3')).to.equal(false)
+			expect(utilsModule.isValidOperation('/10,*2')).to.equal(false)
+		})
+		it('rejects anything that is not a number/operator', () => {
+			expect(utilsModule.isValidOperation('process.exit(1)')).to.equal(
+				false,
+			)
+		})
+	})
+
+	describe('#applyOperation()', () => {
+		let utilsModule: any
+
+		before(async () => {
+			utilsModule = await esmock('../../api/lib/utils.ts')
+		})
+
+		it('applies each operator to a number', () => {
+			expect(utilsModule.applyOperation(100, '/10')).to.equal(10)
+			expect(utilsModule.applyOperation(2, '*100')).to.equal(200)
+			expect(utilsModule.applyOperation(5, '+20')).to.equal(25)
+			expect(utilsModule.applyOperation(5, '-2')).to.equal(3)
+		})
+		it('handles decimals and signed operands', () => {
+			expect(utilsModule.applyOperation(5, '/2.5')).to.equal(2)
+			expect(utilsModule.applyOperation(3, '*-2')).to.equal(-6)
+		})
+		it('returns non-numeric values untouched', () => {
+			expect(utilsModule.applyOperation('foo', '/10')).to.equal('foo')
+			expect(utilsModule.applyOperation('100', '/10')).to.equal('100')
+			expect(utilsModule.applyOperation(true, '/10')).to.equal(true)
+			expect(utilsModule.applyOperation(null, '/10')).to.equal(null)
+		})
+		it('returns the value on a malformed operation', () => {
+			expect(utilsModule.applyOperation(100, '(1+2)*3')).to.equal(100)
+			expect(utilsModule.applyOperation(100, '/10+5')).to.equal(100)
+		})
+		it('returns the value on a non-finite result (divide by zero)', () => {
+			expect(utilsModule.applyOperation(100, '/0')).to.equal(100)
+		})
+	})
 })

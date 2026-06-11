@@ -457,7 +457,7 @@ export default class Gateway {
 			}
 
 			if (valueConf) {
-				if (this._isValidOperation(valueConf.postOperation)) {
+				if (utils.isValidOperation(valueConf.postOperation)) {
 					let op = valueConf.postOperation
 
 					// revert operation to write
@@ -466,7 +466,7 @@ export default class Gateway {
 					else if (op.includes('+')) op = op.replace(/\+/, '-')
 					else if (op.includes('-')) op = op.replace(/-/, '+')
 
-					payload = this._applyOperation(payload, op)
+					payload = utils.applyOperation(payload, op)
 				}
 
 				if (valueConf.parseReceive) {
@@ -1973,8 +1973,8 @@ export default class Gateway {
 		let tmpVal = valueId.value
 
 		if (valueConf) {
-			if (this._isValidOperation(valueConf.postOperation)) {
-				tmpVal = this._applyOperation(
+			if (utils.isValidOperation(valueConf.postOperation)) {
+				tmpVal = utils.applyOperation(
 					valueId.value,
 					valueConf.postOperation,
 				)
@@ -2426,58 +2426,6 @@ export default class Gateway {
 			value,
 			payload.options,
 		)
-	}
-
-	/**
-	 * A post operation is a single arithmetic operator (+ - * /) applied to a
-	 * literal number, e.g. "/10", "*100", "+20". Only this shape is supported
-	 * because the receive path inverts the operation by naively swapping the
-	 * operator (see parsePayload), which is only correct for a single operation.
-	 */
-	private static readonly POST_OPERATION =
-		/^\s*(?<operator>[-+*/])\s*(?<operand>-?\d+(?:\.\d+)?)\s*$/
-
-	/**
-	 * Checks if an operation is valid: a single operator (+ - * /) followed by
-	 * a literal number.
-	 */
-	private _isValidOperation(op: string): boolean {
-		return typeof op === 'string' && Gateway.POST_OPERATION.test(op)
-	}
-
-	/**
-	 * Apply a numeric scaling operation (e.g. "/10", "*2", "+5") to a numeric value.
-	 */
-	private _applyOperation(value: any, op: string): any {
-		if (typeof value !== 'number' || !Number.isFinite(value)) {
-			return value
-		}
-
-		const match = Gateway.POST_OPERATION.exec(op)
-		if (!match) {
-			return value
-		}
-
-		const operand = Number(match.groups.operand)
-		let result: number
-		switch (match.groups.operator) {
-			case '+':
-				result = value + operand
-				break
-			case '-':
-				result = value - operand
-				break
-			case '*':
-				result = value * operand
-				break
-			case '/':
-				result = value / operand
-				break
-			default:
-				return value
-		}
-
-		return Number.isFinite(result) ? result : value
 	}
 
 	/**

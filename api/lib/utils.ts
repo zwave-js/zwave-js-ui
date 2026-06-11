@@ -555,3 +555,55 @@ export function buildLogConfig(
 		forceConsole: isDocker() ? !config.logToFile : false,
 	}
 }
+
+/**
+ * A post operation is a single arithmetic operator (+ - * /) applied to a
+ * literal number, e.g. "/10", "*100", "+20". Only this shape is supported
+ * because the receive path inverts the operation by naively swapping the
+ * operator (see parsePayload), which is only correct for a single operation.
+ */
+const POST_OPERATION =
+	/^\s*(?<operator>[-+*/])\s*(?<operand>-?\d+(?:\.\d+)?)\s*$/
+
+/**
+ * Checks if an operation is valid: a single operator (+ - * /) followed by
+ * a literal number.
+ */
+export function isValidOperation(op: string): boolean {
+	return typeof op === 'string' && POST_OPERATION.test(op)
+}
+
+/**
+ * Apply a numeric scaling operation (e.g. "/10", "*2", "+5") to a numeric value.
+ */
+export function applyOperation(value: any, op: string): any {
+	if (typeof value !== 'number' || !Number.isFinite(value)) {
+		return value
+	}
+
+	const match = POST_OPERATION.exec(op)
+	if (!match) {
+		return value
+	}
+
+	const operand = Number(match.groups.operand)
+	let result: number
+	switch (match.groups.operator) {
+		case '+':
+			result = value + operand
+			break
+		case '-':
+			result = value - operand
+			break
+		case '*':
+			result = value * operand
+			break
+		case '/':
+			result = value / operand
+			break
+		default:
+			return value
+	}
+
+	return Number.isFinite(result) ? result : value
+}
