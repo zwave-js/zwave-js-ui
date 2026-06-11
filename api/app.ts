@@ -2081,14 +2081,19 @@ app.post(
 	},
 )
 
-app.get('/api/snippet', apisLimiter, isAuthenticated, async function (req, res) {
-	try {
-		const snippets = await getSnippets()
-		res.json({ success: true, data: snippets })
-	} catch (err) {
-		res.json({ success: false, message: err.message })
-	}
-})
+app.get(
+	'/api/snippet',
+	apisLimiter,
+	isAuthenticated,
+	async function (req, res) {
+		try {
+			const snippets = await getSnippets()
+			res.json({ success: true, data: snippets })
+		} catch (err) {
+			res.json({ success: false, message: err.message })
+		}
+	},
+)
 
 // Debug capture endpoints
 app.get('/api/debug/status', apisLimiter, isAuthenticated, function (req, res) {
