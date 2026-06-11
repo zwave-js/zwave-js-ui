@@ -215,7 +215,7 @@
 				:return-object="false"
 				:item-title="itemText"
 				item-value="value"
-				:suffix="modelValue.unit"
+				:suffix="selectSuffix"
 				:append-icon="!disable_send ? 'send' : null"
 				v-model="modelValue.newValue"
 				@click:append="updateValue(modelValue)"
@@ -245,7 +245,7 @@
 				:hint="help"
 				persistent-hint
 				chips
-				:suffix="modelValue.unit"
+				:suffix="comboboxSuffix"
 				:item-title="itemText"
 				item-value="value"
 				:type="modelValue.type === 'number' ? 'number' : 'text'"
@@ -600,6 +600,35 @@ export default {
 				borderRadius: this.showMenu ? '50%' : '4px',
 				transition: 'border-radius 200ms ease-in-out',
 			}
+		},
+		/**
+		 * Returns the suffix (unit) for v-combobox, hiding it on small displays
+		 * when the input type is 'number' to prevent overlap between the browser's
+		 * native spinner arrows and the unit text.
+		 */
+		comboboxSuffix() {
+			// Hide suffix on small displays when type is number to avoid overlap
+			// between the spinner arrows and the unit label
+			if (
+				this.modelValue.type === 'number' &&
+				this.modelValue.unit &&
+				this.$vuetify.display.smAndDown
+			) {
+				return undefined
+			}
+			return this.modelValue.unit
+		},
+		/**
+		 * Returns the suffix (unit) for v-select, hiding it on small displays
+		 * to prevent overlap between the dropdown arrow and the unit text.
+		 */
+		selectSuffix() {
+			// Hide suffix on small displays to avoid overlap
+			// between the dropdown arrow and the unit label
+			if (this.modelValue.unit && this.$vuetify.display.smAndDown) {
+				return undefined
+			}
+			return this.modelValue.unit
 		},
 	},
 	methods: {
