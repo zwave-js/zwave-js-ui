@@ -846,6 +846,19 @@ export default {
 
 			this.network = new Network(container, data, options)
 
+			// Test hook: when localStorage.exposeZwaveGraph is set, expose the
+			// vis-network instance on window so screenshot/automation tooling
+			// can deterministically select a node (vis-network's hit-testing on
+			// canvas clicks is non-deterministic under physics layout). No-op
+			// in normal usage since the flag is unset. See
+			// .claude/skills/refresh-docs-screenshots for the consumer.
+			if (
+				typeof window !== 'undefined' &&
+				window.localStorage?.getItem('exposeZwaveGraph')
+			) {
+				window.__zwGraph = this
+			}
+
 			// event handlers
 			// https://visjs.github.io/vis-network/docs/network/#Events
 			this.network.once('stabilizationIterationsDone', () => {

@@ -423,7 +423,7 @@ After making changes, ALWAYS test these complete user scenarios:
 -   **vite.config.mjs**: Frontend build configuration
 -   **nodemon.json**: Backend development server configuration
 -   **.mocharc.yml**: Test configuration
--   **server_config.js**: Mock Z-Wave controller configuration
+-   **mock-server/**: Mock Z-Wave controller node configs, one `.cjs` per device category. `npm run fake-stick:fleet` merges all 31 nodes; `npm run fake-stick` loads only `002-window-covering-pinned.cjs` (single node, used by the e2e workflow)
 
 ## Environment Configuration
 

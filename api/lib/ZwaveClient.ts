@@ -2169,7 +2169,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 			const zwaveNode = this.getNode(nodeId)
 
-			if (zwaveNode.protocol === Protocols.ZWaveLongRange) {
+			// getNode() may return undefined (node unknown to the driver, e.g.
+			// removed mid-request, or a UI-only fake node). Such a node has no
+			// discoverable neighbors.
+			if (!zwaveNode || zwaveNode.protocol === Protocols.ZWaveLongRange) {
 				return []
 			}
 

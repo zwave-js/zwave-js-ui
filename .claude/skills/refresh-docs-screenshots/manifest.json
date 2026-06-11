@@ -1,0 +1,139 @@
+{
+	"defaults": {
+		"viewport": { "width": 1440, "height": 900 },
+		"themes": ["dark"],
+		"settleAfterRoute": 1200
+	},
+	"entries": [
+		{
+			"filename": "control_panel_dark.png",
+			"themes": ["dark", "light"],
+			"lightFilename": "control_panel.png",
+			"route": "/control-panel",
+			"preActions": [
+				{ "wait": "table tbody tr" },
+				{ "settle": 800 }
+			]
+		},
+		{
+			"filename": "settings_dark.png",
+			"themes": ["dark", "light"],
+			"lightFilename": "settings.png",
+			"route": "/settings",
+			"preActions": [
+				{ "wait": ".v-expansion-panels" },
+				{ "settle": 600 }
+			]
+		},
+		{
+			"filename": "scenes.png",
+			"route": "/scenes",
+			"preActions": [
+				{ "wait": "table tbody tr" },
+				{ "click": "table tbody tr:first-child" },
+				{ "settle": 400 }
+			]
+		},
+		{
+			"filename": "mesh_diagram.png",
+			"route": "/mesh",
+			"preActions": [
+				{ "wait": "canvas" },
+				{ "settle": 2500 }
+			]
+		},
+		{
+			"filename": "mesh-selected.png",
+			"route": "/mesh",
+			"preActions": [
+				{ "wait": "canvas" },
+				{ "settle": 3000 },
+				{ "exec": "const g = window.__zwGraph; const n = g.allNodes.find(n => n.id === 4); g.$emit('node-click', n);" },
+				{ "wait": "#properties" },
+				{ "settle": 1000 }
+			]
+		},
+		{
+			"filename": "debug.png",
+			"route": "/debug",
+			"preActions": [
+				{ "wait": "#debug_window" },
+				{ "settle": 800 },
+				{ "exec": "const W = document.getElementById('debug_window'); const T = (lvl, src, msg) => { const c = { INFO: '#3a8', WARN: '#fc3', ERROR: '#f55', DEBUG: '#7be', VERBOSE: '#aaa' }[lvl] || '#aaa'; const ts = new Date().toISOString().replace('T',' ').slice(0,23); return `<span style=\"color:#888\">${ts}</span> <span style=\"color:${c};font-weight:600\">${lvl}</span> <span style=\"font-weight:600\">${src}</span>: ${msg}<br/>`; }; const D = (n, dir, label, body) => `<span style=\"color:#888\">${new Date().toISOString().replace('T',' ').slice(0,23)}</span> <span style=\"color:#7be;font-weight:600\">CNTRLR</span>   « <span style=\"color:#fc3\">[Node 0${n}]</span> ${dir} ${label}<br/>  └─ ${body}<br/>`; W.innerHTML = [ T('INFO', 'GATEWAY', 'Loading custom devices from /home/daniel/zwave-js-ui/store/customDevices.json'), T('INFO', 'GATEWAY', 'Loaded 1 custom Hass devices configurations'), T('INFO', 'APP', 'Version: 11.16.2'), T('INFO', 'APP', 'Application path: /home/daniel/zwave-js-ui'), T('INFO', 'APP', 'Store path: /home/daniel/zwave-js-ui/store'), T('INFO', 'ZWAVE', 'Connecting to tcp://127.0.0.1:5555'), T('INFO', 'ZWAVE', 'Driver ready'), T('INFO', 'ZWAVE', 'Network is fully alive'), T('INFO', 'GATEWAY', 'Subscribing to MQTT topic zwave/_CLIENTS/zwavejs2mqtt/api/+/set'), D(2, '·', 'GET_NODE_PROTOCOL_INFO_REQUEST', 'protocol = Z-Wave, listening, routing'), D(2, '«', 'CONFIGURATION_GET', 'parameter #1, valueSize = 1'), D(2, '·', 'CONFIGURATION_REPORT', 'parameter #1: 0 (default)'), T('INFO', 'ZWAVE', 'Z-Wave network value updated: nodeId=4 cmdClass=Door Lock value=Mode → 0xff'), D(4, '«', 'DOOR_LOCK_OPERATION_GET', ''), D(4, '·', 'DOOR_LOCK_OPERATION_REPORT', 'currentMode = Secured, doorStatus = closed, latchStatus = closed, boltStatus = locked'), T('DEBUG', 'ZWAVE', 'Bound to driver events for node 5'), T('DEBUG', 'ZWAVE', 'Bound to driver events for node 6'), T('VERBOSE', 'ZWAVE', 'Pinging node 7 to keep it awake'), T('INFO', 'ZWAVE', 'Backup completed: store-2026-04-30.tar.gz') ].join(''); W.scrollTop = W.scrollHeight;" }
+			]
+		},
+		{
+			"filename": "nodes_manager.png",
+			"route": "/control-panel",
+			"preActions": [
+				{ "wait": "table tbody tr" },
+				{ "settle": 600 },
+				{ "click": ".v-fab .v-btn" },
+				{ "settle": 500 },
+				{ "click": "button[aria-label='Manage nodes']" },
+				{ "wait": ".v-overlay--active.v-dialog" },
+				{ "settle": 700 }
+			]
+		},
+		{
+			"filename": "route_health_result.png",
+			"route": "/mesh",
+			"preActions": [
+				{ "wait": "canvas" },
+				{ "settle": 3000 },
+				{ "exec": "const g = window.__zwGraph; const n = g.allNodes.find(n => n.id === 4); g.$emit('node-click', n);" },
+				{ "wait": "#properties button:has-text('Diagnose')" },
+				{ "settle": 600 },
+				{ "click": "#properties button:has-text('Diagnose')" },
+				{ "wait": ".v-overlay--active.v-dialog" },
+				{ "settle": 1000 }
+			]
+		},
+		{
+			"filename": "config_updates_icon.png",
+			"route": "/control-panel",
+			"clip": { "selector": "header .v-badge:has(button[aria-label='Check for updates'])", "padding": 10 },
+			"preActions": [
+				{ "wait": "table tbody tr" },
+				{ "exec": "const s = document.querySelector('#app').__vue_app__.config.globalProperties.$pinia._s.get('base'); s.appInfo.newConfigVersion = '1.99.0';" },
+				{ "settle": 600 }
+			]
+		},
+		{
+			"filename": "config_updates_dialog.png",
+			"route": "/control-panel",
+			"clip": ".v-overlay--active.v-dialog .v-card",
+			"preActions": [
+				{ "wait": "table tbody tr" },
+				{ "exec": "const s = document.querySelector('#app').__vue_app__.config.globalProperties.$pinia._s.get('base'); s.appInfo.newConfigVersion = '1.99.0';" },
+				{ "settle": 400 },
+				{ "click": "header button[aria-label='Check for updates']" },
+				{ "wait": ".v-overlay--active.v-dialog" },
+				{ "settle": 500 }
+			]
+		},
+		{
+			"filename": "gateway_values_table.png",
+			"route": "/settings",
+			"preActions": [
+				{ "wait": ".v-expansion-panels" },
+				{ "click": ".v-expansion-panel-title:has-text('General')" },
+				{ "settle": 800 },
+				{ "scrollTo": ".v-data-table" },
+				{ "settle": 400 }
+			]
+		},
+		{
+			"filename": "edit_gateway_value.png",
+			"route": "/settings",
+			"preActions": [
+				{ "wait": ".v-expansion-panels" },
+				{ "click": ".v-expansion-panel-title:has-text('General')" },
+				{ "settle": 800 },
+				{ "click": ".v-data-table .v-icon.text-success" },
+				{ "wait": ".v-overlay--active.v-dialog" },
+				{ "settle": 500 }
+			]
+		}
+	]
+}

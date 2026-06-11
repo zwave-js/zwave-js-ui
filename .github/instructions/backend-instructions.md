@@ -67,7 +67,9 @@ In order to emulate a Z-Wave stick, you can use the `fake-stick` command:
 npm run fake-stick
 ```
 
-This will spawn a fake Z-Wave stick using `server_config.js` configuration. By default the stick listens on `tcp://:::5555` and this can be used as `path` in zwave settings.
+This will spawn a fake Z-Wave stick with a single node, loaded from `mock-server/002-window-covering-pinned.cjs`. By default the stick listens on `tcp://:::5555` and this can be used as `path` in zwave settings.
+
+For a richer 31-node demo fleet, run `npm run fake-stick:fleet` instead, which loads every `.cjs` file in the `mock-server/` directory (one per device category, merged at startup). Add a new `.cjs` file there (one or more nodes per file, unique node IDs) to extend the fleet.
 
 ---
 

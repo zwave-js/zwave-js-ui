@@ -1,0 +1,14 @@
+{
+	"name": "refresh-docs-screenshots",
+	"version": "0.0.0",
+	"private": true,
+	"type": "module",
+	"description": "Playwright-driven screenshot capture for docs/_images. Isolated from the main project so the heavy chromium dep doesn't leak into zwave-js-ui's devDependencies.",
+	"scripts": {
+		"capture": "node capture.mjs",
+		"setup": "npm install && npx playwright install chromium"
+	},
+	"dependencies": {
+		"playwright": "^1.59.1"
+	}
+}

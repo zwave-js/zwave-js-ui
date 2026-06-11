@@ -120,7 +120,8 @@ Each agent provides:
 # Development
 npm run dev              # Frontend dev server (port 8092)
 npm run dev:server       # Backend dev server (port 8091)
-npm run fake-stick       # Mock Z-Wave controller
+npm run fake-stick       # Mock Z-Wave controller (single node)
+npm run fake-stick:fleet # Mock Z-Wave controller (31-node demo fleet)
 
 # Building
 npm run build            # Build everything (~24s)

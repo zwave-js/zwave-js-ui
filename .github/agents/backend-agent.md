@@ -13,7 +13,7 @@ stack:
 applyTo:
   - api/**
   - esbuild.js
-  - server_config.js
+  - mock-server/**
 commands:
   build: npm run build:server
   dev: npm run dev:server
@@ -217,7 +217,8 @@ describe('retryOperation', () => {
    npm run fake-stick
    ```
    - Listens on tcp://localhost:5555
-   - Configured in server_config.js
+   - Loads a single node from `mock-server/002-window-covering-pinned.cjs` (also used by the e2e workflow)
+   - For the full 31-node demo fleet, run `npm run fake-stick:fleet` instead (every `.cjs` file in `mock-server/`, merged at startup)
 
 2. **Start Backend Dev Server**:
    ```bash
