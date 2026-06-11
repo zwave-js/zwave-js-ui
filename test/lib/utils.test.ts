@@ -73,4 +73,97 @@ describe('#utils', () => {
 			)
 		})
 	})
+
+	describe('#isRecord()', () => {
+		let utils: any
+
+		before(async () => {
+			utils = await esmock('../../api/lib/utils.ts')
+		})
+
+		it('returns true for plain objects', () => {
+			expect(utils.isRecord({ key: 'value' })).to.equal(true)
+		})
+
+		it('returns false for arrays and null', () => {
+			expect(utils.isRecord([])).to.equal(false)
+			expect(utils.isRecord(null)).to.equal(false)
+		})
+
+		it('returns false for non-object primitives', () => {
+			expect(utils.isRecord(undefined)).to.equal(false)
+			expect(utils.isRecord('value')).to.equal(false)
+			expect(utils.isRecord(1)).to.equal(false)
+			expect(utils.isRecord(true)).to.equal(false)
+		})
+	})
+
+	describe('#isPositiveIntegerString()', () => {
+		let utils: any
+
+		before(async () => {
+			utils = await esmock('../../api/lib/utils.ts')
+		})
+
+		it('returns true for base-10 positive integer strings', () => {
+			expect(utils.isPositiveIntegerString('1')).to.equal(true)
+			expect(utils.isPositiveIntegerString('42')).to.equal(true)
+			expect(utils.isPositiveIntegerString('9007199254740991')).to.equal(
+				true,
+			)
+		})
+
+		it('returns false for non-decimal or non-positive values', () => {
+			expect(utils.isPositiveIntegerString('0')).to.equal(false)
+			expect(utils.isPositiveIntegerString('-1')).to.equal(false)
+			expect(utils.isPositiveIntegerString('0xd6aa1f93')).to.equal(false)
+			expect(utils.isPositiveIntegerString('2.5')).to.equal(false)
+		})
+
+		it('returns false for empty or whitespace values', () => {
+			expect(utils.isPositiveIntegerString('')).to.equal(false)
+			expect(utils.isPositiveIntegerString(' ')).to.equal(false)
+		})
+
+		it('returns false for numeric precision edge values', () => {
+			expect(utils.isPositiveIntegerString('9007199254740993')).to.equal(
+				false,
+			)
+		})
+
+		it('returns false for non-string values', () => {
+			expect(utils.isPositiveIntegerString(undefined)).to.equal(false)
+			expect(utils.isPositiveIntegerString(null)).to.equal(false)
+			expect(utils.isPositiveIntegerString(1)).to.equal(false)
+		})
+	})
+
+	describe('#isValidNodeIdString()', () => {
+		let utils: any
+
+		before(async () => {
+			utils = await esmock('../../api/lib/utils.ts')
+		})
+
+		it('returns true for node ids within the addressable range', () => {
+			expect(utils.isValidNodeIdString('1')).to.equal(true)
+			expect(utils.isValidNodeIdString('232')).to.equal(true)
+			// Z-Wave Long Range node ids (up to MAX_NODES_LR = 4000)
+			expect(utils.isValidNodeIdString('1000')).to.equal(true)
+			expect(utils.isValidNodeIdString('4000')).to.equal(true)
+		})
+
+		it('returns false for values above the node id range', () => {
+			expect(utils.isValidNodeIdString('4001')).to.equal(false)
+			// decimal home id never gets mistaken for a node id
+			expect(utils.isValidNodeIdString('3597893011')).to.equal(false)
+		})
+
+		it('returns false for non-node-id strings', () => {
+			expect(utils.isValidNodeIdString('0')).to.equal(false)
+			expect(utils.isValidNodeIdString('0xd6aa1f93')).to.equal(false)
+			expect(utils.isValidNodeIdString('')).to.equal(false)
+			expect(utils.isValidNodeIdString(5)).to.equal(false)
+		})
+	})
 })
