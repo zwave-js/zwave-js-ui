@@ -206,6 +206,40 @@ const AEROPAC: HassDevice = {
 	},
 }
 
+// Inovelli RGBW devices using Multilevel Switch + Color Switch
+const INOVELLI_RGBW_DEVICE: HassDevice = {
+	type: 'light',
+    object_id: 'rgbw_bulb',
+    values: [
+        '38-0-currentValue',
+        '38-0-targetValue',
+        '51-0-currentColor',
+        '51-0-targetColor',
+    ],
+    discovery_payload: {
+        state_topic: '38-0-currentValue',
+        command_topic: '38-0-targetValue',
+        on_command_type: 'brightness',
+        brightness_state_topic: '38-0-currentValue',
+        brightness_command_topic: '38-0-targetValue',
+        state_value_template: '{{ "on" if value_json.value|int > 0 else "0" }}',
+        brightness_value_template: '{{ (value_json.value|int) | round(0) }}',
+        brightness_scale: '99',
+        color_temp_state_topic: '51-0-currentColor',
+        color_temp_command_template: "{{ {'warmWhite': ((0.7349 * (value - 153))|round(0)), 'coldWhite': (255 - (0.7349 * (value - 153))|round(0)), 'red': 255, 'green': 255, 'blue': 255}|to_json }}",
+        color_temp_command_topic: '51-0-targetColor',
+        color_temp_value_template: "{{ '%03d%03d' | format((value_json.value.warmWhite), (value_json.value.coldWhite)) }}",
+        rgb_command_template: "{{ {'warmWhite': 0, 'coldWhite': 0, 'red': red, 'green': green, 'blue': blue}|to_json }}",
+        rgb_command_topic: '51-0-targetColor',
+        rgb_state_topic: '51-0-currentColor',
+        rgb_value_template: '{{ value_json.value.red }},{{ value_json.value.green }},{{ value_json.value.blue }}',
+        min_mireds: 153,
+        max_mireds: 500,
+        payload_on: 'on',
+        payload_off: '0',
+	},
+}
+
 const devices: { [deviceId: string]: HassDevice[] } = {
 	'89-3-1': [
 		{
@@ -256,47 +290,6 @@ const devices: { [deviceId: string]: HassDevice[] } = {
 				current_temperature_template: '{{ value_json.value }}',
 				temperature_state_template: '{{ value_json.value }}',
 				temperature_command_topic: true,
-			},
-		},
-	],
-	'798-1-5': [
-		// Inovelli LZW42 Multi-Color Bulb
-		{
-			type: 'light',
-			object_id: 'rgbw_bulb',
-			values: [
-				'38-0-currentValue',
-				'38-0-targetValue',
-				'51-0-currentColor',
-				'51-0-targetColor',
-			],
-			discovery_payload: {
-				state_topic: '38-0-currentValue',
-				command_topic: '38-0-targetValue',
-				on_command_type: 'brightness',
-				brightness_state_topic: '38-0-currentValue',
-				brightness_command_topic: '38-0-targetValue',
-				state_value_template:
-					'{{ "on" if value_json.value|int > 0 else "0" }}',
-				brightness_value_template:
-					'{{ (value_json.value|int) | round(0) }}',
-				brightness_scale: '99',
-				color_temp_state_topic: '51-0-currentColor',
-				color_temp_command_template:
-					"{{ {'warmWhite': ((0.7349 * (value - 153))|round(0)), 'coldWhite': (255 - (0.7349 * (value - 153))|round(0)), 'red': 255, 'green': 255, 'blue': 255}|to_json }}",
-				color_temp_command_topic: '51-0-targetColor',
-				color_temp_value_template:
-					"{{ '%03d%03d' | format((value_json.value.warmWhite), (value_json.value.coldWhite)) }}",
-				rgb_command_template:
-					"{{ {'warmWhite': 0, 'coldWhite': 0, 'red': red, 'green': green, 'blue': blue}|to_json }}",
-				rgb_command_topic: '51-0-targetColor',
-				rgb_state_topic: '51-0-currentColor',
-				rgb_value_template:
-					'{{ value_json.value.red }},{{ value_json.value.green }},{{ value_json.value.blue }}',
-				min_mireds: 153,
-				max_mireds: 500,
-				payload_on: 'on',
-				payload_off: '0',
 			},
 		},
 	],
@@ -413,6 +406,8 @@ const devices: { [deviceId: string]: HassDevice[] } = {
 	'881-21-2': [SPIRIT_ZWAVE_PLUS], // Eurotronic Spirit / Aeotec ZWA021
 	'129-1-20': [AEROPAC], //Siegenia Aeropac
 	'2-32784-3': [THERMOSTAT_DANFOSS], // Danfoss Room Thermostat (MT2649 / DRS21) https://products.z-wavealliance.org/products/1062
+	'798-1-5': [INOVELLI_RGBW_DEVICE], // Inovelli LZW42 Multi-Color Bulb
+    '798-1-10': [INOVELLI_RGBW_DEVICE], // Inovelli LZW45 Light Strip
 }
 
 export default devices
