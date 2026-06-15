@@ -1,12 +1,15 @@
 <template>
 	<div
-		:style="`max-width: calc(100vw - ${
-			$vuetify.display.lgAndUp ? 120 : 70
-		}px)`"
-		class="mx-2"
+		style="
+			max-width: calc(
+				100vw - var(--v-layout-left, 0px) - var(--v-layout-right, 0px) -
+					32px
+			);
+		"
+		class="px-2"
 		v-if="node"
 	>
-		<v-row class="mt-2" align="center">
+		<v-row class="mt-2 mx-0" align="center">
 			<v-col style="min-width: 200px" class="ml-4">
 				<span class="text-h6 text-grey">Device </span>
 				<br />
@@ -38,7 +41,7 @@
 			<v-col
 				:class="$vuetify.display.smAndDown ? 'text-center' : 'text-end'"
 			>
-				<v-btn-group class="ml-2" multiple>
+				<v-btn-group class="ml-2 mr-1" multiple>
 					<v-btn
 						color="primary"
 						variant="outlined"
