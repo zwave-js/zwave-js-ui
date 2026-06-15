@@ -346,8 +346,15 @@ const useBaseStore = defineStore('base', {
 			const index = this.nodesMap.get(n.id)
 
 			if (index >= 0) {
-				this.nodesMap.delete(n.id)
 				this.nodes.splice(index, 1)
+				// splice shifts every node after `index` down by one, so the cached
+				// id -> index map is now stale for all of them. Rebuild it so getNode
+				// and updateNode keep resolving to the right slot — otherwise partial
+				// updates (e.g. status changes after Replace Failed Node) land on the
+				// wrong node and the UI goes stale until a refresh (see #4666).
+				this.nodesMap = new Map(
+					this.nodes.map((node, i) => [node.id, i]),
+				)
 			}
 		},
 		setNeighbors(neighbors) {
