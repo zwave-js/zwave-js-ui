@@ -406,7 +406,7 @@ const devices: { [deviceId: string]: HassDevice[] } = {
 	'881-21-2': [SPIRIT_ZWAVE_PLUS], // Eurotronic Spirit / Aeotec ZWA021
 	'129-1-20': [AEROPAC], //Siegenia Aeropac
 	'2-32784-3': [THERMOSTAT_DANFOSS], // Danfoss Room Thermostat (MT2649 / DRS21) https://products.z-wavealliance.org/products/1062
-	'798-1-5': [INOVELLI_RGBW_DEVICE], // Inovelli LZW42 Multi-Color Bulb
+    '798-1-5': [INOVELLI_RGBW_DEVICE], // Inovelli LZW42 Multi-Color Bulb
     '798-1-10': [INOVELLI_RGBW_DEVICE], // Inovelli LZW45 Light Strip
 }
 
