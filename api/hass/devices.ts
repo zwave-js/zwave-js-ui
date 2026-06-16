@@ -208,7 +208,7 @@ const AEROPAC: HassDevice = {
 
 // Inovelli RGBW devices using Multilevel Switch + Color Switch
 const INOVELLI_RGBW_DEVICE: HassDevice = {
-	type: 'light',
+    type: 'light',
     object_id: 'rgbw_bulb',
     values: [
         '38-0-currentValue',
