@@ -187,6 +187,7 @@ export type GatewayConfig = {
 	entityTemplate?: string
 	hassDiscovery?: boolean
 	discoveryPrefix?: string
+	useLocationAsSuggestedArea?: boolean
 	logEnabled?: boolean
 	logLevel?: LogLevel
 	logToFile?: boolean
@@ -217,6 +218,7 @@ interface DeviceInfo {
 	model: string
 	name: string
 	sw_version: string
+	suggested_area?: string
 }
 
 export default class Gateway {
@@ -455,7 +457,7 @@ export default class Gateway {
 			}
 
 			if (valueConf) {
-				if (this._isValidOperation(valueConf.postOperation)) {
+				if (utils.isValidOperation(valueConf.postOperation)) {
 					let op = valueConf.postOperation
 
 					// revert operation to write
@@ -464,7 +466,7 @@ export default class Gateway {
 					else if (op.includes('+')) op = op.replace(/\+/, '-')
 					else if (op.includes('-')) op = op.replace(/-/, '+')
 
-					payload = eval(`${payload}${op}`)
+					payload = utils.applyOperation(payload, op)
 				}
 
 				if (valueConf.parseReceive) {
@@ -1692,6 +1694,12 @@ export default class Gateway {
 							unit = 'min'
 						} else if (unit === 'hours') {
 							unit = 'h'
+						} else if (unit === 'kVar') {
+							// HA reactive_power device class requires lowercase unit
+							unit = 'kvar'
+						} else if (unit === 'kVarh') {
+							// Normalize reactive energy unit to lowercase
+							unit = 'kvarh'
 						}
 						cfg.discovery_payload.unit_of_measurement = unit
 					}
@@ -1968,8 +1976,11 @@ export default class Gateway {
 		let tmpVal = valueId.value
 
 		if (valueConf) {
-			if (this._isValidOperation(valueConf.postOperation)) {
-				tmpVal = eval(valueId.value + valueConf.postOperation)
+			if (utils.isValidOperation(valueConf.postOperation)) {
+				tmpVal = utils.applyOperation(
+					valueId.value,
+					valueConf.postOperation,
+				)
 			}
 
 			if (valueConf.parseSend) {
@@ -2424,14 +2435,6 @@ export default class Gateway {
 	}
 
 	/**
-	 * Checks if an operation is valid, it must exist and must contains
-	 * only numbers and operators
-	 */
-	private _isValidOperation(op: string): boolean {
-		return op && !/[^0-9.()\-+*/,]/g.test(op)
-	}
-
-	/**
 	 * Evaluate the return value of a custom parse Function
 	 *
 	 */
@@ -2502,7 +2505,7 @@ export default class Gateway {
 	 * Get the device Object to send in discovery payload
 	 */
 	private _deviceInfo(node: ZUINode, nodeName: string): DeviceInfo {
-		return {
+		const deviceInfo: DeviceInfo = {
 			identifiers: [
 				UID_DISCOVERY_PREFIX + this._zwave.homeHex + '_node' + node.id,
 			],
@@ -2514,6 +2517,13 @@ export default class Gateway {
 			name: nodeName,
 			sw_version: node.firmwareVersion || utils.getVersion(),
 		}
+
+		const suggestedArea = node.loc?.trim()
+		if (this.config.useLocationAsSuggestedArea && suggestedArea) {
+			deviceInfo.suggested_area = suggestedArea
+		}
+
+		return deviceInfo
 	}
 
 	private setDiscoveryAvailability(
@@ -2722,7 +2732,7 @@ export default class Gateway {
 			switchValue = `37-${endpoint}-currentValue`
 		}
 
-		/* 
+		/*
 			Find the control switch of the device Brightness or Binary
 			If multilevel is not there use binary
 			Some devices use also endpoint + 1 as on/off/brightness... try to guess that too!

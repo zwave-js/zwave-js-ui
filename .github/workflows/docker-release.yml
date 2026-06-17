@@ -1,5 +1,13 @@
 name: Docker Release
 
+# A release fires two runs (the `release` event + the `push` of the version-bump
+# commit to master). Both export to the same GHA cache scope and push the same
+# `sha` tag, which races and intermittently fails one of them. Serialize them so
+# the second run waits and reuses the first run's warm cache instead of racing it.
+concurrency:
+  group: docker-release
+  cancel-in-progress: false
+
 on:
   push:
     branches:
@@ -20,10 +28,6 @@ jobs:
     steps:
       - uses: catchpoint/workflow-telemetry-action@v1
       - uses: actions/checkout@v5
-      - uses: actions/setup-node@v5
-        with:
-          node-version: 20
-          cache: 'npm'
 
       - uses: docker/setup-buildx-action@v3
       - uses: docker/setup-qemu-action@v3
@@ -75,20 +79,15 @@ jobs:
             org.opencontainers.image.authors=Daniel Lando <daniel.sorridi@gmail.com>
             maintainer=robertsLando
 
-      - name: Pre-build frontend and backend files
-        run: |
-          npm ci
-          npm run build
-
       - name: build+push
-        timeout-minutes: 120 # prevents this to run indeterminatly
+        timeout-minutes: 120 # prevents this to run indeterminately
         uses: docker/build-push-action@v6
         with:
           platforms: linux/arm64,linux/amd64,linux/arm/v7,linux/arm/v6
           file: docker/Dockerfile
           context: . # without this it will clone master branch instead of using local
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=gha,scope=zwave-js-ui
+          cache-to: type=gha,mode=max,scope=zwave-js-ui
           push: true
           tags: ${{ steps.docker_meta.outputs.tags }}
           labels: ${{ steps.docker_meta.outputs.labels }}
@@ -100,10 +99,12 @@ jobs:
           platforms: linux/arm64,linux/amd64,linux/arm/v7,linux/arm/v6
           file: docker/Dockerfile
           context: . # without this it will clone master branch instead of using local
-          cache-from: type=gha
+          cache-from: |
+            type=gha,scope=zwavejs2mqtt
+            type=gha,scope=zwave-js-ui
           build-args: |
             image=zwavejs2mqtt
-          cache-to: type=gha,mode=max
+          cache-to: type=gha,mode=max,scope=zwavejs2mqtt
           push: true
           tags: ${{ steps.docker_meta2.outputs.tags }}
           labels: ${{ steps.docker_meta2.outputs.labels }}

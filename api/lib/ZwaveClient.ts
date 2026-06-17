@@ -168,6 +168,8 @@ const GROUP_NAME_MAX_LENGTH = 64
  * the LR address space so they never collide with physical or broadcast nodes.
  */
 const GROUP_ID_MIN = 0x1000
+// Ordered from least verbose to most verbose (matching winston/npm log levels)
+const LOG_LEVEL_ORDER = ['error', 'warn', 'info', 'verbose', 'debug', 'silly']
 
 function validateMethods<T extends readonly (keyof ZwaveClient)[]>(
 	methods: T,
@@ -627,6 +629,7 @@ export type ZUINode = {
 	available: boolean
 	failed: boolean
 	lastActive?: number
+	lastAwake?: number
 	dbLink?: string
 	maxDataRate?: DataRate
 	interviewStage?: keyof typeof InterviewStage
@@ -801,6 +804,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	private tmpNode: utils.DeepPartial<ZUINode>
 	// tells if a node replacement is in progress
 	private isReplacing = false
+	// node ids surfaced to the UI via `node found` that have not yet hit
+	// `node added` — if inclusion fails before the interview completes
+	// they're orphans stuck at ProtocolInfo and must be cleared (see #4639)
+	private _pendingInclusionNodeIds: Set<number> = new Set()
 
 	private hasUserCallbacks = false
 
@@ -831,7 +838,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 	private driverFunctionCache: utils.Snippet[] = []
 
-	private _extraLogTransports: any[] = []
+	private _extraLogTransports: Array<{ transport: any; level?: string }> = []
 
 	// Foreach valueId, we store a callback function to be called when the value changes
 	private valuesObservers: Record<string, ValueIdObserver> = {}
@@ -949,7 +956,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 * If the driver is already running, the transport is applied immediately.
 	 */
 	addExtraLogTransport(transport: any, level?: string): void {
-		this._extraLogTransports.push(transport)
+		this._extraLogTransports.push({ transport, level })
 		if (this._driver && this._driverReady) {
 			const config: any = {
 				transports: [transport],
@@ -966,7 +973,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 * If the driver is running, the transport is detached immediately.
 	 */
 	removeExtraLogTransport(transport: any): void {
-		const idx = this._extraLogTransports.indexOf(transport)
+		const idx = this._extraLogTransports.findIndex(
+			(e) => e.transport === transport,
+		)
 		if (idx !== -1) {
 			this._extraLogTransports.splice(idx, 1)
 		}
@@ -2477,8 +2486,32 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		zwaveOptions.logConfig.transports = [
 			logTransport,
-			...this._extraLogTransports,
+			...this._extraLogTransports.map((e) => e.transport),
 		]
+
+		// If any extra transport requires a more verbose log level, apply it.
+		// Use the most verbose (highest priority) level among all extra transports.
+		const extraLevel = this._extraLogTransports
+			.map((e) => e.level)
+			.filter(Boolean)
+			.reduce<string | undefined>((best, level) => {
+				if (!best) return level
+				return LOG_LEVEL_ORDER.indexOf(level) >
+					LOG_LEVEL_ORDER.indexOf(best)
+					? level
+					: best
+			}, undefined)
+		if (extraLevel) {
+			const currentLevel = zwaveOptions.logConfig.level
+			const currentIdx =
+				typeof currentLevel === 'string'
+					? LOG_LEVEL_ORDER.indexOf(currentLevel)
+					: -1
+			const extraIdx = LOG_LEVEL_ORDER.indexOf(extraLevel)
+			if (extraIdx > currentIdx) {
+				zwaveOptions.logConfig.level = extraLevel
+			}
+		}
 
 		logTransport.stream.on('data', (data) => {
 			this.socket
@@ -2650,7 +2683,13 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			this.getNode(valueId.nodeId)?.getValueTimestamp(valueId) ??
 			Date.now()
 
-		this.sendToSocket(socketEvents.valueUpdated, valueId)
+		// Skip the socket broadcast when the value didn't actually change.
+		// Chatty meshes can produce ~50% no-op value updates (see #4639) and
+		// each one triggers an unnecessary re-render of the nodes table.
+		// MQTT/HASS still get every event via the local 'valueChanged' below.
+		if (changed) {
+			this.sendToSocket(socketEvents.valueUpdated, valueId)
+		}
 
 		this.emit('valueChanged', valueId, node, changed)
 
@@ -6552,6 +6591,23 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		const message = 'Inclusion failed'
 		this.isReplacing = false
 		this.tmpNode = undefined
+
+		// Clear any ghost nodes the driver surfaced via `node found` but never
+		// promoted to `node added`. zwave-js doesn't always emit `node removed`
+		// for these, so they would stay stuck on ProtocolInfo in the UI forever.
+		for (const nodeId of this._pendingInclusionNodeIds) {
+			const node = this._nodes.get(nodeId)
+			if (node && !node.ready) {
+				this.logNode(
+					nodeId,
+					'info',
+					'Removing ghost node after failed inclusion',
+				)
+				this._removeNode(nodeId)
+			}
+		}
+		this._pendingInclusionNodeIds.clear()
+
 		this._updateControllerStatus(message)
 		this.emit('event', EventSource.CONTROLLER, 'inclusion failed')
 	}
@@ -6573,6 +6629,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		if (this.driverReady) {
 			node = this._createNode(nodeId)
 			this.sendToSocket(socketEvents.nodeFound, { node })
+			// track until `node added` clears it; cleaned up on inclusion failure
+			this._pendingInclusionNodeIds.add(nodeId)
 		} else {
 			node = this._nodes.get(nodeId)
 		}
@@ -6589,6 +6647,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 */
 	private async _onNodeAdded(zwaveNode: ZWaveNode, result: InclusionResult) {
 		let node: ZUINode
+		// node made it past `node found` — no longer a ghost candidate
+		this._pendingInclusionNodeIds.delete(zwaveNode.id)
 		// the driver is ready so this node has been added on fly
 		if (this.driverReady) {
 			node = this._addNode(zwaveNode)
@@ -7320,6 +7380,15 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		)
 
 		this._onNodeStatus(zwaveNode, true)
+
+		const node = this._nodes.get(zwaveNode.id)
+		if (node) {
+			node.lastAwake = Date.now()
+			this.emitNodeUpdate(node, {
+				lastAwake: node.lastAwake,
+			} as utils.DeepPartial<ZUINode>)
+		}
+
 		this.emit(
 			'event',
 			EventSource.NODE,
@@ -7815,6 +7884,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	private _removeNode(nodeid: number) {
 		// don't use splice here, nodeid equals to the index in the array
 		const node = this._nodes.get(nodeid)
+		this._pendingInclusionNodeIds.delete(nodeid)
 		if (node) {
 			this._nodes.delete(nodeid)
 
@@ -8443,7 +8513,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 				this.statelessTimeouts[valueId.id] = setTimeout(() => {
 					valueId.value = undefined
-					this.emitValueChanged(valueId, node, false)
+					// reset is itself a transition (X -> undefined), so the UI
+					// must be told even after the no-op suppression in emitValueChanged
+					this.emitValueChanged(valueId, node, true)
 				}, 1000)
 			}
 		}
