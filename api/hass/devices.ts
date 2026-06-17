@@ -226,13 +226,17 @@ const INOVELLI_RGBW_DEVICE: HassDevice = {
 		brightness_value_template: '{{ (value_json.value|int) | round(0) }}',
 		brightness_scale: '99',
 		color_temp_state_topic: '51-0-currentColor',
-		color_temp_command_template: "{{ {'warmWhite': ((0.7349 * (value - 153))|round(0)), 'coldWhite': (255 - (0.7349 * (value - 153))|round(0)), 'red': 255, 'green': 255, 'blue': 255}|to_json }}",
+		color_temp_command_template:
+			"{{ {'warmWhite': ((0.7349 * (value - 153))|round(0)), 'coldWhite': (255 - (0.7349 * (value - 153))|round(0)), 'red': 255, 'green': 255, 'blue': 255}|to_json }}",
 		color_temp_command_topic: '51-0-targetColor',
-		color_temp_value_template: "{{ '%03d%03d' | format((value_json.value.warmWhite), (value_json.value.coldWhite)) }}",
-		rgb_command_template: "{{ {'warmWhite': 0, 'coldWhite': 0, 'red': red, 'green': green, 'blue': blue}|to_json }}",
+		color_temp_value_template:
+			"{{ '%03d%03d' | format((value_json.value.warmWhite), (value_json.value.coldWhite)) }}",
+		rgb_command_template:
+			"{{ {'warmWhite': 0, 'coldWhite': 0, 'red': red, 'green': green, 'blue': blue}|to_json }}",
 		rgb_command_topic: '51-0-targetColor',
 		rgb_state_topic: '51-0-currentColor',
-		rgb_value_template: '{{ value_json.value.red }},{{ value_json.value.green }},{{ value_json.value.blue }}',
+		rgb_value_template:
+			'{{ value_json.value.red }},{{ value_json.value.green }},{{ value_json.value.blue }}',
 		min_mireds: 153,
 		max_mireds: 500,
 		payload_on: 'on',
