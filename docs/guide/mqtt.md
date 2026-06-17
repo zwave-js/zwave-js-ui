@@ -2677,6 +2677,158 @@ Payload:
 }
 ```
 
+## Groups
+
+As an alternative to the ad-hoc [Broadcast](#broadcast) and [Multicast](#multicast) topics above, you can create **persistent multicast groups** in the UI. See [Multicast and Broadcast Groups](/usage/groups) for the full guide.
+
+Virtual nodes (broadcast and multicast groups) publish their values to MQTT as regular node topics. You can write to them just like any other node — the write is automatically routed as a Z-Wave broadcast or multicast command.
+
+### Virtual node value topics
+
+Virtual node values are published using the same topic structure as physical nodes.
+
+**Named topics** example for a group named "Living Room Lights":
+
+```text
+# Published value (read)
+zwave/Living Room Lights/Multilevel Switch/endpoint_0/targetValue
+
+# Write to group (sends multicast command to all members)
+zwave/Living Room Lights/Multilevel Switch/endpoint_0/targetValue/set
+```
+
+**Value ID topics** example (group ID 4096):
+
+```text
+# Published value (read)
+zwave/4096/38/0/targetValue
+
+# Write to group
+zwave/4096/38/0/targetValue/set
+```
+
+Broadcast nodes work the same way — writing to a broadcast node's value topic sends the command to all nodes in the network:
+
+```text
+# Write to broadcast node (named topics)
+zwave/Broadcast/Binary Switch/endpoint_0/targetValue/set
+```
+
+> [!NOTE]
+> The difference between this approach and the [Broadcast](#broadcast)/[Multicast](#multicast) topics is that groups are pre-configured in the UI and their values appear as regular MQTT topics. This makes them easier to use with home automation systems that discover and subscribe to MQTT topics automatically.
+
+### Group management APIs
+
+#### `_getGroups`
+
+```ts
+_getGroups(): Group[]
+```
+
+Get all configured multicast groups.
+
+<details>
+<summary>Mqtt usage</summary>
+
+Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/_getGroups/set`
+
+Payload:
+
+```json
+{
+	"args": []
+}
+```
+
+</details>
+
+#### `_createGroup`
+
+```ts
+async _createGroup(
+	name: string,
+	nodeIds: number[],
+): Promise<Group>
+```
+
+Create a new multicast group. Requires a name and at least 2 node IDs.
+
+<details>
+<summary>Mqtt usage</summary>
+
+Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/_createGroup/set`
+
+Payload:
+
+```json
+{
+	"args": [
+		"Living Room Lights",
+		[2, 3, 5]
+	]
+}
+```
+
+</details>
+
+#### `_updateGroup`
+
+```ts
+async _updateGroup(
+	id: number,
+	name: string,
+	nodeIds: number[],
+): Promise<Group | null>
+```
+
+Update an existing group's name and/or node list.
+
+<details>
+<summary>Mqtt usage</summary>
+
+Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/_updateGroup/set`
+
+Payload:
+
+```json
+{
+	"args": [
+		4096,
+		"Living Room Lights",
+		[2, 3, 5, 7]
+	]
+}
+```
+
+</details>
+
+#### `_deleteGroup`
+
+```ts
+async _deleteGroup(
+	id: number,
+): Promise<boolean>
+```
+
+Delete a multicast group and its virtual node.
+
+<details>
+<summary>Mqtt usage</summary>
+
+Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/_deleteGroup/set`
+
+Payload:
+
+```json
+{
+	"args": [
+		4096
+	]
+}
+```
+
+</details>
+
 ## Special topics
 
 ### App version

@@ -531,6 +531,12 @@ export default {
 				})
 
 				pages.splice(4, 0, {
+					icon: 'group_work',
+					title: 'Groups',
+					path: Routes.groups,
+				})
+
+				pages.splice(5, 0, {
 					icon: 'content_copy',
 					title: 'Templates',
 					path: Routes.configurationTemplates,
