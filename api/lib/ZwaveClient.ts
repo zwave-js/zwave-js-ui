@@ -74,6 +74,7 @@ import type {
 	ZWaveNodeEvents,
 	ZWaveNodeFirmwareUpdateFinishedCallback,
 	ZWaveNodeFirmwareUpdateProgressCallback,
+	InterviewProgress,
 	ZWaveNodeMetadataUpdatedArgs,
 	ZWaveNodeValueAddedArgs,
 	ZWaveNodeValueNotificationArgs,
@@ -633,6 +634,7 @@ export type ZUINode = {
 	dbLink?: string
 	maxDataRate?: DataRate
 	interviewStage?: keyof typeof InterviewStage
+	interviewProgress?: number
 	status?: keyof typeof NodeStatus
 	inited: boolean
 	rebuildRoutesProgress?: RebuildRoutesStatus | undefined
@@ -1092,9 +1094,15 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				entry.timeout = setTimeout(
 					() => {
 						const oldEntry = this.throttledFunctions.get(key)
-						if (oldEntry?.fn) {
+						if (oldEntry) {
 							oldEntry.lastUpdate = Date.now()
-							fn()
+							// clear the timeout so later calls can schedule a
+							// new trailing emit
+							oldEntry.timeout = null
+							// run the most recently queued function, not the one
+							// captured when this timeout was scheduled, so the
+							// final value of a burst is never dropped
+							oldEntry.fn()
 						}
 					},
 					entry.lastUpdate + wait - now,
@@ -7046,7 +7054,11 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 * Update current node status and interviewState
 	 *
 	 */
-	private _onNodeStatus(zwaveNode: ZWaveNode, updateStatusOnly = false) {
+	private _onNodeStatus(
+		zwaveNode: ZWaveNode,
+		updateStatusOnly = false,
+		updateInterviewStage = false,
+	) {
 		const node = this._nodes.get(zwaveNode.id)
 
 		if (node) {
@@ -7055,9 +7067,16 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				zwaveNode.status
 			] as keyof typeof NodeStatus
 			node.available = zwaveNode.status !== NodeStatus.Dead
-			node.interviewStage = InterviewStage[
-				zwaveNode.interviewStage
-			] as keyof typeof InterviewStage
+
+			// The interview stage is normally driven by the granular `interview
+			// progress` events; only seed it from the node here when explicitly
+			// requested (e.g. node ready / added), so status changes like
+			// wake/sleep/alive/dead don't regress it during an interview.
+			if (updateInterviewStage) {
+				node.interviewStage = InterviewStage[
+					zwaveNode.interviewStage
+				] as keyof typeof InterviewStage
+			}
 
 			if (zwaveNode.interviewStage === InterviewStage.Complete) {
 				node.hasDeviceConfigChanged = zwaveNode.hasDeviceConfigChanged()
@@ -7069,7 +7088,6 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				changedProps = {
 					status: node.status,
 					available: node.available,
-					interviewStage: node.interviewStage,
 				}
 			}
 
@@ -7214,7 +7232,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		this.getGroups(zwaveNode.id, true)
 
-		this._onNodeStatus(zwaveNode)
+		this._onNodeStatus(zwaveNode, false, true)
 
 		// Check for matching configuration templates
 		this._checkConfigurationTemplates(node, zwaveNode)
@@ -7270,11 +7288,47 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	}
 
 	/**
+	 * Update a node's interview progress and notify the UI.
+	 * When `throttle` is set the emit is rate-limited, otherwise it is emitted immediately.
+	 */
+	private _setInterviewProgress(
+		zwaveNode: ZWaveNode,
+		progress: number,
+		stage?: keyof typeof InterviewStage,
+		throttle = false,
+	) {
+		const node = this._nodes.get(zwaveNode.id)
+		if (!node) return
+
+		node.interviewProgress = progress
+		const changedProps: utils.DeepPartial<ZUINode> = {
+			interviewProgress: progress,
+		}
+		if (stage !== undefined) {
+			node.interviewStage = stage
+			changedProps.interviewStage = stage
+		}
+
+		if (throttle) {
+			// send at most 4msg per second
+			this.throttle(
+				'_setInterviewProgress_' + node.id,
+				this.emitNodeUpdate.bind(this, node, changedProps),
+				250,
+			)
+		} else {
+			this.emitNodeUpdate(node, changedProps)
+		}
+	}
+
+	/**
 	 * Triggered when a node interview starts for the first time or when the node is manually re-interviewed
 	 *
 	 */
 	private _onNodeInterviewStarted(zwaveNode: ZWaveNode) {
 		this.logNode(zwaveNode, 'info', 'Interview started')
+
+		// Z-Wave JS sends interview progress events - no need to change the progress here.
 
 		this.emit(
 			'event',
@@ -7357,6 +7411,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			'error',
 			`Interview FAILED: ${args.errorMessage}`,
 		)
+
+		// Reset the progress: the interview stopped before completing.
+		this._setInterviewProgress(zwaveNode, 0)
 
 		this._onNodeStatus(zwaveNode, true)
 
@@ -7766,6 +7823,22 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		}
 
 	/**
+	 * Emitted when we receive a node `interview progress` event
+	 *
+	 */
+	private _onNodeInterviewProgress(
+		zwaveNode: ZWaveNode,
+		progress: InterviewProgress,
+	) {
+		this._setInterviewProgress(
+			zwaveNode,
+			Math.round(progress.progress),
+			InterviewStage[progress.stage] as keyof typeof InterviewStage,
+			true,
+		)
+	}
+
+	/**
 	 * Triggered we receive a node `firmware update finished` event
 	 *
 	 */
@@ -7832,6 +7905,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				this._onNodeInterviewCompleted.bind(this),
 			)
 			.on('interview failed', this._onNodeInterviewFailed.bind(this))
+			.on('interview progress', this._onNodeInterviewProgress.bind(this))
 			.on('wake up', this._onNodeWakeUp.bind(this))
 			.on('sleep', this._onNodeSleep.bind(this))
 			.on('alive', this._onNodeAlive.bind(this))
@@ -7979,7 +8053,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		this._bindNodeEvents(zwaveNode)
 		this._dumpNode(zwaveNode)
-		this._onNodeStatus(zwaveNode)
+		this._onNodeStatus(zwaveNode, false, true)
 
 		this.logNode(zwaveNode, 'debug', `Has been added to nodes array`)
 

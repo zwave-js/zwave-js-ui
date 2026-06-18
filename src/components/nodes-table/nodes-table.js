@@ -324,6 +324,16 @@ export default {
 			}
 			return map[status] || 'grey'
 		},
+		// Only show the progress indicator while an interview can actually make
+		// progress: not yet complete, and the node is neither dead nor asleep
+		// (a stalled interview would otherwise show a misleading spinner).
+		showInterviewProgress(node) {
+			return (
+				node.interviewStage !== 'Complete' &&
+				node.status !== 'Dead' &&
+				node.status !== 'Asleep'
+			)
+		},
 		powerRichValue(node) {
 			let level = node.minBatteryLevel
 			let iconStyle = `color: ${this.currentTheme.success}`

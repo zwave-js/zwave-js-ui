@@ -332,16 +332,23 @@
 			>
 				<v-chip
 					size="small"
-					:color="interviewStageColor(`${item.interviewStage}`)"
+					:color="interviewStageColor(item.interviewStage)"
 					>{{ item.interviewStage }}</v-chip
 				>
 				<v-progress-circular
-					v-if="item.interviewStage !== 'Complete'"
-					indeterminate
+					v-if="showInterviewProgress(item)"
+					:indeterminate="item.interviewProgress == null"
+					:model-value="item.interviewProgress ?? 0"
 					class="mt-1"
-					size="20"
+					size="32"
 					color="primary"
-				></v-progress-circular>
+				>
+					<span
+						v-if="item.interviewProgress != null"
+						class="text-caption"
+						>{{ item.interviewProgress }}</span
+					>
+				</v-progress-circular>
 			</div>
 			<div v-else></div>
 		</template>
