@@ -13,7 +13,7 @@
 		></v-text-field> -->
 		<v-data-iterator
 			:loading="loading"
-			:items="nodes"
+			:items="displayedNodes"
 			:search="search"
 			v-model="selected"
 			item-key="id"
@@ -65,6 +65,29 @@
 							</v-btn>
 							<v-btn variant="flat" :modelValue="true">
 								<v-icon>arrow_downward</v-icon>
+							</v-btn>
+						</v-btn-toggle>
+					</div>
+					<div>
+						<v-btn-toggle
+							class="mx-auto my-2"
+							v-model="nodeView"
+							mandatory
+							color="primary"
+						>
+							<v-btn
+								value="physical"
+								v-tooltip:bottom="'Physical devices'"
+							>
+								<v-icon>device_hub</v-icon>
+							</v-btn>
+							<v-btn
+								value="virtual"
+								v-tooltip:bottom="
+									'Virtual devices (broadcast / multicast groups)'
+								"
+							>
+								<v-icon>cloud</v-icon>
 							</v-btn>
 						</v-btn-toggle>
 					</div>
@@ -135,12 +158,17 @@
 									>
 										<strong
 											@click.stop="
+												!item.raw.virtual &&
 												select(
 													[item],
 													!isSelected(item),
 												)
 											"
-											v-tooltip:bottom="'Click to select'"
+											v-tooltip:bottom="
+												item.raw.virtual
+													? 'Virtual devices cannot be selected'
+													: 'Click to select'
+											"
 											style="
 												font-size: 14px;
 												line-height: 1.3;
@@ -383,9 +411,24 @@ export default {
 		selected() {
 			this.$emit('selected', this.selected)
 		},
+		// Clear selection when switching between physical and virtual views
+		// so a lingering selection from the other view doesn't drive the
+		// bulk action toolbar.
+		nodeView() {
+			this.selected = []
+		},
 	},
 	computed: {
 		...mapState(useBaseStore, ['nodes']),
+		// Nodes shown in the view, split between physical and virtual devices
+		// so the two (which have very different characteristics) are never
+		// mixed in the same list. A standard Broadcast virtual node always
+		// exists, so the split is always relevant.
+		displayedNodes() {
+			return this.nodes.filter((node) =>
+				this.nodeView === 'virtual' ? node.virtual : !node.virtual,
+			)
+		},
 		sortingRules() {
 			return [
 				{
@@ -398,6 +441,9 @@ export default {
 	data() {
 		return {
 			search: '',
+			// Active device view: 'physical' (default) or 'virtual'. Only
+			// relevant when the network actually contains virtual nodes.
+			nodeView: 'physical',
 			sortBy: 'id',
 			keys: [
 				{
