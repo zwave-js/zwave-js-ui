@@ -17,7 +17,6 @@ import type { CallAPIResult, ZwaveConfig } from './lib/ZwaveClient.ts'
 import ZWaveClient from './lib/ZwaveClient.ts'
 import multer, { diskStorage } from 'multer'
 import extract from 'extract-zip'
-import * as yauzl from 'yauzl'
 import { serverVersion } from '@zwave-js/server'
 import archiver from 'archiver'
 import rateLimit from 'express-rate-limit'
@@ -34,6 +33,7 @@ import { Driver, libVersion } from 'zwave-js'
 import {
 	defaultPsw,
 	defaultUser,
+	logsDir,
 	sessionSecret,
 	snippetsDir,
 	storeDir,
@@ -64,6 +64,8 @@ import {
 	writeFile,
 	lstat,
 	mkdir,
+	mkdtemp,
+	cp,
 } from 'node:fs/promises'
 import { generate } from 'selfsigned'
 import type { ZnifferConfig } from './lib/ZnifferManager.ts'
@@ -357,71 +359,6 @@ async function getSnippets() {
 }
 
 /**
- * Scan a zip archive's central directory and reject it if any entry is not a
- * regular file or directory (e.g. symlinks or device/special files). This is
- * done before extraction because extract-zip materializes such entries
- * verbatim, which could be abused to plant a link escaping `storeDir`.
- */
-function assertArchiveHasNoLinks(zipPath: string): Promise<void> {
-	const IFMT = 0o170000
-	const IFDIR = 0o040000
-	const IFREG = 0o100000
-
-	return new Promise((resolve, reject) => {
-		yauzl.open(
-			zipPath,
-			{ lazyEntries: true },
-			(err, zipfile) => {
-				if (err || !zipfile) {
-					return reject(err ?? Error('Invalid archive'))
-				}
-
-				let settled = false
-				const fail = (e: Error) => {
-					if (settled) return
-					settled = true
-					zipfile.close()
-					reject(e)
-				}
-
-				zipfile.on('entry', (entry: yauzl.Entry) => {
-					// Convert the external file attributes into a unix stat mode
-					const mode = (entry.externalFileAttributes >>> 16) & 0xffff
-					const fmt = mode & IFMT
-
-					const isDir =
-						fmt === IFDIR || entry.fileName.endsWith('/')
-					// mode is 0 for archives created without unix attributes
-					// (e.g. plain Windows zips) - treat those as regular files
-					const isRegular = fmt === IFREG || mode === 0
-
-					if (!isDir && !isRegular) {
-						return fail(
-							Error(
-								`Restore archive contains an unsupported entry: ${entry.fileName}`,
-							),
-						)
-					}
-
-					zipfile.readEntry()
-				})
-
-				zipfile.on('end', () => {
-					if (settled) return
-					settled = true
-					zipfile.close()
-					resolve()
-				})
-
-				zipfile.on('error', fail)
-
-				zipfile.readEntry()
-			},
-		)
-	})
-}
-
-/**
  * Resolve the real path of the nearest existing ancestor of `target` and
  * ensure it is still confined within `storeDir`. This defeats symlinked
  * path components (which a plain string prefix check is blind to) for both
@@ -431,7 +368,7 @@ async function assertRealPathInStore(target: string) {
 	let current = target
 
 	// Walk up until we hit an existing ancestor (the target itself may be new)
-	// eslint-disable-next-line no-constant-condition
+
 	while (true) {
 		try {
 			const real = await realpath(current)
@@ -1504,6 +1441,7 @@ app.post(
 							// Build logConfig object from our settings
 							editableOptions.logConfig = utils.buildLogConfig(
 								settings.zwave || {},
+								logsDir,
 							)
 						}
 
@@ -2177,11 +2115,19 @@ app.post(
 			}
 
 			if (isRestore) {
-				// Reject archives containing symlink/hardlink/device entries:
-				// extract-zip materializes them verbatim, which could plant a
-				// link escaping storeDir for a later write to follow.
-				await assertArchiveHasNoLinks(file.path)
-				await extract(file.path, { dir: storeDir })
+				// Stage, reject symlinks escaping the store, then merge in.
+				const stageDir = await mkdtemp(path.join(storeDir, '.restore-'))
+				try {
+					await extract(file.path, { dir: stageDir })
+					await utils.assertNoEscapingSymlinks(stageDir, stageDir)
+					await cp(stageDir, storeDir, {
+						recursive: true,
+						// keep in-store links (e.g. *_current.log) as links, don't copy their targets
+						verbatimSymlinks: true,
+					})
+				} finally {
+					await rm(stageDir, { recursive: true, force: true })
+				}
 			} else {
 				const destinationPath = await getSafePath(
 					path.join(storeDir, folder, file.originalname),

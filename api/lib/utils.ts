@@ -5,9 +5,8 @@ import { readFileSync, statSync } from 'node:fs'
 import type { ZwaveConfig } from './ZwaveClient.ts'
 import { isUint8Array } from 'node:util/types'
 import { createRequire } from 'node:module'
-import { mkdir, access } from 'node:fs/promises'
+import { mkdir, access, readdir, readlink } from 'node:fs/promises'
 import { fileURLToPath } from 'node:url'
-import { logsDir } from '../config/app.ts'
 import tripleBeam from 'triple-beam'
 
 const loglevels = tripleBeam.configs.npm.levels
@@ -502,10 +501,40 @@ export function buildPreferences(
 }
 
 /**
+ * Throw if any symlink under `dir` resolves outside `root`. Targets are
+ * resolved literally (not followed), so dangling links work and the walk
+ * never leaves `root`. Permits in-store links (e.g. `*_current.log`).
+ */
+export async function assertNoEscapingSymlinks(
+	dir: string,
+	root: string,
+): Promise<void> {
+	const entries = await readdir(dir, { withFileTypes: true })
+
+	for (const entry of entries) {
+		const full = path.join(dir, entry.name)
+
+		if (entry.isSymbolicLink()) {
+			const target = await readlink(full)
+			const resolved = path.resolve(path.dirname(full), target)
+
+			if (resolved !== root && !resolved.startsWith(root + path.sep)) {
+				throw Error(
+					`Archive contains a symlink escaping the store: ${entry.name}`,
+				)
+			}
+		} else if (entry.isDirectory()) {
+			await assertNoEscapingSymlinks(full, root)
+		}
+	}
+}
+
+/**
  * Build logConfig object for Z-Wave driver options from Z-Wave configuration
  */
 export function buildLogConfig(
 	config: ZwaveConfig,
+	logsDir: string,
 ): PartialZWaveOptions['logConfig'] {
 	return {
 		enabled: config.logEnabled,
