@@ -8,6 +8,7 @@ import { createRequire } from 'node:module'
 import { mkdir, access, readdir, readlink } from 'node:fs/promises'
 import { fileURLToPath } from 'node:url'
 import tripleBeam from 'triple-beam'
+import { MAX_NODES_LR } from '@zwave-js/core'
 
 const loglevels = tripleBeam.configs.npm.levels
 
@@ -225,6 +226,40 @@ export function removeSlash(str: string | number): string {
  */
 export function hasProperty(obj: Record<string, any>, prop: string): boolean {
 	return Object.prototype.hasOwnProperty.call(obj, prop)
+}
+
+/**
+ * Check if a value is a non-array object
+ */
+export function isRecord(value: unknown): value is Record<string, any> {
+	return value !== null && typeof value === 'object' && !Array.isArray(value)
+}
+
+/**
+ * Check if a value is a base-10 positive integer string
+ */
+export function isPositiveIntegerString(value: unknown): boolean {
+	if (typeof value !== 'string') {
+		return false
+	}
+
+	if (!/^\d+$/.test(value)) {
+		return false
+	}
+
+	const number = Number(value)
+	return Number.isSafeInteger(number) && number > 0
+}
+
+/**
+ * Check if a value is a string holding a valid Z-Wave node id, i.e. a positive
+ * integer within the addressable range (1..MAX_NODES_LR). Used to tell node-id
+ * keys apart from home-id keys when importing a `nodes.json` backup: node ids
+ * are at most 4 digits (Long Range tops out at 4000) while home ids are larger
+ * (8 hex digits, or a ~10-digit decimal).
+ */
+export function isValidNodeIdString(value: unknown): boolean {
+	return isPositiveIntegerString(value) && Number(value) <= MAX_NODES_LR
 }
 
 /**
@@ -548,4 +583,56 @@ export function buildLogConfig(
 		filename: joinPath(logsDir, 'zwavejs_%DATE%.log'),
 		forceConsole: isDocker() ? !config.logToFile : false,
 	}
+}
+
+/**
+ * A post operation is a single arithmetic operator (+ - * /) applied to a
+ * literal number, e.g. "/10", "*100", "+20". Only this shape is supported
+ * because the receive path inverts the operation by naively swapping the
+ * operator (see parsePayload), which is only correct for a single operation.
+ */
+const POST_OPERATION =
+	/^\s*(?<operator>[-+*/])\s*(?<operand>-?\d+(?:\.\d+)?)\s*$/
+
+/**
+ * Checks if an operation is valid: a single operator (+ - * /) followed by
+ * a literal number.
+ */
+export function isValidOperation(op: string): boolean {
+	return typeof op === 'string' && POST_OPERATION.test(op)
+}
+
+/**
+ * Apply a numeric scaling operation (e.g. "/10", "*2", "+5") to a numeric value.
+ */
+export function applyOperation(value: any, op: string): any {
+	if (typeof value !== 'number' || !Number.isFinite(value)) {
+		return value
+	}
+
+	const match = POST_OPERATION.exec(op)
+	if (!match) {
+		return value
+	}
+
+	const operand = Number(match.groups.operand)
+	let result: number
+	switch (match.groups.operator) {
+		case '+':
+			result = value + operand
+			break
+		case '-':
+			result = value - operand
+			break
+		case '*':
+			result = value * operand
+			break
+		case '/':
+			result = value / operand
+			break
+		default:
+			return value
+	}
+
+	return Number.isFinite(result) ? result : value
 }

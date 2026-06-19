@@ -457,7 +457,7 @@ export default class Gateway {
 			}
 
 			if (valueConf) {
-				if (this._isValidOperation(valueConf.postOperation)) {
+				if (utils.isValidOperation(valueConf.postOperation)) {
 					let op = valueConf.postOperation
 
 					// revert operation to write
@@ -466,7 +466,7 @@ export default class Gateway {
 					else if (op.includes('+')) op = op.replace(/\+/, '-')
 					else if (op.includes('-')) op = op.replace(/-/, '+')
 
-					payload = eval(`${payload}${op}`)
+					payload = utils.applyOperation(payload, op)
 				}
 
 				if (valueConf.parseReceive) {
@@ -658,7 +658,7 @@ export default class Gateway {
 	 */
 	rediscoverNode(nodeID: number): void {
 		const node = this._zwave.nodes.get(nodeID)
-		if (node) {
+		if (node && !node.virtual) {
 			// delete all discovered values
 			this._onNodeRemoved(node)
 			node.hassDevices = {}
@@ -1236,6 +1236,9 @@ export default class Gateway {
 			)
 			return
 		}
+
+		// Virtual nodes don't have deviceClass/endpoints needed for discovery
+		if (node.virtual) return
 
 		const valueId = node.values[vId]
 
@@ -1973,8 +1976,11 @@ export default class Gateway {
 		let tmpVal = valueId.value
 
 		if (valueConf) {
-			if (this._isValidOperation(valueConf.postOperation)) {
-				tmpVal = eval(valueId.value + valueConf.postOperation)
+			if (utils.isValidOperation(valueConf.postOperation)) {
+				tmpVal = utils.applyOperation(
+					valueId.value,
+					valueConf.postOperation,
+				)
 			}
 
 			if (valueConf.parseSend) {
@@ -2126,6 +2132,9 @@ export default class Gateway {
 	}
 
 	private _onNodeInited(node: ZUINode): void {
+		// Virtual nodes (broadcast/multicast) don't need polling or HA discovery
+		if (node.virtual) return
+
 		// enable poll if required
 		const values = this.config.values?.filter(
 			(v: GatewayValue) => v.enablePoll && v.device === node.deviceId,
@@ -2426,14 +2435,6 @@ export default class Gateway {
 	}
 
 	/**
-	 * Checks if an operation is valid, it must exist and must contains
-	 * only numbers and operators
-	 */
-	private _isValidOperation(op: string): boolean {
-		return op && !/[^0-9.()\-+*/,]/g.test(op)
-	}
-
-	/**
 	 * Evaluate the return value of a custom parse Function
 	 *
 	 */
@@ -2508,8 +2509,11 @@ export default class Gateway {
 			identifiers: [
 				UID_DISCOVERY_PREFIX + this._zwave.homeHex + '_node' + node.id,
 			],
-			manufacturer: node.manufacturer,
-			model: node.productDescription + ' (' + node.productLabel + ')',
+			manufacturer: node.manufacturer || 'Z-Wave JS',
+			model:
+				node.productDescription && node.productLabel
+					? node.productDescription + ' (' + node.productLabel + ')'
+					: node.name || 'Virtual Node',
 			name: nodeName,
 			sw_version: node.firmwareVersion || utils.getVersion(),
 		}
@@ -2728,7 +2732,7 @@ export default class Gateway {
 			switchValue = `37-${endpoint}-currentValue`
 		}
 
-		/* 
+		/*
 			Find the control switch of the device Brightness or Binary
 			If multilevel is not there use binary
 			Some devices use also endpoint + 1 as on/off/brightness... try to guess that too!

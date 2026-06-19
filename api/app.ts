@@ -72,6 +72,10 @@ import type { ZnifferConfig } from './lib/ZnifferManager.ts'
 import ZnifferManager from './lib/ZnifferManager.ts'
 import { getAllNamedScaleGroups, getAllSensors } from '@zwave-js/core'
 import debugManager from './lib/DebugManager.ts'
+import {
+	getImportedNodeLocation,
+	normalizeImportedNodesConfig,
+} from './lib/importConfig.ts'
 
 const createCertificate = promisify(generate)
 
@@ -470,12 +474,10 @@ async function startGateway(settings: Settings) {
 	let mqtt: MqttClient
 	let zwave: ZWaveClient
 
-	if (
-		isAuthEnabled() &&
-		sessionSecret === 'DEFAULT_SESSION_SECRET_CHANGE_ME'
-	) {
-		logger.error(
-			'Session secret is the default one. For security reasons you should change it by using SESSION_SECRET env var',
+	if (isAuthEnabled() && !process.env.SESSION_SECRET) {
+		logger.warn(
+			'SESSION_SECRET env var is not set; using an auto-generated secret persisted in the store. ' +
+				'Set SESSION_SECRET explicitly to control the secret across environments.',
 		)
 	}
 
@@ -619,10 +621,10 @@ app.use(
 		level: 6, // Balanced compression level (0-9, higher = more compression but slower)
 	}),
 )
-app.use(express.json({ limit: '50mb' }) as RequestHandler)
+app.use(express.json({ limit: '5mb' }) as RequestHandler)
 app.use(
 	express.urlencoded({
-		limit: '50mb',
+		limit: '5mb',
 		extended: true,
 		parameterLimit: 50000,
 	}) as RequestHandler,
@@ -1630,46 +1632,71 @@ app.post(
 	apisLimiter,
 	isAuthenticated,
 	async function (req, res) {
-		let config = req.body.data
 		try {
 			if (!gw.zwave) throw Error('Z-Wave client not inited')
 
-			// try convert to node object
-			if (Array.isArray(config)) {
-				const parsed = {}
+			const { nodes, selectedHomeId, skippedHomeIds } =
+				normalizeImportedNodesConfig(req.body.data, gw.zwave.homeHex, {
+					homeId:
+						typeof req.body.homeId === 'string'
+							? req.body.homeId
+							: undefined,
+					mergeAll: req.body.mergeAll === true,
+				})
 
-				for (let i = 0; i < config.length; i++) {
-					if (config[i]) {
-						parsed[i] = config[i]
-					}
-				}
-
-				config = parsed
+			if (skippedHomeIds.length > 0) {
+				logger.warn(
+					`Import: skipped nodes for home id(s) ${skippedHomeIds.join(
+						', ',
+					)}` +
+						(selectedHomeId
+							? `, imported ${selectedHomeId} (current controller)`
+							: ', none matched the current controller'),
+				)
 			}
 
-			for (const nodeId in config) {
-				const node = config[nodeId]
+			if (!selectedHomeId && skippedHomeIds.length > 0) {
+				return res.json({
+					success: false,
+					message: `Import skipped: the backup contains nodes for home ids ${skippedHomeIds.join(
+						', ',
+					)}, none of which match the connected controller (${
+						gw.zwave.homeHex
+					}).`,
+				})
+			}
+
+			for (const nodeId in nodes) {
+				const node = nodes[nodeId]
 				if (!node || typeof node !== 'object') continue
+
+				if (!utils.isValidNodeIdString(nodeId)) {
+					continue
+				}
 
 				// All API calls expect nodeId to be a number, so convert it here.
 				const nodeIdNumber = Number(nodeId)
+
 				if (utils.hasProperty(node, 'name')) {
 					await gw.zwave.callApi(
 						'setNodeName',
 						nodeIdNumber,
-						node.name || '',
+						typeof node.name === 'string' ? node.name : '',
 					)
 				}
 
-				if (utils.hasProperty(node, 'loc')) {
+				if (
+					utils.hasProperty(node, 'loc') ||
+					utils.hasProperty(node, 'location')
+				) {
 					await gw.zwave.callApi(
 						'setNodeLocation',
 						nodeIdNumber,
-						node.loc || '',
+						getImportedNodeLocation(node),
 					)
 				}
 
-				if (node.hassDevices) {
+				if (utils.isRecord(node.hassDevices)) {
 					await gw.zwave.storeDevices(
 						node.hassDevices,
 						nodeIdNumber,
@@ -2145,14 +2172,19 @@ app.post(
 	},
 )
 
-app.get('/api/snippet', apisLimiter, async function (req, res) {
-	try {
-		const snippets = await getSnippets()
-		res.json({ success: true, data: snippets })
-	} catch (err) {
-		res.json({ success: false, message: err.message })
-	}
-})
+app.get(
+	'/api/snippet',
+	apisLimiter,
+	isAuthenticated,
+	async function (req, res) {
+		try {
+			const snippets = await getSnippets()
+			res.json({ success: true, data: snippets })
+		} catch (err) {
+			res.json({ success: false, message: err.message })
+		}
+	},
+)
 
 // Debug capture endpoints
 app.get('/api/debug/status', apisLimiter, isAuthenticated, function (req, res) {

@@ -1,5 +1,26 @@
 # Changelog
 
+## [11.20.0](https://github.com/zwave-js/zwave-js-ui/compare/v11.19.1...v11.20.0) (2026-06-17)
+
+### ✨ Features
+
+* bump zwave-js@15.24.3 ([#4670](https://github.com/zwave-js/zwave-js-ui/issues/4670)) ([ad1667e](https://github.com/zwave-js/zwave-js-ui/commit/ad1667ef2c6d5c3eb732f49b0774d20191b0ff22))
+* support for multicast/broadcast groups ([#4382](https://github.com/zwave-js/zwave-js-ui/issues/4382)) ([edf18e9](https://github.com/zwave-js/zwave-js-ui/commit/edf18e9cbe60280aa562e02399648c8925e9ccb8))
+
+### 🐛 Bug Fixes
+
+* **api:** apply imported node metadata across wrapped and legacy nodes.json formats ([#4636](https://github.com/zwave-js/zwave-js-ui/issues/4636)) ([87c89da](https://github.com/zwave-js/zwave-js-ui/commit/87c89da15d3de69b9eeaa0cc9c99d4830018ea29))
+* **api:** reduce default JSON request body size limit ([#4663](https://github.com/zwave-js/zwave-js-ui/issues/4663)) ([b965182](https://github.com/zwave-js/zwave-js-ui/commit/b9651821cda5b763dc13535a0e00443be1d27d6e))
+* **api:** require authentication for the snippet listing endpoint ([#4661](https://github.com/zwave-js/zwave-js-ui/issues/4661)) ([dc129d3](https://github.com/zwave-js/zwave-js-ui/commit/dc129d33a02c46d519f4af41e80b950f6c25ca79))
+* **config:** enforce a strong session secret ([#4664](https://github.com/zwave-js/zwave-js-ui/issues/4664)) ([c570f60](https://github.com/zwave-js/zwave-js-ui/commit/c570f60b571a58a8506e6affe8118e42a3a6f224))
+* **gateway:** apply numeric `postOperation` scaling directly ([#4662](https://github.com/zwave-js/zwave-js-ui/issues/4662)) ([fb73508](https://github.com/zwave-js/zwave-js-ui/commit/fb73508efe459fa124ad8c9b4c1038a9762196d8))
+* **hass:** add LZW45 to Inovelli RGBW Home Assistant discovery template ([#4669](https://github.com/zwave-js/zwave-js-ui/issues/4669)) ([3c2d62f](https://github.com/zwave-js/zwave-js-ui/commit/3c2d62ffb5b9b76aa56a18911a1891c066ee65d8))
+* **ui:** keep node index map consistent after node removal ([#4667](https://github.com/zwave-js/zwave-js-ui/issues/4667)) ([58ba24e](https://github.com/zwave-js/zwave-js-ui/commit/58ba24eef35a0a78c8273611f1cb1dc859fb50db)), closes [#4666](https://github.com/zwave-js/zwave-js-ui/issues/4666) [#4639](https://github.com/zwave-js/zwave-js-ui/issues/4639)
+
+### 🔧 Chores
+
+* add concurrency settings to Docker release workflow to prevent failures during releases ([82792a9](https://github.com/zwave-js/zwave-js-ui/commit/82792a9c1a929b91d21c036703b88122eff06bc4))
+
 ## [11.19.1](https://github.com/zwave-js/zwave-js-ui/compare/v11.19.0...v11.19.1) (2026-06-02)
 
 ### 🐛 Bug Fixes
