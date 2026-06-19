@@ -161,6 +161,10 @@ const useBaseStore = defineStore('base', {
 		},
 		uiState: {
 			darkMode: colorSchemeToDarkMode(loadColorScheme(settings)),
+			// Active nodes view ('physical' | 'virtual'), shared between the
+			// regular table and the compact (smart) view so the selection
+			// stays consistent when switching between them.
+			nodeView: 'physical',
 		},
 	}),
 	getters: {
@@ -690,6 +694,9 @@ const useBaseStore = defineStore('base', {
 		setCompactMode(value) {
 			settings.store('compact', value)
 			this.ui.compactMode = value
+		},
+		setNodeView(value) {
+			this.uiState.nodeView = value
 		},
 		setBrowserTitle(value) {
 			const title = value || 'Z-Wave JS UI'

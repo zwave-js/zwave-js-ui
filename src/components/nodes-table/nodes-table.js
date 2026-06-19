@@ -76,6 +76,17 @@ export default {
 		currentTheme() {
 			return this.app.currentTheme
 		},
+		// Active device view ('physical' | 'virtual'). Backed by the shared
+		// store so the selection stays consistent with the compact (smart)
+		// view when switching between them.
+		nodeView: {
+			get() {
+				return useBaseStore().uiState.nodeView
+			},
+			set(value) {
+				useBaseStore().setNodeView(value)
+			},
+		},
 		// Nodes shown in the table, split between physical and virtual
 		// devices so the two (which have very different characteristics)
 		// are never mixed in the same list. A standard Broadcast virtual
@@ -90,9 +101,6 @@ export default {
 	data: function () {
 		return {
 			search: '',
-			// Active device view: 'physical' (default) or 'virtual'. Only
-			// relevant when the network actually contains virtual nodes.
-			nodeView: 'physical',
 			managedNodes: null,
 			nodesProps: {
 				id: { type: 'number', label: 'ID', groupable: false },

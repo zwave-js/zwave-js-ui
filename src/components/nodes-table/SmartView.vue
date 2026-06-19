@@ -209,10 +209,7 @@
 									</span>
 
 									<v-badge
-										v-if="
-											item.raw.interviewStage ===
-											'Complete'
-										"
+										v-if="!isInterviewing(item.raw)"
 										class="align-self-center"
 										bordered
 										offset-y="2"
@@ -369,6 +366,7 @@ import {
 	mdiBatteryUnknown,
 	mdiCheckAll,
 	mdiCheckCircle,
+	mdiCloud,
 	mdiEmoticon,
 	mdiEmoticonDead,
 	mdiHelpCircle,
@@ -420,6 +418,17 @@ export default {
 	},
 	computed: {
 		...mapState(useBaseStore, ['nodes']),
+		// Active device view ('physical' | 'virtual'). Backed by the shared
+		// store so the selection stays consistent with the regular table when
+		// switching between compact and normal views.
+		nodeView: {
+			get() {
+				return useBaseStore().uiState.nodeView
+			},
+			set(value) {
+				useBaseStore().setNodeView(value)
+			},
+		},
 		// Nodes shown in the view, split between physical and virtual devices
 		// so the two (which have very different characteristics) are never
 		// mixed in the same list. A standard Broadcast virtual node always
@@ -441,9 +450,6 @@ export default {
 	data() {
 		return {
 			search: '',
-			// Active device view: 'physical' (default) or 'virtual'. Only
-			// relevant when the network actually contains virtual nodes.
-			nodeView: 'physical',
 			sortBy: 'id',
 			keys: [
 				{
@@ -477,6 +483,17 @@ export default {
 	methods: {
 		padId(id) {
 			return id.toString().padStart(3, '0')
+		},
+		// Only physical, non-controller nodes have a meaningful interview
+		// stage. Virtual nodes (broadcast/multicast groups) and the controller
+		// have no `interviewStage`, so they must never show the interview
+		// progress spinner (which would otherwise spin forever as "unknown").
+		isInterviewing(node) {
+			return (
+				!node.virtual &&
+				!node.isControllerNode &&
+				node.interviewStage !== 'Complete'
+			)
 		},
 		nodeInfo(node) {
 			return jsonToList({
@@ -561,6 +578,15 @@ export default {
 				iconStyle: `color: ${colors.grey.base}`,
 				description: node.status,
 				size: 40,
+			}
+
+			// Virtual nodes (broadcast/multicast groups) have no real status,
+			// so show the cloud icon that identifies them instead of "?".
+			if (node.virtual) {
+				v.icon = mdiCloud
+				v.iconStyle = 'color: purple'
+				v.description = 'Virtual node'
+				return v
 			}
 
 			switch (node.status) {
