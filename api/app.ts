@@ -395,32 +395,28 @@ async function assertRealPathInStore(target: string) {
 }
 
 /**
- * Get the `path` param from a request. Throws if the path is not safe.
- * Performs a string confinement check and, when `resolveReal` is set,
- * additionally resolves the real path of the nearest existing ancestor to
- * guard against symlinked components escaping `storeDir`.
+ * Get the `path` param from a request. Throws if the path is not safe - that is if it escapes the storeDir.
  */
 async function getSafePath(req: Request | string, resolveReal = true) {
-	let reqPath = typeof req === 'string' ? req : req.query.path
+	const reqPath = typeof req === 'string' ? req : req.query.path
 
 	if (typeof reqPath !== 'string') {
 		throw Error('Invalid path')
 	}
 
-	reqPath = path.normalize(reqPath)
+	// path.resolve collapses any `..` segments and yields an absolute path, so
+	// the prefix check below cannot be bypassed with traversal sequences.
+	const safePath = path.resolve(storeDir, reqPath)
 
-	if (
-		(!reqPath.startsWith(storeDir + path.sep) && reqPath !== storeDir) ||
-		reqPath === storeDir
-	) {
+	if (safePath === storeDir || !safePath.startsWith(storeDir + path.sep)) {
 		throw Error('Path not allowed')
 	}
 
 	if (resolveReal) {
-		await assertRealPathInStore(reqPath)
+		await assertRealPathInStore(safePath)
 	}
 
-	return reqPath
+	return safePath
 }
 
 async function loadCertKey(): Promise<{
