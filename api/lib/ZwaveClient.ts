@@ -5687,7 +5687,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			}
 
 			if (zwaveNode) {
-				this._onNodeStatus(zwaveNode, true)
+				this._onNodeStatus(zwaveNode, { updateStatusOnly: true })
 			}
 			return result
 		}
@@ -7056,9 +7056,19 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 */
 	private _onNodeStatus(
 		zwaveNode: ZWaveNode,
-		updateStatusOnly = false,
-		updateInterviewStage = false,
+		options?: {
+			/** Only emit the status/availability change instead of the full node */
+			updateStatusOnly?: boolean
+			/**
+			 * Seed the interview stage from the node (e.g. on node ready/added),
+			 * instead of leaving it to the granular interview progress events
+			 */
+			updateInterviewStage?: boolean
+		},
 	) {
+		const { updateStatusOnly = false, updateInterviewStage = false } =
+			options ?? {}
+
 		const node = this._nodes.get(zwaveNode.id)
 
 		if (node) {
@@ -7232,7 +7242,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		this.getGroups(zwaveNode.id, true)
 
-		this._onNodeStatus(zwaveNode, false, true)
+		this._onNodeStatus(zwaveNode, { updateInterviewStage: true })
 
 		// Check for matching configuration templates
 		this._checkConfigurationTemplates(node, zwaveNode)
@@ -7352,7 +7362,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			`Interview stage ${stageName.toUpperCase()} completed`,
 		)
 
-		this._onNodeStatus(zwaveNode, true)
+		this._onNodeStatus(zwaveNode, { updateStatusOnly: true })
 
 		this.emit(
 			'event',
@@ -7380,7 +7390,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			'Interview COMPLETED, all values are updated',
 		)
 
-		this._onNodeStatus(zwaveNode, true)
+		this._onNodeStatus(zwaveNode, { updateStatusOnly: true })
 
 		this._checkNodeFirmwareUpdates(zwaveNode.id).catch((error) => {
 			this.logNode(
@@ -7415,7 +7425,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		// Reset the progress: the interview stopped before completing.
 		this._setInterviewProgress(zwaveNode, 0)
 
-		this._onNodeStatus(zwaveNode, true)
+		this._onNodeStatus(zwaveNode, { updateStatusOnly: true })
 
 		this.emit(
 			'event',
@@ -7436,7 +7446,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			`Is ${oldStatus === NodeStatus.Unknown ? '' : 'now '}awake`,
 		)
 
-		this._onNodeStatus(zwaveNode, true)
+		this._onNodeStatus(zwaveNode, { updateStatusOnly: true })
 
 		const node = this._nodes.get(zwaveNode.id)
 		if (node) {
@@ -7465,7 +7475,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			`Is ${oldStatus === NodeStatus.Unknown ? '' : 'now '}asleep`,
 		)
 
-		this._onNodeStatus(zwaveNode, true)
+		this._onNodeStatus(zwaveNode, { updateStatusOnly: true })
 		this.emit(
 			'event',
 			EventSource.NODE,
@@ -7479,7 +7489,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 *
 	 */
 	private _onNodeAlive(zwaveNode: ZWaveNode, oldStatus: NodeStatus) {
-		this._onNodeStatus(zwaveNode, true)
+		this._onNodeStatus(zwaveNode, { updateStatusOnly: true })
 		if (oldStatus === NodeStatus.Dead) {
 			this.logNode(zwaveNode, 'info', 'Has returned from the dead')
 		} else {
@@ -7499,7 +7509,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 *
 	 */
 	private _onNodeDead(zwaveNode: ZWaveNode, oldStatus: NodeStatus) {
-		this._onNodeStatus(zwaveNode, true)
+		this._onNodeStatus(zwaveNode, { updateStatusOnly: true })
 		this.logNode(
 			zwaveNode,
 			'info',
@@ -8053,7 +8063,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		this._bindNodeEvents(zwaveNode)
 		this._dumpNode(zwaveNode)
-		this._onNodeStatus(zwaveNode, false, true)
+		this._onNodeStatus(zwaveNode, { updateInterviewStage: true })
 
 		this.logNode(zwaveNode, 'debug', `Has been added to nodes array`)
 
