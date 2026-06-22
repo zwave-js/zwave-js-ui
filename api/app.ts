@@ -33,6 +33,7 @@ import { Driver, libVersion } from 'zwave-js'
 import {
 	defaultPsw,
 	defaultUser,
+	logsDir,
 	sessionSecret,
 	snippetsDir,
 	storeDir,
@@ -63,6 +64,8 @@ import {
 	writeFile,
 	lstat,
 	mkdir,
+	mkdtemp,
+	cp,
 } from 'node:fs/promises'
 import { generate } from 'selfsigned'
 import type { ZnifferConfig } from './lib/ZnifferManager.ts'
@@ -360,22 +363,65 @@ async function getSnippets() {
 }
 
 /**
- * Get the `path` param from a request. Throws if the path is not safe
+ * Resolve the real path of the nearest existing ancestor of `target` and
+ * ensure it is still confined within `storeDir`. This defeats symlinked
+ * path components (which a plain string prefix check is blind to) for both
+ * existing and not-yet-created paths.
  */
-function getSafePath(req: Request | string) {
-	let reqPath = typeof req === 'string' ? req : req.query.path
+async function assertRealPathInStore(target: string) {
+	let current = target
+
+	// Walk up until we hit an existing ancestor (the target itself may be new)
+
+	while (true) {
+		try {
+			// If the path exists, check if it is a symlink that escapes the store
+			const real = await realpath(current)
+			if (real !== storeDir && !real.startsWith(storeDir + path.sep)) {
+				throw Error('Path not allowed')
+			}
+			// We found an existing non-symlink target within the store,
+			// so the given path is safe to use (whether it exists or not)
+			return
+		} catch (err) {
+			// If the path does not exist, e.g. when creating a directory,
+			// walk up to the nearest existing ancestor and check that.
+			if (err?.code !== 'ENOENT') {
+				throw err
+			}
+			const parent = path.dirname(current)
+			if (parent === current) {
+				// reached filesystem root without finding an existing ancestor
+				throw Error('Path not allowed')
+			}
+			current = parent
+		}
+	}
+}
+
+/**
+ * Get the `path` param from a request. Throws if the path is not safe - that is if it escapes the storeDir.
+ */
+async function getSafePath(req: Request | string, resolveReal = true) {
+	const reqPath = typeof req === 'string' ? req : req.query.path
 
 	if (typeof reqPath !== 'string') {
 		throw Error('Invalid path')
 	}
 
-	reqPath = path.normalize(reqPath)
+	// path.resolve collapses any `..` segments and yields an absolute path, so
+	// the prefix check below cannot be bypassed with traversal sequences.
+	const safePath = path.resolve(storeDir, reqPath)
 
-	if (!reqPath.startsWith(storeDir) || reqPath === storeDir) {
+	if (safePath === storeDir || !safePath.startsWith(storeDir + path.sep)) {
 		throw Error('Path not allowed')
 	}
 
-	return reqPath
+	if (resolveReal) {
+		await assertRealPathInStore(safePath)
+	}
+
+	return safePath
 }
 
 async function loadCertKey(): Promise<{
@@ -1398,6 +1444,7 @@ app.post(
 							// Build logConfig object from our settings
 							editableOptions.logConfig = utils.buildLogConfig(
 								settings.zwave || {},
+								logsDir,
 							)
 						}
 
@@ -1900,14 +1947,14 @@ app.get('/api/store', storeLimiter, isAuthenticated, async function (req, res) {
 	try {
 		let data: StoreFileEntry[] | string
 		if (req.query.path) {
-			const reqPath = getSafePath(req)
+			const reqPath = await getSafePath(req)
 			// lgtm [js/path-injection]
 			let stat = await lstat(reqPath)
 
 			// check symlink is secure
 			if (stat.isSymbolicLink()) {
 				const realPath = await realpath(reqPath)
-				getSafePath(realPath)
+				await getSafePath(realPath)
 				stat = await lstat(realPath)
 			}
 
@@ -1939,7 +1986,7 @@ app.get('/api/store', storeLimiter, isAuthenticated, async function (req, res) {
 
 app.put('/api/store', storeLimiter, isAuthenticated, async function (req, res) {
 	try {
-		const reqPath = getSafePath(req)
+		const reqPath = await getSafePath(req)
 
 		const isNew = req.query.isNew === 'true'
 		const isDirectory = req.query.isDirectory === 'true'
@@ -1974,7 +2021,7 @@ app.delete(
 	isAuthenticated,
 	async function (req, res) {
 		try {
-			const reqPath = getSafePath(req)
+			const reqPath = await getSafePath(req)
 
 			// lgtm [js/path-injection]
 			await rm(reqPath, { recursive: true, force: true })
@@ -1995,7 +2042,7 @@ app.put(
 		try {
 			const files = req.body.files || []
 			for (const f of files) {
-				await rm(f, { recursive: true, force: true })
+				await rm(await getSafePath(f), { recursive: true, force: true })
 			}
 			res.json({ success: true })
 		} catch (error) {
@@ -2036,12 +2083,18 @@ app.post(
 			const s = await lstat(f)
 			const name = f.replace(storeDir, '')
 			if (s.isFile()) {
-				archive.file(f, { name })
+				try {
+					// check path is secure, if so add it as file
+					await getSafePath(f)
+					archive.file(f, { name })
+				} catch (e) {
+					// ignore
+				}
 			} else if (s.isSymbolicLink()) {
 				const targetPath = await realpath(f)
 				try {
 					// check path is secure, if so add it as file
-					getSafePath(targetPath)
+					await getSafePath(targetPath)
 					archive.file(targetPath, { name })
 				} catch (e) {
 					// ignore
@@ -2089,9 +2142,21 @@ app.post(
 			}
 
 			if (isRestore) {
-				await extract(file.path, { dir: storeDir })
+				// Stage, reject symlinks escaping the store, then merge in.
+				const stageDir = await mkdtemp(path.join(storeDir, '.restore-'))
+				try {
+					await extract(file.path, { dir: stageDir })
+					await utils.assertNoEscapingSymlinks(stageDir, stageDir)
+					await cp(stageDir, storeDir, {
+						recursive: true,
+						// keep in-store links (e.g. *_current.log) as links, don't copy their targets
+						verbatimSymlinks: true,
+					})
+				} finally {
+					await rm(stageDir, { recursive: true, force: true })
+				}
 			} else {
-				const destinationPath = getSafePath(
+				const destinationPath = await getSafePath(
 					path.join(storeDir, folder, file.originalname),
 				)
 				await rename(file.path, destinationPath)
