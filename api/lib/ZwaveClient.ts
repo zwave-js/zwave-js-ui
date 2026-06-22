@@ -3940,24 +3940,31 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		if (!this.driverReady) return
 
 		const controller = this._driver.controller
-		const broadcastNodeIds = [NODE_ID_BROADCAST, NODE_ID_BROADCAST_LR]
 
-		for (const nodeId of broadcastNodeIds) {
+		// Pair each broadcast node id with a freshly fetched driver instance.
+		// The driver snapshots the physical node set at construction time, so a
+		// cached instance keeps referencing nodes that have since been removed —
+		// querying those throws "Node X was not found" (#4677). Re-fetching here
+		// also keeps the instance used for write-back (via `getVirtualNode`) in
+		// sync with the network. The LR broadcast node only exists while the
+		// network has LR nodes (see `_refreshBroadcastLRNode`).
+		const broadcastNodes: [number, VirtualNode][] = [
+			[NODE_ID_BROADCAST, controller.getBroadcastNode()],
+		]
+
+		if (this._virtualNodes.has(NODE_ID_BROADCAST_LR)) {
+			broadcastNodes.push([
+				NODE_ID_BROADCAST_LR,
+				controller.getBroadcastNodeLR(),
+			])
+		}
+
+		for (const [nodeId, broadcastInstance] of broadcastNodes) {
 			try {
 				const virtualNode = this._nodes.get(nodeId)
 
-				if (!this._virtualNodes.has(nodeId) || !virtualNode) continue
+				if (!virtualNode) continue
 
-				// Re-fetch a fresh broadcast instance from the controller. The
-				// driver snapshots the physical node set at construction time,
-				// so a cached instance keeps referencing nodes that have since
-				// been removed — querying those throws "Node X was not found"
-				// (#4677). Refreshing here also keeps the instance used for
-				// write-back (via `getVirtualNode`) in sync with the network.
-				const broadcastInstance =
-					nodeId === NODE_ID_BROADCAST
-						? controller.getBroadcastNode()
-						: controller.getBroadcastNodeLR()
 				this._virtualNodes.set(nodeId, broadcastInstance)
 
 				const definedValueIds = broadcastInstance.getDefinedValueIDs()
