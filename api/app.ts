@@ -456,8 +456,14 @@ async function loadCertKey(): Promise<{
 			key = result.private
 			cert = result.cert
 
-			await writeFile(utils.joinPath(storeDir, 'key.pem'), key)
-			await writeFile(utils.joinPath(storeDir, 'cert.pem'), cert)
+			// restrict the private key (and cert) to the owner so a permissive
+			// umask can't leave the self-signed TLS key world/group-readable
+			await writeFile(utils.joinPath(storeDir, 'key.pem'), key, {
+				mode: 0o600,
+			})
+			await writeFile(utils.joinPath(storeDir, 'cert.pem'), cert, {
+				mode: 0o600,
+			})
 			logger.info('New cert and key created')
 		} catch (error) {
 			logger.error('Error creating cert and key for HTTPS', error)
