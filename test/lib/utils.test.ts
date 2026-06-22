@@ -5,10 +5,20 @@ import sinon from 'sinon'
 
 import sinonChai from 'sinon-chai'
 import chaiAsPromised from 'chai-as-promised'
-import { mkdtemp, mkdir, writeFile, symlink, rm } from 'node:fs/promises'
+import {
+	mkdtemp,
+	mkdir,
+	writeFile,
+	symlink,
+	rm,
+	realpath,
+} from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import nodePath from 'node:path'
-import { assertNoEscapingSymlinks } from '../../api/lib/utils.ts'
+import {
+	assertNoEscapingSymlinks,
+	resolveSafeStorePath,
+} from '../../api/lib/utils.ts'
 
 chai.use(sinonChai)
 chai.use(chaiAsPromised)
@@ -133,6 +143,109 @@ describe('#utils', () => {
 			await expect(
 				assertNoEscapingSymlinks(root, root),
 			).to.be.rejectedWith(/escaping the store/)
+		})
+	})
+
+	describe('#resolveSafeStorePath()', () => {
+		const tmpDirs: string[] = []
+
+		// canonical (symlink-free) store dir so the base path itself never
+		// triggers the symlink-confinement logic in the "happy path" tests
+		async function makeTmpDir(prefix: string): Promise<string> {
+			const dir = await realpath(
+				await mkdtemp(nodePath.join(tmpdir(), prefix)),
+			)
+			tmpDirs.push(dir)
+			return dir
+		}
+
+		afterEach(async () => {
+			while (tmpDirs.length) {
+				await rm(tmpDirs.pop(), { recursive: true, force: true })
+			}
+		})
+
+		it('resolves a normal path within the store', async () => {
+			const store = await makeTmpDir('zui-safe-path-')
+			await mkdir(nodePath.join(store, 'sub'))
+			await writeFile(nodePath.join(store, 'sub', 'a.json'), '{}')
+			await expect(
+				resolveSafeStorePath('sub/a.json', store),
+			).to.eventually.equal(nodePath.join(store, 'sub', 'a.json'))
+		})
+
+		it('allows a not-yet-existing path inside the store', async () => {
+			// exercises the walk-up to the nearest existing ancestor (e.g. PUT
+			// creating a new file/dir); neither newdir nor newfile.json exist
+			const store = await makeTmpDir('zui-safe-path-')
+			await expect(
+				resolveSafeStorePath('newdir/newfile.json', store),
+			).to.eventually.equal(
+				nodePath.join(store, 'newdir', 'newfile.json'),
+			)
+		})
+
+		it('rejects a non-string path', async () => {
+			const store = await makeTmpDir('zui-safe-path-')
+			await expect(
+				resolveSafeStorePath(undefined, store),
+			).to.be.rejectedWith(/Invalid path/)
+		})
+
+		it('rejects a path equal to the store dir', async () => {
+			const store = await makeTmpDir('zui-safe-path-')
+			await expect(resolveSafeStorePath('', store)).to.be.rejectedWith(
+				/Path not allowed/,
+			)
+		})
+
+		it('rejects a traversal path escaping the store', async () => {
+			const store = await makeTmpDir('zui-safe-path-')
+			await expect(
+				resolveSafeStorePath('../../etc/passwd', store),
+			).to.be.rejectedWith(/Path not allowed/)
+		})
+
+		it('rejects a symlinked component escaping the store', async () => {
+			const store = await makeTmpDir('zui-safe-path-')
+			await symlink('/etc', nodePath.join(store, 'evil'))
+			await expect(
+				resolveSafeStorePath('evil/passwd', store),
+			).to.be.rejectedWith(/Path not allowed/)
+		})
+
+		it('rejects a new path under a symlinked-escaping ancestor', async () => {
+			// the escaping symlink is an existing ancestor of a not-yet-existing
+			// target, so the walk-up must reject it rather than keep climbing
+			const store = await makeTmpDir('zui-safe-path-')
+			await symlink('/etc', nodePath.join(store, 'evil'))
+			await expect(
+				resolveSafeStorePath('evil/newdir/newfile.json', store),
+			).to.be.rejectedWith(/Path not allowed/)
+		})
+
+		it('skips the symlink check when resolveReal is false', async () => {
+			const store = await makeTmpDir('zui-safe-path-')
+			await symlink('/etc', nodePath.join(store, 'evil'))
+			await expect(
+				resolveSafeStorePath('evil/passwd', store, false),
+			).to.eventually.equal(nodePath.join(store, 'evil', 'passwd'))
+		})
+
+		// Regression: the store dir itself may be reached through a symlink
+		// (bind-mounted data dirs, symlinked $HOME, /tmp -> /private/tmp, ...).
+		// A resolved target must be compared against the *resolved* store root,
+		// otherwise every legitimate path is rejected on such setups.
+		it('allows a path when the store dir is reached through a symlink', async () => {
+			const realStore = await makeTmpDir('zui-safe-path-real-')
+			const linkParent = await makeTmpDir('zui-safe-path-link-')
+			const linkedStore = nodePath.join(linkParent, 'store-link')
+			await symlink(realStore, linkedStore)
+			await writeFile(nodePath.join(realStore, 'settings.json'), '{}')
+
+			await expect(
+				resolveSafeStorePath('settings.json', linkedStore),
+			).to.eventually.equal(nodePath.join(linkedStore, 'settings.json'))
 		})
 	})
 

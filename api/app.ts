@@ -363,65 +363,11 @@ async function getSnippets() {
 }
 
 /**
- * Resolve the real path of the nearest existing ancestor of `target` and
- * ensure it is still confined within `storeDir`. This defeats symlinked
- * path components (which a plain string prefix check is blind to) for both
- * existing and not-yet-created paths.
- */
-async function assertRealPathInStore(target: string) {
-	let current = target
-
-	// Walk up until we hit an existing ancestor (the target itself may be new)
-
-	while (true) {
-		try {
-			// If the path exists, check if it is a symlink that escapes the store
-			const real = await realpath(current)
-			if (real !== storeDir && !real.startsWith(storeDir + path.sep)) {
-				throw Error('Path not allowed')
-			}
-			// We found an existing non-symlink target within the store,
-			// so the given path is safe to use (whether it exists or not)
-			return
-		} catch (err) {
-			// If the path does not exist, e.g. when creating a directory,
-			// walk up to the nearest existing ancestor and check that.
-			if (err?.code !== 'ENOENT') {
-				throw err
-			}
-			const parent = path.dirname(current)
-			if (parent === current) {
-				// reached filesystem root without finding an existing ancestor
-				throw Error('Path not allowed')
-			}
-			current = parent
-		}
-	}
-}
-
-/**
  * Get the `path` param from a request. Throws if the path is not safe - that is if it escapes the storeDir.
  */
 async function getSafePath(req: Request | string, resolveReal = true) {
 	const reqPath = typeof req === 'string' ? req : req.query.path
-
-	if (typeof reqPath !== 'string') {
-		throw Error('Invalid path')
-	}
-
-	// path.resolve collapses any `..` segments and yields an absolute path, so
-	// the prefix check below cannot be bypassed with traversal sequences.
-	const safePath = path.resolve(storeDir, reqPath)
-
-	if (safePath === storeDir || !safePath.startsWith(storeDir + path.sep)) {
-		throw Error('Path not allowed')
-	}
-
-	if (resolveReal) {
-		await assertRealPathInStore(safePath)
-	}
-
-	return safePath
+	return utils.resolveSafeStorePath(reqPath, storeDir, resolveReal)
 }
 
 async function loadCertKey(): Promise<{
@@ -2090,25 +2036,22 @@ app.post(
 		archive.pipe(res)
 
 		for (const f of files) {
-			const s = await lstat(f)
-			const name = f.replace(storeDir, '')
-			if (s.isFile()) {
-				try {
-					// check path is secure, if so add it as file
-					await getSafePath(f)
-					archive.file(f, { name })
-				} catch (e) {
-					// ignore
-				}
-			} else if (s.isSymbolicLink()) {
-				const targetPath = await realpath(f)
-				try {
-					// check path is secure, if so add it as file
-					await getSafePath(targetPath)
+			try {
+				// confine the path to the store *before* touching the
+				// filesystem, so unsafe paths can't be probed via lstat/realpath
+				const safe = await getSafePath(f)
+				const s = await lstat(safe)
+				const name = safe.replace(storeDir, '')
+				if (s.isFile()) {
+					archive.file(safe, { name })
+				} else if (s.isSymbolicLink()) {
+					// getSafePath already resolved the link target and checked
+					// it stays in the store; add the dereferenced target
+					const targetPath = await realpath(safe)
 					archive.file(targetPath, { name })
-				} catch (e) {
-					// ignore
 				}
+			} catch (e) {
+				// ignore unsafe or unreadable entries
 			}
 		}
 
