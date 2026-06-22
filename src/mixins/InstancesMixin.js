@@ -224,7 +224,20 @@ export default {
 				}
 
 				if (nodes?.length > 0) {
-					const requests = nodes.map((node) =>
+					// Virtual nodes (broadcast/multicast groups) don't support
+					// node-level actions like re-interview, ping or rebuild
+					// routes, so exclude them from bulk actions.
+					const targetNodes = nodes.filter((node) => !node.virtual)
+
+					if (targetNodes.length === 0) {
+						this.showSnackbar(
+							`Action ${action} does not apply to virtual nodes`,
+							'warning',
+						)
+						return
+					}
+
+					const requests = targetNodes.map((node) =>
 						this.app.apiRequest(action, [node.id]),
 					)
 
