@@ -1,5 +1,17 @@
 # Changelog
 
+## [11.21.0](https://github.com/zwave-js/zwave-js-ui/compare/v11.20.0...v11.21.0) (2026-06-22)
+
+### ✨ Features
+
+* bump @zwave-js/server@3.10.0 ([#4684](https://github.com/zwave-js/zwave-js-ui/issues/4684)) ([e13dc1d](https://github.com/zwave-js/zwave-js-ui/commit/e13dc1de744087f761bff3a628a9048289128d06))
+* bump zwave-js@15.25.0 ([#4675](https://github.com/zwave-js/zwave-js-ui/issues/4675)) ([c11b6b7](https://github.com/zwave-js/zwave-js-ui/commit/c11b6b7557c97baf353421685792fce43641e2eb))
+* support reporting interview progress as a percentage ([#4674](https://github.com/zwave-js/zwave-js-ui/issues/4674)) ([1409807](https://github.com/zwave-js/zwave-js-ui/commit/14098076a7f7cb64c5a1c61e36a681645c799d28))
+
+### 🐛 Bug Fixes
+
+* exclude virtual nodes from network map rendering ([#4683](https://github.com/zwave-js/zwave-js-ui/issues/4683)) ([edd36fb](https://github.com/zwave-js/zwave-js-ui/commit/edd36fb97ecaadd51f924747de8b80668e8b103d))
+
 ## [11.20.0](https://github.com/zwave-js/zwave-js-ui/compare/v11.19.1...v11.20.0) (2026-06-17)
 
 ### ✨ Features
