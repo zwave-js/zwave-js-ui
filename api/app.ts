@@ -1125,10 +1125,14 @@ app.put(
 
 			await jsonStore.put(store.users, users)
 
+			// don't leak the password hash to the client (mirrors /api/authenticate)
+			const userData: User = Object.assign({}, oldUser)
+			delete userData.passwordHash
+
 			res.json({
 				success: true,
 				message: 'Password updated',
-				user: oldUser,
+				user: userData,
 			})
 		} catch (error) {
 			res.json({
