@@ -78,7 +78,7 @@
     "@esm2cjs/escape-string-regexp": "^5.0.0",
     "@kvaster/zwavejs-prom": "^0.0.3",
     "@zwave-js/log-transport-json": "^3.0.0",
-    "@zwave-js/server": "^3.9.0",
+    "@zwave-js/server": "^3.10.0",
     "archiver": "^7.0.1",
     "compression": "^1.8.1",
     "connect-history-api-fallback": "2.0.0",
