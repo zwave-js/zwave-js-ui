@@ -375,12 +375,17 @@ async function assertRealPathInStore(target: string) {
 
 	while (true) {
 		try {
+			// If the path exists, check if it is a symlink that escapes the store
 			const real = await realpath(current)
 			if (real !== storeDir && !real.startsWith(storeDir + path.sep)) {
 				throw Error('Path not allowed')
 			}
+			// We found an existing non-symlink target within the store,
+			// so the given path is safe to use (whether it exists or not)
 			return
 		} catch (err) {
+			// If the path does not exist, e.g. when creating a directory,
+			// walk up to the nearest existing ancestor and check that.
 			if (err?.code !== 'ENOENT') {
 				throw err
 			}
