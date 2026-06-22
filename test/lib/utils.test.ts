@@ -174,6 +174,17 @@ describe('#utils', () => {
 			).to.eventually.equal(nodePath.join(store, 'sub', 'a.json'))
 		})
 
+		it('allows a not-yet-existing path inside the store', async () => {
+			// exercises the walk-up to the nearest existing ancestor (e.g. PUT
+			// creating a new file/dir); neither newdir nor newfile.json exist
+			const store = await makeTmpDir('zui-safe-path-')
+			await expect(
+				resolveSafeStorePath('newdir/newfile.json', store),
+			).to.eventually.equal(
+				nodePath.join(store, 'newdir', 'newfile.json'),
+			)
+		})
+
 		it('rejects a non-string path', async () => {
 			const store = await makeTmpDir('zui-safe-path-')
 			await expect(
@@ -200,6 +211,16 @@ describe('#utils', () => {
 			await symlink('/etc', nodePath.join(store, 'evil'))
 			await expect(
 				resolveSafeStorePath('evil/passwd', store),
+			).to.be.rejectedWith(/Path not allowed/)
+		})
+
+		it('rejects a new path under a symlinked-escaping ancestor', async () => {
+			// the escaping symlink is an existing ancestor of a not-yet-existing
+			// target, so the walk-up must reject it rather than keep climbing
+			const store = await makeTmpDir('zui-safe-path-')
+			await symlink('/etc', nodePath.join(store, 'evil'))
+			await expect(
+				resolveSafeStorePath('evil/newdir/newfile.json', store),
 			).to.be.rejectedWith(/Path not allowed/)
 		})
 
