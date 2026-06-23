@@ -4,9 +4,17 @@ name: Docker Release
 # commit to master). Both export to the same GHA cache scope and push the same
 # `sha` tag, which races and intermittently fails one of them. Serialize them so
 # the second run waits and reuses the first run's warm cache instead of racing it.
+#
+# `queue: max` is required: with the default `queue: single` only ONE run may be
+# pending per group, so when both runs pile up behind an in-progress one GitHub
+# CANCELS the older pending run instead of queueing it. That casualty was the
+# `release` run (the only one producing the `latest`/semver tags), which is why
+# `latest` went stale while `master` kept updating. `queue: max` queues up to 100
+# runs FIFO so neither is dropped. (cancel-in-progress must stay false.)
 concurrency:
   group: docker-release
   cancel-in-progress: false
+  queue: max
 
 on:
   push:
