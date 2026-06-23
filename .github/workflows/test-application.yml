@@ -53,7 +53,8 @@ jobs:
                     "gateway": {
                         "type": 0,
                         "payloadType": 0,
-                        "nodeNames": true,
+                        "nodeNames": false,
+                        "ignoreLoc": true,
                         "hassDiscovery": true,
                         "discoveryPrefix": "homeassistant",
                         "logEnabled": true,
@@ -87,9 +88,12 @@ jobs:
             
             - name: Test MQTT write and read
               timeout-minutes: 1
+              # Topics use the bare node id (zwave/2/...): gateway type 0 with
+              # nodeNames:false + ignoreLoc:true keys topics by id, so this stays
+              # stable regardless of node 2's name/location in the mock config.
               run: |
-                  docker exec broker mosquitto_pub -h localhost -p 1883 -t "zwave/nodeID_2/106/0/targetValue/3/set" -m "1"
-                  docker exec broker mosquitto_sub -h localhost -p 1883 -t "zwave/nodeID_2/106/0/currentValue/3" -C 1
+                  docker exec broker mosquitto_pub -h localhost -p 1883 -t "zwave/2/106/0/targetValue/3/set" -m "1"
+                  docker exec broker mosquitto_sub -h localhost -p 1883 -t "zwave/2/106/0/currentValue/3" -C 1
 
             - name: Output backend logs
               if: always()

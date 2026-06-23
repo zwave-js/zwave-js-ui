@@ -127,6 +127,7 @@ export default defineConfig([
 		'snippets/',
 		'store/',
 		'dev-dist/',
+		'.claude/',
 		'.github/',
 	]),
 ])

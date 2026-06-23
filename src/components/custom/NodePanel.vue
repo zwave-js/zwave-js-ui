@@ -568,11 +568,12 @@ export default {
 		async refreshNodeNeighbors() {
 			if (!this.node) return
 
-			try {
-				await this.app.apiRequest('getNodeNeighbors', [this.node.id])
-			} catch (error) {
-				// Silent fail - neighbors will be shown from cached data
-			}
+			// Passive refresh triggered when the panel opens — keep it quiet.
+			// On failure neighbors fall back to cached data.
+			await this.app.apiRequest('getNodeNeighbors', [this.node.id], {
+				infoSnack: false,
+				errorSnack: false,
+			})
 		},
 		checkMove(evt) {
 			const { futureIndex } = evt.draggedContext
