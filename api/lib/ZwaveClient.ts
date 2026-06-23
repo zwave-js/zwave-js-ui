@@ -3929,6 +3929,11 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	private _updateBroadcastNodeValues(): void {
 		if (!this.driverReady) return
 
+		// Keep the cached instances in sync with the driver *synchronously*, so
+		// the write-back path (`getVirtualNode` → `setValue`) never targets a
+		// removed node even before the throttled value rebuild below runs.
+		this._refreshBroadcastInstances()
+
 		this.throttle(
 			'broadcast_values_rebuild',
 			() => this._doUpdateBroadcastNodeValues(),
@@ -3936,11 +3941,48 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		)
 	}
 
+	/**
+	 * Re-fetch the cached broadcast VirtualNode instances from the controller.
+	 *
+	 * The driver snapshots the physical node set when a broadcast node is
+	 * constructed, so a long-lived instance keeps referencing nodes that have
+	 * since been removed — using one then throws "Node X was not found" (#4677),
+	 * both when enumerating values and when sending a write. Re-fetching is
+	 * cheap (it just wraps the controller's current node set), so we do it
+	 * eagerly on every node-set change. Only instances that currently exist are
+	 * refreshed; the LR broadcast node exists solely while the network has LR
+	 * nodes (see `_refreshBroadcastLRNode`).
+	 */
+	private _refreshBroadcastInstances(): void {
+		if (!this.driverReady) return
+
+		const controller = this._driver.controller
+
+		if (this._virtualNodes.has(NODE_ID_BROADCAST)) {
+			this._virtualNodes.set(
+				NODE_ID_BROADCAST,
+				controller.getBroadcastNode(),
+			)
+		}
+
+		if (this._virtualNodes.has(NODE_ID_BROADCAST_LR)) {
+			this._virtualNodes.set(
+				NODE_ID_BROADCAST_LR,
+				controller.getBroadcastNodeLR(),
+			)
+		}
+	}
+
 	private _doUpdateBroadcastNodeValues(): void {
+		if (!this.driverReady) return
+
 		const broadcastNodeIds = [NODE_ID_BROADCAST, NODE_ID_BROADCAST_LR]
 
 		for (const nodeId of broadcastNodeIds) {
 			try {
+				// The cached instances are kept current by
+				// `_refreshBroadcastInstances`, so they already reflect the
+				// live node set (no removed nodes) by the time we get here.
 				const broadcastInstance = this._virtualNodes.get(nodeId)
 				const virtualNode = this._nodes.get(nodeId)
 
