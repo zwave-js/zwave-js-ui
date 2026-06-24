@@ -104,6 +104,10 @@ export function usePopoverFallback({
 			stopTracking()
 			if (isOpen) startTracking()
 		},
+		// Flush after the DOM patch: on open, V0 mounts Popover.Content in
+		// the same tick, so a default 'pre' watcher would query the DOM
+		// before the element exists and startTracking would bail on null.
+		{ flush: 'post' },
 	)
 
 	onBeforeUnmount(stopTracking)

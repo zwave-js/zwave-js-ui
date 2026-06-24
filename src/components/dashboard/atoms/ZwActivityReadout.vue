@@ -33,43 +33,43 @@ import {
 	ICON_SIZE,
 } from '@/lib/icons'
 
-type TransientType = 'ota' | 'rebuild' | 'interview'
-interface Transient {
-	type: TransientType
+type ActivityType = 'ota' | 'rebuild' | 'interview'
+interface Activity {
+	type: ActivityType
 	label: string
 	progress?: number
 }
 
 const props = withDefaults(
 	defineProps<{
-		transient: Transient
+		activity: Activity
 		variant?: 'table' | 'card'
 	}>(),
 	{ variant: 'table' },
 )
 
-const TRANSIENT_ICON = {
+const ACTIVITY_ICON = {
 	ota: DownloadIcon,
 	rebuild: RefreshIcon,
 	interview: InterviewIcon,
 } as const
 
-const iconComp = computed(() => TRANSIENT_ICON[props.transient.type])
+const iconComp = computed(() => ACTIVITY_ICON[props.activity.type])
 
 // Progress is optional — when undefined the readout renders an
 // indeterminate sweep across the bar with no numeric label. A literal
 // placeholder (e.g. 30%) would be misleading, especially for OTA where
 // users watch the number.
 const pct = computed(() =>
-	props.transient.progress !== undefined
-		? Math.round(props.transient.progress * 100)
+	props.activity.progress !== undefined
+		? Math.round(props.activity.progress * 100)
 		: undefined,
 )
 
 const title = computed(() =>
 	pct.value !== undefined
-		? `${props.transient.label} · ${pct.value}%`
-		: props.transient.label,
+		? `${props.activity.label} · ${pct.value}%`
+		: props.activity.label,
 )
 </script>
 
