@@ -52,6 +52,7 @@ export {
 	Plug as PlugIcon,
 	Power as PowerIcon,
 	QrCode as QrIcon,
+	// Lucide has no PIR/motion glyph; Radio's waves come close though.
 	Radio as MotionIcon,
 	RefreshCw as RefreshIcon,
 	Search as SearchIcon,
@@ -59,7 +60,7 @@ export {
 	Signal as SignalIcon,
 	SignalHigh as SignalHighIcon,
 	SignalLow as SignalLowIcon,
-	SignalMedium as SignalMedIcon,
+	SignalMedium as SignalMediumIcon,
 	Siren as SirenIcon,
 	Sun as DimmerIcon,
 	Sun as SunIcon,
@@ -78,7 +79,7 @@ export {
 /**
  * Closed vocabulary of icon sizes used across the dashboard.
  * Call sites read `<AddIcon :size="ICON_SIZE.button" />` — numeric
- * literals are forbidden in dashboard components.
+ * literals should be avoided in dashboard components.
  *
  * Sharing a numeric value across aliases is fine (button covers three
  * surfaces); adding a new numeric value is a design decision.
