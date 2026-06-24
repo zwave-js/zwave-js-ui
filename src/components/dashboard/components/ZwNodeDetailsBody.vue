@@ -5,11 +5,15 @@
 				<span class="zw-nd__overline">PRIMARY</span>
 				<span class="zw-nd__status">
 					<ZwStatusDot
-						:status="device.isController ? 'controller' : device.status"
+						:status="
+							device.isController ? 'controller' : device.status
+						"
 					/>
 					<span class="zw-nd__status-label">{{ statusLabel }}</span>
 					<span class="zw-nd__bullet">·</span>
-					<span class="zw-nd__lastseen">last seen {{ device.lastSeen }}</span>
+					<span class="zw-nd__lastseen"
+						>last seen {{ device.lastSeen }}</span
+					>
 				</span>
 			</div>
 			<div class="zw-nd__primary">
@@ -59,10 +63,13 @@
 						Current {{ device.firmware?.node ?? '—' }}
 					</div>
 					<div class="zw-nd__update-line">
-						Update available — see the device drawer's footer to apply.
+						Update available — see the device drawer's footer to
+						apply.
 					</div>
 				</div>
-				<div v-else class="zw-nd__empty">No firmware update available.</div>
+				<div v-else class="zw-nd__empty">
+					No firmware update available.
+				</div>
 			</Tabs.Panel>
 
 			<Tabs.Panel value="events" class="zw-nd__content zw-nd__empty">
@@ -187,10 +194,7 @@ const debugRows = computed<[string, string | number][]>(() => [
 	['Endpoint count', '1'],
 	['Routing scheme', '—'],
 	['Tx power', String(props.device.txPower ?? 0) + ' dBm'],
-	[
-		'Wakeup interval',
-		props.device.power.type === 'battery' ? '3600s' : '—',
-	],
+	['Wakeup interval', props.device.power.type === 'battery' ? '3600s' : '—'],
 	['Generic device class', props.device.archetype.label],
 ])
 
@@ -203,9 +207,15 @@ const advancedCommands = computed<{ label: string; action: DeviceAction }[]>(
 					{ label: 'Restore NVM', action: { type: 'restore-nvm' } },
 					{ label: 'Reset stats', action: { type: 'reset-stats' } },
 					{ label: 'Export JSON', action: { type: 'export-json' } },
-					{ label: 'Update topics', action: { type: 'update-topics' } },
+					{
+						label: 'Update topics',
+						action: { type: 'update-topics' },
+					},
 					{ label: 'Hard reset', action: { type: 'hard-reset' } },
-					{ label: 'Restart driver', action: { type: 'restart-driver' } },
+					{
+						label: 'Restart driver',
+						action: { type: 'restart-driver' },
+					},
 				]
 			: [
 					{ label: 'Interview', action: { type: 'interview' } },

@@ -8,7 +8,9 @@
 		</div>
 		<ZwSlider
 			:model-value="pv.level"
-			@update:model-value="(level) => emit('action', device, { type: 'dim', level })"
+			@update:model-value="
+				(level) => emit('action', device, { type: 'dim', level })
+			"
 		/>
 	</div>
 </template>

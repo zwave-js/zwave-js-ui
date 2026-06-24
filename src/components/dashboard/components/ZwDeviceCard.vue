@@ -41,15 +41,24 @@
 					v-if="device.power.type === 'battery'"
 					:pct="device.power.battery"
 				/>
-				<ZwPill v-if="device.status === 'asleep'" tone="asleep" size="sm">
+				<ZwPill
+					v-if="device.status === 'asleep'"
+					tone="asleep"
+					size="sm"
+				>
 					<MoonIcon :size="ICON_SIZE.pill" /> Asleep
 				</ZwPill>
-				<ZwPill v-else-if="device.status === 'dead'" tone="danger" size="sm">
+				<ZwPill
+					v-else-if="device.status === 'dead'"
+					tone="danger"
+					size="sm"
+				>
 					Dead
 				</ZwPill>
 				<ZwPill
 					v-else-if="
-						device.interviewState !== 'complete' && !device.isController
+						device.interviewState !== 'complete' &&
+						!device.isController
 					"
 					tone="info"
 					size="sm"
@@ -83,15 +92,15 @@ const emit = defineEmits<{
 	action: [Device, DeviceAction]
 }>()
 
-const nodeIdLabel = computed(() =>
-	String(props.device.nodeId).padStart(3, '0'),
-)
+const nodeIdLabel = computed(() => String(props.device.nodeId).padStart(3, '0'))
 
 const isAlertState = computed(() => {
 	const pv = props.device.primaryValue
 	if (!pv || pv.type !== 'state') return false
 	const s = pv as PrimaryValueState
-	return s.stateIdx === 1 && (s.colors[1] === 'red' || s.colors[1] === 'amber')
+	return (
+		s.stateIdx === 1 && (s.colors[1] === 'red' || s.colors[1] === 'amber')
+	)
 })
 
 function onKeyDown(e: KeyboardEvent) {

@@ -14,7 +14,9 @@
 		<ZwToggle
 			:model-value="pv.on"
 			size="md"
-			@update:model-value="(on) => emit('action', device, { type: 'toggle', on })"
+			@update:model-value="
+				(on) => emit('action', device, { type: 'toggle', on })
+			"
 		/>
 	</div>
 </template>

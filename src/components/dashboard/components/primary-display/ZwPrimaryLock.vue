@@ -11,7 +11,9 @@
 		<ZwToggle
 			:model-value="pv.locked"
 			size="md"
-			@update:model-value="(locked) => emit('action', device, { type: 'lock', locked })"
+			@update:model-value="
+				(locked) => emit('action', device, { type: 'lock', locked })
+			"
 		/>
 	</div>
 </template>

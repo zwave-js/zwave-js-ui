@@ -10,10 +10,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import {
-	PRIMARY_RENDERERS,
-	type PrimaryKey,
-} from './primary-display/registry'
+import { PRIMARY_RENDERERS, type PrimaryKey } from './primary-display/registry'
 import type { Device, DeviceAction } from '@/lib/dashboard-types'
 
 const props = defineProps<{ device: Device; compact?: boolean }>()

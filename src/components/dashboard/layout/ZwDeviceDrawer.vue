@@ -1,9 +1,6 @@
 <template>
 	<Dialog.Root v-model="open">
-		<Dialog.Content
-			class="zw-drawer__panel"
-			:close-on-click-outside="true"
-		>
+		<Dialog.Content class="zw-drawer__panel" :close-on-click-outside="true">
 			<template v-if="device">
 				<header class="zw-drawer__header">
 					<div class="zw-drawer__icon">

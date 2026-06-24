@@ -5,9 +5,13 @@
 			<ZwToggle
 				:model-value="(pv as PrimaryValueToggle).on"
 				size="sm"
-				@update:model-value="(on) => emit('action', device, { type: 'toggle', on })"
+				@update:model-value="
+					(on) => emit('action', device, { type: 'toggle', on })
+				"
 			/>
-			<ZwChip :tone="(pv as PrimaryValueToggle).on ? 'neutral' : 'neutral'">
+			<ZwChip
+				:tone="(pv as PrimaryValueToggle).on ? 'neutral' : 'neutral'"
+			>
 				{{ (pv as PrimaryValueToggle).on ? 'ON' : 'OFF' }}
 			</ZwChip>
 		</template>
@@ -29,7 +33,9 @@
 			<ZwToggle
 				:model-value="(pv as PrimaryValueLock).locked"
 				size="sm"
-				@update:model-value="(locked) => emit('action', device, { type: 'lock', locked })"
+				@update:model-value="
+					(locked) => emit('action', device, { type: 'lock', locked })
+				"
 			/>
 			<ZwChip :tone="(pv as PrimaryValueLock).locked ? 'ok' : 'warn'">
 				{{ (pv as PrimaryValueLock).locked ? 'LOCKED' : 'UNLOCKED' }}
@@ -39,7 +45,8 @@
 		<!-- reading -->
 		<template v-else-if="pv?.type === 'reading'">
 			<span class="zw-cp__num">
-				{{ (pv as PrimaryValueReading).value }}{{ (pv as PrimaryValueReading).unit }}
+				{{ (pv as PrimaryValueReading).value
+				}}{{ (pv as PrimaryValueReading).unit }}
 			</span>
 		</template>
 

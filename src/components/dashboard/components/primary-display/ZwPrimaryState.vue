@@ -1,6 +1,9 @@
 <template>
 	<div class="zw-pv-state">
-		<div class="zw-pv-state__value" :class="{ 'zw-pv-state__value--alert': isAlert }">
+		<div
+			class="zw-pv-state__value"
+			:class="{ 'zw-pv-state__value--alert': isAlert }"
+		>
 			{{ pv.value }}
 		</div>
 		<div class="zw-pv-state__caption">{{ device.archetype.label }}</div>
@@ -18,7 +21,9 @@ const pv = computed(() => props.device.primaryValue as PrimaryValueState)
 const isAlert = computed(() => {
 	const v = pv.value
 	if (!v) return false
-	return v.stateIdx === 1 && (v.colors[1] === 'red' || v.colors[1] === 'amber')
+	return (
+		v.stateIdx === 1 && (v.colors[1] === 'red' || v.colors[1] === 'amber')
+	)
 })
 </script>
 

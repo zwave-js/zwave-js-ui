@@ -19,11 +19,7 @@
 				<ChevronDownIcon :size="ICON_SIZE.button" />
 			</Popover.Activator>
 		</Button.Group>
-		<Popover.Content
-			as="div"
-			class="zw-asb__menu"
-			role="menu"
-		>
+		<Popover.Content as="div" class="zw-asb__menu" role="menu">
 			<button
 				v-for="item in MENU"
 				:key="item.id"

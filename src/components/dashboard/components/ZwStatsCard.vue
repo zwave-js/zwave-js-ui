@@ -3,7 +3,9 @@
 		<div class="zw-sc__title">{{ title }}</div>
 		<div
 			class="zw-sc__body"
-			:style="{ gridTemplateColumns: `repeat(auto-fit, minmax(${minCellWidth}px, 1fr))` }"
+			:style="{
+				gridTemplateColumns: `repeat(auto-fit, minmax(${minCellWidth}px, 1fr))`,
+			}"
 		>
 			<div v-for="item in items" :key="item.label" class="zw-sc__cell">
 				<div class="zw-sc__label">{{ item.label }}</div>
