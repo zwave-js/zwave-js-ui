@@ -11,7 +11,11 @@
 			<DynamicScrollerItem
 				:item="item"
 				:active="active"
-				:size-dependencies="[viewport, cols, item.kind === 'card-row' ? item.devices.length : 0]"
+				:size-dependencies="[
+					viewport,
+					cols,
+					item.kind === 'card-row' ? item.devices.length : 0,
+				]"
 				:data-index="index"
 			>
 				<div
@@ -20,7 +24,11 @@
 					:class="{ 'zw-cards__group-head--lead': item.lead }"
 				>
 					<h3 class="zw-cards__group-name">
-						{{ item.key === '__controller' ? 'Controller' : item.key }}
+						{{
+							item.key === '__controller'
+								? 'Controller'
+								: item.key
+						}}
 					</h3>
 					<span
 						v-if="item.key !== '__controller'"
@@ -33,7 +41,9 @@
 				<div
 					v-else
 					class="zw-cards__grid"
-					:style="{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }"
+					:style="{
+						gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`,
+					}"
 				>
 					<ZwDeviceCard
 						v-for="d in item.devices"

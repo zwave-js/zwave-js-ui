@@ -22,9 +22,16 @@
 					:title="`Sort by ${cell.label || cell.key}`"
 					@click="emit('sort', cell.sortKey as SortKey)"
 				>
-					<span>{{ cell.label || (cell.key === 'activity' ? 'Activity' : cell.key) }}</span>
+					<span>{{
+						cell.label ||
+						(cell.key === 'activity' ? 'Activity' : cell.key)
+					}}</span>
 					<component
-						:is="cell.active && sort.dir === 'desc' ? ArrowDownIcon : ArrowUpIcon"
+						:is="
+							cell.active && sort.dir === 'desc'
+								? ArrowDownIcon
+								: ArrowUpIcon
+						"
 						:size="ICON_SIZE.caret"
 						:style="{ opacity: cell.active ? 1 : 0.28 }"
 					/>
@@ -39,11 +46,7 @@
 			</template>
 		</div>
 
-		<div
-			ref="bodyRef"
-			class="zw-table__body"
-			@scroll.passive="onScroll"
-		>
+		<div ref="bodyRef" class="zw-table__body" @scroll.passive="onScroll">
 			<ZwEmptyState v-if="layoutItems.length === 0" />
 			<div
 				v-else
@@ -51,10 +54,7 @@
 				:style="{ height: totalHeight + 'px' }"
 			>
 				<!-- Virtualized: rows and group-heads. Reused across scroll. -->
-				<template
-					v-for="item in visibleItems"
-					:key="item.id"
-				>
+				<template v-for="item in visibleItems" :key="item.id">
 					<div
 						v-if="item.kind === 'group-head'"
 						class="zw-table__group-head"
@@ -64,10 +64,17 @@
 						<ChevronDownIcon
 							:size="ICON_SIZE.caret"
 							class="zw-table__group-chev"
-							:class="{ 'zw-table__group-chev--collapsed': item.collapsed }"
+							:class="{
+								'zw-table__group-chev--collapsed':
+									item.collapsed,
+							}"
 						/>
 						<span class="zw-table__group-name">
-							{{ item.key === '__controller' ? 'Controller' : item.key }}
+							{{
+								item.key === '__controller'
+									? 'Controller'
+									: item.key
+							}}
 						</span>
 						<span
 							v-if="item.key !== '__controller'"
@@ -194,8 +201,7 @@ const columns = computed<ToggleableCol[]>(() => {
 		cap = ['value']
 	}
 	return cap.filter(
-		(c) =>
-			!TOGGLEABLE_COL_SET.has(c) || visibleColsSet.value.has(c),
+		(c) => !TOGGLEABLE_COL_SET.has(c) || visibleColsSet.value.has(c),
 	)
 })
 
@@ -249,9 +255,7 @@ const headerCells = computed<HeaderCell[] | null>(() => {
 
 	return cells.map(({ label, key }) => {
 		const sortKey =
-			key === 'id'
-				? ('id' as SortKey)
-				: (SORT_KEY_FOR_COL[key] ?? null)
+			key === 'id' ? ('id' as SortKey) : (SORT_KEY_FOR_COL[key] ?? null)
 		const sortable = sortKey !== null && SORTABLE_KEYS.has(sortKey)
 		const active = sortable && props.sort.key === sortKey
 		return {
@@ -268,10 +272,10 @@ const headerCells = computed<HeaderCell[] | null>(() => {
 const sortedGroups = computed<[string, Device[]][]>(() => {
 	let arr = props.groups.map(
 		([key, items]) =>
-			[key, [...items].sort((a, b) => compareDevices(a, b, props.sort))] as [
-				string,
-				Device[],
-			],
+			[
+				key,
+				[...items].sort((a, b) => compareDevices(a, b, props.sort)),
+			] as [string, Device[]],
 	)
 	if (props.grouping === 'location' && props.sort.key === 'location') {
 		const sign = props.sort.dir === 'desc' ? -1 : 1
@@ -344,7 +348,11 @@ const layout = computed<{ items: LayoutItem[]; total: number }>(() => {
 		// separate flatItems entry) lets us position the persistent
 		// expanded body without it ever entering the virtualized
 		// loop.
-		if (item.kind === 'row' && expanded != null && item.device.id === expanded) {
+		if (
+			item.kind === 'row' &&
+			expanded != null &&
+			item.device.id === expanded
+		) {
 			top += expandedBodyHeight.value
 		}
 	}

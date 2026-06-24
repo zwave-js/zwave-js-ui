@@ -1,8 +1,5 @@
 <template>
-	<header
-		class="zw-topbar"
-		:class="{ 'zw-topbar--compact': compact }"
-	>
+	<header class="zw-topbar" :class="{ 'zw-topbar--compact': compact }">
 		<Button.Root
 			v-if="showMenuButton"
 			class="zw-topbar__icon-btn"
@@ -20,7 +17,9 @@
 			</span>
 		</Button.Root>
 
-		<h1 v-if="viewport >= 760" class="zw-topbar__title">{{ scopeTitle }}</h1>
+		<h1 v-if="viewport >= 760" class="zw-topbar__title">
+			{{ scopeTitle }}
+		</h1>
 
 		<div class="zw-topbar__search">
 			<ZwSearchInput
@@ -43,9 +42,13 @@
 			<span class="zw-topbar__pulse" />
 			<span v-if="showActivityLabel" class="zw-topbar__activity-label">
 				<span>Activity</span>
-				<span class="zw-topbar__activity-count">{{ activityCount }}</span>
+				<span class="zw-topbar__activity-count">{{
+					activityCount
+				}}</span>
 			</span>
-			<span v-else class="zw-topbar__activity-badge">{{ activityCount }}</span>
+			<span v-else class="zw-topbar__activity-badge">{{
+				activityCount
+			}}</span>
 		</Button.Root>
 
 		<ZwAddDeviceSplitButton
@@ -234,7 +237,10 @@ const showActivityLabel = computed(() => props.viewport >= 760)
 	letter-spacing: 0.2px;
 	flex-shrink: 0;
 	position: relative;
-	transition: background 0.12s, border-color 0.12s, color 0.12s;
+	transition:
+		background 0.12s,
+		border-color 0.12s,
+		color 0.12s;
 }
 
 .zw-topbar__activity:hover {

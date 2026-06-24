@@ -87,7 +87,10 @@
 						}}</span>
 						<div class="zw-nd__event-body">
 							<div class="zw-nd__event-name">{{ ev.event }}</div>
-							<div v-if="eventDetail(ev)" class="zw-nd__event-detail">
+							<div
+								v-if="eventDetail(ev)"
+								class="zw-nd__event-detail"
+							>
 								{{ eventDetail(ev) }}
 							</div>
 						</div>

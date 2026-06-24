@@ -47,7 +47,6 @@ function onAction(device: Device, action: DeviceAction) {
 	const req = dispatchAction(device, action)
 	const app = appInstance()
 	if (!app) {
-		// eslint-disable-next-line no-console
 		console.warn('[ControlPanelNew] App instance not registered yet')
 		return
 	}

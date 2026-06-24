@@ -1,9 +1,5 @@
 <template>
-	<div
-		v-if="device"
-		class="zw-drawer__overlay"
-		@click.self="emit('close')"
-	>
+	<div v-if="device" class="zw-drawer__overlay" @click.self="emit('close')">
 		<div
 			ref="panelRef"
 			class="zw-drawer__panel"

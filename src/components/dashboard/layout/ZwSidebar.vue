@@ -119,13 +119,36 @@ const ICONS = {
 
 const NAV_ENTRIES: NavEntry[] = [
 	{ kind: 'section', label: 'Network' },
-	{ kind: 'item', id: 'overview', icon: 'graph', label: 'Overview', meta: 'count' },
-	{ kind: 'item', id: 'attention', icon: 'alert', label: 'Needs attention', meta: 'attention' },
-	{ kind: 'item', id: 'activity', icon: 'pulse', label: 'Activity', meta: 'activity' },
+	{
+		kind: 'item',
+		id: 'overview',
+		icon: 'graph',
+		label: 'Overview',
+		meta: 'count',
+	},
+	{
+		kind: 'item',
+		id: 'attention',
+		icon: 'alert',
+		label: 'Needs attention',
+		meta: 'attention',
+	},
+	{
+		kind: 'item',
+		id: 'activity',
+		icon: 'pulse',
+		label: 'Activity',
+		meta: 'activity',
+	},
 	{ kind: 'section', label: 'Manage' },
 	{ kind: 'item', id: 'smart-start', icon: 'qr', label: 'Smart Start' },
 	{ kind: 'item', id: 'scenes', icon: 'scene', label: 'Scenes' },
-	{ kind: 'item', id: 'configuration-templates', icon: 'grid', label: 'Templates' },
+	{
+		kind: 'item',
+		id: 'configuration-templates',
+		icon: 'grid',
+		label: 'Templates',
+	},
 	{ kind: 'item', id: 'mesh', icon: 'network', label: 'Network graph' },
 	{ kind: 'section', label: 'System' },
 	{ kind: 'item', id: 'settings', icon: 'settings', label: 'Settings' },
@@ -263,9 +286,7 @@ function renderBrand(
 	)
 }
 
-function renderRailExpand(
-	bodyEmit: (e: 'close' | 'toggleCollapse') => void,
-) {
+function renderRailExpand(bodyEmit: (e: 'close' | 'toggleCollapse') => void) {
 	return h('div', { class: 'zw-sb__rail-expand' }, [
 		h(
 			'button',
@@ -291,12 +312,20 @@ function renderNav(isWide: boolean) {
 function renderEntry(entry: NavEntry, i: number, isWide: boolean) {
 	if (entry.kind === 'section') {
 		if (isWide) {
-			return h('div', { class: 'zw-sb__section', key: `s-${i}` }, entry.label)
+			return h(
+				'div',
+				{ class: 'zw-sb__section', key: `s-${i}` },
+				entry.label,
+			)
 		}
 		if (i === 0) {
 			return h('div', { class: 'zw-sb__rail-spacer', key: `s-${i}` })
 		}
-		return h('div', { class: 'zw-sb__rail-divider', key: `s-${i}` }, h('span'))
+		return h(
+			'div',
+			{ class: 'zw-sb__rail-divider', key: `s-${i}` },
+			h('span'),
+		)
 	}
 	const isActive = props.active === entry.id
 	if (!isWide) {
@@ -327,7 +356,8 @@ function renderEntry(entry: NavEntry, i: number, isWide: boolean) {
 		)
 	}
 	const meta = metaValue(entry)
-	const isAttention = entry.meta === 'attention' && (attentionCount.value ?? 0) > 0
+	const isAttention =
+		entry.meta === 'attention' && (attentionCount.value ?? 0) > 0
 	const actions = rowActionsByNav.value[entry.id] ?? []
 	return h(
 		'div',
@@ -360,7 +390,10 @@ function renderEntry(entry: NavEntry, i: number, isWide: boolean) {
 								{
 									class: [
 										'zw-sb__row-meta',
-										{ 'zw-sb__row-meta--danger': isAttention },
+										{
+											'zw-sb__row-meta--danger':
+												isAttention,
+										},
 									],
 								},
 								String(meta),
@@ -377,7 +410,8 @@ function renderEntry(entry: NavEntry, i: number, isWide: boolean) {
 						class: [
 							'zw-sb__row-action',
 							{
-								'zw-sb__row-action--danger': ra.tone === 'danger',
+								'zw-sb__row-action--danger':
+									ra.tone === 'danger',
 								'is-active': ra.active,
 							},
 						],
@@ -390,7 +424,9 @@ function renderEntry(entry: NavEntry, i: number, isWide: boolean) {
 						},
 					},
 					h(RowActionGlyph, {
-						shape: ra.active ? ra.iconActive ?? 'square' : ra.icon,
+						shape: ra.active
+							? (ra.iconActive ?? 'square')
+							: ra.icon,
 					}),
 				),
 			),
@@ -403,7 +439,11 @@ function renderFooterWide() {
 		h('div', { class: 'zw-sb__credit' }, [
 			h('span', { class: 'zw-sb__credit-line' }, [
 				h('span', 'Made with'),
-				h('span', { class: 'zw-sb__heart', 'aria-hidden': 'true' }, '♥'),
+				h(
+					'span',
+					{ class: 'zw-sb__heart', 'aria-hidden': 'true' },
+					'♥',
+				),
 				h('span', 'by'),
 				h('span', { class: 'zw-sb__credit-name' }, 'Daniel Lando'),
 			]),
@@ -826,7 +866,9 @@ function renderFooterRail() {
 	border: 1px solid transparent;
 	background: transparent;
 	color: var(--zw-fg-soft);
-	transition: background 0.12s, border-color 0.12s;
+	transition:
+		background 0.12s,
+		border-color 0.12s;
 }
 
 .zw-sb__row-action:hover {
@@ -1004,7 +1046,10 @@ function renderFooterRail() {
 	border: 1px solid rgba(0, 0, 0, 0.1);
 	background: var(--zw-card);
 	color: var(--zw-fg-soft);
-	transition: background 0.12s, border-color 0.12s, color 0.12s;
+	transition:
+		background 0.12s,
+		border-color 0.12s,
+		color 0.12s;
 }
 
 .zw-sb__restart:hover {

@@ -96,9 +96,7 @@ import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useRouter } from 'vue-router'
 import useDashboardStore from '@/stores/dashboard'
-import ZwSidebar, {
-	type RowAction,
-} from './ZwSidebar.vue'
+import ZwSidebar, { type RowAction } from './ZwSidebar.vue'
 import ZwTopbar from './ZwTopbar.vue'
 import ZwActivityStrip from './ZwActivityStrip.vue'
 import ZwDeviceListToolbar from './ZwDeviceListToolbar.vue'
@@ -173,9 +171,7 @@ const emit = defineEmits<{
 // edges. Behaviour is identical in production where the shell IS the window.
 
 const shellRef = ref<HTMLElement | null>(null)
-const viewport = ref(
-	typeof window !== 'undefined' ? window.innerWidth : 1280,
-)
+const viewport = ref(typeof window !== 'undefined' ? window.innerWidth : 1280)
 
 let ro: ResizeObserver | null = null
 
@@ -197,9 +193,7 @@ onBeforeUnmount(() => {
 })
 
 const isMobile = computed(() => viewport.value < 760)
-const isCompact = computed(
-	() => viewport.value >= 760 && viewport.value < 1100,
-)
+const isCompact = computed(() => viewport.value >= 760 && viewport.value < 1100)
 
 // ── ui state (AppShell-owned) ────────────────────────────────
 //
@@ -220,9 +214,11 @@ const selectedId = ref<Device['id'] | null>(null)
 const expandedRowId = ref<Device['id'] | null>(null)
 const collapsedGroups = ref<Set<string>>(new Set(persisted.collapsedGroups))
 const visibleCols = ref<string[]>([...persisted.visibleCols])
-const sort = ref<SortState>({ ...(persisted.sort as SortState) } || {
-	...DEFAULT_SORT,
-})
+const sort = ref<SortState>(
+	{ ...(persisted.sort as SortState) } || {
+		...DEFAULT_SORT,
+	},
+)
 const capturing = ref(false)
 const triggerEl = ref<HTMLElement | null>(null)
 

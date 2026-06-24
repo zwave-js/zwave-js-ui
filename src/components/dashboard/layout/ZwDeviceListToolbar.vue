@@ -24,9 +24,7 @@
 			v-if="view === 'table'"
 			:model-value="visibleCols as ToggleableCol[]"
 			:trigger-label-hidden="viewport < 600"
-			@update:model-value="
-				(next) => emit('update:visibleCols', next)
-			"
+			@update:model-value="(next) => emit('update:visibleCols', next)"
 		/>
 	</div>
 </template>
@@ -35,12 +33,7 @@
 import { computed } from 'vue'
 import ZwSegmented from '@/components/dashboard/atoms/ZwSegmented.vue'
 import ZwColumnsMenu from '@/components/dashboard/components/ZwColumnsMenu.vue'
-import {
-	GridIcon,
-	ListIcon,
-	LocationsIcon,
-	TypeIcon,
-} from '@/lib/icons'
+import { GridIcon, ListIcon, LocationsIcon, TypeIcon } from '@/lib/icons'
 
 type Grouping = 'location' | 'type' | 'all'
 type View = 'cards' | 'table'
