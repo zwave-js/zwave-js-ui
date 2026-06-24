@@ -147,7 +147,7 @@ export interface Device {
 	archetype: Archetype
 	power: PowerInfo
 	status: DeviceStatus
-	interviewState: 'complete' | 'interview' | 'failed' | string
+	interviewState: 'complete' | 'interview' | 'failed'
 	security?: SecurityKey | 'none'
 	securityKeys: SecurityKey[]
 	firmware?: { node?: string; sdk?: string }
