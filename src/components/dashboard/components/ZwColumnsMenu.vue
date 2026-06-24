@@ -14,8 +14,7 @@
 
 <script setup lang="ts">
 import ZwToggleMenu from '@/components/dashboard/atoms/ZwToggleMenu.vue'
-
-type ToggleableCol = 'activity' | 'location' | 'value' | 'power' | 'lastSeen'
+import type { ToggleableCol } from './deviceRowGrid'
 
 defineProps<{
 	modelValue: readonly ToggleableCol[]
@@ -26,11 +25,12 @@ const emit = defineEmits<{
 	'update:modelValue': [ToggleableCol[]]
 }>()
 
-const TOGGLEABLE_COLS = [
+const TOGGLEABLE_COLS: { id: ToggleableCol; label: string }[] = [
 	{ id: 'activity', label: 'Activity' },
 	{ id: 'location', label: 'Location' },
 	{ id: 'value', label: 'State / Value' },
 	{ id: 'power', label: 'Power' },
+	{ id: 'signal', label: 'Link' },
 	{ id: 'lastSeen', label: 'Last seen' },
 ]
 </script>

@@ -2,7 +2,6 @@
 	<div class="zw-expanded-row">
 		<ZwNodeDetailsBody
 			:device="device"
-			:viewport="viewport"
 			@action="(d, a) => emit('action', d, a)"
 		/>
 	</div>
@@ -12,7 +11,7 @@
 import ZwNodeDetailsBody from './ZwNodeDetailsBody.vue'
 import type { Device, DeviceAction } from '@/lib/dashboard-types'
 
-defineProps<{ device: Device; viewport: number }>()
+defineProps<{ device: Device }>()
 const emit = defineEmits<{ action: [Device, DeviceAction] }>()
 </script>
 

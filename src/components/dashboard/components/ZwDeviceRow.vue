@@ -81,11 +81,19 @@
 
 		<!-- chevron -->
 		<span class="zw-row__cell">
-			<ChevronDownIcon
-				:size="ICON_SIZE.sortArrow"
-				class="zw-row__chev"
-				:class="{ 'zw-row__chev--open': expanded }"
-			/>
+			<button
+				type="button"
+				class="zw-row__expand"
+				:aria-expanded="expanded"
+				:aria-label="expanded ? 'Collapse details' : 'Expand details'"
+				@click.stop="emit('expand', device.id)"
+			>
+				<ChevronDownIcon
+					:size="ICON_SIZE.sortArrow"
+					class="zw-row__chev"
+					:class="{ 'zw-row__chev--open': expanded }"
+				/>
+			</button>
 		</span>
 	</div>
 </template>
@@ -237,6 +245,23 @@ const signalIconColor = computed(() =>
 	font-size: 10px;
 	color: var(--zw-muted);
 	letter-spacing: 0.4px;
+}
+
+.zw-row__expand {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	padding: 0;
+	border: 0;
+	background: none;
+	color: inherit;
+	cursor: pointer;
+}
+
+.zw-row__expand:focus-visible {
+	outline: 2px solid var(--zw-fg);
+	outline-offset: 2px;
+	border-radius: 4px;
 }
 
 .zw-row__chev {
