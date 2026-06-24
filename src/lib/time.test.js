@@ -16,7 +16,7 @@ describe('relativeTime', () => {
 		expect(relativeTime(NOW - 9999, NOW)).to.equal('just now')
 	})
 	it('formats seconds (10–59s)', () => {
-		expect(relativeTime(NOW - 12_000, NOW)).to.equal('12s ago')
+		expect(relativeTime(NOW - 12000, NOW)).to.equal('12s ago')
 	})
 	it('formats minutes', () => {
 		expect(relativeTime(NOW - 5 * 60 * 1000, NOW)).to.equal('5m ago')

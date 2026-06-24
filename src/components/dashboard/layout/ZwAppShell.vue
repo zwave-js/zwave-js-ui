@@ -104,7 +104,6 @@ import ZwCardsBody from './ZwCardsBody.vue'
 import ZwTableBody from './ZwTableBody.vue'
 import ZwDeviceDrawer from './ZwDeviceDrawer.vue'
 import {
-	DEFAULT_SORT,
 	buildGroups,
 	nextSort,
 	type SortKey,
@@ -214,11 +213,7 @@ const selectedId = ref<Device['id'] | null>(null)
 const expandedRowId = ref<Device['id'] | null>(null)
 const collapsedGroups = ref<Set<string>>(new Set(persisted.collapsedGroups))
 const visibleCols = ref<string[]>([...persisted.visibleCols])
-const sort = ref<SortState>(
-	{ ...(persisted.sort as SortState) } || {
-		...DEFAULT_SORT,
-	},
-)
+const sort = ref<SortState>({ ...(persisted.sort as SortState) })
 const capturing = ref(false)
 const triggerEl = ref<HTMLElement | null>(null)
 
