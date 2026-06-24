@@ -24,7 +24,9 @@ const props = withDefaults(
 // uses the default so the table's hundred-dot list allocates nothing
 // per row.
 const sizeStyle = computed(() =>
-	props.size === 8 ? undefined : { '--zw-status-dot-size': `${props.size}px` },
+	props.size === 8
+		? undefined
+		: { '--zw-status-dot-size': `${props.size}px` },
 )
 </script>
 

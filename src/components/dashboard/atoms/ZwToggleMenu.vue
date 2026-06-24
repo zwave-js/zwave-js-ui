@@ -10,11 +10,7 @@
 			</span>
 			<ChevronDownIcon class="zw-tm__chevron" :size="ICON_SIZE.pill" />
 		</Popover.Activator>
-		<Popover.Content
-			as="div"
-			class="zw-tm__panel"
-			role="menu"
-		>
+		<Popover.Content as="div" class="zw-tm__panel" role="menu">
 			<div v-if="header" class="zw-tm__header">{{ header }}</div>
 			<button
 				v-for="opt in options"
@@ -51,12 +47,7 @@
 import { computed, ref, useId } from 'vue'
 import type { Component } from 'vue'
 import { Popover } from '@vuetify/v0'
-import {
-	CheckIcon,
-	ChevronDownIcon,
-	FilterIcon,
-	ICON_SIZE,
-} from '@/lib/icons'
+import { CheckIcon, ChevronDownIcon, FilterIcon, ICON_SIZE } from '@/lib/icons'
 import { usePopoverFallback } from '@/lib/popover-fallback.ts'
 
 interface ToggleMenuOption {

@@ -12,11 +12,7 @@
 			:value="opt.value"
 			class="zw-segmented__btn zw-focus-ring"
 		>
-			<component
-				:is="opt.icon"
-				v-if="opt.icon"
-				:size="ICON_SIZE.chip"
-			/>
+			<component :is="opt.icon" v-if="opt.icon" :size="ICON_SIZE.chip" />
 			<span v-if="!compact">{{ opt.label }}</span>
 		</Button.Root>
 	</Button.Group>

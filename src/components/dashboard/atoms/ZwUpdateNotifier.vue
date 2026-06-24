@@ -9,7 +9,9 @@
 		<span v-if="compact" class="zw-update__dot" />
 		<span v-else class="zw-update__body">
 			<span class="zw-update__title">Update available</span>
-			<span class="zw-update__versions">{{ current }} → {{ available }}</span>
+			<span class="zw-update__versions"
+				>{{ current }} → {{ available }}</span
+			>
 		</span>
 	</Button.Root>
 </template>

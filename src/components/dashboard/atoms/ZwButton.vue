@@ -15,12 +15,7 @@
 <script setup lang="ts">
 import { Button } from '@vuetify/v0'
 
-type Variant =
-	| 'primary'
-	| 'outline'
-	| 'destructive'
-	| 'ghost'
-	| 'mono-outline'
+type Variant = 'primary' | 'outline' | 'destructive' | 'ghost' | 'mono-outline'
 
 withDefaults(
 	defineProps<{

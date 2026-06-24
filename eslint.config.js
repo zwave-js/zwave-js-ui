@@ -58,6 +58,15 @@ export default defineConfig([
 		},
 	},
 	{
+		// Support linting Vue SFCs written in TypeScript
+		files: ['**/*.vue'],
+		languageOptions: {
+			parserOptions: {
+				parser: '@typescript-eslint/parser',
+			},
+		},
+	},
+	{
 		files: ['**/*.ts', '**/*.tsx'],
 
 		languageOptions: {
