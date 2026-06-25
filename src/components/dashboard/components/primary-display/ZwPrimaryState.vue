@@ -38,7 +38,7 @@ const isAlert = computed(() => (pv.value ? isStateAlert(pv.value) : false))
 }
 
 .zw-pv-state__value--alert {
-	color: #a14b1f;
+	color: var(--zw-warning);
 }
 
 .zw-pv-state__caption {

@@ -67,7 +67,7 @@ const entries = computed(() =>
 }
 
 .zw-sec__state {
-	color: #047857;
+	color: var(--zw-ok);
 }
 
 .zw-sec__row--missing {

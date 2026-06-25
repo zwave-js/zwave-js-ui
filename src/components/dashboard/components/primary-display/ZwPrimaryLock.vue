@@ -45,6 +45,6 @@ const pv = usePrimaryValue(() => props.device, 'lock')
 }
 
 .zw-pv-lock__label--unlocked {
-	color: #a14b1f;
+	color: var(--zw-warning);
 }
 </style>
