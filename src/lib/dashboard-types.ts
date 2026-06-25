@@ -11,6 +11,8 @@
 // backwards compatibility — components import from `@/lib/dashboard-types`
 // today.
 
+import type { Component } from 'vue'
+
 // ── Primary value ──────────────────────────────────────────────
 
 export type PrimaryValueType =
@@ -100,8 +102,10 @@ export type ArchetypeKind =
 export interface Archetype {
 	kind: ArchetypeKind
 	label: string
-	// Aliased Lucide component (e.g. SwitchIcon from @/lib/icons).
-	icon: unknown
+	// Aliased Lucide component (e.g. SwitchIcon from @/lib/icons), rendered
+	// via `<component :is="archetype.icon">`. Typed as Vue's `Component` —
+	// the same contract `primary-display/registry.ts` uses for its renderers.
+	icon: Component
 	power: PowerType
 }
 
