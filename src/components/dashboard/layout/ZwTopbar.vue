@@ -69,7 +69,7 @@ import ZwSearchInput from '@/components/dashboard/atoms/ZwSearchInput.vue'
 import ZwAddDeviceSplitButton from '@/components/dashboard/components/ZwAddDeviceSplitButton.vue'
 import { ICON_SIZE, MenuIcon } from '@/lib/icons'
 
-type AddAction = 'include' | 'replace' | 'exclude'
+type AddAction = 'include' | 'replace-failed' | 'exclude'
 
 const props = defineProps<{
 	query: string

@@ -56,16 +56,12 @@ function onAction(device: Device, action: DeviceAction) {
 	})
 }
 
-function onAddAction(kind: 'include' | 'replace' | 'exclude') {
+function onAddAction(kind: 'include' | 'replace-failed' | 'exclude') {
 	const app = appInstance()
 	if (!app) return
-	const api =
-		kind === 'exclude'
-			? 'startExclusion'
-			: kind === 'replace'
-				? 'startInclusion'
-				: 'startInclusion'
-	const args = kind === 'replace' ? ['replaceFailed'] : []
+	const api = kind === 'exclude' ? 'startExclusion' : 'startInclusion'
+	// 'replaceFailed' is the zwave-js socket-API mode for startInclusion.
+	const args = kind === 'replace-failed' ? ['replaceFailed'] : []
 	void app.apiRequest(api, args, { infoSnack: true, errorSnack: true })
 }
 

@@ -90,7 +90,7 @@
 						:columns="columns as ToggleableCol[]"
 						:viewport="viewport"
 						:style="absStyle(item)"
-						@expand="(id) => emit('expand', id)"
+						@open="(dev) => emit('open', dev)"
 						@action="(dev, a) => emit('action', dev, a)"
 					/>
 				</template>
@@ -174,7 +174,7 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-	expand: [Device['id']]
+	open: [Device]
 	toggleGroup: [string]
 	sort: [SortKey]
 	action: [Device, DeviceAction]

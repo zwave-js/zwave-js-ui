@@ -73,7 +73,7 @@
 					:visible-cols="visibleCols"
 					:sort="sort"
 					:grouping="grouping"
-					@expand="onRowExpand"
+					@open="onRowOpen"
 					@toggle-group="onToggleGroup"
 					@sort="(k) => (sort = nextSort(sort, k))"
 					@action="onAction"
@@ -120,7 +120,7 @@ import {
 type Scope = 'overview' | 'attention' | 'activity'
 type Grouping = 'location' | 'type' | 'all'
 type View = 'cards' | 'table'
-type AddAction = 'include' | 'replace' | 'exclude'
+type AddAction = 'include' | 'replace-failed' | 'exclude'
 
 const DEVICE_LIST_NAV: ReadonlySet<string> = new Set<Scope>([
 	'overview',
@@ -374,8 +374,10 @@ function onCardOpen(d: Device, e?: MouseEvent): void {
 	selectedId.value = d.id
 }
 
-function onRowExpand(id: Device['id']): void {
-	expandedRowId.value = expandedRowId.value === id ? null : id
+function onRowOpen(dev: Device): void {
+	// Table view shows details inline: toggle this row's expansion. (Card
+	// view's `open` opens the drawer instead — see onCardOpen.)
+	expandedRowId.value = expandedRowId.value === dev.id ? null : dev.id
 }
 
 function onToggleGroup(key: string): void {
