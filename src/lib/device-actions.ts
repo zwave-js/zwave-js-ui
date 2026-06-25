@@ -72,7 +72,6 @@ export const ACTION_DISPATCHERS: {
 	interview: (d) => ({ api: 'refreshInfo', args: [d.id] }),
 	refresh: (d) => ({ api: 'refreshValues', args: [d.id] }),
 	rebuild: (d) => ({ api: 'rebuildNodeRoutes', args: [d.id] }),
-	replace: (d) => ({ api: 'replaceFailedNode', args: [d.id] }),
 	remove: (d) => ({ api: 'removeFailedNode', args: [d.id] }),
 	export: (d) => ({ api: 'dumpNode', args: [d.id] }),
 	clear: (d) => ({ api: 'softReset', args: [d.id] }),
