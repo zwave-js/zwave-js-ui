@@ -221,7 +221,7 @@ const advancedCommands = computed<{ label: string; action: DeviceAction }[]>(
 					{ label: 'Interview', action: { type: 'interview' } },
 					{ label: 'Refresh', action: { type: 'refresh' } },
 					{ label: 'Rebuild', action: { type: 'rebuild' } },
-					{ label: 'Replace', action: { type: 'replace' } },
+					{ label: 'Replace', action: { type: 'replace-failed' } },
 					{ label: 'Remove', action: { type: 'remove' } },
 					{ label: 'Ping', action: { type: 'ping' } },
 					{ label: 'Export', action: { type: 'export' } },

@@ -58,7 +58,7 @@ import {
 } from '@/lib/icons'
 import { usePopoverFallback } from '@/lib/popover-fallback.ts'
 
-type Action = 'include' | 'replace' | 'exclude'
+type Action = 'include' | 'replace-failed' | 'exclude'
 
 defineProps<{
 	compact?: boolean
@@ -81,7 +81,7 @@ const MENU = [
 		destructive: false,
 	},
 	{
-		id: 'replace' as const,
+		id: 'replace-failed' as const,
 		icon: RefreshIcon,
 		title: 'Replace failed device',
 		desc: 'Swap an unresponsive node in place',

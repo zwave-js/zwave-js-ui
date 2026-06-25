@@ -194,7 +194,6 @@ export type DeviceAction =
 	| { type: 'interview' }
 	| { type: 'refresh' }
 	| { type: 'rebuild' }
-	| { type: 'replace' }
 	| { type: 'remove' }
 	| { type: 'export' }
 	| { type: 'clear' }
