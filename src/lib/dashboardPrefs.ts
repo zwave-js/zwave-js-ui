@@ -1,14 +1,6 @@
-// src/lib/dashboardPrefs.ts
-//
-// Plan 76 — persist the dashboard's UI preferences across reloads.
-//
-// Wraps the project's `Settings` localStorage helper (`src/modules/Settings.js`)
-// with a Pinia-friendly `load()` / `save()` pair and a debounced
-// `scheduleSave()` for use as a watcher callback in `ZwAppShell.vue`.
-//
-// `Settings.js` already prefixes keys with `zwave-js-ui_`; we use a
-// distinct top-level key 'dashboard' so this slice is isolated from
-// existing `eventsList` / `smartStartTable` blobs.
+// Persists the dashboard's UI preferences across reloads via the project's
+// `Settings` localStorage helper, under its own `dashboard` key. Exposes
+// `load()`/`save()` plus a debounced `scheduleSave()`.
 
 import { Settings } from '../modules/Settings.js'
 
@@ -81,9 +73,8 @@ function isStringArray(v: unknown): v is string[] {
 }
 
 /**
- * Load persisted prefs, validating each field against its accepted
- * shape. Any invalid value falls back to its default WITHOUT resetting
- * the rest of the blob — see plan 76 task 3.
+ * Load persisted prefs, validating each field; invalid fields fall back
+ * to their default independently of the rest.
  */
 export function load(): DashboardPrefs {
 	const raw = settings.load(STORAGE_KEY, {}) as Partial<
@@ -108,11 +99,7 @@ export function save(prefs: DashboardPrefs): void {
 
 let saveTimer: ReturnType<typeof setTimeout> | null = null
 
-/**
- * Debounced save (~200 ms). Coalesces rapid changes — sort-header
- * clicks, column-toggle bursts, collapsing groups in sequence — into a
- * single localStorage write.
- */
+/** Debounced save (~200 ms) that coalesces rapid changes into one write. */
 export function scheduleSave(prefs: DashboardPrefs, ms = 200): void {
 	if (saveTimer) clearTimeout(saveTimer)
 	saveTimer = setTimeout(() => {
@@ -121,10 +108,7 @@ export function scheduleSave(prefs: DashboardPrefs, ms = 200): void {
 	}, ms)
 }
 
-/**
- * Flush a pending debounced save immediately. Useful for unmount /
- * route-leave hooks so in-flight changes don't get lost.
- */
+/** Flush a pending debounced save immediately (e.g. on unmount/route-leave). */
 export function flushSave(prefs: DashboardPrefs): void {
 	if (saveTimer) {
 		clearTimeout(saveTimer)

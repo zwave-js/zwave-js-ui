@@ -15,8 +15,8 @@
 <script setup lang="ts">
 import { ICON_SIZE, SearchIcon } from '@/lib/icons'
 
-// Atom is locale-agnostic: callers pass already-translated strings for
-// placeholder and aria-label. No fallbacks here would silently leak EN.
+// Locale-agnostic: callers pass already-translated `placeholder` and
+// `ariaLabel`.
 defineProps<{
 	modelValue: string
 	placeholder: string

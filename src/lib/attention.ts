@@ -1,19 +1,11 @@
-// src/lib/attention.ts
-//
-// Plan 73 — the "Needs attention" predicate behind the sidebar scope
-// and its badge count.
-//
-// A device "needs attention" when any of the following is true:
-//   1. status === 'dead'
-//   2. health === 'weak' AND device is awake (signal issues only
-//      interesting on awake nodes — see plan 73)
-//   3. battery node with `power.battery < 15` (danger threshold; plan 13)
-//   4. interviewState !== 'complete' AND no in-flight `interview`
-//      activity (avoid double-counting with the Activity scope)
-//   5. hasUpdate === true (pending firmware update)
-//
-// Controller never counts; asleep battery devices with healthy battery
-// never count.
+// "Needs attention" predicate behind the attention scope and its badge
+// count. A device needs attention when any of these holds:
+//   1. status is 'dead'
+//   2. health is 'weak' while awake
+//   3. battery below LOW_BATTERY_THRESHOLD
+//   4. interview incomplete with no in-flight interview activity
+//   5. a firmware update is available
+// Controllers are always excluded.
 
 import type { Device } from './dashboard-types.ts'
 
@@ -39,11 +31,7 @@ export function deviceNeedsAttention(d: Device): boolean {
 	return false
 }
 
-/**
- * Returns a short human-readable reason for the attention badge — used
- * by tooltips on the sidebar scope row and the per-device chip.
- * Returns `null` when the device does NOT need attention.
- */
+/** Short human-readable reason a device needs attention, else `null`. */
 export function attentionReason(d: Device): string | null {
 	if (!deviceNeedsAttention(d)) return null
 	if (d.status === 'dead') return 'Dead'

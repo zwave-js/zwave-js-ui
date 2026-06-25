@@ -128,8 +128,8 @@ const DEVICE_LIST_NAV: ReadonlySet<string> = new Set<Scope>([
 	'activity',
 ])
 
-// Non-scope nav IDs whose route segment matches the ID itself (per plan 51
-// task 2). Selecting one of these dispatches via vue-router.
+// Non-scope nav IDs whose route segment matches the ID itself; selecting
+// one dispatches via vue-router.
 const ROUTABLE_NAV_IDS = new Set([
 	'smart-start',
 	'scenes',
@@ -163,11 +163,9 @@ const emit = defineEmits<{
 }>()
 
 // ── viewport ─────────────────────────────────────────────────
-// Deviates from plan 50 task 1 (which calls for window.innerWidth + resize).
-// ResizeObserver on the shell root makes the layout breakpoints respect the
-// shell's actual rendered width — required when the shell is embedded inside
-// a fixed-width host (e.g. the showcase frame) instead of reaching the page
-// edges. Behaviour is identical in production where the shell IS the window.
+// A ResizeObserver on the shell root drives the layout breakpoints off the
+// shell's actual rendered width rather than the window width, so it stays
+// correct even when embedded in a fixed-width host.
 
 const shellRef = ref<HTMLElement | null>(null)
 const viewport = ref(typeof window !== 'undefined' ? window.innerWidth : 1280)
@@ -196,10 +194,9 @@ const isCompact = computed(() => viewport.value >= 760 && viewport.value < 1100)
 
 // ── ui state (AppShell-owned) ────────────────────────────────
 //
-// Plan 76: load persisted prefs synchronously before the first render
-// so users never see the default values flash to their saved values on
-// reload. `query`, `selectedId`, `expandedRowId`, `mobileSidebarOpen`
-// are intentionally NOT persisted (per plan 76's "ephemeral" list).
+// Load persisted prefs synchronously before first render so saved values
+// don't flash in after the defaults. `query`, `selectedId`,
+// `expandedRowId`, and `mobileSidebarOpen` stay ephemeral.
 const persisted = loadPrefs()
 
 const active = ref<string>(persisted.scope ?? props.initialActive)
@@ -222,10 +219,9 @@ watch(isMobile, (v) => {
 	if (!v) mobileSidebarOpen.value = false
 })
 
-// ── persistence (plan 76) ────────────────────────────────────
-// Snapshot the persistable slice for the debounced writer. Watching
-// each ref individually would also work, but consolidating into one
-// computed lets us reuse the snapshot for the unmount flush.
+// ── persistence ──────────────────────────────────────────────
+// Snapshot the persistable slice once so the debounced writer and the
+// unmount flush share it.
 function snapshotPrefs(): DashboardPrefs {
 	return {
 		scope: active.value as DashboardPrefs['scope'],
@@ -268,7 +264,7 @@ function onToggleCollapse(): void {
 	sidebarState.value = sidebarMode.value === 'wide' ? 'collapsed' : 'wide'
 }
 
-// ── store (plan 70 placeholder) ──────────────────────────────
+// ── store ────────────────────────────────────────────────────
 
 const store = useDashboardStore()
 const { devices, activities } = storeToRefs(store)
@@ -277,9 +273,9 @@ const { devices, activities } = storeToRefs(store)
 
 const isDeviceListNav = computed(() => DEVICE_LIST_NAV.has(active.value))
 
-// Debounce the search input by ~100 ms so each keystroke doesn't run
-// the full filter pipeline. The atom is uncontrolled; the debounce
-// lives here (plan 75 task 4).
+// Debounce the search input ~100 ms so each keystroke doesn't run the
+// full filter pipeline; the input atom is uncontrolled, so the debounce
+// lives here.
 const debouncedQuery = ref('')
 let queryTimer: ReturnType<typeof setTimeout> | null = null
 watch(query, (v) => {
@@ -375,8 +371,7 @@ function onCardOpen(d: Device, e?: MouseEvent): void {
 }
 
 function onRowOpen(dev: Device): void {
-	// Table view shows details inline: toggle this row's expansion. (Card
-	// view's `open` opens the drawer instead — see onCardOpen.)
+	// Table view shows details inline: toggle this row's expansion.
 	expandedRowId.value = expandedRowId.value === dev.id ? null : dev.id
 }
 
@@ -389,7 +384,7 @@ function onToggleGroup(key: string): void {
 
 function onViewChange(v: View): void {
 	view.value = v
-	// View switch drops the current selection per plan 50 task 6.
+	// Switching view drops the current selection.
 	selectedId.value = null
 	expandedRowId.value = null
 }

@@ -1,19 +1,12 @@
-// src/lib/time.ts
-//
-// Plan 74 — relative-time helpers + a shared `useNow()` composable so
-// every consumer ticks off the same 30-second heartbeat instead of
-// each surface running its own interval.
+// Relative-time helpers and a shared `useNow()` composable: all consumers
+// tick off one 30-second heartbeat.
 
 import { onScopeDispose, ref } from 'vue'
 import type { Ref } from 'vue'
 
 /**
- * Format a Unix-millisecond timestamp as a relative-time string
- * (`just now`, `2m ago`, `1h ago`, `3d ago`). Returns `'never'` when
- * the timestamp is missing.
- *
- * Pure — caller supplies `now` so the function stays deterministic and
- * easy to test.
+ * Format a Unix-ms timestamp as a relative-time string (`just now`,
+ * `2m ago`, …), or `'never'` if missing. Pure: the caller supplies `now`.
  */
 export function relativeTime(at: number | undefined, now: number): string {
 	if (!at) return 'never'
@@ -25,9 +18,8 @@ export function relativeTime(at: number | undefined, now: number): string {
 	return `${Math.floor(secs / 86400)}d ago`
 }
 
-// Singleton `now` ref, ticked every 30 seconds. Multiple consumers
-// share the same interval; `onScopeDispose` decrements the refcount
-// and clears the interval when the last consumer goes away.
+// Singleton `now` ref ticked every 30s. Consumers share one interval; the
+// refcount clears it when the last consumer unmounts.
 
 let sharedNow: Ref<number> | null = null
 let intervalId: ReturnType<typeof setInterval> | null = null

@@ -1,12 +1,5 @@
-// src/stores/dashboard.ts
-//
-// Plan 70 — dashboard store. Single point that fans Z-Wave node data
-// out to every dashboard surface as projected `Device` records, plus
-// the derived counts the sidebar (plan 51) and topbar (plan 52) need
-// to read in sync without prop-drilling.
-//
-// The store does NOT own UI-local dashboard state (active scope, view,
-// query, selection). Those live in `ZwAppShell.vue` (plan 50).
+// Dashboard store: projects Z-Wave node data into `Device` records shared
+// across the dashboard, with derived device/attention/activity counts.
 
 import { computed } from 'vue'
 import { defineStore } from 'pinia'
@@ -47,9 +40,7 @@ const useDashboardStore = defineStore('dashboard', () => {
 	}
 })
 
-// Re-export so legacy call sites that imported `deviceNeedsAttention`
-// from this module keep working. Plan 73 owns the implementation in
-// `src/lib/attention.ts`.
+// Convenience re-export; the implementation lives in `lib/attention.ts`.
 export { deviceNeedsAttention } from '../lib/attention.ts'
 
 export default useDashboardStore

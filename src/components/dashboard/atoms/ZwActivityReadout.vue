@@ -56,11 +56,8 @@ const ACTIVITY_ICON = {
 
 const iconComp = computed(() => ACTIVITY_ICON[props.activity.type])
 
-// Progress is optional — when undefined the readout renders an
-// indeterminate sweep across the bar with no numeric label. A literal
-// placeholder (e.g. 30%) would be misleading, especially for OTA where
-// users watch the number. Plan 72 made `progress` a 0–100 integer
-// (was 0–1).
+// Optional progress (a 0–100 integer): when undefined the bar shows an
+// indeterminate sweep with no number.
 const pct = computed(() =>
 	props.activity.progress !== undefined
 		? Math.round(props.activity.progress)

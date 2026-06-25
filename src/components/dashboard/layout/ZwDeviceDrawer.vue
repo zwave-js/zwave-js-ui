@@ -117,9 +117,9 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
-/* The drawer is scoped to its parent body container via `position: absolute`,
-   so the AppShell's sidebar / topbar / activity strip / toolbar stay visible
-   and interactive while a device is open. See plan 57. */
+/* `position: absolute` scopes the drawer to its parent body container, so
+   the surrounding shell chrome stays visible and interactive while a
+   device is open. */
 .zw-drawer__overlay {
 	position: absolute;
 	inset: 0;

@@ -53,7 +53,7 @@
 				class="zw-table__inner"
 				:style="{ height: totalHeight + 'px' }"
 			>
-				<!-- Virtualized: rows and group-heads. Reused across scroll. -->
+				<!-- Virtualized rows and group-heads. -->
 				<template v-for="item in visibleItems" :key="item.id">
 					<div
 						v-if="item.kind === 'group-head'"
@@ -95,9 +95,8 @@
 					/>
 				</template>
 
-				<!-- Persistent: the expanded body lives outside the virtualized
-				     loop so scrolling it out of view (or row-height churn from
-				     a tab switch) never tears it down. -->
+				<!-- The expanded body lives outside the virtualized loop so it
+				     keeps its state across scroll and row-height changes. -->
 				<div
 					v-if="expandedDevice && expandedBodyTop != null"
 					ref="expandedHostRef"
@@ -140,7 +139,7 @@ import type { Device, DeviceAction } from '@/lib/dashboard-types'
 
 type Grouping = 'location' | 'type' | 'all'
 
-// Every toggleable column id, from deviceRowGrid (the source of truth).
+// Every toggleable column id, from deviceRowGrid.
 const ALL_COLS: ToggleableCol[] = TOGGLEABLE_COLS.map((c) => c.id)
 const TOGGLEABLE_COL_SET = new Set<ToggleableCol>(ALL_COLS)
 
@@ -156,9 +155,8 @@ type RowItem = { id: string; kind: 'row'; device: Device }
 type FlatItem = GroupHeadItem | RowItem
 type LayoutItem = FlatItem & { top: number; height: number }
 
-// Fixed sizes — must match the row/group-head CSS below. Keeping them
-// constants (instead of measuring) avoids the resize-feedback loop that
-// killed the DynamicScroller approach.
+// Fixed sizes — must match the row/group-head CSS below. Constants (not
+// measured) avoid a resize-feedback loop.
 const ROW_HEIGHT = 42
 const GROUP_HEAD_HEIGHT = 36
 const SCROLL_BUFFER = 240
@@ -180,9 +178,8 @@ const emit = defineEmits<{
 	action: [Device, DeviceAction]
 }>()
 
-// Built once per visibleCols change so the per-column .has() in the
-// filter below doesn't pay a per-iteration O(n) walk against the
-// array form.
+// A Set so the per-row column check below is O(1); rebuilt when
+// visibleCols changes.
 const visibleColsSet = computed(() => new Set(props.visibleCols))
 
 const columns = computed<ToggleableCol[]>(() => {
@@ -317,11 +314,8 @@ const expandedDevice = computed<Device | null>(() => {
 })
 
 // ── manual virtualization ─────────────────────────────────────────
-// vue-virtual-scroller recycled DOM views across items, which tore
-// the expanded body's component state down on every tab switch.
-// We render only the rows in/near the viewport; the expanded body
-// lives outside this loop so it survives both scroll and row-height
-// churn.
+// Render only the rows in or near the viewport. The expanded body lives
+// outside this loop so its state survives scroll and row-height changes.
 
 const bodyRef = ref<HTMLElement | null>(null)
 const expandedHostRef = ref<HTMLElement | null>(null)
@@ -338,10 +332,8 @@ const layout = computed<{ items: LayoutItem[]; total: number }>(() => {
 			item.kind === 'group-head' ? GROUP_HEAD_HEIGHT : ROW_HEIGHT
 		out.push({ ...item, top, height } as LayoutItem)
 		top += height
-		// Reserve space for the expanded body right after the row
-		// it belongs to. Using a layout-only gap (rather than a
-		// separate flatItems entry) lets us position the persistent
-		// expanded body without it ever entering the virtualized
+		// Reserve space for the expanded body right after its row, as
+		// a layout-only gap so the body never enters the virtualized
 		// loop.
 		if (
 			item.kind === 'row' &&
@@ -361,9 +353,7 @@ const visibleItems = computed<LayoutItem[]>(() => {
 	const top = scrollTop.value - SCROLL_BUFFER
 	const bottom = scrollTop.value + viewportHeight.value + SCROLL_BUFFER
 	const arr = layoutItems.value
-	// Binary-ish narrow: items are top-sorted, so we could bisect, but
-	// a linear pass is plenty fast for 4000 entries and avoids a
-	// pre-built index that has to stay in sync.
+	// Linear scan — fast enough for a few thousand top-sorted entries.
 	const out: LayoutItem[] = []
 	for (const it of arr) {
 		if (it.top + it.height < top) continue

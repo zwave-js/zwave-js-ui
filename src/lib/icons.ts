@@ -1,19 +1,8 @@
-// src/lib/icons.ts
-//
-// Central re-export of the dashboard's icon vocabulary. Each Lucide
-// glyph is aliased to a semantic name suffixed `Icon` so call sites
-// read `<AddIcon :size="ICON_SIZE.inline" />`.
-//
-// Call sites import directly:
-//   import { AddIcon, ICON_SIZE } from '@/lib/icons'
-//
-// Lucide ships per-icon ESM entry points; Vite tree-shakes unused aliases.
-//
-// A few Lucide glyphs back two semantic roles:
-//   - Sun → DimmerIcon (dimmable lights) and SunIcon (weather/illuminance)
-//   - Thermometer → ThermostatIcon (climate device) and TempIcon (sensor)
-// Kept as distinct aliases so call sites express intent — a future swap
-// to a dedicated glyph touches one line here, not every consumer.
+// Dashboard icon vocabulary: each Lucide glyph is aliased to a semantic
+// name suffixed `Icon`, so call sites read `<AddIcon :size="…" />`.
+// A few glyphs back two roles (Sun → DimmerIcon and SunIcon; Thermometer
+// → ThermostatIcon and TempIcon), kept as distinct aliases so call sites
+// express intent.
 
 export {
 	Plus as AddIcon,
@@ -52,7 +41,7 @@ export {
 	Plug as PlugIcon,
 	Power as PowerIcon,
 	QrCode as QrIcon,
-	// Lucide has no PIR/motion glyph; Radio's waves come close though.
+	// Lucide has no motion/PIR glyph; Radio's waves are the closest.
 	Radio as MotionIcon,
 	RefreshCw as RefreshIcon,
 	Search as SearchIcon,
@@ -77,11 +66,8 @@ export {
 } from '@lucide/vue'
 
 /**
- * Closed vocabulary of icon sizes used across the dashboard.
- *
- * Call sites read `<AddIcon :size="ICON_SIZE.inline" />` — numeric
- * literals should be avoided in dashboard components. Sharing a numeric
- * value across aliases is fine; adding a new value is a design call.
+ * Shared icon-size scale; components reference these names rather than
+ * raw pixel values.
  */
 export const ICON_SIZE = {
 	pill: 10, // pill leading glyph; popover-menu check / chevron

@@ -1,15 +1,5 @@
-// src/lib/dashboard-types.ts
-//
-// Type contract that the new dashboard components consume. The
-// authoritative shape and the runtime projection (Z-Wave node → UI
-// Device) ship with plan 70 (`fn · device projection`); these stubs
-// stand in for the contract so the visual components compile and stay
-// statically checked while plan 70 is in review.
-//
-// When plan 70 lands, move these declarations to `src/lib/device-projection.ts`
-// (and `src/lib/device-actions.ts`) and re-export from this module for
-// backwards compatibility — components import from `@/lib/dashboard-types`
-// today.
+// Shared type contract for the dashboard: the `Device` shape plus the
+// value and action types its components render and emit.
 
 import type { Component } from 'vue'
 
@@ -72,10 +62,8 @@ export type PrimaryValue =
 	| PrimaryValueState
 	| PrimaryValueThermostat
 
-// Maps each discriminant to its concrete shape. A renderer declares the
-// one variant it handles (`usePrimaryValue(device, 'state')`) and gets
-// back exactly `PrimaryValueState | null`, so the registry stays
-// type-checked end-to-end instead of relying on scattered `as` casts.
+// Maps each discriminant to its concrete shape, enabling compile-time
+// narrowing by primary-value type.
 export interface PrimaryValueByType {
 	toggle: PrimaryValueToggle
 	dim: PrimaryValueDim
@@ -96,7 +84,7 @@ export interface PowerInfo {
 
 export type DeviceStatus = 'alive' | 'awake' | 'asleep' | 'dead'
 
-// Plan 71 archetype set. The catalogue lives in `src/lib/archetypes.ts`.
+// Archetype kinds; the catalogue lives in `archetypes.ts`.
 export type ArchetypeKind =
 	| 'controller'
 	| 'light'
@@ -117,19 +105,15 @@ export type ArchetypeKind =
 export interface Archetype {
 	kind: ArchetypeKind
 	label: string
-	// Aliased Lucide component (e.g. SwitchIcon from @/lib/icons), rendered
-	// via `<component :is="archetype.icon">`. Typed as Vue's `Component` —
-	// the same contract `primary-display/registry.ts` uses for its renderers.
+	// Lucide icon component, rendered via `<component :is>`.
 	icon: Component
 	power: PowerType
 }
 
 // ── Activity ──────────────────────────────────────────────────
 //
-// In-flight long-running operations against a device: OTA firmware
-// updates, route rebuilds, interviews. Earlier scaffolding called
-// these "transient"; the dashboard rework standardises on "activity"
-// (plan 72).
+// In-flight long-running operations on a device: OTA updates, route
+// rebuilds, interviews.
 
 export type ActivityType = 'ota' | 'rebuild' | 'interview'
 
@@ -188,9 +172,8 @@ export interface Device {
 
 // ── Action contract ───────────────────────────────────────────
 //
-// Components emit `action(device, { type, ... })` rather than
-// verb-specific events. Plan 70 owns the dispatcher that routes each
-// action shape to the matching socket call.
+// Components emit `action(device, { type, … })`; `device-actions.ts`
+// maps each shape to its socket call.
 
 export type DeviceAction =
 	| { type: 'toggle'; on: boolean }

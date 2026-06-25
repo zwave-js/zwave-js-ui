@@ -9,18 +9,10 @@
 </template>
 
 <script setup lang="ts">
-// ControlPanelNew — opt-in route mounting the rework's `ZwAppShell`
-// against the live websocket store. The legacy `/control-panel`
-// remains untouched.
-//
-// `App.vue` hides its own chrome on this route (see `meta.hideTopbar`
-// in `src/router/index.js`), so the new shell renders full-bleed
-// while auth, login, and the socket bootstrap above it stay in place.
-//
-// Actions flow `ZwAppShell @action → dispatchAction → apiRequest()`.
-// `apiRequest` lives on the App.vue instance registered in
-// `instanceManager`; we reach it from the route so the new shell
-// doesn't need to know about App.vue.
+// Opt-in route that mounts `ZwAppShell` against the live websocket store.
+// `meta.hideTopbar` makes App.vue drop its chrome so the shell renders
+// full-bleed. Device actions are resolved by `dispatchAction` and sent
+// through `apiRequest()` on the App instance, reached via `instanceManager`.
 
 import ZwAppShell from '@/components/dashboard/layout/ZwAppShell.vue'
 import { dispatchAction } from '@/lib/device-actions.ts'

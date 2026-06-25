@@ -136,10 +136,8 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-	// "Show this device's details" — the same intent (name + payload) that
-	// ZwDeviceCard emits, so a parent wires one handler for both the row and
-	// the card. The parent owns the surface: expand this row inline (table
-	// view) or open the drawer (card view).
+	// Request to show this device's details; the parent decides whether to
+	// expand the row inline or open the drawer.
 	open: [Device]
 	action: [Device, DeviceAction]
 }>()

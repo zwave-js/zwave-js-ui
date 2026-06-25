@@ -14,8 +14,7 @@
 			</ZwChip>
 		</template>
 
-		<!-- dim — interactive small slider; same drag/click affordance as
-			 the drawer/card slider, just scaled down. -->
+		<!-- dim — interactive small slider -->
 		<template v-else-if="pv?.type === 'dim'">
 			<span class="zw-cp__slider">
 				<ZwSlider

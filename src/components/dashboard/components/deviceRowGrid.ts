@@ -1,12 +1,7 @@
-// deviceRowGrid — DeviceRow column packing.
-//
-// TOGGLEABLE_COLS below is the single source of truth for the optional
-// columns — their ids, order and human labels. ZwColumnsMenu renders its
-// menu from it and ZwDeviceRow keys off the same `ToggleableCol` ids.
-//
-// The viewport drives whether columns are visible at all; the
-// `columns` array drives which optional columns participate.
-// Returns a string ready for `grid-template-columns`.
+// DeviceRow column packing. TOGGLEABLE_COLS is the single source of truth
+// for the optional columns (ids, order, labels) — consumers import it
+// rather than re-declaring. Viewport decides whether columns show at all;
+// the `columns` array decides which optional ones participate.
 
 import { MOBILE_BREAKPOINT } from '@/lib/dashboard-breakpoints.ts'
 
@@ -18,8 +13,7 @@ export type ToggleableCol =
 	| 'signal'
 	| 'lastSeen'
 
-// The toggleable columns in display order, with their menu labels. This is
-// the one place the list is declared; consumers import from here.
+// Toggleable columns in display order, with their menu labels.
 export const TOGGLEABLE_COLS: { id: ToggleableCol; label: string }[] = [
 	{ id: 'activity', label: 'Activity' },
 	{ id: 'location', label: 'Location' },

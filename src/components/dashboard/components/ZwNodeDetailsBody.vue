@@ -41,9 +41,8 @@
 					Controller exposes no command-class values.
 				</div>
 				<div v-else class="zw-nd__values-stub">
-					<!-- TODO: full ValuesView lands as a follow-up plan.
-						 Render a placeholder for now. -->
-					Values pane — full ValuesView ships with a follow-up plan.
+					<!-- Placeholder until the full values view is built. -->
+					Values pane — full view coming soon.
 				</div>
 			</Tabs.Panel>
 
@@ -191,8 +190,7 @@ const firmwareRows = computed<[string, string | number][]>(() => [
 	['Interview', props.device.interviewState],
 ])
 
-// Stubs — plan 70 (association groups) and plan 74 (events) will
-// flesh these out.
+// Placeholder association-group rows.
 const groupsStub: [string, string][] = [
 	['Lifeline', '1 → Controller'],
 	['NodeID_1', '—'],
@@ -228,11 +226,9 @@ const debugRows = computed<[string, string | number][]>(() => [
 	['Generic device class', props.device.archetype.label],
 ])
 
-// ── events tab (plan 74) ─────────────────────────────────────
-// Reuse `node.eventsQueue` from the base store verbatim — same data
-// the legacy events view consumes. The component looks the node up by
-// `device.nodeId` so it stays in sync with socket events without a
-// projection round-trip.
+// ── events tab ───────────────────────────────────────────────
+// Reads `node.eventsQueue` from the base store, looked up by
+// `device.nodeId`, so it tracks socket events live.
 const baseStore = useBaseStore()
 const now = useNow()
 const MAX_EVENTS = 50
@@ -265,9 +261,8 @@ function toMs(t: NodeEventEntry['time']): number | undefined {
 }
 
 function eventDetail(ev: NodeEventEntry): string {
-	// Args shape varies per event — match the legacy renderer's heuristic
-	// of "first arg is the new value when present" and stringify the rest
-	// for unknown events.
+	// Event arg shapes vary: treat the first arg as the new value when
+	// present, and stringify the rest.
 	if (!Array.isArray(ev.args) || ev.args.length === 0) return ''
 	const first = ev.args[0] as unknown
 	if (first && typeof first === 'object') {
@@ -324,9 +319,9 @@ const advancedCommands = computed<{ label: string; action: DeviceAction }[]>(
 </script>
 
 <style>
-/* Unscoped — V0 Tabs primitives set inheritAttrs:false, so Vue does not
-   forward the parent's scoped data-v-* hash onto the rendered tab list,
-   items, or panels. The .zw-nd namespace is unique to this component. */
+/* Unscoped — V0 Tabs primitives use inheritAttrs:false, so the scoped
+   data-v-* hash never reaches the tab list/items/panels. The .zw-nd
+   namespace is unique to this component. */
 .zw-nd {
 	display: flex;
 	flex-direction: column;
@@ -511,7 +506,7 @@ const advancedCommands = computed<{ label: string; action: DeviceAction }[]>(
 	}
 }
 
-/* ── Events tab (plan 74) ───────────────────────────────────── */
+/* ── Events tab ──────────────────────────────────────────────── */
 .zw-nd__events {
 	display: flex;
 	flex-direction: column;

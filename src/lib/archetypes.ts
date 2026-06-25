@@ -1,17 +1,7 @@
-// src/lib/archetypes.ts
-//
-// Plan 71 — archetype catalogue.
-//
-// Maps a Z-Wave node (`ZUINode`) to an `Archetype` — the device kind
-// drives icon stamp, group-by-type bucket, and primary-value selection
-// (plan 30 / 31 / 70).
-//
-// Inference is heuristic: deviceClass.generic → supportsCC → product
-// regex → fallback. Order matters; first match wins.
-//
-// Command classes are referenced by the `CommandClasses` enum from
-// `@zwave-js/cc`, never by hex literal (project convention; see
-// auto-memory `feedback-command-classes`).
+// Archetype catalogue. Maps a Z-Wave node to an `Archetype` — the device
+// kind that drives its icon, grouping, and primary-value selection.
+// Inference is heuristic (device class → supported CCs → product regex →
+// fallback); order matters, first match wins.
 
 import { CommandClasses } from '@zwave-js/core'
 import type { Component } from 'vue'
@@ -42,7 +32,6 @@ interface ArchetypeDef {
 	power: PowerType
 }
 
-// Catalogue ordering mirrors plan 71's table.
 export const ARCHETYPES: Record<ArchetypeKind, ArchetypeDef> = {
 	controller: {
 		kind: 'controller',
@@ -121,9 +110,7 @@ export const ARCHETYPES: Record<ArchetypeKind, ArchetypeDef> = {
 	},
 }
 
-// `Notification` CC notification types (Z-Wave SDS13713). The backend
-// surfaces these as numeric values inside the Notification CC value tree
-// — we read them by stringified name where available, fall back to id.
+// `Notification` CC notification types (Z-Wave SDS13713).
 const NOTIFICATION_TYPE = {
 	smoke: 1,
 	co: 2,
@@ -151,9 +138,8 @@ function hasNotificationType(node: ZUINode, type: number): boolean {
 	for (const v of Object.values(node.values)) {
 		if (v?.commandClass !== (CommandClasses.Notification as number))
 			continue
-		// zwave-js stores notification type as the property group on the value id
-		// (e.g. propertyName 'Smoke Alarm'). Match by id substring as a
-		// pragmatic v1 — refine when finer-grained mapping is needed.
+		// Match by id substring: zwave-js exposes the type via
+		// property/propertyName (e.g. 'Smoke Alarm').
 		const probe =
 			`${v.property ?? ''} ${v.propertyName ?? ''}`.toLowerCase()
 		if (type === NOTIFICATION_TYPE.smoke && probe.includes('smoke'))
@@ -177,12 +163,8 @@ export function productMatches(node: ZUINode, regex: RegExp): boolean {
 }
 
 /**
- * Infer the archetype for a node from device class, supported CCs, and
- * product hints. Pure, side-effect-free.
- *
- * Rules are evaluated highest-priority first; first match wins. When a
- * node legitimately fits two buckets (e.g. a smart plug that supports
- * Binary Switch + Meter), the most specific rule wins.
+ * Infer a node's archetype from device class, supported CCs, and product
+ * hints. Pure; the first matching rule wins, most specific first.
  */
 export function inferArchetype(node: ZUINode): Archetype {
 	const def = inferArchetypeDef(node)

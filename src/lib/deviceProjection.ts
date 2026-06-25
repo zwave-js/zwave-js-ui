@@ -1,14 +1,6 @@
-// src/lib/deviceProjection.ts
-//
-// Plan 70 — Z-Wave node → UI `Device` projection.
-//
-// The projection is the contract every dashboard component relies on
-// (`device.archetype.icon`, `device.primaryValue.type`, `device.power.battery`,
-// …). Components NEVER reach into raw `node.values`; they read the
-// projected shape exclusively.
-//
-// Pure, side-effect-free. Callers (the dashboard store) memoize per
-// node id keyed by (node.lastActive, activity signature).
+// Projects a raw Z-Wave node (`ZUINode`) into the `Device` shape the
+// dashboard renders from. Pure and side-effect-free so callers can
+// memoize per node.
 
 import { CommandClasses } from '@zwave-js/core'
 import type { ZUINode, ZUIValueId } from '../../api/lib/ZwaveClient.ts'
@@ -267,10 +259,8 @@ function clampLevel(n: number): number {
 }
 
 function meterWatts(node: ZUINode): number | null {
-	// Meter CC values appear as `value-<scale>` keys; the scale tells us
-	// the unit. The Watt scales (electric power) come through with
-	// `unit: 'W'` or `'kW'`, so the unit check is the load-bearing
-	// signal — propertyName is localized and unreliable.
+	// Match electric-power readings on `unit` (`W`/`kW`); propertyName is
+	// localized and unreliable.
 	const v = findValue(
 		node,
 		CommandClasses.Meter,
@@ -309,14 +299,9 @@ function labelsFor(kind: string): StateLabels {
 }
 
 /**
- * Plan 72 — derive `device.activity[]` from existing node fields:
- *   - `node.firmwareUpdate` (FirmwareUpdateProgress payload) → OTA
- *   - `node.rebuildRoutesProgress` → rebuild
- *   - `node.interviewStage !== 'Complete'` → interview (with
- *     backend-synthesized `interviewProgress`)
- *
- * `activitiesByNode` is an optional escape hatch (showcase tests
- * inject synthetic entries); when present its entries are appended.
+ * Derive `device.activity[]` from node fields: `firmwareUpdate` → OTA,
+ * `rebuildRoutesProgress` → rebuild, incomplete `interviewStage` →
+ * interview. Entries from `override`, when given, are appended.
  */
 function projectActivities(
 	node: ZUINode,
@@ -345,9 +330,8 @@ function projectActivities(
 
 	const rebuild = node.rebuildRoutesProgress
 	if (rebuild) {
-		// rebuildRoutesProgress is a status enum string per node, not a
-		// percentage. Treat any non-terminal state as in-flight; the
-		// backend's own progress (when wired) replaces the placeholder.
+		// rebuildRoutesProgress is a status enum, not a percentage; treat
+		// any non-terminal state as in-flight.
 		const done =
 			(typeof rebuild === 'string' &&
 				(rebuild === 'done' || rebuild === 'failed')) ||
@@ -441,11 +425,7 @@ export function projectDevice(
 	}
 }
 
-/**
- * Project an array of nodes. Use this for the cross-cutting `devices`
- * pool — the store memoizes per-node so re-projection on partial node
- * updates is cheap.
- */
+/** Project an array of nodes; per-node projection is memoizable upstream. */
 export function projectDevices(
 	nodes: ZUINode[],
 	opts: ProjectOptions = {},

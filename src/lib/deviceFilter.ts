@@ -1,11 +1,5 @@
-// src/lib/deviceFilter.ts
-//
-// Plan 75 — the device filter pipeline. Three ordered operations:
-//   scope → search → group, then sort within each group.
-//
-// Search uses plain case-insensitive substring matching for v1. Future
-// fuzzy multi-token support is documented in the plan; only this
-// function changes when it lands.
+// Device filter pipeline: scope → search → group, then sort within each
+// group. Search is case-insensitive substring matching.
 
 import type { Device } from './dashboard-types.ts'
 import { deviceNeedsAttention } from './attention.ts'
@@ -31,9 +25,8 @@ export const SORTABLE_KEYS: ReadonlySet<SortKey> = new Set<SortKey>([
 ])
 
 /**
- * Switch to a new sort key (starts ascending) or flip direction if the
- * same key is clicked. To return to default the user clicks the ID
- * header — no implicit reset on third click.
+ * Switch to a new sort key (ascending) or flip direction when the same
+ * key is clicked again.
  */
 export function nextSort(prev: SortState, key: SortKey): SortState {
 	if (prev.key !== key) return { key, dir: 'asc' }
@@ -130,10 +123,9 @@ export function groupBy(
 }
 
 /**
- * Run the full pipeline: scope → search → group → sort within each
- * group. The location-by-location ordering follows the sort direction
- * when grouping by location and sorting by location key; controller
- * group stays pinned.
+ * Run the full pipeline: scope → search → group → sort within each group.
+ * When grouping and sorting both by location, the groups themselves follow
+ * the sort direction; the controller group stays pinned first.
  */
 export function buildGroups(
 	devices: Device[],

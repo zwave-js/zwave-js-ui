@@ -1,13 +1,6 @@
-// src/lib/device-actions.ts
-//
-// Plan 70 — action contract + dispatch table.
-//
-// Components emit one event — `action(device, action)` — and never call
-// the socket directly. This file is the single point that translates
-// `DeviceAction` shapes into `socketActions.zwave` API calls. Adding a
-// new action requires both an entry in the union AND a matching
-// dispatcher entry — the conditional-mapped type below makes TS refuse
-// to build if either half is missing.
+// Translates `DeviceAction` shapes into ZwaveClient API requests. The
+// mapped type below forces every action in the union to have a matching
+// dispatcher entry, so a missing one fails to compile.
 
 import { CommandClasses } from '@zwave-js/core'
 import type { Device, DeviceAction } from './dashboard-types.ts'
@@ -19,9 +12,8 @@ type ActionDispatcher<A extends DeviceAction> = (
 	action: A,
 ) => SocketRequest
 
-// What the dispatcher returns — the dispatcher does not own the socket;
-// callers pass the request to `apiRequest()` on the running App
-// instance. This keeps the module pure and easy to test.
+// What the dispatcher returns; callers pass it to `apiRequest()`, which
+// keeps this module pure.
 export interface SocketRequest {
 	api: string
 	args: unknown[]
@@ -74,12 +66,8 @@ export const ACTION_DISPATCHERS: {
 			[a.mode],
 		],
 	}),
-	// UI-only / controller-targeted actions that don't fit the
-	// "reactive CC write" pattern. These produce ZwaveClient API
-	// requests against the controller or node bookkeeping APIs; some
-	// (include / exclude / heal / replace) are conceptually
-	// ControllerActions per plan 70 — kept here for v1 since the
-	// existing UI already routes them through the same emit.
+	// Controller- and node-management actions, mapped to their
+	// bookkeeping APIs.
 	ping: (d) => ({ api: 'pingNode', args: [d.id] }),
 	interview: (d) => ({ api: 'refreshInfo', args: [d.id] }),
 	refresh: (d) => ({ api: 'refreshValues', args: [d.id] }),
@@ -104,11 +92,7 @@ export const ACTION_DISPATCHERS: {
 	exclude: () => ({ api: 'startExclusion', args: [] }),
 }
 
-/**
- * Resolve a `DeviceAction` to the matching socket request. The caller
- * is responsible for actually emitting it (via `apiRequest()` on the
- * App instance) and for any optimistic local update — by design.
- */
+/** Resolve a `DeviceAction` to its socket request; the caller emits it. */
 export function dispatchAction(
 	device: Device,
 	action: DeviceAction,

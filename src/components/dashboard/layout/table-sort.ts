@@ -1,9 +1,4 @@
-// table-sort.ts
-//
-// Plan 75 took over the canonical sort + comparator implementation
-// (`src/lib/deviceFilter.ts`). This module stays as a re-export shim
-// so existing imports (`./table-sort`) keep working without churn —
-// `ZwTableBody` and `ZwAppShell` import the same symbols either way.
+// Re-export shim for the sort helpers in `lib/deviceFilter.ts`.
 
 export {
 	DEFAULT_SORT,

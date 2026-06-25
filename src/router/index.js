@@ -141,11 +141,9 @@ const router = createRouter({
 			},
 		},
 		{
-			// Opt-in alternate dashboard route. Mounts the rework's
-			// ZwAppShell against the live websocket store. The legacy
-			// /control-panel keeps working untouched. `hideTopbar`
-			// suppresses App.vue's `<v-app-bar>` + `<v-navigation-drawer>`
-			// so the new shell renders full-bleed.
+			// Opt-in alternate dashboard route. `hideTopbar` makes App.vue
+			// drop its app-bar and navigation drawer so the shell renders
+			// full-bleed.
 			path: Routes.controlPanelNew,
 			name: 'Control Panel (new)',
 			component: ControlPanelNew,
