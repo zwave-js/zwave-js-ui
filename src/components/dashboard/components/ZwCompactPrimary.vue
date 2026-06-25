@@ -9,9 +9,7 @@
 					(on) => emit('action', device, { type: 'toggle', on })
 				"
 			/>
-			<ZwChip
-				:tone="(pv as PrimaryValueToggle).on ? 'neutral' : 'neutral'"
-			>
+			<ZwChip tone="neutral">
 				{{ (pv as PrimaryValueToggle).on ? 'ON' : 'OFF' }}
 			</ZwChip>
 		</template>
