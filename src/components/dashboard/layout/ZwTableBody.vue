@@ -106,7 +106,6 @@
 				>
 					<ZwExpandedRow
 						:device="expandedDevice"
-						:viewport="viewport"
 						@action="(dev, a) => emit('action', dev, a)"
 					/>
 				</div>
