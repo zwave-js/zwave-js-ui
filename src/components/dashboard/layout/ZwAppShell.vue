@@ -201,6 +201,10 @@ const persisted = loadPrefs()
 
 const active = ref<string>(persisted.scope ?? props.initialActive)
 const mobileSidebarOpen = ref(false)
+// Manual override of the width-derived sidebar mode. Intentionally NOT
+// persisted: collapse/expand is a per-session choice that resets to the
+// viewport-appropriate default on reload, so it's absent from DashboardPrefs
+// and from the persistence watcher below.
 const sidebarState = ref<'collapsed' | 'wide' | null>(null)
 const activityHidden = ref(persisted.activityHidden)
 const query = ref('')

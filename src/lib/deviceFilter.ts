@@ -80,7 +80,7 @@ export function applySearch(devices: Device[], query: string): Device[] {
 	if (!q) return devices
 	return devices.filter((d) =>
 		[d.name, d.location, d.product, d.manufacturer, String(d.nodeId)].some(
-			(s) => !!s && s.toLowerCase().includes(q),
+			(s) => s?.toLowerCase().includes(q),
 		),
 	)
 }
