@@ -7,14 +7,8 @@
 //
 // The store does NOT own UI-local dashboard state (active scope, view,
 // query, selection). Those live in `ZwAppShell.vue` (plan 50).
-//
-// `setDevices()` remains as an escape hatch for the showcase fixture
-// (`src/views/DashboardShowcase.vue`) — when the showcase mounts it
-// pushes a static device list, bypassing the base-store projection.
-// Production callers should not call `setDevices`; let the projection
-// computed track the live `useBaseStore().nodes`.
 
-import { computed, ref } from 'vue'
+import { computed } from 'vue'
 import { defineStore } from 'pinia'
 import useBaseStore from './base.js'
 import { projectDevices } from '../lib/deviceProjection.ts'
@@ -24,18 +18,10 @@ import type { Device } from '../lib/dashboard-types.ts'
 const useDashboardStore = defineStore('dashboard', () => {
 	const base = useBaseStore()
 
-	// Showcase-only override. `null` means: project live nodes from
-	// the base store. Plan 70 acceptance: production never sets this.
-	const override = ref<Device[] | null>(null)
-
-	const projected = computed<Device[]>(() =>
+	const devices = computed<Device[]>(() =>
 		projectDevices(
 			(base.nodes ?? []) as Parameters<typeof projectDevices>[0],
 		),
-	)
-
-	const devices = computed<Device[]>(() =>
-		override.value !== null ? override.value : projected.value,
 	)
 
 	const deviceCount = computed(
@@ -52,22 +38,12 @@ const useDashboardStore = defineStore('dashboard', () => {
 
 	const activityCount = computed(() => activities.value.length)
 
-	function setDevices(d: Device[]) {
-		override.value = d
-	}
-
-	function clearOverride() {
-		override.value = null
-	}
-
 	return {
 		devices,
 		deviceCount,
 		attentionCount,
 		activities,
 		activityCount,
-		setDevices,
-		clearOverride,
 	}
 })
 
