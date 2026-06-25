@@ -121,6 +121,7 @@ import ZwExpandedRow from '@/components/dashboard/components/ZwExpandedRow.vue'
 import ZwEmptyState from '@/components/dashboard/components/ZwEmptyState.vue'
 import {
 	deviceRowGrid,
+	TOGGLEABLE_COLS,
 	type ToggleableCol,
 } from '@/components/dashboard/components/deviceRowGrid'
 import {
@@ -139,14 +140,9 @@ import type { Device, DeviceAction } from '@/lib/dashboard-types'
 
 type Grouping = 'location' | 'type' | 'all'
 
-const TOGGLEABLE_COL_SET = new Set<ToggleableCol>([
-	'activity',
-	'location',
-	'value',
-	'power',
-	'signal',
-	'lastSeen',
-])
+// Every toggleable column id, from deviceRowGrid (the source of truth).
+const ALL_COLS: ToggleableCol[] = TOGGLEABLE_COLS.map((c) => c.id)
+const TOGGLEABLE_COL_SET = new Set<ToggleableCol>(ALL_COLS)
 
 type GroupHeadItem = {
 	id: string
@@ -193,7 +189,7 @@ const columns = computed<ToggleableCol[]>(() => {
 	let cap: ToggleableCol[]
 	const w = props.viewport
 	if (w >= 1024) {
-		cap = ['activity', 'location', 'value', 'power', 'signal', 'lastSeen']
+		cap = ALL_COLS
 	} else if (w >= 768) {
 		cap = ['location', 'value', 'power', 'signal']
 	} else {

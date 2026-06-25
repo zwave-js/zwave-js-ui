@@ -33,11 +33,11 @@
 import { computed } from 'vue'
 import ZwSegmented from '@/components/dashboard/atoms/ZwSegmented.vue'
 import ZwColumnsMenu from '@/components/dashboard/components/ZwColumnsMenu.vue'
+import type { ToggleableCol } from '@/components/dashboard/components/deviceRowGrid'
 import { GridIcon, ListIcon, LocationsIcon, TypeIcon } from '@/lib/icons'
 
 type Grouping = 'location' | 'type' | 'all'
 type View = 'cards' | 'table'
-type ToggleableCol = 'activity' | 'location' | 'value' | 'power' | 'lastSeen'
 
 const props = defineProps<{
 	grouping: Grouping
