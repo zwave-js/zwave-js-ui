@@ -1,9 +1,4 @@
-// src/lib/archetypes.test.js
-//
-// Plan 71 — archetype catalogue tests.
-// Runs under the `test:ui` mocha+babel suite so this file is .js.
-// `archetypes.ts` re-exports plain functions; type checks happen at build
-// time, not at test time.
+// Archetype catalogue tests (mocha+babel `test:ui` suite, hence .js).
 
 import { expect } from 'chai'
 import { CommandClasses } from '@zwave-js/core'

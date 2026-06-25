@@ -1,6 +1,4 @@
-// src/lib/deviceProjection.test.js
-//
-// Plan 70 — projection tests. Mocha + Babel.
+// Device projection tests.
 
 import { expect } from 'chai'
 import { CommandClasses } from '@zwave-js/core'

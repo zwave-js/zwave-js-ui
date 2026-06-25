@@ -1,6 +1,4 @@
-// src/lib/attention.test.js
-//
-// Plan 73 — attention predicate tests.
+// Attention predicate tests.
 
 import { expect } from 'chai'
 import {

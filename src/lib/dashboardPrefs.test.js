@@ -1,6 +1,4 @@
-// src/lib/dashboardPrefs.test.js
-//
-// Plan 76 — preferences persistence tests.
+// Preferences persistence tests.
 
 import { expect } from 'chai'
 

@@ -1,6 +1,4 @@
-// src/lib/time.test.js
-//
-// Plan 74 — relativeTime tests.
+// relativeTime tests.
 
 import { expect } from 'chai'
 import { relativeTime } from './time.ts'

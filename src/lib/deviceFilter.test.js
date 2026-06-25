@@ -1,6 +1,4 @@
-// src/lib/deviceFilter.test.js
-//
-// Plan 75 — filter pipeline tests.
+// Filter pipeline tests.
 
 import { expect } from 'chai'
 import {
