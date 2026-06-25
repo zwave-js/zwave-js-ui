@@ -86,7 +86,7 @@
 					<ZwDeviceRow
 						v-else
 						:device="item.device"
-						:expanded="expandedId === item.device.id"
+						:expanded="expandedId === item.device.nodeId"
 						:columns="columns as ToggleableCol[]"
 						:viewport="viewport"
 						:style="absStyle(item)"
@@ -164,7 +164,7 @@ const SCROLL_BUFFER = 240
 const props = defineProps<{
 	groups: [string, Device[]][]
 	viewport: number
-	expandedId: number | string | null
+	expandedId: number | null
 	collapsedGroups: Set<string>
 	visibleCols: readonly string[]
 	sort: SortState
@@ -297,7 +297,7 @@ const flatItems = computed<FlatItem[]>(() => {
 		})
 		if (collapsed) continue
 		for (const d of items) {
-			out.push({ id: `row:${d.id}`, kind: 'row', device: d })
+			out.push({ id: `row:${d.nodeId}`, kind: 'row', device: d })
 		}
 	}
 	return out
@@ -306,7 +306,7 @@ const flatItems = computed<FlatItem[]>(() => {
 const expandedDevice = computed<Device | null>(() => {
 	if (props.expandedId == null) return null
 	for (const item of flatItems.value) {
-		if (item.kind === 'row' && item.device.id === props.expandedId) {
+		if (item.kind === 'row' && item.device.nodeId === props.expandedId) {
 			return item.device
 		}
 	}
@@ -338,7 +338,7 @@ const layout = computed<{ items: LayoutItem[]; total: number }>(() => {
 		if (
 			item.kind === 'row' &&
 			expanded != null &&
-			item.device.id === expanded
+			item.device.nodeId === expanded
 		) {
 			top += expandedBodyHeight.value
 		}
@@ -366,7 +366,7 @@ const visibleItems = computed<LayoutItem[]>(() => {
 const expandedBodyTop = computed<number | null>(() => {
 	if (props.expandedId == null) return null
 	for (const it of layoutItems.value) {
-		if (it.kind === 'row' && it.device.id === props.expandedId) {
+		if (it.kind === 'row' && it.device.nodeId === props.expandedId) {
 			return it.top + ROW_HEIGHT
 		}
 	}

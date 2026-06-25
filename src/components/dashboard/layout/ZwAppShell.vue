@@ -206,8 +206,8 @@ const activityHidden = ref(persisted.activityHidden)
 const query = ref('')
 const grouping = ref<Grouping>(persisted.grouping ?? props.initialGrouping)
 const view = ref<View>(persisted.view ?? props.initialView)
-const selectedId = ref<Device['id'] | null>(null)
-const expandedRowId = ref<Device['id'] | null>(null)
+const selectedId = ref<number | null>(null)
+const expandedRowId = ref<number | null>(null)
 const collapsedGroups = ref<Set<string>>(new Set(persisted.collapsedGroups))
 const visibleCols = ref<string[]>([...persisted.visibleCols])
 const sort = ref<SortState>({ ...(persisted.sort as SortState) })
@@ -302,7 +302,7 @@ const groups = computed<[string, Device[]][]>(() =>
 const selectedDevice = computed(() =>
 	selectedId.value === null
 		? null
-		: (devices.value.find((d) => d.id === selectedId.value) ?? null),
+		: (devices.value.find((d) => d.nodeId === selectedId.value) ?? null),
 )
 
 // ── scope title ──────────────────────────────────────────────
@@ -367,12 +367,12 @@ function onCardOpen(d: Device, e?: MouseEvent): void {
 	if (e?.currentTarget instanceof HTMLElement) {
 		triggerEl.value = e.currentTarget
 	}
-	selectedId.value = d.id
+	selectedId.value = d.nodeId
 }
 
 function onRowOpen(dev: Device): void {
 	// Table view shows details inline: toggle this row's expansion.
-	expandedRowId.value = expandedRowId.value === dev.id ? null : dev.id
+	expandedRowId.value = expandedRowId.value === dev.nodeId ? null : dev.nodeId
 }
 
 function onToggleGroup(key: string): void {

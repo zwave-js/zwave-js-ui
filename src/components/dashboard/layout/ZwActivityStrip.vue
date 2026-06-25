@@ -8,7 +8,7 @@
 			<span class="zw-strip__label">Activity</span>
 			<span
 				v-for="d in visibleActivities"
-				:key="d.id"
+				:key="d.nodeId"
 				class="zw-strip__chip"
 			>
 				<span class="zw-strip__pulse" />
@@ -25,7 +25,7 @@
 				aria-label="Hide activity"
 				@click="emit('hide')"
 			>
-				<XIcon :size="14" />
+				<XIcon :size="ICON_SIZE.inline" />
 			</Button.Root>
 		</div>
 	</div>
@@ -34,7 +34,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { Button } from '@vuetify/v0'
-import { XIcon } from '@/lib/icons'
+import { ICON_SIZE, XIcon } from '@/lib/icons'
 import type { Device } from '@/lib/dashboard-types'
 
 const props = defineProps<{

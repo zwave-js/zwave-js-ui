@@ -5,6 +5,7 @@
 			class="zw-drawer__panel"
 			role="dialog"
 			aria-modal="true"
+			:aria-label="device.name"
 			@click.stop
 		>
 			<header class="zw-drawer__header">
@@ -95,14 +96,16 @@ function onKeyDown(e: KeyboardEvent) {
 	}
 }
 
+// Trap focus only on the open transition and release it on close; switching
+// from one device to another keeps the single active trap on the same panel.
 watch(
 	() => props.device,
-	async (d) => {
-		if (d) {
+	async (d, prev) => {
+		if (d && !prev) {
 			await nextTick()
 			activateTrap()
 			document.addEventListener('keydown', onKeyDown)
-		} else {
+		} else if (!d && prev) {
 			deactivateTrap()
 			document.removeEventListener('keydown', onKeyDown)
 		}

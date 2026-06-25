@@ -391,7 +391,6 @@ export function projectDevice(
 	const activity = projectActivities(node, opts.activitiesByNode)
 
 	return {
-		id: node.id,
 		nodeId: node.id,
 		isController: !!node.isControllerNode,
 		name: node.name || node.productLabel || `Node ${node.id}`,
@@ -413,6 +412,7 @@ export function projectDevice(
 		},
 		protocol: projectProtocol(node),
 		lastSeen: lastSeenLabel(now, node.lastActive),
+		lastSeenTs: node.lastActive,
 		primaryValue: projectPrimaryValue(node, archetype.kind),
 		activity,
 		health: 'ok',

@@ -145,7 +145,6 @@ export interface CommStats {
 // ── Device ────────────────────────────────────────────────────
 
 export interface Device {
-	id: number | string
 	nodeId: number
 	isController: boolean
 	name: string
@@ -162,6 +161,8 @@ export interface Device {
 	firmware?: { node?: string; sdk?: string }
 	protocol?: string
 	lastSeen: string
+	// Raw last-active epoch (ms) backing the `lastSeen` label, kept for sorting.
+	lastSeenTs?: number
 	primaryValue: PrimaryValue | null
 	activity: Activity[]
 	health?: 'ok' | 'weak' | 'unknown'

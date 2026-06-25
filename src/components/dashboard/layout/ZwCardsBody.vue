@@ -47,7 +47,7 @@
 				>
 					<ZwDeviceCard
 						v-for="d in item.devices"
-						:key="d.id"
+						:key="d.nodeId"
 						:device="d"
 						@open="(dev) => emit('open', dev)"
 						@action="(dev, a) => emit('action', dev, a)"
@@ -120,7 +120,7 @@ const flatItems = computed<FlatItem[]>(() => {
 		for (let i = 0; i < devices.length; i += n) {
 			const slice = devices.slice(i, i + n)
 			out.push({
-				id: `row:${key}:${i}:${slice.map((d) => d.id).join(',')}`,
+				id: `row:${key}:${i}:${slice.map((d) => d.nodeId).join(',')}`,
 				kind: 'card-row',
 				devices: slice,
 			})

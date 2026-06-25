@@ -83,7 +83,6 @@
     "@kvaster/zwavejs-prom": "^0.0.3",
     "@lucide/vue": "^1.16.0",
     "@vuetify/v0": "~1.0.0-alpha.5",
-    "@vueuse/core": "^14.3.0",
     "@zwave-js/log-transport-json": "^3.0.0",
     "@zwave-js/server": "^3.8.0",
     "archiver": "^7.0.1",

@@ -12,7 +12,6 @@ import {
 
 function mk(o) {
 	return {
-		id: o.id,
 		nodeId: o.id,
 		isController: !!o.isController,
 		name: o.name ?? `Node ${o.id}`,
@@ -55,12 +54,12 @@ describe('applyScope', () => {
 	it('attention keeps controller + dead', () => {
 		const out = applyScope([CONTROLLER, SWITCH_A, DEAD], 'attention')
 		expect(out).to.have.length(2)
-		expect(out.map((d) => d.id)).to.deep.equal([1, 4])
+		expect(out.map((d) => d.nodeId)).to.deep.equal([1, 4])
 	})
 	it('activity keeps only devices with activity', () => {
 		const out = applyScope([CONTROLLER, SWITCH_A, RUNNING], 'activity')
 		expect(out).to.have.length(1)
-		expect(out[0].id).to.equal(5)
+		expect(out[0].nodeId).to.equal(5)
 	})
 })
 
@@ -166,9 +165,9 @@ describe('buildGroups (full pipeline)', () => {
 		})
 		expect(out[0][0]).to.equal('__controller')
 		// Switches are sorted by id within each bucket.
-		expect(out.flatMap(([, ds]) => ds.map((d) => d.id))).to.include.members(
-			[1, 2, 3, 4, 5],
-		)
+		expect(
+			out.flatMap(([, ds]) => ds.map((d) => d.nodeId)),
+		).to.include.members([1, 2, 3, 4, 5])
 	})
 
 	it('attention scope narrows the pool', () => {
@@ -178,7 +177,7 @@ describe('buildGroups (full pipeline)', () => {
 			query: '',
 			sort: { key: 'id', dir: 'asc' },
 		})
-		expect(out[0][1].map((d) => d.id)).to.have.members([1, 4])
+		expect(out[0][1].map((d) => d.nodeId)).to.have.members([1, 4])
 	})
 
 	it('location sort reorders groups by location asc/desc', () => {

@@ -29,7 +29,7 @@ export const ACTION_DISPATCHERS: {
 	toggle: (d, a) => ({
 		api: 'sendCommand',
 		args: [
-			{ nodeId: d.id as number, commandClass: cc('Binary Switch') },
+			{ nodeId: d.nodeId, commandClass: cc('Binary Switch') },
 			'set',
 			[a.on],
 		],
@@ -37,7 +37,7 @@ export const ACTION_DISPATCHERS: {
 	dim: (d, a) => ({
 		api: 'sendCommand',
 		args: [
-			{ nodeId: d.id as number, commandClass: cc('Multilevel Switch') },
+			{ nodeId: d.nodeId, commandClass: cc('Multilevel Switch') },
 			'set',
 			[a.level],
 		],
@@ -45,7 +45,7 @@ export const ACTION_DISPATCHERS: {
 	lock: (d, a) => ({
 		api: 'sendCommand',
 		args: [
-			{ nodeId: d.id as number, commandClass: cc('Door Lock') },
+			{ nodeId: d.nodeId, commandClass: cc('Door Lock') },
 			'set',
 			[a.locked ? 255 : 0],
 		],
@@ -53,7 +53,7 @@ export const ACTION_DISPATCHERS: {
 	'thermostat-setpoint': (d, a) => ({
 		api: 'sendCommand',
 		args: [
-			{ nodeId: d.id as number, commandClass: cc('Thermostat Setpoint') },
+			{ nodeId: d.nodeId, commandClass: cc('Thermostat Setpoint') },
 			'set',
 			[1, a.setpoint],
 		],
@@ -61,26 +61,26 @@ export const ACTION_DISPATCHERS: {
 	'thermostat-mode': (d, a) => ({
 		api: 'sendCommand',
 		args: [
-			{ nodeId: d.id as number, commandClass: cc('Thermostat Mode') },
+			{ nodeId: d.nodeId, commandClass: cc('Thermostat Mode') },
 			'set',
 			[a.mode],
 		],
 	}),
 	// Controller- and node-management actions, mapped to their
 	// bookkeeping APIs.
-	ping: (d) => ({ api: 'pingNode', args: [d.id] }),
-	interview: (d) => ({ api: 'refreshInfo', args: [d.id] }),
-	refresh: (d) => ({ api: 'refreshValues', args: [d.id] }),
-	rebuild: (d) => ({ api: 'rebuildNodeRoutes', args: [d.id] }),
-	remove: (d) => ({ api: 'removeFailedNode', args: [d.id] }),
-	export: (d) => ({ api: 'dumpNode', args: [d.id] }),
-	clear: (d) => ({ api: 'softReset', args: [d.id] }),
+	ping: (d) => ({ api: 'pingNode', args: [d.nodeId] }),
+	interview: (d) => ({ api: 'refreshInfo', args: [d.nodeId] }),
+	refresh: (d) => ({ api: 'refreshValues', args: [d.nodeId] }),
+	rebuild: (d) => ({ api: 'rebuildNodeRoutes', args: [d.nodeId] }),
+	remove: (d) => ({ api: 'removeFailedNode', args: [d.nodeId] }),
+	export: (d) => ({ api: 'dumpNode', args: [d.nodeId] }),
+	clear: (d) => ({ api: 'softReset', args: [d.nodeId] }),
 	heal: () => ({ api: 'beginRebuildingRoutes', args: [] }),
 	'backup-nvm': () => ({ api: 'backupNVMRaw', args: [] }),
 	'restore-nvm': () => ({ api: 'restoreNVM', args: [] }),
-	'reset-stats': (d) => ({ api: 'resetStatistics', args: [d.id] }),
-	'export-json': (d) => ({ api: 'dumpNode', args: [d.id] }),
-	'update-topics': (d) => ({ api: 'updateHassDiscovery', args: [d.id] }),
+	'reset-stats': (d) => ({ api: 'resetStatistics', args: [d.nodeId] }),
+	'export-json': (d) => ({ api: 'dumpNode', args: [d.nodeId] }),
+	'update-topics': (d) => ({ api: 'updateHassDiscovery', args: [d.nodeId] }),
 	'hard-reset': () => ({ api: 'hardReset', args: [] }),
 	'restart-driver': () => ({ api: 'restart', args: [] }),
 	include: () => ({ api: 'startInclusion', args: [] }),

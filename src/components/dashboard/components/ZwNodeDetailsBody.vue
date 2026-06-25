@@ -165,7 +165,7 @@ const tab = ref<TabId>(props.device.isController ? 'summary' : 'values')
 
 // Switching to a different device resets to that device's default tab.
 watch(
-	() => props.device.id,
+	() => props.device.nodeId,
 	() => {
 		tab.value = props.device.isController ? 'summary' : 'values'
 	},

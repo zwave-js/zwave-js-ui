@@ -44,7 +44,7 @@ function sortValueFor(d: Device, key: SortKey): number | string {
 			if (d.power.type === 'mains') return -1
 			return d.power.battery ?? 0
 		case 'lastSeen':
-			return (d as Device & { lastSeenSecs?: number }).lastSeenSecs ?? 0
+			return d.lastSeenTs ?? 0
 		case 'activity':
 			return (d.activity?.length ?? 0) > 0 ? 1 : 0
 	}
@@ -79,9 +79,9 @@ export function applySearch(devices: Device[], query: string): Device[] {
 	const q = query.toLowerCase().trim()
 	if (!q) return devices
 	return devices.filter((d) =>
-		[d.name, d.location, d.product, d.manufacturer, String(d.nodeId)]
-			.filter(Boolean)
-			.some((s) => s.toLowerCase().includes(q)),
+		[d.name, d.location, d.product, d.manufacturer, String(d.nodeId)].some(
+			(s) => !!s && s.toLowerCase().includes(q),
+		),
 	)
 }
 
