@@ -6,7 +6,7 @@
 			'zw-row--mobile': viewport < MOBILE_BREAKPOINT,
 		}"
 		:style="rowStyle"
-		@click="emit('expand', device.id)"
+		@click="emit('open', device)"
 	>
 		<ZwStatusDot
 			:status="device.isController ? 'controller' : device.status"
@@ -98,7 +98,7 @@
 				class="zw-row__expand"
 				:aria-expanded="expanded"
 				:aria-label="expanded ? 'Collapse details' : 'Expand details'"
-				@click.stop="emit('expand', device.id)"
+				@click.stop="emit('open', device)"
 			>
 				<ChevronDownIcon
 					:size="ICON_SIZE.sortArrow"
@@ -136,7 +136,11 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-	expand: [Device['id']]
+	// "Show this device's details" — the same intent (name + payload) that
+	// ZwDeviceCard emits, so a parent wires one handler for both the row and
+	// the card. The parent owns the surface: expand this row inline (table
+	// view) or open the drawer (card view).
+	open: [Device]
 	action: [Device, DeviceAction]
 }>()
 
