@@ -1,5 +1,5 @@
 <template>
-	<div class="zw-pv-thermostat">
+	<div v-if="pv" class="zw-pv-thermostat">
 		<div class="zw-pv-thermostat__row">
 			<span class="zw-pv-thermostat__current">{{ pv.value }}</span>
 			<span class="zw-pv-thermostat__unit">{{ pv.unit }}</span>
@@ -12,12 +12,8 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
-import type {
-	Device,
-	DeviceAction,
-	PrimaryValueThermostat,
-} from '@/lib/dashboard-types'
+import { usePrimaryValue } from './usePrimaryValue'
+import type { Device, DeviceAction } from '@/lib/dashboard-types'
 
 const props = defineProps<{ device: Device; compact?: boolean }>()
 // Setpoint / mode editing controls live in the drawer; the card variant
@@ -25,7 +21,7 @@ const props = defineProps<{ device: Device; compact?: boolean }>()
 // dispatcher's @action passthrough is type-correct.
 defineEmits<{ action: [Device, DeviceAction] }>()
 
-const pv = computed(() => props.device.primaryValue as PrimaryValueThermostat)
+const pv = usePrimaryValue(() => props.device, 'thermostat')
 </script>
 
 <style scoped>

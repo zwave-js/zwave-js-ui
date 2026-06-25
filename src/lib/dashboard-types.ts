@@ -72,6 +72,19 @@ export type PrimaryValue =
 	| PrimaryValueState
 	| PrimaryValueThermostat
 
+// Maps each discriminant to its concrete shape. A renderer declares the
+// one variant it handles (`usePrimaryValue(device, 'state')`) and gets
+// back exactly `PrimaryValueState | null`, so the registry stays
+// type-checked end-to-end instead of relying on scattered `as` casts.
+export interface PrimaryValueByType {
+	toggle: PrimaryValueToggle
+	dim: PrimaryValueDim
+	lock: PrimaryValueLock
+	reading: PrimaryValueReading
+	state: PrimaryValueState
+	thermostat: PrimaryValueThermostat
+}
+
 // ── Power / status / archetype ─────────────────────────────────
 
 export type PowerType = 'mains' | 'battery' | 'usb'

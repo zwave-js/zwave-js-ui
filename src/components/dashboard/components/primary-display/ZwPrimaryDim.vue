@@ -1,5 +1,5 @@
 <template>
-	<div class="zw-pv-dim" @click.stop>
+	<div v-if="pv" class="zw-pv-dim" @click.stop>
 		<div class="zw-pv-dim__top">
 			<span class="zw-pv-dim__value">
 				{{ pv.level }}<span class="zw-pv-dim__pct">%</span>
@@ -18,16 +18,13 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import ZwSlider from '@/components/dashboard/atoms/ZwSlider.vue'
-import type {
-	Device,
-	DeviceAction,
-	PrimaryValueDim,
-} from '@/lib/dashboard-types'
+import { usePrimaryValue } from './usePrimaryValue'
+import type { Device, DeviceAction } from '@/lib/dashboard-types'
 
 const props = defineProps<{ device: Device; compact?: boolean }>()
 const emit = defineEmits<{ action: [Device, DeviceAction] }>()
 
-const pv = computed(() => props.device.primaryValue as PrimaryValueDim)
+const pv = usePrimaryValue(() => props.device, 'dim')
 
 const caption = computed(() =>
 	props.device.archetype.kind === 'shade' ? 'Open' : 'Bright',

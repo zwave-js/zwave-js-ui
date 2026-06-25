@@ -1,5 +1,5 @@
 <template>
-	<div class="zw-pv-state">
+	<div v-if="pv" class="zw-pv-state">
 		<div
 			class="zw-pv-state__value"
 			:class="{ 'zw-pv-state__value--alert': isAlert }"
@@ -12,11 +12,12 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { Device, PrimaryValueState } from '@/lib/dashboard-types'
+import { usePrimaryValue } from './usePrimaryValue'
+import type { Device } from '@/lib/dashboard-types'
 
 const props = defineProps<{ device: Device; compact?: boolean }>()
 
-const pv = computed(() => props.device.primaryValue as PrimaryValueState)
+const pv = usePrimaryValue(() => props.device, 'state')
 
 const isAlert = computed(() => {
 	const v = pv.value

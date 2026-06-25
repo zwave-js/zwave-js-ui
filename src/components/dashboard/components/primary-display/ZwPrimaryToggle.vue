@@ -1,5 +1,5 @@
 <template>
-	<div class="zw-pv-toggle" @click.stop>
+	<div v-if="pv" class="zw-pv-toggle" @click.stop>
 		<div class="zw-pv-toggle__label-col">
 			<div
 				class="zw-pv-toggle__label"
@@ -22,18 +22,14 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
 import ZwToggle from '@/components/dashboard/atoms/ZwToggle.vue'
-import type {
-	Device,
-	DeviceAction,
-	PrimaryValueToggle,
-} from '@/lib/dashboard-types'
+import { usePrimaryValue } from './usePrimaryValue'
+import type { Device, DeviceAction } from '@/lib/dashboard-types'
 
 const props = defineProps<{ device: Device; compact?: boolean }>()
 const emit = defineEmits<{ action: [Device, DeviceAction] }>()
 
-const pv = computed(() => props.device.primaryValue as PrimaryValueToggle)
+const pv = usePrimaryValue(() => props.device, 'toggle')
 </script>
 
 <style scoped>

@@ -1,17 +1,17 @@
 <template>
-	<div class="zw-pv-reading">
+	<div v-if="pv" class="zw-pv-reading">
 		<span class="zw-pv-reading__value">{{ pv.value }}</span>
 		<span class="zw-pv-reading__unit">{{ pv.unit }}</span>
 	</div>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
-import type { Device, PrimaryValueReading } from '@/lib/dashboard-types'
+import { usePrimaryValue } from './usePrimaryValue'
+import type { Device } from '@/lib/dashboard-types'
 
 const props = defineProps<{ device: Device; compact?: boolean }>()
 
-const pv = computed(() => props.device.primaryValue as PrimaryValueReading)
+const pv = usePrimaryValue(() => props.device, 'reading')
 </script>
 
 <style scoped>

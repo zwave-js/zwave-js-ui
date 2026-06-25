@@ -1,5 +1,5 @@
 <template>
-	<div class="zw-pv-lock" @click.stop>
+	<div v-if="pv" class="zw-pv-lock" @click.stop>
 		<div class="zw-pv-lock__label-col">
 			<div
 				class="zw-pv-lock__label"
@@ -19,18 +19,14 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
 import ZwToggle from '@/components/dashboard/atoms/ZwToggle.vue'
-import type {
-	Device,
-	DeviceAction,
-	PrimaryValueLock,
-} from '@/lib/dashboard-types'
+import { usePrimaryValue } from './usePrimaryValue'
+import type { Device, DeviceAction } from '@/lib/dashboard-types'
 
 const props = defineProps<{ device: Device; compact?: boolean }>()
 const emit = defineEmits<{ action: [Device, DeviceAction] }>()
 
-const pv = computed(() => props.device.primaryValue as PrimaryValueLock)
+const pv = usePrimaryValue(() => props.device, 'lock')
 </script>
 
 <style scoped>
