@@ -13,19 +13,14 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { usePrimaryValue } from './usePrimaryValue'
+import { isStateAlert } from '@/lib/primaryValue'
 import type { Device } from '@/lib/dashboard-types'
 
 const props = defineProps<{ device: Device; compact?: boolean }>()
 
 const pv = usePrimaryValue(() => props.device, 'state')
 
-const isAlert = computed(() => {
-	const v = pv.value
-	if (!v) return false
-	return (
-		v.stateIdx === 1 && (v.colors[1] === 'red' || v.colors[1] === 'amber')
-	)
-})
+const isAlert = computed(() => (pv.value ? isStateAlert(pv.value) : false))
 </script>
 
 <style scoped>

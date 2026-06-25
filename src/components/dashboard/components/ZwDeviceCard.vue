@@ -80,6 +80,7 @@ import ZwPill from '@/components/dashboard/atoms/ZwPill.vue'
 import ZwBatteryMini from '@/components/dashboard/atoms/ZwBatteryMini.vue'
 import ZwActivityReadout from '@/components/dashboard/atoms/ZwActivityReadout.vue'
 import { DownloadIcon, ICON_SIZE, MoonIcon } from '@/lib/icons'
+import { isStateAlert } from '@/lib/primaryValue'
 import type { Device, DeviceAction } from '@/lib/dashboard-types'
 
 const props = defineProps<{ device: Device }>()
@@ -92,11 +93,7 @@ const nodeIdLabel = computed(() => String(props.device.nodeId).padStart(3, '0'))
 
 const isAlertState = computed(() => {
 	const pv = props.device.primaryValue
-	if (!pv || pv.type !== 'state') return false
-	return (
-		pv.stateIdx === 1 &&
-		(pv.colors[1] === 'red' || pv.colors[1] === 'amber')
-	)
+	return pv?.type === 'state' ? isStateAlert(pv) : false
 })
 
 function onKeyDown(e: KeyboardEvent) {

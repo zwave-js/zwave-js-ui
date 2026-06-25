@@ -64,6 +64,7 @@
 import { computed } from 'vue'
 import ZwToggle from '@/components/dashboard/atoms/ZwToggle.vue'
 import ZwChip from '@/components/dashboard/atoms/ZwChip.vue'
+import { isStateAlert } from '@/lib/primaryValue'
 import type { Device, DeviceAction, PrimaryValue } from '@/lib/dashboard-types'
 
 const props = defineProps<{ device: Device }>()
@@ -73,12 +74,9 @@ const pv = computed<PrimaryValue | null>(() => props.device.primaryValue)
 
 const stateChipTone = computed(() => {
 	const s = pv.value
-	if (!s || s.type !== 'state') return 'neutral'
-	if (s.stateIdx !== 1) return 'neutral'
-	const c = s.colors[1]
-	if (c === 'red') return 'danger'
-	if (c === 'amber') return 'warn'
-	return 'neutral'
+	if (!s || s.type !== 'state' || !isStateAlert(s)) return 'neutral'
+	// isStateAlert guarantees the colour is red or amber.
+	return s.colors[1] === 'red' ? 'danger' : 'warn'
 })
 </script>
 
