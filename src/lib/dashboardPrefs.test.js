@@ -40,7 +40,6 @@ describe('dashboardPrefs', () => {
 		expect(p.sort).to.deep.equal({ key: 'id', dir: 'asc' })
 		expect(p.visibleCols).to.include('activity')
 		expect(p.collapsedGroups).to.deep.equal([])
-		expect(p.tabletExpanded).to.equal(false)
 		expect(p.activityHidden).to.equal(false)
 	})
 
@@ -53,7 +52,6 @@ describe('dashboardPrefs', () => {
 			sort: { key: 'location', dir: 'desc' },
 			visibleCols: ['location'],
 			collapsedGroups: ['Kitchen'],
-			tabletExpanded: true,
 			activityHidden: true,
 		})
 		const p = m.load()
@@ -63,7 +61,6 @@ describe('dashboardPrefs', () => {
 		expect(p.sort).to.deep.equal({ key: 'location', dir: 'desc' })
 		expect(p.visibleCols).to.deep.equal(['location'])
 		expect(p.collapsedGroups).to.deep.equal(['Kitchen'])
-		expect(p.tabletExpanded).to.equal(true)
 		expect(p.activityHidden).to.equal(true)
 	})
 
@@ -77,7 +74,6 @@ describe('dashboardPrefs', () => {
 			sort: { key: 'id', dir: 'asc' },
 			visibleCols: ['location'],
 			collapsedGroups: [],
-			tabletExpanded: false,
 			activityHidden: false,
 		})
 		// Corrupt the scope only.
