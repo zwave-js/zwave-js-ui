@@ -3,7 +3,7 @@
 		class="zw-row"
 		:class="{
 			'zw-row--expanded': expanded,
-			'zw-row--mobile': viewport < 600,
+			'zw-row--mobile': viewport < MOBILE_BREAKPOINT,
 		}"
 		:style="rowStyle"
 		@click="emit('expand', device.id)"
@@ -27,7 +27,10 @@
 		</span>
 
 		<!-- activity/activity -->
-		<span v-if="hasCol('activity') && viewport >= 600" class="zw-row__cell">
+		<span
+			v-if="hasCol('activity') && viewport >= MOBILE_BREAKPOINT"
+			class="zw-row__cell"
+		>
 			<ZwActivityReadout
 				v-if="device.activity[0]"
 				variant="table"
@@ -40,14 +43,17 @@
 
 		<!-- location -->
 		<span
-			v-if="hasCol('location') && viewport >= 600"
+			v-if="hasCol('location') && viewport >= MOBILE_BREAKPOINT"
 			class="zw-row__cell zw-row__cell--muted"
 		>
 			{{ device.location || '—' }}
 		</span>
 
 		<!-- value -->
-		<span v-if="hasCol('value') || viewport < 600" class="zw-row__cell">
+		<span
+			v-if="hasCol('value') || viewport < MOBILE_BREAKPOINT"
+			class="zw-row__cell"
+		>
 			<ZwCompactPrimary
 				:device="device"
 				@action="(d, a) => emit('action', d, a)"
@@ -55,7 +61,10 @@
 		</span>
 
 		<!-- power -->
-		<span v-if="hasCol('power') && viewport >= 600" class="zw-row__cell">
+		<span
+			v-if="hasCol('power') && viewport >= MOBILE_BREAKPOINT"
+			class="zw-row__cell"
+		>
 			<span v-if="device.power.type === 'mains'" class="zw-row__mains">
 				MAINS
 			</span>
@@ -63,7 +72,10 @@
 		</span>
 
 		<!-- signal -->
-		<span v-if="hasCol('signal') && viewport >= 600" class="zw-row__cell">
+		<span
+			v-if="hasCol('signal') && viewport >= MOBILE_BREAKPOINT"
+			class="zw-row__cell"
+		>
 			<component
 				:is="signalIcon"
 				:size="14"
@@ -73,7 +85,7 @@
 
 		<!-- last seen -->
 		<span
-			v-if="hasCol('lastSeen') && viewport >= 600"
+			v-if="hasCol('lastSeen') && viewport >= MOBILE_BREAKPOINT"
 			class="zw-row__cell zw-row__cell--last"
 		>
 			{{ device.lastSeen }}
@@ -106,6 +118,7 @@ import ZwChip from '@/components/dashboard/atoms/ZwChip.vue'
 import ZwActivityReadout from '@/components/dashboard/atoms/ZwActivityReadout.vue'
 import ZwCompactPrimary from './ZwCompactPrimary.vue'
 import { deviceRowGrid, type ToggleableCol } from './deviceRowGrid'
+import { MOBILE_BREAKPOINT } from '@/lib/dashboard-breakpoints'
 import {
 	ChevronDownIcon,
 	DownloadIcon,

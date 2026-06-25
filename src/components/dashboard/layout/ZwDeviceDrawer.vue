@@ -45,6 +45,7 @@ import { computed, ref, watch } from 'vue'
 import { Dialog } from '@vuetify/v0'
 import ZwNodeDetailsBody from '@/components/dashboard/components/ZwNodeDetailsBody.vue'
 import { ICON_SIZE, XIcon } from '@/lib/icons'
+import { MOBILE_BREAKPOINT } from '@/lib/dashboard-breakpoints'
 import type { Device, DeviceAction } from '@/lib/dashboard-types'
 
 const props = defineProps<{ device: Device | null; viewport: number }>()
@@ -58,7 +59,7 @@ const paddedNodeId = computed(() =>
 )
 
 const panelWidth = computed(() => {
-	if (props.viewport < 600) return props.viewport
+	if (props.viewport < MOBILE_BREAKPOINT) return props.viewport
 	return Math.max(460, Math.min(Math.round(props.viewport * 0.6), 1000))
 })
 

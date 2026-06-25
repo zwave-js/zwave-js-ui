@@ -8,6 +8,8 @@
 // `columns` array drives which optional columns participate.
 // Returns a string ready for `grid-template-columns`.
 
+import { MOBILE_BREAKPOINT } from '@/lib/dashboard-breakpoints.ts'
+
 export type ToggleableCol =
 	| 'activity'
 	| 'location'
@@ -40,7 +42,7 @@ export function deviceRowGrid(
 	viewport: number,
 	columns: readonly ToggleableCol[],
 ): string {
-	if (viewport < 600) {
+	if (viewport < MOBILE_BREAKPOINT) {
 		// Mobile collapse: status, id, name, value, chevron only.
 		return 'auto auto 1fr auto auto'
 	}
