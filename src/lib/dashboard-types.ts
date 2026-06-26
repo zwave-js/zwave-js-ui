@@ -1,15 +1,5 @@
-// src/lib/dashboard-types.ts
-//
-// Type contract that the new dashboard components consume. The
-// authoritative shape and the runtime projection (Z-Wave node → UI
-// Device) ship with plan 70 (`fn · device projection`); these stubs
-// stand in for the contract so the visual components compile and stay
-// statically checked while plan 70 is in review.
-//
-// When plan 70 lands, move these declarations to `src/lib/device-projection.ts`
-// (and `src/lib/device-actions.ts`) and re-export from this module for
-// backwards compatibility — components import from `@/lib/dashboard-types`
-// today.
+// Shared type contract for the dashboard: the `Device` shape plus the
+// value and action types its components render and emit.
 
 import type { Component } from 'vue'
 
@@ -72,10 +62,8 @@ export type PrimaryValue =
 	| PrimaryValueState
 	| PrimaryValueThermostat
 
-// Maps each discriminant to its concrete shape. A renderer declares the
-// one variant it handles (`usePrimaryValue(device, 'state')`) and gets
-// back exactly `PrimaryValueState | null`, so the registry stays
-// type-checked end-to-end instead of relying on scattered `as` casts.
+// Maps each discriminant to its concrete shape, enabling compile-time
+// narrowing by primary-value type.
 export interface PrimaryValueByType {
 	toggle: PrimaryValueToggle
 	dim: PrimaryValueDim
@@ -96,45 +84,54 @@ export interface PowerInfo {
 
 export type DeviceStatus = 'alive' | 'awake' | 'asleep' | 'dead'
 
+// Archetype kinds; the catalogue lives in `archetypes.ts`.
 export type ArchetypeKind =
+	| 'controller'
+	| 'light'
 	| 'switch'
-	| 'dimmer'
-	| 'plug'
-	| 'thermostat'
+	| 'outlet'
+	| 'shade'
 	| 'lock'
 	| 'motion'
 	| 'contact'
-	| 'leak'
-	| 'tempsensor'
-	| 'shade'
-	| 'siren'
+	| 'smoke'
+	| 'water'
+	| 'climate'
+	| 'sensor'
+	| 'button'
 	| 'remote'
-	| 'rgb'
-	| 'controller'
+	| 'unknown'
 
 export interface Archetype {
 	kind: ArchetypeKind
 	label: string
-	// Aliased Lucide component (e.g. SwitchIcon from @/lib/icons), rendered
-	// via `<component :is="archetype.icon">`. Typed as Vue's `Component` —
-	// the same contract `primary-display/registry.ts` uses for its renderers.
+	// Lucide icon component, rendered via `<component :is>`.
 	icon: Component
 	power: PowerType
 }
 
-// ── Activity ─────────────────────────────────────────────────
+// ── Activity ──────────────────────────────────────────────────
+//
+// In-flight long-running operations on a device: OTA updates, route
+// rebuilds, interviews.
 
 export type ActivityType = 'ota' | 'rebuild' | 'interview'
 
 export interface Activity {
 	type: ActivityType
 	label: string
+	/** 0–100 integer percentage. Optional for indeterminate operations. */
 	progress?: number
 }
 
 // ── Security ──────────────────────────────────────────────────
 
-export type SecurityKey = 'S0' | 'S2_UA' | 'S2_A' | 'S2_AC'
+// Canonical zwave-js `SecurityClass` member names (see @zwave-js/core).
+export type SecurityKey =
+	| 'S0_Legacy'
+	| 'S2_Unauthenticated'
+	| 'S2_Authenticated'
+	| 'S2_AccessControl'
 
 // ── Comm stats (controller) ───────────────────────────────────
 
@@ -153,7 +150,6 @@ export interface CommStats {
 // ── Device ────────────────────────────────────────────────────
 
 export interface Device {
-	id: number | string
 	nodeId: number
 	isController: boolean
 	name: string
@@ -170,6 +166,8 @@ export interface Device {
 	firmware?: { node?: string; sdk?: string }
 	protocol?: string
 	lastSeen: string
+	// Raw last-active epoch (ms) backing the `lastSeen` label, kept for sorting.
+	lastSeenTs?: number
 	primaryValue: PrimaryValue | null
 	activity: Activity[]
 	health?: 'ok' | 'weak' | 'unknown'
@@ -180,9 +178,8 @@ export interface Device {
 
 // ── Action contract ───────────────────────────────────────────
 //
-// Components emit `action(device, { type, ... })` rather than
-// verb-specific events. Plan 70 owns the dispatcher that routes each
-// action shape to the matching socket call.
+// Components emit `action(device, { type, … })`; `device-actions.ts`
+// maps each shape to its socket call.
 
 export type DeviceAction =
 	| { type: 'toggle'; on: boolean }

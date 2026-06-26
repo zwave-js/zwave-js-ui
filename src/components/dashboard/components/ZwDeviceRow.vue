@@ -26,7 +26,7 @@
 			</span>
 		</span>
 
-		<!-- activity/activity -->
+		<!-- activity -->
 		<span
 			v-if="hasCol('activity') && viewport >= MOBILE_BREAKPOINT"
 			class="zw-row__cell"
@@ -101,7 +101,7 @@
 				@click.stop="emit('open', device)"
 			>
 				<ChevronDownIcon
-					:size="ICON_SIZE.sortArrow"
+					:size="ICON_SIZE.caret"
 					class="zw-row__chev"
 					:class="{ 'zw-row__chev--open': expanded }"
 				/>
@@ -126,6 +126,7 @@ import {
 	SignalHighIcon,
 	SignalLowIcon,
 } from '@/lib/icons'
+import { padNumber } from '@/lib/utils'
 import type { Device, DeviceAction } from '@/lib/dashboard-types'
 
 const props = defineProps<{
@@ -136,15 +137,13 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-	// "Show this device's details" — the same intent (name + payload) that
-	// ZwDeviceCard emits, so a parent wires one handler for both the row and
-	// the card. The parent owns the surface: expand this row inline (table
-	// view) or open the drawer (card view).
+	// Request to show this device's details; the parent decides whether to
+	// expand the row inline or open the drawer.
 	open: [Device]
 	action: [Device, DeviceAction]
 }>()
 
-const nodeIdLabel = computed(() => String(props.device.nodeId).padStart(3, '0'))
+const nodeIdLabel = computed(() => padNumber(props.device.nodeId, 3))
 
 const subtitle = computed(() => {
 	const parts = [props.device.manufacturer, props.device.productCode].filter(

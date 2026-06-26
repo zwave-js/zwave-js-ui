@@ -1,6 +1,6 @@
 <template>
 	<div class="zw-search">
-		<SearchIcon class="zw-search__icon" :size="ICON_SIZE.button" />
+		<SearchIcon class="zw-search__icon" :size="ICON_SIZE.inline" />
 		<input
 			type="search"
 			class="zw-search__input"
@@ -15,8 +15,8 @@
 <script setup lang="ts">
 import { ICON_SIZE, SearchIcon } from '@/lib/icons'
 
-// Atom is locale-agnostic: callers pass already-translated strings for
-// placeholder and aria-label. No fallbacks here would silently leak EN.
+// Locale-agnostic: callers pass already-translated `placeholder` and
+// `ariaLabel`.
 defineProps<{
 	modelValue: string
 	placeholder: string

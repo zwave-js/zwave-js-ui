@@ -56,9 +56,8 @@ interface ToggleMenuOption {
 	icon?: Component
 }
 
-// Atom is locale-agnostic: callers pass an already-translated triggerLabel
-// (or set triggerLabelHidden to render an icon-only chevron trigger). No
-// EN fallback here would silently leak the literal "Filter" string.
+// Locale-agnostic: callers pass an already-translated `triggerLabel`, or
+// set `triggerLabelHidden` for an icon-only trigger.
 const props = defineProps<{
 	options: ToggleMenuOption[]
 	modelValue: readonly string[]
@@ -76,8 +75,7 @@ const contentId = `zw-tm-${useId()}`
 
 usePopoverFallback({ open, contentId })
 
-// Built once per modelValue change so the three .has() calls per
-// option-row don't each pay an O(n) array walk.
+// A Set so each option row's membership check is O(1).
 const selectedSet = computed(() => new Set(props.modelValue))
 
 function onToggle(id: string): void {
@@ -172,8 +170,7 @@ function onToggle(id: string): void {
 
 .zw-tm__header {
 	padding: 6px 10px 4px;
-	font-family: var(--zw-mono);
-	font-size: 10px;
+	font: var(--zw-text-mono-micro);
 	color: var(--zw-muted);
 	text-transform: uppercase;
 	letter-spacing: 0.6px;

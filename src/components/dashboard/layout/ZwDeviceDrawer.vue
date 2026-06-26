@@ -1,51 +1,59 @@
 <template>
-	<Dialog.Root v-model="open">
-		<Dialog.Content class="zw-drawer__panel" :close-on-click-outside="true">
-			<template v-if="device">
-				<header class="zw-drawer__header">
-					<div class="zw-drawer__icon">
-						<component
-							:is="device.archetype.icon"
-							:size="ICON_SIZE.drawerHeader"
-						/>
-					</div>
-					<div class="zw-drawer__name-col">
-						<div class="zw-drawer__name">{{ device.name }}</div>
-						<div class="zw-drawer__sub">
-							Node {{ paddedNodeId }}
-							<template v-if="device.manufacturer">
-								· {{ device.manufacturer }}
-							</template>
-							<template v-if="device.productCode">
-								· {{ device.productCode }}
-							</template>
-						</div>
-					</div>
-					<Dialog.Close
-						as="button"
-						class="zw-drawer__close"
-						aria-label="Close drawer"
-					>
-						<XIcon :size="ICON_SIZE.topbar" />
-					</Dialog.Close>
-				</header>
-				<div class="zw-drawer__body">
-					<ZwNodeDetailsBody
-						:device="device"
-						@action="(d, a) => emit('action', d, a)"
+	<div v-if="device" class="zw-drawer__overlay" @click.self="emit('close')">
+		<div
+			ref="panelRef"
+			class="zw-drawer__panel"
+			role="dialog"
+			aria-modal="true"
+			:aria-label="device.name"
+			@click.stop
+		>
+			<header class="zw-drawer__header">
+				<div class="zw-drawer__icon">
+					<component
+						:is="device.archetype.icon"
+						:size="ICON_SIZE.drawerHeader"
 					/>
 				</div>
-			</template>
-		</Dialog.Content>
-	</Dialog.Root>
+				<div class="zw-drawer__name-col">
+					<div class="zw-drawer__name">{{ device.name }}</div>
+					<div class="zw-drawer__sub">
+						Node {{ paddedNodeId }}
+						<template v-if="device.manufacturer">
+							· {{ device.manufacturer }}
+						</template>
+						<template v-if="device.productCode">
+							· {{ device.productCode }}
+						</template>
+					</div>
+				</div>
+				<button
+					ref="closeRef"
+					type="button"
+					class="zw-drawer__close"
+					aria-label="Close drawer"
+					@click="emit('close')"
+				>
+					<XIcon :size="ICON_SIZE.topbar" />
+				</button>
+			</header>
+			<div class="zw-drawer__body">
+				<ZwNodeDetailsBody
+					:device="device"
+					@action="(d, a) => emit('action', d, a)"
+				/>
+			</div>
+		</div>
+	</div>
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
-import { Dialog } from '@vuetify/v0'
+import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
+import { createFocusTrap, type FocusTrap } from 'focus-trap'
 import ZwNodeDetailsBody from '@/components/dashboard/components/ZwNodeDetailsBody.vue'
 import { ICON_SIZE, XIcon } from '@/lib/icons'
 import { MOBILE_BREAKPOINT } from '@/lib/dashboard-breakpoints'
+import { padNumber } from '@/lib/utils'
 import type { Device, DeviceAction } from '@/lib/dashboard-types'
 
 const props = defineProps<{ device: Device | null; viewport: number }>()
@@ -54,67 +62,89 @@ const emit = defineEmits<{
 	action: [Device, DeviceAction]
 }>()
 
-const paddedNodeId = computed(() =>
-	String(props.device?.nodeId ?? 0).padStart(3, '0'),
-)
+const panelRef = ref<HTMLElement | null>(null)
+const closeRef = ref<HTMLButtonElement | null>(null)
+let trap: FocusTrap | null = null
+
+const paddedNodeId = computed(() => padNumber(props.device?.nodeId ?? 0, 3))
 
 const panelWidth = computed(() => {
 	if (props.viewport < MOBILE_BREAKPOINT) return props.viewport
 	return Math.max(460, Math.min(Math.round(props.viewport * 0.6), 1000))
 })
 
-// Bridge prop ↔ Dialog v-model. When the dialog closes itself (ESC, native
-// cancel, click-outside), emit `close` so the parent can null the prop.
-const open = ref(props.device !== null)
+function activateTrap() {
+	if (!panelRef.value) return
+	trap = createFocusTrap(panelRef.value, {
+		escapeDeactivates: false,
+		initialFocus: () => closeRef.value ?? panelRef.value!,
+		allowOutsideClick: true,
+	})
+	trap.activate()
+}
 
+function deactivateTrap() {
+	trap?.deactivate()
+	trap = null
+}
+
+function onKeyDown(e: KeyboardEvent) {
+	if (e.key === 'Escape') {
+		e.stopPropagation()
+		emit('close')
+	}
+}
+
+// Trap focus only on the open transition and release it on close; switching
+// from one device to another keeps the single active trap on the same panel.
 watch(
 	() => props.device,
-	(d) => {
-		open.value = d !== null
+	async (d, prev) => {
+		if (d && !prev) {
+			await nextTick()
+			activateTrap()
+			document.addEventListener('keydown', onKeyDown)
+		} else if (!d && prev) {
+			deactivateTrap()
+			document.removeEventListener('keydown', onKeyDown)
+		}
 	},
+	{ immediate: true },
 )
 
-watch(open, (v) => {
-	if (!v && props.device !== null) emit('close')
+onBeforeUnmount(() => {
+	deactivateTrap()
+	document.removeEventListener('keydown', onKeyDown)
 })
 </script>
 
-<style>
-/* Unscoped — V0 primitives set inheritAttrs:false; .zw-drawer namespace is
-   unique to this component. Native <dialog> is rendered by Dialog.Content;
-   showModal() supplies focus trap, ESC handling, and the top-layer backdrop. */
+<style scoped>
+/* `position: absolute` scopes the drawer to its parent body container, so
+   the surrounding shell chrome stays visible and interactive while a
+   device is open. */
+.zw-drawer__overlay {
+	position: absolute;
+	inset: 0;
+	z-index: 30;
+	background: rgba(30, 25, 20, 0.32);
+	display: flex;
+	justify-content: flex-end;
+	animation: zw-fade-in 0.18s;
+}
+
 .zw-drawer__panel {
 	display: flex;
 	flex-direction: column;
-	position: fixed;
-	inset: 0 0 0 auto;
-	margin: 0;
 	width: v-bind('panelWidth + "px"');
 	max-width: 100%;
 	height: 100%;
-	max-height: 100%;
 	background: var(--zw-card);
 	box-shadow: var(--zw-e-drawer);
 	border: none;
 	padding: 0;
 	overflow: hidden;
 	color: var(--zw-fg);
-}
-
-/* Native <dialog> UA style hides closed dialogs via `dialog:not([open])`,
-   but the author class above beats that selector in the cascade. Restate
-   the hidden state explicitly so the panel is invisible until showModal(). */
-.zw-drawer__panel:not([open]) {
-	display: none;
-}
-
-.zw-drawer__panel[open] {
 	animation: zw-slide-in-right 0.22s cubic-bezier(0.2, 0.7, 0.2, 1);
-}
-
-.zw-drawer__panel::backdrop {
-	background: rgba(30, 25, 20, 0.32);
-	animation: zw-fade-in 0.18s;
 }
 
 @media (max-width: 600px) {
@@ -187,5 +217,12 @@ watch(open, (v) => {
 .zw-drawer__body {
 	flex: 1;
 	overflow-y: auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.zw-drawer__overlay,
+	.zw-drawer__panel {
+		animation-duration: 0.01ms;
+	}
 }
 </style>

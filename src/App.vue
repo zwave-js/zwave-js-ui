@@ -3,7 +3,12 @@
 		<!-- Skip to main content link for keyboard accessibility -->
 		<a href="#main-content" class="skip-link">Skip to main content</a>
 		<div
-			v-if="$route.meta.requiresAuth && auth !== undefined && !hideTopbar"
+			v-if="
+				$route.meta.requiresAuth &&
+				auth !== undefined &&
+				!hideTopbar &&
+				!$route.meta.hideTopbar
+			"
 		>
 			<v-navigation-drawer
 				v-if="!navTabs || $vuetify.display.smAndDown"
@@ -286,7 +291,7 @@
 					</v-col>
 				</v-row>
 				<v-footer
-					v-if="$route.path !== '/store'"
+					v-if="$route.path !== '/store' && !$route.meta.hideTopbar"
 					class="text-center"
 					style="
 						position: fixed;

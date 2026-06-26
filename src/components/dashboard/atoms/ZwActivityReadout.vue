@@ -16,7 +16,7 @@
 			:max="100"
 		>
 			<Progress.Fill as="span" class="zw-tx__fill">
-				<span v-if="variant === 'card'" class="zw-tx__shimmer" />
+				<span class="zw-tx__shimmer" />
 			</Progress.Fill>
 		</Progress.Root>
 		<span v-if="pct !== undefined" class="zw-tx__pct">{{ pct }}%</span>
@@ -56,13 +56,11 @@ const ACTIVITY_ICON = {
 
 const iconComp = computed(() => ACTIVITY_ICON[props.activity.type])
 
-// Progress is optional — when undefined the readout renders an
-// indeterminate sweep across the bar with no numeric label. A literal
-// placeholder (e.g. 30%) would be misleading, especially for OTA where
-// users watch the number.
+// Optional progress (a 0–100 integer): when undefined the bar shows an
+// indeterminate sweep with no number.
 const pct = computed(() =>
 	props.activity.progress !== undefined
-		? Math.round(props.activity.progress * 100)
+		? Math.round(props.activity.progress)
 		: undefined,
 )
 
@@ -165,9 +163,7 @@ const title = computed(() =>
 }
 
 .zw-tx__pct {
-	font-family: var(--zw-mono);
-	font-size: 10px;
-	font-weight: 600;
+	font: var(--zw-text-mono-micro);
 	min-width: 26px;
 	text-align: right;
 	font-variant-numeric: tabular-nums;

@@ -14,6 +14,7 @@ const ControllerChart = () => import('@/views/ControllerChart.vue')
 const Zniffer = () => import('@/views/Zniffer.vue')
 const ConfigurationTemplates = () =>
 	import('@/views/ConfigurationTemplates.vue')
+const ControlPanelNew = () => import('@/views/ControlPanelNew.vue')
 
 import ConfigApis from '../apis/ConfigApis'
 import useBaseStore from '../stores/base'
@@ -22,6 +23,7 @@ export const Routes = {
 	login: '/',
 	error: '/error',
 	controlPanel: '/control-panel',
+	controlPanelNew: '/control-panel-new',
 	settings: '/settings',
 	scenes: '/scenes',
 	debug: '/debug',
@@ -136,6 +138,19 @@ const router = createRouter({
 			props: true,
 			meta: {
 				requiresAuth: true,
+			},
+		},
+		{
+			// Opt-in alternate dashboard route. `hideTopbar` makes App.vue
+			// drop its app-bar and navigation drawer so the shell renders
+			// full-bleed.
+			path: Routes.controlPanelNew,
+			name: 'Control Panel (new)',
+			component: ControlPanelNew,
+			props: true,
+			meta: {
+				requiresAuth: true,
+				hideTopbar: true,
 			},
 		},
 	],
