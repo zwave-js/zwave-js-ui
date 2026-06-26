@@ -1,75 +1,49 @@
-import chai, { expect } from 'chai'
-import esmock from 'esmock'
-import type { SinonStub } from 'sinon'
-import sinon from 'sinon'
-
-import sinonChai from 'sinon-chai'
-
-chai.use(sinonChai)
+import { describe, it, expect, afterEach } from 'vitest'
+import nodePath from 'node:path'
+import { getPath, joinPath, basePath } from '../../api/lib/utils.ts'
 
 declare let process: NodeJS.Process & {
 	pkg?: boolean
 }
-const snapshotPath = '/snapshot/zui'
 
 describe('#utils', () => {
 	describe('#getPath()', () => {
-		let utils: any
-
-		before(async () => {
-			utils = await esmock('../../api/lib/utils.ts', {
-				path: {
-					resolve: () => snapshotPath,
-					join: (...args: string[]) => args.join('/'),
-				},
-			})
+		afterEach(() => {
+			delete process.pkg
 		})
 
 		it('write && process.pkg', () => {
 			process.pkg = true
-			expect(utils.getPath(true)).to.equal(process.cwd())
+			expect(getPath(true)).to.equal(process.cwd())
 		})
 		it('write && !process.pkg', () => {
 			delete process.pkg
-			expect(utils.getPath(true)).to.equal(snapshotPath)
+			expect(getPath(true)).to.equal(basePath)
 		})
 		it('!write && process.pkg', () => {
 			process.pkg = true
-			expect(utils.getPath(false)).to.equal(snapshotPath)
+			expect(getPath(false)).to.equal(basePath)
 		})
 		it('!write && !process.pkg', () => {
 			delete process.pkg
-			expect(utils.getPath(false)).to.equal(snapshotPath)
+			expect(getPath(false)).to.equal(basePath)
 		})
 	})
 
 	describe('#joinPath()', () => {
-		let pathMock: { join: SinonStub; resolve: () => string }
-		let utils: any
-
-		before(async () => {
-			pathMock = {
-				join: sinon.stub(),
-				resolve: () => snapshotPath,
-			}
-			utils = await esmock('../../api/lib/utils.ts', {
-				path: pathMock,
-			})
+		afterEach(() => {
+			delete process.pkg
 		})
 
-		it('zero length', () => {
-			utils.joinPath()
-			return expect(pathMock.join.callCount).to.equal(1)
+		it('passes string arguments straight to path.join', () => {
+			expect(joinPath('foo', 'bar')).to.equal(nodePath.join('foo', 'bar'))
 		})
-		it('1 length', () => {
-			utils.joinPath('foo')
-			return expect(pathMock.join).to.have.been.calledWith('foo')
-		})
-		it('first arg bool gets new path 0', () => {
-			utils.joinPath(true, 'bar')
-			return expect(pathMock.join).to.have.been.calledWithExactly(
-				snapshotPath,
-				'bar',
+		it('resolves a boolean first argument to the base path', () => {
+			expect(joinPath(false, 'bar')).to.equal(
+				nodePath.join(basePath, 'bar'),
+			)
+			expect(joinPath(true, 'bar')).to.equal(
+				nodePath.join(basePath, 'bar'),
 			)
 		})
 	})

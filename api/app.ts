@@ -33,6 +33,7 @@ import { Driver, libVersion } from 'zwave-js'
 import {
 	defaultPsw,
 	defaultUser,
+	logsDir,
 	sessionSecret,
 	snippetsDir,
 	storeDir,
@@ -1396,6 +1397,7 @@ app.post(
 							// Build logConfig object from our settings
 							editableOptions.logConfig = utils.buildLogConfig(
 								settings.zwave || {},
+								logsDir,
 							)
 						}
 

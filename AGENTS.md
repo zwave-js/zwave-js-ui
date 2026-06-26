@@ -22,7 +22,7 @@ This repository uses specialized GitHub Copilot agents to provide targeted assis
 
 **File**: [`.github/agents/testing-agent.md`](.github/agents/testing-agent.md)  
 **Specialization**: Automated testing and QA  
-**Expertise**: Mocha, Chai, unit testing, integration testing, mocking  
+**Expertise**: Vitest, unit testing, integration testing, mocking  
 **Use for**: Writing tests, improving coverage, test automation, debugging test failures
 
 ### 📚 Documentation Agent
@@ -102,10 +102,9 @@ Each agent provides:
 
 **Testing**:
 
-- Mocha
-- Chai
-- TypeScript/Babel
-- Sinon (mocking)
+- Vitest (runner + assertions)
+- vi (built-in mocking/spies)
+- TypeScript
 
 **Build**:
 

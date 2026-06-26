@@ -119,7 +119,7 @@ import {
 	BatteryReplacementStatus,
 } from 'zwave-js'
 import { getEnumMemberName, parseQRCodeString } from 'zwave-js/Utils'
-import { configDbDir, nvmBackupsDir, storeDir } from '../config/app.ts'
+import { configDbDir, logsDir, nvmBackupsDir, storeDir } from '../config/app.ts'
 import store from '../config/store.ts'
 import jsonStore from './jsonStore.ts'
 import * as LogManager from './logger.ts'
@@ -2284,7 +2284,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 					this.cfg.deviceConfigPriorityDir || deviceConfigPriorityDir,
 			},
 			// https://zwave-js.github.io/node-zwave-js/#/api/driver?id=logconfig
-			logConfig: utils.buildLogConfig(this.cfg),
+			logConfig: utils.buildLogConfig(this.cfg, logsDir),
 			emitValueUpdateAfterSetValue: true,
 			apiKeys: {
 				firmwareUpdateService:

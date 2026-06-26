@@ -1,20 +1,17 @@
 ---
 name: testing_agent
 description: QA engineer specialist for Z-Wave JS UI automated testing
-persona: Expert QA engineer specializing in Mocha, TypeScript/JavaScript testing, integration testing, and test-driven development
+persona: Expert QA engineer specializing in Vitest, TypeScript/JavaScript testing, integration testing, and test-driven development
 stack:
-  - Mocha
-  - Chai (assertions)
+  - Vitest (test runner + assertions + mocking)
+  - vi (mocking/spying)
   - TypeScript (backend tests)
-  - Babel (frontend tests)
-  - Sinon (mocking/spying)
+  - Vite (frontend tooling)
   - Vue Test Utils
 applyTo:
   - test/**
   - "**/*.test.ts"
-  - "**/*.test.js"
   - "**/*.spec.ts"
-  - "**/*.spec.js"
 commands:
   test_all: npm test
   test_backend: npm run test:server
@@ -55,400 +52,436 @@ I am a QA engineer specialist for Z-Wave JS UI, focused on comprehensive automat
 ## Commands I Execute
 
 ```bash
-# Run all tests (~3 seconds total)
-npm test
+# Run all tests once
+npm test                   # vitest run (all tests)
+
+# Watch mode (re-run on change)
+npm run test:watch         # vitest
 
 # Run specific test suites
-npm run test:server        # Backend tests only (~2s, 51 tests)
-npm run test:ui            # Frontend tests only (~1s, 52 tests)
+npm run test:server        # Backend tests only (vitest run test/lib)
+npm run test:ui            # Frontend tests only (vitest run src/)
 
 # Coverage report
-npm run coverage           # Detailed coverage report (~12s)
+npm run coverage           # vitest run --coverage (v8 provider)
 ```
 
 ## Test Directory Structure
 
-```
+All tests are written in TypeScript (`*.test.ts`) by convention. Backend
+tests live in `test/lib/*.test.ts`; frontend tests live in
+`src/modules/*.test.ts`.
+
+```text
 test/
-├── backend/
-│   ├── api.test.ts       # API endpoint tests
-│   ├── utils.test.ts     # Utility function tests
-│   └── zwave.test.ts     # Z-Wave functionality tests
-└── frontend/
-    ├── components/
-    │   └── DeviceCard.test.js
-    └── stores/
-        └── base.test.js
+└── lib/
+    ├── Constants.test.ts   # Pure utility tests
+    ├── jsonStore.test.ts   # Storage helper tests
+    └── utils.test.ts       # Utility function tests
+src/
+└── modules/
+    ├── Settings.test.ts    # Settings module tests
+    └── ...
 ```
 
 ## Testing Patterns
 
-### Backend Test Pattern (Mocha + TypeScript)
+Globals are NOT enabled in `vitest.config.ts`, so every test file imports
+exactly what it uses from `vitest`:
 
-```typescript
-// test/backend/utils.test.ts
-import { expect } from 'chai'
-import sinon from 'sinon'
-import { retryOperation, formatDeviceName } from '../../api/lib/utils'
+```ts
+import { describe, it, expect, beforeAll, beforeEach, afterEach, afterAll, vi } from 'vitest'
+```
 
-describe('Backend Utils', () => {
-  describe('retryOperation', () => {
-    let stub: sinon.SinonStub
-    
-    beforeEach(() => {
-      stub = sinon.stub()
-    })
-    
-    afterEach(() => {
-      sinon.restore()
-    })
-    
-    it('should succeed on first attempt', async () => {
-      stub.resolves('success')
-      
-      const result = await retryOperation(stub, 3)
-      
-      expect(result).to.equal('success')
-      expect(stub.callCount).to.equal(1)
-    })
-    
-    it('should retry on failure', async () => {
-      stub.onFirstCall().rejects(new Error('Failed'))
-      stub.onSecondCall().rejects(new Error('Failed'))
-      stub.onThirdCall().resolves('success')
-      
-      const result = await retryOperation(stub, 3)
-      
-      expect(result).to.equal('success')
-      expect(stub.callCount).to.equal(3)
-    })
-    
-    it('should throw after max retries', async () => {
-      stub.rejects(new Error('Persistent failure'))
-      
-      try {
-        await retryOperation(stub, 3)
-        expect.fail('Should have thrown')
-      } catch (error) {
-        expect(error.message).to.equal('Persistent failure')
-        expect(stub.callCount).to.equal(3)
-      }
-    })
-  })
-  
-  describe('formatDeviceName', () => {
-    it('should format name with node ID', () => {
-      const result = formatDeviceName({ id: 5, name: 'Light' })
-      expect(result).to.equal('Light (Node 5)')
-    })
-    
-    it('should handle missing name', () => {
-      const result = formatDeviceName({ id: 5 })
-      expect(result).to.equal('Node 5')
-    })
-    
-    it('should handle empty name', () => {
-      const result = formatDeviceName({ id: 5, name: '' })
-      expect(result).to.equal('Node 5')
-    })
-  })
+Vitest's `expect` is built on Chai, so BOTH assertion styles work:
+
+- chai-style BDD: `expect(x).to.equal(y)`, `.to.deep.equal(y)`, `.to.eql(y)`,
+  `.to.be.true`
+- jest-style: `expect(x).toBe(y)`, `.toEqual(y)`
+
+The existing suite keeps chai-style assertions. Prefer jest-style
+(`toBe`/`toEqual`) for NEW tests, but either is valid.
+
+### Backend Test Pattern (Vitest + TypeScript)
+
+Use `vi.fn()` stubs and async `resolves`/`rejects` assertions
+(`test/lib/jsonStore.test.ts`):
+
+```ts
+import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { StorageHelper } from '../../api/lib/jsonStore.ts'
+
+describe('#jsonStore', () => {
+	it('returns data', async () => {
+		const mod = new StorageHelper({
+			readFile: vi.fn().mockResolvedValue({ foo: 'bar' }) as any,
+		})
+		await expect(mod._getFile({ file: 'foo', default: {} })).resolves.toEqual({
+			file: 'foo',
+			data: { foo: 'bar' },
+		})
+	})
+
+	it('rejects on write error', async () => {
+		const mod = new StorageHelper({
+			writeFile: vi.fn().mockRejectedValue(Error('boom')) as any,
+		})
+		await expect(mod.put({ file: 'foo' } as any, '')).rejects.toThrow('boom')
+	})
+})
+```
+
+A pure-import test needs no mocks (`test/lib/Constants.test.ts`):
+
+```ts
+import { describe, it, expect } from 'vitest'
+import * as mod from '../../api/lib/Constants.ts'
+
+describe('#Constants', () => {
+	it('known', () =>
+		expect(mod.commandClass(0)).to.equal('no_operation'))
 })
 ```
 
 ### API Endpoint Test Pattern
 
-```typescript
-// test/backend/api.test.ts
-import { expect } from 'chai'
-import sinon from 'sinon'
+```ts
+// test/lib/api.test.ts
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import request from 'supertest'
 import app from '../../api/app'
 
 describe('API Endpoints', () => {
-  let zwaveClientMock: sinon.SinonMock
-  
-  beforeEach(() => {
-    // Mock Z-Wave client
-    zwaveClientMock = sinon.mock(zwaveClient)
-  })
-  
-  afterEach(() => {
-    zwaveClientMock.restore()
-  })
-  
-  describe('GET /api/nodes', () => {
-    it('should return all nodes', async () => {
-      const mockNodes = [
-        { id: 1, name: 'Controller', status: 'alive' },
-        { id: 2, name: 'Light', status: 'alive' }
-      ]
-      
-      zwaveClientMock.expects('getNodes').resolves(mockNodes)
-      
-      const response = await request(app)
-        .get('/api/nodes')
-        .expect(200)
-      
-      expect(response.body.success).to.be.true
-      expect(response.body.data).to.deep.equal(mockNodes)
-      zwaveClientMock.verify()
-    })
-    
-    it('should handle errors gracefully', async () => {
-      zwaveClientMock.expects('getNodes')
-        .rejects(new Error('Connection failed'))
-      
-      const response = await request(app)
-        .get('/api/nodes')
-        .expect(500)
-      
-      expect(response.body.success).to.be.false
-      expect(response.body.message).to.include('Connection failed')
-    })
-  })
-  
-  describe('POST /api/nodes/:id/command', () => {
-    it('should send command to node', async () => {
-      const commandData = { command: 'turnOn' }
-      
-      zwaveClientMock.expects('sendCommand')
-        .withArgs(2, commandData)
-        .resolves({ success: true })
-      
-      const response = await request(app)
-        .post('/api/nodes/2/command')
-        .send(commandData)
-        .expect(200)
-      
-      expect(response.body.success).to.be.true
-      zwaveClientMock.verify()
-    })
-    
-    it('should validate node ID', async () => {
-      const response = await request(app)
-        .post('/api/nodes/invalid/command')
-        .send({ command: 'turnOn' })
-        .expect(400)
-      
-      expect(response.body.success).to.be.false
-    })
-  })
+	let getNodesSpy: ReturnType<typeof vi.spyOn>
+
+	beforeEach(() => {
+		// Spy on the Z-Wave client method
+		getNodesSpy = vi.spyOn(zwaveClient, 'getNodes')
+	})
+
+	afterEach(() => {
+		vi.restoreAllMocks()
+	})
+
+	describe('GET /api/nodes', () => {
+		it('should return all nodes', async () => {
+			const mockNodes = [
+				{ id: 1, name: 'Controller', status: 'alive' },
+				{ id: 2, name: 'Light', status: 'alive' },
+			]
+
+			getNodesSpy.mockResolvedValue(mockNodes)
+
+			const response = await request(app).get('/api/nodes').expect(200)
+
+			expect(response.body.success).toBe(true)
+			expect(response.body.data).toEqual(mockNodes)
+			expect(getNodesSpy).toHaveBeenCalledOnce()
+		})
+
+		it('should handle errors gracefully', async () => {
+			getNodesSpy.mockRejectedValue(new Error('Connection failed'))
+
+			const response = await request(app).get('/api/nodes').expect(500)
+
+			expect(response.body.success).toBe(false)
+			expect(response.body.message).toContain('Connection failed')
+		})
+	})
+
+	describe('POST /api/nodes/:id/command', () => {
+		it('should send command to node', async () => {
+			const commandData = { command: 'turnOn' }
+
+			const sendCommandSpy = vi
+				.spyOn(zwaveClient, 'sendCommand')
+				.mockResolvedValue({ success: true })
+
+			const response = await request(app)
+				.post('/api/nodes/2/command')
+				.send(commandData)
+				.expect(200)
+
+			expect(response.body.success).toBe(true)
+			expect(sendCommandSpy).toHaveBeenCalledWith(2, commandData)
+		})
+
+		it('should validate node ID', async () => {
+			const response = await request(app)
+				.post('/api/nodes/invalid/command')
+				.send({ command: 'turnOn' })
+				.expect(400)
+
+			expect(response.body.success).toBe(false)
+		})
+	})
 })
 ```
 
 ### Frontend Component Test Pattern
 
-```javascript
-// test/frontend/components/DeviceCard.test.js
-import { mount } from '@vue/test-utils'
-import { expect } from 'chai'
-import sinon from 'sinon'
+```typescript
+// src/modules/DeviceCard.test.ts
+import { describe, it, expect, beforeEach, afterEach } from 'vitest'
+import { mount, VueWrapper } from '@vue/test-utils'
+import { Pinia } from 'pinia'
 import DeviceCard from '@/components/DeviceCard.vue'
 import { createPinia, setActivePinia } from 'pinia'
 
 describe('DeviceCard.vue', () => {
-  let wrapper
-  let pinia
-  
-  beforeEach(() => {
-    pinia = createPinia()
-    setActivePinia(pinia)
-  })
-  
-  afterEach(() => {
-    if (wrapper) {
-      wrapper.unmount()
-    }
-  })
-  
-  it('renders device information', () => {
-    const device = {
-      id: 2,
-      name: 'Living Room Light',
-      status: 'alive',
-      type: 'Binary Switch'
-    }
-    
-    wrapper = mount(DeviceCard, {
-      props: { device },
-      global: {
-        plugins: [pinia]
-      }
-    })
-    
-    expect(wrapper.text()).to.include('Living Room Light')
-    expect(wrapper.text()).to.include('Binary Switch')
-  })
-  
-  it('emits command when button clicked', async () => {
-    const device = {
-      id: 2,
-      name: 'Light',
-      status: 'alive'
-    }
-    
-    wrapper = mount(DeviceCard, {
-      props: { device },
-      global: {
-        plugins: [pinia]
-      }
-    })
-    
-    await wrapper.find('[data-test="control-button"]').trigger('click')
-    
-    expect(wrapper.emitted('command')).to.exist
-    expect(wrapper.emitted('command')[0]).to.deep.equal([
-      { nodeId: 2, command: 'turnOn' }
-    ])
-  })
-  
-  it('shows loading state during operation', async () => {
-    const device = { id: 2, name: 'Light', status: 'alive' }
-    
-    wrapper = mount(DeviceCard, {
-      props: { device, loading: true },
-      global: {
-        plugins: [pinia]
-      }
-    })
-    
-    expect(wrapper.find('[data-test="loading-spinner"]').exists()).to.be.true
-    expect(wrapper.find('[data-test="control-button"]').attributes('disabled'))
-      .to.exist
-  })
+	let wrapper: VueWrapper
+	let pinia: Pinia
+
+	beforeEach(() => {
+		pinia = createPinia()
+		setActivePinia(pinia)
+	})
+
+	afterEach(() => {
+		if (wrapper) {
+			wrapper.unmount()
+		}
+	})
+
+	it('renders device information', () => {
+		const device = {
+			id: 2,
+			name: 'Living Room Light',
+			status: 'alive',
+			type: 'Binary Switch',
+		}
+
+		wrapper = mount(DeviceCard, {
+			props: { device },
+			global: {
+				plugins: [pinia],
+			},
+		})
+
+		expect(wrapper.text()).to.include('Living Room Light')
+		expect(wrapper.text()).to.include('Binary Switch')
+	})
+
+	it('emits command when button clicked', async () => {
+		const device = {
+			id: 2,
+			name: 'Light',
+			status: 'alive',
+		}
+
+		wrapper = mount(DeviceCard, {
+			props: { device },
+			global: {
+				plugins: [pinia],
+			},
+		})
+
+		await wrapper.find('[data-test="control-button"]').trigger('click')
+
+		expect(wrapper.emitted('command')).to.exist
+		expect(wrapper.emitted('command')[0]).to.deep.equal([
+			{ nodeId: 2, command: 'turnOn' },
+		])
+	})
+
+	it('shows loading state during operation', async () => {
+		const device = { id: 2, name: 'Light', status: 'alive' }
+
+		wrapper = mount(DeviceCard, {
+			props: { device, loading: true },
+			global: {
+				plugins: [pinia],
+			},
+		})
+
+		expect(wrapper.find('[data-test="loading-spinner"]').exists()).to.be.true
+		expect(
+			wrapper.find('[data-test="control-button"]').attributes('disabled'),
+		).to.exist
+	})
+})
+```
+
+### Plain Module Test Pattern
+
+The frontend modules under `src/modules/` are still plain `.js`, but their
+tests are TypeScript (`src/modules/Settings.test.ts`). When a `.ts` test
+imports one of those modules it MUST use an explicit `.js` extension (e.g.
+`import { Settings } from './Settings.js'`) to satisfy the repo's
+`import/extensions` ESLint rule.
+
+When a test defines a helper class, declare its fields with types — TypeScript
+errors on assigning to an undeclared `this.x`:
+
+```typescript
+import { describe, it, expect } from 'vitest'
+import { Settings } from './Settings.js'
+
+class LocalStorageMock {
+	items: Record<string, any> = {}
+
+	getItem(key: string) {
+		return this.items[key]
+	}
+
+	setItem(key: string, value: any) {
+		this.items[key] = String(value)
+	}
+}
+
+describe('Settings', () => {
+	it('stores a value', () => {
+		const settings = new Settings(new LocalStorageMock())
+		settings.store('key', 10)
+		expect(settings.storage.items.key).to.eql('10')
+	})
 })
 ```
 
 ### Socket.IO Mock Pattern
 
-```javascript
-// test/frontend/socket-mock.js
+```typescript
+// src/modules/socket-mock.ts
+type Handler = (data: any) => void
+
 export class SocketMock {
-  constructor() {
-    this.handlers = new Map()
-    this.emitHistory = []
-  }
-  
-  on(event, handler) {
-    if (!this.handlers.has(event)) {
-      this.handlers.set(event, [])
-    }
-    this.handlers.get(event).push(handler)
-  }
-  
-  off(event, handler) {
-    if (this.handlers.has(event)) {
-      const handlers = this.handlers.get(event)
-      const index = handlers.indexOf(handler)
-      if (index >= 0) {
-        handlers.splice(index, 1)
-      }
-    }
-  }
-  
-  emit(event, data) {
-    this.emitHistory.push({ event, data })
-  }
-  
-  simulateEvent(event, data) {
-    if (this.handlers.has(event)) {
-      this.handlers.get(event).forEach(handler => handler(data))
-    }
-  }
-  
-  reset() {
-    this.handlers.clear()
-    this.emitHistory = []
-  }
+	handlers: Map<string, Handler[]> = new Map()
+	emitHistory: Array<{ event: string; data: any }> = []
+
+	on(event: string, handler: Handler) {
+		if (!this.handlers.has(event)) {
+			this.handlers.set(event, [])
+		}
+		this.handlers.get(event).push(handler)
+	}
+
+	off(event: string, handler: Handler) {
+		if (this.handlers.has(event)) {
+			const handlers = this.handlers.get(event)
+			const index = handlers.indexOf(handler)
+			if (index >= 0) {
+				handlers.splice(index, 1)
+			}
+		}
+	}
+
+	emit(event: string, data: any) {
+		this.emitHistory.push({ event, data })
+	}
+
+	simulateEvent(event: string, data: any) {
+		if (this.handlers.has(event)) {
+			this.handlers.get(event).forEach((handler) => handler(data))
+		}
+	}
+
+	reset() {
+		this.handlers.clear()
+		this.emitHistory = []
+	}
 }
 
 // Usage in tests
-import { SocketMock } from './socket-mock'
+import { describe, it, expect, beforeEach, afterEach } from 'vitest'
+import { SocketMock } from './socket-mock.js'
 
 describe('Real-time Updates', () => {
-  let socket
-  
-  beforeEach(() => {
-    socket = new SocketMock()
-  })
-  
-  afterEach(() => {
-    socket.reset()
-  })
-  
-  it('should update node on socket event', async () => {
-    const store = useBaseStore()
-    
-    // Simulate receiving update from server
-    socket.simulateEvent('nodeUpdated', {
-      id: 2,
-      name: 'Updated Light',
-      status: 'alive'
-    })
-    
-    const node = store.getNodeById(2)
-    expect(node.name).to.equal('Updated Light')
-  })
+	let socket: SocketMock
+
+	beforeEach(() => {
+		socket = new SocketMock()
+	})
+
+	afterEach(() => {
+		socket.reset()
+	})
+
+	it('should update node on socket event', async () => {
+		const store = useBaseStore()
+
+		// Simulate receiving update from server
+		socket.simulateEvent('nodeUpdated', {
+			id: 2,
+			name: 'Updated Light',
+			status: 'alive',
+		})
+
+		const node = store.getNodeById(2)
+		expect(node.name).to.equal('Updated Light')
+	})
 })
 ```
 
 ### Pinia Store Test Pattern
 
-```javascript
-// test/frontend/stores/base.test.js
-import { expect } from 'chai'
+```typescript
+// src/modules/base.test.ts
+import { describe, it, expect, beforeEach } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
 import { useBaseStore } from '@/stores/base'
 
 describe('Base Store', () => {
-  beforeEach(() => {
-    setActivePinia(createPinia())
-  })
-  
-  it('should add new node', () => {
-    const store = useBaseStore()
-    
-    store.updateNode({ id: 1, name: 'Controller' })
-    
-    expect(store.nodes).to.have.lengthOf(1)
-    expect(store.nodes[0]).to.deep.equal({ id: 1, name: 'Controller' })
-  })
-  
-  it('should update existing node', () => {
-    const store = useBaseStore()
-    
-    store.updateNode({ id: 1, name: 'Controller', status: 'alive' })
-    store.updateNode({ id: 1, status: 'dead' })
-    
-    expect(store.nodes).to.have.lengthOf(1)
-    expect(store.nodes[0].name).to.equal('Controller')
-    expect(store.nodes[0].status).to.equal('dead')
-  })
-  
-  it('should find node by ID', () => {
-    const store = useBaseStore()
-    
-    store.updateNode({ id: 1, name: 'Controller' })
-    store.updateNode({ id: 2, name: 'Light' })
-    
-    const node = store.getNodeById(2)
-    expect(node.name).to.equal('Light')
-  })
+	beforeEach(() => {
+		setActivePinia(createPinia())
+	})
+
+	it('should add new node', () => {
+		const store = useBaseStore()
+
+		store.updateNode({ id: 1, name: 'Controller' })
+
+		expect(store.nodes).to.have.lengthOf(1)
+		expect(store.nodes[0]).to.deep.equal({ id: 1, name: 'Controller' })
+	})
+
+	it('should update existing node', () => {
+		const store = useBaseStore()
+
+		store.updateNode({ id: 1, name: 'Controller', status: 'alive' })
+		store.updateNode({ id: 1, status: 'dead' })
+
+		expect(store.nodes).to.have.lengthOf(1)
+		expect(store.nodes[0].name).to.equal('Controller')
+		expect(store.nodes[0].status).to.equal('dead')
+	})
+
+	it('should find node by ID', () => {
+		const store = useBaseStore()
+
+		store.updateNode({ id: 1, name: 'Controller' })
+		store.updateNode({ id: 2, name: 'Light' })
+
+		const node = store.getNodeById(2)
+		expect(node.name).to.equal('Light')
+	})
 })
 ```
 
 ## Test Configuration
 
-```javascript
-// .mocharc.yml
-spec:
-  - 'test/**/*.test.ts'
-  - 'test/**/*.test.js'
-require:
-  - 'ts-node/register'
-  - '@babel/register'
-timeout: 5000
-recursive: true
+Test configuration lives in `vitest.config.ts`. It uses the `node`
+environment, does NOT enable `globals` (import from `vitest` explicitly),
+includes `src/**/*.test.{js,ts}` and `test/**/*.test.ts`, and uses the v8
+coverage provider. The frontend include glob still accepts `.js` so a stray
+test is never silently skipped, but tests are written in TypeScript
+(`*.test.ts`) by convention.
+
+```ts
+// vitest.config.ts
+import { defineConfig } from 'vitest/config'
+
+export default defineConfig({
+	test: {
+		environment: 'node',
+		globals: false,
+		include: ['src/**/*.test.{js,ts}', 'test/**/*.test.ts'],
+		coverage: {
+			provider: 'v8',
+			reporter: ['text', 'lcov'],
+			reportsDirectory: 'coverage',
+		},
+	},
+})
 ```
 
 ## Mocking Best Practices
@@ -469,32 +502,70 @@ recursive: true
 - Pure functions
 - Internal utilities (test them separately)
 
+### Mocking Toolkit (vi)
+
+- Function stubs/spies: `vi.fn()`, with `.mockResolvedValue(x)`,
+  `.mockRejectedValue(err)`, `.mockReturnValue(x)`, `.mockImplementation(fn)`.
+- Spying on an existing object method: `vi.spyOn(obj, 'method')`.
+- Module mocking: `vi.mock('module-specifier', factory)`, using
+  `vi.importActual()` inside the factory to keep the real parts. Use
+  `vi.mocked()` for typed access to a mocked module.
+- Reset between tests with `vi.clearAllMocks()` / `vi.restoreAllMocks()` in
+  hooks.
+- Call assertions: `expect(mockFn).toHaveBeenCalledWith(...)`,
+  `.toHaveBeenCalledTimes(n)`, `.toHaveBeenCalledOnce()`.
+
 ### Mock Example
 
+Spying on a method with `vi.spyOn`:
+
 ```typescript
-import sinon from 'sinon'
-import * as fs from 'fs'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
+import * as fs from 'fs/promises'
 
 describe('File Operations', () => {
-  let readFileStub: sinon.SinonStub
-  
-  beforeEach(() => {
-    readFileStub = sinon.stub(fs, 'readFile')
-  })
-  
-  afterEach(() => {
-    readFileStub.restore()
-  })
-  
-  it('should read config file', async () => {
-    const mockConfig = { port: 8091 }
-    readFileStub.yields(null, JSON.stringify(mockConfig))
-    
-    const config = await loadConfig()
-    
-    expect(config.port).to.equal(8091)
-    expect(readFileStub.calledOnce).to.be.true
-  })
+	let readFileSpy: ReturnType<typeof vi.spyOn>
+
+	beforeEach(() => {
+		readFileSpy = vi.spyOn(fs, 'readFile')
+	})
+
+	afterEach(() => {
+		vi.restoreAllMocks()
+	})
+
+	it('should read config file', async () => {
+		const mockConfig = { port: 8091 }
+		readFileSpy.mockResolvedValue(JSON.stringify(mockConfig))
+
+		const config = await loadConfig()
+
+		expect(config.port).toBe(8091)
+		expect(readFileSpy).toHaveBeenCalledOnce()
+	})
+})
+```
+
+Module mocking (the role formerly filled by `esmock`):
+
+```typescript
+import { describe, it, expect, vi } from 'vitest'
+
+vi.mock('../../api/lib/someModule.ts', async () => {
+	const actual = await vi.importActual('../../api/lib/someModule.ts')
+	return {
+		...actual,
+		fetchRemote: vi.fn().mockResolvedValue({ ok: true }),
+	}
+})
+
+import { fetchRemote, doWork } from '../../api/lib/someModule.ts'
+
+describe('doWork', () => {
+	it('uses the mocked remote call', async () => {
+		await doWork()
+		expect(vi.mocked(fetchRemote)).toHaveBeenCalledOnce()
+	})
 })
 ```
 
@@ -507,7 +578,7 @@ describe('File Operations', () => {
 - **Lines**: >80%
 
 ```bash
-# Generate coverage report
+# Generate coverage report (v8 provider, writes coverage/lcov.info)
 npm run coverage
 
 # View HTML report
@@ -517,6 +588,7 @@ open coverage/index.html
 ## Test Naming Conventions
 
 Use descriptive names that explain:
+
 1. What is being tested
 2. Under what conditions
 3. What the expected outcome is
@@ -556,81 +628,79 @@ For each new feature, ensure:
 ### Testing Async Operations
 
 ```typescript
+import { it, expect } from 'vitest'
+
 it('should handle async operations', async () => {
-  const result = await asyncFunction()
-  expect(result).to.exist
+	const result = await asyncFunction()
+	expect(result).toBeDefined()
 })
 
-// Or with promises
-it('should handle promises', () => {
-  return asyncFunction().then(result => {
-    expect(result).to.exist
-  })
+// Or assert directly on the promise
+it('should resolve with a value', async () => {
+	await expect(asyncFunction()).resolves.toBe('ok')
 })
 ```
 
 ### Testing Error Handling
 
 ```typescript
-it('should throw error for invalid input', async () => {
-  try {
-    await functionThatThrows()
-    expect.fail('Should have thrown')
-  } catch (error) {
-    expect(error.message).to.equal('Invalid input')
-  }
+import { it, expect } from 'vitest'
+
+it('should reject with error', async () => {
+	await expect(functionThatThrows()).rejects.toThrow(/Invalid input/)
 })
 
-// Or with chai-as-promised
-it('should reject with error', async () => {
-  await expect(functionThatThrows()).to.be.rejectedWith('Invalid input')
+// Synchronous throws
+it('should throw on invalid input', () => {
+	expect(() => validate('bad')).toThrow('Invalid input')
 })
 ```
+
+Async assertions use `resolves`/`rejects` — there is no `.eventually`,
+`.rejectedWith`, or `.fulfilled` anymore.
 
 ### Testing Time-Dependent Code
 
 ```typescript
-import sinon from 'sinon'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 
 describe('Scheduled Tasks', () => {
-  let clock: sinon.SinonFakeTimers
-  
-  beforeEach(() => {
-    clock = sinon.useFakeTimers()
-  })
-  
-  afterEach(() => {
-    clock.restore()
-  })
-  
-  it('should execute callback after delay', () => {
-    const callback = sinon.spy()
-    
-    scheduleTask(callback, 1000)
-    
-    expect(callback.called).to.be.false
-    
-    clock.tick(1000)
-    
-    expect(callback.calledOnce).to.be.true
-  })
+	beforeEach(() => {
+		vi.useFakeTimers()
+	})
+
+	afterEach(() => {
+		vi.useRealTimers()
+	})
+
+	it('should execute callback after delay', () => {
+		const callback = vi.fn()
+
+		scheduleTask(callback, 1000)
+
+		expect(callback).not.toHaveBeenCalled()
+
+		vi.advanceTimersByTime(1000)
+
+		expect(callback).toHaveBeenCalledOnce()
+	})
 })
 ```
 
 ## Debugging Failed Tests
 
 ```bash
-# Run single test file
-npm test -- test/backend/utils.test.ts
+# Run a single test file
+npm test -- test/lib/utils.test.ts
 
-# Run with grep pattern
-npm test -- --grep "retry"
+# Run tests matching a name pattern
+npm test -- -t "retry"
 
-# Increase timeout for debugging
-npm test -- --timeout 30000
+# Watch a single file while debugging
+npm run test:watch -- test/lib/utils.test.ts
 
-# Show full error stack
-npm test -- --reporter spec
+# Use the verbose reporter
+npm test -- --reporter verbose
 ```
 
 ## Performance Considerations
