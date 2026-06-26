@@ -27,6 +27,10 @@ export default defineConfig({
 		include: ['src/**/*.test.{js,ts}', 'test/**/*.test.ts'],
 		coverage: {
 			provider: 'v8',
+			// Report every file matched by `include`, not just those imported by
+			// a test, so untested files count against coverage (matches the old
+			// `c8 --all` behaviour and keeps the Coveralls report honest).
+			all: true,
 			reporter: ['text', 'lcov'],
 			reportsDirectory: './coverage',
 			include: ['api/**', 'src/**'],
