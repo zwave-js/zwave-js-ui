@@ -1,6 +1,6 @@
 // relativeTime tests.
 
-import { expect } from 'chai'
+import { describe, it, expect } from 'vitest'
 import { relativeTime } from './time.ts'
 
 const NOW = 1700000000000

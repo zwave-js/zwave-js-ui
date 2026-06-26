@@ -1,6 +1,6 @@
 // Device projection tests.
 
-import { expect } from 'chai'
+import { describe, it, expect } from 'vitest'
 import { CommandClasses } from '@zwave-js/core'
 import { projectDevice, projectDevices } from './deviceProjection.ts'
 

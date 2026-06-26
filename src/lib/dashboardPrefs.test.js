@@ -1,6 +1,6 @@
 // Preferences persistence tests.
 
-import { expect } from 'chai'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 
 class LocalStorageMock {
 	constructor() {
@@ -15,10 +15,11 @@ class LocalStorageMock {
 }
 
 // Reload the module per-test so the module-scoped `settings` instance
-// picks up the freshly-mocked localStorage.
+// picks up the freshly-mocked localStorage. `vi.resetModules()` clears the
+// registry so the dynamic import re-evaluates the module top-level.
 async function freshModule() {
-	const url = new URL('./dashboardPrefs.ts', import.meta.url).href
-	return await import(`${url}?t=${Date.now()}_${Math.random()}`)
+	vi.resetModules()
+	return await import('./dashboardPrefs.ts')
 }
 
 describe('dashboardPrefs', () => {

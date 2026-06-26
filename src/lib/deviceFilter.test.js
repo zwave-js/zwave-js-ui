@@ -1,6 +1,6 @@
 // Filter pipeline tests.
 
-import { expect } from 'chai'
+import { describe, it, expect } from 'vitest'
 import {
 	applyScope,
 	applySearch,

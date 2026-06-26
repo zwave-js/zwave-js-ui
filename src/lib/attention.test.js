@@ -1,6 +1,6 @@
 // Attention predicate tests.
 
-import { expect } from 'chai'
+import { describe, it, expect } from 'vitest'
 import {
 	deviceNeedsAttention,
 	attentionReason,

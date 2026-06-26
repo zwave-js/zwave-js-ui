@@ -1,6 +1,6 @@
-// Archetype catalogue tests (mocha+babel `test:ui` suite, hence .js).
+// Archetype catalogue tests.
 
-import { expect } from 'chai'
+import { describe, it, expect } from 'vitest'
 import { CommandClasses } from '@zwave-js/core'
 import { inferArchetype, productMatches } from './archetypes.ts'
 
