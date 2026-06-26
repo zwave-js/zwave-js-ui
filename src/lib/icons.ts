@@ -21,6 +21,7 @@ export {
 	CircleHelp as UnknownIcon,
 	ClipboardList as InterviewIcon,
 	Clock as ClockIcon,
+	Copy as CopyIcon,
 	Cpu as ControllerIcon,
 	DoorClosed as ContactIcon,
 	Download as DownloadIcon,
@@ -44,6 +45,7 @@ export {
 	// Lucide has no motion/PIR glyph; Radio's waves are the closest.
 	Radio as MotionIcon,
 	RefreshCw as RefreshIcon,
+	Undo2 as ResetIcon,
 	Search as SearchIcon,
 	Settings as SettingsIcon,
 	Signal as SignalIcon,

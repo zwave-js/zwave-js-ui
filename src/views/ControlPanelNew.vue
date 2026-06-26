@@ -15,9 +15,15 @@
 // full-bleed. Device actions are resolved by `dispatchAction` and sent
 // through `apiRequest()` on the App instance, reached via `instanceManager`.
 
+import { provide, reactive } from 'vue'
 import ZwAppShell from '@/components/dashboard/layout/ZwAppShell.vue'
 import { dispatchAction } from '@/lib/device-actions.ts'
 import type { Device, DeviceAction } from '@/lib/dashboard-types'
+import {
+	actionPendingKey,
+	DeviceActionPendingKey,
+	type PendingSet,
+} from '@/components/dashboard/deviceActionPending.ts'
 import { manager, instances } from '@/lib/instanceManager'
 
 interface AppLike {
@@ -38,17 +44,28 @@ function appInstance(): AppLike | null {
 	return (inst as unknown as AppLike) ?? null
 }
 
-function onAction(device: Device, action: DeviceAction) {
+// Value-pane components watch this to show a spinner only while their request
+// is actually in flight.
+const pending = reactive(new Set<string>()) as PendingSet
+provide(DeviceActionPendingKey, pending)
+
+async function onAction(device: Device, action: DeviceAction) {
 	const req = dispatchAction(device, action)
 	const app = appInstance()
 	if (!app) {
 		console.warn('[ControlPanelNew] App instance not registered yet')
 		return
 	}
-	void app.apiRequest(req.api, req.args, {
-		infoSnack: false,
-		errorSnack: true,
-	})
+	const key = actionPendingKey(device, action)
+	if (key) pending.add(key)
+	try {
+		await app.apiRequest(req.api, req.args, {
+			infoSnack: false,
+			errorSnack: true,
+		})
+	} finally {
+		if (key) pending.delete(key)
+	}
 }
 
 function onAddAction(kind: 'include' | 'replace-failed' | 'exclude') {

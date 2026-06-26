@@ -50,6 +50,19 @@ export const ACTION_DISPATCHERS: {
 		api: 'writeValue',
 		args: [{ nodeId: d.nodeId, ...a.valueId }, a.mode],
 	}),
+	// Generic value-pane interactions.
+	'set-value': (d, a) => ({
+		api: 'writeValue',
+		args: [{ nodeId: d.nodeId, ...a.valueId }, a.value],
+	}),
+	'poll-value': (d, a) => ({
+		api: 'pollValue',
+		args: [{ nodeId: d.nodeId, ...a.valueId }],
+	}),
+	'refresh-cc': (d, a) => ({
+		api: 'refreshCCValues',
+		args: [d.nodeId, a.commandClass],
+	}),
 	// Controller- and node-management actions, mapped to their
 	// bookkeeping APIs.
 	ping: (d) => ({ api: 'pingNode', args: [d.nodeId] }),

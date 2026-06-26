@@ -40,6 +40,7 @@
 			<div class="zw-drawer__body">
 				<ZwNodeDetailsBody
 					:device="device"
+					layout="stacked"
 					@action="(d, a) => emit('action', d, a)"
 				/>
 			</div>

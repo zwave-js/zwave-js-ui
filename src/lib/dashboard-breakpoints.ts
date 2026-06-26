@@ -12,3 +12,10 @@
 // `@media (max-width: 600px)` stays a literal (a stylesheet can't read a JS
 // constant); keep the two in sync if this ever changes.
 export const MOBILE_BREAKPOINT = 600
+
+// Container-width threshold (px) at which the table-row expansion switches
+// from the stacked layout to the two-pane layout (left rail + tabbed detail).
+// Below this — and always inside the card-view drawer — the stacked layout is
+// used. Like MOBILE_BREAKPOINT this is measured against the shell's own width
+// (the `viewport` passed down), so it tracks available space, not the window.
+export const TWO_PANE_BREAKPOINT = 900
