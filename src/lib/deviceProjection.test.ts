@@ -62,6 +62,17 @@ describe('projectDevice', () => {
 		expect(d.primaryValue).to.deep.include({ type: 'toggle', on: true })
 	})
 
+	it('reads switch state from targetValue when currentValue is absent', () => {
+		const node = {
+			id: 5,
+			values: asValuesObj([
+				val('a', CommandClasses['Binary Switch'], 'targetValue', true),
+			]),
+		}
+		const d = projectDevice(node)
+		expect(d.primaryValue).to.deep.include({ type: 'toggle', on: true })
+	})
+
 	it('projects an outlet (Binary Switch + Meter) with watts', () => {
 		const node = {
 			id: 6,
@@ -99,17 +110,26 @@ describe('projectDevice', () => {
 		expect(d.primaryValue).to.deep.include({ type: 'dim', level: 65 })
 	})
 
-	it('projects a lock (Door Lock CC)', () => {
+	it('projects a lock (Door Lock CC) and captures the targetMode write target', () => {
 		const node = {
 			id: 8,
 			values: asValuesObj([
 				val('a', CommandClasses['Door Lock'], 'currentMode', 255),
+				val('t', CommandClasses['Door Lock'], 'targetMode', 255),
 				val('b', CommandClasses.Battery, 'level', 78),
 			]),
 		}
 		const d = projectDevice(node)
 		expect(d.archetype.kind).to.equal('lock')
 		expect(d.primaryValue).to.deep.include({ type: 'lock', locked: true })
+		// The action layer writes to the writeable targetMode value, not the
+		// read-only currentMode.
+		expect(d.primaryValue).to.have.property('target')
+		expect((d.primaryValue as any).target).to.deep.equal({
+			commandClass: CommandClasses['Door Lock'],
+			endpoint: 0,
+			property: 'targetMode',
+		})
 		expect(d.power).to.deep.equal({ type: 'battery', battery: 78 })
 	})
 

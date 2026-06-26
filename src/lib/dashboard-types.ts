@@ -2,6 +2,7 @@
 // value and action types its components render and emit.
 
 import type { Component } from 'vue'
+import type { ValueID } from '@zwave-js/core'
 
 // ── Primary value ──────────────────────────────────────────────
 
@@ -13,31 +14,42 @@ export type PrimaryValueType =
 	| 'state'
 	| 'thermostat'
 
+// The interactive values below carry the writeable `target` (a `ValueID`) the
+// action layer writes to; read-only values (reading, state) omit it.
+
+// On/off device — switch, outlet, or binary light.
 export interface PrimaryValueToggle {
 	type: 'toggle'
 	label?: string
 	on: boolean
 	watts?: number | null
+	target: ValueID
 }
 
+// Variable level (0–100%) — dimmable light or shade position.
 export interface PrimaryValueDim {
 	type: 'dim'
 	label?: string
 	level: number
+	target: ValueID
 }
 
+// Door lock secured/unsecured state.
 export interface PrimaryValueLock {
 	type: 'lock'
 	label?: string
 	locked: boolean
+	target: ValueID
 }
 
+// Read-only sensor measurement (value + unit), e.g. temperature.
 export interface PrimaryValueReading {
 	type: 'reading'
 	value: number | string
 	unit: string
 }
 
+// Discrete sensor state with display labels/colours, e.g. motion clear/detected.
 export interface PrimaryValueState {
 	type: 'state'
 	value: string
@@ -46,12 +58,15 @@ export interface PrimaryValueState {
 	colors: string[]
 }
 
+// Thermostat — current temperature, setpoint, and mode.
 export interface PrimaryValueThermostat {
 	type: 'thermostat'
 	value: number
 	unit: string
 	setpoint: number
 	mode: string
+	setpointTarget?: ValueID
+	modeTarget?: ValueID
 }
 
 export type PrimaryValue =
@@ -182,11 +197,11 @@ export interface Device {
 // maps each shape to its socket call.
 
 export type DeviceAction =
-	| { type: 'toggle'; on: boolean }
-	| { type: 'dim'; level: number }
-	| { type: 'lock'; locked: boolean }
-	| { type: 'thermostat-setpoint'; setpoint: number }
-	| { type: 'thermostat-mode'; mode: string }
+	| { type: 'toggle'; on: boolean; valueId: ValueID }
+	| { type: 'dim'; level: number; valueId: ValueID }
+	| { type: 'lock'; locked: boolean; valueId: ValueID }
+	| { type: 'thermostat-setpoint'; setpoint: number; valueId: ValueID }
+	| { type: 'thermostat-mode'; mode: string; valueId: ValueID }
 	| { type: 'ping' }
 	| { type: 'interview' }
 	| { type: 'refresh' }

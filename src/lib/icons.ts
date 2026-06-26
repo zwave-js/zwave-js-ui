@@ -51,6 +51,7 @@ export {
 	SignalLow as SignalLowIcon,
 	SignalMedium as SignalMediumIcon,
 	Siren as SirenIcon,
+	Square as StopIcon,
 	Sun as DimmerIcon,
 	Sun as SunIcon,
 	Tablet as RemoteIcon,

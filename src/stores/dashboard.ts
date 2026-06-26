@@ -31,12 +31,16 @@ const useDashboardStore = defineStore('dashboard', () => {
 
 	const activityCount = computed(() => activities.value.length)
 
+	// `appInfo.homeHex` is the controller home ID formatted as `0x…` hex.
+	const homeHex = computed(() => base.appInfo?.homeHex || '')
+
 	return {
 		devices,
 		deviceCount,
 		attentionCount,
 		activities,
 		activityCount,
+		homeHex,
 	}
 })
 

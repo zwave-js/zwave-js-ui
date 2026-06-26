@@ -1,5 +1,5 @@
 <template>
-	<div v-if="pv" class="zw-pv-toggle" @click.stop>
+	<div v-if="pv" class="zw-pv-toggle">
 		<div class="zw-pv-toggle__label-col">
 			<div
 				class="zw-pv-toggle__label"
@@ -7,17 +7,24 @@
 			>
 				{{ pv.on ? 'On' : 'Off' }}
 			</div>
-			<div v-if="pv.on && pv.watts != null" class="zw-pv-toggle__caption">
+			<div v-if="pv.watts != null" class="zw-pv-toggle__caption">
 				{{ pv.watts }} W
 			</div>
 		</div>
-		<ZwToggle
-			:model-value="pv.on"
-			size="md"
-			@update:model-value="
-				(on) => emit('action', device, { type: 'toggle', on })
-			"
-		/>
+		<span class="zw-click-shield" @click.stop>
+			<ZwToggle
+				:model-value="pv.on"
+				size="md"
+				@update:model-value="
+					(on) =>
+						emit('action', device, {
+							type: 'toggle',
+							on,
+							valueId: pv.target,
+						})
+				"
+			/>
+		</span>
 	</div>
 </template>
 
