@@ -4,7 +4,13 @@ import { describe, it, expect } from 'vitest'
 import { CommandClasses } from '@zwave-js/core'
 import { projectDevice, projectDevices } from './deviceProjection.ts'
 
-function val(id, cc, property, value, extra = {}) {
+function val(
+	id: string,
+	cc: number,
+	property: any,
+	value: any,
+	extra: any = {},
+) {
 	return {
 		id: `${id}`,
 		nodeId: 1,
@@ -17,8 +23,8 @@ function val(id, cc, property, value, extra = {}) {
 	}
 }
 
-function asValuesObj(arr) {
-	const obj = {}
+function asValuesObj(arr: any[]) {
+	const obj: Record<string, any> = {}
 	for (const v of arr) obj[v.id] = v
 	return obj
 }
@@ -232,7 +238,7 @@ describe('projectDevice', () => {
 			rebuildRoutesProgress: 'pending',
 			values: {},
 		})
-		expect(d.activity.find((a) => a.type === 'rebuild')).to.exist
+		expect(d.activity.find((a) => a.type === 'rebuild')).toBeDefined()
 	})
 
 	it('derives interview activity with synthesized progress', () => {

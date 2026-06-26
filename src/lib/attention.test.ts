@@ -7,7 +7,7 @@ import {
 	LOW_BATTERY_THRESHOLD,
 } from './attention.ts'
 
-function base(overrides = {}) {
+function base(overrides: any = {}) {
 	return {
 		id: 1,
 		nodeId: 1,

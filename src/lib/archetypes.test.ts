@@ -4,8 +4,8 @@ import { describe, it, expect } from 'vitest'
 import { CommandClasses } from '@zwave-js/core'
 import { inferArchetype, productMatches } from './archetypes.ts'
 
-function nodeWithCCs(ccs, extra = {}) {
-	const values = {}
+function nodeWithCCs(ccs: number[], extra: any = {}) {
+	const values: Record<string, any> = {}
 	ccs.forEach((cc, i) => {
 		values[`${i}-${cc}`] = { commandClass: cc }
 	})
@@ -107,8 +107,9 @@ describe('inferArchetype', () => {
 
 	it('attaches label + icon for every archetype', () => {
 		const a = inferArchetype({ values: {} })
-		expect(a.label).to.be.a('string').and.not.empty
-		expect(a.icon).to.exist
+		expect(a.label).to.be.a('string')
+		expect(a.label.length).to.be.above(0)
+		expect(a.icon).toBeTruthy()
 		expect(a.power).to.be.oneOf(['mains', 'battery', 'usb'])
 	})
 })

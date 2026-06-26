@@ -3,13 +3,11 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 
 class LocalStorageMock {
-	constructor() {
-		this.items = {}
-	}
-	getItem(k) {
+	items: Record<string, any> = {}
+	getItem(k: string) {
 		return this.items[k]
 	}
-	setItem(k, v) {
+	setItem(k: string, v: any) {
 		this.items[k] = v
 	}
 }
@@ -23,13 +21,15 @@ async function freshModule() {
 }
 
 describe('dashboardPrefs', () => {
-	let prevStorage
+	let prevStorage: any
+	let store: LocalStorageMock
 	beforeEach(() => {
-		prevStorage = global.localStorage
-		global.localStorage = new LocalStorageMock()
+		prevStorage = (global as any).localStorage
+		store = new LocalStorageMock()
+		;(global as any).localStorage = store
 	})
 	afterEach(() => {
-		global.localStorage = prevStorage
+		;(global as any).localStorage = prevStorage
 	})
 
 	it('returns defaults when nothing is stored', async () => {
@@ -78,9 +78,9 @@ describe('dashboardPrefs', () => {
 			activityHidden: false,
 		})
 		// Corrupt the scope only.
-		const raw = JSON.parse(global.localStorage.getItem('dashboard'))
+		const raw = JSON.parse(store.getItem('dashboard'))
 		raw.scope = 'bogus'
-		global.localStorage.setItem('dashboard', JSON.stringify(raw))
+		store.setItem('dashboard', JSON.stringify(raw))
 
 		const p = m.load()
 		expect(p.scope).to.equal('overview') // fell back to default
@@ -90,7 +90,7 @@ describe('dashboardPrefs', () => {
 
 	it('resets to defaults on empty storage even after corruption', async () => {
 		const m = await freshModule()
-		global.localStorage.setItem('dashboard', 'not json at all')
+		store.setItem('dashboard', 'not json at all')
 		const p = m.load()
 		expect(p.scope).to.equal('overview')
 	})

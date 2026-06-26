@@ -10,7 +10,7 @@ import {
 	nextSort,
 } from './deviceFilter.ts'
 
-function mk(o) {
+function mk(o: any) {
 	return {
 		nodeId: o.id,
 		isController: !!o.isController,
