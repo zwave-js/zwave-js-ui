@@ -78,9 +78,9 @@
 			class="zw-row__cell"
 		>
 			<component
-				:is="signalIcon"
+				:is="signal.icon"
 				:size="14"
-				:style="{ color: signalIconColor }"
+				:style="{ color: signal.color }"
 			/>
 		</span>
 
@@ -120,13 +120,8 @@ import ZwActivityReadout from '@/components/dashboard/atoms/ZwActivityReadout.vu
 import ZwCompactPrimary from './ZwCompactPrimary.vue'
 import { deviceRowGrid, type ToggleableCol } from './deviceRowGrid'
 import { MOBILE_BREAKPOINT } from '@/lib/dashboard-breakpoints'
-import {
-	ChevronDownIcon,
-	DownloadIcon,
-	ICON_SIZE,
-	SignalHighIcon,
-	SignalLowIcon,
-} from '@/lib/icons'
+import { ChevronDownIcon, DownloadIcon, ICON_SIZE } from '@/lib/icons'
+import { signalDisplay } from '@/lib/deviceSignal'
 import { padNumber } from '@/lib/utils'
 import type { Device, DeviceAction } from '@/lib/dashboard-types'
 
@@ -161,13 +156,7 @@ function hasCol(c: ToggleableCol): boolean {
 	return props.columns.includes(c)
 }
 
-const signalIcon = computed(() =>
-	props.device.health === 'weak' ? SignalLowIcon : SignalHighIcon,
-)
-
-const signalIconColor = computed(() =>
-	props.device.health === 'weak' ? 'var(--zw-warning)' : 'var(--zw-fg-soft)',
-)
+const signal = computed(() => signalDisplay(props.device.health))
 </script>
 
 <style scoped>
@@ -191,8 +180,10 @@ const signalIconColor = computed(() =>
 	background: var(--zw-row-hover);
 }
 
+/* Opaque (not the translucent chip tint) because this row is rendered as
+   a sticky overlay over scrolling detail content — it must not bleed. */
 .zw-row--expanded {
-	background: var(--zw-chip-bg);
+	background: var(--zw-bg-soft);
 }
 
 .zw-row__id {

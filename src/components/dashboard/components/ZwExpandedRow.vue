@@ -2,6 +2,7 @@
 	<div class="zw-expanded-row">
 		<ZwNodeDetailsBody
 			:device="device"
+			:viewport="viewport"
 			@action="(d, a) => emit('action', d, a)"
 		/>
 	</div>
@@ -11,7 +12,9 @@
 import ZwNodeDetailsBody from './ZwNodeDetailsBody.vue'
 import type { Device, DeviceAction } from '@/lib/dashboard-types'
 
-defineProps<{ device: Device }>()
+// `viewport` (the shell width) flows through to NodeDetailsBody, which uses
+// it to pick the two-pane vs stacked layout for the inline expansion.
+defineProps<{ device: Device; viewport: number }>()
 const emit = defineEmits<{ action: [Device, DeviceAction] }>()
 </script>
 

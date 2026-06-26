@@ -202,6 +202,11 @@ export type DeviceAction =
 	| { type: 'lock'; locked: boolean; valueId: ValueID }
 	| { type: 'thermostat-setpoint'; setpoint: number; valueId: ValueID }
 	| { type: 'thermostat-mode'; mode: string; valueId: ValueID }
+	// Generic value-pane interactions: write any value, re-read a single
+	// value, or re-read every value of a command class.
+	| { type: 'set-value'; valueId: ValueID; value: unknown }
+	| { type: 'poll-value'; valueId: ValueID }
+	| { type: 'refresh-cc'; commandClass: number }
 	| { type: 'ping' }
 	| { type: 'interview' }
 	| { type: 'refresh' }
