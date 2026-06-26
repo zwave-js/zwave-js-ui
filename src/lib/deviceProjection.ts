@@ -142,19 +142,23 @@ function projectPrimaryValue(
 	}
 
 	if (archetypeKind === 'outlet' || archetypeKind === 'switch') {
-		const on = findValue(
-			node,
-			CommandClasses['Binary Switch'],
-			(v) =>
-				v.property === 'currentValue' || v.property === 'targetValue',
-		)
-		const onValue =
-			on?.property === 'currentValue' && typeof on.value === 'boolean'
-				? on.value
-				: false
+		// Display state prefers currentValue, falling back to targetValue so a
+		// switch that has only reported its target still reads correctly rather
+		// than forcing OFF. Either one resolves the write target below.
+		const on =
+			findValue(
+				node,
+				CommandClasses['Binary Switch'],
+				(v) => v.property === 'currentValue',
+			) ??
+			findValue(
+				node,
+				CommandClasses['Binary Switch'],
+				(v) => v.property === 'targetValue',
+			)
 		return {
 			type: 'toggle',
-			on: onValue,
+			on: typeof on?.value === 'boolean' ? on.value : false,
 			watts: meterWatts(node),
 			// Root-endpoint fallback until a Binary Switch value surfaces.
 			target: on

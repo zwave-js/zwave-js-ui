@@ -62,6 +62,17 @@ describe('projectDevice', () => {
 		expect(d.primaryValue).to.deep.include({ type: 'toggle', on: true })
 	})
 
+	it('reads switch state from targetValue when currentValue is absent', () => {
+		const node = {
+			id: 5,
+			values: asValuesObj([
+				val('a', CommandClasses['Binary Switch'], 'targetValue', true),
+			]),
+		}
+		const d = projectDevice(node)
+		expect(d.primaryValue).to.deep.include({ type: 'toggle', on: true })
+	})
+
 	it('projects an outlet (Binary Switch + Meter) with watts', () => {
 		const node = {
 			id: 6,
