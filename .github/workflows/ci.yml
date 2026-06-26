@@ -69,9 +69,7 @@ jobs:
 
       - name: Generate coverage report
         if: matrix['node-version'] == '20.x'
-        run: |
-          npm run coverage
-          npm run record-coverage
+        run: npm run coverage
 
       - name: Coveralls
         uses: coverallsapp/github-action@master

@@ -1,17 +1,15 @@
-import { expect } from 'chai'
-import { Settings } from './Settings'
+import { describe, it, expect } from 'vitest'
+import { Settings } from './Settings.js'
 
 class LocalStorageMock {
-	constructor() {
-		this.items = {}
-		this.isMocked = true
-	}
+	items: Record<string, any> = {}
+	isMocked = true
 
-	getItem(key) {
+	getItem(key: string) {
 		return this.items[key]
 	}
 
-	setItem(key, val) {
+	setItem(key: string, val: any) {
 		this.items[key] = val
 	}
 }
