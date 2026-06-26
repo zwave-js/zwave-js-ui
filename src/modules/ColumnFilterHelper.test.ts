@@ -1,5 +1,5 @@
-import { expect } from 'chai'
-import { ColumnFilterHelper } from './ColumnFilterHelper'
+import { describe, it, expect } from 'vitest'
+import { ColumnFilterHelper } from './ColumnFilterHelper.js'
 
 describe('ColumnFilterHelper', () => {
 	describe('#defaultFilter', () => {

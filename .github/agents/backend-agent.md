@@ -184,15 +184,15 @@ const port = 8091
 ## Testing Requirements
 
 - Write tests in test/ directory
-- Use Mocha + TypeScript for backend tests
+- Use Vitest for backend tests
 - Mock external dependencies (Z-Wave, MQTT)
 - Test both success and error paths
 - Maintain >80% code coverage
 
 ```typescript
-// test/utils.test.ts
-import { expect } from 'chai'
-import { retryOperation } from '../api/lib/utils'
+// test/lib/utils.test.ts
+import { describe, it, expect } from 'vitest'
+import { retryOperation } from '../../api/lib/utils.ts'
 
 describe('retryOperation', () => {
   it('should retry failed operations', async () => {
@@ -204,8 +204,8 @@ describe('retryOperation', () => {
     }
     
     const result = await retryOperation(operation, 3)
-    expect(result).to.equal('success')
-    expect(attempts).to.equal(3)
+    expect(result).toBe('success')
+    expect(attempts).toBe(3)
   })
 })
 ```
