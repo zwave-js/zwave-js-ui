@@ -32,7 +32,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, defineComponent, h } from 'vue'
+import { computed, defineComponent, h, type Component } from 'vue'
 import { Dialog } from '@vuetify/v0'
 import { storeToRefs } from 'pinia'
 import useDashboardStore from '@/stores/dashboard'
@@ -46,12 +46,14 @@ import {
 	GridIcon,
 	ICON_SIZE,
 	NetworkIcon,
+	PlayIcon,
 	PowerIcon,
 	PulseIcon,
 	QrIcon,
 	RefreshIcon,
 	SceneIcon,
 	SettingsIcon,
+	StopIcon,
 	XIcon,
 } from '@/lib/icons'
 
@@ -85,7 +87,8 @@ const emit = defineEmits<{
 }>()
 
 const store = useDashboardStore()
-const { deviceCount, attentionCount, activityCount } = storeToRefs(store)
+const { deviceCount, attentionCount, activityCount, homeHex } =
+	storeToRefs(store)
 
 const modeIsMobile = computed(() => props.mode === 'mobile')
 
@@ -195,20 +198,12 @@ function onSelect(navId: string): void {
 	if (modeIsMobile.value) emit('update:mobileOpen', false)
 }
 
-// Row-action toggle glyph: idle = filled circle, active = filled square.
-// Bespoke spans avoid pulling in icon-set svgs for a 2-state toggle.
-const RowActionGlyph = defineComponent({
-	props: {
-		shape: { type: String, required: true },
-	},
-	setup(p) {
-		return () =>
-			h('span', {
-				class: 'zw-sb__row-action-glyph',
-				style: { borderRadius: p.shape === 'circle' ? '50%' : '1px' },
-			})
-	},
-})
+// Row-action glyphs, keyed by RowAction.icon / .iconActive. Media-style
+// play/stop reads as a control to start/stop a capture (vs. a status dot).
+const ROW_ACTION_ICONS: Record<string, Component> = {
+	play: PlayIcon,
+	stop: StopIcon,
+}
 
 // Body component (inline) so the wide/collapsed/mobile aside shells can
 // share markup without a separate file.
@@ -251,7 +246,7 @@ function renderBrand(
 						h(
 							'div',
 							{ class: 'zw-sb__home-id', title: 'Home ID' },
-							'0x7e570001',
+							homeHex.value || '—',
 						),
 					])
 				: null,
@@ -401,8 +396,9 @@ function renderEntry(entry: NavEntry, i: number, isWide: boolean) {
 						: null,
 				],
 			),
-			...actions.map((ra) =>
-				h(
+			...actions.map((ra) => {
+				const glyph = (ra.active ? ra.iconActive : ra.icon) ?? 'play'
+				return h(
 					'button',
 					{
 						key: ra.id,
@@ -423,13 +419,15 @@ function renderEntry(entry: NavEntry, i: number, isWide: boolean) {
 							emit('rowAction', entry.id, ra.id)
 						},
 					},
-					h(RowActionGlyph, {
-						shape: ra.active
-							? (ra.iconActive ?? 'square')
-							: ra.icon,
+					h(ROW_ACTION_ICONS[glyph] ?? PlayIcon, {
+						size: ICON_SIZE.dense,
+						// Stop reads better as a solid square; the play
+						// triangle stays line-style (its filled tip halos).
+						...(glyph === 'stop' ? { fill: 'currentColor' } : {}),
+						'aria-hidden': 'true',
 					}),
-				),
-			),
+				)
+			}),
 		],
 	)
 }
@@ -779,7 +777,14 @@ function renderFooterRail() {
 	background: transparent;
 }
 
-.zw-sb__row.is-active {
+/* Highlight lives on the row (not the inner button) so it spans the full
+   width and any row action sits inside the highlighted menu item. */
+.zw-sb__row:hover {
+	background: rgba(0, 0, 0, 0.04);
+}
+
+.zw-sb__row.is-active,
+.zw-sb__row.is-active:hover {
 	background: var(--zw-accent-soft);
 }
 
@@ -806,17 +811,9 @@ function renderFooterRail() {
 	font-family: inherit;
 }
 
-.zw-sb__row-btn:hover {
-	background: rgba(0, 0, 0, 0.04);
-}
-
 .zw-sb__row.is-active .zw-sb__row-btn {
 	color: var(--zw-accent);
 	font-weight: 600;
-}
-
-.zw-sb__row.is-active .zw-sb__row-btn:hover {
-	background: transparent;
 }
 
 .zw-sb__row-icon {
@@ -840,55 +837,59 @@ function renderFooterRail() {
 	font-size: 10px;
 	font-weight: 600;
 	color: var(--zw-fg-soft);
+	/* Shared padding box so the numbers right-align whether or not the
+	   meta carries a colored background (e.g. the attention chip). */
+	padding: 1px 6px;
 	border-radius: 8px;
 }
 
 .zw-sb__row-meta--danger {
 	color: var(--zw-danger);
 	background: var(--zw-danger-soft);
-	padding: 1px 6px;
 }
 
 /* ─ row action (sibling button) ─ */
 
+/* Mirrors .zw-sb__restart: neutral surface button with a subtle border. */
 .zw-sb__row-action {
 	appearance: none;
 	cursor: pointer;
 	font: inherit;
+	box-sizing: border-box;
 	width: 22px;
 	height: 22px;
 	padding: 0;
-	border-radius: 4px;
+	border-radius: 6px;
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
 	flex-shrink: 0;
-	border: 1px solid transparent;
-	background: transparent;
+	border: 1px solid var(--zw-line);
+	background: var(--zw-card);
 	color: var(--zw-fg-soft);
 	transition:
 		background 0.12s,
-		border-color 0.12s;
+		border-color 0.12s,
+		color 0.12s;
 }
 
 .zw-sb__row-action:hover {
 	background: rgba(0, 0, 0, 0.04);
+	border-color: var(--zw-line2);
 }
 
-.zw-sb__row-action--danger {
+/* Capture toggle: neutral idle (play), red tint on hover, and a solid red
+   stop state while a capture is running. */
+.zw-sb__row-action--danger:hover {
+	background: var(--zw-danger-soft);
+	border-color: rgba(var(--v0-error), 0.4);
 	color: var(--zw-danger);
 }
 
 .zw-sb__row-action--danger.is-active {
 	background: var(--zw-danger-soft);
-	border-color: rgba(229, 57, 53, 0.3);
-}
-
-.zw-sb__row-action-glyph {
-	width: 8px;
-	height: 8px;
-	background: currentColor;
-	display: inline-block;
+	border-color: rgba(var(--v0-error), 0.45);
+	color: var(--zw-danger);
 }
 
 /* ─ footer (wide) ─ */

@@ -325,8 +325,8 @@ const rowActions = computed<RowAction[]>(() => [
 		ariaLabel: capturing.value
 			? 'Stop debug capture'
 			: 'Start debug capture',
-		icon: 'circle',
-		iconActive: 'square',
+		icon: 'play',
+		iconActive: 'stop',
 		tone: 'danger',
 		active: capturing.value,
 	},
