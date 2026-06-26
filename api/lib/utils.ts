@@ -7,7 +7,6 @@ import { isUint8Array } from 'node:util/types'
 import { createRequire } from 'node:module'
 import { mkdir, access } from 'node:fs/promises'
 import { fileURLToPath } from 'node:url'
-import { logsDir } from '../config/app.ts'
 import tripleBeam from 'triple-beam'
 
 const loglevels = tripleBeam.configs.npm.levels
@@ -506,6 +505,7 @@ export function buildPreferences(
  */
 export function buildLogConfig(
 	config: ZwaveConfig,
+	logsDir: string,
 ): PartialZWaveOptions['logConfig'] {
 	return {
 		enabled: config.logEnabled,
