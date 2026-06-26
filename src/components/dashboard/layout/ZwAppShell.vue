@@ -72,7 +72,6 @@
 					:collapsed-groups="collapsedGroups"
 					:visible-cols="visibleCols"
 					:sort="sort"
-					:grouping="grouping"
 					@open="onRowOpen"
 					@toggle-group="onToggleGroup"
 					@sort="(k) => (sort = nextSort(sort, k))"

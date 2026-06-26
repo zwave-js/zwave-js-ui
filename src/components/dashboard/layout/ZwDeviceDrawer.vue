@@ -53,6 +53,7 @@ import { createFocusTrap, type FocusTrap } from 'focus-trap'
 import ZwNodeDetailsBody from '@/components/dashboard/components/ZwNodeDetailsBody.vue'
 import { ICON_SIZE, XIcon } from '@/lib/icons'
 import { MOBILE_BREAKPOINT } from '@/lib/dashboard-breakpoints'
+import { padNumber } from '@/lib/utils'
 import type { Device, DeviceAction } from '@/lib/dashboard-types'
 
 const props = defineProps<{ device: Device | null; viewport: number }>()
@@ -65,9 +66,7 @@ const panelRef = ref<HTMLElement | null>(null)
 const closeRef = ref<HTMLButtonElement | null>(null)
 let trap: FocusTrap | null = null
 
-const paddedNodeId = computed(() =>
-	String(props.device?.nodeId ?? 0).padStart(3, '0'),
-)
+const paddedNodeId = computed(() => padNumber(props.device?.nodeId ?? 0, 3))
 
 const panelWidth = computed(() => {
 	if (props.viewport < MOBILE_BREAKPOINT) return props.viewport

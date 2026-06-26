@@ -126,6 +126,7 @@ import {
 	SignalHighIcon,
 	SignalLowIcon,
 } from '@/lib/icons'
+import { padNumber } from '@/lib/utils'
 import type { Device, DeviceAction } from '@/lib/dashboard-types'
 
 const props = defineProps<{
@@ -142,7 +143,7 @@ const emit = defineEmits<{
 	action: [Device, DeviceAction]
 }>()
 
-const nodeIdLabel = computed(() => String(props.device.nodeId).padStart(3, '0'))
+const nodeIdLabel = computed(() => padNumber(props.device.nodeId, 3))
 
 const subtitle = computed(() => {
 	const parts = [props.device.manufacturer, props.device.productCode].filter(

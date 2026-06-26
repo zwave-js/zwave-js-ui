@@ -1,9 +1,8 @@
 <template>
 	<div v-if="activities.length > 0" class="zw-strip">
 		<div
-			class="zw-strip__scroll"
+			class="zw-strip__scroll zw-strip__scroll--masked"
 			:style="{ paddingLeft: padX + 'px' }"
-			:class="{ 'zw-strip__scroll--masked': true }"
 		>
 			<span class="zw-strip__label">Activity</span>
 			<span
@@ -14,8 +13,11 @@
 				<span class="zw-strip__pulse" />
 				{{ d.activity[0].label }} · {{ d.name || d.product }}
 			</span>
-			<span v-if="activities.length > 6" class="zw-strip__more">
-				+{{ activities.length - 6 }} more
+			<span
+				v-if="activities.length > visibleActivities.length"
+				class="zw-strip__more"
+			>
+				+{{ activities.length - visibleActivities.length }} more
 			</span>
 		</div>
 		<div class="zw-strip__hide" :style="{ paddingInline: padX - 6 + 'px' }">
@@ -46,7 +48,9 @@ const emit = defineEmits<{ hide: [] }>()
 
 const padX = computed(() => (props.viewport < 600 ? 12 : 20))
 
-const visibleActivities = computed(() => props.activities.slice(0, 6))
+// Cap the inline chips; the rest collapse into a "+N more" tail.
+const MAX_CHIPS = 6
+const visibleActivities = computed(() => props.activities.slice(0, MAX_CHIPS))
 </script>
 
 <style>

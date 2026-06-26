@@ -71,6 +71,7 @@ import ZwBatteryMini from '@/components/dashboard/atoms/ZwBatteryMini.vue'
 import ZwActivityReadout from '@/components/dashboard/atoms/ZwActivityReadout.vue'
 import { DownloadIcon, ICON_SIZE, MoonIcon } from '@/lib/icons'
 import { isStateAlert } from '@/lib/primaryValue'
+import { padNumber } from '@/lib/utils'
 import type { Device, DeviceAction } from '@/lib/dashboard-types'
 
 const props = defineProps<{ device: Device }>()
@@ -79,7 +80,7 @@ const emit = defineEmits<{
 	action: [Device, DeviceAction]
 }>()
 
-const nodeIdLabel = computed(() => String(props.device.nodeId).padStart(3, '0'))
+const nodeIdLabel = computed(() => padNumber(props.device.nodeId, 3))
 
 const isAlertState = computed(() => {
 	const pv = props.device.primaryValue

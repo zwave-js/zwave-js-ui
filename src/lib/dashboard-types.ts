@@ -126,7 +126,12 @@ export interface Activity {
 
 // ── Security ──────────────────────────────────────────────────
 
-export type SecurityKey = 'S0' | 'S2_UA' | 'S2_A' | 'S2_AC'
+// Canonical zwave-js `SecurityClass` member names (see @zwave-js/core).
+export type SecurityKey =
+	| 'S0_Legacy'
+	| 'S2_Unauthenticated'
+	| 'S2_Authenticated'
+	| 'S2_AccessControl'
 
 // ── Comm stats (controller) ───────────────────────────────────
 

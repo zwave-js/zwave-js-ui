@@ -22,10 +22,10 @@ import type { Device, SecurityKey } from '@/lib/dashboard-types'
 const props = defineProps<{ device: Device }>()
 
 const KEYS: { id: SecurityKey; label: string }[] = [
-	{ id: 'S0', label: 'S0 Legacy' },
-	{ id: 'S2_UA', label: 'S2 Unauthenticated' },
-	{ id: 'S2_A', label: 'S2 Authenticated' },
-	{ id: 'S2_AC', label: 'S2 Access Control' },
+	{ id: 'S0_Legacy', label: 'S0 Legacy' },
+	{ id: 'S2_Unauthenticated', label: 'S2 Unauthenticated' },
+	{ id: 'S2_Authenticated', label: 'S2 Authenticated' },
+	{ id: 'S2_AccessControl', label: 'S2 Access Control' },
 ]
 
 const entries = computed(() =>

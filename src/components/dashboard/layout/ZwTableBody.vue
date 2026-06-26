@@ -22,10 +22,7 @@
 					:title="`Sort by ${cell.label || cell.key}`"
 					@click="emit('sort', cell.sortKey as SortKey)"
 				>
-					<span>{{
-						cell.label ||
-						(cell.key === 'activity' ? 'Activity' : cell.key)
-					}}</span>
+					<span>{{ cell.label || cell.key }}</span>
 					<component
 						:is="
 							cell.active && sort.dir === 'desc'
@@ -71,13 +68,13 @@
 						/>
 						<span class="zw-table__group-name">
 							{{
-								item.key === '__controller'
+								item.key === CONTROLLER_KEY
 									? 'Controller'
 									: item.key
 							}}
 						</span>
 						<span
-							v-if="item.key !== '__controller'"
+							v-if="item.key !== CONTROLLER_KEY"
 							class="zw-table__group-count"
 						>
 							{{ item.count }}
@@ -123,12 +120,8 @@ import {
 	TOGGLEABLE_COLS,
 	type ToggleableCol,
 } from '@/components/dashboard/components/deviceRowGrid'
-import {
-	compareDevices,
-	SORTABLE_KEYS,
-	type SortKey,
-	type SortState,
-} from './table-sort'
+import { SORTABLE_KEYS, type SortKey, type SortState } from './table-sort'
+import { CONTROLLER_KEY } from '@/lib/deviceFilter'
 import {
 	ArrowDownIcon,
 	ArrowUpIcon,
@@ -136,8 +129,6 @@ import {
 	ICON_SIZE,
 } from '@/lib/icons'
 import type { Device, DeviceAction } from '@/lib/dashboard-types'
-
-type Grouping = 'location' | 'type' | 'all'
 
 // Every toggleable column id, from deviceRowGrid.
 const ALL_COLS: ToggleableCol[] = TOGGLEABLE_COLS.map((c) => c.id)
@@ -168,7 +159,6 @@ const props = defineProps<{
 	collapsedGroups: Set<string>
 	visibleCols: readonly string[]
 	sort: SortState
-	grouping: Grouping
 }>()
 
 const emit = defineEmits<{
@@ -220,30 +210,17 @@ const SORT_KEY_FOR_COL: Record<string, SortKey> = {
 
 const headerCells = computed<HeaderCell[] | null>(() => {
 	if (props.viewport < 600) return null
+	// Lead/trailing cells frame the row; the optional columns and their
+	// labels come straight from TOGGLEABLE_COLS (the single source of truth).
 	const cells: { label: string; key: string }[] = [
 		{ label: '', key: 'status' },
 		{ label: '#', key: 'id' },
 		{ label: 'Device', key: 'name' },
+		...TOGGLEABLE_COLS.filter((c) => columns.value.includes(c.id)).map(
+			(c) => ({ label: c.label, key: c.id }),
+		),
+		{ label: '', key: 'chev' },
 	]
-	if (columns.value.includes('activity')) {
-		cells.push({ label: 'Activity', key: 'activity' })
-	}
-	if (columns.value.includes('location')) {
-		cells.push({ label: 'Location', key: 'location' })
-	}
-	if (columns.value.includes('value')) {
-		cells.push({ label: 'State / Value', key: 'value' })
-	}
-	if (columns.value.includes('power')) {
-		cells.push({ label: 'Power', key: 'power' })
-	}
-	if (columns.value.includes('signal')) {
-		cells.push({ label: 'Link', key: 'signal' })
-	}
-	if (columns.value.includes('lastSeen')) {
-		cells.push({ label: 'Last seen', key: 'lastSeen' })
-	}
-	cells.push({ label: '', key: 'chev' })
 
 	return cells.map(({ label, key }) => {
 		const sortKey =
@@ -261,32 +238,11 @@ const headerCells = computed<HeaderCell[] | null>(() => {
 	})
 })
 
-const sortedGroups = computed<[string, Device[]][]>(() => {
-	let arr = props.groups.map(
-		([key, items]) =>
-			[
-				key,
-				[...items].sort((a, b) => compareDevices(a, b, props.sort)),
-			] as [string, Device[]],
-	)
-	if (props.grouping === 'location' && props.sort.key === 'location') {
-		const sign = props.sort.dir === 'desc' ? -1 : 1
-		arr = [...arr].sort((a, b) => {
-			if (a[0] === '__controller') return -1
-			if (b[0] === '__controller') return 1
-			const av = String(a[0]).toLowerCase()
-			const bv = String(b[0]).toLowerCase()
-			if (av < bv) return -1 * sign
-			if (av > bv) return 1 * sign
-			return 0
-		})
-	}
-	return arr
-})
-
+// `props.groups` arrives already scoped, grouped and sorted by
+// `buildGroups` (see ZwAppShell); the cards body consumes it the same way.
 const flatItems = computed<FlatItem[]>(() => {
 	const out: FlatItem[] = []
-	for (const [key, items] of sortedGroups.value) {
+	for (const [key, items] of props.groups) {
 		const collapsed = props.collapsedGroups.has(key)
 		out.push({
 			id: `head:${key}`,

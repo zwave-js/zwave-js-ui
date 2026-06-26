@@ -25,13 +25,13 @@
 				>
 					<h3 class="zw-cards__group-name">
 						{{
-							item.key === '__controller'
+							item.key === CONTROLLER_KEY
 								? 'Controller'
 								: item.key
 						}}
 					</h3>
 					<span
-						v-if="item.key !== '__controller'"
+						v-if="item.key !== CONTROLLER_KEY"
 						class="zw-cards__group-count"
 					>
 						{{ item.count }}
@@ -66,6 +66,7 @@ import { computed } from 'vue'
 import { DynamicScroller, DynamicScrollerItem } from 'vue-virtual-scroller'
 import ZwDeviceCard from '@/components/dashboard/components/ZwDeviceCard.vue'
 import ZwEmptyState from '@/components/dashboard/components/ZwEmptyState.vue'
+import { CONTROLLER_KEY } from '@/lib/deviceFilter'
 import type { Device, DeviceAction } from '@/lib/dashboard-types'
 
 type GroupHeadItem = {

@@ -5,6 +5,7 @@
 import { CommandClasses } from '@zwave-js/core'
 import type { ZUINode, ZUIValueId } from '../../api/lib/ZwaveClient.ts'
 import { inferArchetype } from './archetypes.ts'
+import { relativeTime } from './time.ts'
 import type {
 	Activity,
 	Device,
@@ -19,12 +20,14 @@ export interface ProjectOptions {
 	activitiesByNode?: Map<number, Activity[]>
 }
 
-const SECURITY_CLASS_TO_KEY: Record<string, SecurityKey> = {
-	S0_Legacy: 'S0',
-	S2_Unauthenticated: 'S2_UA',
-	S2_Authenticated: 'S2_A',
-	S2_AccessControl: 'S2_AC',
-}
+// SecurityClass member names, low → high; `node.security` carries the
+// highest granted class as its enum member name.
+const SECURITY_KEYS: readonly SecurityKey[] = [
+	'S0_Legacy',
+	'S2_Unauthenticated',
+	'S2_Authenticated',
+	'S2_AccessControl',
+]
 
 function findValue(
 	node: ZUINode,
@@ -63,41 +66,20 @@ function projectStatus(node: ZUINode): DeviceStatus {
 }
 
 function projectSecurityKeys(node: ZUINode): SecurityKey[] {
-	const out: SecurityKey[] = []
-	const sc =
-		(node as unknown as { securityClasses?: Record<string, boolean> })
-			.securityClasses ?? null
-	if (sc) {
-		for (const [k, v] of Object.entries(sc)) {
-			const mapped = SECURITY_CLASS_TO_KEY[k]
-			if (mapped && v) out.push(mapped)
-		}
-	}
-	// Fall back to legacy `security` string if no `securityClasses` block.
-	if (out.length === 0 && typeof node.security === 'string') {
-		const sec = node.security
-		if (sec.includes('S2_Access')) out.push('S2_AC')
-		else if (sec.includes('S2_Authenticated')) out.push('S2_A')
-		else if (sec.includes('S2_Unauthenticated')) out.push('S2_UA')
-		else if (sec.includes('S0')) out.push('S0')
-	}
-	return out
+	const sc = (
+		node as unknown as { securityClasses?: Record<string, boolean> }
+	).securityClasses
+	if (sc) return SECURITY_KEYS.filter((k) => sc[k])
+	// Fall back to the highest-class `security` member-name string.
+	const highest = SECURITY_KEYS.find((k) => k === node.security)
+	return highest ? [highest] : []
 }
 
-function projectInterview(node: ZUINode): {
-	state: 'complete' | 'interview' | 'failed'
-	progress?: number
-} {
+function projectInterview(node: ZUINode): 'complete' | 'interview' | 'failed' {
 	const stage = node.interviewStage
-	if (!stage || stage === 'Complete') return { state: 'complete' }
-	if (node.failed) return { state: 'failed' }
-	const progress =
-		typeof (node as unknown as { interviewProgress?: number })
-			.interviewProgress === 'number'
-			? (node as unknown as { interviewProgress: number })
-					.interviewProgress
-			: undefined
-	return { state: 'interview', progress }
+	if (!stage || stage === 'Complete') return 'complete'
+	if (node.failed) return 'failed'
+	return 'interview'
 }
 
 function projectProtocol(node: ZUINode): string {
@@ -349,12 +331,7 @@ function projectActivities(
 		out.push({
 			type: 'interview',
 			label: 'Interviewing',
-			progress:
-				typeof (node as unknown as { interviewProgress?: number })
-					.interviewProgress === 'number'
-					? (node as unknown as { interviewProgress: number })
-							.interviewProgress
-					: 0,
+			progress: node.interviewProgress ?? 0,
 		})
 	}
 
@@ -362,15 +339,6 @@ function projectActivities(
 	if (extra && extra.length) out.push(...extra)
 
 	return out
-}
-
-function lastSeenLabel(now: number, lastActive?: number): string {
-	if (!lastActive) return 'never'
-	const secs = Math.max(0, Math.floor((now - lastActive) / 1000))
-	if (secs < 60) return `${secs}s ago`
-	if (secs < 3600) return `${Math.floor(secs / 60)}m ago`
-	if (secs < 86400) return `${Math.floor(secs / 3600)}h ago`
-	return `${Math.floor(secs / 86400)}d ago`
 }
 
 /**
@@ -382,8 +350,8 @@ export function projectDevice(
 ): Device {
 	const now = opts.now ?? Date.now()
 	const archetype = inferArchetype(node)
-	const interview = projectInterview(node)
 	const power = projectPower(node)
+	const securityKeys = projectSecurityKeys(node)
 	const hasUpdate =
 		Array.isArray(node.availableFirmwareUpdates) &&
 		node.availableFirmwareUpdates.length > 0
@@ -401,17 +369,16 @@ export function projectDevice(
 		archetype,
 		power,
 		status: projectStatus(node),
-		interviewState: interview.state,
-		security:
-			projectSecurityKeys(node).slice(-1)[0] ??
-			(node.security ? 'none' : 'none'),
-		securityKeys: projectSecurityKeys(node),
+		interviewState: projectInterview(node),
+		// Highest granted class is last (keys are low → high).
+		security: securityKeys.at(-1) ?? 'none',
+		securityKeys,
 		firmware: {
 			node: node.firmwareVersion,
 			sdk: node.sdkVersion,
 		},
 		protocol: projectProtocol(node),
-		lastSeen: lastSeenLabel(now, node.lastActive),
+		lastSeen: relativeTime(node.lastActive, now),
 		lastSeenTs: node.lastActive,
 		primaryValue: projectPrimaryValue(node, archetype.kind),
 		activity,
