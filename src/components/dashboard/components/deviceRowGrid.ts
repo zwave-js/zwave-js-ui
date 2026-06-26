@@ -25,8 +25,8 @@ export const TOGGLEABLE_COLS: { id: ToggleableCol; label: string }[] = [
 
 const WIDTHS: Record<ToggleableCol, string> = {
 	activity: '120px',
-	location: '1fr',
-	value: '1.4fr',
+	location: '0.8fr',
+	value: '180px',
 	power: '72px',
 	signal: '40px',
 	lastSeen: '88px',

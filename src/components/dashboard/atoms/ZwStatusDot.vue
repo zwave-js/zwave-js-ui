@@ -3,6 +3,7 @@
 		class="zw-status-dot"
 		:class="`zw-status-dot--${status}`"
 		:style="sizeStyle"
+		:title="label ?? defaultLabel"
 	/>
 </template>
 
@@ -15,8 +16,15 @@ const props = withDefaults(
 	defineProps<{
 		status: Status
 		size?: number
+		// Override the default status-derived tooltip.
+		label?: string
 	}>(),
 	{ size: 8 },
+)
+
+// Default tooltip: the status name, Title-cased.
+const defaultLabel = computed(
+	() => props.status.charAt(0).toUpperCase() + props.status.slice(1),
 )
 
 // Bind size through a single custom property so the style block owns

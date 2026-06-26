@@ -95,6 +95,7 @@ import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useRouter } from 'vue-router'
 import useDashboardStore from '@/stores/dashboard'
+import useBaseStore from '@/stores/base'
 import ZwSidebar, { type RowAction } from './ZwSidebar.vue'
 import ZwTopbar from './ZwTopbar.vue'
 import ZwActivityStrip from './ZwActivityStrip.vue'
@@ -159,6 +160,8 @@ const emit = defineEmits<{
 	sidebarRowAction: [string, string]
 	restart: []
 	checkUpdates: []
+	// `true` to start the debug capture, `false` to finish it.
+	debugCapture: [boolean]
 }>()
 
 // ── viewport ─────────────────────────────────────────────────
@@ -214,7 +217,6 @@ const expandedRowId = ref<number | null>(null)
 const collapsedGroups = ref<Set<string>>(new Set(persisted.collapsedGroups))
 const visibleCols = ref<string[]>([...persisted.visibleCols])
 const sort = ref<SortState>({ ...(persisted.sort as SortState) })
-const capturing = ref(false)
 const triggerEl = ref<HTMLElement | null>(null)
 
 // Close mobile sidebar on viewport widen.
@@ -270,7 +272,12 @@ function onToggleCollapse(): void {
 // ── store ────────────────────────────────────────────────────
 
 const store = useDashboardStore()
+const baseStore = useBaseStore()
 const { devices, activities } = storeToRefs(store)
+
+// Reflects the live debug-capture session (base store), so the sidebar
+// toggle stays in sync with captures started elsewhere (e.g. the topbar).
+const capturing = computed(() => baseStore.debugCaptureActive)
 
 // ── scoped + grouped device pool ─────────────────────────────
 
@@ -353,7 +360,7 @@ function onNavSelect(navId: string): void {
 function onSidebarRowAction(navId: string, actionId: string): void {
 	emit('sidebarRowAction', navId, actionId)
 	if (navId === 'debug' && actionId === 'capture') {
-		capturing.value = !capturing.value
+		emit('debugCapture', !capturing.value)
 	}
 }
 

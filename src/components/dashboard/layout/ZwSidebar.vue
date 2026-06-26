@@ -91,8 +91,14 @@ const emit = defineEmits<{
 }>()
 
 const store = useDashboardStore()
-const { deviceCount, attentionCount, activityCount, homeHex } =
-	storeToRefs(store)
+const {
+	deviceCount,
+	attentionCount,
+	activityCount,
+	homeHex,
+	appVersion,
+	zwaveVersion,
+} = storeToRefs(store)
 
 const modeIsMobile = computed(() => props.mode === 'mobile')
 
@@ -195,6 +201,16 @@ function railBadge(
 		tone: entry.meta === 'attention' ? 'danger' : 'accent',
 		label: String(v),
 	}
+}
+
+// On the collapsed rail, an active row action surfaces as a status dot on
+// the nav icon, toned to match the action.
+function railActionDot(
+	entry: Extract<NavEntry, { kind: 'item' }>,
+): { show: false } | { show: true; tone: 'danger' | 'accent' } {
+	const action = (rowActionsByNav.value[entry.id] ?? []).find((a) => a.active)
+	if (!action) return { show: false }
+	return { show: true, tone: action.tone === 'danger' ? 'danger' : 'accent' }
 }
 
 function onSelect(navId: string): void {
@@ -329,6 +345,7 @@ function renderEntry(entry: NavEntry, i: number, isWide: boolean) {
 	const isActive = props.active === entry.id
 	if (!isWide) {
 		const badge = railBadge(entry)
+		const dot = badge.show ? { show: false as const } : railActionDot(entry)
 		return h(
 			'button',
 			{
@@ -350,6 +367,14 @@ function renderEntry(entry: NavEntry, i: number, isWide: boolean) {
 							},
 							badge.label,
 						)
+					: null,
+				dot.show
+					? h('span', {
+							class: [
+								'zw-sb__rail-dot',
+								`zw-sb__rail-dot--${dot.tone}`,
+							],
+						})
 					: null,
 			],
 		)
@@ -480,11 +505,15 @@ function renderFooterWide() {
 						h(RefreshIcon, { size: 11 }),
 					),
 				]),
-				h('span', { class: 'zw-sb__version-value' }, '11.17.0'),
+				h('span', { class: 'zw-sb__version-value' }, appVersion.value),
 			]),
 			h('div', { class: 'zw-sb__version-row' }, [
 				h('span', { class: 'zw-sb__version-name' }, 'Z-Wave JS'),
-				h('span', { class: 'zw-sb__version-value' }, '15.24.0'),
+				h(
+					'span',
+					{ class: 'zw-sb__version-value' },
+					zwaveVersion.value,
+				),
 			]),
 		]),
 		h(ZwUpdateNotifier, { current: '11.17.0', available: '11.18.1' }),
@@ -518,9 +547,14 @@ function renderFooterRail() {
 			available: '11.18.1',
 			compact: true,
 		}),
-		h('div', { class: 'zw-sb__conn-rail', title: 'connected · v11.17.0' }, [
-			h('span', { class: 'zw-sb__conn-dot' }),
-		]),
+		h(
+			'div',
+			{
+				class: 'zw-sb__conn-rail',
+				title: `connected · v${appVersion.value}`,
+			},
+			[h('span', { class: 'zw-sb__conn-dot' })],
+		),
 	])
 }
 </script>
@@ -768,6 +802,25 @@ function renderFooterRail() {
 }
 
 .zw-sb__rail-badge--accent {
+	background: var(--zw-accent);
+}
+
+/* Status dot for an active row action on the collapsed rail. */
+.zw-sb__rail-dot {
+	position: absolute;
+	top: 6px;
+	right: 6px;
+	width: 8px;
+	height: 8px;
+	border-radius: 50%;
+	box-shadow: 0 0 0 1.5px var(--zw-card);
+}
+
+.zw-sb__rail-dot--danger {
+	background: var(--zw-danger);
+}
+
+.zw-sb__rail-dot--accent {
 	background: var(--zw-accent);
 }
 

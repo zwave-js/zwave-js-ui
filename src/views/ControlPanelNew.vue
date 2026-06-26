@@ -5,6 +5,7 @@
 		@add-action="onAddAction"
 		@restart="onRestart"
 		@check-updates="onCheckUpdates"
+		@debug-capture="onDebugCapture"
 	/>
 </template>
 
@@ -28,6 +29,8 @@ interface AppLike {
 	showSnackbar: (msg: string, level?: string) => void
 	restart: () => Promise<void>
 	showUpdateDialog: () => Promise<void>
+	startDebugCapture: () => Promise<void>
+	finishDebugCapture: () => Promise<void>
 }
 
 function appInstance(): AppLike | null {
@@ -67,6 +70,13 @@ function onCheckUpdates() {
 	const app = appInstance()
 	if (!app) return
 	void app.showUpdateDialog()
+}
+
+// Defer to App's capture wizard; it owns the capture state the shell reads back.
+function onDebugCapture(start: boolean) {
+	const app = appInstance()
+	if (!app) return
+	void (start ? app.startDebugCapture() : app.finishDebugCapture())
 }
 </script>
 
