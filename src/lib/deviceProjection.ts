@@ -373,7 +373,14 @@ function projectActivities(
 		}
 	}
 
-	if (node.interviewStage && node.interviewStage !== 'Complete') {
+	// Skip interview progress for nodes that can't make any: a Dead or Asleep
+	// node would otherwise show a stalled, misleading indicator.
+	if (
+		node.interviewStage &&
+		node.interviewStage !== 'Complete' &&
+		node.status !== 'Dead' &&
+		node.status !== 'Asleep'
+	) {
 		out.push({
 			type: 'interview',
 			label: 'Interviewing',

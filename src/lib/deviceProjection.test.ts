@@ -287,6 +287,21 @@ describe('projectDevice', () => {
 		)
 	})
 
+	it('suppresses interview activity for Dead or Asleep nodes', () => {
+		for (const status of ['Dead', 'Asleep'] as const) {
+			const d = projectDevice({
+				id: 34,
+				interviewStage: 'CommandClasses',
+				interviewProgress: 60,
+				status,
+				values: {},
+			})
+			expect(d.activity.find((a) => a.type === 'interview')).to.equal(
+				undefined,
+			)
+		}
+	})
+
 	it('attaches activity entries from the registry', () => {
 		const map = new Map()
 		map.set(14, [{ type: 'ota', label: 'OTA', progress: 42 }])

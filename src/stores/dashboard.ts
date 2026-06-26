@@ -13,7 +13,11 @@ const useDashboardStore = defineStore('dashboard', () => {
 
 	const devices = computed<Device[]>(() =>
 		projectDevices(
-			(base.nodes ?? []) as Parameters<typeof projectDevices>[0],
+			// Virtual nodes (broadcast/multicast groups) belong in their own
+			// view, not the device list.
+			((base.nodes ?? []) as Parameters<typeof projectDevices>[0]).filter(
+				(n) => !n.virtual,
+			),
 		),
 	)
 
