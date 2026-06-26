@@ -1,0 +1,14 @@
+// Dashboard layout breakpoints.
+
+// The mobile cutoff, in pixels. This is a CONTAINER-width threshold: the
+// dashboard measures its own content area with a ResizeObserver and passes
+// it down as `viewport`, so the device row grid (deviceRowGrid) and the
+// drawer (ZwDeviceDrawer) collapse on available space, not window size.
+//
+// It deliberately does NOT derive from Vuetify's display thresholds
+// (480 / 760 / 1100 / 1380, see plugins/vuetify.js) — those are window-based
+// and none of them is 600 — so a single shared constant is the source of
+// truth across the three JS sites that read `viewport`. The drawer's CSS
+// `@media (max-width: 600px)` stays a literal (a stylesheet can't read a JS
+// constant); keep the two in sync if this ever changes.
+export const MOBILE_BREAKPOINT = 600
