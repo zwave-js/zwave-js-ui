@@ -8,7 +8,7 @@
 				{{ pv.locked ? 'Locked' : 'Unlocked' }}
 			</div>
 		</div>
-		<span class="zw-pv-lock__control" @click.stop>
+		<span class="zw-click-shield" @click.stop>
 			<ZwToggle
 				:model-value="pv.locked"
 				size="md"
@@ -42,11 +42,6 @@ const pv = usePrimaryValue(() => props.device, 'lock')
 	align-items: center;
 	justify-content: space-between;
 	gap: 12px;
-}
-
-/* Stops card/row clicks reaching the control without affecting layout. */
-.zw-pv-lock__control {
-	display: contents;
 }
 
 .zw-pv-lock__label {

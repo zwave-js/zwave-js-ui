@@ -2,7 +2,7 @@
 	<span class="zw-cp">
 		<!-- toggle -->
 		<template v-if="pv?.type === 'toggle'">
-			<span class="zw-cp__control" @click.stop>
+			<span class="zw-click-shield" @click.stop>
 				<ZwToggle
 					:model-value="pv.on"
 					size="sm"
@@ -42,7 +42,7 @@
 
 		<!-- lock -->
 		<template v-else-if="pv?.type === 'lock'">
-			<span class="zw-cp__control" @click.stop>
+			<span class="zw-click-shield" @click.stop>
 				<ZwToggle
 					:model-value="pv.locked"
 					size="sm"
@@ -108,11 +108,6 @@ const stateChipTone = computed(() => {
 	align-items: center;
 	gap: 6px;
 	white-space: nowrap;
-}
-
-/* Stops row clicks reaching the control without affecting layout. */
-.zw-cp__control {
-	display: contents;
 }
 
 .zw-cp__slider {

@@ -11,7 +11,7 @@
 				{{ pv.watts }} W
 			</div>
 		</div>
-		<span class="zw-pv-toggle__control" @click.stop>
+		<span class="zw-click-shield" @click.stop>
 			<ZwToggle
 				:model-value="pv.on"
 				size="md"
@@ -45,12 +45,6 @@ const pv = usePrimaryValue(() => props.device, 'toggle')
 	align-items: center;
 	justify-content: space-between;
 	gap: 12px;
-}
-
-/* Wrapper exists only to stop card/row clicks reaching the control; it must
-   not affect layout, so it generates no box. */
-.zw-pv-toggle__control {
-	display: contents;
 }
 
 .zw-pv-toggle__label-col {

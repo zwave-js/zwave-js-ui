@@ -144,6 +144,14 @@
 	outline-offset: var(--zw-focus-offset, 1px);
 }
 
+/* ── Click shield ───────────────────────────────────────────── */
+/* Wrap an interactive control in <span class="zw-click-shield" @click.stop>
+   so a click on the control does not bubble to a clickable card/row. Generates
+   no box (display: contents), so it never affects the control's layout. */
+.zw-click-shield {
+	display: contents;
+}
+
 /* ── Keyframes (semantic names, ported from --a-* / --b-* ───── */
 
 @keyframes zw-pulse {

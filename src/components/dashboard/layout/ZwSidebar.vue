@@ -59,12 +59,16 @@ import {
 
 export type SidebarMode = 'wide' | 'collapsed' | 'mobile'
 
+// Keys of ROW_ACTION_ICONS — a row action names its glyph, the renderer looks
+// it up. Keeping these in sync removes the need for a lookup fallback.
+export type RowActionIcon = 'play' | 'stop'
+
 export interface RowAction {
 	navId: string
 	id: string
 	ariaLabel: string
-	icon: string
-	iconActive?: string
+	icon: RowActionIcon
+	iconActive?: RowActionIcon
 	tone?: 'default' | 'danger'
 	active: boolean
 }
@@ -200,7 +204,7 @@ function onSelect(navId: string): void {
 
 // Row-action glyphs, keyed by RowAction.icon / .iconActive. Media-style
 // play/stop reads as a control to start/stop a capture (vs. a status dot).
-const ROW_ACTION_ICONS: Record<string, Component> = {
+const ROW_ACTION_ICONS: Record<RowActionIcon, Component> = {
 	play: PlayIcon,
 	stop: StopIcon,
 }
@@ -397,7 +401,7 @@ function renderEntry(entry: NavEntry, i: number, isWide: boolean) {
 				],
 			),
 			...actions.map((ra) => {
-				const glyph = (ra.active ? ra.iconActive : ra.icon) ?? 'play'
+				const glyph = ra.active ? (ra.iconActive ?? ra.icon) : ra.icon
 				return h(
 					'button',
 					{
@@ -419,7 +423,7 @@ function renderEntry(entry: NavEntry, i: number, isWide: boolean) {
 							emit('rowAction', entry.id, ra.id)
 						},
 					},
-					h(ROW_ACTION_ICONS[glyph] ?? PlayIcon, {
+					h(ROW_ACTION_ICONS[glyph], {
 						size: ICON_SIZE.dense,
 						// Stop reads better as a solid square; the play
 						// triangle stays line-style (its filled tip halos).

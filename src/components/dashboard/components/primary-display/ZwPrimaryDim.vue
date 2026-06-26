@@ -6,7 +6,7 @@
 			</span>
 			<span class="zw-pv-dim__caption">{{ caption }}</span>
 		</div>
-		<span class="zw-pv-dim__control" @click.stop>
+		<span class="zw-click-shield" @click.stop>
 			<ZwSlider
 				:model-value="pv.level"
 				@update:model-value="
@@ -39,11 +39,6 @@ const caption = computed(() =>
 </script>
 
 <style scoped>
-/* Stops card/row clicks reaching the slider without affecting layout. */
-.zw-pv-dim__control {
-	display: contents;
-}
-
 .zw-pv-dim {
 	display: flex;
 	flex-direction: column;
