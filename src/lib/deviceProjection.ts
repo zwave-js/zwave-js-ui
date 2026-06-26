@@ -2,7 +2,8 @@
 // dashboard renders from. Pure and side-effect-free so callers can
 // memoize per node.
 
-import { CommandClasses } from '@zwave-js/core'
+import { CommandClasses, type ValueID } from '@zwave-js/core'
+import { DoorLockMode } from '@zwave-js/cc'
 import type { ZUINode, ZUIValueId } from '../../api/lib/ZwaveClient.ts'
 import { inferArchetype } from './archetypes.ts'
 import { relativeTime } from './time.ts'
@@ -40,6 +41,21 @@ function findValue(
 		if (predicate(v)) return v
 	}
 	return undefined
+}
+
+// The `ValueID` of a located value. `overrideProperty` swaps to a writeable
+// companion on the same endpoint (e.g. `targetValue` for `currentValue`);
+// otherwise the value's own property and propertyKey are kept.
+function valueId(v: ZUIValueId, overrideProperty?: string): ValueID {
+	const id: ValueID = {
+		commandClass: v.commandClass,
+		endpoint: v.endpoint ?? 0,
+		property: overrideProperty ?? v.property,
+	}
+	if (overrideProperty === undefined && v.propertyKey !== undefined) {
+		id.propertyKey = v.propertyKey
+	}
+	return id
 }
 
 function batteryLevel(node: ZUINode): number | null {
@@ -104,7 +120,11 @@ function projectPrimaryValue(
 				v.property === 'currentValue' || v.property === 'targetValue',
 		)
 		if (typeof lvl?.value === 'number')
-			return { type: 'dim', level: clampLevel(lvl.value) }
+			return {
+				type: 'dim',
+				level: clampLevel(lvl.value),
+				target: valueId(lvl, 'targetValue'),
+			}
 		// Light may instead be binary.
 		const on = findValue(
 			node,
@@ -112,7 +132,12 @@ function projectPrimaryValue(
 			(v) => v.property === 'currentValue',
 		)
 		if (typeof on?.value === 'boolean')
-			return { type: 'toggle', on: on.value, watts: meterWatts(node) }
+			return {
+				type: 'toggle',
+				on: on.value,
+				watts: meterWatts(node),
+				target: valueId(on, 'targetValue'),
+			}
 		return null
 	}
 
@@ -120,13 +145,25 @@ function projectPrimaryValue(
 		const on = findValue(
 			node,
 			CommandClasses['Binary Switch'],
-			(v) => v.property === 'currentValue',
+			(v) =>
+				v.property === 'currentValue' || v.property === 'targetValue',
 		)
-		const onValue = typeof on?.value === 'boolean' ? on.value : false
+		const onValue =
+			on?.property === 'currentValue' && typeof on.value === 'boolean'
+				? on.value
+				: false
 		return {
 			type: 'toggle',
 			on: onValue,
 			watts: meterWatts(node),
+			// Root-endpoint fallback until a Binary Switch value surfaces.
+			target: on
+				? valueId(on, 'targetValue')
+				: {
+						commandClass: CommandClasses['Binary Switch'],
+						endpoint: 0,
+						property: 'targetValue',
+					},
 		}
 	}
 
@@ -137,12 +174,15 @@ function projectPrimaryValue(
 			(v) => v.property === 'currentMode' || v.property === 'targetMode',
 		)
 		if (locked?.value !== undefined) {
-			// Door Lock CC: 0 = Unsecured, 255 = Secured.
 			const isLocked =
-				locked.value === 255 ||
+				locked.value === DoorLockMode.Secured ||
 				locked.value === 'Secured' ||
 				locked.value === true
-			return { type: 'lock', locked: isLocked }
+			return {
+				type: 'lock',
+				locked: isLocked,
+				target: valueId(locked, 'targetMode'),
+			}
 		}
 		return null
 	}
@@ -177,6 +217,8 @@ function projectPrimaryValue(
 			setpoint:
 				typeof setpointVal?.value === 'number' ? setpointVal.value : 0,
 			mode: stateLabel(modeVal) ?? 'Off',
+			setpointTarget: setpointVal ? valueId(setpointVal) : undefined,
+			modeTarget: modeVal ? valueId(modeVal) : undefined,
 		}
 	}
 

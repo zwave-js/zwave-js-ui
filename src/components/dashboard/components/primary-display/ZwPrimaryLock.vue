@@ -1,5 +1,5 @@
 <template>
-	<div v-if="pv" class="zw-pv-lock" @click.stop>
+	<div v-if="pv" class="zw-pv-lock">
 		<div class="zw-pv-lock__label-col">
 			<div
 				class="zw-pv-lock__label"
@@ -8,13 +8,20 @@
 				{{ pv.locked ? 'Locked' : 'Unlocked' }}
 			</div>
 		</div>
-		<ZwToggle
-			:model-value="pv.locked"
-			size="md"
-			@update:model-value="
-				(locked) => emit('action', device, { type: 'lock', locked })
-			"
-		/>
+		<span class="zw-pv-lock__control" @click.stop>
+			<ZwToggle
+				:model-value="pv.locked"
+				size="md"
+				@update:model-value="
+					(locked) =>
+						emit('action', device, {
+							type: 'lock',
+							locked,
+							valueId: pv.target,
+						})
+				"
+			/>
+		</span>
 	</div>
 </template>
 
@@ -35,6 +42,11 @@ const pv = usePrimaryValue(() => props.device, 'lock')
 	align-items: center;
 	justify-content: space-between;
 	gap: 12px;
+}
+
+/* Stops card/row clicks reaching the control without affecting layout. */
+.zw-pv-lock__control {
+	display: contents;
 }
 
 .zw-pv-lock__label {

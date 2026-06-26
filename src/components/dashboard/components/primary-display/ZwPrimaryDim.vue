@@ -1,17 +1,24 @@
 <template>
-	<div v-if="pv" class="zw-pv-dim" @click.stop>
+	<div v-if="pv" class="zw-pv-dim">
 		<div class="zw-pv-dim__top">
 			<span class="zw-pv-dim__value">
 				{{ pv.level }}<span class="zw-pv-dim__pct">%</span>
 			</span>
 			<span class="zw-pv-dim__caption">{{ caption }}</span>
 		</div>
-		<ZwSlider
-			:model-value="pv.level"
-			@update:model-value="
-				(level) => emit('action', device, { type: 'dim', level })
-			"
-		/>
+		<span class="zw-pv-dim__control" @click.stop>
+			<ZwSlider
+				:model-value="pv.level"
+				@update:model-value="
+					(level) =>
+						emit('action', device, {
+							type: 'dim',
+							level,
+							valueId: pv.target,
+						})
+				"
+			/>
+		</span>
 	</div>
 </template>
 
@@ -32,6 +39,11 @@ const caption = computed(() =>
 </script>
 
 <style scoped>
+/* Stops card/row clicks reaching the slider without affecting layout. */
+.zw-pv-dim__control {
+	display: contents;
+}
+
 .zw-pv-dim {
 	display: flex;
 	flex-direction: column;

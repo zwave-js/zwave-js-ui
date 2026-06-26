@@ -109,13 +109,11 @@ function onKeyDown(e: KeyboardEvent) {
 	cursor: pointer;
 	transition:
 		box-shadow 0.2s,
-		transform 0.15s,
 		border-color 0.15s;
 	position: relative;
 }
 
 .zw-card:hover {
-	transform: translateY(-1px);
 	box-shadow: var(--zw-e4);
 }
 

@@ -1,14 +1,21 @@
 <template>
-	<span class="zw-cp" @click.stop>
+	<span class="zw-cp">
 		<!-- toggle -->
 		<template v-if="pv?.type === 'toggle'">
-			<ZwToggle
-				:model-value="pv.on"
-				size="sm"
-				@update:model-value="
-					(on) => emit('action', device, { type: 'toggle', on })
-				"
-			/>
+			<span class="zw-cp__control" @click.stop>
+				<ZwToggle
+					:model-value="pv.on"
+					size="sm"
+					@update:model-value="
+						(on) =>
+							emit('action', device, {
+								type: 'toggle',
+								on,
+								valueId: pv.target,
+							})
+					"
+				/>
+			</span>
 			<ZwChip tone="neutral">
 				{{ pv.on ? 'ON' : 'OFF' }}
 			</ZwChip>
@@ -16,13 +23,17 @@
 
 		<!-- dim — interactive small slider -->
 		<template v-else-if="pv?.type === 'dim'">
-			<span class="zw-cp__slider">
+			<span class="zw-cp__slider" @click.stop>
 				<ZwSlider
 					size="sm"
 					:model-value="pv.level"
 					@update:model-value="
 						(level) =>
-							emit('action', device, { type: 'dim', level })
+							emit('action', device, {
+								type: 'dim',
+								level,
+								valueId: pv.target,
+							})
 					"
 				/>
 			</span>
@@ -31,13 +42,20 @@
 
 		<!-- lock -->
 		<template v-else-if="pv?.type === 'lock'">
-			<ZwToggle
-				:model-value="pv.locked"
-				size="sm"
-				@update:model-value="
-					(locked) => emit('action', device, { type: 'lock', locked })
-				"
-			/>
+			<span class="zw-cp__control" @click.stop>
+				<ZwToggle
+					:model-value="pv.locked"
+					size="sm"
+					@update:model-value="
+						(locked) =>
+							emit('action', device, {
+								type: 'lock',
+								locked,
+								valueId: pv.target,
+							})
+					"
+				/>
+			</span>
 			<ZwChip :tone="pv.locked ? 'ok' : 'warn'">
 				{{ pv.locked ? 'LOCKED' : 'UNLOCKED' }}
 			</ZwChip>
@@ -90,6 +108,11 @@ const stateChipTone = computed(() => {
 	align-items: center;
 	gap: 6px;
 	white-space: nowrap;
+}
+
+/* Stops row clicks reaching the control without affecting layout. */
+.zw-cp__control {
+	display: contents;
 }
 
 .zw-cp__slider {

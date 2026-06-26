@@ -1,8 +1,10 @@
-// Translates `DeviceAction` shapes into ZwaveClient API requests. The
-// mapped type below forces every action in the union to have a matching
-// dispatcher entry, so a missing one fails to compile.
+// Maps `DeviceAction` shapes to ZwaveClient requests (one dispatcher per
+// action, enforced by the mapped type).
+//
+// Value writes use `writeValue`, not `sendCommand`: only `setValue` updates
+// the value optimistically and verifies it. The `valueId` rides on the action.
 
-import { CommandClasses } from '@zwave-js/core'
+import { DoorLockMode } from '@zwave-js/cc'
 import type { Device, DeviceAction } from './dashboard-types.ts'
 
 type DeviceActionType = DeviceAction['type']
@@ -19,52 +21,34 @@ export interface SocketRequest {
 	args: unknown[]
 }
 
-const cc = (name: keyof typeof CommandClasses) => CommandClasses[name]
-
 export const ACTION_DISPATCHERS: {
 	[T in DeviceActionType]: ActionDispatcher<
 		Extract<DeviceAction, { type: T }>
 	>
 } = {
 	toggle: (d, a) => ({
-		api: 'sendCommand',
-		args: [
-			{ nodeId: d.nodeId, commandClass: cc('Binary Switch') },
-			'set',
-			[a.on],
-		],
+		api: 'writeValue',
+		args: [{ nodeId: d.nodeId, ...a.valueId }, a.on],
 	}),
 	dim: (d, a) => ({
-		api: 'sendCommand',
-		args: [
-			{ nodeId: d.nodeId, commandClass: cc('Multilevel Switch') },
-			'set',
-			[a.level],
-		],
+		api: 'writeValue',
+		// Multilevel Switch caps at 99 (255 = restore); the slider reaches 100.
+		args: [{ nodeId: d.nodeId, ...a.valueId }, Math.min(a.level, 99)],
 	}),
 	lock: (d, a) => ({
-		api: 'sendCommand',
+		api: 'writeValue',
 		args: [
-			{ nodeId: d.nodeId, commandClass: cc('Door Lock') },
-			'set',
-			[a.locked ? 255 : 0],
+			{ nodeId: d.nodeId, ...a.valueId },
+			a.locked ? DoorLockMode.Secured : DoorLockMode.Unsecured,
 		],
 	}),
 	'thermostat-setpoint': (d, a) => ({
-		api: 'sendCommand',
-		args: [
-			{ nodeId: d.nodeId, commandClass: cc('Thermostat Setpoint') },
-			'set',
-			[1, a.setpoint],
-		],
+		api: 'writeValue',
+		args: [{ nodeId: d.nodeId, ...a.valueId }, a.setpoint],
 	}),
 	'thermostat-mode': (d, a) => ({
-		api: 'sendCommand',
-		args: [
-			{ nodeId: d.nodeId, commandClass: cc('Thermostat Mode') },
-			'set',
-			[a.mode],
-		],
+		api: 'writeValue',
+		args: [{ nodeId: d.nodeId, ...a.valueId }, a.mode],
 	}),
 	// Controller- and node-management actions, mapped to their
 	// bookkeeping APIs.
