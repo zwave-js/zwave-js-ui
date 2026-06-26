@@ -18,9 +18,9 @@ import {
 	ShadeIcon,
 	SignalIcon,
 	SirenIcon,
-	StatusIcon,
 	SwitchIcon,
 	ThermostatIcon,
+	UnknownIcon,
 	ZapIcon,
 } from './icons.ts'
 import type { Archetype, ArchetypeKind, PowerType } from './dashboard-types.ts'
@@ -105,7 +105,7 @@ export const ARCHETYPES: Record<ArchetypeKind, ArchetypeDef> = {
 	unknown: {
 		kind: 'unknown',
 		label: 'Device',
-		icon: StatusIcon,
+		icon: UnknownIcon,
 		power: 'mains',
 	},
 }

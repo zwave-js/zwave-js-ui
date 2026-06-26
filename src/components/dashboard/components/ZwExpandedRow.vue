@@ -19,5 +19,16 @@ const emit = defineEmits<{ action: [Device, DeviceAction] }>()
 .zw-expanded-row {
 	background: var(--zw-bg);
 	border-bottom: 1px solid var(--zw-line);
+	padding: 12px 16px;
+}
+
+/* Cap and center the details so they read as a contained panel rather than
+   stretching across the full table. */
+.zw-expanded-row :deep(.zw-nd) {
+	max-width: 820px;
+	margin-inline: auto;
+	border: 1px solid var(--zw-line);
+	border-radius: 8px;
+	overflow: hidden;
 }
 </style>

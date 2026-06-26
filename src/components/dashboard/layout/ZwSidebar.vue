@@ -197,6 +197,16 @@ function railBadge(
 	}
 }
 
+// On the collapsed rail, an active row action surfaces as a status dot on
+// the nav icon, toned to match the action.
+function railActionDot(
+	entry: Extract<NavEntry, { kind: 'item' }>,
+): { show: false } | { show: true; tone: 'danger' | 'accent' } {
+	const action = (rowActionsByNav.value[entry.id] ?? []).find((a) => a.active)
+	if (!action) return { show: false }
+	return { show: true, tone: action.tone === 'danger' ? 'danger' : 'accent' }
+}
+
 function onSelect(navId: string): void {
 	emit('select', navId)
 	if (modeIsMobile.value) emit('update:mobileOpen', false)
@@ -329,6 +339,7 @@ function renderEntry(entry: NavEntry, i: number, isWide: boolean) {
 	const isActive = props.active === entry.id
 	if (!isWide) {
 		const badge = railBadge(entry)
+		const dot = badge.show ? { show: false as const } : railActionDot(entry)
 		return h(
 			'button',
 			{
@@ -350,6 +361,14 @@ function renderEntry(entry: NavEntry, i: number, isWide: boolean) {
 							},
 							badge.label,
 						)
+					: null,
+				dot.show
+					? h('span', {
+							class: [
+								'zw-sb__rail-dot',
+								`zw-sb__rail-dot--${dot.tone}`,
+							],
+						})
 					: null,
 			],
 		)
@@ -768,6 +787,27 @@ function renderFooterRail() {
 }
 
 .zw-sb__rail-badge--accent {
+	background: var(--zw-accent);
+}
+
+/* Binary status indicator for an active row action (e.g. debug capture).
+   Mirrors ZwUpdateNotifier's compact dot: a box-shadow ring (not a border,
+   which pixelates at this size) lifts it clear of the nav glyph. */
+.zw-sb__rail-dot {
+	position: absolute;
+	top: 6px;
+	right: 6px;
+	width: 8px;
+	height: 8px;
+	border-radius: 50%;
+	box-shadow: 0 0 0 1.5px var(--zw-card);
+}
+
+.zw-sb__rail-dot--danger {
+	background: var(--zw-danger);
+}
+
+.zw-sb__rail-dot--accent {
 	background: var(--zw-accent);
 }
 

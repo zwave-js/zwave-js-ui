@@ -49,12 +49,13 @@
 			{{ device.location || '—' }}
 		</span>
 
-		<!-- value -->
+		<!-- value — hidden while expanded; the details body shows it instead -->
 		<span
 			v-if="hasCol('value') || viewport < MOBILE_BREAKPOINT"
 			class="zw-row__cell"
 		>
 			<ZwCompactPrimary
+				v-if="!expanded"
 				:device="device"
 				@action="(d, a) => emit('action', d, a)"
 			/>

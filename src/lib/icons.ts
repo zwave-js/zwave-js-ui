@@ -18,7 +18,7 @@ export {
 	ChevronDown as ChevronDownIcon,
 	ChevronRight as ChevronRightIcon,
 	ChevronUp as ChevronUpIcon,
-	CircleCheck as StatusIcon,
+	CircleHelp as UnknownIcon,
 	ClipboardList as InterviewIcon,
 	Clock as ClockIcon,
 	Cpu as ControllerIcon,
