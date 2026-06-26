@@ -7,6 +7,7 @@ Z-Wave JS UI is a full-featured Z-Wave Control Panel and MQTT Gateway built with
 ## Commit and PR Standards
 
 **ALWAYS follow conventional commit standards for all commits and PR titles/descriptions:**
+**ALWAYS split work into multiple commits instead of doing a single big commit at the end of implementation.**
 
 ### Commit Messages
 

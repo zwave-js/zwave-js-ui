@@ -2,7 +2,7 @@ import draggable from 'vuedraggable'
 import colors from 'vuetify/util/colors'
 import { ManagedItems } from '@/modules/ManagedItems'
 
-import { mapState } from 'pinia'
+import { mapActions, mapState } from 'pinia'
 import {
 	mdiBatteryAlertVariantOutline,
 	mdiBattery20,
@@ -61,6 +61,12 @@ export default {
 		'managedNodes.selected': function (val) {
 			this.$emit('selected', val)
 		},
+		// Clear selection when switching between physical and virtual views
+		// so a lingering selection from the other view doesn't drive the
+		// bulk action toolbar.
+		nodeView: function () {
+			if (this.managedNodes) this.managedNodes.selected = []
+		},
 	},
 	computed: {
 		...mapState(useBaseStore, ['nodes']),
@@ -69,6 +75,27 @@ export default {
 		},
 		currentTheme() {
 			return this.app.currentTheme
+		},
+		// Active device view ('physical' | 'virtual'). Backed by the shared
+		// store so the selection stays consistent with the compact (smart)
+		// view when switching between them.
+		nodeView: {
+			get() {
+				return useBaseStore().uiState.nodeView
+			},
+			set(value) {
+				useBaseStore().setNodeView(value)
+			},
+		},
+		// Nodes shown in the table, split between physical and virtual
+		// devices so the two (which have very different characteristics)
+		// are never mixed in the same list. A standard Broadcast virtual
+		// node always exists, so the split is always relevant.
+		displayedNodes() {
+			if (!this.managedNodes) return []
+			return this.managedNodes.filteredItems.filter((node) =>
+				this.nodeView === 'virtual' ? node.virtual : !node.virtual,
+			)
 		},
 	},
 	data: function () {
@@ -94,6 +121,28 @@ export default {
 				productDescription: { type: 'string', label: 'Product' },
 				productLabel: { type: 'string', label: 'Product code' },
 				name: { type: 'string', label: 'Name' },
+				virtual: {
+					type: 'boolean',
+					label: 'Virtual',
+					richValue: (node) =>
+						this.booleanRichValue(node.virtual, {
+							true: {
+								icon: 'cloud',
+								iconStyle: 'color: purple',
+								description: 'Virtual Node',
+							},
+							false: {
+								icon: 'device_hub',
+								iconStyle: 'color: green',
+								description: 'Physical Node',
+							},
+							default: {
+								icon: 'device_hub',
+								iconStyle: 'color: green',
+								description: 'Physical Node',
+							},
+						}),
+				},
 				loc: { type: 'string', label: 'Location' },
 				security: {
 					type: 'string',
@@ -235,12 +284,18 @@ export default {
 					label: 'Last Active',
 					groupable: false,
 				},
+				lastAwake: {
+					type: 'date',
+					label: 'Last Awake',
+					groupable: false,
+				},
 			},
 			expanded: [],
 			headersMenu: false,
 		}
 	},
 	methods: {
+		...mapActions(useBaseStore, ['getDateTimeString']),
 		getProgress(node) {
 			return node.firmwareUpdate
 				? Math.round(
@@ -295,6 +350,16 @@ export default {
 				Complete: 'success',
 			}
 			return map[status] || 'grey'
+		},
+		// Only show the progress indicator while an interview can actually make
+		// progress: not yet complete, and the node is neither dead nor asleep
+		// (a stalled interview would otherwise show a misleading spinner).
+		showInterviewProgress(node) {
+			return (
+				node.interviewStage !== 'Complete' &&
+				node.status !== 'Dead' &&
+				node.status !== 'Asleep'
+			)
 		},
 		powerRichValue(node) {
 			let level = node.minBatteryLevel

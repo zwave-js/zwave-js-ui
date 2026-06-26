@@ -6,6 +6,7 @@ const Settings = () => import('@/views/Settings.vue')
 const Mesh = () => import('@/views/Mesh.vue')
 const Store = () => import('@/views/Store.vue')
 const Scenes = () => import('@/views/Scenes.vue')
+const Groups = () => import('@/views/Groups.vue')
 const Debug = () => import('@/views/Debug.vue')
 const Login = () => import('@/views/Login.vue')
 const ErrorPage = () => import('@/views/ErrorPage.vue')
@@ -26,6 +27,7 @@ export const Routes = {
 	controlPanelNew: '/control-panel-new',
 	settings: '/settings',
 	scenes: '/scenes',
+	groups: '/groups',
 	debug: '/debug',
 	store: '/store',
 	mesh: '/mesh',
@@ -90,6 +92,15 @@ const router = createRouter({
 			path: Routes.scenes,
 			name: 'Scenes',
 			component: Scenes,
+			props: true,
+			meta: {
+				requiresAuth: true,
+			},
+		},
+		{
+			path: Routes.groups,
+			name: 'Groups',
+			component: Groups,
 			props: true,
 			meta: {
 				requiresAuth: true,

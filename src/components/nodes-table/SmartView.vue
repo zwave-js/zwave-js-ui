@@ -13,7 +13,7 @@
 		></v-text-field> -->
 		<v-data-iterator
 			:loading="loading"
-			:items="nodes"
+			:items="displayedNodes"
 			:search="search"
 			v-model="selected"
 			item-key="id"
@@ -65,6 +65,29 @@
 							</v-btn>
 							<v-btn variant="flat" :modelValue="true">
 								<v-icon>arrow_downward</v-icon>
+							</v-btn>
+						</v-btn-toggle>
+					</div>
+					<div>
+						<v-btn-toggle
+							class="mx-auto my-2"
+							v-model="nodeView"
+							mandatory
+							color="primary"
+						>
+							<v-btn
+								value="physical"
+								v-tooltip:bottom="'Physical devices'"
+							>
+								<v-icon>device_hub</v-icon>
+							</v-btn>
+							<v-btn
+								value="virtual"
+								v-tooltip:bottom="
+									'Virtual devices (broadcast / multicast groups)'
+								"
+							>
+								<v-icon>cloud</v-icon>
 							</v-btn>
 						</v-btn-toggle>
 					</div>
@@ -135,12 +158,17 @@
 									>
 										<strong
 											@click.stop="
+												!item.raw.virtual &&
 												select(
 													[item],
 													!isSelected(item),
 												)
 											"
-											v-tooltip:bottom="'Click to select'"
+											v-tooltip:bottom="
+												item.raw.virtual
+													? 'Virtual devices cannot be selected'
+													: 'Click to select'
+											"
 											style="
 												font-size: 14px;
 												line-height: 1.3;
@@ -181,10 +209,7 @@
 									</span>
 
 									<v-badge
-										v-if="
-											item.raw.interviewStage ===
-											'Complete'
-										"
+										v-if="!isInterviewing(item.raw)"
 										class="align-self-center"
 										bordered
 										offset-y="2"
@@ -341,6 +366,7 @@ import {
 	mdiBatteryUnknown,
 	mdiCheckAll,
 	mdiCheckCircle,
+	mdiCloud,
 	mdiEmoticon,
 	mdiEmoticonDead,
 	mdiHelpCircle,
@@ -383,9 +409,35 @@ export default {
 		selected() {
 			this.$emit('selected', this.selected)
 		},
+		// Clear selection when switching between physical and virtual views
+		// so a lingering selection from the other view doesn't drive the
+		// bulk action toolbar.
+		nodeView() {
+			this.selected = []
+		},
 	},
 	computed: {
 		...mapState(useBaseStore, ['nodes']),
+		// Active device view ('physical' | 'virtual'). Backed by the shared
+		// store so the selection stays consistent with the regular table when
+		// switching between compact and normal views.
+		nodeView: {
+			get() {
+				return useBaseStore().uiState.nodeView
+			},
+			set(value) {
+				useBaseStore().setNodeView(value)
+			},
+		},
+		// Nodes shown in the view, split between physical and virtual devices
+		// so the two (which have very different characteristics) are never
+		// mixed in the same list. A standard Broadcast virtual node always
+		// exists, so the split is always relevant.
+		displayedNodes() {
+			return this.nodes.filter((node) =>
+				this.nodeView === 'virtual' ? node.virtual : !node.virtual,
+			)
+		},
 		sortingRules() {
 			return [
 				{
@@ -431,6 +483,17 @@ export default {
 	methods: {
 		padId(id) {
 			return id.toString().padStart(3, '0')
+		},
+		// Only physical, non-controller nodes have a meaningful interview
+		// stage. Virtual nodes (broadcast/multicast groups) and the controller
+		// have no `interviewStage`, so they must never show the interview
+		// progress spinner (which would otherwise spin forever as "unknown").
+		isInterviewing(node) {
+			return (
+				!node.virtual &&
+				!node.isControllerNode &&
+				node.interviewStage !== 'Complete'
+			)
 		},
 		nodeInfo(node) {
 			return jsonToList({
@@ -515,6 +578,15 @@ export default {
 				iconStyle: `color: ${colors.grey.base}`,
 				description: node.status,
 				size: 40,
+			}
+
+			// Virtual nodes (broadcast/multicast groups) have no real status,
+			// so show the cloud icon that identifies them instead of "?".
+			if (node.virtual) {
+				v.icon = mdiCloud
+				v.iconStyle = 'color: purple'
+				v.description = 'Virtual node'
+				return v
 			}
 
 			switch (node.status) {

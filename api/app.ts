@@ -64,12 +64,18 @@ import {
 	writeFile,
 	lstat,
 	mkdir,
+	mkdtemp,
+	cp,
 } from 'node:fs/promises'
 import { generate } from 'selfsigned'
 import type { ZnifferConfig } from './lib/ZnifferManager.ts'
 import ZnifferManager from './lib/ZnifferManager.ts'
 import { getAllNamedScaleGroups, getAllSensors } from '@zwave-js/core'
 import debugManager from './lib/DebugManager.ts'
+import {
+	getImportedNodeLocation,
+	normalizeImportedNodesConfig,
+} from './lib/importConfig.ts'
 
 const createCertificate = promisify(generate)
 
@@ -357,22 +363,11 @@ async function getSnippets() {
 }
 
 /**
- * Get the `path` param from a request. Throws if the path is not safe
+ * Get the `path` param from a request. Throws if the path is not safe - that is if it escapes the storeDir.
  */
-function getSafePath(req: Request | string) {
-	let reqPath = typeof req === 'string' ? req : req.query.path
-
-	if (typeof reqPath !== 'string') {
-		throw Error('Invalid path')
-	}
-
-	reqPath = path.normalize(reqPath)
-
-	if (!reqPath.startsWith(storeDir) || reqPath === storeDir) {
-		throw Error('Path not allowed')
-	}
-
-	return reqPath
+async function getSafePath(req: Request | string, resolveReal = true) {
+	const reqPath = typeof req === 'string' ? req : req.query.path
+	return utils.resolveSafeStorePath(reqPath, storeDir, resolveReal)
 }
 
 async function loadCertKey(): Promise<{
@@ -407,8 +402,14 @@ async function loadCertKey(): Promise<{
 			key = result.private
 			cert = result.cert
 
-			await writeFile(utils.joinPath(storeDir, 'key.pem'), key)
-			await writeFile(utils.joinPath(storeDir, 'cert.pem'), cert)
+			// restrict the private key (and cert) to the owner so a permissive
+			// umask can't leave the self-signed TLS key world/group-readable
+			await writeFile(utils.joinPath(storeDir, 'key.pem'), key, {
+				mode: 0o600,
+			})
+			await writeFile(utils.joinPath(storeDir, 'cert.pem'), cert, {
+				mode: 0o600,
+			})
 			logger.info('New cert and key created')
 		} catch (error) {
 			logger.error('Error creating cert and key for HTTPS', error)
@@ -426,12 +427,10 @@ async function startGateway(settings: Settings) {
 	let mqtt: MqttClient
 	let zwave: ZWaveClient
 
-	if (
-		isAuthEnabled() &&
-		sessionSecret === 'DEFAULT_SESSION_SECRET_CHANGE_ME'
-	) {
-		logger.error(
-			'Session secret is the default one. For security reasons you should change it by using SESSION_SECRET env var',
+	if (isAuthEnabled() && !process.env.SESSION_SECRET) {
+		logger.warn(
+			'SESSION_SECRET env var is not set; using an auto-generated secret persisted in the store. ' +
+				'Set SESSION_SECRET explicitly to control the secret across environments.',
 		)
 	}
 
@@ -575,10 +574,10 @@ app.use(
 		level: 6, // Balanced compression level (0-9, higher = more compression but slower)
 	}),
 )
-app.use(express.json({ limit: '50mb' }) as RequestHandler)
+app.use(express.json({ limit: '5mb' }) as RequestHandler)
 app.use(
 	express.urlencoded({
-		limit: '50mb',
+		limit: '5mb',
 		extended: true,
 		parameterLimit: 50000,
 	}) as RequestHandler,
@@ -1078,10 +1077,14 @@ app.put(
 
 			await jsonStore.put(store.users, users)
 
+			// don't leak the password hash to the client (mirrors /api/authenticate)
+			const userData: User = Object.assign({}, oldUser)
+			delete userData.passwordHash
+
 			res.json({
 				success: true,
 				message: 'Password updated',
-				user: oldUser,
+				user: userData,
 			})
 		} catch (error) {
 			res.json({
@@ -1586,46 +1589,71 @@ app.post(
 	apisLimiter,
 	isAuthenticated,
 	async function (req, res) {
-		let config = req.body.data
 		try {
 			if (!gw.zwave) throw Error('Z-Wave client not inited')
 
-			// try convert to node object
-			if (Array.isArray(config)) {
-				const parsed = {}
+			const { nodes, selectedHomeId, skippedHomeIds } =
+				normalizeImportedNodesConfig(req.body.data, gw.zwave.homeHex, {
+					homeId:
+						typeof req.body.homeId === 'string'
+							? req.body.homeId
+							: undefined,
+					mergeAll: req.body.mergeAll === true,
+				})
 
-				for (let i = 0; i < config.length; i++) {
-					if (config[i]) {
-						parsed[i] = config[i]
-					}
-				}
-
-				config = parsed
+			if (skippedHomeIds.length > 0) {
+				logger.warn(
+					`Import: skipped nodes for home id(s) ${skippedHomeIds.join(
+						', ',
+					)}` +
+						(selectedHomeId
+							? `, imported ${selectedHomeId} (current controller)`
+							: ', none matched the current controller'),
+				)
 			}
 
-			for (const nodeId in config) {
-				const node = config[nodeId]
+			if (!selectedHomeId && skippedHomeIds.length > 0) {
+				return res.json({
+					success: false,
+					message: `Import skipped: the backup contains nodes for home ids ${skippedHomeIds.join(
+						', ',
+					)}, none of which match the connected controller (${
+						gw.zwave.homeHex
+					}).`,
+				})
+			}
+
+			for (const nodeId in nodes) {
+				const node = nodes[nodeId]
 				if (!node || typeof node !== 'object') continue
+
+				if (!utils.isValidNodeIdString(nodeId)) {
+					continue
+				}
 
 				// All API calls expect nodeId to be a number, so convert it here.
 				const nodeIdNumber = Number(nodeId)
+
 				if (utils.hasProperty(node, 'name')) {
 					await gw.zwave.callApi(
 						'setNodeName',
 						nodeIdNumber,
-						node.name || '',
+						typeof node.name === 'string' ? node.name : '',
 					)
 				}
 
-				if (utils.hasProperty(node, 'loc')) {
+				if (
+					utils.hasProperty(node, 'loc') ||
+					utils.hasProperty(node, 'location')
+				) {
 					await gw.zwave.callApi(
 						'setNodeLocation',
 						nodeIdNumber,
-						node.loc || '',
+						getImportedNodeLocation(node),
 					)
 				}
 
-				if (node.hassDevices) {
+				if (utils.isRecord(node.hassDevices)) {
 					await gw.zwave.storeDevices(
 						node.hassDevices,
 						nodeIdNumber,
@@ -1875,14 +1903,14 @@ app.get('/api/store', storeLimiter, isAuthenticated, async function (req, res) {
 	try {
 		let data: StoreFileEntry[] | string
 		if (req.query.path) {
-			const reqPath = getSafePath(req)
+			const reqPath = await getSafePath(req)
 			// lgtm [js/path-injection]
 			let stat = await lstat(reqPath)
 
 			// check symlink is secure
 			if (stat.isSymbolicLink()) {
 				const realPath = await realpath(reqPath)
-				getSafePath(realPath)
+				await getSafePath(realPath)
 				stat = await lstat(realPath)
 			}
 
@@ -1914,7 +1942,7 @@ app.get('/api/store', storeLimiter, isAuthenticated, async function (req, res) {
 
 app.put('/api/store', storeLimiter, isAuthenticated, async function (req, res) {
 	try {
-		const reqPath = getSafePath(req)
+		const reqPath = await getSafePath(req)
 
 		const isNew = req.query.isNew === 'true'
 		const isDirectory = req.query.isDirectory === 'true'
@@ -1949,7 +1977,7 @@ app.delete(
 	isAuthenticated,
 	async function (req, res) {
 		try {
-			const reqPath = getSafePath(req)
+			const reqPath = await getSafePath(req)
 
 			// lgtm [js/path-injection]
 			await rm(reqPath, { recursive: true, force: true })
@@ -1970,7 +1998,7 @@ app.put(
 		try {
 			const files = req.body.files || []
 			for (const f of files) {
-				await rm(f, { recursive: true, force: true })
+				await rm(await getSafePath(f), { recursive: true, force: true })
 			}
 			res.json({ success: true })
 		} catch (error) {
@@ -2008,19 +2036,22 @@ app.post(
 		archive.pipe(res)
 
 		for (const f of files) {
-			const s = await lstat(f)
-			const name = f.replace(storeDir, '')
-			if (s.isFile()) {
-				archive.file(f, { name })
-			} else if (s.isSymbolicLink()) {
-				const targetPath = await realpath(f)
-				try {
-					// check path is secure, if so add it as file
-					getSafePath(targetPath)
+			try {
+				// confine the path to the store *before* touching the
+				// filesystem, so unsafe paths can't be probed via lstat/realpath
+				const safe = await getSafePath(f)
+				const s = await lstat(safe)
+				const name = safe.replace(storeDir, '')
+				if (s.isFile()) {
+					archive.file(safe, { name })
+				} else if (s.isSymbolicLink()) {
+					// getSafePath already resolved the link target and checked
+					// it stays in the store; add the dereferenced target
+					const targetPath = await realpath(safe)
 					archive.file(targetPath, { name })
-				} catch (e) {
-					// ignore
 				}
+			} catch (e) {
+				// ignore unsafe or unreadable entries
 			}
 		}
 
@@ -2064,9 +2095,21 @@ app.post(
 			}
 
 			if (isRestore) {
-				await extract(file.path, { dir: storeDir })
+				// Stage, reject symlinks escaping the store, then merge in.
+				const stageDir = await mkdtemp(path.join(storeDir, '.restore-'))
+				try {
+					await extract(file.path, { dir: stageDir })
+					await utils.assertNoEscapingSymlinks(stageDir, stageDir)
+					await cp(stageDir, storeDir, {
+						recursive: true,
+						// keep in-store links (e.g. *_current.log) as links, don't copy their targets
+						verbatimSymlinks: true,
+					})
+				} finally {
+					await rm(stageDir, { recursive: true, force: true })
+				}
 			} else {
-				const destinationPath = getSafePath(
+				const destinationPath = await getSafePath(
 					path.join(storeDir, folder, file.originalname),
 				)
 				await rename(file.path, destinationPath)
@@ -2083,14 +2126,19 @@ app.post(
 	},
 )
 
-app.get('/api/snippet', apisLimiter, async function (req, res) {
-	try {
-		const snippets = await getSnippets()
-		res.json({ success: true, data: snippets })
-	} catch (err) {
-		res.json({ success: false, message: err.message })
-	}
-})
+app.get(
+	'/api/snippet',
+	apisLimiter,
+	isAuthenticated,
+	async function (req, res) {
+		try {
+			const snippets = await getSnippets()
+			res.json({ success: true, data: snippets })
+		} catch (err) {
+			res.json({ success: false, message: err.message })
+		}
+	},
+)
 
 // Debug capture endpoints
 app.get('/api/debug/status', apisLimiter, isAuthenticated, function (req, res) {
