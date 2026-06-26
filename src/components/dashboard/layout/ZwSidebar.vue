@@ -91,8 +91,14 @@ const emit = defineEmits<{
 }>()
 
 const store = useDashboardStore()
-const { deviceCount, attentionCount, activityCount, homeHex } =
-	storeToRefs(store)
+const {
+	deviceCount,
+	attentionCount,
+	activityCount,
+	homeHex,
+	appVersion,
+	zwaveVersion,
+} = storeToRefs(store)
 
 const modeIsMobile = computed(() => props.mode === 'mobile')
 
@@ -499,11 +505,15 @@ function renderFooterWide() {
 						h(RefreshIcon, { size: 11 }),
 					),
 				]),
-				h('span', { class: 'zw-sb__version-value' }, '11.17.0'),
+				h('span', { class: 'zw-sb__version-value' }, appVersion.value),
 			]),
 			h('div', { class: 'zw-sb__version-row' }, [
 				h('span', { class: 'zw-sb__version-name' }, 'Z-Wave JS'),
-				h('span', { class: 'zw-sb__version-value' }, '15.24.0'),
+				h(
+					'span',
+					{ class: 'zw-sb__version-value' },
+					zwaveVersion.value,
+				),
 			]),
 		]),
 		h(ZwUpdateNotifier, { current: '11.17.0', available: '11.18.1' }),
@@ -537,9 +547,14 @@ function renderFooterRail() {
 			available: '11.18.1',
 			compact: true,
 		}),
-		h('div', { class: 'zw-sb__conn-rail', title: 'connected · v11.17.0' }, [
-			h('span', { class: 'zw-sb__conn-dot' }),
-		]),
+		h(
+			'div',
+			{
+				class: 'zw-sb__conn-rail',
+				title: `connected · v${appVersion.value}`,
+			},
+			[h('span', { class: 'zw-sb__conn-dot' })],
+		),
 	])
 }
 </script>
@@ -790,9 +805,7 @@ function renderFooterRail() {
 	background: var(--zw-accent);
 }
 
-/* Binary status indicator for an active row action (e.g. debug capture).
-   Mirrors ZwUpdateNotifier's compact dot: a box-shadow ring (not a border,
-   which pixelates at this size) lifts it clear of the nav glyph. */
+/* Status dot for an active row action on the collapsed rail. */
 .zw-sb__rail-dot {
 	position: absolute;
 	top: 6px;

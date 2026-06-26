@@ -2,7 +2,7 @@
 // across the dashboard, with derived device/attention/activity counts.
 
 import { computed } from 'vue'
-import { defineStore } from 'pinia'
+import { acceptHMRUpdate, defineStore } from 'pinia'
 import useBaseStore from './base.js'
 import { projectDevices } from '../lib/deviceProjection.ts'
 import { deviceNeedsAttention } from '../lib/attention.ts'
@@ -38,6 +38,9 @@ const useDashboardStore = defineStore('dashboard', () => {
 	// `appInfo.homeHex` is the controller home ID formatted as `0x…` hex.
 	const homeHex = computed(() => base.appInfo?.homeHex || '')
 
+	const appVersion = computed(() => base.appInfo?.appVersion || '')
+	const zwaveVersion = computed(() => base.appInfo?.zwaveVersion || '')
+
 	return {
 		devices,
 		deviceCount,
@@ -45,10 +48,18 @@ const useDashboardStore = defineStore('dashboard', () => {
 		activities,
 		activityCount,
 		homeHex,
+		appVersion,
+		zwaveVersion,
 	}
 })
 
 // Convenience re-export; the implementation lives in `lib/attention.ts`.
 export { deviceNeedsAttention } from '../lib/attention.ts'
+
+// Without this, editing the store's getters during dev leaves components bound
+// to a stale instance (missing the new getters) until a full reload.
+if (import.meta.hot) {
+	import.meta.hot.accept(acceptHMRUpdate(useDashboardStore, import.meta.hot))
+}
 
 export default useDashboardStore
