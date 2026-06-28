@@ -570,6 +570,12 @@ export default {
 					groups.Configuration = []
 				}
 
+				for (const key in groups) {
+					if (groups[key][0]?.commandClass === 99) {
+						groups[key].sort((a, b) => (a.propertyKey ?? 0) - (b.propertyKey ?? 0))
+					}
+				}
+
 				return groups
 			} else {
 				return {}
