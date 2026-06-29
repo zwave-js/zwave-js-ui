@@ -4,7 +4,11 @@
 // Value writes use `writeValue`, not `sendCommand`: only `setValue` updates
 // the value optimistically and verifies it. The `valueId` rides on the action.
 
-import { DoorLockMode } from '@zwave-js/cc'
+import {
+	DoorLockMode,
+	setValueWasUnsupervisedOrSucceeded,
+	type SetValueResult,
+} from '@zwave-js/cc'
 import type { Device, DeviceAction } from './dashboard-types.ts'
 
 type DeviceActionType = DeviceAction['type']
@@ -98,4 +102,22 @@ export function dispatchAction(
 		typeof action
 	>
 	return dispatcher(device, action)
+}
+
+// Shape the UI reads from an `apiRequest` response.
+export interface ApiResponse {
+	success: boolean
+	result?: unknown
+}
+
+export function isRequestSuccess(api: string, response: ApiResponse): boolean {
+	if (!response.success) return false
+	// `writeValue` carries a SetValue status; Working/Success/Unsupervised count
+	// as accepted. Other APIs report only the top-level success flag.
+	if (api === 'writeValue' && response.result) {
+		return setValueWasUnsupervisedOrSucceeded(
+			response.result as SetValueResult,
+		)
+	}
+	return true
 }

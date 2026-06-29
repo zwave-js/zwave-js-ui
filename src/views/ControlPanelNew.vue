@@ -17,11 +17,16 @@
 
 import { provide, shallowRef } from 'vue'
 import ZwAppShell from '@/components/dashboard/layout/ZwAppShell.vue'
-import { dispatchAction } from '@/lib/device-actions.ts'
+import {
+	dispatchAction,
+	isRequestSuccess,
+	type ApiResponse,
+} from '@/lib/device-actions.ts'
 import type { Device, DeviceAction } from '@/lib/dashboard-types'
 import {
 	actionPendingKey,
 	DeviceActionPendingKey,
+	DeviceActionResultKey,
 } from '@/lib/deviceActionPending.ts'
 import { manager, instances } from '@/lib/instanceManager'
 
@@ -30,7 +35,7 @@ interface AppLike {
 		api: string,
 		args?: unknown[],
 		opts?: { infoSnack?: boolean; errorSnack?: boolean },
-	) => Promise<unknown>
+	) => Promise<ApiResponse>
 	showSnackbar: (msg: string, level?: string) => void
 	restart: () => Promise<void>
 	showUpdateDialog: () => Promise<void>
@@ -48,11 +53,21 @@ function appInstance(): AppLike | null {
 const pending = shallowRef<ReadonlySet<string>>(new Set())
 provide(DeviceActionPendingKey, pending)
 
+// Last outcome per key, so a row can tell a rejected write from a successful one.
+const result = shallowRef<ReadonlyMap<string, boolean>>(new Map())
+provide(DeviceActionResultKey, result)
+
 function setPending(key: string, on: boolean) {
 	const next = new Set(pending.value)
 	if (on) next.add(key)
 	else next.delete(key)
 	pending.value = next
+}
+
+function setResult(key: string, ok: boolean) {
+	const next = new Map(result.value)
+	next.set(key, ok)
+	result.value = next
 }
 
 async function onAction(device: Device, action: DeviceAction) {
@@ -65,10 +80,13 @@ async function onAction(device: Device, action: DeviceAction) {
 	const key = actionPendingKey(device, action)
 	if (key) setPending(key, true)
 	try {
-		await app.apiRequest(req.api, req.args, {
+		const response = await app.apiRequest(req.api, req.args, {
 			infoSnack: false,
 			errorSnack: true,
 		})
+		// Record the outcome before clearing pending: the row's watch fires on
+		// the pending flip and reads the result, so it must be set first.
+		if (key) setResult(key, isRequestSuccess(req.api, response))
 	} finally {
 		if (key) setPending(key, false)
 	}

@@ -16,6 +16,14 @@ export const DeviceActionPendingKey: InjectionKey<PendingSet> = Symbol(
 	'zwDeviceActionPending',
 )
 
+// Last completed-request outcome per key (true = succeeded), so a row can tell a
+// successful write from a rejected one. Same key scheme as the pending Set.
+export type ActionResultMap = ShallowRef<ReadonlyMap<string, boolean>>
+
+export const DeviceActionResultKey: InjectionKey<ActionResultMap> = Symbol(
+	'zwDeviceActionResult',
+)
+
 // Stable per-node value identity (`cc-endpoint-property-key`); keys pending
 // requests and matches event args back to values. Partial: event args may
 // carry only some of the fields.

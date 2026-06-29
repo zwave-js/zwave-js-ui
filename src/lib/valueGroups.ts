@@ -145,15 +145,15 @@ function formatValue(v: ZUIValueId, kind: ValueParamKind): string {
 	}
 }
 
-// Caches projected params by their source value object. The store *replaces* a
-// value object on update (splice), so unchanged values keep a stable reference
-// here — and so each row's `param` prop stays referentially stable, letting Vue
-// skip re-rendering every row when a single value changes.
+// Keeps each row's `param` referentially stable while unchanged, so Vue can skip
+// re-rendering rows that didn't change.
 const paramCache = new WeakMap<ZUIValueId, ValueParam>()
 
 function projectParam(v: ZUIValueId): ValueParam {
 	const cached = paramCache.get(v)
-	if (cached) return cached
+	// Compare the value too: the store can mutate `.value` in place (same object),
+	// so the key alone would return a stale param.
+	if (cached && Object.is(cached.value, v.value)) return cached
 	const param = buildParam(v)
 	paramCache.set(v, param)
 	return param
