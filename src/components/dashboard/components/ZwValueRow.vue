@@ -323,7 +323,9 @@ function coerce(raw: unknown): unknown {
 
 function commit(value: unknown) {
 	menuOpen.value = false
-	draft.value = value
+	// Hold an optimistic draft only for readable params (the watch clears it on
+	// confirm). Write-only params never report back, so a draft would stick dirty.
+	draft.value = props.param.readable ? value : null
 	emit('set', props.param.target, value)
 }
 
@@ -363,11 +365,9 @@ function resetDefault() {
 }
 
 function copyId() {
-	try {
-		void navigator.clipboard?.writeText(props.param.id)
-	} catch {
-		// Clipboard may be unavailable (insecure context); ignore.
-	}
+	// Clipboard API is absent in insecure contexts (`?.`) and can reject
+	// (permission denied / not focused); swallow both — it's only feedback.
+	void navigator.clipboard?.writeText(props.param.id).catch(() => {})
 	copied.value = true
 	setTimeout(() => {
 		copied.value = false
