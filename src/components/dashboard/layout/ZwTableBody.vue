@@ -80,10 +80,12 @@
 							{{ item.count }}
 						</span>
 					</div>
+					<!-- The expanded device's summary row is rendered by the
+					     sticky overlay below, not here, so it can pin. -->
 					<ZwDeviceRow
-						v-else
+						v-else-if="item.device.nodeId !== expandedId"
 						:device="item.device"
-						:expanded="expandedId === item.device.nodeId"
+						:expanded="false"
 						:columns="columns as ToggleableCol[]"
 						:viewport="viewport"
 						:style="absStyle(item)"
@@ -102,8 +104,60 @@
 				>
 					<ZwExpandedRow
 						:device="expandedDevice"
+						:viewport="viewport"
 						@action="(dev, a) => emit('action', dev, a)"
 					/>
+				</div>
+
+				<!-- Sticky summary row — keeps the expanded device pinned
+				     just beneath the group header while its detail scrolls. -->
+				<div
+					v-if="expandedDevice && stickyRowTop != null"
+					class="zw-table__sticky-row"
+					:style="{ top: stickyRowTop + 'px' }"
+				>
+					<ZwDeviceRow
+						:device="expandedDevice"
+						:expanded="true"
+						:columns="columns as ToggleableCol[]"
+						:viewport="viewport"
+						@open="(dev) => emit('open', dev)"
+						@action="(dev, a) => emit('action', dev, a)"
+					/>
+				</div>
+
+				<!-- Sticky group header — pinned to the top of the scroll
+				     viewport as the active group scrolls. -->
+				<div
+					v-if="stickyGroup"
+					class="zw-table__group-head zw-table__group-head--sticky"
+					:style="{
+						top: stickyGroup.top + 'px',
+						height: GROUP_HEAD_HEIGHT + 'px',
+					}"
+					@click="emit('toggleGroup', stickyGroup.key)"
+				>
+					<ChevronDownIcon
+						:size="ICON_SIZE.caret"
+						class="zw-table__group-chev"
+						:class="{
+							'zw-table__group-chev--collapsed':
+								stickyGroup.collapsed,
+						}"
+					/>
+					<span class="zw-table__group-name">
+						{{
+							stickyGroup.key === CONTROLLER_KEY
+								? 'Controller'
+								: stickyGroup.key
+						}}
+					</span>
+					<span
+						v-if="stickyGroup.key !== CONTROLLER_KEY"
+						class="zw-table__group-count"
+					>
+						{{ stickyGroup.count }}
+					</span>
 				</div>
 			</div>
 		</div>
@@ -329,6 +383,62 @@ const expandedBodyTop = computed<number | null>(() => {
 	return null
 })
 
+// ── sticky group header + expanded summary row ─────────────────────
+// Absolute positioning (the virtualization) defeats native
+// `position: sticky`, so we re-create it: derive each group's vertical
+// span, then render the active group's header — and, while a row is
+// expanded, its summary row just below — as overlays whose `top` is
+// pinned to the scroll viewport. The expanded row is dropped from the
+// normal loop (see template) so the overlay is its sole render.
+
+interface GroupSpan {
+	key: string
+	count: number
+	collapsed: boolean
+	headTop: number
+	endTop: number
+}
+
+const groupSpans = computed<GroupSpan[]>(() => {
+	const spans: GroupSpan[] = []
+	for (const it of layoutItems.value) {
+		if (it.kind !== 'group-head') continue
+		if (spans.length) spans[spans.length - 1].endTop = it.top
+		spans.push({
+			key: it.key,
+			count: it.count,
+			collapsed: it.collapsed,
+			headTop: it.top,
+			endTop: totalHeight.value,
+		})
+	}
+	return spans
+})
+
+// The group whose span contains the current scroll offset, with its
+// header `top` clamped so the next group pushes it up at the boundary.
+const stickyGroup = computed(() => {
+	const st = scrollTop.value
+	for (const g of groupSpans.value) {
+		if (st >= g.headTop && st < g.endTop) {
+			return { ...g, top: Math.min(st, g.endTop - GROUP_HEAD_HEIGHT) }
+		}
+	}
+	return null
+})
+
+// Top for the pinned summary row: just under the group header, clamped
+// to the expanded region so it rides up out of view past the panel.
+const stickyRowTop = computed<number | null>(() => {
+	if (expandedBodyTop.value == null) return null
+	const rowTop = expandedBodyTop.value - ROW_HEIGHT
+	const regionBottom = expandedBodyTop.value + expandedBodyHeight.value
+	return Math.min(
+		Math.max(scrollTop.value + GROUP_HEAD_HEIGHT, rowTop),
+		regionBottom - ROW_HEIGHT,
+	)
+})
+
 function absStyle(item: LayoutItem) {
 	return {
 		position: 'absolute' as const,
@@ -486,6 +596,25 @@ onBeforeUnmount(() => {
 	position: absolute;
 	left: 0;
 	right: 0;
+}
+
+/* Sticky overlays — opaque backgrounds (so scrolling content doesn't
+   bleed through) and a hair of lift. The group header sits above the
+   summary row, which sits above the detail panel. */
+.zw-table__group-head--sticky {
+	position: absolute;
+	left: 0;
+	right: 0;
+	z-index: 3;
+	box-shadow: 0 2px 4px rgba(var(--v0-on-surface), 0.06);
+}
+
+.zw-table__sticky-row {
+	position: absolute;
+	left: 0;
+	right: 0;
+	z-index: 2;
+	box-shadow: 0 2px 5px rgba(var(--v0-on-surface), 0.06);
 }
 
 .zw-table__group-head {

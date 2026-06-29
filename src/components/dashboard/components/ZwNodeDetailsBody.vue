@@ -1,14 +1,54 @@
 <template>
-	<div class="zw-nd">
-		<header class="zw-nd__header">
+	<div class="zw-nd" :class="`zw-nd--${mode}`">
+		<!-- ── Two-pane left rail: primary · status · signal · activity ──
+		     Only in the wide (split) layout. The rail surfaces what would
+		     otherwise be the Events tab, which is dropped from the tab bar
+		     in this mode. -->
+		<aside
+			v-if="mode === 'split'"
+			class="zw-nd__rail"
+			:style="{ width: railWidth + 'px' }"
+		>
+			<div class="zw-nd__rail-primary">
+				<span class="zw-nd__overline">PRIMARY</span>
+				<div class="zw-nd__primary">
+					<ZwPrimaryDisplay :device="device" @action="onAction" />
+				</div>
+			</div>
+			<div class="zw-nd__rail-section">
+				<span class="zw-nd__overline">STATUS</span>
+				<span class="zw-nd__status">
+					<ZwStatusDot :status="dotStatus" />
+					<span class="zw-nd__status-label">{{ statusLabel }}</span>
+					<span class="zw-nd__bullet">·</span>
+					<span class="zw-nd__lastseen"
+						>last seen {{ device.lastSeen }}</span
+					>
+				</span>
+			</div>
+			<div class="zw-nd__rail-section">
+				<span class="zw-nd__overline">SIGNAL</span>
+				<span class="zw-nd__signal">
+					<component
+						:is="signal.icon"
+						:size="14"
+						:style="{ color: signal.color }"
+					/>
+					<span>{{ signal.label }}</span>
+				</span>
+			</div>
+			<div class="zw-nd__rail-activity">
+				<span class="zw-nd__overline">RECENT ACTIVITY</span>
+				<ZwNodeEvents :device="device" :max="25" />
+			</div>
+		</aside>
+
+		<!-- ── Stacked header: full-width above the tabs (drawer / mobile) ── -->
+		<header v-else class="zw-nd__header">
 			<div class="zw-nd__header-top">
 				<span class="zw-nd__overline">PRIMARY</span>
 				<span class="zw-nd__status">
-					<ZwStatusDot
-						:status="
-							device.isController ? 'controller' : device.status
-						"
-					/>
+					<ZwStatusDot :status="dotStatus" />
 					<span class="zw-nd__status-label">{{ statusLabel }}</span>
 					<span class="zw-nd__bullet">·</span>
 					<span class="zw-nd__lastseen"
@@ -17,112 +57,98 @@
 				</span>
 			</div>
 			<div class="zw-nd__primary">
-				<ZwPrimaryDisplay
-					:device="device"
-					@action="(d, a) => emit('action', d, a)"
-				/>
+				<ZwPrimaryDisplay :device="device" @action="onAction" />
 			</div>
 		</header>
 
-		<Tabs.Root v-model="tab">
-			<Tabs.List as="nav" class="zw-nd__tabs">
-				<Tabs.Item
-					v-for="t in tabs"
-					:key="t.id"
-					:value="t.id"
-					class="zw-nd__tab"
-				>
-					{{ t.label }}
-				</Tabs.Item>
-			</Tabs.List>
-
-			<Tabs.Panel value="values" class="zw-nd__content">
-				<div v-if="device.isController" class="zw-nd__empty">
-					Controller exposes no command-class values.
-				</div>
-				<div v-else class="zw-nd__values-stub">
-					<!-- Placeholder until the full values view is built. -->
-					Values pane — full view coming soon.
-				</div>
-			</Tabs.Panel>
-
-			<Tabs.Panel value="summary" class="zw-nd__content zw-nd__summary">
-				<ZwPropTable :rows="manufacturerRows" />
-				<ZwPropTable :rows="firmwareRows" />
-				<ZwSecurityPanel :device="device" />
-			</Tabs.Panel>
-
-			<Tabs.Panel value="groups" class="zw-nd__content">
-				<ZwPropTable :rows="groupsStub" />
-			</Tabs.Panel>
-
-			<Tabs.Panel value="updates" class="zw-nd__content zw-nd__updates">
-				<div v-if="device.hasUpdate" class="zw-nd__update-card">
-					<div class="zw-nd__update-current">
-						Current {{ device.firmware?.node ?? '—' }}
-					</div>
-					<div class="zw-nd__update-line">
-						Update available — see the device drawer's footer to
-						apply.
-					</div>
-				</div>
-				<div v-else class="zw-nd__empty">
-					No firmware update available.
-				</div>
-			</Tabs.Panel>
-
-			<Tabs.Panel value="events" class="zw-nd__content zw-nd__events">
-				<template v-if="events.length === 0">
-					<div class="zw-nd__empty">No recent events</div>
-				</template>
-				<template v-else>
-					<div
-						v-for="(ev, i) in events"
-						:key="i"
-						class="zw-nd__event"
+		<!-- ── Tabbed detail content — identical in both layouts. Sits in
+		     the right pane (split) or below the header (stacked). -->
+		<div class="zw-nd__main">
+			<Tabs.Root v-model="tab">
+				<Tabs.List as="nav" class="zw-nd__tabs">
+					<Tabs.Item
+						v-for="t in tabs"
+						:key="t.id"
+						:value="t.id"
+						class="zw-nd__tab"
 					>
-						<span class="zw-nd__event-time">{{
-							relativeTime(toMs(ev.time), now)
-						}}</span>
-						<div class="zw-nd__event-body">
-							<div class="zw-nd__event-name">{{ ev.event }}</div>
-							<div
-								v-if="eventDetail(ev)"
-								class="zw-nd__event-detail"
-							>
-								{{ eventDetail(ev) }}
-							</div>
+						{{ t.label }}
+					</Tabs.Item>
+				</Tabs.List>
+
+				<Tabs.Panel value="values" class="zw-nd__content">
+					<div v-if="device.isController" class="zw-nd__empty">
+						Controller exposes no command-class values.
+					</div>
+					<ZwValuesView v-else :device="device" @action="onAction" />
+				</Tabs.Panel>
+
+				<Tabs.Panel
+					value="summary"
+					class="zw-nd__content zw-nd__summary"
+				>
+					<ZwPropTable :rows="manufacturerRows" />
+					<ZwPropTable :rows="firmwareRows" />
+					<ZwSecurityPanel :device="device" />
+				</Tabs.Panel>
+
+				<Tabs.Panel value="groups" class="zw-nd__content">
+					<ZwPropTable :rows="groupsStub" />
+				</Tabs.Panel>
+
+				<Tabs.Panel
+					value="updates"
+					class="zw-nd__content zw-nd__updates"
+				>
+					<div v-if="device.hasUpdate" class="zw-nd__update-card">
+						<div class="zw-nd__update-current">
+							Current {{ device.firmware?.node ?? '—' }}
+						</div>
+						<div class="zw-nd__update-line">
+							Update available — see the device drawer's footer to
+							apply.
 						</div>
 					</div>
-					<div
-						v-if="totalEvents > MAX_EVENTS"
-						class="zw-nd__event-footer"
-					>
-						+{{ totalEvents - MAX_EVENTS }} earlier events
+					<div v-else class="zw-nd__empty">
+						No firmware update available.
 					</div>
-				</template>
-			</Tabs.Panel>
+				</Tabs.Panel>
 
-			<Tabs.Panel value="debug" class="zw-nd__content">
-				<div v-if="device.isController" class="zw-nd__stats">
-					<ZwStatsCard title="Communication" :items="commStats" />
-					<ZwStatsCard title="Messages" :items="messageStats" />
-				</div>
-				<ZwPropTable v-else :rows="debugRows" />
-			</Tabs.Panel>
-
-			<Tabs.Panel value="advanced" class="zw-nd__content zw-nd__advanced">
-				<ZwButton
-					v-for="cmd in advancedCommands"
-					:key="cmd.label"
-					variant="mono-outline"
-					size="sm"
-					@click="emit('action', device, cmd.action)"
+				<!-- Events is omitted from the tab bar in the split layout
+				     (its content lives in the rail), so the panel is only
+				     mounted in the stacked layout. -->
+				<Tabs.Panel
+					v-if="mode === 'stacked'"
+					value="events"
+					class="zw-nd__content"
 				>
-					{{ cmd.label }}
-				</ZwButton>
-			</Tabs.Panel>
-		</Tabs.Root>
+					<ZwNodeEvents :device="device" />
+				</Tabs.Panel>
+
+				<Tabs.Panel value="debug" class="zw-nd__content">
+					<div v-if="device.isController" class="zw-nd__stats">
+						<ZwStatsCard title="Communication" :items="commStats" />
+						<ZwStatsCard title="Messages" :items="messageStats" />
+					</div>
+					<ZwPropTable v-else :rows="debugRows" />
+				</Tabs.Panel>
+
+				<Tabs.Panel
+					value="advanced"
+					class="zw-nd__content zw-nd__advanced"
+				>
+					<ZwButton
+						v-for="cmd in advancedCommands"
+						:key="cmd.label"
+						variant="mono-outline"
+						size="sm"
+						@click="emit('action', device, cmd.action)"
+					>
+						{{ cmd.label }}
+					</ZwButton>
+				</Tabs.Panel>
+			</Tabs.Root>
+		</div>
 	</div>
 </template>
 
@@ -135,12 +161,34 @@ import ZwPrimaryDisplay from './ZwPrimaryDisplay.vue'
 import ZwPropTable from './ZwPropTable.vue'
 import ZwSecurityPanel from './ZwSecurityPanel.vue'
 import ZwStatsCard, { type StatsItem } from './ZwStatsCard.vue'
+import ZwNodeEvents from './ZwNodeEvents.vue'
+import ZwValuesView from './ZwValuesView.vue'
+import { signalDisplay } from '@/lib/deviceSignal'
+import {
+	RAIL_WIDTH_BREAKPOINT,
+	RAIL_WIDTH_COMPACT,
+	RAIL_WIDTH_SPACIOUS,
+	TWO_PANE_BREAKPOINT,
+} from '@/lib/dashboard-breakpoints'
 import type { Device, DeviceAction } from '@/lib/dashboard-types'
-import useBaseStore from '@/stores/base'
-import { relativeTime, useNow } from '@/lib/time'
 
-const props = defineProps<{ device: Device }>()
+// `viewport` is the host panel's available width (the shell width passed down
+// by the table, NOT the device viewport). It selects the layout and feeds the
+// rail width. `layout="stacked"` forces the single-column layout regardless of
+// width — the card-view drawer uses it so it always keeps the stacked layout.
+const props = withDefaults(
+	defineProps<{
+		device: Device
+		viewport?: number
+		layout?: 'auto' | 'stacked'
+	}>(),
+	{ viewport: 0, layout: 'auto' },
+)
 const emit = defineEmits<{ action: [Device, DeviceAction] }>()
+
+function onAction(d: Device, a: DeviceAction) {
+	emit('action', d, a)
+}
 
 type TabId =
 	| 'values'
@@ -151,7 +199,7 @@ type TabId =
 	| 'debug'
 	| 'advanced'
 
-const tabs: { id: TabId; label: string }[] = [
+const ALL_TABS: { id: TabId; label: string }[] = [
 	{ id: 'values', label: 'Values' },
 	{ id: 'summary', label: 'Summary' },
 	{ id: 'groups', label: 'Groups' },
@@ -161,20 +209,57 @@ const tabs: { id: TabId; label: string }[] = [
 	{ id: 'advanced', label: 'Advanced' },
 ]
 
-const tab = ref<TabId>(props.device.isController ? 'summary' : 'values')
+// Two-pane on wider panels; stacked in the drawer and on narrow screens.
+const mode = computed<'split' | 'stacked'>(() =>
+	props.layout === 'stacked'
+		? 'stacked'
+		: props.viewport >= TWO_PANE_BREAKPOINT
+			? 'split'
+			: 'stacked',
+)
+
+// In split mode the Events tab is dropped — its content lives in the rail.
+const tabs = computed(() =>
+	mode.value === 'split'
+		? ALL_TABS.filter((t) => t.id !== 'events')
+		: ALL_TABS,
+)
+
+const railWidth = computed(() =>
+	props.viewport >= RAIL_WIDTH_BREAKPOINT
+		? RAIL_WIDTH_SPACIOUS
+		: RAIL_WIDTH_COMPACT,
+)
+
+function defaultTab(): TabId {
+	return props.device.isController ? 'summary' : 'values'
+}
+
+const tab = ref<TabId>(defaultTab())
 
 // Switching to a different device resets to that device's default tab.
 watch(
 	() => props.device.nodeId,
 	() => {
-		tab.value = props.device.isController ? 'summary' : 'values'
+		tab.value = defaultTab()
 	},
+)
+
+// Collapsing to two-pane drops the Events tab — fall back to the default.
+watch(mode, (m) => {
+	if (m === 'split' && tab.value === 'events') tab.value = defaultTab()
+})
+
+const dotStatus = computed(() =>
+	props.device.isController ? 'controller' : props.device.status,
 )
 
 const statusLabel = computed(() => {
 	const s = props.device.isController ? 'controller' : props.device.status
 	return s.charAt(0).toUpperCase() + s.slice(1)
 })
+
+const signal = computed(() => signalDisplay(props.device.health))
 
 const manufacturerRows = computed<[string, string | number][]>(() => [
 	['Manufacturer', props.device.manufacturer ?? '—'],
@@ -226,66 +311,6 @@ const debugRows = computed<[string, string | number][]>(() => [
 	['Generic device class', props.device.archetype.label],
 ])
 
-// ── events tab ───────────────────────────────────────────────
-// Reads `node.eventsQueue` from the base store, looked up by
-// `device.nodeId`, so it tracks socket events live.
-const baseStore = useBaseStore()
-const now = useNow()
-const MAX_EVENTS = 50
-
-interface NodeEventEntry {
-	event: string
-	args?: unknown[]
-	time?: Date | string | number
-}
-
-const eventsQueue = computed<NodeEventEntry[]>(() => {
-	const node = baseStore.getNode(props.device.nodeId)
-	const q = node?.eventsQueue
-	return Array.isArray(q) ? (q as NodeEventEntry[]) : []
-})
-
-const totalEvents = computed(() => eventsQueue.value.length)
-
-const events = computed<NodeEventEntry[]>(() =>
-	eventsQueue.value.slice(-MAX_EVENTS).reverse(),
-)
-
-function toMs(t: NodeEventEntry['time']): number | undefined {
-	if (!t) return undefined
-	if (t instanceof Date) return t.getTime()
-	if (typeof t === 'number') return t
-	const d = new Date(t)
-	const n = d.getTime()
-	return Number.isNaN(n) ? undefined : n
-}
-
-function eventDetail(ev: NodeEventEntry): string {
-	// Event arg shapes vary: treat the first arg as the new value when
-	// present, and stringify the rest.
-	if (!Array.isArray(ev.args) || ev.args.length === 0) return ''
-	const first = ev.args[0] as unknown
-	if (first && typeof first === 'object') {
-		const o = first as { propertyName?: string; newValue?: unknown }
-		if (o.propertyName !== undefined && o.newValue !== undefined) {
-			return `${o.propertyName} → ${formatValue(o.newValue)}`
-		}
-	}
-	return ev.args.map((a) => formatValue(a)).join(' · ')
-}
-
-function formatValue(v: unknown): string {
-	if (v === null || v === undefined) return '—'
-	if (typeof v === 'object') {
-		try {
-			return JSON.stringify(v)
-		} catch {
-			return String(v)
-		}
-	}
-	return String(v)
-}
-
 const advancedCommands = computed<{ label: string; action: DeviceAction }[]>(
 	() =>
 		props.device.isController
@@ -324,12 +349,74 @@ const advancedCommands = computed<{ label: string; action: DeviceAction }[]>(
    namespace is unique to this component. */
 .zw-nd {
 	display: flex;
+	min-width: 0;
+}
+
+.zw-nd--stacked {
 	flex-direction: column;
+}
+
+/* Two-pane: rail on the left, tabbed content on the right. `stretch`
+   (the flex default) keeps the rail's right border full-height regardless
+   of which column is taller. */
+.zw-nd--split {
+	flex-direction: row;
+	align-items: stretch;
+}
+
+/* The tabbed content well. Carries the container so summary/debug grids
+   pack to the content width — NOT the whole component — which matters in
+   the split layout where the rail eats 300–340px. */
+.zw-nd__main {
+	display: flex;
+	flex-direction: column;
+	flex: 1;
+	min-width: 0;
 	container-type: inline-size;
 	container-name: zw-nd;
 }
 
-/* ── Header ──────────────────────────────────────────────────── */
+/* ── Left rail (split only) ──────────────────────────────────── */
+.zw-nd__rail {
+	flex-shrink: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	padding: 16px;
+	background: var(--zw-bg-soft);
+	border-right: 1px solid var(--zw-line);
+}
+
+.zw-nd__rail-primary {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.zw-nd__rail-section {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+
+.zw-nd__rail-activity {
+	border-top: 1px solid var(--zw-line);
+	padding-top: 14px;
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.zw-nd__signal {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	font-size: 12px;
+	font-weight: 500;
+	color: var(--zw-fg);
+}
+
+/* ── Stacked header ──────────────────────────────────────────── */
 .zw-nd__header {
 	padding: 16px;
 	background: var(--zw-bg-soft);
@@ -457,12 +544,6 @@ const advancedCommands = computed<{ label: string; action: DeviceAction }[]>(
 	font-style: italic;
 }
 
-.zw-nd__values-stub {
-	padding: 24px;
-	color: var(--zw-muted);
-	font-style: italic;
-}
-
 .zw-nd__updates {
 	display: flex;
 	flex-direction: column;
@@ -504,57 +585,5 @@ const advancedCommands = computed<{ label: string; action: DeviceAction }[]>(
 	.zw-nd__stats {
 		grid-template-columns: 1fr 1fr;
 	}
-}
-
-/* ── Events tab ──────────────────────────────────────────────── */
-.zw-nd__events {
-	display: flex;
-	flex-direction: column;
-	gap: 0;
-}
-
-.zw-nd__event {
-	display: flex;
-	gap: 10px;
-	padding: 8px 0;
-	border-bottom: 1px dashed var(--zw-line);
-}
-
-.zw-nd__event:last-of-type {
-	border-bottom: none;
-}
-
-.zw-nd__event-time {
-	font-family: var(--zw-mono);
-	font-size: 11px;
-	color: var(--zw-muted);
-	width: 72px;
-	flex-shrink: 0;
-}
-
-.zw-nd__event-body {
-	min-width: 0;
-}
-
-.zw-nd__event-name {
-	font-size: 12px;
-	font-weight: 500;
-}
-
-.zw-nd__event-detail {
-	font-size: 11px;
-	color: var(--zw-muted);
-	margin-top: 2px;
-	word-break: break-word;
-}
-
-.zw-nd__event-footer {
-	margin-top: 8px;
-	padding-top: 8px;
-	border-top: 1px dashed var(--zw-line);
-	font-family: var(--zw-mono);
-	font-size: 11px;
-	color: var(--zw-muted);
-	text-align: center;
 }
 </style>

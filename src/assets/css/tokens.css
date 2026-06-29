@@ -172,6 +172,18 @@
 	}
 }
 
+@keyframes zw-spin {
+	to {
+		transform: rotate(360deg);
+	}
+}
+
+/* Utility: spin an icon (e.g. a refresh glyph) while an op is in flight. */
+.zw-spin {
+	animation: zw-spin 0.9s linear infinite;
+	transform-origin: 50% 50%;
+}
+
 @keyframes zw-slide-in-right {
 	from {
 		transform: translateX(20px);
