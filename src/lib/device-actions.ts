@@ -50,7 +50,8 @@ export const ACTION_DISPATCHERS: {
 		api: 'writeValue',
 		args: [{ nodeId: d.nodeId, ...a.valueId }, a.mode],
 	}),
-	// Generic value-pane interactions.
+	// Generic value-pane interactions. `set-value` writes the value verbatim —
+	// no clamping or coercion; the caller is responsible for a sensible value.
 	'set-value': (d, a) => ({
 		api: 'writeValue',
 		args: [{ nodeId: d.nodeId, ...a.valueId }, a.value],

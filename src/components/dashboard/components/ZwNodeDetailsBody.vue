@@ -164,7 +164,12 @@ import ZwStatsCard, { type StatsItem } from './ZwStatsCard.vue'
 import ZwNodeEvents from './ZwNodeEvents.vue'
 import ZwValuesView from './ZwValuesView.vue'
 import { signalDisplay } from '@/lib/deviceSignal'
-import { TWO_PANE_BREAKPOINT } from '@/lib/dashboard-breakpoints'
+import {
+	RAIL_WIDTH_BREAKPOINT,
+	RAIL_WIDTH_COMPACT,
+	RAIL_WIDTH_SPACIOUS,
+	TWO_PANE_BREAKPOINT,
+} from '@/lib/dashboard-breakpoints'
 import type { Device, DeviceAction } from '@/lib/dashboard-types'
 
 // `viewport` is the host panel's available width (the shell width passed down
@@ -220,8 +225,11 @@ const tabs = computed(() =>
 		: ALL_TABS,
 )
 
-// Rail follows the design's two widths: roomier on desktop, tighter below.
-const railWidth = computed(() => (props.viewport >= 1200 ? 340 : 300))
+const railWidth = computed(() =>
+	props.viewport >= RAIL_WIDTH_BREAKPOINT
+		? RAIL_WIDTH_SPACIOUS
+		: RAIL_WIDTH_COMPACT,
+)
 
 function defaultTab(): TabId {
 	return props.device.isController ? 'summary' : 'values'

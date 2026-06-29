@@ -2,7 +2,11 @@
 // pane renders. Pure — the component memoizes it with a computed.
 
 import { CommandClasses, type ValueID } from '@zwave-js/core'
-import type { ZUINode, ZUIValueId } from '../../api/lib/ZwaveClient.ts'
+import type {
+	ZUINode,
+	ZUIValueId,
+	ZUIValueIdState,
+} from '../../api/lib/ZwaveClient.ts'
 
 const CONFIGURATION_CC = CommandClasses.Configuration
 const MULTILEVEL_SWITCH_CC = CommandClasses['Multilevel Switch']
@@ -19,7 +23,7 @@ export type ValueParamKind =
 	| 'reading'
 
 export interface ValueOption {
-	value: number | string
+	value: number | string | boolean
 	label: string
 }
 
@@ -82,7 +86,9 @@ function toValueId(v: ZUIValueId): ValueID {
 	return id
 }
 
-function hasStates(v: ZUIValueId): boolean {
+function hasStates(
+	v: ZUIValueId,
+): v is ZUIValueId & { states: ZUIValueIdState[] } {
 	return Array.isArray(v.states) && v.states.length > 0
 }
 
@@ -94,7 +100,8 @@ function isLevel(v: ZUIValueId): boolean {
 	) {
 		return true
 	}
-	return v.type === 'number' && v.min === 0 && v.max === 99
+	// A 0–99 number with discrete states is an enum (more specific), not a level.
+	return v.type === 'number' && v.min === 0 && v.max === 99 && !hasStates(v)
 }
 
 // Picks the control *shape* (editability is `readonly`, set elsewhere). A value
@@ -138,7 +145,21 @@ function formatValue(v: ZUIValueId, kind: ValueParamKind): string {
 	}
 }
 
+// Caches projected params by their source value object. The store *replaces* a
+// value object on update (splice), so unchanged values keep a stable reference
+// here — and so each row's `param` prop stays referentially stable, letting Vue
+// skip re-rendering every row when a single value changes.
+const paramCache = new WeakMap<ZUIValueId, ValueParam>()
+
 function projectParam(v: ZUIValueId): ValueParam {
+	const cached = paramCache.get(v)
+	if (cached) return cached
+	const param = buildParam(v)
+	paramCache.set(v, param)
+	return param
+}
+
+function buildParam(v: ZUIValueId): ValueParam {
 	const kind = paramKind(v)
 	const isConfig = v.commandClass === CONFIGURATION_CC
 	const hasDefault = v.default !== undefined && v.default !== null
@@ -149,7 +170,9 @@ function projectParam(v: ZUIValueId): ValueParam {
 		kind,
 		value: v.value,
 		display: formatValue(v, kind),
-		readonly: !v.writeable,
+		// `reading` has no editable control, so it must render read-only even
+		// when the value is technically writeable (avoids an empty control).
+		readonly: kind === 'reading' || !v.writeable,
 		readable: !!v.readable,
 		unit: v.unit,
 		min: v.min,

@@ -19,3 +19,9 @@ export const MOBILE_BREAKPOINT = 600
 // used. Like MOBILE_BREAKPOINT this is measured against the shell's own width
 // (the `viewport` passed down), so it tracks available space, not the window.
 export const TWO_PANE_BREAKPOINT = 900
+
+// Two-pane left-rail sizing. At/above RAIL_WIDTH_BREAKPOINT the rail uses the
+// spacious width, below it the compact one (matches the design's two widths).
+export const RAIL_WIDTH_BREAKPOINT = 1200
+export const RAIL_WIDTH_SPACIOUS = 340
+export const RAIL_WIDTH_COMPACT = 300

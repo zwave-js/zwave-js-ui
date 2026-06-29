@@ -4,7 +4,7 @@
 			No recent events
 		</div>
 		<template v-else>
-			<div v-for="(row, i) in rows" :key="i" class="zw-node-events__row">
+			<div v-for="row in rows" :key="row.key" class="zw-node-events__row">
 				<span class="zw-node-events__time">{{
 					relativeTime(row.timeMs, now)
 				}}</span>
@@ -32,7 +32,7 @@ import type {
 import type { Device } from '@/lib/dashboard-types'
 import useBaseStore from '@/stores/base'
 import { relativeTime, useNow } from '@/lib/time'
-import { valueIdKey } from '@/components/dashboard/deviceActionPending.ts'
+import { valueIdKey } from '@/lib/deviceActionPending.ts'
 
 // Live feed of a node's recent events, shared by the Events tab and the rail's
 // "Recent activity". `max` caps entries (the rail passes a smaller cap).
@@ -118,11 +118,18 @@ function eventDetail(ev: NodeEventEntry): string {
 // Pre-resolve display strings per data change, so the `now` tick re-runs only
 // the cheap relative-time format, not the per-event label lookup.
 const rows = computed(() =>
-	events.value.map((ev) => ({
-		name: ev.event,
-		timeMs: toMs(ev.time),
-		detail: eventDetail(ev),
-	})),
+	events.value.map((ev) => {
+		const timeMs = toMs(ev.time)
+		const detail = eventDetail(ev)
+		// Content-derived key so prepending a new event doesn't reshuffle every
+		// row's key (index keys force a full re-patch of the reversed list).
+		return {
+			key: `${timeMs}|${ev.event}|${detail}`,
+			name: ev.event,
+			timeMs,
+			detail,
+		}
+	}),
 )
 
 function formatValue(v: unknown): string {

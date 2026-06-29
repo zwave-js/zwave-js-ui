@@ -2,11 +2,15 @@
 // `apiRequest` so spinners clear on response (not a timer, and not only when a
 // value changes — a poll often re-reads the same value).
 
-import type { InjectionKey } from 'vue'
+import type { InjectionKey, ShallowRef } from 'vue'
 import type { ValueID } from '@zwave-js/core'
-import type { Device, DeviceAction } from '@/lib/dashboard-types.ts'
+import type { Device, DeviceAction } from './dashboard-types.ts'
 
-export type PendingSet = Set<string>
+// A shallowRef holding an immutable Set, replaced on each change. Members are
+// read via `.value.has(...)`, so a row's check re-runs only when the set is
+// actually swapped — not via Vue's reactive-Set per-key tracking, which
+// invalidates every `.has()` watcher in every mounted row on any mutation.
+export type PendingSet = ShallowRef<ReadonlySet<string>>
 
 export const DeviceActionPendingKey: InjectionKey<PendingSet> = Symbol(
 	'zwDeviceActionPending',

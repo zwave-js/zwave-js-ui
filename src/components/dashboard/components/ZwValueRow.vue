@@ -136,15 +136,20 @@
 				</select>
 			</template>
 
-			<!-- number -->
-			<template v-else-if="param.kind === 'number'">
+			<!-- number / text input (shared scaffold) -->
+			<template
+				v-else-if="param.kind === 'number' || param.kind === 'text'"
+			>
 				<input
 					class="zw-vrow__input"
-					type="number"
+					:class="{ 'zw-vrow__input--text': param.kind === 'text' }"
+					:type="param.kind === 'number' ? 'number' : 'text'"
 					:value="cur"
-					:min="param.min"
-					:max="param.max"
-					:step="param.step || 1"
+					:min="param.kind === 'number' ? param.min : undefined"
+					:max="param.kind === 'number' ? param.max : undefined"
+					:step="
+						param.kind === 'number' ? param.step || 1 : undefined
+					"
 					:disabled="busy"
 					@input="onInput"
 					@keydown.enter="send"
@@ -157,6 +162,7 @@
 					type="button"
 					class="zw-vrow__apply"
 					title="Apply"
+					:disabled="busy"
 					@click="send"
 				>
 					<CheckIcon :size="ICON_SIZE.dense" />
@@ -180,30 +186,6 @@
 				<span class="zw-vrow__mono zw-vrow__pct"
 					>{{ levelValue }}%</span
 				>
-			</template>
-
-			<!-- text -->
-			<template v-else-if="param.kind === 'text'">
-				<input
-					class="zw-vrow__input zw-vrow__input--text"
-					type="text"
-					:value="cur"
-					:disabled="busy"
-					@input="onInput"
-					@keydown.enter="send"
-				/>
-				<span v-if="param.unit" class="zw-vrow__unit">{{
-					param.unit
-				}}</span>
-				<button
-					v-if="dirty"
-					type="button"
-					class="zw-vrow__apply"
-					title="Apply"
-					@click="send"
-				>
-					<CheckIcon :size="ICON_SIZE.dense" />
-				</button>
 			</template>
 
 			<!-- color (writeable values render display-only in this theme) -->
@@ -235,13 +217,13 @@
 			"
 			class="zw-vrow__range"
 		>
-			{{ rangeMeta }}
+			{{ rangeHint }}
 		</div>
 	</div>
 </template>
 
 <script setup lang="ts">
-import { computed, inject, ref, useId, watch } from 'vue'
+import { computed, inject, ref, shallowRef, useId, watch } from 'vue'
 import { Popover } from '@vuetify/v0'
 import ZwToggle from '@/components/dashboard/atoms/ZwToggle.vue'
 import ZwSlider from '@/components/dashboard/atoms/ZwSlider.vue'
@@ -259,7 +241,7 @@ import {
 	DeviceActionPendingKey,
 	pollPendingKey,
 	setPendingKey,
-} from '@/components/dashboard/deviceActionPending.ts'
+} from '@/lib/deviceActionPending.ts'
 import type { ValueID } from '@zwave-js/core'
 
 const props = defineProps<{
@@ -272,7 +254,12 @@ const emit = defineEmits<{
 }>()
 
 // Pending edit until applied; null = show the live value. Clears on confirm.
+// (null is safe as the "no edit" sentinel: drafts only come from user input on
+// editable controls, never a literal null value.)
 const draft = ref<unknown>(null)
+
+// How long the "copied" checkmark shows before reverting to the copy icon.
+const COPY_FEEDBACK_MS = 1200
 const copied = ref(false)
 const menuOpen = ref(false)
 const menuId = `zw-vrow-${useId()}`
@@ -280,12 +267,15 @@ const menuId = `zw-vrow-${useId()}`
 usePopoverFallback({ open: menuOpen, contentId: menuId })
 
 // Busy state from the host's pending set — clears the instant `apiRequest` resolves.
-const pending = inject(DeviceActionPendingKey, new Set<string>())
+const pending = inject(
+	DeviceActionPendingKey,
+	shallowRef<ReadonlySet<string>>(new Set()),
+)
 const sending = computed(() =>
-	pending.has(setPendingKey(props.nodeId, props.param.target)),
+	pending.value.has(setPendingKey(props.nodeId, props.param.target)),
 )
 const refreshing = computed(() =>
-	pending.has(pollPendingKey(props.nodeId, props.param.target)),
+	pending.value.has(pollPendingKey(props.nodeId, props.param.target)),
 )
 
 const cur = computed(() =>
@@ -300,7 +290,7 @@ const busy = computed(() => sending.value || refreshing.value)
 const levelValue = computed(() => Number(cur.value) || 0)
 
 // Range hint under an editable number; default segment only when one exists.
-const rangeMeta = computed(() => {
+const rangeHint = computed(() => {
 	const p = props.param
 	const range = `min ${p.min} · max ${p.max}`
 	return p.default !== undefined ? `${range} · default ${p.default}` : range
@@ -323,14 +313,22 @@ function coerce(raw: unknown): unknown {
 
 function commit(value: unknown) {
 	menuOpen.value = false
-	// Hold an optimistic draft only for readable params (the watch clears it on
-	// confirm). Write-only params never report back, so a draft would stick dirty.
-	draft.value = props.param.readable ? value : null
+	// Don't optimistically pin the value. On a failed or un-acked write the
+	// device never confirms, so a pinned draft would keep showing the attempted
+	// value while the error toast says it failed. Show the live value instead;
+	// `busy` covers the in-flight window and the watch reflects the real result.
+	draft.value = null
 	emit('set', props.param.target, value)
 }
 
 function send() {
-	if (dirty.value) commit(coerce(draft.value))
+	if (!dirty.value) return
+	// An empty number input coerces to 0; don't send a spurious 0 / NaN.
+	if (props.param.kind === 'number') {
+		const n = Number(draft.value)
+		if (draft.value === '' || Number.isNaN(n)) return
+	}
+	commit(coerce(draft.value))
 }
 
 function onInput(e: Event) {
@@ -371,7 +369,7 @@ function copyId() {
 	copied.value = true
 	setTimeout(() => {
 		copied.value = false
-	}, 1200)
+	}, COPY_FEEDBACK_MS)
 }
 </script>
 
@@ -597,11 +595,14 @@ function copyId() {
 }
 
 .zw-vrow__input {
+	/* Narrow: numbers are short and right-aligned like the readouts. */
 	width: 80px;
 	text-align: right;
 }
 
 .zw-vrow__input--text {
+	/* Wider for free text, but still bounded so a long value can't push the
+	   control line past the cell. */
 	width: 180px;
 	text-align: left;
 }

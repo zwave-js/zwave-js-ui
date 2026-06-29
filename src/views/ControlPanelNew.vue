@@ -15,15 +15,14 @@
 // full-bleed. Device actions are resolved by `dispatchAction` and sent
 // through `apiRequest()` on the App instance, reached via `instanceManager`.
 
-import { provide, reactive } from 'vue'
+import { provide, shallowRef } from 'vue'
 import ZwAppShell from '@/components/dashboard/layout/ZwAppShell.vue'
 import { dispatchAction } from '@/lib/device-actions.ts'
 import type { Device, DeviceAction } from '@/lib/dashboard-types'
 import {
 	actionPendingKey,
 	DeviceActionPendingKey,
-	type PendingSet,
-} from '@/components/dashboard/deviceActionPending.ts'
+} from '@/lib/deviceActionPending.ts'
 import { manager, instances } from '@/lib/instanceManager'
 
 interface AppLike {
@@ -45,9 +44,16 @@ function appInstance(): AppLike | null {
 }
 
 // Value-pane components watch this to show a spinner only while their request
-// is actually in flight.
-const pending = reactive(new Set<string>()) as PendingSet
+// is actually in flight. Immutable Set, swapped on change (see PendingSet).
+const pending = shallowRef<ReadonlySet<string>>(new Set())
 provide(DeviceActionPendingKey, pending)
+
+function setPending(key: string, on: boolean) {
+	const next = new Set(pending.value)
+	if (on) next.add(key)
+	else next.delete(key)
+	pending.value = next
+}
 
 async function onAction(device: Device, action: DeviceAction) {
 	const req = dispatchAction(device, action)
@@ -57,14 +63,14 @@ async function onAction(device: Device, action: DeviceAction) {
 		return
 	}
 	const key = actionPendingKey(device, action)
-	if (key) pending.add(key)
+	if (key) setPending(key, true)
 	try {
 		await app.apiRequest(req.api, req.args, {
 			infoSnack: false,
 			errorSnack: true,
 		})
 	} finally {
-		if (key) pending.delete(key)
+		if (key) setPending(key, false)
 	}
 }
 
