@@ -25,7 +25,7 @@
 			<ZwSearchInput
 				:model-value="query"
 				:placeholder="searchPlaceholder"
-				:ariaLabel="'Search devices'"
+				:aria-label="'Search devices'"
 				@update:model-value="(v) => emit('query', v)"
 			/>
 		</div>
