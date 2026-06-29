@@ -2,7 +2,19 @@
 
 import { describe, it, expect } from 'vitest'
 import { CommandClasses } from '@zwave-js/core'
-import { projectDevice, projectDevices } from './deviceProjection.ts'
+import type { ZUINode } from '../../api/lib/ZwaveClient'
+import type { Device } from './dashboard-types'
+import {
+	projectDevice as _projectDevice,
+	projectDevices as _projectDevices,
+} from './deviceProjection.ts'
+
+// Test fixtures are intentionally partial ZUINode objects — cast at the
+// boundary so call sites stay readable.
+const projectDevice = (n: any, opts?: any): Device =>
+	_projectDevice(n as ZUINode, opts)
+const projectDevices = (n: any[], opts?: any): Device[] =>
+	_projectDevices(n as ZUINode[], opts)
 
 function val(
 	id: string,

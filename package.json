@@ -76,9 +76,9 @@
   ],
   "dependencies": {
     "@esm2cjs/escape-string-regexp": "^5.0.0",
+    "@floating-ui/dom": "^1.7.6",
     "@fontsource/roboto": "^5.2.10",
     "@fontsource/roboto-mono": "^5.2.9",
-    "@floating-ui/dom": "^1.7.6",
     "@kvaster/zwavejs-prom": "^0.0.3",
     "@lucide/vue": "^1.16.0",
     "@vuetify/v0": "~1.0.0-alpha.5",
@@ -136,6 +136,7 @@
     "@typescript-eslint/parser": "^8.45.0",
     "@vitejs/plugin-vue": "^6.0.2",
     "@vitest/coverage-v8": "^4.1.9",
+    "@vue/tsconfig": "^0.9.1",
     "@yao-pkg/pkg": "^6.10.1",
     "ansi_up": "^6.0.2",
     "axios": "^1.7.2",

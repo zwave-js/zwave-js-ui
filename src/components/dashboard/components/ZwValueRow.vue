@@ -128,7 +128,7 @@
 				>
 					<option
 						v-for="o in param.options"
-						:key="o.value"
+						:key="String(o.value)"
 						:value="String(o.value)"
 					>
 						[{{ o.value }}] {{ o.label }}

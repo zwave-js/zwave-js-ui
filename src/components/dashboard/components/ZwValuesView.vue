@@ -4,7 +4,7 @@
 			v-model="query"
 			class="zw-values__search"
 			placeholder="Filter values…"
-			aria-label="Filter values"
+			ariaLabel="Filter values"
 		/>
 
 		<ZwValueGroup

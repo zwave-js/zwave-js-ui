@@ -1,6 +1,8 @@
 // Filter pipeline tests.
 
 import { describe, it, expect } from 'vitest'
+import type { Component } from 'vue'
+import type { Device } from './dashboard-types'
 import {
 	applyScope,
 	applySearch,
@@ -10,7 +12,7 @@ import {
 	nextSort,
 } from './deviceFilter.ts'
 
-function mk(o: any) {
+function mk(o: any): Device {
 	return {
 		nodeId: o.id,
 		isController: !!o.isController,
@@ -21,7 +23,7 @@ function mk(o: any) {
 		archetype: {
 			kind: o.kind ?? 'switch',
 			label: o.label ?? 'Switch',
-			icon: null,
+			icon: null as unknown as Component,
 			power: 'mains',
 		},
 		power: o.power ?? { type: 'mains' },
