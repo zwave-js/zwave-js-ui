@@ -272,10 +272,10 @@ import {
 import { usePopoverFallback } from '@/lib/popover-fallback.ts'
 import type { ValueParam } from '@/lib/valueGroups.ts'
 import {
-	DeviceActionPendingKey,
-	DeviceActionResultKey,
+	DeviceActionStatusKey,
 	pollPendingKey,
 	setPendingKey,
+	type ActionStatus,
 } from '@/lib/deviceActionPending.ts'
 import type { ValueID } from '@zwave-js/core'
 
@@ -305,20 +305,18 @@ const menuId = `zw-vrow-${useId()}`
 
 usePopoverFallback({ open: menuOpen, contentId: menuId })
 
-// Busy state from the host's pending set — clears the instant `apiRequest` resolves.
-const pending = inject(
-	DeviceActionPendingKey,
-	shallowRef<ReadonlySet<string>>(new Set()),
-)
-// Last write outcome, keyed the same as pending; set together with pending-clear.
-const results = inject(
-	DeviceActionResultKey,
-	shallowRef<ReadonlyMap<string, boolean>>(new Map()),
+// Per-key action lifecycle: 'pending' while in flight, 'ok'/'fail' briefly on
+// completion, then deleted. Rows only need to distinguish pending from done+fail.
+const status = inject(
+	DeviceActionStatusKey,
+	shallowRef<ReadonlyMap<string, ActionStatus>>(new Map()),
 )
 const setKey = computed(() => setPendingKey(props.nodeId, props.param.target))
-const sending = computed(() => pending.value.has(setKey.value))
-const refreshing = computed(() =>
-	pending.value.has(pollPendingKey(props.nodeId, props.param.target)),
+const sending = computed(() => status.value.get(setKey.value) === 'pending')
+const refreshing = computed(
+	() =>
+		status.value.get(pollPendingKey(props.nodeId, props.param.target)) ===
+		'pending',
 )
 
 const cur = computed(() =>
@@ -347,11 +345,11 @@ watch(
 	},
 )
 
-// On send completion (pending cleared): the recorded outcome tells success from
-// failure. On failure, revert the optimistic draft and flag the error briefly.
+// On send completion (status transitions away from 'pending'): read the outcome
+// before nextTick deletes it. On failure, revert the draft and show an error.
 watch(sending, (isNowSending, wasSending) => {
 	if (!wasSending || isNowSending) return
-	if (results.value.get(setKey.value) === false) {
+	if (status.value.get(setKey.value) === 'fail') {
 		draft.value = null
 		sendFailed.value = true
 		clearTimeout(sendErrorTimer)

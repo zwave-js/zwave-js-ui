@@ -15,7 +15,7 @@
 // full-bleed. Device actions are resolved by `dispatchAction` and sent
 // through `apiRequest()` on the App instance, reached via `instanceManager`.
 
-import { provide, shallowRef } from 'vue'
+import { nextTick, provide, shallowRef } from 'vue'
 import ZwAppShell from '@/components/dashboard/layout/ZwAppShell.vue'
 import {
 	dispatchAction,
@@ -25,8 +25,8 @@ import {
 import type { Device, DeviceAction } from '@/lib/dashboard-types'
 import {
 	actionPendingKey,
-	DeviceActionPendingKey,
-	DeviceActionResultKey,
+	DeviceActionStatusKey,
+	type ActionStatus,
 } from '@/lib/deviceActionPending.ts'
 import { manager, instances } from '@/lib/instanceManager'
 
@@ -48,34 +48,26 @@ function appInstance(): AppLike | null {
 	return (inst as unknown as AppLike) ?? null
 }
 
-// Value-pane components watch this to show a spinner only while their request
-// is actually in flight. Immutable Set, swapped on change (see PendingSet).
-const pending = shallowRef<ReadonlySet<string>>(new Set())
-provide(DeviceActionPendingKey, pending)
+// Per-key action lifecycle: 'pending' while in flight, 'ok'/'fail' on
+// completion, then deleted after one tick (nextTick cleanup).
+const status = shallowRef<ReadonlyMap<string, ActionStatus>>(new Map())
+provide(DeviceActionStatusKey, status)
 
-// Last outcome per key, so a row can tell a rejected write from a successful one.
-const result = shallowRef<ReadonlyMap<string, boolean>>(new Map())
-provide(DeviceActionResultKey, result)
-
-function setPending(key: string, on: boolean) {
-	const next = new Set(pending.value)
-	if (on) next.add(key)
-	else next.delete(key)
-	pending.value = next
+function setStatus(key: string, value: ActionStatus) {
+	const next = new Map(status.value)
+	next.set(key, value)
+	status.value = next
 }
 
-function setResult(key: string, ok: boolean) {
-	const next = new Map(result.value)
-	next.set(key, ok)
-	result.value = next
-}
-
-// Record the outcome and clear pending together. The row's watcher reacts to the
-// pending flip and reads the result, so the two must update in one tick — keep
-// them paired here rather than split across the request.
 function completeAction(key: string, ok: boolean) {
-	setResult(key, ok)
-	setPending(key, false)
+	setStatus(key, ok ? 'ok' : 'fail')
+	// Pre-flush watchers read the outcome before nextTick resolves; safe to
+	// delete afterwards so the map never accumulates stale entries.
+	nextTick(() => {
+		const next = new Map(status.value)
+		next.delete(key)
+		status.value = next
+	})
 }
 
 async function onAction(device: Device, action: DeviceAction) {
@@ -86,7 +78,7 @@ async function onAction(device: Device, action: DeviceAction) {
 		return
 	}
 	const key = actionPendingKey(device, action)
-	if (key) setPending(key, true)
+	if (key) setStatus(key, 'pending')
 	let ok = false
 	try {
 		const response = await app.apiRequest(req.api, req.args, {
