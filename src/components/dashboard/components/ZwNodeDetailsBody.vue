@@ -119,7 +119,78 @@
 						<ZwStatsCard title="Communication" :items="commStats" />
 						<ZwStatsCard title="Messages" :items="messageStats" />
 					</div>
-					<ZwPropTable v-else :rows="debugRows" />
+					<ZwActionList v-else>
+						<ZwActionBtn
+							title="Ping"
+							description="Send a no-op command to check the node responds."
+							:actions="[
+								{
+									label: 'Ping',
+									busyLabel: 'Pinging…',
+									doneLabel: 'Sent',
+								},
+							]"
+							tone="accent"
+							@run="emit('action', device, { type: 'ping' })"
+						>
+							<template #icon
+								><PulseIcon :size="ICON_SIZE.std"
+							/></template>
+						</ZwActionBtn>
+						<ZwActionBtn
+							title="Re-interview node"
+							description="Clear all info and run a fresh interview."
+							:actions="[
+								{
+									label: 'Interview',
+									busyLabel: 'Interviewing…',
+									doneLabel: 'Queued',
+								},
+							]"
+							@run="emit('action', device, { type: 'interview' })"
+						>
+							<template #icon
+								><InterviewIcon :size="ICON_SIZE.std"
+							/></template>
+						</ZwActionBtn>
+						<ZwActionBtn
+							title="Rebuild routes"
+							description="Recompute the mesh routes between the controller and this node."
+							:actions="[
+								{
+									label: 'Rebuild',
+									busyLabel: 'Rebuilding…',
+									doneLabel: 'Done',
+								},
+							]"
+							@run="emit('action', device, { type: 'rebuild' })"
+						>
+							<template #icon
+								><NetworkIcon :size="ICON_SIZE.std"
+							/></template>
+						</ZwActionBtn>
+						<ZwActionBtn
+							title="Export node JSON"
+							description="Download this node's definition for backup or sharing."
+							:actions="[
+								{ label: 'UI', doneLabel: 'Saved' },
+								{ label: 'Driver', doneLabel: 'Saved' },
+							]"
+							@run="
+								(i: number) =>
+									emit('action', device, {
+										type:
+											i === 0
+												? 'export-ui'
+												: 'export-json',
+									})
+							"
+						>
+							<template #icon
+								><DownloadIcon :size="ICON_SIZE.std"
+							/></template>
+						</ZwActionBtn>
+					</ZwActionList>
 				</Tabs.Panel>
 
 				<Tabs.Panel
@@ -150,8 +221,17 @@ import ZwPrimaryDisplay from './ZwPrimaryDisplay.vue'
 import ZwPropTable from './ZwPropTable.vue'
 import ZwSecurityPanel from './ZwSecurityPanel.vue'
 import ZwStatsCard, { type StatsItem } from './ZwStatsCard.vue'
+import ZwActionList from './ZwActionList.vue'
+import ZwActionBtn from './ZwActionBtn.vue'
 import ZwNodeEvents from './ZwNodeEvents.vue'
 import ZwValuesView from './ZwValuesView.vue'
+import {
+	DownloadIcon,
+	ICON_SIZE,
+	InterviewIcon,
+	NetworkIcon,
+	PulseIcon,
+} from '@/lib/icons'
 import {
 	RAIL_WIDTH_BREAKPOINT,
 	RAIL_WIDTH_COMPACT,
@@ -282,14 +362,6 @@ const messageStats = computed<StatsItem[]>(() => {
 		{ label: 'Dropped RX', value: s?.messagesDroppedRX ?? 0 },
 	]
 })
-
-const debugRows = computed<[string, string | number][]>(() => [
-	['Endpoint count', '1'],
-	['Routing scheme', '—'],
-	['Tx power', String(props.device.txPower ?? 0) + ' dBm'],
-	['Wakeup interval', props.device.power.type === 'battery' ? '3600s' : '—'],
-	['Generic device class', props.device.archetype.label],
-])
 
 const advancedCommands = computed<{ label: string; action: DeviceAction }[]>(
 	() =>

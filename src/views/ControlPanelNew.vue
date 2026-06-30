@@ -29,6 +29,7 @@ import {
 	type ActionStatus,
 } from '@/lib/deviceActionPending.ts'
 import { manager, instances } from '@/lib/instanceManager'
+import useBaseStore from '@/stores/base'
 
 interface AppLike {
 	apiRequest: (
@@ -67,7 +68,24 @@ function completeAction(key: string, ok: boolean) {
 	})
 }
 
+function downloadJson(data: unknown, filename: string) {
+	const json = JSON.stringify(data, null, 2)
+	const blob = new Blob([json], { type: 'text/plain' })
+	const a = document.createElement('a')
+	a.href = URL.createObjectURL(blob)
+	a.download = filename
+	document.body.appendChild(a)
+	a.click()
+	document.body.removeChild(a)
+	URL.revokeObjectURL(a.href)
+}
+
 async function onAction(device: Device, action: DeviceAction) {
+	if (action.type === 'export-ui') {
+		const node = useBaseStore().getNode(device.nodeId)
+		if (node) downloadJson(node, `node_${device.nodeId}.json`)
+		return
+	}
 	const req = dispatchAction(device, action)
 	const app = appInstance()
 	if (!app) {
