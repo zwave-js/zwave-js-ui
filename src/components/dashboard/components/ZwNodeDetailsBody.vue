@@ -81,8 +81,8 @@
 					<ZwSecurityPanel :device="device" />
 				</Tabs.Panel>
 
-				<Tabs.Panel value="groups" class="zw-nd__content">
-					<ZwPropTable :rows="groupsStub" />
+				<Tabs.Panel value="associations" class="zw-nd__content">
+					<ZwAssociationsTab :device="device" @action="onAction" />
 				</Tabs.Panel>
 
 				<Tabs.Panel
@@ -223,6 +223,7 @@ import ZwSecurityPanel from './ZwSecurityPanel.vue'
 import ZwStatsCard, { type StatsItem } from './ZwStatsCard.vue'
 import ZwActionList from './ZwActionList.vue'
 import ZwActionBtn from './ZwActionBtn.vue'
+import ZwAssociationsTab from './ZwAssociationsTab.vue'
 import ZwNodeEvents from './ZwNodeEvents.vue'
 import ZwValuesView from './ZwValuesView.vue'
 import {
@@ -259,7 +260,7 @@ function onAction(d: Device, a: DeviceAction) {
 type TabId =
 	| 'values'
 	| 'summary'
-	| 'groups'
+	| 'associations'
 	| 'updates'
 	| 'events'
 	| 'debug'
@@ -268,7 +269,7 @@ type TabId =
 const ALL_TABS: { id: TabId; label: string }[] = [
 	{ id: 'values', label: 'Values' },
 	{ id: 'summary', label: 'Summary' },
-	{ id: 'groups', label: 'Groups' },
+	{ id: 'associations', label: 'Associations' },
 	{ id: 'updates', label: 'Updates' },
 	{ id: 'events', label: 'Events' },
 	{ id: 'debug', label: 'Debug' },
@@ -334,13 +335,6 @@ const fwRows = computed<[string, string | number][]>(() => [
 	['Version', props.device.firmware?.node ?? '—'],
 	['SDK', props.device.firmware?.sdk ?? '—'],
 ])
-
-// Placeholder association-group rows.
-const groupsStub: [string, string][] = [
-	['Lifeline', '1 → Controller'],
-	['NodeID_1', '—'],
-	['Endpoint', '—'],
-]
 
 const commStats = computed<StatsItem[]>(() => {
 	const s = props.device.commStats
