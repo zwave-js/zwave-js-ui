@@ -77,10 +77,10 @@
 			v-if="hasCol('signal') && viewport >= MOBILE_BREAKPOINT"
 			class="zw-row__cell"
 		>
-			<component
-				:is="signal.icon"
-				:size="14"
-				:style="{ color: signal.color }"
+			<ZwSignalBars
+				v-if="!device.isController"
+				:level="signal.level"
+				:label="signal.label"
 			/>
 		</span>
 
@@ -115,6 +115,7 @@
 import { computed } from 'vue'
 import ZwStatusDot from '@/components/dashboard/atoms/ZwStatusDot.vue'
 import ZwBatteryMini from '@/components/dashboard/atoms/ZwBatteryMini.vue'
+import ZwSignalBars from '@/components/dashboard/atoms/ZwSignalBars.vue'
 import ZwChip from '@/components/dashboard/atoms/ZwChip.vue'
 import ZwActivityReadout from '@/components/dashboard/atoms/ZwActivityReadout.vue'
 import ZwCompactPrimary from './ZwCompactPrimary.vue'

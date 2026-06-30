@@ -37,9 +37,10 @@
 				:activity="device.activity[0]"
 			/>
 			<template v-else>
-				<ZwBatteryMini
-					v-if="device.power.type === 'battery'"
-					:pct="device.power.battery"
+				<ZwSignalBars
+					v-if="!device.isController"
+					:level="signal.level"
+					:label="signal.label"
 				/>
 				<ZwPill
 					v-if="device.status === 'asleep'"
@@ -55,9 +56,21 @@
 				>
 					Dead
 				</ZwPill>
+				<ZwPill
+					v-else-if="device.interviewState === 'interview'"
+					tone="info"
+					size="sm"
+				>
+					Interviewing
+				</ZwPill>
 				<ZwPill v-else-if="device.hasUpdate" tone="accent" size="sm">
 					<DownloadIcon :size="ICON_SIZE.pill" /> Update
 				</ZwPill>
+				<ZwBatteryMini
+					v-if="device.power.type === 'battery'"
+					class="zw-card__battery"
+					:pct="device.power.battery"
+				/>
 			</template>
 		</footer>
 	</div>
@@ -68,8 +81,10 @@ import { computed } from 'vue'
 import ZwPrimaryDisplay from './ZwPrimaryDisplay.vue'
 import ZwPill from '@/components/dashboard/atoms/ZwPill.vue'
 import ZwBatteryMini from '@/components/dashboard/atoms/ZwBatteryMini.vue'
+import ZwSignalBars from '@/components/dashboard/atoms/ZwSignalBars.vue'
 import ZwActivityReadout from '@/components/dashboard/atoms/ZwActivityReadout.vue'
 import { DownloadIcon, ICON_SIZE, MoonIcon } from '@/lib/icons'
+import { signalDisplay } from '@/lib/deviceSignal'
 import { isStateAlert } from '@/lib/primaryValue'
 import { padNumber } from '@/lib/utils'
 import type { Device, DeviceAction } from '@/lib/dashboard-types'
@@ -81,6 +96,7 @@ const emit = defineEmits<{
 }>()
 
 const nodeIdLabel = computed(() => padNumber(props.device.nodeId, 3))
+const signal = computed(() => signalDisplay(props.device.health))
 
 const isAlertState = computed(() => {
 	const pv = props.device.primaryValue
@@ -182,5 +198,9 @@ function onKeyDown(e: KeyboardEvent) {
 	align-items: center;
 	gap: 8px;
 	min-height: 18px;
+}
+
+.zw-card__battery {
+	margin-left: auto;
 }
 </style>
