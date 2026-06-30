@@ -1,5 +1,6 @@
 <template>
-	<div v-if="rows.length" class="zw-pt">
+	<div v-if="rows.length || title" class="zw-pt">
+		<div v-if="title" class="zw-pt__title">{{ title }}</div>
 		<div
 			v-for="(row, idx) in rows"
 			:key="idx"
@@ -13,7 +14,13 @@
 </template>
 
 <script setup lang="ts">
-defineProps<{ rows: [string, string | number][] }>()
+withDefaults(
+	defineProps<{
+		rows: [string, string | number][]
+		title?: string
+	}>(),
+	{ title: undefined },
+)
 </script>
 
 <style scoped>
@@ -22,6 +29,16 @@ defineProps<{ rows: [string, string | number][] }>()
 	border: 1px solid var(--zw-line);
 	border-radius: 6px;
 	overflow: hidden;
+}
+
+.zw-pt__title {
+	padding: 6px 10px;
+	border-bottom: 1px solid var(--zw-line);
+	font-family: var(--zw-mono);
+	font-size: 10px;
+	color: var(--zw-muted);
+	text-transform: uppercase;
+	letter-spacing: 0.4px;
 }
 
 .zw-pt__row {
