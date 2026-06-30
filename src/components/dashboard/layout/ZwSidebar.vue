@@ -35,6 +35,7 @@
 import { computed, defineComponent, h, type Component } from 'vue'
 import { Dialog } from '@vuetify/v0'
 import { storeToRefs } from 'pinia'
+import logoSvg from '/logo.svg?raw'
 import useDashboardStore from '@/stores/dashboard'
 import ZwUpdateNotifier from '@/components/dashboard/atoms/ZwUpdateNotifier.vue'
 import {
@@ -253,7 +254,10 @@ function renderBrand(
 			class: ['zw-sb__brand', { 'zw-sb__brand--rail': !isWide }],
 		},
 		[
-			h('div', { class: 'zw-sb__logo' }, 'Z'),
+			h('div', {
+				class: 'zw-sb__logo',
+				innerHTML: logoSvg.replace('#0071BC', 'currentColor'),
+			}),
 			isWide
 				? h('div', { class: 'zw-sb__brand-text' }, [
 						h('div', { class: 'zw-sb__home' }, 'Z-Wave JS UI'),
@@ -622,11 +626,10 @@ function renderFooterRail() {
 .zw-sb__logo {
 	width: 28px;
 	height: 28px;
+	padding: 5px;
 	border-radius: 6px;
 	background: var(--zw-accent);
 	color: #fff;
-	font-weight: 700;
-	font-size: 13px;
 	display: flex;
 	align-items: center;
 	justify-content: center;
