@@ -246,7 +246,15 @@
 </template>
 
 <script setup lang="ts">
-import { computed, inject, ref, shallowRef, useId, watch } from 'vue'
+import {
+	computed,
+	inject,
+	onBeforeUnmount,
+	ref,
+	shallowRef,
+	useId,
+	watch,
+} from 'vue'
 import { Popover } from '@vuetify/v0'
 import ZwToggle from '@/components/dashboard/atoms/ZwToggle.vue'
 import ZwSlider from '@/components/dashboard/atoms/ZwSlider.vue'
@@ -285,6 +293,9 @@ const emit = defineEmits<{
 // editable controls, never a literal null value.)
 const draft = ref<unknown>(null)
 const sendFailed = ref(false)
+// How long the "could not be set" flag stays visible after a failed write.
+const SEND_ERROR_MS = 3000
+let sendErrorTimer: ReturnType<typeof setTimeout> | undefined
 
 // How long the "copied" checkmark shows before reverting to the copy icon.
 const COPY_FEEDBACK_MS = 1200
@@ -299,7 +310,7 @@ const pending = inject(
 	DeviceActionPendingKey,
 	shallowRef<ReadonlySet<string>>(new Set()),
 )
-// Last write outcome, keyed the same as pending; written before pending clears.
+// Last write outcome, keyed the same as pending; set together with pending-clear.
 const results = inject(
 	DeviceActionResultKey,
 	shallowRef<ReadonlyMap<string, boolean>>(new Map()),
@@ -336,18 +347,21 @@ watch(
 	},
 )
 
-// On send completion (pending cleared): the recorded outcome is readable
-// synchronously. On failure, revert the optimistic draft and flag the error.
+// On send completion (pending cleared): the recorded outcome tells success from
+// failure. On failure, revert the optimistic draft and flag the error briefly.
 watch(sending, (isNowSending, wasSending) => {
 	if (!wasSending || isNowSending) return
 	if (results.value.get(setKey.value) === false) {
 		draft.value = null
 		sendFailed.value = true
-		setTimeout(() => {
+		clearTimeout(sendErrorTimer)
+		sendErrorTimer = setTimeout(() => {
 			sendFailed.value = false
-		}, 3000)
+		}, SEND_ERROR_MS)
 	}
 })
+
+onBeforeUnmount(() => clearTimeout(sendErrorTimer))
 
 function coerce(raw: unknown): unknown {
 	if (props.param.kind === 'number' || props.param.kind === 'level') {
@@ -359,8 +373,9 @@ function coerce(raw: unknown): unknown {
 function commit(value: unknown) {
 	menuOpen.value = false
 	sendFailed.value = false
-	// Show the value optimistically; the send-completion watch reverts on failure.
-	draft.value = value
+	// Show the value optimistically (the value-update watch clears it on confirm).
+	// Write-only params never report back, so don't pin — it would stick dirty.
+	draft.value = props.param.readable ? value : null
 	emit('set', props.param.target, value)
 }
 

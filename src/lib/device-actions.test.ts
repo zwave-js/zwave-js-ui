@@ -5,8 +5,8 @@
 
 import { describe, it, expect } from 'vitest'
 import { CommandClasses } from '@zwave-js/core'
-import { DoorLockMode } from '@zwave-js/cc'
-import { dispatchAction } from './device-actions.ts'
+import { DoorLockMode, SetValueStatus } from '@zwave-js/cc'
+import { dispatchAction, isRequestSuccess } from './device-actions.ts'
 import type { Device } from './dashboard-types.ts'
 
 const device = { nodeId: 8 } as Device
@@ -76,5 +76,34 @@ describe('dispatchAction', () => {
 			api: 'refreshValues',
 			args: [8],
 		})
+	})
+})
+
+describe('isRequestSuccess', () => {
+	it('returns false for an unsuccessful response', () => {
+		expect(isRequestSuccess('pingNode', { success: false })).to.equal(false)
+	})
+
+	it('returns true for a successful non-writeValue response', () => {
+		expect(isRequestSuccess('pingNode', { success: true })).to.equal(true)
+	})
+
+	it('treats a successful writeValue with no result as success', () => {
+		expect(isRequestSuccess('writeValue', { success: true })).to.equal(true)
+	})
+
+	it('honors the SetValueResult status for writeValue', () => {
+		expect(
+			isRequestSuccess('writeValue', {
+				success: true,
+				result: { status: SetValueStatus.Success },
+			}),
+		).to.equal(true)
+		expect(
+			isRequestSuccess('writeValue', {
+				success: true,
+				result: { status: SetValueStatus.Fail },
+			}),
+		).to.equal(false)
 	})
 })

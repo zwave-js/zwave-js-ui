@@ -70,6 +70,14 @@ function setResult(key: string, ok: boolean) {
 	result.value = next
 }
 
+// Record the outcome and clear pending together. The row's watcher reacts to the
+// pending flip and reads the result, so the two must update in one tick — keep
+// them paired here rather than split across the request.
+function completeAction(key: string, ok: boolean) {
+	setResult(key, ok)
+	setPending(key, false)
+}
+
 async function onAction(device: Device, action: DeviceAction) {
 	const req = dispatchAction(device, action)
 	const app = appInstance()
@@ -79,16 +87,15 @@ async function onAction(device: Device, action: DeviceAction) {
 	}
 	const key = actionPendingKey(device, action)
 	if (key) setPending(key, true)
+	let ok = false
 	try {
 		const response = await app.apiRequest(req.api, req.args, {
 			infoSnack: false,
 			errorSnack: true,
 		})
-		// Record the outcome before clearing pending: the row's watch fires on
-		// the pending flip and reads the result, so it must be set first.
-		if (key) setResult(key, isRequestSuccess(req.api, response))
+		ok = isRequestSuccess(req.api, response)
 	} finally {
-		if (key) setPending(key, false)
+		if (key) completeAction(key, ok)
 	}
 }
 

@@ -57,7 +57,7 @@ import {
 
 const props = withDefaults(
 	defineProps<{
-		modelValue: number | string
+		modelValue: string
 		min?: number
 		max?: number
 		step?: number
@@ -70,7 +70,11 @@ const props = withDefaults(
 	{ step: 1, disabled: false, dirty: false },
 )
 
-const emit = defineEmits<{ 'update:modelValue': [string]; commit: []; reset: [] }>()
+const emit = defineEmits<{
+	'update:modelValue': [string]
+	commit: []
+	reset: []
+}>()
 
 const atMax = computed(
 	() => props.max !== undefined && Number(props.modelValue) >= props.max,
@@ -88,7 +92,9 @@ function clamp(v: number): number {
 
 function bump(delta: number): void {
 	const base = Number(props.modelValue)
-	const next = String(clamp((Number.isFinite(base) ? base : 0) + delta * props.step))
+	const next = String(
+		clamp((Number.isFinite(base) ? base : 0) + delta * props.step),
+	)
 	emit('update:modelValue', next)
 }
 

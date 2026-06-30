@@ -103,6 +103,11 @@ import {
 } from '@/lib/icons'
 import { usePopoverFallback } from '@/lib/popover-fallback.ts'
 
+// Show the filter input once the list grows beyond this many options.
+const OPTIONS_FILTER_THRESHOLD = 6
+// Panel is never narrower than this, even under a small trigger.
+const MIN_PANEL_WIDTH_PX = 220
+
 type OptionValue = number | string | boolean
 
 interface DropdownOption {
@@ -115,6 +120,7 @@ const props = withDefaults(
 		modelValue: OptionValue | null
 		options: DropdownOption[]
 		allowManual?: boolean
+		// min/max/unit apply only with allowManual (combobox manual entry).
 		min?: number
 		max?: number
 		unit?: string
@@ -134,7 +140,9 @@ usePopoverFallback({ open, contentId, placement: 'bottom-start', offsetPx: 4 })
 
 // Autocomplete shows a filter when options exceed the plain threshold.
 // Combobox (allowManual) always shows the filter since it doubles as entry.
-const showFilter = computed(() => props.allowManual || props.options.length > 6)
+const showFilter = computed(
+	() => props.allowManual || props.options.length > OPTIONS_FILTER_THRESHOLD,
+)
 
 const filterPlaceholder = computed(() => {
 	if (!props.allowManual) return 'Filter…'
@@ -154,11 +162,12 @@ const filteredOptions = computed(() => {
 	)
 })
 
-// Integer typed in the filter field — only meaningful in combobox mode.
+// Number typed in the filter field — only meaningful in combobox mode.
 const manualNum = computed<number | null>(() => {
 	if (!props.allowManual) return null
 	const q = filter.value.trim()
-	if (!/^-?\d+$/.test(q)) return null
+	// Accept integers and decimals — allowManualEntry params may have a decimal step.
+	if (!/^-?\d+(\.\d+)?$/.test(q)) return null
 	return Number(q)
 })
 
@@ -225,7 +234,7 @@ watch(
 		if (a && c) {
 			c.style.setProperty(
 				'min-width',
-				`${Math.max(a.offsetWidth, 220)}px`,
+				`${Math.max(a.offsetWidth, MIN_PANEL_WIDTH_PX)}px`,
 				'important',
 			)
 		}
