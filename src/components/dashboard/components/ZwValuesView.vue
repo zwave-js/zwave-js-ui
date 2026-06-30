@@ -1,11 +1,18 @@
 <template>
 	<div class="zw-values">
-		<ZwSearchInput
-			v-model="query"
-			class="zw-values__search"
-			placeholder="Filter values…"
-			aria-label="Filter values"
-		/>
+		<div class="zw-values__toolbar">
+			<ZwSearchInput
+				v-model="query"
+				class="zw-values__search"
+				placeholder="Filter values…"
+				aria-label="Filter values"
+			/>
+			<ZwValuesActionsMenu
+				@refresh-all="onRefreshAll"
+				@expand-all="expandAll"
+				@collapse-all="collapseAll"
+			/>
+		</div>
 
 		<ZwValueGroup
 			v-for="g in filtered"
@@ -31,6 +38,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import ZwSearchInput from '@/components/dashboard/atoms/ZwSearchInput.vue'
+import ZwValuesActionsMenu from './ZwValuesActionsMenu.vue'
 import ZwValueGroup from './ZwValueGroup.vue'
 import useBaseStore from '@/stores/base'
 import {
@@ -105,6 +113,18 @@ function toggle(ccId: number) {
 	open.value = next
 }
 
+function expandAll() {
+	open.value = new Set(groups.value.map((g) => g.ccId))
+}
+
+function collapseAll() {
+	open.value = new Set()
+}
+
+function onRefreshAll() {
+	emit('action', props.device, { type: 'refresh' })
+}
+
 function onSet(valueId: ValueID, value: unknown) {
 	emit('action', props.device, { type: 'set-value', valueId, value })
 }
@@ -123,6 +143,17 @@ function onRefreshCc(commandClass: number) {
 	display: flex;
 	flex-direction: column;
 	gap: 10px;
+}
+
+.zw-values__toolbar {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.zw-values__search {
+	flex: 1;
+	min-width: 0;
 }
 
 .zw-values__empty {

@@ -74,6 +74,7 @@ export const ICON_SIZE = {
 	chip: 11, // chips
 	caret: 12, // expandable section chevron (sort / group headers)
 	dense: 13, // update notifier; dense action buttons (refresh / trash)
+	std: 15, // standard-size glyphs in menus and standalone buttons
 	inline: 14, // table rows / inline
 	nav: 16, // nav rows
 	topbar: 18, // top bar / icon buttons
