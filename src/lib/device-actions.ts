@@ -104,7 +104,6 @@ export function dispatchAction(
 	return dispatcher(device, action)
 }
 
-// Shape the UI reads from an `apiRequest` response.
 export interface ApiResponse {
 	success: boolean
 	result?: unknown
@@ -112,8 +111,7 @@ export interface ApiResponse {
 
 export function isRequestSuccess(api: string, response: ApiResponse): boolean {
 	if (!response.success) return false
-	// `writeValue` carries a SetValue status; Working/Success/Unsupervised count
-	// as accepted. Other APIs report only the top-level success flag.
+	// `writeValue` carries a SetValue status beyond the top-level success flag.
 	if (api === 'writeValue' && response.result) {
 		return setValueWasUnsupervisedOrSucceeded(
 			response.result as SetValueResult,

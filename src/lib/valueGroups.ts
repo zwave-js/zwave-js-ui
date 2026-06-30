@@ -145,14 +145,12 @@ function formatValue(v: ZUIValueId, kind: ValueParamKind): string {
 	}
 }
 
-// Keeps each row's `param` referentially stable while unchanged, so Vue can skip
-// re-rendering rows that didn't change.
+// Referential stability cache — unchanged params reuse the same object.
 const paramCache = new WeakMap<ZUIValueId, ValueParam>()
 
 function projectParam(v: ZUIValueId): ValueParam {
 	const cached = paramCache.get(v)
-	// Compare the value too: the store can mutate `.value` in place (same object),
-	// so the key alone would return a stale param.
+	// The store can mutate `.value` in place, so compare it too.
 	if (cached && Object.is(cached.value, v.value)) return cached
 	const param = buildParam(v)
 	paramCache.set(v, param)

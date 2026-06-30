@@ -48,8 +48,6 @@ function appInstance(): AppLike | null {
 	return (inst as unknown as AppLike) ?? null
 }
 
-// Per-key action lifecycle: 'pending' while in flight, 'ok'/'fail' on
-// completion, then deleted after one tick (nextTick cleanup).
 const status = shallowRef<ReadonlyMap<string, ActionStatus>>(new Map())
 provide(DeviceActionStatusKey, status)
 
@@ -61,8 +59,7 @@ function setStatus(key: string, value: ActionStatus) {
 
 function completeAction(key: string, ok: boolean) {
 	setStatus(key, ok ? 'ok' : 'fail')
-	// Pre-flush watchers read the outcome before nextTick resolves; safe to
-	// delete afterwards so the map never accumulates stale entries.
+	// Delete after one tick so pre-flush watchers can read the outcome.
 	nextTick(() => {
 		const next = new Map(status.value)
 		next.delete(key)

@@ -63,8 +63,7 @@ const props = withDefaults(
 		step?: number
 		unit?: string
 		disabled?: boolean
-		// Controlled dirty state: parent sets this when the value has changed
-		// from the committed value. Drives the apply button visibility.
+		// When true, shows the apply button.
 		dirty?: boolean
 	}>(),
 	{ step: 1, disabled: false, dirty: false },

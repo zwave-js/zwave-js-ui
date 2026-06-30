@@ -288,9 +288,7 @@ const emit = defineEmits<{
 	poll: [ValueID]
 }>()
 
-// Pending edit until applied; null = show the live value. Clears on confirm.
-// (null is safe as the "no edit" sentinel: drafts only come from user input on
-// editable controls, never a literal null value.)
+// Pending edit until applied; null = show the live value.
 const draft = ref<unknown>(null)
 const sendFailed = ref(false)
 // How long the "could not be set" flag stays visible after a failed write.
@@ -305,8 +303,6 @@ const menuId = `zw-vrow-${useId()}`
 
 usePopoverFallback({ open: menuOpen, contentId: menuId })
 
-// Per-key action lifecycle: 'pending' while in flight, 'ok'/'fail' briefly on
-// completion, then deleted. Rows only need to distinguish pending from done+fail.
 const status = inject(
 	DeviceActionStatusKey,
 	shallowRef<ReadonlyMap<string, ActionStatus>>(new Map()),
@@ -330,14 +326,13 @@ const dirty = computed(
 const busy = computed(() => sending.value || refreshing.value)
 const levelValue = computed(() => Number(cur.value) || 0)
 
-// Range hint under an editable number; default segment only when one exists.
 const rangeHint = computed(() => {
 	const p = props.param
 	const range = `min ${p.min} · max ${p.max}`
 	return p.default !== undefined ? `${range} · default ${p.default}` : range
 })
 
-// Confirmed value arrived: drop the optimistic draft so the live value shows.
+// Drop the draft when the confirmed value arrives.
 watch(
 	() => props.param.value,
 	() => {
@@ -345,8 +340,7 @@ watch(
 	},
 )
 
-// On send completion (status transitions away from 'pending'): read the outcome
-// before nextTick deletes it. On failure, revert the draft and show an error.
+// On failure, revert the draft and show an error.
 watch(sending, (isNowSending, wasSending) => {
 	if (!wasSending || isNowSending) return
 	if (status.value.get(setKey.value) === 'fail') {
@@ -371,15 +365,13 @@ function coerce(raw: unknown): unknown {
 function commit(value: unknown) {
 	menuOpen.value = false
 	sendFailed.value = false
-	// Show the value optimistically (the value-update watch clears it on confirm).
-	// Write-only params never report back, so don't pin — it would stick dirty.
+	// Write-only params never get a confirmed value back, so don't pin a draft.
 	draft.value = props.param.readable ? value : null
 	emit('set', props.param.target, value)
 }
 
 function send() {
 	if (!dirty.value) return
-	// An empty number input coerces to 0; don't send a spurious 0 / NaN.
 	if (props.param.kind === 'number') {
 		const n = Number(draft.value)
 		if (draft.value === '' || Number.isNaN(n)) return
@@ -391,7 +383,6 @@ function onInput(e: Event) {
 	draft.value = (e.target as HTMLInputElement).value
 }
 
-// Narrows `cur` to what ZwDropdown accepts; anything else means no selection.
 function asOptionValue(v: unknown): number | string | boolean | null {
 	if (
 		typeof v === 'number' ||
@@ -404,8 +395,7 @@ function asOptionValue(v: unknown): number | string | boolean | null {
 
 function commitLevel() {
 	if (draft.value === null) return
-	// Multilevel Switch tops out at 99 (100/255 mean "restore"); the slider
-	// track is 0–100, so clamp before writing.
+	// Clamp to 0–99 (100 means "restore previous" in Multilevel Switch).
 	const level = Math.min(99, Math.max(0, Number(draft.value)))
 	if (level !== Number(props.param.value)) {
 		commit(level)
@@ -424,8 +414,6 @@ function resetDefault() {
 }
 
 function copyId() {
-	// Clipboard API is absent in insecure contexts (`?.`) and can reject
-	// (permission denied / not focused); swallow both — it's only feedback.
 	void navigator.clipboard?.writeText(props.param.id).catch(() => {})
 	copied.value = true
 	setTimeout(() => {

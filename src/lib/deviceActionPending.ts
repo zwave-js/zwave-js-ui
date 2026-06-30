@@ -8,9 +8,7 @@ import type { Device, DeviceAction } from './dashboard-types.ts'
 
 export type ActionStatus = 'pending' | 'ok' | 'fail'
 
-// A shallowRef holding an immutable Map, replaced on each change. A row's
-// `.get()` re-runs only when the map is swapped — not per-key, so a single
-// value change doesn't invalidate every mounted row.
+// Immutable Map in a shallowRef — replaced on each change.
 export type ActionStatusMap = ShallowRef<ReadonlyMap<string, ActionStatus>>
 
 export const DeviceActionStatusKey: InjectionKey<ActionStatusMap> = Symbol(

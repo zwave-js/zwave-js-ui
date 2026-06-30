@@ -138,8 +138,6 @@ const contentId = `zw-dd-${useId()}`
 
 usePopoverFallback({ open, contentId, placement: 'bottom-start', offsetPx: 4 })
 
-// Autocomplete shows a filter when options exceed the plain threshold.
-// Combobox (allowManual) always shows the filter since it doubles as entry.
 const showFilter = computed(
 	() => props.allowManual || props.options.length > OPTIONS_FILTER_THRESHOLD,
 )
@@ -162,11 +160,9 @@ const filteredOptions = computed(() => {
 	)
 })
 
-// Number typed in the filter field — only meaningful in combobox mode.
 const manualNum = computed<number | null>(() => {
 	if (!props.allowManual) return null
 	const q = filter.value.trim()
-	// Accept integers and decimals — allowManualEntry params may have a decimal step.
 	if (!/^-?\d+(\.\d+)?$/.test(q)) return null
 	return Number(q)
 })
@@ -176,12 +172,9 @@ const manualValid = computed(() => {
 	if (n === null) return false
 	if (props.min !== undefined && n < props.min) return false
 	if (props.max !== undefined && n > props.max) return false
-	// Don't offer "set custom" for a value already in the list.
 	return !props.options.some((o) => String(o.value) === String(n))
 })
 
-// Selected value as a string key — options compare against this, so it's
-// coerced once rather than per option per render.
 const selectedKey = computed(() => String(props.modelValue))
 
 const curOpt = computed(() =>
@@ -216,10 +209,7 @@ function onFilterKeyDown(e: KeyboardEvent): void {
 	}
 }
 
-// On open: match panel width to trigger (min 220px) and focus the filter.
-// On close: clear the filter so it doesn't persist across sessions.
-// Registered after usePopoverFallback so its watcher fires first and the
-// element is already positioned when we set width here.
+// Match panel width to trigger on open; clear filter on close.
 watch(
 	() => open.value,
 	(isOpen) => {
