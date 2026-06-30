@@ -194,7 +194,7 @@
 			<input
 				ref="fileInput"
 				type="file"
-				accept=".gbl,.otz,.ota,.hex,.bin,.hec"
+				:accept="FW_EXTENSIONS.join(',')"
 				class="zw-fw__file-input"
 				@change="onFileChange"
 			/>
@@ -206,9 +206,9 @@
 			>
 				<UploadIcon :size="ICON_SIZE.topbar" class="zw-fw__drop-icon" />
 				<span class="zw-fw__drop-label">Choose a firmware file</span>
-				<span class="zw-fw__drop-hint"
-					>.gbl · .otz · .ota · .hex · .bin</span
-				>
+				<span class="zw-fw__drop-hint">{{
+					FW_EXTENSIONS.join(' · ')
+				}}</span>
 			</button>
 			<div v-else class="zw-fw__file-row">
 				<UploadIcon :size="ICON_SIZE.std" class="zw-fw__file-icon" />
@@ -252,6 +252,8 @@ interface FwCandidate {
 	downgrade: boolean
 	latest?: boolean
 }
+
+const FW_EXTENSIONS = ['.gbl', '.otz', '.ota', '.hex', '.bin', '.hec'] as const
 
 const props = defineProps<{ device: Device }>()
 const emit = defineEmits<{ action: [Device, DeviceAction] }>()
@@ -453,7 +455,7 @@ function onFileChange(e: Event) {
 .zw-fw__progress-track {
 	height: 6px;
 	border-radius: 3px;
-	background: rgba(0, 0, 0, 0.1);
+	background: rgba(var(--v0-on-surface), 0.1);
 	overflow: hidden;
 }
 
@@ -493,8 +495,8 @@ function onFileChange(e: Event) {
 
 .zw-fw__btn--accent {
 	background: var(--zw-accent);
-	color: #fff;
-	box-shadow: 0 1px 2px rgba(0, 0, 0, 0.18);
+	color: var(--zw-on-accent);
+	box-shadow: 0 1px 2px rgba(var(--v0-on-surface), 0.18);
 }
 
 .zw-fw__btn--ghost {
@@ -505,8 +507,8 @@ function onFileChange(e: Event) {
 
 .zw-fw__btn--danger {
 	background: transparent;
-	color: #e53935;
-	border-color: #e53935;
+	color: var(--zw-danger);
+	border-color: var(--zw-danger);
 }
 
 /* empty */

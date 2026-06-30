@@ -525,7 +525,7 @@ const advancedCommands = computed<{ label: string; action: DeviceAction }[]>(
 /* V0 Tabs.Item emits `data-selected="true"` on the active tab. */
 .zw-nd__tab[data-selected='true'] {
 	background: var(--zw-accent);
-	color: #fff;
+	color: var(--zw-on-accent);
 }
 
 .zw-nd__tab:focus-visible {
@@ -538,12 +538,12 @@ const advancedCommands = computed<{ label: string; action: DeviceAction }[]>(
 	height: 7px;
 	border-radius: 50%;
 	background: var(--zw-accent);
-	box-shadow: 0 0 0 1.5px #fff;
+	box-shadow: 0 0 0 1.5px var(--zw-card);
 	flex-shrink: 0;
 }
 
 .zw-nd__tab[data-selected='true'] .zw-nd__tab-dot {
-	background: #fff;
+	background: var(--zw-on-accent);
 	box-shadow: none;
 }
 
