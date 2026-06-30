@@ -76,8 +76,8 @@
 					value="summary"
 					class="zw-nd__content zw-nd__summary"
 				>
-					<ZwPropTable :rows="manufacturerRows" />
-					<ZwPropTable :rows="firmwareRows" />
+					<ZwPropTable title="Device" :rows="deviceRows" />
+					<ZwPropTable title="Firmware" :rows="fwRows" />
 					<ZwSecurityPanel :device="device" />
 				</Tabs.Panel>
 
@@ -245,18 +245,14 @@ const statusLabel = computed(() => {
 	return s.charAt(0).toUpperCase() + s.slice(1)
 })
 
-const manufacturerRows = computed<[string, string | number][]>(() => [
-	['Manufacturer', props.device.manufacturer ?? '—'],
-	['Product', props.device.product ?? '—'],
-	['Code', props.device.productCode ?? '—'],
-	['Protocol', props.device.protocol ?? '—'],
+const deviceRows = computed<[string, string | number][]>(() => [
+	['Device class', props.device.archetype.label],
+	['Interview', props.device.interviewState],
 ])
 
-const firmwareRows = computed<[string, string | number][]>(() => [
-	['Firmware', props.device.firmware?.node ?? '—'],
+const fwRows = computed<[string, string | number][]>(() => [
+	['Version', props.device.firmware?.node ?? '—'],
 	['SDK', props.device.firmware?.sdk ?? '—'],
-	['Last seen', props.device.lastSeen],
-	['Interview', props.device.interviewState],
 ])
 
 // Placeholder association-group rows.
