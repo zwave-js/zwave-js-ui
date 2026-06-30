@@ -215,3 +215,5 @@ export type DeviceAction =
 	| { type: 'include' }
 	| { type: 'replace-failed' }
 	| { type: 'exclude' }
+	| { type: 'clear-associations' }
+	| { type: 'remove-all-associations' }
