@@ -81,6 +81,15 @@ export const ACTION_DISPATCHERS: {
 		args: ['replaceFailed'],
 	}),
 	exclude: () => ({ api: 'startExclusion', args: [] }),
+	'export-ui': (d) => ({ api: 'dumpNode', args: [d.nodeId] }),
+	'clear-associations': (d) => ({
+		api: 'removeAllAssociations',
+		args: [d.nodeId],
+	}),
+	'remove-all-associations': (d) => ({
+		api: 'removeNodeFromAllAssociations',
+		args: [d.nodeId],
+	}),
 }
 
 export function dispatchAction(

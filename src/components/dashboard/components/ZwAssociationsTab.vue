@@ -1,6 +1,9 @@
 <template>
 	<div class="zw-assoc">
 		<div class="zw-assoc__groups">
+			<div v-if="!groups.length" class="zw-assoc__empty">
+				No association groups available.
+			</div>
 			<div v-for="g in groups" :key="g.name" class="zw-assoc__group">
 				<span class="zw-assoc__name">
 					<LinkIcon
@@ -73,20 +76,10 @@ interface AssocGroup {
 const groups = computed<AssocGroup[]>(() => {
 	const node = baseStore.getNode(props.device.nodeId)
 	const raw = node?.groups ?? []
-	if (!raw.length) {
-		return [
-			{ name: 'Lifeline', members: 'Controller (node 1)', count: '1/5' },
-			{ name: 'NodeID_1', members: '—', count: '0/5' },
-			{ name: 'Endpoint', members: '—', count: '0/5' },
-		]
-	}
 	return raw.map((g: Record<string, unknown>) => ({
-		name: String(g.label ?? g.text ?? `Group ${g.value ?? ''}`),
-		members:
-			Array.isArray(g.multiChannelNodeIds) && g.multiChannelNodeIds.length
-				? g.multiChannelNodeIds.join(', ')
-				: '—',
-		count: `${Array.isArray(g.multiChannelNodeIds) ? g.multiChannelNodeIds.length : 0}/${g.maxNodes ?? '?'}`,
+		name: String(g.title ?? `Group ${g.value ?? '?'}`),
+		members: '—',
+		count: `?/${g.maxNodes ?? '?'}`,
 	}))
 })
 </script>
@@ -133,5 +126,11 @@ const groups = computed<AssocGroup[]>(() => {
 
 .zw-assoc__count {
 	color: var(--zw-muted);
+}
+
+.zw-assoc__empty {
+	font-size: 12px;
+	color: var(--zw-muted);
+	padding: 9px 11px;
 }
 </style>
