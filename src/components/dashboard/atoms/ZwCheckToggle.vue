@@ -2,6 +2,8 @@
 	<button
 		type="button"
 		class="zw-ct"
+		role="switch"
+		:aria-checked="modelValue"
 		@click="emit('update:modelValue', !modelValue)"
 	>
 		<span class="zw-ct__box" :class="{ 'zw-ct__box--on': modelValue }">
@@ -45,7 +47,7 @@ const emit = defineEmits<{ 'update:modelValue': [boolean] }>()
 	height: 16px;
 	border-radius: 4px;
 	flex: 0 0 16px;
-	border: 1.5px solid rgba(0, 0, 0, 0.3);
+	border: 1.5px solid rgba(var(--v0-on-surface), 0.3);
 	background: transparent;
 	display: inline-flex;
 	align-items: center;
@@ -61,7 +63,7 @@ const emit = defineEmits<{ 'update:modelValue': [boolean] }>()
 }
 
 .zw-ct__check {
-	color: #fff;
+	color: var(--zw-on-accent);
 }
 
 .zw-ct__label {

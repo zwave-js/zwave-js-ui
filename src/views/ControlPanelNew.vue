@@ -86,6 +86,17 @@ async function onAction(device: Device, action: DeviceAction) {
 		if (node) downloadJson(node, `node_${device.nodeId}.json`)
 		return
 	}
+	if (action.type === 'firmware-upload') {
+		const app = appInstance()
+		if (!app) return
+		const data = await action.file.arrayBuffer()
+		await app.apiRequest(
+			'updateFirmware',
+			[device.nodeId, [{ name: action.file.name, data }]],
+			{ infoSnack: true, errorSnack: true },
+		)
+		return
+	}
 	const req = dispatchAction(device, action)
 	const app = appInstance()
 	if (!app) {

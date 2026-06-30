@@ -31,43 +31,8 @@
 			<ZwCheckToggle v-model="showDown" label="Show downgrades" />
 		</div>
 
-		<!-- flashing banner -->
-		<div v-if="flash" class="zw-fw__flash">
-			<div class="zw-fw__flash-head">
-				<span class="zw-fw__flash-label">
-					<RefreshIcon
-						:size="ICON_SIZE.dense"
-						class="zw-fw__spin zw-fw__flash-icon"
-					/>
-					Flashing <span class="zw-fw__mono">{{ flash.version }}</span
-					>…
-				</span>
-				<span class="zw-fw__mono zw-fw__flash-pct"
-					>{{ flash.pct }}%</span
-				>
-			</div>
-			<div class="zw-fw__progress-track">
-				<div
-					class="zw-fw__progress-fill"
-					:style="{ width: flash.pct + '%' }"
-				/>
-			</div>
-			<div class="zw-fw__flash-foot">
-				<span class="zw-fw__flash-hint"
-					>Keep the device powered until this completes.</span
-				>
-				<button
-					type="button"
-					class="zw-fw__btn zw-fw__btn--danger"
-					@click="abortInstall"
-				>
-					Abort
-				</button>
-			</div>
-		</div>
-
 		<!-- available updates -->
-		<div v-if="!flash" class="zw-fw__list">
+		<div class="zw-fw__list">
 			<span class="zw-fw__overline">
 				{{
 					visible.length
@@ -108,14 +73,7 @@
 						>
 					</span>
 					<span class="zw-fw__spacer" />
-					<span
-						v-if="installed === c.version"
-						class="zw-fw__installed"
-					>
-						<CheckIcon :size="ICON_SIZE.dense" /> Installed
-					</span>
 					<button
-						v-else
 						type="button"
 						class="zw-fw__btn"
 						:class="
@@ -123,13 +81,13 @@
 								? 'zw-fw__btn--ghost'
 								: 'zw-fw__btn--accent'
 						"
-						@click="startInstall(c.version)"
+						@click="installOTA(c)"
 					>
 						<DownloadIcon :size="ICON_SIZE.dense" />
 						{{ c.downgrade ? 'Downgrade' : 'Install' }}
 					</button>
 				</div>
-				<div v-if="c.changelog?.length" class="zw-fw__changelog">
+				<div v-if="c.changelogLines.length" class="zw-fw__changelog">
 					<div
 						class="zw-fw__changelog-body"
 						:class="{
@@ -142,7 +100,7 @@
 						}"
 					>
 						<div
-							v-for="(line, li) in c.changelog"
+							v-for="(line, li) in c.changelogLines"
 							:key="li"
 							class="zw-fw__changelog-line"
 							:class="{
@@ -159,13 +117,13 @@
 						<div
 							v-if="
 								!expandedLogs.has(c.version) &&
-								c.changelog.length > 3
+								c.changelogLines.length > 3
 							"
 							class="zw-fw__changelog-fade"
 						/>
 					</div>
 					<button
-						v-if="c.changelog.length > 3"
+						v-if="c.changelogLines.length > 3"
 						type="button"
 						class="zw-fw__changelog-toggle"
 						@click="toggleLog(c.version)"
@@ -221,7 +179,11 @@
 				>
 					<XIcon :size="ICON_SIZE.inline" />
 				</button>
-				<button type="button" class="zw-fw__btn zw-fw__btn--accent">
+				<button
+					type="button"
+					class="zw-fw__btn zw-fw__btn--accent"
+					@click="flashFile"
+				>
 					<ZapIcon :size="ICON_SIZE.dense" /> Flash
 				</button>
 			</div>
@@ -231,6 +193,8 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
+import { padVersion } from '@zwave-js/shared'
+import { compare } from 'semver'
 import ZwPill from '@/components/dashboard/atoms/ZwPill.vue'
 import ZwCheckToggle from '@/components/dashboard/atoms/ZwCheckToggle.vue'
 import {
@@ -243,14 +207,19 @@ import {
 	XIcon,
 	ZapIcon,
 } from '@/lib/icons'
-import type { Device, DeviceAction } from '@/lib/dashboard-types'
+import type {
+	Device,
+	DeviceAction,
+	FirmwareUpdateInfo,
+} from '@/lib/dashboard-types'
 
 interface FwCandidate {
 	version: string
 	channel: 'stable' | 'prerelease'
-	changelog: string[]
+	changelogLines: string[]
 	downgrade: boolean
-	latest?: boolean
+	latest: boolean
+	raw: FirmwareUpdateInfo
 }
 
 const FW_EXTENSIONS = ['.gbl', '.otz', '.ota', '.hex', '.bin', '.hec'] as const
@@ -262,22 +231,51 @@ const includePre = ref(false)
 const showDown = ref(false)
 const checking = ref(false)
 const lastChecked = ref('—')
-const flash = ref<{ version: string; pct: number } | null>(null)
-const installed = ref<string | null>(null)
 const expandedLogs = ref<Set<string>>(new Set())
 const uploadFile = ref<string | null>(null)
 const fileInput = ref<HTMLInputElement | null>(null)
-let flashTimer: ReturnType<typeof setInterval> | null = null
+
+function isLatest(u: FirmwareUpdateInfo, all: FirmwareUpdateInfo[]): boolean {
+	if (u.downgrade) return false
+	const upgrades = all.filter((c) => !c.downgrade)
+	if (upgrades.length === 0) return false
+	let best = upgrades[0]
+	for (let i = 1; i < upgrades.length; i++) {
+		try {
+			if (
+				compare(
+					padVersion(upgrades[i].version),
+					padVersion(best.version),
+				) > 0
+			) {
+				best = upgrades[i]
+			}
+		} catch {
+			// invalid semver — keep current best
+		}
+	}
+	return u.version === best.version
+}
 
 const candidates = computed<FwCandidate[]>(() => {
 	const updates = props.device.availableFirmwareUpdates
 	if (!updates?.length) return []
-	return updates.map((u, i) => ({
+	const sorted = [...updates].sort((a, b) => {
+		try {
+			return compare(padVersion(b.version), padVersion(a.version))
+		} catch {
+			return 0
+		}
+	})
+	return sorted.map((u) => ({
 		version: u.version,
 		channel: u.channel ?? 'stable',
-		changelog: u.changelog ?? [],
+		changelogLines: u.changelog
+			? u.changelog.split('\n').filter((l) => l.trim())
+			: [],
 		downgrade: u.downgrade ?? false,
-		latest: i === 0 && !u.downgrade,
+		latest: isLatest(u, sorted),
+		raw: u,
 	}))
 })
 
@@ -296,37 +294,15 @@ const hiddenCount = computed(
 function check() {
 	if (checking.value) return
 	checking.value = true
-	emit('action', props.device, {
-		type: 'check-firmware-updates',
-	} as DeviceAction)
+	emit('action', props.device, { type: 'check-firmware-updates' })
 	setTimeout(() => {
 		checking.value = false
 		lastChecked.value = 'just now'
 	}, 1300)
 }
 
-function startInstall(version: string) {
-	if (flashTimer) clearInterval(flashTimer)
-	installed.value = null
-	flash.value = { version, pct: 0 }
-	flashTimer = setInterval(() => {
-		if (!flash.value) return
-		if (flash.value.pct >= 100) {
-			if (flashTimer) clearInterval(flashTimer)
-			installed.value = flash.value.version
-			flash.value = null
-			return
-		}
-		flash.value = {
-			...flash.value,
-			pct: Math.min(100, flash.value.pct + 7),
-		}
-	}, 300)
-}
-
-function abortInstall() {
-	if (flashTimer) clearInterval(flashTimer)
-	flash.value = null
+function installOTA(c: FwCandidate) {
+	emit('action', props.device, { type: 'firmware-install', update: c.raw })
 }
 
 function toggleLog(version: string) {
@@ -343,6 +319,14 @@ function pickFile() {
 function onFileChange(e: Event) {
 	const input = e.target as HTMLInputElement
 	uploadFile.value = input.files?.[0]?.name ?? null
+}
+
+function flashFile() {
+	const file = fileInput.value?.files?.[0]
+	if (!file) return
+	emit('action', props.device, { type: 'firmware-upload', file })
+	uploadFile.value = null
+	if (fileInput.value) fileInput.value.value = ''
 }
 </script>
 
@@ -419,62 +403,6 @@ function onFileChange(e: Event) {
 	display: flex;
 	gap: 16px;
 	flex-wrap: wrap;
-}
-
-/* flash banner */
-.zw-fw__flash {
-	background: var(--zw-bg-soft);
-	border-radius: 10px;
-	padding: 12px;
-}
-
-.zw-fw__flash-head {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	margin-bottom: 8px;
-}
-
-.zw-fw__flash-label {
-	display: inline-flex;
-	align-items: center;
-	gap: 6px;
-	font-size: 12px;
-	font-weight: 500;
-}
-
-.zw-fw__flash-icon {
-	color: var(--zw-accent);
-}
-
-.zw-fw__flash-pct {
-	font-size: 12px;
-	color: var(--zw-accent);
-}
-
-.zw-fw__progress-track {
-	height: 6px;
-	border-radius: 3px;
-	background: rgba(var(--v0-on-surface), 0.1);
-	overflow: hidden;
-}
-
-.zw-fw__progress-fill {
-	height: 100%;
-	background: var(--zw-accent);
-	transition: width 0.3s linear;
-}
-
-.zw-fw__flash-foot {
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-	margin-top: 10px;
-}
-
-.zw-fw__flash-hint {
-	font-size: 11px;
-	color: var(--zw-muted);
 }
 
 /* buttons */

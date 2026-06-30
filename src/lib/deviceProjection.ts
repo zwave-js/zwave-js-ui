@@ -392,17 +392,23 @@ export function projectDevice(
 	const hasUpdate = rawUpdates.length > 0
 	const availableFirmwareUpdates: FirmwareUpdateInfo[] = rawUpdates.map(
 		(u: Record<string, unknown>) => ({
-			version:
-				typeof u.version === 'string'
-					? u.version
-					: JSON.stringify(u.version),
+			version: typeof u.version === 'string' ? u.version : '',
 			channel:
-				u.channel === 'prerelease'
+				u.channel === 'beta'
 					? ('prerelease' as const)
 					: ('stable' as const),
-			changelog: Array.isArray(u.changelog) ? u.changelog : [],
+			changelog: typeof u.changelog === 'string' ? u.changelog : '',
 			date: typeof u.date === 'string' ? u.date : undefined,
 			downgrade: !!u.downgrade,
+			normalizedVersion:
+				typeof u.normalizedVersion === 'string'
+					? u.normalizedVersion
+					: undefined,
+			files: Array.isArray(u.files) ? u.files : undefined,
+			device:
+				u.device && typeof u.device === 'object'
+					? (u.device as Record<string, unknown>)
+					: undefined,
 		}),
 	)
 

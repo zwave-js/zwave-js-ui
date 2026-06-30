@@ -159,10 +159,12 @@ export interface CommStats {
 export interface FirmwareUpdateInfo {
 	version: string
 	channel?: 'stable' | 'prerelease'
-	changelog: string[]
+	changelog: string
 	date?: string
 	downgrade: boolean
-	latest?: boolean
+	normalizedVersion?: string
+	files?: { target: number; url: string; integrity: string }[]
+	device?: Record<string, unknown>
 }
 
 // ── Device ────────────────────────────────────────────────────
