@@ -202,6 +202,7 @@ export type DeviceAction =
 	| { type: 'rebuild' }
 	| { type: 'remove' }
 	| { type: 'export' }
+	| { type: 'export-ui' }
 	| { type: 'clear' }
 	| { type: 'heal' }
 	| { type: 'backup-nvm' }
