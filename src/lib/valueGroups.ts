@@ -1,5 +1,4 @@
-// Projects a node's `values` into the grouped, control-ready shape the Values
-// pane renders. Pure — the component memoizes it with a computed.
+// Projects a node's values into the grouped shape the Values pane renders.
 
 import { CommandClasses, type ValueID } from '@zwave-js/core'
 import type {
@@ -11,7 +10,6 @@ import type {
 const CONFIGURATION_CC = CommandClasses.Configuration
 const MULTILEVEL_SWITCH_CC = CommandClasses['Multilevel Switch']
 
-// Which control a value renders (most-specific wins — see `paramKind`).
 export type ValueParamKind =
 	| 'switch'
 	| 'button'
@@ -92,7 +90,6 @@ function hasStates(
 	return Array.isArray(v.states) && v.states.length > 0
 }
 
-// 0–99 dimmer-style value: Multilevel Switch current/target, or any 0–99 number.
 function isLevel(v: ZUIValueId): boolean {
 	if (
 		v.commandClass === MULTILEVEL_SWITCH_CC &&
@@ -100,23 +97,20 @@ function isLevel(v: ZUIValueId): boolean {
 	) {
 		return true
 	}
-	// A 0–99 number with discrete states is an enum (more specific), not a level.
 	return v.type === 'number' && v.min === 0 && v.max === 99 && !hasStates(v)
 }
 
-// Picks the control *shape* (editability is `readonly`, set elsewhere). A value
-// can match several predicates, so order matters — most specific first.
+// Order matters — most specific match first.
 function paramKind(v: ZUIValueId): ValueParamKind {
-	// write-only boolean = a command (e.g. Meter reset), not a toggle
+	// Write-only boolean = a command (e.g. Meter reset).
 	if (v.type === 'boolean' && v.writeable && !v.readable) return 'button'
 	if (v.type === 'boolean') return 'switch'
 	if (v.type === 'color') return 'color'
 	if (isLevel(v)) return 'level'
-	// states → dropdown, unless free entry is allowed (keep arbitrary values reachable)
 	if (hasStates(v) && !(v.writeable && v.allowManualEntry)) return 'enum'
 	if (v.type === 'number') return 'number'
 	if (v.type === 'string' || v.type === 'buffer') return 'text'
-	return 'reading' // duration / any / unsupported → read-only, never written
+	return 'reading'
 }
 
 function formatValue(v: ZUIValueId, kind: ValueParamKind): string {
@@ -145,7 +139,6 @@ function formatValue(v: ZUIValueId, kind: ValueParamKind): string {
 	}
 }
 
-// Referential stability cache — unchanged params reuse the same object.
 const paramCache = new WeakMap<ZUIValueId, ValueParam>()
 
 function projectParam(v: ZUIValueId): ValueParam {
@@ -168,8 +161,6 @@ function buildParam(v: ZUIValueId): ValueParam {
 		kind,
 		value: v.value,
 		display: formatValue(v, kind),
-		// `reading` has no editable control, so it must render read-only even
-		// when the value is technically writeable (avoids an empty control).
 		readonly: kind === 'reading' || !v.writeable,
 		readable: !!v.readable,
 		unit: v.unit,
@@ -187,8 +178,6 @@ function buildParam(v: ZUIValueId): ValueParam {
 	}
 }
 
-// Groups a node's values by command class (first-seen order), each projected to
-// a render-ready `ValueParam`. `[]` for a node without values (e.g. controller).
 export function buildValueGroups(node?: ZUINode | null): ValueGroup[] {
 	if (!node || !Array.isArray(node.values)) return []
 	const byCc = new Map<number, ValueGroup>()

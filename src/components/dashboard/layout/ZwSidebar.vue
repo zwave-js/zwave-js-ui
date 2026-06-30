@@ -59,8 +59,6 @@ import {
 
 export type SidebarMode = 'wide' | 'collapsed' | 'mobile'
 
-// Keys of ROW_ACTION_ICONS — a row action names its glyph, the renderer looks
-// it up. Keeping these in sync removes the need for a lookup fallback.
 export type RowActionIcon = 'play' | 'stop'
 
 export interface RowAction {
@@ -203,8 +201,8 @@ function railBadge(
 	}
 }
 
-// On the collapsed rail, an active row action surfaces as a status dot on
-// the nav icon, toned to match the action.
+// On the collapsed rail, an active row action surfaces as a status dot
+// on the nav icon, toned to match the action.
 function railActionDot(
 	entry: Extract<NavEntry, { kind: 'item' }>,
 ): { show: false } | { show: true; tone: 'danger' | 'accent' } {
@@ -218,15 +216,11 @@ function onSelect(navId: string): void {
 	if (modeIsMobile.value) emit('update:mobileOpen', false)
 }
 
-// Row-action glyphs, keyed by RowAction.icon / .iconActive. Media-style
-// play/stop reads as a control to start/stop a capture (vs. a status dot).
 const ROW_ACTION_ICONS: Record<RowActionIcon, Component> = {
 	play: PlayIcon,
 	stop: StopIcon,
 }
 
-// Body component (inline) so the wide/collapsed/mobile aside shells can
-// share markup without a separate file.
 const SidebarBody = defineComponent({
 	props: {
 		wide: { type: Boolean, required: true },
@@ -450,8 +444,7 @@ function renderEntry(entry: NavEntry, i: number, isWide: boolean) {
 					},
 					h(ROW_ACTION_ICONS[glyph], {
 						size: ICON_SIZE.dense,
-						// Stop reads better as a solid square; the play
-						// triangle stays line-style (its filled tip halos).
+						// Solid fill for stop; line-style for play (looks better).
 						...(glyph === 'stop' ? { fill: 'currentColor' } : {}),
 						'aria-hidden': 'true',
 					}),
@@ -560,7 +553,6 @@ function renderFooterRail() {
 </script>
 
 <style>
-/* Unscoped — class names .zw-sidebar* / .zw-sb* are unique to this component. */
 
 .zw-sidebar {
 	display: flex;

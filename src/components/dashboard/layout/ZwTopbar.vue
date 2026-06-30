@@ -125,8 +125,6 @@ const showActivityLabel = computed(() => props.viewport >= 760)
 </script>
 
 <style>
-/* Unscoped — V0 primitives strip Vue's scoped data-v-* hash. .zw-topbar* is
-   unique to this layout component. */
 
 .zw-topbar {
 	display: flex;

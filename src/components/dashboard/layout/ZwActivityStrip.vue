@@ -54,8 +54,6 @@ const visibleActivities = computed(() => props.activities.slice(0, MAX_CHIPS))
 </script>
 
 <style>
-/* Unscoped — V0 Button.Root strips Vue's scoped data-v-* hash. .zw-strip* is
-   unique to this component. */
 .zw-strip {
 	display: flex;
 	align-items: stretch;

@@ -34,8 +34,6 @@ import useBaseStore from '@/stores/base'
 import { relativeTime, useNow } from '@/lib/time'
 import { valueIdKey } from '@/lib/deviceActionPending.ts'
 
-// Live feed of a node's recent events, shared by the Events tab and the rail's
-// "Recent activity". `max` caps entries (the rail passes a smaller cap).
 const props = withDefaults(defineProps<{ device: Device; max?: number }>(), {
 	max: 50,
 })
@@ -49,7 +47,6 @@ interface NodeEventEntry {
 	time?: Date | string | number
 }
 
-// `node.eventsQueue` from the store, so it tracks socket events live.
 const eventsQueue = computed<NodeEventEntry[]>(() => {
 	const node = baseStore.getNode(props.device.nodeId)
 	const q = node?.eventsQueue
@@ -73,14 +70,11 @@ function toMs(t: NodeEventEntry['time']): number | undefined {
 	return Number.isNaN(n) ? undefined : n
 }
 
-// A value-updated/notification event arg, loosely typed — queue args are
-// untyped, so every field may be absent.
 type ValueEventArg = Partial<
 	TranslatedValueID & ValueUpdatedArgs & ValueNotificationArgs
 >
 
-// value-id → metadata label, rebuilt per node-values change. O(1) lookup avoids
-// re-scanning values per event per render; raw event payloads lack the label.
+// value-id → metadata label index (event payloads lack the label).
 const valueLabelIndex = computed(() => {
 	const node = baseStore.getNode(props.device.nodeId) as
 		| { values?: (ValueEventArg & { label?: string })[] }
@@ -95,7 +89,6 @@ const valueLabelIndex = computed(() => {
 })
 
 function eventDetail(ev: NodeEventEntry): string {
-	// Prefer a value's metadata label over its raw property for value events.
 	if (!Array.isArray(ev.args) || ev.args.length === 0) return ''
 	const first = ev.args[0] as unknown
 	if (first && typeof first === 'object') {
@@ -115,14 +108,10 @@ function eventDetail(ev: NodeEventEntry): string {
 	return ev.args.map((a) => formatValue(a)).join(' · ')
 }
 
-// Pre-resolve display strings per data change, so the `now` tick re-runs only
-// the cheap relative-time format, not the per-event label lookup.
 const rows = computed(() =>
 	events.value.map((ev) => {
 		const timeMs = toMs(ev.time)
 		const detail = eventDetail(ev)
-		// Content-derived key so prepending a new event doesn't reshuffle every
-		// row's key (index keys force a full re-patch of the reversed list).
 		return {
 			key: `${timeMs}|${ev.event}|${detail}`,
 			name: ev.event,

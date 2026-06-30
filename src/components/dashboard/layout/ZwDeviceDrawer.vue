@@ -96,8 +96,7 @@ function onKeyDown(e: KeyboardEvent) {
 	}
 }
 
-// Trap focus only on the open transition and release it on close; switching
-// from one device to another keeps the single active trap on the same panel.
+// Trap focus on open, release on close.
 watch(
 	() => props.device,
 	async (d, prev) => {

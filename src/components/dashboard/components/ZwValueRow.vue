@@ -423,8 +423,6 @@ function copyId() {
 </script>
 
 <style>
-/* Unscoped — the V0 Popover primitive sets inheritAttrs:false, so the
-   scoped data-v-* hash never reaches the menu. .zw-vrow is unique here. */
 .zw-vrow {
 	padding: 10px 12px;
 	display: flex;

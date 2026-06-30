@@ -26,11 +26,6 @@ const emit = defineEmits<{ 'update:modelValue': [boolean] }>()
 </script>
 
 <style>
-/* Styles unscoped — V0 primitives set inheritAttrs:false so Vue does not
-   forward the parent's scoped data-v-* hash onto the rendered <button>.
-   .zw-toggle namespace is unique to this atom. */
-/* 2-px focus offset (vs the utility's 1-px default) so the ring sits
-   clear of the pill track. */
 .zw-toggle {
 	appearance: none;
 	border: none;
@@ -47,9 +42,7 @@ const emit = defineEmits<{ 'update:modelValue': [boolean] }>()
 	opacity: 0.5;
 }
 
-/* SwitchThumb sets `visibility: hidden` inline when unchecked — we
-   override it because the design slides the thumb between two positions
-   rather than fading it in/out. */
+/* Override SwitchThumb's inline visibility:hidden on unchecked state. */
 .zw-toggle__thumb {
 	visibility: visible !important;
 	position: absolute;

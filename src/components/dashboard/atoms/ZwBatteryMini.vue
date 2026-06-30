@@ -13,9 +13,6 @@ import { computed } from 'vue'
 
 const props = defineProps<{ pct?: number | null }>()
 
-// Three-state classifier drives both fill colour and (at 'low') the
-// label tint via CSS attribute selectors below — no per-instance style
-// allocation per battery row.
 const level = computed<'low' | 'mid' | 'ok' | null>(() => {
 	const v = props.pct
 	if (v == null) return null
@@ -26,8 +23,6 @@ const level = computed<'low' | 'mid' | 'ok' | null>(() => {
 </script>
 
 <style scoped>
-/* Type role is Mono Micro — the battery readout is a dense
-   column-style annotation. */
 .zw-bat {
 	display: inline-flex;
 	align-items: center;
@@ -45,8 +40,7 @@ const level = computed<'low' | 'mid' | 'ok' | null>(() => {
 	box-sizing: border-box;
 }
 
-/* Inner cell is 16px wide; leave 1px inset so the fill never touches
-   the border. Clamp to 2px minimum so 1% still shows. */
+/* 1px inset from border; clamp to 2px min so 1% still shows. */
 .zw-bat__fill {
 	position: absolute;
 	top: 1px;

@@ -56,8 +56,6 @@ const ACTIVITY_ICON = {
 
 const iconComp = computed(() => ACTIVITY_ICON[props.activity.type])
 
-// Optional progress (a 0–100 integer): when undefined the bar shows an
-// indeterminate sweep with no number.
 const pct = computed(() =>
 	props.activity.progress !== undefined
 		? Math.round(props.activity.progress)
@@ -72,8 +70,6 @@ const title = computed(() =>
 </script>
 
 <style>
-/* Unscoped — V0 primitives set inheritAttrs:false; .zw-tx namespace is
-   unique to this atom. */
 .zw-tx {
 	display: inline-flex;
 	align-items: center;
@@ -104,8 +100,7 @@ const title = computed(() =>
 	overflow: hidden;
 }
 
-/* Indeterminate state hides the fill and animates a sweep across the
-   bar so the user still sees that work is in flight. */
+/* Indeterminate: hide fill, animate a sweep instead. */
 .zw-tx--indeterminate .zw-tx__fill {
 	display: none;
 }

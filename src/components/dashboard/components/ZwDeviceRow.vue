@@ -133,8 +133,6 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-	// Request to show this device's details; the parent decides whether to
-	// expand the row inline or open the drawer.
 	open: [Device]
 	action: [Device, DeviceAction]
 }>()

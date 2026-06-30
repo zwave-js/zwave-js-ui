@@ -1,6 +1,4 @@
-// Projects a raw Z-Wave node (`ZUINode`) into the `Device` shape the
-// dashboard renders from. Pure and side-effect-free so callers can
-// memoize per node.
+// Projects a ZUINode into the Device shape the dashboard renders from.
 
 import { CommandClasses, type ValueID } from '@zwave-js/core'
 import { DoorLockMode } from '@zwave-js/cc'
@@ -21,8 +19,7 @@ export interface ProjectOptions {
 	activitiesByNode?: Map<number, Activity[]>
 }
 
-// SecurityClass member names, low → high; `node.security` carries the
-// highest granted class as its enum member name.
+// SecurityClass member names, low → high.
 const SECURITY_KEYS: readonly SecurityKey[] = [
 	'S0_Legacy',
 	'S2_Unauthenticated',
@@ -43,9 +40,6 @@ function findValue(
 	return undefined
 }
 
-// The `ValueID` of a located value. `overrideProperty` swaps to a writeable
-// companion on the same endpoint (e.g. `targetValue` for `currentValue`);
-// otherwise the value's own property and propertyKey are kept.
 function valueId(v: ZUIValueId, overrideProperty?: string): ValueID {
 	const id: ValueID = {
 		commandClass: v.commandClass,
@@ -142,9 +136,7 @@ function projectPrimaryValue(
 	}
 
 	if (archetypeKind === 'outlet' || archetypeKind === 'switch') {
-		// Display state prefers currentValue, falling back to targetValue so a
-		// switch that has only reported its target still reads correctly rather
-		// than forcing OFF. Either one resolves the write target below.
+		// Prefer currentValue, fall back to targetValue.
 		const on =
 			findValue(
 				node,
@@ -287,8 +279,7 @@ function clampLevel(n: number): number {
 }
 
 function meterWatts(node: ZUINode): number | null {
-	// Match electric-power readings on `unit` (`W`/`kW`); propertyName is
-	// localized and unreliable.
+	// Match on unit (propertyName is localized and unreliable).
 	const v = findValue(
 		node,
 		CommandClasses.Meter,
@@ -326,11 +317,6 @@ function labelsFor(kind: string): StateLabels {
 	}
 }
 
-/**
- * Derive `device.activity[]` from node fields: `firmwareUpdate` → OTA,
- * `rebuildRoutesProgress` → rebuild, incomplete `interviewStage` →
- * interview. Entries from `override`, when given, are appended.
- */
 function projectActivities(
 	node: ZUINode,
 	override?: Map<number, Activity[]>,
@@ -358,8 +344,7 @@ function projectActivities(
 
 	const rebuild = node.rebuildRoutesProgress
 	if (rebuild) {
-		// rebuildRoutesProgress is a status enum, not a percentage; treat
-		// any non-terminal state as in-flight.
+		// Status enum, not a percentage — treat any non-terminal state as in-flight.
 		const done =
 			(typeof rebuild === 'string' &&
 				(rebuild === 'done' || rebuild === 'failed')) ||
@@ -373,8 +358,7 @@ function projectActivities(
 		}
 	}
 
-	// Skip interview progress for nodes that can't make any: a Dead or Asleep
-	// node would otherwise show a stalled, misleading indicator.
+	// Dead/Asleep nodes can't progress — skip to avoid stale indicators.
 	if (
 		node.interviewStage &&
 		node.interviewStage !== 'Complete' &&
@@ -394,9 +378,6 @@ function projectActivities(
 	return out
 }
 
-/**
- * Project one ZUINode → UI Device. Pure; safe to memoize.
- */
 export function projectDevice(
 	node: ZUINode,
 	opts: ProjectOptions = {},
@@ -445,7 +426,6 @@ export function projectDevice(
 	}
 }
 
-/** Project an array of nodes; per-node projection is memoizable upstream. */
 export function projectDevices(
 	nodes: ZUINode[],
 	opts: ProjectOptions = {},

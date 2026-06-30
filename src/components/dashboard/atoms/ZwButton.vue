@@ -30,12 +30,6 @@ const emit = defineEmits<{ click: [MouseEvent] }>()
 </script>
 
 <style>
-/* Styles are unscoped because Vuetify0 primitives set inheritAttrs:false,
-   so Vue does not forward the parent's scoped data-v-* hash onto the
-   rendered <button>. Class names are BEM-namespaced under .zw-btn.
-   Each variant only sets the four --btn-* custom properties below;
-   the base rule applies them so chrome (radius, transition, focus
-   ring) stays declared once. */
 .zw-btn {
 	appearance: none;
 	cursor: pointer;

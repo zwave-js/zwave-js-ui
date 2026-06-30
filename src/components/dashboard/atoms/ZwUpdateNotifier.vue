@@ -30,8 +30,6 @@ const emit = defineEmits<{ click: [] }>()
 </script>
 
 <style>
-/* Unscoped — V0 primitives set inheritAttrs:false; .zw-update namespace
-   is unique to this atom. */
 .zw-update {
 	display: inline-flex;
 	align-items: center;
@@ -61,16 +59,12 @@ const emit = defineEmits<{ click: [] }>()
 	line-height: 1.2;
 }
 
-/* Title is an intermediate of Caption (11/400) and Label (12/600):
-   the design calls for 11/600, which is not a tabled type-scale
-   role. Keep the explicit declarations rather than picking a role
-   that would shift the size or drop emphasis. */
+/* Design calls for 11/600, which has no type-scale role. */
 .zw-update__title {
 	font-size: 11px;
 	font-weight: 600;
 }
 
-/* Versions line is Mono Micro. */
 .zw-update__versions {
 	font: var(--zw-text-mono-micro);
 	color: var(--zw-fg-soft);
@@ -92,8 +86,6 @@ const emit = defineEmits<{ click: [] }>()
 	height: 7px;
 	background: var(--zw-accent);
 	border-radius: 50%;
-	/* Ring matches the card background so the dot reads as floating over
-	   the surface in either theme — not a literal white halo. */
 	box-shadow: 0 0 0 1.5px var(--zw-card);
 }
 </style>

@@ -85,9 +85,7 @@ export function applySearch(devices: Device[], query: string): Device[] {
 	)
 }
 
-// Group key the controller bucket is filed under; pinned first and rendered
-// as "Controller". Exported so view components match on it rather than
-// re-hardcoding the sentinel.
+// Sentinel group key for the controller bucket (pinned first).
 export const CONTROLLER_KEY = '__controller'
 
 /**

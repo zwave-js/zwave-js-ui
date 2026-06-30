@@ -1,6 +1,4 @@
-// Persists the dashboard's UI preferences across reloads via the project's
-// `Settings` localStorage helper, under its own `dashboard` key. Exposes
-// `load()`/`save()` plus a debounced `scheduleSave()`.
+// Persists dashboard UI preferences in localStorage.
 
 import { Settings } from '../modules/Settings.js'
 
