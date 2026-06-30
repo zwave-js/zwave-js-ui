@@ -125,7 +125,6 @@ const showActivityLabel = computed(() => props.viewport >= 760)
 </script>
 
 <style>
-
 .zw-topbar {
 	display: flex;
 	align-items: center;

@@ -553,7 +553,6 @@ function renderFooterRail() {
 </script>
 
 <style>
-
 .zw-sidebar {
 	display: flex;
 	flex-direction: column;
