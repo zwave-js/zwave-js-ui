@@ -1,20 +1,12 @@
-import type { Component } from 'vue'
-import { SignalHighIcon, SignalLowIcon } from './icons.ts'
 import type { Device } from './dashboard-types.ts'
 
 export interface SignalDisplay {
-	icon: Component // Lucide, rendered via `<component :is>`
-	color: string
+	level: 0 | 1 | 2 | 3 | 4
 	label: string
 }
 
-// Device link health → signal glyph/color/label, shared by the table row and
-// the details rail. Only `weak` reads as degraded today.
 export function signalDisplay(health: Device['health']): SignalDisplay {
-	const weak = health === 'weak'
-	return {
-		icon: weak ? SignalLowIcon : SignalHighIcon,
-		color: weak ? 'var(--zw-warning)' : 'var(--zw-fg-soft)',
-		label: weak ? 'Weak' : 'Strong',
-	}
+	if (health === 'weak') return { level: 1, label: 'Weak signal' }
+	if (health === 'ok') return { level: 4, label: 'Strong signal' }
+	return { level: 0, label: 'Unknown signal' }
 }

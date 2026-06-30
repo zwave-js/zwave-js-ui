@@ -26,17 +26,6 @@
 					>
 				</span>
 			</div>
-			<div class="zw-nd__rail-section">
-				<span class="zw-nd__overline">SIGNAL</span>
-				<span class="zw-nd__signal">
-					<component
-						:is="signal.icon"
-						:size="14"
-						:style="{ color: signal.color }"
-					/>
-					<span>{{ signal.label }}</span>
-				</span>
-			</div>
 			<div class="zw-nd__rail-activity">
 				<span class="zw-nd__overline">RECENT ACTIVITY</span>
 				<ZwNodeEvents :device="device" :max="25" />
@@ -163,7 +152,6 @@ import ZwSecurityPanel from './ZwSecurityPanel.vue'
 import ZwStatsCard, { type StatsItem } from './ZwStatsCard.vue'
 import ZwNodeEvents from './ZwNodeEvents.vue'
 import ZwValuesView from './ZwValuesView.vue'
-import { signalDisplay } from '@/lib/deviceSignal'
 import {
 	RAIL_WIDTH_BREAKPOINT,
 	RAIL_WIDTH_COMPACT,
@@ -256,8 +244,6 @@ const statusLabel = computed(() => {
 	const s = props.device.isController ? 'controller' : props.device.status
 	return s.charAt(0).toUpperCase() + s.slice(1)
 })
-
-const signal = computed(() => signalDisplay(props.device.health))
 
 const manufacturerRows = computed<[string, string | number][]>(() => [
 	['Manufacturer', props.device.manufacturer ?? '—'],
@@ -400,15 +386,6 @@ const advancedCommands = computed<{ label: string; action: DeviceAction }[]>(
 	display: flex;
 	flex-direction: column;
 	gap: 8px;
-}
-
-.zw-nd__signal {
-	display: inline-flex;
-	align-items: center;
-	gap: 6px;
-	font-size: 12px;
-	font-weight: 500;
-	color: var(--zw-fg);
 }
 
 /* ── Stacked header ──────────────────────────────────────────── */

@@ -85,10 +85,9 @@ function projectSecurityKeys(node: ZUINode): SecurityKey[] {
 	return highest ? [highest] : []
 }
 
-function projectInterview(node: ZUINode): 'complete' | 'interview' | 'failed' {
+function projectInterview(node: ZUINode): 'complete' | 'interview' {
 	const stage = node.interviewStage
 	if (!stage || stage === 'Complete') return 'complete'
-	if (node.failed) return 'failed'
 	return 'interview'
 }
 
