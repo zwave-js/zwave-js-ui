@@ -62,6 +62,14 @@
 						class="zw-nd__tab"
 					>
 						{{ t.label }}
+						<span
+							v-if="
+								t.id === 'updates' &&
+								!device.isController &&
+								device.hasUpdate
+							"
+							class="zw-nd__tab-dot"
+						/>
 					</Tabs.Item>
 				</Tabs.List>
 
@@ -85,22 +93,8 @@
 					<ZwAssociationsTab :device="device" @action="onAction" />
 				</Tabs.Panel>
 
-				<Tabs.Panel
-					value="updates"
-					class="zw-nd__content zw-nd__updates"
-				>
-					<div v-if="device.hasUpdate" class="zw-nd__update-card">
-						<div class="zw-nd__update-current">
-							Current {{ device.firmware?.node ?? '—' }}
-						</div>
-						<div class="zw-nd__update-line">
-							Update available — see the device drawer's footer to
-							apply.
-						</div>
-					</div>
-					<div v-else class="zw-nd__empty">
-						No firmware update available.
-					</div>
+				<Tabs.Panel value="updates" class="zw-nd__content">
+					<ZwUpdatesTab :device="device" @action="onAction" />
 				</Tabs.Panel>
 
 				<!-- Events is omitted from the tab bar in the split layout
@@ -224,6 +218,7 @@ import ZwStatsCard, { type StatsItem } from './ZwStatsCard.vue'
 import ZwActionList from './ZwActionList.vue'
 import ZwActionBtn from './ZwActionBtn.vue'
 import ZwAssociationsTab from './ZwAssociationsTab.vue'
+import ZwUpdatesTab from './ZwUpdatesTab.vue'
 import ZwNodeEvents from './ZwNodeEvents.vue'
 import ZwValuesView from './ZwValuesView.vue'
 import {
@@ -530,12 +525,26 @@ const advancedCommands = computed<{ label: string; action: DeviceAction }[]>(
 /* V0 Tabs.Item emits `data-selected="true"` on the active tab. */
 .zw-nd__tab[data-selected='true'] {
 	background: var(--zw-accent);
-	color: #fff;
+	color: var(--zw-on-accent);
 }
 
 .zw-nd__tab:focus-visible {
 	outline: 2px solid var(--zw-accent);
 	outline-offset: 1px;
+}
+
+.zw-nd__tab-dot {
+	width: 7px;
+	height: 7px;
+	border-radius: 50%;
+	background: var(--zw-accent);
+	box-shadow: 0 0 0 1.5px var(--zw-card);
+	flex-shrink: 0;
+}
+
+.zw-nd__tab[data-selected='true'] .zw-nd__tab-dot {
+	background: var(--zw-on-accent);
+	box-shadow: none;
 }
 
 /* ── Content ─────────────────────────────────────────────────── */
@@ -576,31 +585,6 @@ const advancedCommands = computed<{ label: string; action: DeviceAction }[]>(
 	color: var(--zw-muted);
 	text-align: center;
 	font-style: italic;
-}
-
-.zw-nd__updates {
-	display: flex;
-	flex-direction: column;
-	gap: 8px;
-}
-
-.zw-nd__update-card {
-	background: var(--zw-card);
-	border: 1px solid var(--zw-line);
-	border-radius: 6px;
-	padding: 12px;
-}
-
-.zw-nd__update-current {
-	font-family: var(--zw-mono);
-	font-size: 11px;
-	color: var(--zw-muted);
-	margin-bottom: 4px;
-}
-
-.zw-nd__update-line {
-	font-size: 13px;
-	color: var(--zw-fg);
 }
 
 .zw-nd__advanced {

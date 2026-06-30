@@ -32,6 +32,8 @@
 	--zw-bg-soft: rgb(var(--v0-background-soft));
 	--zw-card: rgb(var(--v0-surface));
 
+	--zw-on-accent: rgb(var(--v0-on-primary));
+
 	/* Alpha-based — on-surface is black in light theme, white in dark.
 	   These automatically flip when the user switches themes. */
 	--zw-fg: rgba(var(--v0-on-surface), 0.87);

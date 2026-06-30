@@ -9,6 +9,7 @@ import type {
 	Activity,
 	Device,
 	DeviceStatus,
+	FirmwareUpdateInfo,
 	PowerInfo,
 	PrimaryValue,
 	SecurityKey,
@@ -385,9 +386,31 @@ export function projectDevice(
 	const archetype = inferArchetype(node)
 	const power = projectPower(node)
 	const securityKeys = projectSecurityKeys(node)
-	const hasUpdate =
-		Array.isArray(node.availableFirmwareUpdates) &&
-		node.availableFirmwareUpdates.length > 0
+	const rawUpdates = Array.isArray(node.availableFirmwareUpdates)
+		? node.availableFirmwareUpdates
+		: []
+	const hasUpdate = rawUpdates.length > 0
+	const availableFirmwareUpdates: FirmwareUpdateInfo[] = rawUpdates.map(
+		(u: Record<string, unknown>) => ({
+			version: typeof u.version === 'string' ? u.version : '',
+			channel:
+				u.channel === 'beta'
+					? ('prerelease' as const)
+					: ('stable' as const),
+			changelog: typeof u.changelog === 'string' ? u.changelog : '',
+			date: typeof u.date === 'string' ? u.date : undefined,
+			downgrade: !!u.downgrade,
+			normalizedVersion:
+				typeof u.normalizedVersion === 'string'
+					? u.normalizedVersion
+					: undefined,
+			files: Array.isArray(u.files) ? u.files : undefined,
+			device:
+				u.device && typeof u.device === 'object'
+					? (u.device as Record<string, unknown>)
+					: undefined,
+		}),
+	)
 
 	const activity = projectActivities(node, opts.activitiesByNode)
 
@@ -417,6 +440,9 @@ export function projectDevice(
 		activity,
 		health: 'ok',
 		hasUpdate,
+		availableFirmwareUpdates: hasUpdate
+			? availableFirmwareUpdates
+			: undefined,
 		txPower:
 			typeof (node as unknown as { txPower?: number }).txPower ===
 			'number'

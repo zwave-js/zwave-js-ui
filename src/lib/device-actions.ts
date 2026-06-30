@@ -82,6 +82,18 @@ export const ACTION_DISPATCHERS: {
 	}),
 	exclude: () => ({ api: 'startExclusion', args: [] }),
 	'export-ui': (d) => ({ api: 'dumpNode', args: [d.nodeId] }),
+	'check-firmware-updates': (d) => ({
+		api: 'getAvailableFirmwareUpdates',
+		args: [d.nodeId],
+	}),
+	'firmware-install': (d, a) => ({
+		api: 'firmwareUpdateOTA',
+		args: [d.nodeId, a.update],
+	}),
+	'firmware-upload': (d, a) => ({
+		api: 'updateFirmware',
+		args: [d.nodeId, [{ name: a.file.name, data: a.file }]],
+	}),
 	'clear-associations': (d) => ({
 		api: 'removeAllAssociations',
 		args: [d.nodeId],

@@ -154,6 +154,19 @@ export interface CommStats {
 	messagesDroppedRX: number
 }
 
+// ── Firmware updates ─────────────────────────────────────────
+
+export interface FirmwareUpdateInfo {
+	version: string
+	channel?: 'stable' | 'prerelease'
+	changelog: string
+	date?: string
+	downgrade: boolean
+	normalizedVersion?: string
+	files?: { target: number; url: string; integrity: string }[]
+	device?: Record<string, unknown>
+}
+
 // ── Device ────────────────────────────────────────────────────
 
 export interface Device {
@@ -179,6 +192,7 @@ export interface Device {
 	activity: Activity[]
 	health?: 'ok' | 'weak' | 'unknown'
 	hasUpdate?: boolean
+	availableFirmwareUpdates?: FirmwareUpdateInfo[]
 	txPower?: number
 	commStats?: CommStats
 }
@@ -217,3 +231,6 @@ export type DeviceAction =
 	| { type: 'exclude' }
 	| { type: 'clear-associations' }
 	| { type: 'remove-all-associations' }
+	| { type: 'check-firmware-updates' }
+	| { type: 'firmware-install'; update: FirmwareUpdateInfo }
+	| { type: 'firmware-upload'; file: File }
