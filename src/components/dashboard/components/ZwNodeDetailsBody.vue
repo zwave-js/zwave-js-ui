@@ -172,10 +172,8 @@ import {
 } from '@/lib/dashboard-breakpoints'
 import type { Device, DeviceAction } from '@/lib/dashboard-types'
 
-// `viewport` is the host panel's available width (the shell width passed down
-// by the table, NOT the device viewport). It selects the layout and feeds the
-// rail width. `layout="stacked"` forces the single-column layout regardless of
-// width — the card-view drawer uses it so it always keeps the stacked layout.
+// `viewport` is the host panel's width. `layout="stacked"` forces
+// single-column regardless of width (used by the card-view drawer).
 const props = withDefaults(
 	defineProps<{
 		device: Device
@@ -344,9 +342,6 @@ const advancedCommands = computed<{ label: string; action: DeviceAction }[]>(
 </script>
 
 <style>
-/* Unscoped — V0 Tabs primitives use inheritAttrs:false, so the scoped
-   data-v-* hash never reaches the tab list/items/panels. The .zw-nd
-   namespace is unique to this component. */
 .zw-nd {
 	display: flex;
 	min-width: 0;

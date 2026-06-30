@@ -107,8 +107,6 @@ function onItemClick(id: Action): void {
 </script>
 
 <style>
-/* Unscoped — V0 primitives set inheritAttrs:false; .zw-asb namespace is
-   unique to this component. */
 .zw-asb__group {
 	display: inline-flex;
 	border-radius: 6px;

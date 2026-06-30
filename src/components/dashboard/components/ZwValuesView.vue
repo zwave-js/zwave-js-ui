@@ -46,7 +46,6 @@ const emit = defineEmits<{ action: [Device, DeviceAction] }>()
 
 const baseStore = useBaseStore()
 
-// Reads live from the store so writes/polls re-render as values land.
 const groups = computed<ValueGroup[]>(() =>
 	buildValueGroups(baseStore.getNode(props.device.nodeId)),
 )

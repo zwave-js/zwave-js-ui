@@ -128,8 +128,6 @@ const DEVICE_LIST_NAV: ReadonlySet<string> = new Set<Scope>([
 	'activity',
 ])
 
-// Non-scope nav IDs whose route segment matches the ID itself; selecting
-// one dispatches via vue-router.
 const ROUTABLE_NAV_IDS = new Set([
 	'smart-start',
 	'scenes',
@@ -165,9 +163,6 @@ const emit = defineEmits<{
 }>()
 
 // ── viewport ─────────────────────────────────────────────────
-// A ResizeObserver on the shell root drives the layout breakpoints off the
-// shell's actual rendered width rather than the window width, so it stays
-// correct even when embedded in a fixed-width host.
 
 const shellRef = ref<HTMLElement | null>(null)
 const viewport = ref(typeof window !== 'undefined' ? window.innerWidth : 1280)
@@ -195,18 +190,11 @@ const isMobile = computed(() => viewport.value < 760)
 const isCompact = computed(() => viewport.value >= 760 && viewport.value < 1100)
 
 // ── ui state (AppShell-owned) ────────────────────────────────
-//
-// Load persisted prefs synchronously before first render so saved values
-// don't flash in after the defaults. `query`, `selectedId`,
-// `expandedRowId`, and `mobileSidebarOpen` stay ephemeral.
 const persisted = loadPrefs()
 
 const active = ref<string>(persisted.scope ?? props.initialActive)
 const mobileSidebarOpen = ref(false)
-// Manual override of the width-derived sidebar mode. Intentionally NOT
-// persisted: collapse/expand is a per-session choice that resets to the
-// viewport-appropriate default on reload, so it's absent from DashboardPrefs
-// and from the persistence watcher below.
+// Not persisted: resets to viewport-appropriate default on reload.
 const sidebarState = ref<'collapsed' | 'wide' | null>(null)
 const activityHidden = ref(persisted.activityHidden)
 const query = ref('')
@@ -225,8 +213,6 @@ watch(isMobile, (v) => {
 })
 
 // ── persistence ──────────────────────────────────────────────
-// Snapshot the persistable slice once so the debounced writer and the
-// unmount flush share it.
 function snapshotPrefs(): DashboardPrefs {
 	return {
 		scope: active.value as DashboardPrefs['scope'],
@@ -275,17 +261,12 @@ const store = useDashboardStore()
 const baseStore = useBaseStore()
 const { devices, activities } = storeToRefs(store)
 
-// Reflects the live debug-capture session (base store), so the sidebar
-// toggle stays in sync with captures started elsewhere (e.g. the topbar).
 const capturing = computed(() => baseStore.debugCaptureActive)
 
 // ── scoped + grouped device pool ─────────────────────────────
 
 const isDeviceListNav = computed(() => DEVICE_LIST_NAV.has(active.value))
 
-// Debounce the search input ~100 ms so each keystroke doesn't run the
-// full filter pipeline; the input atom is uncontrolled, so the debounce
-// lives here.
 const debouncedQuery = ref('')
 let queryTimer: ReturnType<typeof setTimeout> | null = null
 watch(query, (v) => {

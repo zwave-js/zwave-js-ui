@@ -1,8 +1,4 @@
-// Maps `DeviceAction` shapes to ZwaveClient requests (one dispatcher per
-// action, enforced by the mapped type).
-//
-// Value writes use `writeValue`, not `sendCommand`: only `setValue` updates
-// the value optimistically and verifies it. The `valueId` rides on the action.
+// Maps DeviceAction shapes to ZwaveClient socket requests.
 
 import {
 	DoorLockMode,
@@ -18,8 +14,6 @@ type ActionDispatcher<A extends DeviceAction> = (
 	action: A,
 ) => SocketRequest
 
-// What the dispatcher returns; callers pass it to `apiRequest()`, which
-// keeps this module pure.
 export interface SocketRequest {
 	api: string
 	args: unknown[]
@@ -54,8 +48,6 @@ export const ACTION_DISPATCHERS: {
 		api: 'writeValue',
 		args: [{ nodeId: d.nodeId, ...a.valueId }, a.mode],
 	}),
-	// Generic value-pane interactions. `set-value` writes the value verbatim —
-	// no clamping or coercion; the caller is responsible for a sensible value.
 	'set-value': (d, a) => ({
 		api: 'writeValue',
 		args: [{ nodeId: d.nodeId, ...a.valueId }, a.value],
@@ -68,8 +60,6 @@ export const ACTION_DISPATCHERS: {
 		api: 'refreshCCValues',
 		args: [d.nodeId, a.commandClass],
 	}),
-	// Controller- and node-management actions, mapped to their
-	// bookkeeping APIs.
 	ping: (d) => ({ api: 'pingNode', args: [d.nodeId] }),
 	interview: (d) => ({ api: 'refreshInfo', args: [d.nodeId] }),
 	refresh: (d) => ({ api: 'refreshValues', args: [d.nodeId] }),
@@ -93,7 +83,6 @@ export const ACTION_DISPATCHERS: {
 	exclude: () => ({ api: 'startExclusion', args: [] }),
 }
 
-/** Resolve a `DeviceAction` to its socket request; the caller emits it. */
 export function dispatchAction(
 	device: Device,
 	action: DeviceAction,

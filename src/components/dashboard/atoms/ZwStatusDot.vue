@@ -27,10 +27,7 @@ const defaultLabel = computed(
 	() => props.status.charAt(0).toUpperCase() + props.status.slice(1),
 )
 
-// Bind size through a single custom property so the style block owns
-// both width and height; skip the binding entirely when the caller
-// uses the default so the table's hundred-dot list allocates nothing
-// per row.
+// Skip the style binding at the default size (avoids per-row allocation).
 const sizeStyle = computed(() =>
 	props.size === 8
 		? undefined

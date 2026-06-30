@@ -68,10 +68,7 @@ export {
 	Activity as PulseIcon,
 } from '@lucide/vue'
 
-/**
- * Shared icon-size scale; components reference these names rather than
- * raw pixel values.
- */
+// Shared icon-size scale — use these names instead of raw pixel values.
 export const ICON_SIZE = {
 	pill: 10, // pill leading glyph; popover-menu check / chevron
 	chip: 11, // chips

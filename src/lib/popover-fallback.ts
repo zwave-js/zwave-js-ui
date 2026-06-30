@@ -1,22 +1,6 @@
 // Floating-UI-backed positioner for V0 Popover content.
-//
-// V0's docs explicitly recommend Floating UI for browsers without CSS
-// Anchor Positioning support — and even in supporting browsers, V0 hard-
-// codes `position-area: bottom` (with no way to override via Root props),
-// which centers the popover under its anchor instead of letting us
-// right-align it to a trigger button.
-//
-// `autoUpdate` keeps the popover in place while the user scrolls, resizes,
-// or interacts with surrounding layout, replacing V0's anchor-positioning
-// inline styles entirely. We disable V0's anchor styles by writing
-// `position-area: none !important` once, then drive `top`/`left` ourselves
-// via `computePosition`.
-//
-// Element lookup: neither `Popover.Activator` nor `Popover.Content` calls
-// `defineExpose`, so Vue template refs on them yield nothing useful. We
-// rely on the caller-supplied `contentId` (bound via `<Popover.Root :id>`
-// so V0 wires both activator's `popovertarget` and content's `id` to that
-// value), and find the elements at activation time via the DOM.
+// V0 hard-codes `position-area: bottom` with no override, so we disable its
+// anchor styles and drive top/left ourselves via computePosition + autoUpdate.
 
 import { onBeforeUnmount, watch, toValue } from 'vue'
 import type { MaybeRefOrGetter, Ref } from 'vue'
@@ -58,12 +42,7 @@ export function usePopoverFallback({
 		const a = document.querySelector<HTMLElement>(`[popovertarget="${id}"]`)
 		if (!a || !c) return
 
-		// Override V0's `position-area: bottom` (which centers the popover
-		// on its anchor) and its `position-anchor` so Floating UI's manual
-		// top/left writes are not overridden by the CSS-anchor cascade.
-		// The position-strategy + right/bottom anchors are also static —
-		// set them once here, leaving only top/left to be rewritten on
-		// each autoUpdate tick.
+		// Override V0's anchor-positioning styles so Floating UI controls placement.
 		c.style.setProperty('position-area', 'none', 'important')
 		c.style.setProperty('position-anchor', 'none', 'important')
 		c.style.setProperty('margin', '0', 'important')
@@ -109,9 +88,7 @@ export function usePopoverFallback({
 			stopTracking()
 			if (isOpen) startTracking()
 		},
-		// Flush after the DOM patch: on open, V0 mounts Popover.Content in
-		// the same tick, so a default 'pre' watcher would query the DOM
-		// before the element exists and startTracking would bail on null.
+		// post: the popover element must exist in the DOM before we position it.
 		{ flush: 'post' },
 	)
 

@@ -1,11 +1,7 @@
-// "Needs attention" predicate behind the attention scope and its badge
-// count. A device needs attention when any of these holds:
-//   1. status is 'dead'
-//   2. health is 'weak' while awake
-//   3. battery below LOW_BATTERY_THRESHOLD
-//   4. interview incomplete with no in-flight interview activity
-//   5. a firmware update is available
-// Controllers are always excluded.
+// "Needs attention" predicate for the attention scope and badge count.
+// A device needs attention when: dead, weak signal while awake, low battery,
+// incomplete interview (with none in-flight), or firmware update available.
+// Controllers are excluded.
 
 import type { Device } from './dashboard-types.ts'
 
@@ -31,7 +27,7 @@ export function deviceNeedsAttention(d: Device): boolean {
 	return false
 }
 
-/** Short human-readable reason a device needs attention, else `null`. */
+/** Short human-readable reason a device needs attention, or `null`. */
 export function attentionReason(d: Device): string | null {
 	if (!deviceNeedsAttention(d)) return null
 	if (d.status === 'dead') return 'Dead'

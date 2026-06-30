@@ -1,25 +1,6 @@
 // Single source of truth for the dashboard color palette.
-//
-// Imported by:
-// - src/plugins/vuetify0.ts → exposed as --v0-<name> CSS variables that
-//   src/assets/css/tokens.css reads to compose the --zw-* vocabulary
-// - src/plugins/vuetify.js → wired into Vuetify 3's theme system so legacy
-//   pages keep picking up the same palette while they're still on Vuetify 3
-//
-// The two destinations MUST stay in lockstep. Add new colors here, never
-// inline them in either plugin file.
-
-// No `secondary` key: the only secondary tone in the system is the
-// muted FG ramp, already covered by --zw-fg-soft.
-//
-// `info` exists ONLY for backwards compatibility with the legacy
-// dashboard's `<v-alert type="info">` call sites (FirmwareUpdates.vue,
-// NodeDetails.vue, TemplateWizard.vue, Zniffer.vue). Vuetify 3 maps an
-// alert's `type` onto the theme color of the same name, so dropping
-// `info` would break those alerts. The new dashboard implements
-// info-toned surfaces as an accent alias at the atom layer (see
-// .zw-tone-info in tokens.css). REMOVE this key once dashboard-neo
-// lands and the legacy v-alert call sites are gone.
+// Consumed by vuetify0.ts (--v0-* CSS vars) and vuetify.js (Vuetify 3 theme).
+// Add new colors here, never inline them in either plugin file.
 export type Palette = Record<string, string> & {
 	primary: string
 	'primary-darken-1': string
@@ -36,13 +17,11 @@ export type Palette = Record<string, string> & {
 	'background-soft': string
 	'on-surface': string
 	'on-background': string
-	// `on-<accent>` keys exist so atoms can derive contrast text from V0
-	// channel vars (e.g. `rgb(var(--v0-on-primary))`) and stay correct in
-	// dark mode — flipping to a literal `#fff` would defeat that.
 	'on-primary': string
-	// Legacy-only — see header comment. Remove with dashboard-neo.
+	// Legacy: required by v-alert type="info" in FirmwareUpdates, NodeDetails,
+	// TemplateWizard, Zniffer. Remove after dashboard-neo migration.
 	info: string
-	// Kept for backwards compatibility with the legacy app.
+	// Legacy: used by the old dashboard. Remove after dashboard-neo migration.
 	purple: string
 }
 
@@ -67,10 +46,8 @@ export const lightColors: Palette = {
 	purple: '#BA68C8',
 }
 
-// Dark palette is a placeholder — full dark-mode design is a separate pass.
-// Keys MUST all exist or Vuetify 3 throws when a component asks for them, and
-// V0 silently drops them. Alpha-based --zw-* tokens flip automatically because
-// on-surface flips to white here.
+// Placeholder — full dark-mode design is a separate pass.
+// All keys must exist (Vuetify 3 throws on missing theme colors).
 export const darkColors: Palette = {
 	primary: '#1976D2',
 	'primary-darken-1': '#1565C0',

@@ -1,7 +1,5 @@
-// Archetype catalogue. Maps a Z-Wave node to an `Archetype` — the device
-// kind that drives its icon, grouping, and primary-value selection.
-// Inference is heuristic (device class → supported CCs → product regex →
-// fallback); order matters, first match wins.
+// Archetype catalogue: maps a Z-Wave node to its device kind, icon,
+// and grouping. First matching rule wins.
 
 import { CommandClasses } from '@zwave-js/core'
 import type { Component } from 'vue'

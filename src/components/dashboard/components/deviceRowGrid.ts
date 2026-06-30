@@ -1,7 +1,4 @@
-// DeviceRow column packing. TOGGLEABLE_COLS is the single source of truth
-// for the optional columns (ids, order, labels) — consumers import it
-// rather than re-declaring. Viewport decides whether columns show at all;
-// the `columns` array decides which optional ones participate.
+// DeviceRow column definitions and grid-template builder.
 
 import { MOBILE_BREAKPOINT } from '@/lib/dashboard-breakpoints.ts'
 

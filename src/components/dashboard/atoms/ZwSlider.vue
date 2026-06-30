@@ -30,17 +30,14 @@ withDefaults(
 
 const emit = defineEmits<{ 'update:modelValue': [number] }>()
 
-// Slider.Root accepts scalar v-model and emits scalar back, but typescript
-// doesn't infer the scalar case so we narrow here.
+// Slider.Root accepts scalar v-model and emits scalar back, but TypeScript
+// doesn't infer the scalar case — narrow here.
 function onUpdate(value: number | number[]): void {
 	emit('update:modelValue', Array.isArray(value) ? (value[0] ?? 0) : value)
 }
 </script>
 
 <style>
-/* Styles unscoped — V0 primitives set inheritAttrs:false so Vue does not
-   forward the parent's scoped data-v-* hash onto the rendered elements.
-   .zw-slider namespace is unique to this atom. */
 .zw-slider {
 	position: relative;
 	height: 14px;
@@ -64,9 +61,7 @@ function onUpdate(value: number | number[]): void {
 	pointer-events: none;
 }
 
-/* Track captures pointerdown for click-to-jump, so its hit area spans
-   the full 14-px slider row even though the visual line is 6 px — clicks
-   in the padding above/below the line still register. */
+/* Hit area spans the full slider height for click-to-jump. */
 .zw-slider__track {
 	display: block;
 	position: relative;
@@ -98,10 +93,6 @@ function onUpdate(value: number | number[]): void {
 	transition: width 0.05s;
 }
 
-/* Solid accent disc whose size scales with the variant. Drop-shadow at
-   rest carries the "grabbable" affordance; halo grows on hover and
-   dragging. V0 sets inline `left: <pct>%` so we translate(-50%) to
-   center the disc on the value. */
 .zw-slider__thumb {
 	position: absolute;
 	top: 50%;

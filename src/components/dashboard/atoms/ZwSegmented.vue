@@ -37,18 +37,14 @@ defineProps<{
 
 const emit = defineEmits<{ 'update:modelValue': [string] }>()
 
-// Button.Group with `mandatory: true` + scalar v-model emits the single
-// selected value back as a string. With `mandatory: true` it cannot
-// emit null (no deselect possible), so the optional path is defensive.
+// Button.Group with `mandatory: true` emits a string, but the type is
+// `unknown` — narrow before forwarding.
 function onSelect(value: unknown): void {
 	if (typeof value === 'string') emit('update:modelValue', value)
 }
 </script>
 
 <style>
-/* Styles unscoped — V0 primitives set inheritAttrs:false so Vue does not
-   forward the parent's scoped data-v-* hash. .zw-segmented* class names
-   are unique to this atom. */
 .zw-segmented {
 	display: inline-flex;
 	background: var(--zw-bg);
@@ -57,8 +53,6 @@ function onSelect(value: unknown): void {
 	border: 1px solid var(--zw-line-soft);
 }
 
-/* Type role is Caption; the selected state pops weight to 600 to
-   match the design's segmented control. */
 .zw-segmented__btn {
 	appearance: none;
 	background: transparent;
@@ -82,8 +76,7 @@ function onSelect(value: unknown): void {
 	padding: 3px 7px;
 }
 
-/* `data-selected="true"` is emitted by V0 ButtonRoot when inside a
-   ButtonGroup and selected — replaces the previous .--active class. */
+/* V0 ButtonRoot emits `data-selected="true"` when selected inside a group. */
 .zw-segmented__btn[data-selected='true'] {
 	background: var(--zw-card);
 	color: var(--zw-accent);

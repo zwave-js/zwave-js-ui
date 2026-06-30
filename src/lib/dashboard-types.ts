@@ -14,9 +14,6 @@ export type PrimaryValueType =
 	| 'state'
 	| 'thermostat'
 
-// The interactive values below carry the writeable `target` (a `ValueID`) the
-// action layer writes to; read-only values (reading, state) omit it.
-
 // On/off device — switch, outlet, or binary light.
 export interface PrimaryValueToggle {
 	type: 'toggle'
@@ -77,8 +74,6 @@ export type PrimaryValue =
 	| PrimaryValueState
 	| PrimaryValueThermostat
 
-// Maps each discriminant to its concrete shape, enabling compile-time
-// narrowing by primary-value type.
 export interface PrimaryValueByType {
 	toggle: PrimaryValueToggle
 	dim: PrimaryValueDim
@@ -126,9 +121,6 @@ export interface Archetype {
 }
 
 // ── Activity ──────────────────────────────────────────────────
-//
-// In-flight long-running operations on a device: OTA updates, route
-// rebuilds, interviews.
 
 export type ActivityType = 'ota' | 'rebuild' | 'interview'
 
@@ -192,9 +184,6 @@ export interface Device {
 }
 
 // ── Action contract ───────────────────────────────────────────
-//
-// Components emit `action(device, { type, … })`; `device-actions.ts`
-// maps each shape to its socket call.
 
 export type DeviceAction =
 	| { type: 'toggle'; on: boolean; valueId: ValueID }

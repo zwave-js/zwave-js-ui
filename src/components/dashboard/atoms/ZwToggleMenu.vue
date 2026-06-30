@@ -89,10 +89,6 @@ function onToggle(id: string): void {
 </script>
 
 <style>
-/* Styles unscoped — V0 primitives set inheritAttrs:false so Vue's scoped
-   data-v-* hash does not reach the rendered elements. .zw-tm namespace is
-   unique to this atom. */
-/* Trigger uses the Caption type role. */
 .zw-tm__trigger {
 	appearance: none;
 	background: var(--zw-card);

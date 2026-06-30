@@ -235,9 +235,6 @@ watch(
 </script>
 
 <style>
-/* Unscoped — V0 Popover primitives set inheritAttrs:false so scoped data-v-*
-   hashes never reach the rendered elements. .zw-dropdown* names are unique. */
-
 .zw-dropdown__trigger {
 	appearance: none;
 	display: inline-flex;

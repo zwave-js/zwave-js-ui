@@ -12,8 +12,6 @@
 import ZwNodeDetailsBody from './ZwNodeDetailsBody.vue'
 import type { Device, DeviceAction } from '@/lib/dashboard-types'
 
-// `viewport` (the shell width) flows through to NodeDetailsBody, which uses
-// it to pick the two-pane vs stacked layout for the inline expansion.
 defineProps<{ device: Device; viewport: number }>()
 const emit = defineEmits<{ action: [Device, DeviceAction] }>()
 </script>

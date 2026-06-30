@@ -200,8 +200,8 @@ type RowItem = { id: string; kind: 'row'; device: Device }
 type FlatItem = GroupHeadItem | RowItem
 type LayoutItem = FlatItem & { top: number; height: number }
 
-// Fixed sizes — must match the row/group-head CSS below. Constants (not
-// measured) avoid a resize-feedback loop.
+// Fixed sizes (must match the row/group-head CSS). Constants instead of
+// measured values to avoid a resize-feedback loop.
 const ROW_HEIGHT = 42
 const GROUP_HEAD_HEIGHT = 36
 const SCROLL_BUFFER = 240
@@ -222,8 +222,6 @@ const emit = defineEmits<{
 	action: [Device, DeviceAction]
 }>()
 
-// A Set so the per-row column check below is O(1); rebuilt when
-// visibleCols changes.
 const visibleColsSet = computed(() => new Set(props.visibleCols))
 
 const columns = computed<ToggleableCol[]>(() => {
@@ -264,8 +262,6 @@ const SORT_KEY_FOR_COL: Record<string, SortKey> = {
 
 const headerCells = computed<HeaderCell[] | null>(() => {
 	if (props.viewport < 600) return null
-	// Lead/trailing cells frame the row; the optional columns and their
-	// labels come straight from TOGGLEABLE_COLS (the single source of truth).
 	const cells: { label: string; key: string }[] = [
 		{ label: '', key: 'status' },
 		{ label: '#', key: 'id' },
@@ -292,8 +288,6 @@ const headerCells = computed<HeaderCell[] | null>(() => {
 	})
 })
 
-// `props.groups` arrives already scoped, grouped and sorted by
-// `buildGroups` (see ZwAppShell); the cards body consumes it the same way.
 const flatItems = computed<FlatItem[]>(() => {
 	const out: FlatItem[] = []
 	for (const [key, items] of props.groups) {
@@ -324,8 +318,6 @@ const expandedDevice = computed<Device | null>(() => {
 })
 
 // ── manual virtualization ─────────────────────────────────────────
-// Render only the rows in or near the viewport. The expanded body lives
-// outside this loop so its state survives scroll and row-height changes.
 
 const bodyRef = ref<HTMLElement | null>(null)
 const expandedHostRef = ref<HTMLElement | null>(null)
@@ -342,9 +334,7 @@ const layout = computed<{ items: LayoutItem[]; total: number }>(() => {
 			item.kind === 'group-head' ? GROUP_HEAD_HEIGHT : ROW_HEIGHT
 		out.push({ ...item, top, height } as LayoutItem)
 		top += height
-		// Reserve space for the expanded body right after its row, as
-		// a layout-only gap so the body never enters the virtualized
-		// loop.
+		// Reserve space for the expanded body.
 		if (
 			item.kind === 'row' &&
 			expanded != null &&
@@ -384,12 +374,8 @@ const expandedBodyTop = computed<number | null>(() => {
 })
 
 // ── sticky group header + expanded summary row ─────────────────────
-// Absolute positioning (the virtualization) defeats native
-// `position: sticky`, so we re-create it: derive each group's vertical
-// span, then render the active group's header — and, while a row is
-// expanded, its summary row just below — as overlays whose `top` is
-// pinned to the scroll viewport. The expanded row is dropped from the
-// normal loop (see template) so the overlay is its sole render.
+// Virtualization uses absolute positioning, which defeats native
+// position:sticky. We re-create it with manually computed top offsets.
 
 interface GroupSpan {
 	key: string
@@ -415,8 +401,8 @@ const groupSpans = computed<GroupSpan[]>(() => {
 	return spans
 })
 
-// The group whose span contains the current scroll offset, with its
-// header `top` clamped so the next group pushes it up at the boundary.
+// The group header pinned at the top of the scroll viewport. Clamped so
+// the next group's header pushes it upward at the boundary.
 const stickyGroup = computed(() => {
 	const st = scrollTop.value
 	for (const g of groupSpans.value) {
@@ -427,8 +413,8 @@ const stickyGroup = computed(() => {
 	return null
 })
 
-// Top for the pinned summary row: just under the group header, clamped
-// to the expanded region so it rides up out of view past the panel.
+// Top offset for the pinned expanded-device summary row. Sits just below
+// the sticky group header and scrolls out when the expanded region ends.
 const stickyRowTop = computed<number | null>(() => {
 	if (expandedBodyTop.value == null) return null
 	const rowTop = expandedBodyTop.value - ROW_HEIGHT
@@ -455,8 +441,7 @@ function onScroll(e: Event) {
 }
 
 // ── scrollbar-width compensation ─────────────────────────────────
-// The body owns its own scrollbar; the column header lives outside
-// it, so its width otherwise drifts when the scrollbar appears.
+// Header lives outside the scrollable body, so compensate for scrollbar width.
 
 const rootRef = ref<HTMLElement | null>(null)
 const scrollbarW = ref(0)
@@ -483,8 +468,7 @@ onMounted(() => {
 	}
 })
 
-// Track the persistent expanded body's height so we reserve the
-// right amount of space in the layout.
+// Track the expanded body's height so the layout reserves the right space.
 watch(expandedHostRef, (el, _old, onCleanup) => {
 	if (expandedObserver) {
 		expandedObserver.disconnect()
