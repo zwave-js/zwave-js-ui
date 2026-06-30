@@ -14,7 +14,7 @@ function nodeWithCCs(ccs: number[], extra: any = {}) {
 
 describe('inferArchetype', () => {
 	it('returns controller for the controller node', () => {
-		const a = inferArchetype({ isControllerNode: true })
+		const a = inferArchetype({ isControllerNode: true } as any)
 		expect(a.kind).to.equal('controller')
 	})
 
@@ -27,7 +27,7 @@ describe('inferArchetype', () => {
 		const a = inferArchetype({
 			deviceClass: { generic: 'Entry Control' },
 			values: {},
-		})
+		} as any)
 		expect(a.kind).to.equal('lock')
 	})
 
@@ -101,12 +101,12 @@ describe('inferArchetype', () => {
 	})
 
 	it('returns unknown for an empty node', () => {
-		const a = inferArchetype({ values: {} })
+		const a = inferArchetype({ values: {} } as any)
 		expect(a.kind).to.equal('unknown')
 	})
 
 	it('attaches label + icon for every archetype', () => {
-		const a = inferArchetype({ values: {} })
+		const a = inferArchetype({ values: {} } as any)
 		expect(a.label).to.be.a('string')
 		expect(a.label.length).to.be.above(0)
 		expect(a.icon).toBeTruthy()
@@ -116,21 +116,21 @@ describe('inferArchetype', () => {
 
 describe('productMatches', () => {
 	it('matches productLabel substring case-insensitive', () => {
-		expect(productMatches({ productLabel: 'Wall Plug' }, /plug/i)).to.equal(
-			true,
-		)
+		expect(
+			productMatches({ productLabel: 'Wall Plug' } as any, /plug/i),
+		).to.equal(true)
 	})
 	it('matches productDescription substring case-insensitive', () => {
 		expect(
 			productMatches(
-				{ productDescription: 'Z-Wave smart bulb' },
+				{ productDescription: 'Z-Wave smart bulb' } as any,
 				/bulb/i,
 			),
 		).to.equal(true)
 	})
 	it('returns false on no match', () => {
-		expect(productMatches({ productLabel: 'Switch' }, /shade/i)).to.equal(
-			false,
-		)
+		expect(
+			productMatches({ productLabel: 'Switch' } as any, /shade/i),
+		).to.equal(false)
 	})
 })

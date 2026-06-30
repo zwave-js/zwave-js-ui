@@ -6,14 +6,7 @@
 				<ZwToggle
 					:model-value="pv.on"
 					size="sm"
-					@update:model-value="
-						(on) =>
-							emit('action', device, {
-								type: 'toggle',
-								on,
-								valueId: pv.target,
-							})
-					"
+					@update:model-value="onToggle"
 				/>
 			</span>
 			<ZwChip tone="neutral">
@@ -27,14 +20,7 @@
 				<ZwSlider
 					size="sm"
 					:model-value="pv.level"
-					@update:model-value="
-						(level) =>
-							emit('action', device, {
-								type: 'dim',
-								level,
-								valueId: pv.target,
-							})
-					"
+					@update:model-value="onDim"
 				/>
 			</span>
 			<span class="zw-cp__num">{{ pv.level }}%</span>
@@ -46,14 +32,7 @@
 				<ZwToggle
 					:model-value="pv.locked"
 					size="sm"
-					@update:model-value="
-						(locked) =>
-							emit('action', device, {
-								type: 'lock',
-								locked,
-								valueId: pv.target,
-							})
-					"
+					@update:model-value="onLock"
 				/>
 			</span>
 			<ZwChip :tone="pv.locked ? 'ok' : 'warn'">
@@ -100,6 +79,26 @@ const stateChipTone = computed(() => {
 	// isStateAlert guarantees the colour is red or amber.
 	return s.colors[1] === 'red' ? 'danger' : 'warn'
 })
+
+function onToggle(on: boolean) {
+	const v = pv.value
+	if (v?.type === 'toggle')
+		emit('action', props.device, { type: 'toggle', on, valueId: v.target })
+}
+function onDim(level: number) {
+	const v = pv.value
+	if (v?.type === 'dim')
+		emit('action', props.device, { type: 'dim', level, valueId: v.target })
+}
+function onLock(locked: boolean) {
+	const v = pv.value
+	if (v?.type === 'lock')
+		emit('action', props.device, {
+			type: 'lock',
+			locked,
+			valueId: v.target,
+		})
+}
 </script>
 
 <style scoped>
