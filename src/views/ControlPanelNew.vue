@@ -15,13 +15,18 @@
 // full-bleed. Device actions are resolved by `dispatchAction` and sent
 // through `apiRequest()` on the App instance, reached via `instanceManager`.
 
-import { provide, shallowRef } from 'vue'
+import { nextTick, provide, shallowRef } from 'vue'
 import ZwAppShell from '@/components/dashboard/layout/ZwAppShell.vue'
-import { dispatchAction } from '@/lib/device-actions.ts'
+import {
+	dispatchAction,
+	isRequestSuccess,
+	type ApiResponse,
+} from '@/lib/device-actions.ts'
 import type { Device, DeviceAction } from '@/lib/dashboard-types'
 import {
 	actionPendingKey,
-	DeviceActionPendingKey,
+	DeviceActionStatusKey,
+	type ActionStatus,
 } from '@/lib/deviceActionPending.ts'
 import { manager, instances } from '@/lib/instanceManager'
 
@@ -30,7 +35,7 @@ interface AppLike {
 		api: string,
 		args?: unknown[],
 		opts?: { infoSnack?: boolean; errorSnack?: boolean },
-	) => Promise<unknown>
+	) => Promise<ApiResponse>
 	showSnackbar: (msg: string, level?: string) => void
 	restart: () => Promise<void>
 	showUpdateDialog: () => Promise<void>
@@ -43,16 +48,23 @@ function appInstance(): AppLike | null {
 	return (inst as unknown as AppLike) ?? null
 }
 
-// Value-pane components watch this to show a spinner only while their request
-// is actually in flight. Immutable Set, swapped on change (see PendingSet).
-const pending = shallowRef<ReadonlySet<string>>(new Set())
-provide(DeviceActionPendingKey, pending)
+const status = shallowRef<ReadonlyMap<string, ActionStatus>>(new Map())
+provide(DeviceActionStatusKey, status)
 
-function setPending(key: string, on: boolean) {
-	const next = new Set(pending.value)
-	if (on) next.add(key)
-	else next.delete(key)
-	pending.value = next
+function setStatus(key: string, value: ActionStatus) {
+	const next = new Map(status.value)
+	next.set(key, value)
+	status.value = next
+}
+
+function completeAction(key: string, ok: boolean) {
+	setStatus(key, ok ? 'ok' : 'fail')
+	// Delete after one tick so pre-flush watchers can read the outcome.
+	nextTick(() => {
+		const next = new Map(status.value)
+		next.delete(key)
+		status.value = next
+	})
 }
 
 async function onAction(device: Device, action: DeviceAction) {
@@ -63,14 +75,16 @@ async function onAction(device: Device, action: DeviceAction) {
 		return
 	}
 	const key = actionPendingKey(device, action)
-	if (key) setPending(key, true)
+	if (key) setStatus(key, 'pending')
+	let ok = false
 	try {
-		await app.apiRequest(req.api, req.args, {
+		const response = await app.apiRequest(req.api, req.args, {
 			infoSnack: false,
 			errorSnack: true,
 		})
+		ok = isRequestSuccess(req.api, response)
 	} finally {
-		if (key) setPending(key, false)
+		if (key) completeAction(key, ok)
 	}
 }
 

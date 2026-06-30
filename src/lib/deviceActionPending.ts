@@ -6,14 +6,13 @@ import type { InjectionKey, ShallowRef } from 'vue'
 import type { ValueID } from '@zwave-js/core'
 import type { Device, DeviceAction } from './dashboard-types.ts'
 
-// A shallowRef holding an immutable Set, replaced on each change. Members are
-// read via `.value.has(...)`, so a row's check re-runs only when the set is
-// actually swapped — not via Vue's reactive-Set per-key tracking, which
-// invalidates every `.has()` watcher in every mounted row on any mutation.
-export type PendingSet = ShallowRef<ReadonlySet<string>>
+export type ActionStatus = 'pending' | 'ok' | 'fail'
 
-export const DeviceActionPendingKey: InjectionKey<PendingSet> = Symbol(
-	'zwDeviceActionPending',
+// Immutable Map in a shallowRef — replaced on each change.
+export type ActionStatusMap = ShallowRef<ReadonlyMap<string, ActionStatus>>
+
+export const DeviceActionStatusKey: InjectionKey<ActionStatusMap> = Symbol(
+	'zwDeviceActionStatus',
 )
 
 // Stable per-node value identity (`cc-endpoint-property-key`); keys pending

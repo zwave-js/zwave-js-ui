@@ -68,7 +68,8 @@ import ZwValueRow from './ZwValueRow.vue'
 import { ChevronDownIcon, ICON_SIZE, RefreshIcon, ResetIcon } from '@/lib/icons'
 import {
 	ccPendingKey,
-	DeviceActionPendingKey,
+	DeviceActionStatusKey,
+	type ActionStatus,
 } from '@/lib/deviceActionPending.ts'
 import type { ValueGroup } from '@/lib/valueGroups.ts'
 import type { ValueID } from '@zwave-js/core'
@@ -86,13 +87,14 @@ const emit = defineEmits<{
 	refreshCc: [number]
 }>()
 
-// Spins only while the CC refresh is actually in flight (see deviceActionPending).
-const pending = inject(
-	DeviceActionPendingKey,
-	shallowRef<ReadonlySet<string>>(new Set()),
+const status = inject(
+	DeviceActionStatusKey,
+	shallowRef<ReadonlyMap<string, ActionStatus>>(new Map()),
 )
-const refreshing = computed(() =>
-	pending.value.has(ccPendingKey(props.nodeId, props.group.ccId)),
+const refreshing = computed(
+	() =>
+		status.value.get(ccPendingKey(props.nodeId, props.group.ccId)) ===
+		'pending',
 )
 
 function onRefresh() {
