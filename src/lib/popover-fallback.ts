@@ -17,12 +17,6 @@
 // rely on the caller-supplied `contentId` (bound via `<Popover.Root :id>`
 // so V0 wires both activator's `popovertarget` and content's `id` to that
 // value), and find the elements at activation time via the DOM.
-//
-// Alignment rule:
-//   - placement: 'bottom-end' (menu's right edge aligned with activator's
-//     right edge, menu extends leftward) — matches typical dropdown UX.
-//   - Middleware `flip` switches to bottom-start (left-aligned) etc. when
-//     the preferred placement would clip.
 
 import { onBeforeUnmount, watch, toValue } from 'vue'
 import type { MaybeRefOrGetter, Ref } from 'vue'
@@ -33,15 +27,28 @@ import {
 	shift,
 	offset,
 } from '@floating-ui/dom'
+import type { Placement } from '@floating-ui/dom'
+
+// Flip fallbacks per primary placement.
+const FALLBACK_PLACEMENTS: Partial<Record<Placement, Placement[]>> = {
+	'bottom-end': ['bottom-start', 'top-end', 'top-start'],
+	'bottom-start': ['top-start', 'bottom-end', 'top-end'],
+}
 
 interface FallbackPositionOptions {
 	open: Ref<boolean>
 	contentId: MaybeRefOrGetter<string>
+	// Default: 'bottom-end'. Pass 'bottom-start' for left-anchored menus.
+	placement?: Placement
+	// Gap between activator and panel in pixels. Default: 6.
+	offsetPx?: number
 }
 
 export function usePopoverFallback({
 	open,
 	contentId,
+	placement = 'bottom-end',
+	offsetPx = 6,
 }: FallbackPositionOptions): void {
 	let cleanup: (() => void) | null = null
 
@@ -66,16 +73,14 @@ export function usePopoverFallback({
 
 		cleanup = autoUpdate(a, c, () => {
 			computePosition(a, c, {
-				placement: 'bottom-end',
+				placement,
 				strategy: 'fixed',
 				middleware: [
-					offset(6),
+					offset(offsetPx),
 					flip({
-						fallbackPlacements: [
-							'bottom-start',
-							'top-end',
-							'top-start',
-						],
+						fallbackPlacements:
+							FALLBACK_PLACEMENTS[placement] ??
+							FALLBACK_PLACEMENTS['bottom-end'],
 					}),
 					shift({ padding: 8 }),
 				],

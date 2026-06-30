@@ -27,6 +27,13 @@
 						<RefreshIcon :size="ICON_SIZE.chip" class="zw-spin" />
 						Setting…
 					</span>
+					<span
+						v-else-if="sendFailed"
+						class="zw-vrow__status zw-vrow__status--error"
+					>
+						<AlertIcon :size="ICON_SIZE.chip" />
+						Could not be set
+					</span>
 				</template>
 				<template v-else>
 					<span
@@ -120,43 +127,52 @@
 
 			<!-- enum select -->
 			<template v-else-if="param.kind === 'enum'">
-				<select
-					class="zw-vrow__select"
-					:value="String(cur)"
+				<ZwDropdown
+					:model-value="asOptionValue(cur)"
+					:options="param.options ?? []"
 					:disabled="busy"
-					@change="onEnumChange"
-				>
-					<option
-						v-for="o in param.options"
-						:key="String(o.value)"
-						:value="String(o.value)"
-					>
-						[{{ o.value }}] {{ o.label }}
-					</option>
-				</select>
+					@update:model-value="commit"
+				/>
 			</template>
 
-			<!-- number / text input (shared scaffold) -->
-			<template
-				v-else-if="param.kind === 'number' || param.kind === 'text'"
-			>
+			<!-- number: combobox when options exist, else a stepper -->
+			<template v-else-if="param.kind === 'number'">
+				<ZwDropdown
+					v-if="param.options"
+					:model-value="asOptionValue(cur)"
+					:options="param.options"
+					:allow-manual="true"
+					:min="param.min"
+					:max="param.max"
+					:unit="param.unit"
+					:disabled="busy"
+					@update:model-value="commit"
+				/>
+				<ZwNumericInput
+					v-else
+					:model-value="String(cur ?? '')"
+					:min="param.min"
+					:max="param.max"
+					:step="param.step"
+					:unit="param.unit"
+					:disabled="busy"
+					:dirty="dirty"
+					@update:model-value="draft = $event"
+					@commit="send"
+					@reset="draft = null"
+				/>
+			</template>
+
+			<!-- text input -->
+			<template v-else-if="param.kind === 'text'">
 				<input
 					class="zw-vrow__input"
-					:class="{ 'zw-vrow__input--text': param.kind === 'text' }"
-					:type="param.kind === 'number' ? 'number' : 'text'"
+					type="text"
 					:value="cur"
-					:min="param.kind === 'number' ? param.min : undefined"
-					:max="param.kind === 'number' ? param.max : undefined"
-					:step="
-						param.kind === 'number' ? param.step || 1 : undefined
-					"
 					:disabled="busy"
 					@input="onInput"
 					@keydown.enter="send"
 				/>
-				<span v-if="param.unit" class="zw-vrow__unit">{{
-					param.unit
-				}}</span>
 				<button
 					v-if="dirty"
 					type="button"
@@ -201,6 +217,13 @@
 				<RefreshIcon :size="ICON_SIZE.chip" class="zw-spin" />
 				{{ sending ? 'Setting…' : 'Refreshing…' }}
 			</span>
+			<span
+				v-else-if="sendFailed"
+				class="zw-vrow__status zw-vrow__status--error"
+			>
+				<AlertIcon :size="ICON_SIZE.chip" />
+				Could not be set
+			</span>
 		</div>
 
 		<!-- description -->
@@ -223,12 +246,23 @@
 </template>
 
 <script setup lang="ts">
-import { computed, inject, ref, shallowRef, useId, watch } from 'vue'
+import {
+	computed,
+	inject,
+	onBeforeUnmount,
+	ref,
+	shallowRef,
+	useId,
+	watch,
+} from 'vue'
 import { Popover } from '@vuetify/v0'
 import ZwToggle from '@/components/dashboard/atoms/ZwToggle.vue'
 import ZwSlider from '@/components/dashboard/atoms/ZwSlider.vue'
+import ZwDropdown from '@/components/dashboard/atoms/ZwDropdown.vue'
+import ZwNumericInput from '@/components/dashboard/atoms/ZwNumericInput.vue'
 import {
 	CheckIcon,
+	AlertIcon,
 	CopyIcon,
 	ICON_SIZE,
 	MoreIcon,
@@ -238,9 +272,10 @@ import {
 import { usePopoverFallback } from '@/lib/popover-fallback.ts'
 import type { ValueParam } from '@/lib/valueGroups.ts'
 import {
-	DeviceActionPendingKey,
+	DeviceActionStatusKey,
 	pollPendingKey,
 	setPendingKey,
+	type ActionStatus,
 } from '@/lib/deviceActionPending.ts'
 import type { ValueID } from '@zwave-js/core'
 
@@ -253,10 +288,12 @@ const emit = defineEmits<{
 	poll: [ValueID]
 }>()
 
-// Pending edit until applied; null = show the live value. Clears on confirm.
-// (null is safe as the "no edit" sentinel: drafts only come from user input on
-// editable controls, never a literal null value.)
+// Pending edit until applied; null = show the live value.
 const draft = ref<unknown>(null)
+const sendFailed = ref(false)
+// How long the "could not be set" flag stays visible after a failed write.
+const SEND_ERROR_MS = 3000
+let sendErrorTimer: ReturnType<typeof setTimeout> | undefined
 
 // How long the "copied" checkmark shows before reverting to the copy icon.
 const COPY_FEEDBACK_MS = 1200
@@ -266,16 +303,16 @@ const menuId = `zw-vrow-${useId()}`
 
 usePopoverFallback({ open: menuOpen, contentId: menuId })
 
-// Busy state from the host's pending set — clears the instant `apiRequest` resolves.
-const pending = inject(
-	DeviceActionPendingKey,
-	shallowRef<ReadonlySet<string>>(new Set()),
+const status = inject(
+	DeviceActionStatusKey,
+	shallowRef<ReadonlyMap<string, ActionStatus>>(new Map()),
 )
-const sending = computed(() =>
-	pending.value.has(setPendingKey(props.nodeId, props.param.target)),
-)
-const refreshing = computed(() =>
-	pending.value.has(pollPendingKey(props.nodeId, props.param.target)),
+const setKey = computed(() => setPendingKey(props.nodeId, props.param.target))
+const sending = computed(() => status.value.get(setKey.value) === 'pending')
+const refreshing = computed(
+	() =>
+		status.value.get(pollPendingKey(props.nodeId, props.param.target)) ===
+		'pending',
 )
 
 const cur = computed(() =>
@@ -289,20 +326,34 @@ const dirty = computed(
 const busy = computed(() => sending.value || refreshing.value)
 const levelValue = computed(() => Number(cur.value) || 0)
 
-// Range hint under an editable number; default segment only when one exists.
 const rangeHint = computed(() => {
 	const p = props.param
 	const range = `min ${p.min} · max ${p.max}`
 	return p.default !== undefined ? `${range} · default ${p.default}` : range
 })
 
-// Once the confirmed value updates, drop the optimistic draft.
+// Drop the draft when the confirmed value arrives.
 watch(
 	() => props.param.value,
 	() => {
 		draft.value = null
 	},
 )
+
+// On failure, revert the draft and show an error.
+watch(sending, (isNowSending, wasSending) => {
+	if (!wasSending || isNowSending) return
+	if (status.value.get(setKey.value) === 'fail') {
+		draft.value = null
+		sendFailed.value = true
+		clearTimeout(sendErrorTimer)
+		sendErrorTimer = setTimeout(() => {
+			sendFailed.value = false
+		}, SEND_ERROR_MS)
+	}
+})
+
+onBeforeUnmount(() => clearTimeout(sendErrorTimer))
 
 function coerce(raw: unknown): unknown {
 	if (props.param.kind === 'number' || props.param.kind === 'level') {
@@ -313,17 +364,14 @@ function coerce(raw: unknown): unknown {
 
 function commit(value: unknown) {
 	menuOpen.value = false
-	// Don't optimistically pin the value. On a failed or un-acked write the
-	// device never confirms, so a pinned draft would keep showing the attempted
-	// value while the error toast says it failed. Show the live value instead;
-	// `busy` covers the in-flight window and the watch reflects the real result.
-	draft.value = null
+	sendFailed.value = false
+	// Write-only params never get a confirmed value back, so don't pin a draft.
+	draft.value = props.param.readable ? value : null
 	emit('set', props.param.target, value)
 }
 
 function send() {
 	if (!dirty.value) return
-	// An empty number input coerces to 0; don't send a spurious 0 / NaN.
 	if (props.param.kind === 'number') {
 		const n = Number(draft.value)
 		if (draft.value === '' || Number.isNaN(n)) return
@@ -335,16 +383,19 @@ function onInput(e: Event) {
 	draft.value = (e.target as HTMLInputElement).value
 }
 
-function onEnumChange(e: Event) {
-	const raw = (e.target as HTMLSelectElement).value
-	const opt = props.param.options?.find((o) => String(o.value) === raw)
-	commit(opt ? opt.value : raw)
+function asOptionValue(v: unknown): number | string | boolean | null {
+	if (
+		typeof v === 'number' ||
+		typeof v === 'string' ||
+		typeof v === 'boolean'
+	)
+		return v
+	return null
 }
 
 function commitLevel() {
 	if (draft.value === null) return
-	// Multilevel Switch tops out at 99 (100/255 mean "restore"); the slider
-	// track is 0–100, so clamp before writing.
+	// Clamp to 0–99 (100 means "restore previous" in Multilevel Switch).
 	const level = Math.min(99, Math.max(0, Number(draft.value)))
 	if (level !== Number(props.param.value)) {
 		commit(level)
@@ -363,8 +414,6 @@ function resetDefault() {
 }
 
 function copyId() {
-	// Clipboard API is absent in insecure contexts (`?.`) and can reject
-	// (permission denied / not focused); swallow both — it's only feedback.
 	void navigator.clipboard?.writeText(props.param.id).catch(() => {})
 	copied.value = true
 	setTimeout(() => {
@@ -575,7 +624,6 @@ function copyId() {
 	text-align: right;
 }
 
-.zw-vrow__select,
 .zw-vrow__input {
 	appearance: none;
 	border: 1px solid var(--zw-line);
@@ -585,24 +633,7 @@ function copyId() {
 	background: var(--zw-bg);
 	color: var(--zw-fg);
 	font-family: var(--zw-mono);
-}
-
-.zw-vrow__select {
-	padding-right: 22px;
-	cursor: pointer;
-	max-width: 240px;
-	text-overflow: ellipsis;
-}
-
-.zw-vrow__input {
-	/* Narrow: numbers are short and right-aligned like the readouts. */
-	width: 80px;
-	text-align: right;
-}
-
-.zw-vrow__input--text {
-	/* Wider for free text, but still bounded so a long value can't push the
-	   control line past the cell. */
+	/* Bounded so a long value can't push the control line past the cell. */
 	width: 180px;
 	text-align: left;
 }
@@ -673,6 +704,10 @@ function copyId() {
 	font-family: var(--zw-mono);
 	color: var(--zw-accent);
 	white-space: nowrap;
+}
+
+.zw-vrow__status--error {
+	color: var(--zw-danger);
 }
 
 /* ── meta ── */
