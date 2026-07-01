@@ -74,7 +74,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, useId } from 'vue'
+import { computed, ref, useId, watch } from 'vue'
 import { Popover } from '@vuetify/v0'
 import ZwDropdown from '@/components/dashboard/atoms/ZwDropdown.vue'
 import ZwNumericInput from '@/components/dashboard/atoms/ZwNumericInput.vue'
@@ -82,17 +82,20 @@ import { ICON_SIZE, MoreIcon, RefreshIcon } from '@/lib/icons'
 import { usePopoverFallback } from '@/lib/popover-fallback.ts'
 import type { ControllerOption } from '@/lib/controllerOptions.ts'
 
-const props = defineProps<{
-	option: ControllerOption
-}>()
+const props = withDefaults(
+	defineProps<{
+		option: ControllerOption
+		sending?: boolean
+		refreshing?: boolean
+	}>(),
+	{ sending: false, refreshing: false },
+)
 const emit = defineEmits<{
 	change: [key: string, value: unknown]
 	refresh: [key: string]
 }>()
 
 const draft = ref<unknown>(null)
-const sending = ref(false)
-const refreshing = ref(false)
 const menuOpen = ref(false)
 const menuId = `zw-optrow-${useId()}`
 
@@ -106,7 +109,14 @@ const dirty = computed(
 		draft.value !== null &&
 		String(draft.value) !== String(props.option.value),
 )
-const busy = computed(() => sending.value || refreshing.value)
+const busy = computed(() => props.sending || props.refreshing)
+
+watch(
+	() => props.option.value,
+	() => {
+		draft.value = null
+	},
+)
 
 function commit(value: unknown) {
 	menuOpen.value = false
