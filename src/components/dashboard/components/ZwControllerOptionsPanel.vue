@@ -26,9 +26,14 @@ const emit = defineEmits<{ action: [Device, DeviceAction] }>()
 
 const baseStore = useBaseStore()
 
-const options = computed(() =>
-	buildControllerOptions(baseStore.getNode(props.device.nodeId)),
-)
+const options = computed(() => {
+	const zwave = (
+		baseStore as unknown as { zwave: { rf: { autoPowerlevels: boolean } } }
+	).zwave
+	return buildControllerOptions(baseStore.getNode(props.device.nodeId), {
+		autoPowerlevels: zwave?.rf?.autoPowerlevels ?? true,
+	})
+})
 
 function onChange(key: string, value: unknown) {
 	if (key === 'rfRegion') {
@@ -36,18 +41,36 @@ function onChange(key: string, value: unknown) {
 			type: 'set-rf-region',
 			region: Number(value),
 		})
-	} else if (key === 'measured0dBm') {
+	} else if (key === 'powerlevel' || key === 'measured0dBm') {
 		const node = baseStore.getNode(props.device.nodeId)
 		emit('action', props.device, {
 			type: 'set-powerlevel',
-			powerlevel: node?.powerlevel ?? 0,
-			measured0dBm: Number(value),
+			powerlevel:
+				key === 'powerlevel' ? Number(value) : (node?.powerlevel ?? 0),
+			measured0dBm:
+				key === 'measured0dBm'
+					? Number(value)
+					: (node?.measured0dBm ?? 0),
+		})
+	} else if (key === 'maxLRPowerlevel') {
+		emit('action', props.device, {
+			type: 'set-max-lr-powerlevel',
+			maxLRPowerlevel: Number(value),
 		})
 	}
 }
 
-function onRefresh(_key: string) {
-	emit('action', props.device, { type: 'refresh' })
+function onRefresh(key: string) {
+	const propMap: Record<string, string> = {
+		rfRegion: 'RFRegion',
+		powerlevel: 'powerlevel',
+		measured0dBm: 'powerlevel',
+		maxLRPowerlevel: 'maxLongRangePowerlevel',
+	}
+	emit('action', props.device, {
+		type: 'refresh-controller-prop',
+		prop: propMap[key] ?? key,
+	})
 }
 </script>
 

@@ -2,6 +2,7 @@
 // the controller options panel renders.
 
 import type { ZUINode } from '../../api/lib/ZwaveClient.ts'
+import { regionSupportsAutoPowerlevel } from '@server/lib/shared'
 
 export type ControllerOptionKind = 'enum' | 'number' | 'readonly'
 
@@ -24,43 +25,63 @@ export interface ControllerOption {
 	options?: ControllerOptionChoice[]
 }
 
+export interface BuildControllerOptionsContext {
+	autoPowerlevels: boolean
+}
+
 export function buildControllerOptions(
 	node: ZUINode | null | undefined,
+	ctx: BuildControllerOptionsContext = { autoPowerlevels: true },
 ): ControllerOption[] {
 	if (!node) return []
 
 	const opts: ControllerOption[] = []
 
+	const isAutoEnabled =
+		ctx.autoPowerlevels &&
+		regionSupportsAutoPowerlevel(node.RFRegion as number)
+
 	// RF Region — enum dropdown built from the controller's reported regions.
-	const regionOptions: ControllerOptionChoice[] = (node.rfRegions ?? []).map(
-		(r) => ({ value: r.value, label: r.title }),
-	)
-	const regionValue = node.RFRegion ?? 0
-	const regionLabel =
-		regionOptions.find((o) => o.value === regionValue)?.label ??
-		String(regionValue)
+	// Filter out disabled entries (Unknown, Default (EU)) matching the old UI.
+	const regionOptions: ControllerOptionChoice[] = (node.rfRegions ?? [])
+		.filter((r) => !(r as { disabled?: boolean }).disabled)
+		.map((r) => ({ value: r.value, label: r.title }))
+	const supported = node.RFRegion !== undefined
+	const regionValue = node.RFRegion
+	const regionLabel = supported
+		? (regionOptions.find((o) => o.value === regionValue)?.label ??
+			String(regionValue))
+		: undefined
 	opts.push({
 		key: 'rfRegion',
 		label: 'RF Region',
-		description: 'Radio-frequency region the controller transmits in.',
-		kind: 'enum',
+		description: supported
+			? 'Radio-frequency region the controller transmits in.'
+			: 'Not supported by your controller.',
+		kind: supported ? 'enum' : 'readonly',
 		value: regionValue,
-		display: `[${regionValue}] ${regionLabel}`,
-		options: regionOptions,
+		display: supported ? `[${regionValue}] ${regionLabel}` : '—',
+		options: supported ? regionOptions : undefined,
 	})
 
-	// Normal Power Level — read-only when auto-driven.
+	// Normal Power Level — editable unless auto-powerlevel is active.
 	const powerlevel = node.powerlevel ?? 0
 	opts.push({
 		key: 'powerlevel',
 		label: 'Normal Power Level',
-		description: 'Automatic mode enabled in settings.',
-		kind: 'readonly',
+		description: isAutoEnabled
+			? 'Automatic mode enabled in settings.'
+			: undefined,
+		kind: isAutoEnabled ? 'readonly' : 'number',
 		value: powerlevel,
 		display: `${powerlevel} dBm`,
+		unit: 'dBm',
+		min: -10,
+		max: 20,
+		step: 0.1,
 	})
 
-	// Measured output power at 0 dBm — editable calibration offset.
+	// Measured output power at 0 dBm — always editable.
 	const measured = node.measured0dBm ?? 0
 	opts.push({
 		key: 'measured0dBm',
@@ -73,19 +94,29 @@ export function buildControllerOptions(
 		unit: 'dBm',
 		min: -10,
 		max: 10,
-		step: 1,
+		step: 0.1,
 	})
 
-	// Max LR Power Level — read-only, only relevant for Long Range sticks.
+	// Max LR Power Level — editable (enum) unless auto-powerlevel is active.
 	if (node.supportsLongRange) {
-		const maxLR = node.maxLongRangePowerlevel ?? 0
+		const maxLR = node.maxLongRangePowerlevel ?? 14
+		const lrOptions: ControllerOptionChoice[] = [
+			{ value: 14, label: '+14 dBm' },
+			{ value: 20, label: '+20 dBm' },
+		]
+		const lrLabel =
+			lrOptions.find((o) => o.value === maxLR)?.label ??
+			`${maxLR > 0 ? '+' : ''}${maxLR} dBm`
 		opts.push({
 			key: 'maxLRPowerlevel',
 			label: 'Maximum LR Power Level',
-			description: 'Automatic mode enabled in settings.',
-			kind: 'readonly',
+			description: isAutoEnabled
+				? 'Automatic mode enabled in settings.'
+				: undefined,
+			kind: isAutoEnabled ? 'readonly' : 'enum',
 			value: maxLR,
-			display: `${maxLR > 0 ? '+' : ''}${maxLR} dBm`,
+			display: lrLabel,
+			options: isAutoEnabled ? undefined : lrOptions,
 		})
 	}
 

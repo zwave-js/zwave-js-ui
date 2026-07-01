@@ -236,6 +236,8 @@ export type DeviceAction =
 	| { type: 'firmware-upload'; file: File }
 	| { type: 'set-rf-region'; region: number }
 	| { type: 'set-powerlevel'; powerlevel: number; measured0dBm: number }
+	| { type: 'set-max-lr-powerlevel'; maxLRPowerlevel: number }
+	| { type: 'refresh-controller-prop'; prop: string }
 	| { type: 'shutdown' }
 	| { type: 'soft-reset' }
 	| { type: 'factory-reset' }

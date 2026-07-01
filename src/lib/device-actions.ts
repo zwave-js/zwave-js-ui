@@ -107,6 +107,14 @@ export const ACTION_DISPATCHERS: {
 		api: 'setPowerlevel',
 		args: [a.powerlevel, a.measured0dBm],
 	}),
+	'set-max-lr-powerlevel': (_d, a) => ({
+		api: 'setMaxLongRangePowerlevel',
+		args: [a.maxLRPowerlevel],
+	}),
+	'refresh-controller-prop': (_d, a) => ({
+		api: 'updateControllerNodeProps',
+		args: [null, [a.prop]],
+	}),
 	shutdown: () => ({ api: 'shutdownZwaveAPI', args: [] }),
 	'soft-reset': () => ({ api: 'softReset', args: [] }),
 	'factory-reset': () => ({ api: 'hardReset', args: [] }),
