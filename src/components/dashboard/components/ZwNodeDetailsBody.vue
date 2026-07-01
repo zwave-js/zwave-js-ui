@@ -172,14 +172,15 @@
 										label: 'Backup',
 										busyLabel: 'Backing up…',
 										doneLabel: 'Done',
+										state: btnState('backup-nvm'),
 									},
 									{
 										label: 'Restore',
 										busyLabel: 'Restoring…',
 										doneLabel: 'Done',
+										state: btnState('restore-nvm'),
 									},
 								]"
-								:action-states="nvmStates"
 								:disabled="anyControllerActionBusy"
 								@run="
 									(i: number) =>
@@ -204,9 +205,9 @@
 									{
 										label: 'Shutdown',
 										busyLabel: 'Shutting down…',
+										state: btnState('shutdown'),
 									},
 								]"
-								:action-states="shutdownState"
 								:disabled="anyControllerActionBusy"
 								tone="accent"
 								@run="
@@ -225,9 +226,9 @@
 										label: 'Soft reset',
 										busyLabel: 'Resetting…',
 										doneLabel: 'Done',
+										state: btnState('soft-reset'),
 									},
 								]"
-								:action-states="softResetState"
 								:disabled="anyControllerActionBusy"
 								@run="
 									emit('action', device, {
@@ -246,9 +247,9 @@
 									{
 										label: 'Reset',
 										busyLabel: 'Resetting…',
+										state: btnState('factory-reset'),
 									},
 								]"
-								:action-states="factoryResetState"
 								:disabled="anyControllerActionBusy"
 								tone="danger"
 								@run="
@@ -377,7 +378,6 @@ import useBaseStore from '@/stores/base'
 import { buildValueGroups } from '@/lib/valueGroups.ts'
 import type { Device, DeviceAction } from '@/lib/dashboard-types'
 import {
-	actionPendingKey,
 	DeviceActionStatusKey,
 	type ActionStatus,
 } from '@/lib/deviceActionPending.ts'
@@ -402,32 +402,31 @@ const status = inject(
 	shallowRef<ReadonlyMap<string, ActionStatus>>(new Map()),
 )
 
-function btnState(actionType: DeviceAction['type']): BtnState {
-	const key = actionPendingKey(props.device, {
-		type: actionType,
-	} as DeviceAction)
-	if (!key) return 'idle'
+type ControllerDebugAction =
+	| 'backup-nvm'
+	| 'restore-nvm'
+	| 'shutdown'
+	| 'soft-reset'
+	| 'factory-reset'
+
+function btnState(actionType: ControllerDebugAction): BtnState {
+	const key = `${props.device.nodeId}:${actionType}`
 	const s = status.value.get(key)
 	if (s === 'pending') return 'busy'
 	if (s === 'ok') return 'done'
 	return 'idle'
 }
 
-const nvmStates = computed<BtnState[]>(() => [
-	btnState('backup-nvm'),
-	btnState('restore-nvm'),
-])
-
-const shutdownState = computed<BtnState[]>(() => [btnState('shutdown')])
-const softResetState = computed<BtnState[]>(() => [btnState('soft-reset')])
-const factoryResetState = computed<BtnState[]>(() => [
-	btnState('factory-reset'),
-])
+const CONTROLLER_DEBUG_ACTIONS: ControllerDebugAction[] = [
+	'backup-nvm',
+	'restore-nvm',
+	'shutdown',
+	'soft-reset',
+	'factory-reset',
+]
 
 const anyControllerActionBusy = computed(() =>
-	[nvmStates, shutdownState, softResetState, factoryResetState].some((s) =>
-		s.value.some((v) => v !== 'idle'),
-	),
+	CONTROLLER_DEBUG_ACTIONS.some((type) => btnState(type) !== 'idle'),
 )
 
 function onAction(d: Device, a: DeviceAction) {

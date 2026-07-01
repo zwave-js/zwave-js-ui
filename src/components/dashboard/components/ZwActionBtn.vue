@@ -54,6 +54,8 @@ export interface ActionDef {
 	label: string
 	busyLabel?: string
 	doneLabel?: string
+	/** When set, overrides internal timer-driven state for this action. */
+	state?: BtnState
 }
 
 export type BtnState = 'idle' | 'busy' | 'done'
@@ -64,15 +66,12 @@ const props = withDefaults(
 		description?: string
 		actions: ActionDef[]
 		tone?: 'default' | 'accent' | 'danger'
-		/** When provided, overrides internal state for each action index. */
-		actionStates?: BtnState[]
 		/** Disables all buttons regardless of state. */
 		disabled?: boolean
 	}>(),
 	{
 		description: undefined,
 		tone: 'default',
-		actionStates: undefined,
 		disabled: false,
 	},
 )
@@ -82,14 +81,13 @@ const emit = defineEmits<{ run: [index: number] }>()
 const internalStates = reactive<BtnState[]>(props.actions.map(() => 'idle'))
 
 const states = computed(() =>
-	props.actions.map((_, i) => props.actionStates?.[i] ?? internalStates[i]),
+	props.actions.map((a, i) => a.state ?? internalStates[i]),
 )
 
 function run(i: number) {
 	if (states.value[i] !== 'idle') return
 	emit('run', i)
-	// When the parent controls this button's state, skip internal timers.
-	if (props.actionStates) return
+	if (props.actions[i].state !== undefined) return
 	if (props.actions[i].busyLabel) {
 		internalStates[i] = 'busy'
 		setTimeout(() => {
