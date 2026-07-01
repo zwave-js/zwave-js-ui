@@ -2,6 +2,7 @@
 
 import { CommandClasses, type ValueID } from '@zwave-js/core'
 import { DoorLockMode } from '@zwave-js/cc'
+import type { ControllerStatistics } from 'zwave-js'
 import type { ZUINode, ZUIValueId } from '../../api/lib/ZwaveClient.ts'
 import { inferArchetype } from './archetypes.ts'
 import { relativeTime } from './time.ts'
@@ -381,19 +382,7 @@ function projectActivities(
 
 function projectCommStats(node: ZUINode): CommStats | undefined {
 	if (!node.isControllerNode) return undefined
-	const s = node.statistics as
-		| {
-				CAN?: number
-				NAK?: number
-				timeoutACK?: number
-				timeoutResponse?: number
-				timeoutCallback?: number
-				messagesTX?: number
-				messagesRX?: number
-				messagesDroppedTX?: number
-				messagesDroppedRX?: number
-		  }
-		| undefined
+	const s = node.statistics as ControllerStatistics | undefined
 	if (!s) return undefined
 	return {
 		can: s.CAN ?? 0,

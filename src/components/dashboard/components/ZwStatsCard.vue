@@ -76,6 +76,7 @@ function formatValue(item: StatsItem) {
 	font-family: var(--zw-mono);
 	font-size: 10px;
 	color: var(--zw-muted);
+	min-width: 0;
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
