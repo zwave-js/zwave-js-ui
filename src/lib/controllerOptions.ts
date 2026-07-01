@@ -2,7 +2,7 @@
 // the controller options panel renders.
 
 import type { ZUINode } from '../../api/lib/ZwaveClient.ts'
-import { regionSupportsAutoPowerlevel } from '@server/lib/shared'
+import { regionSupportsAutoPowerlevel } from '../../api/lib/shared.ts'
 
 export type ControllerOptionKind = 'enum' | 'number' | 'readonly'
 
