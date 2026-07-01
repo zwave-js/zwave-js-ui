@@ -22,7 +22,7 @@
 					'zw-ab__btn--done': states[i] === 'done',
 					'zw-ab__btn--busy': states[i] === 'busy',
 				}"
-				:disabled="states[i] !== 'idle'"
+				:disabled="disabled || states[i] !== 'idle'"
 				@click="run(i)"
 			>
 				<RefreshIcon
@@ -47,14 +47,18 @@
 </template>
 
 <script setup lang="ts">
-import { reactive } from 'vue'
+import { computed, reactive } from 'vue'
 import { CheckIcon, ICON_SIZE, RefreshIcon } from '@/lib/icons'
 
 export interface ActionDef {
 	label: string
 	busyLabel?: string
 	doneLabel?: string
+	/** When set, overrides internal timer-driven state for this action. */
+	state?: BtnState
 }
+
+export type BtnState = 'idle' | 'busy' | 'done'
 
 const props = withDefaults(
 	defineProps<{
@@ -62,30 +66,40 @@ const props = withDefaults(
 		description?: string
 		actions: ActionDef[]
 		tone?: 'default' | 'accent' | 'danger'
+		/** Disables all buttons regardless of state. */
+		disabled?: boolean
 	}>(),
-	{ description: undefined, tone: 'default' },
+	{
+		description: undefined,
+		tone: 'default',
+		disabled: false,
+	},
 )
 
 const emit = defineEmits<{ run: [index: number] }>()
 
-type BtnState = 'idle' | 'busy' | 'done'
-const states = reactive<BtnState[]>(props.actions.map(() => 'idle'))
+const internalStates = reactive<BtnState[]>(props.actions.map(() => 'idle'))
+
+const states = computed(() =>
+	props.actions.map((a, i) => a.state ?? internalStates[i]),
+)
 
 function run(i: number) {
-	if (states[i] !== 'idle') return
+	if (states.value[i] !== 'idle') return
 	emit('run', i)
+	if (props.actions[i].state !== undefined) return
 	if (props.actions[i].busyLabel) {
-		states[i] = 'busy'
+		internalStates[i] = 'busy'
 		setTimeout(() => {
-			states[i] = 'done'
+			internalStates[i] = 'done'
 			setTimeout(() => {
-				states[i] = 'idle'
+				internalStates[i] = 'idle'
 			}, 1400)
 		}, 1300)
 	} else {
-		states[i] = 'done'
+		internalStates[i] = 'done'
 		setTimeout(() => {
-			states[i] = 'idle'
+			internalStates[i] = 'idle'
 		}, 1400)
 	}
 }
@@ -182,6 +196,11 @@ function run(i: number) {
 	background: rgba(67, 160, 71, 0.12);
 	color: #2e7d32;
 	border-color: transparent;
+}
+
+.zw-ab__btn:disabled:not(.zw-ab__btn--busy):not(.zw-ab__btn--done) {
+	opacity: 0.45;
+	cursor: default;
 }
 
 .zw-ab__btn--busy {

@@ -6,6 +6,8 @@
 				v-for="(opt, i) in options"
 				:key="opt.key"
 				:option="opt"
+				:sending="isSending(opt.key)"
+				:refreshing="isRefreshing(opt.key)"
 				:class="{ 'zw-ctrl-opts__row--last': i === options.length - 1 }"
 				@change="onChange"
 				@refresh="onRefresh"
@@ -15,16 +17,26 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, inject, shallowRef } from 'vue'
 import ZwControllerOptionRow from './ZwControllerOptionRow.vue'
 import useBaseStore from '@/stores/base'
 import { buildControllerOptions } from '@/lib/controllerOptions.ts'
+import {
+	controllerPropKey,
+	DeviceActionStatusKey,
+	type ActionStatus,
+} from '@/lib/deviceActionPending.ts'
 import type { Device, DeviceAction } from '@/lib/dashboard-types'
 
 const props = defineProps<{ device: Device }>()
 const emit = defineEmits<{ action: [Device, DeviceAction] }>()
 
 const baseStore = useBaseStore()
+
+const status = inject(
+	DeviceActionStatusKey,
+	shallowRef<ReadonlyMap<string, ActionStatus>>(new Map()),
+)
 
 const options = computed(() => {
 	const zwave = (
@@ -34,6 +46,38 @@ const options = computed(() => {
 		autoPowerlevels: zwave?.rf?.autoPowerlevels ?? true,
 	})
 })
+
+const SET_KEY_MAP: Record<string, string> = {
+	rfRegion: 'rfRegion',
+	powerlevel: 'powerlevel',
+	measured0dBm: 'powerlevel',
+	maxLRPowerlevel: 'maxLRPowerlevel',
+}
+
+const REFRESH_KEY_MAP: Record<string, string> = {
+	rfRegion: 'RFRegion',
+	powerlevel: 'powerlevel',
+	measured0dBm: 'powerlevel',
+	maxLRPowerlevel: 'maxLongRangePowerlevel',
+}
+
+function isSending(key: string): boolean {
+	const prop = SET_KEY_MAP[key] ?? key
+	return (
+		status.value.get(
+			controllerPropKey(props.device.nodeId, 'set', prop),
+		) === 'pending'
+	)
+}
+
+function isRefreshing(key: string): boolean {
+	const prop = REFRESH_KEY_MAP[key] ?? key
+	return (
+		status.value.get(
+			controllerPropKey(props.device.nodeId, 'refresh', prop),
+		) === 'pending'
+	)
+}
 
 function onChange(key: string, value: unknown) {
 	if (key === 'rfRegion') {
@@ -61,15 +105,9 @@ function onChange(key: string, value: unknown) {
 }
 
 function onRefresh(key: string) {
-	const propMap: Record<string, string> = {
-		rfRegion: 'RFRegion',
-		powerlevel: 'powerlevel',
-		measured0dBm: 'powerlevel',
-		maxLRPowerlevel: 'maxLongRangePowerlevel',
-	}
 	emit('action', props.device, {
 		type: 'refresh-controller-prop',
-		prop: propMap[key] ?? key,
+		prop: REFRESH_KEY_MAP[key] ?? key,
 	})
 }
 </script>

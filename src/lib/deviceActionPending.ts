@@ -28,6 +28,14 @@ export function ccPendingKey(nodeId: number, cc: number): string {
 	return `${nodeId}:cc:${cc}`
 }
 
+export function controllerPropKey(
+	nodeId: number,
+	op: string,
+	prop: string,
+): string {
+	return `${nodeId}:${op}:ctrl:${prop}`
+}
+
 export function actionPendingKey(
 	device: Device,
 	action: DeviceAction,
@@ -39,6 +47,24 @@ export function actionPendingKey(
 			return pollPendingKey(device.nodeId, action.valueId)
 		case 'refresh-cc':
 			return ccPendingKey(device.nodeId, action.commandClass)
+		case 'set-rf-region':
+			return controllerPropKey(device.nodeId, 'set', 'rfRegion')
+		case 'set-powerlevel':
+			return controllerPropKey(device.nodeId, 'set', 'powerlevel')
+		case 'set-max-lr-powerlevel':
+			return controllerPropKey(device.nodeId, 'set', 'maxLRPowerlevel')
+		case 'refresh-controller-prop':
+			return controllerPropKey(device.nodeId, 'refresh', action.prop)
+		case 'backup-nvm':
+			return `${device.nodeId}:backup-nvm`
+		case 'restore-nvm':
+			return `${device.nodeId}:restore-nvm`
+		case 'factory-reset':
+			return `${device.nodeId}:factory-reset`
+		case 'soft-reset':
+			return `${device.nodeId}:soft-reset`
+		case 'shutdown':
+			return `${device.nodeId}:shutdown`
 		default:
 			return null
 	}
