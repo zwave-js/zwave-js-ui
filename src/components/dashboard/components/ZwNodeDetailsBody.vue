@@ -86,6 +86,11 @@
 					<ZwPropTable title="Device" :rows="deviceRows" />
 					<ZwPropTable title="Firmware" :rows="fwRows" />
 					<ZwSecurityPanel :device="device" />
+					<ZwControllerOptionsPanel
+						v-if="device.isController"
+						:device="device"
+						@action="onAction"
+					/>
 				</Tabs.Panel>
 
 				<Tabs.Panel value="associations" class="zw-nd__content">
@@ -204,6 +209,7 @@ import ZwAssociationsTab from './ZwAssociationsTab.vue'
 import ZwUpdatesTab from './ZwUpdatesTab.vue'
 import ZwNodeEvents from './ZwNodeEvents.vue'
 import ZwValuesView from './ZwValuesView.vue'
+import ZwControllerOptionsPanel from './ZwControllerOptionsPanel.vue'
 import {
 	DownloadIcon,
 	ICON_SIZE,
