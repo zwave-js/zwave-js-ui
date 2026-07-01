@@ -9,7 +9,7 @@
 			class="zw-nd__rail"
 			:style="{ width: railWidth + 'px' }"
 		>
-			<div class="zw-nd__rail-primary">
+			<div v-if="!device.isController" class="zw-nd__rail-primary">
 				<span class="zw-nd__overline">PRIMARY</span>
 				<div class="zw-nd__primary">
 					<ZwPrimaryDisplay :device="device" @action="onAction" />
@@ -35,7 +35,9 @@
 		<!-- ── Stacked header: full-width above the tabs (drawer / mobile) ── -->
 		<header v-else class="zw-nd__header">
 			<div class="zw-nd__header-top">
-				<span class="zw-nd__overline">PRIMARY</span>
+				<span v-if="!device.isController" class="zw-nd__overline"
+					>PRIMARY</span
+				>
 				<span class="zw-nd__status">
 					<ZwStatusDot :status="dotStatus" />
 					<span class="zw-nd__status-label">{{ statusLabel }}</span>
@@ -45,7 +47,7 @@
 					>
 				</span>
 			</div>
-			<div class="zw-nd__primary">
+			<div v-if="!device.isController" class="zw-nd__primary">
 				<ZwPrimaryDisplay :device="device" @action="onAction" />
 			</div>
 		</header>
@@ -74,10 +76,7 @@
 				</Tabs.List>
 
 				<Tabs.Panel value="values" class="zw-nd__content">
-					<div v-if="device.isController" class="zw-nd__empty">
-						Controller exposes no command-class values.
-					</div>
-					<ZwValuesView v-else :device="device" @action="onAction" />
+					<ZwValuesView :device="device" @action="onAction" />
 				</Tabs.Panel>
 
 				<Tabs.Panel
@@ -186,22 +185,6 @@
 						</ZwActionBtn>
 					</ZwActionList>
 				</Tabs.Panel>
-
-				<Tabs.Panel
-					v-if="device.isController"
-					value="advanced"
-					class="zw-nd__content zw-nd__advanced"
-				>
-					<ZwButton
-						v-for="cmd in advancedCommands"
-						:key="cmd.label"
-						variant="mono-outline"
-						size="sm"
-						@click="emit('action', device, cmd.action)"
-					>
-						{{ cmd.label }}
-					</ZwButton>
-				</Tabs.Panel>
 			</Tabs.Root>
 		</div>
 	</div>
@@ -211,7 +194,6 @@
 import { ref, computed, watch } from 'vue'
 import { Tabs } from '@vuetify/v0'
 import ZwStatusDot from '@/components/dashboard/atoms/ZwStatusDot.vue'
-import ZwButton from '@/components/dashboard/atoms/ZwButton.vue'
 import ZwPrimaryDisplay from './ZwPrimaryDisplay.vue'
 import ZwPropTable from './ZwPropTable.vue'
 import ZwSecurityPanel from './ZwSecurityPanel.vue'
@@ -235,6 +217,8 @@ import {
 	RAIL_WIDTH_SPACIOUS,
 	TWO_PANE_BREAKPOINT,
 } from '@/lib/dashboard-breakpoints'
+import useBaseStore from '@/stores/base'
+import { buildValueGroups } from '@/lib/valueGroups.ts'
 import type { Device, DeviceAction } from '@/lib/dashboard-types'
 
 // `viewport` is the host panel's width. `layout="stacked"` forces
@@ -249,6 +233,8 @@ const props = withDefaults(
 )
 const emit = defineEmits<{ action: [Device, DeviceAction] }>()
 
+const baseStore = useBaseStore()
+
 function onAction(d: Device, a: DeviceAction) {
 	emit('action', d, a)
 }
@@ -260,9 +246,13 @@ type TabId =
 	| 'updates'
 	| 'events'
 	| 'debug'
-	| 'advanced'
 
-const BASE_TABS: { id: TabId; label: string }[] = [
+interface TabEntry {
+	id: TabId
+	label: string
+}
+
+const NODE_TABS: TabEntry[] = [
 	{ id: 'values', label: 'Values' },
 	{ id: 'summary', label: 'Summary' },
 	{ id: 'associations', label: 'Associations' },
@@ -271,10 +261,29 @@ const BASE_TABS: { id: TabId; label: string }[] = [
 	{ id: 'debug', label: 'Debug' },
 ]
 
-const ALL_TABS = computed(() =>
+const CONTROLLER_BASE_TABS: TabEntry[] = [
+	{ id: 'summary', label: 'Overview' },
+	{ id: 'values', label: 'Values' },
+	{ id: 'associations', label: 'Associations' },
+	{ id: 'updates', label: 'Updates' },
+	{ id: 'events', label: 'Events' },
+	{ id: 'debug', label: 'Debug' },
+]
+
+const controllerHasValues = computed(() =>
 	props.device.isController
-		? [...BASE_TABS, { id: 'advanced' as TabId, label: 'Advanced' }]
-		: BASE_TABS,
+		? buildValueGroups(baseStore.getNode(props.device.nodeId)).length > 0
+		: true,
+)
+
+const controllerTabs = computed(() =>
+	controllerHasValues.value
+		? CONTROLLER_BASE_TABS
+		: CONTROLLER_BASE_TABS.filter((t) => t.id !== 'values'),
+)
+
+const ALL_TABS = computed(() =>
+	props.device.isController ? controllerTabs.value : NODE_TABS,
 )
 
 // Two-pane on wider panels; stacked in the drawer and on narrow screens.
@@ -357,17 +366,6 @@ const messageStats = computed<StatsItem[]>(() => {
 		{ label: 'Dropped RX', value: s?.messagesDroppedRX ?? 0 },
 	]
 })
-
-const advancedCommands: { label: string; action: DeviceAction }[] = [
-	{ label: 'Heal', action: { type: 'heal' } },
-	{ label: 'Backup NVM', action: { type: 'backup-nvm' } },
-	{ label: 'Restore NVM', action: { type: 'restore-nvm' } },
-	{ label: 'Reset stats', action: { type: 'reset-stats' } },
-	{ label: 'Export JSON', action: { type: 'export-json' } },
-	{ label: 'Update topics', action: { type: 'update-topics' } },
-	{ label: 'Hard reset', action: { type: 'hard-reset' } },
-	{ label: 'Restart driver', action: { type: 'restart-driver' } },
-]
 </script>
 
 <style>
@@ -571,12 +569,6 @@ const advancedCommands: { label: string; action: DeviceAction }[] = [
 	color: var(--zw-muted);
 	text-align: center;
 	font-style: italic;
-}
-
-.zw-nd__advanced {
-	display: grid;
-	grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-	gap: 8px;
 }
 
 .zw-nd__stats {

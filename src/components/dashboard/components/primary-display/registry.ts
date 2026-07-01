@@ -12,7 +12,6 @@
 import type { Component } from 'vue'
 import type { PrimaryValueType } from '@/lib/dashboard-types'
 
-import Controller from './ZwPrimaryController.vue'
 import Toggle from './ZwPrimaryToggle.vue'
 import Dim from './ZwPrimaryDim.vue'
 import Lock from './ZwPrimaryLock.vue'
@@ -20,10 +19,9 @@ import Reading from './ZwPrimaryReading.vue'
 import State from './ZwPrimaryState.vue'
 import Thermostat from './ZwPrimaryThermostat.vue'
 
-export type PrimaryKey = PrimaryValueType | 'controller'
+export type PrimaryKey = PrimaryValueType
 
 export const PRIMARY_RENDERERS: Record<PrimaryKey, Component> = {
-	controller: Controller,
 	toggle: Toggle,
 	dim: Dim,
 	lock: Lock,

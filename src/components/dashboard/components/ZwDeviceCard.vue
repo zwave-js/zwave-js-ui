@@ -25,6 +25,7 @@
 
 		<div class="zw-card__body">
 			<ZwPrimaryDisplay
+				v-if="!device.isController"
 				:device="device"
 				@action="(d, a) => emit('action', d, a)"
 			/>
