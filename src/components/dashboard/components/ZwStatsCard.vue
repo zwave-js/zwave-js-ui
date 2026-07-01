@@ -1,10 +1,27 @@
 <template>
-	<section class="zw-sc">
+	<section class="zw-sc" :class="{ 'zw-sc--ledger': layout === 'ledger' }">
 		<div class="zw-sc__header">
 			<span class="zw-sc__title">{{ title }}</span>
 			<span v-if="hint" class="zw-sc__hint">{{ hint }}</span>
 		</div>
+		<div v-if="layout === 'ledger'" class="zw-sc__ledger">
+			<div
+				v-for="(item, i) in items"
+				:key="item.label"
+				class="zw-sc__row"
+				:class="{ 'zw-sc__row--first': i === 0 }"
+			>
+				<span class="zw-sc__row-label">{{ item.label }}</span>
+				<span
+					class="zw-sc__row-value"
+					:class="{ 'zw-sc__row-value--muted': isMuted(item) }"
+				>
+					{{ formatValue(item) }}
+				</span>
+			</div>
+		</div>
 		<div
+			v-else
 			class="zw-sc__body"
 			:style="{
 				gridTemplateColumns: `repeat(auto-fit, minmax(${minCellWidth}px, 1fr))`,
@@ -34,9 +51,10 @@ withDefaults(
 		title: string
 		hint?: string
 		items: StatsItem[]
+		layout?: 'grid' | 'ledger'
 		minCellWidth?: number
 	}>(),
-	{ minCellWidth: 96 },
+	{ layout: 'grid', minCellWidth: 96 },
 )
 
 function isMuted(item: StatsItem) {
@@ -57,6 +75,9 @@ function formatValue(item: StatsItem) {
 	border: 1px solid var(--zw-line);
 	border-radius: 6px;
 	overflow: hidden;
+}
+
+.zw-sc:not(.zw-sc--ledger) {
 	padding-bottom: 8px;
 }
 
@@ -86,6 +107,7 @@ function formatValue(item: StatsItem) {
 	white-space: nowrap;
 }
 
+/* ── Grid layout (default) ── */
 .zw-sc__body {
 	display: grid;
 	gap: 1px;
@@ -117,6 +139,43 @@ function formatValue(item: StatsItem) {
 }
 
 .zw-sc__value--muted {
+	color: var(--zw-muted);
+}
+
+/* ── Ledger layout ── */
+.zw-sc__ledger {
+	display: flex;
+	flex-direction: column;
+}
+
+.zw-sc__row {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	padding: 7px 12px;
+	border-top: 1px solid var(--zw-line);
+}
+
+.zw-sc__row--first {
+	border-top: none;
+}
+
+.zw-sc__row-label {
+	font-family: var(--zw-mono);
+	font-size: 11px;
+	color: var(--zw-muted);
+}
+
+.zw-sc__row-value {
+	font-family: var(--zw-mono);
+	font-size: 14px;
+	font-weight: 500;
+	color: var(--zw-fg);
+	font-variant-numeric: tabular-nums;
+}
+
+.zw-sc__row-value--muted {
 	color: var(--zw-muted);
 }
 </style>

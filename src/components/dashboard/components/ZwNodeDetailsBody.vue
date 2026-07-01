@@ -94,11 +94,13 @@
 							<ZwStatsCard
 								title="Communication"
 								hint="Serial link errors"
+								layout="ledger"
 								:items="commStats"
 							/>
 							<ZwStatsCard
 								title="Messages"
 								hint="Frames since driver start"
+								layout="ledger"
 								:items="messageStats"
 							/>
 						</div>
