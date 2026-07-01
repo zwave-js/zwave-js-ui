@@ -188,6 +188,7 @@
 				</Tabs.Panel>
 
 				<Tabs.Panel
+					v-if="device.isController"
 					value="advanced"
 					class="zw-nd__content zw-nd__advanced"
 				>
@@ -261,15 +262,20 @@ type TabId =
 	| 'debug'
 	| 'advanced'
 
-const ALL_TABS: { id: TabId; label: string }[] = [
+const BASE_TABS: { id: TabId; label: string }[] = [
 	{ id: 'values', label: 'Values' },
 	{ id: 'summary', label: 'Summary' },
 	{ id: 'associations', label: 'Associations' },
 	{ id: 'updates', label: 'Updates' },
 	{ id: 'events', label: 'Events' },
 	{ id: 'debug', label: 'Debug' },
-	{ id: 'advanced', label: 'Advanced' },
 ]
+
+const ALL_TABS = computed(() =>
+	props.device.isController
+		? [...BASE_TABS, { id: 'advanced' as TabId, label: 'Advanced' }]
+		: BASE_TABS,
+)
 
 // Two-pane on wider panels; stacked in the drawer and on narrow screens.
 const mode = computed<'split' | 'stacked'>(() =>
@@ -283,8 +289,8 @@ const mode = computed<'split' | 'stacked'>(() =>
 // In split mode the Events tab is dropped — its content lives in the rail.
 const tabs = computed(() =>
 	mode.value === 'split'
-		? ALL_TABS.filter((t) => t.id !== 'events')
-		: ALL_TABS,
+		? ALL_TABS.value.filter((t) => t.id !== 'events')
+		: ALL_TABS.value,
 )
 
 const railWidth = computed(() =>
@@ -352,36 +358,16 @@ const messageStats = computed<StatsItem[]>(() => {
 	]
 })
 
-const advancedCommands = computed<{ label: string; action: DeviceAction }[]>(
-	() =>
-		props.device.isController
-			? [
-					{ label: 'Heal', action: { type: 'heal' } },
-					{ label: 'Backup NVM', action: { type: 'backup-nvm' } },
-					{ label: 'Restore NVM', action: { type: 'restore-nvm' } },
-					{ label: 'Reset stats', action: { type: 'reset-stats' } },
-					{ label: 'Export JSON', action: { type: 'export-json' } },
-					{
-						label: 'Update topics',
-						action: { type: 'update-topics' },
-					},
-					{ label: 'Hard reset', action: { type: 'hard-reset' } },
-					{
-						label: 'Restart driver',
-						action: { type: 'restart-driver' },
-					},
-				]
-			: [
-					{ label: 'Interview', action: { type: 'interview' } },
-					{ label: 'Refresh', action: { type: 'refresh' } },
-					{ label: 'Rebuild', action: { type: 'rebuild' } },
-					{ label: 'Replace', action: { type: 'replace-failed' } },
-					{ label: 'Remove', action: { type: 'remove' } },
-					{ label: 'Ping', action: { type: 'ping' } },
-					{ label: 'Export', action: { type: 'export' } },
-					{ label: 'Clear', action: { type: 'clear' } },
-				],
-)
+const advancedCommands: { label: string; action: DeviceAction }[] = [
+	{ label: 'Heal', action: { type: 'heal' } },
+	{ label: 'Backup NVM', action: { type: 'backup-nvm' } },
+	{ label: 'Restore NVM', action: { type: 'restore-nvm' } },
+	{ label: 'Reset stats', action: { type: 'reset-stats' } },
+	{ label: 'Export JSON', action: { type: 'export-json' } },
+	{ label: 'Update topics', action: { type: 'update-topics' } },
+	{ label: 'Hard reset', action: { type: 'hard-reset' } },
+	{ label: 'Restart driver', action: { type: 'restart-driver' } },
+]
 </script>
 
 <style>
