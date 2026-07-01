@@ -55,6 +55,16 @@ export function actionPendingKey(
 			return controllerPropKey(device.nodeId, 'set', 'maxLRPowerlevel')
 		case 'refresh-controller-prop':
 			return controllerPropKey(device.nodeId, 'refresh', action.prop)
+		case 'backup-nvm':
+			return `${device.nodeId}:backup-nvm`
+		case 'restore-nvm':
+			return `${device.nodeId}:restore-nvm`
+		case 'factory-reset':
+			return `${device.nodeId}:factory-reset`
+		case 'soft-reset':
+			return `${device.nodeId}:soft-reset`
+		case 'shutdown':
+			return `${device.nodeId}:shutdown`
 		default:
 			return null
 	}

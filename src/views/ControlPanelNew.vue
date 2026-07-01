@@ -64,19 +64,29 @@ function setStatus(key: string, value: ActionStatus) {
 	status.value = next
 }
 
-function completeAction(key: string, ok: boolean) {
+const DONE_VISIBLE_MS = 1400
+
+function completeAction(key: string, ok: boolean, delayMs = 0) {
 	setStatus(key, ok ? 'ok' : 'fail')
-	// Delete after one tick so pre-flush watchers can read the outcome.
-	nextTick(() => {
+	const clear = () => {
 		const next = new Map(status.value)
 		next.delete(key)
 		status.value = next
-	})
+	}
+	if (delayMs > 0) {
+		setTimeout(clear, delayMs)
+	} else {
+		// Delete after one tick so pre-flush watchers can read the outcome.
+		nextTick(clear)
+	}
 }
 
-function downloadJson(data: unknown, filename: string) {
-	const json = JSON.stringify(data, null, 2)
-	const blob = new Blob([json], { type: 'text/plain' })
+function downloadFile(
+	data: string | ArrayBuffer | Uint8Array,
+	filename: string,
+	type = 'text/plain',
+) {
+	const blob = new Blob([data], { type })
 	const a = document.createElement('a')
 	a.href = URL.createObjectURL(blob)
 	a.download = filename
@@ -84,6 +94,10 @@ function downloadJson(data: unknown, filename: string) {
 	a.click()
 	document.body.removeChild(a)
 	URL.revokeObjectURL(a.href)
+}
+
+function downloadJson(data: unknown, filename: string) {
+	downloadFile(JSON.stringify(data, null, 2), filename)
 }
 
 async function onAction(device: Device, action: DeviceAction) {
@@ -115,40 +129,34 @@ async function onAction(device: Device, action: DeviceAction) {
 		)
 		return
 	}
-	if (action.type === 'factory-reset') {
+	if (action.type === 'backup-nvm') {
 		const app = appInstance()
 		if (!app) return
-		const result = await app.confirm(
-			'Hard Reset',
-			'Your controller will be reset to factory and all paired devices will be removed',
+		const confirmed = await app.confirm(
+			'NVM Backup',
+			'While doing the backup the Z-Wave radio will be turned on/off',
 			'alert',
-			{
-				confirmText: 'Ok',
-				inputs: [
-					{
-						type: 'text',
-						label: 'Confirm',
-						required: true,
-						key: 'confirm',
-						hint: 'Type "yes" and press OK to confirm',
-					},
-				],
-			},
+			{ confirmText: 'Ok' },
 		)
-		if (!result || typeof result !== 'object' || result.confirm !== 'yes') {
-			return
-		}
+		if (!confirmed) return
 		const key = actionPendingKey(device, action)
 		if (key) setStatus(key, 'pending')
 		let ok = false
 		try {
-			const response = await app.apiRequest('hardReset', [], {
+			const response = await app.apiRequest('backupNVMRaw', [], {
 				infoSnack: false,
 				errorSnack: true,
 			})
 			ok = response.success
+			if (ok && response.result) {
+				const r = response.result as {
+					data: ArrayBuffer | Uint8Array
+					fileName: string
+				}
+				downloadFile(r.data, r.fileName, 'application/octet-stream')
+			}
 		} finally {
-			if (key) completeAction(key, ok)
+			if (key) completeAction(key, ok, DONE_VISIBLE_MS)
 		}
 		return
 	}
@@ -196,7 +204,94 @@ async function onAction(device: Device, action: DeviceAction) {
 			)
 			ok = response.success
 		} finally {
-			if (key) completeAction(key, ok)
+			if (key) completeAction(key, ok, DONE_VISIBLE_MS)
+		}
+		return
+	}
+	if (action.type === 'factory-reset') {
+		const app = appInstance()
+		if (!app) return
+		const result = await app.confirm(
+			'Hard Reset',
+			'Your controller will be reset to factory and all paired devices will be removed',
+			'alert',
+			{
+				confirmText: 'Ok',
+				inputs: [
+					{
+						type: 'text',
+						label: 'Confirm',
+						required: true,
+						key: 'confirm',
+						hint: 'Type "yes" and press OK to confirm',
+					},
+				],
+			},
+		)
+		if (!result || typeof result !== 'object' || result.confirm !== 'yes') {
+			return
+		}
+		const key = actionPendingKey(device, action)
+		if (key) setStatus(key, 'pending')
+		let ok = false
+		try {
+			const response = await app.apiRequest('hardReset', [], {
+				infoSnack: false,
+				errorSnack: true,
+			})
+			ok = response.success
+		} finally {
+			if (key) completeAction(key, ok, DONE_VISIBLE_MS)
+		}
+		return
+	}
+	if (action.type === 'soft-reset') {
+		const app = appInstance()
+		if (!app) return
+		const confirmed = await app.confirm(
+			'Info',
+			`<p>Are you sure you want to soft-reset your controller?</p>
+			<p>USB modules will reconnect, meaning that they might get a new address. Make sure to configure your device address in a way that prevents it from changing, e.g. by using <code>/dev/serial/by-id/...</code> on Linux.</p>
+			<p><strong>This method may cause problems in Docker containers with certain Z-Wave stick.</strong> If that happens, you may need to restart your host OS and docker container.</p>`,
+			'info',
+			{ confirmText: 'ok', cancelText: 'cancel', width: 900 },
+		)
+		if (!confirmed) return
+		const key = actionPendingKey(device, action)
+		if (key) setStatus(key, 'pending')
+		let ok = false
+		try {
+			const response = await app.apiRequest('softReset', [], {
+				infoSnack: false,
+				errorSnack: true,
+			})
+			ok = response.success
+		} finally {
+			if (key) completeAction(key, ok, DONE_VISIBLE_MS)
+		}
+		return
+	}
+	if (action.type === 'shutdown') {
+		const app = appInstance()
+		if (!app) return
+		const confirmed = await app.confirm(
+			'Info',
+			'Are you sure you want to shutdown the Zwave API? You will have to unplug and replug the Zwave stick manually to restart it.',
+			'warning',
+			{ confirmText: 'ok', cancelText: 'cancel' },
+		)
+		if (!confirmed) return
+		const key = actionPendingKey(device, action)
+		if (key) setStatus(key, 'pending')
+		let ok = false
+		try {
+			const response = await app.apiRequest('shutdownZwaveAPI', [], {
+				infoSnack: false,
+				errorSnack: true,
+			})
+			ok = response.success
+		} finally {
+			if (key) completeAction(key, ok, DONE_VISIBLE_MS)
 		}
 		return
 	}

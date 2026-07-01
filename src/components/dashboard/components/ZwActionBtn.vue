@@ -47,7 +47,7 @@
 </template>
 
 <script setup lang="ts">
-import { reactive } from 'vue'
+import { computed, reactive } from 'vue'
 import { CheckIcon, ICON_SIZE, RefreshIcon } from '@/lib/icons'
 
 export interface ActionDef {
@@ -56,36 +56,45 @@ export interface ActionDef {
 	doneLabel?: string
 }
 
+export type BtnState = 'idle' | 'busy' | 'done'
+
 const props = withDefaults(
 	defineProps<{
 		title: string
 		description?: string
 		actions: ActionDef[]
 		tone?: 'default' | 'accent' | 'danger'
+		/** When provided, overrides internal state for each action index. */
+		actionStates?: BtnState[]
 	}>(),
-	{ description: undefined, tone: 'default' },
+	{ description: undefined, tone: 'default', actionStates: undefined },
 )
 
 const emit = defineEmits<{ run: [index: number] }>()
 
-type BtnState = 'idle' | 'busy' | 'done'
-const states = reactive<BtnState[]>(props.actions.map(() => 'idle'))
+const internalStates = reactive<BtnState[]>(props.actions.map(() => 'idle'))
+
+const states = computed(() =>
+	props.actions.map((_, i) => props.actionStates?.[i] ?? internalStates[i]),
+)
 
 function run(i: number) {
-	if (states[i] !== 'idle') return
+	if (states.value[i] !== 'idle') return
 	emit('run', i)
+	// When the parent controls this button's state, skip internal timers.
+	if (props.actionStates) return
 	if (props.actions[i].busyLabel) {
-		states[i] = 'busy'
+		internalStates[i] = 'busy'
 		setTimeout(() => {
-			states[i] = 'done'
+			internalStates[i] = 'done'
 			setTimeout(() => {
-				states[i] = 'idle'
+				internalStates[i] = 'idle'
 			}, 1400)
 		}, 1300)
 	} else {
-		states[i] = 'done'
+		internalStates[i] = 'done'
 		setTimeout(() => {
-			states[i] = 'idle'
+			internalStates[i] = 'idle'
 		}, 1400)
 	}
 }

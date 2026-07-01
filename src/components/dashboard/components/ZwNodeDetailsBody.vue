@@ -178,6 +178,7 @@
 										doneLabel: 'Done',
 									},
 								]"
+								:action-states="nvmStates"
 								@run="
 									(i: number) =>
 										emit('action', device, {
@@ -203,6 +204,7 @@
 										busyLabel: 'Shutting down…',
 									},
 								]"
+								:action-states="shutdownState"
 								tone="accent"
 								@run="
 									emit('action', device, { type: 'shutdown' })
@@ -222,6 +224,7 @@
 										doneLabel: 'Done',
 									},
 								]"
+								:action-states="softResetState"
 								@run="
 									emit('action', device, {
 										type: 'soft-reset',
@@ -241,6 +244,7 @@
 										busyLabel: 'Resetting…',
 									},
 								]"
+								:action-states="factoryResetState"
 								tone="danger"
 								@run="
 									emit('action', device, {
@@ -333,7 +337,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed, inject, shallowRef, watch } from 'vue'
 import { Tabs } from '@vuetify/v0'
 import ZwStatusDot from '@/components/dashboard/atoms/ZwStatusDot.vue'
 import ZwPrimaryDisplay from './ZwPrimaryDisplay.vue'
@@ -367,6 +371,12 @@ import {
 import useBaseStore from '@/stores/base'
 import { buildValueGroups } from '@/lib/valueGroups.ts'
 import type { Device, DeviceAction } from '@/lib/dashboard-types'
+import {
+	actionPendingKey,
+	DeviceActionStatusKey,
+	type ActionStatus,
+} from '@/lib/deviceActionPending.ts'
+import type { BtnState } from './ZwActionBtn.vue'
 
 // `viewport` is the host panel's width. `layout="stacked"` forces
 // single-column regardless of width (used by the card-view drawer).
@@ -381,6 +391,33 @@ const props = withDefaults(
 const emit = defineEmits<{ action: [Device, DeviceAction] }>()
 
 const baseStore = useBaseStore()
+
+const status = inject(
+	DeviceActionStatusKey,
+	shallowRef<ReadonlyMap<string, ActionStatus>>(new Map()),
+)
+
+function btnState(actionType: DeviceAction['type']): BtnState {
+	const key = actionPendingKey(props.device, {
+		type: actionType,
+	} as DeviceAction)
+	if (!key) return 'idle'
+	const s = status.value.get(key)
+	if (s === 'pending') return 'busy'
+	if (s === 'ok') return 'done'
+	return 'idle'
+}
+
+const nvmStates = computed<BtnState[]>(() => [
+	btnState('backup-nvm'),
+	btnState('restore-nvm'),
+])
+
+const shutdownState = computed<BtnState[]>(() => [btnState('shutdown')])
+const softResetState = computed<BtnState[]>(() => [btnState('soft-reset')])
+const factoryResetState = computed<BtnState[]>(() => [
+	btnState('factory-reset'),
+])
 
 function onAction(d: Device, a: DeviceAction) {
 	emit('action', d, a)
