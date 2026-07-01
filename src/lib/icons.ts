@@ -26,6 +26,7 @@ export {
 	DoorClosed as ContactIcon,
 	Download as DownloadIcon,
 	Droplet as LeakIcon,
+	HardDrive as DatabaseIcon,
 	Filter as FilterIcon,
 	House as LocationsIcon,
 	LayoutGrid as GridIcon,

@@ -102,6 +102,14 @@ export const ACTION_DISPATCHERS: {
 		api: 'removeNodeFromAllAssociations',
 		args: [d.nodeId],
 	}),
+	'set-rf-region': (_d, a) => ({ api: 'setRFRegion', args: [a.region] }),
+	'set-powerlevel': (_d, a) => ({
+		api: 'setPowerlevel',
+		args: [a.powerlevel, a.measured0dBm],
+	}),
+	shutdown: () => ({ api: 'shutdownZwaveAPI', args: [] }),
+	'soft-reset': () => ({ api: 'softReset', args: [] }),
+	'factory-reset': () => ({ api: 'hardReset', args: [] }),
 }
 
 export function dispatchAction(

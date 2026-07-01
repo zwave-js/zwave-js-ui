@@ -234,3 +234,8 @@ export type DeviceAction =
 	| { type: 'check-firmware-updates' }
 	| { type: 'firmware-install'; update: FirmwareUpdateInfo }
 	| { type: 'firmware-upload'; file: File }
+	| { type: 'set-rf-region'; region: number }
+	| { type: 'set-powerlevel'; powerlevel: number; measured0dBm: number }
+	| { type: 'shutdown' }
+	| { type: 'soft-reset' }
+	| { type: 'factory-reset' }
