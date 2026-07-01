@@ -17,7 +17,7 @@
 			</div>
 		</div>
 
-		<ZwActionList>
+		<ZwActionList v-if="!device.isController">
 			<ZwActionBtn
 				title="Clear all associations"
 				description="Remove every target from this node's association groups."
