@@ -81,16 +81,39 @@
 
 				<Tabs.Panel
 					value="summary"
-					class="zw-nd__content zw-nd__summary"
+					class="zw-nd__content"
+					:class="
+						device.isController
+							? 'zw-nd__overview'
+							: 'zw-nd__summary'
+					"
 				>
-					<ZwPropTable title="Device" :rows="deviceRows" />
-					<ZwPropTable title="Firmware" :rows="fwRows" />
-					<ZwSecurityPanel :device="device" />
-					<ZwControllerOptionsPanel
-						v-if="device.isController"
-						:device="device"
-						@action="onAction"
-					/>
+					<template v-if="device.isController">
+						<span class="zw-nd__section-label">Statistics</span>
+						<div class="zw-nd__stats">
+							<ZwStatsCard
+								title="Communication"
+								hint="Serial link errors"
+								:items="commStats"
+							/>
+							<ZwStatsCard
+								title="Messages"
+								hint="Frames since driver start"
+								:items="messageStats"
+							/>
+						</div>
+						<ZwControllerOptionsPanel
+							:device="device"
+							@action="onAction"
+						/>
+						<span class="zw-nd__section-label">Firmware</span>
+						<ZwPropTable :rows="fwRows" />
+					</template>
+					<template v-else>
+						<ZwPropTable title="Device" :rows="deviceRows" />
+						<ZwPropTable title="Firmware" :rows="fwRows" />
+						<ZwSecurityPanel :device="device" />
+					</template>
 				</Tabs.Panel>
 
 				<Tabs.Panel value="associations" class="zw-nd__content">
@@ -112,11 +135,125 @@
 					<ZwNodeEvents :device="device" />
 				</Tabs.Panel>
 
-				<Tabs.Panel value="debug" class="zw-nd__content">
-					<div v-if="device.isController" class="zw-nd__stats">
-						<ZwStatsCard title="Communication" :items="commStats" />
-						<ZwStatsCard title="Messages" :items="messageStats" />
-					</div>
+				<Tabs.Panel
+					value="debug"
+					class="zw-nd__content"
+					:class="{ 'zw-nd__debug': device.isController }"
+				>
+					<template v-if="device.isController">
+						<ZwActionList>
+							<ZwActionBtn
+								title="Export controller JSON"
+								description="Download the controller's definition for backup or diagnostics."
+								:actions="[
+									{ label: 'UI', doneLabel: 'Saved' },
+									{ label: 'Driver', doneLabel: 'Saved' },
+								]"
+								@run="
+									(i: number) =>
+										emit('action', device, {
+											type:
+												i === 0
+													? 'export-ui'
+													: 'export-json',
+										})
+								"
+							>
+								<template #icon
+									><DownloadIcon :size="ICON_SIZE.std"
+								/></template>
+							</ZwActionBtn>
+							<ZwActionBtn
+								title="NVM Backup / Restore"
+								description="Back up or restore the controller's non-volatile memory."
+								:actions="[
+									{
+										label: 'Backup',
+										busyLabel: 'Backing up…',
+										doneLabel: 'Done',
+									},
+									{
+										label: 'Restore',
+										busyLabel: 'Restoring…',
+										doneLabel: 'Done',
+									},
+								]"
+								@run="
+									(i: number) =>
+										emit('action', device, {
+											type:
+												i === 0
+													? 'backup-nvm'
+													: 'restore-nvm',
+										})
+								"
+							>
+								<template #icon
+									><DatabaseIcon :size="ICON_SIZE.std"
+								/></template>
+							</ZwActionBtn>
+						</ZwActionList>
+						<ZwActionList>
+							<ZwActionBtn
+								title="Shutdown"
+								description="Safely shut down the Z-Wave API so the stick can be unplugged."
+								:actions="[
+									{
+										label: 'Shutdown',
+										busyLabel: 'Shutting down…',
+									},
+								]"
+								tone="accent"
+								@run="
+									emit('action', device, { type: 'shutdown' })
+								"
+							>
+								<template #icon
+									><PowerIcon :size="ICON_SIZE.std"
+								/></template>
+							</ZwActionBtn>
+							<ZwActionBtn
+								title="Soft reset"
+								description="Restart the controller. The network is preserved."
+								:actions="[
+									{
+										label: 'Soft reset',
+										busyLabel: 'Resetting…',
+										doneLabel: 'Done',
+									},
+								]"
+								@run="
+									emit('action', device, {
+										type: 'soft-reset',
+									})
+								"
+							>
+								<template #icon
+									><RefreshIcon :size="ICON_SIZE.std"
+								/></template>
+							</ZwActionBtn>
+							<ZwActionBtn
+								title="Factory reset"
+								description="Reset the controller to factory defaults. Every paired device will be removed."
+								:actions="[
+									{
+										label: 'Reset',
+										busyLabel: 'Resetting…',
+									},
+								]"
+								tone="danger"
+								@run="
+									emit('action', device, {
+										type: 'factory-reset',
+									})
+								"
+							>
+								<template #icon
+									><AlertIcon :size="ICON_SIZE.std"
+								/></template>
+							</ZwActionBtn>
+						</ZwActionList>
+					</template>
 					<ZwActionList v-else>
 						<ZwActionBtn
 							title="Ping"
@@ -211,11 +348,15 @@ import ZwNodeEvents from './ZwNodeEvents.vue'
 import ZwValuesView from './ZwValuesView.vue'
 import ZwControllerOptionsPanel from './ZwControllerOptionsPanel.vue'
 import {
+	AlertIcon,
+	DatabaseIcon,
 	DownloadIcon,
 	ICON_SIZE,
 	InterviewIcon,
 	NetworkIcon,
+	PowerIcon,
 	PulseIcon,
+	RefreshIcon,
 } from '@/lib/icons'
 import {
 	RAIL_WIDTH_BREAKPOINT,
@@ -357,9 +498,9 @@ const commStats = computed<StatsItem[]>(() => {
 	return [
 		{ label: 'CAN', value: s?.can ?? 0 },
 		{ label: 'NAK', value: s?.nak ?? 0 },
-		{ label: 'Timeout ACK', value: s?.timeoutACK ?? 0 },
-		{ label: 'Timeout Response', value: s?.timeoutResponse ?? 0 },
-		{ label: 'Timeout Callback', value: s?.timeoutCallback ?? 0 },
+		{ label: 'ACK Timeout', value: s?.timeoutACK ?? 0 },
+		{ label: 'Response Timeout', value: s?.timeoutResponse ?? 0 },
+		{ label: 'Callback Timeout', value: s?.timeoutCallback ?? 0 },
 	]
 })
 
@@ -570,6 +711,30 @@ const messageStats = computed<StatsItem[]>(() => {
 	.zw-nd__summary {
 		grid-template-columns: 1fr 1fr 1fr;
 	}
+}
+
+/* Controller overview — single-column stack, not the responsive grid
+   the node summary uses. */
+.zw-nd__overview {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+
+.zw-nd__section-label {
+	font-family: var(--zw-mono);
+	font-size: 10px;
+	font-weight: 600;
+	color: var(--zw-muted);
+	text-transform: uppercase;
+	letter-spacing: 0.6px;
+}
+
+/* Controller debug tab — two action-list cards stacked. */
+.zw-nd__debug {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
 }
 
 .zw-nd__empty {

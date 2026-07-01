@@ -1,6 +1,9 @@
 <template>
 	<section class="zw-sc">
-		<div class="zw-sc__title">{{ title }}</div>
+		<div class="zw-sc__header">
+			<span class="zw-sc__title">{{ title }}</span>
+			<span v-if="hint" class="zw-sc__hint">{{ hint }}</span>
+		</div>
 		<div
 			class="zw-sc__body"
 			:style="{
@@ -29,6 +32,7 @@ export type StatsItem = {
 withDefaults(
 	defineProps<{
 		title: string
+		hint?: string
 		items: StatsItem[]
 		minCellWidth?: number
 	}>(),
@@ -56,13 +60,30 @@ function formatValue(item: StatsItem) {
 	padding-bottom: 8px;
 }
 
+.zw-sc__header {
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: 8px;
+	padding: 8px 12px;
+	border-bottom: 1px solid var(--zw-line);
+}
+
 .zw-sc__title {
-	padding: 6px 10px;
 	font-family: var(--zw-mono);
 	font-size: 10px;
 	color: var(--zw-muted);
 	text-transform: uppercase;
 	letter-spacing: 0.6px;
+}
+
+.zw-sc__hint {
+	font-family: var(--zw-mono);
+	font-size: 10px;
+	color: var(--zw-muted);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 }
 
 .zw-sc__body {

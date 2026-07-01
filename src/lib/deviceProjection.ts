@@ -7,6 +7,7 @@ import { inferArchetype } from './archetypes.ts'
 import { relativeTime } from './time.ts'
 import type {
 	Activity,
+	CommStats,
 	Device,
 	DeviceStatus,
 	FirmwareUpdateInfo,
@@ -378,6 +379,35 @@ function projectActivities(
 	return out
 }
 
+function projectCommStats(node: ZUINode): CommStats | undefined {
+	if (!node.isControllerNode) return undefined
+	const s = node.statistics as
+		| {
+				CAN?: number
+				NAK?: number
+				timeoutACK?: number
+				timeoutResponse?: number
+				timeoutCallback?: number
+				messagesTX?: number
+				messagesRX?: number
+				messagesDroppedTX?: number
+				messagesDroppedRX?: number
+		  }
+		| undefined
+	if (!s) return undefined
+	return {
+		can: s.CAN ?? 0,
+		nak: s.NAK ?? 0,
+		timeoutACK: s.timeoutACK ?? 0,
+		timeoutResponse: s.timeoutResponse ?? 0,
+		timeoutCallback: s.timeoutCallback ?? 0,
+		messagesTX: s.messagesTX ?? 0,
+		messagesRX: s.messagesRX ?? 0,
+		messagesDroppedTX: s.messagesDroppedTX ?? 0,
+		messagesDroppedRX: s.messagesDroppedRX ?? 0,
+	}
+}
+
 export function projectDevice(
 	node: ZUINode,
 	opts: ProjectOptions = {},
@@ -448,6 +478,7 @@ export function projectDevice(
 			'number'
 				? (node as unknown as { txPower: number }).txPower
 				: undefined,
+		commStats: projectCommStats(node),
 	}
 }
 
