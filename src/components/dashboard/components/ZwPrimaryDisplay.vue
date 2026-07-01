@@ -17,7 +17,6 @@ const props = defineProps<{ device: Device; compact?: boolean }>()
 const emit = defineEmits<{ action: [Device, DeviceAction] }>()
 
 const key = computed<PrimaryKey | null>(() => {
-	if (props.device.isController) return 'controller'
 	return props.device.primaryValue?.type ?? null
 })
 
