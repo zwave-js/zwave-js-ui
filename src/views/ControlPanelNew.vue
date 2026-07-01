@@ -37,6 +37,12 @@ interface AppLike {
 		args?: unknown[],
 		opts?: { infoSnack?: boolean; errorSnack?: boolean },
 	) => Promise<ApiResponse>
+	confirm: (
+		title: string,
+		text: string,
+		level?: string,
+		options?: Record<string, unknown>,
+	) => Promise<Record<string, unknown> | boolean>
 	showSnackbar: (msg: string, level?: string) => void
 	restart: () => Promise<void>
 	showUpdateDialog: () => Promise<void>
@@ -86,6 +92,18 @@ async function onAction(device: Device, action: DeviceAction) {
 		if (node) downloadJson(node, `node_${device.nodeId}.json`)
 		return
 	}
+	if (action.type === 'export-json') {
+		const app = appInstance()
+		if (!app) return
+		const response = await app.apiRequest('dumpNode', [device.nodeId], {
+			infoSnack: false,
+			errorSnack: true,
+		})
+		if (response.success && response.result) {
+			downloadJson(response.result, `node_${device.nodeId}_dump.json`)
+		}
+		return
+	}
 	if (action.type === 'firmware-upload') {
 		const app = appInstance()
 		if (!app) return
@@ -95,6 +113,91 @@ async function onAction(device: Device, action: DeviceAction) {
 			[device.nodeId, [{ name: action.file.name, data }]],
 			{ infoSnack: true, errorSnack: true },
 		)
+		return
+	}
+	if (action.type === 'factory-reset') {
+		const app = appInstance()
+		if (!app) return
+		const result = await app.confirm(
+			'Hard Reset',
+			'Your controller will be reset to factory and all paired devices will be removed',
+			'alert',
+			{
+				confirmText: 'Ok',
+				inputs: [
+					{
+						type: 'text',
+						label: 'Confirm',
+						required: true,
+						key: 'confirm',
+						hint: 'Type "yes" and press OK to confirm',
+					},
+				],
+			},
+		)
+		if (!result || typeof result !== 'object' || result.confirm !== 'yes') {
+			return
+		}
+		const key = actionPendingKey(device, action)
+		if (key) setStatus(key, 'pending')
+		let ok = false
+		try {
+			const response = await app.apiRequest('hardReset', [], {
+				infoSnack: false,
+				errorSnack: true,
+			})
+			ok = response.success
+		} finally {
+			if (key) completeAction(key, ok)
+		}
+		return
+	}
+	if (action.type === 'restore-nvm') {
+		const app = appInstance()
+		if (!app) return
+		const result = await app.confirm(
+			'NVM Restore',
+			'While doing the restore the Z-Wave radio will be turned on/off.\n<strong>A failure during this process may brick your controller. Use at your own risk!</strong>',
+			'alert',
+			{
+				confirmText: 'Ok',
+				width: 500,
+				inputs: [
+					{
+						type: 'file',
+						label: 'File',
+						hint: 'NVM file',
+						key: 'file',
+					},
+					{
+						type: 'checkbox',
+						label: 'Skip compatibility check',
+						hint: 'This needs to be checked in order to allow restoring NVM backups on older controllers, with the risk of restoring an incompatible backup',
+						key: 'useRaw',
+					},
+				],
+			},
+		)
+		if (!result || typeof result !== 'object' || !result.file) return
+		let nvmData: ArrayBuffer
+		try {
+			nvmData = await (result.file as File).arrayBuffer()
+		} catch {
+			return
+		}
+		const key = actionPendingKey(device, action)
+		if (key) setStatus(key, 'pending')
+		let ok = false
+		try {
+			const response = await app.apiRequest(
+				'restoreNVM',
+				[nvmData, result.useRaw],
+				{ infoSnack: true, errorSnack: true },
+			)
+			ok = response.success
+		} finally {
+			if (key) completeAction(key, ok)
+		}
 		return
 	}
 	const req = dispatchAction(device, action)
