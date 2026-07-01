@@ -22,7 +22,7 @@
 					'zw-ab__btn--done': states[i] === 'done',
 					'zw-ab__btn--busy': states[i] === 'busy',
 				}"
-				:disabled="states[i] !== 'idle'"
+				:disabled="disabled || states[i] !== 'idle'"
 				@click="run(i)"
 			>
 				<RefreshIcon
@@ -66,8 +66,15 @@ const props = withDefaults(
 		tone?: 'default' | 'accent' | 'danger'
 		/** When provided, overrides internal state for each action index. */
 		actionStates?: BtnState[]
+		/** Disables all buttons regardless of state. */
+		disabled?: boolean
 	}>(),
-	{ description: undefined, tone: 'default', actionStates: undefined },
+	{
+		description: undefined,
+		tone: 'default',
+		actionStates: undefined,
+		disabled: false,
+	},
 )
 
 const emit = defineEmits<{ run: [index: number] }>()
@@ -191,6 +198,11 @@ function run(i: number) {
 	background: rgba(67, 160, 71, 0.12);
 	color: #2e7d32;
 	border-color: transparent;
+}
+
+.zw-ab__btn:disabled:not(.zw-ab__btn--busy):not(.zw-ab__btn--done) {
+	opacity: 0.45;
+	cursor: default;
 }
 
 .zw-ab__btn--busy {

@@ -149,6 +149,7 @@
 									{ label: 'UI', doneLabel: 'Saved' },
 									{ label: 'Driver', doneLabel: 'Saved' },
 								]"
+								:disabled="anyControllerActionBusy"
 								@run="
 									(i: number) =>
 										emit('action', device, {
@@ -179,6 +180,7 @@
 									},
 								]"
 								:action-states="nvmStates"
+								:disabled="anyControllerActionBusy"
 								@run="
 									(i: number) =>
 										emit('action', device, {
@@ -205,6 +207,7 @@
 									},
 								]"
 								:action-states="shutdownState"
+								:disabled="anyControllerActionBusy"
 								tone="accent"
 								@run="
 									emit('action', device, { type: 'shutdown' })
@@ -225,6 +228,7 @@
 									},
 								]"
 								:action-states="softResetState"
+								:disabled="anyControllerActionBusy"
 								@run="
 									emit('action', device, {
 										type: 'soft-reset',
@@ -245,6 +249,7 @@
 									},
 								]"
 								:action-states="factoryResetState"
+								:disabled="anyControllerActionBusy"
 								tone="danger"
 								@run="
 									emit('action', device, {
@@ -418,6 +423,12 @@ const softResetState = computed<BtnState[]>(() => [btnState('soft-reset')])
 const factoryResetState = computed<BtnState[]>(() => [
 	btnState('factory-reset'),
 ])
+
+const anyControllerActionBusy = computed(() =>
+	[nvmStates, shutdownState, softResetState, factoryResetState].some((s) =>
+		s.value.some((v) => v !== 'idle'),
+	),
+)
 
 function onAction(d: Device, a: DeviceAction) {
 	emit('action', d, a)
