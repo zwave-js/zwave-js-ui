@@ -1,8 +1,17 @@
 // Projects the controller node's RF-related properties into the shape
 // the controller options panel renders.
 
+import { RFRegion } from '@zwave-js/core'
 import type { ZUINode } from '../../api/lib/ZwaveClient.ts'
-import { regionSupportsAutoPowerlevel } from '../../api/lib/shared.ts'
+
+function regionSupportsAutoPowerlevel(region: number | undefined): boolean {
+	return (
+		region === RFRegion.Europe ||
+		region === RFRegion['Europe (Long Range)'] ||
+		region === RFRegion.USA ||
+		region === RFRegion['USA (Long Range)']
+	)
+}
 
 export type ControllerOptionKind = 'enum' | 'number' | 'readonly'
 
@@ -38,8 +47,7 @@ export function buildControllerOptions(
 	const opts: ControllerOption[] = []
 
 	const isAutoEnabled =
-		ctx.autoPowerlevels &&
-		regionSupportsAutoPowerlevel(node.RFRegion as number)
+		ctx.autoPowerlevels && regionSupportsAutoPowerlevel(node.RFRegion)
 
 	// RF Region — enum dropdown built from the controller's reported regions.
 	// Filter out disabled entries (Unknown, Default (EU)) matching the old UI.
