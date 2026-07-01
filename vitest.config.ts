@@ -18,7 +18,7 @@ export default defineConfig({
 			},
 			{
 				find: /^@server\/(.+)/,
-				replacement: `${path.resolve(__dirname, 'server')}/$1`,
+				replacement: `${path.resolve(__dirname, 'api')}/$1`,
 			},
 		],
 	},
