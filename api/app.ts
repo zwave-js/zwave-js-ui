@@ -76,6 +76,11 @@ import {
 	getImportedNodeLocation,
 	normalizeImportedNodesConfig,
 } from './lib/importConfig.ts'
+import {
+	isTrustedRequest,
+	isTrustedSocket,
+	startTrustedListener,
+} from './lib/trustedListener.ts'
 
 const createCertificate = promisify(generate)
 
@@ -121,9 +126,14 @@ const logger = loggers.module('App')
 
 const verifyJWT = promisify(jwt.verify.bind(jwt))
 
+// The trusted listener skips rate limiting: the host application is trusted,
+// and over a unix socket req.ip is undefined which express-rate-limit rejects
+const skipTrusted = (req: Request) => isTrustedRequest(req)
+
 const storeLimiter = rateLimit({
 	windowMs: 15 * 60 * 1000, // 15 minutes
 	max: 100,
+	skip: skipTrusted,
 	handler: function (req, res) {
 		res.json({
 			success: false,
@@ -136,6 +146,7 @@ const storeLimiter = rateLimit({
 const loginLimiter = rateLimit({
 	windowMs: 60 * 60 * 1000, // keep in memory for 1 hour
 	max: 5, // start blocking after 5 requests
+	skip: skipTrusted,
 	handler: function (req, res) {
 		res.json({ success: false, message: 'Max requests limit reached' })
 	},
@@ -144,6 +155,7 @@ const loginLimiter = rateLimit({
 const apisLimiter = rateLimit({
 	windowMs: 60 * 60 * 1000, // keep in memory for 1 hour
 	max: 500, // start blocking after 500 requests
+	skip: skipTrusted,
 	handler: function (req, res) {
 		res.json({ success: false, message: 'Max requests limit reached' })
 	},
@@ -194,7 +206,11 @@ socketManager.authMiddleware = function (
 	socket: Socket & { user?: User },
 	next: (err?) => void,
 ) {
-	if (!isAuthEnabled()) {
+	// The handshake request socket is the raw net.Socket accepted (and
+	// allowlist-checked) by the trusted listener; websocket upgrades reuse it
+	if (isTrustedSocket(socket.request?.socket)) {
+		next()
+	} else if (!isAuthEnabled()) {
 		next()
 	} else if (socket.handshake.auth?.token || socket.handshake.query?.token) {
 		const token = (socket.handshake.auth?.token ||
@@ -211,6 +227,7 @@ socketManager.authMiddleware = function (
 
 let gw: Gateway // the gateway instance
 let zniffer: ZnifferManager // the zniffer instance
+let trustedServer: HttpServer | undefined // the trusted (host API) listener
 const plugins: CustomPlugin[] = []
 let pluginsRouter: Router
 
@@ -315,6 +332,10 @@ export async function startServer(port: number | string, host?: string) {
 	}
 
 	setupSocket(server)
+	trustedServer = await startTrustedListener(app)
+	if (trustedServer) {
+		socketManager.attachServer(trustedServer)
+	}
 	setupInterceptor()
 	await loadSnippets()
 	startZniffer(settings.zniffer)
@@ -926,7 +947,7 @@ async function parseJWT(req: Request) {
 // middleware to check if user is authenticated
 async function isAuthenticated(req: Request, res: Response, next: () => void) {
 	// if user is authenticated in the session, carry on
-	if (req?.session?.user || !isAuthEnabled()) {
+	if (isTrustedRequest(req) || req?.session?.user || !isAuthEnabled()) {
 		return next()
 	}
 
@@ -948,7 +969,12 @@ async function isAuthenticated(req: Request, res: Response, next: () => void) {
 
 // logout the user
 app.get('/api/auth-enabled', apisLimiter, function (req, res) {
-	res.json({ success: true, data: isAuthEnabled() })
+	// Report auth as disabled on the trusted listener so an embedded UI
+	// skips the login screen
+	res.json({
+		success: true,
+		data: isTrustedRequest(req) ? false : isAuthEnabled(),
+	})
 })
 
 // api to authenticate user
@@ -2281,6 +2307,7 @@ process.removeAllListeners('SIGINT')
 async function gracefuShutdown() {
 	logger.warn('Shutdown detected: closing clients...')
 	try {
+		trustedServer?.close() // also unlinks a unix socket file
 		if (gw) await gw.close()
 		await destroyPlugins()
 	} catch (error) {

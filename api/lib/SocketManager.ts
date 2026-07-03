@@ -54,6 +54,15 @@ class SocketManager extends TypedEventEmitter<SocketManagerEventCallbacks> {
 			.on('connection', this._onConnection.bind(this))
 	}
 
+	/**
+	 * Attaches the already-bound socket.io instance to an additional http
+	 * server: connections from it flow into the same io, namespaces and
+	 * middleware
+	 */
+	attachServer(server: HttpServer) {
+		this.io.attach(server)
+	}
+
 	private _authMiddleware(): (socket: Socket, next: () => void) => void {
 		return (socket: Socket, next: () => void) => {
 			if (this.authMiddleware !== undefined) {

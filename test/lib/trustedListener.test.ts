@@ -1,0 +1,171 @@
+import express from 'express'
+import ipaddr from 'ipaddr.js'
+import { existsSync } from 'node:fs'
+import { mkdtemp, rm, writeFile } from 'node:fs/promises'
+import type { Server as HttpServer } from 'node:http'
+import { createServer, request } from 'node:http'
+import type { AddressInfo } from 'node:net'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
+import { io as ioClient } from 'socket.io-client'
+import { afterEach, describe, expect, it } from 'vitest'
+import type { TrustedListenerConfig } from '../../api/config/app.ts'
+import SocketManager from '../../api/lib/SocketManager.ts'
+import {
+	isTrustedRequest,
+	isTrustedSocket,
+	startTrustedListener,
+} from '../../api/lib/trustedListener.ts'
+
+function probeApp() {
+	const app = express()
+	app.get('/probe', (req, res) => {
+		res.json({ trusted: isTrustedRequest(req) })
+	})
+	return app
+}
+
+function tcpConfig(allowedCidr: string): TrustedListenerConfig {
+	return {
+		kind: 'tcp',
+		host: '127.0.0.1',
+		// Ephemeral port, resolved via server.address() after listen
+		port: 0,
+		allowedIps: [ipaddr.parseCIDR(allowedCidr)],
+	}
+}
+
+function serverPort(server: HttpServer): number {
+	return (server.address() as AddressInfo).port
+}
+
+describe('startTrustedListener', () => {
+	const servers: HttpServer[] = []
+	const cleanups: (() => Promise<void>)[] = []
+
+	afterEach(async () => {
+		for (const server of servers.splice(0)) {
+			await new Promise((resolve) => server.close(resolve))
+		}
+		for (const cleanup of cleanups.splice(0)) {
+			await cleanup()
+		}
+	})
+
+	it('returns undefined without configuration', async () => {
+		expect(
+			await startTrustedListener(probeApp(), undefined),
+		).toBeUndefined()
+	})
+
+	it('marks allowlisted TCP connections as trusted', async () => {
+		const server = await startTrustedListener(
+			probeApp(),
+			tcpConfig('127.0.0.0/8'),
+		)
+		servers.push(server)
+
+		const res = await fetch(`http://127.0.0.1:${serverPort(server)}/probe`)
+		expect(await res.json()).toEqual({ trusted: true })
+	})
+
+	it('destroys connections from non-allowlisted peers, ignoring X-Forwarded-For', async () => {
+		const server = await startTrustedListener(
+			probeApp(),
+			tcpConfig('10.0.0.0/8'),
+		)
+		servers.push(server)
+
+		await expect(
+			fetch(`http://127.0.0.1:${serverPort(server)}/probe`, {
+				// A spoofed forwarding header must not defeat the peer allowlist
+				headers: { 'X-Forwarded-For': '10.0.0.1' },
+			}),
+		).rejects.toThrow()
+	})
+
+	it('serves and trusts requests over a unix socket, replacing a stale file', async () => {
+		const dir = await mkdtemp(join(tmpdir(), 'zui-trusted-'))
+		cleanups.push(() => rm(dir, { recursive: true, force: true }))
+		const socketPath = join(dir, 'api.sock')
+
+		// Stale file from an unclean shutdown must not prevent the bind
+		await writeFile(socketPath, '')
+
+		const server = await startTrustedListener(probeApp(), {
+			kind: 'unix',
+			path: socketPath,
+		})
+
+		const body = await new Promise<string>((resolve, reject) => {
+			request({ socketPath, path: '/probe' }, (res) => {
+				let data = ''
+				res.on('data', (chunk) => (data += chunk))
+				res.on('end', () => resolve(data))
+			})
+				.on('error', reject)
+				.end()
+		})
+		expect(JSON.parse(body)).toEqual({ trusted: true })
+
+		await new Promise((resolve) => server.close(resolve))
+		expect(existsSync(socketPath)).toBe(false)
+	})
+
+	it('bypasses socket.io auth only on the trusted listener', async () => {
+		const app = probeApp()
+
+		const mainServer = createServer(app)
+		servers.push(mainServer)
+		await new Promise<void>((resolve) =>
+			mainServer.listen(0, '127.0.0.1', resolve),
+		)
+
+		const trustedServer = await startTrustedListener(
+			app,
+			tcpConfig('127.0.0.0/8'),
+		)
+		servers.push(trustedServer)
+
+		const socketManager = new SocketManager()
+		socketManager.authMiddleware = (
+			socket,
+			next: (err?: Error) => void,
+		) => {
+			if (isTrustedSocket(socket.request?.socket)) {
+				next()
+			} else {
+				next(new Error('Authentication error'))
+			}
+		}
+		socketManager.bindServer(mainServer)
+		socketManager.attachServer(trustedServer)
+		cleanups.push(() => socketManager.io.close())
+
+		const connect = (port: number, transport: string) =>
+			new Promise<string>((resolve) => {
+				const client = ioClient(`http://127.0.0.1:${port}`, {
+					transports: [transport],
+					reconnection: false,
+				})
+				client.on('connect', () => {
+					client.close()
+					resolve('connected')
+				})
+				client.on('connect_error', (err) => {
+					client.close()
+					resolve(err.message)
+				})
+			})
+
+		expect(await connect(serverPort(trustedServer), 'polling')).toBe(
+			'connected',
+		)
+		expect(await connect(serverPort(trustedServer), 'websocket')).toBe(
+			'connected',
+		)
+		expect(await connect(serverPort(mainServer), 'polling')).toBe(
+			'Authentication error',
+		)
+	})
+})
