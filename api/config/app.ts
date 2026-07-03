@@ -125,9 +125,10 @@ function parseCidrOrThrow(raw: string, context: string): ParsedCidr {
  * the TCP peer allowlist is the only gate. Throws on any misconfiguration
  * so the process fails to start instead of silently degrading.
  */
-export function parseTrustedListenerConfig(
-	env: Record<string, string | undefined>,
-): TrustedListenerConfig | undefined {
+export function parseTrustedListenerConfig(env: {
+	TRUSTED_API_LISTEN?: string
+	TRUSTED_API_ALLOWED_IPS?: string
+}): TrustedListenerConfig | undefined {
 	const listen = env.TRUSTED_API_LISTEN?.trim()
 	if (!listen) {
 		return undefined
@@ -185,4 +186,9 @@ export function parseTrustedListenerConfig(
 }
 
 export const trustedListener: TrustedListenerConfig | undefined =
-	parseTrustedListenerConfig(process.env)
+	parseTrustedListenerConfig({
+		// Only access the two desired environment variables to avoid accidentally
+		// leaking up the process environment to an error log downstream
+		TRUSTED_API_LISTEN: process.env.TRUSTED_API_LISTEN,
+		TRUSTED_API_ALLOWED_IPS: process.env.TRUSTED_API_ALLOWED_IPS,
+	})
