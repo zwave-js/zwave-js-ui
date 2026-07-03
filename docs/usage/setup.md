@@ -416,6 +416,7 @@ The external settings file should be a JSON file with the following structure:
 **Features**:
 
 - `enableSoftReset` (boolean): Enable soft reset functionality
+- `enableStatistics` (boolean): Enable Z-Wave JS usage statistics. When set, the statistics opt-in dialog is not shown and the managing application is expected to control the statistics opt-in (e.g. via the Z-Wave JS Server API)
 
 **Z-Wave JS Server Settings**:
 
