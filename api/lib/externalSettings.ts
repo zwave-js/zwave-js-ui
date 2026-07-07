@@ -45,6 +45,7 @@ export interface ExternalZwaveSettings {
 
 	// Features
 	enableSoftReset?: boolean
+	enableStatistics?: boolean
 
 	// Z-Wave JS Server settings
 	serverEnabled?: boolean
@@ -119,6 +120,8 @@ export function getExternallyManagedPaths(): string[] {
 	// Features
 	if (settings.enableSoftReset !== undefined)
 		paths.push('zwave.enableSoftReset')
+	if (settings.enableStatistics !== undefined)
+		paths.push('zwave.enableStatistics')
 
 	// Device config
 	if (settings.deviceConfigPriorityDir !== undefined)
@@ -236,6 +239,8 @@ export function mergeExternalSettings(
 	// Features
 	if (settings.enableSoftReset !== undefined)
 		zwaveConfig.enableSoftReset = settings.enableSoftReset
+	if (settings.enableStatistics !== undefined)
+		zwaveConfig.enableStatistics = settings.enableStatistics
 
 	// Device config
 	if (settings.deviceConfigPriorityDir !== undefined)

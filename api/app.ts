@@ -1527,6 +1527,12 @@ app.post(
 					'Gateway is restarting, wait a moment before doing another request',
 				)
 			}
+			// Reject changes when the statistics opt-in belongs to the managing application
+			if (
+				getExternallyManagedPaths().includes('zwave.enableStatistics')
+			) {
+				throw Error('Statistics are managed externally')
+			}
 			const { enableStatistics } = req.body
 
 			const settings: Settings =
