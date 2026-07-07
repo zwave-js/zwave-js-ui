@@ -2,7 +2,7 @@ import type { Express } from 'express'
 import { createServer, type Server as HttpServer } from 'node:http'
 import type { Socket as NetSocket } from 'node:net'
 import { networkInterfaces } from 'node:os'
-import { unlink } from 'node:fs/promises'
+import { lstat, unlink } from 'node:fs/promises'
 import {
 	formatCidr,
 	matchesCidr,
@@ -273,12 +273,19 @@ export async function startTrustedListener(
 	if (config.kind === 'unix') {
 		// Node only unlinks the socket file on server.close(), so a previous
 		// unclean shutdown leaves a stale file that would fail the bind
-		let unlinked = true
-		await unlink(config.path).catch((error) => {
-			unlinked = false
+		const existing = await lstat(config.path).catch((error) => {
 			if (error.code !== 'ENOENT') throw error
+			return undefined
 		})
-		if (unlinked) {
+		if (existing) {
+			// Only ever delete a socket, so a misconfigured path cannot
+			// destroy an arbitrary file
+			if (!existing.isSocket()) {
+				throw new Error(
+					`Trusted listener: ${config.path} exists and is not a socket, refusing to replace it`,
+				)
+			}
+			await unlink(config.path)
 			logger.warn(
 				`Trusted listener: removed stale socket file ${config.path}`,
 			)

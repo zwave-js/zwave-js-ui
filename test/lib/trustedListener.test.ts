@@ -1,4 +1,5 @@
 import express from 'express'
+import { execFile } from 'node:child_process'
 import { existsSync } from 'node:fs'
 import { mkdtemp, rm, writeFile } from 'node:fs/promises'
 import type { Server as HttpServer } from 'node:http'
@@ -84,13 +85,25 @@ describe('startTrustedListener', () => {
 		).rejects.toThrow()
 	})
 
-	it('serves and trusts requests over a unix socket, replacing a stale file', async () => {
+	it('serves and trusts requests over a unix socket, replacing a stale socket', async () => {
 		const dir = await mkdtemp(join(tmpdir(), 'zui-trusted-'))
 		cleanups.push(() => rm(dir, { recursive: true, force: true }))
 		const socketPath = join(dir, 'api.sock')
 
-		// Stale file from an unclean shutdown must not prevent the bind
-		await writeFile(socketPath, '')
+		// A stale socket from an unclean shutdown must not prevent the bind;
+		// exiting without close() leaves the socket file behind
+		await new Promise<void>((resolve, reject) => {
+			execFile(
+				process.execPath,
+				[
+					'-e',
+					'require("net").createServer().listen(process.argv[1], () => process.exit(0))',
+					socketPath,
+				],
+				(err) => (err ? reject(err as Error) : resolve()),
+			)
+		})
+		expect(existsSync(socketPath)).toBe(true)
 
 		const server = await startTrustedListener(probeApp(), {
 			kind: 'unix',
@@ -110,6 +123,22 @@ describe('startTrustedListener', () => {
 
 		await new Promise((resolve) => server.close(resolve))
 		expect(existsSync(socketPath)).toBe(false)
+	})
+
+	it('refuses to replace a non-socket file at the unix socket path', async () => {
+		const dir = await mkdtemp(join(tmpdir(), 'zui-trusted-'))
+		cleanups.push(() => rm(dir, { recursive: true, force: true }))
+		const socketPath = join(dir, 'api.sock')
+
+		await writeFile(socketPath, 'important data')
+
+		await expect(
+			startTrustedListener(probeApp(), {
+				kind: 'unix',
+				path: socketPath,
+			}),
+		).rejects.toThrow(/not a socket/)
+		expect(existsSync(socketPath)).toBe(true)
 	})
 
 	it('bypasses socket.io auth only on the trusted listener', async () => {
