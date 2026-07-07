@@ -200,7 +200,8 @@ const RESPONSE_CODES = {
 } as const
 type RESPONSE_CODES = (typeof RESPONSE_CODES)[keyof typeof RESPONSE_CODES]
 
-const socketManager = new SocketManager()
+// Exported so integration tests can exercise the real socket auth middleware
+export const socketManager = new SocketManager()
 
 socketManager.authMiddleware = function (
 	socket: Socket & { user?: User },
@@ -2307,7 +2308,11 @@ process.removeAllListeners('SIGINT')
 async function gracefuShutdown() {
 	logger.warn('Shutdown detected: closing clients...')
 	try {
-		trustedServer?.close() // also unlinks a unix socket file
+		if (trustedServer) {
+			// Await the close so a unix socket file is unlinked before exit
+			const server = trustedServer
+			await new Promise((resolve) => server.close(resolve))
+		}
 		if (gw) await gw.close()
 		await destroyPlugins()
 	} catch (error) {

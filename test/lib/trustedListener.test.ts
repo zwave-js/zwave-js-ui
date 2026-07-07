@@ -1,5 +1,4 @@
 import express from 'express'
-import ipaddr from 'ipaddr.js'
 import { existsSync } from 'node:fs'
 import { mkdtemp, rm, writeFile } from 'node:fs/promises'
 import type { Server as HttpServer } from 'node:http'
@@ -9,12 +8,13 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { io as ioClient } from 'socket.io-client'
 import { afterEach, describe, expect, it } from 'vitest'
-import type { TrustedListenerConfig } from '../../api/config/app.ts'
+import { parseCidr } from '../../api/lib/ipUtils.ts'
 import SocketManager from '../../api/lib/SocketManager.ts'
 import {
 	isTrustedRequest,
 	isTrustedSocket,
 	startTrustedListener,
+	type TrustedListenerConfig,
 } from '../../api/lib/trustedListener.ts'
 
 function probeApp() {
@@ -31,7 +31,7 @@ function tcpConfig(allowedCidr: string): TrustedListenerConfig {
 		host: '127.0.0.1',
 		// Ephemeral port, resolved via server.address() after listen
 		port: 0,
-		allowedIps: [ipaddr.parseCIDR(allowedCidr)],
+		allowedIps: [parseCidr(allowedCidr)],
 	}
 }
 
@@ -140,7 +140,12 @@ describe('startTrustedListener', () => {
 		}
 		socketManager.bindServer(mainServer)
 		socketManager.attachServer(trustedServer)
-		cleanups.push(() => socketManager.io.close())
+		cleanups.push(
+			() =>
+				new Promise<void>((resolve) =>
+					socketManager.io.close(() => resolve()),
+				),
+		)
 
 		const connect = (port: number, transport: string) =>
 			new Promise<string>((resolve) => {
@@ -164,7 +169,11 @@ describe('startTrustedListener', () => {
 		expect(await connect(serverPort(trustedServer), 'websocket')).toBe(
 			'connected',
 		)
+		// Both engine.io transports have distinct handshake paths
 		expect(await connect(serverPort(mainServer), 'polling')).toBe(
+			'Authentication error',
+		)
+		expect(await connect(serverPort(mainServer), 'websocket')).toBe(
 			'Authentication error',
 		)
 	})

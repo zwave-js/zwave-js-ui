@@ -60,6 +60,9 @@ class SocketManager extends TypedEventEmitter<SocketManagerEventCallbacks> {
 	 * middleware
 	 */
 	attachServer(server: HttpServer) {
+		if (!this.io) {
+			throw new Error('bindServer must be called before attachServer')
+		}
 		this.io.attach(server)
 	}
 

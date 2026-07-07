@@ -1,8 +1,8 @@
-import ipaddr from 'ipaddr.js'
 import { describe, expect, it } from 'vitest'
-import { parseTrustedListenerConfig } from '../../api/config/app.ts'
+import { parseCidr, parseIp } from '../../api/lib/ipUtils.ts'
 import {
 	isAllowedAddress,
+	parseTrustedListenerConfig,
 	resolveListenAddress,
 } from '../../api/lib/trustedListener.ts'
 
@@ -45,9 +45,10 @@ describe('parseTrustedListenerConfig', () => {
 			TRUSTED_API_LISTEN: '172.30.32.0/23:8092',
 			TRUSTED_API_ALLOWED_IPS: '172.30.32.2',
 		})
+		expect(config).toBeDefined()
 		expect(config.kind).toBe('tcp')
 		if (config.kind === 'tcp') {
-			expect(config.host).toEqual(ipaddr.parseCIDR('172.30.32.0/23'))
+			expect(config.host).toEqual(parseCidr('172.30.32.0/23'))
 		}
 	})
 
@@ -56,10 +57,11 @@ describe('parseTrustedListenerConfig', () => {
 			TRUSTED_API_LISTEN: '127.0.0.1:8092',
 			TRUSTED_API_ALLOWED_IPS: ' 172.30.32.2, 10.0.0.0/8 ',
 		})
+		expect(config).toBeDefined()
 		if (config.kind === 'tcp') {
 			expect(config.allowedIps).toEqual([
-				[ipaddr.parse('172.30.32.2'), 32],
-				ipaddr.parseCIDR('10.0.0.0/8'),
+				{ addr: parseIp('172.30.32.2'), prefix: 32 },
+				parseCidr('10.0.0.0/8'),
 			])
 		}
 	})
@@ -106,20 +108,22 @@ describe('parseTrustedListenerConfig', () => {
 	})
 
 	it('rejects an invalid port', () => {
-		expect(() =>
-			parseTrustedListenerConfig({
-				TRUSTED_API_LISTEN: '127.0.0.1:0',
-				TRUSTED_API_ALLOWED_IPS: '127.0.0.1',
-			}),
-		).toThrow(/invalid port/)
+		for (const port of ['0', '99999']) {
+			expect(() =>
+				parseTrustedListenerConfig({
+					TRUSTED_API_LISTEN: `127.0.0.1:${port}`,
+					TRUSTED_API_ALLOWED_IPS: '127.0.0.1',
+				}),
+			).toThrow(/invalid port/)
+		}
 	})
 })
 
 describe('isAllowedAddress', () => {
 	const allowed = [
-		ipaddr.parseCIDR('172.30.32.0/23'),
-		[ipaddr.parse('127.0.0.1'), 32] as [ipaddr.IPv4, number],
-		ipaddr.parseCIDR('fd00::/8'),
+		parseCidr('172.30.32.0/23'),
+		parseCidr('127.0.0.1/32'),
+		parseCidr('fd00::/8'),
 	]
 
 	it('matches exact IPs and CIDR ranges', () => {
@@ -154,16 +158,13 @@ describe('resolveListenAddress', () => {
 
 	it('resolves the local address inside the network', () => {
 		expect(
-			resolveListenAddress(
-				ipaddr.parseCIDR('172.30.32.0/23'),
-				interfaces,
-			),
+			resolveListenAddress(parseCidr('172.30.32.0/23'), interfaces),
 		).toBe('172.30.33.7')
 	})
 
 	it('throws when no local address matches', () => {
 		expect(() =>
-			resolveListenAddress(ipaddr.parseCIDR('10.0.0.0/8'), interfaces),
+			resolveListenAddress(parseCidr('10.0.0.0/8'), interfaces),
 		).toThrow(/no local address/)
 	})
 
@@ -173,7 +174,7 @@ describe('resolveListenAddress', () => {
 			eth1: [{ address: '172.30.33.8' }],
 		} as any
 		expect(() =>
-			resolveListenAddress(ipaddr.parseCIDR('172.30.32.0/23'), multi),
+			resolveListenAddress(parseCidr('172.30.32.0/23'), multi),
 		).toThrow(/multiple local addresses/)
 	})
 })
