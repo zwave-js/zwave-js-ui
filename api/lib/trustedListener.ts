@@ -2,7 +2,7 @@ import type { Express } from 'express'
 import { createServer, type Server as HttpServer } from 'node:http'
 import type { Socket as NetSocket } from 'node:net'
 import { networkInterfaces } from 'node:os'
-import { lstat, unlink } from 'node:fs/promises'
+import { chmod, lstat, unlink } from 'node:fs/promises'
 import {
 	formatCidr,
 	matchesCidr,
@@ -291,6 +291,10 @@ export async function startTrustedListener(
 			)
 		}
 		await listenOrThrow(server, (cb) => server.listen(config.path, cb))
+		// Restrict to owner+group: the ambient umask may otherwise leave the
+		// socket world-writable (0777 under umask 000 in root containers),
+		// handing any local process unauthenticated control of the Z-Wave API
+		await chmod(config.path, 0o660)
 	} else {
 		host =
 			typeof config.host === 'string'

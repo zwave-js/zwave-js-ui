@@ -45,7 +45,7 @@ This is the list of the supported environment variables:
 A host application that embeds or manages Z-Wave JS UI (for example Home Assistant) can enable a second, **unauthenticated** listener. It serves the full application (UI, REST APIs and Socket.IO) with authentication bypassed, so it must only ever be reachable by the host itself. It is configured exclusively via environment variables so that only whoever controls the process environment can enable it:
 
 - `TRUSTED_API_LISTEN`: Enables the trusted listener. Three forms are accepted:
-  - An absolute path starting with `/`: bind a unix socket at that path. Access control is left to filesystem permissions. A stale socket file from an unclean shutdown is removed automatically on startup; because of this, no two instances may share the same socket path — a second instance would silently take over the socket of the first.
+  - An absolute path starting with `/`: bind a unix socket at that path. The socket is created with mode `0660` (owner and group only), so the host must run Z-Wave JS UI under a user or group the intended client shares; access is otherwise left to filesystem permissions. A stale socket file from an unclean shutdown is removed automatically on startup; because of this, no two instances may share the same socket path — a second instance would silently take over the socket of the first.
   - `host:port` with a literal IP (IPv6 in brackets, e.g. `[fd00::1]:8092`): bind exactly that address.
   - `cidr:port` (e.g. `172.30.32.0/23:8092`): resolve the local interface address inside that network at startup and bind to it. This lets the host name a (docker) network without either side knowing the container's dynamic IP. Startup fails if no (or more than one) local address matches.
 

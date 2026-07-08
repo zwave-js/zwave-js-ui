@@ -1,6 +1,6 @@
 import express from 'express'
 import { execFile } from 'node:child_process'
-import { existsSync } from 'node:fs'
+import { existsSync, statSync } from 'node:fs'
 import { mkdtemp, rm, writeFile } from 'node:fs/promises'
 import type { Server as HttpServer } from 'node:http'
 import { createServer, request } from 'node:http'
@@ -120,6 +120,9 @@ describe('startTrustedListener', () => {
 				.end()
 		})
 		expect(JSON.parse(body)).toEqual({ trusted: true })
+
+		// Not world-accessible regardless of the ambient umask
+		expect(statSync(socketPath).mode & 0o777).toBe(0o660)
 
 		await new Promise((resolve) => server.close(resolve))
 		expect(existsSync(socketPath)).toBe(false)
