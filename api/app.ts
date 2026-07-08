@@ -200,15 +200,12 @@ const RESPONSE_CODES = {
 } as const
 type RESPONSE_CODES = (typeof RESPONSE_CODES)[keyof typeof RESPONSE_CODES]
 
-// Exported so integration tests can exercise the real socket auth middleware
 export const socketManager = new SocketManager()
 
 socketManager.authMiddleware = function (
 	socket: Socket & { user?: User },
 	next: (err?) => void,
 ) {
-	// The handshake request socket is the raw net.Socket accepted (and
-	// allowlist-checked) by the trusted listener; websocket upgrades reuse it
 	if (isTrustedSocket(socket.request?.socket)) {
 		next()
 	} else if (!isAuthEnabled()) {
@@ -970,8 +967,6 @@ async function isAuthenticated(req: Request, res: Response, next: () => void) {
 
 // logout the user
 app.get('/api/auth-enabled', apisLimiter, function (req, res) {
-	// Report auth as disabled on the trusted listener so an embedded UI
-	// skips the login screen
 	res.json({
 		success: true,
 		data: isTrustedRequest(req) ? false : isAuthEnabled(),

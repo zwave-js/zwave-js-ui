@@ -30,7 +30,6 @@ function tcpConfig(allowedCidr: string): TrustedListenerConfig {
 	return {
 		kind: 'tcp',
 		host: '127.0.0.1',
-		// Ephemeral port, resolved via server.address() after listen
 		port: 0,
 		allowedIps: [parseCidr(allowedCidr)],
 	}

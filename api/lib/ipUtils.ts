@@ -1,9 +1,6 @@
-// Minimal IP address utilities for the trusted listener: parsing and CIDR
-// matching only, so we don't need a dependency for it
-
 export interface ParsedIp {
 	kind: 'ipv4' | 'ipv6'
-	/** 4 (IPv4) or 16 (IPv6) bytes, network order */
+	/** Network-order bytes: 4 for IPv4, 16 for IPv6 */
 	bytes: number[]
 }
 
@@ -17,7 +14,7 @@ function parseIpv4(raw: string): ParsedIp | undefined {
 	if (!match) return undefined
 	const bytes: number[] = []
 	for (const part of match.slice(1)) {
-		// Reject leading zeros so ambiguous octal-looking octets fail loudly
+		// Reject leading zeros because some parsers treat them as octal
 		if (part.length > 1 && part.startsWith('0')) return undefined
 		const value = parseInt(part, 10)
 		if (value > 255) return undefined
@@ -51,7 +48,7 @@ function parseIpv6(raw: string): ParsedIp | undefined {
 		const groups = part.split(':')
 		for (let i = 0; i < groups.length; i++) {
 			const group = groups[i]
-			// An embedded IPv4 tail (::ffff:1.2.3.4) fills the last two groups
+			// Embedded IPv4 tail (::ffff:1.2.3.4) occupies the last two groups
 			if (group.includes('.')) {
 				if (!ipv4Allowed || i !== groups.length - 1) return undefined
 				const v4 = parseIpv4(group)

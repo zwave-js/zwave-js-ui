@@ -7,7 +7,7 @@ import { join } from 'node:path'
 import { io as ioClient } from 'socket.io-client'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 
-// Point the store at a temp dir before the app config module loads
+// Set before the app config module loads
 const testStoreDir = await mkdtemp(join(tmpdir(), 'zui-trusted-app-'))
 process.env.STORE_DIR = testStoreDir
 
@@ -31,8 +31,6 @@ function getJson(url: string): Promise<any> {
 	)
 }
 
-// The real express app served over both a plain (untrusted) server and a
-// trusted listener, to verify the trusted-request wiring end to end
 describe('trusted listener app integration', () => {
 	let mainServer: HttpServer
 	let trustedServer: HttpServer

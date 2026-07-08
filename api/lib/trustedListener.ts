@@ -133,8 +133,7 @@ function logRejection(remote: string) {
 	if (last !== undefined && now - last < REJECTION_LOG_WINDOW_MS) {
 		return
 	}
-	// Delete before set so the map stays ordered by recency, then evict the
-	// least recently seen address when full
+	// Re-insert so the map stays ordered by recency; evict the oldest when full
 	lastRejectionLogAt.delete(remote)
 	lastRejectionLogAt.set(remote, now)
 	if (lastRejectionLogAt.size > REJECTION_LOG_MAX_TRACKED) {
@@ -151,9 +150,8 @@ export function isTrustedSocket(socket: unknown): boolean {
 	)
 }
 
-// The trust decision never involves req.ip or X-Forwarded-* headers: the
-// host application may itself be a proxy (e.g. HA Supervisor ingress) that
-// forwards untrusted client addresses in headers
+// Skip req.ip / X-Forwarded-* because the host may itself be a proxy that
+// forwards untrusted client addresses in those headers
 export function isTrustedRequest(req: { socket?: unknown }): boolean {
 	return isTrustedSocket(req?.socket)
 }
@@ -166,7 +164,6 @@ export function isAllowedAddress(
 	if (!parsed) {
 		return false
 	}
-	// Unwrap IPv4-mapped IPv6 (::ffff:a.b.c.d) so IPv4 allowlist entries match
 	const addr = unwrapMappedIp(parsed)
 	return allowed.some((cidr) => matchesCidr(addr, cidr))
 }
@@ -243,9 +240,7 @@ function listenOrThrow(
 /**
  * Start the optional trusted (host API) listener: a plain-HTTP server for
  * the same express app, on which authentication is bypassed. Transport
- * security is the host application's responsibility (a private docker
- * network or a unix socket); for TCP the peer allowlist is the only gate,
- * enforced on the kernel-reported TCP peer address before any HTTP parsing
+ * security is the host application's responsibility.
  */
 export async function startTrustedListener(
 	app: Express,
@@ -271,15 +266,13 @@ export async function startTrustedListener(
 
 	let host: string | undefined
 	if (config.kind === 'unix') {
-		// Node only unlinks the socket file on server.close(), so a previous
-		// unclean shutdown leaves a stale file that would fail the bind
+		// Remove stale socket left by an unclean shutdown so the bind succeeds
 		const existing = await lstat(config.path).catch((error) => {
 			if (error.code !== 'ENOENT') throw error
 			return undefined
 		})
 		if (existing) {
-			// Only ever delete a socket, so a misconfigured path cannot
-			// destroy an arbitrary file
+			// Refuse to delete a non-socket so a misconfigured path can't destroy a file
 			if (!existing.isSocket()) {
 				throw new Error(
 					`Trusted listener: ${config.path} exists and is not a socket, refusing to replace it`,
@@ -291,9 +284,7 @@ export async function startTrustedListener(
 			)
 		}
 		await listenOrThrow(server, (cb) => server.listen(config.path, cb))
-		// Restrict to owner+group: the ambient umask may otherwise leave the
-		// socket world-writable (0777 under umask 000 in root containers),
-		// handing any local process unauthenticated control of the Z-Wave API
+		// Restrict to owner+group because the ambient umask may leave it world-writable
 		await chmod(config.path, 0o660)
 	} else {
 		host =
@@ -307,8 +298,7 @@ export async function startTrustedListener(
 
 	const binding = describeBinding(config, host)
 
-	// Runtime errors after a successful bind must not tear down the primary
-	// gateway; log them with enough context to diagnose
+	// Log-only after a successful bind so a runtime error doesn't kill the gateway
 	server.on('error', (error: NodeJS.ErrnoException) => {
 		logger.error(
 			`Trusted listener error on ${binding}: ${error.code ?? ''} ${
@@ -317,8 +307,6 @@ export async function startTrustedListener(
 		)
 	})
 
-	// warn so the security-relevant "auth is bypassed here" notice survives
-	// stricter log level filters
 	logger.warn(`Trusted (unauthenticated) API listening on ${binding}`)
 
 	return server
