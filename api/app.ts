@@ -335,6 +335,12 @@ export async function startServer(port: number | string, host?: string) {
 const defaultSnippets: utils.Snippet[] = []
 
 async function loadSnippets() {
+	// Idempotent by construction: clear before repopulating so calling this
+	// more than once (e.g. an HTTP test harness invoking the `__testHooks`
+	// seam for more than one suite sharing this module's cache) can never
+	// duplicate entries. Production only ever calls this once, at startup,
+	// so this is purely defensive.
+	defaultSnippets.length = 0
 	const localSnippetsDir = utils.joinPath(false, 'snippets')
 	await utils.ensureDir(snippetsDir)
 
