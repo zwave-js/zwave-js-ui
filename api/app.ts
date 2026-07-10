@@ -135,6 +135,12 @@ export interface CreateAppOptions {
 	test?: {
 		gateway?: Gateway
 		restarting?: boolean
+		// Constructed by the caller so it can keep reading `.io`/room membership itself - no getter is exposed after construction
+		socketManager?: SocketManager
+		// Binds the real SocketManager + auth middleware + all inbound event handlers to `server`, mirroring startServer()'s setupSocket() call without starting a real Gateway/MQTT/ZWaveClient
+		server?: HttpServer
+		// Additionally mirrors startServer()'s log interceptor wiring; opt-in since logStream is a shared singleton and most tests don't need it
+		interceptor?: boolean
 		enumerateSerialPorts?: typeof Driver.enumerateSerialPorts
 		logFatalError?: (message: string) => void
 	}
@@ -235,7 +241,7 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 	} as const
 	type RESPONSE_CODES = (typeof RESPONSE_CODES)[keyof typeof RESPONSE_CODES]
 
-	const socketManager = new SocketManager()
+	const socketManager = testOptions?.socketManager ?? new SocketManager()
 	const backupManagerOwner = Symbol()
 
 	socketManager.authMiddleware = function (
@@ -2525,6 +2531,14 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 
 	function handleUnhandledRejection(reason: unknown) {
 		logFatalError(formatFatalErrorLog('unhandledRejection', reason))
+	}
+
+	// Test-only: wires the real SocketManager (+ auth middleware + every inbound handler), and optionally the log interceptor, over a caller-supplied ephemeral server - the construction-time equivalent of what startServer() does in production
+	if (testOptions?.server) {
+		setupSocket(testOptions.server)
+		if (testOptions.interceptor) {
+			setupInterceptor()
+		}
 	}
 
 	return {
