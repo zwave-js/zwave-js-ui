@@ -217,6 +217,14 @@ let pluginsRouter: Router
 // flag used to prevent multiple restarts while one is already in progress
 let restarting = false
 
+// Indirection around `Driver.enumerateSerialPorts` (real local/mDNS
+// enumeration) so `GET /api/serial-ports` can have its collaborator
+// replaced with a deterministic fake in tests, without ever touching real
+// serial hardware or the network. Production always uses the real
+// implementation; only the test-only seam below ever replaces it.
+let enumerateSerialPorts: typeof Driver.enumerateSerialPorts =
+	Driver.enumerateSerialPorts.bind(Driver)
+
 // ### UTILS
 
 /**
@@ -1206,7 +1214,7 @@ app.get(
 		// Only enumerate serial ports if ZWAVE_PORT is not set via env var
 		if (process.platform !== 'sunos' && !process.env.ZWAVE_PORT) {
 			try {
-				serial_ports = await Driver.enumerateSerialPorts({
+				serial_ports = await enumerateSerialPorts({
 					local: true,
 					remote: true,
 				})
@@ -2336,6 +2344,28 @@ export const __testHooks = {
 	isRestarting() {
 		return restarting
 	},
+	/**
+	 * Replaces the collaborator `GET /api/serial-ports` calls to enumerate
+	 * local/mDNS-remote serial ports. Production real-hardware/network
+	 * enumeration (`Driver.enumerateSerialPorts`) is the default; passing
+	 * `undefined` restores it. Lets tests assert an exact returned port
+	 * list deterministically, without any real serial/mDNS I/O.
+	 */
+	setEnumerateSerialPorts(
+		value: typeof Driver.enumerateSerialPorts | undefined,
+	) {
+		enumerateSerialPorts = value ?? Driver.enumerateSerialPorts.bind(Driver)
+	},
+	/**
+	 * Invokes the exact same production snippet-bootstrap function
+	 * `startServer()` calls before ever handling a request, so HTTP
+	 * characterization tests can populate `defaultSnippets` from the real
+	 * bundled `snippets/` directory instead of the harness leaving it
+	 * silently empty. This exposes the already-private function for tests
+	 * to call - nothing about `loadSnippets()` itself, or app startup, is
+	 * changed.
+	 */
+	loadSnippets,
 }
 
 export default app
