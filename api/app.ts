@@ -224,6 +224,14 @@ let restarting = false
 // implementation; only the test-only seam below ever replaces it.
 let enumerateSerialPorts: typeof Driver.enumerateSerialPorts =
 	Driver.enumerateSerialPorts.bind(Driver)
+// Tracks whether `enumerateSerialPorts` currently points at the real
+// production collaborator (true) or a test-injected fake (false). Only
+// read by the `__testHooks` observability seam below - production never
+// consults it - so a test harness's teardown can prove
+// `setEnumerateSerialPorts(undefined)` actually restored the production
+// default instead of leaving the previous test's fake installed, without
+// ever invoking the real enumerator (which would trigger serial/mDNS I/O).
+let enumerateSerialPortsIsProductionDefault = true
 
 // ### UTILS
 
@@ -2360,7 +2368,26 @@ export const __testHooks = {
 	setEnumerateSerialPorts(
 		value: typeof Driver.enumerateSerialPorts | undefined,
 	) {
-		enumerateSerialPorts = value ?? Driver.enumerateSerialPorts.bind(Driver)
+		if (value === undefined) {
+			enumerateSerialPorts = Driver.enumerateSerialPorts.bind(Driver)
+			enumerateSerialPortsIsProductionDefault = true
+		} else {
+			enumerateSerialPorts = value
+			enumerateSerialPortsIsProductionDefault = false
+		}
+	},
+	/**
+	 * Narrow, test-only observability seam: reports whether
+	 * `enumerateSerialPorts` currently points at the real production
+	 * `Driver.enumerateSerialPorts` collaborator (`true`) or a
+	 * test-injected fake (`false`) - without ever invoking it, so checking
+	 * this can never trigger real serial/mDNS I/O. Lets a harness's
+	 * teardown regression prove `setEnumerateSerialPorts(undefined)`
+	 * actually restored the production default instead of silently
+	 * leaving the last test's fake installed.
+	 */
+	isEnumerateSerialPortsProductionDefault() {
+		return enumerateSerialPortsIsProductionDefault
 	},
 	/**
 	 * Invokes the exact same production snippet-bootstrap function

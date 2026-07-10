@@ -39,6 +39,7 @@ export interface AppTestHooks {
 	setRestarting(value: boolean): void
 	isRestarting(): boolean
 	setEnumerateSerialPorts(value: EnumerateSerialPorts | undefined): void
+	isEnumerateSerialPortsProductionDefault(): boolean
 	loadSnippets(): Promise<void>
 }
 
@@ -190,6 +191,13 @@ export async function createHttpHarness(): Promise<HttpHarness> {
 			for (const key of Object.keys(jsonStore.store)) {
 				delete jsonStore.store[key]
 			}
+			// Restore the real production `Driver.enumerateSerialPorts`
+			// collaborator (`resetState()` above only ever installs the
+			// safe `NO_OP_ENUMERATE_SERIAL_PORTS` fake, itself a
+			// test-only stand-in) so nothing about this module's shared,
+			// cached state outlives this specific harness instance. See
+			// `harnessLifecycle.test.ts` for the regression proving this.
+			__testHooks.setEnumerateSerialPorts(undefined)
 			cleanupTestEnv()
 		},
 	}

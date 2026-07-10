@@ -140,6 +140,20 @@ export function closeWatchers() {
 	for (const [, watcher] of watchers) {
 		watcher.close()
 	}
+	watchers.clear()
+}
+
+// ### TEST-ONLY SEAM
+//
+// Exposes the size of the internal file-watcher registry so HTTP
+// characterization tests can prove `closeWatchers()` actually released
+// every `fs.FSWatcher` this module opened (`customDevices.js`/`.json`,
+// falling back to watching their parent directory), instead of leaking
+// open watcher handles - bound to an already-deleted throwaway
+// `STORE_DIR` - across test files that share this module's cache. Nothing
+// in the production entrypoint (`api/bin/www.ts`) reads this.
+export function __getWatcherCountForTests(): number {
+	return watchers.size
 }
 
 export const GatewayType = GATEWAY_TYPE
