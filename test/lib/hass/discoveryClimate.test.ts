@@ -1,0 +1,430 @@
+/**
+ * Characterization tests for the climate / composite discovery pipeline:
+ * `Gateway.discoverClimates` (builds the `thermostat` config into the
+ * module-global `allDevices`, mutating it) and the two branches of
+ * `Gateway.discoverDevice` (the `climate` topic/template resolver and the
+ * generic composite topic-rewrite). The full node pipeline is driven through
+ * the REAL producer - `zwave.emit('nodeInited', node)` -> `_onNodeInited` ->
+ * `discoverClimates` + `discoverDevice` + `discoverValue` - so the captured
+ * topics/templates/payloads are exactly what production emits.
+ *
+ * Faithfulness notes locked here:
+ *  - a thermostat node yields exactly ONE discovery packet: the composite
+ *    climate device "claims" its member values (setpoints/mode/state/air-temp)
+ *    via the `discovered[valueId.id]` guard, so `discoverValue` skips the
+ *    Air-temperature Multilevel Sensor that would otherwise be its own entity.
+ *  - `mode_state_template`/`action_template` are literal inverted/forward maps.
+ *  - the current `temperature_state_topic` follows the CURRENT mode value
+ *    (`setpoint_topic[mode.value]`), i.e. it changes with the active mode.
+ *  - `unique_id` for a composite device uses the capital `_Node<id>_` infix
+ *    (distinct from `discoverValue`'s node-level identifiers).
+ */
+import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest'
+import { mqttMockFactory } from './mqttMock.ts'
+import {
+	createGatewayHarness,
+	cleanupGatewayHarnessEnv,
+	type GatewayHarness,
+} from './gatewayHarness.ts'
+import { buildNode, buildValueId, addValue, state } from './fixtures.ts'
+import type { ZUINode, ZUIValueIdState } from '../../../api/lib/ZwaveClient.ts'
+
+vi.mock('mqtt', () => mqttMockFactory())
+
+let harness: GatewayHarness
+
+beforeAll(async () => {
+	harness = await createGatewayHarness()
+})
+
+afterAll(async () => {
+	await harness.close()
+	cleanupGatewayHarnessEnv()
+})
+
+interface ThermostatOptions {
+	id?: number
+	name?: string
+	deviceId: string
+	modeStates?: ZUIValueIdState[]
+	modeValue?: number
+	includeMode?: boolean
+	setpoints?: number[]
+	withTemp?: boolean
+	tempUnit?: string
+	withAction?: boolean
+}
+
+/** Builds a thermostat `ZUINode` (generic device class 0x08). */
+function buildThermostatNode(opts: ThermostatOptions): ZUINode {
+	const {
+		id = 2,
+		name = 'Thermostat',
+		deviceId,
+		modeStates = [state(0, 'Off'), state(1, 'Heat'), state(2, 'Cool')],
+		modeValue = 1,
+		includeMode = true,
+		setpoints = [1, 2],
+		withTemp = true,
+		tempUnit = '°C',
+		withAction = true,
+	} = opts
+
+	const node = buildNode({
+		id,
+		name,
+		deviceId,
+		deviceClass: { basic: 0, generic: 0x08, specific: 0 },
+	})
+
+	if (includeMode) {
+		addValue(
+			node,
+			buildValueId({
+				nodeId: id,
+				commandClass: 64, // Thermostat Mode
+				endpoint: 0,
+				property: 'mode',
+				propertyName: 'mode',
+				type: 'number',
+				value: modeValue,
+				states: modeStates,
+			}),
+		)
+	}
+
+	for (const pk of setpoints) {
+		addValue(
+			node,
+			buildValueId({
+				nodeId: id,
+				commandClass: 67, // Thermostat Setpoint
+				endpoint: 0,
+				property: 'setpoint',
+				propertyKey: pk,
+				propertyName: 'setpoint',
+				type: 'number',
+				value: 20 + pk,
+				unit: '°C',
+			}),
+		)
+	}
+
+	if (withTemp) {
+		addValue(
+			node,
+			buildValueId({
+				nodeId: id,
+				commandClass: 49, // Multilevel Sensor
+				endpoint: 0,
+				property: 'Air temperature',
+				propertyName: 'Air temperature',
+				type: 'number',
+				value: 21.5,
+				unit: tempUnit,
+				ccSpecific: { sensorType: 1, scale: 0 },
+			}),
+		)
+	}
+
+	if (withAction) {
+		addValue(
+			node,
+			buildValueId({
+				nodeId: id,
+				commandClass: 66, // Thermostat Operating State
+				endpoint: 0,
+				property: 'state',
+				propertyName: 'state',
+				type: 'number',
+				value: 1,
+				states: [state(0, 'Idle'), state(1, 'Heating')],
+			}),
+		)
+	}
+
+	return node
+}
+
+/** Drives the REAL `_onNodeInited` discovery pipeline via the zwave event. */
+function initNode(node: ZUINode): void {
+	harness.zwave.nodes.set(node.id, node)
+	harness.zwave.emit('nodeInited', node)
+}
+
+function climatePacket(nodeName = 'Thermostat') {
+	return harness
+		.publishedDiscoveries()
+		.find(
+			(p) =>
+				p.topic === `homeassistant/climate/${nodeName}/climate/config`,
+		)
+}
+
+describe('discoverClimates + discoverDevice (climate)', () => {
+	it('discovers a full thermostat: mode map, setpoint topics, action map', () => {
+		harness.resetState()
+		const node = buildThermostatNode({ deviceId: 'test-climate-full' })
+		initNode(node)
+
+		const climate = node.hassDevices['climate_climate']
+		expect(climate).toBeDefined()
+		expect(climate.type).toBe('climate')
+		expect(climate.object_id).toBe('climate')
+		expect(climate.persistent).toBe(false)
+		expect(climate.ignoreDiscovery).toBe(false)
+		expect(climate.discoveryTopic).toBe('climate/Thermostat/climate/config')
+
+		// mode/setpoint/action maps survive on the stored device
+		expect(climate.mode_map).toEqual({ off: 0, heat: 1, cool: 2 })
+		expect(climate.setpoint_topic).toEqual({
+			1: '67-0-setpoint-1',
+			2: '67-0-setpoint-2',
+		})
+		expect(climate.default_setpoint).toBe('67-0-setpoint-1')
+		expect(climate.action_map).toEqual({ 0: 'idle', 1: 'heating' })
+	})
+
+	it('publishes exactly one packet (climate claims its member values)', () => {
+		harness.resetState()
+		const node = buildThermostatNode({ deviceId: 'test-climate-claim' })
+		initNode(node)
+
+		// The Air-temperature Multilevel Sensor is a member of the climate
+		// device, so `discovered[...]` makes `discoverValue` skip it: the whole
+		// thermostat node maps to a single climate entity.
+		const all = harness.publishedDiscoveries()
+		expect(all).toHaveLength(1)
+		expect(all[0].topic).toBe(
+			'homeassistant/climate/Thermostat/climate/config',
+		)
+	})
+
+	it('resolves climate topics/templates and QoS/retain faithfully', () => {
+		harness.resetState()
+		const node = buildThermostatNode({ deviceId: 'test-climate-topics' })
+		initNode(node)
+
+		const packet = climatePacket()
+		expect(packet).toBeDefined()
+		expect(packet.options).toEqual({ qos: 0, retain: false })
+
+		const p = packet.payload
+		// modes list and mode topics/template
+		expect(p.modes).toEqual(['off', 'heat', 'cool'])
+		expect(p.mode_state_topic).toBe(
+			'zwave/Thermostat/thermostat_mode/endpoint_0/mode',
+		)
+		expect(p.mode_command_topic).toBe(
+			'zwave/Thermostat/thermostat_mode/endpoint_0/mode/set',
+		)
+		expect(p.mode_state_template).toBe(
+			'{{ {0: "off", 1: "heat", 2: "cool"}[value_json.value] | default(\'off\') }}',
+		)
+
+		// current mode is Heat (value 1) -> temperature topic points at setpoint 1
+		expect(p.temperature_state_topic).toBe(
+			'zwave/Thermostat/thermostat_setpoint/endpoint_0/setpoint/1',
+		)
+		expect(p.temperature_command_topic).toBe(
+			'zwave/Thermostat/thermostat_setpoint/endpoint_0/setpoint/1/set',
+		)
+
+		// action topic/template
+		expect(p.action_topic).toBe(
+			'zwave/Thermostat/thermostat_operating_state/endpoint_0/state',
+		)
+		expect(p.action_template).toBe(
+			'{{ {0: "idle", 1: "heating"}[value_json.value] | default(\'idle\') }}',
+		)
+
+		// current temperature + unit + precision
+		expect(p.current_temperature_topic).toBe(
+			'zwave/Thermostat/sensor_multilevel/endpoint_0/Air_temperature',
+		)
+		expect(p.temperature_unit).toBe('C')
+		expect(p.precision).toBe(0.1)
+
+		// carried-through catalog defaults
+		expect(p.min_temp).toBe(5)
+		expect(p.max_temp).toBe(40)
+		expect(p.temp_step).toBe(0.5)
+		expect(p.temperature_state_template).toBe('{{ value_json.value }}')
+		expect(p.current_temperature_template).toBe('{{ value_json.value }}')
+
+		// identifiers / availability / name
+		expect(p.unique_id).toBe('zwavejs2mqtt_0xabcdef01_Node2_climate')
+		expect(p.device.identifiers).toEqual(['zwavejs2mqtt_0xabcdef01_node2'])
+		expect(p.name).toBe('Thermostat_climate')
+		expect(p.availability_mode).toBe('all')
+		expect(p.availability).toHaveLength(3)
+	})
+
+	it('temperature topic follows the CURRENT mode value (cool)', () => {
+		harness.resetState()
+		const node = buildThermostatNode({
+			deviceId: 'test-climate-cool',
+			modeValue: 2, // Cool active
+		})
+		initNode(node)
+
+		const p = climatePacket().payload
+		// mode.value === 2 -> setpoint_topic[2] -> the cooling setpoint
+		expect(p.temperature_state_topic).toBe(
+			'zwave/Thermostat/thermostat_setpoint/endpoint_0/setpoint/2',
+		)
+	})
+
+	it('single-setpoint thermostat with no mode CC: no modes, default setpoint', () => {
+		harness.resetState()
+		const node = buildThermostatNode({
+			deviceId: 'test-climate-nomode',
+			includeMode: false,
+			setpoints: [1],
+			withAction: false,
+		})
+		initNode(node)
+
+		const climate = node.hassDevices['climate_climate']
+		expect(climate).toBeDefined()
+		// no mode CC -> modes + mode_state_template deleted, default_setpoint set
+		expect(climate.default_setpoint).toBe('67-0-setpoint-1')
+		const p = climatePacket().payload
+		expect(p.modes).toBeUndefined()
+		expect(p.mode_state_template).toBeUndefined()
+		expect(p.mode_state_topic).toBeUndefined()
+		// temperature still resolves from the default setpoint
+		expect(p.temperature_state_topic).toBe(
+			'zwave/Thermostat/thermostat_setpoint/endpoint_0/setpoint/1',
+		)
+	})
+
+	it('thermostat without an Air-temperature value omits current temp fields', () => {
+		harness.resetState()
+		const node = buildThermostatNode({
+			deviceId: 'test-climate-notemp',
+			withTemp: false,
+		})
+		initNode(node)
+
+		const p = climatePacket().payload
+		// current_temperature_topic + template are deleted when no temperature id
+		expect(p.current_temperature_topic).toBeUndefined()
+		expect(p.current_temperature_template).toBeUndefined()
+		expect(p.temperature_unit).toBeUndefined()
+	})
+
+	it('Fahrenheit air temperature maps temperature_unit to F', () => {
+		harness.resetState()
+		const node = buildThermostatNode({
+			deviceId: 'test-climate-f',
+			tempUnit: '°F',
+		})
+		initNode(node)
+
+		expect(climatePacket().payload.temperature_unit).toBe('F')
+	})
+
+	it('re-running the node pipeline is idempotent (no duplicate publishes)', () => {
+		harness.resetState()
+		const node = buildThermostatNode({ deviceId: 'test-climate-idem' })
+		initNode(node)
+		expect(harness.publishedDiscoveries()).toHaveLength(1)
+
+		// Re-init: the climate device already exists on the node, and every
+		// member value is already in `discovered`, so nothing is republished.
+		harness.resetPublishes()
+		harness.zwave.emit('nodeInited', node)
+		expect(harness.publishedDiscoveries()).toHaveLength(0)
+	})
+})
+
+describe('discoverDevice (generic composite topic-rewrite)', () => {
+	it('resolves value ids to topics and appends /set for command topics', () => {
+		harness.resetState()
+		const node = buildNode({
+			id: 7,
+			name: 'Composite',
+			deviceId: 'test-composite',
+		})
+		const tempKey = addValue(
+			node,
+			buildValueId({
+				nodeId: 7,
+				commandClass: 49,
+				endpoint: 0,
+				property: 'Air temperature',
+				propertyName: 'Air temperature',
+				type: 'number',
+				value: 21,
+				unit: '°C',
+				ccSpecific: { sensorType: 1, scale: 0 },
+			}),
+		)
+
+		const composite = {
+			type: 'sensor',
+			object_id: 'composite',
+			values: [tempKey],
+			discovery_payload: {
+				state_topic: tempKey,
+				command_topic: tempKey,
+				json_attributes_topic: tempKey,
+				unit_of_measurement: '°C',
+			},
+		} as any
+
+		harness.gw.discoverDevice(node as any, composite)
+
+		const stored = node.hassDevices['sensor_composite']
+		expect(stored).toBeDefined()
+		const p = stored.discovery_payload as any
+		const base =
+			'zwave/Composite/sensor_multilevel/endpoint_0/Air_temperature'
+		// state/json_attributes topics resolved, no /set suffix
+		expect(p.state_topic).toBe(base)
+		expect(p.json_attributes_topic).toBe(base)
+		// command topic resolved WITH /set suffix
+		expect(p.command_topic).toBe(base + '/set')
+		// non-topic keys untouched
+		expect(p.unit_of_measurement).toBe('°C')
+		// composite unique_id uses the capital `_Node<id>_` infix
+		expect(p.unique_id).toBe('zwavejs2mqtt_0xabcdef01_Node7_composite')
+	})
+
+	it('is skipped when the device already exists on the node', () => {
+		harness.resetState()
+		const node = buildNode({
+			id: 8,
+			name: 'Composite2',
+			deviceId: 'test-composite-2',
+		})
+		const tempKey = addValue(
+			node,
+			buildValueId({
+				nodeId: 8,
+				commandClass: 49,
+				endpoint: 0,
+				property: 'Air temperature',
+				propertyName: 'Air temperature',
+				value: 21,
+				unit: '°C',
+				ccSpecific: { sensorType: 1, scale: 0 },
+			}),
+		)
+		const composite = {
+			type: 'sensor',
+			object_id: 'dup',
+			values: [tempKey],
+			discovery_payload: { state_topic: tempKey },
+		} as any
+
+		harness.gw.discoverDevice(node as any, composite)
+		expect(harness.publishedDiscoveries()).toHaveLength(1)
+
+		// second call: node.hassDevices['sensor_dup'] already set -> no-op
+		harness.resetPublishes()
+		harness.gw.discoverDevice(node as any, composite)
+		expect(harness.publishedDiscoveries()).toHaveLength(0)
+	})
+})
