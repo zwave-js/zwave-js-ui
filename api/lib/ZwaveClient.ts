@@ -1307,6 +1307,57 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	}
 
 	/**
+	 * Construct the official `@zwave-js/server` instance and wire its
+	 * `error`/`hard reset` listeners. Called from `connect()` right after the
+	 * driver is created (and only when `serverEnabled`), so the server always
+	 * exists BEFORE the driver becomes ready. Extracted verbatim from
+	 * `connect()` so its behavior is unchanged.
+	 */
+	private _createServer() {
+		this.server = new ZwavejsServer(this._driver, {
+			port: this.cfg.serverPort || 3000,
+			host: this.cfg.serverHost,
+			logger: LogManager.module('Z-Wave-Server'),
+			enableDNSServiceDiscovery: !this.cfg.serverServiceDiscoveryDisabled,
+		})
+
+		this.server.on('error', () => {
+			// this is already logged by the server but we need this to prevent
+			// unhandled exceptions
+		})
+
+		this.server.on('hard reset', () => {
+			logger.info('Hard reset requested by ZwaveJS Server')
+			this.init()
+		})
+	}
+
+	/**
+	 * Start the official `@zwave-js/server` once the driver is ready and nodes
+	 * are restored (called from `_onDriverReady`). The `!this.server['server']`
+	 * guard prevents a second `start()` when the driver re-emits `driver ready`
+	 * (see #602). Extracted verbatim from `_onDriverReady` so its behavior is
+	 * unchanged.
+	 */
+	private _startServerIfNeeded() {
+		if (this.cfg.serverEnabled && this.server) {
+			// fix prevent to start server when already inited
+			if (!this.server['server']) {
+				this.server
+					.start(!this.hasUserCallbacks)
+					.then(() => {
+						logger.info('Z-Wave server started')
+					})
+					.catch((error) => {
+						logger.error(
+							`Failed to start zwave-js server: ${error.message}`,
+						)
+					})
+			}
+		}
+	}
+
+	/**
 	 * Method used to close client connection, use this before destroy
 	 */
 	async close(keepListeners = false) {
@@ -2569,23 +2620,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			}
 
 			if (this.cfg.serverEnabled) {
-				this.server = new ZwavejsServer(this._driver, {
-					port: this.cfg.serverPort || 3000,
-					host: this.cfg.serverHost,
-					logger: LogManager.module('Z-Wave-Server'),
-					enableDNSServiceDiscovery:
-						!this.cfg.serverServiceDiscoveryDisabled,
-				})
-
-				this.server.on('error', () => {
-					// this is already logged by the server but we need this to prevent
-					// unhandled exceptions
-				})
-
-				this.server.on('hard reset', () => {
-					logger.info('Hard reset requested by ZwaveJS Server')
-					this.init()
-				})
+				this._createServer()
 			}
 
 			if (this.cfg.enableStatistics) {
@@ -6388,21 +6423,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		this._error = undefined
 
 		// start server only when driver is ready. Fixes #602
-		if (this.cfg.serverEnabled && this.server) {
-			// fix prevent to start server when already inited
-			if (!this.server['server']) {
-				this.server
-					.start(!this.hasUserCallbacks)
-					.then(() => {
-						logger.info('Z-Wave server started')
-					})
-					.catch((error) => {
-						logger.error(
-							`Failed to start zwave-js server: ${error.message}`,
-						)
-					})
-			}
-		}
+		this._startServerIfNeeded()
 
 		logger.info(`Scanning network with homeid: ${homeHex}`)
 
