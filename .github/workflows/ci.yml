@@ -74,6 +74,10 @@ jobs:
         if: matrix['node-version'] == '20.x'
         run: npm run coverage
 
+      - name: Enforce backend coverage thresholds
+        if: matrix['node-version'] == '20.x'
+        run: npm run coverage:server
+
       - name: Coveralls
         uses: coverallsapp/github-action@master
         if: matrix['node-version'] == '20.x'
