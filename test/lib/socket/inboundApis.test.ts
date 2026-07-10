@@ -21,6 +21,13 @@
  * `gw` itself (never `undefined`) - every test below installs at least a
  * bare `createFakeGateway()`, varying only `.zwave`, to match that
  * invariant instead of exercising an impossible-in-production state.
+ *
+ * Store isolation: this file imports the real, store-dependent
+ * `ZwaveClient.ts` for its one real-`callApi()`-backed `ZWAVE_API` test
+ * below (see `callApi.test.ts`'s doc comment for the full mechanics) -
+ * `import type` only here (erased at compile time), with the real runtime
+ * value dynamically imported inside `beforeAll`, strictly AFTER
+ * `createSocketHarness()` has already isolated `STORE_DIR`.
  */
 import {
 	describe,
@@ -31,6 +38,7 @@ import {
 	afterEach,
 	vi,
 } from 'vitest'
+import type ZWaveClientType from '../../../api/lib/ZwaveClient.ts'
 import { createSocketHarness, type SocketHarness } from './harness.ts'
 import { createFakeGateway, createFakeZniffer } from './fakes.ts'
 
@@ -46,9 +54,13 @@ function emit<T = any>(
 
 describe('Socket contract: inbound ACK APIs', () => {
 	let harness: SocketHarness
+	let ZWaveClient: typeof ZWaveClientType
 
 	beforeAll(async () => {
 		harness = await createSocketHarness()
+		;({ default: ZWaveClient } = await import(
+			'../../../api/lib/ZwaveClient.ts'
+		))
 	})
 
 	afterAll(async () => {
@@ -156,6 +168,37 @@ describe('Socket contract: inbound ACK APIs', () => {
 				42,
 			)
 		})
+
+		it('routes through the REAL ZwaveClient.callApi() dispatcher (not a mocked gw.zwave.callApi) for a real allowed method, echoing its real success/result/args (ZwaveClient.ts:6032-6070, app.ts:708-726)', async () => {
+			// Every other test in this describe block uses
+			// `createFakeGateway()`'s mocked `zwave.callApi` - proving the
+			// EVENT HANDLER's plumbing (arg defaulting, `api` echo, ack
+			// shape), but never the real dispatcher itself. This test
+			// wires a REAL `ZWaveClient` instance as `gw.zwave` instead, so
+			// the real `callApi()` (see `callApi.test.ts` for its full
+			// characterization) is what actually runs.
+			const zwave = new ZWaveClient({} as any, harness.io)
+			zwave.scenes = [{ sceneid: 1, label: 'Party', values: [] }]
+			;(zwave as any)._driver = {}
+			zwave.driverReady = true
+			harness.testHooks.setGateway(
+				createFakeGateway({ zwave: zwave as any }) as any,
+			)
+			const client = await connectedClient()
+
+			const result = await emit(client, 'ZWAVE_API', {
+				api: '_sceneGetValues',
+				args: [1],
+			})
+
+			expect(result).toStrictEqual({
+				success: true,
+				message: 'Success zwave api call',
+				result: [],
+				args: [1],
+				api: '_sceneGetValues',
+			})
+		})
 	})
 
 	describe('MQTT_API', () => {
@@ -213,9 +256,17 @@ describe('Socket contract: inbound ACK APIs', () => {
 	})
 
 	describe('HASS_API', () => {
-		it('calls gw.rediscoverNode(nodeId) for the known "rediscoverNode" action and echoes apiName as api', async () => {
+		it('calls gw.rediscoverNode(nodeId) for the known "rediscoverNode" action - real signature is void, so `result` is stripped from the wire ack (Gateway.ts:673, app.ts:802-809)', async () => {
+			// `Gateway.rediscoverNode(nodeID): void` - a production-impossible
+			// fake that returned a string here would silently paper over a
+			// real regression if the real method ever DID start returning
+			// something. `vi.fn()` (no return value) matches the real
+			// signature; `res` stays `undefined`, and `undefined`-valued
+			// object keys are stripped by Socket.IO's JSON-based ack
+			// serialization - so the real wire ack has NO `result` key at
+			// all, not merely `result: undefined`.
 			const gateway = createFakeGateway({
-				rediscoverNode: vi.fn(() => 'rediscovered'),
+				rediscoverNode: vi.fn(),
 			} as any)
 			harness.testHooks.setGateway(gateway as any)
 			const client = await connectedClient()
@@ -228,9 +279,9 @@ describe('Socket contract: inbound ACK APIs', () => {
 			expect(result).toStrictEqual({
 				success: true,
 				message: 'Success HASS api call',
-				result: 'rediscovered',
 				api: 'rediscoverNode',
 			})
+			expect('result' in result).toBe(false)
 		})
 
 		it('quirk: an unknown apiName silently "succeeds" (switch has no default case, res/err stay undefined)', async () => {
@@ -269,10 +320,17 @@ describe('Socket contract: inbound ACK APIs', () => {
 	})
 
 	describe('ZNIFFER_API', () => {
-		it('awaits zniffer.start() for the known "start" action', async () => {
+		it('awaits zniffer.start() for the known "start" action - real signature is Promise<void>, so `result` is stripped from the wire ack (ZnifferManager.ts:276-290, app.ts:858-901)', async () => {
+			// `ZnifferManager.start(): Promise<void>` - a
+			// production-impossible fake that resolved to a string here
+			// would hide a real regression the same way the HASS_API
+			// `rediscoverNode` fake above did. `createFakeZniffer()`'s
+			// OWN default (`fakes.ts`) already resolves to `undefined`,
+			// matching production; this override previously replaced that
+			// correct default with an impossible sentinel.
 			harness.testHooks.setGateway(createFakeGateway() as any)
 			const zniffer = createFakeZniffer({
-				start: vi.fn(() => Promise.resolve('started')),
+				start: vi.fn(() => Promise.resolve(undefined)),
 			} as any)
 			harness.testHooks.setZniffer(zniffer as any)
 			const client = await connectedClient()
@@ -284,9 +342,9 @@ describe('Socket contract: inbound ACK APIs', () => {
 			expect(result).toStrictEqual({
 				success: true,
 				message: 'Success ZNIFFER api call',
-				result: 'started',
 				api: 'start',
 			})
+			expect('result' in result).toBe(false)
 		})
 
 		it('reports success:false with "Unknown ZNIFFER api <name>" for an unknown apiName', async () => {
