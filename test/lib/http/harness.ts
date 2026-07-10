@@ -22,7 +22,7 @@ import { createServer, type Server as HttpServer } from 'node:http'
 import { mkdirSync } from 'node:fs'
 import type { Express } from 'express'
 import supertest from 'supertest'
-import { ensureTestEnv, getTestStoreDir } from './env.ts'
+import { cleanupTestEnv, ensureTestEnv, getTestStoreDir } from './env.ts'
 import type { FakeGateway } from './fakes.ts'
 
 export interface AppTestHooks {
@@ -47,8 +47,13 @@ interface JsonStoreModule {
 	store: Record<string, { file: string; default: unknown }>
 }
 
+interface GatewayModule {
+	closeWatchers: () => void
+}
+
 let appModulePromise: Promise<AppModule> | undefined
 let jsonStoreModulePromise: Promise<JsonStoreModule> | undefined
+let gatewayModulePromise: Promise<GatewayModule> | undefined
 
 /**
  * Loads (once per test file) the real `api/app.ts` module, after ensuring
@@ -82,6 +87,13 @@ export async function loadJsonStore(): Promise<JsonStoreModule> {
 	return jsonStoreModulePromise
 }
 
+async function loadGatewayModule(): Promise<GatewayModule> {
+	if (!gatewayModulePromise) {
+		gatewayModulePromise = import('../../../api/lib/Gateway.ts')
+	}
+	return gatewayModulePromise
+}
+
 export interface HttpHarness {
 	app: Express
 	/** One-shot supertest requests against the live ephemeral server. */
@@ -98,8 +110,15 @@ export interface HttpHarness {
 }
 
 export async function createHttpHarness(): Promise<HttpHarness> {
-	const [{ default: app, __testHooks }, { jsonStore, store }] =
-		await Promise.all([loadAppModule(), loadJsonStore()])
+	const [
+		{ default: app, __testHooks },
+		{ jsonStore, store },
+		{ closeWatchers },
+	] = await Promise.all([
+		loadAppModule(),
+		loadJsonStore(),
+		loadGatewayModule(),
+	])
 
 	await jsonStore.init(store)
 
@@ -137,6 +156,11 @@ export async function createHttpHarness(): Promise<HttpHarness> {
 			await new Promise<void>((resolve, reject) => {
 				server.close((err) => (err ? reject(err) : resolve()))
 			})
+			closeWatchers()
+			for (const key of Object.keys(jsonStore.store)) {
+				delete jsonStore.store[key]
+			}
+			cleanupTestEnv()
 		},
 	}
 }
