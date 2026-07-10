@@ -56,11 +56,39 @@ describe('HTTP contract: settings, restart, statistics, versions', () => {
 	})
 
 	describe('GET /api/serial-ports', () => {
-		it('lists locally enumerated serial ports as an array (real, hardware-free enumeration)', async () => {
+		it('returns exactly the ports the (mocked) enumerator resolves, with no real serial/mDNS I/O', async () => {
+			harness.testHooks.setEnumerateSerialPorts((options) => {
+				expect(options).toEqual({ local: true, remote: true })
+				return Promise.resolve(['/dev/ttyFAKE0', '/dev/ttyFAKE1'])
+			})
+
 			const res = await harness.request.get('/api/serial-ports')
+
 			expect(res.status).toBe(200)
-			expect(res.body.success).toBe(true)
-			expect(Array.isArray(res.body.serial_ports)).toBe(true)
+			expect(res.body).toEqual({
+				success: true,
+				serial_ports: ['/dev/ttyFAKE0', '/dev/ttyFAKE1'],
+			})
+		})
+
+		it('returns an empty list without throwing when the enumerator resolves none', async () => {
+			harness.testHooks.setEnumerateSerialPorts(() => Promise.resolve([]))
+
+			const res = await harness.request.get('/api/serial-ports')
+
+			expect(res.status).toBe(200)
+			expect(res.body).toEqual({ success: true, serial_ports: [] })
+		})
+
+		it('preserved quirk: an enumerator rejection is caught and reported as a failed-but-200 envelope with an empty list', async () => {
+			harness.testHooks.setEnumerateSerialPorts(() =>
+				Promise.reject(new Error('boom')),
+			)
+
+			const res = await harness.request.get('/api/serial-ports')
+
+			expect(res.status).toBe(200)
+			expect(res.body).toEqual({ success: false, serial_ports: [] })
 		})
 	})
 

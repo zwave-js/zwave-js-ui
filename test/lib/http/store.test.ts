@@ -1,9 +1,28 @@
 import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest'
 import { mkdirSync, writeFileSync, existsSync, readFileSync } from 'node:fs'
 import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { createHttpHarness, type HttpHarness } from './harness.ts'
 import { getTestStoreDir } from './env.ts'
 import { createFakeGateway } from './fakes.ts'
+
+/** The repo-root `snippets/` directory the production `loadSnippets()`
+ * bundles at startup - independent of `storeDir`/`snippetsDir`. */
+const BUNDLED_SNIPPETS_DIR = path.join(
+	path.dirname(fileURLToPath(import.meta.url)),
+	'..',
+	'..',
+	'..',
+	'snippets',
+)
+
+/** Every `.js` file the repo ships under `snippets/` as of this writing. */
+const EXPECTED_BUNDLED_SNIPPET_NAMES = [
+	'access-store-dir',
+	'clone-config',
+	'pingNodes',
+	'reinterview-nodes',
+]
 
 /**
  * Characterizes: GET/PUT/DELETE /api/store, PUT/POST /api/store-multi,
@@ -332,7 +351,54 @@ describe('HTTP contract: store, upload, snippets', () => {
 	})
 
 	describe('GET /api/snippet', () => {
-		it('returns the cached snippets plus on-disk snippets when a gateway is attached', async () => {
+		it('includes every real bundled snippet (loaded via the production loadSnippets() seam), verbatim', async () => {
+			const gw = createFakeGateway()
+			harness.testHooks.setGateway(gw)
+
+			const res = await harness.request.get('/api/snippet')
+
+			expect(res.status).toBe(200)
+			expect(res.body.success).toBe(true)
+			const names = (res.body.data as Array<{ name: string }>).map(
+				(s) => s.name,
+			)
+			expect(names).toEqual(
+				expect.arrayContaining(EXPECTED_BUNDLED_SNIPPET_NAMES),
+			)
+			for (const name of EXPECTED_BUNDLED_SNIPPET_NAMES) {
+				const content = readFileSync(
+					path.join(BUNDLED_SNIPPETS_DIR, `${name}.js`),
+					'utf8',
+				)
+				expect(res.body.data).toEqual(
+					expect.arrayContaining([{ name, content }]),
+				)
+			}
+		})
+
+		it('includes a real snippet written to the isolated on-disk snippets dir', async () => {
+			const gw = createFakeGateway()
+			harness.testHooks.setGateway(gw)
+
+			writeFileSync(
+				path.join(getTestStoreDir(), 'snippets', 'my-on-disk.js'),
+				'// a real isolated on-disk snippet\n',
+			)
+
+			const res = await harness.request.get('/api/snippet')
+
+			expect(res.status).toBe(200)
+			expect(res.body.data).toEqual(
+				expect.arrayContaining([
+					{
+						name: 'my-on-disk',
+						content: '// a real isolated on-disk snippet\n',
+					},
+				]),
+			)
+		})
+
+		it('returns the cached snippets plus bundled and on-disk snippets when a gateway is attached', async () => {
 			const gw = createFakeGateway()
 			gw.zwave.cacheSnippets = [{ name: 'cached', content: '//x' }]
 			harness.testHooks.setGateway(gw)

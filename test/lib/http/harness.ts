@@ -9,7 +9,9 @@
  *     `./env.ts`), so route handlers that touch `jsonStore`/session files
  *     never read or write real application data.
  *  2. Dynamically imports `api/app.ts` (after the env is set) and drives its
- *     `__testHooks` test-only seam to inject fake `gw`/`zniffer` collaborators.
+ *     `__testHooks` test-only seam to inject fake `gw`/`zniffer`
+ *     collaborators, a deterministic serial-port enumerator, and to invoke
+ *     the real `loadSnippets()` production bootstrap.
  *  3. Wraps the plain Express `app` export in a real `http.Server` bound to
  *     an ephemeral port (`listen(0)`), so requests exercise the exact same
  *     middleware stack/route handlers as production, over a real socket.
@@ -19,11 +21,16 @@
  *     future pool/isolation changes).
  */
 import { createServer, type Server as HttpServer } from 'node:http'
-import { mkdirSync } from 'node:fs'
 import type { Express } from 'express'
 import supertest from 'supertest'
-import { cleanupTestEnv, ensureTestEnv, getTestStoreDir } from './env.ts'
+import { cleanupTestEnv, ensureTestEnv } from './env.ts'
 import type { FakeGateway } from './fakes.ts'
+
+/** Mirrors `Driver.enumerateSerialPorts`'s signature from `zwave-js`. */
+export type EnumerateSerialPorts = (options?: {
+	local?: boolean
+	remote?: boolean
+}) => Promise<string[]>
 
 export interface AppTestHooks {
 	setGateway(value: FakeGateway | undefined): void
@@ -31,6 +38,8 @@ export interface AppTestHooks {
 	setPluginsRouter(value: unknown): void
 	setRestarting(value: boolean): void
 	isRestarting(): boolean
+	setEnumerateSerialPorts(value: EnumerateSerialPorts | undefined): void
+	loadSnippets(): Promise<void>
 }
 
 interface AppModule {
@@ -94,6 +103,19 @@ async function loadGatewayModule(): Promise<GatewayModule> {
 	return gatewayModulePromise
 }
 
+/**
+ * Safe placeholder for the serial-port enumerator: every harness starts
+ * (and every `resetState()` call reverts to) this deterministic no-network,
+ * no-hardware fake, NOT the real `Driver.enumerateSerialPorts`. Individual
+ * tests that want to assert a specific returned list still call
+ * `testHooks.setEnumerateSerialPorts(...)` themselves; this default just
+ * guarantees that a test which forgets to (e.g. the generic
+ * "route exists" check in `routeContract.test.ts`) can never trigger a
+ * real serial/mDNS scan.
+ */
+const NO_OP_ENUMERATE_SERIAL_PORTS: EnumerateSerialPorts = () =>
+	Promise.resolve([])
+
 export interface HttpHarness {
 	app: Express
 	/** One-shot supertest requests against the live ephemeral server. */
@@ -104,7 +126,10 @@ export interface HttpHarness {
 	jsonStore: JsonStoreModule['jsonStore']
 	store: JsonStoreModule['store']
 	server: HttpServer
-	/** Resets the seam state (gw/zniffer/pluginsRouter/restarting). */
+	/**
+	 * Resets the seam state (gw/zniffer/pluginsRouter/restarting/serial
+	 * port enumerator).
+	 */
 	resetState(): void
 	close(): Promise<void>
 }
@@ -122,13 +147,13 @@ export async function createHttpHarness(): Promise<HttpHarness> {
 
 	await jsonStore.init(store)
 
-	// Production only creates `storeDir/snippets` inside `loadSnippets()`,
-	// which is only called from the real `startServer()` this harness
-	// deliberately bypasses (see the file-level comment). Creating it here
-	// is pure test-infra plumbing (a directory, no I/O side effects beyond
-	// the isolated STORE_DIR) so `GET /api/snippet` behaves the same as it
-	// would after a real startup instead of failing on a missing directory.
-	mkdirSync(`${getTestStoreDir()}/snippets`, { recursive: true })
+	// Invokes the real `loadSnippets()` production seam (see `__testHooks`
+	// in `api/app.ts`) - the exact function `startServer()` calls before
+	// handling any request - so `defaultSnippets` is populated from the
+	// real bundled `snippets/` directory (and `storeDir/snippets` exists)
+	// exactly as it would after a real startup, instead of the harness
+	// leaving both silently empty/missing.
+	await __testHooks.loadSnippets()
 
 	const server = createServer(app)
 	await new Promise<void>((resolve) => {
@@ -140,7 +165,12 @@ export async function createHttpHarness(): Promise<HttpHarness> {
 		__testHooks.setZniffer(undefined)
 		__testHooks.setPluginsRouter(undefined)
 		__testHooks.setRestarting(false)
+		__testHooks.setEnumerateSerialPorts(NO_OP_ENUMERATE_SERIAL_PORTS)
 	}
+
+	// Install the safe default immediately, before any request can reach
+	// `GET /api/serial-ports` - see `NO_OP_ENUMERATE_SERIAL_PORTS`.
+	resetState()
 
 	return {
 		app,
