@@ -56,6 +56,7 @@
     "docs": "docsify serve ./docs",
     "docs:generate": "node --experimental-strip-types generateDocs.ts",
     "coverage": "vitest run --coverage",
+    "coverage:server": "vitest run --config vitest.config.server.ts --coverage",
     "build": "npm-run-all build:*",
     "build:server": "tsc",
     "build:ui": "vite build",
