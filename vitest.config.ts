@@ -35,6 +35,25 @@ export default defineConfig({
 			reportsDirectory: './coverage',
 			include: ['api/**', 'src/**'],
 			exclude: ['**/*.test.*', 'test/**'],
+			// Glob-scoped thresholds (matched against each covered file's path,
+			// independently of the top-level `lines`/`statements`/etc. keys,
+			// which aren't set here) let this single, full-repo `npm run
+			// coverage` run double as backend-only threshold enforcement -
+			// see `vitest.config.server.ts`'s doc comment for why these
+			// specific numbers were chosen. This avoids running the backend
+			// test suite a second time in CI just to check its coverage
+			// (previously a separate `npm run coverage:server` step); running
+			// backend tests once, in the full combined run, is enough to both
+			// enforce the thresholds below AND produce the file-level line
+			// data Coveralls needs for `api/**`.
+			thresholds: {
+				'api/**': {
+					statements: 19,
+					branches: 14,
+					functions: 23,
+					lines: 19,
+				},
+			},
 		},
 	},
 })

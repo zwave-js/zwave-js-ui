@@ -64,19 +64,18 @@ jobs:
           name: lint-fix
           path: fix.patch
 
-      # On 20.x the coverage step below runs the full suite, so only run the
-      # plain test step on the other matrix versions to avoid testing twice.
+      # On 20.x the coverage step below runs the full suite (and, via
+      # `vitest.config.ts`'s glob-scoped `api/**` coverage thresholds,
+      # enforces the same backend coverage floor `coverage:server` checks
+      # locally), so only run the plain test step on the other matrix
+      # versions to avoid testing twice.
       - name: Test
         if: matrix['node-version'] != '20.x'
         run: npm run test
 
-      - name: Generate coverage report
+      - name: Generate coverage report (also enforces api/** thresholds)
         if: matrix['node-version'] == '20.x'
         run: npm run coverage
-
-      - name: Enforce backend coverage thresholds
-        if: matrix['node-version'] == '20.x'
-        run: npm run coverage:server
 
       - name: Coveralls
         uses: coverallsapp/github-action@master
