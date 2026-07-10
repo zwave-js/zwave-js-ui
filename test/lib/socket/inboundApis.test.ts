@@ -10,6 +10,7 @@ import {
 	createFakeGateway,
 	createFakeZniffer,
 	type FakeGateway,
+	createFakeZwaveClient,
 } from './fakes.ts'
 import { connectedClient, emit } from './helpers.ts'
 
@@ -257,6 +258,146 @@ describe('Socket contract: inbound ACK APIs', () => {
 				success: false,
 				message: 'hass boom',
 				api: 'disableDiscovery',
+			})
+		})
+
+		it('routes "delete" to gw.publishDiscovery(device, nodeId, {deleteDevice:true, forceUpdate:true}) (app.ts:765-770)', async () => {
+			const device = { id: 'switch_sw', type: 'switch' }
+			const gateway = createFakeGateway({
+				publishDiscovery: vi.fn(),
+			} as any)
+			harness.testHooks.setGateway(gateway as any)
+			const client = await connectedClient()
+
+			const result = await emit(client, 'HASS_API', {
+				apiName: 'delete',
+				device,
+				nodeId: 2,
+			})
+			expect(gateway.publishDiscovery).toHaveBeenCalledWith(device, 2, {
+				deleteDevice: true,
+				forceUpdate: true,
+			})
+			// `publishDiscovery(): void` -> undefined `result` key is stripped
+			expect(result).toStrictEqual({
+				success: true,
+				message: 'Success HASS api call',
+				api: 'delete',
+			})
+			expect('result' in result).toBe(false)
+		})
+
+		it('routes "discover" to gw.publishDiscovery(device, nodeId, {deleteDevice:false, forceUpdate:true}) (app.ts:771-776)', async () => {
+			const device = { id: 'switch_sw', type: 'switch' }
+			const gateway = createFakeGateway({
+				publishDiscovery: vi.fn(),
+			} as any)
+			harness.testHooks.setGateway(gateway as any)
+			const client = await connectedClient()
+
+			const result = await emit(client, 'HASS_API', {
+				apiName: 'discover',
+				device,
+				nodeId: 2,
+			})
+			expect(gateway.publishDiscovery).toHaveBeenCalledWith(device, 2, {
+				deleteDevice: false,
+				forceUpdate: true,
+			})
+			expect(result).toStrictEqual({
+				success: true,
+				message: 'Success HASS api call',
+				api: 'discover',
+			})
+		})
+
+		it('routes "update" to gw.zwave.updateDevice(device, nodeId) (app.ts:783-785)', async () => {
+			const device = { id: 'switch_sw', type: 'switch' }
+			const gateway = createFakeGateway()
+			harness.testHooks.setGateway(gateway as any)
+			const client = await connectedClient()
+
+			const result = await emit(client, 'HASS_API', {
+				apiName: 'update',
+				device,
+				nodeId: 2,
+			})
+			expect(gateway.zwave.updateDevice).toHaveBeenCalledWith(device, 2)
+			expect(result).toStrictEqual({
+				success: true,
+				message: 'Success HASS api call',
+				api: 'update',
+			})
+		})
+
+		it('routes "add" to gw.zwave.addDevice(device, nodeId) (app.ts:786-788)', async () => {
+			const device = { id: 'switch_sw', type: 'switch' }
+			const gateway = createFakeGateway()
+			harness.testHooks.setGateway(gateway as any)
+			const client = await connectedClient()
+
+			const result = await emit(client, 'HASS_API', {
+				apiName: 'add',
+				device,
+				nodeId: 2,
+			})
+			expect(gateway.zwave.addDevice).toHaveBeenCalledWith(device, 2)
+			expect(result).toStrictEqual({
+				success: true,
+				message: 'Success HASS api call',
+				api: 'add',
+			})
+		})
+
+		it('awaits gw.zwave.storeDevices(devices, nodeId, remove) for "store" (app.ts:789-795)', async () => {
+			const devices = { switch_sw: { type: 'switch' } }
+			const gateway = createFakeGateway()
+			harness.testHooks.setGateway(gateway as any)
+			const client = await connectedClient()
+
+			const result = await emit(client, 'HASS_API', {
+				apiName: 'store',
+				devices,
+				nodeId: 2,
+				remove: false,
+			})
+			expect(gateway.zwave.storeDevices).toHaveBeenCalledWith(
+				devices,
+				2,
+				false,
+			)
+			expect(result).toStrictEqual({
+				success: true,
+				message: 'Success HASS api call',
+				api: 'store',
+			})
+		})
+
+		it('proves "store" is AWAITED: a rejected storeDevices promise is caught, yielding success:false (app.ts:789-800)', async () => {
+			// `store` is the ONLY HASS action the handler `await`s. If the
+			// `await` were dropped, this rejection would escape the try/catch
+			// and the ack would (wrongly) report success. success:false here
+			// is the observable proof the `await` is really there.
+			const gateway = createFakeGateway({
+				zwave: createFakeZwaveClient({
+					storeDevices: vi.fn(() =>
+						Promise.reject(new Error('store boom')),
+					),
+				}),
+			} as any)
+			harness.testHooks.setGateway(gateway as any)
+			const client = await connectedClient()
+
+			const result = await emit(client, 'HASS_API', {
+				apiName: 'store',
+				devices: {},
+				nodeId: 2,
+				remove: true,
+			})
+			expect(result).toStrictEqual({
+				success: false,
+				message: 'store boom',
+				api: 'store',
 			})
 		})
 	})
