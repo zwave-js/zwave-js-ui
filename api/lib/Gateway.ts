@@ -143,6 +143,30 @@ export function closeWatchers() {
 	watchers.clear()
 }
 
+// ### TEST-ONLY SEAMS (custom devices)
+//
+// The custom-devices loader (`loadCustomDevices`) and its `allDevices`
+// projection are module-private process-global state, mutated at import time
+// and again whenever the `customDevices.js`/`.json` file watcher fires. These
+// read-only / re-invocation seams let the HASS characterization suite drive
+// and observe that loader DETERMINISTICALLY (write a file, re-run the loader,
+// inspect the projection) instead of racing the OS-level `fs.watch` event.
+// `loadCustomDevices` is the exact function the watcher invokes, so this
+// exercises the real precedence/sha-dedup/parse-failure code path. Nothing in
+// the production entrypoint (`api/bin/www.ts`) reads or calls these.
+export function __loadCustomDevicesForTests(): void {
+	loadCustomDevices()
+}
+
+export function __getAllDevicesForTests(): Record<string, HassDevice[]> {
+	return allDevices as unknown as Record<string, HassDevice[]>
+}
+
+export function __resetCustomDevicesStateForTests(): void {
+	lastCustomDevicesLoad = null
+	allDevices = hassDevices
+}
+
 export const GatewayType = GATEWAY_TYPE
 export type GatewayType = (typeof GATEWAY_TYPE)[keyof typeof GATEWAY_TYPE]
 
