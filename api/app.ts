@@ -320,6 +320,8 @@ export async function startServer(port: number | string, host?: string) {
 	startZniffer(settings.zniffer)
 	await debugManager.init() // Clean up any old debug temp files
 	await startGateway(settings)
+
+	return server
 }
 
 const defaultSnippets: utils.Snippet[] = []
@@ -2305,6 +2307,35 @@ process.on('uncaughtException', (reason) => {
 
 for (const signal of ['SIGINT', 'SIGTERM']) {
 	process.once(signal as NodeJS.Signals, gracefuShutdown)
+}
+
+// ### TEST-ONLY SEAM
+//
+// `gw`, `zniffer`, `pluginsRouter` and `restarting` are normally populated by
+// `startServer`/`startGateway`, which construct a real `Gateway` backed by a
+// real `ZWaveClient`/`MqttClient` (i.e. real hardware/network I/O). HTTP
+// characterization tests need to drive the routes' observable contract
+// (status codes, envelopes, collaborator calls) without touching hardware,
+// so this seam lets them set the same module-level state directly with
+// typed fakes instead. Nothing in the production entrypoint
+// (`api/bin/www.ts`) imports or calls this - it only exists for
+// `test/lib/http/*`.
+export const __testHooks = {
+	setGateway(value: Gateway | undefined) {
+		gw = value
+	},
+	setZniffer(value: ZnifferManager | undefined) {
+		zniffer = value
+	},
+	setPluginsRouter(value: Router | undefined) {
+		pluginsRouter = value
+	},
+	setRestarting(value: boolean) {
+		restarting = value
+	},
+	isRestarting() {
+		return restarting
+	},
 }
 
 export default app
