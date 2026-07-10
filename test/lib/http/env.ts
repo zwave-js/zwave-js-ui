@@ -23,10 +23,44 @@
  * dynamic `import()` of `api/app.ts` or its config, so every HTTP test file
  * gets its own throwaway store directory AND a normalized set of app-facing
  * env vars, instead of inheriting ambient process state.
+ *
+ * ### Why `dotenv` itself is mocked here
+ *
+ * `api/config/app.ts` calls `dotenv`'s `config({ path: './.env.app' })` at
+ * module-evaluation time - i.e. AFTER the normalization below has already
+ * cleared `process.env` for every `APP_ENV_VARS` entry. `dotenv`'s default
+ * `override: false` behavior only skips a key that is *present* in
+ * `process.env` (`Object.prototype.hasOwnProperty`, even if its value is an
+ * empty string); a key that was `delete`d is no longer present, so if the
+ * process's current working directory happens to contain a real
+ * `.env.app` file (a developer's local override, a future CI convenience
+ * file, ...), `dotenv` would repopulate exactly the values normalization
+ * just removed - silently re-introducing the same ambient-pollution
+ * problem `ensureTestEnv()` exists to prevent.
+ *
+ * Pre-setting every key to a placeholder value (instead of deleting it)
+ * would defeat `dotenv` too, but isn't a safe substitute: several vars
+ * (`TZ`/`LOCALE` in particular) are read and echoed back verbatim with no
+ * `||` fallback (`api/app.ts` sets `tz: process.env.TZ` directly), so
+ * flipping "absent" to `''` changes an observable API response from an
+ * omitted JSON field to an empty-string field - a real behavioral
+ * difference, not just an implementation detail. Rather than hand-picking
+ * a per-variable placeholder that happens to be behaviorally inert (fragile,
+ * and only as complete as our current reading of `api/app.ts`), this mocks
+ * `dotenv`'s `config()` itself into a no-op for this test file's module
+ * graph, so no `.env.app` file - real or hypothetical - can ever be read
+ * during these tests, regardless of what normalization did or didn't do to
+ * `process.env` beforehand. See `envDotenvIsolation.test.ts` for a
+ * regression that proves this with a representative `.env.app` file.
  */
+import { vi } from 'vitest'
 import { mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
+
+vi.mock('dotenv', () => ({
+	config: () => ({ parsed: {} }),
+}))
 
 let storeDir: string | undefined
 
