@@ -160,7 +160,7 @@ export default class Gateway<
 	private topicLevels: number[] = []
 	private _closed = false
 	private jobs: Map<string, Cron> = new Map()
-	private mqttDiscovery: MqttDiscoveryManager
+	private _mqttDiscovery: MqttDiscoveryManager
 	private listenersAttached = false
 	private readonly onWriteRequest = this._onWriteRequest.bind(this)
 	private readonly onBroadRequest = this._onBroadRequest.bind(this)
@@ -187,6 +187,16 @@ export default class Gateway<
 		return this._zwave
 	}
 
+	/**
+	 * The lifecycle-managed legacy Home Assistant MQTT discovery subsystem this
+	 * gateway owns. Exposed so the `AppRuntime`-owned `HomeAssistantManager`
+	 * coordinator can resolve the CURRENT discovery manager (never a stale
+	 * capture) across restarts.
+	 */
+	public get mqttDiscovery(): MqttDiscoveryManager {
+		return this._mqttDiscovery
+	}
+
 	public get closed() {
 		return this._closed
 	}
@@ -205,7 +215,7 @@ export default class Gateway<
 		// clients
 		this._mqtt = mqtt
 		this._zwave = zwave
-		this.mqttDiscovery = new MqttDiscoveryManager({
+		this._mqttDiscovery = new MqttDiscoveryManager({
 			config: this.config,
 			mqtt,
 			zwave,
