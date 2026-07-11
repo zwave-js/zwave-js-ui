@@ -1,10 +1,9 @@
 import { CommandClasses } from '@zwave-js/core'
-import { describe, expect, it, vi } from 'vitest'
-import {
-	DiscoveryGenerator,
-	type DiscoveryGeneratorOptions,
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
+import type {
+	DiscoveryGenerator as DiscoveryGeneratorType,
+	DiscoveryGeneratorOptions,
 } from '../../../api/hass/DiscoveryGenerator.ts'
-import { isHassNode } from '../../../api/hass/ports.ts'
 import type {
 	HassDeviceRegistryPort,
 	HassLogger,
@@ -13,11 +12,41 @@ import type {
 	HassValue,
 	HassZwavePort,
 } from '../../../api/hass/ports.ts'
+import type * as HassPortsModule from '../../../api/hass/ports.ts'
 import type {
 	HassDevice,
 	HassDeviceCatalog,
 	HassDeviceMap,
 } from '../../../api/hass/types.ts'
+import {
+	cleanupTestEnv,
+	ensureTestEnv,
+	snapshotRepositoryStore,
+	type RepositoryStoreArtifact,
+} from './env.ts'
+
+let DiscoveryGenerator: typeof DiscoveryGeneratorType
+let isHassNode: typeof HassPortsModule.isHassNode
+let repositoryStoreBefore: RepositoryStoreArtifact[]
+
+beforeAll(async () => {
+	repositoryStoreBefore = snapshotRepositoryStore()
+	const isolatedStoreDir = ensureTestEnv()
+	const [discoveryModule, portsModule, configModule] = await Promise.all([
+		import('../../../api/hass/DiscoveryGenerator.ts'),
+		import('../../../api/hass/ports.ts'),
+		import('../../../api/config/app.ts'),
+	])
+	DiscoveryGenerator = discoveryModule.DiscoveryGenerator
+	isHassNode = portsModule.isHassNode
+	expect(configModule.storeDir).toBe(isolatedStoreDir)
+})
+
+afterAll(() => {
+	cleanupTestEnv()
+	vi.resetModules()
+	expect(snapshotRepositoryStore()).toEqual(repositoryStoreBefore)
+})
 
 function value(overrides: Partial<HassValue> = {}): HassValue {
 	return {

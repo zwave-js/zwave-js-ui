@@ -1,10 +1,28 @@
-import { afterEach, describe, expect, it, vi } from 'vitest'
-import Gateway, { closeWatchers } from '../../../api/lib/Gateway.ts'
+import {
+	afterAll,
+	afterEach,
+	beforeAll,
+	describe,
+	expect,
+	it,
+	vi,
+} from 'vitest'
+import type GatewayType from '../../../api/lib/Gateway.ts'
+import type * as GatewayModuleType from '../../../api/lib/Gateway.ts'
 import type { HassDevice } from '../../../api/hass/types.ts'
+import {
+	cleanupTestEnv,
+	ensureTestEnv,
+	snapshotRepositoryStore,
+	type RepositoryStoreArtifact,
+} from './env.ts'
 
-const gateways: Gateway[] = []
+let Gateway: typeof GatewayType
+let gatewayModule: typeof GatewayModuleType
+let repositoryStoreBefore: RepositoryStoreArtifact[]
+const gateways: GatewayType[] = []
 
-function gateway(): Gateway {
+function gateway(): GatewayType {
 	const instance = new Gateway({ type: 0 }, null, null)
 	gateways.push(instance)
 	return instance
@@ -19,11 +37,34 @@ function device(): HassDevice {
 	}
 }
 
+beforeAll(async () => {
+	repositoryStoreBefore = snapshotRepositoryStore()
+	const isolatedStoreDir = ensureTestEnv()
+	const [loadedGatewayModule, configModule] = await Promise.all([
+		import('../../../api/lib/Gateway.ts'),
+		import('../../../api/config/app.ts'),
+	])
+	gatewayModule = loadedGatewayModule
+	Gateway = loadedGatewayModule.default
+	expect(configModule.storeDir).toBe(isolatedStoreDir)
+	expect(gatewayModule.__getWatcherCountForTests()).toBe(2)
+	expect(gatewayModule.__getActiveWatcherCountForTests()).toBe(2)
+})
+
 afterEach(() => {
 	for (const instance of gateways.splice(0)) {
 		instance['customDeviceRegistry'].dispose()
 	}
-	closeWatchers()
+})
+
+afterAll(() => {
+	gatewayModule.closeWatchers()
+	expect(gatewayModule.__getWatcherCountForTests()).toBe(0)
+	expect(gatewayModule.__getActiveWatcherCountForTests()).toBe(0)
+	expect(gatewayModule.__getRegistrySubscriberCountForTests()).toBe(0)
+	cleanupTestEnv()
+	vi.resetModules()
+	expect(snapshotRepositoryStore()).toEqual(repositoryStoreBefore)
 })
 
 describe('Gateway HASS compatibility facades', () => {
