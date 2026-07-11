@@ -1,25 +1,27 @@
 /**
- * Direct unit tests for {@link HomeAssistantManager}, the `AppRuntime`-owned
- * lifecycle coordinator for the built-in Home Assistant subsystem.
+ * Direct unit tests for {@link HomeAssistantManager}, the single
+ * process-lifetime owner of the built-in Home Assistant subsystem.
  *
- * The coordinator does not re-implement the discovery / `@zwave-js/server`
- * lifecycles (those stay owned by the live `Gateway`/`ZwaveClient`); it gives
- * the subsystem a single process-lifetime owner with an idempotent
- * initialize -> bind -> start -> stop lifecycle that always resolves the
- * CURRENT sub-managers through always-current resolvers (never a stale
- * capture). These tests drive it in isolation with hand-rolled collaborator
- * resolvers so every lifecycle transition, idempotency guard, current-manager
- * resolution, partial-failure tolerance and the status-quiesce-on-stop path is
- * proven against the coordinator itself. The end-to-end wiring into
- * `AppRuntime` (ordering relative to the clients) is covered by
- * `test/runtime/AppRuntime.test.ts`.
+ * Unlike the earlier hollow coordinator (which reached into the live
+ * `Gateway`/`ZwaveClient` through always-current resolvers), this manager
+ * genuinely OWNS a generation of sub-managers: it constructs them through the
+ * injected {@link HomeAssistantClientFactories} (which also adopt them into the
+ * current clients), holds the concrete instances plus their disposers, and
+ * drives an explicit, idempotent lifecycle state machine
+ * (`idle -> initialized -> starting -> started -> stopping -> initialized`,
+ * plus `failed`). These tests drive it in isolation with hand-rolled factories
+ * so every transition, the exact teardown call order, idempotency from every
+ * state, concurrent-stop de-duplication, restart (fresh generation), partial
+ * attach (no server) and the failed-then-quiesce path are proven against the
+ * manager itself. The end-to-end wiring into `AppRuntime` (ordering relative to
+ * the clients) is covered by `test/runtime/AppRuntime.test.ts`.
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import type { Mock } from 'vitest'
 import HomeAssistantManager, {
-	type HassDiscoverySubsystem,
-	type HassServerSubsystem,
-	type HomeAssistantCollaborators,
+	type HassManagedDiscovery,
+	type HassManagedServer,
+	type HomeAssistantClientFactories,
 } from '../../../api/hass/HomeAssistantManager.ts'
 
 // A logger whose methods are function-valued PROPERTIES (not method
@@ -43,36 +45,33 @@ function makeLogger(): MockLogger {
 	}
 }
 
-/** A fake discovery subsystem exposing a spyable idempotent `disposeStatus`. */
-function makeDiscovery(): HassDiscoverySubsystem & { disposeStatus: Mock } {
-	return { disposeStatus: vi.fn() }
+/** A fake discovery handle exposing a spyable idempotent `stop`. */
+type FakeDiscovery = HassManagedDiscovery & { stop: Mock }
+function makeDiscovery(): FakeDiscovery {
+	return { stop: vi.fn() }
 }
 
-/** A fake `@zwave-js/server` subsystem with a fixed reported version. */
-function makeServer(version: string): HassServerSubsystem {
-	return { version }
+/** A fake `@zwave-js/server` handle with a fixed version and spyable destroy. */
+type FakeServer = HassManagedServer & { destroy: Mock }
+function makeServer(version: string): FakeServer {
+	return { version, destroy: vi.fn().mockResolvedValue(undefined) }
 }
 
 /**
- * A mutable resolver bundle: the objects returned by `resolveDiscovery` /
- * `resolveServer` can be swapped between calls so tests can prove the
- * coordinator always reads the CURRENT sub-manager and never caches.
+ * A factory bundle wrapping fixed discovery/server instances, recording how
+ * many times each `create*` was invoked so tests can prove the manager
+ * constructs exactly one fresh generation per attach.
  */
-function makeCollaborators(): HomeAssistantCollaborators & {
-	setDiscovery(d: HassDiscoverySubsystem | undefined): void
-	setServer(s: HassServerSubsystem | undefined): void
+function makeFactories(
+	discovery: HassManagedDiscovery | undefined,
+	server: HassManagedServer | undefined,
+): HomeAssistantClientFactories & {
+	createDiscovery: Mock
+	createServer: Mock
 } {
-	let discovery: HassDiscoverySubsystem | undefined
-	let server: HassServerSubsystem | undefined
 	return {
-		resolveDiscovery: () => discovery,
-		resolveServer: () => server,
-		setDiscovery: (d) => {
-			discovery = d
-		},
-		setServer: (s) => {
-			server = s
-		},
+		createDiscovery: vi.fn(() => discovery),
+		createServer: vi.fn(() => server),
 	}
 }
 
@@ -87,10 +86,12 @@ describe('HomeAssistantManager', () => {
 		it('takes ownership and logs on first call', () => {
 			const manager = new HomeAssistantManager({ logger })
 			expect(manager.initialized).toBe(false)
+			expect(manager.state).toBe('idle')
 
 			manager.initialize()
 
 			expect(manager.initialized).toBe(true)
+			expect(manager.state).toBe('initialized')
 			expect(logger.info).toHaveBeenCalledTimes(1)
 			expect(logger.info).toHaveBeenCalledWith(
 				'Home Assistant subsystem initialized',
@@ -104,132 +105,129 @@ describe('HomeAssistantManager', () => {
 			manager.initialize()
 			manager.initialize()
 
-			expect(manager.initialized).toBe(true)
+			expect(manager.state).toBe('initialized')
 			// Only the first call logged; ownership is retained silently after.
 			expect(logger.info).toHaveBeenCalledTimes(1)
 		})
 	})
 
-	describe('bind() and facade getters', () => {
-		it('resolves nothing before any collaborators are bound', () => {
+	describe('attachClients()', () => {
+		it('constructs and OWNS a fresh generation through the factories', () => {
 			const manager = new HomeAssistantManager({ logger })
-
-			expect(manager.discovery).toBeUndefined()
-			expect(manager.server).toBeUndefined()
-		})
-
-		it('resolves the current collaborators once bound', () => {
-			const manager = new HomeAssistantManager({ logger })
-			const collaborators = makeCollaborators()
+			manager.initialize()
 			const discovery = makeDiscovery()
 			const server = makeServer('1.2.3')
-			collaborators.setDiscovery(discovery)
-			collaborators.setServer(server)
+			const factories = makeFactories(discovery, server)
 
-			manager.bind(collaborators)
+			manager.attachClients(factories)
 
+			// Exactly one of each was constructed...
+			expect(factories.createDiscovery).toHaveBeenCalledTimes(1)
+			expect(factories.createServer).toHaveBeenCalledTimes(1)
+			// ...and the manager holds the EXACT concrete instances returned
+			// (direct ownership, not a resolver into a client).
 			expect(manager.discovery).toBe(discovery)
 			expect(manager.server).toBe(server)
+			expect(manager.state).toBe('starting')
+			expect(manager.generation).toBe(1)
+			expect(logger.info).toHaveBeenCalledWith(
+				'Home Assistant subsystem attached (generation 1)',
+			)
 		})
 
-		it('always reads the CURRENT sub-manager (no stale capture)', () => {
+		it('auto-initializes when attached straight from idle', () => {
 			const manager = new HomeAssistantManager({ logger })
-			const collaborators = makeCollaborators()
-			manager.bind(collaborators)
+			expect(manager.state).toBe('idle')
 
+			manager.attachClients(
+				makeFactories(makeDiscovery(), makeServer('1')),
+			)
+
+			expect(manager.initialized).toBe(true)
+			expect(manager.state).toBe('starting')
+			// The auto-initialize still logged the ownership line first.
+			expect(logger.info).toHaveBeenCalledWith(
+				'Home Assistant subsystem initialized',
+			)
+		})
+
+		it('tolerates a generation with no server (createServer -> undefined)', () => {
+			const manager = new HomeAssistantManager({ logger })
+			const discovery = makeDiscovery()
+			const factories = makeFactories(discovery, undefined)
+
+			manager.attachClients(factories)
+
+			expect(manager.discovery).toBe(discovery)
+			expect(manager.server).toBeUndefined()
+			expect(manager.state).toBe('starting')
+		})
+
+		it('defensively halts a lingering discovery if re-attached without a stop', () => {
+			const manager = new HomeAssistantManager({ logger })
 			const first = makeDiscovery()
-			collaborators.setDiscovery(first)
-			expect(manager.discovery).toBe(first)
+			manager.attachClients(makeFactories(first, makeServer('1')))
+			expect(manager.generation).toBe(1)
 
-			// Simulate a gateway replaced mid-restart: the resolver now returns a
-			// brand-new discovery manager. The coordinator must observe it
-			// immediately without any rebind.
+			// A misuse/partial-failure that re-attaches without stopping first:
+			// the previous generation's discovery must be halted so no producer
+			// leaks, and the new generation replaces it wholesale.
 			const second = makeDiscovery()
-			collaborators.setDiscovery(second)
+			manager.attachClients(makeFactories(second, makeServer('2')))
+
+			expect(first.stop).toHaveBeenCalledTimes(1)
 			expect(manager.discovery).toBe(second)
-
-			// And a subsystem that becomes absent (e.g. MQTT disabled) resolves
-			// back to undefined rather than a cached instance.
-			collaborators.setDiscovery(undefined)
-			expect(manager.discovery).toBeUndefined()
-		})
-
-		it('can be re-bound to a fresh resolver bundle', () => {
-			const manager = new HomeAssistantManager({ logger })
-			const first = makeCollaborators()
-			const firstServer = makeServer('1.0.0')
-			first.setServer(firstServer)
-			manager.bind(first)
-			expect(manager.server).toBe(firstServer)
-
-			const second = makeCollaborators()
-			const secondServer = makeServer('2.0.0')
-			second.setServer(secondServer)
-			manager.bind(second)
-			expect(manager.server).toBe(secondServer)
+			expect(manager.generation).toBe(2)
 		})
 	})
 
 	describe('start()', () => {
-		it('marks the subsystem active and logs both subsystems present', () => {
+		it('advances starting -> started and logs the server version', () => {
 			const manager = new HomeAssistantManager({ logger })
-			const collaborators = makeCollaborators()
-			collaborators.setDiscovery(makeDiscovery())
-			collaborators.setServer(makeServer('9.9.9'))
-			manager.bind(collaborators)
+			manager.attachClients(
+				makeFactories(makeDiscovery(), makeServer('9.9.9')),
+			)
+			logger.info.mockClear()
 
 			expect(manager.started).toBe(false)
 			manager.start()
 
 			expect(manager.started).toBe(true)
+			expect(manager.state).toBe('started')
 			expect(logger.info).toHaveBeenCalledWith(
-				'Home Assistant subsystem started (discovery: active, server: 9.9.9)',
+				'Home Assistant subsystem started (server: 9.9.9)',
 			)
 		})
 
-		it('tolerates entirely absent collaborators (partial failure)', () => {
+		it('reports an inactive server when the generation has none', () => {
 			const manager = new HomeAssistantManager({ logger })
-
-			// Never bound: every resolver is missing. Must not throw and must
-			// report both subsystems inactive.
-			expect(() => manager.start()).not.toThrow()
-			expect(manager.started).toBe(true)
-			expect(logger.info).toHaveBeenCalledWith(
-				'Home Assistant subsystem started (discovery: inactive, server: inactive)',
-			)
-		})
-
-		it('reports each subsystem independently', () => {
-			const manager = new HomeAssistantManager({ logger })
-			const collaborators = makeCollaborators()
-			// Discovery present, server absent.
-			collaborators.setDiscovery(makeDiscovery())
-			manager.bind(collaborators)
+			manager.attachClients(makeFactories(makeDiscovery(), undefined))
+			logger.info.mockClear()
 
 			manager.start()
 
 			expect(logger.info).toHaveBeenCalledWith(
-				'Home Assistant subsystem started (discovery: active, server: inactive)',
+				'Home Assistant subsystem started (server: inactive)',
 			)
 		})
 
-		it('resolves the CURRENT server version at start time', () => {
+		it('is a no-op before any generation is attached', () => {
 			const manager = new HomeAssistantManager({ logger })
-			const collaborators = makeCollaborators()
-			manager.bind(collaborators)
-			// Version only becomes resolvable after the client started, i.e.
-			// after bind - proving start reads live, not at bind time.
-			collaborators.setServer(makeServer('3.10.0'))
+			manager.initialize()
+			logger.info.mockClear()
 
 			manager.start()
 
-			expect(logger.info).toHaveBeenCalledWith(
-				'Home Assistant subsystem started (discovery: inactive, server: 3.10.0)',
-			)
+			expect(manager.started).toBe(false)
+			expect(manager.state).toBe('initialized')
+			expect(logger.info).not.toHaveBeenCalled()
 		})
 
 		it('is idempotent - a second start is a no-op', () => {
 			const manager = new HomeAssistantManager({ logger })
+			manager.attachClients(
+				makeFactories(makeDiscovery(), makeServer('1')),
+			)
 			manager.start()
 			logger.info.mockClear()
 
@@ -237,98 +235,243 @@ describe('HomeAssistantManager', () => {
 
 			expect(manager.started).toBe(true)
 			expect(logger.info).not.toHaveBeenCalled()
+		})
+	})
+
+	describe('markFailed()', () => {
+		it('moves starting -> failed while retaining the owned handles', () => {
+			const manager = new HomeAssistantManager({ logger })
+			const discovery = makeDiscovery()
+			const server = makeServer('1')
+			manager.attachClients(makeFactories(discovery, server))
+
+			manager.markFailed()
+
+			expect(manager.state).toBe('failed')
+			// Handles retained so the subsequent stop can still quiesce them.
+			expect(manager.discovery).toBe(discovery)
+			expect(manager.server).toBe(server)
+			expect(logger.warn).toHaveBeenCalledWith(
+				'Home Assistant subsystem entered failed state',
+			)
+		})
+
+		it('moves started -> failed', () => {
+			const manager = new HomeAssistantManager({ logger })
+			manager.attachClients(
+				makeFactories(makeDiscovery(), makeServer('1')),
+			)
+			manager.start()
+
+			manager.markFailed()
+
+			expect(manager.state).toBe('failed')
+		})
+
+		it('is a no-op from initialized (nothing to fail)', () => {
+			const manager = new HomeAssistantManager({ logger })
+			manager.initialize()
+
+			manager.markFailed()
+
+			expect(manager.state).toBe('initialized')
+			expect(logger.warn).not.toHaveBeenCalled()
 		})
 	})
 
 	describe('stop()', () => {
-		it('quiesces the current discovery status subscription', () => {
+		it('quiesces discovery THEN awaits the server destroy, in that order', async () => {
 			const manager = new HomeAssistantManager({ logger })
-			const collaborators = makeCollaborators()
-			const discovery = makeDiscovery()
-			collaborators.setDiscovery(discovery)
-			manager.bind(collaborators)
+			const order: string[] = []
+			const discovery: FakeDiscovery = {
+				stop: vi.fn(() => {
+					order.push('discovery.stop')
+				}),
+			}
+			const server: FakeServer = {
+				version: '1',
+				destroy: vi.fn(() => {
+					order.push('server.destroy')
+					return Promise.resolve()
+				}),
+			}
+			manager.attachClients(makeFactories(discovery, server))
 			manager.start()
 			logger.info.mockClear()
 
-			manager.stop()
+			await manager.stop()
 
-			expect(discovery.disposeStatus).toHaveBeenCalledTimes(1)
+			expect(order).toEqual(['discovery.stop', 'server.destroy'])
+			expect(discovery.stop).toHaveBeenCalledTimes(1)
+			expect(server.destroy).toHaveBeenCalledTimes(1)
+			// Settled back to initialized, ready for a restart, handles cleared.
+			expect(manager.state).toBe('initialized')
 			expect(manager.started).toBe(false)
+			expect(manager.discovery).toBeUndefined()
+			expect(manager.server).toBeUndefined()
 			expect(logger.info).toHaveBeenCalledWith(
 				'Home Assistant subsystem stopped',
 			)
 		})
 
-		it('is a no-op when never started (no discovery touched)', () => {
+		it('is a no-op from idle', async () => {
 			const manager = new HomeAssistantManager({ logger })
-			const collaborators = makeCollaborators()
-			const discovery = makeDiscovery()
-			collaborators.setDiscovery(discovery)
-			manager.bind(collaborators)
 
-			manager.stop()
+			await manager.stop()
 
-			expect(discovery.disposeStatus).not.toHaveBeenCalled()
-			expect(manager.started).toBe(false)
+			expect(manager.state).toBe('idle')
 			expect(logger.info).not.toHaveBeenCalled()
 		})
 
-		it('tolerates an absent discovery subsystem while started', () => {
+		it('is a no-op from initialized (nothing started)', async () => {
 			const manager = new HomeAssistantManager({ logger })
-			// No collaborators bound at all: started, then stop must not throw.
-			manager.start()
+			manager.initialize()
 			logger.info.mockClear()
 
-			expect(() => manager.stop()).not.toThrow()
-			expect(manager.started).toBe(false)
-			expect(logger.info).toHaveBeenCalledWith(
-				'Home Assistant subsystem stopped',
-			)
+			await manager.stop()
+
+			expect(manager.state).toBe('initialized')
+			expect(logger.info).not.toHaveBeenCalled()
 		})
 
-		it('disposes the CURRENT discovery manager, not a start-time capture', () => {
+		it('quiesces from the starting state (stop during start)', async () => {
 			const manager = new HomeAssistantManager({ logger })
-			const collaborators = makeCollaborators()
-			const atStart = makeDiscovery()
-			collaborators.setDiscovery(atStart)
-			manager.bind(collaborators)
+			const discovery = makeDiscovery()
+			const server = makeServer('1')
+			manager.attachClients(makeFactories(discovery, server))
+			expect(manager.state).toBe('starting')
+
+			await manager.stop()
+
+			expect(discovery.stop).toHaveBeenCalledTimes(1)
+			expect(server.destroy).toHaveBeenCalledTimes(1)
+			expect(manager.state).toBe('initialized')
+		})
+
+		it('quiesces from the failed state', async () => {
+			const manager = new HomeAssistantManager({ logger })
+			const discovery = makeDiscovery()
+			const server = makeServer('1')
+			manager.attachClients(makeFactories(discovery, server))
+			manager.markFailed()
+
+			await manager.stop()
+
+			expect(discovery.stop).toHaveBeenCalledTimes(1)
+			expect(server.destroy).toHaveBeenCalledTimes(1)
+			expect(manager.state).toBe('initialized')
+		})
+
+		it('tolerates a generation with no server', async () => {
+			const manager = new HomeAssistantManager({ logger })
+			const discovery = makeDiscovery()
+			manager.attachClients(makeFactories(discovery, undefined))
 			manager.start()
 
-			// Gateway replaced between start and stop.
-			const atStop = makeDiscovery()
-			collaborators.setDiscovery(atStop)
+			await expect(manager.stop()).resolves.toBeUndefined()
 
-			manager.stop()
+			expect(discovery.stop).toHaveBeenCalledTimes(1)
+			expect(manager.state).toBe('initialized')
+		})
 
-			expect(atStart.disposeStatus).not.toHaveBeenCalled()
-			expect(atStop.disposeStatus).toHaveBeenCalledTimes(1)
+		it('de-duplicates concurrent stops onto a single in-flight teardown', async () => {
+			const manager = new HomeAssistantManager({ logger })
+			const discovery = makeDiscovery()
+			// A server whose destroy we control, so both stop() calls observe
+			// the SAME in-flight teardown before it settles.
+			let releaseDestroy: () => void = () => undefined
+			const destroyGate = new Promise<void>((resolve) => {
+				releaseDestroy = resolve
+			})
+			const server: FakeServer = {
+				version: '1',
+				destroy: vi.fn(() => destroyGate),
+			}
+			manager.attachClients(makeFactories(discovery, server))
+			manager.start()
+
+			const first = manager.stop()
+			const second = manager.stop()
+			// Both callers share ONE teardown: destroy invoked exactly once.
+			expect(server.destroy).toHaveBeenCalledTimes(1)
+
+			releaseDestroy()
+			await Promise.all([first, second])
+
+			expect(server.destroy).toHaveBeenCalledTimes(1)
+			expect(discovery.stop).toHaveBeenCalledTimes(1)
+			expect(manager.state).toBe('initialized')
+		})
+
+		it('clears the in-flight guard so a later stop can run again', async () => {
+			const manager = new HomeAssistantManager({ logger })
+			const discovery = makeDiscovery()
+			const server = makeServer('1')
+			manager.attachClients(makeFactories(discovery, server))
+			manager.start()
+
+			await manager.stop()
+			// A second stop after settling is a clean no-op (already initialized).
+			await manager.stop()
+
+			expect(discovery.stop).toHaveBeenCalledTimes(1)
+			expect(server.destroy).toHaveBeenCalledTimes(1)
 		})
 	})
 
-	describe('restart', () => {
-		it('supports start -> stop -> start again', () => {
+	describe('restart (stop -> re-attach -> start)', () => {
+		it('attaches a brand-new generation and never reuses stale handles', async () => {
 			const manager = new HomeAssistantManager({ logger })
-			const collaborators = makeCollaborators()
-			const discovery = makeDiscovery()
-			collaborators.setDiscovery(discovery)
-			collaborators.setServer(makeServer('1.0.0'))
-			manager.bind(collaborators)
 
+			// Generation 1.
+			const discovery1 = makeDiscovery()
+			const server1 = makeServer('1.0.0')
+			manager.attachClients(makeFactories(discovery1, server1))
 			manager.start()
-			expect(manager.started).toBe(true)
+			expect(manager.generation).toBe(1)
 
-			manager.stop()
-			expect(manager.started).toBe(false)
-			expect(discovery.disposeStatus).toHaveBeenCalledTimes(1)
+			// Quiesce.
+			await manager.stop()
+			expect(discovery1.stop).toHaveBeenCalledTimes(1)
+			expect(server1.destroy).toHaveBeenCalledTimes(1)
+			expect(manager.discovery).toBeUndefined()
 
+			// Generation 2 - a completely fresh pair.
+			const discovery2 = makeDiscovery()
+			const server2 = makeServer('2.0.0')
+			manager.attachClients(makeFactories(discovery2, server2))
 			manager.start()
-			expect(manager.started).toBe(true)
+
+			expect(manager.generation).toBe(2)
+			expect(manager.discovery).toBe(discovery2)
+			expect(manager.server).toBe(server2)
+			// The old generation was never touched again by the restart.
+			expect(discovery1.stop).toHaveBeenCalledTimes(1)
+			expect(server1.destroy).toHaveBeenCalledTimes(1)
 
 			// Two distinct "started" logs across the two start calls.
 			const startedLogs = logger.info.mock.calls.filter((call) =>
 				String(call[0]).startsWith('Home Assistant subsystem started'),
 			)
 			expect(startedLogs).toHaveLength(2)
+		})
+
+		it('survives repeated start/stop cycles idempotently', async () => {
+			const manager = new HomeAssistantManager({ logger })
+
+			for (let i = 1; i <= 3; i++) {
+				const discovery = makeDiscovery()
+				const server = makeServer(`${i}.0.0`)
+				manager.attachClients(makeFactories(discovery, server))
+				manager.start()
+				expect(manager.started).toBe(true)
+				expect(manager.generation).toBe(i)
+
+				await manager.stop()
+				expect(manager.started).toBe(false)
+				expect(discovery.stop).toHaveBeenCalledTimes(1)
+				expect(server.destroy).toHaveBeenCalledTimes(1)
+			}
 		})
 	})
 })
