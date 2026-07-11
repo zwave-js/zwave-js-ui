@@ -53,6 +53,13 @@ const zwaveCtor = vi.fn()
 const gatewayCtor = vi.fn()
 const znifferCtor = vi.fn()
 const gatewayStart = vi.fn(() => Promise.resolve())
+// Tracked separately from `test/lib/http/fakes.ts`'s `createFakeGateway()`
+// (used by the OTHER `shutdown()` test, which sets a fake gateway directly)
+// so the "real plugin loading path" `shutdown()` regression below can drive
+// a gateway constructed through the actual `startGateway()` production path
+// - the same mocked `Gateway` class every other test in this file already
+// goes through - while still asserting its `close()` was invoked.
+const gatewayClose = vi.fn(() => Promise.resolve())
 
 vi.mock('../../api/lib/MqttClient.ts', () => ({
 	default: class MockMqttClient {
@@ -76,6 +83,7 @@ vi.mock('../../api/lib/Gateway.ts', () => ({
 			gatewayCtor(...args)
 		}
 		start = gatewayStart
+		close = gatewayClose
 	},
 }))
 
@@ -124,6 +132,7 @@ describe('AppRuntime', () => {
 		gatewayCtor.mockClear()
 		znifferCtor.mockClear()
 		gatewayStart.mockClear()
+		gatewayClose.mockClear()
 	})
 
 	function createRuntime(
@@ -655,7 +664,7 @@ describe('AppRuntime', () => {
 	})
 
 	describe('shutdown()', () => {
-		it('closes the current gateway (if any) and destroys any loaded plugins', async () => {
+		it('closes the current gateway (if any); a shutdown with no loaded plugins is a no-op for plugin teardown', async () => {
 			const runtime = createRuntime()
 			const gw = createFakeGateway()
 			runtime.setGateway(gw as unknown as Gateway)
@@ -665,6 +674,85 @@ describe('AppRuntime', () => {
 			expect(gw.close).toHaveBeenCalledOnce()
 			expect(runtime.getPlugins()).toEqual([])
 		})
+
+		it(
+			'tears down every plugin loaded through the REAL startGateway() plugin-loading/registration ' +
+				'path - not a hand-pushed fake bypassing it (there is no such seam: AppRuntime only ever ' +
+				"populates its plugin list from startGateway()'s dynamic import/createPlugin() call) - " +
+				"destroying each exactly once, in destroyPlugins()'s LIFO order, only after the gateway " +
+				'itself has been closed',
+			async () => {
+				const pluginDir = mkdtempSync(
+					path.join(tmpdir(), 'apprun-shutdown-plugin-test-'),
+				)
+				try {
+					writeFileSync(
+						path.join(pluginDir, 'shutdown-plugin-a.mjs'),
+						'export default class ShutdownPluginA {\n' +
+							'  constructor(context) { this.context = context }\n' +
+							'  async destroy() {}\n' +
+							'}\n',
+					)
+					writeFileSync(
+						path.join(pluginDir, 'shutdown-plugin-b.mjs'),
+						'export default class ShutdownPluginB {\n' +
+							'  constructor(context) { this.context = context }\n' +
+							'  async destroy() {}\n' +
+							'}\n',
+					)
+
+					const runtime = createRuntime()
+					// Real production path - identical to the "plugin
+					// loading (startGateway())" describe block above:
+					// startGateway() constructs the gateway (the same
+					// module-mocked `Gateway`/`gatewayClose` every other
+					// test in this file already goes through) AND
+					// dynamically imports/registers each plugin exactly as
+					// a real deployment would. This regression can only
+					// pass if destroyPlugins()/shutdown() actually walks
+					// the plugins startGateway() itself loaded - there is
+					// no way to "fake" a plugin into AppRuntime's private
+					// list any other way.
+					await runtime.startGateway({
+						gateway: {
+							plugins: [
+								path.join(pluginDir, 'shutdown-plugin-a.mjs'),
+								path.join(pluginDir, 'shutdown-plugin-b.mjs'),
+							],
+						},
+					})
+
+					const [pluginA, pluginB] = runtime.getPlugins()
+					expect(pluginA.name).toBe('shutdown-plugin-a.mjs')
+					expect(pluginB.name).toBe('shutdown-plugin-b.mjs')
+					const destroyA = vi.spyOn(pluginA, 'destroy')
+					const destroyB = vi.spyOn(pluginB, 'destroy')
+
+					await runtime.shutdown()
+
+					expect(gatewayClose).toHaveBeenCalledOnce()
+					expect(destroyA).toHaveBeenCalledOnce()
+					expect(destroyB).toHaveBeenCalledOnce()
+					expect(runtime.getPlugins()).toEqual([])
+
+					// shutdown() closes the gateway, THEN destroys plugins
+					// (`closeIfPresent` runs before `destroyPlugins()`).
+					expect(
+						gatewayClose.mock.invocationCallOrder[0],
+					).toBeLessThan(destroyA.mock.invocationCallOrder[0])
+					expect(
+						gatewayClose.mock.invocationCallOrder[0],
+					).toBeLessThan(destroyB.mock.invocationCallOrder[0])
+					// destroyPlugins() pops from the end of the list, so
+					// the LAST-loaded plugin is destroyed FIRST (LIFO).
+					expect(destroyB.mock.invocationCallOrder[0]).toBeLessThan(
+						destroyA.mock.invocationCallOrder[0],
+					)
+				} finally {
+					rmSync(pluginDir, { recursive: true, force: true })
+				}
+			},
+		)
 
 		it('shutdown() with no gateway attached does not throw (guarded close)', async () => {
 			const runtime = createRuntime()
