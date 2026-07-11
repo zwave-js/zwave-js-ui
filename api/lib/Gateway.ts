@@ -46,16 +46,18 @@ const PAYLOAD_TYPE = {
 	RAW: 2,
 } as const
 
-// Compatibility registry for the long-standing module-level test seams below.
-// Runtime Gateways own a separate registry that starts/stops with the instance.
-const legacyCustomDeviceRegistry = new CustomDeviceRegistry({
+// The default registry preserves the legacy import-time watcher lifecycle.
+// Runtime Gateways own lightweight catalog views of this source, so every
+// process has one loader/two file watchers rather than one duplicate pair per
+// Gateway instance.
+const defaultCustomDeviceRegistry = new CustomDeviceRegistry({
 	storeDir,
 	logger,
 })
-legacyCustomDeviceRegistry.start()
+defaultCustomDeviceRegistry.start()
 
 export function closeWatchers() {
-	legacyCustomDeviceRegistry.dispose()
+	defaultCustomDeviceRegistry.dispose()
 }
 
 // ### TEST-ONLY SEAM
@@ -68,7 +70,15 @@ export function closeWatchers() {
 // `STORE_DIR` - across test files that share this module's cache. Nothing
 // in the production entrypoint (`api/bin/www.ts`) reads this.
 export function __getWatcherCountForTests(): number {
-	return legacyCustomDeviceRegistry.watcherCount
+	return defaultCustomDeviceRegistry.watcherCount
+}
+
+export function __getActiveWatcherCountForTests(): number {
+	return defaultCustomDeviceRegistry.activeWatcherCount
+}
+
+export function __getRegistrySubscriberCountForTests(): number {
+	return defaultCustomDeviceRegistry.subscriberCount
 }
 
 // ### TEST-ONLY SEAM
@@ -84,7 +94,7 @@ export function __getWatcherCountForTests(): number {
 // it only affects the test-owned watcher registry, never runtime reload
 // behavior.
 export function __rebindWatchersForTests(): void {
-	legacyCustomDeviceRegistry.rebind()
+	defaultCustomDeviceRegistry.rebind()
 }
 
 // ### TEST-ONLY SEAMS (custom devices)
@@ -99,7 +109,7 @@ export function __rebindWatchersForTests(): void {
 // exercises the real precedence/sha-dedup/parse-failure code path. Nothing in
 // the production entrypoint (`api/bin/www.ts`) reads or calls these.
 export function __loadCustomDevicesForTests(): void {
-	legacyCustomDeviceRegistry.load()
+	defaultCustomDeviceRegistry.load()
 }
 
 // Returns a DEEP SNAPSHOT of the live `allDevices` catalog, never the live
@@ -112,7 +122,7 @@ export function __loadCustomDevicesForTests(): void {
 // sha-dedup use `__getCustomDevicesShaForTests()` instead of reference
 // identity on this snapshot.
 export function __getAllDevicesForTests(): Record<string, HassDevice[]> {
-	return legacyCustomDeviceRegistry.snapshot()
+	return defaultCustomDeviceRegistry.snapshot()
 }
 
 // Exposes the dedup sha (`lastCustomDevicesLoad`) so tests can assert whether
@@ -121,7 +131,7 @@ export function __getAllDevicesForTests(): Record<string, HassDevice[]> {
 // on reference identity of the snapshot above. `null` before any load / after
 // a reset.
 export function __getCustomDevicesShaForTests(): string | null {
-	return legacyCustomDeviceRegistry.sha
+	return defaultCustomDeviceRegistry.sha
 }
 
 // Evicts any `require.cache` entry the preferred `.js` custom-devices loader
@@ -134,11 +144,11 @@ export function __getCustomDevicesShaForTests(): string | null {
 // isolated. See the stale-cache quirk characterization in
 // `customDevices.test.ts`.
 export function __evictCustomDevicesRequireCacheForTests(): void {
-	legacyCustomDeviceRegistry.evictRequireCache()
+	defaultCustomDeviceRegistry.evictRequireCache()
 }
 
 export function __resetCustomDevicesStateForTests(): void {
-	legacyCustomDeviceRegistry.reset()
+	defaultCustomDeviceRegistry.reset()
 }
 
 export const GatewayType = GATEWAY_TYPE
@@ -223,6 +233,21 @@ export default class Gateway {
 	private jobs: Map<string, Cron> = new Map()
 	private customDeviceRegistry: CustomDeviceRegistry
 	private discoveryGenerator: DiscoveryGenerator
+	private listenersAttached = false
+	private readonly onWriteRequest = this._onWriteRequest.bind(this)
+	private readonly onBroadRequest = this._onBroadRequest.bind(this)
+	private readonly onMulticastRequest = this._onMulticastRequest.bind(this)
+	private readonly onApiRequest = this._onApiRequest.bind(this)
+	private readonly onHassStatus = this._onHassStatus.bind(this)
+	private readonly onBrokerStatus = this._onBrokerStatus.bind(this)
+	private readonly onNodeInited = this._onNodeInited.bind(this)
+	private readonly onDriverStatus = this._onDriverStatus.bind(this)
+	private readonly onNodeStatus = this._onNodeStatus.bind(this)
+	private readonly onNodeLastActive = this._onNodeLastActive.bind(this)
+	private readonly onValueChanged = this._onValueChanged.bind(this)
+	private readonly onNodeRemoved = this._onNodeRemoved.bind(this)
+	private readonly onNotification = this._onNotification.bind(this)
+	private readonly onEvent = this._onEvent.bind(this)
 
 	public get mqtt() {
 		return this._mqtt
@@ -245,10 +270,7 @@ export default class Gateway {
 		// clients
 		this._mqtt = mqtt
 		this._zwave = zwave
-		this.customDeviceRegistry = new CustomDeviceRegistry({
-			storeDir,
-			logger,
-		})
+		this.customDeviceRegistry = defaultCustomDeviceRegistry.fork()
 		const getDiscovered = () => this.discovered
 		const getMqtt = () => this._mqtt
 		const getZwave = () => this._zwave
@@ -321,42 +343,16 @@ export default class Gateway {
 		// topic levels for subscribes using wildecards
 		this.topicLevels = []
 
-		if (this.mqttEnabled) {
-			this._mqtt.on('writeRequest', this._onWriteRequest.bind(this))
-			this._mqtt.on('broadcastRequest', this._onBroadRequest.bind(this))
-			this._mqtt.on(
-				'multicastRequest',
-				this._onMulticastRequest.bind(this),
-			)
-			this._mqtt.on('apiCall', this._onApiRequest.bind(this))
-			this._mqtt.on('hassStatus', this._onHassStatus.bind(this))
-			this._mqtt.on('brokerStatus', this._onBrokerStatus.bind(this))
-		}
-
+		this.attachListeners()
 		if (this._zwave) {
-			// needed in order to apply gateway values configs like polling
-			this._zwave.on('nodeInited', this._onNodeInited.bind(this))
-			// needed to init scheduled jobs
-			this._zwave.on('driverStatus', this._onDriverStatus.bind(this))
-
-			if (this.mqttEnabled) {
-				this._zwave.on('nodeStatus', this._onNodeStatus.bind(this))
-				this._zwave.on(
-					'nodeLastActive',
-					this._onNodeLastActive.bind(this),
-				)
-
-				this._zwave.on('valueChanged', this._onValueChanged.bind(this))
-				this._zwave.on('nodeRemoved', this._onNodeRemoved.bind(this))
-				this._zwave.on('notification', this._onNotification.bind(this))
-
-				if (this.config.sendEvents) {
-					this._zwave.on('event', this._onEvent.bind(this))
-				}
-			}
-
 			// this is async but doesn't need to be awaited
-			await this._zwave.connect()
+			try {
+				await this._zwave.connect()
+			} catch (error) {
+				this.detachListeners()
+				this.customDeviceRegistry.dispose()
+				throw error
+			}
 		} else {
 			logger.error('Z-Wave settings are not valid')
 		}
@@ -522,17 +518,82 @@ export default class Gateway {
 
 		logger.info('Closing Gateway...')
 
-		if (this._zwave) {
-			await this._zwave.close()
+		try {
+			if (this._zwave) {
+				await this._zwave.close()
+			}
+		} finally {
+			try {
+				this.cancelJobs()
+			} finally {
+				try {
+					// close mqtt client after zwave connection is closed
+					if (this.mqttEnabled) {
+						await this._mqtt.close()
+					}
+				} finally {
+					this.detachListeners()
+					this.customDeviceRegistry.dispose()
+				}
+			}
 		}
+	}
 
-		this.cancelJobs()
-		this.customDeviceRegistry.dispose()
+	private attachListeners(): void {
+		if (this.listenersAttached) return
 
-		// close mqtt client after zwave connection is closed
 		if (this.mqttEnabled) {
-			await this._mqtt.close()
+			this._mqtt.on('writeRequest', this.onWriteRequest)
+			this._mqtt.on('broadcastRequest', this.onBroadRequest)
+			this._mqtt.on('multicastRequest', this.onMulticastRequest)
+			this._mqtt.on('apiCall', this.onApiRequest)
+			this._mqtt.on('hassStatus', this.onHassStatus)
+			this._mqtt.on('brokerStatus', this.onBrokerStatus)
 		}
+
+		if (this._zwave) {
+			this._zwave.on('nodeInited', this.onNodeInited)
+			this._zwave.on('driverStatus', this.onDriverStatus)
+
+			if (this.mqttEnabled) {
+				this._zwave.on('nodeStatus', this.onNodeStatus)
+				this._zwave.on('nodeLastActive', this.onNodeLastActive)
+				this._zwave.on('valueChanged', this.onValueChanged)
+				this._zwave.on('nodeRemoved', this.onNodeRemoved)
+				this._zwave.on('notification', this.onNotification)
+				if (this.config.sendEvents) {
+					this._zwave.on('event', this.onEvent)
+				}
+			}
+		}
+
+		this.listenersAttached = true
+	}
+
+	private detachListeners(): void {
+		if (!this.listenersAttached) return
+
+		if (this._mqtt) {
+			this._mqtt.off('writeRequest', this.onWriteRequest)
+			this._mqtt.off('broadcastRequest', this.onBroadRequest)
+			this._mqtt.off('multicastRequest', this.onMulticastRequest)
+			this._mqtt.off('apiCall', this.onApiRequest)
+			this._mqtt.off('hassStatus', this.onHassStatus)
+			this._mqtt.off('brokerStatus', this.onBrokerStatus)
+		}
+
+		if (this._zwave) {
+			this._zwave.off('nodeInited', this.onNodeInited)
+			this._zwave.off('driverStatus', this.onDriverStatus)
+			this._zwave.off('nodeStatus', this.onNodeStatus)
+			this._zwave.off('nodeLastActive', this.onNodeLastActive)
+			this._zwave.off('valueChanged', this.onValueChanged)
+			this._zwave.off('nodeRemoved', this.onNodeRemoved)
+			this._zwave.off('notification', this.onNotification)
+			this._zwave.off('event', this.onEvent)
+		}
+
+		this.listenersAttached = false
 	}
 
 	/**

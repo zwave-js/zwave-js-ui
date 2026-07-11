@@ -23,6 +23,8 @@ import {
 } from './fixtures.ts'
 import { useManagedCurrent, type ManagedCurrent } from '../shared/harness.ts'
 
+let closeGatewayWatchers: (() => void) | undefined
+
 export interface PublishedDiscovery {
 	topic: string
 	/** Parsed JSON payload, or the raw string for a delete (empty payload). */
@@ -38,10 +40,10 @@ export interface GatewayHarness {
 	publishedDiscoveries(): PublishedDiscovery[]
 	lastDiscovery(): PublishedDiscovery
 	resetPublishes(): void
+	resetState(): void
 	/**
-	 * Releases this harness's MQTT client and the Gateway module's
-	 * `customDevices` watchers (idempotent). Per-file `STORE_DIR` removal is
-	 * handled by `useGatewayHarness()`'s `afterAll`.
+	 * Releases this harness's Gateway-owned resources. The shared custom-device
+	 * watcher source and per-file `STORE_DIR` are released by the file cleanup.
 	 */
 	close(): Promise<void>
 }
@@ -69,6 +71,7 @@ export async function createGatewayHarness(
 		import('#api/lib/Gateway.ts'),
 		import('#api/lib/MqttClient.ts'),
 	])
+	closeGatewayWatchers = closeWatchers
 
 	const mqtt = new MqttClient(defaultMqttConfig(options.mqttConfig))
 	const zwave = createFakeGatewayZwave(options.zwave)
@@ -120,16 +123,11 @@ export async function createGatewayHarness(
 		resetPublishes() {
 			broker.published.length = 0
 		},
+		resetState() {
+			broker.published.length = 0
+		},
 		async close() {
-			// Drive the real Gateway.close teardown (zwave.close, cancelJobs,
-			// mqtt.close) instead of closing mqtt directly; Gateway.close leaves
-			// the module-global watchers, so release them separately — in a
-			// finally so a throwing gw.close still can't leak an armed watcher
-			try {
-				await gw.close()
-			} finally {
-				closeWatchers()
-			}
+			await gw.close()
 		},
 	}
 }
@@ -138,10 +136,9 @@ export async function createGatewayHarness(
  * Managed `GatewayHarness` lifecycle for a HASS test file: one fresh harness
  * per test (call `get(options)` in a `beforeEach`, or `replace(options)` to
  * swap config mid-test), always closed in `afterEach`. Because the `mqtt` mock
- * registry and the Gateway watchers are module-global, `afterEach` also clears
- * the broker registry (so `latestBroker()` tracks the current harness and the
- * list can't grow unbounded) and the final `afterAll` closes any surviving
- * watcher and drops the isolated `STORE_DIR`.
+ * registry and the source registry watchers are module-global, `afterEach`
+ * also clears the broker registry and the final `afterAll` closes the shared
+ * source before dropping the isolated `STORE_DIR`.
  */
 export function useGatewayHarness(): ManagedCurrent<
 	GatewayHarness,
@@ -152,16 +149,17 @@ export function useGatewayHarness(): ManagedCurrent<
 		(harness) => harness.close(),
 		{
 			afterEachCleanup: resetMqttBrokers,
-			async afterAllCleanup() {
-				// harness.close() already releases the current harness's
-				// watchers; sweep once more in case a test threw before its
-				// close, then remove the STORE_DIR api/config/app.ts captured
-				const { closeWatchers } = await import('#api/lib/Gateway.ts')
-				closeWatchers()
-				cleanupTestEnv()
+			afterAllCleanup() {
+				cleanupGatewayHarnessEnv()
 			},
 		},
 	)
+}
+
+export function cleanupGatewayHarnessEnv(): void {
+	closeGatewayWatchers?.()
+	closeGatewayWatchers = undefined
+	cleanupTestEnv()
 }
 
 /**

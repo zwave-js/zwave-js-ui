@@ -12,15 +12,14 @@ export interface CustomDeviceRegistryOptions {
 	storeDir: string
 	logger: Pick<HassLogger, 'error' | 'info'>
 	devices?: HassDeviceCatalog
+	source?: CustomDeviceRegistry
 }
 
-function cloneCatalog(catalog: HassDeviceCatalog): HassDeviceCatalog {
-	return Object.fromEntries(
-		Object.entries(catalog).map(([deviceId, devices]) => [
-			deviceId,
-			[...devices],
-		]),
-	)
+function copyCatalog(catalog: unknown): HassDeviceCatalog {
+	// The legacy loader used Object.assign({}, builtIns, customDevices). Keep
+	// that deliberately shallow and permissive: malformed per-device entries
+	// remain in the projection, while get() treats them as having no devices.
+	return Object.assign({}, catalog) as HassDeviceCatalog
 }
 
 /**
@@ -36,13 +35,19 @@ export class CustomDeviceRegistry implements HassDeviceRegistryPort {
 	private readonly customDevicesJsPath: string
 	private readonly customDevicesJsonPath: string
 	private readonly watchers = new Map<string, fs.FSWatcher>()
+	private readonly listeners = new Set<() => void>()
+	private readonly source: CustomDeviceRegistry | undefined
 	private allDevices: HassDeviceCatalog
 	private lastCustomDevicesLoad: string | null = null
+	private unsubscribeSource: (() => void) | undefined
 	private started = false
 
 	public constructor(options: CustomDeviceRegistryOptions) {
-		this.baseDevices = cloneCatalog(options.devices ?? builtInDevices)
-		this.allDevices = cloneCatalog(this.baseDevices)
+		this.source = options.source
+		this.baseDevices = copyCatalog(options.devices ?? builtInDevices)
+		this.allDevices = options.source
+			? options.source.copyProjection()
+			: copyCatalog(this.baseDevices)
 		this.logger = options.logger
 		this.customDevicesPath = path.join(options.storeDir, 'customDevices')
 		this.customDevicesJsPath = this.customDevicesPath + '.js'
@@ -53,6 +58,14 @@ export class CustomDeviceRegistry implements HassDeviceRegistryPort {
 		if (this.started) return
 
 		this.started = true
+		if (this.source) {
+			this.allDevices = this.source.copyProjection()
+			this.unsubscribeSource = this.source.subscribe(() => {
+				this.allDevices = this.source?.copyProjection() ?? {}
+			})
+			return
+		}
+
 		this.load()
 		this.watch(this.customDevicesJsPath)
 		this.watch(this.customDevicesJsonPath)
@@ -60,7 +73,7 @@ export class CustomDeviceRegistry implements HassDeviceRegistryPort {
 
 	public load(): void {
 		let loaded = ''
-		let devices: HassDeviceCatalog | null = null
+		let devices: unknown
 
 		try {
 			if (fs.existsSync(this.customDevicesJsPath)) {
@@ -77,32 +90,38 @@ export class CustomDeviceRegistry implements HassDeviceRegistryPort {
 			return
 		}
 
-		const sha = crypto
-			.createHash('sha256')
-			.update(JSON.stringify(devices))
-			.digest('hex')
-		if (this.lastCustomDevicesLoad === sha) return
+		try {
+			const sha = crypto
+				.createHash('sha256')
+				.update(JSON.stringify(devices))
+				.digest('hex')
+			if (this.lastCustomDevicesLoad === sha) return
 
-		this.logger.info(`Loading custom devices from ${loaded}`)
-		this.lastCustomDevicesLoad = sha
+			const replacement = Object.assign(
+				copyCatalog(this.baseDevices),
+				devices,
+			)
+			const loadedCount =
+				devices !== null &&
+				(typeof devices === 'object' || typeof devices === 'function')
+					? Object.keys(devices).length
+					: 0
 
-		if (devices === null) {
-			throw new TypeError('Custom devices catalog must be an object')
+			this.logger.info(`Loading custom devices from ${loaded}`)
+			this.allDevices = replacement
+			this.lastCustomDevicesLoad = sha
+			this.notify()
+			this.logger.info(
+				`Loaded ${loadedCount} custom Hass devices configurations`,
+			)
+		} catch (error) {
+			this.logger.error(`Failed to load ${loaded}:`, error)
 		}
-
-		this.allDevices = Object.assign(
-			cloneCatalog(this.baseDevices),
-			cloneCatalog(devices),
-		)
-		this.logger.info(
-			`Loaded ${
-				Object.keys(devices).length
-			} custom Hass devices configurations`,
-		)
 	}
 
 	public get(deviceId: string | undefined) {
-		return deviceId ? (this.allDevices[deviceId] ?? []) : []
+		const devices = deviceId ? this.allDevices[deviceId] : undefined
+		return Array.isArray(devices) ? devices : []
 	}
 
 	public set(deviceId: string | undefined, devices: HassDevice[]): void {
@@ -121,9 +140,35 @@ export class CustomDeviceRegistry implements HassDeviceRegistryPort {
 		return this.watchers.size
 	}
 
+	public get activeWatcherCount(): number {
+		const getActiveHandles = Reflect.get(process, '_getActiveHandles')
+		if (typeof getActiveHandles !== 'function') return 0
+		const activeHandles: unknown[] = Reflect.apply(
+			getActiveHandles,
+			process,
+			[],
+		)
+		return [...this.watchers.values()].filter((watcher) =>
+			activeHandles.includes(watcher),
+		).length
+	}
+
+	public get subscriberCount(): number {
+		return this.listeners.size
+	}
+
+	public fork(): CustomDeviceRegistry {
+		return new CustomDeviceRegistry({
+			storeDir: path.dirname(this.customDevicesPath),
+			logger: this.logger,
+			source: this,
+		})
+	}
+
 	public reset(): void {
 		this.lastCustomDevicesLoad = null
-		this.allDevices = cloneCatalog(this.baseDevices)
+		this.allDevices = copyCatalog(this.baseDevices)
+		this.notify()
 	}
 
 	public evictRequireCache(): void {
@@ -137,15 +182,28 @@ export class CustomDeviceRegistry implements HassDeviceRegistryPort {
 
 	public rebind(): void {
 		this.dispose()
-		this.started = true
-		this.watch(this.customDevicesJsPath)
-		this.watch(this.customDevicesJsonPath)
+		this.start()
 	}
 
 	public dispose(): void {
+		this.unsubscribeSource?.()
+		this.unsubscribeSource = undefined
 		for (const watcher of this.watchers.values()) watcher.close()
 		this.watchers.clear()
 		this.started = false
+	}
+
+	private copyProjection(): HassDeviceCatalog {
+		return copyCatalog(this.allDevices)
+	}
+
+	private subscribe(listener: () => void): () => void {
+		this.listeners.add(listener)
+		return () => this.listeners.delete(listener)
+	}
+
+	private notify(): void {
+		for (const listener of this.listeners) listener()
 	}
 
 	private watch(filename: string): void {
