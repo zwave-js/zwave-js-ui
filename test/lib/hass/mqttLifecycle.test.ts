@@ -35,6 +35,7 @@ import {
 	it,
 	expect,
 	beforeAll,
+	beforeEach,
 	afterAll,
 	afterEach,
 	vi,
@@ -106,6 +107,17 @@ function discoverSwitch(
 }
 
 describe('MQTT connection lifecycle (production-faithful fake)', () => {
+	// The harness broker is constructed ONCE (file-level `beforeAll`) and shared,
+	// so its `connected` flag accumulates across tests. Every scenario in this
+	// describe models a specific connection transition and drives its own
+	// `triggerConnect()` when it needs a live link, so re-establishing the
+	// freshly-constructed DISCONNECTED precondition before each test makes them
+	// order-independent (a prior test leaving the shared broker connected must
+	// not bleed into the "starts DISCONNECTED" characterization under shuffle).
+	beforeEach(() => {
+		harness.broker.forceDisconnected()
+	})
+
 	/** Seeds one node with a persistent discovered switch device. */
 	function seed(id: number, deviceId: string): void {
 		const { node } = discoverSwitch(deviceId, id)

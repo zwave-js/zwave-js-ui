@@ -118,6 +118,16 @@ export interface FakeBroker extends EventEmitter {
 	triggerOffline(): void
 	/** Fire `'reconnect'` (real client between an offline and a re-connect). */
 	triggerReconnect(): void
+	/**
+	 * Reset to the freshly-constructed, not-yet-connected state
+	 * (`connected = false`) WITHOUT emitting any event. Test-setup only: the
+	 * harness broker is shared across a file (constructed once), so a test that
+	 * characterizes the pre-`'connect'` state must re-establish that
+	 * precondition deterministically, independently of what earlier tests (in
+	 * any run order) left the shared connection flag as. Deliberately does NOT
+	 * clear `subscribed`, so it cannot disturb another suite's live routing.
+	 */
+	forceDisconnected(): void
 }
 
 /**
@@ -250,6 +260,12 @@ export function createFakeBroker(): FakeBroker {
 
 	broker.triggerReconnect = () => {
 		broker.emit('reconnect')
+	}
+
+	broker.forceDisconnected = () => {
+		// No event: this only re-establishes the constructed precondition for a
+		// test that asserts pre-`'connect'` behavior on the shared broker.
+		broker.connected = false
 	}
 
 	mqttBrokers.push(broker)
