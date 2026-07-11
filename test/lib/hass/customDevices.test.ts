@@ -19,9 +19,20 @@
  *  - `.js` takes precedence over `.json` when both exist.
  *  - no file -> loader is a no-op (projection stays the base catalog).
  *  - a parse/load failure is swallowed (projection unchanged, no throw).
- *  - an unchanged file is sha-deduped (projection object is NOT reassigned).
- *  - a changed file reloads (projection reassigned, merged over the catalog).
+ *  - an unchanged file is sha-deduped (the dedup sha - hence the projection -
+ *    is NOT changed).
+ *  - a changed file reloads (dedup sha changes, projection merged over the
+ *    catalog).
  *  - watchers are all releasable (`closeWatchers()` -> count 0, no leaks).
+ *
+ * Finding-1/2 additions:
+ *  - `__getAllDevicesForTests()` returns a DEEP SNAPSHOT: mutating it cannot
+ *    corrupt the live discovery catalog (reference identity is therefore no
+ *    longer a valid signal - reassignment vs dedup is observed via
+ *    `__getCustomDevicesShaForTests()`).
+ *  - the preferred `.js` loader reads through `require()`, whose module cache
+ *    serves a rewritten `.js` STALE; this is characterized and named as a
+ *    quirk, and teardown evicts the cache so `.js` tests stay isolated.
  */
 import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest'
 import { writeFileSync, rmSync, existsSync } from 'node:fs'
@@ -57,6 +68,11 @@ beforeAll(async () => {
 afterEach(() => {
 	// reset process-global loader state + remove any files a test created
 	mod.__resetCustomDevicesStateForTests()
+	// evict any require.cache entry a `.js` fixture created so a later test's
+	// `require()` re-reads from disk instead of being served this test's stale
+	// module (see the stale-cache quirk test). Do this BEFORE removing the
+	// file, while it is still resolvable.
+	mod.__evictCustomDevicesRequireCacheForTests()
 	for (const p of [jsPath, jsonPath]) {
 		if (existsSync(p)) rmSync(p, { force: true })
 	}
@@ -77,10 +93,11 @@ describe('loadCustomDevices projection', () => {
 
 	it('is a no-op when no custom-devices file exists', () => {
 		mod.__resetCustomDevicesStateForTests()
-		const before = mod.__getAllDevicesForTests()
+		expect(mod.__getCustomDevicesShaForTests()).toBeNull()
 		mod.__loadCustomDevicesForTests()
-		// projection is NOT reassigned (same reference) and has no custom key
-		expect(mod.__getAllDevicesForTests()).toBe(before)
+		// loader short-circuits: dedup sha is still null (never reassigned) and
+		// the projection carries no custom key
+		expect(mod.__getCustomDevicesShaForTests()).toBeNull()
 		expect(mod.__getAllDevicesForTests()['test-custom']).toBeUndefined()
 	})
 
@@ -132,8 +149,9 @@ describe('loadCustomDevices projection', () => {
 
 		// must not throw
 		expect(() => mod.__loadCustomDevicesForTests()).not.toThrow()
-		// projection was never reassigned
-		expect(mod.__getAllDevicesForTests()).toBe(before)
+		// projection was never reassigned: dedup sha still null, content equal
+		expect(mod.__getCustomDevicesShaForTests()).toBeNull()
+		expect(mod.__getAllDevicesForTests()).toEqual(before)
 		expect(mod.__getAllDevicesForTests()['test-bad']).toBeUndefined()
 	})
 
@@ -142,42 +160,136 @@ describe('loadCustomDevices projection', () => {
 		mod.__resetCustomDevicesStateForTests()
 
 		mod.__loadCustomDevicesForTests()
-		const afterFirst = mod.__getAllDevicesForTests()
-		expect(afterFirst['test-dedup']).toBeDefined()
+		const shaAfterFirst = mod.__getCustomDevicesShaForTests()
+		expect(shaAfterFirst).not.toBeNull()
+		expect(mod.__getAllDevicesForTests()['test-dedup']).toBeDefined()
 
 		// second load with identical content is deduped by sha -> the loader
-		// returns before reassigning, so the projection is the SAME object
+		// returns before reassigning, so the dedup sha is unchanged
 		mod.__loadCustomDevicesForTests()
-		expect(mod.__getAllDevicesForTests()).toBe(afterFirst)
+		expect(mod.__getCustomDevicesShaForTests()).toBe(shaAfterFirst)
 	})
 
-	it('reloads when the file content changes (projection reassigned)', () => {
+	it('reloads when the file content changes (dedup sha changes)', () => {
 		writeFileSync(jsonPath, JSON.stringify({ 'test-reload': [{ v: 1 }] }))
 		mod.__resetCustomDevicesStateForTests()
 		mod.__loadCustomDevicesForTests()
-		const afterFirst = mod.__getAllDevicesForTests()
-		expect((afterFirst['test-reload'] as any)[0].v).toBe(1)
+		const shaAfterFirst = mod.__getCustomDevicesShaForTests()
+		expect((mod.__getAllDevicesForTests()['test-reload'] as any)[0].v).toBe(
+			1,
+		)
 
-		// change the file -> different sha -> reload -> new projection object
+		// change the file -> different sha -> reload -> new projection content
 		writeFileSync(jsonPath, JSON.stringify({ 'test-reload': [{ v: 2 }] }))
 		mod.__loadCustomDevicesForTests()
-		const afterSecond = mod.__getAllDevicesForTests()
-		expect(afterSecond).not.toBe(afterFirst)
-		expect((afterSecond['test-reload'] as any)[0].v).toBe(2)
+		expect(mod.__getCustomDevicesShaForTests()).not.toBe(shaAfterFirst)
+		expect((mod.__getAllDevicesForTests()['test-reload'] as any)[0].v).toBe(
+			2,
+		)
 	})
 
 	it('reset clears the dedup sha so identical content re-applies', () => {
 		writeFileSync(jsonPath, JSON.stringify({ 'test-reset': [{ v: 1 }] }))
 		mod.__resetCustomDevicesStateForTests()
 		mod.__loadCustomDevicesForTests()
-		const first = mod.__getAllDevicesForTests()
+		expect(mod.__getCustomDevicesShaForTests()).not.toBeNull()
 
 		// resetting the process-global sha means an identical file re-applies
-		// (new projection object) rather than being deduped
+		// (sha recomputed and set again) rather than being deduped
 		mod.__resetCustomDevicesStateForTests()
-		expect(mod.__getAllDevicesForTests()).not.toBe(first)
+		expect(mod.__getCustomDevicesShaForTests()).toBeNull()
 		mod.__loadCustomDevicesForTests()
-		expect(mod.__getAllDevicesForTests()).not.toBe(first)
+		expect(mod.__getCustomDevicesShaForTests()).not.toBeNull()
 		expect(mod.__getAllDevicesForTests()['test-reset']).toBeDefined()
+	})
+})
+
+describe('__getAllDevicesForTests deep snapshot (finding 1)', () => {
+	it('hands out a fresh deep copy on every call (no shared reference)', () => {
+		const a = mod.__getAllDevicesForTests()
+		const b = mod.__getAllDevicesForTests()
+		// different top-level object...
+		expect(b).not.toBe(a)
+		// ...with identical content...
+		expect(b).toEqual(a)
+		// ...and cloned nested arrays too (deep, not shallow)
+		expect(b[CATALOG_KEY]).not.toBe(a[CATALOG_KEY])
+		expect(b[CATALOG_KEY]).toEqual(a[CATALOG_KEY])
+	})
+
+	it('mutating the returned snapshot cannot corrupt the live discovery catalog', () => {
+		writeFileSync(
+			jsonPath,
+			JSON.stringify({ 'test-immutable': [{ v: 1 }] }),
+		)
+		mod.__resetCustomDevicesStateForTests()
+		mod.__loadCustomDevicesForTests()
+
+		const snapshot = mod.__getAllDevicesForTests()
+		// hostile mutations of the returned value
+		;(snapshot['test-immutable'] as any)[0].v = 999
+		snapshot['injected'] = [{ hacked: true }] as any
+		delete snapshot[CATALOG_KEY]
+
+		// a fresh fetch is entirely unaffected - the seam handed out a copy, so
+		// the production catalog `allDevices` was never touched
+		const fresh = mod.__getAllDevicesForTests()
+		expect((fresh['test-immutable'] as any)[0].v).toBe(1)
+		expect(fresh['injected']).toBeUndefined()
+		expect(fresh[CATALOG_KEY]).toBeDefined()
+	})
+})
+
+describe('preferred .js loader require.cache staleness (finding 2)', () => {
+	it('QUIRK: a rewritten customDevices.js is served STALE from require.cache on reload', () => {
+		// Write v1 as the preferred `.js` form and load it through the real
+		// loader (which does `require(customDevices)`).
+		writeFileSync(jsPath, "module.exports = { 'js-stale': [{ v: 1 }] }\n")
+		mod.__resetCustomDevicesStateForTests()
+		mod.__loadCustomDevicesForTests()
+		expect((mod.__getAllDevicesForTests()['js-stale'] as any)[0].v).toBe(1)
+
+		// Rewrite the SAME `.js` file with v2 and reload. Reset the dedup sha
+		// first so sha-dedup cannot be what suppresses the change - this
+		// isolates the require.cache effect specifically.
+		writeFileSync(jsPath, "module.exports = { 'js-stale': [{ v: 2 }] }\n")
+		mod.__resetCustomDevicesStateForTests()
+		mod.__loadCustomDevicesForTests()
+
+		// QUIRK (NOT desired behavior, pinned not endorsed): the projection is
+		// STILL v1. `require()` caches the module by resolved path, so
+		// rewriting the `.js` on disk within the same process is not observed.
+		// Production loads customDevices once per process (a runtime `.js`
+		// change already needs a restart), so this staleness never surfaces at
+		// runtime. See the PR body quirk ledger + follow-up.
+		expect((mod.__getAllDevicesForTests()['js-stale'] as any)[0].v).toBe(1)
+
+		// The test-only eviction seam is what refreshes it - proving the
+		// staleness is precisely the require.cache, and that teardown's
+		// eviction genuinely re-reads from disk (keeping the suite isolated).
+		// This does NOT change production reload semantics.
+		mod.__evictCustomDevicesRequireCacheForTests()
+		mod.__resetCustomDevicesStateForTests()
+		mod.__loadCustomDevicesForTests()
+		expect((mod.__getAllDevicesForTests()['js-stale'] as any)[0].v).toBe(2)
+	})
+
+	it('a .json rewrite is NOT stale (read fresh via fs, contrasting the .js quirk)', () => {
+		// The `.json` fallback is read with `fs.readFileSync`, not `require`,
+		// so it has no cache and always reflects the current file - the exact
+		// contrast that makes the `.js` staleness above a genuine quirk.
+		writeFileSync(jsonPath, JSON.stringify({ 'json-fresh': [{ v: 1 }] }))
+		mod.__resetCustomDevicesStateForTests()
+		mod.__loadCustomDevicesForTests()
+		expect((mod.__getAllDevicesForTests()['json-fresh'] as any)[0].v).toBe(
+			1,
+		)
+
+		writeFileSync(jsonPath, JSON.stringify({ 'json-fresh': [{ v: 2 }] }))
+		mod.__resetCustomDevicesStateForTests()
+		mod.__loadCustomDevicesForTests()
+		expect((mod.__getAllDevicesForTests()['json-fresh'] as any)[0].v).toBe(
+			2,
+		)
 	})
 })

@@ -158,8 +158,49 @@ export function __loadCustomDevicesForTests(): void {
 	loadCustomDevices()
 }
 
+// Returns a DEEP SNAPSHOT of the live `allDevices` catalog, never the live
+// reference. Production discovery reads `allDevices` directly, so handing a
+// test the live object would let an assertion (or an accidental mutation)
+// corrupt the discovery catalog for every subsequent lookup in the process.
+// The snapshot is a structural copy, so mutating the returned value has no
+// effect on the module's state (proven by the mutation regression in
+// `customDevices.test.ts`). Tests that need to observe reassignment vs
+// sha-dedup use `__getCustomDevicesShaForTests()` instead of reference
+// identity on this snapshot.
 export function __getAllDevicesForTests(): Record<string, HassDevice[]> {
-	return allDevices as unknown as Record<string, HassDevice[]>
+	return structuredClone(
+		allDevices as unknown as Record<string, HassDevice[]>,
+	)
+}
+
+// Exposes the dedup sha (`lastCustomDevicesLoad`) so tests can assert whether
+// a given `loadCustomDevices()` invocation REASSIGNED the projection (sha
+// changes) or was sha-deduped/short-circuited (sha unchanged) without relying
+// on reference identity of the snapshot above. `null` before any load / after
+// a reset.
+export function __getCustomDevicesShaForTests(): string | null {
+	return lastCustomDevicesLoad
+}
+
+// Evicts any `require.cache` entry the preferred `.js` custom-devices loader
+// created. `loadCustomDevices()` loads the `.js` form via `require()`, whose
+// module cache serves a REWRITTEN `.js` file staler (production loads
+// customDevices once per process, so a runtime `.js` change already requires a
+// restart - this seam does NOT alter that). Tests that write a `.js` fixture
+// call this in teardown so a later test's `require()` re-reads from disk
+// instead of being served this test's cached module, keeping the suite
+// isolated. See the stale-cache quirk characterization in
+// `customDevices.test.ts`.
+export function __evictCustomDevicesRequireCacheForTests(): void {
+	// Delete by the literal absolute paths, which are exactly the keys Node's
+	// CJS loader uses for these on-disk files. Deliberately does NOT call
+	// `require.resolve(CUSTOM_DEVICES)`: under Vitest's module runner that has
+	// a side effect (it pins the extension-less specifier's resolution to
+	// whichever file currently exists), which would corrupt the very
+	// `.js`-over-`.json` precedence these tests characterize.
+	for (const key of [customDevicesJsPath, customDevicesJsonPath]) {
+		delete require.cache[key]
+	}
 }
 
 export function __resetCustomDevicesStateForTests(): void {
