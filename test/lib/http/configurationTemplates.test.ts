@@ -1,6 +1,109 @@
-import { describe, it, expect } from 'vitest'
+import {
+	describe,
+	it,
+	expect,
+	vi,
+} from 'vitest'
+import type { Express } from 'express'
+import type { RateLimitRequestHandler } from 'express-rate-limit'
 import { useHttpHarness } from './harness.ts'
 import { createFakeGateway } from '../shared/fakes.ts'
+import { registerConfigurationTemplatesRoutes } from '../../../api/routes/configurationTemplates.ts'
+import type { AppRuntime } from '../../../api/runtime/AppRuntime.ts'
+
+/**
+ * Registers the real `registerConfigurationTemplatesRoutes` against a
+ * minimal fake `app` whose `.get/.post/.put/.delete` just record
+ * `(path, ...handlers)` instead of an actual Express router, then returns
+ * the REAL, production handler closure registered for `method`+`path` -
+ * i.e. the exact function express would have invoked, retrieved without
+ * an HTTP layer in between.
+ *
+ * Used only for the three `if (!id) return res.json(...)` branches below
+ * (PUT/DELETE/POST `:id` routes) that are empirically unreachable via
+ * genuine HTTP: Express 4's `path-to-regexp`-based router requires `:id`
+ * to match at least one character, so `req.params.id` can never actually
+ * be `''`/falsy for a real request - the guard is real, deliberate
+ * defensive code, just not exercisable through the router. This invokes
+ * the same production closure directly with a synthetic empty `id`,
+ * rather than reimplementing or approximating its logic - distinct from
+ * (and not barred by) the AppRuntime shutdown/plugin-teardown finding's
+ * "don't bypass the production path" constraint, which concerns bypassing
+ * real plugin *loading*, not invoking an already-registered real handler.
+ */
+function captureConfigurationTemplatesHandler(
+	method: 'get' | 'post' | 'put' | 'delete',
+	routePath: string,
+): (req: any, res: any) => unknown {
+	type Handler = (req: any, res: any) => unknown
+	const registered: Array<{
+		method: string
+		path: string
+		handler: Handler
+	}> = []
+
+	const fakeApp = {
+		get: (p: string, ...handlers: Handler[]) => {
+			registered.push({
+				method: 'get',
+				path: p,
+				handler: handlers.at(-1),
+			})
+		},
+		post: (p: string, ...handlers: Handler[]) => {
+			registered.push({
+				method: 'post',
+				path: p,
+				handler: handlers.at(-1),
+			})
+		},
+		put: (p: string, ...handlers: Handler[]) => {
+			registered.push({
+				method: 'put',
+				path: p,
+				handler: handlers.at(-1),
+			})
+		},
+		delete: (p: string, ...handlers: Handler[]) => {
+			registered.push({
+				method: 'delete',
+				path: p,
+				handler: handlers.at(-1),
+			})
+		},
+	}
+
+	// The `if (!id)` branches return before ever touching `runtime` - a
+	// `requireGateway` that throws makes that guaranteed-unused precondition
+	// explicit, so this test would fail loudly (rather than silently
+	// pass for the wrong reason) if the route ever changed to check
+	// `runtime` before `id`.
+	const fakeRuntime = {
+		requireGateway: vi.fn(() => {
+			throw new Error(
+				'requireGateway must not be reached: the empty-id guard should return first',
+			)
+		}),
+	}
+
+	registerConfigurationTemplatesRoutes(
+		fakeApp as unknown as Express,
+		fakeRuntime as unknown as AppRuntime,
+		{
+			apisLimiter: (() => {}) as unknown as RateLimitRequestHandler,
+		},
+	)
+
+	const match = registered.find(
+		(r) => r.method === method && r.path === routePath,
+	)
+	if (!match) {
+		throw new Error(
+			`No ${method.toUpperCase()} ${routePath} handler was registered`,
+		)
+	}
+	return match.handler
+}
 
 describe('HTTP contract: configuration templates', () => {
 	const getHarness = useHttpHarness()
@@ -53,6 +156,20 @@ describe('HTTP contract: configuration templates', () => {
 				message: 'nodeId and name are required',
 			})
 			expect(gw.zwave.createConfigurationTemplate).not.toHaveBeenCalled()
+		})
+
+		it('fails with a generic error when no gateway is attached (past the nodeId/name guard, exercising the catch block)', async () => {
+			const harness = await getHarness()
+			const res = await harness.request
+				.post('/api/configuration-templates')
+				.send({ nodeId: 2, name: 'My Template' })
+
+			expect(res.status).toBe(200)
+			expect(res.body).toEqual({
+				success: false,
+				message:
+					"Cannot read properties of undefined (reading 'zwave')",
+			})
 		})
 
 		it('creates a template with the exact args/order, in body order', async () => {
@@ -139,6 +256,22 @@ describe('HTTP contract: configuration templates', () => {
 					'Each template must have name, deviceId, and values array',
 			})
 			expect(gw.zwave.importConfigurationTemplates).not.toHaveBeenCalled()
+		})
+
+		it('fails with a generic error when no gateway is attached (past the array/required-fields guards, exercising the catch block)', async () => {
+			const harness = await getHarness()
+			const res = await harness.request
+				.post('/api/configuration-templates/import')
+				.send({
+					data: [{ name: 'T1', deviceId: '1:1:1:1', values: [] }],
+				})
+
+			expect(res.status).toBe(200)
+			expect(res.body).toEqual({
+				success: false,
+				message:
+					"Cannot read properties of undefined (reading 'zwave')",
+			})
 		})
 
 		it('imports valid templates via gw.zwave.importConfigurationTemplates', async () => {
@@ -257,6 +390,20 @@ describe('HTTP contract: configuration templates', () => {
 			expect(gw.zwave.applyConfigurationTemplate).not.toHaveBeenCalled()
 		})
 
+		it('fails with a generic error when no gateway is attached (past the id/nodeId guards, exercising the catch block)', async () => {
+			const harness = await getHarness()
+			const res = await harness.request
+				.post('/api/configuration-templates/template-1/apply')
+				.send({ nodeId: 2 })
+
+			expect(res.status).toBe(200)
+			expect(res.body).toEqual({
+				success: false,
+				message:
+					"Cannot read properties of undefined (reading 'zwave')",
+			})
+		})
+
 		it('applies the template to the node, coercing an omitted force to false', async () => {
 			const gw = createFakeGateway()
 			gw.zwave.applyConfigurationTemplate.mockResolvedValue({
@@ -300,6 +447,60 @@ describe('HTTP contract: configuration templates', () => {
 				2,
 				true,
 			)
+		})
+	})
+
+	describe('direct-handler-invocation: :id guards unreachable via real HTTP', () => {
+		// Express 4 (`path-to-regexp@0.1.x`) requires a named param segment
+		// like `:id` to match at least one character, so a real request can
+		// never produce `req.params.id === ''` - these three `if (!id)`
+		// guards can only be exercised by invoking the real, registered
+		// handler function directly with a synthetic empty id, bypassing
+		// the router (not the handler itself).
+
+		it('PUT /api/configuration-templates/:id returns "Invalid template ID" for an empty id, without touching the runtime', async () => {
+			const handler = captureConfigurationTemplatesHandler(
+				'put',
+				'/api/configuration-templates/:id',
+			)
+			const json = vi.fn()
+
+			await handler({ params: { id: '' }, body: {} }, { json })
+
+			expect(json).toHaveBeenCalledExactlyOnceWith({
+				success: false,
+				message: 'Invalid template ID',
+			})
+		})
+
+		it('DELETE /api/configuration-templates/:id returns "Invalid template ID" for an empty id, without touching the runtime', async () => {
+			const handler = captureConfigurationTemplatesHandler(
+				'delete',
+				'/api/configuration-templates/:id',
+			)
+			const json = vi.fn()
+
+			await handler({ params: { id: '' }, body: {} }, { json })
+
+			expect(json).toHaveBeenCalledExactlyOnceWith({
+				success: false,
+				message: 'Invalid template ID',
+			})
+		})
+
+		it('POST /api/configuration-templates/:id/apply returns "Invalid template ID" for an empty id, without touching the runtime', async () => {
+			const handler = captureConfigurationTemplatesHandler(
+				'post',
+				'/api/configuration-templates/:id/apply',
+			)
+			const json = vi.fn()
+
+			await handler({ params: { id: '' }, body: { nodeId: 2 } }, { json })
+
+			expect(json).toHaveBeenCalledExactlyOnceWith({
+				success: false,
+				message: 'Invalid template ID',
+			})
 		})
 	})
 })

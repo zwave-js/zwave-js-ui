@@ -48,32 +48,72 @@ export default defineConfig({
 			reportsDirectory: './coverage',
 			include: ['api/**/*.{js,ts}', 'src/**/*.{js,ts}'],
 			exclude: ['**/*.test.*', 'test/**'],
-			// Glob-scoped thresholds (matched against each covered file's path,
-			// independently of the top-level `lines`/`statements`/etc. keys,
-			// which aren't set here) let this single, full-repo `npm run
-			// coverage` run double as backend-only threshold enforcement.
-			// This avoids running the backend test suite a second time in CI
-			// just to check its coverage (`coverage:server` is a local-only
-			// convenience script, not part of the CI pipeline); running
-			// backend tests once, in the full combined run, is enough to both
-			// enforce the thresholds below AND produce the file-level line
-			// data Coveralls needs for `api/**`.
+			// Glob-scoped/exact-file thresholds (matched against each covered
+			// file's path, independently of the top-level `lines`/
+			// `statements`/etc. keys, which aren't set here) let this single,
+			// full-repo `npm run coverage` run double as backend-only
+			// threshold enforcement (exact-file keys, not `perFile`, so this
+			// stays scoped to just these files below). This avoids running
+			// the backend test suite a second time in CI just to check its
+			// coverage (`coverage:server` is a local-only convenience script,
+			// not part of the CI pipeline); running backend tests once, in
+			// the full combined run, is enough to both enforce the
+			// thresholds below AND produce the file-level line data
+			// Coveralls needs for `api/**`.
 			//
-			// `'api/runtime/**'` and `'api/routes/**'` are independently
-			// -accumulated glob groups (a file under `api/routes/` counts
-			// toward both groups' own coverage maps - see the coverage v8
-			// provider's `resolveThresholds()`), enforcing a stricter bar for
-			// the runtime/HTTP-router extraction
+			// `'api/runtime/AppRuntime.ts'` and each `'api/routes/*.ts'` file
+			// are independently-accumulated exact-file groups (a file under
+			// `api/routes/` counts toward its own exact-file group's
+			// coverage map - see the coverage v8 provider's
+			// `resolveThresholds()`), enforcing a stricter bar for the
+			// runtime/HTTP-router extraction
 			// (`refactor(api): extract runtime and http routers`) than the
-			// rest of the codebase.
+			// rest of the codebase, per-file rather than pooled across the
+			// whole directory.
 			thresholds: {
-				'api/runtime/**': {
+				'api/runtime/AppRuntime.ts': {
 					statements: 90,
 					branches: 85,
 					functions: 90,
 					lines: 90,
 				},
-				'api/routes/**': {
+				'api/routes/auth.ts': {
+					statements: 90,
+					branches: 85,
+					functions: 90,
+					lines: 90,
+				},
+				'api/routes/configurationTemplates.ts': {
+					statements: 90,
+					branches: 85,
+					functions: 90,
+					lines: 90,
+				},
+				'api/routes/debug.ts': {
+					statements: 90,
+					branches: 85,
+					functions: 90,
+					lines: 90,
+				},
+				'api/routes/health.ts': {
+					statements: 90,
+					branches: 85,
+					functions: 90,
+					lines: 90,
+				},
+				'api/routes/importExport.ts': {
+					statements: 90,
+					branches: 85,
+					functions: 90,
+					lines: 90,
+				},
+				'api/routes/settings.ts': {
+					statements: 90,
+					branches: 85,
+					functions: 90,
+					lines: 90,
+				},
+				'api/routes/store.ts': {
 					statements: 90,
 					branches: 85,
 					functions: 90,
