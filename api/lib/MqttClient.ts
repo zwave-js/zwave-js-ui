@@ -55,6 +55,16 @@ export interface MqttClientEventCallbacks {
 	apiCall: (topic: string, apiName: string, payload: any) => void
 	connect: () => void
 	brokerStatus: (online: boolean) => void
+	/**
+	 * Public, plugin-facing compatibility event: fired with the parsed
+	 * online/offline boolean whenever a Home Assistant birth/will
+	 * (`homeassistant/status`) message is received. The broker subscription
+	 * itself is owned by the discovery subsystem (`MqttDiscoveryManager`), which
+	 * routes the emit back here via {@link default.emitHassStatus}; this client
+	 * no longer subscribes the topic unconditionally, so the event fires exactly
+	 * once per status message with no duplicate broker ownership.
+	 */
+	hassStatus: (online: boolean) => void
 }
 
 export type MqttClientEvents = Extract<keyof MqttClientEventCallbacks, string>
@@ -389,6 +399,17 @@ class MqttClient extends TypedEventEmitter<MqttClientEventCallbacks> {
 				}
 			})
 		}
+	}
+
+	/**
+	 * Emit the public, plugin-facing `hassStatus` compatibility event. Called by
+	 * the Home Assistant discovery subsystem (which owns the scoped
+	 * `homeassistant/status` subscription) from its status-message handler, so
+	 * the legacy plugin event is preserved without this client re-subscribing
+	 * the topic itself. See {@link MqttClientEventCallbacks.hassStatus}.
+	 */
+	public emitHassStatus(online: boolean): void {
+		this.emit('hassStatus', online)
 	}
 
 	/**
