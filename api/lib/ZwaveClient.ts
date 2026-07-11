@@ -29,7 +29,6 @@ import { applyExternalDriverSettings } from './externalSettings.ts'
 import { JSONTransport } from '@zwave-js/log-transport-json'
 import type {
 	AssociationAddress,
-	AssociationGroup,
 	OTWFirmwareUpdateProgress,
 	OTWFirmwareUpdateResult,
 	ControllerStatistics,
@@ -115,7 +114,6 @@ import {
 	setValueWasUnsupervisedOrSucceeded,
 	UserIDStatus,
 	ProvisioningEntryStatus,
-	AssociationCheckResult,
 	JoinNetworkStrategy,
 	DriverMode,
 	BatteryReplacementStatus,
@@ -173,6 +171,9 @@ import {
 	type ZUIScheduleConfig,
 	type ZUISlot,
 } from './zwave/ports.ts'
+import { SceneService } from './zwave/SceneService.ts'
+import { GroupService } from './zwave/GroupService.ts'
+import { AssociationService } from './zwave/AssociationService.ts'
 
 export type { HassDevice } from '../hass/types.ts'
 export { ZUIScheduleEntryLockMode }
@@ -192,14 +193,6 @@ const logger = LogManager.module('Z-Wave')
 
 const NEIGHBORS_LOCK_REFRESH = 60 * 1000
 
-/** Maximum length of a multicast group name (avoids bloating MQTT topics). */
-const GROUP_NAME_MAX_LENGTH = 64
-
-/**
- * Lower bound for auto-assigned multicast-group virtual-node IDs. Chosen above
- * the LR address space so they never collide with physical or broadcast nodes.
- */
-const GROUP_ID_MIN = 0x1000
 // Ordered from least verbose to most verbose (matching winston/npm log levels)
 const LOG_LEVEL_ORDER = ['error', 'warn', 'info', 'verbose', 'debug', 'silly']
 
@@ -742,20 +735,12 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	private closed: boolean
 	private destroyed = false
 	private _driverReady: boolean
-	private scenes: ZUIScene[]
-	private groups: Group[]
 	private _nodes: Map<number, ZUINode>
 	/**
 	 * Holds the live driver-side virtual-node instances (multicast groups +
 	 * standard/LR broadcast). Keyed by virtual nodeId.
 	 */
 	private _virtualNodes: Map<number, VirtualNode>
-	/**
-	 * Index of physical nodeId → groupIds containing it. Rebuilt on group
-	 * create/update/delete so per-value-change lookups are O(1) instead of
-	 * O(groups).
-	 */
-	private _nodeToGroups: Map<number, Set<number>>
 	private storeNodes: Record<number, Partial<ZUINode>>
 	private _devices: Record<string, Partial<ZUINode>>
 	private driverInfo: ZUIDriverInfo
@@ -852,6 +837,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	private _lockNeighborsRefresh: boolean
 	private _scheduleService: ScheduleService
 	private _configTemplateService: ConfigurationTemplateService
+	private _sceneService: SceneService<ZUIValueIdScene>
+	private _groupService: GroupService
+	private _associationService: AssociationService
 
 	private nvmEvent: string
 
@@ -982,13 +970,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		this.closed = false
 		this.driverReady = false
-		this.scenes = jsonStore.get(store.scenes)
-		this.groups = jsonStore.get(store.groups)
 
 		this._nodes = new Map()
 		this._virtualNodes = new Map()
-		this._nodeToGroups = new Map()
-		this._rebuildNodeToGroupsIndex()
 
 		const templateDriverPort = {
 			getDriver: () => this._driver,
@@ -1040,6 +1024,122 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			logger,
 			jsonStore.get(store.configurationTemplates),
 			configManager,
+		)
+
+		// --- SceneService wiring -------------------------------------------------
+		const scenePersistencePort = {
+			get: () => jsonStore.get(store.scenes),
+			put: (data: ZUIScene[]) => jsonStore.put(store.scenes, data),
+		}
+		const sceneNodeStorePort = {
+			getNode: (nodeId: number) => this._nodes.get(nodeId),
+		}
+		const sceneUtilsPort = {
+			getValueId: (v: Partial<ZUIValueId>) => this._getValueID(v),
+		}
+		const sceneWritePort = {
+			writeValue: (valueId: ZUIValueIdScene, value: unknown) =>
+				this.writeValue(valueId, value),
+		}
+		this._sceneService = new SceneService<ZUIValueIdScene>(
+			scenePersistencePort,
+			sceneNodeStorePort,
+			sceneUtilsPort,
+			sceneWritePort,
+			logger,
+			jsonStore.get(store.scenes),
+		)
+
+		// --- GroupService wiring --------------------------------------------------
+		const groupDriverPort = {
+			isDriverReady: () => this.driverReady,
+			getOwnNodeId: () => this._driver?.controller?.ownNodeId,
+			hasPhysicalNode: (id: number) => {
+				const knownPhysicalIds = this._driver?.controller?.nodes
+				return !knownPhysicalIds || knownPhysicalIds.has(id)
+			},
+			getMulticastGroup: (nodeIds: number[]) =>
+				this._driver.controller.getMulticastGroup(nodeIds),
+		}
+		const groupZUINodeStorePort = {
+			get: (id: number) => this._nodes.get(id),
+			set: (id: number, node: ZUINode) => this._nodes.set(id, node),
+			delete: (id: number) => this._nodes.delete(id),
+		}
+		const groupSocketPort = {
+			sendToSocket: (event: string, data: unknown) =>
+				this.sendToSocket(event, data),
+			emitNodeUpdate: (
+				node: ZUINode,
+				changedProps: utils.DeepPartial<ZUINode>,
+			) => this.emitNodeUpdate(node, changedProps),
+			emitValueChanged: (
+				valueId: ZUIValueId,
+				node: ZUINode,
+				changed: boolean,
+			) => this.emit('valueChanged', valueId, node, changed),
+		}
+		const groupUtilsPort = {
+			deepEqual: (a: unknown, b: unknown) => utils.deepEqual(a, b),
+			getValueId: (v: Partial<ZUIValueId>) => this._getValueID(v),
+			buildVirtualValueId: (
+				nodeId: number,
+				zwaveValue: VirtualValueID,
+				value: unknown,
+			) => this._buildVirtualValueId(nodeId, zwaveValue, value),
+			newVirtualZUINode: (
+				nodeId: number,
+				name: string,
+				kind: NonNullable<ZUINode['kind']>,
+			) => this._newVirtualZUINode(nodeId, name, kind),
+			throttle: (key: string, fn: () => void, wait: number) =>
+				this.throttle(key, fn, wait),
+		}
+		const groupPersistencePort = {
+			get: () => jsonStore.get(store.groups),
+			put: (data: Group[]) => jsonStore.put(store.groups, data),
+		}
+		this._groupService = new GroupService(
+			groupDriverPort,
+			this._virtualNodes,
+			groupZUINodeStorePort,
+			groupSocketPort,
+			groupUtilsPort,
+			groupPersistencePort,
+			logger,
+			jsonStore.get(store.groups),
+		)
+
+		// --- AssociationService wiring ---------------------------------------------
+		const associationDriverPort = {
+			getDriver: () => this._driver,
+		}
+		const associationNodeStorePort = {
+			getZWaveNode: (nodeId: number) => this.getNode(nodeId),
+			getZUINode: (nodeId: number) => this._nodes.get(nodeId),
+			emitNodeUpdate: (
+				node: ZUINode,
+				changedProps: utils.DeepPartial<ZUINode>,
+			) => this.emitNodeUpdate(node, changedProps),
+		}
+		const associationLogPort = {
+			logNode: (
+				nodeId: number,
+				level: string,
+				message: string,
+				...args: unknown[]
+			) =>
+				this.logNode(
+					nodeId,
+					level as LogManager.LogLevel,
+					message,
+					...args,
+				),
+		}
+		this._associationService = new AssociationService(
+			associationDriverPort,
+			associationNodeStorePort,
+			associationLogPort,
 		)
 
 		this._devices = {}
@@ -1510,46 +1610,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	}
 
 	/**
-	 * Populate node `groups`
+	 * Populate node `groups`. Delegates to AssociationService.
 	 */
 	getGroups(nodeId: number, ignoreUpdate = false) {
-		const zwaveNode = this.getNode(nodeId)
-		const node = this._nodes.get(nodeId)
-		if (node && zwaveNode) {
-			let endpointGroups: ReadonlyMap<
-				number,
-				ReadonlyMap<number, AssociationGroup>
-			> = new Map()
-			try {
-				endpointGroups =
-					this._driver.controller.getAllAssociationGroups(nodeId)
-			} catch (error) {
-				this.logNode(
-					zwaveNode,
-					'warn',
-					`Error while fetching groups associations: ${error.message}`,
-				)
-			}
-			node.groups = []
-
-			for (const [endpoint, groups] of endpointGroups) {
-				for (const [groupIndex, group] of groups) {
-					// https://zwave-js.github.io/node-zwave-js/#/api/controller?id=associationgroup-interface
-					node.groups.push({
-						title: group.label,
-						endpoint: endpoint,
-						value: groupIndex,
-						maxNodes: group.maxNodes,
-						isLifeline: group.isLifeline,
-						multiChannel: group.multiChannel,
-					})
-				}
-			}
-		}
-
-		if (node && !ignoreUpdate) {
-			this.emitNodeUpdate(node, { groups: node.groups })
-		}
+		return this._associationService.getGroups(nodeId, ignoreUpdate)
 	}
 
 	/**
@@ -1559,50 +1623,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		nodeId: number,
 		refresh = false,
 	): Promise<ZUIGroupAssociation[]> {
-		const zwaveNode = this.getNode(nodeId)
-		const toReturn: ZUIGroupAssociation[] = []
-
-		if (zwaveNode) {
-			try {
-				if (refresh) {
-					await zwaveNode.refreshCCValues(CommandClasses.Association)
-					await zwaveNode.refreshCCValues(
-						CommandClasses['Multi Channel Association'],
-					)
-				}
-				// https://zwave-js.github.io/node-zwave-js/#/api/controller?id=association-interface
-				// the result is a map where the key is the group number and the value is the array of associations {nodeId, endpoint?}
-				const result =
-					this._driver.controller.getAllAssociations(nodeId)
-				for (const [source, group] of result.entries()) {
-					for (const [groupId, associations] of group) {
-						for (const a of associations) {
-							toReturn.push({
-								endpoint: source.endpoint,
-								groupId: groupId,
-								nodeId: a.nodeId,
-								targetEndpoint: a.endpoint,
-							} as ZUIGroupAssociation)
-						}
-					}
-				}
-			} catch (error) {
-				this.logNode(
-					zwaveNode,
-					'warn',
-					`Error while fetching groups associations: ${error.message}`,
-				)
-				// node doesn't support groups associations
-			}
-		} else {
-			this.logNode(
-				zwaveNode,
-				'warn',
-				`Error while fetching groups associations, node not found`,
-			)
-		}
-
-		return toReturn
+		return this._associationService.getAssociations(nodeId, refresh)
 	}
 
 	/**
@@ -1613,7 +1634,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		groupId: number,
 		association: AssociationAddress,
 	) {
-		return this.driver.controller.checkAssociation(
+		return this._associationService.checkAssociation(
 			source,
 			groupId,
 			association,
@@ -1629,60 +1650,12 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		associations: AssociationAddress[],
 		options?: { force?: boolean },
 	) {
-		const zwaveNode = this.getNode(source.nodeId)
-
-		const sourceMsg = `Node ${
-			source.nodeId +
-			(source.endpoint ? ' Endpoint ' + source.endpoint : '')
-		}`
-
-		if (!zwaveNode) {
-			throw new Error(`Node ${source.nodeId} not found`)
-		}
-
-		const result: AssociationCheckResult[] = []
-		const force = options?.force ?? false
-
-		for (const a of associations) {
-			const checkResult = this._driver.controller.checkAssociation(
-				source,
-				groupId,
-				a,
-			)
-
-			result.push(checkResult)
-
-			if (checkResult === AssociationCheckResult.OK || force) {
-				const isForcedAdd =
-					force && checkResult !== AssociationCheckResult.OK
-				const logLevel = isForcedAdd ? 'warn' : 'info'
-				const action = isForcedAdd ? 'Force adding' : 'Adding'
-				const bypassInfo = isForcedAdd
-					? ` (bypassing check: ${getEnumMemberName(AssociationCheckResult, checkResult)})`
-					: ''
-
-				this.logNode(
-					zwaveNode,
-					logLevel,
-					`${action} Node ${a.nodeId} to Group ${groupId} of ${sourceMsg}${bypassInfo}`,
-				)
-
-				await this._driver.controller.addAssociations(
-					source,
-					groupId,
-					[a],
-					{ force },
-				)
-			} else {
-				this.logNode(
-					zwaveNode,
-					'warn',
-					`Unable to add Node ${a.nodeId} to Group ${groupId} of ${sourceMsg}: ${getEnumMemberName(AssociationCheckResult, checkResult)}`,
-				)
-			}
-		}
-
-		return result
+		return this._associationService.addAssociations(
+			source,
+			groupId,
+			associations,
+			options,
+		)
 	}
 
 	/**
@@ -1694,94 +1667,18 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		groupId: number,
 		associations: AssociationAddress[],
 	) {
-		const zwaveNode = this.getNode(source.nodeId)
-
-		const sourceMsg = `Node ${
-			source.nodeId +
-			(source.endpoint ? ' Endpoint ' + source.endpoint : '')
-		}`
-
-		if (zwaveNode) {
-			try {
-				this.logNode(
-					zwaveNode,
-					'info',
-					`Removing associations from ${sourceMsg} Group ${groupId}: %o`,
-					associations,
-				)
-
-				await this._driver.controller.removeAssociations(
-					source,
-					groupId,
-					associations,
-				)
-			} catch (error) {
-				this.logNode(
-					zwaveNode,
-					'warn',
-					`Error while removing associations from ${sourceMsg}: ${error.message}`,
-				)
-			}
-		} else {
-			this.logNode(
-				zwaveNode,
-				'warn',
-				`Error while removing associations from ${sourceMsg}, node not found`,
-			)
-		}
+		return this._associationService.removeAssociations(
+			source,
+			groupId,
+			associations,
+		)
 	}
 
 	/**
 	 * Remove all associations
 	 */
 	async removeAllAssociations(nodeId: number) {
-		const zwaveNode = this.getNode(nodeId)
-
-		if (zwaveNode) {
-			try {
-				const allAssociations =
-					this._driver.controller.getAllAssociations(nodeId)
-
-				for (const [
-					source,
-					groupAssociations,
-				] of allAssociations.entries()) {
-					for (const [groupId, associations] of groupAssociations) {
-						if (associations.length > 0) {
-							await this._driver.controller.removeAssociations(
-								source,
-								groupId,
-								associations as AssociationAddress[],
-							)
-							this.logNode(
-								zwaveNode,
-								'info',
-								`Removed ${
-									associations.length
-								} associations from Node ${
-									source.nodeId +
-									(source.endpoint
-										? ' Endpoint ' + source.endpoint
-										: '')
-								} group ${groupId}`,
-							)
-						}
-					}
-				}
-			} catch (error) {
-				this.logNode(
-					zwaveNode,
-					'warn',
-					`Error while removing all associations from ${nodeId}: ${error.message}`,
-				)
-			}
-		} else {
-			this.logNode(
-				zwaveNode,
-				'warn',
-				`Node not found when calling 'removeAllAssociations'`,
-			)
-		}
+		return this._associationService.removeAllAssociations(nodeId)
 	}
 
 	/**
@@ -1831,33 +1728,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 * Remove node from all associations
 	 */
 	async removeNodeFromAllAssociations(nodeId: number) {
-		const zwaveNode = this.getNode(nodeId)
-
-		if (zwaveNode) {
-			try {
-				this.logNode(
-					zwaveNode,
-					'info',
-					`Removing Node ${nodeId} from all associations`,
-				)
-
-				await this._driver.controller.removeNodeFromAllAssociations(
-					nodeId,
-				)
-			} catch (error) {
-				this.logNode(
-					zwaveNode,
-					'warn',
-					`Error while removing Node ${nodeId} from all associations: ${error.message}`,
-				)
-			}
-		} else {
-			this.logNode(
-				zwaveNode,
-				'warn',
-				`Node not found when calling 'removeNodeFromAllAssociations'`,
-			)
-		}
+		return this._associationService.removeNodeFromAllAssociations(nodeId)
 	}
 
 	/**
@@ -2359,7 +2230,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		this.emit('valueChanged', valueId, node, changed)
 
 		// Update virtual nodes that contain this node
-		this._updateVirtualNodesForNode(valueId.nodeId)
+		this._groupService.updateVirtualNodesForNode(valueId.nodeId)
 	}
 
 	public emitStatistics(
@@ -2565,47 +2436,21 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 * Creates a new scene with a specific `label` and stores it in `scenes.json`
 	 */
 	async _createScene(label: string) {
-		const id =
-			this.scenes.length > 0
-				? this.scenes[this.scenes.length - 1].sceneid + 1
-				: 1
-		this.scenes.push({
-			sceneid: id,
-			label: label,
-			values: [],
-		})
-
-		await jsonStore.put(store.scenes, this.scenes)
-
-		return true
+		return this._sceneService.createScene(label)
 	}
 
 	/**
 	 * Delete a scene with a specific `sceneid` and updates `scenes.json`
 	 */
 	async _removeScene(sceneid: number) {
-		const index = this.scenes.findIndex((s) => s.sceneid === sceneid)
-
-		if (index < 0) {
-			throw Error('No scene found with given sceneid')
-		}
-
-		this.scenes.splice(index, 1)
-
-		await jsonStore.put(store.scenes, this.scenes)
-
-		return true
+		return this._sceneService.removeScene(sceneid)
 	}
 
 	/**
 	 * Imports scenes Array in `scenes.json`
 	 */
 	async _setScenes(scenes: ZUIScene[]) {
-		// TODO: add scenes validation
-		this.scenes = scenes
-		await jsonStore.put(store.scenes, this.scenes)
-
-		return scenes
+		return this._sceneService.setScenes(scenes)
 	}
 
 	/**
@@ -2613,18 +2458,14 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 *
 	 */
 	_getScenes(): ZUIScene[] {
-		return this.scenes
+		return this._sceneService.getScenes()
 	}
 
 	/**
 	 * Return all values of the scene with given `sceneid`
 	 */
 	_sceneGetValues(sceneid: number) {
-		const scene = this.scenes.find((s) => s.sceneid === sceneid)
-		if (!scene) {
-			throw Error('No scene found with given sceneid')
-		}
-		return scene.values
+		return this._sceneService.sceneGetValues(sceneid)
 	}
 
 	/**
@@ -2637,261 +2478,60 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		value: any,
 		timeout: number,
 	) {
-		const scene = this.scenes.find((s) => s.sceneid === sceneid)
-		const node = this._nodes.get(valueId.nodeId)
-
-		if (!scene) {
-			throw Error('No scene found with given sceneid')
-		}
-
-		if (!node) {
-			throw Error(`Node ${valueId.nodeId} not found`)
-		} else {
-			// check if it is an existing valueid
-			if (!node.values[this._getValueID(valueId)]) {
-				throw Error('No value found with given valueId')
-			} else {
-				// if this valueid is already in owr scene edit it else create new one
-				const index = scene.values.findIndex((s) => s.id === valueId.id)
-
-				valueId = index < 0 ? valueId : scene.values[index]
-				valueId.value = value
-				valueId.timeout = timeout || 0
-
-				if (index < 0) {
-					scene.values.push(valueId)
-				}
-			}
-		}
-
-		return jsonStore.put(store.scenes, this.scenes)
+		return this._sceneService.addSceneValue(
+			sceneid,
+			valueId,
+			value,
+			timeout,
+		)
 	}
 
 	/**
 	 * Remove a value from scene
 	 */
 	async _removeSceneValue(sceneid: number, valueId: ZUIValueIdScene) {
-		const scene = this.scenes.find((s) => s.sceneid === sceneid)
-
-		if (!scene) {
-			throw Error('No scene found with given sceneid')
-		}
-
-		// get the index with also the node identifier as prefix
-		const index = scene.values.findIndex((s) => s.id === valueId.id)
-
-		if (index < 0) {
-			throw Error('No ValueId match found in given scene')
-		} else {
-			scene.values.splice(index, 1)
-		}
-
-		return jsonStore.put(store.scenes, this.scenes)
+		return this._sceneService.removeSceneValue(sceneid, valueId)
 	}
 
 	/**
 	 * Activate a scene with given scene id
 	 */
 	_activateScene(sceneId: number): boolean {
-		const values = this._sceneGetValues(sceneId) || []
-
-		for (let i = 0; i < values.length; i++) {
-			setTimeout(
-				() => {
-					this.writeValue(values[i], values[i].value).catch(
-						logger.error,
-					)
-				},
-				values[i].timeout ? values[i].timeout * 1000 : 0,
-			)
-		}
-
-		return true
+		return this._sceneService.activateScene(sceneId)
 	}
 
 	// === GROUPS MANAGEMENT ===
 
 	/**
-	 * Validate and normalize a group name.
-	 */
-	private _validateGroupName(name: string): string {
-		const trimmed = name?.trim()
-		if (!trimmed) {
-			throw new Error('Group name is required')
-		}
-		if (trimmed.length > GROUP_NAME_MAX_LENGTH) {
-			throw new Error(
-				`Group name must be at most ${GROUP_NAME_MAX_LENGTH} characters`,
-			)
-		}
-		return trimmed
-	}
-
-	/**
-	 * Filter and validate node IDs for group creation/update.
-	 * Removes duplicates, controller node, broadcast IDs, virtual-group IDs,
-	 * and any IDs not present in the controller's physical nodes map.
-	 */
-	private _filterGroupNodeIds(nodeIds: number[]): number[] {
-		const ownNodeId = this._driver?.controller?.ownNodeId
-		const knownPhysicalIds = this._driver?.controller?.nodes
-		const filtered = [...new Set(nodeIds)].filter(
-			(id) =>
-				typeof id === 'number' &&
-				Number.isInteger(id) &&
-				id > 0 &&
-				id !== ownNodeId &&
-				id !== NODE_ID_BROADCAST &&
-				id !== NODE_ID_BROADCAST_LR &&
-				id < GROUP_ID_MIN &&
-				(!knownPhysicalIds || knownPhysicalIds.has(id)),
-		)
-
-		if (filtered.length < 2) {
-			throw new Error('At least 2 valid nodes are required for a group')
-		}
-
-		return filtered
-	}
-
-	/**
-	 * Get next available group ID (>= GROUP_ID_MIN).
-	 */
-	private _getNextGroupId(): number {
-		const existingIds = new Set(this.groups.map((g) => g.id))
-		let nextId = GROUP_ID_MIN
-		while (existingIds.has(nextId)) {
-			nextId++
-		}
-		return nextId
-	}
-
-	/**
-	 * Rebuild the nodeId → groupIds index. Called whenever the groups list
-	 * changes so per-value-change lookups stay O(1).
-	 */
-	private _rebuildNodeToGroupsIndex(): void {
-		this._nodeToGroups.clear()
-		for (const group of this.groups) {
-			for (const nodeId of group.nodeIds) {
-				let set = this._nodeToGroups.get(nodeId)
-				if (!set) {
-					set = new Set()
-					this._nodeToGroups.set(nodeId, set)
-				}
-				set.add(group.id)
-			}
-		}
-	}
-
-	/**
-	 * Create a new group. Builds the multicast instance before persisting so a
-	 * failure leaves no phantom group in `groups.json`.
+	 * Create a new group. Delegates to GroupService.
 	 */
 	async _createGroup(name: string, nodeIds: number[]): Promise<Group> {
-		const trimmedName = this._validateGroupName(name)
-		const validNodeIds = this._filterGroupNodeIds(nodeIds)
-
-		const id = this._getNextGroupId()
-		const group: Group = { id, name: trimmedName, nodeIds: validNodeIds }
-
-		// Build the live multicast instance up-front: if zwave-js rejects the
-		// node set, throw before we touch persistent state.
-		if (this.driverReady) {
-			const multicastGroup =
-				this._driver.controller.getMulticastGroup(validNodeIds)
-			this._virtualNodes.set(id, multicastGroup)
-		}
-
-		this.groups.push(group)
-		try {
-			await jsonStore.put(store.groups, this.groups)
-		} catch (error) {
-			// Rollback in-memory state on persistence failure
-			this.groups.pop()
-			this._virtualNodes.delete(id)
-			throw error
-		}
-
-		this._rebuildNodeToGroupsIndex()
-		this._createVirtualNode(group)
-
-		return group
+		return this._groupService.createGroup(name, nodeIds)
 	}
 
 	/**
-	 * Update an existing group.
+	 * Update an existing group. Delegates to GroupService.
 	 */
 	async _updateGroup(
 		id: number,
 		name: string,
 		nodeIds: number[],
 	): Promise<Group | null> {
-		const trimmedName = this._validateGroupName(name)
-		const validNodeIds = this._filterGroupNodeIds(nodeIds)
-
-		const groupIndex = this.groups.findIndex((g) => g.id === id)
-		if (groupIndex === -1) {
-			return null
-		}
-
-		const previous = { ...this.groups[groupIndex] }
-		this.groups[groupIndex].name = trimmedName
-		this.groups[groupIndex].nodeIds = validNodeIds
-
-		// Refresh the multicast instance with the validated node list before
-		// persisting — if zwave-js rejects, restore previous state and throw.
-		if (this.driverReady) {
-			try {
-				const multicastGroup =
-					this._driver.controller.getMulticastGroup(validNodeIds)
-				this._virtualNodes.set(id, multicastGroup)
-			} catch (error) {
-				this.groups[groupIndex] = previous
-				throw error
-			}
-		}
-
-		try {
-			await jsonStore.put(store.groups, this.groups)
-		} catch (error) {
-			this.groups[groupIndex] = previous
-			throw error
-		}
-
-		this._rebuildNodeToGroupsIndex()
-		this._updateVirtualNode(this.groups[groupIndex])
-
-		return this.groups[groupIndex]
+		return this._groupService.updateGroup(id, name, nodeIds)
 	}
 
 	/**
-	 * Delete a group.
+	 * Delete a group. Delegates to GroupService.
 	 */
 	async _deleteGroup(id: number): Promise<boolean> {
-		const groupIndex = this.groups.findIndex((g) => g.id === id)
-		if (groupIndex === -1) {
-			return false
-		}
-
-		this._nodes.delete(id)
-		this._virtualNodes.delete(id)
-
-		this.groups.splice(groupIndex, 1)
-		await jsonStore.put(store.groups, this.groups)
-
-		this._rebuildNodeToGroupsIndex()
-
-		this.sendToSocket(socketEvents.nodeRemoved, { id })
-
-		return true
+		return this._groupService.deleteGroup(id)
 	}
 
 	/**
 	 * Get all groups
 	 */
 	_getGroups(): Group[] {
-		return this.groups
+		return this._groupService.getGroups()
 	}
 
 	// ------------ CONFIGURATION TEMPLATES MANAGEMENT -----------------------------------
@@ -2982,55 +2622,6 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	}
 
 	/**
-	 * Materialize (or re-materialize) the ZUINode shell + initial values for a
-	 * multicast group.
-	 *
-	 * Despite the name, this runs in three scenarios:
-	 *   1. **Driver startup / restore** — `init()` iterates persisted groups
-	 *      and calls this to (re)build their live `VirtualNode` instance and
-	 *      ZUI shell. The live instance is *not* yet in `_virtualNodes`, so it
-	 *      is created here.
-	 *   2. **After `_createGroup` succeeds** — the live `VirtualNode` was
-	 *      already eagerly registered in `_virtualNodes` (so a driver-side
-	 *      rejection happens before we mutate persistent state); this call
-	 *      only needs to build the ZUI shell.
-	 *   3. **As a fallback inside `_updateVirtualNode`** when the ZUI shell is
-	 *      missing for an existing live instance.
-	 *
-	 * The `_virtualNodes.has(group.id)` guard short-circuits case (2)/(3) and
-	 * lazily creates the live instance for case (1).
-	 */
-	private _createVirtualNode(group: Group): void {
-		if (!this.driverReady) return
-
-		try {
-			if (!this._virtualNodes.has(group.id)) {
-				const multicastGroup =
-					this._driver.controller.getMulticastGroup(group.nodeIds)
-				this._virtualNodes.set(group.id, multicastGroup)
-			}
-
-			const virtualNode = this._newVirtualZUINode(
-				group.id,
-				group.name,
-				'multicast',
-			)
-
-			this._nodes.set(group.id, virtualNode)
-
-			// Emit node update (not nodeAdded, which expects {node, result}
-			// and shows a confirmation dialog)
-			this.sendToSocket(socketEvents.nodeUpdated, virtualNode)
-
-			this._updateVirtualNodeValues(group)
-		} catch (error) {
-			logger.error(
-				`Error creating virtual node for group ${group.id}: ${error.message}`,
-			)
-		}
-	}
-
-	/**
 	 * Apply a configuration template to a node
 	 */
 	async applyConfigurationTemplate(
@@ -3059,26 +2650,6 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		return this._configTemplateService.importConfigurationTemplates(
 			templates,
 		)
-	}
-
-	/**
-	 * Update virtual node for multicast group
-	 */
-	private _updateVirtualNode(group: Group): void {
-		const virtualNode = this._nodes.get(group.id)
-		if (!virtualNode) {
-			// Create if doesn't exist
-			this._createVirtualNode(group)
-			return
-		}
-
-		virtualNode.name = group.name
-
-		// Update virtual node values based on member nodes
-		this._updateVirtualNodeValues(group)
-
-		// Emit node updated event
-		this.emitNodeUpdate(virtualNode, { name: virtualNode.name })
 	}
 
 	/**
@@ -3144,77 +2715,6 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		this._applyValueMetadataFields(valueId, meta)
 
 		return valueId
-	}
-
-	/**
-	 * Populate values for a multicast group virtual node.
-	 *
-	 * zwave-js `VirtualNode.getDefinedValueIDs()` returns the **union** of all
-	 * writeable actuator value IDs across every physical member node, plus
-	 * Basic CC (always added so heterogeneous groups can be controlled
-	 * together). This means a group may expose CCs that only some members
-	 * support — nodes that don't will simply ignore the command.
-	 *
-	 * For each value we aggregate the current state of all member nodes:
-	 * if every member has the same value it is shown, otherwise `undefined`.
-	 */
-	private _updateVirtualNodeValues(group: Group): void {
-		const virtualNode = this._nodes.get(group.id)
-		if (!virtualNode) return
-
-		const multicastGroup = this._virtualNodes.get(group.id)
-		if (!multicastGroup) return
-
-		try {
-			const definedValueIDs = multicastGroup.getDefinedValueIDs()
-
-			virtualNode.values = {}
-
-			for (const zwaveValue of definedValueIDs) {
-				const vId = this._getValueID(
-					zwaveValue as unknown as ZUIValueId,
-				)
-
-				// Aggregate values from member nodes that support this CC.
-				// Show the value if all supporting members agree (using deep
-				// equality so object-valued CCs like Color compare correctly),
-				// otherwise undefined.
-				const memberValues = group.nodeIds
-					.map((id) => this._nodes.get(id)?.values?.[vId]?.value)
-					.filter((v) => v !== undefined && v !== null)
-				const allSame =
-					memberValues.length > 0 &&
-					memberValues.every((v) =>
-						utils.deepEqual(v, memberValues[0]),
-					)
-
-				const valueId = this._buildVirtualValueId(
-					group.id,
-					zwaveValue,
-					allSame ? memberValues[0] : undefined,
-				)
-				if (!valueId) continue
-
-				virtualNode.values[vId] = valueId
-			}
-
-			// Emit valueChanged for each value so the MQTT gateway
-			// publishes them and registers topics for write-back
-			for (const vId in virtualNode.values) {
-				this.emit(
-					'valueChanged',
-					virtualNode.values[vId],
-					virtualNode,
-					true,
-				)
-			}
-
-			this.emitNodeUpdate(virtualNode, { values: virtualNode.values })
-		} catch (error) {
-			logger.error(
-				`Error updating virtual node values for group ${group.id}: ${error.message}`,
-			)
-		}
 	}
 
 	/**
@@ -3399,86 +2899,6 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			this.sendToSocket(socketEvents.nodeRemoved, {
 				id: NODE_ID_BROADCAST_LR,
 			})
-		}
-	}
-
-	/**
-	 * Update virtual nodes when a member node's value changes.
-	 * Throttled to avoid excessive rebuilds on frequent value updates.
-	 */
-	private _updateVirtualNodesForNode(nodeId: number): void {
-		const groupIds = this._nodeToGroups.get(nodeId)
-		if (!groupIds || groupIds.size === 0) return
-
-		for (const groupId of groupIds) {
-			const group = this.groups.find((g) => g.id === groupId)
-			if (!group) continue
-			this.throttle(
-				`virtual_node_update_${group.id}`,
-				() => {
-					this._updateVirtualNodeValues(group)
-				},
-				1000,
-			)
-		}
-		// Note: broadcast node values are not updated here because they are
-		// write-only and don't need to reflect individual node value changes.
-		// They are rebuilt when nodes are added/removed or become ready.
-	}
-
-	/**
-	 * Drop a removed physical node from any group containing it. Persists
-	 * groups.json before touching live virtual instances, so a crash between
-	 * the in-memory mutation and the disk write can never resurrect the
-	 * removed node on restart. Refreshes the corresponding multicast instances
-	 * and virtual ZUI nodes after the write succeeds.
-	 */
-	private async _removeNodeFromGroups(nodeId: number): Promise<void> {
-		const groupIds = this._nodeToGroups.get(nodeId)
-		if (!groupIds || groupIds.size === 0) return
-
-		const affected: Group[] = []
-		for (const groupId of groupIds) {
-			const group = this.groups.find((g) => g.id === groupId)
-			if (!group) continue
-			group.nodeIds = group.nodeIds.filter((id) => id !== nodeId)
-			affected.push(group)
-		}
-
-		if (affected.length === 0) return
-
-		try {
-			await jsonStore.put(store.groups, this.groups)
-		} catch (error) {
-			logger.error(
-				`Failed to persist groups after removing node ${nodeId}: ${error.message}`,
-			)
-			return
-		}
-
-		this._rebuildNodeToGroupsIndex()
-
-		for (const group of affected) {
-			if (group.nodeIds.length >= 2 && this.driverReady) {
-				try {
-					const refreshed = this._driver.controller.getMulticastGroup(
-						group.nodeIds,
-					)
-					this._virtualNodes.set(group.id, refreshed)
-				} catch (error) {
-					logger.error(
-						`Failed to refresh multicast group ${group.id} after removing node ${nodeId}: ${error.message}`,
-					)
-				}
-				this._updateVirtualNode(group)
-			} else {
-				// Group dropped below the 2-node minimum; tear down the live
-				// virtual node but leave the persisted entry so the user can
-				// fix it from the Groups page.
-				this._virtualNodes.delete(group.id)
-				this._nodes.delete(group.id)
-				this.sendToSocket(socketEvents.nodeRemoved, { id: group.id })
-			}
 		}
 	}
 
@@ -5538,8 +4958,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		this._createBroadcastNodes()
 
 		// Recreate virtual nodes for existing groups
-		for (const group of this.groups) {
-			this._createVirtualNode(group)
+		for (const group of this._groupService.getGroups()) {
+			this._groupService.createVirtualNode(group)
 		}
 
 		for (const [, node] of this._driver.controller.nodes) {
@@ -5933,7 +5353,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		// Persist the group cleanup *before* refreshing live virtual nodes /
 		// broadcast values, so the on-disk state reflects the removal.
-		await this._removeNodeFromGroups(zwaveNode.id)
+		await this._groupService.removeNodeFromGroups(zwaveNode.id)
 
 		// Update broadcast nodes after node removal
 		this._refreshBroadcastLRNode()
