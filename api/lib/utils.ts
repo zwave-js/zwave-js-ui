@@ -404,8 +404,17 @@ export function parseSecurityKeys(
 	options: PartialZWaveOptions | ZnifferOptions,
 ): void {
 	config.securityKeys = config.securityKeys || {}
-	// Fix: the long range keys map must exist before it is indexed into below
-	config.securityKeysLongRange = config.securityKeysLongRange || {}
+	// `config.securityKeysLongRange` is deliberately NOT defaulted here -
+	// this preserves a pre-existing (undocumented until now) startup-failure
+	// quirk: setting a `KEY_LR_*` env var without the persisted settings
+	// already having ANY `zwave.securityKeysLongRange` object throws below,
+	// instead of silently creating one. That is a latent footgun (a
+	// misconfigured env var should arguably not crash startup at all, or
+	// should crash with a clearer message earlier), but reverting it is out
+	// of scope here - this only turns what used to be an incidental
+	// `TypeError` from indexing into `undefined` into an explicit,
+	// characterized one (see the `KEY_LR_*` loop below), preserving the
+	// exact prior pass/fail behavior without inventing new validation.
 
 	if (process.env.NETWORK_KEY) {
 		config.securityKeys.S0_Legacy = process.env.NETWORK_KEY
@@ -439,6 +448,17 @@ export function parseSecurityKeys(
 	// load long range security keys from env
 	for (const k of longRangeEnvKeys) {
 		if (isKeyOf(k, availableLongRangeKeys)) {
+			if (!config.securityKeysLongRange) {
+				// Preserved quirk (see the comment at the top of this
+				// function): a `KEY_LR_*` env var was set, but no
+				// `zwave.securityKeysLongRange` object was ever persisted.
+				// Characterized, not fixed here.
+				throw new TypeError(
+					`Cannot set Long Range security key '${k}' from env var 'KEY_LR_${k}': ` +
+						"no 'zwave.securityKeysLongRange' object exists in the persisted settings. " +
+						'Configure at least one Long Range security key via the UI first.',
+				)
+			}
 			config.securityKeysLongRange[k] = process.env[`KEY_LR_${k}`]
 		}
 	}
@@ -449,6 +469,17 @@ export function parseSecurityKeys(
 	for (const key in config.securityKeys) {
 		if (isKeyOf(key, availableKeys)) {
 			const value = config.securityKeys[key]
+			// Preserved quirk: a persisted `null` key value used to crash
+			// via an incidental `.length` `TypeError` on `null` (before
+			// `value?.length` silently treated it as "no key configured"
+			// instead). This makes that same crash explicit/characterized
+			// rather than reverting to the unguarded `.length` access -
+			// still not fixed, just no longer accidental.
+			if (value === null) {
+				throw new TypeError(
+					`config.securityKeys.${key} is null; remove the key entirely instead of persisting it as null`,
+				)
+			}
 			if (value?.length === 32) {
 				securityKeys[key] = Buffer.from(value, 'hex')
 			}
@@ -456,6 +487,13 @@ export function parseSecurityKeys(
 	}
 
 	options.securityKeys = securityKeys
+
+	// Only defaulted here (immediately before its own conversion loop),
+	// matching the exact pre-existing ordering this function is
+	// characterizing: by the time THIS loop runs, `securityKeysLongRange`
+	// is guaranteed to exist, so only the earlier `KEY_LR_*` env-loading
+	// loop above can ever hit the preserved missing-map failure.
+	config.securityKeysLongRange = config.securityKeysLongRange || {}
 
 	const securityKeysLongRange: Partial<
 		Record<SecurityKeyLongRangeName, BytesView>
@@ -465,6 +503,12 @@ export function parseSecurityKeys(
 	for (const key in config.securityKeysLongRange) {
 		if (isKeyOf(key, availableLongRangeKeys)) {
 			const value = config.securityKeysLongRange[key]
+			// Same preserved null-value quirk as `securityKeys` above.
+			if (value === null) {
+				throw new TypeError(
+					`config.securityKeysLongRange.${key} is null; remove the key entirely instead of persisting it as null`,
+				)
+			}
 			if (value?.length === 32) {
 				securityKeysLongRange[key] = Buffer.from(value, 'hex')
 			}
