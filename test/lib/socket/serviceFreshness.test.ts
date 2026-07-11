@@ -14,9 +14,40 @@
  * already awaiting its gateway's response is never affected by a runtime
  * swap that happens after it started).
  *
- * One harness is shared per `describe` block (`beforeAll`/`afterAll` - see
- * `harness.ts`'s `close()` doc comment for why one harness can't be
- * recreated per file); `afterEach` disconnects clients and resets state.
+ * ### One harness for the WHOLE file, not one per describe block
+ *
+ * `harness.ts`'s `close()` doc comment already explains why a harness can't
+ * be recreated mid-file (a second `createSocketHarness()` call would
+ * operate against an already-deleted `STORE_DIR`) - but there is a second,
+ * independent reason a harness must not be recreated even when nothing
+ * checks `STORE_DIR`: `loadAppModule()` memoizes `api/app.ts`'s import per
+ * test file, so every `createSocketHarness()` call in this file binds
+ * `setupSocket()`/`registerSocketApi()` to the SAME module-level
+ * `socketManager` singleton. `registerSocketApi()` calls
+ * `socketManager.on('clients', callback)` - a real `EventEmitter.on()` -
+ * every time it runs, and nothing ever removes a previously-registered
+ * `'clients'` listener (a harness's `close()`/`resetState()` reset the
+ * `gw`/`zniffer`/etc. test-hook seams, never the listeners
+ * `registerSocketApi()` installed). Each describe block below used to call
+ * its own `createSocketHarness()` in its own `beforeAll` - three describe
+ * blocks meant three permanently-stacked `'clients'` listeners on that one
+ * singleton, each independently re-running
+ * `gw.zwave.setUserCallbacks()`/`removeUserCallbacks()` on every firing.
+ * None of this file's assertions caught it (they only ever assert
+ * handler-level resolution - ack payloads/`callApi` call counts - never
+ * `'clients'` listener/callback COUNTS), but it's real: reproduced
+ * empirically with a scratch file calling `createSocketHarness()` three
+ * times and observing `getSocketManager().listenerCount('clients')` grow
+ * 1 -> 2 -> 3.
+ *
+ * The fix: exactly ONE `createSocketHarness()` call for this whole file
+ * (`beforeAll`/`afterAll` below, matching `clientLifecycle.test.ts`'s
+ * already-correct single-harness pattern), shared by every describe block.
+ * `afterEach`'s `disconnectAllClients()` + `resetState()` remain the
+ * sanctioned per-test cleanup - only the harness itself is no longer
+ * recreated. The dedicated describe block right below this comment (and
+ * the top-level `afterAll`, further down) prove `listenerCount('clients')`
+ * stays exactly `1` for the whole file, including after `harness.close()`.
  */
 import {
 	describe,
@@ -50,22 +81,67 @@ async function connectedClient(harness: SocketHarness) {
 	return client
 }
 
+/**
+ * `getSocketManager()` returns the real, module-cached `SocketManager`
+ * singleton (a genuine `EventEmitter` mixin - see `api/lib/EventEmitter.ts`),
+ * narrowed by `SocketHarness`'s own type to just `{ io, authMiddleware }`.
+ * This re-widens it to the handful of `EventEmitter` methods this file's
+ * listener-count regression needs, without changing `harness.ts`'s public
+ * contract for every other test file.
+ */
+function getClientsListenerCount(harness: SocketHarness): number {
+	const socketManager = harness.testHooks.getSocketManager() as unknown as {
+		listenerCount(event: string): number
+	}
+	return socketManager.listenerCount('clients')
+}
+
+let harness: SocketHarness
+
+beforeAll(async () => {
+	harness = await createSocketHarness()
+})
+
+afterEach(async () => {
+	await harness.disconnectAllClients()
+	harness.resetState()
+})
+
+afterAll(async () => {
+	// Every describe block below shared this ONE harness/`socketManager` -
+	// prove exactly one 'clients' listener accumulated across the whole
+	// file, not one per describe block.
+	expect(getClientsListenerCount(harness)).toBe(1)
+
+	await harness.close()
+
+	// `close()` neither removes nor duplicates that listener - it stays
+	// exactly `1` even after full teardown (see this file's header comment
+	// for why `close()` was never meant to manage it).
+	expect(getClientsListenerCount(harness)).toBe(1)
+})
+
+describe('Socket contract: registerSocketApi installs the "clients" listener exactly once for this shared harness', () => {
+	it('has exactly one "clients" listener right after harness creation, and its callback fires exactly once per connect/disconnect', async () => {
+		expect(getClientsListenerCount(harness)).toBe(1)
+
+		const gateway = createFakeGateway()
+		harness.testHooks.setGateway(gateway as any)
+
+		const client = await connectedClient(harness)
+		expect(gateway.zwave.setUserCallbacks).toHaveBeenCalledOnce()
+
+		client.disconnect()
+		await harness.waitForServerSocketCount(0)
+		expect(gateway.zwave.removeUserCallbacks).toHaveBeenCalledOnce()
+
+		// Still exactly one listener - driving a real connect/disconnect
+		// through it doesn't itself install another.
+		expect(getClientsListenerCount(harness)).toBe(1)
+	})
+})
+
 describe('Socket contract: service freshness between calls on one connected client', () => {
-	let harness: SocketHarness
-
-	beforeAll(async () => {
-		harness = await createSocketHarness()
-	})
-
-	afterAll(async () => {
-		await harness.close()
-	})
-
-	afterEach(async () => {
-		await harness.disconnectAllClients()
-		harness.resetState()
-	})
-
 	it('INITED resolves the gateway fresh on each call - a mid-session gateway swap is observed by the very next call, not the one the connection started with', async () => {
 		const gwA = createFakeGateway({
 			zwave: createFakeZwaveClient({
@@ -182,21 +258,6 @@ describe('Socket contract: service freshness between calls on one connected clie
 })
 
 describe('Socket contract: per-call service freshness under concurrent in-flight requests', () => {
-	let harness: SocketHarness
-
-	beforeAll(async () => {
-		harness = await createSocketHarness()
-	})
-
-	afterAll(async () => {
-		await harness.close()
-	})
-
-	afterEach(async () => {
-		await harness.disconnectAllClients()
-		harness.resetState()
-	})
-
 	it('a slow ZWAVE_API call already in flight when the gateway is swapped still resolves against the gateway it started with, while a call started after the swap resolves against the new one', async () => {
 		let resolveSlow!: (value: unknown) => void
 		const slow = new Promise((resolve) => {
@@ -268,21 +329,6 @@ describe('Socket contract: per-call service freshness under concurrent in-flight
 })
 
 describe('Socket contract: default (no-op) ACK when a client omits the callback', () => {
-	let harness: SocketHarness
-
-	beforeAll(async () => {
-		harness = await createSocketHarness()
-	})
-
-	afterAll(async () => {
-		await harness.close()
-	})
-
-	afterEach(async () => {
-		await harness.disconnectAllClients()
-		harness.resetState()
-	})
-
 	it('processes ZWAVE_API side effects even when the client supplies no ack callback at all (defaults to the shared no-op)', async () => {
 		const gateway = createFakeGateway()
 		harness.testHooks.setGateway(gateway as any)
