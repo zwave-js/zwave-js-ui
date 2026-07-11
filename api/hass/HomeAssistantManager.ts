@@ -1,36 +1,51 @@
 import type { HassLogger } from './ports.ts'
 
 /**
- * The narrow view the coordinator needs of the legacy MQTT discovery subsystem
- * (owned by the live `Gateway` via `MqttDiscoveryManager`). Kept minimal so the
- * coordinator never binds to the concrete manager and tolerates its absence.
+ * Narrow control handle for the legacy MQTT discovery subsystem the coordinator
+ * owns. `MqttDiscoveryManager` structurally satisfies this. The coordinator
+ * only ever needs to STOP it (halt every discovery producer, listener and the
+ * scoped HA/broker status subscription); the discovery effective-start stays
+ * locked to `Gateway.start()`, driven on the very instance the coordinator
+ * constructed and the gateway adopted.
  */
-export interface HassDiscoverySubsystem {
-	/** Remove the scoped HA/broker status subscription. Idempotent. */
-	disposeStatus(): void
+export interface HassManagedDiscovery {
+	/**
+	 * Halt all discovery producers/listeners/watchers/subscriptions.
+	 * Idempotent and reentrant.
+	 */
+	stop(): void
 }
 
 /**
- * The narrow view the coordinator needs of the `@zwave-js/server` subsystem
- * (owned by the live `ZwaveClient` via `ZwaveServerManager`). Teardown stays
- * owned by `ZwaveClient.close()` (awaited before the driver), so the
- * coordinator only ever reads through this facade.
+ * Narrow control handle for the `@zwave-js/server` subsystem the coordinator
+ * owns. `ZwaveServerManager` structurally satisfies this. The coordinator
+ * constructs it, the `ZwaveClient` drives create/start at the locked driver
+ * points, and the coordinator awaits its destroy on stop so the server is gone
+ * before the driver is destroyed.
  */
-export interface HassServerSubsystem {
+export interface HassManagedServer {
+	/** The upstream `@zwave-js/server` package version. */
 	readonly version: string
+	/**
+	 * Tear the server down, awaiting its shutdown so the caller can guarantee
+	 * the server (and its port) is released before the driver. Idempotent.
+	 */
+	destroy(): Promise<void>
 }
 
 /**
- * Resolver bundle the coordinator uses to reach the CURRENT sub-managers on
- * every call. Each resolver reads the live gateway/client through `AppRuntime`,
- * so a gateway or Z-Wave client replaced mid-restart is observed immediately -
- * nothing is captured once and cached. Any resolver may return `undefined`
- * (no gateway yet, MQTT disabled, a mocked collaborator, a partial failure),
- * which the coordinator treats as "that subsystem is not present".
+ * Factory bundle the coordinator owns to construct AND wire a fresh generation
+ * of sub-managers into the current clients. Each `create*` constructs the
+ * concrete manager for the CURRENT gateway/client, adopts it into that client
+ * (so the client drives it at the locked timing points) and returns the narrow
+ * control handle the coordinator holds. Building the concrete instance behind
+ * this seam keeps the coordinator decoupled from the concrete client classes
+ * (no import cycle, no downcast). `createServer` may return `undefined` when
+ * the generation has no Z-Wave client (e.g. `settings.zwave` absent).
  */
-export interface HomeAssistantCollaborators {
-	resolveDiscovery(): HassDiscoverySubsystem | undefined
-	resolveServer(): HassServerSubsystem | undefined
+export interface HomeAssistantClientFactories {
+	createDiscovery(): HassManagedDiscovery
+	createServer(): HassManagedServer | undefined
 }
 
 export interface HomeAssistantManagerOptions {
@@ -38,107 +53,211 @@ export interface HomeAssistantManagerOptions {
 }
 
 /**
- * `AppRuntime`-owned lifecycle coordinator for the built-in Home Assistant
- * subsystem. It does not re-implement the discovery or `@zwave-js/server`
- * lifecycles - those are owned by the live `Gateway`/`ZwaveClient` (and locked
- * to `Gateway.start()/close()` and `ZwaveClient.connect()/close()` by the
- * characterization suite). Instead this object gives the subsystem a single,
- * process-lifetime owner that:
+ * Lifecycle states of the Home Assistant subsystem.
  *
- *  - is created and {@link initialize}d BEFORE the MQTT/Z-Wave clients start,
- *  - has the live collaborators {@link bind}ed to it (as always-current
- *    resolvers, never stale captures) once the gateway exists,
- *  - is {@link start}ed after the gateway has started, and
- *  - is {@link stop}ped BEFORE the collaborators are closed, quiescing the HA
- *    status reactions so no rediscovery races the client shutdown.
+ *  - `idle`: constructed, not yet owned. Before {@link HomeAssistantManager.initialize}.
+ *  - `initialized`: ownership taken, no generation attached yet. Also the
+ *    resting state a completed {@link HomeAssistantManager.stop} returns to
+ *    (ready for a restart).
+ *  - `starting`: a fresh generation has been
+ *    {@link HomeAssistantManager.attachClients attached} and the clients are
+ *    starting it (discovery at `Gateway.start()`, server at driver-ready).
+ *  - `started`: {@link HomeAssistantManager.start} confirmed the generation is up.
+ *  - `stopping`: {@link HomeAssistantManager.stop} is quiescing the current
+ *    generation (async, while it awaits the server destroy).
+ *  - `failed`: a startup failure was recorded via
+ *    {@link HomeAssistantManager.markFailed}; still stoppable so the coordinator
+ *    can quiesce it.
+ */
+export type HomeAssistantLifecycleState =
+	| 'idle'
+	| 'initialized'
+	| 'starting'
+	| 'started'
+	| 'stopping'
+	| 'failed'
+
+/**
+ * The single, process-lifetime owner of the built-in Home Assistant subsystem.
  *
- * Every step is idempotent and tolerant of absent collaborators, preserving the
- * partial-failure / restart / ordering guarantees `AppRuntime` relies on. The
- * {@link discovery}/{@link server} facade getters resolve the current
- * sub-managers for any consumer.
+ * Unlike the earlier hollow coordinator, this object genuinely OWNS the legacy
+ * MQTT discovery manager and the `@zwave-js/server` manager: it constructs a
+ * fresh generation of both through the injected
+ * {@link HomeAssistantClientFactories} (which also adopt them into the current
+ * `Gateway`/`ZwaveClient`), holds the instances plus their disposers, and
+ * drives their lifecycle through an explicit, idempotent state machine:
+ *
+ *  - {@link initialize} (once, before any client is constructed),
+ *  - {@link attachClients} (construct + adopt a fresh generation into the new
+ *    clients, before they start),
+ *  - {@link start} (confirm the generation is up, after `Gateway.start()`),
+ *  - {@link stop} (quiesce: halt every discovery producer/listener/subscription
+ *    and AWAIT the server destroy, before the clients are closed), and
+ *  - {@link markFailed} (record a startup failure so the subsequent stop still
+ *    quiesces the partially-started generation).
+ *
+ * The discovery/server effective START stays locked to `Gateway.start()` and
+ * the `ZwaveClient` driver points respectively - those clients drive the very
+ * instances this manager constructed and they adopted - so no timing changes.
+ * Every transition is idempotent and safe from any state; concurrent stops
+ * share one in-flight teardown; a restart attaches a brand-new generation (the
+ * previous one is disposed), so nothing stale ever survives.
  */
 export default class HomeAssistantManager {
 	private readonly logger: HassLogger
-	private collaborators: HomeAssistantCollaborators | undefined
-	private _initialized = false
-	private _started = false
+	private _state: HomeAssistantLifecycleState = 'idle'
+	private _generation = 0
+	private _discovery: HassManagedDiscovery | undefined
+	private _server: HassManagedServer | undefined
+	private stopInFlight: Promise<void> | undefined
 
 	public constructor(options: HomeAssistantManagerOptions) {
 		this.logger = options.logger
 	}
 
-	/** Whether {@link initialize} has run. */
+	/** The current lifecycle state. */
+	public get state(): HomeAssistantLifecycleState {
+		return this._state
+	}
+
+	/** Whether {@link initialize} has run (ownership taken). */
 	public get initialized(): boolean {
-		return this._initialized
+		return this._state !== 'idle'
 	}
 
 	/** Whether the subsystem is currently started. */
 	public get started(): boolean {
-		return this._started
-	}
-
-	/** The current legacy MQTT discovery subsystem, if any. */
-	public get discovery(): HassDiscoverySubsystem | undefined {
-		return this.collaborators?.resolveDiscovery()
-	}
-
-	/** The current `@zwave-js/server` subsystem, if any. */
-	public get server(): HassServerSubsystem | undefined {
-		return this.collaborators?.resolveServer()
+		return this._state === 'started'
 	}
 
 	/**
-	 * Take ownership of the subsystem before any client starts. Idempotent: a
-	 * second call (e.g. a restart) is a no-op beyond keeping ownership.
+	 * Monotonic generation counter, bumped on every {@link attachClients}. Lets
+	 * tests assert that a restart wired a brand-new generation rather than
+	 * reusing a stale one.
+	 */
+	public get generation(): number {
+		return this._generation
+	}
+
+	/** The discovery manager the current generation owns, if any. */
+	public get discovery(): HassManagedDiscovery | undefined {
+		return this._discovery
+	}
+
+	/** The `@zwave-js/server` manager the current generation owns, if any. */
+	public get server(): HassManagedServer | undefined {
+		return this._server
+	}
+
+	/**
+	 * Take ownership of the subsystem before any client is constructed.
+	 * Idempotent: a second call (a restart re-entering) is a no-op beyond
+	 * keeping ownership; it never regresses a running generation.
 	 */
 	public initialize(): void {
-		if (this._initialized) return
-		this._initialized = true
+		if (this._state !== 'idle') return
+		this._state = 'initialized'
 		this.logger.info('Home Assistant subsystem initialized')
 	}
 
 	/**
-	 * Attach the live collaborators as always-current resolvers. Safe to call
-	 * again to re-point at a replaced gateway/client; because the resolvers
-	 * read the live collaborators on each call, the coordinator never holds a
-	 * stale reference.
+	 * Construct a fresh generation of sub-managers through the injected
+	 * factories (which also adopt them into the current clients) and take
+	 * ownership of them. Called by `AppRuntime` after the new clients exist but
+	 * BEFORE they start, so the discovery/server the clients drive at their
+	 * locked timing points are the ones this manager owns.
+	 *
+	 * Bumps {@link generation} and moves to `starting`. Any lingering previous
+	 * generation's discovery is defensively halted first (the async server
+	 * destroy is owned by the coordinated {@link stop}, which `AppRuntime`
+	 * always runs before re-attaching), so no producer leaks even on a misuse
+	 * that skipped a stop.
 	 */
-	public bind(collaborators: HomeAssistantCollaborators): void {
-		this.collaborators = collaborators
-	}
+	public attachClients(factories: HomeAssistantClientFactories): void {
+		if (this._state === 'idle') this.initialize()
 
-	/**
-	 * Mark the subsystem active once the gateway has started. Resolves the
-	 * current sub-managers so their presence is observed against the live
-	 * clients (never a stale capture) and logged. Idempotent.
-	 */
-	public start(): void {
-		if (this._started) return
-		this._started = true
+		// Defensive: a live generation replaced without a stop first. Halt its
+		// discovery synchronously so nothing leaks. (AppRuntime always stops
+		// before re-attaching, so this only guards misuse/partial failures.)
+		if (this._discovery) this._discovery.stop()
 
-		const discovery = this.discovery
-		const server = this.server
+		this._generation += 1
+		this._discovery = factories.createDiscovery()
+		this._server = factories.createServer()
+		this._state = 'starting'
 		this.logger.info(
-			`Home Assistant subsystem started (discovery: ${
-				discovery ? 'active' : 'inactive'
-			}, server: ${server ? server.version : 'inactive'})`,
+			`Home Assistant subsystem attached (generation ${this._generation})`,
 		)
 	}
 
 	/**
-	 * Quiesce the subsystem before the collaborators are closed: dispose the
-	 * current discovery status subscription so no HA/broker status transition
-	 * triggers a rediscovery while the Z-Wave/MQTT clients are shutting down.
-	 * The structural teardown (discovered index, catalog fork, server destroy)
-	 * remains owned by `Gateway.close()`/`ZwaveClient.close()` at their exact
-	 * positions. Idempotent and tolerant of an already-closed or absent
-	 * subsystem.
+	 * Confirm the current generation is up, once `Gateway.start()` has started
+	 * discovery (and, through the driver, the server). Idempotent: a no-op when
+	 * already started, or when nothing is attached to start.
 	 */
-	public stop(): void {
-		if (!this._started) return
-		this._started = false
+	public start(): void {
+		if (this._state === 'started') return
+		// Only a freshly attached generation can be started. From any other
+		// state (no clients attached, stopping, failed) this is a safe no-op.
+		if (this._state !== 'starting') return
 
-		this.discovery?.disposeStatus()
-		this.logger.info('Home Assistant subsystem stopped')
+		this._state = 'started'
+		this.logger.info(
+			`Home Assistant subsystem started (server: ${
+				this._server ? this._server.version : 'inactive'
+			})`,
+		)
+	}
+
+	/**
+	 * Record that the current generation failed to start (e.g. `Gateway.start()`
+	 * threw). Keeps the owned handles so the subsequent {@link stop} can still
+	 * quiesce the partially-started generation. Idempotent; only meaningful
+	 * while starting/started.
+	 */
+	public markFailed(): void {
+		if (this._state === 'starting' || this._state === 'started') {
+			this._state = 'failed'
+			this.logger.warn('Home Assistant subsystem entered failed state')
+		}
+	}
+
+	/**
+	 * Quiesce the current generation BEFORE the clients are closed: halt every
+	 * discovery producer/listener/subscription and AWAIT the `@zwave-js/server`
+	 * destroy, so no rediscovery races the shutdown and the server (and its
+	 * port) is released before the driver is destroyed.
+	 *
+	 * Idempotent and concurrency-safe:
+	 *  - from `idle`/`initialized` (nothing started) it is a no-op;
+	 *  - from `starting`/`started`/`failed` it runs the teardown once and
+	 *    settles back to `initialized`, ready for a restart to re-attach;
+	 *  - concurrent calls share the single in-flight teardown promise.
+	 */
+	public async stop(): Promise<void> {
+		if (this.stopInFlight) return this.stopInFlight
+		if (this._state === 'idle' || this._state === 'initialized') return
+
+		this._state = 'stopping'
+		const discovery = this._discovery
+		const server = this._server
+
+		this.stopInFlight = (async () => {
+			try {
+				// Halt discovery producers/listeners/subscriptions first...
+				discovery?.stop()
+				// ...then await the server quiesce/destroy so it (and its port)
+				// is gone before the driver is destroyed downstream.
+				await server?.destroy()
+			} finally {
+				this._discovery = undefined
+				this._server = undefined
+				this._state = 'initialized'
+				this.stopInFlight = undefined
+				this.logger.info('Home Assistant subsystem stopped')
+			}
+		})()
+
+		return this.stopInFlight
 	}
 }

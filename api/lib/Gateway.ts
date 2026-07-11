@@ -149,6 +149,7 @@ export type GatewayMqtt = Pick<
 	| 'on'
 	| 'publish'
 	| 'subscribe'
+	| 'subscribeExact'
 >
 
 export default class Gateway<
@@ -163,6 +164,7 @@ export default class Gateway<
 	private _closed = false
 	private jobs: Map<string, Cron> = new Map()
 	private _mqttDiscovery?: MqttDiscoveryManager
+	private readonly customDeviceRegistrySource: HassDeviceRegistrySourcePort
 	private listenersAttached = false
 	private readonly onWriteRequest = this._onWriteRequest.bind(this)
 	private readonly onBroadRequest = this._onBroadRequest.bind(this)
@@ -237,6 +239,7 @@ export default class Gateway<
 		// clients
 		this._mqtt = mqtt
 		this._zwave = zwave
+		this.customDeviceRegistrySource = customDeviceRegistry
 	}
 
 	/**
@@ -258,8 +261,8 @@ export default class Gateway<
 		const getZwave = () => this._zwave
 		return {
 			config: this.config,
-			mqtt,
-			zwave,
+			mqtt: this._mqtt,
+			zwave: this._zwave,
 			nodeUpdates: {
 				emitNodeUpdate: (nodeId, hassDevices) => {
 					const node = this.zwave.nodes.get(nodeId)
@@ -271,7 +274,7 @@ export default class Gateway<
 				valueTopic: (node, value, returnObject) =>
 					this.valueTopic(node, value, returnObject),
 			},
-			registrySource: customDeviceRegistry,
+			registrySource: this.customDeviceRegistrySource,
 			logger: hassLogger,
 		}
 	}
