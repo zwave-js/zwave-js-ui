@@ -136,7 +136,8 @@ import jsonStore from './jsonStore.ts'
 import * as LogManager from './logger.ts'
 import * as utils from './utils.ts'
 
-import { serverVersion, ZwavejsServer } from '@zwave-js/server'
+import type { ZwavejsServer } from '@zwave-js/server'
+import ZwaveServerManager from '../hass/ZwaveServerManager.ts'
 import type { Server as SocketServer } from 'socket.io'
 import { TypedEventEmitter } from './EventEmitter.ts'
 import type { GatewayValue } from './Gateway.ts'
@@ -809,7 +810,19 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 	private _driver: Driver
 
-	private server: ZwavejsServer
+	/**
+	 * Owns the official `@zwave-js/server` lifecycle. The `server` accessor
+	 * below delegates to it so the legacy internal/API surface is unchanged.
+	 */
+	private _serverManager: ZwaveServerManager
+	private get server(): ZwavejsServer | null {
+		return this._serverManager?.server ?? null
+	}
+
+	private set server(value: ZwavejsServer | null) {
+		if (this._serverManager) this._serverManager.server = value
+	}
+
 	private statelessTimeouts: Record<string, NodeJS.Timeout>
 	private commandsTimeout: NodeJS.Timeout
 	private healTimeout: NodeJS.Timeout
@@ -910,6 +923,15 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				if (node) this.emitNodeUpdate(node, { hassDevices: devices })
 			},
 			updateStoreNodes: () => this.updateStoreNodes(),
+		})
+
+		this._serverManager = new ZwaveServerManager({
+			getDriver: () => this._driver,
+			getConfig: () => this.cfg,
+			getHasUserCallbacks: () => this.hasUserCallbacks,
+			onHardReset: () => this.init(),
+			logger,
+			serverLogger: LogManager.module('Z-Wave-Server'),
 		})
 
 		this.init()
@@ -1175,9 +1197,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		})
 
 		// when no user is connected, give back the control to HA server
-		if (this.server?.['sockets'] !== undefined) {
-			this.server.setInclusionUserCallbacks()
-		}
+		this._serverManager.handInclusionControlBack()
 	}
 
 	/**
@@ -1264,6 +1284,28 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	}
 
 	/**
+	 * Construct the official `@zwave-js/server` instance and wire its
+	 * `error`/`hard reset` listeners. Called from `connect()` right after the
+	 * driver is created (and only when `serverEnabled`), so the server always
+	 * exists BEFORE the driver becomes ready. Extracted verbatim from
+	 * `connect()` so its behavior is unchanged.
+	 */
+	private _createServer() {
+		this._serverManager.create()
+	}
+
+	/**
+	 * Start the official `@zwave-js/server` once the driver is ready and nodes
+	 * are restored (called from `_onDriverReady`). The `!this.server['server']`
+	 * guard prevents a second `start()` when the driver re-emits `driver ready`
+	 * (see #602). Extracted verbatim from `_onDriverReady` so its behavior is
+	 * unchanged.
+	 */
+	private _startServerIfNeeded() {
+		this._serverManager.startIfNeeded()
+	}
+
+	/**
 	 * Method used to close client connection, use this before destroy
 	 */
 	async close(keepListeners = false) {
@@ -1315,9 +1357,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			this.throttledFunctions.delete(key)
 		}
 
-		if (this.server) {
-			await this.server.destroy()
-			this.server = null
+		if (this._serverManager) {
+			await this._serverManager.destroy()
 		}
 
 		if (this._driver) {
@@ -4330,7 +4371,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		info.inclusionState = this._inclusionState
 		info.appVersion = utils.getVersion()
 		info.zwaveVersion = libVersion
-		info.serverVersion = serverVersion
+		info.serverVersion = this._serverManager.version
 
 		return info
 	}
