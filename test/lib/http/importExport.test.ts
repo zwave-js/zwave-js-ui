@@ -209,5 +209,85 @@ describe('HTTP contract: import/export config', () => {
 			)
 			expect(gw.zwave.storeDevices).not.toHaveBeenCalled()
 		})
+
+		it(
+			'resolves the gateway fresh before every distinct operation - a gateway swapped mid-import ' +
+				'(between two `await`s, simulating a concurrent POST /api/restart) is honored by every ' +
+				'later operation, both later in the same node and for every node processed afterwards, ' +
+				'never masked by the pre-swap reference',
+			async () => {
+				const gwA = createFakeGateway()
+				const gwB = createFakeGateway()
+				harness.testHooks.setGateway(gwA)
+
+				// Swap the runtime's gateway as a side effect of the very
+				// FIRST awaited Z-Wave operation resolving (node 2's
+				// `setNodeName`) - exactly what a concurrent restart landing
+				// mid-import would do. If the route had captured `gwA` once
+				// into a local variable and reused it across awaits (the bug
+				// this regression guards against), every operation below
+				// would still hit `gwA`'s collaborators instead.
+				gwA.zwave.callApi.mockImplementationOnce(() => {
+					harness.testHooks.setGateway(gwB)
+					return { success: true, message: 'OK' }
+				})
+
+				const res = await harness.request
+					.post('/api/importConfig')
+					.send({
+						data: {
+							// Node 2: exercises setNodeName (triggers the
+							// swap), then setNodeLocation and storeDevices -
+							// both awaited AFTER the swap, in the SAME node.
+							2: {
+								name: 'Kitchen light',
+								loc: 'Kitchen',
+								hassDevices: {
+									light_2: { type: 'light' },
+								},
+							},
+							// Node 3: processed entirely after node 2 (numeric
+							// `for...in` keys iterate in ascending order) -
+							// its setNodeName call must also hit gwB.
+							3: { name: 'Bedroom light' },
+						},
+					})
+
+				expect(res.status).toBe(200)
+				expect(res.body).toEqual({
+					success: true,
+					message: 'Configuration imported successfully',
+				})
+
+				// Only the operation that triggered the swap reaches gwA.
+				expect(gwA.zwave.callApi).toHaveBeenCalledExactlyOnceWith(
+					'setNodeName',
+					2,
+					'Kitchen light',
+				)
+				expect(gwA.zwave.storeDevices).not.toHaveBeenCalled()
+
+				// Every operation after the swap - node 2's setNodeLocation
+				// and storeDevices, plus all of node 3 - is applied against
+				// the replacement gateway.
+				expect(gwB.zwave.callApi).toHaveBeenNthCalledWith(
+					1,
+					'setNodeLocation',
+					2,
+					'Kitchen',
+				)
+				expect(gwB.zwave.callApi).toHaveBeenNthCalledWith(
+					2,
+					'setNodeName',
+					3,
+					'Bedroom light',
+				)
+				expect(gwB.zwave.storeDevices).toHaveBeenCalledExactlyOnceWith(
+					{ light_2: { type: 'light' } },
+					2,
+					false,
+				)
+			},
+		)
 	})
 })

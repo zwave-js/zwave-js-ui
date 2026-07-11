@@ -46,13 +46,27 @@ export function registerImportExportRoutes(
 			try {
 				// Preserved quirk: a missing gateway reports the historical
 				// native-TypeError message.
-				const gw = runtime.requireGateway('zwave')
-				if (!gw.zwave) throw Error('Z-Wave client not inited')
+				//
+				// `runtime.requireGateway('zwave')` is deliberately re-resolved
+				// immediately before every distinct use below - including each
+				// individual `callApi`/`storeDevices` call inside the loop -
+				// rather than captured once into a local `gw` and reused
+				// across the many `await`s this handler crosses. This mirrors
+				// the pre-extraction original (a module-scope, reassignable
+				// `gw` binding that every access re-read live): a gateway
+				// replaced mid-import (e.g. a concurrent `POST /api/restart`)
+				// must be honored by every subsequent operation, never masked
+				// by a stale reference captured before the replacement. See
+				// `test/lib/http/importExport.test.ts`'s "gateway swapped
+				// mid-import" regression.
+				if (!runtime.requireGateway('zwave').zwave) {
+					throw Error('Z-Wave client not inited')
+				}
 
 				const { nodes, selectedHomeId, skippedHomeIds } =
 					normalizeImportedNodesConfig(
 						req.body.data,
-						gw.zwave.homeHex,
+						runtime.requireGateway('zwave').zwave.homeHex,
 						{
 							homeId:
 								typeof req.body.homeId === 'string'
@@ -79,7 +93,7 @@ export function registerImportExportRoutes(
 						message: `Import skipped: the backup contains nodes for home ids ${skippedHomeIds.join(
 							', ',
 						)}, none of which match the connected controller (${
-							gw.zwave.homeHex
+							runtime.requireGateway('zwave').zwave.homeHex
 						}).`,
 					})
 				}
@@ -96,30 +110,36 @@ export function registerImportExportRoutes(
 					const nodeIdNumber = Number(nodeId)
 
 					if (utils.hasProperty(node, 'name')) {
-						await gw.zwave.callApi(
-							'setNodeName',
-							nodeIdNumber,
-							typeof node.name === 'string' ? node.name : '',
-						)
+						await runtime
+							.requireGateway('zwave')
+							.zwave.callApi(
+								'setNodeName',
+								nodeIdNumber,
+								typeof node.name === 'string' ? node.name : '',
+							)
 					}
 
 					if (
 						utils.hasProperty(node, 'loc') ||
 						utils.hasProperty(node, 'location')
 					) {
-						await gw.zwave.callApi(
-							'setNodeLocation',
-							nodeIdNumber,
-							getImportedNodeLocation(node),
-						)
+						await runtime
+							.requireGateway('zwave')
+							.zwave.callApi(
+								'setNodeLocation',
+								nodeIdNumber,
+								getImportedNodeLocation(node),
+							)
 					}
 
 					if (utils.isRecord(node.hassDevices)) {
-						await gw.zwave.storeDevices(
-							node.hassDevices,
-							nodeIdNumber,
-							false,
-						)
+						await runtime
+							.requireGateway('zwave')
+							.zwave.storeDevices(
+								node.hassDevices,
+								nodeIdNumber,
+								false,
+							)
 					}
 				}
 
