@@ -19,9 +19,9 @@ export interface HassValue {
 	id: string
 	nodeId: number
 	commandClass: number
-	endpoint: number
+	endpoint?: number
 	property: string | number
-	propertyName: string
+	propertyName?: string
 	propertyKey?: string | number
 	propertyKeyName?: string
 	type: ValueType
@@ -70,6 +70,14 @@ export interface HassNode {
 	firmwareVersion?: string
 }
 
+export interface HassTopicNode {
+	id: number
+	values?: Record<string, HassValue>
+	deviceId?: string
+	name?: string
+	loc?: string
+}
+
 export interface HassValueConfiguration {
 	device_class?: string
 	icon?: string
@@ -83,9 +91,9 @@ export interface HassValueTopic {
 }
 
 export interface HassTopicPort {
-	nodeTopic(node: HassNode): string
+	nodeTopic(node: HassTopicNode): string
 	valueTopic(
-		node: HassNode,
+		node: HassTopicNode,
 		value: HassValue,
 		returnObject?: boolean,
 	): string | HassValueTopic | null
@@ -112,8 +120,8 @@ export interface HassZwavePort {
 		nodeId: number,
 		deleteDevice?: boolean,
 	): void
-	emitNodeUpdate(node: HassNode, update: { hassDevices: HassDeviceMap }): void
-	writeValue(value: HassValue, newValue: unknown): Promise<unknown>
+	emitNodeUpdate(nodeId: number, devices: HassDeviceMap): void
+	writeCoverStop(value: HassValue): Promise<unknown>
 }
 
 export interface HassDiscoveryConfig {
