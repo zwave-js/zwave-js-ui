@@ -470,6 +470,44 @@ describe('DiscoveryGenerator', () => {
 		expect(disabled.published).toHaveLength(0)
 	})
 
+	it('the publication fence quiesces every producer and re-arms on activate', () => {
+		const stored = device({
+			discoveryTopic: 'sensor/node/stored/config',
+			persistent: true,
+			discovery_payload: { state_topic: 'x' },
+		})
+		const nodes = new Map<number, unknown>([
+			[2, node({ hassDevices: { stored } })],
+		])
+		const harness = setup({ nodes })
+		const { generator, published, logDebug } = harness
+
+		// Active by default.
+		expect(generator.active).toBe(true)
+
+		// Deactivate: publishDiscovery no-ops (retained publication fenced)...
+		generator.deactivate()
+		expect(generator.active).toBe(false)
+		generator.publishDiscovery(
+			device({ discoveryTopic: 'sensor/node/fenced/config' }),
+			2,
+		)
+		expect(published).toHaveLength(0)
+		expect(logDebug).toHaveBeenCalledWith(
+			'Discovery is quiesced; skipping retained publication',
+		)
+
+		// ...and the status-driven rediscoverAll path publishes nothing either.
+		generator.rediscoverAll()
+		expect(published).toHaveLength(0)
+
+		// Re-arm: publication resumes exactly once.
+		generator.activate()
+		expect(generator.active).toBe(true)
+		generator.rediscoverAll()
+		expect(published).toHaveLength(1)
+	})
+
 	it('translates thermostat modes and stops covers', async () => {
 		const fan = value({
 			id: ccValueId(CommandClasses['Thermostat Fan Mode'], 'mode'),

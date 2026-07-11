@@ -245,6 +245,31 @@ describe('MqttDiscoveryManager start/stop lifecycle', () => {
 		expect(() => manager.stop()).not.toThrow()
 		expect(source.subscriberCount).toBe(0)
 	})
+
+	it('stop() fences discovery publication synchronously; start() re-arms it', () => {
+		const { manager } = makeManager()
+		const generator = manager.discoveryGenerator
+
+		manager.start()
+		expect(generator.active).toBe(true)
+
+		// stop() must drop the fence synchronously (before any await a
+		// coordinator performs on the server destroy), so no producer can
+		// publish retained discovery once the teardown has begun.
+		manager.stop()
+		expect(generator.active).toBe(false)
+
+		const rediscoverAll = vi.spyOn(generator, 'rediscoverAll')
+		manager.rediscoverAll()
+		// The manager facade still forwards, but the fenced generator no-ops
+		// its retained publication (proven in DiscoveryGenerator.test.ts).
+		expect(rediscoverAll).toHaveBeenCalledTimes(1)
+		expect(generator.active).toBe(false)
+
+		// A restart reusing this same generator instance re-arms the fence.
+		manager.start()
+		expect(generator.active).toBe(true)
+	})
 })
 
 describe('MqttDiscoveryManager scoped status subscription', () => {

@@ -134,6 +134,9 @@ export default class MqttDiscoveryManager {
 	 * call again after {@link stop} (restart).
 	 */
 	public start(statusSource?: HassStatusSource, statusEnabled = false): void {
+		// Re-arm the publication fence first (a restart may reuse this very
+		// generator instance on the standalone Gateway path).
+		this._discoveryGenerator.activate()
 		this._customDeviceRegistry.start()
 		this._discovered = {}
 		if (statusSource && statusEnabled) {
@@ -145,8 +148,14 @@ export default class MqttDiscoveryManager {
 	 * Dispose the status subscription and the catalog view. Idempotent and
 	 * reentrant, so it is safe to call from both the Gateway teardown and an
 	 * outer coordinator.
+	 *
+	 * The publication fence is dropped FIRST and synchronously, before any
+	 * subscription/watcher is disposed, so from the instant stop begins no
+	 * further retained discovery can be published - even by an event that
+	 * arrives while an outer coordinator is still awaiting the server destroy.
 	 */
 	public stop(): void {
+		this._discoveryGenerator.deactivate()
 		this.disposeStatus()
 		this._customDeviceRegistry.dispose()
 	}
