@@ -91,9 +91,33 @@ export interface FakeBroker extends EventEmitter {
 	 * Convenience for tests: deliver a message through the real `mqtt`
 	 * event contract (`'message'` with a `Buffer` payload), so
 	 * `MqttClient._onMessageReceived` runs exactly as it would for a real
-	 * inbound packet.
+	 * inbound packet - but ONLY if the broker is connected AND the topic
+	 * matches an active subscription, exactly like a real broker (which never
+	 * pushes a packet to a client that is offline or has not subscribed to a
+	 * matching filter). Non-matching / disconnected deliveries are silently
+	 * dropped.
 	 */
 	deliver(topic: string, payload: string | Buffer): void
+	/**
+	 * Deliver a message straight to the `'message'` handler, BYPASSING the
+	 * connected + subscription gate. Models a packet the transport hands the
+	 * client even though the client never subscribed to it (e.g. an action
+	 * addressed to a different client id shared on a wildcard), so a test can
+	 * prove `MqttClient`'s OWN defensive guards drop it - not merely that the
+	 * broker never delivered it.
+	 */
+	deliverRaw(topic: string, payload: string | Buffer): void
+	/**
+	 * Transition the fake to connected and fire the `'connect'` event, exactly
+	 * as the real `mqtt` client does once the TCP/MQTT handshake completes.
+	 * `connected` is set BEFORE the event so the real `_onConnect` ->
+	 * `subscribe()` path (which checks `client.connected`) succeeds.
+	 */
+	triggerConnect(): void
+	/** Transition offline and fire `'offline'` (real client on link loss). */
+	triggerOffline(): void
+	/** Fire `'reconnect'` (real client between an offline and a re-connect). */
+	triggerReconnect(): void
 }
 
 /**
@@ -120,12 +144,35 @@ export function resetMqttBrokers(): void {
 }
 
 /**
+ * True when `topic` matches an MQTT subscription `filter`, honoring the
+ * single-level (`+`) and multi-level (`#`) wildcards - the same matching a
+ * real broker applies to decide whether to deliver a packet to a subscriber.
+ * `MqttClient` subscribes to concrete topics (`homeassistant/status`),
+ * action wildcards (`zwave/_CLIENTS/<id>/api/#`) and value wildcards
+ * (`zwave/+/+/+/+/set`), so the fake must implement both wildcard kinds.
+ */
+export function topicMatchesFilter(topic: string, filter: string): boolean {
+	const t = topic.split('/')
+	const f = filter.split('/')
+	for (let i = 0; i < f.length; i++) {
+		if (f[i] === '#') return true // matches this level and everything below
+		if (i >= t.length) return false
+		if (f[i] === '+') continue // matches exactly one level
+		if (f[i] !== t[i]) return false
+	}
+	return t.length === f.length
+}
+
+/**
  * Builds a fresh `FakeBroker`. Not normally called directly by tests - the
- * `vi.mock('mqtt')` factory calls it once per real `connect()`.
+ * `vi.mock('mqtt')` factory calls it once per real `connect()`. Starts
+ * DISCONNECTED, exactly like a real `mqtt` client, which only becomes usable
+ * for inbound traffic after it fires `'connect'` (drive that with
+ * `triggerConnect()`).
  */
 export function createFakeBroker(): FakeBroker {
 	const broker = new EventEmitter() as FakeBroker
-	broker.connected = true
+	broker.connected = false
 	broker.published = []
 	broker.subscribed = []
 	broker.ended = false
@@ -134,7 +181,11 @@ export function createFakeBroker(): FakeBroker {
 		// `mqtt`'s real signature allows `publish(topic, payload, cb)` where
 		// the 3rd arg is the callback; mirror that so the real
 		// `MqttClient.publish`/`updateClientStatus`/`publishVersion` call
-		// shapes all resolve.
+		// shapes all resolve. NOTE: like the real client, publishing does NOT
+		// require `connected` (the real `MqttClient.publish` only checks
+		// `this.client`), so discovery publishes are recorded even before a
+		// `'connect'`; only inbound `deliver()` is connection/subscription
+		// gated.
 		let opts: Record<string, any> | undefined
 		let callback: ((err?: Error) => void) | undefined
 		if (typeof options === 'function') {
@@ -169,12 +220,36 @@ export function createFakeBroker(): FakeBroker {
 		return broker
 	}
 
+	const toBuffer = (payload: string | Buffer) =>
+		Buffer.isBuffer(payload) ? payload : Buffer.from(payload)
+
 	broker.deliver = (topic, payload) => {
-		broker.emit(
-			'message',
-			topic,
-			Buffer.isBuffer(payload) ? payload : Buffer.from(payload),
+		// A real broker delivers nothing to an offline client, and nothing for
+		// a topic the client never subscribed to (with a matching filter).
+		if (!broker.connected) return
+		const matches = broker.subscribed.some((s) =>
+			topicMatchesFilter(topic, s.topic),
 		)
+		if (!matches) return
+		broker.emit('message', topic, toBuffer(payload))
+	}
+
+	broker.deliverRaw = (topic, payload) => {
+		broker.emit('message', topic, toBuffer(payload))
+	}
+
+	broker.triggerConnect = () => {
+		broker.connected = true
+		broker.emit('connect')
+	}
+
+	broker.triggerOffline = () => {
+		broker.connected = false
+		broker.emit('offline')
+	}
+
+	broker.triggerReconnect = () => {
+		broker.emit('reconnect')
 	}
 
 	mqttBrokers.push(broker)
