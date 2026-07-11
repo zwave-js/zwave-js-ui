@@ -10,13 +10,14 @@ import history from 'connect-history-api-fallback'
 import cors from 'cors'
 import compression from 'compression'
 import morgan from 'morgan'
-import type { Settings, User, PublicUser } from './config/store.ts'
+import type { PersistedSettings, User, PublicUser } from './config/store.ts'
 import store from './config/store.ts'
 import type { GatewayConfig } from './lib/Gateway.ts'
 import Gateway, { GatewayType } from './lib/Gateway.ts'
 import jsonStore from './lib/jsonStore.ts'
 import * as loggers from './lib/logger.ts'
 import { logContainer } from './lib/logger.ts'
+import type { MqttConfig } from './lib/MqttClient.ts'
 import MqttClient from './lib/MqttClient.ts'
 import SocketManager from './lib/SocketManager.ts'
 import type { CallAPIResult, ZwaveConfig } from './lib/ZwaveClient.ts'
@@ -531,7 +532,7 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 		loggers.setupAll(settings ? settings.gateway : null)
 	}
 
-	async function startGateway(settings: Settings) {
+	async function startGateway(settings: PersistedSettings) {
 		let mqtt: MqttClient
 		let zwave: ZWaveClient
 
@@ -543,16 +544,19 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 		}
 
 		if (settings.mqtt) {
-			mqtt = new MqttClient(settings.mqtt)
+			mqtt = new MqttClient(settings.mqtt as MqttConfig)
 		}
 
 		if (settings.zwave) {
-			zwave = new ZWaveClient(settings.zwave, socketManager.io)
+			zwave = new ZWaveClient(
+				settings.zwave as ZwaveConfig,
+				socketManager.io,
+			)
 		}
 
 		backupManager.init(zwave, backupManagerOwner)
 
-		gw = new Gateway(settings.gateway, zwave, mqtt)
+		gw = new Gateway(settings.gateway as GatewayConfig, zwave, mqtt)
 
 		await gw.start()
 
@@ -589,9 +593,14 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 		restarting = false
 	}
 
-	function startZniffer(settings: ZnifferConfig | undefined) {
+	function startZniffer(
+		settings: utils.DeepPartial<ZnifferConfig> | undefined,
+	) {
 		if (settings) {
-			zniffer = new ZnifferManager(settings, socketManager.io)
+			zniffer = new ZnifferManager(
+				settings as ZnifferConfig,
+				socketManager.io,
+			)
 		}
 	}
 
@@ -1039,7 +1048,7 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 	// ### APIs
 
 	function isAuthEnabled() {
-		const settings = jsonStore.get(store.settings) as Settings
+		const settings = jsonStore.get(store.settings)
 		return settings.gateway?.authEnabled === true
 	}
 
@@ -1398,7 +1407,7 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 				let shouldRestartZniffer = false
 				let canUpdateZwaveOptions = false
 
-				const actualSettings = jsonStore.get(store.settings) as Settings
+				const actualSettings = jsonStore.get(store.settings)
 
 				// TODO: validate settings using calss-validator
 				// when settings is null consider a force restart
@@ -1622,7 +1631,7 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 
 				if (!gw?.zwave) throw Error('Z-Wave client not inited')
 
-				const settings = jsonStore.get(store.settings) as Settings
+				const settings = jsonStore.get(store.settings)
 
 				restarting = true
 
@@ -1679,8 +1688,8 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 				}
 				const { enableStatistics } = req.body
 
-				const settings: Settings =
-					jsonStore.get(store.settings) || ({} as Settings)
+				const settings: PersistedSettings =
+					jsonStore.get(store.settings) || {}
 
 				if (!settings.zwave) {
 					settings.zwave = {}
@@ -1719,8 +1728,8 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 		async function (req, res) {
 			try {
 				const { disableChangelog } = req.body
-				const settings: Settings =
-					jsonStore.get(store.settings) || ({} as Settings)
+				const settings: PersistedSettings =
+					jsonStore.get(store.settings) || {}
 
 				if (!settings.gateway) {
 					settings.gateway = {
@@ -2381,8 +2390,8 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 
 				if (!gw?.zwave) throw Error('Z-Wave client not inited')
 
-				const settings: Settings =
-					jsonStore.get(store.settings) || ({} as Settings)
+				const settings: PersistedSettings =
+					jsonStore.get(store.settings) || {}
 				const originalLogLevel = settings.gateway?.logLevel || 'info'
 				const restartDriver = req.body.restartDriver || false
 
