@@ -13,6 +13,7 @@ import ZnifferManager from '../lib/ZnifferManager.ts'
 import type { CustomPlugin, PluginConstructor } from '../lib/CustomPlugin.ts'
 import { createPlugin } from '../lib/CustomPlugin.ts'
 import backupManager from '../lib/BackupManager.ts'
+import HomeAssistantManager from '../hass/HomeAssistantManager.ts'
 import jsonStore from '../lib/jsonStore.ts'
 import store from '../config/store.ts'
 import type { PersistedSettings } from '../config/store.ts'
@@ -70,11 +71,32 @@ export class AppRuntime {
 
 	private readonly deps: AppRuntimeDeps
 
+	// The built-in Home Assistant subsystem's process-lifetime owner. Created
+	// once here so it exists BEFORE any MQTT/Z-Wave client is constructed in
+	// `startGateway()`; it coordinates the live discovery/`@zwave-js/server`
+	// sub-managers (owned by the current `Gateway`/`ZwaveClient`) through
+	// always-current resolvers, so a gateway/client replaced mid-restart is
+	// resolved on the very next call with no stale capture.
+	private readonly homeAssistant: HomeAssistantManager
+
 	constructor(deps: AppRuntimeDeps) {
 		this.deps = deps
 		this.gateway = deps.gateway
 		this.zniffer = deps.zniffer
 		this.restarting = deps.restarting ?? false
+		this.homeAssistant = new HomeAssistantManager({
+			logger: loggers.module('HomeAssistant'),
+		})
+		this.homeAssistant.bind({
+			resolveDiscovery: () => this.getGateway()?.mqttDiscovery,
+			resolveServer: () => this.getGateway()?.zwave?.zwaveServer,
+		})
+	}
+
+	// ### Home Assistant subsystem ###
+
+	getHomeAssistant(): HomeAssistantManager {
+		return this.homeAssistant
 	}
 
 	getGateway(): GatewayPort | undefined {
@@ -183,6 +205,11 @@ export class AppRuntime {
 	}
 
 	async startGateway(settings: PersistedSettings): Promise<void> {
+		// Take ownership of the Home Assistant subsystem before any client is
+		// constructed. Idempotent, so a restart re-entering here is a no-op.
+		this.homeAssistant.initialize()
+
+
 		let mqtt!: MqttClient
 		let zwave!: ZWaveClient
 
@@ -215,6 +242,11 @@ export class AppRuntime {
 		this.setGateway(gw)
 
 		await gw.start()
+
+		// Mark the subsystem active now that the gateway (and, through it, the
+		// discovery + `@zwave-js/server` sub-managers) has started. Resolves
+		// the current sub-managers against the just-started clients.
+		this.homeAssistant.start()
 
 		const pluginsConfig = settings.gateway?.plugins ?? null
 		const pluginsRouter = express.Router()
@@ -278,7 +310,14 @@ export class AppRuntime {
 		}
 	}
 
+	/**
+	 * The Home Assistant subsystem is stopped BEFORE the collaborators are
+	 * closed, quiescing its status reactions so no rediscovery races the
+	 * client shutdown; the structural discovery/server teardown still runs
+	 * inside `Gateway.close()`/`ZwaveClient.close()` at their locked positions.
+	 */
 	async shutdown(): Promise<void> {
+		this.homeAssistant.stop()
 		try {
 			await this.closeIfPresent(this.gateway)
 		} catch (error) {

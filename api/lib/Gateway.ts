@@ -153,7 +153,7 @@ export default class Gateway<
 	private topicLevels: number[] = []
 	private _closed = false
 	private jobs: Map<string, Cron> = new Map()
-	private mqttDiscovery: MqttDiscoveryManager
+	private _mqttDiscovery: MqttDiscoveryManager
 	private listenersAttached = false
 	private readonly onWriteRequest = this._onWriteRequest.bind(this)
 	private readonly onBroadRequest = this._onBroadRequest.bind(this)
@@ -178,6 +178,16 @@ export default class Gateway<
 
 	public get zwave() {
 		return this._zwave
+	}
+
+	/**
+	 * The lifecycle-managed legacy Home Assistant MQTT discovery subsystem this
+	 * gateway owns. Exposed so the `AppRuntime`-owned `HomeAssistantManager`
+	 * coordinator can resolve the CURRENT discovery manager (never a stale
+	 * capture) across restarts.
+	 */
+	public get mqttDiscovery(): MqttDiscoveryManager {
+		return this._mqttDiscovery
 	}
 
 	public get closed() {
@@ -206,7 +216,7 @@ export default class Gateway<
 		// domain object. The Gateway keeps its public discovery facades by
 		// delegating through the compatibility accessors below. Ports adapt the
 		// live clients so the manager never binds to a concrete client.
-		this.mqttDiscovery = new MqttDiscoveryManager({
+		this._mqttDiscovery = new MqttDiscoveryManager({
 			config: this.config,
 			mqtt: {
 				get disabled() {

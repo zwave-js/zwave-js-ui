@@ -815,6 +815,18 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 * below delegates to it so the legacy internal/API surface is unchanged.
 	 */
 	private _serverManager: ZwaveServerManager
+
+	/**
+	 * The lifecycle-managed `@zwave-js/server` (`ZwavejsServer`) subsystem this
+	 * client owns. Exposed so the `AppRuntime`-owned `HomeAssistantManager`
+	 * coordinator can resolve the CURRENT server manager (never a stale
+	 * capture) across restarts. The internal `server` accessor below keeps
+	 * addressing the underlying `ZwavejsServer` instance for the legacy surface.
+	 */
+	public get zwaveServer(): ZwaveServerManager {
+		return this._serverManager
+	}
+
 	private get server(): ZwavejsServer | null {
 		return this._serverManager?.server ?? null
 	}
