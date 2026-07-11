@@ -109,4 +109,46 @@ describe('Gateway HASS compatibility facades', () => {
 			}),
 		).not.toThrow()
 	})
+
+	it('writes the cached cover mapping when its live node value is gone', async () => {
+		const instance = gateway()
+		const cachedValue = {
+			id: '7-38-0-targetValue',
+			nodeId: 7,
+			commandClass: 38,
+			endpoint: 0,
+			property: 'targetValue',
+			type: 'number',
+			readable: true,
+			writeable: true,
+			default: 0,
+			stateless: false,
+			ccSpecific: {},
+		}
+		const writeValue = vi.fn().mockResolvedValue(undefined)
+		const values = { '38-0-targetValue': cachedValue }
+		Reflect.set(instance, '_zwave', {
+			nodes: new Map([[7, { values }]]),
+			writeValue,
+		})
+		Reflect.set(instance, 'discovered', {
+			[cachedValue.id]: device(),
+		})
+		instance['discovered'][cachedValue.id] = {
+			...device(),
+			type: 'cover',
+			discovery_payload: { payload_stop: 'STOP' },
+		}
+		delete values['38-0-targetValue']
+
+		expect(
+			instance.parsePayload('STOP', cachedValue as any, undefined),
+		).toBeNull()
+		await vi.waitFor(() =>
+			expect(writeValue).toHaveBeenCalledWith(
+				{ ...cachedValue, property: 'Up' },
+				false,
+			),
+		)
+	})
 })

@@ -9,7 +9,15 @@
  * store/. No real Driver is constructed; the home id and live nodes are seeded
  * at the injection boundary the Driver would otherwise supply.
  */
-import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest'
+import {
+	describe,
+	it,
+	expect,
+	beforeAll,
+	afterAll,
+	beforeEach,
+	vi,
+} from 'vitest'
 import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import type { Server as SocketServer } from 'socket.io'
@@ -368,6 +376,49 @@ describe('persisting HASS devices for a node', () => {
 			true,
 		)
 		expect(persisted[HOME]['11'].hassDevices.sensor_old).toBeUndefined()
+	})
+
+	it('emits the live node map when concurrent writes complete B then A', async () => {
+		const node: any = { id: 12, hassDevices: {} }
+		const { zwave, socket } = await makeLoadedClient(12, node)
+		const persistenceResolvers: Array<() => void> = []
+		vi.spyOn(zwave, 'updateStoreNodes').mockImplementation(
+			() =>
+				new Promise<void>((resolve) => {
+					persistenceResolvers.push(resolve)
+				}),
+		)
+		const devicesA = {
+			sensor_a: { type: 'sensor', object_id: 'a' },
+		}
+		const devicesB = {
+			sensor_b: { type: 'sensor', object_id: 'b' },
+		}
+
+		const writeA = zwave.storeDevices(devicesA as any, 12, false)
+		const writeB = zwave.storeDevices(devicesB as any, 12, false)
+		expect(persistenceResolvers).toHaveLength(2)
+
+		persistenceResolvers[1]()
+		await writeB
+		persistenceResolvers[0]()
+		await writeA
+		await flush()
+
+		expect(node.hassDevices).toEqual({
+			sensor_b: { ...devicesB.sensor_b, persistent: true },
+		})
+		const emits = nodeUpdatedEmits(socket)
+		expect(emits).toHaveLength(2)
+		expect(emits.map((entry) => entry.args[0].hassDevices)).toEqual([
+			node.hassDevices,
+			node.hassDevices,
+		])
+		expect(
+			emits.every(
+				(entry) => entry.args[0].hassDevices === node.hassDevices,
+			),
+		).toBe(true)
 	})
 })
 
