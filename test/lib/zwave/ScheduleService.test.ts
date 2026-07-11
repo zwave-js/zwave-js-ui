@@ -1,7 +1,17 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { ScheduleService } from '../../../api/lib/zwave/ScheduleService.ts'
 import { SupervisionStatus } from '@zwave-js/core'
-import { ScheduleEntryLockScheduleKind, UserIDStatus } from 'zwave-js'
+import {
+	ScheduleEntryLockScheduleKind,
+	ScheduleEntryLockWeekday,
+	UserIDStatus,
+} from 'zwave-js'
+import type {
+	ScheduleEntryLockDailyRepeatingSchedule,
+	ScheduleEntryLockWeekDaySchedule,
+	ScheduleEntryLockYearDaySchedule,
+	ScheduleEntryLockSlotId,
+} from 'zwave-js'
 import type {
 	ScheduleDriverPort,
 	ScheduleNodeStorePort,
@@ -50,7 +60,7 @@ function createDriverPort(
 						),
 					},
 				},
-			}) as any,
+			}) as ReturnType<ScheduleDriverPort['getDriver']>,
 	}
 }
 
@@ -79,7 +89,7 @@ function createUtilsPort(): ScheduleUtilsPort {
 // Stub out the CC statics so we don't need a real driver
 async function stubCCStatics(
 	overrides: Partial<{
-		supportedUsers: number
+		supportedUsers: number | undefined
 		numWeekDaySlots: number
 		numYearDaySlots: number
 		numDailyRepeatingSlots: number
@@ -89,8 +99,9 @@ async function stubCCStatics(
 		cachedSchedules: Record<string, unknown>
 	}> = {},
 ) {
+	const supportedUsers =
+		'supportedUsers' in overrides ? overrides.supportedUsers : 2
 	const {
-		supportedUsers = 2,
 		numWeekDaySlots = 1,
 		numYearDaySlots = 1,
 		numDailyRepeatingSlots = 1,
@@ -138,6 +149,36 @@ async function stubCCStatics(
 	)
 
 	return { UserCodeCC, ScheduleEntryLockCC }
+}
+
+// Production-valid typed payloads per upstream zwave-js types
+const weeklyPayload: ScheduleEntryLockWeekDaySchedule = {
+	weekday: ScheduleEntryLockWeekday.Monday,
+	startHour: 8,
+	startMinute: 0,
+	stopHour: 17,
+	stopMinute: 0,
+}
+
+const dailyPayload: ScheduleEntryLockDailyRepeatingSchedule = {
+	weekdays: [ScheduleEntryLockWeekday.Sunday],
+	startHour: 6,
+	startMinute: 30,
+	durationHour: 2,
+	durationMinute: 0,
+}
+
+const yearlyPayload: ScheduleEntryLockYearDaySchedule = {
+	startYear: 2025,
+	startMonth: 6,
+	startDay: 15,
+	startHour: 9,
+	startMinute: 0,
+	stopYear: 2025,
+	stopMonth: 6,
+	stopDay: 15,
+	stopHour: 18,
+	stopMinute: 0,
 }
 
 // ---------------------------------------------------------------------------
@@ -248,13 +289,8 @@ describe('ScheduleService', () => {
 					1: ScheduleEntryLockScheduleKind.WeekDay,
 				},
 				cachedSchedules: {
-					[`${ScheduleEntryLockScheduleKind.WeekDay}-1-1`]: {
-						dayOfWeek: 1,
-						startHour: 8,
-						startMinute: 0,
-						stopHour: 17,
-						stopMinute: 0,
-					},
+					[`${ScheduleEntryLockScheduleKind.WeekDay}-1-1`]:
+						weeklyPayload,
 				},
 			})
 
@@ -297,12 +333,9 @@ describe('ScheduleService', () => {
 				svc.setSchedule(2, 'weekly', {
 					userId: 1,
 					slotId: 1,
-					dayOfWeek: 1,
-					startHour: 8,
-					startMinute: 0,
-					stopHour: 17,
-					stopMinute: 0,
-				} as any),
+					...weeklyPayload,
+				} as ScheduleEntryLockSlotId &
+					ScheduleEntryLockWeekDaySchedule),
 			).rejects.toThrow('Schedule Entry Lock CC not supported')
 		})
 
@@ -316,32 +349,23 @@ describe('ScheduleService', () => {
 			await expect(
 				svc.setSchedule(
 					2,
-					'invalid' as any,
+					'invalid' as 'daily',
 					{
 						userId: 1,
 						slotId: 1,
-					} as any,
+					} as ScheduleEntryLockSlotId &
+						ScheduleEntryLockDailyRepeatingSchedule,
 				),
 			).rejects.toThrow('Invalid schedule type')
 		})
 
-		it('sets a weekly schedule and verifies success via readback', async () => {
+		it('sets a weekly schedule, calls setWeekDaySchedule, and verifies success via readback', async () => {
 			const zwaveNode = createFakeZwaveNode(true)
-			const scheduleData = {
-				dayOfWeek: 1,
-				startHour: 8,
-				startMinute: 0,
-				stopHour: 17,
-				stopMinute: 0,
-			}
+			const cc = zwaveNode.commandClasses['Schedule Entry Lock']
 			// setWeekDaySchedule returns undefined (no supervision)
-			zwaveNode.commandClasses[
-				'Schedule Entry Lock'
-			].setWeekDaySchedule.mockResolvedValue(undefined)
+			cc.setWeekDaySchedule.mockResolvedValue(undefined)
 			// readback returns matching data
-			zwaveNode.commandClasses[
-				'Schedule Entry Lock'
-			].getWeekDaySchedule.mockResolvedValue(scheduleData)
+			cc.getWeekDaySchedule.mockResolvedValue(weeklyPayload)
 
 			const nodeStore = createNodeStorePort({
 				id: 2,
@@ -361,22 +385,44 @@ describe('ScheduleService', () => {
 			const result = await svc.setSchedule(2, 'weekly', {
 				userId: 1,
 				slotId: 1,
-				...scheduleData,
-			} as any)
+				...weeklyPayload,
+			} as ScheduleEntryLockSlotId & ScheduleEntryLockWeekDaySchedule)
 
 			expect(result?.status).toBe(SupervisionStatus.Success)
 			expect(nodeStore.emitCalls.length).toBeGreaterThan(0)
+
+			// Exact upstream method used
+			expect(cc.setWeekDaySchedule).toHaveBeenCalledWith(
+				{ userId: 1, slotId: 1 },
+				weeklyPayload,
+			)
+			expect(cc.getWeekDaySchedule).toHaveBeenCalledWith({
+				userId: 1,
+				slotId: 1,
+			})
+
+			// Other mode writers NOT called
+			expect(cc.setYearDaySchedule).not.toHaveBeenCalled()
+			expect(cc.setDailyRepeatingSchedule).not.toHaveBeenCalled()
+			// Other mode readers NOT called
+			expect(cc.getYearDaySchedule).not.toHaveBeenCalled()
+			expect(cc.getDailyRepeatingSchedule).not.toHaveBeenCalled()
 		})
 
 		it('handles delete (empty schedule) via readback', async () => {
 			const zwaveNode = createFakeZwaveNode(true)
-			zwaveNode.commandClasses[
-				'Schedule Entry Lock'
-			].setWeekDaySchedule.mockResolvedValue(undefined)
+			const cc = zwaveNode.commandClasses['Schedule Entry Lock']
+			cc.setWeekDaySchedule.mockResolvedValue(undefined)
 			// readback returns undefined (deleted)
-			zwaveNode.commandClasses[
-				'Schedule Entry Lock'
-			].getWeekDaySchedule.mockResolvedValue(undefined)
+			cc.getWeekDaySchedule.mockResolvedValue(undefined)
+
+			const existingSlot: ScheduleEntryLockSlotId &
+				ScheduleEntryLockWeekDaySchedule & { enabled: boolean } = {
+				userId: 1,
+				slotId: 1,
+				enabled: true,
+				...weeklyPayload,
+			}
 
 			const nodeStore = createNodeStorePort({
 				id: 2,
@@ -384,18 +430,7 @@ describe('ScheduleService', () => {
 					daily: { numSlots: 0, slots: [] },
 					weekly: {
 						numSlots: 1,
-						slots: [
-							{
-								userId: 1,
-								slotId: 1,
-								enabled: true,
-								dayOfWeek: 1,
-								startHour: 8,
-								startMinute: 0,
-								stopHour: 17,
-								stopMinute: 0,
-							} as any,
-						],
+						slots: [existingSlot],
 					},
 					yearly: { numSlots: 0, slots: [] },
 				},
@@ -410,16 +445,15 @@ describe('ScheduleService', () => {
 			const result = await svc.setSchedule(2, 'weekly', {
 				userId: 1,
 				slotId: 1,
-			} as any)
+			} as ScheduleEntryLockSlotId & ScheduleEntryLockWeekDaySchedule)
 
 			expect(result?.status).toBe(SupervisionStatus.Success)
 		})
 
-		it('returns supervision result directly when supervised', async () => {
+		it('returns supervision result directly when supervised (daily)', async () => {
 			const zwaveNode = createFakeZwaveNode(true)
-			zwaveNode.commandClasses[
-				'Schedule Entry Lock'
-			].setDailyRepeatingSchedule.mockResolvedValue({
+			const cc = zwaveNode.commandClasses['Schedule Entry Lock']
+			cc.setDailyRepeatingSchedule.mockResolvedValue({
 				status: SupervisionStatus.Success,
 			})
 
@@ -441,14 +475,24 @@ describe('ScheduleService', () => {
 			const result = await svc.setSchedule(2, 'daily', {
 				userId: 1,
 				slotId: 1,
-				weekday: 0,
-				startHour: 6,
-				startMinute: 30,
-				durationHour: 2,
-				durationMinute: 0,
-			} as any)
+				...dailyPayload,
+			} as ScheduleEntryLockSlotId &
+				ScheduleEntryLockDailyRepeatingSchedule)
 
 			expect(result?.status).toBe(SupervisionStatus.Success)
+
+			// Exact upstream method used
+			expect(cc.setDailyRepeatingSchedule).toHaveBeenCalledWith(
+				{ userId: 1, slotId: 1 },
+				dailyPayload,
+			)
+
+			// Other mode writers/readers NOT called
+			expect(cc.setWeekDaySchedule).not.toHaveBeenCalled()
+			expect(cc.setYearDaySchedule).not.toHaveBeenCalled()
+			expect(cc.getWeekDaySchedule).not.toHaveBeenCalled()
+			expect(cc.getYearDaySchedule).not.toHaveBeenCalled()
+			expect(cc.getDailyRepeatingSchedule).not.toHaveBeenCalled()
 		})
 	})
 
@@ -460,7 +504,7 @@ describe('ScheduleService', () => {
 						controller: {
 							nodes: { get: () => undefined },
 						},
-					}) as any,
+					}) as ReturnType<ScheduleDriverPort['getDriver']>,
 			}
 			const svc = new ScheduleService(
 				driverPort,
@@ -563,23 +607,50 @@ describe('ScheduleService', () => {
 
 	describe('_pushSchedule (static)', () => {
 		it('updates an existing slot in place', () => {
-			const arr: any[] = [
-				{ userId: 1, slotId: 1, dayOfWeek: 1, enabled: false },
+			const arr: (ScheduleEntryLockSlotId &
+				ScheduleEntryLockWeekDaySchedule & { enabled: boolean })[] = [
+				{
+					userId: 1,
+					slotId: 1,
+					weekday: ScheduleEntryLockWeekday.Monday,
+					startHour: 8,
+					startMinute: 0,
+					stopHour: 17,
+					stopMinute: 0,
+					enabled: false,
+				},
 			]
+			const updated: ScheduleEntryLockWeekDaySchedule = {
+				weekday: ScheduleEntryLockWeekday.Tuesday,
+				startHour: 9,
+				startMinute: 0,
+				stopHour: 18,
+				stopMinute: 0,
+			}
 			ScheduleService._pushSchedule(
 				arr,
 				{ userId: 1, slotId: 1 },
-				{ dayOfWeek: 2 } as any,
+				updated,
 				true,
 			)
 			expect(arr.length).toBe(1)
-			expect(arr[0].dayOfWeek).toBe(2)
+			expect(arr[0].weekday).toBe(ScheduleEntryLockWeekday.Tuesday)
 			expect(arr[0].enabled).toBe(true)
 		})
 
 		it('removes a slot when schedule is undefined and slot exists', () => {
-			const arr: any[] = [
-				{ userId: 1, slotId: 1, dayOfWeek: 1, enabled: true },
+			const arr: (ScheduleEntryLockSlotId &
+				ScheduleEntryLockWeekDaySchedule & { enabled: boolean })[] = [
+				{
+					userId: 1,
+					slotId: 1,
+					weekday: ScheduleEntryLockWeekday.Monday,
+					startHour: 8,
+					startMinute: 0,
+					stopHour: 17,
+					stopMinute: 0,
+					enabled: true,
+				},
 			]
 			ScheduleService._pushSchedule(
 				arr,
@@ -591,7 +662,8 @@ describe('ScheduleService', () => {
 		})
 
 		it('does nothing when schedule is undefined and slot does not exist', () => {
-			const arr: any[] = []
+			const arr: (ScheduleEntryLockSlotId &
+				ScheduleEntryLockWeekDaySchedule & { enabled: boolean })[] = []
 			ScheduleService._pushSchedule(
 				arr,
 				{ userId: 1, slotId: 1 },
@@ -603,11 +675,10 @@ describe('ScheduleService', () => {
 	})
 
 	describe('setSchedule – yearly', () => {
-		it('sets a yearly schedule via supervision', async () => {
+		it('sets a yearly schedule via supervision, does not call weekly/daily', async () => {
 			const zwaveNode = createFakeZwaveNode(true)
-			zwaveNode.commandClasses[
-				'Schedule Entry Lock'
-			].setYearDaySchedule.mockResolvedValue({
+			const cc = zwaveNode.commandClasses['Schedule Entry Lock']
+			cc.setYearDaySchedule.mockResolvedValue({
 				status: SupervisionStatus.Success,
 			})
 
@@ -629,34 +700,39 @@ describe('ScheduleService', () => {
 			const result = await svc.setSchedule(2, 'yearly', {
 				userId: 1,
 				slotId: 1,
-				startYear: 2025,
-				startMonth: 6,
-				startDay: 15,
-				startHour: 9,
-				startMinute: 0,
-				stopYear: 2025,
-				stopMonth: 6,
-				stopDay: 15,
-				stopHour: 18,
-				stopMinute: 0,
-			} as any)
+				...yearlyPayload,
+			} as ScheduleEntryLockSlotId & ScheduleEntryLockYearDaySchedule)
 
 			expect(result?.status).toBe(SupervisionStatus.Success)
+
+			// Exact upstream method used
+			expect(cc.setYearDaySchedule).toHaveBeenCalledWith(
+				{ userId: 1, slotId: 1 },
+				yearlyPayload,
+			)
+
+			// Other mode writers/readers NOT called
+			expect(cc.setWeekDaySchedule).not.toHaveBeenCalled()
+			expect(cc.setDailyRepeatingSchedule).not.toHaveBeenCalled()
+			expect(cc.getWeekDaySchedule).not.toHaveBeenCalled()
+			expect(cc.getDailyRepeatingSchedule).not.toHaveBeenCalled()
+			expect(cc.getYearDaySchedule).not.toHaveBeenCalled()
 		})
 	})
 
 	describe('setSchedule – readback mismatch', () => {
 		it('returns Fail when readback does not match', async () => {
 			const zwaveNode = createFakeZwaveNode(true)
-			zwaveNode.commandClasses[
-				'Schedule Entry Lock'
-			].setWeekDaySchedule.mockResolvedValue(undefined)
+			const cc = zwaveNode.commandClasses['Schedule Entry Lock']
+			cc.setWeekDaySchedule.mockResolvedValue(undefined)
 			// Readback returns different data
-			zwaveNode.commandClasses[
-				'Schedule Entry Lock'
-			].getWeekDaySchedule.mockResolvedValue({
-				dayOfWeek: 99,
-			})
+			cc.getWeekDaySchedule.mockResolvedValue({
+				weekday: ScheduleEntryLockWeekday.Saturday,
+				startHour: 0,
+				startMinute: 0,
+				stopHour: 0,
+				stopMinute: 0,
+			} satisfies ScheduleEntryLockWeekDaySchedule)
 
 			const nodeStore = createNodeStorePort({
 				id: 2,
@@ -676,12 +752,8 @@ describe('ScheduleService', () => {
 			const result = await svc.setSchedule(2, 'weekly', {
 				userId: 1,
 				slotId: 1,
-				dayOfWeek: 1,
-				startHour: 8,
-				startMinute: 0,
-				stopHour: 17,
-				stopMinute: 0,
-			} as any)
+				...weeklyPayload,
+			} as ScheduleEntryLockSlotId & ScheduleEntryLockWeekDaySchedule)
 
 			expect(result?.status).toBe(SupervisionStatus.Fail)
 		})
@@ -715,7 +787,7 @@ describe('ScheduleService', () => {
 				'Schedule Entry Lock'
 			].getWeekDaySchedule.mockImplementation(() => {
 				svc.cancelGetSchedule()
-				return Promise.resolve({ dayOfWeek: 1 })
+				return Promise.resolve(weeklyPayload)
 			})
 
 			const result = await svc.getSchedules(2, {
@@ -727,8 +799,54 @@ describe('ScheduleService', () => {
 		})
 	})
 
-	describe('getSchedules – returns undefined when userCodes is null', () => {
-		it('returns undefined when getSupportedUsersCached returns undefined', async () => {
+	describe('getSchedules – unknown userCodes', () => {
+		it('populates slot counts and emits node update when userCodes is undefined', async () => {
+			const zwaveNode = createFakeZwaveNode(true)
+			const driverPort = createDriverPort(zwaveNode)
+			const nodeStore = createNodeStorePort()
+			const svc = new ScheduleService(
+				driverPort,
+				nodeStore,
+				createUtilsPort(),
+			)
+
+			await stubCCStatics({
+				supportedUsers: undefined,
+				numWeekDaySlots: 3,
+				numYearDaySlots: 2,
+				numDailyRepeatingSlots: 1,
+			})
+
+			const result = await svc.getSchedules(2)
+
+			// Must return node.schedule, not undefined
+			expect(result).toBeDefined()
+			expect(result?.weekly?.numSlots).toBe(3)
+			expect(result?.yearly?.numSlots).toBe(2)
+			expect(result?.daily?.numSlots).toBe(1)
+			// Slots are empty (zero user iterations)
+			expect(result?.weekly?.slots).toEqual([])
+			expect(result?.yearly?.slots).toEqual([])
+			expect(result?.daily?.slots).toEqual([])
+
+			// emitNodeUpdate must have been called exactly once
+			expect(nodeStore.emitCalls.length).toBe(1)
+			const [emittedNode, emittedProps] = nodeStore.emitCalls[0] as [
+				ScheduleNodeState,
+				Record<string, unknown>,
+			]
+			expect(emittedNode.id).toBe(2)
+			expect(emittedProps).toHaveProperty('schedule')
+			expect(emittedProps).toHaveProperty('userCodes')
+
+			// userCodes.total should be 0 (null ?? 0)
+			expect(emittedNode.userCodes?.total).toBe(0)
+
+			// Lock is released
+			expect(svc.lockGetSchedule).toBe(false)
+		})
+
+		it('populates slot counts when userCodes is null (upstream permits)', async () => {
 			const zwaveNode = createFakeZwaveNode(true)
 			const driverPort = createDriverPort(zwaveNode)
 			const nodeStore = createNodeStorePort()
@@ -740,11 +858,32 @@ describe('ScheduleService', () => {
 
 			const { UserCodeCC } = await import('zwave-js')
 			vi.spyOn(UserCodeCC, 'getSupportedUsersCached').mockReturnValue(
-				undefined as any,
+				null as unknown as number,
 			)
+			const { ScheduleEntryLockCC } = await import('zwave-js')
+			vi.spyOn(
+				ScheduleEntryLockCC,
+				'getNumWeekDaySlotsCached',
+			).mockReturnValue(2)
+			vi.spyOn(
+				ScheduleEntryLockCC,
+				'getNumYearDaySlotsCached',
+			).mockReturnValue(1)
+			vi.spyOn(
+				ScheduleEntryLockCC,
+				'getNumDailyRepeatingSlotsCached',
+			).mockReturnValue(0)
 
 			const result = await svc.getSchedules(2)
-			expect(result).toBeUndefined()
+
+			// Must return schedule (not undefined)
+			expect(result).toBeDefined()
+			expect(result?.weekly?.numSlots).toBe(2)
+			expect(result?.yearly?.numSlots).toBe(1)
+			expect(result?.daily?.numSlots).toBe(0)
+
+			// Node update emitted
+			expect(nodeStore.emitCalls.length).toBe(1)
 			expect(svc.lockGetSchedule).toBe(false)
 		})
 	})
@@ -771,19 +910,14 @@ describe('ScheduleService', () => {
 					1: ScheduleEntryLockScheduleKind.WeekDay,
 				},
 				cachedSchedules: {
-					[`${ScheduleEntryLockScheduleKind.WeekDay}-1-1`]: {
-						dayOfWeek: 1,
-						startHour: 8,
-						startMinute: 0,
-						stopHour: 17,
-						stopMinute: 0,
-					},
+					[`${ScheduleEntryLockScheduleKind.WeekDay}-1-1`]:
+						weeklyPayload,
 				},
 			})
 
 			const result = await svc.getSchedules(2, {
 				fromCache: true,
-				mode: 'weekly' as any,
+				mode: 'weekly',
 			})
 			expect(result).toBeDefined()
 			expect(result?.weekly?.slots?.length).toBe(1)
@@ -793,8 +927,8 @@ describe('ScheduleService', () => {
 	describe('setSchedule – updates existing slot', () => {
 		it('updates an existing slot in the schedule on success', async () => {
 			const zwaveNode = createFakeZwaveNode(true)
-			const scheduleData = {
-				dayOfWeek: 3,
+			const updatedData: ScheduleEntryLockWeekDaySchedule = {
+				weekday: ScheduleEntryLockWeekday.Wednesday,
 				startHour: 10,
 				startMinute: 0,
 				stopHour: 18,
@@ -806,24 +940,21 @@ describe('ScheduleService', () => {
 				status: SupervisionStatus.Success,
 			})
 
+			const existingSlot: ScheduleEntryLockSlotId &
+				ScheduleEntryLockWeekDaySchedule & { enabled: boolean } = {
+				userId: 1,
+				slotId: 1,
+				enabled: true,
+				...weeklyPayload,
+			}
+
 			const nodeStore = createNodeStorePort({
 				id: 2,
 				schedule: {
 					daily: { numSlots: 0, slots: [] },
 					weekly: {
 						numSlots: 1,
-						slots: [
-							{
-								userId: 1,
-								slotId: 1,
-								dayOfWeek: 1,
-								startHour: 8,
-								startMinute: 0,
-								stopHour: 17,
-								stopMinute: 0,
-								enabled: true,
-							} as any,
-						],
+						slots: [existingSlot],
 					},
 					yearly: { numSlots: 0, slots: [] },
 				},
@@ -838,16 +969,16 @@ describe('ScheduleService', () => {
 			const result = await svc.setSchedule(2, 'weekly', {
 				userId: 1,
 				slotId: 1,
-				...scheduleData,
-			} as any)
+				...updatedData,
+			} as ScheduleEntryLockSlotId & ScheduleEntryLockWeekDaySchedule)
 
 			expect(result?.status).toBe(SupervisionStatus.Success)
 			// The existing slot should be updated
 			const node = nodeStore.getNode(2)
 			expect(node?.schedule?.weekly?.slots?.length).toBe(1)
-			expect((node?.schedule?.weekly?.slots?.[0] as any)?.dayOfWeek).toBe(
-				3,
-			)
+			const slot = node?.schedule?.weekly?.slots?.[0]
+			expect(slot).toBeDefined()
+			expect(slot?.weekday).toBe(ScheduleEntryLockWeekday.Wednesday)
 		})
 	})
 
@@ -874,12 +1005,8 @@ describe('ScheduleService', () => {
 			const result = await svc.setSchedule(2, 'weekly', {
 				userId: 1,
 				slotId: 1,
-				dayOfWeek: 1,
-				startHour: 8,
-				startMinute: 0,
-				stopHour: 17,
-				stopMinute: 0,
-			} as any)
+				...weeklyPayload,
+			} as ScheduleEntryLockSlotId & ScheduleEntryLockWeekDaySchedule)
 
 			expect(result?.status).toBe(SupervisionStatus.Success)
 		})
