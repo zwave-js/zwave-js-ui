@@ -51,7 +51,7 @@
     "lint-fix:markdownlint": "markdownlint --fix '**/*.md'",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:server": "vitest run test/lib",
+    "test:server": "vitest run test/lib test/runtime",
     "test:ui": "vitest run src/",
     "docs": "docsify serve ./docs",
     "docs:generate": "node --experimental-strip-types generateDocs.ts",
