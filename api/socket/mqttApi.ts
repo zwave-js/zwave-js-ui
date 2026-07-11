@@ -4,10 +4,9 @@
  */
 import type { Socket } from 'socket.io'
 import * as loggers from '../lib/logger.ts'
-import { getErrorMessage } from '../lib/errors.ts'
 import { inboundEvents } from '../lib/SocketEvents.ts'
 import type { AppRuntime } from '../runtime/AppRuntime.ts'
-import { noop, type SocketAck } from './types.ts'
+import { getLegacyErrorMessage, noop, type SocketAck } from './types.ts'
 
 const logger = loggers.module('App')
 
@@ -27,7 +26,7 @@ export interface MqttApiRequest {
 
 export interface MqttApiAck {
 	success: boolean
-	message: string
+	message: unknown
 	result: void
 	api?: string
 }
@@ -47,7 +46,7 @@ export function registerMqttApiHandler(
 			logger.info(`Mqtt api call: ${data.api}`)
 
 			let res: void
-			let err: string | undefined
+			let err: unknown = undefined
 
 			try {
 				switch (data.api) {
@@ -78,7 +77,7 @@ export function registerMqttApiHandler(
 				}
 			} catch (error) {
 				logger.error('Error while calling MQTT api', error)
-				err = getErrorMessage(error)
+				err = getLegacyErrorMessage(error)
 			}
 
 			cb({

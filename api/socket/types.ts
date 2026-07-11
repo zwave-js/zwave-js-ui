@@ -11,6 +11,15 @@
 export type SocketAck<T> = (result: T) => void
 
 /**
+ * Preserves the legacy handlers' direct `error.message` property read.
+ * In particular, primitive/object throws yield `undefined`, while `null`
+ * still throws from inside the catch block and therefore produces no ACK.
+ */
+export function getLegacyErrorMessage(error: unknown): unknown {
+	return (error as { message?: unknown }).message
+}
+
+/**
  * Default acknowledgement callback used when a client doesn't pass one.
  * A zero-parameter function is structurally assignable to any `SocketAck<T>`
  * (TypeScript permits a callback with fewer declared parameters than the
