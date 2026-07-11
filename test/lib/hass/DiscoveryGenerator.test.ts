@@ -200,12 +200,17 @@ describe('DiscoveryGenerator', () => {
 
 	it('owns rediscovery, disabling, removal, and facade state updates', () => {
 		const hassNode = node({
+			name: 'Switch',
+			manufacturer: 'Test',
+			productDescription: 'Wall',
+			productLabel: 'Switch',
+			firmwareVersion: '1.0.0',
 			hassDevices: { old: device() },
 			values: {
-				'37-0-currentValue': value(),
+				'37-0-currentValue': value({ isCurrentValue: true }),
 			},
 		})
-		const { generator, discovered, emitted } = setup({
+		const { generator, discovered, emitted, published } = setup({
 			nodes: new Map([
 				[2, hassNode],
 				[3, { id: 3 }],
@@ -220,10 +225,64 @@ describe('DiscoveryGenerator', () => {
 		generator.rediscoverNode(2)
 		expect(discovered['2-stale']).toBeUndefined()
 		expect(discovered['9-keep']).toBeDefined()
-		expect(emitted).toHaveLength(1)
+		expect(Object.keys(hassNode.hassDevices)).toEqual(['switch_switch'])
+		expect(hassNode.hassDevices.switch_switch).toEqual({
+			type: 'switch',
+			object_id: 'switch',
+			discovery_payload: {
+				payload_off: false,
+				payload_on: true,
+				value_template: '{{ value_json.value }}',
+				command_topic: 'prefix/node/2-37-0-currentValue/set',
+				state_topic: 'prefix/node/2-37-0-currentValue',
+				availability: [
+					{
+						payload_available: 'true',
+						payload_not_available: 'false',
+						topic: 'prefix/node/2/status',
+						value_template:
+							"{{'true' if value_json.value else 'false'}}",
+					},
+					{
+						topic: 'prefix/_CLIENTS/ZWAVE_GATEWAY/status',
+						value_template:
+							"{{'online' if value_json.value else 'offline'}}",
+					},
+					{
+						payload_available: 'true',
+						payload_not_available: 'false',
+						topic: 'prefix/driver/status',
+					},
+				],
+				availability_mode: 'all',
+				device: {
+					identifiers: ['zwavejs2mqtt_0x12345678_node2'],
+					manufacturer: 'Test',
+					model: 'Wall (Switch)',
+					name: 'Switch',
+					sw_version: '1.0.0',
+				},
+				name: 'Switch_switch',
+				unique_id: 'zwavejs2mqtt_0x12345678_2-37-0-currentValue',
+			},
+			discoveryTopic: 'switch/Switch/switch/config',
+			values: ['37-0-currentValue'],
+			persistent: false,
+			ignoreDiscovery: false,
+		})
+		expect(published).toEqual([
+			{
+				topic: 'switch/Switch/switch/config',
+				payload: hassNode.hassDevices.switch_switch.discovery_payload,
+				options: { qos: 0, retain: false },
+				prefix: 'homeassistant',
+			},
+		])
+		expect(emitted).toEqual([{ nodeId: 2, devices: hassNode.hassDevices }])
 
 		generator.disableDiscovery(3)
 		generator.disableDiscovery(2)
+		expect(Object.values(hassNode.hassDevices)).toHaveLength(1)
 		expect(
 			Object.values(hassNode.hassDevices).every(
 				(entry) => entry.ignoreDiscovery,
@@ -477,11 +536,26 @@ describe('DiscoveryGenerator', () => {
 		)
 		const rawPayload: Record<string, unknown> = {}
 		raw.generator.setDiscoveryAvailability(hassNode, rawPayload)
-		expect(rawPayload.availability).not.toEqual(
-			expect.arrayContaining([
-				expect.objectContaining({ value_template: 'true' }),
-			]),
-		)
+		expect(rawPayload).toEqual({
+			availability: [
+				{
+					payload_available: 'true',
+					payload_not_available: 'false',
+					topic: 'prefix/node/2/status',
+				},
+				{
+					topic: 'prefix/_CLIENTS/ZWAVE_GATEWAY/status',
+					value_template:
+						"{{'online' if value_json.value else 'offline'}}",
+				},
+				{
+					payload_available: 'true',
+					payload_not_available: 'false',
+					topic: 'prefix/driver/status',
+				},
+			],
+			availability_mode: 'all',
+		})
 
 		expect(
 			json.generator.getDiscoveryTopic(
@@ -553,6 +627,18 @@ describe('DiscoveryGenerator', () => {
 				'%nid_%ln_%loc_%pk_%pn_%p_%o_%n_%l',
 			),
 		).toBe('nodeID_5_Room-Node_Room_1_Current_current_entity_Node_Level')
+		expect(
+			generator.getEntityName(
+				node({ id: 5 }),
+				value({
+					propertyKey: undefined,
+					propertyName: undefined,
+					label: undefined,
+				}),
+				device(),
+				'%pk_%pn_%l',
+			),
+		).toBe('undefined_undefined_undefined')
 	})
 
 	it('discovers a complete custom climate device and malformed alternatives', () => {

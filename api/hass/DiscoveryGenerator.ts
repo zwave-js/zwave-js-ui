@@ -1465,26 +1465,26 @@ export class DiscoveryGenerator {
 		ignoreLoc = false,
 	): string {
 		entityTemplate ||= '%ln_%o'
-		let propertyKey: string = config.type
-		let propertyName: string = config.type
+		let propertyKey: string | undefined = config.type
+		let propertyName: string | undefined = config.type
 		let property: string = config.type
-		let label = config.object_id
+		let label: string | undefined = config.object_id
 		if (valueId) {
 			property = valueId.property?.toString()
-			propertyKey = valueId.propertyKey?.toString() ?? ''
-			propertyName = valueId.propertyName?.toString() ?? ''
-			label = valueId.label ?? ''
+			propertyKey = valueId.propertyKey?.toString()
+			propertyName = valueId.propertyName?.toString()
+			label = valueId.label
 		}
 		return entityTemplate
 			.replace(/%nid/g, HASS_NODE_PREFIX + node.id)
 			.replace(/%ln/g, this.getNodeName(node, ignoreLoc))
 			.replace(/%loc/g, node.loc || '')
-			.replace(/%pk/g, propertyKey)
-			.replace(/%pn/g, propertyName)
+			.replace(/%pk/g, String(propertyKey))
+			.replace(/%pn/g, String(propertyName))
 			.replace(/%p/g, property)
 			.replace(/%o/g, config.object_id)
 			.replace(/%n/g, node.name || HASS_NODE_PREFIX + node.id)
-			.replace(/%l/g, label)
+			.replace(/%l/g, String(label))
 	}
 
 	private requireValueTopic(node: HassNode, value: HassValue): string {
