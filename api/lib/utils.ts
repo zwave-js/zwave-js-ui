@@ -9,6 +9,8 @@ import { mkdir, access, readdir, readlink, realpath } from 'node:fs/promises'
 import { fileURLToPath } from 'node:url'
 import tripleBeam from 'triple-beam'
 import { MAX_NODES_LR } from '@zwave-js/core'
+import type { BytesView } from '@zwave-js/shared'
+import { hasErrorCode } from './errors.ts'
 
 const loglevels = tripleBeam.configs.npm.levels
 
@@ -25,13 +27,25 @@ export interface Snippet {
 	content: string
 }
 
-export type DeepPartial<T> = {
-	[P in keyof T]?: T[P] extends Array<infer U>
+/**
+ * Recursively makes every (nested, own) property of `T` optional.
+ *
+ * Bottoms out at non-plain-object types (primitives, `unknown`/`any`,
+ * functions, and built-in class instances such as `Error`/streams) by
+ * returning them unchanged rather than recursing into their prototype
+ * members. Without this guard, `keyof` on a primitive (e.g. `keyof string`)
+ * or on `unknown` produces a nonsensical mapped type instead of the
+ * intended "same primitive, optionally absent" semantics.
+ */
+export type DeepPartial<T> = T extends (...args: never[]) => unknown
+	? T
+	: T extends Array<infer U>
 		? Array<DeepPartial<U>>
-		: T[P] extends ReadonlyArray<infer U>
+		: T extends ReadonlyArray<infer U>
 			? ReadonlyArray<DeepPartial<U>>
-			: DeepPartial<T[P]>
-}
+			: T extends object
+				? { [P in keyof T]?: DeepPartial<T[P]> }
+				: T
 
 export interface ErrnoException extends Error {
 	errno?: number
@@ -373,23 +387,40 @@ export function stringifyJSON(obj: any): string {
 	})
 }
 
+type SecurityKeyName = keyof NonNullable<ZwaveConfig['securityKeys']>
+type SecurityKeyLongRangeName = keyof NonNullable<
+	ZwaveConfig['securityKeysLongRange']
+>
+
+function isKeyOf<T extends string>(
+	key: string,
+	allowed: readonly T[],
+): key is T {
+	return (allowed as readonly string[]).includes(key)
+}
+
 export function parseSecurityKeys(
 	config: ZwaveConfig,
 	options: PartialZWaveOptions | ZnifferOptions,
 ): void {
 	config.securityKeys = config.securityKeys || {}
+	// Fix: the long range keys map must exist before it is indexed into below
+	config.securityKeysLongRange = config.securityKeysLongRange || {}
 
 	if (process.env.NETWORK_KEY) {
 		config.securityKeys.S0_Legacy = process.env.NETWORK_KEY
 	}
 
-	const availableKeys = [
+	const availableKeys: readonly SecurityKeyName[] = [
 		'S2_Unauthenticated',
 		'S2_Authenticated',
 		'S2_AccessControl',
 		'S0_Legacy',
 	]
-	const availableLongRangeKeys = ['S2_Authenticated', 'S2_AccessControl']
+	const availableLongRangeKeys: readonly SecurityKeyLongRangeName[] = [
+		'S2_Authenticated',
+		'S2_AccessControl',
+	]
 
 	const envKeys = Object.keys(process.env)
 		.filter((k) => k?.startsWith('KEY_'))
@@ -401,47 +432,46 @@ export function parseSecurityKeys(
 
 	// load security keys from env
 	for (const k of envKeys) {
-		if (availableKeys.includes(k)) {
+		if (isKeyOf(k, availableKeys)) {
 			config.securityKeys[k] = process.env[`KEY_${k}`]
 		}
 	}
 	// load long range security keys from env
 	for (const k of longRangeEnvKeys) {
-		if (availableLongRangeKeys.includes(k)) {
+		if (isKeyOf(k, availableLongRangeKeys)) {
 			config.securityKeysLongRange[k] = process.env[`KEY_LR_${k}`]
 		}
 	}
 
-	options.securityKeys = {}
-	options.securityKeysLongRange = {}
+	const securityKeys: Partial<Record<SecurityKeyName, BytesView>> = {}
 
 	// convert security keys to buffer
 	for (const key in config.securityKeys) {
-		if (
-			availableKeys.includes(key) &&
-			config.securityKeys[key].length === 32
-		) {
-			options.securityKeys[key] = Buffer.from(
-				config.securityKeys[key],
-				'hex',
-			)
+		if (isKeyOf(key, availableKeys)) {
+			const value = config.securityKeys[key]
+			if (value?.length === 32) {
+				securityKeys[key] = Buffer.from(value, 'hex')
+			}
 		}
 	}
 
-	config.securityKeysLongRange = config.securityKeysLongRange || {}
+	options.securityKeys = securityKeys
+
+	const securityKeysLongRange: Partial<
+		Record<SecurityKeyLongRangeName, BytesView>
+	> = {}
 
 	// convert long range security keys to buffer
 	for (const key in config.securityKeysLongRange) {
-		if (
-			availableLongRangeKeys.includes(key) &&
-			config.securityKeysLongRange[key].length === 32
-		) {
-			options.securityKeysLongRange[key] = Buffer.from(
-				config.securityKeysLongRange[key],
-				'hex',
-			)
+		if (isKeyOf(key, availableLongRangeKeys)) {
+			const value = config.securityKeysLongRange[key]
+			if (value?.length === 32) {
+				securityKeysLongRange[key] = Buffer.from(value, 'hex')
+			}
 		}
 	}
+
+	options.securityKeysLongRange = securityKeysLongRange
 }
 
 function hasDockerEnv() {
@@ -600,7 +630,7 @@ export async function assertRealPathInStore(
 		} catch (err) {
 			// If the path does not exist, e.g. when creating a directory,
 			// walk up to the nearest existing ancestor and check that.
-			if (err?.code !== 'ENOENT') {
+			if (!hasErrorCode(err) || err.code !== 'ENOENT') {
 				throw err
 			}
 			const parent = path.dirname(current)
@@ -689,7 +719,7 @@ export function applyOperation(value: any, op: string): any {
 	}
 
 	const match = POST_OPERATION.exec(op)
-	if (!match) {
+	if (!match || !match.groups) {
 		return value
 	}
 
