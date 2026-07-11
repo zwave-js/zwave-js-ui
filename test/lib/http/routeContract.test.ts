@@ -3,20 +3,11 @@ import express, { type Express } from 'express'
 import { createHttpHarness, type HttpHarness } from './harness.ts'
 import { createFakeGateway } from './fakes.ts'
 
-/**
- * Independent, hard-coded inventory of every HTTP route registered in
- * `api/app.ts`. These 35 `{method, path}` pairs are written out literally -
- * NOT derived by introspecting `app._router`/`app.ts` constants - so this
- * file fails loudly if a route is ever renamed, removed, or its method
- * changed, independently of the deeper per-route-group behavior suites.
- *
- * Each entry is exercised with a generic request and only checked for
- * "the route exists" (any status other than Express's default 404 for an
- * unmatched route). Response *content* is characterized in the dedicated
- * route-group files (auth.test.ts, health.test.ts, settings.test.ts,
- * importExport.test.ts, configurationTemplates.test.ts, store.test.ts,
- * debug.test.ts).
- */
+// Every {method, path} route api/app.ts registers, listed independently
+// (not introspected from app.ts) so a renamed/removed/re-methoded route
+// fails loudly here too. Response content is characterized per route group
+// in auth.test.ts, health.test.ts, settings.test.ts, importExport.test.ts,
+// configurationTemplates.test.ts, store.test.ts, and debug.test.ts.
 const ROUTES: Array<{
 	method: 'get' | 'post' | 'put' | 'delete'
 	path: string
@@ -74,31 +65,10 @@ const ROUTES: Array<{
 	{ method: 'post', path: '/api/debug/cancel' },
 ]
 
-/**
- * ONE harness, shared by every `describe` block in this file (created in a
- * file-scoped `beforeAll`/`afterAll`, not nested inside each `describe`).
- *
- * This file used to give each of its two `describe` blocks its OWN
- * `beforeAll`/`afterAll` pair, each creating and closing its own harness.
- * That's unsafe: `harness.ts` caches `api/app.ts`/`api/lib/jsonStore.ts`/
- * `api/lib/Gateway.ts` module imports ONCE per test file
- * (`appModulePromise`/`jsonStoreModulePromise`/`gatewayModulePromise`), so
- * a SECOND `createHttpHarness()` call in the same file reuses those
- * already-evaluated modules instead of re-importing them - while
- * `env.ts`'s `ensureTestEnv()` happily mints a brand new throwaway
- * `STORE_DIR` every time its own `storeDir` variable is `undefined` (i.e.
- * after the first harness's `close()` already called `cleanupTestEnv()`).
- * The result: the cached `api/config/app.ts`-derived `storeDir` constant
- * keeps pointing at the FIRST harness's directory - which the first
- * `close()` already `rmSync`'d - while `Gateway.ts`'s file watchers stay
- * bound to that same deleted path, and the second harness's
- * `__testHooks.loadSnippets()` call would duplicate every bundled snippet
- * name in `defaultSnippets` (that specific duplication is now also fixed
- * at its own root cause: `loadSnippets()` in `api/app.ts` clears
- * `defaultSnippets` before repopulating it, so it's idempotent regardless
- * of how many times - or in how many harnesses - it's called; see the
- * "does not duplicate snippets" test below, which exercises exactly that).
- */
+// One harness for the whole file, in a beforeAll/afterAll, not per describe
+// block: harness.ts caches api/app.ts's module import per file, so a second
+// createHttpHarness() call here would reuse that cached module while
+// pointing at the first harness's already-`rmSync`'d STORE_DIR
 let harness: HttpHarness
 
 beforeAll(async () => {
@@ -118,10 +88,8 @@ describe('HTTP contract: full 35-route inventory', () => {
 		'$method $path is a registered route (not a 404)',
 		async ({ method, path }) => {
 			let req = harness.request[method](path)
-			// This route responds with a ZIP body under a (quirky, preserved)
-			// `application/json` Content-Type header; superagent would
-			// otherwise try to auto-parse the binary body as JSON and throw
-			// before we ever see the status code.
+			// Superagent would otherwise try to auto-parse this ZIP body as
+			// JSON and throw before the status code is ever seen
 			if (path === '/api/store/backup') {
 				req = req.buffer(true).parse((response, callback) => {
 					const chunks: Buffer[] = []
@@ -142,13 +110,8 @@ describe('HTTP contract: full 35-route inventory', () => {
 	})
 
 	it('does not duplicate bundled snippets when loadSnippets() runs more than once', async () => {
-		// Regression for the exact bug the module-level harness comment
-		// above describes: before `loadSnippets()` cleared `defaultSnippets`
-		// first, calling it twice - which used to happen organically
-		// whenever this file created a second harness - would duplicate
-		// every bundled snippet name. Calling the seam directly here proves
-		// idempotency without needing a second harness (which would
-		// reintroduce the very bug this test guards against).
+		// Regression for a duplicate-snippet bug that used to appear whenever
+		// this file created a second harness, calling loadSnippets() twice
 		await harness.testHooks.loadSnippets()
 		await harness.testHooks.loadSnippets()
 
@@ -168,30 +131,14 @@ describe('HTTP contract: full 35-route inventory', () => {
 		)
 		expect(duplicated).toEqual([])
 
-		// Don't leak the fake gateway into whatever runs next in this file.
 		harness.resetState()
 	})
 })
 
-/**
- * Independent, hard-coded inventory of every `{method, path}` Express
- * registers, as literal *route patterns* (e.g. `/health/:client`, not a
- * concrete `/health/zwave` test path). This is a SEPARATE list from `ROUTES`
- * above (which uses concrete substituted paths so supertest can fire real
- * requests) and is not derived from `app.ts`, `ROUTES`, or any other
- * production constant.
- *
- * Unlike the `ROUTES` inventory - which can only ever tell you that its own
- * 35 hard-coded entries still resolve - this compares against the COMPLETE
- * actual set of routes Express registered (via `app._router.stack`
- * introspection). That means it fails loudly for every kind of drift:
- *  - a new route is added to `app.ts` and forgotten here (actual has an
- *    entry expected doesn't)
- *  - a route is removed/renamed from `app.ts` but left here (expected has an
- *    entry actual doesn't)
- *  - a route's method or path pattern changes (set membership differs even
- *    though the counts might coincidentally match)
- */
+// Literal route *patterns* (e.g. /health/:client, not a concrete test
+// path), compared below against Express's actual registered stack to catch
+// drift the concrete ROUTES list above can't: a route added, removed,
+// renamed, or changed method without this list being updated
 const EXPECTED_REGISTERED_ROUTES: Array<{
 	method: 'get' | 'post' | 'put' | 'delete'
 	path: string
@@ -249,14 +196,9 @@ const EXPECTED_REGISTERED_ROUTES: Array<{
 	{ method: 'post', path: '/api/debug/cancel' },
 ]
 
-/**
- * Express internals aren't part of the public `Express` type, hence the
- * narrow structural type instead of `any`. `name`/`regexp`/`handle` are
- * present on every middleware layer (not just `.route` layers) - `name` is
- * `'router'` for a layer created by `app.use(mountPath, someRouter)`,
- * `regexp` is the compiled mount-path matcher, and `handle.stack` is that
- * sub-router's OWN layer stack.
- */
+// Express doesn't export a type for its internal router stack, so this
+// narrows just the fields every layer actually has (route layers and
+// `router`-named mount layers alike)
 interface ExpressRouteLayer {
 	route?: {
 		path: string
@@ -271,21 +213,11 @@ interface ExpressAppInternals {
 	_router: { stack: ExpressRouteLayer[] }
 }
 
-/**
- * Reverses path-to-regexp@0.1.x's (bundled with this repo's pinned Express
- * 4.x) compiled mount-path regexp back into a literal string prefix - e.g.
- * the regexp Express stores for `app.use('/api/sub', router)`,
- * `/^\/api\/sub\/?(?=\/|$)/i`, becomes `'/api/sub'`.
- *
- * This intentionally only recognizes that one specific, stable shape:
- * a LITERAL mount path (no `:params`, no wildcards), compiled with
- * Express's default router options (`end: false`). It does not - and
- * cannot in general - invert an arbitrary `path-to-regexp` pattern (that
- * transform isn't reversible once params/wildcards are involved); mount
- * paths with those are rare in practice and none exist in this app today,
- * so callers get `undefined` for them instead of a fabricated, incorrect
- * prefix.
- */
+// Reverses path-to-regexp@0.1.x's compiled mount-path regexp (bundled with
+// this repo's pinned Express 4.x) back into a literal prefix, e.g.
+// /^\/api\/sub\/?(?=\/|$)/i becomes '/api/sub'. Only that one literal-mount
+// shape is supported; params/wildcards aren't invertible and none exist in
+// this app's mount points today, so callers get undefined for those
 function extractLiteralMountPrefix(regexp: RegExp): string | undefined {
 	const match = /^\^((?:\\\/[^\\/]+)*)\\\/\?\(\?=\\\/\|\$\)$/.exec(
 		regexp.source,
@@ -294,25 +226,13 @@ function extractLiteralMountPrefix(regexp: RegExp): string | undefined {
 	return match[1].replace(/\\\//g, '/')
 }
 
-/**
- * Recursively walks the real Express router stack - INCLUDING every
- * mounted sub-router's own stack (`layer.handle.stack`, at any nesting
- * depth), preserving each sub-router's mount prefix - and returns every
- * `{method, path}` pair Express actually registered a handler for. This is
- * the ground truth, not a hard-coded guess: a route registered inside a
- * mounted sub-router (e.g. `app.use('/api/sub', subRouter)` with
- * `subRouter.get('/thing', ...)`) is reported as `GET /api/sub/thing`,
- * exactly as if it had been registered directly with
- * `app.get('/api/sub/thing', ...)`. A flat, top-level-only scan of
- * `app._router.stack` (the previous implementation) would silently miss
- * routes like that entirely - the exact gap this recursion closes; see
- * the "recursive router traversal" tests below for a regression proving a
- * nested router route is detected with its mount prefix intact.
- *
- * Only route layers (`.get/.post/.put/.delete(...)`) are counted; bare
- * middleware (`app.use(fn)`, static file serving, the SPA history
- * fallback, error handlers, ...) has no `.route` and is skipped.
- */
+// Recursively walks the real Express router stack, including every mounted
+// sub-router's own stack at any nesting depth, so a route registered inside
+// a mounted sub-router (e.g. app.use('/api/sub', subRouter)) is reported
+// with its mount prefix intact instead of being silently missed by a
+// flat, top-level-only scan. Only route layers count; bare middleware
+// (static serving, the SPA fallback, error handlers, ...) has no `.route`
+// and is skipped.
 function getActualRegisteredRoutes(
 	app: Express,
 ): Array<{ method: string; path: string }> {
@@ -377,14 +297,8 @@ describe('HTTP contract: complete Express route inventory (drift detection)', ()
 })
 
 describe('getActualRegisteredRoutes: recursive router traversal', () => {
-	/**
-	 * These exercise the traversal function itself against small, disposable
-	 * Express apps built inline - NOT the real `api/app.ts` (which has no
-	 * mounted sub-routers today; see `EXPECTED_REGISTERED_ROUTES` above,
-	 * unchanged). That keeps this a true regression test for the algorithm,
-	 * independent of - and unaffected by - whatever the production app
-	 * happens to register.
-	 */
+	// Exercises the traversal algorithm against disposable apps built inline,
+	// independent of api/app.ts (which has no mounted sub-routers today)
 	it('detects a route registered on a mounted sub-router, with the mount prefix preserved', () => {
 		const subRouter = express.Router()
 		subRouter.get('/thing', (_req, res) => res.end())

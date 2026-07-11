@@ -2,13 +2,9 @@ import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest'
 import { createHttpHarness, type HttpHarness } from './harness.ts'
 import { createFakeGateway } from './fakes.ts'
 
-/**
- * Characterizes all 8 `/api/configuration-templates*` routes. Every handler
- * shares the same `try { ... gw.zwave.<method>(...) ... } catch { success:false }`
- * shape, so each route's tests cover: the happy path (exact collaborator
- * call args), request validation failures (no collaborator call made), and
- * the "no gateway attached" failure quirk.
- */
+// Every handler shares the same try { gw.zwave.<method>(...) } catch
+// { success: false } shape, so each route's tests cover the happy path,
+// request validation failures, and the no-gateway-attached failure
 describe('HTTP contract: configuration templates', () => {
 	let harness: HttpHarness
 

@@ -2,14 +2,10 @@ import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest'
 import { createHttpHarness, type HttpHarness } from './harness.ts'
 import { createFakeGateway } from './fakes.ts'
 
-/**
- * Characterizes: GET /api/exportConfig, POST /api/importConfig.
- *
- * `normalizeImportedNodesConfig`/`getImportedNodeLocation` (api/lib/importConfig.ts)
- * already have their own unit tests, so this file focuses on the HTTP-level
- * contract: status/envelope shape, gw.zwave collaborator calls, and the
- * "no side effects on rejected input" requirement.
- */
+// normalizeImportedNodesConfig/getImportedNodeLocation (api/lib/importConfig.ts)
+// already have their own unit tests, so this file only covers the HTTP-level
+// contract: status/envelope shape, gw.zwave collaborator calls, and no side
+// effects on rejected input
 describe('HTTP contract: import/export config', () => {
 	let harness: HttpHarness
 
@@ -49,10 +45,9 @@ describe('HTTP contract: import/export config', () => {
 				data: { 2: { name: 'New name' } },
 			})
 
-			// Preserved quirk: the handler guards `!gw.zwave` but never guards
-			// `gw` itself, so with no gateway attached the access to `gw.zwave`
-			// throws a TypeError, not the intended "Z-Wave client not inited"
-			// message.
+			// The handler guards !gw.zwave but never guards gw itself, so
+			// with no gateway attached this throws a TypeError instead of
+			// the intended "Z-Wave client not inited" message
 			expect(res.status).toBe(200)
 			expect(res.body).toEqual({
 				success: false,

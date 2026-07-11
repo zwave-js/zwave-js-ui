@@ -2,15 +2,8 @@ import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest'
 import { createHttpHarness, type HttpHarness } from './harness.ts'
 import { seedUser, signUserToken, setSettings } from './authHelpers.ts'
 
-/**
- * Characterizes: GET /api/auth-enabled, POST /api/authenticate,
- * GET /api/logout, PUT /api/password.
- *
- * These four routes share the app's session/JWT authentication machinery,
- * so they're grouped together. The dedicated login-rate-limit quirk lives
- * in its own file (authRateLimit.test.ts) so it can safely exhaust the
- * `loginLimiter` budget without affecting these tests.
- */
+// The login-rate-limit quirk lives in its own file (authRateLimit.test.ts)
+// so exhausting loginLimiter's budget there can't affect these tests
 describe('HTTP contract: auth & password', () => {
 	let harness: HttpHarness
 
@@ -23,8 +16,7 @@ describe('HTTP contract: auth & password', () => {
 	})
 
 	afterEach(async () => {
-		// Auth must be disabled again before the next test, several of which
-		// assume the default (unauthenticated) bypass.
+		// Reset auth since several tests assume the default unauthenticated bypass
 		await setSettings(harness, { gateway: {} })
 	})
 
@@ -71,8 +63,8 @@ describe('HTTP contract: auth & password', () => {
 				password: 'wrong-password',
 			})
 
-			// Preserved quirk: authentication failures resolve with HTTP 200,
-			// not 401/403 - the caller must inspect `success`.
+			// Authentication failures resolve with HTTP 200, not 401/403;
+			// the caller must inspect success
 			expect(res.status).toBe(200)
 			expect(res.body).toEqual({
 				success: false,
@@ -144,8 +136,8 @@ describe('HTTP contract: auth & password', () => {
 
 			const res = await harness.request.get('/api/logout')
 
-			// Preserved quirk: this is the same HTTP-200 envelope produced by
-			// `isAuthenticated` itself - the route handler body never runs.
+			// This is the same HTTP-200 envelope isAuthenticated itself
+			// produces; the route handler body never runs
 			expect(res.status).toBe(200)
 			expect(res.body).toEqual({
 				success: false,
@@ -179,10 +171,9 @@ describe('HTTP contract: auth & password', () => {
 				confirmNew: 'y',
 			})
 
-			// Preserved quirk: with auth disabled and no prior login, there is
-			// no `req.session.user`, so the handler's own lookup throws and is
-			// caught by its try/catch - the response looks like a generic
-			// server-side failure rather than an auth error.
+			// With no session user, the handler's own lookup throws and is
+			// caught by its try/catch, so this looks like a generic
+			// server failure rather than an auth error
 			expect(res.status).toBe(200)
 			expect(res.body.success).toBe(false)
 			expect(res.body.message).toBe('Error while updating passwords')
@@ -211,7 +202,6 @@ describe('HTTP contract: auth & password', () => {
 			expect(res.body.user.username).toBe('frank')
 			expect(res.body.user).not.toHaveProperty('passwordHash')
 
-			// Persisted: a fresh login with the new password now succeeds.
 			const relogin = await harness.request
 				.post('/api/authenticate')
 				.send({ username: 'frank', password: 'new-password' })
@@ -238,7 +228,6 @@ describe('HTTP contract: auth & password', () => {
 				message: 'Current password is wrong',
 			})
 
-			// No side effect: the old password still works.
 			const relogin = await harness.request
 				.post('/api/authenticate')
 				.send({ username: 'grace', password: 'right-password' })

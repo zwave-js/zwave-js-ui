@@ -6,8 +6,8 @@ import { createHttpHarness, type HttpHarness } from './harness.ts'
 import { getTestStoreDir } from './env.ts'
 import { createFakeGateway } from './fakes.ts'
 
-/** The repo-root `snippets/` directory the production `loadSnippets()`
- * bundles at startup - independent of `storeDir`/`snippetsDir`. */
+// The repo-root snippets/ directory production loadSnippets() bundles at
+// startup, independent of storeDir/snippetsDir
 const BUNDLED_SNIPPETS_DIR = path.join(
 	path.dirname(fileURLToPath(import.meta.url)),
 	'..',
@@ -16,7 +16,7 @@ const BUNDLED_SNIPPETS_DIR = path.join(
 	'snippets',
 )
 
-/** Every `.js` file the repo ships under `snippets/` as of this writing. */
+// Every .js file the repo ships under snippets/
 const EXPECTED_BUNDLED_SNIPPET_NAMES = [
 	'access-store-dir',
 	'clone-config',
@@ -24,10 +24,6 @@ const EXPECTED_BUNDLED_SNIPPET_NAMES = [
 	'reinterview-nodes',
 ]
 
-/**
- * Characterizes: GET/PUT/DELETE /api/store, PUT/POST /api/store-multi,
- * GET /api/store/backup, POST /api/store/upload, GET /api/snippet.
- */
 describe('HTTP contract: store, upload, snippets', () => {
 	let harness: HttpHarness
 
@@ -256,9 +252,7 @@ describe('HTTP contract: store, upload, snippets', () => {
 				'(preserved quirk: jsonStore.backup() never overrides the default JSON content type)',
 			async () => {
 				// backup() only archives store files that already exist on
-				// disk, so persist at least one before asserting a non-empty
-				// ZIP (a fresh, never-persisted store would produce a
-				// structurally valid but empty archive instead).
+				// disk, so persist at least one to avoid an empty ZIP
 				await harness.jsonStore.put(harness.store.settings, {
 					zwave: {},
 				})

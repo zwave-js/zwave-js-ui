@@ -1,14 +1,7 @@
-/**
- * Minimal, typed fakes for the Z-Wave/MQTT collaborators the HTTP routes
- * read through `gw`/`gw.zwave`/`gw.mqtt`. These are plain objects (not real
- * `Gateway`/`ZWaveClient`/`MqttClient` instances) - the routes only ever
- * access a handful of members, and TypeScript's structural typing means a
- * shape-compatible fake works at runtime without touching real hardware,
- * serial ports, or MQTT brokers.
- *
- * Every method is a `vi.fn()` so tests can assert exact collaborator
- * arguments/order and control return values/rejections per test.
- */
+// Plain, vi.fn()-based fakes for the Z-Wave/MQTT collaborators HTTP routes
+// read through gw/gw.zwave/gw.mqtt: structural typing lets these stand in
+// for real Gateway/ZWaveClient/MqttClient instances without touching real
+// hardware, serial ports, or MQTT brokers
 import { vi } from 'vitest'
 
 export interface FakeZwaveClient {

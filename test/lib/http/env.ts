@@ -1,79 +1,21 @@
-/**
- * Shared, isolated environment bootstrap for the HTTP contract suite.
- *
- * `api/app.ts` (transitively, via `api/config/app.ts` and `api/lib/logger.ts`)
- * touches the filesystem at module-evaluation time: it resolves/creates a
- * `STORE_DIR`, persists a session secret, and ensures the store/logs
- * directories exist. If we let that default to the repository's real
- * `store/` directory, running these tests would pollute real application
- * data (session secret file, session store, log directory, ...).
- *
- * `api/app.ts`/`api/config/app.ts` also read a number of *other* env vars
- * directly (HTTPS/FORCE_DISABLE_SSL, TRUST_PROXY, SSL cert/key paths, the
- * `.env.app`-documented gateway settings, ...) at both module-evaluation
- * and per-request time. If the process running the test suite happens to
- * have any of these set ambiently (a developer's shell, a CI runner, a
- * leftover from another test file in the same worker, ...), the app under
- * test would silently behave differently than the deterministic contract
- * these suites characterize - e.g. `sslDisabled` flipping, session cookies
- * becoming `Secure`, serial port enumeration being skipped, or `tz`/`locale`
- * echoing an ambient value instead of `undefined`.
- *
- * This module MUST be imported (and `ensureTestEnv()` called) before any
- * dynamic `import()` of `api/app.ts` or its config, so every HTTP test file
- * gets its own throwaway store directory AND a normalized set of app-facing
- * env vars, instead of inheriting ambient process state.
- *
- * ### Why `dotenv` itself is mocked here
- *
- * `api/config/app.ts` calls `dotenv`'s `config({ path: './.env.app' })` at
- * module-evaluation time - i.e. AFTER the normalization below has already
- * cleared `process.env` for every `APP_ENV_VARS` entry. `dotenv`'s default
- * `override: false` behavior only skips a key that is *present* in
- * `process.env` (`Object.prototype.hasOwnProperty`, even if its value is an
- * empty string); a key that was `delete`d is no longer present, so if the
- * process's current working directory happens to contain a real
- * `.env.app` file (a developer's local override, a future CI convenience
- * file, ...), `dotenv` would repopulate exactly the values normalization
- * just removed - silently re-introducing the same ambient-pollution
- * problem `ensureTestEnv()` exists to prevent.
- *
- * Pre-setting every key to a placeholder value (instead of deleting it)
- * would defeat `dotenv` too, but isn't a safe substitute: several vars
- * (`TZ`/`LOCALE` in particular) are read and echoed back verbatim with no
- * `||` fallback (`api/app.ts` sets `tz: process.env.TZ` directly), so
- * flipping "absent" to `''` changes an observable API response from an
- * omitted JSON field to an empty-string field - a real behavioral
- * difference, not just an implementation detail. Rather than hand-picking
- * a per-variable placeholder that happens to be behaviorally inert (fragile,
- * and only as complete as our current reading of `api/app.ts`), this mocks
- * `dotenv`'s `config()` itself into a no-op for this test file's module
- * graph, so no `.env.app` file - real or hypothetical - can ever be read
- * during these tests, regardless of what normalization did or didn't do to
- * `process.env` beforehand. See `envDotenvIsolation.test.ts` for a
- * regression that proves this with a representative `.env.app` file.
- */
 import { vi } from 'vitest'
 import { mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 
+// Mocked because dotenv's default override:false only skips vars already
+// present in process.env, so a real .env.app file would repopulate the
+// vars ensureTestEnv() just cleared
 vi.mock('dotenv', () => ({
 	config: () => ({ parsed: {} }),
 }))
 
 let storeDir: string | undefined
 
-/**
- * Every env var `api/app.ts` or `api/config/app.ts` reads directly (either
- * documented in `.env.app.example` or referenced via `process.env.*` in
- * those two files). Snapshotted before the first mutation and restored on
- * `cleanupTestEnv()`, so ambient values from the host shell/CI runner (or a
- * previous test file sharing this worker process) can never leak into - or
- * out of - the app under test.
- */
+// Every env var api/app.ts or api/config/app.ts reads directly, snapshotted
+// before mutation and restored by cleanupTestEnv() so ambient shell/CI
+// values never leak into the app under test
 const APP_ENV_VARS = [
-	// `.env.app.example`-documented gateway/session/network settings
 	'HOST',
 	'PORT',
 	'STORE_DIR',
@@ -86,8 +28,6 @@ const APP_ENV_VARS = [
 	'ZWAVEJS_EXTERNAL_CONFIG',
 	'TZ',
 	'LOCALE',
-	// Read directly in `api/app.ts` / `api/config/app.ts` but not listed in
-	// `.env.app.example`
 	'FORCE_DISABLE_SSL',
 	'TRUST_PROXY',
 	'SSL_CERTIFICATE',
@@ -102,26 +42,11 @@ const APP_ENV_VARS = [
 
 let envSnapshot: Record<string, string | undefined> | undefined
 
-/**
- * Deterministic, non-production secret so JWTs signed/verified across
- * requests in a test are stable and never depend on a persisted file.
- * Exported so tests can sign their own tokens with `jsonwebtoken` to
- * characterize the `/api/authenticate` token flow and the `isAuthenticated`
- * JWT-header fallback.
- */
+// Deterministic so JWTs signed/verified across requests in a test stay
+// stable without depending on a persisted secret file
 export const TEST_SESSION_SECRET =
 	'http-contract-test-secret-do-not-use-in-production'
 
-/**
- * Create (once per test file / module instance) an isolated STORE_DIR and
- * point the app's env vars at it. Safe to call multiple times.
- *
- * Snapshots every entry in `APP_ENV_VARS` on first call, then clears all of
- * them (`normalize`) before setting only the two this harness itself needs
- * (`STORE_DIR`, `SESSION_SECRET`), so app behavior only ever depends on
- * what this file - or an individual test - explicitly sets, never on
- * ambient process state.
- */
 export function ensureTestEnv(): string {
 	if (!storeDir) {
 		envSnapshot = {}
@@ -135,12 +60,9 @@ export function ensureTestEnv(): string {
 		)
 		process.env.STORE_DIR = storeDir
 		process.env.SESSION_SECRET = TEST_SESSION_SECRET
-		// `ZWAVE_PORT` stays unset so `/api/serial-ports` takes the
-		// enumeration branch; the real `Driver.enumerateSerialPorts`
-		// collaborator itself is replaced per-test via the app's
-		// `setEnumerateSerialPorts` test hook (see `harness.ts`), so no
-		// real serial/mDNS I/O ever happens. `process.platform` is left
-		// untouched so that branch's check stays honest too.
+		// TZ/LOCALE stay unset rather than a placeholder because
+		// api/app.ts echoes them with no || fallback, so unset vs ''
+		// produce different JSON responses
 	}
 	return storeDir
 }
@@ -149,12 +71,6 @@ export function getTestStoreDir(): string {
 	return ensureTestEnv()
 }
 
-/**
- * Best-effort cleanup of the throwaway store directory AND restoration of
- * every `APP_ENV_VARS` entry to its pre-`ensureTestEnv()` value (or removal,
- * if it was unset), so nothing leaks into whatever runs next in this
- * process.
- */
 export function cleanupTestEnv(): void {
 	if (storeDir) {
 		rmSync(storeDir, { recursive: true, force: true })

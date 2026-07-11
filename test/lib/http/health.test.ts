@@ -2,9 +2,6 @@ import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest'
 import { createHttpHarness, type HttpHarness } from './harness.ts'
 import { createFakeGateway } from './fakes.ts'
 
-/**
- * Characterizes: GET /health, GET /health/:client, GET /version.
- */
 describe('HTTP contract: health & version', () => {
 	let harness: HttpHarness
 
@@ -98,12 +95,9 @@ describe('HTTP contract: health & version', () => {
 			async () => {
 				const res = await harness.request.get('/health/not-a-client')
 
-				// The first `res.status(500).send(...)` is what actually reaches
-				// the socket; the handler doesn't `return` after it, so it falls
-				// through to a second `res.status(...).send(...)` call against an
-				// already-sent response. Express/Node ignore the second write
-				// (headers already sent) rather than crashing the process - this
-				// test pins that the *first* response body is what clients see.
+				// The handler doesn't return after the first res.send(), so it
+				// falls through to a second send() against an already-sent
+				// response; Express/Node silently ignore that second write
 				expect(res.status).toBe(500)
 				expect(res.text).toBe("Requested client doesn 't exist")
 			},
