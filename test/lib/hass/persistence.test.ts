@@ -17,6 +17,14 @@
  * dynamically, strictly AFTER `ensureTestEnv()` has pointed STORE_DIR at a
  * throwaway dir, so every `jsonStore.put()` write lands there and never in the
  * repo `store/` directory. No real Driver is ever constructed.
+ *
+ * Fixture strategy (see F7): persistence/projection tests use
+ * `makeLoadedClient()`, which seeds a home-scoped `nodes.json` and populates
+ * `storeNodes` through the REAL `getStoreNodes()` loader before driving
+ * `storeDevices()` and the disk write - NOT a `storeNodes = {...}` injection.
+ * Direct state injection survives ONLY in `makeMutatorClient()`, used strictly
+ * for the narrow `addDevice`/`updateDevice`/`emitNodeUpdate` in-memory mutation
+ * unit tests, which are deliberately isolated from the load path.
  */
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest'
 import { existsSync, readFileSync } from 'node:fs'
@@ -50,18 +58,59 @@ const HOME = '0xtesthome'
 const flush = () => new Promise<void>((r) => setImmediate(r))
 
 /**
- * Construct a REAL `ZwaveClient` (init-only, no driver) with a recording
- * socket, a seeded `homeHex`, an empty `storeNodes`, and a single ZUI node
- * already present in `_nodes`. Nothing here starts a timer or opens a handle.
+ * Base: a REAL init-only `ZwaveClient` (no Driver) with a recording socket
+ * and `driverInfo.name` set so `homeHex` resolves. Populates NOTHING else -
+ * callers choose whether to drive the real store-load path or inject state.
  */
-function makeClient(
+function newInitClient(home: string | undefined = HOME): {
+	zwave: ZWaveClientType
+	socket: RecordingSocket
+} {
+	const socket = createRecordingSocket()
+	const zwave = new ZWaveClient({} as any, socket as any)
+	if (home !== undefined) {
+		;(zwave as any).driverInfo = { name: home }
+	}
+	return { zwave, socket }
+}
+
+/**
+ * NARROW mutator-unit fixture (direct state injection - use ONLY for the
+ * `addDevice`/`updateDevice`/`emitNodeUpdate` guard+re-key+projection unit
+ * tests, which characterize pure in-memory mutation and must not depend on the
+ * disk-load path). `storeNodes` and `_nodes` are assigned directly. For
+ * anything that exercises real persistence/projection use `makeLoadedClient`,
+ * which drives the production `getStoreNodes()` load instead.
+ */
+function makeMutatorClient(
 	nodeId: number,
 	node: any,
 ): { zwave: ZWaveClientType; socket: RecordingSocket } {
-	const socket = createRecordingSocket()
-	const zwave = new ZWaveClient({} as any, socket as any)
-	;(zwave as any).driverInfo = { name: HOME }
+	const { zwave, socket } = newInitClient()
 	;(zwave as any).storeNodes = { [nodeId]: {} }
+	;(zwave as any)._nodes.set(nodeId, node)
+	return { zwave, socket }
+}
+
+/**
+ * REAL-load fixture: seeds a home-scoped `nodes.json` in the isolated store,
+ * then populates `storeNodes` by running the production `getStoreNodes()`
+ * loader (home-id scoping / array + flat back-compat conversion included) -
+ * NOT by assigning `storeNodes`. The ZUINode is still placed into `_nodes`
+ * directly; that is the one unavoidable injection, because `_createNode()`
+ * needs a live `Driver.controller` this init-only client never builds. Every
+ * subsequent `addDevice`/`storeDevices`/`updateStoreNodes` then flows through
+ * the genuine load -> mutate -> project -> disk-write path.
+ */
+async function makeLoadedClient(
+	nodeId: number,
+	node: any,
+	seedBucket: Record<string, any> = { [nodeId]: {} },
+): Promise<{ zwave: ZWaveClientType; socket: RecordingSocket }> {
+	await jsonStore.put(store.nodes, { [HOME]: seedBucket })
+	const { zwave, socket } = newInitClient()
+	// REAL production load path fills storeNodes from disk
+	await zwave.getStoreNodes()
 	;(zwave as any)._nodes.set(nodeId, node)
 	return { zwave, socket }
 }
@@ -96,7 +145,7 @@ beforeEach(async () => {
 describe('ZwaveClient.addDevice()', () => {
 	it('keys the device by `type_object_id` (NOT the passed `.id`), strips `.id`, and forces persistent:false', async () => {
 		const node: any = { id: 5, hassDevices: {} }
-		const { zwave, socket } = makeClient(5, node)
+		const { zwave, socket } = makeMutatorClient(5, node)
 
 		const device: HassDeviceLike = {
 			id: 'ignored-incoming-id',
@@ -127,7 +176,10 @@ describe('ZwaveClient.addDevice()', () => {
 	})
 
 	it('is a no-op (no emission) when the node is unknown', async () => {
-		const { zwave, socket } = makeClient(5, { id: 5, hassDevices: {} })
+		const { zwave, socket } = makeMutatorClient(5, {
+			id: 5,
+			hassDevices: {},
+		})
 		zwave.addDevice(
 			{ id: 'x', type: 'sensor', object_id: 'y' } as any,
 			999, // no such node
@@ -138,7 +190,7 @@ describe('ZwaveClient.addDevice()', () => {
 
 	it('is a no-op when the incoming device has no `.id`', async () => {
 		const node: any = { id: 5, hassDevices: {} }
-		const { zwave, socket } = makeClient(5, node)
+		const { zwave, socket } = makeMutatorClient(5, node)
 		zwave.addDevice({ type: 'sensor', object_id: 'y' } as any, 5)
 		await flush()
 		expect(node.hassDevices).toEqual({})
@@ -153,7 +205,7 @@ describe('ZwaveClient.updateDevice()', () => {
 			id: 7,
 			hassDevices: { switch_sw: { ...existing } },
 		}
-		const { zwave, socket } = makeClient(7, node)
+		const { zwave, socket } = makeMutatorClient(7, node)
 
 		const incoming: HassDeviceLike = {
 			id: 'switch_sw', // must match an existing key
@@ -178,7 +230,7 @@ describe('ZwaveClient.updateDevice()', () => {
 			id: 7,
 			hassDevices: { switch_sw: { type: 'switch', object_id: 'sw' } },
 		}
-		const { zwave, socket } = makeClient(7, node)
+		const { zwave, socket } = makeMutatorClient(7, node)
 
 		zwave.updateDevice({ id: 'switch_sw' } as any, 7, true)
 
@@ -189,7 +241,7 @@ describe('ZwaveClient.updateDevice()', () => {
 
 	it('is a no-op when the id does not match any existing device (guard)', async () => {
 		const node: any = { id: 7, hassDevices: {} }
-		const { zwave, socket } = makeClient(7, node)
+		const { zwave, socket } = makeMutatorClient(7, node)
 		zwave.updateDevice({ id: 'nope' } as any, 7)
 		await flush()
 		expect(node.hassDevices).toEqual({})
@@ -200,7 +252,8 @@ describe('ZwaveClient.updateDevice()', () => {
 describe('ZwaveClient.storeDevices()', () => {
 	it('sets persistent=!remove, projects a deep COPY onto the node, and writes nodes.json under homeHex', async () => {
 		const node: any = { id: 9, hassDevices: {} }
-		const { zwave, socket } = makeClient(9, node)
+		// storeNodes[9] comes from the REAL getStoreNodes() load, not injection
+		const { zwave, socket } = await makeLoadedClient(9, node)
 
 		const devices = {
 			sensor_a: { type: 'sensor', object_id: 'a' },
@@ -231,10 +284,12 @@ describe('ZwaveClient.storeDevices()', () => {
 
 	it('removes the stored hassDevices when remove is true and sets persistent:false', async () => {
 		const node: any = { id: 9, hassDevices: {} }
-		const { zwave } = makeClient(9, node)
-		;(zwave as any).storeNodes[9] = {
-			hassDevices: { old: { type: 'sensor', object_id: 'old' } },
-		}
+		// seed a previously-persisted device on disk and load it for real, so
+		// the remove path deletes a genuinely loaded `storeNodes[9].hassDevices`
+		const { zwave } = await makeLoadedClient(9, node, {
+			9: { hassDevices: { old: { type: 'sensor', object_id: 'old' } } },
+		})
+		expect((zwave as any).storeNodes[9].hassDevices.old).toBeDefined()
 
 		const devices = { sensor_a: { type: 'sensor', object_id: 'a' } }
 		await zwave.storeDevices(devices as any, 9, true)
@@ -248,7 +303,7 @@ describe('ZwaveClient.storeDevices()', () => {
 
 	it('drops undefined-valued fields but keeps null in the persisted deep copy (utils.copy = JSON round-trip)', async () => {
 		const node: any = { id: 9, hassDevices: {} }
-		const { zwave } = makeClient(9, node)
+		const { zwave } = await makeLoadedClient(9, node)
 
 		const devices: any = {
 			sensor_a: {
@@ -266,7 +321,10 @@ describe('ZwaveClient.storeDevices()', () => {
 	})
 
 	it('is a no-op when the node is unknown', async () => {
-		const { zwave, socket } = makeClient(9, { id: 9, hassDevices: {} })
+		const { zwave, socket } = await makeLoadedClient(9, {
+			id: 9,
+			hassDevices: {},
+		})
 		await zwave.storeDevices(
 			{ x: { type: 't', object_id: 'o' } } as any,
 			42,
@@ -274,6 +332,44 @@ describe('ZwaveClient.storeDevices()', () => {
 		)
 		await flush()
 		expect(nodeUpdatedEmits(socket)).toHaveLength(0)
+	})
+
+	it('loads a previously-persisted home-scoped device, then round-trips a new set through nodes.json', async () => {
+		const node: any = { id: 11, hassDevices: {} }
+		// a bucket a prior session persisted (home-scoped, with a device)
+		const { zwave } = await makeLoadedClient(11, node, {
+			11: {
+				name: 'Kitchen',
+				hassDevices: {
+					sensor_old: {
+						type: 'sensor',
+						object_id: 'old',
+						persistent: true,
+					},
+				},
+			},
+		})
+		// the REAL load surfaced the persisted, home-scoped bucket
+		expect((zwave as any).storeNodes[11].name).toBe('Kitchen')
+		expect(
+			(zwave as any).storeNodes[11].hassDevices.sensor_old.persistent,
+		).toBe(true)
+
+		// persist a brand-new device set through the genuine project+write path
+		const devices = { climate_x: { type: 'climate', object_id: 'x' } }
+		await zwave.storeDevices(devices as any, 11, false)
+
+		// node projection is a deep copy carrying persistent:true
+		expect(node.hassDevices.climate_x.persistent).toBe(true)
+
+		// disk round-trip: nodes.json keeps the node name, swaps in the new
+		// device set (storeDevices replaces, not merges), all under homeHex
+		const persisted = jsonStore.get(store.nodes)
+		expect(persisted[HOME]['11'].name).toBe('Kitchen')
+		expect(persisted[HOME]['11'].hassDevices.climate_x.persistent).toBe(
+			true,
+		)
+		expect(persisted[HOME]['11'].hassDevices.sensor_old).toBeUndefined()
 	})
 })
 
@@ -283,7 +379,7 @@ describe('ZwaveClient.getStoreNodes() home-id scoping', () => {
 			[HOME]: { '3': { name: 'Mine' } },
 			'0xother': { '3': { name: 'Theirs' } },
 		})
-		const { zwave } = makeClient(3, { id: 3, hassDevices: {} })
+		const { zwave } = newInitClient()
 
 		await zwave.getStoreNodes()
 
@@ -292,7 +388,7 @@ describe('ZwaveClient.getStoreNodes() home-id scoping', () => {
 
 	it('returns {} when the homeHex bucket is absent', async () => {
 		await jsonStore.put(store.nodes, { '0xother': { '3': {} } })
-		const { zwave } = makeClient(3, { id: 3, hassDevices: {} })
+		const { zwave } = newInitClient()
 
 		await zwave.getStoreNodes()
 
@@ -301,7 +397,7 @@ describe('ZwaveClient.getStoreNodes() home-id scoping', () => {
 
 	it('migrates a legacy flat (non-0x-keyed) nodes.json to a homeHex-scoped file', async () => {
 		await jsonStore.put(store.nodes, { '3': { name: 'Legacy' } })
-		const { zwave } = makeClient(3, { id: 3, hassDevices: {} })
+		const { zwave } = newInitClient()
 
 		await zwave.getStoreNodes()
 
@@ -318,7 +414,7 @@ describe('ZwaveClient.getStoreNodes() home-id scoping', () => {
 			{ name: 'One' },
 			{ name: 'Two' },
 		])
-		const { zwave } = makeClient(1, { id: 1, hassDevices: {} })
+		const { zwave } = newInitClient()
 
 		await zwave.getStoreNodes()
 
@@ -348,7 +444,7 @@ describe('synchronous projection ordering (emitNodeUpdate)', () => {
 		// proof that HASS persistence is fully "fake-node compatible": the
 		// projection is applied directly to whatever object sits in `_nodes`.
 		const node: any = { id: 5, hassDevices: {} }
-		const { zwave, socket } = makeClient(5, node)
+		const { zwave, socket } = makeMutatorClient(5, node)
 
 		zwave.addDevice(
 			{ id: 'x', type: 'sensor', object_id: 'temp' } as any,
