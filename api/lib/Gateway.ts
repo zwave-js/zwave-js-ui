@@ -299,13 +299,9 @@ export default class Gateway {
 						hassDevices,
 					}),
 				writeCoverStop: async (value) => {
-					const node = getZwave().nodes.get(value.nodeId)
-					const existing =
-						node?.values[value.id.replace(value.nodeId + '-', '')]
-					if (!existing) return
 					await getZwave().writeValue(
 						{
-							...existing,
+							...value,
 							property: 'Up',
 						},
 						false,

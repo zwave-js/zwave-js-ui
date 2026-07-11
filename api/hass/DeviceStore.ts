@@ -75,6 +75,9 @@ export class HassDeviceStore {
 		const copiedDevices = copyDevices(devices)
 		this.port.setNodeDevices(nodeId, copiedDevices)
 		await this.port.updateStoreNodes()
-		this.port.emitNodeUpdate(nodeId, copiedDevices)
+		this.port.emitNodeUpdate(
+			nodeId,
+			this.port.getNodeDevices(nodeId) ?? copiedDevices,
+		)
 	}
 }
