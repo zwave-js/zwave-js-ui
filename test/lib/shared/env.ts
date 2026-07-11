@@ -45,6 +45,7 @@ vi.mock('#api/config/app.ts', () => ({
 	base: '/',
 	port: 0,
 	host: undefined,
+	sslDisabled: () => process.env.FORCE_DISABLE_SSL === 'true',
 }))
 
 export function ensureTestEnv(): string {

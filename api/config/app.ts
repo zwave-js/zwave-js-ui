@@ -87,3 +87,13 @@ export const sessionSecret: string = resolveSessionSecret()
 export const base: string = process.env.BASE_PATH || '/'
 export const port: string | number = process.env.PORT || 8091
 export const host: string | undefined = process.env.HOST // by default undefined, so it will listen on all interfaces both ipv4 and ipv6
+
+/**
+ * Whether HTTPS/TLS should be force-disabled regardless of the persisted
+ * `gateway.https` setting or the `HTTPS` env var - read fresh from
+ * `process.env` on every call (not memoized at module load like the
+ * constants above), since tests toggle this between cases.
+ */
+export function sslDisabled(): boolean {
+	return process.env.FORCE_DISABLE_SSL === 'true'
+}
