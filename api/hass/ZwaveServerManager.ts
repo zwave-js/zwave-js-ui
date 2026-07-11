@@ -79,6 +79,14 @@ export default class ZwaveServerManager {
 	private _server: ZwavejsServer | null = null
 	private readonly host: ZwaveServerHost
 
+	// The single in-flight `destroy()` teardown, and the exact server instance
+	// it captured. Together they scope the destroy to ONE upstream
+	// `server.destroy()` per captured instance: concurrent `destroy()` calls
+	// for the same instance share this promise, while a `destroy()` issued
+	// after the instance was replaced starts a fresh teardown for the new one.
+	private destroyInFlight: Promise<void> | undefined
+	private destroying: ZwavejsServer | null = null
+
 	public constructor(host: ZwaveServerHost) {
 		this.host = host
 	}
@@ -153,12 +161,49 @@ export default class ZwaveServerManager {
 	 * Tear down the server, awaiting `destroy()` so the caller can guarantee
 	 * the server is gone before it destroys the driver. Idempotent: a no-op
 	 * when no server was ever created.
+	 *
+	 * Concurrency-safe by generation of the captured instance:
+	 * - Concurrent `destroy()` calls for the SAME captured server share a
+	 *   single in-flight teardown, so the upstream `server.destroy()` runs
+	 *   exactly once.
+	 * - The reference is cleared only if the instance that was destroyed is
+	 *   still the current one, so a replacement server created (via the
+	 *   `server` setter) while an older destroy is in flight survives.
+	 * - A rejected `destroy()` leaves the reference intact (retryable) and the
+	 *   rejection propagates to the caller (observable); the in-flight guard is
+	 *   always released so a later `destroy()` can retry.
 	 */
 	public async destroy(): Promise<void> {
-		if (this._server) {
-			await this._server.destroy()
-			this._server = null
+		const server = this._server
+		if (!server) return
+
+		if (this.destroyInFlight && this.destroying === server) {
+			return this.destroyInFlight
 		}
+
+		this.destroying = server
+		const run = (async () => {
+			try {
+				await server.destroy()
+				if (this._server === server) {
+					this._server = null
+				}
+			} finally {
+				// Release the in-flight guard only if THIS captured server is
+				// still the one being destroyed - a replacement destroy (of a
+				// server created via the `server` setter while this one was in
+				// flight) will have moved `destroying` on to its own instance,
+				// and must not have its guard cleared by this older run. The
+				// captured-instance identity is used rather than the promise so
+				// the guard doesn't reference `run` inside its own initializer.
+				if (this.destroying === server) {
+					this.destroyInFlight = undefined
+					this.destroying = null
+				}
+			}
+		})()
+		this.destroyInFlight = run
+		return run
 	}
 
 	/**
