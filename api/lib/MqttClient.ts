@@ -55,10 +55,26 @@ export interface MqttClientEventCallbacks {
 	apiCall: (topic: string, apiName: string, payload: any) => void
 	connect: () => void
 	brokerStatus: (online: boolean) => void
-	hassStatus: (online: boolean) => void
 }
 
 export type MqttClientEvents = Extract<keyof MqttClientEventCallbacks, string>
+
+/**
+ * A listener for a scoped exact-topic subscription (see
+ * {@link default.subscribeExact}); receives the raw string payload, or
+ * `undefined` when the received payload was not decodable text.
+ */
+export type MqttExactListener = (payload: string | undefined) => void
+
+/**
+ * Handle returned by {@link default.subscribeExact}. Disposing it removes
+ * exactly the one listener it registered and, when it was the last listener for
+ * its topic, unsubscribes that exact topic from the broker. Idempotent and safe
+ * to call after the client has closed.
+ */
+export interface MqttSubscription {
+	dispose(): void
+}
 
 class MqttClient extends TypedEventEmitter<MqttClientEventCallbacks> {
 	// Assigned synchronously at the top of _init(), which the constructor always invokes before any other method can observe `this`
@@ -73,6 +89,16 @@ class MqttClient extends TypedEventEmitter<MqttClientEventCallbacks> {
 	private error?: string
 	private closed = false
 	private retrySubTimeout: NodeJS.Timeout | null = null
+	// Scoped exact-topic subscriptions (e.g. the Home Assistant
+	// `homeassistant/status` birth/will topic). Unlike the prefixed
+	// write/action subscriptions, these are owned by a subsystem for the
+	// duration of ITS own lifecycle: an owner registers a listener via
+	// `subscribeExact` and disposes it when it stops. They are (re)subscribed on
+	// every `_onConnect` (reconnect-safe) and dispatched in `_onMessageReceived`
+	// before any prefix handling. Keeping them here - instead of an
+	// unconditional subscribe - means `MqttClient` no longer owns any Home
+	// Assistant (or other subsystem) concern.
+	private exactSubscriptions = new Map<string, Set<MqttExactListener>>()
 	private _closeTimeout: NodeJS.Timeout | null = null
 	private storeManager: Manager | null = null
 
@@ -85,8 +111,6 @@ class MqttClient extends TypedEventEmitter<MqttClientEventCallbacks> {
 	private static NAME_PREFIX = 'ZWAVE_GATEWAY-'
 
 	private static ACTIONS: string[] = ['broadcast', 'api', 'multicast']
-
-	private static HASS_WILL = 'homeassistant/status'
 
 	private static STATUS_TOPIC = 'status'
 	private static VERSION_TOPIC = 'version'
@@ -138,6 +162,11 @@ class MqttClient extends TypedEventEmitter<MqttClientEventCallbacks> {
 				return
 			}
 			this.closed = true
+
+			// Drop scoped exact-topic subscriptions so a closed client can never
+			// re-subscribe them on a future connect. Owners still dispose their
+			// own handles independently (both are idempotent).
+			this.exactSubscriptions.clear()
 
 			if (this.retrySubTimeout) {
 				clearTimeout(this.retrySubTimeout)
@@ -290,6 +319,79 @@ class MqttClient extends TypedEventEmitter<MqttClientEventCallbacks> {
 	}
 
 	/**
+	 * Register a scoped subscription to an EXACT broker topic (never prefixed),
+	 * delivering that topic's raw string payload to `listener`. Returns an
+	 * idempotent {@link MqttSubscription} disposer.
+	 *
+	 * Unlike {@link subscribe} (used for the prefixed write/action topics this
+	 * client owns), scoped subscriptions are owned by a caller for the duration
+	 * of its own lifecycle - e.g. the Home Assistant discovery subsystem
+	 * subscribes `homeassistant/status` only while it is started. They are
+	 * reconnect-safe: `_onConnect` (re)subscribes every registered exact topic,
+	 * so a caller that subscribes once keeps receiving the topic across
+	 * reconnects until it disposes. Disposing removes exactly this listener and,
+	 * when it was the topic's last listener, unsubscribes the topic from the
+	 * broker. Interpreting the payload (an online check, etc.) is the caller's
+	 * concern, so `MqttClient` carries no subsystem-specific status logic.
+	 */
+	subscribeExact(
+		topic: string,
+		listener: MqttExactListener,
+	): MqttSubscription {
+		let listeners = this.exactSubscriptions.get(topic)
+		const firstForTopic = !listeners || listeners.size === 0
+		if (!listeners) {
+			listeners = new Set()
+			this.exactSubscriptions.set(topic, listeners)
+		}
+		listeners.add(listener)
+
+		// Subscribe the broker topic now when already connected and this is its
+		// first listener; otherwise `_onConnect` will (re)subscribe it. A
+		// not-yet-connected attempt rejects (queued in `toSubscribe`) - swallow
+		// it, the topic is tracked in `exactSubscriptions` regardless.
+		if (firstForTopic && this.client?.connected) {
+			this.subscribe(topic, { addPrefix: false, qos: 1 }).catch(() => {
+				/* (re)subscribed on the next connect */
+			})
+		}
+
+		let disposed = false
+		return {
+			dispose: (): void => {
+				if (disposed) return
+				disposed = true
+				const set = this.exactSubscriptions.get(topic)
+				if (!set) return
+				set.delete(listener)
+				if (set.size === 0) {
+					this.exactSubscriptions.delete(topic)
+					this.unsubscribeBroker(topic)
+				}
+			},
+		}
+	}
+
+	/**
+	 * Best-effort unsubscribe of an exact broker topic plus removal of any
+	 * pending retry for it. Safe when disconnected/closed: the topic is already
+	 * gone from `exactSubscriptions`, so it will not be re-subscribed on a
+	 * future connect either way.
+	 */
+	private unsubscribeBroker(topic: string): void {
+		this.toSubscribe.delete(topic)
+		if (this.client?.connected) {
+			this.client.unsubscribe(topic, (err?: Error) => {
+				if (err) {
+					logger.error(`Error unsubscribing from ${topic}`, err)
+				} else {
+					logger.info(`Unsubscribed from ${topic}`)
+				}
+			})
+		}
+	}
+
+	/**
 	 * Method used to publish an update
 	 */
 	publish(
@@ -431,9 +533,15 @@ class MqttClient extends TypedEventEmitter<MqttClientEventCallbacks> {
 
 		const subscribePromises: Promise<void>[] = []
 
-		subscribePromises.push(
-			this.subscribe(MqttClient.HASS_WILL, { addPrefix: false, qos: 1 }),
-		)
+		// (Re)subscribe every scoped exact topic an owner registered via
+		// `subscribeExact` (e.g. `homeassistant/status`). Doing this on every
+		// connect makes those subscriptions reconnect-safe without MqttClient
+		// owning any of them; when none are registered this is a no-op.
+		for (const topic of this.exactSubscriptions.keys()) {
+			subscribePromises.push(
+				this.subscribe(topic, { addPrefix: false, qos: 1 }),
+			)
+		}
 
 		// subscribe to actions
 		for (let i = 0; i < MqttClient.ACTIONS.length; i++) {
@@ -508,11 +616,15 @@ class MqttClient extends TypedEventEmitter<MqttClientEventCallbacks> {
 
 		logger.log('info', `Message received on ${topic}: %o`, parsed)
 
-		if (topic === MqttClient.HASS_WILL) {
-			if (typeof parsed === 'string') {
-				this.emit('hassStatus', parsed.toLowerCase() === 'online')
-			} else {
-				logger.error('Invalid payload sent to Hass Will topic')
+		// Deliver scoped exact-topic messages (e.g. `homeassistant/status`) to
+		// their registered listeners before any prefix handling. The payload is
+		// handed over as raw text; interpreting it (online check, an "invalid
+		// payload" complaint, etc.) is the owning subsystem's concern.
+		const exactListeners = this.exactSubscriptions.get(topic)
+		if (exactListeners && exactListeners.size > 0) {
+			const text = typeof parsed === 'string' ? parsed : undefined
+			for (const listener of exactListeners) {
+				listener(text)
 			}
 			return
 		}
