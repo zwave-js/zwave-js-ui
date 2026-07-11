@@ -22,7 +22,6 @@ export async function seedUser(
 }
 
 export function signUserToken(user: { username: string }): string {
-	// Mirrors how /api/authenticate signs a token for a logged-in user
 	return jwt.sign({ username: user.username }, TEST_SESSION_SECRET, {
 		expiresIn: '1d',
 	})

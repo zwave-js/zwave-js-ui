@@ -12,9 +12,6 @@ import { createFakeGateway } from './fakes.ts'
 import { setSettings } from './authHelpers.ts'
 import { enumerateSerialPorts } from '#api/lib/serialPorts.ts'
 
-// settings.zwave is deliberately kept falsy in every payload here so the
-// real (unmocked) startGateway() invoked by POST /api/restart never
-// constructs a real ZWaveClient/MqttClient
 describe('HTTP contract: settings, restart, statistics, versions', () => {
 	let harness: HttpHarness
 
@@ -209,8 +206,6 @@ describe('HTTP contract: settings, restart, statistics, versions', () => {
 				message: 'Gateway restarted successfully',
 			})
 			expect(gw.close).toHaveBeenCalledOnce()
-			// startGateway() replaces gw with a brand-new real Gateway
-			// instance, leaving restarting false for the next request
 			expect(harness.testHooks.isRestarting()).toBe(false)
 		})
 	})

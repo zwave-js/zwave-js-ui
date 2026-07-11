@@ -2,8 +2,6 @@ import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest'
 import { createHttpHarness, type HttpHarness } from './harness.ts'
 import { seedUser, signUserToken, setSettings } from './authHelpers.ts'
 
-// The login-rate-limit quirk lives in its own file (authRateLimit.test.ts)
-// so exhausting loginLimiter's budget there can't affect these tests
 describe('HTTP contract: auth & password', () => {
 	let harness: HttpHarness
 
@@ -16,7 +14,6 @@ describe('HTTP contract: auth & password', () => {
 	})
 
 	afterEach(async () => {
-		// Reset auth since several tests assume the default unauthenticated bypass
 		await setSettings(harness, { gateway: {} })
 	})
 
@@ -63,8 +60,6 @@ describe('HTTP contract: auth & password', () => {
 				password: 'wrong-password',
 			})
 
-			// Authentication failures resolve with HTTP 200, not 401/403;
-			// the caller must inspect success
 			expect(res.status).toBe(200)
 			expect(res.body).toEqual({
 				success: false,
@@ -136,8 +131,6 @@ describe('HTTP contract: auth & password', () => {
 
 			const res = await harness.request.get('/api/logout')
 
-			// This is the same HTTP-200 envelope isAuthenticated itself
-			// produces; the route handler body never runs
 			expect(res.status).toBe(200)
 			expect(res.body).toEqual({
 				success: false,
@@ -171,9 +164,6 @@ describe('HTTP contract: auth & password', () => {
 				confirmNew: 'y',
 			})
 
-			// With no session user, the handler's own lookup throws and is
-			// caught by its try/catch, so this looks like a generic
-			// server failure rather than an auth error
 			expect(res.status).toBe(200)
 			expect(res.body.success).toBe(false)
 			expect(res.body.message).toBe('Error while updating passwords')

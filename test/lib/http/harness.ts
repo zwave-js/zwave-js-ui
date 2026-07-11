@@ -15,14 +15,10 @@ type JsonStoreModule = typeof JsonStoreModuleNamespace
 type StoreConfigModule = typeof StoreConfigModuleNamespace
 type GatewayModule = typeof GatewayModuleNamespace
 
-// Narrows setGateway to accept a structurally-compatible FakeGateway,
-// since the real Gateway class's private fields make it otherwise
-// impossible for a plain fake object to satisfy
 type TestHooks = Omit<AppInstance, 'setGateway'> & {
 	setGateway(value: FakeGateway | undefined): void
 }
 
-// Hoisted so enumerateSerialPorts exists before vi.mock's factory runs
 const { enumerateSerialPorts } = vi.hoisted(() => ({
 	enumerateSerialPorts: vi.fn(() => Promise.resolve<string[]>([])),
 }))

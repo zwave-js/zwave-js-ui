@@ -6,8 +6,6 @@ import { createHttpHarness, type HttpHarness } from './harness.ts'
 import { getTestStoreDir } from './env.ts'
 import { createFakeGateway } from './fakes.ts'
 
-// The repo-root snippets/ directory production loadSnippets() bundles at
-// startup, independent of storeDir/snippetsDir
 const BUNDLED_SNIPPETS_DIR = path.join(
 	path.dirname(fileURLToPath(import.meta.url)),
 	'..',
@@ -16,7 +14,6 @@ const BUNDLED_SNIPPETS_DIR = path.join(
 	'snippets',
 )
 
-// Every .js file the repo ships under snippets/
 const EXPECTED_BUNDLED_SNIPPET_NAMES = [
 	'access-store-dir',
 	'clone-config',
@@ -222,7 +219,6 @@ describe('HTTP contract: store, upload, snippets', () => {
 			expect(res.headers['content-disposition']).toMatch(
 				/attachment; filename="zwave-js-ui-store\.zip"/,
 			)
-			// ZIP local file header signature ("PK\x03\x04")
 			expect((res.body as Buffer).subarray(0, 4).toString('hex')).toBe(
 				'504b0304',
 			)
@@ -251,8 +247,7 @@ describe('HTTP contract: store, upload, snippets', () => {
 			'streams a ZIP archive body while advertising Content-Type: application/json ' +
 				'(preserved quirk: jsonStore.backup() never overrides the default JSON content type)',
 			async () => {
-				// backup() only archives store files that already exist on
-				// disk, so persist at least one to avoid an empty ZIP
+				// Persist one file because backups only include files already on disk
 				await harness.jsonStore.put(harness.store.settings, {
 					zwave: {},
 				})

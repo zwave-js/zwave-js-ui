@@ -2,9 +2,6 @@ import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest'
 import { createHttpHarness, type HttpHarness } from './harness.ts'
 import { createFakeGateway } from './fakes.ts'
 
-// Every handler shares the same try { gw.zwave.<method>(...) } catch
-// { success: false } shape, so each route's tests cover the happy path,
-// request validation failures, and the no-gateway-attached failure
 describe('HTTP contract: configuration templates', () => {
 	let harness: HttpHarness
 

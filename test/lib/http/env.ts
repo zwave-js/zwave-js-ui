@@ -3,18 +3,12 @@ import { mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 
-// Mocked because dotenv's default override:false only skips vars already
-// present in process.env, so a real .env.app file would repopulate the
-// vars ensureTestEnv() just cleared
 vi.mock('dotenv', () => ({
 	config: () => ({ parsed: {} }),
 }))
 
 let storeDir: string | undefined
 
-// Every env var api/app.ts or api/config/app.ts reads directly, snapshotted
-// before mutation and restored by cleanupTestEnv() so ambient shell/CI
-// values never leak into the app under test
 const APP_ENV_VARS = [
 	'HOST',
 	'PORT',
@@ -42,8 +36,6 @@ const APP_ENV_VARS = [
 
 let envSnapshot: Record<string, string | undefined> | undefined
 
-// Deterministic so JWTs signed/verified across requests in a test stay
-// stable without depending on a persisted secret file
 export const TEST_SESSION_SECRET =
 	'http-contract-test-secret-do-not-use-in-production'
 
@@ -60,9 +52,7 @@ export function ensureTestEnv(): string {
 		)
 		process.env.STORE_DIR = storeDir
 		process.env.SESSION_SECRET = TEST_SESSION_SECRET
-		// TZ/LOCALE stay unset rather than a placeholder because
-		// api/app.ts echoes them with no || fallback, so unset vs ''
-		// produce different JSON responses
+		// Keep TZ and LOCALE absent because the response distinguishes them from empty strings
 	}
 	return storeDir
 }

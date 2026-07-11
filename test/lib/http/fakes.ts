@@ -1,7 +1,3 @@
-// Plain, vi.fn()-based fakes for the Z-Wave/MQTT collaborators HTTP routes
-// read through gw/gw.zwave/gw.mqtt: structural typing lets these stand in
-// for real Gateway/ZWaveClient/MqttClient instances without touching real
-// hardware, serial ports, or MQTT brokers
 import { vi } from 'vitest'
 
 export interface FakeZwaveClient {

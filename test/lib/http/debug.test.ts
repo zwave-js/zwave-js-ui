@@ -7,18 +7,13 @@ interface DebugManagerLike {
 	cancelSession(): Promise<void>
 }
 
-// Exercises the real debugManager singleton rather than mocking it: its
-// session methods only touch the isolated per-test STORE_DIR and the fake
-// ZWaveClient's vi.fn() collaborators, so it's safe and more faithful than
-// a hand-rolled mock. Every test cleans up any session it starts.
 describe('HTTP contract: debug capture', () => {
 	let harness: HttpHarness
 	let debugManager: DebugManagerLike
 
 	beforeAll(async () => {
 		harness = await createHttpHarness()
-		// Dynamic import so it resolves after createHttpHarness() sets
-		// STORE_DIR, keeping debugTempDir out of the real project store
+		// Import after harness setup so DebugManager uses the isolated store
 		debugManager = (await import('#api/lib/DebugManager.ts'))
 			.default as DebugManagerLike
 	})
@@ -142,8 +137,7 @@ describe('HTTP contract: debug capture', () => {
 				'504b0304',
 			)
 
-			// archive.on('end', cleanup) runs asynchronously after the
-			// response finishes, so status only reports inactive afterward
+			// Archive cleanup runs after the response finishes
 			const status = await harness.request.get('/api/debug/status')
 			expect(status.body).toEqual({ success: true, active: false })
 		})

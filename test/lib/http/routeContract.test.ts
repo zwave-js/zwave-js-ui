@@ -3,27 +3,19 @@ import express, { type Express } from 'express'
 import { createHttpHarness, type HttpHarness } from './harness.ts'
 import { createFakeGateway } from './fakes.ts'
 
-// Every {method, path} route api/app.ts registers, listed independently
-// (not introspected from app.ts) so a renamed/removed/re-methoded route
-// fails loudly here too. Response content is characterized per route group
-// in auth.test.ts, health.test.ts, settings.test.ts, importExport.test.ts,
-// configurationTemplates.test.ts, store.test.ts, and debug.test.ts.
 const ROUTES: Array<{
 	method: 'get' | 'post' | 'put' | 'delete'
 	path: string
 }> = [
-	// auth / password (4)
 	{ method: 'get', path: '/api/auth-enabled' },
 	{ method: 'post', path: '/api/authenticate' },
 	{ method: 'get', path: '/api/logout' },
 	{ method: 'put', path: '/api/password' },
 
-	// health / version (3)
 	{ method: 'get', path: '/health' },
 	{ method: 'get', path: '/health/zwave' },
 	{ method: 'get', path: '/version' },
 
-	// settings / restart / statistics / versions (6)
 	{ method: 'get', path: '/api/settings' },
 	{ method: 'get', path: '/api/serial-ports' },
 	{ method: 'post', path: '/api/settings' },
@@ -31,11 +23,9 @@ const ROUTES: Array<{
 	{ method: 'post', path: '/api/statistics' },
 	{ method: 'post', path: '/api/versions' },
 
-	// import / export (2)
 	{ method: 'get', path: '/api/exportConfig' },
 	{ method: 'post', path: '/api/importConfig' },
 
-	// configuration templates (8)
 	{ method: 'get', path: '/api/configuration-templates' },
 	{ method: 'post', path: '/api/configuration-templates' },
 	{ method: 'get', path: '/api/configuration-templates/export' },
@@ -48,7 +38,6 @@ const ROUTES: Array<{
 	{ method: 'delete', path: '/api/configuration-templates/template-1' },
 	{ method: 'post', path: '/api/configuration-templates/template-1/apply' },
 
-	// store / upload / snippets (8)
 	{ method: 'get', path: '/api/store' },
 	{ method: 'put', path: '/api/store' },
 	{ method: 'delete', path: '/api/store' },
@@ -58,17 +47,12 @@ const ROUTES: Array<{
 	{ method: 'post', path: '/api/store/upload' },
 	{ method: 'get', path: '/api/snippet' },
 
-	// debug (4)
 	{ method: 'get', path: '/api/debug/status' },
 	{ method: 'post', path: '/api/debug/start' },
 	{ method: 'post', path: '/api/debug/stop' },
 	{ method: 'post', path: '/api/debug/cancel' },
 ]
 
-// One harness for the whole file, in a beforeAll/afterAll, not per describe
-// block: harness.ts caches api/app.ts's module import per file, so a second
-// createHttpHarness() call here would reuse that cached module while
-// pointing at the first harness's already-`rmSync`'d STORE_DIR
 let harness: HttpHarness
 
 beforeAll(async () => {
@@ -88,9 +72,8 @@ describe('HTTP contract: full 35-route inventory', () => {
 		'$method $path is a registered route (not a 404)',
 		async ({ method, path }) => {
 			let req = harness.request[method](path)
-			// Superagent would otherwise try to auto-parse this ZIP body as
-			// JSON and throw before the status code is ever seen
 			if (path === '/api/store/backup') {
+				// Parse the ZIP as bytes because its JSON content type triggers Superagent's JSON parser
 				req = req.buffer(true).parse((response, callback) => {
 					const chunks: Buffer[] = []
 					response.on('data', (chunk: Buffer) => chunks.push(chunk))
@@ -110,8 +93,6 @@ describe('HTTP contract: full 35-route inventory', () => {
 	})
 
 	it('does not duplicate bundled snippets when loadSnippets() runs more than once', async () => {
-		// Regression for a duplicate-snippet bug that used to appear whenever
-		// this file created a second harness, calling loadSnippets() twice
 		await harness.testHooks.loadSnippets()
 		await harness.testHooks.loadSnippets()
 
@@ -135,26 +116,19 @@ describe('HTTP contract: full 35-route inventory', () => {
 	})
 })
 
-// Literal route *patterns* (e.g. /health/:client, not a concrete test
-// path), compared below against Express's actual registered stack to catch
-// drift the concrete ROUTES list above can't: a route added, removed,
-// renamed, or changed method without this list being updated
 const EXPECTED_REGISTERED_ROUTES: Array<{
 	method: 'get' | 'post' | 'put' | 'delete'
 	path: string
 }> = [
-	// auth / password (4)
 	{ method: 'get', path: '/api/auth-enabled' },
 	{ method: 'post', path: '/api/authenticate' },
 	{ method: 'get', path: '/api/logout' },
 	{ method: 'put', path: '/api/password' },
 
-	// health / version (3)
 	{ method: 'get', path: '/health' },
 	{ method: 'get', path: '/health/:client' },
 	{ method: 'get', path: '/version' },
 
-	// settings / restart / statistics / versions (6)
 	{ method: 'get', path: '/api/settings' },
 	{ method: 'get', path: '/api/serial-ports' },
 	{ method: 'post', path: '/api/settings' },
@@ -162,11 +136,9 @@ const EXPECTED_REGISTERED_ROUTES: Array<{
 	{ method: 'post', path: '/api/statistics' },
 	{ method: 'post', path: '/api/versions' },
 
-	// import / export (2)
 	{ method: 'get', path: '/api/exportConfig' },
 	{ method: 'post', path: '/api/importConfig' },
 
-	// configuration templates (8)
 	{ method: 'get', path: '/api/configuration-templates' },
 	{ method: 'post', path: '/api/configuration-templates' },
 	{ method: 'get', path: '/api/configuration-templates/export' },
@@ -179,7 +151,6 @@ const EXPECTED_REGISTERED_ROUTES: Array<{
 	{ method: 'delete', path: '/api/configuration-templates/:id' },
 	{ method: 'post', path: '/api/configuration-templates/:id/apply' },
 
-	// store / upload / snippets (8)
 	{ method: 'get', path: '/api/store' },
 	{ method: 'put', path: '/api/store' },
 	{ method: 'delete', path: '/api/store' },
@@ -189,16 +160,12 @@ const EXPECTED_REGISTERED_ROUTES: Array<{
 	{ method: 'post', path: '/api/store/upload' },
 	{ method: 'get', path: '/api/snippet' },
 
-	// debug (4)
 	{ method: 'get', path: '/api/debug/status' },
 	{ method: 'post', path: '/api/debug/start' },
 	{ method: 'post', path: '/api/debug/stop' },
 	{ method: 'post', path: '/api/debug/cancel' },
 ]
 
-// Express doesn't export a type for its internal router stack, so this
-// narrows just the fields every layer actually has (route layers and
-// `router`-named mount layers alike)
 interface ExpressRouteLayer {
 	route?: {
 		path: string
@@ -213,12 +180,8 @@ interface ExpressAppInternals {
 	_router: { stack: ExpressRouteLayer[] }
 }
 
-// Reverses path-to-regexp@0.1.x's compiled mount-path regexp (bundled with
-// this repo's pinned Express 4.x) back into a literal prefix, e.g.
-// /^\/api\/sub\/?(?=\/|$)/i becomes '/api/sub'. Only that one literal-mount
-// shape is supported; params/wildcards aren't invertible and none exist in
-// this app's mount points today, so callers get undefined for those
 function extractLiteralMountPrefix(regexp: RegExp): string | undefined {
+	// Decode only the literal mount shape emitted by Express 4
 	const match = /^\^((?:\\\/[^\\/]+)*)\\\/\?\(\?=\\\/\|\$\)$/.exec(
 		regexp.source,
 	)
@@ -226,13 +189,6 @@ function extractLiteralMountPrefix(regexp: RegExp): string | undefined {
 	return match[1].replace(/\\\//g, '/')
 }
 
-// Recursively walks the real Express router stack, including every mounted
-// sub-router's own stack at any nesting depth, so a route registered inside
-// a mounted sub-router (e.g. app.use('/api/sub', subRouter)) is reported
-// with its mount prefix intact instead of being silently missed by a
-// flat, top-level-only scan. Only route layers count; bare middleware
-// (static serving, the SPA fallback, error handlers, ...) has no `.route`
-// and is skipped.
 function getActualRegisteredRoutes(
 	app: Express,
 ): Array<{ method: string; path: string }> {
@@ -297,8 +253,6 @@ describe('HTTP contract: complete Express route inventory (drift detection)', ()
 })
 
 describe('getActualRegisteredRoutes: recursive router traversal', () => {
-	// Exercises the traversal algorithm against disposable apps built inline,
-	// independent of api/app.ts (which has no mounted sub-routers today)
 	it('detects a route registered on a mounted sub-router, with the mount prefix preserved', () => {
 		const subRouter = express.Router()
 		subRouter.get('/thing', (_req, res) => res.end())

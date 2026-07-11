@@ -95,9 +95,6 @@ describe('HTTP contract: health & version', () => {
 			async () => {
 				const res = await harness.request.get('/health/not-a-client')
 
-				// The handler doesn't return after the first res.send(), so it
-				// falls through to a second send() against an already-sent
-				// response; Express/Node silently ignore that second write
 				expect(res.status).toBe(500)
 				expect(res.text).toBe("Requested client doesn 't exist")
 			},
