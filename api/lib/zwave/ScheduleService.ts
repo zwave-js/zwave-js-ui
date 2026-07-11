@@ -142,12 +142,8 @@ export class ScheduleService {
 			const driver = this._driver.getDriver()
 			if (!driver) return undefined
 
-			const userCodes = UserCodeCC.getSupportedUsersCached(
-				driver,
-				endpoint,
-			)
-
-			if (userCodes == null) return undefined
+			const userCodes =
+				UserCodeCC.getSupportedUsersCached(driver, endpoint) ?? 0
 
 			const numSlots = {
 				numWeekDaySlots: ScheduleEntryLockCC.getNumWeekDaySlotsCached(
