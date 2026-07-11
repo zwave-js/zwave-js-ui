@@ -30,11 +30,13 @@ export type SocketManagerEvents = Extract<
  * The constructor
  */
 class SocketManager extends TypedEventEmitter<SocketManagerEventCallbacks> {
-	public io: SocketServer
+	// Assigned in `bindServer()`, which app.ts always calls once at startup
+	// (via `setupSocket`) before any other consumer reads `io`.
+	public io!: SocketServer
 
 	private activeSockets: Map<string, Socket> = new Map()
 
-	authMiddleware: (socket: Socket, next: () => void) => void | undefined
+	authMiddleware?: (socket: Socket, next: () => void) => void
 
 	async close(): Promise<void> {
 		if (!this.io) return
@@ -83,8 +85,7 @@ class SocketManager extends TypedEventEmitter<SocketManagerEventCallbacks> {
 
 		// register inbound events from this socket
 		// subscribe/unsubscribe are handled directly in app.ts, skip them here
-		for (const k in inboundEvents) {
-			const eventName = inboundEvents[k]
+		for (const eventName of Object.values(inboundEvents)) {
 			if (
 				eventName === inboundEvents.subscribe ||
 				eventName === inboundEvents.unsubscribe

@@ -21,6 +21,7 @@ import { ensureDir } from './utils.ts'
 import { Manager } from 'mqtt-jsonl-store'
 import { join } from 'node:path'
 import url from 'node:url'
+import { getErrorMessage } from './errors.ts'
 
 const logger = module('Mqtt')
 
@@ -60,18 +61,24 @@ export interface MqttClientEventCallbacks {
 export type MqttClientEvents = Extract<keyof MqttClientEventCallbacks, string>
 
 class MqttClient extends TypedEventEmitter<MqttClientEventCallbacks> {
-	private config: MqttConfig
-	private toSubscribe: Map<
+	// `config`/`toSubscribe` are assigned synchronously at the very top of
+	// `_init`, which the constructor always invokes (fire-and-forget) before
+	// any other method can observe `this`.
+	private config!: MqttConfig
+	private toSubscribe!: Map<
 		string,
 		IClientSubscribeOptions & { addPrefix: boolean }
 	>
-	private _clientID: string
-	private client: Client
+	// `_clientID`/`client` stay unset for the lifetime of the instance when
+	// MQTT is disabled (`_init` returns early in that case), so they're
+	// genuinely optional.
+	private _clientID?: string
+	private client?: Client
 	private error?: string
-	private closed: boolean
-	private retrySubTimeout: NodeJS.Timeout | null
-	private _closeTimeout: NodeJS.Timeout | null
-	private storeManager: Manager | null
+	private closed = false
+	private retrySubTimeout: NodeJS.Timeout | null = null
+	private _closeTimeout: NodeJS.Timeout | null = null
+	private storeManager: Manager | null = null
 
 	static CLIENTS_PREFIX = '_CLIENTS'
 
@@ -143,8 +150,9 @@ class MqttClient extends TypedEventEmitter<MqttClientEventCallbacks> {
 
 			let resolved = false
 
-			if (this.client) {
-				const onClose = async (error: Error) => {
+			const client = this.client
+			if (client) {
+				const onClose = async (error?: Error) => {
 					// prevent multiple resolve
 					if (resolved) {
 						return
@@ -167,10 +175,10 @@ class MqttClient extends TypedEventEmitter<MqttClientEventCallbacks> {
 					logger.info('Client closed')
 					resolve()
 				}
-				this.client.end(false, {}, onClose)
+				client.end(false, {}, onClose)
 				// in case a clean close doesn't work, force close
 				this._closeTimeout = setTimeout(() => {
-					this.client.end(true, {}, onClose)
+					client.end(true, {}, onClose)
 				}, 5000)
 			} else {
 				this.removeAllListeners()
@@ -262,7 +270,7 @@ class MqttClient extends TypedEventEmitter<MqttClientEventCallbacks> {
 						this.toSubscribe.set(topic, options)
 						reject(err)
 					} else {
-						for (const res of granted) {
+						for (const res of granted ?? []) {
 							if (res.qos === 128) {
 								logger.error(
 									`Error subscribing to ${topic}, client doesn't have permission to subscribe to it`,
@@ -413,8 +421,8 @@ class MqttClient extends TypedEventEmitter<MqttClientEventCallbacks> {
 			client.on('error', this._onError.bind(this))
 			client.on('offline', this._onOffline.bind(this))
 		} catch (e) {
-			logger.error(`Error while connecting MQTT ${e.message}`)
-			this.error = e.message
+			logger.error(`Error while connecting MQTT ${getErrorMessage(e)}`)
+			this.error = getErrorMessage(e)
 		}
 	}
 

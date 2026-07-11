@@ -18,7 +18,7 @@ export const defaultLogFile = 'z-ui_%DATE%.log'
 
 export const disableColors = process.env.NO_LOG_COLORS === 'true'
 
-let transportsList: winston.transport[] = null
+let transportsList: winston.transport[] | null = null
 
 // ensure store and logs directories exist
 ensureDirSync(storeDir)
@@ -46,6 +46,15 @@ interface LoggerConfig {
 	logToFile: boolean
 	filePath: string
 }
+
+/**
+ * `DailyRotateFileTransportOptions` declares `filename` as optional, but
+ * `setupCleanJob`'s only caller (`customTransports`, below) always builds it
+ * from `LoggerConfig.filePath`, a required `string`. This narrower alias
+ * documents that real invariant instead of guarding against a case that
+ * never occurs.
+ */
+type CleanJobSettings = DailyRotateFileTransportOptions & { filename: string }
 
 /**
  * Generate logger configuration starting from settings.gateway
@@ -141,7 +150,7 @@ export function customTransports(config: LoggerConfig): winston.transport[] {
 				level: config.level,
 			})
 		} else {
-			const options: DailyRotateFileTransportOptions = {
+			const options: CleanJobSettings = {
 				filename: config.filePath,
 				auditFile: joinPath(logsDir, 'zui-logs.audit.json'),
 				datePattern: 'YYYY-MM-DD',
@@ -219,7 +228,7 @@ export function module(module: string): ModuleLogger {
 export function setupAll(config: DeepPartial<GatewayConfig>) {
 	stopCleanJob()
 
-	transportsList.forEach((t) => {
+	transportsList?.forEach((t) => {
 		if (typeof t.close === 'function') {
 			t.close()
 		}
@@ -227,14 +236,14 @@ export function setupAll(config: DeepPartial<GatewayConfig>) {
 
 	transportsList = null
 
-	logContainer.loggers.forEach((logger: ModuleLogger) => {
-		logger.setup(config)
+	logContainer.loggers.forEach((logger: winston.Logger) => {
+		;(logger as ModuleLogger).setup(config)
 	})
 }
 
-let cleanJob: NodeJS.Timeout
+let cleanJob: NodeJS.Timeout | undefined
 
-export function setupCleanJob(settings: DailyRotateFileTransportOptions) {
+export function setupCleanJob(settings: CleanJobSettings) {
 	if (cleanJob) {
 		return
 	}
