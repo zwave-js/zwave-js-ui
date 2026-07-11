@@ -88,15 +88,42 @@ describe('discoverValue - Central Scene / Scene Activation', () => {
 		)
 	})
 
-	it('uses a nested value template when the scene value carries a unit', () => {
-		const { payload } = discover(
+	it('maps a numeric Scene Activation sceneId with the plain (non-nested) template', () => {
+		// `sceneId` is ALWAYS a plain number on Scene Activation CC, so it
+		// takes the default, non-nested template. (This is the production-real
+		// counterpart to the nested case below - the previous fixture forced a
+		// unit onto `sceneId`, which cannot happen in production.)
+		const { device, payload } = discover(
 			buildValueId({
 				commandClass: CommandClasses['Scene Activation'],
 				property: 'sceneId',
 				propertyName: 'sceneId',
-				value: { value: 3, unit: 'x' } as any,
+				value: 3,
+			} as any),
+		)
+		expect(device.type).toBe('sensor')
+		expect(device.object_id).toBe('scene_state_sceneid')
+		expect(payload.payload.value_template).toBe(
+			"{{ value_json.value | default('') }}",
+		)
+	})
+
+	it('uses a nested value template when a Scene Activation value carries a unit (dimmingDuration)', () => {
+		// The ONLY Scene Activation CC value that carries a unit is
+		// `dimmingDuration`, a zwave-js Duration (`{ value, unit }`). Drive the
+		// nested `value_json.value.value` template branch with that real,
+		// production-possible value instead of an impossible unit-bearing
+		// `sceneId`.
+		const { device, payload } = discover(
+			buildValueId({
+				commandClass: CommandClasses['Scene Activation'],
+				property: 'dimmingDuration',
+				propertyName: 'dimmingDuration',
+				value: { value: 10, unit: 'seconds' } as any,
 			}),
 		)
+		expect(device.type).toBe('sensor')
+		expect(device.object_id).toBe('scene_state_dimmingduration')
 		expect(payload.payload.value_template).toBe(
 			"{{ value_json.value.value | default('') }}",
 		)
