@@ -35,6 +35,15 @@ export interface HassStatusSource {
 	): HassBrokerSubscription
 	on(event: 'brokerStatus', handler: (online: boolean) => void): unknown
 	off(event: 'brokerStatus', handler: (online: boolean) => void): unknown
+	/**
+	 * Re-emit the public, plugin-facing `hassStatus` compatibility event
+	 * carrying the parsed online/offline boolean. The concrete `MqttClient`
+	 * implements this by emitting on its own typed event bus. Routing the emit
+	 * back through the source (rather than re-adding an unconditional
+	 * `homeassistant/status` subscription to `MqttClient`) keeps the broker
+	 * subscription manager-owned while preserving the legacy plugin event.
+	 */
+	emitHassStatus(online: boolean): void
 }
 
 /**
@@ -187,6 +196,13 @@ export default class MqttDiscoveryManager {
 				`Home Assistant is ${online ? 'ONLINE' : 'OFFLINE'}`,
 			)
 			if (online) this.rediscoverAll()
+			// Re-emit the legacy plugin-facing compatibility event LAST, from
+			// this single manager-owned status subscription, so a plugin's
+			// `mqtt.on('hassStatus')` observes the same boolean value and the
+			// same once-per-message cadence as before the refactor - without a
+			// second, unconditional broker subscription and without letting a
+			// misbehaving listener block the internal quiesce/rediscovery above.
+			source.emitHassStatus(online)
 		}
 		const onBrokerStatus = (online: boolean): void => {
 			if (online) this.rediscoverAll()

@@ -94,6 +94,7 @@ function makeStatusSource() {
 		emitBroker(online: boolean): void
 		exactCount(topic?: string): number
 		brokerCount(): number
+		hassStatusEmits: boolean[]
 	} = {
 		subscribeExact(topic, listener) {
 			let set = exactListeners.get(topic)
@@ -120,6 +121,10 @@ function makeStatusSource() {
 			if (index >= 0) brokerListeners.splice(index, 1)
 			return source
 		},
+		emitHassStatus(online) {
+			source.hassStatusEmits.push(online)
+		},
+		hassStatusEmits: [],
 		deliver(topic, payload) {
 			for (const listener of [...(exactListeners.get(topic) ?? [])]) {
 				listener(payload)
@@ -322,6 +327,41 @@ describe('MqttDiscoveryManager scoped status subscription', () => {
 
 		expect(logger.info).toHaveBeenCalledWith('Home Assistant is OFFLINE')
 		expect(rediscoverAll).not.toHaveBeenCalled()
+	})
+
+	it('re-emits the plugin-facing hassStatus compatibility event for each status message', () => {
+		const { manager } = makeManager()
+		vi.spyOn(
+			manager.discoveryGenerator,
+			'rediscoverAll',
+		).mockImplementation(() => {})
+		const status = makeStatusSource()
+
+		manager.subscribeStatus(status)
+		status.deliver(HASS_STATUS_TOPIC, 'online')
+		status.deliver(HASS_STATUS_TOPIC, 'offline')
+		status.deliver(HASS_STATUS_TOPIC, 'ONLINE')
+
+		// Same boolean values, same once-per-message order, no duplicates.
+		expect(status.hassStatusEmits).toEqual([true, false, true])
+	})
+
+	it('does not emit hassStatus for a non-string payload or a broker reconnect', () => {
+		const { manager } = makeManager()
+		vi.spyOn(
+			manager.discoveryGenerator,
+			'rediscoverAll',
+		).mockImplementation(() => {})
+		const status = makeStatusSource()
+
+		manager.subscribeStatus(status)
+		// Non-string payload: legacy complaint, no compat emit.
+		status.deliver(HASS_STATUS_TOPIC, undefined)
+		// Broker reconnect drives an internal rediscovery but is NOT a HA
+		// birth/will message, so it must not surface as a hassStatus event.
+		status.emitBroker(true)
+
+		expect(status.hassStatusEmits).toEqual([])
 	})
 
 	it('a non-string payload logs the legacy Invalid payload complaint and does not rediscover', () => {
