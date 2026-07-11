@@ -166,6 +166,8 @@ import type {
 	HassDeviceMap,
 	StoreHassDevicesResult,
 } from '../hass/types.ts'
+import { ScheduleService } from './zwave/ScheduleService.ts'
+import { ConfigurationTemplateService } from './zwave/ConfigurationTemplateService.ts'
 
 export type { HassDevice } from '../hass/types.ts'
 
@@ -776,7 +778,6 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	private _driverReady: boolean
 	private scenes: ZUIScene[]
 	private groups: Group[]
-	private _configTemplates: ZUIConfigurationTemplate[]
 	private _nodes: Map<number, ZUINode>
 	/**
 	 * Holds the live driver-side virtual-node instances (multicast groups +
@@ -883,8 +884,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	private pollIntervals: Record<string, NodeJS.Timeout>
 
 	private _lockNeighborsRefresh: boolean
-	private _lockGetSchedule: boolean
-	private _cancelGetSchedule: boolean
+	private _scheduleService: ScheduleService
+	private _configTemplateService: ConfigurationTemplateService
 
 	private nvmEvent: string
 
@@ -997,12 +998,82 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		this.driverReady = false
 		this.scenes = jsonStore.get(store.scenes)
 		this.groups = jsonStore.get(store.groups)
-		this._configTemplates = jsonStore.get(store.configurationTemplates)
 
 		this._nodes = new Map()
 		this._virtualNodes = new Map()
 		this._nodeToGroups = new Map()
 		this._rebuildNodeToGroupsIndex()
+
+		// Construct service ports that resolve current state across restarts
+		const scheduleDriverPort = {
+			getDriver: () => this._driver,
+		}
+		const scheduleNodeStorePort = {
+			getNode: (nodeId: number) => this._nodes.get(nodeId),
+			emitNodeUpdate: (
+				node: ZUINode,
+				changedProps: utils.DeepPartial<ZUINode>,
+			) => this.emitNodeUpdate(node, changedProps),
+		}
+		const scheduleUtilsPort = {
+			deepEqual: (a: unknown, b: unknown) => utils.deepEqual(a, b),
+		}
+		this._scheduleService = new ScheduleService(
+			scheduleDriverPort,
+			scheduleNodeStorePort,
+			scheduleUtilsPort,
+		)
+
+		const templateDriverPort = {
+			getDriver: () => this._driver,
+		}
+		const templateNodeStorePort = {
+			getNode: (nodeId: number) => this._nodes.get(nodeId),
+			getNodes: () => this._nodes.entries(),
+			getStoreNode: (nodeId: number) => this.storeNodes[nodeId],
+			setStoreNode: (nodeId: number, data: Partial<ZUINode>) => {
+				if (!this.storeNodes[nodeId]) {
+					this.storeNodes[nodeId] = {} as any
+				}
+				Object.assign(this.storeNodes[nodeId], data)
+			},
+			updateStoreNodes: (rebuildRoutes?: boolean) =>
+				this.updateStoreNodes(rebuildRoutes),
+			emitNodeUpdate: (
+				node: ZUINode,
+				changedProps: utils.DeepPartial<ZUINode>,
+			) => this.emitNodeUpdate(node, changedProps),
+			writeValue: (
+				valueId: {
+					nodeId: number
+					commandClass: number
+					endpoint: number
+					property: number
+					propertyKey?: number | null
+				},
+				value: unknown,
+			) => this.writeValue(valueId as ZUIValueId, value),
+			logNode: (zwaveNode: ZWaveNode, level: string, message: string) =>
+				this.logNode(zwaveNode, level as LogManager.LogLevel, message),
+			throttle: (key: string, fn: () => void, wait: number) =>
+				this.throttle(key, fn, wait),
+		}
+		const templatePersistencePort = {
+			get: () => jsonStore.get(store.configurationTemplates),
+			put: (data: ZUIConfigurationTemplate[]) =>
+				jsonStore.put(store.configurationTemplates, data),
+		}
+		const templateUtilsPort = {
+			generateId: () => utils.generateId(),
+		}
+		this._configTemplateService = new ConfigurationTemplateService(
+			templateDriverPort,
+			templateNodeStorePort,
+			templatePersistencePort,
+			templateUtilsPort,
+			logger,
+			jsonStore.get(store.configurationTemplates),
+		)
 
 		this._devices = {}
 		this.driverInfo = {}
@@ -1447,246 +1518,11 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			fromCache: true,
 		},
 	) {
-		const zwaveNode = this.getNode(nodeId)
-
-		if (!zwaveNode?.commandClasses['Schedule Entry Lock'].isSupported()) {
-			throw new Error(
-				'Schedule Entry Lock CC not supported on node ' + nodeId,
-			)
-		}
-
-		if (this._lockGetSchedule) {
-			throw new Error(
-				'Another request is in progress, cancel it or wait...',
-			)
-		}
-
-		const promise = async () => {
-			this._cancelGetSchedule = false
-			this._lockGetSchedule = true
-			const { mode, fromCache } = opts
-			// TODO: should we check also other endpoints?
-			const endpointIndex = 0
-			const endpoint = zwaveNode.getEndpoint(endpointIndex)
-
-			const userCodes = UserCodeCC.getSupportedUsersCached(
-				this.driver,
-				endpoint,
-			)
-
-			const numSlots = {
-				numWeekDaySlots: ScheduleEntryLockCC.getNumWeekDaySlotsCached(
-					this.driver,
-					endpoint,
-				),
-				numYearDaySlots: ScheduleEntryLockCC.getNumYearDaySlotsCached(
-					this.driver,
-					endpoint,
-				),
-				numDailyRepeatingSlots:
-					ScheduleEntryLockCC.getNumDailyRepeatingSlotsCached(
-						this.driver,
-						endpoint,
-					),
-			}
-
-			const node = this._nodes.get(nodeId)
-
-			const weeklySchedules: ZUISlot<ScheduleEntryLockWeekDaySchedule>[] =
-				node.schedule?.weekly?.slots ?? []
-			const yearlySchedules: ZUISlot<ScheduleEntryLockYearDaySchedule>[] =
-				node.schedule?.yearly?.slots ?? []
-			const dailySchedules: ZUISlot<ScheduleEntryLockDailyRepeatingSchedule>[] =
-				node.schedule?.daily?.slots ?? []
-
-			node.schedule = {
-				daily: {
-					numSlots: numSlots.numDailyRepeatingSlots,
-					slots: dailySchedules,
-				},
-				weekly: {
-					numSlots: numSlots.numWeekDaySlots,
-					slots: weeklySchedules,
-				},
-				yearly: {
-					numSlots: numSlots.numYearDaySlots,
-					slots: yearlySchedules,
-				},
-			}
-
-			node.userCodes = {
-				total: userCodes,
-				available: [],
-				enabled: [],
-			}
-
-			const pushSchedule = (
-				arr: ZUISlot<any>[],
-				slot: ScheduleEntryLockSlotId,
-				schedule:
-					| ScheduleEntryLockWeekDaySchedule
-					| ScheduleEntryLockYearDaySchedule
-					| ScheduleEntryLockDailyRepeatingSchedule,
-				enabled: boolean,
-			) => {
-				const index = arr.findIndex(
-					(s) => s.userId === slot.userId && s.slotId === slot.slotId,
-				)
-				if (schedule) {
-					const newSlot = {
-						...slot,
-						...schedule,
-						enabled,
-					}
-					if (index === -1) {
-						arr.push(newSlot)
-					} else {
-						arr[index] = newSlot
-					}
-				} else if (index !== -1) {
-					arr.splice(index, 1)
-				}
-			}
-
-			for (let i = 1; i <= userCodes; i++) {
-				const status = UserCodeCC.getUserIdStatusCached(
-					this.driver,
-					endpoint,
-					i,
-				)
-
-				if (
-					status === undefined ||
-					status === UserIDStatus.Available ||
-					status === UserIDStatus.StatusNotAvailable
-				) {
-					// skip query on not enabled userIds or empty codes
-					continue
-				}
-
-				node.userCodes.available.push(i)
-
-				const enabledUserId =
-					ScheduleEntryLockCC.getUserCodeScheduleEnabledCached(
-						this.driver,
-						endpoint,
-						i,
-					)
-
-				if (enabledUserId) {
-					node.userCodes.enabled.push(i)
-				}
-
-				const enabledType =
-					ScheduleEntryLockCC.getUserCodeScheduleKindCached(
-						this.driver,
-						endpoint,
-						i,
-					)
-
-				const getCached = (
-					kind: ScheduleEntryLockScheduleKind,
-					slotId: number,
-				) =>
-					ScheduleEntryLockCC.getScheduleCached(
-						this.driver,
-						endpoint,
-						kind,
-						i,
-						slotId,
-					)
-
-				if (!mode || mode === ZUIScheduleEntryLockMode.WEEKLY) {
-					const enabled =
-						enabledType === ScheduleEntryLockScheduleKind.WeekDay
-
-					for (let s = 1; s <= numSlots.numWeekDaySlots; s++) {
-						if (this._cancelGetSchedule) return
-
-						const slot: ScheduleEntryLockSlotId = {
-							userId: i,
-							slotId: s,
-						}
-
-						const schedule = fromCache
-							? (getCached(
-									ScheduleEntryLockScheduleKind.WeekDay,
-									s,
-								) as ScheduleEntryLockWeekDaySchedule)
-							: await zwaveNode.commandClasses[
-									'Schedule Entry Lock'
-								].getWeekDaySchedule(slot)
-
-						pushSchedule(weeklySchedules, slot, schedule, enabled)
-					}
-				}
-
-				if (!mode || mode === ZUIScheduleEntryLockMode.YEARLY) {
-					const enabled =
-						enabledType === ScheduleEntryLockScheduleKind.YearDay
-
-					for (let s = 1; s <= numSlots.numYearDaySlots; s++) {
-						if (this._cancelGetSchedule) return
-
-						const slot: ScheduleEntryLockSlotId = {
-							userId: i,
-							slotId: s,
-						}
-						const schedule = fromCache
-							? (getCached(
-									ScheduleEntryLockScheduleKind.YearDay,
-									s,
-								) as ScheduleEntryLockYearDaySchedule)
-							: await zwaveNode.commandClasses[
-									'Schedule Entry Lock'
-								].getYearDaySchedule(slot)
-
-						pushSchedule(yearlySchedules, slot, schedule, enabled)
-					}
-				}
-
-				if (!mode || mode === ZUIScheduleEntryLockMode.DAILY) {
-					const enabled =
-						enabledType ===
-						ScheduleEntryLockScheduleKind.DailyRepeating
-
-					for (let s = 1; s <= numSlots.numDailyRepeatingSlots; s++) {
-						if (this._cancelGetSchedule) return
-
-						const slot: ScheduleEntryLockSlotId = {
-							userId: i,
-							slotId: s,
-						}
-						const schedule = fromCache
-							? (getCached(
-									ScheduleEntryLockScheduleKind.DailyRepeating,
-									s,
-								) as ScheduleEntryLockDailyRepeatingSchedule)
-							: await zwaveNode.commandClasses[
-									'Schedule Entry Lock'
-								].getDailyRepeatingSchedule(slot)
-
-						pushSchedule(dailySchedules, slot, schedule, enabled)
-					}
-				}
-			}
-
-			this.emitNodeUpdate(node, {
-				schedule: node.schedule,
-				userCodes: node.userCodes,
-			})
-
-			return node.schedule
-		}
-
-		return promise().finally(() => {
-			this._lockGetSchedule = false
-			this._cancelGetSchedule = false
-		})
+		return this._scheduleService.getSchedules(nodeId, opts)
 	}
 
 	cancelGetSchedule() {
-		this._cancelGetSchedule = true
+		this._scheduleService.cancelGetSchedule()
 	}
 
 	async setSchedule(
@@ -1699,182 +1535,11 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				| ScheduleEntryLockYearDaySchedule
 			),
 	) {
-		const zwaveNode = this.getNode(nodeId)
-
-		if (!zwaveNode?.commandClasses['Schedule Entry Lock'].isSupported()) {
-			throw new Error(
-				'Schedule Entry Lock CC not supported on node ' + nodeId,
-			)
-		}
-
-		const slot: ScheduleEntryLockSlotId = {
-			userId: schedule.userId,
-			slotId: schedule.slotId,
-		}
-
-		delete schedule.userId
-		delete schedule.slotId
-		delete schedule['enabled']
-
-		const isDelete = Object.keys(schedule).length === 0
-
-		if (isDelete) {
-			schedule = undefined
-		}
-
-		let result: SupervisionResult
-
-		if (type === 'daily') {
-			result = await zwaveNode.commandClasses[
-				'Schedule Entry Lock'
-			].setDailyRepeatingSchedule(
-				slot,
-				schedule as ScheduleEntryLockDailyRepeatingSchedule,
-			)
-		} else if (type === 'weekly') {
-			result = await zwaveNode.commandClasses[
-				'Schedule Entry Lock'
-			].setWeekDaySchedule(
-				slot,
-				schedule as ScheduleEntryLockWeekDaySchedule,
-			)
-		} else if (type === 'yearly') {
-			result = await zwaveNode.commandClasses[
-				'Schedule Entry Lock'
-			].setYearDaySchedule(
-				slot,
-				schedule as ScheduleEntryLockYearDaySchedule,
-			)
-		} else {
-			throw new Error('Invalid schedule type')
-		}
-
-		// means that is not using supervision, read slot and check if it matches
-		if (!result) {
-			const methods = {
-				daily: 'getDailyRepeatingSchedule',
-				weekly: 'getWeekDaySchedule',
-				yearly: 'getYearDaySchedule',
-			}
-			const res =
-				await zwaveNode.commandClasses['Schedule Entry Lock'][
-					methods[type]
-				](slot)
-
-			if (
-				(isDelete && !res) ||
-				(!isDelete && res && utils.deepEqual(res, schedule))
-			) {
-				result = {
-					status: SupervisionStatus.Success,
-				}
-			} else {
-				result = {
-					status: SupervisionStatus.Fail,
-				}
-			}
-		}
-
-		if (result.status === SupervisionStatus.Success) {
-			const node = this._nodes.get(nodeId)
-
-			// update enabled state
-			for (const mode in node.schedule) {
-				node.schedule[mode].slots = node.schedule[mode].slots.map(
-					(s: ZUISlot<any>) => ({
-						...s,
-						enabled: mode === type,
-					}),
-				)
-			}
-
-			const slots = node.schedule?.[type]?.slots
-
-			if (slots) {
-				const slotIndex = slots.findIndex(
-					(s) => s.userId === slot.userId && s.slotId === slot.slotId,
-				)
-				const newSlot = isDelete
-					? null
-					: {
-							...slot,
-							...schedule,
-							enabled: true,
-						}
-
-				if (isDelete) {
-					if (slotIndex !== -1) {
-						slots.splice(slotIndex, 1)
-					}
-				} else if (slotIndex !== -1) {
-					slots[slotIndex] = newSlot
-				} else {
-					slots.push(newSlot as any)
-				}
-
-				const isEnabledUsercode = node.userCodes?.enabled?.includes(
-					slot.userId,
-				)
-
-				if (!isDelete && !isEnabledUsercode) {
-					node.userCodes.enabled.push(slot.userId)
-				} else if (isDelete && isEnabledUsercode) {
-					const index = node.userCodes.enabled.indexOf(slot.userId)
-					if (index >= 0) {
-						node.userCodes.enabled.splice(index, 1)
-					}
-				}
-
-				this.emitNodeUpdate(node, {
-					schedule: node.schedule,
-					userCodes: node.userCodes,
-				})
-			}
-		}
-
-		return result
+		return this._scheduleService.setSchedule(nodeId, type, schedule)
 	}
 
 	async setEnabledSchedule(nodeId: number, enabled: boolean, userId: number) {
-		const zwaveNode = this.getNode(nodeId)
-
-		if (!zwaveNode) {
-			throw new Error('Node not found')
-		}
-
-		const result = await zwaveNode.commandClasses[
-			'Schedule Entry Lock'
-		].setEnabled(enabled, userId)
-
-		// if result is not defined here we don't have a way
-		// to know if the command was successful or not as there is no
-		// 'get' command for this, so we just assume it was successful
-		if (isUnsupervisedOrSucceeded(result)) {
-			const node = this._nodes.get(nodeId)
-
-			if (node) {
-				if (userId) {
-					if (enabled) {
-						node.userCodes?.enabled.push(userId)
-					} else {
-						const index = node.userCodes?.enabled.indexOf(userId)
-						if (index >= 0) {
-							node.userCodes.enabled.splice(index, 1)
-						}
-					}
-				} else {
-					node.userCodes.enabled = enabled
-						? node.userCodes.available.slice()
-						: []
-				}
-
-				this.emitNodeUpdate(node, {
-					userCodes: node.userCodes,
-				})
-			}
-		}
-
-		return result
+		return this._scheduleService.setEnabledSchedule(nodeId, enabled, userId)
 	}
 
 	/**
@@ -3268,7 +2933,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 * Get all configuration templates
 	 */
 	getConfigurationTemplates(): ZUIConfigurationTemplate[] {
-		return this._configTemplates
+		return this._configTemplateService.getConfigurationTemplates()
 	}
 
 	/**
@@ -3278,65 +2943,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	async getDeviceConfigurationParams(
 		deviceId: string,
 	): Promise<Partial<ZUIValueId>[]> {
-		const parts = deviceId.split('-')
-		if (parts.length !== 3) {
-			throw new Error(
-				'Invalid deviceId format, expected manufacturerId-productId-productType',
-			)
-		}
-
-		const manufacturerId = parseInt(parts[0], 10)
-		const productId = parseInt(parts[1], 10)
-		const productType = parseInt(parts[2], 10)
-
-		if (isNaN(manufacturerId) || isNaN(productId) || isNaN(productType)) {
-			throw new Error('Invalid deviceId: non-numeric components')
-		}
-
-		await configManager.loadDeviceIndex()
-
-		const device = await configManager.lookupDevice(
-			manufacturerId,
-			productType,
-			productId,
-		)
-
-		if (!device || !device.paramInformation) {
-			return []
-		}
-
-		const result: Partial<ZUIValueId>[] = []
-
-		for (const [key, param] of device.paramInformation.entries()) {
-			const propertyKey = key.valueBitMask
-			const id = `0-112-0-${key.parameter}${propertyKey != null ? '-' + propertyKey : ''}`
-
-			result.push({
-				id,
-				commandClass: 112,
-				property: key.parameter,
-				propertyKey: propertyKey,
-				endpoint: 0,
-				type: 'number',
-				readable: true,
-				writeable: !param.readOnly,
-				label: param.label,
-				description: param.description,
-				min: param.minValue,
-				max: param.maxValue,
-				default: param.defaultValue,
-				unit: param.unit,
-				list: param.options?.length > 0,
-				allowManualEntry: param.allowManualEntry,
-				states: param.options?.map((o) => ({
-					text: o.label,
-					value: o.value,
-				})),
-				newValue: param.defaultValue,
-			} as any)
-		}
-
-		return result
+		return this._configTemplateService.getDeviceConfigurationParams(
+			deviceId,
+		) as Promise<Partial<ZUIValueId>[]>
 	}
 
 	/**
@@ -3349,87 +2958,13 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		values?: ZUIConfigurationTemplateValue[],
 		firmwareRange?: { min?: string; max?: string },
 	): Promise<ZUIConfigurationTemplate> {
-		const node = this._nodes.get(nodeId)
-
-		if (!node) {
-			throw Error(`Node ${nodeId} not found`)
-		}
-
-		if (!node.ready) {
-			throw Error(`Node ${nodeId} is not ready`)
-		}
-
-		let configValues: ZUIConfigurationTemplateValue[]
-
-		if (values && values.length > 0) {
-			// Use custom values provided by the wizard
-			configValues = values
-		} else {
-			// Extract CC 112 (Configuration) writeable values
-			configValues = []
-
-			for (const id in node.values) {
-				const v = node.values[id]
-				if (
-					v.commandClass === CommandClasses.Configuration &&
-					v.writeable
-				) {
-					configValues.push({
-						property: v.property as number,
-						propertyKey:
-							v.propertyKey != null
-								? (v.propertyKey as number)
-								: null,
-						endpoint: v.endpoint || 0,
-						value: v.value,
-						label: v.label,
-						description: v.description,
-					})
-				}
-			}
-		}
-
-		if (configValues.length === 0) {
-			throw Error(
-				`Node ${nodeId} has no writeable Configuration CC values`,
-			)
-		}
-
-		const id = utils.generateId()
-
-		const now = new Date().toISOString()
-
-		const template: ZUIConfigurationTemplate = {
-			id,
+		return this._configTemplateService.createConfigurationTemplate(
+			nodeId,
 			name,
-			deviceId: node.deviceId,
-			manufacturerId: node.manufacturerId,
-			productId: node.productId,
-			productType: node.productType,
-			manufacturer: node.manufacturer,
-			productLabel: node.productLabel,
-			firmwareRange:
-				firmwareRange?.min || firmwareRange?.max
-					? firmwareRange
-					: undefined,
-			values: configValues,
 			autoApply,
-			contentHash: this._generateTemplateContentHash(
-				configValues,
-				firmwareRange,
-			),
-			createdAt: now,
-			updatedAt: now,
-		}
-
-		this._configTemplates.push(template)
-		await jsonStore.put(store.configurationTemplates, this._configTemplates)
-
-		if (autoApply) {
-			this._autoApplyTemplateToNodes(template)
-		}
-
-		return template
+			values,
+			firmwareRange,
+		)
 	}
 
 	/**
@@ -3444,68 +2979,17 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			values?: ZUIConfigurationTemplateValue[]
 		},
 	): Promise<ZUIConfigurationTemplate> {
-		const template = this._configTemplates.find((t) => t.id === id)
-
-		if (!template) {
-			throw Error(`Template ${id} not found`)
-		}
-
-		if (updates.name !== undefined) template.name = updates.name
-		if (updates.autoApply !== undefined)
-			template.autoApply = updates.autoApply
-
-		const contentChanged =
-			updates.firmwareRange !== undefined || updates.values !== undefined
-
-		if (updates.firmwareRange !== undefined)
-			template.firmwareRange = updates.firmwareRange
-		if (updates.values !== undefined) template.values = updates.values
-
-		if (contentChanged) {
-			template.contentHash = this._generateTemplateContentHash(
-				template.values,
-				template.firmwareRange,
-			)
-		}
-
-		template.updatedAt = new Date().toISOString()
-
-		await jsonStore.put(store.configurationTemplates, this._configTemplates)
-
-		if (template.autoApply && contentChanged) {
-			this._autoApplyTemplateToNodes(template)
-		}
-
-		return template
+		return this._configTemplateService.updateConfigurationTemplate(
+			id,
+			updates,
+		)
 	}
 
 	/**
 	 * Delete a configuration template
 	 */
 	async deleteConfigurationTemplate(id: string): Promise<boolean> {
-		const index = this._configTemplates.findIndex((t) => t.id === id)
-
-		if (index < 0) {
-			throw Error(`Template ${id} not found`)
-		}
-
-		const deletedHash = this._configTemplates[index].contentHash
-
-		this._configTemplates.splice(index, 1)
-		await jsonStore.put(store.configurationTemplates, this._configTemplates)
-
-		// Cleanup the deleted template's hash from all nodes
-		if (deletedHash) {
-			for (const [, node] of this._nodes) {
-				const hashes = node.appliedTemplateContentHashes
-				if (hashes && hashes.includes(deletedHash)) {
-					// _cleanupAppliedTemplateHashes removes any hash not matching an existing template
-					await this._cleanupAppliedTemplateHashes(node)
-				}
-			}
-		}
-
-		return true
+		return this._configTemplateService.deleteConfigurationTemplate(id)
 	}
 
 	/**
@@ -3592,126 +3076,11 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		errors: string[]
 		reason?: string
 	}> {
-		const template = this._configTemplates.find((t) => t.id === templateId)
-
-		if (!template) {
-			throw Error(`Template ${templateId} not found`)
-		}
-
-		const node = this._nodes.get(nodeId)
-
-		if (!node) {
-			throw Error(`Node ${nodeId} not found`)
-		}
-
-		if (!node.ready) {
-			throw Error(`Node ${nodeId} is not ready`)
-		}
-
-		if (
-			!force &&
-			template.deviceId &&
-			node.deviceId &&
-			template.deviceId !== node.deviceId
-		) {
-			throw Error(
-				`Template device type "${template.deviceId}" does not match node device type "${node.deviceId}". Use force to override.`,
-			)
-		}
-
-		const results: {
-			success: number
-			failed: number
-			errors: string[]
-			reason?: string
-		} = { success: 0, failed: 0, errors: [] }
-
-		for (const tv of template.values) {
-			try {
-				// skip writing `undefined` configuration values to prevent errors
-				if (tv.value === undefined) {
-					results.success++
-					continue
-				}
-
-				const result = await this.writeValue(
-					{
-						nodeId,
-						commandClass: CommandClasses.Configuration,
-						endpoint: tv.endpoint,
-						property: tv.property,
-						propertyKey: tv.propertyKey,
-					} as ZUIValueId,
-					tv.value,
-				)
-
-				if (setValueFailed(result)) {
-					results.failed++
-					results.errors.push(
-						`Parameter ${tv.property}: ${result.message || getEnumMemberName(SetValueStatus, result.status)}`,
-					)
-
-					// Fail + node is dead means no point continuing
-					if (
-						result.status === SetValueStatus.Fail &&
-						node.status === 'Dead'
-					) {
-						const remaining =
-							template.values.length -
-							results.success -
-							results.failed
-						if (remaining > 0) {
-							results.failed += remaining
-						}
-						results.reason = 'Node is dead'
-						break
-					}
-				} else {
-					results.success++
-				}
-			} catch (error) {
-				results.failed++
-				results.errors.push(
-					`Parameter ${tv.property}: ${error.message}`,
-				)
-			}
-		}
-
-		logger.info(
-			`Applied template "${template.name}" to node ${nodeId}: ${results.success} OK, ${results.failed} failed`,
+		return this._configTemplateService.applyConfigurationTemplate(
+			templateId,
+			nodeId,
+			force,
 		)
-
-		// Record content hash if any values were applied successfully
-		if (results.success > 0 && template.contentHash) {
-			if (!node.appliedTemplateContentHashes) {
-				node.appliedTemplateContentHashes = []
-			}
-
-			if (
-				!node.appliedTemplateContentHashes.includes(
-					template.contentHash,
-				)
-			) {
-				node.appliedTemplateContentHashes.push(template.contentHash)
-
-				if (!this.storeNodes[nodeId]) {
-					this.storeNodes[nodeId] = {} as any
-				}
-				this.storeNodes[nodeId].appliedTemplateContentHashes =
-					node.appliedTemplateContentHashes
-
-				this.throttle(
-					'applyTemplate_storeNodes',
-					() => {
-						// eslint-disable-next-line @typescript-eslint/no-floating-promises
-						this.updateStoreNodes(false)
-					},
-					1000,
-				)
-			}
-		}
-
-		return results
 	}
 
 	/**
@@ -3720,69 +3089,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	async importConfigurationTemplates(
 		templates: ZUIConfigurationTemplate[],
 	): Promise<ZUIConfigurationTemplate[]> {
-		// Migrate legacy minFirmwareVersion to firmwareRange
-		for (const t of templates) {
-			if ((t as any).minFirmwareVersion && !t.firmwareRange) {
-				t.firmwareRange = { min: (t as any).minFirmwareVersion }
-				delete (t as any).minFirmwareVersion
-			}
-			t.id = utils.generateId()
-			if (!t.contentHash) {
-				t.contentHash = this._generateTemplateContentHash(
-					t.values,
-					t.firmwareRange,
-				)
-			}
-			this._configTemplates.push(t)
-		}
-
-		await jsonStore.put(store.configurationTemplates, this._configTemplates)
-
-		return this._configTemplates
-	}
-
-	/**
-	 * Generate a short content hash for a template based on its applied values
-	 */
-	private _generateTemplateContentHash(
-		values: ZUIConfigurationTemplateValue[],
-		firmwareRange?: { min?: string; max?: string },
-	): string {
-		// Normalize values to ensure deterministic key ordering across
-		// different code paths (create vs import)
-		const normalized = values.map((v) => ({
-			property: v.property,
-			propertyKey: v.propertyKey ?? null,
-			endpoint: v.endpoint,
-			value: v.value,
-		}))
-		return createHash('sha256')
-			.update(JSON.stringify({ values: normalized, firmwareRange }))
-			.digest('hex')
-			.slice(0, 12)
-	}
-
-	/**
-	 * Remove applied template hashes that no longer match any existing template
-	 */
-	private async _cleanupAppliedTemplateHashes(node: ZUINode) {
-		const hashes = node.appliedTemplateContentHashes
-		if (!hashes || hashes.length === 0) return
-
-		const validHashes = new Set(
-			this._configTemplates.map((t) => t.contentHash),
+		return this._configTemplateService.importConfigurationTemplates(
+			templates,
 		)
-		const cleaned = hashes.filter((h) => validHashes.has(h))
-
-		if (cleaned.length !== hashes.length) {
-			node.appliedTemplateContentHashes = cleaned
-
-			if (!this.storeNodes[node.id]) {
-				this.storeNodes[node.id] = {} as any
-			}
-			this.storeNodes[node.id].appliedTemplateContentHashes = cleaned
-			await this.updateStoreNodes(false)
-		}
 	}
 
 	/**
@@ -4207,137 +3516,11 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	}
 
 	/**
-	 * Auto-apply a template to all matching ready nodes that haven't received it yet
-	 */
-	private _autoApplyTemplateToNodes(template: ZUIConfigurationTemplate) {
-		if (!this._driver?.controller) return
-
-		for (const [, node] of this._nodes) {
-			if (!node.ready || !node.deviceId) continue
-
-			const matching = this._getMatchingTemplates(node)
-			if (!matching.some((t) => t.id === template.id)) continue
-
-			const hashes = node.appliedTemplateContentHashes || []
-			if (hashes.includes(template.contentHash)) continue
-
-			const zwaveNode = this._driver.controller.nodes.get(node.id)
-
-			if (zwaveNode) {
-				this.logNode(
-					zwaveNode,
-					'info',
-					`Auto-applying configuration template "${template.name}"`,
-				)
-			}
-
-			this.applyConfigurationTemplate(template.id, node.id, true)
-				.then((result) => {
-					if (result.failed > 0 && zwaveNode) {
-						this.logNode(
-							zwaveNode,
-							'warn',
-							`Template "${template.name}" partially applied: ${result.success} OK, ${result.failed} failed`,
-						)
-					}
-				})
-				.catch((error) => {
-					if (zwaveNode) {
-						this.logNode(
-							zwaveNode,
-							'error',
-							`Failed to auto-apply template "${template.name}": ${error.message}`,
-						)
-					}
-				})
-		}
-	}
-
-	/**
-	 * Get templates matching a node's device type and firmware version
-	 */
-	private _getMatchingTemplates(node: ZUINode): ZUIConfigurationTemplate[] {
-		if (!node.deviceId) return []
-
-		return this._configTemplates.filter((t) => {
-			if (t.deviceId !== node.deviceId) return false
-
-			// Check firmware version range if specified
-			if (t.firmwareRange?.min || t.firmwareRange?.max) {
-				if (!node.firmwareVersion) {
-					return false
-				}
-
-				const nodeFw = semverCoerce(node.firmwareVersion)
-				if (!nodeFw) return false
-
-				if (t.firmwareRange.min) {
-					const minFw = semverCoerce(t.firmwareRange.min)
-					if (!minFw || !semverGte(nodeFw, minFw)) {
-						return false
-					}
-				}
-
-				if (t.firmwareRange.max) {
-					const maxFw = semverCoerce(t.firmwareRange.max)
-					if (!maxFw || !semverLte(nodeFw, maxFw)) {
-						return false
-					}
-				}
-			}
-
-			return true
-		})
-	}
-
-	/**
-	 * Check and auto-apply matching configuration templates for a node
+	 * Check and auto-apply matching configuration templates for a node.
+	 * Delegates to ConfigurationTemplateService.
 	 */
 	private _checkConfigurationTemplates(node: ZUINode, zwaveNode: ZWaveNode) {
-		// Cleanup stale applied hashes on node ready
-		// eslint-disable-next-line @typescript-eslint/no-floating-promises
-		this._cleanupAppliedTemplateHashes(node)
-
-		const matching = this._getMatchingTemplates(node)
-
-		if (matching.length === 0) {
-			return
-		}
-
-		const appliedHashes = node.appliedTemplateContentHashes || []
-
-		// Filter auto-apply templates that haven't been applied yet
-		const autoApplyTemplates = matching.filter(
-			(t) =>
-				t.autoApply &&
-				t.contentHash &&
-				!appliedHashes.includes(t.contentHash),
-		)
-
-		for (const template of autoApplyTemplates) {
-			this.logNode(
-				zwaveNode,
-				'info',
-				`Auto-applying configuration template "${template.name}"`,
-			)
-			this.applyConfigurationTemplate(template.id, node.id, true)
-				.then((result) => {
-					if (result.failed > 0) {
-						this.logNode(
-							zwaveNode,
-							'warn',
-							`Template "${template.name}" partially applied: ${result.success} OK, ${result.failed} failed`,
-						)
-					}
-				})
-				.catch((error) => {
-					this.logNode(
-						zwaveNode,
-						'error',
-						`Failed to auto-apply template "${template.name}": ${error.message}`,
-					)
-				})
-		}
+		this._configTemplateService.checkConfigurationTemplates(node, zwaveNode)
 	}
 
 	/**
