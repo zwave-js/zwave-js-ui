@@ -1,6 +1,3 @@
-import * as fs from 'node:fs'
-import * as path from 'node:path'
-import { createRequire } from 'node:module'
 import * as utils from './utils.ts'
 import type { SetValueAPIOptions } from 'zwave-js'
 import { AlarmSensorType } from 'zwave-js'
@@ -11,7 +8,6 @@ import type { LogLevel } from './logger.ts'
 import { module } from './logger.ts'
 import type { ColorMode } from '../hass/configurations.ts'
 import hassCfg from '../hass/configurations.ts'
-import hassDevices from '../hass/devices.ts'
 import { storeDir } from '../config/app.ts'
 import type { IClientPublishOptions } from 'mqtt'
 import MqttClient from './MqttClient.ts'
@@ -19,7 +15,6 @@ import type {
 	AllowedApis,
 	CallAPIResult,
 	EventSource,
-	HassDevice,
 	ZUINode,
 	ZUIValueId,
 	ZUIValueIdState,
@@ -27,8 +22,9 @@ import type {
 import type ZwaveClient from './ZwaveClient.ts'
 import Cron from 'croner'
 
-import crypto from 'node:crypto'
 import type { IMeterCCSpecific } from './Constants.ts'
+import { CustomDeviceRegistry } from '../hass/CustomDeviceRegistry.ts'
+import type { HassDevice } from '../hass/types.ts'
 
 const logger = module('Gateway')
 
@@ -48,138 +44,99 @@ const PAYLOAD_TYPE = {
 	RAW: 2,
 } as const
 
-const CUSTOM_DEVICES = storeDir + '/customDevices'
-let allDevices = hassDevices // will contain customDevices + hassDevices
-
-// A custom-devices `.js` file is authored as a CommonJS module (module.exports),
-// so it must be loaded with require() even though this package ships as ESM and
-// is bundled to CJS for release. createRequire gives a working require in every
-// runtime (the ambient `require` is undefined under Node's native ESM loader
-// used by `npm run server`/dev) and exposes the module cache we evict on reload.
-const requireCustomDevices = createRequire(import.meta.url)
-
-// watcher initiates a watch on a file. if this fails (e.g., because the file
-// doesn't exist), instead watch the directory. If the directory watch
-// triggers, cancel it and try to watch the file again. Meanwhile spam `fn()`
-// on any change, trusting that it's idempotent.
-const watchers: Map<string, fs.FSWatcher> = new Map()
-const watch = (filename: string, fn: () => void) => {
-	try {
-		watchers.set(
-			filename,
-			fs.watch(filename, (e: string) => {
-				fn()
-				if (e === 'rename') {
-					watchers.get(filename).close()
-					watch(filename, fn)
-				}
-			}),
-		)
-	} catch {
-		watchers.set(
-			filename,
-			fs.watch(path.dirname(filename), (e, f) => {
-				if (
-					!f ||
-					f === 'customDevices.js' ||
-					f === 'customDevices.json'
-				) {
-					watchers.get(filename).close()
-					watch(filename, fn)
-					fn()
-				}
-			}),
-		)
-	}
-}
-
-const customDevicesJsPath = CUSTOM_DEVICES + '.js'
-const customDevicesJsonPath = CUSTOM_DEVICES + '.json'
-
-/**
- * Overlays the custom-devices file at `<basePath>.js` (preferred) or
- * `<basePath>.json` onto `baseCatalog`, returning the merged catalog plus the
- * dedup sha, the raw custom-device count, and the resolved path. Returns null
- * when neither file exists or parsing fails, so the caller keeps the previous
- * catalog. `.js` wins over `.json` because a `.js` can compute entries a static
- * `.json` can't.
- */
-export function loadCustomDevicesCatalog(
-	basePath: string,
-	baseCatalog: Record<string, HassDevice[]> = hassDevices,
-): {
-	catalog: Record<string, HassDevice[]>
-	customCount: number
-	sha: string
-	loaded: string
-} | null {
-	const jsPath = basePath + '.js'
-	const jsonPath = basePath + '.json'
-	let loaded = ''
-	let devices: Record<string, HassDevice[]> | null = null
-
-	try {
-		if (fs.existsSync(jsPath)) {
-			loaded = jsPath
-			// Node caches require() by resolved path, so evict any prior entry
-			// first; otherwise a watcher-triggered reload returns the stale
-			// exports and the sha de-dup never sees the on-disk edit.
-			delete requireCustomDevices.cache[
-				requireCustomDevices.resolve(basePath)
-			]
-			devices = requireCustomDevices(basePath)
-		} else if (fs.existsSync(jsonPath)) {
-			loaded = jsonPath
-			devices = JSON.parse(fs.readFileSync(jsonPath).toString())
-		} else {
-			return null
-		}
-	} catch (error) {
-		logger.error(`Failed to load ${loaded}:`, error)
-		return null
-	}
-
-	const sha = crypto
-		.createHash('sha256')
-		.update(JSON.stringify(devices))
-		.digest('hex')
-
-	return {
-		catalog: Object.assign({}, baseCatalog, devices),
-		customCount: Object.keys(devices).length,
-		sha,
-		loaded,
-	}
-}
-
-let lastCustomDevicesLoad: string | null = null
-// Projects the custom-devices file onto the module-global `allDevices`,
-// skipping the reassignment whenever the sha shows the data is unchanged.
-const loadCustomDevices = () => {
-	const result = loadCustomDevicesCatalog(CUSTOM_DEVICES)
-	if (!result || lastCustomDevicesLoad === result.sha) {
-		return
-	}
-
-	logger.info(`Loading custom devices from ${result.loaded}`)
-
-	lastCustomDevicesLoad = result.sha
-
-	allDevices = result.catalog
-	logger.info(
-		`Loaded ${result.customCount} custom Hass devices configurations`,
-	)
-}
-
-loadCustomDevices()
-watch(customDevicesJsPath, loadCustomDevices)
-watch(customDevicesJsonPath, loadCustomDevices)
+// Compatibility registry for the long-standing module-level test seams below.
+// Runtime Gateways own a separate registry that starts/stops with the instance.
+const legacyCustomDeviceRegistry = new CustomDeviceRegistry({
+	storeDir,
+	logger,
+})
+legacyCustomDeviceRegistry.start()
 
 export function closeWatchers() {
-	for (const [, watcher] of watchers) {
-		watcher.close()
-	}
-	watchers.clear()
+	legacyCustomDeviceRegistry.dispose()
+}
+
+// ### TEST-ONLY SEAM
+//
+// Exposes the size of the internal file-watcher registry so HTTP
+// characterization tests can prove `closeWatchers()` actually released
+// every `fs.FSWatcher` this module opened (`customDevices.js`/`.json`,
+// falling back to watching their parent directory), instead of leaking
+// open watcher handles - bound to an already-deleted throwaway
+// `STORE_DIR` - across test files that share this module's cache. Nothing
+// in the production entrypoint (`api/bin/www.ts`) reads this.
+export function __getWatcherCountForTests(): number {
+	return legacyCustomDeviceRegistry.watcherCount
+}
+
+// ### TEST-ONLY SEAM
+//
+// Re-installs the module-global custom-device file watchers that
+// `closeWatchers()` tears down. The watches are created exactly once at
+// module import; a lifecycle test that wants to prove teardown releases them
+// must first guarantee they are present (an earlier harness `close()` in the
+// same worker may already have closed them, since they are shared module
+// state). This closes any existing watchers and rebinds both the `.js` and
+// `.json` watches to their real `loadCustomDevices` handler, exactly as the
+// import-time bootstrap does. Production (`api/bin/www.ts`) never calls this;
+// it only affects the test-owned watcher registry, never runtime reload
+// behavior.
+export function __rebindWatchersForTests(): void {
+	legacyCustomDeviceRegistry.rebind()
+}
+
+// ### TEST-ONLY SEAMS (custom devices)
+//
+// The custom-devices loader (`loadCustomDevices`) and its `allDevices`
+// projection are module-private process-global state, mutated at import time
+// and again whenever the `customDevices.js`/`.json` file watcher fires. These
+// read-only / re-invocation seams let the HASS characterization suite drive
+// and observe that loader DETERMINISTICALLY (write a file, re-run the loader,
+// inspect the projection) instead of racing the OS-level `fs.watch` event.
+// `loadCustomDevices` is the exact function the watcher invokes, so this
+// exercises the real precedence/sha-dedup/parse-failure code path. Nothing in
+// the production entrypoint (`api/bin/www.ts`) reads or calls these.
+export function __loadCustomDevicesForTests(): void {
+	legacyCustomDeviceRegistry.load()
+}
+
+// Returns a DEEP SNAPSHOT of the live `allDevices` catalog, never the live
+// reference. Production discovery reads `allDevices` directly, so handing a
+// test the live object would let an assertion (or an accidental mutation)
+// corrupt the discovery catalog for every subsequent lookup in the process.
+// The snapshot is a structural copy, so mutating the returned value has no
+// effect on the module's state (proven by the mutation regression in
+// `customDevices.test.ts`). Tests that need to observe reassignment vs
+// sha-dedup use `__getCustomDevicesShaForTests()` instead of reference
+// identity on this snapshot.
+export function __getAllDevicesForTests(): Record<string, HassDevice[]> {
+	return legacyCustomDeviceRegistry.snapshot()
+}
+
+// Exposes the dedup sha (`lastCustomDevicesLoad`) so tests can assert whether
+// a given `loadCustomDevices()` invocation REASSIGNED the projection (sha
+// changes) or was sha-deduped/short-circuited (sha unchanged) without relying
+// on reference identity of the snapshot above. `null` before any load / after
+// a reset.
+export function __getCustomDevicesShaForTests(): string | null {
+	return legacyCustomDeviceRegistry.sha
+}
+
+// Evicts any `require.cache` entry the preferred `.js` custom-devices loader
+// created. `loadCustomDevices()` loads the `.js` form via `require()`, whose
+// module cache serves a REWRITTEN `.js` file staler (production loads
+// customDevices once per process, so a runtime `.js` change already requires a
+// restart - this seam does NOT alter that). Tests that write a `.js` fixture
+// call this in teardown so a later test's `require()` re-reads from disk
+// instead of being served this test's cached module, keeping the suite
+// isolated. See the stale-cache quirk characterization in
+// `customDevices.test.ts`.
+export function __evictCustomDevicesRequireCacheForTests(): void {
+	legacyCustomDeviceRegistry.evictRequireCache()
+}
+
+export function __resetCustomDevicesStateForTests(): void {
+	legacyCustomDeviceRegistry.reset()
 }
 
 export const GatewayType = GATEWAY_TYPE
@@ -271,6 +228,7 @@ export default class Gateway {
 	private topicLevels: number[]
 	private _closed: boolean
 	private jobs: Map<string, Cron> = new Map()
+	private customDeviceRegistry: CustomDeviceRegistry
 
 	public get mqtt() {
 		return this._mqtt
@@ -293,9 +251,14 @@ export default class Gateway {
 		// clients
 		this._mqtt = mqtt
 		this._zwave = zwave
+		this.customDeviceRegistry = new CustomDeviceRegistry({
+			storeDir,
+			logger,
+		})
 	}
 
 	async start(): Promise<void> {
+		this.customDeviceRegistry.start()
 		// gateway configuration
 		this.config.values = this.config.values || []
 
@@ -557,6 +520,7 @@ export default class Gateway {
 		}
 
 		this.cancelJobs()
+		this.customDeviceRegistry.dispose()
 
 		// close mqtt client after zwave connection is closed
 		if (this.mqttEnabled) {
@@ -705,7 +669,7 @@ export default class Gateway {
 			node.hassDevices = {}
 
 			// rediscover all values
-			const nodeDevices = allDevices[node.deviceId] || []
+			const nodeDevices = this.customDeviceRegistry.get(node.deviceId)
 			nodeDevices.forEach((device) => this.discoverDevice(node, device))
 
 			// discover node values (that are not part of a device)
@@ -1058,7 +1022,7 @@ export default class Gateway {
 		}
 
 		try {
-			const nodeDevices = allDevices[node.deviceId] || []
+			const nodeDevices = this.customDeviceRegistry.get(node.deviceId)
 
 			// skip if there is already a climate device
 			if (
@@ -1174,6 +1138,8 @@ export default class Gateway {
 
 				config.mode_map = {}
 				config.setpoint_topic = {}
+				const discoveredModes = config.discovery_payload.modes
+				if (!Array.isArray(discoveredModes)) return
 
 				// for all available modes update the modes map and setpoint topics
 				for (const m of availableModes) {
@@ -1185,14 +1151,14 @@ export default class Gateway {
 					// map that mode to the first one available in the allowed hass modes
 					let i = 1 // skip 'off'
 					while (
-						config.discovery_payload.modes.includes(hM) &&
+						discoveredModes.includes(hM) &&
 						i < allowedModes.length
 					) {
 						hM = allowedModes[i++]
 					}
 
 					config.mode_map[hM] = m
-					config.discovery_payload.modes.push(hM)
+					discoveredModes.push(hM)
 					if (m > 0) {
 						// find the mode setpoint, ignore off
 						const setId = setpoints.find((v) => v.endsWith('-' + m))
@@ -1261,7 +1227,7 @@ export default class Gateway {
 
 			logger.log('info', 'New climate device discovered: %o', config)
 
-			allDevices[node.deviceId] = nodeDevices
+			this.customDeviceRegistry.set(node.deviceId, nodeDevices)
 		} catch (error) {
 			logger.error('Unable to discover climate device.', error)
 		}
@@ -2205,7 +2171,7 @@ export default class Gateway {
 			// check if there are climates to discover
 			this.discoverClimates(node)
 
-			const nodeDevices = allDevices[node.deviceId] || []
+			const nodeDevices = this.customDeviceRegistry.get(node.deviceId)
 			nodeDevices.forEach((device) => this.discoverDevice(node, device))
 
 			// discover node values (that are not part of a device)
