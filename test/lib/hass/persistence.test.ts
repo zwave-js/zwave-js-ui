@@ -435,6 +435,25 @@ describe('home-id scoping of persisted nodes', () => {
 		// Assert the rejection contract without pinning the message text.
 		await expect(zwave.getStoreNodes()).rejects.toThrow()
 	})
+
+	it('preserved quirk: a malformed per-node entry (null instead of an object) crashes when storeDevices() removes hass devices', async () => {
+		// `NodesStoreFile`'s type is a precise union of the shapes
+		// `getStoreNodes`/`updateStoreNodes` are actually meant to handle,
+		// but neither function (nor `storeDevices`) validates the shape of
+		// individual per-node entries at runtime - exactly as before the
+		// type was tightened from `any`. A corrupted `nodes.json` whose
+		// per-node value is `null` instead of an object still loads
+		// successfully, then crashes downstream the first time something
+		// tries to touch a property on it.
+		const node: any = { id: 9, hassDevices: {} }
+		const { zwave } = await makeLoadedClient(9, node, { 9: null })
+
+		expect((zwave as any).storeNodes[9]).toBeNull()
+
+		await expect(zwave.storeDevices({} as any, 9, true)).rejects.toThrow(
+			TypeError,
+		)
+	})
 })
 
 describe('node update projection ordering', () => {

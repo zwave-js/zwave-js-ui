@@ -6,6 +6,7 @@ import type { ZnifferConfig } from '../lib/ZnifferManager.ts'
 import type {
 	ZUIConfigurationTemplate,
 	ZUIScene,
+	ZUINode,
 	ZwaveConfig,
 } from '../lib/ZwaveClient.ts'
 import type { BackupSettings } from '../lib/BackupManager.ts'
@@ -106,17 +107,33 @@ export interface Settings {
 export type PersistedSettings = DeepPartial<Settings>
 
 /**
- * `nodes.json`'s on-disk shape is legacy and dynamic: either a flat array
- * (pre-multi-home-ID format) or an object keyed by home ID, itself
- * containing an object keyed by node ID. `ZwaveClient.getStoreNodes`/
- * `updateStoreNodes` own the back-compat migration between those shapes and
- * freely reshape/reindex it (including into `ZwaveClient`'s own internal
- * node-store types), so this layer intentionally leaves it as `unknown`
- * here rather than modeling a false-precision interface, to avoid changing
- * that dynamic-key handling in `ZwaveClient` (out of scope for this pass).
+ * `nodes.json`'s on-disk shape is legacy and dynamic; the actual runtime
+ * variants `ZwaveClient.getStoreNodes`/`updateStoreNodes` read, migrate
+ * between, and write are:
+ *  - current/normalized: an object keyed by homeHex string (e.g.
+ *    `"0xdeadbeef"`), each value itself an object keyed by node ID string
+ *    whose values are `Partial<ZUINode>` - `NodesStoreRecordByHome` below.
+ *  - legacy flat (pre-multi-home-ID): the node-ID-keyed object directly,
+ *    with no home-ID layer - `NodesStoreRecord` below. `getStoreNodes`
+ *    disambiguates this from the current shape purely by checking whether
+ *    the first top-level key starts with `'0x'`.
+ *  - legacy array (oldest): a sparse array indexed by node ID, converted
+ *    to the legacy flat object shape before being treated as such.
+ *
+ * This is a precise union of exactly those three on-disk shapes (replacing
+ * a previous `any`), not a validated/normalized type - `getStoreNodes`/
+ * `updateStoreNodes` still perform their own narrow `Array.isArray`/
+ * key-prefix runtime checks to disambiguate which member of the union
+ * they actually received, exactly as before; this only makes the
+ * compile-time contract honest, without changing that dynamic-key
+ * handling or attempting new validation (out of scope for this pass).
  */
-
-export type NodesStoreFile = any
+export type NodesStoreRecord = Record<string, Partial<ZUINode>>
+export type NodesStoreRecordByHome = Record<string, NodesStoreRecord>
+export type NodesStoreFile =
+	| NodesStoreRecordByHome
+	| NodesStoreRecord
+	| Array<Partial<ZUINode> | null | undefined>
 
 interface StoreShape {
 	settings: StoreFile<PersistedSettings>
