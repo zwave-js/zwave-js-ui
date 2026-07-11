@@ -46,20 +46,16 @@ export function registerDebugRoutes(
 					})
 				}
 
-				const gw = runtime.getGateway()
-				if (!gw?.zwave) throw Error('Z-Wave client not inited')
-
 				const settings: PersistedSettings =
 					jsonStore.get(store.settings) || {}
 				const originalLogLevel = settings.gateway?.logLevel || 'info'
 				const restartDriver = req.body.restartDriver || false
 
 				await debugManager.startSession(
-					gw.zwave,
+					runtime.requireGateway('zwave').zwave,
 					originalLogLevel,
 					restartDriver,
 				)
-				runtime.setOwnsDebugSession(true)
 
 				res.json({
 					success: true,
@@ -93,7 +89,6 @@ export function registerDebugRoutes(
 
 				const { archive, cleanup } =
 					await debugManager.stopSession(nodeIds)
-				runtime.setOwnsDebugSession(false)
 
 				const timestamp = new Date().toISOString().replace(/[:.]/g, '-')
 				res.attachment(`zwave-debug-${timestamp}.zip`)
@@ -130,7 +125,6 @@ export function registerDebugRoutes(
 				}
 
 				await debugManager.cancelSession()
-				runtime.setOwnsDebugSession(false)
 
 				res.json({
 					success: true,

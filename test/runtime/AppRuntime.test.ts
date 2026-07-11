@@ -146,7 +146,7 @@ describe('AppRuntime', () => {
 			const gw = createFakeGateway() as unknown as Gateway
 			runtime.setGateway(gw)
 			expect(runtime.getGateway()).toBe(gw)
-			expect(runtime.requireGateway()).toBe(gw)
+			expect(runtime.requireGateway('zwave')).toBe(gw)
 		})
 
 		it('setGateway(undefined) clears a previously-set gateway', () => {
@@ -158,8 +158,8 @@ describe('AppRuntime', () => {
 
 		it('requireGateway() throws the native TypeError when absent (preserved quirk, no guard added)', () => {
 			const runtime = createRuntime()
-			expect(() => runtime.requireGateway().zwave).toThrow(
-				/Cannot read properties of undefined/,
+			expect(() => runtime.requireGateway('zwave')).toThrow(
+				"Cannot read properties of undefined (reading 'zwave')",
 			)
 		})
 	})
@@ -175,7 +175,7 @@ describe('AppRuntime', () => {
 			const zniffer = {} as unknown as ZnifferManager
 			runtime.setZniffer(zniffer)
 			expect(runtime.getZniffer()).toBe(zniffer)
-			expect(runtime.requireZniffer()).toBe(zniffer)
+			expect(runtime.requireZniffer('start')).toBe(zniffer)
 		})
 
 		it('setZniffer(undefined) clears a previously-set zniffer', () => {
@@ -187,9 +187,9 @@ describe('AppRuntime', () => {
 
 		it('requireZniffer() throws the native TypeError when absent (preserved quirk, no guard added)', () => {
 			const runtime = createRuntime()
-			expect(() =>
-				(runtime.requireZniffer() as { start(): void }).start(),
-			).toThrow(/Cannot read properties of undefined/)
+			expect(() => runtime.requireZniffer('start')).toThrow(
+				"Cannot read properties of undefined (reading 'start')",
+			)
 		})
 	})
 
@@ -209,7 +209,7 @@ describe('AppRuntime', () => {
 
 			runtime.setGateway(gwA)
 			expect(runtime.getGateway()).toBe(gwA)
-			expect(runtime.requireGateway().zwave?.devices).toEqual({
+			expect(runtime.requireGateway('zwave').zwave?.devices).toEqual({
 				1: { name: 'device A' },
 			})
 
@@ -220,8 +220,8 @@ describe('AppRuntime', () => {
 			// instance on the very next call; nothing captured gwA.
 			expect(runtime.getGateway()).toBe(gwB)
 			expect(runtime.getGateway()).not.toBe(gwA)
-			expect(runtime.requireGateway()).toBe(gwB)
-			expect(runtime.requireGateway().zwave?.devices).toEqual({
+			expect(runtime.requireGateway('zwave')).toBe(gwB)
+			expect(runtime.requireGateway('zwave').zwave?.devices).toEqual({
 				2: { name: 'device B' },
 			})
 		})
@@ -237,7 +237,7 @@ describe('AppRuntime', () => {
 			runtime.setZniffer(znifferB)
 			expect(runtime.getZniffer()).toBe(znifferB)
 			expect(runtime.getZniffer()).not.toBe(znifferA)
-			expect(runtime.requireZniffer()).toBe(znifferB)
+			expect(runtime.requireZniffer('start')).toBe(znifferB)
 		})
 
 		it('startGateway() (a restart) replaces the gateway in place, immediately visible to the very next call', async () => {
@@ -248,7 +248,7 @@ describe('AppRuntime', () => {
 			await runtime.startGateway({})
 
 			expect(runtime.getGateway()).not.toBe(gwOld)
-			expect(runtime.requireGateway()).not.toBe(gwOld)
+			expect(runtime.requireGateway('zwave')).not.toBe(gwOld)
 			expect(gatewayCtor).toHaveBeenCalledOnce()
 		})
 
@@ -260,7 +260,7 @@ describe('AppRuntime', () => {
 			runtime.startZniffer({ enabled: true })
 
 			expect(runtime.getZniffer()).not.toBe(znifferOld)
-			expect(runtime.requireZniffer()).not.toBe(znifferOld)
+			expect(runtime.requireZniffer('start')).not.toBe(znifferOld)
 			expect(znifferCtor).toHaveBeenCalledOnce()
 		})
 
@@ -439,11 +439,15 @@ describe('AppRuntime', () => {
 			expect(snippets.filter((s) => s.name === 'cached')).toEqual([])
 		})
 
-		it('getSnippets() defaults to an empty cache array when no gateway is attached at all (?? [] fallback)', async () => {
+		it('getSnippets() throws the native TypeError when no gateway is attached at all (preserved quirk)', async () => {
 			const runtime = createRuntime()
+			// Ensures `snippetsDir` exists as a side effect, so the throw we
+			// assert on is genuinely the unguarded `gw.zwave` access - not an
+			// unrelated ENOENT from a missing directory.
 			await runtime.loadSnippets()
-			const snippets = await runtime.getSnippets()
-			expect(snippets.filter((s) => s.name === 'cached')).toEqual([])
+			await expect(runtime.getSnippets()).rejects.toThrow(
+				/Cannot read properties of undefined \(reading 'zwave'\)/,
+			)
 		})
 	})
 

@@ -44,8 +44,10 @@ export function registerImportExportRoutes(
 		isAuthenticated,
 		async function (req, res) {
 			try {
-				const gw = runtime.getGateway()
-				if (!gw?.zwave) throw Error('Z-Wave client not inited')
+				// Preserved quirk: a missing gateway reports the historical
+				// native-TypeError message.
+				const gw = runtime.requireGateway('zwave')
+				if (!gw.zwave) throw Error('Z-Wave client not inited')
 
 				const { nodes, selectedHomeId, skippedHomeIds } =
 					normalizeImportedNodesConfig(

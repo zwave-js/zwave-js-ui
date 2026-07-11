@@ -25,6 +25,15 @@ import { snippetsDir } from '../config/app.ts'
 
 const logger = loggers.module('Runtime')
 
+// `BackupManager.init()`/`.close()`'s `owner` parameter doesn't exist in
+// this layer's own `BackupManager.ts` - it's this (base) layer's own,
+// independently-added ownership token. A single shared constant (mirroring
+// how `api/app.ts`'s pre-extraction code passes its own module-level
+// `backupManagerOwner` to the same calls) is the minimal way to keep every
+// `backupManager.init()` call site (here and in `routes/settings.ts`)
+// type-checking against it.
+export const backupManagerOwner = Symbol()
+
 /**
  * Whether authentication is currently enabled, per the persisted settings.
  *
@@ -106,17 +115,6 @@ export class AppRuntime {
 
 	private defaultSnippets: utils.Snippet[] = []
 
-	// Ownership token passed to `backupManager.init()`/`close()` so a stale
-	// restart cycle can never tear down a fresh session's cron jobs - see
-	// `BackupManager.ts`'s own `init`/`close` doc comments.
-	private readonly backupManagerOwner = Symbol()
-
-	// Tracks whether THIS runtime instance is the one that started the
-	// currently-active debug session (as opposed to `debugManager.
-	// isSessionActive()`, which only says a session is active, not who
-	// started it) - so `shutdown()` only ever cancels a session it owns.
-	private ownsDebugSession = false
-
 	private readonly deps: AppRuntimeDeps
 
 	constructor(deps: AppRuntimeDeps) {
@@ -134,50 +132,17 @@ export class AppRuntime {
 	}
 
 	/**
-	 * Returns the current gateway WITHOUT guarding against it being absent.
-	 *
-	 * This is a narrow, deliberate, single-purpose exception to "no
-	 * non-null assertions": several routes/helpers (configuration
-	 * templates, config import/export, the store snippet listing, the
-	 * restart flow, starting a debug session) have always read `gw.zwave`/
-	 * `gw.close()`/etc. with no presence guard on `gw` itself, so that a
-	 * request/call made with no gateway attached surfaces as a bare
-	 * `TypeError: Cannot read properties of undefined (reading '...')`
-	 * (caught by each route's own try/catch and reported as a generic
-	 * failure), not a friendlier guarded message. This is a pinned,
-	 * intentional quirk - see issue #4722's preserved-quirk ledger and
-	 * `test/lib/http/{importExport,configurationTemplates,store,
-	 * settings}.test.ts` for the exact characterized behavior.
-	 *
-	 * Honestly typing `gateway` as `Gateway | undefined` (required to fix
-	 * the pre-existing `let gw: Gateway` unsound declaration this replaces)
-	 * makes every one of those call sites a real strict-mode error unless
-	 * *something* bridges the gap - and neither a type guard (which would
-	 * turn the throw into a different code path, changing behavior) nor a
-	 * `@ts-expect-error` comment (which would itself become a "Unused
-	 * directive" error under this repo's non-strict `tsconfig.json`, since
-	 * `strictNullChecks` is off there) can do that without changing
-	 * observable behavior. A single, centralized, heavily-documented
-	 * non-null assertion here - instead of one at every call site - is the
-	 * narrowest available tool that preserves the exact native error call
-	 * site to call site. Callers of this method must NOT add their own
-	 * presence guard before using the result; that would defeat the quirk
-	 * (and the tests pinning it).
-	 *
-	 * The assertion itself is a type-level no-op under this repo's current
-	 * non-strict `tsconfig.json` (nothing to assert away when
-	 * `strictNullChecks` is off), which is also why ESLint's
-	 * `@typescript-eslint/no-unnecessary-type-assertion` flags it - see the
-	 * inline `eslint-disable` below. It's kept anyway so this method (and
-	 * every call site relying on it) is already strict-mode clean ahead of
-	 * a later layer enabling `strict: true`.
+	 * Resolves the current gateway and preserves the legacy native-TypeError
+	 * message when it is absent. The property is supplied by the caller so
+	 * each existing failure retains the property name it historically exposed.
 	 */
-	requireGateway(): Gateway {
-		// The single, centralized non-null assertion described above -
-		// see the docstring for why it's kept despite being a no-op under
-		// this repo's current non-strict settings.
-		// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion -- intentional, see doc comment above; a no-op only because this repo's tsconfig.json keeps `strict` off for now
-		return this.gateway!
+	requireGateway(property: string): Gateway {
+		if (this.gateway === undefined) {
+			throw new TypeError(
+				`Cannot read properties of undefined (reading '${property}')`,
+			)
+		}
+		return this.gateway
 	}
 
 	// ### Zniffer ###
@@ -190,19 +155,13 @@ export class AppRuntime {
 		this.zniffer = value
 	}
 
-	/**
-	 * Returns the current zniffer WITHOUT guarding against it being absent.
-	 *
-	 * Same narrow, deliberate exception as `requireGateway()` above: the
-	 * zniffer socket API handler has always called `zniffer.start()`/
-	 * `.stop()`/etc. with no presence guard, so a call made with no
-	 * zniffer configured surfaces as a bare `TypeError` (caught by the
-	 * handler's own try/catch), not a friendlier guarded message. Callers
-	 * must NOT add their own presence guard before using the result.
-	 */
-	requireZniffer(): ZnifferManager {
-		// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion -- intentional, see requireGateway() above; a no-op only because this repo's tsconfig.json keeps `strict` off for now
-		return this.zniffer!
+	requireZniffer(property: string): ZnifferManager {
+		if (this.zniffer === undefined) {
+			throw new TypeError(
+				`Cannot read properties of undefined (reading '${property}')`,
+			)
+		}
+		return this.zniffer
 	}
 
 	// ### Plugins / plugin router ###
@@ -227,16 +186,6 @@ export class AppRuntime {
 
 	setRestarting(value: boolean): void {
 		this.restarting = value
-	}
-
-	// ### Debug session ownership ###
-
-	isOwningDebugSession(): boolean {
-		return this.ownsDebugSession
-	}
-
-	setOwnsDebugSession(value: boolean): void {
-		this.ownsDebugSession = value
 	}
 
 	// ### Serial port enumerator ###
@@ -328,7 +277,8 @@ export class AppRuntime {
 			}
 		}
 
-		const snippetsCache = this.gateway?.zwave?.cacheSnippets ?? []
+		const snippetsCache =
+			this.requireGateway('zwave').zwave?.cacheSnippets ?? []
 		return [...snippetsCache, ...this.defaultSnippets, ...snippets]
 	}
 
@@ -399,7 +349,7 @@ export class AppRuntime {
 		// `Gateway.ts`/`CustomPlugin.ts` change, not part of this layer.
 		// Passing possibly-`undefined` values through this pre-existing,
 		// tolerated mismatch is intentional, preserved behavior, not new.
-		backupManager.init(zwave, this.backupManagerOwner)
+		backupManager.init(zwave, backupManagerOwner)
 
 		// Unlike `mqtt`/`zwave`, `Gateway` is always constructed (even when
 		// `settings.gateway` itself is `undefined`) - `GatewayConfig |
@@ -478,40 +428,16 @@ export class AppRuntime {
 	}
 
 	/**
-	 * Closes the current gateway/zniffer (if any), destroys any loaded
-	 * plugins, and releases this instance's `backupManager` ownership -
-	 * exactly the collaborator-closing portion of `close()`/
-	 * `gracefuShutdown()` in `api/app.ts` (which additionally handles
-	 * process-handler/log-interceptor/debug-session/socketManager
-	 * teardown, none of which are `AppRuntime`'s own collaborators). Each
-	 * step is independently try/caught so one failing close can't prevent
-	 * the others from running, matching the pre-existing guarded
-	 * `if (gw) await gw.close()` behavior this preserves.
+	 * Closes the current gateway (if any) and destroys any loaded plugins -
+	 * exactly what `gracefuShutdown()` in `api/app.ts` does on
+	 * `SIGINT`/`SIGTERM`. Safe (guarded) - unlike route access above,
+	 * `gracefuShutdown()`'s pre-existing `if (gw) await gw.close()` already
+	 * guards against a missing gateway, so this preserves that same
+	 * guarded behavior rather than the unguarded quirk.
 	 */
 	async shutdown(): Promise<void> {
-		try {
-			await this.closeIfPresent(this.gateway)
-		} catch (error) {
-			logger.error('Error while closing gateway', error)
-		}
-
-		try {
-			await this.closeIfPresent(this.zniffer)
-		} catch (error) {
-			logger.error('Error while closing zniffer', error)
-		}
-
-		try {
-			await this.destroyPlugins()
-		} catch (error) {
-			logger.error('Error while closing plugins', error)
-		}
-
-		try {
-			backupManager.close(this.backupManagerOwner)
-		} catch (error) {
-			logger.error('Error while closing backup manager', error)
-		}
+		await this.closeIfPresent(this.gateway)
+		await this.destroyPlugins()
 	}
 }
 

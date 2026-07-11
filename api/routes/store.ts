@@ -348,7 +348,21 @@ export function registerStoreRoutes(
 				isRestore = req.body.restore === 'true'
 				const folder = req.body.folder
 
-				file = req.files?.[0]
+				// Preserved quirk: intentionally unguarded. `req.files` is
+				// typed as possibly `undefined` (and possibly a
+				// `{ [fieldname]: File[] }` map for other multer configs),
+				// but this route's `multerUpload` is always `.array(...)`
+				// so it's a `File[]` whenever multer actually ran. A
+				// non-multipart request never invokes multer's file
+				// handling at all, leaving `req.files` `undefined` - in
+				// that case this line must throw the same native
+				// "Cannot read properties of undefined (reading '0')"
+				// TypeError as before (see the "preserved quirk" test in
+				// store.test.ts), not silently fall through to the
+				// friendlier "No file uploaded" guard below. A single
+				// narrow cast (rather than optional chaining) keeps that
+				// throw behavior identical.
+				file = (req.files as Express.Multer.File[])[0]
 
 				if (!file || !file.path) {
 					throw Error('No file uploaded')

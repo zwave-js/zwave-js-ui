@@ -8,6 +8,13 @@ export interface ConfigurationTemplatesRoutesDeps {
 	apisLimiter: RateLimitRequestHandler
 }
 
+/**
+ * All routes below intentionally call `runtime.requireGateway('zwave')`, which
+ * throws a bare, unguarded `TypeError` if no gateway is currently attached.
+ * This preserves the original code's unguarded `gw.zwave.xxx()` access -
+ * see `AppRuntime.requireGateway()`'s doc comment for the full rationale.
+ * Callers must NOT add a presence guard before using the result.
+ */
 export function registerConfigurationTemplatesRoutes(
 	app: express.Express,
 	runtime: AppRuntime,
@@ -20,9 +27,9 @@ export function registerConfigurationTemplatesRoutes(
 		isAuthenticated,
 		function (req, res) {
 			try {
-				const gw = runtime.getGateway()
-				if (!gw?.zwave) throw Error('Z-Wave client not inited')
-				const templates = gw.zwave.getConfigurationTemplates()
+				const templates = runtime
+					.requireGateway('zwave')
+					.zwave.getConfigurationTemplates()
 				res.json({ success: true, data: templates })
 			} catch (error) {
 				res.json({ success: false, message: getErrorMessage(error) })
@@ -37,8 +44,6 @@ export function registerConfigurationTemplatesRoutes(
 		isAuthenticated,
 		async function (req, res) {
 			try {
-				const gw = runtime.getGateway()
-				if (!gw?.zwave) throw Error('Z-Wave client not inited')
 				const { nodeId, name, autoApply, values, firmwareRange } =
 					req.body
 				if (!nodeId || !name) {
@@ -47,13 +52,15 @@ export function registerConfigurationTemplatesRoutes(
 						message: 'nodeId and name are required',
 					})
 				}
-				const template = await gw.zwave.createConfigurationTemplate(
-					nodeId,
-					name,
-					autoApply,
-					values,
-					firmwareRange,
-				)
+				const template = await runtime
+					.requireGateway('zwave')
+					.zwave.createConfigurationTemplate(
+						nodeId,
+						name,
+						autoApply,
+						values,
+						firmwareRange,
+					)
 				res.json({
 					success: true,
 					data: template,
@@ -72,9 +79,9 @@ export function registerConfigurationTemplatesRoutes(
 		isAuthenticated,
 		function (req, res) {
 			try {
-				const gw = runtime.getGateway()
-				if (!gw?.zwave) throw Error('Z-Wave client not inited')
-				const templates = gw.zwave.getConfigurationTemplates()
+				const templates = runtime
+					.requireGateway('zwave')
+					.zwave.getConfigurationTemplates()
 				res.json({
 					success: true,
 					data: templates,
@@ -110,10 +117,9 @@ export function registerConfigurationTemplatesRoutes(
 						})
 					}
 				}
-				const gw = runtime.getGateway()
-				if (!gw?.zwave) throw Error('Z-Wave client not inited')
-				const result =
-					await gw.zwave.importConfigurationTemplates(templates)
+				const result = await runtime
+					.requireGateway('zwave')
+					.zwave.importConfigurationTemplates(templates)
 				res.json({
 					success: true,
 					data: result,
@@ -132,11 +138,9 @@ export function registerConfigurationTemplatesRoutes(
 		isAuthenticated,
 		async function (req, res) {
 			try {
-				const gw = runtime.getGateway()
-				if (!gw?.zwave) throw Error('Z-Wave client not inited')
-				const params = await gw.zwave.getDeviceConfigurationParams(
-					req.params.deviceId,
-				)
+				const params = await runtime
+					.requireGateway('zwave')
+					.zwave.getDeviceConfigurationParams(req.params.deviceId)
 				res.json({ success: true, data: params })
 			} catch (error) {
 				res.json({ success: false, message: getErrorMessage(error) })
@@ -159,17 +163,14 @@ export function registerConfigurationTemplatesRoutes(
 					})
 				}
 				const { name, autoApply, firmwareRange, values } = req.body
-				const gw = runtime.getGateway()
-				if (!gw?.zwave) throw Error('Z-Wave client not inited')
-				const template = await gw.zwave.updateConfigurationTemplate(
-					id,
-					{
+				const template = await runtime
+					.requireGateway('zwave')
+					.zwave.updateConfigurationTemplate(id, {
 						name,
 						autoApply,
 						firmwareRange,
 						values,
-					},
-				)
+					})
 				res.json({
 					success: true,
 					data: template,
@@ -195,9 +196,9 @@ export function registerConfigurationTemplatesRoutes(
 						message: 'Invalid template ID',
 					})
 				}
-				const gw = runtime.getGateway()
-				if (!gw?.zwave) throw Error('Z-Wave client not inited')
-				await gw.zwave.deleteConfigurationTemplate(id)
+				await runtime
+					.requireGateway('zwave')
+					.zwave.deleteConfigurationTemplate(id)
 				res.json({
 					success: true,
 					message: 'Template deleted successfully',
@@ -229,13 +230,9 @@ export function registerConfigurationTemplatesRoutes(
 						message: 'nodeId is required',
 					})
 				}
-				const gw = runtime.getGateway()
-				if (!gw?.zwave) throw Error('Z-Wave client not inited')
-				const result = await gw.zwave.applyConfigurationTemplate(
-					id,
-					nodeId,
-					!!force,
-				)
+				const result = await runtime
+					.requireGateway('zwave')
+					.zwave.applyConfigurationTemplate(id, nodeId, !!force)
 				res.json({
 					success: true,
 					data: result,

@@ -14,6 +14,7 @@ import * as utils from '../lib/utils.ts'
 import { getExternallyManagedPaths } from '../lib/externalSettings.ts'
 import { getErrorMessage } from '../lib/errors.ts'
 import type { AppRuntime } from '../runtime/AppRuntime.ts'
+import { backupManagerOwner } from '../runtime/AppRuntime.ts'
 import { isAuthenticated } from './auth.ts'
 
 const logger = loggers.module('App')
@@ -375,25 +376,28 @@ export function registerSettingsRoutes(
 					)
 				}
 
-				const gw = runtime.getGateway()
-				if (!gw?.zwave) throw Error('Z-Wave client not inited')
-
 				const settings = jsonStore.get(store.settings)
 
 				runtime.setRestarting(true)
 
 				if (runtime.getDebugManager().isSessionActive()) {
 					await runtime.getDebugManager().cancelSession()
-					runtime.setOwnsDebugSession(false)
 				}
 
-				// Close gateway and restart.
-				await gw.close()
+				// Close gateway and restart. Preserve the historical TypeError
+				// when no gateway is attached.
+				await runtime.requireGateway('close').close()
 				await runtime.destroyPlugins()
 				if (settings.gateway) {
 					runtime.setupLogging({ gateway: settings.gateway })
 				}
 				await runtime.startGateway(settings)
+				// Resolved AFTER `startGateway()` reassigns the gateway - reusing
+				// an earlier local here would observe the just-closed gateway
+				// instead of the new one.
+				runtime
+					.getBackupManager()
+					.init(runtime.requireGateway('zwave').zwave, backupManagerOwner)
 
 				// Restart Zniffer if enabled
 				const oldZniffer = runtime.getZniffer()

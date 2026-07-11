@@ -50,7 +50,7 @@ export function registerHealthRoutes(
 		let status: boolean = false
 
 		if (client !== 'zwave' && client !== 'mqtt') {
-			res.status(500).send("Requested client doesn't exist")
+			res.status(500).send("Requested client doesn 't exist")
 		} else {
 			status = runtime.getGateway()?.[client]?.getStatus().status ?? false
 		}

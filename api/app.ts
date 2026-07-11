@@ -520,7 +520,8 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 	/**
 	 * Binds socketManager to `server`
 	 */
-	function setupSocket(server: HttpServer) {
+	
+function setupSocket(server: HttpServer) {
 		socketManager.bindServer(server)
 
 		socketManager.io.on('connection', (socket) => {
@@ -529,9 +530,9 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 			socket.on(inboundEvents.init, (data, cb = noop) => {
 				let state = {} as any
 
-				// Preserved quirk: unguarded - throws if no gateway is
-				// currently attached (see `requireGateway()`'s doc comment).
-				const currentGw = runtime.requireGateway()
+				// Preserved quirk: throws the historical TypeError if no gateway
+				// is currently attached.
+				const currentGw = runtime.requireGateway('zwave')
 				if (currentGw.zwave) {
 					state = currentGw.zwave.getState()
 				}
@@ -553,9 +554,7 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 				inboundEvents.zwave,
 
 				async (data, cb = noop) => {
-					// Preserved quirk: unguarded - see `requireGateway()`'s
-					// doc comment.
-					const currentGw = runtime.requireGateway()
+					const currentGw = runtime.requireGateway('zwave')
 					if (currentGw.zwave) {
 						if (!data.args) data.args = []
 						const result: CallAPIResult<any> & {
@@ -581,15 +580,16 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 				let res: void, err: string
 
 				try {
-					// Preserved quirk: unguarded - see `requireGateway()`'s
-					// doc comment.
-					const currentGw = runtime.requireGateway()
 					switch (data.api) {
 						case 'updateNodeTopics':
-							res = currentGw.updateNodeTopics(data.args[0])
+							res = runtime
+								.requireGateway('updateNodeTopics')
+								.updateNodeTopics(data.args[0])
 							break
 						case 'removeNodeRetained':
-							res = currentGw.removeNodeRetained(data.args[0])
+							res = runtime
+								.requireGateway('removeNodeRetained')
+								.removeNodeRetained(data.args[0])
 							break
 						default:
 							err = `Unknown MQTT api ${data.api}`
@@ -614,54 +614,51 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 
 				let res: any, err: string
 				try {
-					// Preserved quirk: unguarded - see `requireGateway()`'s
-					// doc comment.
-					const currentGw = runtime.requireGateway()
 					switch (data.apiName) {
 						case 'delete':
-							res = currentGw.publishDiscovery(
-								data.device,
-								data.nodeId,
-								{
+							res = runtime
+								.requireGateway('publishDiscovery')
+								.publishDiscovery(data.device, data.nodeId, {
 									deleteDevice: true,
 									forceUpdate: true,
-								},
-							)
+								})
 							break
 						case 'discover':
-							res = currentGw.publishDiscovery(
-								data.device,
-								data.nodeId,
-								{
+							res = runtime
+								.requireGateway('publishDiscovery')
+								.publishDiscovery(data.device, data.nodeId, {
 									deleteDevice: false,
 									forceUpdate: true,
-								},
-							)
+								})
 							break
 						case 'rediscoverNode':
-							res = currentGw.rediscoverNode(data.nodeId)
+							res = runtime
+								.requireGateway('rediscoverNode')
+								.rediscoverNode(data.nodeId)
 							break
 						case 'disableDiscovery':
-							res = currentGw.disableDiscovery(data.nodeId)
+							res = runtime
+								.requireGateway('disableDiscovery')
+								.disableDiscovery(data.nodeId)
 							break
 						case 'update':
-							res = currentGw.zwave.updateDevice(
-								data.device,
-								data.nodeId,
-							)
+							res = runtime
+								.requireGateway('zwave')
+								.zwave.updateDevice(data.device, data.nodeId)
 							break
 						case 'add':
-							res = currentGw.zwave.addDevice(
-								data.device,
-								data.nodeId,
-							)
+							res = runtime
+								.requireGateway('zwave')
+								.zwave.addDevice(data.device, data.nodeId)
 							break
 						case 'store':
-							res = await currentGw.zwave.storeDevices(
-								data.devices,
-								data.nodeId,
-								data.remove,
-							)
+							res = await runtime
+								.requireGateway('zwave')
+								.zwave.storeDevices(
+									data.devices,
+									data.nodeId,
+									data.remove,
+								)
 							break
 						default:
 							throw new Error(`Unknown HASS api ${data.apiName}`)
@@ -730,38 +727,41 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 
 				let res: any, err: string
 				try {
-					// Preserved quirk: unguarded - see `requireZniffer()`'s
-					// doc comment.
-					const currentZniffer = runtime.requireZniffer()
 					switch (data.apiName) {
 						case 'start':
-							res = await currentZniffer.start()
+							res = await runtime.requireZniffer('start').start()
 							break
 						case 'stop':
-							res = await currentZniffer.stop()
+							res = await runtime.requireZniffer('stop').stop()
 							break
 						case 'clear':
-							res = currentZniffer.clear()
+							res = runtime.requireZniffer('clear').clear()
 							break
 						case 'getFrames':
-							res = currentZniffer.getFrames()
+							res = runtime.requireZniffer('getFrames').getFrames()
 							break
 						case 'setFrequency':
-							res = await currentZniffer.setFrequency(
+							res = await runtime
+								.requireZniffer('setFrequency')
+								.setFrequency(
 								data.frequency,
 							)
 							break
 						case 'setLRChannelConfig':
-							res = await currentZniffer.setLRChannelConfig(
-								data.channelConfig,
-							)
+							res = await runtime
+								.requireZniffer('setLRChannelConfig')
+								.setLRChannelConfig(data.channelConfig)
 							break
 						case 'saveCaptureToFile':
-							res = await currentZniffer.saveCaptureToFile()
+							res = await runtime
+								.requireZniffer('saveCaptureToFile')
+								.saveCaptureToFile()
 							break
 						case 'loadCaptureFromBuffer': {
 							const buffer = Buffer.from(data.buffer)
-							res = await currentZniffer.loadCaptureFromBuffer(buffer)
+							res = await runtime
+								.requireZniffer('loadCaptureFromBuffer')
+								.loadCaptureFromBuffer(buffer)
 							break
 						}
 						default:
@@ -787,9 +787,7 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 
 		// emitted every time a new client connects/disconnects
 		socketManager.on('clients', (event, activeSockets) => {
-			// Preserved quirk: unguarded gateway - see `requireGateway()`'s
-			// doc comment.
-			const currentGw = runtime.requireGateway()
+			const currentGw = runtime.requireGateway('zwave')
 			if (event === 'connection' && activeSockets.size === 1) {
 				currentGw.zwave?.setUserCallbacks()
 			} else if (event === 'disconnect' && activeSockets.size === 0) {
@@ -855,21 +853,6 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 			logStreamInterceptor = undefined
 		}
 
-		try {
-			if (
-				runtime.isOwningDebugSession() &&
-				runtime.getDebugManager().isSessionActive()
-			) {
-				await runtime.getDebugManager().cancelSession()
-				runtime.setOwnsDebugSession(false)
-			}
-		} catch (error) {
-			logger.error('Error while cancelling debug session', error)
-		}
-
-		// Closes the gateway/zniffer/plugins/backupManager - see
-		// `AppRuntime.shutdown()`'s own doc comment for why those four
-		// specifically live there instead of here.
 		await runtime.shutdown()
 
 		try {
