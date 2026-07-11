@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll, afterEach } from 'vitest'
+import { describe, it, expect, beforeAll, afterEach, vi } from 'vitest'
 import { useHttpHarness, bufferResponse } from './harness.ts'
 import { createFakeGateway } from '../shared/fakes.ts'
 
@@ -153,6 +153,34 @@ describe('HTTP contract: debug capture', () => {
 			const status = await harness.request.get('/api/debug/status')
 			expect(status.body).toEqual({ success: true, active: false })
 		})
+
+		it(
+			"reports a generic failure when nodeIds is not an array - debugManager.stopSession()'s " +
+				"`for (const nodeId of nodeIds)` isn't guarded by its own per-node try/catch " +
+				'(that only wraps each iteration once already inside the loop), so a non-iterable ' +
+				"body value throws past it to this route's own catch block",
+			async () => {
+				const gw = createFakeGateway()
+				gw.zwave.driverReady = false
+				const harness = await getHarness({ gateway: gw })
+				await harness.request.post('/api/debug/start').send({})
+
+				const res = await harness.request
+					.post('/api/debug/stop')
+					.send({ nodeIds: 5 })
+
+				expect(res.status).toBe(200)
+				expect(res.body.success).toBe(false)
+				expect(res.body.message).toMatch(/is not iterable/)
+
+				// stopSession() already restores/clears the session (inside
+				// restoreSession()) before it ever reaches the nodeIds loop
+				// that throws, so - unlike a failure earlier in the method -
+				// no session is left active to clean up here.
+				const status = await harness.request.get('/api/debug/status')
+				expect(status.body).toEqual({ success: true, active: false })
+			},
+		)
 	})
 
 	describe('POST /api/debug/cancel', () => {
@@ -183,6 +211,37 @@ describe('HTTP contract: debug capture', () => {
 
 			const status = await harness.request.get('/api/debug/status')
 			expect(status.body).toEqual({ success: true, active: false })
+		})
+
+		it('reports a generic failure when restoring the driver log level throws (uncaught inside cancelSession())', async () => {
+			const gw = createFakeGateway()
+			gw.zwave.driverReady = true
+			gw.zwave.driver.updateLogConfig = vi.fn(() => {
+				throw new Error('driver rejected log config update')
+			})
+			const harness = await getHarness({ gateway: gw })
+			await harness.request.post('/api/debug/start').send({})
+
+			const res = await harness.request.post('/api/debug/cancel')
+
+			expect(res.status).toBe(200)
+			expect(res.body).toEqual({
+				success: false,
+				message: 'driver rejected log config update',
+			})
+
+			// restoreSession() throws before ever reaching its own
+			// `this.session = null` line, so the session is still
+			// (internally) marked active - assert that, then reset the
+			// manager's private state directly rather than calling
+			// cancelSession()/stopSession() again (which would re-run the
+			// same already-.end()-ed winston transport teardown and hang
+			// forever waiting on a 'finish' event that can't fire twice),
+			// so the shared afterEach hook's own cleanup has nothing left
+			// to do.
+			const status = await harness.request.get('/api/debug/status')
+			expect(status.body).toEqual({ success: true, active: true })
+			;(debugManager as unknown as { session: unknown }).session = null
 		})
 	})
 })

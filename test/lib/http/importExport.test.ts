@@ -123,5 +123,91 @@ describe('HTTP contract: import/export config', () => {
 			})
 			expect(gw.zwave.callApi).not.toHaveBeenCalled()
 		})
+
+		it('imports the explicitly-selected home id from a multi-home backup, applying only "location" (no "loc"/name/hassDevices) for that network\'s node', async () => {
+			const gw = createFakeGateway()
+			gw.zwave.homeHex = '0xCAFEBABE'
+			const harness = await getHarness({ gateway: gw })
+
+			const res = await harness.request.post('/api/importConfig').send({
+				data: {
+					'0x11111111': { 2: { location: 'Garage' } },
+					'0x22222222': { 3: { name: 'B' } },
+				},
+				// Explicit selection wins even though neither home id matches
+				// the connected controller's own homeHex.
+				homeId: '0x11111111',
+			})
+
+			expect(res.status).toBe(200)
+			expect(res.body).toEqual({
+				success: true,
+				message: 'Configuration imported successfully',
+			})
+
+			// Only the selected network's node 2 is applied - node 3 (under
+			// the skipped '0x22222222' home id) never surfaces at all.
+			expect(gw.zwave.callApi).toHaveBeenCalledExactlyOnceWith(
+				'setNodeLocation',
+				2,
+				'Garage',
+			)
+			expect(gw.zwave.storeDevices).not.toHaveBeenCalled()
+		})
+
+		it('ignores a non-string homeId (falls back to normal home-id matching)', async () => {
+			const gw = createFakeGateway()
+			gw.zwave.homeHex = '0x11111111'
+			const harness = await getHarness({ gateway: gw })
+
+			const res = await harness.request.post('/api/importConfig').send({
+				data: {
+					'0x11111111': { 2: { name: 'Matched by homeHex' } },
+				},
+				// Not a string - the route's `typeof ... === 'string'` guard
+				// must discard it rather than pass it through.
+				homeId: 12345,
+			})
+
+			expect(res.status).toBe(200)
+			expect(res.body.success).toBe(true)
+			expect(gw.zwave.callApi).toHaveBeenCalledExactlyOnceWith(
+				'setNodeName',
+				2,
+				'Matched by homeHex',
+			)
+		})
+
+		it('skips a non-object node value (null or a primitive) in a flat config, and falls back to an empty name for a non-string "name"', async () => {
+			const gw = createFakeGateway()
+			const harness = await getHarness({ gateway: gw })
+
+			const res = await harness.request.post('/api/importConfig').send({
+				data: {
+					// Node-id-looking keys make this a flat config, not a
+					// home-id-wrapped one - so nothing pre-filters these
+					// non-object values before the route's own per-node
+					// `!node || typeof node !== 'object'` guard sees them.
+					2: null,
+					3: 'not an object either',
+					4: { name: 42 },
+				},
+			})
+
+			expect(res.status).toBe(200)
+			expect(res.body).toEqual({
+				success: true,
+				message: 'Configuration imported successfully',
+			})
+
+			// Nodes 2 and 3 are silently skipped; node 4's non-string name
+			// falls back to an empty string rather than being coerced/thrown.
+			expect(gw.zwave.callApi).toHaveBeenCalledExactlyOnceWith(
+				'setNodeName',
+				4,
+				'',
+			)
+			expect(gw.zwave.storeDevices).not.toHaveBeenCalled()
+		})
 	})
 })

@@ -3,7 +3,9 @@ import type { Express } from 'express'
 import supertest, { type Test as SupertestTest } from 'supertest'
 import { vi } from 'vitest'
 import type { FakeGateway } from '../shared/fakes.ts'
+import type { FakeZniffer } from '../socket/fakes.ts'
 import type { Driver } from 'zwave-js'
+import type * as ZnifferModuleNamespace from '#api/lib/ZnifferManager.ts'
 import {
 	useHarnessLifecycle,
 	listenOnEphemeralPort,
@@ -14,6 +16,8 @@ import {
 } from '../shared/harness.ts'
 
 type RealGateway = InstanceType<GatewayModule['default']>
+type ZnifferModule = typeof ZnifferModuleNamespace
+type RealZniffer = InstanceType<ZnifferModule['default']>
 
 type SerialPortsEnumerator = typeof Driver.enumerateSerialPorts
 type SerialPortsEnumeratorMock = ReturnType<typeof vi.fn<SerialPortsEnumerator>>
@@ -44,6 +48,7 @@ export function bufferResponse(req: SupertestTest): SupertestTest {
 
 export interface HttpHarnessOptions {
 	gateway?: FakeGateway
+	zniffer?: FakeZniffer
 	restarting?: boolean
 	enumerateSerialPorts?: SerialPortsEnumeratorMock
 }
@@ -59,6 +64,7 @@ async function createHarnessInstance(
 		test: {
 			// Gateway has private fields, so a structural mock like FakeGateway needs this cast to satisfy it
 			gateway: options.gateway as unknown as RealGateway | undefined,
+			zniffer: options.zniffer as unknown as RealZniffer | undefined,
 			restarting: options.restarting,
 			enumerateSerialPorts,
 		},

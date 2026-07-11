@@ -1,10 +1,44 @@
 import { describe, it, expect } from 'vitest'
-import { mkdirSync, writeFileSync, existsSync, readFileSync } from 'node:fs'
+import {
+	mkdirSync,
+	mkdtempSync,
+	writeFileSync,
+	existsSync,
+	readFileSync,
+	symlinkSync,
+	rmSync,
+	createWriteStream,
+} from 'node:fs'
 import path from 'node:path'
+import { tmpdir } from 'node:os'
 import { fileURLToPath } from 'node:url'
+import archiver from 'archiver'
+import extract from 'extract-zip'
 import { useHttpHarness, bufferResponse } from './harness.ts'
 import { getTestStoreDir } from '../shared/env.ts'
 import { createFakeGateway } from '../shared/fakes.ts'
+
+/**
+ * Builds a real ZIP file on disk (via the same `archiver` package the
+ * production route uses) containing the given `{ name: content }` entries,
+ * so restore/extract tests exercise real ZIP bytes rather than a fake.
+ */
+async function buildTestZip(
+	destPath: string,
+	files: Record<string, string>,
+): Promise<void> {
+	await new Promise<void>((resolve, reject) => {
+		const archive = archiver('zip')
+		const output = createWriteStream(destPath)
+		output.on('close', () => resolve())
+		archive.on('error', reject)
+		archive.pipe(output)
+		for (const [name, content] of Object.entries(files)) {
+			archive.append(content, { name })
+		}
+		void archive.finalize()
+	})
+}
 
 const BUNDLED_SNIPPETS_DIR = path.join(
 	path.dirname(fileURLToPath(import.meta.url)),
@@ -66,6 +100,60 @@ describe('HTTP contract: store, upload, snippets', () => {
 				success: false,
 				message: 'Path not allowed',
 			})
+		})
+
+		it('follows a symlink to a file and returns the dereferenced target contents (isSymbolicLink() branch)', async () => {
+			const harness = await getHarness()
+			writeFileSync(
+				path.join(getTestStoreDir(), 'link-target.txt'),
+				'target content',
+			)
+			symlinkSync(
+				'link-target.txt',
+				path.join(getTestStoreDir(), 'link-to-target.txt'),
+			)
+
+			const res = await harness.request
+				.get('/api/store')
+				.query({ path: 'link-to-target.txt' })
+
+			expect(res.status).toBe(200)
+			expect(res.body).toEqual({
+				success: true,
+				data: 'target content',
+			})
+		})
+
+		it('hides a directory matching ZWAVEJS_EXTERNAL_CONFIG from the root listing', async () => {
+			const harness = await getHarness()
+			mkdirSync(path.join(getTestStoreDir(), 'config-db'), {
+				recursive: true,
+			})
+			const previous = process.env.ZWAVEJS_EXTERNAL_CONFIG
+			process.env.ZWAVEJS_EXTERNAL_CONFIG = path.join(
+				getTestStoreDir(),
+				'config-db',
+			)
+
+			try {
+				const res = await harness.request.get('/api/store')
+
+				expect(res.status).toBe(200)
+				const rootChildren = (
+					res.body.data as Array<{
+						children: Array<{ name: string }>
+					}>
+				)[0].children
+				expect(rootChildren.some((c) => c.name === 'config-db')).toBe(
+					false,
+				)
+			} finally {
+				if (previous === undefined) {
+					delete process.env.ZWAVEJS_EXTERNAL_CONFIG
+				} else {
+					process.env.ZWAVEJS_EXTERNAL_CONFIG = previous
+				}
+			}
 		})
 	})
 
@@ -133,6 +221,28 @@ describe('HTTP contract: store, upload, snippets', () => {
 				message: 'Path is not a file',
 			})
 		})
+
+		it("overwrites an existing regular file's content when isNew is omitted (isFile() true side)", async () => {
+			const harness = await getHarness()
+			writeFileSync(
+				path.join(getTestStoreDir(), 'overwrite-me.txt'),
+				'old content',
+			)
+
+			const res = await harness.request
+				.put('/api/store')
+				.query({ path: 'overwrite-me.txt' })
+				.send({ content: 'new content' })
+
+			expect(res.status).toBe(200)
+			expect(res.body).toEqual({ success: true })
+			expect(
+				readFileSync(
+					path.join(getTestStoreDir(), 'overwrite-me.txt'),
+					'utf8',
+				),
+			).toBe('new content')
+		})
 	})
 
 	describe('DELETE /api/store', () => {
@@ -192,6 +302,32 @@ describe('HTTP contract: store, upload, snippets', () => {
 			expect(res.status).toBe(200)
 			expect(res.body).toEqual({ success: true })
 		})
+
+		it(
+			'aborts the whole operation (no per-file try/catch) when an earlier path escapes the ' +
+				'store, leaving later-listed files untouched - unlike POST /api/store-multi, which ' +
+				'skips unsafe entries individually',
+			async () => {
+				const harness = await getHarness()
+				writeFileSync(
+					path.join(getTestStoreDir(), 'keep-me.txt'),
+					'still here',
+				)
+
+				const res = await harness.request
+					.put('/api/store-multi')
+					.send({ files: ['../escape.txt', 'keep-me.txt'] })
+
+				expect(res.status).toBe(200)
+				expect(res.body).toEqual({
+					success: false,
+					message: 'Path not allowed',
+				})
+				expect(
+					existsSync(path.join(getTestStoreDir(), 'keep-me.txt')),
+				).toBe(true)
+			},
+		)
 	})
 
 	describe('POST /api/store-multi', () => {
@@ -229,6 +365,41 @@ describe('HTTP contract: store, upload, snippets', () => {
 
 			expect(res.status).toBe(200)
 			expect(res.headers['content-type']).toBe('application/zip')
+		})
+
+		it("includes a symlinked file's dereferenced target content in the archive (isSymbolicLink() branch)", async () => {
+			const harness = await getHarness()
+			writeFileSync(
+				path.join(getTestStoreDir(), 'zip-link-target.txt'),
+				'zip target content',
+			)
+			symlinkSync(
+				'zip-link-target.txt',
+				path.join(getTestStoreDir(), 'zip-link.txt'),
+			)
+
+			const res = await bufferResponse(
+				harness.request
+					.post('/api/store-multi')
+					.send({ files: ['zip-link.txt'] }),
+			)
+
+			expect(res.status).toBe(200)
+
+			const extractDir = mkdtempSync(
+				path.join(tmpdir(), 'store-zip-extract-'),
+			)
+			try {
+				const zipPath = path.join(extractDir, 'archive.zip')
+				writeFileSync(zipPath, res.body as Buffer)
+				await extract(zipPath, { dir: extractDir })
+
+				expect(
+					readFileSync(path.join(extractDir, 'zip-link.txt'), 'utf8'),
+				).toBe('zip target content')
+			} finally {
+				rmSync(extractDir, { recursive: true, force: true })
+			}
 		})
 	})
 
@@ -318,6 +489,64 @@ describe('HTTP contract: store, upload, snippets', () => {
 				success: false,
 				message: 'Path not allowed',
 			})
+		})
+
+		it('surfaces a MulterError message when more files are sent than the configured max count (multerPromise rejection path)', async () => {
+			const harness = await getHarness()
+			const res = await harness.request
+				.post('/api/store/upload')
+				.field('folder', 'uploads')
+				.attach('upload', Buffer.from('one'), 'one.txt')
+				.attach('upload', Buffer.from('two'), 'two.txt')
+
+			expect(res.status).toBe(200)
+			expect(res.body).toEqual({
+				success: false,
+				message: 'Unexpected field',
+			})
+		})
+
+		it('restores a real uploaded ZIP archive into the store (isRestore branch), merging its contents and cleaning up the staged upload', async () => {
+			const harness = await getHarness()
+			const stageParent = mkdtempSync(
+				path.join(tmpdir(), 'store-restore-src-'),
+			)
+			try {
+				const zipPath = path.join(stageParent, 'backup.zip')
+				await buildTestZip(zipPath, {
+					'restored-file.txt': 'restored content',
+					'restored-dir/nested.txt': 'nested restored content',
+				})
+
+				const res = await harness.request
+					.post('/api/store/upload')
+					.field('restore', 'true')
+					.attach('upload', readFileSync(zipPath), {
+						filename: 'backup.zip',
+						contentType: 'application/zip',
+					})
+
+				expect(res.status).toBe(200)
+				expect(res.body).toEqual({ success: true })
+				expect(
+					readFileSync(
+						path.join(getTestStoreDir(), 'restored-file.txt'),
+						'utf8',
+					),
+				).toBe('restored content')
+				expect(
+					readFileSync(
+						path.join(
+							getTestStoreDir(),
+							'restored-dir',
+							'nested.txt',
+						),
+						'utf8',
+					),
+				).toBe('nested restored content')
+			} finally {
+				rmSync(stageParent, { recursive: true, force: true })
+			}
 		})
 	})
 
