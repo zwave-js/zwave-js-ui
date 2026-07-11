@@ -135,8 +135,6 @@ export interface AppInstance {
 	loadSnippets(): Promise<void>
 }
 
-// A factory, not a module-level singleton, so tests can create their own
-// isolated app/gateway/zniffer state instead of mutating shared bindings
 export function createApp(): AppInstance {
 	const app = express()
 	const logger = loggers.module('App')
@@ -347,9 +345,7 @@ export function createApp(): AppInstance {
 		await debugManager.init() // Clean up any old debug temp files
 		await startGateway(settings)
 
-		// Registered here, not at module scope, so importing this module
-		// for tests never installs process-wide signal/exception handlers
-		process.removeAllListeners('SIGINT')
+		// Register process handlers only when the app starts
 		process.on('uncaughtException', (reason) => {
 			const stack = (reason as any).stack || ''
 			logger.error(
@@ -366,7 +362,6 @@ export function createApp(): AppInstance {
 	const defaultSnippets: utils.Snippet[] = []
 
 	async function loadSnippets() {
-		// Clear first so a repeated call can never duplicate entries
 		defaultSnippets.length = 0
 		const localSnippetsDir = utils.joinPath(false, 'snippets')
 		await utils.ensureDir(snippetsDir)
