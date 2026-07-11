@@ -1,20 +1,13 @@
-/**
- * Shared helpers for seeding users / minting JWTs against the exact secret
- * `api/app.ts` verifies with, used by the auth-dependent HTTP contract
- * suites (auth.test.ts, and any other group that needs an authenticated
- * session or a bearer token).
- */
 import jwt from 'jsonwebtoken'
 import { TEST_SESSION_SECRET } from './env.ts'
 import type { HttpHarness } from './harness.ts'
-import { hashPsw } from '../../../api/lib/utils.ts'
+import { hashPsw } from '#api/lib/utils.ts'
 
 export interface TestUser {
 	username: string
 	passwordHash: string
 }
 
-/** Overwrite the users store with a single known user (hashed password). */
 export async function seedUser(
 	harness: HttpHarness,
 	username: string,
@@ -28,14 +21,13 @@ export async function seedUser(
 	return user
 }
 
-/** Sign a JWT the same way `/api/authenticate` does for a logged-in user. */
 export function signUserToken(user: { username: string }): string {
+	// Mirrors how /api/authenticate signs a token for a logged-in user
 	return jwt.sign({ username: user.username }, TEST_SESSION_SECRET, {
 		expiresIn: '1d',
 	})
 }
 
-/** Merge a partial settings object over the current settings and persist it. */
 export async function setSettings(
 	harness: HttpHarness,
 	partial: Record<string, unknown>,

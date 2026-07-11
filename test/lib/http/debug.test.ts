@@ -7,30 +7,19 @@ interface DebugManagerLike {
 	cancelSession(): Promise<void>
 }
 
-/**
- * Characterizes: GET /api/debug/status, POST /api/debug/start,
- * POST /api/debug/stop, POST /api/debug/cancel.
- *
- * Uses the real (singleton) `debugManager` rather than mocking it - its
- * `startSession`/`stopSession`/`cancelSession` only touch the isolated
- * per-test STORE_DIR (temp log files) and the fake ZWaveClient's
- * `vi.fn()` collaborators, so exercising the real module is both safe and a
- * more faithful characterization than a hand-rolled mock. Every test cleans
- * up any session it starts so state never leaks to the next test.
- */
+// Exercises the real debugManager singleton rather than mocking it: its
+// session methods only touch the isolated per-test STORE_DIR and the fake
+// ZWaveClient's vi.fn() collaborators, so it's safe and more faithful than
+// a hand-rolled mock. Every test cleans up any session it starts.
 describe('HTTP contract: debug capture', () => {
 	let harness: HttpHarness
 	let debugManager: DebugManagerLike
 
 	beforeAll(async () => {
 		harness = await createHttpHarness()
-		// Import lazily, after the harness has bootstrapped the isolated
-		// STORE_DIR (via ensureTestEnv()) - a static top-level import would
-		// evaluate api/config/app.ts (and thus resolve `storeDir`) before
-		// the env var is set, pointing debugTempDir at the real project
-		// store instead of the throwaway test one. A dynamic import here
-		// resolves to the exact same cached module instance app.ts uses.
-		debugManager = (await import('../../../api/lib/DebugManager.ts'))
+		// Dynamic import so it resolves after createHttpHarness() sets
+		// STORE_DIR, keeping debugTempDir out of the real project store
+		debugManager = (await import('#api/lib/DebugManager.ts'))
 			.default as DebugManagerLike
 	})
 
@@ -153,9 +142,8 @@ describe('HTTP contract: debug capture', () => {
 				'504b0304',
 			)
 
-			// The route's own `archive.on('end', cleanup)` runs asynchronously
-			// after the response finishes; ending the session here (via the
-			// route itself) means the next status check reports inactive.
+			// archive.on('end', cleanup) runs asynchronously after the
+			// response finishes, so status only reports inactive afterward
 			const status = await harness.request.get('/api/debug/status')
 			expect(status.body).toEqual({ success: true, active: false })
 		})

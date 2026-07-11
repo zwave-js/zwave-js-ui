@@ -1,18 +1,20 @@
-import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest'
+import {
+	describe,
+	it,
+	expect,
+	beforeAll,
+	afterAll,
+	afterEach,
+	vi,
+} from 'vitest'
 import { createHttpHarness, type HttpHarness } from './harness.ts'
 import { createFakeGateway } from './fakes.ts'
 import { setSettings } from './authHelpers.ts'
+import { enumerateSerialPorts } from '#api/lib/serialPorts.ts'
 
-/**
- * Characterizes: GET/POST /api/settings, GET /api/serial-ports,
- * POST /api/restart, POST /api/statistics, POST /api/versions.
- *
- * `settings.zwave` is deliberately kept falsy in every settings payload used
- * here so that the real (unmocked) `startGateway()` invoked by
- * `POST /api/restart` never constructs a real `ZWaveClient`/`MqttClient` -
- * that keeps the whole file hardware/network-free while still exercising the
- * real restart code path end-to-end.
- */
+// settings.zwave is deliberately kept falsy in every payload here so the
+// real (unmocked) startGateway() invoked by POST /api/restart never
+// constructs a real ZWaveClient/MqttClient
 describe('HTTP contract: settings, restart, statistics, versions', () => {
 	let harness: HttpHarness
 
@@ -57,7 +59,7 @@ describe('HTTP contract: settings, restart, statistics, versions', () => {
 
 	describe('GET /api/serial-ports', () => {
 		it('returns exactly the ports the (mocked) enumerator resolves, with no real serial/mDNS I/O', async () => {
-			harness.testHooks.setEnumerateSerialPorts((options) => {
+			vi.mocked(enumerateSerialPorts).mockImplementation((options) => {
 				expect(options).toEqual({ local: true, remote: true })
 				return Promise.resolve(['/dev/ttyFAKE0', '/dev/ttyFAKE1'])
 			})
@@ -72,7 +74,7 @@ describe('HTTP contract: settings, restart, statistics, versions', () => {
 		})
 
 		it('returns an empty list without throwing when the enumerator resolves none', async () => {
-			harness.testHooks.setEnumerateSerialPorts(() => Promise.resolve([]))
+			vi.mocked(enumerateSerialPorts).mockResolvedValue([])
 
 			const res = await harness.request.get('/api/serial-ports')
 
@@ -80,10 +82,8 @@ describe('HTTP contract: settings, restart, statistics, versions', () => {
 			expect(res.body).toEqual({ success: true, serial_ports: [] })
 		})
 
-		it('preserved quirk: an enumerator rejection is caught and reported as a failed-but-200 envelope with an empty list', async () => {
-			harness.testHooks.setEnumerateSerialPorts(() =>
-				Promise.reject(new Error('boom')),
-			)
+		it('an enumerator rejection is caught and reported as a failed-but-200 envelope with an empty list', async () => {
+			vi.mocked(enumerateSerialPorts).mockRejectedValue(new Error('boom'))
 
 			const res = await harness.request.get('/api/serial-ports')
 
@@ -209,9 +209,8 @@ describe('HTTP contract: settings, restart, statistics, versions', () => {
 				message: 'Gateway restarted successfully',
 			})
 			expect(gw.close).toHaveBeenCalledOnce()
-			// The route's `startGateway()` call replaces the module-scope `gw`
-			// with a brand-new real Gateway instance, so restarting is false
-			// again and a follow-up request is accepted.
+			// startGateway() replaces gw with a brand-new real Gateway
+			// instance, leaving restarting false for the next request
 			expect(harness.testHooks.isRestarting()).toBe(false)
 		})
 	})
