@@ -1,0 +1,163 @@
+import { DiscoveryGenerator } from './DiscoveryGenerator.ts'
+import type {
+	HassDiscoveryConfig,
+	HassDeviceRegistryLifecyclePort,
+	HassDeviceRegistrySourcePort,
+	HassLogger,
+	HassMqttPort,
+	HassNodeUpdatePort,
+	HassTopicPort,
+	HassZwavePort,
+} from './ports.ts'
+
+/**
+ * The narrow event source the scoped Home Assistant status subscription needs.
+ * `MqttClient` satisfies it structurally; kept minimal so the manager never
+ * depends on the concrete client.
+ */
+export interface HassStatusSource {
+	on(
+		event: 'hassStatus' | 'brokerStatus',
+		handler: (online: boolean) => void,
+	): unknown
+	off(
+		event: 'hassStatus' | 'brokerStatus',
+		handler: (online: boolean) => void,
+	): unknown
+}
+
+export interface MqttDiscoveryManagerOptions {
+	/** Live gateway/discovery configuration (a stable reference). */
+	config: HassDiscoveryConfig
+	/** MQTT publish/topic port (adapts the live client). */
+	mqtt?: HassMqttPort
+	/** Z-Wave read/write port (adapts the live client). */
+	zwave?: HassZwavePort
+	nodeUpdates: HassNodeUpdatePort
+	/** Node/value topic mapping port (provided by the Gateway facade). */
+	topics: HassTopicPort
+	/**
+	 * Process-wide custom-device catalog source. The manager forks a
+	 * lightweight, per-instance subscribed view of it so every Gateway owns an
+	 * isolated catalog while the source keeps the single import-time watcher
+	 * pair.
+	 */
+	registrySource: HassDeviceRegistrySourcePort
+	logger: HassLogger
+}
+
+/**
+ * Owns the legacy Home Assistant MQTT discovery subsystem that used to live
+ * inline in `Gateway`: the per-instance custom-device catalog fork, the
+ * {@link DiscoveryGenerator} instance, and the scoped
+ * `homeassistant/status`/broker-reconnect subscription that drives a full
+ * rediscovery.
+ *
+ * Lifecycle (all idempotent):
+ *  - {@link start} forks + starts the catalog view, resets discovery state, and
+ *    (when MQTT is enabled) wires the status subscription.
+ *  - {@link stop} disposes the status subscription and the catalog view.
+ *
+ * The Gateway keeps its public discovery facades by delegating through the
+ * {@link discoveryGenerator}/{@link customDeviceRegistry} accessors this
+ * manager exposes.
+ */
+export default class MqttDiscoveryManager {
+	private readonly logger: HassLogger
+	private readonly _customDeviceRegistry: HassDeviceRegistryLifecyclePort
+	private readonly _discoveryGenerator: DiscoveryGenerator
+	private _statusDisposer: (() => void) | undefined
+
+	public constructor(options: MqttDiscoveryManagerOptions) {
+		this.logger = options.logger
+		this._customDeviceRegistry = options.registrySource.fork()
+
+		this._discoveryGenerator = new DiscoveryGenerator({
+			config: options.config,
+			mqtt: options.mqtt,
+			zwave: options.zwave,
+			nodeUpdates: options.nodeUpdates,
+			topics: options.topics,
+			registry: this._customDeviceRegistry,
+			logger: options.logger,
+		})
+	}
+
+	/** The owned discovery generator (the Gateway facades delegate to it). */
+	public get discoveryGenerator(): DiscoveryGenerator {
+		return this._discoveryGenerator
+	}
+
+	/** The per-instance custom-device catalog view. */
+	public get customDeviceRegistry(): HassDeviceRegistryLifecyclePort {
+		return this._customDeviceRegistry
+	}
+
+	/**
+	 * Start the discovery subsystem: fork/start the catalog view, reset the
+	 * discovery index, and (when a status source is supplied and MQTT status
+	 * updates are enabled) subscribe to HA/broker status transitions. Safe to
+	 * call again after {@link stop} (restart).
+	 */
+	public start(statusSource?: HassStatusSource, statusEnabled = false): void {
+		this._customDeviceRegistry.start()
+		this._discoveryGenerator.reset()
+		if (statusSource && statusEnabled) {
+			this.subscribeStatus(statusSource)
+		}
+	}
+
+	/**
+	 * Dispose the status subscription and the catalog view. Idempotent and
+	 * reentrant, so it is safe to call from both the Gateway teardown and an
+	 * outer coordinator.
+	 */
+	public stop(): void {
+		this.disposeStatus()
+		this._customDeviceRegistry.dispose()
+	}
+
+	/**
+	 * Scoped subscription to Home Assistant birth/will (`hassStatus`) and
+	 * broker-reconnect (`brokerStatus`) transitions; an `online` transition on
+	 * either triggers a full {@link rediscoverAll}. Returns an idempotent
+	 * disposer and never double-subscribes: a second call while already
+	 * subscribed returns the existing disposer.
+	 */
+	public subscribeStatus(source: HassStatusSource): () => void {
+		if (this._statusDisposer) return this._statusDisposer
+
+		const onHassStatus = (online: boolean): void => {
+			this.logger.info(
+				`Home Assistant is ${online ? 'ONLINE' : 'OFFLINE'}`,
+			)
+			if (online) this.rediscoverAll()
+		}
+		const onBrokerStatus = (online: boolean): void => {
+			if (online) this.rediscoverAll()
+		}
+
+		source.on('hassStatus', onHassStatus)
+		source.on('brokerStatus', onBrokerStatus)
+
+		let disposed = false
+		this._statusDisposer = (): void => {
+			if (disposed) return
+			disposed = true
+			source.off('hassStatus', onHassStatus)
+			source.off('brokerStatus', onBrokerStatus)
+			this._statusDisposer = undefined
+		}
+		return this._statusDisposer
+	}
+
+	/** Dispose the active status subscription, if any. Idempotent. */
+	public disposeStatus(): void {
+		this._statusDisposer?.()
+	}
+
+	/** Rediscover every persistent device on every node. */
+	public rediscoverAll(): void {
+		this._discoveryGenerator.rediscoverAll()
+	}
+}

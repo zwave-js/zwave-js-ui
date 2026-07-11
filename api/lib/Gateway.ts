@@ -19,13 +19,15 @@ import type {
 import type ZwaveClient from './ZwaveClient.ts'
 import Cron from 'croner'
 
-import { HASS_NODE_PREFIX, type HassDevice } from '../hass/types.ts'
 import {
-	DiscoveryGenerator,
 	HASS_COMMAND_HANDLED,
+	type DiscoveryGenerator,
 } from '../hass/DiscoveryGenerator.ts'
+import MqttDiscoveryManager from '../hass/MqttDiscoveryManager.ts'
+import { HASS_NODE_PREFIX, type HassDevice } from '../hass/types.ts'
 import type {
 	HassDeviceRegistryLifecyclePort,
+	HassDeviceRegistrySourcePort,
 	HassNode,
 	HassTopicNode,
 	HassValue,
@@ -158,8 +160,7 @@ export default class Gateway<
 	private topicLevels: number[] = []
 	private _closed = false
 	private jobs: Map<string, Cron> = new Map()
-	private customDeviceRegistry: HassDeviceRegistryLifecyclePort
-	private discoveryGenerator: DiscoveryGenerator
+	private mqttDiscovery: MqttDiscoveryManager
 	private listenersAttached = false
 	private readonly onWriteRequest = this._onWriteRequest.bind(this)
 	private readonly onBroadRequest = this._onBroadRequest.bind(this)
@@ -169,8 +170,6 @@ export default class Gateway<
 		apiName,
 		payload,
 	) => void this._onApiRequest(topic, apiName as AllowedApis, payload)
-	private readonly onHassStatus = this._onHassStatus.bind(this)
-	private readonly onBrokerStatus = this._onBrokerStatus.bind(this)
 	private readonly onNodeInited = this._onNodeInited.bind(this)
 	private readonly onDriverStatus = this._onDriverStatus.bind(this)
 	private readonly onNodeStatus = this._onNodeStatus.bind(this)
@@ -200,14 +199,13 @@ export default class Gateway<
 		config: GatewayConfig,
 		zwave: TZwave | undefined,
 		mqtt: TMqtt | undefined,
-		customDeviceRegistry: HassDeviceRegistryLifecyclePort,
+		customDeviceRegistry: HassDeviceRegistrySourcePort,
 	) {
 		this.config = config || { type: 1 }
 		// clients
 		this._mqtt = mqtt
 		this._zwave = zwave
-		this.customDeviceRegistry = customDeviceRegistry
-		this.discoveryGenerator = new DiscoveryGenerator({
+		this.mqttDiscovery = new MqttDiscoveryManager({
 			config: this.config,
 			mqtt,
 			zwave,
@@ -222,21 +220,35 @@ export default class Gateway<
 				valueTopic: (node, value, returnObject) =>
 					this.valueTopic(node, value, returnObject),
 			},
-			registry: this.customDeviceRegistry,
+			registrySource: customDeviceRegistry,
 			logger: hassLogger,
 		})
 	}
 
+	// ### HASS compatibility accessors
+	//
+	// The discovery subsystem moved into `MqttDiscoveryManager`, but the
+	// Gateway's public discovery facades still address `discoveryGenerator` and
+	// `customDeviceRegistry`. These accessors delegate to the owned manager.
+	private get discoveryGenerator(): DiscoveryGenerator {
+		return this.mqttDiscovery.discoveryGenerator
+	}
+
+	private get customDeviceRegistry(): HassDeviceRegistryLifecyclePort {
+		return this.mqttDiscovery.customDeviceRegistry
+	}
+
 	async start(): Promise<void> {
-		this.customDeviceRegistry.start()
+		// Start the Home Assistant discovery subsystem: fork/start the catalog
+		// view, reset the discovered index, and (when MQTT is enabled) wire the
+		// scoped HA/broker status subscription that drives a full rediscovery.
+		this.mqttDiscovery.start(this._mqtt, this.mqttEnabled)
 		// gateway configuration
 		this.config.values = this.config.values || []
 
 		// Object where keys are topic and values can be both zwave valueId object
 		// or a valueConf if the topic is a broadcast topic
 		this.topicValues = {}
-
-		this.discoveryGenerator.reset()
 
 		this._closed = false
 
@@ -250,7 +262,7 @@ export default class Gateway<
 				await this._zwave.connect()
 			} catch (error) {
 				this.detachListeners()
-				this.customDeviceRegistry.dispose()
+				this.mqttDiscovery.stop()
 				throw error
 			}
 		} else {
@@ -448,7 +460,7 @@ export default class Gateway<
 					}
 				} finally {
 					this.detachListeners()
-					this.customDeviceRegistry.dispose()
+					this.mqttDiscovery.stop()
 				}
 			}
 		}
@@ -462,8 +474,6 @@ export default class Gateway<
 			this._mqtt.on('broadcastRequest', this.onBroadRequest)
 			this._mqtt.on('multicastRequest', this.onMulticastRequest)
 			this._mqtt.on('apiCall', this.onApiRequest)
-			this._mqtt.on('hassStatus', this.onHassStatus)
-			this._mqtt.on('brokerStatus', this.onBrokerStatus)
 		}
 
 		if (this._zwave) {
@@ -493,8 +503,6 @@ export default class Gateway<
 			this._mqtt.off('broadcastRequest', this.onBroadRequest)
 			this._mqtt.off('multicastRequest', this.onMulticastRequest)
 			this._mqtt.off('apiCall', this.onApiRequest)
-			this._mqtt.off('hassStatus', this.onHassStatus)
-			this._mqtt.off('brokerStatus', this.onBrokerStatus)
 		}
 
 		if (this._zwave) {
@@ -1030,28 +1038,6 @@ export default class Gateway<
 
 		if (this.mqttEnabled) {
 			this._mqtt.publish('driver/status', ready)
-		}
-	}
-
-	/**
-	 * When mqtt client goes online/offline
-	 *
-	 */
-	private _onBrokerStatus(online: boolean): void {
-		if (online) {
-			this.rediscoverAll()
-		}
-	}
-
-	/**
-	 * Hass will/birth
-	 *
-	 */
-	private _onHassStatus(online: boolean): void {
-		logger.info(`Home Assistant is ${online ? 'ONLINE' : 'OFFLINE'}`)
-
-		if (online) {
-			this.rediscoverAll()
 		}
 	}
 

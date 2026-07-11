@@ -84,6 +84,11 @@ export interface HassDeviceRegistryLifecyclePort
 	dispose(): void
 }
 
+export interface HassDeviceRegistrySourcePort
+	extends HassDeviceRegistryLifecyclePort {
+	fork(): HassDeviceRegistryLifecyclePort
+}
+
 export type HassPersistenceNode = Pick<ZUINode, 'hassDevices'>
 
 export interface HassDeviceStorePort {
