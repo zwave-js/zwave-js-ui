@@ -206,4 +206,153 @@ describe('MqttClient scoped exact-topic subscription', () => {
 		await tick()
 		expect(received).toEqual([])
 	})
+
+	it('unsubscribes the desired exact topic from the broker before ending (clean:false session)', async () => {
+		const client = makeClient()
+		client.subscribeExact(STATUS_TOPIC, () => {})
+
+		const broker = latestBroker()
+		broker.triggerConnect()
+		await tick()
+		expect(statusSubscribes()).toBe(1)
+
+		await client.close()
+
+		// The `close()` guard `if (this.client?.connected)` only holds BEFORE
+		// `client.end()` flips the link down, so a recorded unsubscribe of the
+		// exact topic proves it happened while still connected - i.e. before the
+		// end - clearing a clean:false server-side subscription.
+		expect(broker.unsubscribed).toContain(STATUS_TOPIC)
+		expect(broker.ended).toBe(true)
+	})
+
+	it('a delayed subscribe SUCCESS landing after dispose neither delivers nor re-arms the topic', async () => {
+		const client = makeClient()
+		const received: string[] = []
+
+		const broker = latestBroker()
+		broker.triggerConnect()
+		await tick()
+
+		// From here the broker withholds SUBACKs so we can land one late.
+		broker.deferSubscribe = true
+		broker.subscribed.length = 0
+
+		const sub = client.subscribeExact(STATUS_TOPIC, (p) =>
+			received.push(p ?? ''),
+		)
+		expect(broker.pendingSubscribes).toHaveLength(1)
+
+		// Owner disposes while the SUBACK is still in flight...
+		sub.dispose()
+		// ...then the late grant lands: it must NOT re-arm delivery.
+		broker.flushSubscribes()
+
+		broker.deferSubscribe = false
+		broker.subscribed.length = 0
+		broker.triggerOffline()
+		broker.triggerReconnect()
+		broker.triggerConnect()
+		await tick()
+
+		// The disposed topic is not re-subscribed on the fresh connect...
+		expect(statusSubscribes()).toBe(0)
+		broker.deliver(STATUS_TOPIC, 'online')
+		await tick()
+		expect(received).toEqual([])
+
+		await client.close()
+	})
+
+	it('a delayed subscribe FAILURE landing after dispose does not requeue the topic for reconnect', async () => {
+		const client = makeClient()
+		const received: string[] = []
+
+		const broker = latestBroker()
+		broker.triggerConnect()
+		await tick()
+
+		broker.deferSubscribe = true
+		broker.subscribed.length = 0
+
+		const sub = client.subscribeExact(STATUS_TOPIC, (p) =>
+			received.push(p ?? ''),
+		)
+		sub.dispose()
+		// A broker subscribe ERROR lands after dispose. The desired-state-aware
+		// path must NOT requeue the disposed topic into `toSubscribe` (the old
+		// bug), so it can never be re-subscribed on a later connect.
+		broker.flushSubscribes(new Error('not authorized'))
+
+		broker.deferSubscribe = false
+		broker.subscribed.length = 0
+		broker.triggerOffline()
+		broker.triggerReconnect()
+		broker.triggerConnect()
+		await tick()
+
+		expect(statusSubscribes()).toBe(0)
+		broker.deliver(STATUS_TOPIC, 'online')
+		await tick()
+		expect(received).toEqual([])
+
+		await client.close()
+	})
+
+	it('a subscribe FAILURE while still desired is retried on the next connect', async () => {
+		const client = makeClient()
+		const received: string[] = []
+
+		const broker = latestBroker()
+		broker.triggerConnect()
+		await tick()
+
+		broker.deferSubscribe = true
+		broker.subscribed.length = 0
+
+		client.subscribeExact(STATUS_TOPIC, (p) => received.push(p ?? ''))
+		// The subscribe fails but the owner never disposed: the topic stays
+		// desired (in `exactSubscriptions`) and is retried by the next connect.
+		broker.flushSubscribes(new Error('transient'))
+
+		broker.deferSubscribe = false
+		broker.subscribed.length = 0
+		broker.triggerOffline()
+		broker.triggerReconnect()
+		broker.triggerConnect()
+		await tick()
+
+		expect(statusSubscribes()).toBe(1)
+		broker.deliver(STATUS_TOPIC, 'online')
+		await tick()
+		expect(received).toEqual(['online'])
+
+		await client.close()
+	})
+
+	it('a close concurrent with an in-flight subscribe neither delivers nor re-subscribes', async () => {
+		const client = makeClient()
+		const received: string[] = []
+
+		const broker = latestBroker()
+		broker.triggerConnect()
+		await tick()
+
+		broker.deferSubscribe = true
+		broker.subscribed.length = 0
+
+		client.subscribeExact(STATUS_TOPIC, (p) => received.push(p ?? ''))
+		expect(broker.pendingSubscribes).toHaveLength(1)
+
+		// Close races the in-flight subscribe.
+		await client.close()
+		// The grant lands after close: the closed guard makes it a no-op.
+		broker.flushSubscribes()
+
+		broker.deliver(STATUS_TOPIC, 'online')
+		await tick()
+		expect(received).toEqual([])
+		// The desired topic was unsubscribed as part of the close.
+		expect(broker.unsubscribed).toContain(STATUS_TOPIC)
+	})
 })

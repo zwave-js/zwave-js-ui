@@ -521,13 +521,19 @@ export default class Gateway<
 				this.cancelJobs()
 			} finally {
 				try {
+					// Quiesce discovery BEFORE closing MQTT: disposing the
+					// scoped `homeassistant/status` subscription must unsubscribe
+					// from the broker while the client is still connected (so a
+					// clean:false session isn't left with a server-side
+					// subscription), and the publication fence must drop before
+					// the client goes away so nothing publishes during teardown.
+					this.detachListeners()
+					this.mqttDiscovery.stop()
+				} finally {
 					// Preserve the Z-Wave-before-MQTT shutdown contract
 					if (this.mqttEnabled) {
 						await this._mqtt.close()
 					}
-				} finally {
-					this.detachListeners()
-					this.mqttDiscovery.stop()
 				}
 			}
 		}
