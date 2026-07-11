@@ -143,6 +143,24 @@ export function closeWatchers() {
 	watchers.clear()
 }
 
+// ### TEST-ONLY SEAM
+//
+// Re-installs the module-global custom-device file watchers that
+// `closeWatchers()` tears down. The watches are created exactly once at
+// module import; a lifecycle test that wants to prove teardown releases them
+// must first guarantee they are present (an earlier harness `close()` in the
+// same worker may already have closed them, since they are shared module
+// state). This closes any existing watchers and rebinds both the `.js` and
+// `.json` watches to their real `loadCustomDevices` handler, exactly as the
+// import-time bootstrap does. Production (`api/bin/www.ts`) never calls this;
+// it only affects the test-owned watcher registry, never runtime reload
+// behavior.
+export function __rebindWatchersForTests(): void {
+	closeWatchers()
+	watch(customDevicesJsPath, loadCustomDevices)
+	watch(customDevicesJsonPath, loadCustomDevices)
+}
+
 // ### TEST-ONLY SEAMS (custom devices)
 //
 // The custom-devices loader (`loadCustomDevices`) and its `allDevices`

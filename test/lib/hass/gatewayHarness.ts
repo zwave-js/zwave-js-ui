@@ -173,7 +173,13 @@ export async function createGatewayHarness(
 			;(gw as any).topicValues = {}
 		},
 		async close() {
-			await mqtt.close()
+			// Drive the REAL production teardown path (Gateway.close ->
+			// zwave.close, cancelJobs, mqtt.close in that order) rather than
+			// reaching past it to close the MQTT client directly. The
+			// module-global file watchers are deliberately NOT touched by
+			// Gateway.close(), so release them separately (once per file, after
+			// every harness has closed).
+			await gw.close()
 			closeWatchers()
 		},
 	}

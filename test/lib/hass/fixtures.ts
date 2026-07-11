@@ -261,6 +261,8 @@ export type FakeGatewayZwave = EventEmitter & {
 	writeBroadcast: ReturnType<typeof vi.fn>
 	writeMulticast: ReturnType<typeof vi.fn>
 	callApi: ReturnType<typeof vi.fn>
+	/** Real `Gateway.close()` awaits `zwave.close()` before closing MQTT. */
+	close: ReturnType<typeof vi.fn>
 }
 
 export function createFakeGatewayZwave(
@@ -283,6 +285,7 @@ export function createFakeGatewayZwave(
 		callApi: vi.fn(() =>
 			Promise.resolve({ success: true, message: 'ok', result: [] }),
 		),
+		close: vi.fn(() => Promise.resolve(undefined)),
 		...overrides,
 	}) as FakeGatewayZwave
 }
