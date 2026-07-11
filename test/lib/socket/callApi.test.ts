@@ -33,7 +33,14 @@ describe('Socket contract: callApi()', () => {
 	describe('callApi() dispatch', () => {
 		it('success: calls a real allowed method and returns its result, message, and echoed args', async () => {
 			const zwave = await realZwave()
-			zwave['scenes'] = [{ sceneid: 1, label: 'Test', values: [] }]
+			// Seed SceneService's internal scene list directly (mirrors the
+			// old `zwave.scenes = [...]` poke - `_sceneService` is a plain,
+			// TS-private (not JS `#`-private) field). Unlike `_setScenes()`,
+			// this stays purely in-memory and doesn't persist to the shared
+			// on-disk store, so it can't leak into other tests in this file.
+			;(zwave as any)._sceneService._scenes = [
+				{ sceneid: 1, label: 'Test', values: [] },
+			]
 			zwave['_driver'] = {} as unknown as Driver
 			zwave.driverReady = true
 
@@ -97,7 +104,8 @@ describe('Socket contract: callApi()', () => {
 
 		it('bootloader: allows the call when driver.mode is Bootloader even though driverReady is false', async () => {
 			const zwave = await realZwave()
-			zwave['scenes'] = []
+			// scenes default to `[]` in a fresh, isolated store - no seeding
+			// needed.
 			zwave['_driver'] = {
 				mode: DriverMode.Bootloader,
 			} as unknown as Driver
@@ -115,7 +123,8 @@ describe('Socket contract: callApi()', () => {
 
 		it('thrown error: catches a real thrown Error and surfaces its .message', async () => {
 			const zwave = await realZwave()
-			zwave['scenes'] = []
+			// scenes default to `[]` in a fresh, isolated store - no seeding
+			// needed.
 			zwave['_driver'] = {} as unknown as Driver
 			zwave.driverReady = true
 
@@ -206,7 +215,9 @@ describe('Socket contract: callApi()', () => {
 
 		it('argument echo: `args` is set to the exact array passed in, in order, for a multi-arg call', async () => {
 			const zwave = await realZwave()
-			zwave['scenes'] = [{ sceneid: 1, label: 'A', values: [] }]
+			;(zwave as any)._sceneService._scenes = [
+				{ sceneid: 1, label: 'A', values: [] },
+			]
 			zwave['_driver'] = {} as unknown as Driver
 			zwave.driverReady = true
 
