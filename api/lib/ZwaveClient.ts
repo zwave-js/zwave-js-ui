@@ -136,8 +136,10 @@ import jsonStore from './jsonStore.ts'
 import * as LogManager from './logger.ts'
 import * as utils from './utils.ts'
 
-import type { ZwavejsServer } from '@zwave-js/server'
-import ZwaveServerManager from '../hass/ZwaveServerManager.ts'
+import { serverVersion, type ZwavejsServer } from '@zwave-js/server'
+import ZwaveServerManager, {
+	type ZwaveServerHost,
+} from '../hass/ZwaveServerManager.ts'
 import type { Server as SocketServer } from 'socket.io'
 import { TypedEventEmitter } from './EventEmitter.ts'
 import type { GatewayValue } from './Gateway.ts'
@@ -813,17 +815,57 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	/**
 	 * Owns the official `@zwave-js/server` lifecycle. The `server` accessor
 	 * below delegates to it so the legacy internal/API surface is unchanged.
+	 *
+	 * Optional because it is now HA-owned: in production the
+	 * `AppRuntime`-owned `HomeAssistantManager` constructs the manager (via
+	 * {@link buildServerHost}) and adopts it into this client through
+	 * {@link adoptServerManager} BEFORE the driver connects; a client
+	 * constructed directly (standalone / tests) lazily builds its own fallback
+	 * on first access to {@link zwaveServer}. Either way exactly one manager is
+	 * owned per client and the create/start/destroy points are unchanged.
 	 */
-	private _serverManager: ZwaveServerManager
+	private _serverManager?: ZwaveServerManager
+
+	/**
+	 * The narrow {@link ZwaveServerHost} port the server manager uses to reach
+	 * back into this client (current driver/config/user-callbacks + hard-reset
+	 * re-init). Every accessor resolves the CURRENT value, so a driver/config
+	 * swap on restart is honoured with nothing captured at construction time.
+	 * Public so the `HomeAssistantManager` factory can build a manager that this
+	 * client then adopts.
+	 */
+	public buildServerHost(): ZwaveServerHost {
+		return {
+			getDriver: () => this._driver,
+			getConfig: () => this.cfg,
+			getHasUserCallbacks: () => this.hasUserCallbacks,
+			onHardReset: () => this.init(),
+			logger,
+			serverLogger: LogManager.module('Z-Wave-Server'),
+		}
+	}
+
+	/**
+	 * Adopt the HA-owned server manager. Called by `HomeAssistantManager` once,
+	 * before the driver connects, so `create()/startIfNeeded()/destroy()` below
+	 * all drive the manager the coordinator owns. Idempotent per generation.
+	 */
+	public adoptServerManager(manager: ZwaveServerManager): void {
+		this._serverManager = manager
+	}
 
 	/**
 	 * The lifecycle-managed `@zwave-js/server` (`ZwavejsServer`) subsystem this
-	 * client owns. Exposed so the `AppRuntime`-owned `HomeAssistantManager`
-	 * coordinator can resolve the CURRENT server manager (never a stale
-	 * capture) across restarts. The internal `server` accessor below keeps
-	 * addressing the underlying `ZwavejsServer` instance for the legacy surface.
+	 * client owns. In production this is the HA-owned manager adopted via
+	 * {@link adoptServerManager}; a directly-constructed client lazily builds a
+	 * standalone fallback here on first access so its server lifecycle keeps
+	 * working with no coordinator. Exposed so the `HomeAssistantManager` can
+	 * resolve the CURRENT server manager across restarts.
 	 */
 	public get zwaveServer(): ZwaveServerManager {
+		if (!this._serverManager) {
+			this._serverManager = new ZwaveServerManager(this.buildServerHost())
+		}
 		return this._serverManager
 	}
 
@@ -832,7 +874,12 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	}
 
 	private set server(value: ZwavejsServer | null) {
-		if (this._serverManager) this._serverManager.server = value
+		// Route through the lazy accessor so a directly-constructed client
+		// (standalone / tests) that assigns `server` before any create() still
+		// has a manager to hold it. In production this setter is never used
+		// (the manager owns its own `_server`); it exists for the compatibility
+		// surface only.
+		this.zwaveServer.server = value
 	}
 
 	private statelessTimeouts: Record<string, NodeJS.Timeout>
@@ -935,15 +982,6 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				if (node) this.emitNodeUpdate(node, { hassDevices: devices })
 			},
 			updateStoreNodes: () => this.updateStoreNodes(),
-		})
-
-		this._serverManager = new ZwaveServerManager({
-			getDriver: () => this._driver,
-			getConfig: () => this.cfg,
-			getHasUserCallbacks: () => this.hasUserCallbacks,
-			onHardReset: () => this.init(),
-			logger,
-			serverLogger: LogManager.module('Z-Wave-Server'),
 		})
 
 		this.init()
@@ -1208,8 +1246,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			inclusionUserCallbacks: undefined,
 		})
 
-		// when no user is connected, give back the control to HA server
-		this._serverManager.handInclusionControlBack()
+		// when no user is connected, give back the control to HA server. When no
+		// server manager has been built yet (server disabled, never accessed)
+		// there is nothing to hand back, so this is a guarded no-op.
+		this._serverManager?.handInclusionControlBack()
 	}
 
 	/**
@@ -1303,7 +1343,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 * `connect()` so its behavior is unchanged.
 	 */
 	private _createServer() {
-		this._serverManager.create()
+		this.zwaveServer.create()
 	}
 
 	/**
@@ -1314,7 +1354,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 * unchanged.
 	 */
 	private _startServerIfNeeded() {
-		this._serverManager.startIfNeeded()
+		this.zwaveServer.startIfNeeded()
 	}
 
 	/**
@@ -4383,7 +4423,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		info.inclusionState = this._inclusionState
 		info.appVersion = utils.getVersion()
 		info.zwaveVersion = libVersion
-		info.serverVersion = this._serverManager.version
+		info.serverVersion = serverVersion
 
 		return info
 	}

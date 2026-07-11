@@ -21,7 +21,9 @@ import Cron from 'croner'
 
 import type { HassDevice } from '../hass/types.ts'
 import type { DiscoveryGenerator } from '../hass/DiscoveryGenerator.ts'
-import MqttDiscoveryManager from '../hass/MqttDiscoveryManager.ts'
+import MqttDiscoveryManager, {
+	type MqttDiscoveryManagerOptions,
+} from '../hass/MqttDiscoveryManager.ts'
 import type {
 	HassDeviceRegistryLifecyclePort,
 	HassNode,
@@ -153,7 +155,7 @@ export default class Gateway<
 	private topicLevels: number[] = []
 	private _closed = false
 	private jobs: Map<string, Cron> = new Map()
-	private _mqttDiscovery: MqttDiscoveryManager
+	private _mqttDiscovery?: MqttDiscoveryManager
 	private listenersAttached = false
 	private readonly onWriteRequest = this._onWriteRequest.bind(this)
 	private readonly onBroadRequest = this._onBroadRequest.bind(this)
@@ -182,12 +184,32 @@ export default class Gateway<
 
 	/**
 	 * The lifecycle-managed legacy Home Assistant MQTT discovery subsystem this
-	 * gateway owns. Exposed so the `AppRuntime`-owned `HomeAssistantManager`
-	 * coordinator can resolve the CURRENT discovery manager (never a stale
-	 * capture) across restarts.
+	 * gateway owns. In production the `AppRuntime`-owned `HomeAssistantManager`
+	 * constructs the manager (via {@link buildDiscoveryOptions}) and adopts it
+	 * through {@link adoptDiscoveryManager} BEFORE the gateway starts; a gateway
+	 * constructed directly (standalone / tests) lazily builds its own fallback
+	 * here on first access. Either way exactly one manager is owned per gateway
+	 * and the discovery facades below delegate to it. Exposed so the
+	 * `HomeAssistantManager` can resolve the CURRENT discovery manager (never a
+	 * stale capture) across restarts.
 	 */
 	public get mqttDiscovery(): MqttDiscoveryManager {
+		if (!this._mqttDiscovery) {
+			this._mqttDiscovery = new MqttDiscoveryManager(
+				this.buildDiscoveryOptions(),
+			)
+		}
 		return this._mqttDiscovery
+	}
+
+	/**
+	 * Adopt the HA-owned discovery manager. Called by `HomeAssistantManager`
+	 * once, before the gateway starts, so the discovery facades and `start()`
+	 * below all drive the manager the coordinator owns. Idempotent per
+	 * generation.
+	 */
+	public adoptDiscoveryManager(manager: MqttDiscoveryManager): void {
+		this._mqttDiscovery = manager
 	}
 
 	public get closed() {
@@ -208,15 +230,26 @@ export default class Gateway<
 		// clients
 		this._mqtt = mqtt
 		this._zwave = zwave
+	}
+
+	/**
+	 * Build the {@link MqttDiscoveryManagerOptions} that wire a discovery
+	 * manager to THIS gateway's live clients. Public so the HA-owned
+	 * `HomeAssistantManager` can construct the manager it owns (and this gateway
+	 * then adopts via {@link adoptDiscoveryManager}); it is also used to lazily
+	 * build the standalone fallback in {@link mqttDiscovery}.
+	 *
+	 * The legacy Home Assistant MQTT discovery subsystem (discovered index,
+	 * per-instance custom-device catalog fork, DiscoveryGenerator, and the
+	 * scoped HA/broker status subscription) is owned by a lifecycle-managed
+	 * domain object. The Gateway keeps its public discovery facades by
+	 * delegating through the compatibility accessors below. Ports adapt the
+	 * live clients so the manager never binds to a concrete client.
+	 */
+	public buildDiscoveryOptions(): MqttDiscoveryManagerOptions {
 		const getMqtt = () => this._mqtt
 		const getZwave = () => this._zwave
-		// The legacy Home Assistant MQTT discovery subsystem (discovered index,
-		// per-instance custom-device catalog fork, DiscoveryGenerator, and the
-		// scoped HA/broker status subscription) is owned by a lifecycle-managed
-		// domain object. The Gateway keeps its public discovery facades by
-		// delegating through the compatibility accessors below. Ports adapt the
-		// live clients so the manager never binds to a concrete client.
-		this._mqttDiscovery = new MqttDiscoveryManager({
+		return {
 			config: this.config,
 			mqtt: {
 				get disabled() {
@@ -257,7 +290,7 @@ export default class Gateway<
 			},
 			registrySource: defaultCustomDeviceRegistry,
 			logger,
-		})
+		}
 	}
 
 	// ### HASS compatibility accessors
