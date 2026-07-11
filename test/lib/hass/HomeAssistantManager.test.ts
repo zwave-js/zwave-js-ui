@@ -419,6 +419,137 @@ describe('HomeAssistantManager', () => {
 		})
 	})
 
+	describe('stop() generation-scoped race + failure semantics', () => {
+		it('a stale stop does not erase a generation re-attached while it awaits the server destroy', async () => {
+			const manager = new HomeAssistantManager({ logger })
+			const discovery1 = makeDiscovery()
+			// Gate generation 1's destroy so the re-attach interleaves while the
+			// stop is still awaiting it.
+			let releaseDestroy: () => void = () => undefined
+			const destroyGate = new Promise<void>((resolve) => {
+				releaseDestroy = resolve
+			})
+			const server1: FakeServer = {
+				version: '1',
+				destroy: vi.fn(() => destroyGate),
+			}
+			manager.attachClients(makeFactories(discovery1, server1))
+			manager.start()
+
+			const stopping = manager.stop()
+			expect(manager.state).toBe('stopping')
+
+			// A brand-new generation is wired + started WHILE gen 1's stop is
+			// mid-flight (awaiting the gated destroy).
+			const discovery2 = makeDiscovery()
+			const server2 = makeServer('2')
+			manager.attachClients(makeFactories(discovery2, server2))
+			manager.start()
+			expect(manager.generation).toBe(2)
+			expect(manager.state).toBe('started')
+
+			// Let the stale gen 1 teardown settle: it must NOT clear gen 2.
+			releaseDestroy()
+			await stopping
+
+			expect(manager.generation).toBe(2)
+			expect(manager.state).toBe('started')
+			expect(manager.discovery).toBe(discovery2)
+			expect(manager.server).toBe(server2)
+			// The new generation was never quiesced by the stale stop.
+			expect(discovery2.stop).not.toHaveBeenCalled()
+			expect(server2.destroy).not.toHaveBeenCalled()
+			// The stale generation's own resources were still released exactly once.
+			expect(server1.destroy).toHaveBeenCalledTimes(1)
+		})
+
+		it('a rejected server destroy retains the handles, enters failed, and is retryable', async () => {
+			const manager = new HomeAssistantManager({ logger })
+			const discovery = makeDiscovery()
+			const server: FakeServer = {
+				version: '1',
+				destroy: vi
+					.fn()
+					.mockRejectedValueOnce(new Error('destroy failed'))
+					.mockResolvedValueOnce(undefined),
+			}
+			manager.attachClients(makeFactories(discovery, server))
+			manager.start()
+
+			// The rejection is observable to the caller...
+			await expect(manager.stop()).rejects.toThrow('destroy failed')
+			// ...the failed generation is retained (retryable) and observable.
+			expect(manager.state).toBe('failed')
+			expect(manager.discovery).toBe(discovery)
+			expect(manager.server).toBe(server)
+
+			// A later stop retries the teardown and, on success, settles clean.
+			await expect(manager.stop()).resolves.toBeUndefined()
+			expect(server.destroy).toHaveBeenCalledTimes(2)
+			expect(manager.state).toBe('initialized')
+			expect(manager.discovery).toBeUndefined()
+			expect(manager.server).toBeUndefined()
+		})
+
+		it('concurrent stops share one rejected teardown; a later stop retries', async () => {
+			const manager = new HomeAssistantManager({ logger })
+			const discovery = makeDiscovery()
+			const server: FakeServer = {
+				version: '1',
+				destroy: vi
+					.fn()
+					.mockRejectedValueOnce(new Error('boom'))
+					.mockResolvedValueOnce(undefined),
+			}
+			manager.attachClients(makeFactories(discovery, server))
+			manager.start()
+
+			const first = manager.stop()
+			const second = manager.stop()
+			// Both callers observe the SAME in-flight teardown: one destroy.
+			expect(server.destroy).toHaveBeenCalledTimes(1)
+
+			await expect(first).rejects.toThrow('boom')
+			await expect(second).rejects.toThrow('boom')
+			expect(manager.state).toBe('failed')
+
+			await expect(manager.stop()).resolves.toBeUndefined()
+			expect(server.destroy).toHaveBeenCalledTimes(2)
+			expect(manager.state).toBe('initialized')
+		})
+
+		it('a stale stop that rejects after a re-attach does not corrupt the new generation', async () => {
+			const manager = new HomeAssistantManager({ logger })
+			const discovery1 = makeDiscovery()
+			let rejectDestroy: (error: Error) => void = () => undefined
+			const destroyGate = new Promise<void>((_resolve, reject) => {
+				rejectDestroy = reject
+			})
+			const server1: FakeServer = {
+				version: '1',
+				destroy: vi.fn(() => destroyGate),
+			}
+			manager.attachClients(makeFactories(discovery1, server1))
+			manager.start()
+
+			const stopping = manager.stop()
+
+			const discovery2 = makeDiscovery()
+			const server2 = makeServer('2')
+			manager.attachClients(makeFactories(discovery2, server2))
+			manager.start()
+
+			rejectDestroy(new Error('late failure'))
+			await expect(stopping).rejects.toThrow('late failure')
+
+			// The new generation is untouched: still started, not failed.
+			expect(manager.state).toBe('started')
+			expect(manager.generation).toBe(2)
+			expect(manager.discovery).toBe(discovery2)
+			expect(manager.server).toBe(server2)
+		})
+	})
+
 	describe('restart (stop -> re-attach -> start)', () => {
 		it('attaches a brand-new generation and never reuses stale handles', async () => {
 			const manager = new HomeAssistantManager({ logger })

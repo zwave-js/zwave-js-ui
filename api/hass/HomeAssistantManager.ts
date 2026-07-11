@@ -228,16 +228,25 @@ export default class HomeAssistantManager {
 	 * destroy, so no rediscovery races the shutdown and the server (and its
 	 * port) is released before the driver is destroyed.
 	 *
-	 * Idempotent and concurrency-safe:
+	 * Idempotent, concurrency-safe and generation-scoped:
 	 *  - from `idle`/`initialized` (nothing started) it is a no-op;
-	 *  - from `starting`/`started`/`failed` it runs the teardown once and
-	 *    settles back to `initialized`, ready for a restart to re-attach;
-	 *  - concurrent calls share the single in-flight teardown promise.
+	 *  - from `starting`/`started`/`failed` it runs the teardown once and, on
+	 *    success, settles back to `initialized`, ready for a restart;
+	 *  - concurrent calls share the single in-flight teardown promise;
+	 *  - the teardown captures the generation it is quiescing and clears the
+	 *    owned handles/state ONLY if that generation is still current, so an
+	 *    overlapping re-attach (a newer generation wired while this stop is
+	 *    awaiting the server destroy) is never erased by a stale stop;
+	 *  - if the server `destroy()` rejects, the owned handles are RETAINED
+	 *    (retryable), the state moves to `failed` (observable) and the rejection
+	 *    is re-thrown; the in-flight guard is always released so a later stop
+	 *    retries the teardown.
 	 */
 	public async stop(): Promise<void> {
 		if (this.stopInFlight) return this.stopInFlight
 		if (this._state === 'idle' || this._state === 'initialized') return
 
+		const generation = this._generation
 		this._state = 'stopping'
 		const discovery = this._discovery
 		const server = this._server
@@ -249,12 +258,26 @@ export default class HomeAssistantManager {
 				// ...then await the server quiesce/destroy so it (and its port)
 				// is gone before the driver is destroyed downstream.
 				await server?.destroy()
+				// Success: clear the owned handles only if no newer generation
+				// was wired while we were quiescing. An overlapping re-attach
+				// owns `_discovery`/`_server`/`_state` now and must survive.
+				if (this._generation === generation) {
+					this._discovery = undefined
+					this._server = undefined
+					this._state = 'initialized'
+					this.logger.info('Home Assistant subsystem stopped')
+				}
+			} catch (error) {
+				// The server destroy (or a discovery halt) rejected: retain the
+				// handles so a later stop can retry, and surface a failed state
+				// (unless a newer generation already superseded us). Re-throw so
+				// the caller observes the failure.
+				if (this._generation === generation) {
+					this._state = 'failed'
+				}
+				throw error
 			} finally {
-				this._discovery = undefined
-				this._server = undefined
-				this._state = 'initialized'
 				this.stopInFlight = undefined
-				this.logger.info('Home Assistant subsystem stopped')
 			}
 		})()
 
