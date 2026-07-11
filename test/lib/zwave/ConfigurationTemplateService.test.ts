@@ -4,7 +4,10 @@ import type {
 	ZUIConfigurationTemplate,
 	ZUIConfigurationTemplateValue,
 	TemplateNodeState,
+	TemplateDriverPort,
 } from '../../../api/lib/zwave/ports.ts'
+import type { ZWaveNode } from 'zwave-js'
+import { CommandClasses } from '@zwave-js/core'
 import { SetValueStatus } from 'zwave-js'
 
 // ---------------------------------------------------------------------------
@@ -46,7 +49,7 @@ function createDriverPort() {
 				controller: {
 					nodes: { get: vi.fn(() => undefined) },
 				},
-			}) as any,
+			}) as ReturnType<TemplateDriverPort['getDriver']>,
 	}
 }
 
@@ -434,11 +437,21 @@ describe('ConfigurationTemplateService', () => {
 	})
 
 	describe('applyConfigurationTemplate', () => {
-		it('applies values via writeValue and records hash', async () => {
+		it('applies values via writeValue with exact arguments in order and records hash', async () => {
 			const template = makeTemplate({
 				values: [
-					{ property: 1, endpoint: 0, value: 42 },
-					{ property: 2, endpoint: 0, value: 100 },
+					{
+						property: 1,
+						propertyKey: null,
+						endpoint: 0,
+						value: 42,
+					},
+					{
+						property: 2,
+						propertyKey: 3,
+						endpoint: 1,
+						value: 100,
+					},
 				],
 			})
 			const node = makeNode()
@@ -459,6 +472,31 @@ describe('ConfigurationTemplateService', () => {
 			expect(result.success).toBe(2)
 			expect(result.failed).toBe(0)
 			expect(nodeStore.writeValue).toHaveBeenCalledTimes(2)
+
+			// Assert exact write arguments in order: nodeId, CC, endpoint, property, propertyKey, value
+			expect(nodeStore.writeValue).toHaveBeenNthCalledWith(
+				1,
+				{
+					nodeId: 2,
+					commandClass: CommandClasses.Configuration,
+					endpoint: 0,
+					property: 1,
+					propertyKey: null,
+				},
+				42,
+			)
+			expect(nodeStore.writeValue).toHaveBeenNthCalledWith(
+				2,
+				{
+					nodeId: 2,
+					commandClass: CommandClasses.Configuration,
+					endpoint: 1,
+					property: 2,
+					propertyKey: 3,
+				},
+				100,
+			)
+
 			expect(node.appliedTemplateContentHashes).toContain('abc123')
 			expect(loggerFake.info).toHaveBeenCalled()
 		})
@@ -582,6 +620,97 @@ describe('ConfigurationTemplateService', () => {
 			expect(result.success).toBe(1)
 		})
 
+		it('handles partial failure: asserts exact write args and records failures', async () => {
+			const template = makeTemplate({
+				values: [
+					{
+						property: 1,
+						propertyKey: null,
+						endpoint: 0,
+						value: 1,
+					},
+					{
+						property: 2,
+						propertyKey: null,
+						endpoint: 0,
+						value: 2,
+					},
+					{
+						property: 3,
+						propertyKey: null,
+						endpoint: 0,
+						value: 3,
+					},
+				],
+			})
+			const node = makeNode()
+			const nodes = new Map([[2, node]])
+			const nodeStore = createNodeStorePort(nodes)
+			let callIdx = 0
+			nodeStore.writeValue = vi.fn(() => {
+				callIdx++
+				if (callIdx === 2) {
+					return Promise.resolve({
+						status: SetValueStatus.Fail,
+						message: 'Custom error message',
+					})
+				}
+				return Promise.resolve({ status: SetValueStatus.Success })
+			})
+
+			const loggerFake = createLogger()
+			const svc = new ConfigurationTemplateService(
+				createDriverPort(),
+				nodeStore,
+				createPersistencePort(),
+				createUtilsPort(),
+				loggerFake,
+				[template],
+			)
+
+			const result = await svc.applyConfigurationTemplate('tmpl-1', 2)
+
+			expect(result.success).toBe(2)
+			expect(result.failed).toBe(1)
+			expect(result.errors[0]).toContain('Custom error message')
+
+			// Verify all 3 writes were attempted with exact args
+			expect(nodeStore.writeValue).toHaveBeenCalledTimes(3)
+			expect(nodeStore.writeValue).toHaveBeenNthCalledWith(
+				1,
+				{
+					nodeId: 2,
+					commandClass: CommandClasses.Configuration,
+					endpoint: 0,
+					property: 1,
+					propertyKey: null,
+				},
+				1,
+			)
+			expect(nodeStore.writeValue).toHaveBeenNthCalledWith(
+				2,
+				{
+					nodeId: 2,
+					commandClass: CommandClasses.Configuration,
+					endpoint: 0,
+					property: 2,
+					propertyKey: null,
+				},
+				2,
+			)
+			expect(nodeStore.writeValue).toHaveBeenNthCalledWith(
+				3,
+				{
+					nodeId: 2,
+					commandClass: CommandClasses.Configuration,
+					endpoint: 0,
+					property: 3,
+					propertyKey: null,
+				},
+				3,
+			)
+		})
+
 		it('handles write failures and dead node early exit', async () => {
 			const template = makeTemplate({
 				values: [
@@ -676,13 +805,16 @@ describe('ConfigurationTemplateService', () => {
 				...makeTemplate(),
 				minFirmwareVersion: '1.0',
 				firmwareRange: undefined,
-			} as any
+			} as ZUIConfigurationTemplate & { minFirmwareVersion?: string }
 			const result = await svc.importConfigurationTemplates([
 				legacyTemplate,
 			])
 
 			expect(result[0].firmwareRange).toEqual({ min: '1.0' })
-			expect((result[0] as any).minFirmwareVersion).toBeUndefined()
+			expect(
+				(result[0] as unknown as { minFirmwareVersion?: string })
+					.minFirmwareVersion,
+			).toBeUndefined()
 		})
 
 		it('preserves existing contentHash if present', async () => {
@@ -723,7 +855,7 @@ describe('ConfigurationTemplateService', () => {
 				[template],
 			)
 
-			const zwaveNode = { id: 2 } as any
+			const zwaveNode = { id: 2 } as ZWaveNode
 			svc.checkConfigurationTemplates(node, zwaveNode)
 
 			// Allow async auto-apply to complete
@@ -751,7 +883,7 @@ describe('ConfigurationTemplateService', () => {
 				[template],
 			)
 
-			const zwaveNode = { id: 2 } as any
+			const zwaveNode = { id: 2 } as ZWaveNode
 			svc.checkConfigurationTemplates(node, zwaveNode)
 
 			expect(nodeStore.writeValue).not.toHaveBeenCalled()
@@ -774,7 +906,7 @@ describe('ConfigurationTemplateService', () => {
 				[template],
 			)
 
-			const zwaveNode = { id: 2 } as any
+			const zwaveNode = { id: 2 } as ZWaveNode
 			svc.checkConfigurationTemplates(node, zwaveNode)
 
 			expect(nodeStore.writeValue).not.toHaveBeenCalled()
@@ -797,7 +929,7 @@ describe('ConfigurationTemplateService', () => {
 				[template],
 			)
 
-			const zwaveNode = { id: 2 } as any
+			const zwaveNode = { id: 2 } as ZWaveNode
 			svc.checkConfigurationTemplates(node, zwaveNode)
 
 			expect(nodeStore.writeValue).not.toHaveBeenCalled()
@@ -888,6 +1020,151 @@ describe('ConfigurationTemplateService', () => {
 			await expect(
 				svc.getDeviceConfigurationParams('abc-def-ghi'),
 			).rejects.toThrow('non-numeric')
+		})
+
+		it('returns mapped params from ConfigManager with correct lookup ordering', async () => {
+			// Mock ConfigManager at the module level
+			const mockParamInfo = new Map()
+			mockParamInfo.set(
+				{ parameter: 2, valueBitMask: undefined },
+				{
+					label: 'Wake After Power On',
+					description: 'Wake duration',
+					readOnly: false,
+					minValue: 0,
+					maxValue: 255,
+					defaultValue: 0,
+					unit: 'seconds',
+					allowManualEntry: true,
+					options: [],
+				},
+			)
+			mockParamInfo.set(
+				{ parameter: 5, valueBitMask: 1 },
+				{
+					label: 'Sensor Report',
+					description: 'Bitmask param',
+					readOnly: true,
+					minValue: 0,
+					maxValue: 3,
+					defaultValue: 1,
+					unit: undefined,
+					allowManualEntry: false,
+					options: [
+						{ label: 'Off', value: 0 },
+						{ label: 'On', value: 1 },
+					],
+				},
+			)
+
+			const mockDevice = {
+				paramInformation: mockParamInfo,
+			}
+
+			// We need to mock the module-level configManager
+			const configModule = await import('@zwave-js/config')
+			const loadSpy = vi
+				.spyOn(configModule.ConfigManager.prototype, 'loadDeviceIndex')
+				.mockResolvedValue(undefined)
+			const lookupSpy = vi
+				.spyOn(configModule.ConfigManager.prototype, 'lookupDevice')
+				.mockResolvedValue(
+					mockDevice as ReturnType<
+						typeof configModule.ConfigManager.prototype.lookupDevice
+					>,
+				)
+
+			const svc = new ConfigurationTemplateService(
+				createDriverPort(),
+				createNodeStorePort(),
+				createPersistencePort(),
+				createUtilsPort(),
+				createLogger(),
+				[],
+			)
+
+			// deviceId = "134-2-100" → manufacturerId=134, productId=2, productType=100
+			const result = await svc.getDeviceConfigurationParams('134-2-100')
+
+			// Verify loadDeviceIndex was called
+			expect(loadSpy).toHaveBeenCalled()
+
+			// Verify lookupDevice ordering: manufacturer, productType, productId
+			expect(lookupSpy).toHaveBeenCalledWith(134, 100, 2)
+
+			// Verify exact output mapping
+			expect(result.length).toBe(2)
+
+			// First param: parameter 2, no bitmask
+			expect(result[0]).toEqual({
+				id: '0-112-0-2',
+				commandClass: 112,
+				property: 2,
+				propertyKey: undefined,
+				endpoint: 0,
+				type: 'number',
+				readable: true,
+				writeable: true,
+				label: 'Wake After Power On',
+				description: 'Wake duration',
+				min: 0,
+				max: 255,
+				default: 0,
+				unit: 'seconds',
+				list: false,
+				allowManualEntry: true,
+				states: [],
+				newValue: 0,
+			})
+
+			// Second param: parameter 5 with bitmask 1
+			expect(result[1]).toEqual({
+				id: '0-112-0-5-1',
+				commandClass: 112,
+				property: 5,
+				propertyKey: 1,
+				endpoint: 0,
+				type: 'number',
+				readable: true,
+				writeable: false, // readOnly=true
+				label: 'Sensor Report',
+				description: 'Bitmask param',
+				min: 0,
+				max: 3,
+				default: 1,
+				unit: undefined,
+				list: true, // options.length > 0
+				allowManualEntry: false,
+				states: [
+					{ text: 'Off', value: 0 },
+					{ text: 'On', value: 1 },
+				],
+				newValue: 1,
+			})
+		})
+
+		it('returns empty array when device has no paramInformation', async () => {
+			const configModule = await import('@zwave-js/config')
+			vi.spyOn(
+				configModule.ConfigManager.prototype,
+				'loadDeviceIndex',
+			).mockResolvedValue(undefined)
+			vi.spyOn(
+				configModule.ConfigManager.prototype,
+				'lookupDevice',
+			).mockResolvedValue(undefined)
+
+			const svc = new ConfigurationTemplateService(
+				createDriverPort(),
+				createNodeStorePort(),
+				createPersistencePort(),
+				createUtilsPort(),
+				createLogger(),
+				[],
+			)
+
+			const result = await svc.getDeviceConfigurationParams('134-2-100')
+			expect(result).toEqual([])
 		})
 	})
 
@@ -988,7 +1265,7 @@ describe('ConfigurationTemplateService', () => {
 						controller: {
 							nodes: new Map<number, unknown>(),
 						},
-					}) as any,
+					}) as ReturnType<TemplateDriverPort['getDriver']>,
 			}
 
 			const svc = new ConfigurationTemplateService(
@@ -1085,7 +1362,7 @@ describe('ConfigurationTemplateService', () => {
 					},
 				],
 			})
-			const node = makeNode({ status: 'Dead' as any })
+			const node = makeNode({ status: 'Dead' })
 			const nodes = new Map<number, TemplateNodeState>([[2, node]])
 			const nodeStore = createNodeStorePort(nodes)
 			nodeStore.writeValue = vi.fn(() =>
@@ -1148,7 +1425,7 @@ describe('ConfigurationTemplateService', () => {
 	})
 
 	describe('checkConfigurationTemplates – partial failure', () => {
-		it('logs warning when auto-apply has partial failures', async () => {
+		it('logs warning (not info) when auto-apply has partial failures', async () => {
 			const template = makeTemplate({
 				autoApply: true,
 				contentHash: 'unique-hash',
@@ -1179,7 +1456,7 @@ describe('ConfigurationTemplateService', () => {
 				description: '',
 			})
 
-			const fakeZwaveNode = { id: 2 } as any
+			const fakeZwaveNode = { id: 2 } as ZWaveNode
 			const driverPort = {
 				getDriver: () =>
 					({
@@ -1189,7 +1466,7 @@ describe('ConfigurationTemplateService', () => {
 									id === 2 ? fakeZwaveNode : undefined,
 							},
 						},
-					}) as any,
+					}) as ReturnType<TemplateDriverPort['getDriver']>,
 			}
 			const logger = createLogger()
 
@@ -1205,34 +1482,53 @@ describe('ConfigurationTemplateService', () => {
 			svc.checkConfigurationTemplates(node, fakeZwaveNode)
 			// Give async auto-apply time to complete
 			await new Promise((r) => setTimeout(r, 50))
-			// Should have logged
-			expect(nodeStore.logNode).toHaveBeenCalled()
+
+			// Assert exact warning level and message (not info)
+			expect(nodeStore.logNode).toHaveBeenCalledWith(
+				fakeZwaveNode,
+				'warn',
+				expect.stringContaining('partially applied'),
+			)
+			// Ensure the initial info log is separate from the warn
+			const logCalls = (nodeStore.logNode as ReturnType<typeof vi.fn>)
+				.mock.calls
+			const infoLogs = logCalls.filter((c: unknown[]) => c[1] === 'info')
+			const warnLogs = logCalls.filter((c: unknown[]) => c[1] === 'warn')
+			expect(infoLogs.length).toBeGreaterThanOrEqual(1)
+			expect(warnLogs.length).toBe(1)
+			expect(warnLogs[0][2]).toMatch(/1 OK, 1 failed/)
 		})
 	})
 
 	describe('_getMatchingTemplates – firmware range filtering', () => {
-		it('excludes templates with min firmware above node firmware', () => {
+		it('excludes templates with min firmware above node firmware: zero writes', () => {
 			const template = makeTemplate({
+				autoApply: true,
 				firmwareRange: { min: '2.0.0', max: undefined },
 			})
-			const node = makeNode({ firmwareVersion: '1.0.0' })
+			const node = makeNode({
+				firmwareVersion: '1.0.0',
+				appliedTemplateContentHashes: [],
+			})
 			const nodes = new Map<number, TemplateNodeState>([[2, node]])
+			const nodeStore = createNodeStorePort(nodes)
 
 			const svc = new ConfigurationTemplateService(
 				createDriverPort(),
-				createNodeStorePort(nodes),
+				nodeStore,
 				createPersistencePort([template]),
 				createUtilsPort(),
 				createLogger(),
 				[template],
 			)
 
-			const fakeZwaveNode = { id: 2 } as any
+			const fakeZwaveNode = { id: 2 } as ZWaveNode
 			svc.checkConfigurationTemplates(node, fakeZwaveNode)
-			// The template should not match, so no auto-apply happens
+			// Zero writes: template excluded by firmware
+			expect(nodeStore.writeValue).not.toHaveBeenCalled()
 		})
 
-		it('excludes templates with max firmware below node firmware', () => {
+		it('excludes templates with max firmware below node firmware: zero writes', () => {
 			const template = makeTemplate({
 				autoApply: true,
 				firmwareRange: { min: undefined, max: '1.0.0' },
@@ -1242,12 +1538,13 @@ describe('ConfigurationTemplateService', () => {
 				appliedTemplateContentHashes: [],
 			})
 			const nodes = new Map<number, TemplateNodeState>([[2, node]])
+			const nodeStore = createNodeStorePort(nodes)
 
-			const fakeZwaveNode = { id: 2 } as any
+			const fakeZwaveNode = { id: 2 } as ZWaveNode
 
 			const svc = new ConfigurationTemplateService(
 				createDriverPort(),
-				createNodeStorePort(nodes),
+				nodeStore,
 				createPersistencePort([template]),
 				createUtilsPort(),
 				createLogger(),
@@ -1255,7 +1552,8 @@ describe('ConfigurationTemplateService', () => {
 			)
 
 			svc.checkConfigurationTemplates(node, fakeZwaveNode)
-			// Template should not be applied (firmware too high)
+			// Zero writes: firmware too high
+			expect(nodeStore.writeValue).not.toHaveBeenCalled()
 		})
 
 		it('includes template when node firmware is within range', async () => {
@@ -1270,7 +1568,7 @@ describe('ConfigurationTemplateService', () => {
 			})
 			const nodes = new Map<number, TemplateNodeState>([[2, node]])
 
-			const fakeZwaveNode = { id: 2 } as any
+			const fakeZwaveNode = { id: 2 } as ZWaveNode
 			const nodeStore = createNodeStorePort(nodes)
 
 			const svc = new ConfigurationTemplateService(
@@ -1289,34 +1587,36 @@ describe('ConfigurationTemplateService', () => {
 			expect(nodeStore.logNode).toHaveBeenCalled()
 		})
 
-		it('skips template when node has no firmwareVersion', () => {
+		it('skips template when node has no firmwareVersion: zero writes', () => {
 			const template = makeTemplate({
 				autoApply: true,
 				firmwareRange: { min: '1.0.0', max: undefined },
 			})
 			const node = makeNode({
-				firmwareVersion: undefined as any,
+				firmwareVersion: undefined,
 				appliedTemplateContentHashes: [],
 			})
 			const nodes = new Map<number, TemplateNodeState>([[2, node]])
+			const nodeStore = createNodeStorePort(nodes)
 
 			const svc = new ConfigurationTemplateService(
 				createDriverPort(),
-				createNodeStorePort(nodes),
+				nodeStore,
 				createPersistencePort([template]),
 				createUtilsPort(),
 				createLogger(),
 				[template],
 			)
 
-			const fakeZwaveNode = { id: 2 } as any
+			const fakeZwaveNode = { id: 2 } as ZWaveNode
 			svc.checkConfigurationTemplates(node, fakeZwaveNode)
-			// No auto-apply should happen
+			// Zero writes: missing firmware version
+			expect(nodeStore.writeValue).not.toHaveBeenCalled()
 		})
 	})
 
 	describe('_autoApplyToNodes – error handling', () => {
-		it('logs error when auto-apply promise rejects', async () => {
+		it('logs error (not warn/info) when auto-apply promise rejects', async () => {
 			const template = makeTemplate({
 				autoApply: true,
 				contentHash: 'err-hash',
@@ -1324,18 +1624,15 @@ describe('ConfigurationTemplateService', () => {
 			const node = makeNode({ appliedTemplateContentHashes: [] })
 			const nodes = new Map<number, TemplateNodeState>([[2, node]])
 			const nodeStore = createNodeStorePort(nodes)
-			nodeStore.writeValue = vi.fn(() =>
-				Promise.reject(new Error('Network error')),
-			)
 
-			const fakeZwaveNode = { id: 2 } as any
+			const fakeZwaveNode = { id: 2 } as ZWaveNode
 			const driverPort = {
 				getDriver: () =>
 					({
 						controller: {
 							nodes: new Map([[2, fakeZwaveNode]]),
 						},
-					}) as any,
+					}) as ReturnType<TemplateDriverPort['getDriver']>,
 			}
 
 			const svc = new ConfigurationTemplateService(
@@ -1345,6 +1642,11 @@ describe('ConfigurationTemplateService', () => {
 				createUtilsPort(),
 				createLogger(),
 				[template],
+			)
+
+			// Spy on applyConfigurationTemplate and force it to reject
+			vi.spyOn(svc, 'applyConfigurationTemplate').mockRejectedValue(
+				new Error('Network error'),
 			)
 
 			// Trigger auto-apply via update with content change
@@ -1363,8 +1665,14 @@ describe('ConfigurationTemplateService', () => {
 
 			// Wait for async apply promises to settle
 			await new Promise((r) => setTimeout(r, 100))
-			// The error should be caught and logged, not thrown
-			expect(nodeStore.logNode).toHaveBeenCalled()
+			// The error should be caught and logged at error level
+			const logCalls = (nodeStore.logNode as ReturnType<typeof vi.fn>)
+				.mock.calls
+			const errorLogs = logCalls.filter(
+				(c: unknown[]) => c[1] === 'error',
+			)
+			expect(errorLogs.length).toBe(1)
+			expect(errorLogs[0][2]).toMatch(/Failed to auto-apply/)
 		})
 	})
 
@@ -1403,7 +1711,7 @@ describe('ConfigurationTemplateService', () => {
 				[],
 			)
 			// Should not throw even with no driver - no matching templates
-			const fakeZwaveNode = { id: 2 } as any
+			const fakeZwaveNode = { id: 2 } as ZWaveNode
 			svc.checkConfigurationTemplates(node, fakeZwaveNode)
 		})
 	})
@@ -1471,7 +1779,7 @@ describe('ConfigurationTemplateService', () => {
 
 	describe('createConfigurationTemplate – edge cases', () => {
 		it('throws when node has no values (values=undefined)', async () => {
-			const node = makeNode({ values: undefined as any })
+			const node = makeNode({ values: undefined })
 			const nodes = new Map<number, TemplateNodeState>([[2, node]])
 			const svc = new ConfigurationTemplateService(
 				createDriverPort(),
@@ -1494,7 +1802,7 @@ describe('ConfigurationTemplateService', () => {
 						commandClass: 112,
 						writeable: true,
 						property: 1,
-						endpoint: undefined as any,
+						endpoint: undefined,
 						value: 42,
 						label: 'P1',
 						description: 'A param',
@@ -1517,7 +1825,7 @@ describe('ConfigurationTemplateService', () => {
 
 		it('defaults deviceId when node.deviceId is falsy', async () => {
 			const node = makeNode({
-				deviceId: undefined as any,
+				deviceId: undefined,
 				values: {
 					'0-112-0-1': {
 						commandClass: 112,
@@ -1570,7 +1878,7 @@ describe('ConfigurationTemplateService', () => {
 		it('initializes appliedTemplateContentHashes when undefined', async () => {
 			const template = makeTemplate()
 			const node = makeNode({
-				appliedTemplateContentHashes: undefined as any,
+				appliedTemplateContentHashes: undefined,
 			})
 			const nodes = new Map<number, TemplateNodeState>([[2, node]])
 			const nodeStore = createNodeStorePort(nodes)
@@ -1610,7 +1918,7 @@ describe('ConfigurationTemplateService', () => {
 						controller: {
 							nodes: new Map([[2, { id: 2 }]]),
 						},
-					}) as any,
+					}) as ReturnType<TemplateDriverPort['getDriver']>,
 			}
 
 			const svc = new ConfigurationTemplateService(
@@ -1659,7 +1967,7 @@ describe('ConfigurationTemplateService', () => {
 						controller: {
 							nodes: new Map([[2, { id: 2 }]]),
 						},
-					}) as any,
+					}) as ReturnType<TemplateDriverPort['getDriver']>,
 			}
 
 			const svc = new ConfigurationTemplateService(
@@ -1671,10 +1979,7 @@ describe('ConfigurationTemplateService', () => {
 				[template],
 			)
 
-			// Trigger auto-apply via update with name change (no content change - but autoApply set)
-			// Actually we need content change for autoApply to trigger
-			// Let's use checkConfigurationTemplates instead
-			const fakeZwaveNode = { id: 2 } as any
+			const fakeZwaveNode = { id: 2 } as ZWaveNode
 			svc.checkConfigurationTemplates(node, fakeZwaveNode)
 
 			// writeValue should not be called since hash is already applied
@@ -1682,8 +1987,8 @@ describe('ConfigurationTemplateService', () => {
 		})
 	})
 
-	describe('checkConfigurationTemplates – catch handler', () => {
-		it('logs error when applyConfigurationTemplate rejects', async () => {
+	describe('checkConfigurationTemplates – outer catch', () => {
+		it('logs error when applyConfigurationTemplate rejects (checkConfigurationTemplates catch)', async () => {
 			const template = makeTemplate({
 				autoApply: true,
 				contentHash: 'check-catch-hash',
@@ -1696,7 +2001,7 @@ describe('ConfigurationTemplateService', () => {
 			// Override getNode to fail for node 2 (but getNodes still works)
 			nodeStore.getNode = vi.fn(() => undefined)
 
-			const fakeZwaveNode = { id: 2 } as any
+			const fakeZwaveNode = { id: 2 } as ZWaveNode
 			const driverPort = {
 				getDriver: () =>
 					({
@@ -1706,7 +2011,7 @@ describe('ConfigurationTemplateService', () => {
 									id === 2 ? fakeZwaveNode : undefined,
 							},
 						},
-					}) as any,
+					}) as ReturnType<TemplateDriverPort['getDriver']>,
 			}
 			const logger = createLogger()
 
@@ -1722,12 +2027,21 @@ describe('ConfigurationTemplateService', () => {
 			svc.checkConfigurationTemplates(node, fakeZwaveNode)
 			// Wait for async catch handler
 			await new Promise((r) => setTimeout(r, 100))
-			// The error should be caught and logged
-			expect(nodeStore.logNode).toHaveBeenCalledWith(
-				fakeZwaveNode,
-				'error',
-				expect.stringContaining('Failed to auto-apply'),
+
+			// The error should be caught and logged at 'error' level
+			const logCalls = (nodeStore.logNode as ReturnType<typeof vi.fn>)
+				.mock.calls
+			const errorLogs = logCalls.filter(
+				(c: unknown[]) => c[1] === 'error',
 			)
+			expect(errorLogs.length).toBe(1)
+			expect(errorLogs[0][2]).toMatch(/Failed to auto-apply/)
+			expect(errorLogs[0][2]).toMatch(/Node 2 not found/)
+
+			// Ensure info log (auto-applying) is separate and doesn't satisfy assertion
+			const infoLogs = logCalls.filter((c: unknown[]) => c[1] === 'info')
+			expect(infoLogs.length).toBe(1)
+			expect(infoLogs[0][2]).toMatch(/Auto-applying/)
 		})
 	})
 })
