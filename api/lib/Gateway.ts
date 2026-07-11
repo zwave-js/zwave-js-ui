@@ -844,7 +844,7 @@ export default class Gateway {
 	private _onValueChanged(
 		valueId: ZUIValueId,
 		node: ZUINode,
-		changed: boolean,
+		changed?: boolean,
 	): void {
 		if (isHassNode(node)) {
 			this.discoveryGenerator.discoverValueIfNeeded(node, valueId)
@@ -893,7 +893,7 @@ export default class Gateway {
 			this.discoveryGenerator.updateClimateDiscovery(
 				valueId,
 				node,
-				changed,
+				changed ?? false,
 			)
 		}
 
