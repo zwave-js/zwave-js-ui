@@ -56,6 +56,8 @@ type GatewayModule = typeof GatewayModuleNS
 let gwMod: GatewayModule
 let importTimeWatcherCount: number
 let ZWaveClient: typeof ZWaveClientType
+let jsonStore: any
+let store: any
 
 beforeAll(async () => {
 	ensureTestEnv()
@@ -63,13 +65,12 @@ beforeAll(async () => {
 	// captured ONCE, before any test closes watchers, so the assertion below is
 	// independent of the order tests run in
 	importTimeWatcherCount = gwMod.__getWatcherCountForTests()
-
-	const { default: jsonStore } = (await import(
+	;({ default: jsonStore } = (await import(
 		'../../../api/lib/jsonStore.ts'
-	)) as any
-	const { default: store } = (await import(
+	)) as any)
+	;({ default: store } = (await import(
 		'../../../api/config/store.ts'
-	)) as any
+	)) as any)
 	;({ default: ZWaveClient } = await import(
 		'../../../api/lib/ZwaveClient.ts'
 	))
@@ -194,10 +195,17 @@ describe('real-store isolation', () => {
 			? readFileSync(repoNodes, 'utf8')
 			: undefined
 
+		// Seed the ISOLATED real store (home-scoped) and drive the actual load
+		// path (`getStoreNodes()`) rather than injecting `storeNodes` directly,
+		// so this exercises load -> projection -> write end-to-end. The live
+		// node map still needs a physical entry (there is no real controller to
+		// build it from), which is the only narrow injection here.
+		await jsonStore.put(store.nodes, { '0xcleanup': { '4': {} } })
+
 		const socket = createRecordingSocket()
 		const zwave = new ZWaveClient({} as any, socket as any)
 		;(zwave as any).driverInfo = { name: '0xcleanup' }
-		;(zwave as any).storeNodes = { 4: {} }
+		await zwave.getStoreNodes()
 		;(zwave as any)._nodes.set(4, { id: 4, hassDevices: {} })
 
 		await zwave.storeDevices(
