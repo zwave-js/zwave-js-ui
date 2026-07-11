@@ -282,6 +282,78 @@ describe('ZwaveServerManager.destroy()', () => {
 		await expect(manager.destroy()).resolves.toBeUndefined()
 		expect(manager.server).toBeNull()
 	})
+
+	it('shares one upstream destroy() across concurrent calls for the same server', async () => {
+		const { host } = createHost()
+		const manager = new ZwaveServerManager(host)
+		manager.create()
+		const server = lastServer()
+
+		// Gate the upstream teardown so both calls observe it in flight.
+		let release: () => void = () => {}
+		server.destroy = vi.fn(
+			() =>
+				new Promise<void>((resolve) => {
+					release = resolve
+				}),
+		)
+
+		const first = manager.destroy()
+		const second = manager.destroy()
+
+		expect(server.destroy).toHaveBeenCalledOnce()
+
+		release()
+		await Promise.all([first, second])
+
+		expect(server.destroy).toHaveBeenCalledOnce()
+		expect(manager.server).toBeNull()
+	})
+
+	it('does not clear a replacement server created while an older destroy is in flight', async () => {
+		const { host } = createHost()
+		const manager = new ZwaveServerManager(host)
+		manager.create()
+		const original = lastServer()
+
+		let release: () => void = () => {}
+		original.destroy = vi.fn(
+			() =>
+				new Promise<void>((resolve) => {
+					release = resolve
+				}),
+		)
+
+		const destroying = manager.destroy()
+		// A replacement generation is adopted (via the setter) mid-teardown.
+		const replacement = { start: vi.fn(), destroy: vi.fn() } as any
+		manager.server = replacement
+
+		release()
+		await destroying
+
+		expect(manager.server).toBe(replacement)
+	})
+
+	it('a rejected destroy() is observable and retryable (reference retained)', async () => {
+		const { host } = createHost()
+		const manager = new ZwaveServerManager(host)
+		manager.create()
+		const server = lastServer()
+
+		server.destroy = vi
+			.fn()
+			.mockRejectedValueOnce(new Error('teardown failed'))
+			.mockResolvedValueOnce(undefined)
+
+		await expect(manager.destroy()).rejects.toThrow('teardown failed')
+		// Retained after failure so a later stop can retry.
+		expect(manager.server).toBe(server)
+
+		await manager.destroy()
+		expect(server.destroy).toHaveBeenCalledTimes(2)
+		expect(manager.server).toBeNull()
+	})
 })
 
 describe('ZwaveServerManager.handInclusionControlBack()', () => {
