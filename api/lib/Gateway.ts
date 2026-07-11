@@ -303,7 +303,7 @@ export default class Gateway {
 						{
 							...value,
 							property: 'Up',
-						},
+						} as ZUIValueId,
 						false,
 					)
 				},
