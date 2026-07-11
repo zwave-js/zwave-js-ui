@@ -5,10 +5,9 @@
 import type { Socket } from 'socket.io'
 import type { HassDevice } from '../lib/ZwaveClient.ts'
 import * as loggers from '../lib/logger.ts'
-import { getErrorMessage } from '../lib/errors.ts'
 import { inboundEvents } from '../lib/SocketEvents.ts'
 import type { AppRuntime } from '../runtime/AppRuntime.ts'
-import { noop, type SocketAck } from './types.ts'
+import { getLegacyErrorMessage, noop, type SocketAck } from './types.ts'
 
 const logger = loggers.module('App')
 
@@ -29,7 +28,7 @@ export interface HassApiRequest {
 
 export interface HassApiAck {
 	success: boolean
-	message: string
+	message: unknown
 	result: void
 	api?: string
 }
@@ -50,7 +49,7 @@ export function registerHassApiHandler(
 			logger.info(`Hass api call: ${data.apiName}`)
 
 			let res: void
-			let err: string | undefined
+			let err: unknown = undefined
 			try {
 				switch (data.apiName) {
 					case 'delete':
@@ -144,7 +143,7 @@ export function registerHassApiHandler(
 				}
 			} catch (error) {
 				logger.error('Error while calling HASS api', error)
-				err = getErrorMessage(error)
+				err = getLegacyErrorMessage(error)
 			}
 
 			cb({

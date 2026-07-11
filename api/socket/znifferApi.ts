@@ -4,21 +4,19 @@
  */
 import type { Socket } from 'socket.io'
 import * as loggers from '../lib/logger.ts'
-import { getErrorMessage } from '../lib/errors.ts'
 import { inboundEvents } from '../lib/SocketEvents.ts'
 import type { AppRuntime } from '../runtime/AppRuntime.ts'
-import { noop, type SocketAck } from './types.ts'
+import { getLegacyErrorMessage, noop, type SocketAck } from './types.ts'
 
 const logger = loggers.module('App')
 
 /**
- * Request payload accepted by the `ZNIFFER_API` handler below. Every field
- * beyond `apiName` is only meaningful for a subset of actions (see the
- * switch below) - all optional, reflecting that the real wire payload is
- * never validated before use, exactly like the original untyped handler.
+ * Valid `ZNIFFER_API` request payloads. Actions without parameters omit
+ * action-specific fields, while frequency, channel configuration, and capture
+ * data are required only by the operation that consumes each one. Socket.IO
+ * still performs no runtime validation, preserving malformed-wire behavior.
  */
-export interface ZnifferApiRequest {
-	apiName?: string
+interface ZnifferApiRequestBase {
 	/**
 	 * Preserved quirk: only ever read by this handler's log line below,
 	 * never by the ack itself. The real wire payload names the action
@@ -27,14 +25,26 @@ export interface ZnifferApiRequest {
 	 * not new behavior.
 	 */
 	api?: string
-	frequency?: number
-	channelConfig?: number
-	buffer: number[]
 }
+
+export type ZnifferApiRequest = ZnifferApiRequestBase &
+	(
+		| {
+				apiName:
+					| 'start'
+					| 'stop'
+					| 'clear'
+					| 'getFrames'
+					| 'saveCaptureToFile'
+		  }
+		| { apiName: 'setFrequency'; frequency: number }
+		| { apiName: 'setLRChannelConfig'; channelConfig: number }
+		| { apiName: 'loadCaptureFromBuffer'; buffer: number[] }
+	)
 
 export interface ZnifferApiAck {
 	success: boolean
-	message: string
+	message: unknown
 	result: unknown
 	api?: string
 }
@@ -60,8 +70,9 @@ export function registerZnifferApiHandler(
 		) => {
 			logger.info(`Zniffer api call: ${data.api}`)
 
+			const apiName: string = data.apiName
 			let res: unknown
-			let err: string | undefined
+			let err: unknown = undefined
 			try {
 				switch (data.apiName) {
 					case 'start':
@@ -113,18 +124,18 @@ export function registerZnifferApiHandler(
 						break
 					}
 					default:
-						throw new Error(`Unknown ZNIFFER api ${data.apiName}`)
+						throw new Error(`Unknown ZNIFFER api ${apiName}`)
 				}
 			} catch (error) {
 				logger.error('Error while calling ZNIFFER api', error)
-				err = getErrorMessage(error)
+				err = getLegacyErrorMessage(error)
 			}
 
 			cb({
 				success: !err,
 				message: err || 'Success ZNIFFER api call',
 				result: res,
-				api: data.apiName,
+				api: apiName,
 			})
 		},
 	)
