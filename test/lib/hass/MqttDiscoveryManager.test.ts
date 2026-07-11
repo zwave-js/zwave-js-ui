@@ -17,6 +17,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import type { Mock } from 'vitest'
 import MqttDiscoveryManager, {
+	HASS_STATUS_TOPIC,
 	type HassStatusSource,
 	type MqttDiscoveryManagerOptions,
 } from '../../../api/hass/MqttDiscoveryManager.ts'
@@ -77,32 +78,61 @@ function makeTopicPort(): HassTopicPort {
 }
 
 /**
- * A minimal `HassStatusSource` that records per-event listeners so tests can
- * assert exact subscription counts, drive `online`/`offline` transitions, and
- * prove the disposer removed exactly what it added.
+ * A minimal `HassStatusSource` that records the scoped exact-topic
+ * subscriptions and broker-reconnect listeners so tests can assert exact
+ * subscription counts, drive `homeassistant/status` payload deliveries and
+ * broker transitions, and prove each disposer removed exactly what it added.
  */
 function makeStatusSource() {
-	const listeners: Record<string, Array<(online: boolean) => void>> = {
-		hassStatus: [],
-		brokerStatus: [],
-	}
+	const brokerListeners: Array<(online: boolean) => void> = []
+	const exactListeners = new Map<
+		string,
+		Set<(payload: string | undefined) => void>
+	>()
 	const source: HassStatusSource & {
-		emit(event: 'hassStatus' | 'brokerStatus', online: boolean): void
-		count(event: 'hassStatus' | 'brokerStatus'): number
+		deliver(topic: string, payload: string | undefined): void
+		emitBroker(online: boolean): void
+		exactCount(topic?: string): number
+		brokerCount(): number
 	} = {
-		on(event, handler) {
-			listeners[event].push(handler)
+		subscribeExact(topic, listener) {
+			let set = exactListeners.get(topic)
+			if (!set) {
+				set = new Set()
+				exactListeners.set(topic, set)
+			}
+			set.add(listener)
+			let disposed = false
+			return {
+				dispose() {
+					if (disposed) return
+					disposed = true
+					exactListeners.get(topic)?.delete(listener)
+				},
+			}
+		},
+		on(_event, handler) {
+			brokerListeners.push(handler)
 			return source
 		},
-		off(event, handler) {
-			listeners[event] = listeners[event].filter((h) => h !== handler)
+		off(_event, handler) {
+			const index = brokerListeners.indexOf(handler)
+			if (index >= 0) brokerListeners.splice(index, 1)
 			return source
 		},
-		emit(event, online) {
-			for (const handler of [...listeners[event]]) handler(online)
+		deliver(topic, payload) {
+			for (const listener of [...(exactListeners.get(topic) ?? [])]) {
+				listener(payload)
+			}
 		},
-		count(event) {
-			return listeners[event].length
+		emitBroker(online) {
+			for (const handler of [...brokerListeners]) handler(online)
+		},
+		exactCount(topic = HASS_STATUS_TOPIC) {
+			return exactListeners.get(topic)?.size ?? 0
+		},
+		brokerCount() {
+			return brokerListeners.length
 		},
 	}
 	return source
@@ -218,6 +248,16 @@ describe('MqttDiscoveryManager start/stop lifecycle', () => {
 })
 
 describe('MqttDiscoveryManager scoped status subscription', () => {
+	it('subscribes to the fixed homeassistant/status topic (never prefixed)', () => {
+		const { manager } = makeManager()
+		const status = makeStatusSource()
+
+		manager.subscribeStatus(status)
+
+		expect(status.exactCount('homeassistant/status')).toBe(1)
+		expect(HASS_STATUS_TOPIC).toBe('homeassistant/status')
+	})
+
 	it('an online HA status triggers a full rediscovery and logs ONLINE', () => {
 		const { manager, logger } = makeManager()
 		const rediscoverAll = vi
@@ -226,10 +266,23 @@ describe('MqttDiscoveryManager scoped status subscription', () => {
 		const status = makeStatusSource()
 
 		manager.subscribeStatus(status)
-		status.emit('hassStatus', true)
+		status.deliver(HASS_STATUS_TOPIC, 'online')
 
 		expect(rediscoverAll).toHaveBeenCalledTimes(1)
 		expect(logger.info).toHaveBeenCalledWith('Home Assistant is ONLINE')
+	})
+
+	it('the online check is case-insensitive', () => {
+		const { manager } = makeManager()
+		const rediscoverAll = vi
+			.spyOn(manager.discoveryGenerator, 'rediscoverAll')
+			.mockImplementation(() => {})
+		const status = makeStatusSource()
+
+		manager.subscribeStatus(status)
+		status.deliver(HASS_STATUS_TOPIC, 'OnLiNe')
+
+		expect(rediscoverAll).toHaveBeenCalledTimes(1)
 	})
 
 	it('an offline HA status logs OFFLINE and does not rediscover', () => {
@@ -240,9 +293,25 @@ describe('MqttDiscoveryManager scoped status subscription', () => {
 		const status = makeStatusSource()
 
 		manager.subscribeStatus(status)
-		status.emit('hassStatus', false)
+		status.deliver(HASS_STATUS_TOPIC, 'offline')
 
 		expect(logger.info).toHaveBeenCalledWith('Home Assistant is OFFLINE')
+		expect(rediscoverAll).not.toHaveBeenCalled()
+	})
+
+	it('a non-string payload logs the legacy Invalid payload complaint and does not rediscover', () => {
+		const { manager, logger } = makeManager()
+		const rediscoverAll = vi
+			.spyOn(manager.discoveryGenerator, 'rediscoverAll')
+			.mockImplementation(() => {})
+		const status = makeStatusSource()
+
+		manager.subscribeStatus(status)
+		status.deliver(HASS_STATUS_TOPIC, undefined)
+
+		expect(logger.error).toHaveBeenCalledWith(
+			'Invalid payload sent to Hass Will topic',
+		)
 		expect(rediscoverAll).not.toHaveBeenCalled()
 	})
 
@@ -254,10 +323,10 @@ describe('MqttDiscoveryManager scoped status subscription', () => {
 		const status = makeStatusSource()
 
 		manager.subscribeStatus(status)
-		status.emit('brokerStatus', false)
+		status.emitBroker(false)
 		expect(rediscoverAll).not.toHaveBeenCalled()
 
-		status.emit('brokerStatus', true)
+		status.emitBroker(true)
 		expect(rediscoverAll).toHaveBeenCalledTimes(1)
 	})
 
@@ -269,8 +338,8 @@ describe('MqttDiscoveryManager scoped status subscription', () => {
 		const second = manager.subscribeStatus(status)
 
 		expect(second).toBe(first)
-		expect(status.count('hassStatus')).toBe(1)
-		expect(status.count('brokerStatus')).toBe(1)
+		expect(status.exactCount()).toBe(1)
+		expect(status.brokerCount()).toBe(1)
 	})
 
 	it('the returned disposer removes exactly its listeners and is idempotent', () => {
@@ -278,15 +347,15 @@ describe('MqttDiscoveryManager scoped status subscription', () => {
 		const status = makeStatusSource()
 
 		const dispose = manager.subscribeStatus(status)
-		expect(status.count('hassStatus')).toBe(1)
-		expect(status.count('brokerStatus')).toBe(1)
+		expect(status.exactCount()).toBe(1)
+		expect(status.brokerCount()).toBe(1)
 
 		dispose()
-		expect(status.count('hassStatus')).toBe(0)
-		expect(status.count('brokerStatus')).toBe(0)
+		expect(status.exactCount()).toBe(0)
+		expect(status.brokerCount()).toBe(0)
 
 		expect(() => dispose()).not.toThrow()
-		expect(status.count('hassStatus')).toBe(0)
+		expect(status.exactCount()).toBe(0)
 	})
 
 	it('after disposing, a fresh subscribeStatus re-subscribes with a new disposer', () => {
@@ -298,7 +367,7 @@ describe('MqttDiscoveryManager scoped status subscription', () => {
 		const second = manager.subscribeStatus(status)
 
 		expect(second).not.toBe(first)
-		expect(status.count('hassStatus')).toBe(1)
+		expect(status.exactCount()).toBe(1)
 	})
 
 	it('disposeStatus() is a no-op when nothing is subscribed', () => {
@@ -315,8 +384,8 @@ describe('MqttDiscoveryManager scoped status subscription', () => {
 
 		manager.subscribeStatus(status)
 		manager.disposeStatus()
-		status.emit('hassStatus', true)
-		status.emit('brokerStatus', true)
+		status.deliver(HASS_STATUS_TOPIC, 'online')
+		status.emitBroker(true)
 
 		expect(rediscoverAll).not.toHaveBeenCalled()
 	})
@@ -331,9 +400,9 @@ describe('MqttDiscoveryManager start() status wiring', () => {
 		const status = makeStatusSource()
 
 		manager.start(status, true)
-		expect(status.count('hassStatus')).toBe(1)
+		expect(status.exactCount()).toBe(1)
 
-		status.emit('hassStatus', true)
+		status.deliver(HASS_STATUS_TOPIC, 'online')
 		expect(rediscoverAll).toHaveBeenCalledTimes(1)
 	})
 
@@ -343,8 +412,8 @@ describe('MqttDiscoveryManager start() status wiring', () => {
 
 		manager.start(status, false)
 
-		expect(status.count('hassStatus')).toBe(0)
-		expect(status.count('brokerStatus')).toBe(0)
+		expect(status.exactCount()).toBe(0)
+		expect(status.brokerCount()).toBe(0)
 	})
 
 	it('start() without a status source does not subscribe', () => {
@@ -353,7 +422,7 @@ describe('MqttDiscoveryManager start() status wiring', () => {
 
 		manager.start()
 
-		expect(status.count('hassStatus')).toBe(0)
+		expect(status.exactCount()).toBe(0)
 	})
 
 	it('stop() disposes the status subscription wired by start()', () => {
@@ -365,9 +434,9 @@ describe('MqttDiscoveryManager start() status wiring', () => {
 
 		manager.start(status, true)
 		manager.stop()
-		expect(status.count('hassStatus')).toBe(0)
+		expect(status.exactCount()).toBe(0)
 
-		status.emit('hassStatus', true)
+		status.deliver(HASS_STATUS_TOPIC, 'online')
 		expect(rediscoverAll).not.toHaveBeenCalled()
 	})
 })

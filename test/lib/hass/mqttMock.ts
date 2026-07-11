@@ -55,6 +55,11 @@ export interface FakeBroker extends EventEmitter {
 		options?: IClientSubscribeOptions,
 		cb?: (err: Error | null, granted: ISubscriptionGrant[]) => void,
 	): FakeBroker
+	unsubscribe(
+		topic: string | string[],
+		options?: Record<string, any> | ((err?: Error) => void),
+		cb?: (err?: Error) => void,
+	): FakeBroker
 	end(
 		force?: boolean,
 		opts?: Partial<IDisconnectPacket>,
@@ -161,6 +166,20 @@ export function createFakeBroker(): FakeBroker {
 		// Real `mqtt` grants `{ topic, qos }[]`; the wrapper treats qos 128 as
 		// a permission error, so return the requested qos to model a grant.
 		cb?.(null, [{ topic, qos: options?.qos ?? 0 }])
+		return broker
+	}
+
+	broker.unsubscribe = (topic, options, cb) => {
+		// Real `mqtt` allows `unsubscribe(topic, cb)`; mirror that so the
+		// wrapper's `unsubscribeBroker` call shape resolves. Drop every recorded
+		// subscription for the exact topic(s) so a later `deliver()` to it is no
+		// longer routed - modelling a real broker dropping the subscription.
+		const topics = Array.isArray(topic) ? topic : [topic]
+		broker.subscribed = broker.subscribed.filter(
+			(s) => !topics.includes(s.topic),
+		)
+		const callback = typeof options === 'function' ? options : cb
+		callback?.()
 		return broker
 	}
 

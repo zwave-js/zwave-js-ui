@@ -10,20 +10,40 @@ import type {
 import type { HassDevice } from './types.ts'
 
 /**
- * The narrow event source the scoped Home Assistant status subscription needs.
+ * A disposable scoped subscription handle (structurally matches
+ * `MqttClient.subscribeExact`'s return): disposing it removes exactly the one
+ * listener it registered. Kept local so the manager never imports the concrete
+ * client.
+ */
+export interface HassBrokerSubscription {
+	dispose(): void
+}
+
+/**
+ * The narrow MQTT surface the scoped Home Assistant status subscription needs.
  * `MqttClient` satisfies it structurally; kept minimal so the manager never
  * depends on the concrete client.
+ *
+ * `subscribeExact` registers a reconnect-safe subscription to an exact broker
+ * topic and hands back an idempotent disposer; `on`/`off('brokerStatus')` track
+ * broker connection transitions (a reconnect triggers a full rediscovery).
  */
 export interface HassStatusSource {
-	on(
-		event: 'hassStatus' | 'brokerStatus',
-		handler: (online: boolean) => void,
-	): unknown
-	off(
-		event: 'hassStatus' | 'brokerStatus',
-		handler: (online: boolean) => void,
-	): unknown
+	subscribeExact(
+		topic: string,
+		listener: (payload: string | undefined) => void,
+	): HassBrokerSubscription
+	on(event: 'brokerStatus', handler: (online: boolean) => void): unknown
+	off(event: 'brokerStatus', handler: (online: boolean) => void): unknown
 }
+
+/**
+ * The fixed Home Assistant birth/will topic. Home Assistant publishes `online`
+ * to it when it (re)starts; the payload is matched case-insensitively and is
+ * never prefixed. Owned here (not by `MqttClient`) so the whole Home Assistant
+ * status concern lives inside the discovery subsystem.
+ */
+export const HASS_STATUS_TOPIC = 'homeassistant/status'
 
 export interface MqttDiscoveryManagerOptions {
 	/** Live gateway/discovery configuration (a stable reference). */
@@ -132,16 +152,28 @@ export default class MqttDiscoveryManager {
 	}
 
 	/**
-	 * Scoped subscription to Home Assistant birth/will (`hassStatus`) and
-	 * broker-reconnect (`brokerStatus`) transitions; an `online` transition on
-	 * either triggers a full {@link rediscoverAll}. Returns an idempotent
-	 * disposer and never double-subscribes: a second call while already
-	 * subscribed returns the existing disposer.
+	 * Scoped subscription to the Home Assistant birth/will topic
+	 * (`homeassistant/status`, subscribed through the caller-supplied scoped
+	 * MQTT API) plus broker-reconnect (`brokerStatus`) transitions. An HA
+	 * `online` status (case-insensitive) or a broker reconnect triggers a full
+	 * {@link rediscoverAll}. Returns an idempotent disposer and never
+	 * double-subscribes: a second call while already subscribed returns the
+	 * existing disposer.
+	 *
+	 * The online check, the `Home Assistant is ONLINE/OFFLINE` log and the
+	 * legacy `Invalid payload sent to Hass Will topic` complaint live here (not
+	 * in `MqttClient`), so the entire Home Assistant status concern is owned by
+	 * the discovery subsystem.
 	 */
 	public subscribeStatus(source: HassStatusSource): () => void {
 		if (this._statusDisposer) return this._statusDisposer
 
-		const onHassStatus = (online: boolean): void => {
+		const onStatusMessage = (payload: string | undefined): void => {
+			if (typeof payload !== 'string') {
+				this.logger.error('Invalid payload sent to Hass Will topic')
+				return
+			}
+			const online = payload.toLowerCase() === 'online'
 			this.logger.info(
 				`Home Assistant is ${online ? 'ONLINE' : 'OFFLINE'}`,
 			)
@@ -151,14 +183,17 @@ export default class MqttDiscoveryManager {
 			if (online) this.rediscoverAll()
 		}
 
-		source.on('hassStatus', onHassStatus)
+		const subscription = source.subscribeExact(
+			HASS_STATUS_TOPIC,
+			onStatusMessage,
+		)
 		source.on('brokerStatus', onBrokerStatus)
 
 		let disposed = false
 		this._statusDisposer = (): void => {
 			if (disposed) return
 			disposed = true
-			source.off('hassStatus', onHassStatus)
+			subscription.dispose()
 			source.off('brokerStatus', onBrokerStatus)
 			this._statusDisposer = undefined
 		}
