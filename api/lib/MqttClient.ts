@@ -173,9 +173,25 @@ class MqttClient extends TypedEventEmitter<MqttClientEventCallbacks> {
 			}
 			this.closed = true
 
-			// Drop scoped exact-topic subscriptions so a closed client can never
-			// re-subscribe them on a future connect. Owners still dispose their
-			// own handles independently (both are idempotent).
+			// Unsubscribe the desired scoped exact-topic subscriptions from the
+			// broker BEFORE dropping them, so a `clean: false` session is not
+			// left with a lingering server-side subscription (e.g. to
+			// `homeassistant/status`) that would redeliver on the next connect.
+			// Then drop them so a closed client can never re-subscribe on a
+			// future connect. Owners still dispose their own handles
+			// independently (both are idempotent).
+			if (this.client?.connected) {
+				for (const topic of this.exactSubscriptions.keys()) {
+					this.client.unsubscribe(topic, (err?: Error) => {
+						if (err) {
+							logger.error(
+								`Error unsubscribing from ${topic}`,
+								err,
+							)
+						}
+					})
+				}
+			}
 			this.exactSubscriptions.clear()
 
 			if (this.retrySubTimeout) {
@@ -357,13 +373,12 @@ class MqttClient extends TypedEventEmitter<MqttClientEventCallbacks> {
 		listeners.add(listener)
 
 		// Subscribe the broker topic now when already connected and this is its
-		// first listener; otherwise `_onConnect` will (re)subscribe it. A
-		// not-yet-connected attempt rejects (queued in `toSubscribe`) - swallow
-		// it, the topic is tracked in `exactSubscriptions` regardless.
+		// first listener; otherwise `_onConnect` will (re)subscribe it. The
+		// desired-state-aware helper never requeues into `toSubscribe`, so a
+		// callback that lands after this topic is disposed cannot leak it back
+		// onto the broker or into a reconnect.
 		if (firstForTopic && this.client?.connected) {
-			this.subscribe(topic, { addPrefix: false, qos: 1 }).catch(() => {
-				/* (re)subscribed on the next connect */
-			})
+			this.subscribeExactTopic(topic)
 		}
 
 		let disposed = false
@@ -380,6 +395,47 @@ class MqttClient extends TypedEventEmitter<MqttClientEventCallbacks> {
 				}
 			},
 		}
+	}
+
+	/**
+	 * (Re)subscribe a single scoped EXACT broker topic, honoring desired state.
+	 *
+	 * Unlike {@link subscribe} (used for the prefixed write/action topics, whose
+	 * failures requeue into `toSubscribe` for a blanket retry), an exact topic's
+	 * desired state lives ONLY in `exactSubscriptions`. This helper never
+	 * touches `toSubscribe`, and its async broker callback re-checks the desired
+	 * state, so a subscribe that completes - successfully or with an error -
+	 * AFTER the owner disposed the topic (or after the client closed) can
+	 * neither requeue it for a reconnect nor leave it subscribed on the broker.
+	 * A still-desired topic that failed is simply retried by the next
+	 * `_onConnect`, which iterates `exactSubscriptions`.
+	 */
+	private subscribeExactTopic(topic: string): void {
+		const client = this.client
+		if (!client?.connected) return
+
+		client.subscribe(topic, { qos: 1 }, (err) => {
+			const stillDesired =
+				!this.closed && this.exactSubscriptions.has(topic)
+			if (!stillDesired) {
+				// Disposed (or closed) while this subscribe was in flight: make
+				// sure the broker is not left subscribed to a topic nothing
+				// wants anymore (the dispose-time unsubscribe may have raced
+				// ahead of this subscribe completing).
+				if (this.client?.connected) {
+					this.client.unsubscribe(topic, () => {
+						/* best-effort */
+					})
+				}
+				return
+			}
+			if (err) {
+				logger.error(`Error subscribing to ${topic}`, err)
+				// Left in `exactSubscriptions`; retried on the next connect.
+				return
+			}
+			logger.info(`Subscribed to ${topic}`)
+		})
 	}
 
 	/**
@@ -557,11 +613,12 @@ class MqttClient extends TypedEventEmitter<MqttClientEventCallbacks> {
 		// (Re)subscribe every scoped exact topic an owner registered via
 		// `subscribeExact` (e.g. `homeassistant/status`). Doing this on every
 		// connect makes those subscriptions reconnect-safe without MqttClient
-		// owning any of them; when none are registered this is a no-op.
+		// owning any of them; when none are registered this is a no-op. The
+		// desired-state-aware helper deliberately does NOT feed `toSubscribe`
+		// (and so is not part of the awaited `subscribePromises`): a disposed
+		// topic must never be requeued for a blanket retry.
 		for (const topic of this.exactSubscriptions.keys()) {
-			subscribePromises.push(
-				this.subscribe(topic, { addPrefix: false, qos: 1 }),
-			)
+			this.subscribeExactTopic(topic)
 		}
 
 		// subscribe to actions
