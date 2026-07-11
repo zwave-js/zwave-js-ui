@@ -22,10 +22,12 @@ export interface BackupSettings {
 const logger = module('Backup')
 
 class BackupManager {
-	private config: BackupSettings
-	private storeJob: Cron
-	private nvmJob: Cron
-	private zwaveClient: ZwaveClient
+	// Assigned in `init()`, which app.ts always calls once at startup before
+	// any Cron job (the only caller of `backupNvm`/`backupStore`) can fire.
+	private config!: BackupSettings
+	private storeJob?: Cron
+	private nvmJob?: Cron
+	private zwaveClient!: ZwaveClient
 	private owner: symbol
 
 	get default(): BackupSettings {
@@ -45,11 +47,8 @@ class BackupManager {
 	}
 
 	nextRun(job: Cron) {
-		if (job?.nextRun()) {
-			return job.nextRun().toLocaleString()
-		}
-
-		return 'UNKNOWN'
+		const next = job?.nextRun()
+		return next ? next.toLocaleString() : 'UNKNOWN'
 	}
 
 	init(zwaveClient: ZwaveClient, owner: symbol) {

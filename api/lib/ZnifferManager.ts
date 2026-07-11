@@ -16,6 +16,7 @@ import { isDocker } from './utils.ts'
 import { basename } from 'node:path'
 import { readFile } from 'node:fs/promises'
 import tripleBeam from 'triple-beam'
+import { getErrorMessage } from './errors.ts'
 
 const loglevels = tripleBeam.configs.npm.levels
 
@@ -54,20 +55,20 @@ export interface FrameCCLogEntry {
 	tags: string[]
 	message?: {
 		encapsulated?: FrameCCLogEntry[]
-		[key: string]: string | number | boolean | FrameCCLogEntry[]
+		[key: string]: string | number | boolean | FrameCCLogEntry[] | undefined
 	}
 }
 
 export default class ZnifferManager extends TypedEventEmitter<ZnifferManagerEventCallbacks> {
-	private zniffer: Zniffer
+	private zniffer?: Zniffer
 
 	private config: ZnifferConfig
 
 	private socket: SocketServer
 
-	private error: string
+	private error?: string
 
-	private restartTimeout: NodeJS.Timeout
+	private restartTimeout?: NodeJS.Timeout
 
 	get started() {
 		return !!this.zniffer?.active
@@ -133,8 +134,9 @@ export default class ZnifferManager extends TypedEventEmitter<ZnifferManagerEven
 	}
 
 	private async init() {
+		const zniffer = this.checkReady()
 		try {
-			await this.zniffer.init()
+			await zniffer.init()
 		} catch (error) {
 			logger.info('Retrying in 5s...')
 			this.restartTimeout = setTimeout(() => {
@@ -181,10 +183,17 @@ export default class ZnifferManager extends TypedEventEmitter<ZnifferManagerEven
 			.emit(socketEvents.znifferState, this.status())
 	}
 
-	private checkReady() {
+	/**
+	 * Verify the Zniffer instance is ready to use and return it (throws
+	 * otherwise). Callers capture the return value in a local variable
+	 * instead of re-reading `this.zniffer`, so TypeScript can track that
+	 * it's defined without an assertion.
+	 */
+	private checkReady(): Zniffer {
 		if (!this.config.enabled || !this.zniffer) {
 			throw new Error('Zniffer is not initialized')
 		}
+		return this.zniffer
 	}
 
 	public status() {
@@ -204,9 +213,9 @@ export default class ZnifferManager extends TypedEventEmitter<ZnifferManagerEven
 	}
 
 	public getFrames() {
-		this.checkReady()
+		const zniffer = this.checkReady()
 
-		return this.zniffer.capturedFrames.map((frame) => {
+		return zniffer.capturedFrames.map((frame) => {
 			return this.parseFrame(
 				frame.parsedFrame,
 				Buffer.from(frame.frameData),
@@ -216,10 +225,10 @@ export default class ZnifferManager extends TypedEventEmitter<ZnifferManagerEven
 	}
 
 	public async setFrequency(frequency: number) {
-		this.checkReady()
+		const zniffer = this.checkReady()
 
 		logger.info(`Setting Zniffer frequency to ${frequency}`)
-		await this.zniffer.setFrequency(frequency)
+		await zniffer.setFrequency(frequency)
 
 		this.onStateChange()
 
@@ -227,12 +236,12 @@ export default class ZnifferManager extends TypedEventEmitter<ZnifferManagerEven
 	}
 
 	public async setLRChannelConfig(channelConfig: number) {
-		this.checkReady()
+		const zniffer = this.checkReady()
 
 		logger.info(
 			`Setting Zniffer LR channel configuration to ${channelConfig}`,
 		)
-		await this.zniffer.setLRChannelConfig(channelConfig)
+		await zniffer.setLRChannelConfig(channelConfig)
 
 		this.onStateChange()
 
@@ -258,7 +267,7 @@ export default class ZnifferManager extends TypedEventEmitter<ZnifferManagerEven
 		} catch (error) {
 			logger.error('Error parsing command class:', error)
 			return {
-				error: error.message,
+				error: getErrorMessage(error),
 			}
 		}
 	}
@@ -274,7 +283,7 @@ export default class ZnifferManager extends TypedEventEmitter<ZnifferManagerEven
 	}
 
 	public async start() {
-		this.checkReady()
+		const zniffer = this.checkReady()
 
 		if (this.started) {
 			logger.info('Zniffer already started')
@@ -282,7 +291,7 @@ export default class ZnifferManager extends TypedEventEmitter<ZnifferManagerEven
 		}
 
 		logger.info('Starting...')
-		await this.zniffer.start()
+		await zniffer.start()
 
 		this.onStateChange()
 
@@ -290,7 +299,7 @@ export default class ZnifferManager extends TypedEventEmitter<ZnifferManagerEven
 	}
 
 	public async stop() {
-		this.checkReady()
+		const zniffer = this.checkReady()
 
 		if (!this.started) {
 			logger.info('Zniffer is already stopped')
@@ -298,7 +307,7 @@ export default class ZnifferManager extends TypedEventEmitter<ZnifferManagerEven
 		}
 
 		logger.info('Stopping...')
-		await this.zniffer.stop()
+		await zniffer.stop()
 
 		this.onStateChange()
 
@@ -306,42 +315,42 @@ export default class ZnifferManager extends TypedEventEmitter<ZnifferManagerEven
 	}
 
 	public clear() {
-		this.checkReady()
+		const zniffer = this.checkReady()
 
 		logger.info('Clearing...')
-		this.zniffer.clearCapturedFrames()
+		zniffer.clearCapturedFrames()
 
 		logger.info('Frames cleared')
 	}
 
 	public async loadCaptureFromBuffer(buffer: Buffer) {
-		this.checkReady()
+		const zniffer = this.checkReady()
 
 		logger.info(`Loading capture from buffer (${buffer.length} bytes)`)
 
 		try {
 			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 			// @ts-expect-error
-			await this.zniffer.loadCaptureFromBuffer(buffer)
+			await zniffer.loadCaptureFromBuffer(buffer)
 
 			logger.info(`Successfully loaded capture`)
 		} catch (error) {
 			logger.error('Error loading capture:', error)
 			return {
-				error: `Failed to load capture: ${(error as Error).message}`,
+				error: `Failed to load capture: ${getErrorMessage(error)}`,
 			}
 		}
 	}
 
 	public async saveCaptureToFile() {
-		this.checkReady()
+		const zniffer = this.checkReady()
 
 		const filePath = ZNIFFER_CAPTURE_FILE.replace(
 			'%DATE%',
 			new Date().toISOString(),
 		)
 		logger.info(`Saving capture to ${filePath}`)
-		await this.zniffer.saveCaptureToFile(filePath)
+		await zniffer.saveCaptureToFile(filePath)
 		logger.info('Capture saved')
 
 		// Read the saved file to return its content for download
