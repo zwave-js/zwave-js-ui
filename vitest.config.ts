@@ -48,6 +48,38 @@ export default defineConfig({
 			reportsDirectory: './coverage',
 			include: ['api/**/*.{js,ts}', 'src/**/*.{js,ts}'],
 			exclude: ['**/*.test.*', 'test/**'],
+			// Glob-scoped thresholds (matched against each covered file's path,
+			// independently of the top-level `lines`/`statements`/etc. keys,
+			// which aren't set here) let this single, full-repo `npm run
+			// coverage` run double as backend-only threshold enforcement.
+			// This avoids running the backend test suite a second time in CI
+			// just to check its coverage (`coverage:server` is a local-only
+			// convenience script, not part of the CI pipeline); running
+			// backend tests once, in the full combined run, is enough to both
+			// enforce the thresholds below AND produce the file-level line
+			// data Coveralls needs for `api/**`.
+			//
+			// `'api/runtime/**'` and `'api/routes/**'` are independently
+			// -accumulated glob groups (a file under `api/routes/` counts
+			// toward both groups' own coverage maps - see the coverage v8
+			// provider's `resolveThresholds()`), enforcing a stricter bar for
+			// the runtime/HTTP-router extraction
+			// (`refactor(api): extract runtime and http routers`) than the
+			// rest of the codebase.
+			thresholds: {
+				'api/runtime/**': {
+					statements: 90,
+					branches: 85,
+					functions: 90,
+					lines: 90,
+				},
+				'api/routes/**': {
+					statements: 90,
+					branches: 85,
+					functions: 90,
+					lines: 90,
+				},
+			},
 		},
 	},
 })
