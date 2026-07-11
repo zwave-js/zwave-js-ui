@@ -89,11 +89,13 @@ const createCertificate = promisify(generate)
 
 declare module 'express-session' {
 	export interface SessionData {
-		user?: PublicUser
+		// Session files may contain the full user record, including passwordHash; see #4739
+		user?: User | PublicUser
 	}
 }
 
-type JwtUserPayload = PublicUser & JwtPayload
+// Signed JWT payloads are object-checked but their individual claims are not validated
+type JwtUserPayload = Partial<PublicUser> & JwtPayload
 
 function verifyJWT(token: string, secret: string): Promise<JwtUserPayload> {
 	return new Promise((resolve, reject) => {
