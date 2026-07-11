@@ -10,7 +10,7 @@ import history from 'connect-history-api-fallback'
 import cors from 'cors'
 import compression from 'compression'
 import morgan from 'morgan'
-import type { Settings, User } from './config/store.ts'
+import type { Settings, User, PublicUser } from './config/store.ts'
 import store from './config/store.ts'
 import type { GatewayConfig } from './lib/Gateway.ts'
 import Gateway, { GatewayType } from './lib/Gateway.ts'
@@ -31,6 +31,7 @@ import type { Server as HttpServer } from 'node:http'
 import { createServer as createHttpServer } from 'node:http'
 import { createServer as createHttpsServer } from 'node:https'
 import jwt from 'jsonwebtoken'
+import type { JwtPayload, VerifyErrors } from 'jsonwebtoken'
 import path from 'node:path'
 import sessionStore from 'session-file-store'
 import type { Server as SocketIOServer, Socket } from 'socket.io'
@@ -82,13 +83,28 @@ import {
 	getImportedNodeLocation,
 	normalizeImportedNodesConfig,
 } from './lib/importConfig.ts'
+import { getErrorMessage } from './lib/errors.ts'
 
 const createCertificate = promisify(generate)
 
 declare module 'express-session' {
 	export interface SessionData {
-		user?: User
+		user?: PublicUser
 	}
+}
+
+type JwtUserPayload = PublicUser & JwtPayload
+
+function verifyJWT(token: string, secret: string): Promise<JwtUserPayload> {
+	return new Promise((resolve, reject) => {
+		jwt.verify(token, secret, (err: VerifyErrors | null, decoded) => {
+			if (err || !decoded || typeof decoded === 'string') {
+				reject(err ?? new Error('Invalid token payload'))
+				return
+			}
+			resolve(decoded as JwtUserPayload)
+		})
+	})
 }
 
 function multerPromise(
@@ -170,8 +186,6 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 		testOptions?.logFatalError ??
 		((message: string) => logger.error(message))
 
-	const verifyJWT = promisify(jwt.verify.bind(jwt))
-
 	const storeLimiter = rateLimit({
 		windowMs: 15 * 60 * 1000, // 15 minutes
 		max: 100,
@@ -243,8 +257,8 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 	const backupManagerOwner = Symbol()
 
 	socketManager.authMiddleware = function (
-		socket: Socket & { user?: User },
-		next: (err?) => void,
+		socket: Socket & { user?: JwtUserPayload },
+		next: (err?: Error) => void,
 	) {
 		if (!isAuthEnabled()) {
 			next()
@@ -254,11 +268,18 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 		) {
 			const token = (socket.handshake.auth?.token ||
 				socket.handshake.query.token) as string
-			jwt.verify(token, sessionSecret, function (err, decoded: User) {
-				if (err) return next(new Error('Authentication error'))
-				socket.user = decoded
-				next()
-			})
+			jwt.verify(
+				token,
+				sessionSecret,
+				(err: VerifyErrors | null, decoded) => {
+					if (err || !decoded || typeof decoded === 'string') {
+						next(new Error('Authentication error'))
+						return
+					}
+					socket.user = decoded as JwtUserPayload
+					next()
+				},
+			)
 		} else {
 			next(new Error('Authentication error'))
 		}
@@ -503,7 +524,7 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 	}
 
 	function setupLogging(settings: {
-		gateway: utils.DeepPartial<GatewayConfig>
+		gateway?: utils.DeepPartial<GatewayConfig>
 	}) {
 		loggers.setupAll(settings ? settings.gateway : null)
 	}
@@ -566,7 +587,7 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 		restarting = false
 	}
 
-	function startZniffer(settings: ZnifferConfig) {
+	function startZniffer(settings: ZnifferConfig | undefined) {
 		if (settings) {
 			zniffer = new ZnifferManager(settings, socketManager.io)
 		}
@@ -1037,7 +1058,7 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 
 		// Successfully authenticated, token is valid and the user _id of its content
 		// is the same of the current session
-		const users = jsonStore.get(store.users) as User[]
+		const users = jsonStore.get(store.users)
 
 		const user = users.find((u) => u.username === decoded.username)
 
@@ -1083,7 +1104,7 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 	// api to authenticate user
 	app.post('/api/authenticate', loginLimiter, async function (req, res) {
 		const token = req.body.token
-		let user: User
+		let user: User | undefined
 
 		try {
 			// token auth, mostly used to restore sessions when user refresh the page
@@ -1092,12 +1113,12 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 
 				// Successfully authenticated, token is valid and the user _id of its content
 				// is the same of the current session
-				const users = jsonStore.get(store.users) as User[]
+				const users = jsonStore.get(store.users)
 
 				user = users.find((u) => u.username === decoded.username)
 			} else {
 				// credentials auth
-				const users = jsonStore.get(store.users) as User[]
+				const users = jsonStore.get(store.users)
 
 				const username = req.body.username
 				const password = req.body.password
@@ -1108,21 +1129,25 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 					user &&
 					!(await utils.verifyPsw(password, user.passwordHash))
 				) {
-					user = null
+					user = undefined
 				}
 			}
 
-			const result = {
+			const result: {
+				success: boolean
+				code?: number
+				message: string
+				user?: PublicUser
+			} = {
 				success: !!user,
 				code: undefined,
 				message: '',
 				user: undefined,
 			}
 
-			if (result.success) {
-				// don't edit the original user object, remove the password from jwt payload
-				const userData: User = Object.assign({}, user)
-				delete userData.passwordHash
+			const attemptedUsername = user?.username || req.body.username
+			if (user) {
+				const { passwordHash: _passwordHash, ...userData } = user
 
 				const token = jwt.sign(userData, sessionSecret, {
 					expiresIn: '1d',
@@ -1130,7 +1155,7 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 				userData.token = token
 				req.session.user = userData
 				result.user = userData
-				loginLimiter.resetKey(req.ip)
+				if (req.ip) loginLimiter.resetKey(req.ip)
 				logger.info(
 					`User ${user.username} logged in successfully from ${req.ip}`,
 				)
@@ -1138,9 +1163,7 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 				result.code = 3
 				result.message = RESPONSE_CODES.GENERAL_ERROR
 				logger.error(
-					`User ${
-						user?.username || req.body.username
-					} failed to login from ${req.ip}: wrong credentials`,
+					`User ${attemptedUsername} failed to login from ${req.ip}: wrong credentials`,
 				)
 			}
 
@@ -1155,7 +1178,7 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 			logger.error(
 				`User ${
 					user?.username || req.body.username
-				} failed to login from ${req.ip}: ${error.message}`,
+				} failed to login from ${req.ip}: ${getErrorMessage(error)}`,
 			)
 		}
 	})
@@ -1178,7 +1201,7 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 		isAuthenticated,
 		async function (req, res) {
 			try {
-				const users = jsonStore.get(store.users) as User[]
+				const users = jsonStore.get(store.users)
 
 				const user = req.session.user
 				const oldUser = user
@@ -1217,9 +1240,7 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 
 				await jsonStore.put(store.users, users)
 
-				// don't leak the password hash to the client (mirrors /api/authenticate)
-				const userData: User = Object.assign({}, oldUser)
-				delete userData.passwordHash
+				const { passwordHash: _passwordHash, ...userData } = oldUser
 
 				res.json({
 					success: true,
@@ -1230,7 +1251,7 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 				res.json({
 					success: false,
 					message: 'Error while updating passwords',
-					error: error.message,
+					error: getErrorMessage(error),
 				})
 				logger.error('Error while updating password', error)
 			}
