@@ -1,10 +1,16 @@
-import { describe, it, expect } from 'vitest'
+import {
+	describe,
+	it,
+	expect,
+	vi,
+} from 'vitest'
 import {
 	mkdirSync,
 	mkdtempSync,
 	writeFileSync,
 	existsSync,
 	readFileSync,
+	readdirSync,
 	symlinkSync,
 	rmSync,
 	createWriteStream,
@@ -37,6 +43,61 @@ async function buildTestZip(
 			archive.append(content, { name })
 		}
 		void archive.finalize()
+	})
+}
+
+/**
+ * Builds a real ZIP file containing a single symlink entry (`entryName`)
+ * pointing at `target` - via `archiver`'s own `.symlink()` API, the same
+ * library the production route's test fixtures already rely on - so the
+ * escaping-symlink failure path is exercised with genuine ZIP/symlink bytes
+ * round-tripped through `extract-zip`, not a hand-rolled approximation.
+ */
+async function buildEscapingSymlinkZip(
+	destPath: string,
+	entryName: string,
+	target: string,
+): Promise<void> {
+	await new Promise<void>((resolve, reject) => {
+		const archive = archiver('zip')
+		const output = createWriteStream(destPath)
+		output.on('close', () => resolve())
+		archive.on('error', reject)
+		archive.pipe(output)
+		archive.symlink(entryName, target)
+		void archive.finalize()
+	})
+}
+
+/**
+ * Asserts every restore-flow cleanup guarantee the production route makes -
+ * regardless of whether the restore ultimately succeeded or failed:
+ *  - the Multer-uploaded temp file (`store/.tmp/<name>`) is gone (the
+ *    trailing, unconditional `if (file && isRestore) await rm(file.path)`),
+ *  - no `store/.restore-*` staging directory remains (the `try {...} finally
+ *    { await rm(stageDir, ...) }` around extract/symlink-check/merge).
+ *
+ * That trailing cleanup line runs AFTER `res.json(...)` has already been
+ * called, so it is a genuine race against the HTTP response reaching this
+ * test's client - confirmed empirically: the response can (and does)
+ * resolve before the server-side `rm()` finishes. `vi.waitFor` polls (its
+ * default 1s timeout, 50ms interval) rather than asserting immediately, so
+ * this passes reliably once cleanup completes shortly after the response,
+ * while still FAILING (once the timeout is exhausted) if either cleanup
+ * step is ever removed from `api/routes/store.ts`.
+ */
+async function assertRestoreArtifactsCleanedUp(
+	uploadedFilename: string,
+): Promise<void> {
+	await vi.waitFor(() => {
+		expect(
+			existsSync(path.join(getTestStoreDir(), '.tmp', uploadedFilename)),
+		).toBe(false)
+
+		const leftoverStagingDirs = readdirSync(getTestStoreDir()).filter(
+			(name) => name.startsWith('.restore-'),
+		)
+		expect(leftoverStagingDirs).toEqual([])
 	})
 }
 
@@ -544,10 +605,59 @@ describe('HTTP contract: store, upload, snippets', () => {
 						'utf8',
 					),
 				).toBe('nested restored content')
+
+				// Both the Multer-uploaded `.tmp/backup.zip` and the
+				// `.restore-*` extraction staging dir must be gone
+				// afterwards - this must fail if either cleanup step is
+				// ever removed from the production route.
+				await assertRestoreArtifactsCleanedUp('backup.zip')
 			} finally {
 				rmSync(stageParent, { recursive: true, force: true })
 			}
 		})
+
+		it(
+			'rejects a restore ZIP containing a symlink that escapes the store (assertNoEscapingSymlinks ' +
+				'failure path), surfacing the exact error AND still cleaning up the staged upload and the ' +
+				'uploaded temp file - proving cleanup is not conditional on restore success',
+			async () => {
+				const stageParent = mkdtempSync(
+					path.join(tmpdir(), 'store-restore-evil-src-'),
+				)
+				try {
+					const zipPath = path.join(stageParent, 'evil.zip')
+					await buildEscapingSymlinkZip(
+						zipPath,
+						'evil-link',
+						'../../etc/passwd',
+					)
+
+					const res = await harness.request
+						.post('/api/store/upload')
+						.field('restore', 'true')
+						.attach('upload', readFileSync(zipPath), {
+							filename: 'evil.zip',
+							contentType: 'application/zip',
+						})
+
+					expect(res.status).toBe(200)
+					expect(res.body).toEqual({
+						success: false,
+						message:
+							'Archive contains a symlink escaping the store: evil-link',
+					})
+
+					// The rejected restore must still have cleaned up both
+					// the extraction staging dir (via the `finally` around
+					// extract/assertNoEscapingSymlinks/cp) and the
+					// Multer-uploaded temp file (the trailing, unconditional
+					// `if (file && isRestore) await rm(file.path)`).
+					await assertRestoreArtifactsCleanedUp('evil.zip')
+				} finally {
+					rmSync(stageParent, { recursive: true, force: true })
+				}
+			},
+		)
 	})
 
 	describe('GET /api/snippet', () => {
