@@ -290,6 +290,61 @@ describe('HASS catalog: devices.ts', () => {
 		}
 	})
 
+	it('89-3-1 (Secure HRT4-ZW) climate: heat-only mode map, single setpoint, 5-30 range', () => {
+		const hrt4 = hassDevices['89-3-1'][0]
+		expect(hrt4.type).toBe('climate')
+		expect(hrt4.object_id).toBe('HRT4-ZW')
+		expect(hrt4.values).toStrictEqual([
+			'49-0-Air temperature',
+			'67-0-setpoint-1',
+		])
+		expect(hrt4.mode_map).toStrictEqual({ off: 0, heat: 1 })
+		expect(hrt4.setpoint_topic).toStrictEqual({ 1: '67-0-setpoint-1' })
+		expect(hrt4.default_setpoint).toBe('67-0-setpoint-1')
+		expect(hrt4.discovery_payload.min_temp).toBe(5)
+		expect(hrt4.discovery_payload.max_temp).toBe(30)
+		expect(hrt4.discovery_payload.modes).toStrictEqual(['off', 'heat'])
+	})
+
+	it('411-1-1 (Heatit TF 021) climate: off/heat/cool mode map, two setpoints, 15-30 range', () => {
+		const heatit = hassDevices['411-1-1'][0]
+		expect(heatit.type).toBe('climate')
+		expect(heatit.object_id).toBe('thermostat')
+		expect(heatit.mode_map).toStrictEqual({ off: 0, heat: 1, cool: 2 })
+		expect(heatit.setpoint_topic).toStrictEqual({
+			1: '67-0-setpoint-1',
+			2: '67-0-setpoint-2',
+		})
+		expect(heatit.default_setpoint).toBe('67-0-setpoint-1')
+		expect(heatit.discovery_payload.min_temp).toBe(15)
+		expect(heatit.discovery_payload.max_temp).toBe(30)
+		expect(heatit.discovery_payload.modes).toStrictEqual([
+			'off',
+			'heat',
+			'cool',
+		])
+	})
+
+	it('328-1-1 (Stella Z-Wave) climate: cool=11 mode map, two setpoints, 0-50 range, 0.5 step', () => {
+		const stella = hassDevices['328-1-1'][0]
+		expect(stella.type).toBe('climate')
+		expect(stella.object_id).toBe('thermostat')
+		expect(stella.mode_map).toStrictEqual({ off: 0, heat: 1, cool: 11 })
+		expect(stella.setpoint_topic).toStrictEqual({
+			1: '67-0-setpoint-1',
+			11: '67-0-setpoint-11',
+		})
+		expect(stella.default_setpoint).toBe('67-0-setpoint-1')
+		expect(stella.discovery_payload.min_temp).toBe(0)
+		expect(stella.discovery_payload.max_temp).toBe(50)
+		expect(stella.discovery_payload.temp_step).toBe(0.5)
+		expect(stella.discovery_payload.modes).toStrictEqual([
+			'off',
+			'heat',
+			'cool',
+		])
+	})
+
 	it('the four GE/Honeywell dimmers all share ONE identical FAN_DIMMER config object', () => {
 		const ids = [
 			'57-12593-18756',

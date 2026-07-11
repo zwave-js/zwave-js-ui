@@ -138,7 +138,11 @@ describe('discoverValue - Binary Switch (full contract)', () => {
 						"{{'true' if value_json.value else 'false'}}",
 				},
 				{
-					topic: harness.mqtt.getStatusTopic(),
+					// Literal status topic (NOT computed via the producer helper
+					// `mqtt.getStatusTopic()`, which would let a helper change go
+					// unnoticed). The independent pin below asserts the producer
+					// still emits exactly this.
+					topic: 'zwave/_CLIENTS/ZWAVE_GATEWAY-test/status',
 					value_template:
 						"{{'online' if value_json.value else 'offline'}}",
 				},
@@ -159,6 +163,13 @@ describe('discoverValue - Binary Switch (full contract)', () => {
 			name: 'Dev_switch',
 			unique_id: 'zwavejs2mqtt_0xabcdef01_2-37-0-currentValue',
 		})
+
+		// Independently pin the producer helper to the SAME literal, so the
+		// literal used in the payload assertion above and the helper's output
+		// are each locked without one deriving from the other.
+		expect(harness.mqtt.getStatusTopic()).toBe(
+			'zwave/_CLIENTS/ZWAVE_GATEWAY-test/status',
+		)
 	})
 
 	it('skips non-current values (targetValue alone) on switch CC', () => {
