@@ -19,6 +19,9 @@ import {
 	cleanupTestEnv as cleanupSharedTestEnv,
 	TEST_SESSION_SECRET,
 } from '../shared/env.ts'
+import * as fs from 'node:fs'
+import * as path from 'node:path'
+import { fileURLToPath } from 'node:url'
 
 /**
  * Env vars the HASS discovery modules read, snapshotted and cleared before any
@@ -32,6 +35,48 @@ const HASS_ENV_VARS = [
 ] as const
 
 let hassEnvSnapshot: Record<string, string | undefined> | undefined
+
+const repositoryStoreDir = path.resolve(
+	path.dirname(fileURLToPath(import.meta.url)),
+	'../../../store',
+)
+
+export interface RepositoryStoreArtifact {
+	path: string
+	type: 'directory' | 'file'
+	content?: string
+}
+
+/**
+ * Byte-for-byte inventory of the repository store directory. Tests snapshot
+ * this before isolated imports and compare it after teardown, proving logger,
+ * config, and session-secret side effects never escape the temporary STORE_DIR.
+ */
+export function snapshotRepositoryStore(): RepositoryStoreArtifact[] {
+	if (!fs.existsSync(repositoryStoreDir)) return []
+
+	const artifacts: RepositoryStoreArtifact[] = []
+	const visit = (directory: string): void => {
+		for (const entry of fs
+			.readdirSync(directory, { withFileTypes: true })
+			.sort((left, right) => left.name.localeCompare(right.name))) {
+			const absolutePath = path.join(directory, entry.name)
+			const relativePath = path.relative(repositoryStoreDir, absolutePath)
+			if (entry.isDirectory()) {
+				artifacts.push({ path: relativePath, type: 'directory' })
+				visit(absolutePath)
+			} else {
+				artifacts.push({
+					path: relativePath,
+					type: 'file',
+					content: fs.readFileSync(absolutePath).toString('base64'),
+				})
+			}
+		}
+	}
+	visit(repositoryStoreDir)
+	return artifacts
+}
 
 /**
  * Snapshot and clear the HASS env vars, then delegate to the shared harness's
