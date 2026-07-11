@@ -22,15 +22,14 @@ import {
 	cleanupTestEnv,
 	ensureTestEnv,
 	snapshotRepositoryStore,
-	type RepositoryStoreArtifact,
+	TEST_SESSION_SECRET,
 } from './env.ts'
 
 let DiscoveryGenerator: typeof DiscoveryGeneratorType
 let isHassNode: typeof HassPortsModule.isHassNode
-let repositoryStoreBefore: RepositoryStoreArtifact[]
 
 beforeAll(async () => {
-	repositoryStoreBefore = snapshotRepositoryStore()
+	const repositoryStoreBefore = snapshotRepositoryStore()
 	const isolatedStoreDir = ensureTestEnv()
 	const [discoveryModule, portsModule, configModule] = await Promise.all([
 		import('../../../api/hass/DiscoveryGenerator.ts'),
@@ -40,12 +39,14 @@ beforeAll(async () => {
 	DiscoveryGenerator = discoveryModule.DiscoveryGenerator
 	isHassNode = portsModule.isHassNode
 	expect(configModule.storeDir).toBe(isolatedStoreDir)
+	expect(configModule.logsDir.startsWith(isolatedStoreDir)).toBe(true)
+	expect(configModule.sessionSecret).toBe(TEST_SESSION_SECRET)
+	expect(snapshotRepositoryStore()).toEqual(repositoryStoreBefore)
 })
 
 afterAll(() => {
 	cleanupTestEnv()
 	vi.resetModules()
-	expect(snapshotRepositoryStore()).toEqual(repositoryStoreBefore)
 })
 
 function value(overrides: Partial<HassValue> = {}): HassValue {

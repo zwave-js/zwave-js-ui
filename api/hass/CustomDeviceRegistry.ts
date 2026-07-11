@@ -153,6 +153,10 @@ export class CustomDeviceRegistry implements HassDeviceRegistryPort {
 		).length
 	}
 
+	public get watcherPaths(): string[] {
+		return [...this.watchers.keys()]
+	}
+
 	public get subscriberCount(): number {
 		return this.listeners.size
 	}

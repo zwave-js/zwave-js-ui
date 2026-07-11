@@ -7,6 +7,7 @@ import {
 	it,
 	vi,
 } from 'vitest'
+import { existsSync } from 'node:fs'
 import type GatewayType from '../../../api/lib/Gateway.ts'
 import type * as GatewayModuleType from '../../../api/lib/Gateway.ts'
 import type { HassDevice } from '../../../api/hass/types.ts'
@@ -14,12 +15,11 @@ import {
 	cleanupTestEnv,
 	ensureTestEnv,
 	snapshotRepositoryStore,
-	type RepositoryStoreArtifact,
+	TEST_SESSION_SECRET,
 } from './env.ts'
 
 let Gateway: typeof GatewayType
 let gatewayModule: typeof GatewayModuleType
-let repositoryStoreBefore: RepositoryStoreArtifact[]
 const gateways: GatewayType[] = []
 
 function gateway(): GatewayType {
@@ -38,7 +38,7 @@ function device(): HassDevice {
 }
 
 beforeAll(async () => {
-	repositoryStoreBefore = snapshotRepositoryStore()
+	const repositoryStoreBefore = snapshotRepositoryStore()
 	const isolatedStoreDir = ensureTestEnv()
 	const [loadedGatewayModule, configModule] = await Promise.all([
 		import('../../../api/lib/Gateway.ts'),
@@ -47,8 +47,17 @@ beforeAll(async () => {
 	gatewayModule = loadedGatewayModule
 	Gateway = loadedGatewayModule.default
 	expect(configModule.storeDir).toBe(isolatedStoreDir)
+	expect(configModule.logsDir.startsWith(isolatedStoreDir)).toBe(true)
+	expect(configModule.sessionSecret).toBe(TEST_SESSION_SECRET)
+	expect(existsSync(configModule.logsDir)).toBe(true)
 	expect(gatewayModule.__getWatcherCountForTests()).toBe(2)
 	expect(gatewayModule.__getActiveWatcherCountForTests()).toBe(2)
+	expect(
+		gatewayModule
+			.__getWatcherPathsForTests()
+			.every((watcherPath) => watcherPath.startsWith(isolatedStoreDir)),
+	).toBe(true)
+	expect(snapshotRepositoryStore()).toEqual(repositoryStoreBefore)
 })
 
 afterEach(() => {
@@ -64,7 +73,6 @@ afterAll(() => {
 	expect(gatewayModule.__getRegistrySubscriberCountForTests()).toBe(0)
 	cleanupTestEnv()
 	vi.resetModules()
-	expect(snapshotRepositoryStore()).toEqual(repositoryStoreBefore)
 })
 
 describe('Gateway HASS compatibility facades', () => {

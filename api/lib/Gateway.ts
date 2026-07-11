@@ -77,6 +77,10 @@ export function __getActiveWatcherCountForTests(): number {
 	return defaultCustomDeviceRegistry.activeWatcherCount
 }
 
+export function __getWatcherPathsForTests(): string[] {
+	return defaultCustomDeviceRegistry.watcherPaths
+}
+
 export function __getRegistrySubscriberCountForTests(): number {
 	return defaultCustomDeviceRegistry.subscriberCount
 }
