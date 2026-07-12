@@ -13,6 +13,7 @@
 import type {
 	InclusionBackupPort,
 	InclusionConfigPort,
+	InclusionControllerEventPort,
 	InclusionDriverPort,
 	InclusionGrant,
 	InclusionQRPort,
@@ -27,6 +28,7 @@ import { InclusionStrategy, QRCodeVersion } from './ports.ts'
 export class InclusionCoordinator {
 	private readonly _driver: InclusionDriverPort
 	private readonly _socket: InclusionSocketPort
+	private readonly _controllerEvent: InclusionControllerEventPort
 	private readonly _backup: InclusionBackupPort
 	private readonly _config: InclusionConfigPort
 	private readonly _qr: InclusionQRPort
@@ -87,6 +89,7 @@ export class InclusionCoordinator {
 	constructor(
 		driver: InclusionDriverPort,
 		socket: InclusionSocketPort,
+		controllerEvent: InclusionControllerEventPort,
 		backup: InclusionBackupPort,
 		config: InclusionConfigPort,
 		qr: InclusionQRPort,
@@ -102,6 +105,7 @@ export class InclusionCoordinator {
 	) {
 		this._driver = driver
 		this._socket = socket
+		this._controllerEvent = controllerEvent
 		this._backup = backup
 		this._config = config
 		this._qr = qr
@@ -694,6 +698,11 @@ export class InclusionCoordinator {
 			requested,
 		)
 
+		this._controllerEvent.emitControllerEvent(
+			'grant security classes',
+			requested,
+		)
+
 		return new Promise((resolve) => {
 			this._grantResolve = resolve
 		})
@@ -704,6 +713,8 @@ export class InclusionCoordinator {
 
 		this._socket.sendToSocket(this._socketEvents.validateDSK, dsk)
 
+		this._controllerEvent.emitControllerEvent('validate dsk', dsk)
+
 		return new Promise((resolve) => {
 			this._dskResolve = resolve
 		})
@@ -713,6 +724,8 @@ export class InclusionCoordinator {
 		this._dskResolve = null
 		this._grantResolve = null
 		this._socket.sendToSocket(this._socketEvents.inclusionAborted, true)
+
+		this._controllerEvent.emitControllerEvent('inclusion aborted')
 
 		this._logger.warn('Inclusion aborted')
 	}

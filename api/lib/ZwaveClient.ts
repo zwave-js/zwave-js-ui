@@ -1240,9 +1240,15 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			parseQRCodeString: (qrString: string) =>
 				parseQRCodeString(qrString),
 		}
+		const inclusionControllerEventPort = {
+			emitControllerEvent: (eventName: string, ...args: unknown[]) => {
+				this.emit('event', EventSource.CONTROLLER, eventName, ...args)
+			},
+		}
 		this._inclusionCoordinator = new InclusionCoordinator(
 			inclusionDriverPort,
 			inclusionSocketPort,
+			inclusionControllerEventPort,
 			inclusionBackupPort,
 			inclusionConfigPort,
 			inclusionQRPort,
@@ -3426,11 +3432,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 */
 	stopExclusion(): Promise<boolean> {
 		if (this.driverReady) {
-			if (this.commandsTimeout) {
-				clearTimeout(this.commandsTimeout)
-				this.commandsTimeout = null
-			}
-			return this._driver.controller.stopExclusion()
+			return this._inclusionCoordinator.stopExclusion()
 		}
 
 		throw new DriverNotReadyError()
@@ -3441,11 +3443,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 */
 	stopInclusion(): Promise<boolean> {
 		if (this.driverReady) {
-			if (this.commandsTimeout) {
-				clearTimeout(this.commandsTimeout)
-				this.commandsTimeout = null
-			}
-			return this._driver.controller.stopInclusion()
+			return this._inclusionCoordinator.stopInclusion()
 		}
 
 		throw new DriverNotReadyError()
