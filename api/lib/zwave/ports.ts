@@ -365,3 +365,192 @@ export interface AssociationLogPort {
 		...args: unknown[]
 	): void
 }
+
+// ---------------------------------------------------------------------------
+// Firmware update types
+// ---------------------------------------------------------------------------
+
+export interface FirmwareUpdateNodeState {
+	id: number
+	firmwareUpdate?: unknown
+	availableFirmwareUpdates?: FirmwareUpdateInfoRef[]
+	firmwareUpdatesDismissed?: { [version: string]: boolean }
+	lastFirmwareUpdateCheck?: number
+}
+
+export interface FirmwareUpdateInfoRef {
+	version: string
+	downgrade: boolean
+	changelog?: string
+	channel?: string
+	files: Array<{ target: number; url: string; integrity: string }>
+	device?: Record<string, unknown>
+}
+
+export interface FwFileRef {
+	name: string
+	data: Uint8Array<ArrayBuffer>
+	target?: number
+}
+
+// ---------------------------------------------------------------------------
+// Port: driver access for FirmwareUpdateService
+// ---------------------------------------------------------------------------
+
+export interface FirmwareDriverPort {
+	getDriver(): {
+		controller: {
+			getAvailableFirmwareUpdates(
+				nodeId: number,
+				options?: unknown,
+			): Promise<FirmwareUpdateInfoRef[] | null>
+			getAllAvailableFirmwareUpdates(
+				options?: unknown,
+			): Promise<Map<number, FirmwareUpdateInfoRef[]> | null>
+			firmwareUpdateOTA(
+				nodeId: number,
+				updateInfo: FirmwareUpdateInfoRef,
+			): Promise<unknown>
+			nodes: { get(nodeId: number): unknown }
+		}
+		firmwareUpdateOTW(
+			dataOrInfo: Uint8Array<ArrayBuffer> | FirmwareUpdateInfoRef,
+		): Promise<unknown>
+	} | null
+	isDriverReady(): boolean
+}
+
+// ---------------------------------------------------------------------------
+// Port: node store for FirmwareUpdateService
+// ---------------------------------------------------------------------------
+
+export interface FirmwareNodeStorePort {
+	getNode(nodeId: number): FirmwareUpdateNodeState | undefined
+	getStoreNode(nodeId: number): Partial<FirmwareUpdateNodeState> | undefined
+	ensureStoreNode(nodeId: number): Partial<FirmwareUpdateNodeState>
+	updateStoreNodes(): Promise<void>
+	emitNodeUpdate(
+		node: FirmwareUpdateNodeState,
+		changedProps: DeepPartial<FirmwareUpdateNodeState>,
+	): void
+}
+
+// ---------------------------------------------------------------------------
+// Port: socket emission for FirmwareUpdateService
+// ---------------------------------------------------------------------------
+
+export interface FirmwareSocketPort {
+	sendToSocket(event: string, data: unknown): void
+	throttle(key: string, fn: () => void, wait: number): void
+	clearThrottle(key: string): void
+}
+
+// ---------------------------------------------------------------------------
+// Port: configuration for FirmwareUpdateService
+// ---------------------------------------------------------------------------
+
+export interface FirmwareConfigPort {
+	disableAutomaticFirmwareUpdateChecks: boolean
+}
+
+// ---------------------------------------------------------------------------
+// Port: backup manager for FirmwareUpdateService
+// ---------------------------------------------------------------------------
+
+export interface FirmwareBackupPort {
+	backupOnEvent: boolean
+	backupNvm(): Promise<unknown>
+}
+
+// ---------------------------------------------------------------------------
+// Port: firmware file extraction utilities
+// ---------------------------------------------------------------------------
+
+export interface FirmwareExtractionPort {
+	guessFirmwareFileFormat(name: string, data: Uint8Array): unknown
+	extractFirmware(
+		data: Uint8Array,
+		format: unknown,
+	): Promise<{ data: Uint8Array<ArrayBuffer>; firmwareTarget?: number }>
+	tryUnzipFirmwareFile(
+		data: Uint8Array,
+	): { format: unknown; filename: string; rawData: Uint8Array } | undefined
+	isUint8Array(value: unknown): value is Uint8Array
+}
+
+// ---------------------------------------------------------------------------
+// Inclusion/Exclusion types
+// ---------------------------------------------------------------------------
+
+export interface InclusionGrantRef {
+	securityClasses: unknown[]
+	clientSideAuth: boolean
+}
+
+// ---------------------------------------------------------------------------
+// Port: driver access for InclusionCoordinator
+// ---------------------------------------------------------------------------
+
+export interface InclusionDriverPort {
+	getDriver(): {
+		controller: {
+			inclusionState: unknown
+			beginInclusion(options: unknown): Promise<boolean>
+			stopInclusion(): Promise<boolean>
+			beginExclusion(options: unknown): Promise<boolean>
+			stopExclusion(): Promise<boolean>
+			replaceFailedNode(
+				nodeId: number,
+				options: unknown,
+			): Promise<boolean>
+			beginJoiningNetwork(options: unknown): Promise<unknown>
+			stopJoiningNetwork(): Promise<boolean>
+		}
+		updateOptions(options: unknown): void
+	} | null
+	isDriverReady(): boolean
+}
+
+// ---------------------------------------------------------------------------
+// Port: socket emission for InclusionCoordinator
+// ---------------------------------------------------------------------------
+
+export interface InclusionSocketPort {
+	sendToSocket(event: string, data: unknown): void
+}
+
+// ---------------------------------------------------------------------------
+// Port: backup manager for InclusionCoordinator
+// ---------------------------------------------------------------------------
+
+export interface InclusionBackupPort {
+	backupOnEvent: boolean
+	backupNvm(): Promise<unknown>
+}
+
+// ---------------------------------------------------------------------------
+// Port: configuration for InclusionCoordinator
+// ---------------------------------------------------------------------------
+
+export interface InclusionConfigPort {
+	commandsTimeout: number
+	serverEnabled: boolean
+}
+
+// ---------------------------------------------------------------------------
+// Port: QR code parsing for InclusionCoordinator
+// ---------------------------------------------------------------------------
+
+export interface InclusionQRPort {
+	parseQRCodeString(
+		qrString: string,
+	): Promise<{ version: number; [k: string]: unknown } | undefined>
+}
+
+// ---------------------------------------------------------------------------
+// Port: server manager interaction for InclusionCoordinator
+// ---------------------------------------------------------------------------
+
+export interface InclusionServerManagerPort {
+	handInclusionControlBack(): void
+}
