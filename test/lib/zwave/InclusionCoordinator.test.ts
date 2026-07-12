@@ -2085,9 +2085,9 @@ describe('InclusionCoordinator', () => {
 	})
 
 	// -----------------------------------------------------------------
-	// Production integration: coordinator preserved across init/hardReset
+	// Service-level: coordinator preserved across reset (direct unit tests)
 	// -----------------------------------------------------------------
-	describe('Production: coordinator preserved across init/hardReset', () => {
+	describe('Service-level: coordinator preserved across reset (direct unit tests)', () => {
 		it('captured callbacks resolve through current public API after reset', async () => {
 			const { coordinator } = createCoordinator()
 
@@ -2241,9 +2241,9 @@ describe('InclusionCoordinator', () => {
 	})
 
 	// -----------------------------------------------------------------
-	// Production integration: takeTmpNode atomic consume
+	// Service-level: takeTmpNode atomic consume (direct unit tests)
 	// -----------------------------------------------------------------
-	describe('Production: takeTmpNode atomic consume', () => {
+	describe('Service-level: takeTmpNode atomic consume (direct unit tests)', () => {
 		it('first included node gets metadata, coordinator tmp is cleared', async () => {
 			const { coordinator } = createCoordinator()
 

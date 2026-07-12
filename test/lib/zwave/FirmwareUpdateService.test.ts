@@ -1380,9 +1380,9 @@ describe('FirmwareUpdateService', () => {
 	})
 
 	// -----------------------------------------------------------------
-	// Production integration: service preserved across init/hardReset
+	// Service-level: generation fencing across resetGeneration (direct unit tests)
 	// -----------------------------------------------------------------
-	describe('Production: service preserved across server hardReset and public hardReset', () => {
+	describe('Service-level: generation fencing across resetGeneration (direct unit tests)', () => {
 		it('resetGeneration fences a pending scheduled check from persisting', async () => {
 			vi.useFakeTimers()
 			let resolveCheck: (v: Map<number, FirmwareUpdateInfo[]>) => void
