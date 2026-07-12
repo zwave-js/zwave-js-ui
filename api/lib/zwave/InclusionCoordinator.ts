@@ -554,15 +554,7 @@ export class InclusionCoordinator {
 	 * Abort inclusion (called by UI or timeout)
 	 */
 	abortInclusion(): void {
-		if (this._dskResolve) {
-			this._dskResolve(false)
-			this._dskResolve = null
-		}
-
-		if (this._grantResolve) {
-			this._grantResolve(false)
-			this._grantResolve = null
-		}
+		this._settlePendingPromises()
 	}
 
 	/**
@@ -605,6 +597,27 @@ export class InclusionCoordinator {
 		if (mgr) {
 			mgr.handInclusionControlBack()
 		}
+	}
+
+	/**
+	 * Reinstall user callbacks on the current driver if they were
+	 * previously registered. Called after init/hardReset which replaces
+	 * the driver instance while the coordinator survives.
+	 */
+	reinstallUserCallbacks(): void {
+		if (!this._hasUserCallbacks) {
+			return
+		}
+		const drv = this._driver.getDriver()
+		if (!drv || !this._config.serverEnabled) {
+			return
+		}
+		this._logger.info('Reinstalling user callbacks after driver reset')
+		drv.updateOptions({
+			inclusionUserCallbacks: {
+				...this.getUserCallbacks(),
+			},
+		})
 	}
 
 	/**
@@ -675,7 +688,9 @@ export class InclusionCoordinator {
 	}
 
 	/**
-	 * Reset all state (called during close/restart)
+	 * Reset all state (called during close/restart).
+	 * Settles every pending grant/DSK promise with `false` exactly once
+	 * before clearing references so callers are never left dangling.
 	 */
 	reset(): void {
 		this._generation++
@@ -683,8 +698,23 @@ export class InclusionCoordinator {
 		this._tmpNode = undefined
 		this._isReplacing = false
 		this._pendingInclusionNodeIds.clear()
-		this._grantResolve = null
-		this._dskResolve = null
+		this._settlePendingPromises()
+	}
+
+	/**
+	 * Settle pending grant and DSK promises with `false`, exactly once.
+	 * Idempotent: subsequent calls are no-ops because references are
+	 * nulled after invocation.
+	 */
+	private _settlePendingPromises(): void {
+		if (this._dskResolve) {
+			this._dskResolve(false)
+			this._dskResolve = null
+		}
+		if (this._grantResolve) {
+			this._grantResolve(false)
+			this._grantResolve = null
+		}
 	}
 
 	private _onGrantSecurityClasses(
@@ -721,8 +751,8 @@ export class InclusionCoordinator {
 	}
 
 	private _onAbortInclusion(): void {
-		this._dskResolve = null
-		this._grantResolve = null
+		// Settle any pending promises exactly once (idempotent)
+		this._settlePendingPromises()
 		this._socket.sendToSocket(this._socketEvents.inclusionAborted, true)
 
 		this._controllerEvent.emitControllerEvent('inclusion aborted')

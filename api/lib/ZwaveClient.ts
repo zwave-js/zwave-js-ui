@@ -747,17 +747,6 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	private _devices: Record<string, Partial<ZUINode>>
 	private driverInfo: ZUIDriverInfo
 	private status: ZwaveClientStatus
-	// used to store node info before inclusion like name and location
-	private tmpNode: { name?: string; loc?: string } | undefined
-	// tells if a node replacement is in progress
-	private isReplacing = false
-	// node ids surfaced to the UI via `node found` that have not yet hit
-	// `node added` — if inclusion fails before the interview completes
-	// they're orphans stuck at ProtocolInfo and must be cleared (see #4639)
-	private _pendingInclusionNodeIds: Set<number> = new Set()
-
-	private hasUserCallbacks = false
-
 	private _error: string | undefined
 	private _scanComplete: boolean
 	private _cntStatus: string
@@ -789,7 +778,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		return {
 			getDriver: () => this._driver,
 			getConfig: () => this.cfg,
-			getHasUserCallbacks: () => this.hasUserCallbacks,
+			getHasUserCallbacks: () => this._inclusionCoordinator.hasUserCallbacks,
 			onHardReset: () => this.init(),
 			logger,
 			serverLogger: LogManager.module('Z-Wave-Server'),
@@ -830,7 +819,6 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	}
 
 	private statelessTimeouts: Record<string, NodeJS.Timeout>
-	private commandsTimeout: NodeJS.Timeout
 	private healTimeout: NodeJS.Timeout
 	private updatesCheckTimeout: NodeJS.Timeout
 	private pollIntervals: Record<string, NodeJS.Timeout>
@@ -1475,12 +1463,15 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 	setUserCallbacks() {
 		this._inclusionCoordinator.setUserCallbacks()
-		this.hasUserCallbacks = this._inclusionCoordinator.hasUserCallbacks
 	}
 
 	removeUserCallbacks() {
 		this._inclusionCoordinator.removeUserCallbacks()
-		this.hasUserCallbacks = this._inclusionCoordinator.hasUserCallbacks
+	}
+
+	/** Whether user inclusion callbacks are currently registered on the driver */
+	get hasUserCallbacks(): boolean {
+		return this._inclusionCoordinator.hasUserCallbacks
 	}
 
 	/**
@@ -1596,11 +1587,6 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		this.closed = true
 		this.driverReady = false
 
-		if (this.commandsTimeout) {
-			clearTimeout(this.commandsTimeout)
-			this.commandsTimeout = null
-		}
-
 		if (this.restartTimeout) {
 			clearTimeout(this.restartTimeout)
 			this.restartTimeout = null
@@ -1618,7 +1604,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		this._inclusionCoordinator.reset()
 
-		this._firmwareUpdateService.clearScheduledCheck()
+		this._firmwareUpdateService.resetGeneration()
 
 		if (this.statelessTimeouts) {
 			for (const k in this.statelessTimeouts) {
@@ -2199,10 +2185,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			logger.info(`Connecting to ${this.cfg.port}`)
 
 			// setup user callbacks only if there are connected clients
-			this.hasUserCallbacks =
+			const hasConnectedClients =
 				(await this.socket.fetchSockets()).length > 0
 
-			if (this.hasUserCallbacks) {
+			if (hasConnectedClients) {
 				this.setUserCallbacks()
 			}
 
@@ -3176,11 +3162,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 */
 	stopLearnMode(): Promise<boolean> {
 		if (this.driverReady) {
-			if (this.commandsTimeout) {
-				clearTimeout(this.commandsTimeout)
-				this.commandsTimeout = null
-			}
-			return this._driver.controller.stopJoiningNetwork()
+			return this._inclusionCoordinator.stopLearnMode()
 		}
 
 		throw new DriverNotReadyError()
@@ -3191,25 +3173,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 */
 	async startLearnMode(): Promise<JoinNetworkResult> {
 		if (this.driverReady) {
-			if (this.commandsTimeout) {
-				clearTimeout(this.commandsTimeout)
-				this.commandsTimeout = null
-			}
-
-			this.commandsTimeout = setTimeout(
-				() => {
-					this.stopLearnMode().catch(logger.error)
-				},
-				(this.cfg.commandsTimeout || 0) * 1000 || 30000,
-			)
-
-			const joinNetworkOptions: JoinNetworkOptions = {
-				strategy: JoinNetworkStrategy.Default,
-			}
-
-			return this._driver.controller.beginJoiningNetwork(
-				joinNetworkOptions,
-			)
+			return this._inclusionCoordinator.startLearnMode(
+				JoinNetworkStrategy.Default,
+			) as Promise<JoinNetworkResult>
 		}
 
 		throw new DriverNotReadyError()
@@ -3242,13 +3208,11 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			provisioning?: PlannedProvisioningEntry
 		},
 	): Promise<boolean> {
-		const result = await this._inclusionCoordinator.replaceFailedNode(
+		return this._inclusionCoordinator.replaceFailedNode(
 			nodeId,
 			strategy,
 			options,
 		)
-		this.isReplacing = this._inclusionCoordinator.isReplacing
-		return result
 	}
 
 	async getAvailableFirmwareUpdates(
@@ -3399,14 +3363,11 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		},
 	): Promise<boolean> {
 		if (this.driverReady) {
-			const result = await this._inclusionCoordinator.startInclusion(
+			return this._inclusionCoordinator.startInclusion(
 				strategy,
 				options,
 				(parsed) => this.provisionSmartStartNode(parsed),
 			)
-			this.tmpNode = this._inclusionCoordinator.tmpNode
-			this.isReplacing = this._inclusionCoordinator.isReplacing
-			return result
 		}
 
 		throw new DriverNotReadyError()
@@ -4105,6 +4066,11 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 	async hardReset() {
 		if (this.driverReady) {
+			// Settle pending inclusion promises and reset state before the
+			// driver is reset — callbacks bound to the old generation must
+			// not fire on the new one.
+			this._inclusionCoordinator.reset()
+			this._firmwareUpdateService.resetGeneration()
 			await this._driver.hardReset()
 			this.init()
 		} else {
@@ -4504,6 +4470,11 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 					'status changed',
 					this._onControllerStatusChanged.bind(this),
 				)
+
+			// After a hard reset or restart the driver is new, but the
+			// coordinator survives. If user callbacks were installed on the
+			// old driver, reinstall them on the current one.
+			this._inclusionCoordinator.reinstallUserCallbacks()
 		} catch (error) {
 			// Fixes freak error in "driver ready" handler #1309
 			logger.error(error.message)
@@ -4787,13 +4758,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 	private _onInclusionFailed() {
 		const message = 'Inclusion failed'
-		this.isReplacing = false
-		this.tmpNode = undefined
 
-		// Clear any ghost nodes the driver surfaced via `node found` but never
-		// promoted to `node added`. zwave-js doesn't always emit `node removed`
-		// for these, so they would stay stuck on ProtocolInfo in the UI forever.
-		for (const nodeId of this._pendingInclusionNodeIds) {
+		// Delegate state cleanup and ghost node removal to coordinator
+		this._inclusionCoordinator.onInclusionFailed((nodeId) => {
 			const node = this._nodes.get(nodeId)
 			if (node && !node.ready) {
 				this.logNode(
@@ -4803,8 +4770,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				)
 				this._removeNode(nodeId)
 			}
-		}
-		this._pendingInclusionNodeIds.clear()
+		})
 
 		this._updateControllerStatus(message)
 		this.emit('event', EventSource.CONTROLLER, 'inclusion failed')
@@ -4828,7 +4794,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			node = this._createNode(nodeId)
 			this.sendToSocket(socketEvents.nodeFound, { node })
 			// track until `node added` clears it; cleaned up on inclusion failure
-			this._pendingInclusionNodeIds.add(nodeId)
+			this._inclusionCoordinator.onNodeFound(nodeId)
 		} else {
 			node = this._nodes.get(nodeId)
 		}
@@ -4846,7 +4812,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	private async _onNodeAdded(zwaveNode: ZWaveNode, result: InclusionResult) {
 		let node: ZUINode
 		// node made it past `node found` — no longer a ghost candidate
-		this._pendingInclusionNodeIds.delete(zwaveNode.id)
+		this._inclusionCoordinator.onNodeAdded(zwaveNode.id)
 		// the driver is ready so this node has been added on fly
 		if (this.driverReady) {
 			node = this._addNode(zwaveNode)
@@ -6100,7 +6066,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	private _removeNode(nodeid: number) {
 		// don't use splice here, nodeid equals to the index in the array
 		const node = this._nodes.get(nodeid)
-		this._pendingInclusionNodeIds.delete(nodeid)
+		this._inclusionCoordinator.onNodeAdded(nodeid)
 		if (node) {
 			this._nodes.delete(nodeid)
 
@@ -6112,7 +6078,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			this.sendToSocket(socketEvents.nodeRemoved, node)
 		}
 
-		if (!this.isReplacing && this.storeNodes[nodeid]) {
+		if (!this._inclusionCoordinator.isReplacing && this.storeNodes[nodeid]) {
 			delete this.storeNodes[nodeid]
 			// eslint-disable-next-line @typescript-eslint/no-floating-promises
 			this.updateStoreNodes(false)
@@ -6121,21 +6087,20 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 	private _createNode(nodeId: number) {
 		// set node name and location sent with beginInclusion call
-		if (this.tmpNode) {
+		const tmpNode = this._inclusionCoordinator.tmpNode
+		if (tmpNode) {
 			if (this.storeNodes[nodeId]) {
-				this.storeNodes[nodeId].name = this.tmpNode.name
-				this.storeNodes[nodeId].loc = this.tmpNode.loc
+				this.storeNodes[nodeId].name = tmpNode.name
+				this.storeNodes[nodeId].loc = tmpNode.loc
 			} else {
 				this.storeNodes[nodeId] = {
-					name: this.tmpNode.name,
-					loc: this.tmpNode.loc,
+					name: tmpNode.name,
+					loc: tmpNode.loc,
 				}
 			}
 
 			// eslint-disable-next-line @typescript-eslint/no-floating-promises
 			this.updateStoreNodes(false)
-
-			this.tmpNode = undefined
 		}
 
 		const node: ZUINode = {
