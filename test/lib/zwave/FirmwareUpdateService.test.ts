@@ -14,6 +14,7 @@ import type {
 	FirmwareUpdateInfo,
 	FirmwareUpdateNodeState,
 	ServiceLogger,
+	StagedFirmwareNodeUpdate,
 } from '../../../api/lib/zwave/ports.ts'
 
 // ---------------------------------------------------------------------------
@@ -63,6 +64,7 @@ function createNodeStorePort(): FirmwareNodeStorePort & {
 	_nodes: Map<number, FirmwareUpdateNodeState>
 	_store: Map<number, Partial<FirmwareUpdateNodeState>>
 	emitNodeUpdate: ReturnType<typeof vi.fn>
+	persistStagedNodeUpdates: ReturnType<typeof vi.fn>
 } {
 	const nodes = new Map<number, FirmwareUpdateNodeState>()
 	const store = new Map<number, Partial<FirmwareUpdateNodeState>>()
@@ -78,6 +80,25 @@ function createNodeStorePort(): FirmwareNodeStorePort & {
 			return store.get(nodeId)
 		},
 		updateStoreNodes: vi.fn().mockResolvedValue(undefined),
+		persistStagedNodeUpdates: vi
+			.fn()
+			.mockImplementation(
+				async (staged: ReadonlyArray<StagedFirmwareNodeUpdate>) => {
+					// Apply staged data to store (simulates real persistence)
+					for (const entry of staged) {
+						if (!store.has(entry.nodeId)) {
+							store.set(entry.nodeId, {})
+						}
+						const sn = store.get(entry.nodeId)
+						sn.availableFirmwareUpdates =
+							entry.availableFirmwareUpdates
+						sn.lastFirmwareUpdateCheck =
+							entry.lastFirmwareUpdateCheck
+						sn.firmwareUpdatesDismissed =
+							entry.firmwareUpdatesDismissed
+					}
+				},
+			),
 		emitNodeUpdate: vi.fn(),
 	}
 }
@@ -263,7 +284,7 @@ describe('FirmwareUpdateService', () => {
 			const { service } = createService({ driver, nodes })
 
 			await service.checkAllNodesFirmwareUpdates()
-			expect(nodes.updateStoreNodes).toHaveBeenCalled()
+			expect(nodes.persistStagedNodeUpdates).toHaveBeenCalled()
 			expect(nodes.emitNodeUpdate).toHaveBeenCalled()
 		})
 
@@ -700,7 +721,7 @@ describe('FirmwareUpdateService', () => {
 			const { service } = createService({ driver, nodes })
 
 			await service.checkNodeFirmwareUpdates(5)
-			expect(nodes.updateStoreNodes).toHaveBeenCalled()
+			expect(nodes.persistStagedNodeUpdates).toHaveBeenCalled()
 		})
 
 		it('skips when disabled', async () => {
@@ -1909,6 +1930,212 @@ describe('FirmwareUpdateService', () => {
 			await expect(
 				service.firmwareUpdateOTA(1, makeUpdate()),
 			).rejects.toThrow('Network timeout')
+		})
+	})
+
+	describe('deferred persistence: no shared state mutation on reset during persistence', () => {
+		it('checkAllNodesFirmwareUpdates: reset during persistence → no node mutation or emit', async () => {
+			let resolvePersist: () => void
+			const persistPromise = new Promise<void>((resolve) => {
+				resolvePersist = resolve
+			})
+
+			const updates = [makeUpdate({ version: '3.0.0' })]
+			const map = new Map([[7, updates]])
+			const driver = createDriverPort({
+				getDriver: () => ({
+					controller: {
+						getAvailableFirmwareUpdates: vi.fn(),
+						getAllAvailableFirmwareUpdates: vi
+							.fn()
+							.mockResolvedValue(map),
+						firmwareUpdateOTA: vi.fn(),
+						nodes: { get: vi.fn() },
+					},
+					firmwareUpdateOTW: vi.fn(),
+				}),
+			})
+			const nodes = createNodeStorePort()
+			// Set up live node that should NOT be mutated
+			nodes._nodes.set(7, {
+				id: 7,
+				availableFirmwareUpdates: [],
+				lastFirmwareUpdateCheck: 0,
+				firmwareUpdatesDismissed: {},
+			})
+
+			// Make persistStagedNodeUpdates hang until we resolve
+			nodes.persistStagedNodeUpdates.mockReturnValue(persistPromise)
+
+			const { service } = createService({ driver, nodes })
+
+			// Start the check
+			const checkPromise = service.checkAllNodesFirmwareUpdates()
+
+			// Reset while persistence is pending
+			service.resetGeneration()
+
+			// Now resolve persistence
+			resolvePersist()
+
+			// The check should complete (lifecycle cancellation caught internally
+			// or thrown depending on path)
+			await expect(checkPromise).rejects.toBeInstanceOf(
+				FirmwareLifecycleCancelledError,
+			)
+
+			// Shared live node was NOT mutated
+			const liveNode = nodes._nodes.get(7)
+			expect(liveNode.availableFirmwareUpdates).toEqual([])
+			expect(liveNode.lastFirmwareUpdateCheck).toBe(0)
+
+			// No emit occurred
+			expect(nodes.emitNodeUpdate).not.toHaveBeenCalled()
+		})
+
+		it('checkNodeFirmwareUpdates: reset during persistence → no node mutation or emit', async () => {
+			let resolvePersist: () => void
+			const persistPromise = new Promise<void>((resolve) => {
+				resolvePersist = resolve
+			})
+
+			const updates = [makeUpdate({ version: '4.0.0' })]
+			const driver = createDriverPort({
+				getDriver: () => ({
+					controller: {
+						getAvailableFirmwareUpdates: vi
+							.fn()
+							.mockResolvedValue(updates),
+						getAllAvailableFirmwareUpdates: vi.fn(),
+						firmwareUpdateOTA: vi.fn(),
+						nodes: { get: vi.fn() },
+					},
+					firmwareUpdateOTW: vi.fn(),
+				}),
+			})
+			const nodes = createNodeStorePort()
+			nodes._nodes.set(5, {
+				id: 5,
+				availableFirmwareUpdates: [],
+				lastFirmwareUpdateCheck: 0,
+				firmwareUpdatesDismissed: {},
+			})
+
+			nodes.persistStagedNodeUpdates.mockReturnValue(persistPromise)
+
+			const { service } = createService({ driver, nodes })
+
+			const checkPromise = service.checkNodeFirmwareUpdates(5)
+
+			// Reset while persistence is pending
+			service.resetGeneration()
+			resolvePersist()
+
+			// checkNodeFirmwareUpdates swallows lifecycle cancellation
+			await checkPromise
+
+			// Shared live node NOT mutated
+			const liveNode = nodes._nodes.get(5)
+			expect(liveNode.availableFirmwareUpdates).toEqual([])
+			expect(liveNode.lastFirmwareUpdateCheck).toBe(0)
+
+			// No emit
+			expect(nodes.emitNodeUpdate).not.toHaveBeenCalled()
+		})
+
+		it('checkAllNodesFirmwareUpdates normal path: persists then applies to shared state and emits', async () => {
+			const updates = [makeUpdate({ version: '2.0.0' })]
+			const map = new Map([[3, updates]])
+			const driver = createDriverPort({
+				getDriver: () => ({
+					controller: {
+						getAvailableFirmwareUpdates: vi.fn(),
+						getAllAvailableFirmwareUpdates: vi
+							.fn()
+							.mockResolvedValue(map),
+						firmwareUpdateOTA: vi.fn(),
+						nodes: { get: vi.fn() },
+					},
+					firmwareUpdateOTW: vi.fn(),
+				}),
+			})
+			const nodes = createNodeStorePort()
+			nodes._nodes.set(3, {
+				id: 3,
+				availableFirmwareUpdates: [],
+				lastFirmwareUpdateCheck: 0,
+				firmwareUpdatesDismissed: {},
+			})
+
+			const { service } = createService({ driver, nodes })
+
+			await service.checkAllNodesFirmwareUpdates()
+
+			// Store was persisted via persistStagedNodeUpdates
+			expect(nodes.persistStagedNodeUpdates).toHaveBeenCalledWith(
+				expect.arrayContaining([
+					expect.objectContaining({
+						nodeId: 3,
+						availableFirmwareUpdates: updates,
+					}),
+				]),
+			)
+
+			// Shared live node was updated
+			const liveNode = nodes._nodes.get(3)
+			expect(liveNode.availableFirmwareUpdates).toEqual(updates)
+			expect(liveNode.lastFirmwareUpdateCheck).toBeGreaterThan(0)
+
+			// Emit occurred
+			expect(nodes.emitNodeUpdate).toHaveBeenCalledWith(
+				liveNode,
+				expect.objectContaining({
+					availableFirmwareUpdates: updates,
+				}),
+			)
+		})
+
+		it('checkNodeFirmwareUpdates normal path: persists then applies and emits', async () => {
+			const updates = [makeUpdate({ version: '5.0.0' })]
+			const driver = createDriverPort({
+				getDriver: () => ({
+					controller: {
+						getAvailableFirmwareUpdates: vi
+							.fn()
+							.mockResolvedValue(updates),
+						getAllAvailableFirmwareUpdates: vi.fn(),
+						firmwareUpdateOTA: vi.fn(),
+						nodes: { get: vi.fn() },
+					},
+					firmwareUpdateOTW: vi.fn(),
+				}),
+			})
+			const nodes = createNodeStorePort()
+			nodes._nodes.set(9, {
+				id: 9,
+				availableFirmwareUpdates: [],
+				lastFirmwareUpdateCheck: 0,
+				firmwareUpdatesDismissed: {},
+			})
+
+			const { service } = createService({ driver, nodes })
+
+			await service.checkNodeFirmwareUpdates(9)
+
+			// Persisted via staging port
+			expect(nodes.persistStagedNodeUpdates).toHaveBeenCalled()
+
+			// Shared live node updated
+			const liveNode = nodes._nodes.get(9)
+			expect(liveNode.availableFirmwareUpdates).toEqual(updates)
+
+			// Emit occurred
+			expect(nodes.emitNodeUpdate).toHaveBeenCalledWith(
+				liveNode,
+				expect.objectContaining({
+					availableFirmwareUpdates: updates,
+				}),
+			)
 		})
 	})
 })

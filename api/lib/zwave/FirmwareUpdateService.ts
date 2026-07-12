@@ -20,6 +20,7 @@ import type {
 	FwFileRef,
 	OTWFirmwareUpdateResult,
 	ServiceLogger,
+	StagedFirmwareNodeUpdate,
 } from './ports.ts'
 
 /**
@@ -168,6 +169,12 @@ export class FirmwareUpdateService {
 	/**
 	 * Check firmware updates for all nodes and store results in nodes.json.
 	 * Generation-fenced: throws FirmwareLifecycleCancelledError if disposed/reset.
+	 *
+	 * Stages firmware-node projections without mutating shared storeNodes/ZUINode
+	 * or emitting. Persists the staged snapshot, asserts fence, then atomically
+	 * applies to shared in-memory state and emits. If fence breaks while
+	 * persistence is pending, no shared store mutation, node mutation, or emit
+	 * occurs.
 	 */
 	async checkAllNodesFirmwareUpdates(
 		options?: unknown,
@@ -199,11 +206,18 @@ export class FirmwareUpdateService {
 			if (result) {
 				const now = Date.now()
 
+				// Stage projections without mutating shared state
+				const staged: StagedFirmwareNodeUpdate[] = []
 				for (const [nodeId, nodeUpdates] of result) {
 					const filteredUpdates =
 						this._filterFirmwareUpdates(nodeUpdates)
 
-					this._updateNodeFirmwareInfo(nodeId, filteredUpdates, now)
+					const projection = this._computeNodeFirmwareProjection(
+						nodeId,
+						filteredUpdates,
+						now,
+					)
+					staged.push(projection)
 
 					if (filteredUpdates && filteredUpdates.length > 0) {
 						this._logger.info(
@@ -212,9 +226,17 @@ export class FirmwareUpdateService {
 					}
 				}
 
-				// Save to nodes.json
-				await this._nodes.updateStoreNodes()
+				// Persist staged snapshot (writes to store + disk)
+				await this._nodes.persistStagedNodeUpdates(staged)
+
+				// Fence after persistence: if reset raced, do not apply
+				// to shared in-memory state or emit.
 				this._assertFence(gen, 'checkAllNodesFirmwareUpdates')
+
+				// Atomically apply to shared in-memory state and emit
+				for (const projection of staged) {
+					this._applyNodeFirmwareProjection(projection)
+				}
 			}
 
 			return result
@@ -650,6 +672,9 @@ export class FirmwareUpdateService {
 	/**
 	 * Check firmware updates for a specific node after an event.
 	 * Generation-fenced: throws FirmwareLifecycleCancelledError if disposed/reset.
+	 *
+	 * Stages firmware-node projection without mutating shared state. Persists,
+	 * fences, then atomically applies and emits.
 	 */
 	async checkNodeFirmwareUpdates(nodeId: number): Promise<void> {
 		if (!this._driver.isDriverReady() || this._disposed) {
@@ -680,10 +705,21 @@ export class FirmwareUpdateService {
 			const filteredUpdates = this._filterFirmwareUpdates(updates)
 			const timestamp = Date.now()
 
-			this._updateNodeFirmwareInfo(nodeId, filteredUpdates, timestamp)
+			// Stage projection without mutating shared state
+			const projection = this._computeNodeFirmwareProjection(
+				nodeId,
+				filteredUpdates,
+				timestamp,
+			)
 
-			await this._nodes.updateStoreNodes()
+			// Persist staged snapshot
+			await this._nodes.persistStagedNodeUpdates([projection])
+
+			// Fence after persistence
 			this._assertFence(gen, 'checkNodeFirmwareUpdates')
+
+			// Atomically apply to shared in-memory state and emit
+			this._applyNodeFirmwareProjection(projection)
 
 			this._logger.info(
 				`Checked firmware updates for node ${nodeId} after update completion. Found ${filteredUpdates.length} update(s)`,
@@ -737,7 +773,56 @@ export class FirmwareUpdateService {
 	}
 
 	/**
-	 * Update node firmware information in store and memory
+	 * Compute a staged firmware-node projection without mutating shared state.
+	 * Uses existing storeNode dismissed data to compute clean dismissed set.
+	 */
+	private _computeNodeFirmwareProjection(
+		nodeId: number,
+		filteredUpdates: FirmwareUpdateInfo[],
+		timestamp: number,
+	): StagedFirmwareNodeUpdate {
+		const storeNode = this._nodes.getStoreNode(nodeId)
+		const existingDismissed = storeNode?.firmwareUpdatesDismissed || {}
+		const cleanedDismissed = this._cleanDismissedUpdates(
+			filteredUpdates,
+			existingDismissed,
+		)
+
+		return {
+			nodeId,
+			availableFirmwareUpdates: filteredUpdates,
+			lastFirmwareUpdateCheck: timestamp,
+			firmwareUpdatesDismissed: cleanedDismissed,
+		}
+	}
+
+	/**
+	 * Atomically apply a staged firmware projection to the shared in-memory
+	 * node state and emit the update. Called only after persistence succeeds
+	 * and fence holds.
+	 */
+	private _applyNodeFirmwareProjection(
+		projection: StagedFirmwareNodeUpdate,
+	): void {
+		const node = this._nodes.getNode(projection.nodeId)
+		if (node) {
+			node.availableFirmwareUpdates = projection.availableFirmwareUpdates
+			node.lastFirmwareUpdateCheck = projection.lastFirmwareUpdateCheck
+			node.firmwareUpdatesDismissed = projection.firmwareUpdatesDismissed
+
+			this._nodes.emitNodeUpdate(node, {
+				availableFirmwareUpdates: node.availableFirmwareUpdates,
+				lastFirmwareUpdateCheck: node.lastFirmwareUpdateCheck,
+				firmwareUpdatesDismissed: node.firmwareUpdatesDismissed,
+			})
+		}
+	}
+
+	/**
+	 * Update node firmware information in store and memory.
+	 * Used by paths that do not need deferred persistence (e.g. dismissFirmwareUpdate)
+	 * where mutation + emit is fine before persistence since those are user-initiated
+	 * synchronous flows with their own fence.
 	 */
 	private _updateNodeFirmwareInfo(
 		nodeId: number,
