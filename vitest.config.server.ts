@@ -282,7 +282,7 @@ export default defineConfig({
 					functions: 100,
 					lines: 100,
 				},
-				// Layer 13 reduced `ZwaveClient.ts` to 5,559 lines and measured
+				// Layer 13 reduced `ZwaveClient.ts` to 5,552 lines and measured
 				// 35.00/23.05/43.14/35.37 coverage after extracting node
 				// registry, projection, and socket adaptation.
 				'api/lib/ZwaveClient.ts': {
