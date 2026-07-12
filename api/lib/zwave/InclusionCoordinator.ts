@@ -422,7 +422,7 @@ export class InclusionCoordinator {
 						strategy,
 					}
 				}
-				return drv.controller.replaceFailedNode(
+				return await drv.controller.replaceFailedNode(
 					nodeId,
 					inclusionOptions,
 				)
@@ -430,7 +430,7 @@ export class InclusionCoordinator {
 				strategy === inclusionStrategyInsecure ||
 				strategy === inclusionStrategySecurity_S0
 			) {
-				return drv.controller.replaceFailedNode(nodeId, {
+				return await drv.controller.replaceFailedNode(nodeId, {
 					strategy,
 				})
 			} else {
