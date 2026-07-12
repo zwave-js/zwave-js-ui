@@ -760,6 +760,21 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	private statelessTimeouts: Record<string, NodeJS.Timeout>
 	private healTimeout: NodeJS.Timeout
 	private updatesCheckTimeout: NodeJS.Timeout
+	/**
+	 * Scheduling epoch for the daily config-update check chain
+	 * ({@link _scheduledConfigCheck}). Distinct from the {@link DriverLifecycle}
+	 * generation on purpose: that generation is deliberately NOT bumped by
+	 * {@link init} or {@link hardReset} (so a post-hard-reset `driver ready`
+	 * still runs on the same generation), which means it cannot fence the
+	 * config-check chain across those boundaries. This epoch instead is
+	 * invalidated on EVERY boundary that (re)starts the driver-ready chain — see
+	 * {@link _invalidateScheduledConfigCheck}. A scheduled check captures the
+	 * epoch live and, after its awaited driver round-trip, only logs/re-arms
+	 * while the epoch is still current, so a hard reset can neither leave an
+	 * older chain's in-flight check re-arming a duplicate ~24h timer nor let
+	 * repeated init()/hardReset() accumulate chains.
+	 */
+	private _configCheckEpoch = 0
 	private pollIntervals: Record<string, NodeJS.Timeout>
 
 	private _lockNeighborsRefresh: boolean
@@ -887,6 +902,14 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		this.closed = false
 		this.driverReady = false
+
+		// init() is a config-check-chain boundary: it runs on construction, on
+		// restart() (after close()) and on hardReset() (which does NOT bump the
+		// DriverLifecycle generation). Invalidate the scheduling epoch and clear
+		// any armed daily timer here so a hard reset's re-emitted `driver ready`
+		// starts exactly one fresh chain and an older chain's in-flight check
+		// can never re-arm a duplicate/stale timer.
+		this._invalidateScheduledConfigCheck()
 
 		this._nodes = new Map()
 		this._virtualNodes = new Map()
@@ -1336,10 +1359,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			this.healTimeout = null
 		}
 
-		if (this.updatesCheckTimeout) {
-			clearTimeout(this.updatesCheckTimeout)
-			this.updatesCheckTimeout = null
-		}
+		// close() (and, via restart(), the pre-init close) is a config-check-chain
+		// boundary. Invalidate the scheduling epoch and clear the armed daily
+		// timer so an in-flight check that settles after close cannot re-arm.
+		this._invalidateScheduledConfigCheck()
 
 		this._inclusionCoordinator.reset()
 
@@ -1362,6 +1385,24 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		for (const [key, entry] of this.throttledFunctions) {
 			clearTimeout(entry.timeout)
 			this.throttledFunctions.delete(key)
+		}
+	}
+
+	/**
+	 * Invalidate the scheduled config-update-check chain: bump the scheduling
+	 * epoch (so any in-flight {@link _scheduledConfigCheck} bails after its
+	 * awaited driver round-trip instead of logging/re-arming) and clear the
+	 * currently-armed daily timer handle. Called from every boundary that starts
+	 * or restarts the driver-ready chain — {@link init} (which covers
+	 * construction, restart() and hardReset()) and the close path
+	 * ({@link _clearRuntimeOnClose}) — so repeated init()/hardReset() can never
+	 * leave more than one live chain, and no stale handle is ever leaked.
+	 */
+	private _invalidateScheduledConfigCheck(): void {
+		this._configCheckEpoch++
+		if (this.updatesCheckTimeout) {
+			clearTimeout(this.updatesCheckTimeout)
+			this.updatesCheckTimeout = null
 		}
 	}
 
@@ -4151,8 +4192,13 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		this._updateControllerStatus('Driver ready')
 
 		try {
-			// this must be done only after driver is ready
-			this._scheduledConfigCheck(generation).catch(() => {
+			// this must be done only after driver is ready. Capture the current
+			// scheduling epoch so this chain is fenced against later lifecycle
+			// boundaries (init/hardReset/close/restart) that invalidate it.
+			this._scheduledConfigCheck(
+				generation,
+				this._configCheckEpoch,
+			).catch(() => {
 				/* ignore */
 			})
 
@@ -6567,10 +6613,16 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 * this generation. We therefore re-validate the generation and the
 	 * closed/destroyed state AFTER the await, before logging or rearming, so a
 	 * stale in-flight check can never resurrect a ~24h timer that outlives the
-	 * driver or duplicates the replacement generation's own scheduled check. The
-	 * rearm carries the same token forward so the daily chain keeps fencing.
+	 * driver or duplicates the replacement generation's own scheduled check.
+	 * @param epoch The config-check scheduling epoch ({@link _configCheckEpoch})
+	 * captured when this check was scheduled. The generation alone cannot fence
+	 * hardReset()/repeated-init() boundaries because those deliberately keep the
+	 * same generation; the epoch is bumped on every such boundary (see
+	 * {@link _invalidateScheduledConfigCheck}), so an in-flight check from before
+	 * the boundary bails here instead of re-arming a duplicate chain. The rearm
+	 * carries both tokens forward so the daily chain keeps fencing.
 	 */
-	private async _scheduledConfigCheck(generation: number) {
+	private async _scheduledConfigCheck(generation: number, epoch: number) {
 		try {
 			await this.checkForConfigUpdates()
 		} catch (error) {
@@ -6578,9 +6630,12 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		}
 
 		// Bail if this generation was superseded while the check was in flight,
-		// or the client was closed/destroyed — do not log or rearm a stale timer.
+		// the scheduling epoch was invalidated by a lifecycle boundary
+		// (init/hardReset/close/restart), or the client was closed/destroyed —
+		// do not log or rearm a stale timer.
 		if (
 			this._driverLifecycle.generation !== generation ||
+			this._configCheckEpoch !== epoch ||
 			this.closed ||
 			this.destroyed
 		) {
@@ -6596,7 +6651,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		this.updatesCheckTimeout = setTimeout(
 			() => {
-				void this._scheduledConfigCheck(generation)
+				void this._scheduledConfigCheck(generation, epoch)
 			},
 			waitMillis > 0 ? waitMillis : 1000,
 		)
