@@ -2083,4 +2083,222 @@ describe('InclusionCoordinator', () => {
 			vi.useRealTimers()
 		})
 	})
+
+	// -----------------------------------------------------------------
+	// Production integration: coordinator preserved across init/hardReset
+	// -----------------------------------------------------------------
+	describe('Production: coordinator preserved across init/hardReset', () => {
+		it('captured callbacks resolve through current public API after reset', async () => {
+			const { coordinator } = createCoordinator()
+
+			// Capture the callback functions that the driver would hold
+			const callbacks = coordinator.getUserCallbacks()
+			coordinator.setUserCallbacks()
+
+			// Simulate hardReset: reset state, bump generation
+			coordinator.reset()
+
+			// After reset, start a NEW inclusion flow on the same coordinator
+			const grantPromise = callbacks.grantSecurityClasses({
+				securityClasses: [1, 2],
+				clientSideAuth: false,
+			})
+
+			// Resolve through the public API (as UI would)
+			coordinator.grantSecurityClasses({
+				securityClasses: [1],
+				clientSideAuth: true,
+			})
+
+			const result = await grantPromise
+			expect(result).toEqual({
+				securityClasses: [1],
+				clientSideAuth: true,
+			})
+		})
+
+		it('captured DSK callback resolves through validateDSK after reset', async () => {
+			const { coordinator } = createCoordinator()
+			const callbacks = coordinator.getUserCallbacks()
+
+			coordinator.reset()
+
+			const dskPromise = callbacks.validateDSKAndEnterPIN('99999-88888')
+			coordinator.validateDSK('99999')
+
+			expect(await dskPromise).toBe('99999')
+		})
+
+		it('captured abort callback settles via abortInclusion after reset', async () => {
+			const { coordinator } = createCoordinator()
+			const callbacks = coordinator.getUserCallbacks()
+
+			coordinator.reset()
+
+			const grantPromise = callbacks.grantSecurityClasses({
+				securityClasses: [0],
+				clientSideAuth: false,
+			})
+
+			coordinator.abortInclusion()
+			expect(await grantPromise).toBe(false)
+		})
+
+		it('events fire exactly once through current coordinator after reset', () => {
+			const { coordinator, socket, controllerEvent } = createCoordinator()
+			const callbacks = coordinator.getUserCallbacks()
+
+			coordinator.reset()
+
+			void callbacks.grantSecurityClasses({
+				securityClasses: [1],
+				clientSideAuth: false,
+			})
+
+			expect(socket.sendToSocket).toHaveBeenCalledTimes(1)
+			expect(controllerEvent.emitControllerEvent).toHaveBeenCalledTimes(1)
+
+			coordinator.abortInclusion()
+		})
+
+		it('server onHardReset hook: reset + new grant resolves correctly', async () => {
+			const { coordinator } = createCoordinator()
+			const callbacks = coordinator.getUserCallbacks()
+			coordinator.setUserCallbacks()
+
+			// Simulate server onHardReset calling init() which calls reset()
+			coordinator.reset()
+			// After reset, the same coordinator instance is reused
+
+			const grantPromise = callbacks.grantSecurityClasses({
+				securityClasses: [2, 3],
+				clientSideAuth: false,
+			})
+
+			coordinator.grantSecurityClasses({
+				securityClasses: [2],
+				clientSideAuth: false,
+			})
+
+			expect(await grantPromise).toEqual({
+				securityClasses: [2],
+				clientSideAuth: false,
+			})
+		})
+
+		it('hasUserCallbacks preserved across reset (UI-installed)', () => {
+			const { coordinator } = createCoordinator()
+			coordinator.setUserCallbacks()
+			expect(coordinator.hasUserCallbacks).toBe(true)
+
+			coordinator.reset()
+			expect(coordinator.hasUserCallbacks).toBe(true)
+		})
+
+		it('hasUserCallbacks=false preserved across reset (MQTT/server)', () => {
+			const { coordinator } = createCoordinator()
+			// Callbacks passed via driver options, not via setUserCallbacks
+			expect(coordinator.hasUserCallbacks).toBe(false)
+
+			coordinator.reset()
+			expect(coordinator.hasUserCallbacks).toBe(false)
+		})
+
+		it('reinstallUserCallbacks re-registers on new driver after reset', () => {
+			const updateOptions = vi.fn()
+			const driverPort: InclusionDriverPort = {
+				isDriverReady: () => true,
+				getDriver: () => ({
+					controller: {
+						inclusionState: undefined,
+						beginInclusion: vi.fn(),
+						stopInclusion: vi.fn(),
+						beginExclusion: vi.fn(),
+						stopExclusion: vi.fn(),
+						replaceFailedNode: vi.fn(),
+						beginJoiningNetwork: vi.fn(),
+						stopJoiningNetwork: vi.fn(),
+					},
+					updateOptions,
+				}),
+			}
+			const { coordinator } = createCoordinator({ driver: driverPort })
+
+			coordinator.setUserCallbacks()
+			updateOptions.mockClear()
+
+			// Simulate init() -> reset preserves hasUserCallbacks
+			coordinator.reset()
+
+			// Driver ready -> reinstall
+			coordinator.reinstallUserCallbacks()
+			expect(updateOptions).toHaveBeenCalledWith(
+				expect.objectContaining({
+					inclusionUserCallbacks: expect.any(Object),
+				}),
+			)
+		})
+	})
+
+	// -----------------------------------------------------------------
+	// Production integration: takeTmpNode atomic consume
+	// -----------------------------------------------------------------
+	describe('Production: takeTmpNode atomic consume', () => {
+		it('first included node gets metadata, coordinator tmp is cleared', async () => {
+			const { coordinator } = createCoordinator()
+
+			await coordinator.startInclusion(
+				STRATEGY_DEFAULT,
+				{ name: 'Sensor', location: 'Kitchen' },
+				undefined,
+			)
+
+			// First consume gets the metadata
+			const tmp = coordinator.takeTmpNode()
+			expect(tmp).toEqual({ name: 'Sensor', loc: 'Kitchen' })
+
+			// Coordinator is now cleared
+			expect(coordinator.tmpNode).toBeUndefined()
+			expect(coordinator.takeTmpNode()).toBeUndefined()
+		})
+
+		it('later node or replacement cannot inherit stale metadata', async () => {
+			const { coordinator } = createCoordinator()
+
+			await coordinator.startInclusion(
+				STRATEGY_DEFAULT,
+				{ name: 'Light', location: 'Bedroom' },
+				undefined,
+			)
+
+			// First node consumes
+			coordinator.takeTmpNode()
+
+			// Second node gets nothing
+			expect(coordinator.takeTmpNode()).toBeUndefined()
+		})
+
+		it('failure/reset paths remain clear', async () => {
+			const { coordinator } = createCoordinator()
+
+			await coordinator.startInclusion(
+				STRATEGY_DEFAULT,
+				{ name: 'Test', location: 'Loc' },
+				undefined,
+			)
+
+			// Simulate failure
+			coordinator.onInclusionFailed(() => {})
+			expect(coordinator.takeTmpNode()).toBeUndefined()
+
+			// Simulate reset
+			await coordinator.startInclusion(
+				STRATEGY_DEFAULT,
+				{ name: 'Test2', location: 'Loc2' },
+				undefined,
+			)
+			coordinator.reset()
+			expect(coordinator.takeTmpNode()).toBeUndefined()
+		})
+	})
 })

@@ -128,6 +128,17 @@ export class InclusionCoordinator {
 		return this._tmpNode
 	}
 
+	/**
+	 * Atomically consume tmpNode metadata: returns the current value and
+	 * immediately clears it so that no subsequent caller can inherit stale
+	 * metadata from a previous inclusion.
+	 */
+	takeTmpNode(): { name?: string; loc?: string } | undefined {
+		const tmp = this._tmpNode
+		this._tmpNode = undefined
+		return tmp
+	}
+
 	get pendingInclusionNodeIds(): Set<number> {
 		return this._pendingInclusionNodeIds
 	}
@@ -603,9 +614,9 @@ export class InclusionCoordinator {
 	}
 
 	/**
-	 * Reinstall user callbacks on the current driver if they were
-	 * previously registered. Called after init/hardReset which replaces
-	 * the driver instance while the coordinator survives.
+	 * Re-register user callbacks on the current driver after a driver
+	 * replacement (hard reset or restart). The coordinator survives but
+	 * the new driver needs the callbacks passed via updateOptions again.
 	 */
 	reinstallUserCallbacks(): void {
 		if (!this._hasUserCallbacks) {
@@ -615,7 +626,7 @@ export class InclusionCoordinator {
 		if (!drv || !this._config.serverEnabled) {
 			return
 		}
-		this._logger.info('Reinstalling user callbacks after driver reset')
+		this._logger.info('Re-registering user callbacks on new driver')
 		drv.updateOptions({
 			inclusionUserCallbacks: {
 				...this.getUserCallbacks(),
