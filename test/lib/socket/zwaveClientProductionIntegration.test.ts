@@ -1046,7 +1046,6 @@ describe('Production integration: inclusion state sole ownership via coordinator
 		fakeDriver.controller.inclusionState = 2 // InclusionState.Excluding
 		;(zwave as any)._driver = fakeDriver
 		zwave.driverReady = true
-
 		;(zwave as any)._inclusionCoordinator.syncFromDriver()
 		expect(zwave.getState().inclusionState).toBe(2)
 
@@ -1063,7 +1062,6 @@ describe('Production integration: inclusion state sole ownership via coordinator
 		fakeDriver.controller.inclusionState = 3 // InclusionState.Busy
 		;(zwave as any)._driver = fakeDriver
 		zwave.driverReady = true
-
 		;(zwave as any)._inclusionCoordinator.syncFromDriver()
 		expect(zwave.getState().inclusionState).toBe(3)
 
@@ -1079,7 +1077,6 @@ describe('Production integration: inclusion state sole ownership via coordinator
 		fakeDriver.controller.inclusionState = 4 // InclusionState.SmartStart
 		;(zwave as any)._driver = fakeDriver
 		zwave.driverReady = true
-
 		;(zwave as any)._inclusionCoordinator.syncFromDriver()
 		expect(zwave.getState().inclusionState).toBe(4)
 
@@ -1095,7 +1092,6 @@ describe('Production integration: inclusion state sole ownership via coordinator
 		fakeDriver.controller.inclusionState = 0 // Idle
 		;(zwave as any)._driver = fakeDriver
 		zwave.driverReady = true
-
 		;(zwave as any)._inclusionCoordinator.syncFromDriver()
 		expect(zwave.getState().inclusionState).toBe(0)
 

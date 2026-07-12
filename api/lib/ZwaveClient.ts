@@ -1165,11 +1165,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 						this.storeNodes[entry.nodeId] = {}
 					}
 					const sn = this.storeNodes[entry.nodeId]
-					sn.availableFirmwareUpdates =
-						entry.availableFirmwareUpdates
+					sn.availableFirmwareUpdates = entry.availableFirmwareUpdates
 					sn.lastFirmwareUpdateCheck = entry.lastFirmwareUpdateCheck
-					sn.firmwareUpdatesDismissed =
-						entry.firmwareUpdatesDismissed
+					sn.firmwareUpdatesDismissed = entry.firmwareUpdatesDismissed
 				}
 				// Persist to disk. NOTE: once the underlying filesystem write
 				// begins it cannot be cancelled. If a reset races with the
