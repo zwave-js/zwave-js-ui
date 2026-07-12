@@ -94,9 +94,8 @@ export class FirmwareUpdateService {
 			throw new Error('Driver is not ready')
 		}
 
-		const result = await drv.controller.getAllAvailableFirmwareUpdates(
-			options,
-		)
+		const result =
+			await drv.controller.getAllAvailableFirmwareUpdates(options)
 
 		return result
 	}
@@ -259,7 +258,7 @@ export class FirmwareUpdateService {
 			}
 
 			// If it has `files` property, it's a FirmwareUpdateInfo
-			if ('files' in file && Array.isArray((file as FirmwareUpdateInfoRef).files)) {
+			if ('files' in file && Array.isArray(file.files)) {
 				return await drv.firmwareUpdateOTW(
 					file as unknown as Uint8Array<ArrayBuffer>,
 				)
@@ -287,9 +286,7 @@ export class FirmwareUpdateService {
 			const result = await drv.firmwareUpdateOTW(firmwareData)
 			return result
 		} catch (e) {
-			throw Error(
-				`Error while updating firmware: ${getErrorMessage(e)}`,
-			)
+			throw Error(`Error while updating firmware: ${getErrorMessage(e)}`)
 		}
 	}
 
@@ -299,7 +296,16 @@ export class FirmwareUpdateService {
 	async updateFirmware(
 		nodeId: number,
 		files: FwFileRef[],
-		getZwaveNode: (id: number) => { updateFirmware(fw: Array<{ data: Uint8Array<ArrayBuffer>; firmwareTarget?: number }>): Promise<unknown> } | undefined,
+		getZwaveNode: (id: number) =>
+			| {
+					updateFirmware(
+						fw: Array<{
+							data: Uint8Array<ArrayBuffer>
+							firmwareTarget?: number
+						}>,
+					): Promise<unknown>
+			  }
+			| undefined,
 	): Promise<unknown> {
 		if (!this._driver.isDriverReady()) {
 			throw new Error('Driver is not ready')
@@ -372,7 +378,9 @@ export class FirmwareUpdateService {
 	 */
 	async abortFirmwareUpdate(
 		nodeId: number,
-		getZwaveNode: (id: number) => { abortFirmwareUpdate(): Promise<void> } | undefined,
+		getZwaveNode: (
+			id: number,
+		) => { abortFirmwareUpdate(): Promise<void> } | undefined,
 	): Promise<void> {
 		if (!this._driver.isDriverReady()) {
 			throw new Error('Driver is not ready')
@@ -405,10 +413,7 @@ export class FirmwareUpdateService {
 	/**
 	 * Handle node firmware update progress event
 	 */
-	onNodeFirmwareUpdateProgress(
-		nodeId: number,
-		progress: unknown,
-	): void {
+	onNodeFirmwareUpdateProgress(nodeId: number, progress: unknown): void {
 		const node = this._nodes.getNode(nodeId)
 		if (node) {
 			node.firmwareUpdate = progress
@@ -499,9 +504,7 @@ export class FirmwareUpdateService {
 	 */
 	async scheduledFirmwareUpdateCheck(): Promise<void> {
 		if (this._config.disableAutomaticFirmwareUpdateChecks) {
-			this._logger.info(
-				'Automatic firmware update checks are disabled',
-			)
+			this._logger.info('Automatic firmware update checks are disabled')
 			return
 		}
 
@@ -524,14 +527,11 @@ export class FirmwareUpdateService {
 			`Next firmware update check scheduled for: ${nextCheckTime}`,
 		)
 
-		this._firmwareUpdateCheckTimeout = setTimeout(
-			() => {
-				this.scheduledFirmwareUpdateCheck().catch(() => {
-					/* ignore */
-				})
-			},
-			waitMillis,
-		)
+		this._firmwareUpdateCheckTimeout = setTimeout(() => {
+			this.scheduledFirmwareUpdateCheck().catch(() => {
+				/* ignore */
+			})
+		}, waitMillis)
 	}
 
 	/**
@@ -555,13 +555,10 @@ export class FirmwareUpdateService {
 				return
 			}
 
-			const updates = await drv.controller.getAvailableFirmwareUpdates(
-				nodeId,
-			)
+			const updates =
+				await drv.controller.getAvailableFirmwareUpdates(nodeId)
 
-			const filteredUpdates = this._filterFirmwareUpdates(
-				updates as FirmwareUpdateInfoRef[] | null,
-			)
+			const filteredUpdates = this._filterFirmwareUpdates(updates)
 			const timestamp = Date.now()
 
 			this._updateNodeFirmwareInfo(nodeId, filteredUpdates, timestamp)
@@ -660,4 +657,6 @@ export class FirmwareUpdateService {
 
 // Re-export for convenience — avoids needing a separate import of the type
 // alias from ports.ts in the wiring layer.
-type DeepPartial<T> = { [P in keyof T]?: T[P] extends object ? DeepPartial<T[P]> : T[P] }
+type DeepPartial<T> = {
+	[P in keyof T]?: T[P] extends object ? DeepPartial<T[P]> : T[P]
+}

@@ -45,7 +45,9 @@ export class InclusionCoordinator {
 	private readonly _logger: ServiceLogger
 
 	/** Lazy server manager accessor — may be undefined when server is disabled */
-	private readonly _getServerManager: () => InclusionServerManagerPort | undefined
+	private readonly _getServerManager: () =>
+		| InclusionServerManagerPort
+		| undefined
 
 	// ---------------------------------------------------------------
 	// Internal state — maps exactly to ZwaveClient fields
@@ -254,9 +256,7 @@ export class InclusionCoordinator {
 
 					if (parsedQr.version === qrCodeVersionS2) {
 						options.provisioning = parsedQr
-					} else if (
-						parsedQr.version === qrCodeVersionSmartStart
-					) {
+					} else if (parsedQr.version === qrCodeVersionSmartStart) {
 						if (provisionSmartStartNode) {
 							await provisionSmartStartNode(parsedQr)
 						}
@@ -447,9 +447,7 @@ export class InclusionCoordinator {
 	/**
 	 * Start learn mode (join another network)
 	 */
-	async startLearnMode(
-		joinNetworkStrategy: number,
-	): Promise<unknown> {
+	async startLearnMode(joinNetworkStrategy: number): Promise<unknown> {
 		const drv = this._driver.getDriver()
 		if (!drv || !this._driver.isDriverReady()) {
 			throw new Error('Driver is not ready')
@@ -677,7 +675,9 @@ export class InclusionCoordinator {
 	private _onGrantSecurityClasses(
 		requested: InclusionGrantRef,
 	): Promise<InclusionGrantRef | false> {
-		this._logger.info(`Grant security classes: ${JSON.stringify(requested)}`)
+		this._logger.info(
+			`Grant security classes: ${JSON.stringify(requested)}`,
+		)
 		this._socket.sendToSocket(
 			this._socketEvents.grantSecurityClasses,
 			requested,
