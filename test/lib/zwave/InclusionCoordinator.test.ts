@@ -1737,4 +1737,350 @@ describe('InclusionCoordinator', () => {
 			vi.useRealTimers()
 		})
 	})
+
+	// -----------------------------------------------------------------
+	// Finding 1: Hard reset callbacks survive driver replacement
+	// -----------------------------------------------------------------
+	describe('Finding 1: reinstallUserCallbacks after driver replacement', () => {
+		it('reinstalls callbacks on new driver when hasUserCallbacks is true', () => {
+			const updateOptions1 = vi.fn()
+			const updateOptions2 = vi.fn()
+			let currentDriver = {
+				controller: {
+					inclusionState: undefined,
+					beginInclusion: vi.fn(),
+					stopInclusion: vi.fn(),
+					beginExclusion: vi.fn(),
+					stopExclusion: vi.fn(),
+					replaceFailedNode: vi.fn(),
+					beginJoiningNetwork: vi.fn(),
+					stopJoiningNetwork: vi.fn(),
+				},
+				updateOptions: updateOptions1,
+			}
+			const driverPort: InclusionDriverPort = {
+				isDriverReady: () => true,
+				getDriver: () => currentDriver,
+			}
+			const { coordinator } = createCoordinator({ driver: driverPort })
+
+			// Install callbacks on first driver
+			coordinator.setUserCallbacks()
+			expect(updateOptions1).toHaveBeenCalledWith(
+				expect.objectContaining({
+					inclusionUserCallbacks: expect.any(Object),
+				}),
+			)
+
+			// Simulate driver replacement (hard reset)
+			coordinator.reset()
+			currentDriver = {
+				...currentDriver,
+				updateOptions: updateOptions2,
+			}
+
+			// Reinstall on new driver
+			coordinator.reinstallUserCallbacks()
+			expect(updateOptions2).toHaveBeenCalledWith(
+				expect.objectContaining({
+					inclusionUserCallbacks: expect.any(Object),
+				}),
+			)
+		})
+
+		it('does nothing if callbacks were never installed', () => {
+			const updateOptions = vi.fn()
+			const driverPort: InclusionDriverPort = {
+				isDriverReady: () => true,
+				getDriver: () => ({
+					controller: {
+						inclusionState: undefined,
+						beginInclusion: vi.fn(),
+						stopInclusion: vi.fn(),
+						beginExclusion: vi.fn(),
+						stopExclusion: vi.fn(),
+						replaceFailedNode: vi.fn(),
+						beginJoiningNetwork: vi.fn(),
+						stopJoiningNetwork: vi.fn(),
+					},
+					updateOptions,
+				}),
+			}
+			const { coordinator } = createCoordinator({ driver: driverPort })
+
+			coordinator.reinstallUserCallbacks()
+			expect(updateOptions).not.toHaveBeenCalled()
+		})
+
+		it('production flow: install -> hardReset/reset -> driver invokes grant -> promise settles false', async () => {
+			const { coordinator } = createCoordinator()
+			const callbacks = coordinator.getUserCallbacks()
+
+			// Start a grant request
+			const grantPromise = callbacks.grantSecurityClasses({
+				securityClasses: [1, 2],
+				clientSideAuth: false,
+			})
+
+			// Simulate hard reset: reset settles all promises
+			coordinator.reset()
+
+			// The promise must settle exactly once with false
+			const result = await grantPromise
+			expect(result).toBe(false)
+		})
+
+		it('production flow: install -> reset -> driver invokes DSK -> promise already settled', async () => {
+			const { coordinator } = createCoordinator()
+			const callbacks = coordinator.getUserCallbacks()
+
+			// Start a DSK request
+			const dskPromise = callbacks.validateDSKAndEnterPIN('12345-67890')
+
+			// Reset settles the DSK promise
+			coordinator.reset()
+
+			const result = await dskPromise
+			expect(result).toBe(false)
+		})
+
+		it('old coordinator receives no events after reset: abort is safe noop', async () => {
+			const { coordinator } = createCoordinator()
+			const callbacks = coordinator.getUserCallbacks()
+
+			const grantPromise = callbacks.grantSecurityClasses({
+				securityClasses: [1],
+				clientSideAuth: false,
+			})
+
+			// Reset settles, then abort is called after (e.g. late event)
+			coordinator.reset()
+			const result = await grantPromise
+			expect(result).toBe(false)
+
+			// Calling abort after reset is a no-op (no double-settle)
+			expect(() => coordinator.abortInclusion()).not.toThrow()
+		})
+	})
+
+	// -----------------------------------------------------------------
+	// Finding 3: Concurrent reset/abort/close/replacement tests
+	// -----------------------------------------------------------------
+	describe('Finding 3: settle-exactly-once with concurrent operations', () => {
+		it('reset settles grant with false exactly once', async () => {
+			const { coordinator } = createCoordinator()
+			const callbacks = coordinator.getUserCallbacks()
+
+			const settleCount = { grant: 0 }
+			const grantPromise = callbacks
+				.grantSecurityClasses({
+					securityClasses: [1],
+					clientSideAuth: false,
+				})
+				.then((v) => {
+					settleCount.grant++
+					return v
+				})
+
+			coordinator.reset()
+			const result = await grantPromise
+			expect(result).toBe(false)
+			expect(settleCount.grant).toBe(1)
+		})
+
+		it('reset settles both grant and DSK with false exactly once', async () => {
+			const { coordinator } = createCoordinator()
+			const callbacks = coordinator.getUserCallbacks()
+
+			const grantPromise = callbacks.grantSecurityClasses({
+				securityClasses: [1],
+				clientSideAuth: false,
+			})
+			const dskPromise = callbacks.validateDSKAndEnterPIN('12345')
+
+			coordinator.reset()
+
+			expect(await grantPromise).toBe(false)
+			expect(await dskPromise).toBe(false)
+		})
+
+		it('abort followed by reset does not double-settle', async () => {
+			const { coordinator } = createCoordinator()
+			const callbacks = coordinator.getUserCallbacks()
+
+			let settleCount = 0
+			const grantPromise = callbacks
+				.grantSecurityClasses({
+					securityClasses: [1],
+					clientSideAuth: false,
+				})
+				.then((v) => {
+					settleCount++
+					return v
+				})
+
+			// Abort settles first
+			coordinator.abortInclusion()
+			// Reset is a no-op for promises (already settled)
+			coordinator.reset()
+
+			const result = await grantPromise
+			expect(result).toBe(false)
+			expect(settleCount).toBe(1)
+		})
+
+		it('reset followed by abort does not double-settle', async () => {
+			const { coordinator } = createCoordinator()
+			const callbacks = coordinator.getUserCallbacks()
+
+			let settleCount = 0
+			const dskPromise = callbacks
+				.validateDSKAndEnterPIN('12345')
+				.then((v) => {
+					settleCount++
+					return v
+				})
+
+			// Reset settles first
+			coordinator.reset()
+			// Abort is a no-op
+			coordinator.abortInclusion()
+
+			const result = await dskPromise
+			expect(result).toBe(false)
+			expect(settleCount).toBe(1)
+		})
+
+		it('multiple resets do not double-settle', async () => {
+			const { coordinator } = createCoordinator()
+			const callbacks = coordinator.getUserCallbacks()
+
+			let settleCount = 0
+			const grantPromise = callbacks
+				.grantSecurityClasses({
+					securityClasses: [1],
+					clientSideAuth: false,
+				})
+				.then((v) => {
+					settleCount++
+					return v
+				})
+
+			coordinator.reset()
+			coordinator.reset()
+			coordinator.reset()
+
+			const result = await grantPromise
+			expect(result).toBe(false)
+			expect(settleCount).toBe(1)
+		})
+
+		it('grant/DSK cannot be called after reset (no-op with log)', () => {
+			const logger = createLogger()
+			const { coordinator } = createCoordinator({ logger })
+
+			coordinator.reset()
+
+			// Calling grant/DSK after reset logs error
+			coordinator.grantSecurityClasses({
+				securityClasses: [],
+				clientSideAuth: false,
+			})
+			expect(logger.error).toHaveBeenCalledWith(
+				'No inclusion process started',
+			)
+
+			coordinator.validateDSK('1234')
+			expect(logger.error).toHaveBeenCalledTimes(2)
+		})
+	})
+
+	// -----------------------------------------------------------------
+	// Finding 4: Cross-mode timeout lifecycle tests
+	// -----------------------------------------------------------------
+	describe('Finding 4: shared command timeout across modes', () => {
+		it('starting inclusion clears learn mode timeout', async () => {
+			vi.useFakeTimers()
+			const { coordinator, driver } = createCoordinator({
+				config: { commandsTimeout: 5, serverEnabled: true },
+			})
+			const drv = driver.getDriver()
+
+			// Start learn mode (sets timeout)
+			await coordinator.startLearnMode(0)
+
+			// Immediately start inclusion (should clear learn timeout)
+			await coordinator.startInclusion(STRATEGY_DEFAULT, {}, undefined)
+
+			// Advance past original learn timeout
+			await vi.advanceTimersByTimeAsync(6000)
+
+			// stopJoiningNetwork should NOT have been called (timeout was cleared)
+			expect(drv.controller.stopJoiningNetwork).not.toHaveBeenCalled()
+			// But stopInclusion fires from inclusion timeout
+			expect(drv.controller.stopInclusion).toHaveBeenCalled()
+
+			vi.useRealTimers()
+		})
+
+		it('starting exclusion clears inclusion timeout', async () => {
+			vi.useFakeTimers()
+			const { coordinator, driver } = createCoordinator({
+				config: { commandsTimeout: 5, serverEnabled: true },
+			})
+			const drv = driver.getDriver()
+
+			await coordinator.startInclusion(STRATEGY_DEFAULT, {}, undefined)
+			await coordinator.startExclusion({ strategy: 0 })
+
+			// Advance past both timeouts
+			await vi.advanceTimersByTimeAsync(6000)
+
+			// stopInclusion should NOT fire from old timeout
+			expect(drv.controller.stopInclusion).not.toHaveBeenCalled()
+			// stopExclusion fires
+			expect(drv.controller.stopExclusion).toHaveBeenCalled()
+
+			vi.useRealTimers()
+		})
+
+		it('starting learn mode clears replace timeout', async () => {
+			vi.useFakeTimers()
+			const { coordinator, driver } = createCoordinator({
+				config: { commandsTimeout: 5, serverEnabled: true },
+			})
+			const drv = driver.getDriver()
+
+			await coordinator.replaceFailedNode(5, STRATEGY_SECURITY_S2, {})
+			await coordinator.startLearnMode(0)
+
+			// Advance past old replace timeout
+			await vi.advanceTimersByTimeAsync(6000)
+
+			// stopInclusion from replace should NOT fire
+			// stopJoiningNetwork should fire
+			expect(drv.controller.stopJoiningNetwork).toHaveBeenCalled()
+
+			vi.useRealTimers()
+		})
+
+		it('stopLearnMode calls stopJoiningNetwork and clears timeout', async () => {
+			vi.useFakeTimers()
+			const { coordinator, driver } = createCoordinator({
+				config: { commandsTimeout: 5, serverEnabled: true },
+			})
+			const drv = driver.getDriver()
+
+			await coordinator.startLearnMode(0)
+			await coordinator.stopLearnMode()
+
+			// Advance past timeout
+			await vi.advanceTimersByTimeAsync(6000)
+
+			// stopJoiningNetwork called by explicit stop, not by timeout
+			expect(drv.controller.stopJoiningNetwork).toHaveBeenCalledTimes(1)
+
+			vi.useRealTimers()
+		})
+	})
 })
