@@ -22,6 +22,22 @@ import type {
 	ServiceLogger,
 } from './ports.ts'
 
+/**
+ * Thrown when an in-flight firmware operation detects that the service
+ * generation has advanced (reset/dispose happened while awaiting). This is
+ * the explicit lifecycle cancellation error for firmware operations —
+ * consistent with the repo's `DriverNotReadyError` pattern.
+ */
+export class FirmwareLifecycleCancelledError extends Error {
+	constructor(operation: string) {
+		super(
+			`Firmware operation "${operation}" cancelled: service generation advanced`,
+		)
+		Object.setPrototypeOf(this, FirmwareLifecycleCancelledError.prototype)
+		Object.getPrototypeOf(this).name = 'FirmwareLifecycleCancelledError'
+	}
+}
+
 export class FirmwareUpdateService {
 	private readonly _driver: FirmwareDriverPort
 	private readonly _nodes: FirmwareNodeStorePort
@@ -98,6 +114,17 @@ export class FirmwareUpdateService {
 		this.clearScheduledCheck()
 	}
 
+	/**
+	 * Assert that the current generation matches the captured generation and
+	 * the service is not disposed. Throws `FirmwareLifecycleCancelledError`
+	 * if the fence is broken — never allows silent success on stale operations.
+	 */
+	private _assertFence(gen: number, operation: string): void {
+		if (this._generation !== gen || this._disposed) {
+			throw new FirmwareLifecycleCancelledError(operation)
+		}
+	}
+
 	async getAvailableFirmwareUpdates(
 		nodeId: number,
 		options?: unknown,
@@ -107,10 +134,15 @@ export class FirmwareUpdateService {
 			throw new Error('Driver is not ready')
 		}
 
+		const gen = this._generation
+
 		const result = await drv.controller.getAvailableFirmwareUpdates(
 			nodeId,
 			options,
 		)
+
+		// Fence: stale results must not be returned after reset/dispose
+		this._assertFence(gen, 'getAvailableFirmwareUpdates')
 
 		return result
 	}
@@ -123,15 +155,20 @@ export class FirmwareUpdateService {
 			throw new Error('Driver is not ready')
 		}
 
+		const gen = this._generation
+
 		const result =
 			await drv.controller.getAllAvailableFirmwareUpdates(options)
+
+		// Fence: stale results must not be returned after reset/dispose
+		this._assertFence(gen, 'getAllAvailableFirmwareUpdates')
 
 		return result
 	}
 
 	/**
 	 * Check firmware updates for all nodes and store results in nodes.json.
-	 * Generation-fenced: bails out before cache/store mutation if disposed/reset.
+	 * Generation-fenced: throws FirmwareLifecycleCancelledError if disposed/reset.
 	 */
 	async checkAllNodesFirmwareUpdates(
 		options?: unknown,
@@ -158,9 +195,7 @@ export class FirmwareUpdateService {
 
 			// Generation fence after await: do not mutate store/cache
 			// if a close/reset happened while the request was in flight.
-			if (this._generation !== gen || this._disposed) {
-				return result
-			}
+			this._assertFence(gen, 'checkAllNodesFirmwareUpdates')
 
 			if (result) {
 				const now = Date.now()
@@ -184,6 +219,10 @@ export class FirmwareUpdateService {
 
 			return result
 		} catch (error) {
+			// Propagate lifecycle cancellation without logging as unexpected error
+			if (error instanceof FirmwareLifecycleCancelledError) {
+				throw error
+			}
 			this._logger.error(
 				'Error during bulk firmware update check:',
 				getErrorMessage(error),
@@ -261,10 +300,16 @@ export class FirmwareUpdateService {
 			throw Error(`Firmware update already in progress`)
 		}
 
+		const gen = this._generation
+
 		const result = await drv.controller.firmwareUpdateOTA(
 			nodeId,
 			updateInfo,
 		)
+
+		// Fence: do not return result to caller if reset happened —
+		// the result belongs to a previous lifecycle.
+		this._assertFence(gen, 'firmwareUpdateOTA')
 
 		return result
 	}
@@ -275,12 +320,18 @@ export class FirmwareUpdateService {
 	async firmwareUpdateOTW(
 		file: FwFileRef | FirmwareUpdateInfo,
 	): Promise<OTWFirmwareUpdateResult> {
+		const gen = this._generation
+
 		try {
 			if (this._backup.backupOnEvent) {
 				if (this._nvmEventSetter) {
 					this._nvmEventSetter('before_controller_fw_update_otw')
 				}
 				await this._backup.backupNvm()
+
+				// Fence after backup: never let an OTW operation paused in
+				// backup call a replacement driver.
+				this._assertFence(gen, 'firmwareUpdateOTW')
 			}
 
 			const drv = this._driver.getDriver()
@@ -289,7 +340,9 @@ export class FirmwareUpdateService {
 			}
 
 			if ('files' in file) {
-				return await drv.firmwareUpdateOTW(file)
+				const result = await drv.firmwareUpdateOTW(file)
+				this._assertFence(gen, 'firmwareUpdateOTW')
+				return result
 			}
 
 			let firmwareData: Uint8Array<ArrayBuffer>
@@ -302,15 +355,31 @@ export class FirmwareUpdateService {
 					file.data,
 					format,
 				)
+
+				// Fence after extraction: never let extraction paused across
+				// reset call stale node update.
+				this._assertFence(gen, 'firmwareUpdateOTW')
+
 				firmwareData = firmware.data
-			} catch {
+			} catch (e) {
+				// Re-throw lifecycle cancellation as-is
+				if (e instanceof FirmwareLifecycleCancelledError) {
+					throw e
+				}
 				throw Error(
 					`Unable to extract firmware from file '${file.name}'`,
 				)
 			}
 
-			return await drv.firmwareUpdateOTW(firmwareData)
+			const result = await drv.firmwareUpdateOTW(firmwareData)
+			// Fence after driver call before returning result
+			this._assertFence(gen, 'firmwareUpdateOTW')
+			return result
 		} catch (e) {
+			// Propagate lifecycle cancellation without wrapping
+			if (e instanceof FirmwareLifecycleCancelledError) {
+				throw e
+			}
 			throw Error(`Error while updating firmware: ${getErrorMessage(e)}`)
 		}
 	}
@@ -348,6 +417,8 @@ export class FirmwareUpdateService {
 			throw Error(`Firmware update already in progress`)
 		}
 
+		const gen = this._generation
+
 		const firmwares: Array<{
 			data: Uint8Array<ArrayBuffer>
 			firmwareTarget?: number
@@ -381,11 +452,20 @@ export class FirmwareUpdateService {
 						data,
 						format,
 					)
+
+					// Fence after extraction: never let extraction paused
+					// across reset call stale node update.
+					this._assertFence(gen, 'updateFirmware')
+
 					if (f.target !== undefined) {
 						firmware.firmwareTarget = f.target
 					}
 					firmwares.push(firmware)
 				} catch (e) {
+					// Propagate lifecycle cancellation without wrapping
+					if (e instanceof FirmwareLifecycleCancelledError) {
+						throw e
+					}
 					throw Error(
 						`Unable to extract firmware from file '${name}': ${getErrorMessage(e)}`,
 					)
@@ -395,7 +475,15 @@ export class FirmwareUpdateService {
 			}
 		}
 
-		return zwaveNode.updateFirmware(firmwares)
+		// Final fence before calling into the (possibly replaced) node
+		this._assertFence(gen, 'updateFirmware')
+
+		const result = await zwaveNode.updateFirmware(firmwares)
+
+		// Fence after long-running update completes
+		this._assertFence(gen, 'updateFirmware')
+
+		return result
 	}
 
 	/**
@@ -417,7 +505,12 @@ export class FirmwareUpdateService {
 			throw Error(`Node ${nodeId} not found`)
 		}
 
+		const gen = this._generation
+
 		await zwaveNode.abortFirmwareUpdate()
+
+		// Fence: never let abort completion mutate node/socket after reset
+		this._assertFence(gen, 'abortFirmwareUpdate')
 
 		const node = this._nodes.getNode(nodeId)
 
@@ -554,7 +647,7 @@ export class FirmwareUpdateService {
 
 	/**
 	 * Check firmware updates for a specific node after an event.
-	 * Generation-fenced: bails out before cache/store mutation if disposed/reset.
+	 * Generation-fenced: throws FirmwareLifecycleCancelledError if disposed/reset.
 	 */
 	async checkNodeFirmwareUpdates(nodeId: number): Promise<void> {
 		if (!this._driver.isDriverReady() || this._disposed) {
@@ -580,9 +673,7 @@ export class FirmwareUpdateService {
 				await drv.controller.getAvailableFirmwareUpdates(nodeId)
 
 			// Generation fence after await
-			if (this._generation !== gen || this._disposed) {
-				return
-			}
+			this._assertFence(gen, 'checkNodeFirmwareUpdates')
 
 			const filteredUpdates = this._filterFirmwareUpdates(updates)
 			const timestamp = Date.now()
@@ -595,6 +686,10 @@ export class FirmwareUpdateService {
 				`Checked firmware updates for node ${nodeId} after update completion. Found ${filteredUpdates.length} update(s)`,
 			)
 		} catch (error) {
+			// Lifecycle cancellation is expected — don't log as failure
+			if (error instanceof FirmwareLifecycleCancelledError) {
+				return
+			}
 			this._logger.error(
 				`Failed to check firmware updates for node ${nodeId} after update: ${getErrorMessage(error)}`,
 			)
