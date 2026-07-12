@@ -24,6 +24,7 @@ import type {
 	ServiceLogger,
 } from './ports.ts'
 import { InclusionStrategy, QRCodeVersion } from './ports.ts'
+import type { JoinNetworkResult } from './ports.ts'
 
 export class InclusionCoordinator {
 	private readonly _driver: InclusionDriverPort
@@ -481,7 +482,9 @@ export class InclusionCoordinator {
 	/**
 	 * Start learn mode (join another network)
 	 */
-	async startLearnMode(joinNetworkStrategy: number): Promise<unknown> {
+	async startLearnMode(
+		joinNetworkStrategy: number,
+	): Promise<JoinNetworkResult> {
 		const drv = this._driver.getDriver()
 		if (!drv || !this._driver.isDriverReady()) {
 			throw new Error('Driver is not ready')
