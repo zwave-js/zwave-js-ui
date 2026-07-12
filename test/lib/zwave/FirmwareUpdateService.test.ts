@@ -1144,4 +1144,92 @@ describe('FirmwareUpdateService', () => {
 			})
 		})
 	})
+
+	// -----------------------------------------------------------------
+	// Regression: Finding 3 – clearScheduledCheck called on cleanup
+	// -----------------------------------------------------------------
+	describe('clearScheduledCheck', () => {
+		it('cancels a pending scheduled check timer', () => {
+			vi.useFakeTimers()
+			const driver = createDriverPort({
+				isDriverReady: () => true,
+				getDriver: () => ({
+					controller: {
+						getAvailableFirmwareUpdates: vi.fn(),
+						getAllAvailableFirmwareUpdates: vi
+							.fn()
+							.mockResolvedValue(new Map()),
+						firmwareUpdateOTA: vi.fn(),
+						nodes: { get: vi.fn() },
+					},
+					firmwareUpdateOTW: vi.fn(),
+				}),
+			})
+			const nodes = createNodeStorePort()
+			const { service } = createService({ driver, nodes })
+
+			// Trigger the scheduled check (starts the internal timer)
+			void service.scheduledFirmwareUpdateCheck()
+
+			// Clear before the timer fires
+			service.clearScheduledCheck()
+
+			// Advance time well past the scheduled interval
+			vi.advanceTimersByTime(24 * 60 * 60 * 1000 * 2)
+
+			// getAllAvailableFirmwareUpdates should not have been called
+			// (the first scheduledFirmwareUpdateCheck calls it once
+			// immediately; after clearScheduledCheck the re-schedule must
+			// not fire)
+			const ctrl = driver.getDriver().controller
+			const callCount = (
+				ctrl.getAllAvailableFirmwareUpdates as ReturnType<typeof vi.fn>
+			).mock.calls.length
+			// It may have been called once for the initial check, but not
+			// again for the scheduled re-run
+			expect(callCount).toBeLessThanOrEqual(1)
+		})
+	})
+
+	// -----------------------------------------------------------------
+	// Regression: Finding 6 – FirmwareUpdateInfoRef passed without cast
+	// -----------------------------------------------------------------
+	describe('firmwareUpdateOTW with FirmwareUpdateInfo', () => {
+		it('passes FirmwareUpdateInfoRef directly to driver without Uint8Array cast', async () => {
+			const firmwareUpdateOTW = vi.fn().mockResolvedValue({ ok: true })
+			const driver = createDriverPort({
+				isDriverReady: () => true,
+				getDriver: () => ({
+					controller: {
+						getAvailableFirmwareUpdates: vi.fn(),
+						getAllAvailableFirmwareUpdates: vi.fn(),
+						firmwareUpdateOTA: vi.fn(),
+						nodes: { get: vi.fn() },
+					},
+					firmwareUpdateOTW,
+				}),
+			})
+			const { service } = createService({ driver })
+
+			const updateInfo: FirmwareUpdateInfoRef = {
+				version: '3.0.0',
+				downgrade: false,
+				changelog: 'New features',
+				channel: 'stable',
+				files: [
+					{
+						target: 0,
+						url: 'https://fw.example.com/v3.bin',
+						integrity: 'sha256:def',
+					},
+				],
+			}
+
+			await service.firmwareUpdateOTW(updateInfo)
+
+			// Verify it was passed as-is (a FirmwareUpdateInfoRef, not cast
+			// to Uint8Array)
+			expect(firmwareUpdateOTW).toHaveBeenCalledWith(updateInfo)
+		})
+	})
 })

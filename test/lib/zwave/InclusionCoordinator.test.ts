@@ -1487,4 +1487,271 @@ describe('InclusionCoordinator', () => {
 			})
 		})
 	})
+
+	// -----------------------------------------------------------------
+	// Regression: Finding 2 – timeout cancelled on reset (close/restart)
+	// -----------------------------------------------------------------
+	describe('timeout cleanup on reset', () => {
+		it('reset() cancels the inclusion timeout so it cannot fire against a new driver', () => {
+			vi.useFakeTimers()
+			const { coordinator, driver } = createCoordinator({
+				backup: { ...createBackupPort(), backupOnEvent: false },
+			})
+
+			// Start inclusion — sets up timeout
+			void coordinator.startInclusion(
+				STRATEGY_INSECURE,
+				undefined,
+				undefined,
+				STRATEGY_SMART_START,
+				STRATEGY_SECURITY_S2,
+				STRATEGY_DEFAULT,
+				STRATEGY_INSECURE,
+				STRATEGY_SECURITY_S0,
+			)
+
+			// Now simulate close/restart — reset should cancel the timeout
+			coordinator.reset()
+
+			// Advance past timeout — stopInclusion should NOT be called
+			const drv = driver.getDriver()
+			vi.advanceTimersByTime(60_000)
+			expect(drv.controller.stopInclusion).not.toHaveBeenCalled()
+		})
+
+		it('reset() cancels the exclusion timeout', () => {
+			vi.useFakeTimers()
+			const { coordinator, driver } = createCoordinator({
+				backup: { ...createBackupPort(), backupOnEvent: false },
+			})
+
+			void coordinator.startExclusion({})
+
+			coordinator.reset()
+
+			const drv = driver.getDriver()
+			vi.advanceTimersByTime(60_000)
+			expect(drv.controller.stopExclusion).not.toHaveBeenCalled()
+		})
+
+		it('reset() increments generation', () => {
+			const { coordinator } = createCoordinator()
+			const gen0 = coordinator.generation
+			coordinator.reset()
+			expect(coordinator.generation).toBe(gen0 + 1)
+		})
+	})
+
+	// -----------------------------------------------------------------
+	// Regression: Finding 4 – stale driver detection across await
+	// -----------------------------------------------------------------
+	describe('generation fencing across awaits', () => {
+		it('startInclusion rejects when driver closed during backup', async () => {
+			const backup = createBackupPort()
+			backup.backupOnEvent = true
+
+			let resolveBackup: () => void
+			backup.backupNvm = vi.fn(
+				() => new Promise<void>((r) => (resolveBackup = r)),
+			)
+
+			const { coordinator } = createCoordinator({ backup })
+
+			const promise = coordinator.startInclusion(
+				STRATEGY_INSECURE,
+				undefined,
+				undefined,
+				STRATEGY_SMART_START,
+				STRATEGY_SECURITY_S2,
+				STRATEGY_DEFAULT,
+				STRATEGY_INSECURE,
+				STRATEGY_SECURITY_S0,
+			)
+
+			// Simulate close/restart while backup is pending
+			coordinator.reset()
+			resolveBackup()
+
+			await expect(promise).rejects.toThrow(
+				'Driver was closed during inclusion setup',
+			)
+		})
+
+		it('startExclusion rejects when driver closed during backup', async () => {
+			const backup = createBackupPort()
+			backup.backupOnEvent = true
+
+			let resolveBackup: () => void
+			backup.backupNvm = vi.fn(
+				() => new Promise<void>((r) => (resolveBackup = r)),
+			)
+
+			const { coordinator } = createCoordinator({ backup })
+
+			const promise = coordinator.startExclusion({})
+
+			coordinator.reset()
+			resolveBackup()
+
+			await expect(promise).rejects.toThrow(
+				'Driver was closed during exclusion setup',
+			)
+		})
+
+		it('replaceFailedNode rejects when driver closed during backup', async () => {
+			const backup = createBackupPort()
+			backup.backupOnEvent = true
+
+			let resolveBackup: () => void
+			backup.backupNvm = vi.fn(
+				() => new Promise<void>((r) => (resolveBackup = r)),
+			)
+
+			const { coordinator } = createCoordinator({ backup })
+
+			const promise = coordinator.replaceFailedNode(
+				5,
+				STRATEGY_INSECURE,
+				undefined,
+				STRATEGY_SECURITY_S2,
+				STRATEGY_INSECURE,
+				STRATEGY_SECURITY_S0,
+			)
+
+			coordinator.reset()
+			resolveBackup()
+
+			await expect(promise).rejects.toThrow(
+				'Driver was closed during replace setup',
+			)
+		})
+
+		it('startInclusion rejects when driver closed during QR parse', async () => {
+			const backup = createBackupPort()
+			backup.backupOnEvent = false
+
+			let resolveQr: (v: unknown) => void
+			const qr: InclusionQRPort = {
+				parseQRCodeString: vi.fn(
+					() => new Promise((r) => (resolveQr = r)),
+				),
+			}
+
+			const { coordinator } = createCoordinator({ backup, qr })
+
+			const promise = coordinator.startInclusion(
+				STRATEGY_SECURITY_S2,
+				{ qrString: 'test-qr' },
+				undefined,
+				STRATEGY_SMART_START,
+				STRATEGY_SECURITY_S2,
+				STRATEGY_DEFAULT,
+				STRATEGY_INSECURE,
+				STRATEGY_SECURITY_S0,
+				1,
+				0,
+			)
+
+			coordinator.reset()
+			resolveQr({ version: 0, securityClasses: [], dsk: '00000' })
+
+			await expect(promise).rejects.toThrow(
+				'Driver was closed during inclusion setup',
+			)
+		})
+	})
+
+	// -----------------------------------------------------------------
+	// Regression: Finding 1 – callback resolution owned by coordinator
+	// -----------------------------------------------------------------
+	describe('callback resolution consolidation', () => {
+		it('grantSecurityClasses resolves the coordinator-owned promise', async () => {
+			const { coordinator, socket } = createCoordinator()
+			coordinator.setUserCallbacks()
+
+			const callbacks = coordinator.getUserCallbacks()
+			const grantPromise = callbacks.grantSecurityClasses({
+				securityClasses: [1, 2],
+				clientSideAuth: false,
+			})
+
+			// Verify socket emission
+			expect(socket.sendToSocket).toHaveBeenCalledWith(
+				'GRANT_SECURITY_CLASSES',
+				{ securityClasses: [1, 2], clientSideAuth: false },
+			)
+
+			// Resolve via coordinator
+			coordinator.grantSecurityClasses({
+				securityClasses: [1],
+				clientSideAuth: true,
+			})
+
+			const result = await grantPromise
+			expect(result).toEqual({
+				securityClasses: [1],
+				clientSideAuth: true,
+			})
+		})
+
+		it('validateDSK resolves the coordinator-owned promise', async () => {
+			const { coordinator, socket } = createCoordinator()
+			coordinator.setUserCallbacks()
+
+			const callbacks = coordinator.getUserCallbacks()
+			const dskPromise = callbacks.validateDSKAndEnterPIN('12345-67890')
+
+			expect(socket.sendToSocket).toHaveBeenCalledWith(
+				'VALIDATE_DSK',
+				'12345-67890',
+			)
+
+			coordinator.validateDSK('12345')
+
+			const result = await dskPromise
+			expect(result).toBe('12345')
+		})
+
+		it('abortInclusion resolves both pending promises with false', async () => {
+			const { coordinator } = createCoordinator()
+			coordinator.setUserCallbacks()
+
+			const callbacks = coordinator.getUserCallbacks()
+			const grantPromise = callbacks.grantSecurityClasses({
+				securityClasses: [1],
+				clientSideAuth: false,
+			})
+			const dskPromise = callbacks.validateDSKAndEnterPIN('dsk-value')
+
+			coordinator.abortInclusion()
+
+			expect(await grantPromise).toBe(false)
+			expect(await dskPromise).toBe(false)
+		})
+
+		it('setUserCallbacks with serverEnabled=false does not call updateOptions', () => {
+			const config = createConfigPort()
+			config.serverEnabled = false
+			const { coordinator, driver } = createCoordinator({ config })
+
+			coordinator.setUserCallbacks()
+
+			const drv = driver.getDriver()
+			expect(drv.updateOptions).not.toHaveBeenCalled()
+			expect(coordinator.hasUserCallbacks).toBe(true)
+		})
+
+		it('removeUserCallbacks hands control back to HA server', () => {
+			const serverManager: InclusionServerManagerPort = {
+				handInclusionControlBack: vi.fn(),
+			}
+			const { coordinator } = createCoordinator({ serverManager })
+
+			coordinator.setUserCallbacks()
+			coordinator.removeUserCallbacks()
+
+			expect(coordinator.hasUserCallbacks).toBe(false)
+			expect(serverManager.handInclusionControlBack).toHaveBeenCalled()
+		})
+	})
 })
