@@ -778,7 +778,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		return {
 			getDriver: () => this._driver,
 			getConfig: () => this.cfg,
-			getHasUserCallbacks: () => this._inclusionCoordinator.hasUserCallbacks,
+			getHasUserCallbacks: () =>
+				this._inclusionCoordinator.hasUserCallbacks,
 			onHardReset: () => this.init(),
 			logger,
 			serverLogger: LogManager.module('Z-Wave-Server'),
@@ -6078,7 +6079,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			this.sendToSocket(socketEvents.nodeRemoved, node)
 		}
 
-		if (!this._inclusionCoordinator.isReplacing && this.storeNodes[nodeid]) {
+		if (
+			!this._inclusionCoordinator.isReplacing &&
+			this.storeNodes[nodeid]
+		) {
 			delete this.storeNodes[nodeid]
 			// eslint-disable-next-line @typescript-eslint/no-floating-promises
 			this.updateStoreNodes(false)

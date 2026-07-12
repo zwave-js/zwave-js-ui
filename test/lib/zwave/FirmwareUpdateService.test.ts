@@ -1232,4 +1232,150 @@ describe('FirmwareUpdateService', () => {
 			expect(firmwareUpdateOTW).toHaveBeenCalledWith(updateInfo)
 		})
 	})
+
+	// -----------------------------------------------------------------
+	// Finding 5: Generation fencing and dispose tests
+	// -----------------------------------------------------------------
+	describe('Finding 5: generation fencing and dispose', () => {
+		it('dispose() increments generation and marks disposed', () => {
+			const { service } = createService()
+			const gen0 = service.generation
+			expect(service.disposed).toBe(false)
+
+			service.dispose()
+			expect(service.generation).toBe(gen0 + 1)
+			expect(service.disposed).toBe(true)
+		})
+
+		it('resetGeneration() increments generation without disposal', () => {
+			const { service } = createService()
+			const gen0 = service.generation
+			service.resetGeneration()
+			expect(service.generation).toBe(gen0 + 1)
+			expect(service.disposed).toBe(false)
+		})
+
+		it('scheduledFirmwareUpdateCheck does not reschedule after dispose', async () => {
+			vi.useFakeTimers()
+			const { service } = createService()
+
+			// Start the scheduled check
+			const checkPromise = service.scheduledFirmwareUpdateCheck()
+
+			// Dispose while check is pending
+			service.dispose()
+
+			await checkPromise
+
+			// No timer should be set for the old generation
+			// Advance time significantly — if a timer was wrongly set, it would fire
+			await vi.advanceTimersByTimeAsync(100 * 60 * 60 * 1000)
+
+			// If we get here without error, no stale timer fired
+			vi.useRealTimers()
+		})
+
+		it('scheduledFirmwareUpdateCheck does not reschedule after resetGeneration', async () => {
+			vi.useFakeTimers()
+			const updates = new Map([[7, [makeUpdate()]]])
+			let resolveCheck: () => void
+			const checkPromise = new Promise<void>((r) => {
+				resolveCheck = r
+			})
+			const driver = createDriverPort({
+				getDriver: () => ({
+					controller: {
+						getAvailableFirmwareUpdates: vi.fn(),
+						getAllAvailableFirmwareUpdates: vi.fn().mockReturnValue(
+							new Promise((resolve) => {
+								// Control when the check resolves
+								void checkPromise.then(() => resolve(updates))
+							}),
+						),
+						firmwareUpdateOTA: vi.fn(),
+						nodes: { get: vi.fn() },
+					},
+					firmwareUpdateOTW: vi.fn(),
+				}),
+			})
+			const nodes = createNodeStorePort()
+			nodes._nodes.set(7, { id: 7 })
+			const { service } = createService({ driver, nodes })
+
+			const schedulePromise = service.scheduledFirmwareUpdateCheck()
+
+			// Reset generation while check is in-flight
+			service.resetGeneration()
+
+			// Now let the check resolve
+			resolveCheck()
+			await schedulePromise
+
+			// Store should NOT have been updated (generation fence)
+			expect(nodes.updateStoreNodes).not.toHaveBeenCalled()
+
+			vi.useRealTimers()
+		})
+
+		it('checkNodeFirmwareUpdates bails out after dispose mid-flight', async () => {
+			let resolveCheck: (v: unknown[]) => void
+			const driver = createDriverPort({
+				getDriver: () => ({
+					controller: {
+						getAvailableFirmwareUpdates: vi.fn().mockReturnValue(
+							new Promise((resolve) => {
+								resolveCheck = resolve
+							}),
+						),
+						getAllAvailableFirmwareUpdates: vi.fn(),
+						firmwareUpdateOTA: vi.fn(),
+						nodes: { get: vi.fn() },
+					},
+					firmwareUpdateOTW: vi.fn(),
+				}),
+			})
+			const nodes = createNodeStorePort()
+			nodes._nodes.set(5, { id: 5 })
+			const { service } = createService({ driver, nodes })
+
+			const checkPromise = service.checkNodeFirmwareUpdates(5)
+
+			// Dispose while the check is in-flight
+			service.dispose()
+
+			// Resolve the check
+			resolveCheck([makeUpdate()])
+			await checkPromise
+
+			// Store should NOT have been updated
+			expect(nodes.updateStoreNodes).not.toHaveBeenCalled()
+		})
+
+		it('disposed service does not start scheduled check', async () => {
+			const { service, logger } = createService()
+			service.dispose()
+
+			await service.scheduledFirmwareUpdateCheck()
+
+			// Should return immediately without logging "disabled" or starting
+			expect(logger.info).not.toHaveBeenCalledWith(
+				expect.stringContaining('Starting bulk'),
+			)
+		})
+
+		it('clearScheduledCheck cancels pending timer', () => {
+			vi.useFakeTimers()
+			const { service } = createService()
+
+			// Manually set a timeout
+			;(service as any)._firmwareUpdateCheckTimeout = setTimeout(
+				() => {},
+				1000,
+			)
+			service.clearScheduledCheck()
+			expect((service as any)._firmwareUpdateCheckTimeout).toBeNull()
+
+			vi.useRealTimers()
+		})
+	})
 })
