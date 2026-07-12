@@ -833,7 +833,6 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	private commandsTimeout: NodeJS.Timeout
 	private healTimeout: NodeJS.Timeout
 	private updatesCheckTimeout: NodeJS.Timeout
-	private firmwareUpdateCheckTimeout: NodeJS.Timeout
 	private pollIntervals: Record<string, NodeJS.Timeout>
 
 	private _lockNeighborsRefresh: boolean
@@ -1152,7 +1151,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		// --- FirmwareUpdateService wiring ------------------------------------------
 		const firmwareDriverPort = {
-			getDriver: () => this._driver as any,
+			getDriver: () => this._driver,
 			isDriverReady: () => this.driverReady,
 		}
 		const firmwareNodeStorePort = {
@@ -1160,7 +1159,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			getStoreNode: (nodeId: number) => this.storeNodes[nodeId],
 			ensureStoreNode: (nodeId: number) => {
 				if (!this.storeNodes[nodeId]) {
-					this.storeNodes[nodeId] = {} as any
+					this.storeNodes[nodeId] = {}
 				}
 				return this.storeNodes[nodeId]
 			},
@@ -1177,11 +1176,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				this.throttle(key, fn, wait),
 			clearThrottle: (key: string) => this.clearThrottle(key),
 		}
-		// eslint-disable-next-line @typescript-eslint/no-this-alias
-		const self = this
+		const getClientCfg = () => this.cfg
 		const firmwareConfigPort = {
 			get disableAutomaticFirmwareUpdateChecks() {
-				return !!self.cfg.disableAutomaticFirmwareUpdateChecks
+				return !!getClientCfg().disableAutomaticFirmwareUpdateChecks
 			},
 		}
 		const firmwareBackupPort = {
@@ -1191,12 +1189,16 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			backupNvm: () => backupManager.backupNvm(),
 		}
 		const firmwareExtractionPort = {
-			guessFirmwareFileFormat: (name: string, data: Uint8Array) =>
-				guessFirmwareFileFormat(name, data as any),
-			extractFirmware: (data: Uint8Array, format: unknown) =>
-				extractFirmware(data as any, format as FirmwareFileFormat),
-			tryUnzipFirmwareFile: (data: Uint8Array) =>
-				tryUnzipFirmwareFile(data as any),
+			guessFirmwareFileFormat: (
+				name: string,
+				data: Uint8Array<ArrayBuffer>,
+			) => guessFirmwareFileFormat(name, data),
+			extractFirmware: (
+				data: Uint8Array<ArrayBuffer>,
+				format: FirmwareFileFormat,
+			) => extractFirmware(data, format),
+			tryUnzipFirmwareFile: (data: Uint8Array<ArrayBuffer>) =>
+				tryUnzipFirmwareFile(data),
 			isUint8Array: (value: unknown): value is Uint8Array =>
 				isUint8Array(value),
 		}
@@ -1215,7 +1217,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		// --- InclusionCoordinator wiring -------------------------------------------
 		const inclusionDriverPort = {
-			getDriver: () => this._driver as any,
+			getDriver: () => this._driver,
 			isDriverReady: () => this.driverReady,
 		}
 		const inclusionSocketPort = {
@@ -1230,15 +1232,15 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		}
 		const inclusionConfigPort = {
 			get commandsTimeout() {
-				return self.cfg.commandsTimeout || 0
+				return getClientCfg().commandsTimeout || 0
 			},
 			get serverEnabled() {
-				return !!self.cfg.serverEnabled
+				return !!getClientCfg().serverEnabled
 			},
 		}
 		const inclusionQRPort = {
 			parseQRCodeString: (qrString: string) =>
-				parseQRCodeString(qrString) as any,
+				parseQRCodeString(qrString),
 		}
 		this._inclusionCoordinator = new InclusionCoordinator(
 			inclusionDriverPort,
@@ -1610,17 +1612,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			this.updatesCheckTimeout = null
 		}
 
-		if (this.firmwareUpdateCheckTimeout) {
-			clearTimeout(this.firmwareUpdateCheckTimeout)
-			this.firmwareUpdateCheckTimeout = null
-		}
-
-		// Cancel coordinator-owned inclusion/exclusion/replace timeout and
-		// resolve any pending callbacks so they don't fire against a new driver
 		this._inclusionCoordinator.reset()
 
-		// Cancel firmware scheduled check timer so it doesn't leak across
-		// close/restart
 		this._firmwareUpdateService.clearScheduledCheck()
 
 		if (this.statelessTimeouts) {
@@ -2101,11 +2094,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		// when server is not enabled, disable the user callbacks set/remove
 		// so it can be used through MQTT
 		if (!this.cfg.serverEnabled) {
-			// The coordinator's callbacks use the narrow InclusionGrantRef
-			// port type; the driver expects the concrete InclusionGrant -
-			// they're structurally compatible at runtime.
 			zwaveOptions.inclusionUserCallbacks =
-				this._inclusionCoordinator.getUserCallbacks() as unknown as InclusionUserCallbacks
+				this._inclusionCoordinator.getUserCallbacks()
 		}
 
 		if (this.cfg.scales) {
@@ -5040,7 +5030,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	}
 
 	grantSecurityClasses(requested: InclusionGrant) {
-		this._inclusionCoordinator.grantSecurityClasses(requested as any)
+		this._inclusionCoordinator.grantSecurityClasses(requested)
 	}
 
 	validateDSK(dsk: string) {

@@ -10,9 +10,19 @@ import type {
 	VirtualValueID,
 	ZWaveController,
 } from 'zwave-js'
-import type { SupervisionResult } from '@zwave-js/core'
+import type {
+	FirmwareFileFormat,
+	SecurityClass,
+	SupervisionResult,
+} from '@zwave-js/core'
 import type { ConfigManager } from '@zwave-js/config'
 import type { DeepPartial } from '../utils.ts'
+
+export type { FirmwareFileFormat, SecurityClass }
+
+// ---------------------------------------------------------------------------
+// Schedule types re-exported so services don't import ZwaveClient
+// ---------------------------------------------------------------------------
 
 export const ZUIScheduleEntryLockMode = {
 	DAILY: 'daily',
@@ -384,7 +394,6 @@ export interface FirmwareUpdateInfoRef {
 	changelog?: string
 	channel?: string
 	files: Array<{ target: number; url: string; integrity: string }>
-	device?: Record<string, unknown>
 }
 
 export interface FwFileRef {
@@ -467,14 +476,21 @@ export interface FirmwareBackupPort {
 // ---------------------------------------------------------------------------
 
 export interface FirmwareExtractionPort {
-	guessFirmwareFileFormat(name: string, data: Uint8Array): unknown
+	guessFirmwareFileFormat(
+		name: string,
+		data: Uint8Array<ArrayBuffer>,
+	): FirmwareFileFormat
 	extractFirmware(
-		data: Uint8Array,
-		format: unknown,
+		data: Uint8Array<ArrayBuffer>,
+		format: FirmwareFileFormat,
 	): Promise<{ data: Uint8Array<ArrayBuffer>; firmwareTarget?: number }>
-	tryUnzipFirmwareFile(
-		data: Uint8Array,
-	): { format: unknown; filename: string; rawData: Uint8Array } | undefined
+	tryUnzipFirmwareFile(data: Uint8Array<ArrayBuffer>):
+		| {
+				format: FirmwareFileFormat
+				filename: string
+				rawData: Uint8Array<ArrayBuffer>
+		  }
+		| undefined
 	isUint8Array(value: unknown): value is Uint8Array
 }
 
@@ -483,7 +499,7 @@ export interface FirmwareExtractionPort {
 // ---------------------------------------------------------------------------
 
 export interface InclusionGrantRef {
-	securityClasses: unknown[]
+	securityClasses: SecurityClass[]
 	clientSideAuth: boolean
 }
 
@@ -542,9 +558,7 @@ export interface InclusionConfigPort {
 // ---------------------------------------------------------------------------
 
 export interface InclusionQRPort {
-	parseQRCodeString(
-		qrString: string,
-	): Promise<{ version: number; [k: string]: unknown } | undefined>
+	parseQRCodeString(qrString: string): Promise<{ version: number }>
 }
 
 // ---------------------------------------------------------------------------

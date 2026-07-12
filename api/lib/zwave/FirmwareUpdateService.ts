@@ -22,6 +22,7 @@ import type {
 	FirmwareConfigPort,
 	FirmwareDriverPort,
 	FirmwareExtractionPort,
+	FirmwareFileFormat,
 	FirmwareNodeStorePort,
 	FirmwareSocketPort,
 	FirmwareUpdateInfoRef,
@@ -332,7 +333,7 @@ export class FirmwareUpdateService {
 			let { data, name } = f
 			if (this._extraction.isUint8Array(data)) {
 				try {
-					let format: unknown
+					let format: FirmwareFileFormat
 					if (name.endsWith('.zip')) {
 						const extracted =
 							this._extraction.tryUnzipFirmwareFile(data)
@@ -344,7 +345,7 @@ export class FirmwareUpdateService {
 
 						format = extracted.format
 						name = extracted.filename
-						data = extracted.rawData as Uint8Array<ArrayBuffer>
+						data = extracted.rawData
 					} else {
 						format = this._extraction.guessFirmwareFileFormat(
 							name,
