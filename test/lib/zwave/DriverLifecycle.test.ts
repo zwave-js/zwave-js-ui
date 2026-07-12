@@ -44,10 +44,21 @@ import { ZwaveClientStatus } from '../../../api/lib/zwave/ports.ts'
 const hoisted = vi.hoisted(() => ({
 	drivers: [] as any[],
 	destroyOrder: [] as string[],
-	/** 'resolve' | 'reject' | 'hang' — how the fake `driver.start()` behaves. */
-	startBehavior: 'resolve' as 'resolve' | 'reject' | 'hang',
+	/** 'resolve' | 'reject' | 'hang' | 'deferred' — how the fake `driver.start()` behaves. */
+	startBehavior: 'resolve' as 'resolve' | 'reject' | 'hang' | 'deferred',
 	/** Error thrown by `driver.start()` when `startBehavior === 'reject'`. */
 	startError: new Error('start failed'),
+	/**
+	 * When `startBehavior === 'deferred'`, each `driver.start()` call pushes a
+	 * controllable `{ resolve, reject }` here (in call order) and returns a
+	 * promise that only settles when the test drives it. Lets a test interleave
+	 * two overlapping `connect()` calls deterministically (old start settling
+	 * after a replacement has taken over) with no timers.
+	 */
+	startDeferreds: [] as Array<{
+		resolve: () => void
+		reject: (err: unknown) => void
+	}>,
 	/** Synchronous hook invoked at the very start of `driver.start()`. */
 	startHook: null as null | (() => void),
 	/** Synchronous hook invoked inside the stubbed `utils.ensureDir`. */
@@ -76,6 +87,7 @@ vi.mock('zwave-js', async () => {
 		controller = new FakeController()
 		port: any
 		options: any
+		private _destroyed = false
 		start = vi.fn(() => {
 			hoisted.startHook?.()
 			if (hoisted.startBehavior === 'reject') {
@@ -86,9 +98,21 @@ vi.mock('zwave-js', async () => {
 					/* never resolves */
 				})
 			}
+			if (hoisted.startBehavior === 'deferred') {
+				return new Promise<void>((resolve, reject) => {
+					hoisted.startDeferreds.push({ resolve, reject })
+				})
+			}
 			return Promise.resolve()
 		})
 		destroy = vi.fn(() => {
+			// The real zwave-js `Driver.destroy()` is idempotent (guarded by an
+			// internal `_destroyPromise`); mirror that so a stale-connect teardown
+			// racing a `close()` records the destroy effect exactly once.
+			if (this._destroyed) {
+				return Promise.resolve()
+			}
+			this._destroyed = true
 			hoisted.destroyOrder.push('driver')
 			if (hoisted.destroyRejects) {
 				return Promise.reject(new Error('destroy failed'))
@@ -274,11 +298,28 @@ function fakeManager() {
 /** Flush pending microtasks. */
 const flush = () => Promise.resolve()
 
+/**
+ * Pump the microtask queue until `pred()` holds (or a bounded number of turns
+ * elapses). Deterministic: every intermediate `await` inside `connect()`
+ * resolves synchronously (mocked `ensureDir`/`hasConnectedClients`), so this
+ * only advances already-settled microtasks — no timers, no wall-clock.
+ */
+async function until(pred: () => boolean, max = 100): Promise<void> {
+	for (let i = 0; i < max; i++) {
+		if (pred()) return
+		await Promise.resolve()
+	}
+	if (!pred()) {
+		throw new Error('until(): condition was not met')
+	}
+}
+
 beforeEach(() => {
 	hoisted.drivers.length = 0
 	hoisted.destroyOrder.length = 0
 	hoisted.startBehavior = 'resolve'
 	hoisted.startError = new Error('start failed')
+	hoisted.startDeferreds.length = 0
 	hoisted.startHook = null
 	hoisted.ensureDirHook = null
 	hoisted.destroyRejects = false
@@ -490,6 +531,64 @@ describe('DriverLifecycle — backoff restart & checkIfDestroyed', () => {
 	it('checkIfDestroyed returns false when not destroyed', () => {
 		const { lifecycle } = createHarness()
 		expect(lifecycle.checkIfDestroyed()).toBe(false)
+	})
+})
+
+// ===========================================================================
+// backoff restart — coalescing & generation fencing (finding 3)
+// ===========================================================================
+
+describe('DriverLifecycle — backoff restart coalescing & fencing', () => {
+	beforeEach(() => vi.useFakeTimers())
+	afterEach(() => vi.useRealTimers())
+
+	it('coalesces two backoff schedules made before firing into a single restart (latest delay wins)', async () => {
+		const { lifecycle, host } = createHarness()
+
+		// Two backoff requests arrive before either timer fires. Previously the
+		// second overwrote `_restartTimeout` and LEAKED the first handle, so BOTH
+		// fired → a double restart. They must now coalesce into ONE pending
+		// restart using the most-recent delay (2^1 * 1000 = 2000ms).
+		lifecycle.backoffRestart() // 1st: 1000ms
+		lifecycle.backoffRestart() // 2nd: 2000ms (clears the 1000ms handle)
+
+		// The leaked first handle must NOT fire at its original 1000ms.
+		await vi.advanceTimersByTimeAsync(1000)
+		expect(host.restart).not.toHaveBeenCalled()
+
+		// Only the single coalesced restart fires at the latest 2000ms delay.
+		await vi.advanceTimersByTimeAsync(1000)
+		expect(host.restart).toHaveBeenCalledTimes(1)
+
+		// And nothing else is left pending afterwards.
+		await vi.advanceTimersByTimeAsync(60000)
+		expect(host.restart).toHaveBeenCalledTimes(1)
+	})
+
+	it('a healthy replacement (new generation) fences a still-pending backoff restart', async () => {
+		const { lifecycle, host } = createHarness({ serverEnabled: false })
+
+		// A backoff restart is scheduled...
+		lifecycle.backoffRestart() // 1000ms, captures generation 0
+
+		// ...then a healthy driver connects, bumping the generation. This does
+		// NOT clear the pending timer, so only the generation fence can stop the
+		// stale restart from firing.
+		await lifecycle.connect()
+		expect(lifecycle.generation).toBe(1)
+
+		await vi.advanceTimersByTimeAsync(60000)
+		expect(host.restart).not.toHaveBeenCalled() // fenced: no stale restart
+	})
+
+	it('close() clears a pending backoff restart so it never fires', async () => {
+		const { lifecycle, host } = createHarness({ serverEnabled: false })
+
+		lifecycle.backoffRestart() // schedule
+		await lifecycle.close() // clears the handle AND bumps the generation
+
+		await vi.advanceTimersByTimeAsync(60000)
+		expect(host.restart).not.toHaveBeenCalled()
 	})
 })
 
@@ -775,6 +874,123 @@ describe('DriverLifecycle — connect generation fencing', () => {
 		await lifecycle.connect()
 		// fenced right after persistConfig — no driver created
 		expect(hoisted.drivers).toHaveLength(0)
+	})
+})
+
+// ===========================================================================
+// connect() — overlapping-connect ownership (finding 1)
+// ===========================================================================
+
+describe('DriverLifecycle — overlapping connect ownership', () => {
+	// Deterministically interleave two overlapping connect() calls: the first
+	// (stale) generation's driver.start() is held open via a per-instance
+	// deferred while a second connect() supersedes it and stores a replacement
+	// driver on the host. We then settle the stale start LAST and assert that
+	// only the stale generation's OWN driver is torn down — never the live
+	// replacement — with no leak.
+	async function openTwoOverlappingConnects() {
+		const harness = createHarness({ serverEnabled: false })
+		hoisted.startBehavior = 'deferred'
+
+		// First (soon-to-be-stale) connect: creates driver0, holds at start().
+		const stalePromise = harness.lifecycle.connect()
+		await until(() => hoisted.startDeferreds.length === 1)
+		expect(hoisted.drivers).toHaveLength(1)
+
+		// Second connect supersedes the first (bumps the generation), creates
+		// driver1, stores it on the host and holds at its own start().
+		const freshPromise = harness.lifecycle.connect()
+		await until(() => hoisted.startDeferreds.length === 2)
+		expect(hoisted.drivers).toHaveLength(2)
+
+		const [driver0, driver1] = hoisted.drivers
+
+		// Let the REPLACEMENT finish first so it becomes the live driver.
+		hoisted.startDeferreds[1].resolve()
+		await freshPromise
+		expect(harness.state.driver).toBe(driver1)
+		expect(harness.state.status).toBe(ZwaveClientStatus.CONNECTED)
+
+		return { ...harness, stalePromise, driver0, driver1 }
+	}
+
+	it('a stale start that RESOLVES after a replacement tears down only its own driver', async () => {
+		const { state, stalePromise, driver0, driver1 } =
+			await openTwoOverlappingConnects()
+
+		// The stale generation's start finally resolves — it must NOT clobber
+		// the live replacement.
+		hoisted.startDeferreds[0].resolve()
+		await stalePromise
+
+		expect(driver0.destroy).toHaveBeenCalledTimes(1) // stale torn down (no leak)
+		expect(driver1.destroy).not.toHaveBeenCalled() // replacement retained
+		expect(state.driver).toBe(driver1) // host still points at replacement
+	})
+
+	it('a stale start that REJECTS after a replacement never destroys the replacement or backs off', async () => {
+		const { host, state, stalePromise, driver0, driver1 } =
+			await openTwoOverlappingConnects()
+
+		// Regression: previously the catch destroyed host.getDriver() BEFORE the
+		// generation check, so a superseded rejected start destroyed the live
+		// replacement. It must now tear down only its own driver and then bail
+		// out on the generation mismatch (no error report, no backoff).
+		hoisted.startDeferreds[0].reject(new Error('late start failure'))
+		await stalePromise
+
+		expect(driver0.destroy).toHaveBeenCalledTimes(1) // stale torn down (no leak)
+		expect(driver1.destroy).not.toHaveBeenCalled() // replacement retained
+		expect(state.driver).toBe(driver1) // host still points at replacement
+		expect(host.onDriverError).not.toHaveBeenCalled() // stale error swallowed
+		expect(host.restart).not.toHaveBeenCalled() // no stale backoff restart
+	})
+})
+
+// ===========================================================================
+// connect() — final logConfig override (finding 4)
+// ===========================================================================
+
+describe('DriverLifecycle — final logConfig override', () => {
+	it('a documented zwave.options.logConfig override still receives the JSON transport, extra transports and bumped level', async () => {
+		// A user-supplied `zwave.options.logConfig` (merged via Object.assign)
+		// REPLACES the log-config object reference. The required JSON transport
+		// (debug-socket forwarding) and every registered extra transport must
+		// still land on that FINAL object, and the most-verbose extra level must
+		// win over the override's level.
+		const { lifecycle } = createHarness({
+			serverEnabled: false,
+			options: { logConfig: { level: 'error' } } as any,
+		})
+		const extra = { id: 'extra-forwarder' }
+		lifecycle.addExtraLogTransport(extra, 'debug')
+
+		await lifecycle.connect()
+
+		const passedLogConfig = hoisted.drivers[0].options.logConfig
+		const jsonTransport = hoisted.logTransports[0]
+		expect(jsonTransport).toBeDefined()
+		// required JSON transport survived the override replacing the object
+		expect(passedLogConfig.transports).toContain(jsonTransport)
+		// registered extra transport survived too
+		expect(passedLogConfig.transports).toContain(extra)
+		// the extra transport's more-verbose 'debug' won over the override 'error'
+		expect(passedLogConfig.level).toBe('debug')
+	})
+
+	it('a zwave.options.logConfig override with no extra transports still receives the JSON transport', async () => {
+		const { lifecycle } = createHarness({
+			serverEnabled: false,
+			options: { logConfig: { level: 'warn' } } as any,
+		})
+
+		await lifecycle.connect()
+
+		const passedLogConfig = hoisted.drivers[0].options.logConfig
+		const jsonTransport = hoisted.logTransports[0]
+		expect(passedLogConfig.transports).toEqual([jsonTransport])
+		// no extra transport → the override's own level is preserved
+		expect(passedLogConfig.level).toBe('warn')
 	})
 })
 

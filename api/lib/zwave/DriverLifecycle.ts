@@ -305,7 +305,25 @@ export class DriverLifecycle {
 			}`,
 		)
 
+		// Coalesce repeated backoff schedules into a SINGLE pending restart.
+		// Without this, a second call would overwrite `_restartTimeout` and
+		// leak the earlier handle — leaving it live to fire an extra restart.
+		// The most recent call wins (its delay is used), matching the previous
+		// "latest schedule decides the delay" behavior.
+		if (this._restartTimeout) {
+			clearTimeout(this._restartTimeout)
+			this._restartTimeout = null
+		}
+
+		// Fence the callback to the generation active at schedule time, so a
+		// close()/restart or a healthy replacement driver (either of which bumps
+		// the generation) can never let a stale timer fire an unwanted restart.
+		const generation = this._generation
 		this._restartTimeout = setTimeout(() => {
+			this._restartTimeout = null
+			if (this._generation !== generation) {
+				return
+			}
 			this.host.restart().catch((error: Error) => {
 				logger.error(`Error while restarting driver: ${error.message}`)
 			})
@@ -527,8 +545,16 @@ export class DriverLifecycle {
 		const logTransport = new JSONTransport()
 		logTransport.format = createDefaultTransportFormat(true, false)
 
-		if (logConfig) {
-			logConfig.transports = [
+		// Resolve the log transports/level against the FINAL `logConfig` that
+		// the driver will actually receive — i.e. AFTER `Object.assign(cfg.options)`
+		// and `applyExternalDriverSettings()` above may have replaced or mutated
+		// it. Mutating the pre-override local `logConfig` here would silently drop
+		// the required JSON transport (and every registered extra transport) from
+		// the driver whenever a documented `zwave.options.logConfig` override
+		// replaced the object reference.
+		const finalLogConfig = zwaveOptions.logConfig
+		if (finalLogConfig) {
+			finalLogConfig.transports = [
 				logTransport,
 				...this._extraLogTransports.map((e) => e.transport),
 			]
@@ -546,14 +572,14 @@ export class DriverLifecycle {
 						: best
 				}, undefined)
 			if (extraLevel) {
-				const currentLevel = logConfig.level
+				const currentLevel = finalLogConfig.level
 				const currentIdx =
 					typeof currentLevel === 'string'
 						? LOG_LEVEL_ORDER.indexOf(currentLevel)
 						: -1
 				const extraIdx = LOG_LEVEL_ORDER.indexOf(extraLevel)
 				if (extraIdx > currentIdx) {
-					logConfig.level = extraLevel
+					finalLogConfig.level = extraLevel
 				}
 			}
 		}
@@ -561,6 +587,12 @@ export class DriverLifecycle {
 		logTransport.stream.on('data', (data: any) => {
 			this.host.emitDebug(data.message.toString())
 		})
+
+		// Retain the exact `Driver` instance THIS generation creates, so every
+		// stale/error exit can tear down that specific instance and never a
+		// replacement that a newer generation may have stored on the host. See
+		// {@link teardownConnectDriver}.
+		let createdDriver: Driver | null = null
 
 		try {
 			if (shouldUpdateSettings) {
@@ -572,6 +604,7 @@ export class DriverLifecycle {
 			// init driver here because if connect fails the driver is destroyed
 			// this could throw so include in the try/catch
 			const driver = new Driver(port, zwaveOptions)
+			createdDriver = driver
 			this.host.setDriver(driver)
 			driver.on('error', (error) =>
 				this.dispatchDriverError(generation, error),
@@ -598,6 +631,7 @@ export class DriverLifecycle {
 			const hasConnectedClients = await this.host.hasConnectedClients()
 
 			if (this._generation !== generation) {
+				this.teardownConnectDriver(driver)
 				return
 			}
 
@@ -608,6 +642,7 @@ export class DriverLifecycle {
 			await driver.start()
 
 			if (this._generation !== generation) {
+				this.teardownConnectDriver(driver)
 				return
 			}
 
@@ -625,15 +660,13 @@ export class DriverLifecycle {
 
 			this.host.setStatus(ZwaveClientStatus.CONNECTED)
 		} catch (error) {
-			// destroy diver instance when it fails
-			const driver = this.host.getDriver()
-			if (driver) {
-				driver.destroy().catch((err: Error) => {
-					logger.error(
-						`Error while destroying driver ${err.message}`,
-						error,
-					)
-				})
+			// Tear down the driver THIS generation created (if any). We must NOT
+			// read `host.getDriver()` here: a newer generation may already have
+			// stored its own replacement driver on the host, and destroying that
+			// would kill a live replacement. Tearing down the exact instance we
+			// created leaks nothing and never touches a replacement.
+			if (createdDriver) {
+				this.teardownConnectDriver(createdDriver, error)
 			}
 
 			if (this._generation !== generation) {
@@ -657,6 +690,22 @@ export class DriverLifecycle {
 					error,
 				)
 			}
+		}
+	}
+
+	/**
+	 * Tear down a specific driver instance created by {@link connect} on a
+	 * stale/error exit. Destroys that exact instance (idempotent in `zwave-js`),
+	 * and clears the host's driver field ONLY when it still references this
+	 * instance — so a replacement generation that has already stored its own
+	 * driver on the host is left untouched.
+	 */
+	private teardownConnectDriver(driver: Driver, cause?: unknown): void {
+		driver.destroy().catch((err: Error) => {
+			logger.error(`Error while destroying driver ${err.message}`, cause)
+		})
+		if (this.host.getDriver() === driver) {
+			this.host.setDriver(null)
 		}
 	}
 
