@@ -3,17 +3,7 @@
  * timers, and socket emissions for both OTW (over-the-wire, controller) and
  * OTA (over-the-air, node) firmware updates.
  *
- * Extracted from ZwaveClient to keep the monolith slim. The service is
- * strict-clean (no `any` casts, no non-null assertions, no ts-ignore).
- *
- * Ports:
- *   driver      – driver + controller access for firmware operations
- *   nodes       – node store read/write for firmware state
- *   socket      – socket emission + throttling
- *   config      – runtime config (disableAutomaticFirmwareUpdateChecks)
- *   backup      – NVM backup before OTW updates
- *   extraction  – firmware file parsing/extraction utilities
- *   logger      – structured logging
+ * Extracted from ZwaveClient to keep the monolith slim.
  */
 
 import { getErrorMessage } from '../errors.ts'
@@ -25,9 +15,10 @@ import type {
 	FirmwareFileFormat,
 	FirmwareNodeStorePort,
 	FirmwareSocketPort,
-	FirmwareUpdateInfoRef,
-	FirmwareUpdateNodeState,
+	FirmwareUpdateInfo,
+	FirmwareUpdateResult,
 	FwFileRef,
+	OTWFirmwareUpdateResult,
 	ServiceLogger,
 } from './ports.ts'
 
@@ -66,14 +57,10 @@ export class FirmwareUpdateService {
 		this._nvmEventSetter = nvmEventSetter
 	}
 
-	// ---------------------------------------------------------------
-	// Public API
-	// ---------------------------------------------------------------
-
 	async getAvailableFirmwareUpdates(
 		nodeId: number,
 		options?: unknown,
-	): Promise<FirmwareUpdateInfoRef[] | null> {
+	): Promise<FirmwareUpdateInfo[]> {
 		const drv = this._driver.getDriver()
 		if (!drv || !this._driver.isDriverReady()) {
 			throw new Error('Driver is not ready')
@@ -89,7 +76,7 @@ export class FirmwareUpdateService {
 
 	async getAllAvailableFirmwareUpdates(
 		options?: unknown,
-	): Promise<Map<number, FirmwareUpdateInfoRef[]> | null> {
+	): Promise<Map<number, FirmwareUpdateInfo[]>> {
 		const drv = this._driver.getDriver()
 		if (!drv || !this._driver.isDriverReady()) {
 			throw new Error('Driver is not ready')
@@ -106,7 +93,7 @@ export class FirmwareUpdateService {
 	 */
 	async checkAllNodesFirmwareUpdates(
 		options?: unknown,
-	): Promise<Map<number, FirmwareUpdateInfoRef[]> | null | undefined> {
+	): Promise<Map<number, FirmwareUpdateInfo[]> | undefined> {
 		const drv = this._driver.getDriver()
 		if (!drv || !this._driver.isDriverReady()) {
 			throw new Error('Driver is not ready')
@@ -162,18 +149,14 @@ export class FirmwareUpdateService {
 		nodeId: number,
 		version: string,
 	): Promise<boolean> {
-		// Ensure store entry exists
 		const storeNode = this._nodes.ensureStoreNode(nodeId)
 
-		// Initialize dismissal tracking if not exists
 		if (!storeNode.firmwareUpdatesDismissed) {
 			storeNode.firmwareUpdatesDismissed = {}
 		}
 
-		// Mark version as dismissed
 		storeNode.firmwareUpdatesDismissed[version] = true
 
-		// Update in-memory node
 		const node = this._nodes.getNode(nodeId)
 		if (node) {
 			if (!node.firmwareUpdatesDismissed) {
@@ -181,13 +164,11 @@ export class FirmwareUpdateService {
 			}
 			node.firmwareUpdatesDismissed[version] = true
 
-			// Emit update to frontend
 			this._nodes.emitNodeUpdate(node, {
 				firmwareUpdatesDismissed: node.firmwareUpdatesDismissed,
 			})
 		}
 
-		// Save to nodes.json
 		await this._nodes.updateStoreNodes()
 		this._logger.info(
 			`Dismissed firmware update ${version} for node ${nodeId}`,
@@ -199,13 +180,12 @@ export class FirmwareUpdateService {
 	/**
 	 * Get available non-dismissed firmware updates for a node
 	 */
-	getNodeFirmwareUpdates(nodeId: number): FirmwareUpdateInfoRef[] {
+	getNodeFirmwareUpdates(nodeId: number): FirmwareUpdateInfo[] {
 		const node = this._nodes.getNode(nodeId)
 		if (!node?.availableFirmwareUpdates) {
 			return []
 		}
 
-		// Filter out dismissed updates
 		return node.availableFirmwareUpdates.filter((update) => {
 			const dismissed =
 				node.firmwareUpdatesDismissed?.[update.version] || false
@@ -218,8 +198,8 @@ export class FirmwareUpdateService {
 	 */
 	async firmwareUpdateOTA(
 		nodeId: number,
-		updateInfo: FirmwareUpdateInfoRef,
-	): Promise<unknown> {
+		updateInfo: FirmwareUpdateInfo,
+	): Promise<FirmwareUpdateResult> {
 		const drv = this._driver.getDriver()
 		if (!drv || !this._driver.isDriverReady()) {
 			throw new Error('Driver is not ready')
@@ -243,8 +223,8 @@ export class FirmwareUpdateService {
 	 * OTW (over-the-wire) firmware update for the controller
 	 */
 	async firmwareUpdateOTW(
-		file: FwFileRef | FirmwareUpdateInfoRef,
-	): Promise<unknown> {
+		file: FwFileRef | FirmwareUpdateInfo,
+	): Promise<OTWFirmwareUpdateResult> {
 		try {
 			if (this._backup.backupOnEvent) {
 				if (this._nvmEventSetter) {
@@ -258,34 +238,28 @@ export class FirmwareUpdateService {
 				throw new Error('Driver is not ready')
 			}
 
-			// If it has `files` property, it's a FirmwareUpdateInfo — pass
-			// it directly (the driver signature accepts both data and info).
-			if ('files' in file && Array.isArray(file.files)) {
-				const info: FirmwareUpdateInfoRef = file
-				return await drv.firmwareUpdateOTW(info)
+			if ('files' in file) {
+				return await drv.firmwareUpdateOTW(file)
 			}
-
-			const fwFile = file as FwFileRef
 
 			let firmwareData: Uint8Array<ArrayBuffer>
 			try {
 				const format = this._extraction.guessFirmwareFileFormat(
-					fwFile.name,
-					fwFile.data,
+					file.name,
+					file.data,
 				)
 				const firmware = await this._extraction.extractFirmware(
-					fwFile.data,
+					file.data,
 					format,
 				)
 				firmwareData = firmware.data
 			} catch {
 				throw Error(
-					`Unable to extract firmware from file '${fwFile.name}'`,
+					`Unable to extract firmware from file '${file.name}'`,
 				)
 			}
 
-			const result = await drv.firmwareUpdateOTW(firmwareData)
-			return result
+			return await drv.firmwareUpdateOTW(firmwareData)
 		} catch (e) {
 			throw Error(`Error while updating firmware: ${getErrorMessage(e)}`)
 		}
@@ -304,10 +278,10 @@ export class FirmwareUpdateService {
 							data: Uint8Array<ArrayBuffer>
 							firmwareTarget?: number
 						}>,
-					): Promise<unknown>
+					): Promise<FirmwareUpdateResult>
 			  }
 			| undefined,
-	): Promise<unknown> {
+	): Promise<FirmwareUpdateResult> {
 		if (!this._driver.isDriverReady()) {
 			throw new Error('Driver is not ready')
 		}
@@ -397,43 +371,31 @@ export class FirmwareUpdateService {
 
 		const node = this._nodes.getNode(nodeId)
 
-		// reset fw update progress
 		if (node) {
 			node.firmwareUpdate = undefined
 
 			this._nodes.emitNodeUpdate(node, {
 				firmwareUpdate: false,
-			} as DeepPartial<FirmwareUpdateNodeState>)
+			})
 		}
 	}
 
-	// ---------------------------------------------------------------
-	// Node firmware update progress/finished callbacks
-	// ---------------------------------------------------------------
-
-	/**
-	 * Handle node firmware update progress event
-	 */
 	onNodeFirmwareUpdateProgress(nodeId: number, progress: unknown): void {
 		const node = this._nodes.getNode(nodeId)
 		if (node) {
 			node.firmwareUpdate = progress
-			// send at most 4msg per second
 			this._socket.throttle(
 				'_onNodeFirmwareUpdateProgress_' + node.id,
 				() => {
 					this._nodes.emitNodeUpdate(node, {
 						firmwareUpdate: progress,
-					} as DeepPartial<FirmwareUpdateNodeState>)
+					})
 				},
 				250,
 			)
 		}
 	}
 
-	/**
-	 * Handle node firmware update finished event
-	 */
 	onNodeFirmwareUpdateFinished(nodeId: number): void {
 		const node = this._nodes.getNode(nodeId)
 		if (node) {
@@ -445,13 +407,9 @@ export class FirmwareUpdateService {
 
 			this._nodes.emitNodeUpdate(node, {
 				firmwareUpdate: false,
-			} as DeepPartial<FirmwareUpdateNodeState>)
+			})
 		}
 	}
-
-	// ---------------------------------------------------------------
-	// OTW firmware update callbacks
-	// ---------------------------------------------------------------
 
 	/**
 	 * Handle OTW firmware update progress event
@@ -479,7 +437,6 @@ export class FirmwareUpdateService {
 		statusName: string,
 		otwSocketEvent: string,
 	): void {
-		// prevent progress event to come after finish
 		this._socket.clearThrottle('_onOTWFirmwareUpdateProgress')
 
 		this._socket.sendToSocket(otwSocketEvent, {
@@ -495,10 +452,6 @@ export class FirmwareUpdateService {
 			}.\n   Status: ${statusName}. Result: ${JSON.stringify(result)}.`,
 		)
 	}
-
-	// ---------------------------------------------------------------
-	// Scheduled firmware update check
-	// ---------------------------------------------------------------
 
 	/**
 	 * Schedule periodic firmware update checks
@@ -586,16 +539,12 @@ export class FirmwareUpdateService {
 		}
 	}
 
-	// ---------------------------------------------------------------
-	// Private helpers
-	// ---------------------------------------------------------------
-
 	/**
 	 * Filter firmware updates to remove downgrades
 	 */
 	private _filterFirmwareUpdates(
-		updates: FirmwareUpdateInfoRef[] | null,
-	): FirmwareUpdateInfoRef[] {
+		updates: FirmwareUpdateInfo[] | null,
+	): FirmwareUpdateInfo[] {
 		return (updates || []).filter((update) => !update.downgrade)
 	}
 
@@ -603,7 +552,7 @@ export class FirmwareUpdateService {
 	 * Clean up dismissed updates map to only contain versions that exist
 	 */
 	private _cleanDismissedUpdates(
-		filteredUpdates: FirmwareUpdateInfoRef[],
+		filteredUpdates: FirmwareUpdateInfo[],
 		existingDismissed: { [version: string]: boolean },
 	): { [version: string]: boolean } {
 		const cleanedDismissed: { [version: string]: boolean } = {}
@@ -622,16 +571,14 @@ export class FirmwareUpdateService {
 	 */
 	private _updateNodeFirmwareInfo(
 		nodeId: number,
-		filteredUpdates: FirmwareUpdateInfoRef[],
+		filteredUpdates: FirmwareUpdateInfo[],
 		timestamp: number,
 	): void {
 		const storeNode = this._nodes.ensureStoreNode(nodeId)
 
-		// Update stored firmware update info
 		storeNode.availableFirmwareUpdates = filteredUpdates
 		storeNode.lastFirmwareUpdateCheck = timestamp
 
-		// Clean up dismissed updates map
 		const existingDismissed = storeNode.firmwareUpdatesDismissed || {}
 		const cleanedDismissed = this._cleanDismissedUpdates(
 			filteredUpdates,
@@ -639,14 +586,12 @@ export class FirmwareUpdateService {
 		)
 		storeNode.firmwareUpdatesDismissed = cleanedDismissed
 
-		// Update in-memory node
 		const node = this._nodes.getNode(nodeId)
 		if (node) {
 			node.availableFirmwareUpdates = filteredUpdates
 			node.lastFirmwareUpdateCheck = timestamp
 			node.firmwareUpdatesDismissed = cleanedDismissed
 
-			// Emit update to frontend
 			this._nodes.emitNodeUpdate(node, {
 				availableFirmwareUpdates: node.availableFirmwareUpdates,
 				lastFirmwareUpdateCheck: node.lastFirmwareUpdateCheck,
@@ -654,10 +599,4 @@ export class FirmwareUpdateService {
 			})
 		}
 	}
-}
-
-// Re-export for convenience — avoids needing a separate import of the type
-// alias from ports.ts in the wiring layer.
-type DeepPartial<T> = {
-	[P in keyof T]?: T[P] extends object ? DeepPartial<T[P]> : T[P]
 }

@@ -8,7 +8,7 @@ import type {
 	FirmwareExtractionPort,
 	FirmwareNodeStorePort,
 	FirmwareSocketPort,
-	FirmwareUpdateInfoRef,
+	FirmwareUpdateInfo,
 	FirmwareUpdateNodeState,
 	ServiceLogger,
 } from '../../../api/lib/zwave/ports.ts'
@@ -18,8 +18,8 @@ import type {
 // ---------------------------------------------------------------------------
 
 function makeUpdate(
-	overrides: Partial<FirmwareUpdateInfoRef> = {},
-): FirmwareUpdateInfoRef {
+	overrides: Partial<FirmwareUpdateInfo> = {},
+): FirmwareUpdateInfo {
 	return {
 		version: '2.0.0',
 		downgrade: false,
@@ -1192,10 +1192,10 @@ describe('FirmwareUpdateService', () => {
 	})
 
 	// -----------------------------------------------------------------
-	// Regression: Finding 6 – FirmwareUpdateInfoRef passed without cast
+	// Regression: Finding 6 – FirmwareUpdateInfo passed without cast
 	// -----------------------------------------------------------------
 	describe('firmwareUpdateOTW with FirmwareUpdateInfo', () => {
-		it('passes FirmwareUpdateInfoRef directly to driver without Uint8Array cast', async () => {
+		it('passes FirmwareUpdateInfo directly to driver without Uint8Array cast', async () => {
 			const firmwareUpdateOTW = vi.fn().mockResolvedValue({ ok: true })
 			const driver = createDriverPort({
 				isDriverReady: () => true,
@@ -1211,7 +1211,7 @@ describe('FirmwareUpdateService', () => {
 			})
 			const { service } = createService({ driver })
 
-			const updateInfo: FirmwareUpdateInfoRef = {
+			const updateInfo: FirmwareUpdateInfo = {
 				version: '3.0.0',
 				downgrade: false,
 				changelog: 'New features',
@@ -1227,7 +1227,7 @@ describe('FirmwareUpdateService', () => {
 
 			await service.firmwareUpdateOTW(updateInfo)
 
-			// Verify it was passed as-is (a FirmwareUpdateInfoRef, not cast
+			// Verify it was passed as-is (a FirmwareUpdateInfo, not cast
 			// to Uint8Array)
 			expect(firmwareUpdateOTW).toHaveBeenCalledWith(updateInfo)
 		})

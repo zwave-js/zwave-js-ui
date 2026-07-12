@@ -5,11 +5,15 @@ import type {
 	InclusionBackupPort,
 	InclusionConfigPort,
 	InclusionDriverPort,
-	InclusionGrantRef,
+	InclusionGrant,
 	InclusionQRPort,
 	InclusionServerManagerPort,
 	InclusionSocketPort,
 	ServiceLogger,
+} from '../../../api/lib/zwave/ports.ts'
+import {
+	InclusionStrategy,
+	QRCodeVersion,
 } from '../../../api/lib/zwave/ports.ts'
 
 // ---------------------------------------------------------------------------
@@ -64,13 +68,10 @@ function createConfigPort(timeout = 30): InclusionConfigPort {
 	}
 }
 
-function createQRPort(parsedResult?: {
-	version: number
-	[k: string]: unknown
-}): InclusionQRPort {
+function createQRPort(parsedResult?: Record<string, unknown>): InclusionQRPort {
 	return {
 		parseQRCodeString: vi.fn().mockResolvedValue(parsedResult),
-	}
+	} as InclusionQRPort
 }
 
 function createLogger(): ServiceLogger & {
@@ -138,11 +139,11 @@ function createCoordinator(
 }
 
 // Strategy constants matching zwave-js
-const STRATEGY_DEFAULT = 0
-const STRATEGY_SECURITY_S2 = 1
-const STRATEGY_INSECURE = 2
-const STRATEGY_SECURITY_S0 = 3
-const STRATEGY_SMART_START = 4
+const STRATEGY_DEFAULT = InclusionStrategy.Default
+const STRATEGY_SECURITY_S2 = InclusionStrategy.Security_S2
+const STRATEGY_INSECURE = InclusionStrategy.Insecure
+const STRATEGY_SECURITY_S0 = InclusionStrategy.Security_S0
+const STRATEGY_SMART_START = InclusionStrategy.SmartStart
 
 // ---------------------------------------------------------------------------
 // Tests
@@ -159,18 +160,7 @@ describe('InclusionCoordinator', () => {
 			const { coordinator, driver } = createCoordinator()
 			const drv = driver.getDriver()
 
-			await coordinator.startInclusion(
-				STRATEGY_DEFAULT,
-				{},
-				undefined,
-				STRATEGY_SMART_START,
-				STRATEGY_SECURITY_S2,
-				STRATEGY_DEFAULT,
-				STRATEGY_INSECURE,
-				STRATEGY_SECURITY_S0,
-				1,
-				0,
-			)
+			await coordinator.startInclusion(STRATEGY_DEFAULT, {}, undefined)
 
 			expect(drv.controller.beginInclusion).toHaveBeenCalledWith(
 				expect.objectContaining({ strategy: STRATEGY_DEFAULT }),
@@ -181,18 +171,7 @@ describe('InclusionCoordinator', () => {
 			const { coordinator } = createCoordinator()
 
 			await expect(
-				coordinator.startInclusion(
-					STRATEGY_SMART_START,
-					{},
-					undefined,
-					STRATEGY_SMART_START,
-					STRATEGY_SECURITY_S2,
-					STRATEGY_DEFAULT,
-					STRATEGY_INSECURE,
-					STRATEGY_SECURITY_S0,
-					1,
-					0,
-				),
+				coordinator.startInclusion(STRATEGY_SMART_START, {}, undefined),
 			).rejects.toThrow('Smart Start')
 		})
 
@@ -203,13 +182,6 @@ describe('InclusionCoordinator', () => {
 				STRATEGY_DEFAULT,
 				{ name: 'Test', location: 'Room' },
 				undefined,
-				STRATEGY_SMART_START,
-				STRATEGY_SECURITY_S2,
-				STRATEGY_DEFAULT,
-				STRATEGY_INSECURE,
-				STRATEGY_SECURITY_S0,
-				1,
-				0,
 			)
 
 			expect(coordinator.tmpNode).toEqual({
@@ -227,18 +199,7 @@ describe('InclusionCoordinator', () => {
 				nvmEventSetter: nvmSetter,
 			})
 
-			await coordinator.startInclusion(
-				STRATEGY_DEFAULT,
-				{},
-				undefined,
-				STRATEGY_SMART_START,
-				STRATEGY_SECURITY_S2,
-				STRATEGY_DEFAULT,
-				STRATEGY_INSECURE,
-				STRATEGY_SECURITY_S0,
-				1,
-				0,
-			)
+			await coordinator.startInclusion(STRATEGY_DEFAULT, {}, undefined)
 
 			expect(nvmSetter).toHaveBeenCalledWith('before_start_inclusion')
 			expect(backup.backupNvm).toHaveBeenCalled()
@@ -252,18 +213,7 @@ describe('InclusionCoordinator', () => {
 			const { coordinator } = createCoordinator({ driver })
 
 			await expect(
-				coordinator.startInclusion(
-					STRATEGY_DEFAULT,
-					{},
-					undefined,
-					STRATEGY_SMART_START,
-					STRATEGY_SECURITY_S2,
-					STRATEGY_DEFAULT,
-					STRATEGY_INSECURE,
-					STRATEGY_SECURITY_S0,
-					1,
-					0,
-				),
+				coordinator.startInclusion(STRATEGY_DEFAULT, {}, undefined),
 			).rejects.toThrow('Driver is not ready')
 		})
 
@@ -271,18 +221,7 @@ describe('InclusionCoordinator', () => {
 			const { coordinator, driver } = createCoordinator()
 			const drv = driver.getDriver()
 
-			await coordinator.startInclusion(
-				STRATEGY_INSECURE,
-				{},
-				undefined,
-				STRATEGY_SMART_START,
-				STRATEGY_SECURITY_S2,
-				STRATEGY_DEFAULT,
-				STRATEGY_INSECURE,
-				STRATEGY_SECURITY_S0,
-				1,
-				0,
-			)
+			await coordinator.startInclusion(STRATEGY_INSECURE, {}, undefined)
 
 			expect(drv.controller.beginInclusion).toHaveBeenCalledWith({
 				strategy: STRATEGY_INSECURE,
@@ -297,13 +236,6 @@ describe('InclusionCoordinator', () => {
 				STRATEGY_SECURITY_S0,
 				{},
 				undefined,
-				STRATEGY_SMART_START,
-				STRATEGY_SECURITY_S2,
-				STRATEGY_DEFAULT,
-				STRATEGY_INSECURE,
-				STRATEGY_SECURITY_S0,
-				1,
-				0,
 			)
 
 			expect(drv.controller.beginInclusion).toHaveBeenCalledWith({
@@ -317,28 +249,20 @@ describe('InclusionCoordinator', () => {
 
 			await coordinator.startInclusion(
 				STRATEGY_SECURITY_S2,
-				{ provisioning: { some: 'data' }, dsk: '12345' },
+				{ provisioning: { some: 'data' } as never, dsk: '12345' },
 				undefined,
-				STRATEGY_SMART_START,
-				STRATEGY_SECURITY_S2,
-				STRATEGY_DEFAULT,
-				STRATEGY_INSECURE,
-				STRATEGY_SECURITY_S0,
-				1,
-				0,
 			)
 
 			expect(drv.controller.beginInclusion).toHaveBeenCalledWith(
 				expect.objectContaining({
 					strategy: STRATEGY_SECURITY_S2,
 					provisioning: { some: 'data' },
-					dsk: '12345',
 				}),
 			)
 		})
 
 		it('handles Security_S2 with qrString (S2 QR code)', async () => {
-			const qr = createQRPort({ version: 0, dsk: '12345' })
+			const qr = createQRPort({ version: QRCodeVersion.S2, dsk: '12345' })
 			const { coordinator, driver } = createCoordinator({ qr })
 			const drv = driver.getDriver()
 
@@ -360,7 +284,7 @@ describe('InclusionCoordinator', () => {
 		})
 
 		it('handles Security_S2 with qrString (SmartStart QR code)', async () => {
-			const qr = createQRPort({ version: 1 })
+			const qr = createQRPort({ version: QRCodeVersion.SmartStart })
 			const provisionFn = vi.fn().mockResolvedValue(undefined)
 			const { coordinator } = createCoordinator({ qr })
 
@@ -390,13 +314,6 @@ describe('InclusionCoordinator', () => {
 					STRATEGY_SECURITY_S2,
 					{ qrString: 'invalid' },
 					undefined,
-					STRATEGY_SMART_START,
-					STRATEGY_SECURITY_S2,
-					STRATEGY_DEFAULT,
-					STRATEGY_INSECURE,
-					STRATEGY_SECURITY_S0,
-					1,
-					0,
 				),
 			).rejects.toThrow('Invalid QR code string')
 		})
@@ -410,13 +327,6 @@ describe('InclusionCoordinator', () => {
 					STRATEGY_SECURITY_S2,
 					{ qrString: 'weird-qr' },
 					undefined,
-					STRATEGY_SMART_START,
-					STRATEGY_SECURITY_S2,
-					STRATEGY_DEFAULT,
-					STRATEGY_INSECURE,
-					STRATEGY_SECURITY_S0,
-					1,
-					0,
 				),
 			).rejects.toThrow('Invalid QR code version')
 		})
@@ -430,13 +340,6 @@ describe('InclusionCoordinator', () => {
 					STRATEGY_SECURITY_S2,
 					{ qrString: 'invalid', name: 'Test' },
 					undefined,
-					STRATEGY_SMART_START,
-					STRATEGY_SECURITY_S2,
-					STRATEGY_DEFAULT,
-					STRATEGY_INSECURE,
-					STRATEGY_SECURITY_S0,
-					1,
-					0,
 				),
 			).rejects.toThrow()
 			expect(coordinator.tmpNode).toBeUndefined()
@@ -447,21 +350,12 @@ describe('InclusionCoordinator', () => {
 			const drv = driver.getDriver()
 
 			await coordinator.startInclusion(
-				99,
+				99 as InclusionStrategy,
 				{},
 				undefined,
-				STRATEGY_SMART_START,
-				STRATEGY_SECURITY_S2,
-				STRATEGY_DEFAULT,
-				STRATEGY_INSECURE,
-				STRATEGY_SECURITY_S0,
-				1,
-				0,
 			)
 
-			expect(drv.controller.beginInclusion).toHaveBeenCalledWith({
-				strategy: 99,
-			})
+			expect(drv.controller.beginInclusion).toHaveBeenCalledWith()
 		})
 	})
 
@@ -547,14 +441,7 @@ describe('InclusionCoordinator', () => {
 			const { coordinator, driver } = createCoordinator()
 			const drv = driver.getDriver()
 
-			await coordinator.replaceFailedNode(
-				5,
-				STRATEGY_SECURITY_S2,
-				{},
-				STRATEGY_SECURITY_S2,
-				STRATEGY_INSECURE,
-				STRATEGY_SECURITY_S0,
-			)
+			await coordinator.replaceFailedNode(5, STRATEGY_SECURITY_S2, {})
 
 			expect(drv.controller.replaceFailedNode).toHaveBeenCalledWith(
 				5,
@@ -585,14 +472,7 @@ describe('InclusionCoordinator', () => {
 			const { coordinator } = createCoordinator({ driver: driverPort })
 
 			await expect(
-				coordinator.replaceFailedNode(
-					5,
-					STRATEGY_SECURITY_S2,
-					{},
-					STRATEGY_SECURITY_S2,
-					STRATEGY_INSECURE,
-					STRATEGY_SECURITY_S0,
-				),
+				coordinator.replaceFailedNode(5, STRATEGY_SECURITY_S2, {}),
 			).rejects.toThrow('failed')
 			expect(coordinator.isReplacing).toBe(false)
 		})
@@ -601,14 +481,7 @@ describe('InclusionCoordinator', () => {
 			const { coordinator } = createCoordinator()
 
 			await expect(
-				coordinator.replaceFailedNode(
-					5,
-					99,
-					{},
-					STRATEGY_SECURITY_S2,
-					STRATEGY_INSECURE,
-					STRATEGY_SECURITY_S0,
-				),
+				coordinator.replaceFailedNode(5, 99 as InclusionStrategy, {}),
 			).rejects.toThrow('not supported')
 		})
 
@@ -616,14 +489,7 @@ describe('InclusionCoordinator', () => {
 			const { coordinator, driver } = createCoordinator()
 			const drv = driver.getDriver()
 
-			await coordinator.replaceFailedNode(
-				5,
-				STRATEGY_INSECURE,
-				{},
-				STRATEGY_SECURITY_S2,
-				STRATEGY_INSECURE,
-				STRATEGY_SECURITY_S0,
-			)
+			await coordinator.replaceFailedNode(5, STRATEGY_INSECURE, {})
 
 			expect(drv.controller.replaceFailedNode).toHaveBeenCalledWith(5, {
 				strategy: STRATEGY_INSECURE,
@@ -631,18 +497,13 @@ describe('InclusionCoordinator', () => {
 		})
 
 		it('handles S2 with QR code provisioning', async () => {
-			const qr = createQRPort({ version: 0, dsk: '12345' })
+			const qr = createQRPort({ version: QRCodeVersion.S2, dsk: '12345' })
 			const { coordinator, driver } = createCoordinator({ qr })
 			const drv = driver.getDriver()
 
-			await coordinator.replaceFailedNode(
-				5,
-				STRATEGY_SECURITY_S2,
-				{ qrString: 'some-qr' },
-				STRATEGY_SECURITY_S2,
-				STRATEGY_INSECURE,
-				STRATEGY_SECURITY_S0,
-			)
+			await coordinator.replaceFailedNode(5, STRATEGY_SECURITY_S2, {
+				qrString: 'some-qr',
+			})
 
 			expect(qr.parseQRCodeString).toHaveBeenCalledWith('some-qr')
 			expect(drv.controller.replaceFailedNode).toHaveBeenCalledWith(
@@ -659,14 +520,9 @@ describe('InclusionCoordinator', () => {
 			const { coordinator } = createCoordinator({ qr })
 
 			await expect(
-				coordinator.replaceFailedNode(
-					5,
-					STRATEGY_SECURITY_S2,
-					{ qrString: 'invalid' },
-					STRATEGY_SECURITY_S2,
-					STRATEGY_INSECURE,
-					STRATEGY_SECURITY_S0,
-				),
+				coordinator.replaceFailedNode(5, STRATEGY_SECURITY_S2, {
+					qrString: 'invalid',
+				}),
 			).rejects.toThrow('Invalid QR code string')
 		})
 
@@ -679,14 +535,7 @@ describe('InclusionCoordinator', () => {
 				nvmEventSetter: nvmSetter,
 			})
 
-			await coordinator.replaceFailedNode(
-				5,
-				STRATEGY_SECURITY_S2,
-				{},
-				STRATEGY_SECURITY_S2,
-				STRATEGY_INSECURE,
-				STRATEGY_SECURITY_S0,
-			)
+			await coordinator.replaceFailedNode(5, STRATEGY_SECURITY_S2, {})
 
 			expect(nvmSetter).toHaveBeenCalledWith('before_replace_failed_node')
 			expect(backup.backupNvm).toHaveBeenCalled()
@@ -700,14 +549,7 @@ describe('InclusionCoordinator', () => {
 			const { coordinator } = createCoordinator({ driver })
 
 			await expect(
-				coordinator.replaceFailedNode(
-					5,
-					STRATEGY_SECURITY_S2,
-					{},
-					STRATEGY_SECURITY_S2,
-					STRATEGY_INSECURE,
-					STRATEGY_SECURITY_S0,
-				),
+				coordinator.replaceFailedNode(5, STRATEGY_SECURITY_S2, {}),
 			).rejects.toThrow('Driver is not ready')
 		})
 	})
@@ -997,18 +839,7 @@ describe('InclusionCoordinator', () => {
 			})
 			const drv = driver.getDriver()
 
-			await coordinator.startInclusion(
-				STRATEGY_DEFAULT,
-				{},
-				undefined,
-				STRATEGY_SMART_START,
-				STRATEGY_SECURITY_S2,
-				STRATEGY_DEFAULT,
-				STRATEGY_INSECURE,
-				STRATEGY_SECURITY_S0,
-				1,
-				0,
-			)
+			await coordinator.startInclusion(STRATEGY_DEFAULT, {}, undefined)
 
 			// Advance past the timeout (1s)
 			await vi.advanceTimersByTimeAsync(1500)
@@ -1044,18 +875,7 @@ describe('InclusionCoordinator', () => {
 				logger,
 			})
 
-			await coordinator.startInclusion(
-				STRATEGY_DEFAULT,
-				{},
-				undefined,
-				STRATEGY_SMART_START,
-				STRATEGY_SECURITY_S2,
-				STRATEGY_DEFAULT,
-				STRATEGY_INSECURE,
-				STRATEGY_SECURITY_S0,
-				1,
-				0,
-			)
+			await coordinator.startInclusion(STRATEGY_DEFAULT, {}, undefined)
 
 			await vi.advanceTimersByTimeAsync(1500)
 
@@ -1124,14 +944,7 @@ describe('InclusionCoordinator', () => {
 			})
 			const drv = driver.getDriver()
 
-			await coordinator.replaceFailedNode(
-				5,
-				STRATEGY_SECURITY_S2,
-				{},
-				STRATEGY_SECURITY_S2,
-				STRATEGY_INSECURE,
-				STRATEGY_SECURITY_S0,
-			)
+			await coordinator.replaceFailedNode(5, STRATEGY_SECURITY_S2, {})
 
 			await vi.advanceTimersByTimeAsync(1500)
 
@@ -1377,32 +1190,10 @@ describe('InclusionCoordinator', () => {
 			const { coordinator } = createCoordinator()
 
 			// First inclusion sets a timeout
-			await coordinator.startInclusion(
-				STRATEGY_DEFAULT,
-				{},
-				undefined,
-				STRATEGY_SMART_START,
-				STRATEGY_SECURITY_S2,
-				STRATEGY_DEFAULT,
-				STRATEGY_INSECURE,
-				STRATEGY_SECURITY_S0,
-				1,
-				0,
-			)
+			await coordinator.startInclusion(STRATEGY_DEFAULT, {}, undefined)
 
 			// Second inclusion should clear first timeout
-			await coordinator.startInclusion(
-				STRATEGY_DEFAULT,
-				{},
-				undefined,
-				STRATEGY_SMART_START,
-				STRATEGY_SECURITY_S2,
-				STRATEGY_DEFAULT,
-				STRATEGY_INSECURE,
-				STRATEGY_SECURITY_S0,
-				1,
-				0,
-			)
+			await coordinator.startInclusion(STRATEGY_DEFAULT, {}, undefined)
 
 			coordinator.clearCommandsTimeout()
 			vi.useRealTimers()
@@ -1432,13 +1223,6 @@ describe('InclusionCoordinator', () => {
 				STRATEGY_SECURITY_S2,
 				{},
 				undefined,
-				STRATEGY_SMART_START,
-				STRATEGY_SECURITY_S2,
-				STRATEGY_DEFAULT,
-				STRATEGY_INSECURE,
-				STRATEGY_SECURITY_S0,
-				1,
-				0,
 			)
 
 			expect(drv.controller.beginInclusion).toHaveBeenCalledWith({
@@ -1453,14 +1237,7 @@ describe('InclusionCoordinator', () => {
 			const { coordinator, driver } = createCoordinator()
 			const drv = driver.getDriver()
 
-			await coordinator.replaceFailedNode(
-				5,
-				STRATEGY_SECURITY_S0,
-				{},
-				STRATEGY_SECURITY_S2,
-				STRATEGY_INSECURE,
-				STRATEGY_SECURITY_S0,
-			)
+			await coordinator.replaceFailedNode(5, STRATEGY_SECURITY_S0, {})
 
 			expect(drv.controller.replaceFailedNode).toHaveBeenCalledWith(5, {
 				strategy: STRATEGY_SECURITY_S0,
@@ -1473,14 +1250,7 @@ describe('InclusionCoordinator', () => {
 			const { coordinator, driver } = createCoordinator()
 			const drv = driver.getDriver()
 
-			await coordinator.replaceFailedNode(
-				5,
-				STRATEGY_SECURITY_S2,
-				{},
-				STRATEGY_SECURITY_S2,
-				STRATEGY_INSECURE,
-				STRATEGY_SECURITY_S0,
-			)
+			await coordinator.replaceFailedNode(5, STRATEGY_SECURITY_S2, {})
 
 			expect(drv.controller.replaceFailedNode).toHaveBeenCalledWith(5, {
 				strategy: STRATEGY_SECURITY_S2,
@@ -1613,9 +1383,6 @@ describe('InclusionCoordinator', () => {
 				5,
 				STRATEGY_INSECURE,
 				undefined,
-				STRATEGY_SECURITY_S2,
-				STRATEGY_INSECURE,
-				STRATEGY_SECURITY_S0,
 			)
 
 			coordinator.reset()
@@ -1643,17 +1410,14 @@ describe('InclusionCoordinator', () => {
 				STRATEGY_SECURITY_S2,
 				{ qrString: 'test-qr' },
 				undefined,
-				STRATEGY_SMART_START,
-				STRATEGY_SECURITY_S2,
-				STRATEGY_DEFAULT,
-				STRATEGY_INSECURE,
-				STRATEGY_SECURITY_S0,
-				1,
-				0,
 			)
 
 			coordinator.reset()
-			resolveQr({ version: 0, securityClasses: [], dsk: '00000' })
+			resolveQr({
+				version: QRCodeVersion.S2,
+				securityClasses: [],
+				dsk: '00000',
+			})
 
 			await expect(promise).rejects.toThrow(
 				'Driver was closed during inclusion setup',
