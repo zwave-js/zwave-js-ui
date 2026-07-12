@@ -1172,3 +1172,84 @@ describe('Production integration: inclusion state sole ownership via coordinator
 		expect(zwave.getInfo().inclusionState).toBe(2)
 	})
 })
+
+// -----------------------------------------------------------------
+// 10. _isReplacing cleared at successful replacement completion
+// -----------------------------------------------------------------
+describe('Production integration: _isReplacing cleared at replacement completion', () => {
+	it('replaceFailedNode starts → replacement removal preserves store → node added clears flag → later unrelated removal deletes store', async () => {
+		const zwave = realZwave({ commandsTimeout: 30 })
+		const fakeDriver = createFakeDriver()
+		;(zwave as any)._driver = fakeDriver
+		zwave.driverReady = true
+		;(zwave as any).storeNodes = { 5: { name: 'OldSensor' } }
+		;(zwave as any)._nodes.set(5, { id: 5, name: 'OldSensor' })
+
+		const coordinator = (zwave as any)._inclusionCoordinator
+
+		// Start replacement
+		await zwave.replaceFailedNode(5, InclusionStrategy.Insecure)
+		expect(coordinator.isReplacing).toBe(true)
+
+		// Replacement removal: _removeNode preserves store because isReplacing=true
+		;(zwave as any)._removeNode(5)
+		expect((zwave as any).storeNodes[5]).toEqual({ name: 'OldSensor' })
+
+		// Simulate the real _onNodeAdded path (which calls onNodeAdded + onReplacementComplete)
+		coordinator.onNodeAdded(5)
+		coordinator.onReplacementComplete()
+		expect(coordinator.isReplacing).toBe(false)
+
+		// Later unrelated removal: deletes store because isReplacing=false
+		;(zwave as any)._nodes.set(6, { id: 6, name: 'Other' })
+		;(zwave as any).storeNodes[6] = { name: 'Other' }
+		;(zwave as any)._removeNode(6)
+		expect((zwave as any).storeNodes[6]).toBeUndefined()
+	})
+
+	it('inclusion stopped clears _isReplacing for flows without node-added', async () => {
+		const zwave = realZwave({ commandsTimeout: 30 })
+		const fakeDriver = createFakeDriver()
+		;(zwave as any)._driver = fakeDriver
+		zwave.driverReady = true
+		;(zwave as any).storeNodes = { 5: { name: 'OldSensor' } }
+		;(zwave as any)._nodes.set(5, { id: 5, name: 'OldSensor' })
+
+		const coordinator = (zwave as any)._inclusionCoordinator
+
+		// Start replacement
+		await zwave.replaceFailedNode(5, InclusionStrategy.Insecure)
+		expect(coordinator.isReplacing).toBe(true)
+
+		// Replacement removal preserves store
+		;(zwave as any)._removeNode(5)
+		expect((zwave as any).storeNodes[5]).toEqual({ name: 'OldSensor' })
+
+		// No node-added fires, but inclusion stopped
+		;(zwave as any)._onInclusionStopped()
+		expect(coordinator.isReplacing).toBe(false)
+
+		// Now removal deletes store
+		;(zwave as any)._nodes.set(7, { id: 7, name: 'Unrelated' })
+		;(zwave as any).storeNodes[7] = { name: 'Unrelated' }
+		;(zwave as any)._removeNode(7)
+		expect((zwave as any).storeNodes[7]).toBeUndefined()
+	})
+
+	it('normal inclusion stopped does not affect isReplacing (which is already false)', async () => {
+		const zwave = realZwave({ commandsTimeout: 30 })
+		const fakeDriver = createFakeDriver()
+		;(zwave as any)._driver = fakeDriver
+		zwave.driverReady = true
+		;(zwave as any).storeNodes = {}
+
+		// Start normal inclusion (not replacement)
+		await zwave.startInclusion(InclusionStrategy.Default)
+		const coordinator = (zwave as any)._inclusionCoordinator
+		expect(coordinator.isReplacing).toBe(false)
+
+		// Stopped doesn't break anything
+		;(zwave as any)._onInclusionStopped()
+		expect(coordinator.isReplacing).toBe(false)
+	})
+})

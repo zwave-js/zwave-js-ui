@@ -655,6 +655,18 @@ export class InclusionCoordinator {
 	}
 
 	/**
+	 * Handle inclusion stopped event.
+	 * Clears `_isReplacing` for replacement flows that end without a
+	 * node-added event (e.g. user cancels replacement before the new
+	 * node arrives). Does NOT clear too early: by the time 'inclusion
+	 * stopped' fires, any 'node removed' for the old replaced node has
+	 * already been processed (zwave-js event ordering guarantee).
+	 */
+	onInclusionStopped(): void {
+		this._isReplacing = false
+	}
+
+	/**
 	 * Handle inclusion failed event
 	 */
 	onInclusionFailed(removeNode: (nodeId: number) => void): void {
@@ -676,10 +688,25 @@ export class InclusionCoordinator {
 	}
 
 	/**
-	 * Clear a node from pending after it was successfully added
+	 * Clear a node from pending after it was successfully added.
+	 * Does NOT clear `_isReplacing` — that is handled by the dedicated
+	 * `onReplacementNodeAdded()` method, called only from the real
+	 * controller `node added` event (not from `_removeNode` pending
+	 * cleanup which also calls this method).
 	 */
 	onNodeAdded(nodeId: number): void {
 		this._pendingInclusionNodeIds.delete(nodeId)
+	}
+
+	/**
+	 * Signal that a replacement node was successfully added.
+	 * Clears `_isReplacing` — the replacement lifecycle is complete.
+	 * Called from the real `_onNodeAdded` controller event handler only
+	 * (after `node removed` for the old node has already been processed,
+	 * so `_removeNode` sees `isReplacing=true` and preserves store).
+	 */
+	onReplacementComplete(): void {
+		this._isReplacing = false
 	}
 
 	/**
