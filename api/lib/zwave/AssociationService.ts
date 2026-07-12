@@ -52,19 +52,42 @@ export class AssociationService {
 	// ---------------------------------------------------------------
 
 	/**
+	 * Resolves the current driver, throwing if it is not (yet/anymore)
+	 * available.
+	 *
+	 * This is intentionally called fresh at every point in this file where
+	 * the pre-extraction `ZwaveClient` re-read `this._driver` directly
+	 * (rather than once at the top of a method), including immediately
+	 * after `await` boundaries such as CC-value refreshes or a preceding
+	 * add/remove call. A driver can be torn down and replaced by a
+	 * restart while one of these methods is suspended on an `await`, so
+	 * every access must observe the *current* driver instead of a value
+	 * captured before the suspension — caching it into a local once and
+	 * reusing that reference across an `await` would silently keep
+	 * operating against a stale/destroyed driver.
+	 */
+	private _requireDriver() {
+		const driver = this._driver.getDriver()
+		if (!driver) {
+			throw new Error('Driver not ready')
+		}
+		return driver
+	}
+
+	/**
 	 * Populate node `groups`
 	 */
 	getGroups(nodeId: number, ignoreUpdate = false): void {
 		const zwaveNode = this._nodes.getZWaveNode(nodeId)
 		const node = this._nodes.getZUINode(nodeId)
-		const driver = this._driver.getDriver()
 
-		if (node && zwaveNode && driver) {
+		if (node && zwaveNode) {
 			let endpointGroups: ReadonlyMap<
 				number,
 				ReadonlyMap<number, AssociationGroup>
 			> = new Map()
 			try {
+				const driver = this._requireDriver()
 				endpointGroups =
 					driver.controller.getAllAssociationGroups(nodeId)
 			} catch (error) {
@@ -74,6 +97,9 @@ export class AssociationService {
 					`Error while fetching groups associations: ${getErrorMessage(error)}`,
 				)
 			}
+			// Matches original behavior: groups are reset unconditionally
+			// once a node/ZUI-node pair is found, even if the controller
+			// call above failed or the driver was unavailable.
 			node.groups = []
 
 			for (const [endpoint, groups] of endpointGroups) {
@@ -104,10 +130,9 @@ export class AssociationService {
 		refresh = false,
 	): Promise<AssociationEntry[]> {
 		const zwaveNode = this._nodes.getZWaveNode(nodeId)
-		const driver = this._driver.getDriver()
 		const toReturn: AssociationEntry[] = []
 
-		if (zwaveNode && driver) {
+		if (zwaveNode) {
 			try {
 				if (refresh) {
 					await zwaveNode.refreshCCValues(CommandClasses.Association)
@@ -115,6 +140,11 @@ export class AssociationService {
 						CommandClasses['Multi Channel Association'],
 					)
 				}
+				// Re-resolved here (after the refresh awaits above), not
+				// cached before them, so a driver restart that races with
+				// the CC refresh is observed instead of operating on a
+				// torn-down driver.
+				const driver = this._requireDriver()
 				// https://zwave-js.github.io/node-zwave-js/#/api/controller?id=association-interface
 				// the result is a map where the key is the group number and the value is the array of associations {nodeId, endpoint?}
 				const result = driver.controller.getAllAssociations(nodeId)
@@ -157,10 +187,7 @@ export class AssociationService {
 		groupId: number,
 		association: AssociationAddress,
 	): AssociationCheckResult {
-		const driver = this._driver.getDriver()
-		if (!driver) {
-			throw new Error('Driver not ready')
-		}
+		const driver = this._requireDriver()
 		return driver.controller.checkAssociation(source, groupId, association)
 	}
 
@@ -174,14 +201,13 @@ export class AssociationService {
 		options?: { force?: boolean },
 	): Promise<AssociationCheckResult[]> {
 		const zwaveNode = this._nodes.getZWaveNode(source.nodeId)
-		const driver = this._driver.getDriver()
 
 		const sourceMsg = `Node ${
 			source.nodeId +
 			(source.endpoint ? ' Endpoint ' + source.endpoint : '')
 		}`
 
-		if (!zwaveNode || !driver) {
+		if (!zwaveNode) {
 			throw new Error(`Node ${source.nodeId} not found`)
 		}
 
@@ -189,6 +215,12 @@ export class AssociationService {
 		const force = options?.force ?? false
 
 		for (const a of associations) {
+			// Re-resolved on every iteration (not once before the loop) so
+			// that a driver restart occurring during a previous
+			// iteration's awaited `addAssociations` call is observed by
+			// the next iteration instead of continuing to use the old
+			// driver.
+			const driver = this._requireDriver()
 			const checkResult = driver.controller.checkAssociation(
 				source,
 				groupId,
@@ -236,14 +268,13 @@ export class AssociationService {
 		associations: AssociationAddress[],
 	): Promise<void> {
 		const zwaveNode = this._nodes.getZWaveNode(source.nodeId)
-		const driver = this._driver.getDriver()
 
 		const sourceMsg = `Node ${
 			source.nodeId +
 			(source.endpoint ? ' Endpoint ' + source.endpoint : '')
 		}`
 
-		if (zwaveNode && driver) {
+		if (zwaveNode) {
 			try {
 				this._log.logNode(
 					source.nodeId,
@@ -252,6 +283,7 @@ export class AssociationService {
 					associations,
 				)
 
+				const driver = this._requireDriver()
 				await driver.controller.removeAssociations(
 					source,
 					groupId,
@@ -278,10 +310,10 @@ export class AssociationService {
 	 */
 	async removeAllAssociations(nodeId: number): Promise<void> {
 		const zwaveNode = this._nodes.getZWaveNode(nodeId)
-		const driver = this._driver.getDriver()
 
-		if (zwaveNode && driver) {
+		if (zwaveNode) {
 			try {
+				const driver = this._requireDriver()
 				const allAssociations =
 					driver.controller.getAllAssociations(nodeId)
 
@@ -291,7 +323,13 @@ export class AssociationService {
 				] of allAssociations.entries()) {
 					for (const [groupId, associations] of groupAssociations) {
 						if (associations.length > 0) {
-							await driver.controller.removeAssociations(
+							// Re-resolved on every inner-loop iteration (not
+							// cached from the `getAllAssociations` call
+							// above) so a driver restart racing with a
+							// previous iteration's await is observed
+							// instead of continuing against a stale driver.
+							const currentDriver = this._requireDriver()
+							await currentDriver.controller.removeAssociations(
 								source,
 								groupId,
 								[...associations],
@@ -332,9 +370,8 @@ export class AssociationService {
 	 */
 	async removeNodeFromAllAssociations(nodeId: number): Promise<void> {
 		const zwaveNode = this._nodes.getZWaveNode(nodeId)
-		const driver = this._driver.getDriver()
 
-		if (zwaveNode && driver) {
+		if (zwaveNode) {
 			try {
 				this._log.logNode(
 					nodeId,
@@ -342,6 +379,7 @@ export class AssociationService {
 					`Removing Node ${nodeId} from all associations`,
 				)
 
+				const driver = this._requireDriver()
 				await driver.controller.removeNodeFromAllAssociations(nodeId)
 			} catch (error) {
 				this._log.logNode(
