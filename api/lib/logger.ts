@@ -223,12 +223,13 @@ export function module(module: string): ModuleLogger {
 }
 
 /**
- * Setup all loggers starting from config
+ * Closes every cached transport (if closeable) and drops the memoized
+ * `transportsList`, so the next `customTransports()` call rebuilds it from
+ * scratch instead of returning the stale, already-configured array (see
+ * issue #2937's "setup transports only once" memoization above). Shared by
+ * `setupAll()` and the test-only reset seam below so both stay in sync.
  */
-export function setupAll(config: DeepPartial<GatewayConfig>) {
-	activeConfig = config
-	stopCleanJob()
-
+function closeCachedTransports(): void {
 	transportGenerations.forEach((generation) => {
 		generation.forEach((transport) => {
 			if (typeof transport.close === 'function') {
@@ -237,10 +238,40 @@ export function setupAll(config: DeepPartial<GatewayConfig>) {
 		})
 	})
 	transportGenerations.clear()
+}
+
+/**
+ * Setup all loggers starting from config
+ */
+export function setupAll(config: DeepPartial<GatewayConfig>) {
+	activeConfig = config
+	stopCleanJob()
+	closeCachedTransports()
 
 	logContainer.loggers.forEach((logger: winston.Logger) => {
 		;(logger as ModuleLogger).setup(config)
 	})
+}
+
+// ### TEST-ONLY SEAM
+//
+// `module()`/`customTransports()` intentionally memoize the transports list
+// and register every named logger in the module-level `logContainer`
+// singleton (production never needs to un-create a logger). A test file
+// that exercises several module names/configs in the same process (e.g.
+// `test/lib/logger.test.ts`) would otherwise leak that singleton state
+// across `describe`/`it` blocks - and, under `--sequence.shuffle`, whichever
+// block happens to run first "wins" the shared cache, making the rest
+// order-dependent. Nothing in the production entrypoint (`api/bin/www.ts`)
+// imports or calls this - it only exists so tests can reset the logger
+// singleton to a clean slate between suites.
+export const __testHooks = {
+	/** Closes and forgets every registered logger and cached transport. */
+	reset(): void {
+		stopCleanJob()
+		closeCachedTransports()
+		logContainer.close()
+	},
 }
 
 let cleanJob: NodeJS.Timeout | undefined
