@@ -31,7 +31,6 @@ import { HASS_NODE_PREFIX, type HassDevice } from '../hass/types.ts'
 import type {
 	HassDeviceRegistryLifecyclePort,
 	HassDeviceRegistrySourcePort,
-	HassNode,
 	HassTopicNode,
 	HassValue,
 	HassValueTopic,
@@ -1062,10 +1061,15 @@ export default class Gateway<
 	 * Triggered when a notification is received from a node in Z-Wave Client
 	 */
 	private _onNotification(
-		node: ZUINode,
+		node: ZUINode | undefined,
 		valueId: ZUIValueId,
 		data: Record<string, any>,
 	): void {
+		if (node === undefined) {
+			throw new TypeError(
+				"Cannot read properties of undefined (reading 'deviceId')",
+			)
+		}
 		const topic = this.valueTopic(node, valueId)
 
 		if (this.config.payloadType !== PayloadType.RAW) {

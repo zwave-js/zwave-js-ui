@@ -261,7 +261,13 @@ class DebugManager {
 					session.driverDebugTransport,
 				)
 				if (session.zwaveClient.driverReady) {
-					session.zwaveClient.driver.updateLogConfig({
+					const driver = session.zwaveClient.driver
+					if (!driver) {
+						throw new TypeError(
+							'Driver is unavailable while restoring the debug log level',
+						)
+					}
+					driver.updateLogConfig({
 						level: session.originalLogLevel,
 					})
 				}
