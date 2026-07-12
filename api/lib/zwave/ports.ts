@@ -208,7 +208,7 @@ export interface ScenePersistencePort<
 	V extends ZUISceneValueRef = ZUISceneValueRef,
 > {
 	get(): ZUISceneRecord<V>[]
-	put(data: ZUISceneRecord<V>[]): Promise<unknown>
+	put(data: ZUISceneRecord<V>[]): Promise<ZUISceneRecord<V>[]>
 }
 
 // ---------------------------------------------------------------------------

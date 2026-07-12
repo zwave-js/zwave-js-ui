@@ -1,4 +1,12 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import {
+	describe,
+	it,
+	expect,
+	expectTypeOf,
+	vi,
+	beforeEach,
+	afterEach,
+} from 'vitest'
 import { SceneService } from '../../../api/lib/zwave/SceneService.ts'
 import type {
 	ScenePersistencePort,
@@ -37,10 +45,16 @@ function createPersistencePort() {
 	let stored: ZUISceneRecord<TestValueRef>[] = []
 	return {
 		get: () => stored,
+		// Mirrors the real `scenePersistencePort.put` in ZwaveClient.ts,
+		// which is `(data) => jsonStore.put(store.scenes, data)` -
+		// `jsonStore.put<T>()` resolves with the data it was given, not a
+		// boolean, so the fake must match that exact shape for
+		// `ScenePersistencePort.put`'s restored `Promise<ZUISceneRecord<V>[]>`
+		// return type to mean anything.
 		put: vi.fn((data: ZUISceneRecord<TestValueRef>[]) => {
 			stored = data
 			puts.push(data.map((s) => ({ ...s, values: [...s.values] })))
-			return Promise.resolve(true)
+			return Promise.resolve(data)
 		}),
 		puts,
 	} satisfies ScenePersistencePort<TestValueRef> & {
@@ -287,6 +301,30 @@ describe('SceneService', () => {
 
 			expect(service.sceneGetValues(1)[0].timeout).toBe(0)
 		})
+
+		// Finding #3 (runtime): `addSceneValue` used to be typed
+		// `Promise<unknown>`, silently widened from the persistence port.
+		// Confirm the actual resolved value is the live scenes array (what
+		// the pre-extraction `ZwaveClient._addSceneValue` always returned
+		// via `jsonStore.put`), not some opaque/boolean value.
+		it('resolves with the current scenes array, not a boolean/unknown value', async () => {
+			const { service } = createService([
+				{ sceneid: 1, label: 'A', values: [] },
+			])
+
+			const result = await service.addSceneValue(1, makeValueId(), 42, 3)
+
+			expect(result).toBe(service.getScenes())
+			expect(result).toEqual([
+				{
+					sceneid: 1,
+					label: 'A',
+					values: [
+						expect.objectContaining({ value: 42, timeout: 3 }),
+					],
+				},
+			])
+		})
 	})
 
 	describe('removeSceneValue', () => {
@@ -318,6 +356,21 @@ describe('SceneService', () => {
 
 			expect(service.sceneGetValues(1)).toEqual([])
 			expect(persistence.put).toHaveBeenCalledTimes(1)
+		})
+
+		// Finding #3 (runtime): mirrors the `addSceneValue` assertion above -
+		// `removeSceneValue` must resolve with the live scenes array, not a
+		// boolean/unknown value.
+		it('resolves with the current scenes array, not a boolean/unknown value', async () => {
+			const value = makeValueId()
+			const { service } = createService([
+				{ sceneid: 1, label: 'A', values: [value] },
+			])
+
+			const result = await service.removeSceneValue(1, value)
+
+			expect(result).toBe(service.getScenes())
+			expect(result).toEqual([{ sceneid: 1, label: 'A', values: [] }])
 		})
 	})
 
@@ -397,6 +450,53 @@ describe('SceneService', () => {
 			await Promise.resolve()
 
 			expect(logger.errors).toContain('boom')
+		})
+	})
+
+	// -------------------------------------------------------------------------
+	// Finding #3 (compile-time): the persistence port and the scene facade
+	// methods that delegate to it used to be declared `Promise<unknown>`,
+	// silently widening the return type all the way up through
+	// `ZwaveClient._addSceneValue`/`_removeSceneValue`. These `expectTypeOf`
+	// assertions are pure compile-time checks - they run with zero runtime
+	// effect under `vitest run` (types are erased, not checked, by the
+	// esbuild/vite transform), so they are only meaningful when compiled
+	// with a real type checker. This repo's only mechanism for that today is
+	// `npx tsc --noEmit -p tsconfig.eslint.json` (the config `eslint.config.js`
+	// wires up for type-aware linting; `npm run lint`/`npm test` do not
+	// surface a plain type mismatch like this on their own - verified
+	// empirically while implementing this fix). If a future change widens
+	// these types again, that command (not `npm test` or `npm run lint`)
+	// is what will catch it.
+	// -------------------------------------------------------------------------
+	describe('facade return type precision (Finding #3)', () => {
+		it('ScenePersistencePort.put resolves with the persisted scenes array, not unknown', () => {
+			expectTypeOf<
+				ReturnType<ScenePersistencePort<TestValueRef>['put']>
+			>().toEqualTypeOf<Promise<ZUISceneRecord<TestValueRef>[]>>()
+
+			// Documents exactly what regressed and is now restored.
+			expectTypeOf<
+				ReturnType<ScenePersistencePort<TestValueRef>['put']>
+			>().not.toEqualTypeOf<Promise<unknown>>()
+		})
+
+		it('SceneService.addSceneValue/removeSceneValue resolve with the scenes array, not unknown', () => {
+			const { service } = createService([])
+
+			expectTypeOf<
+				ReturnType<typeof service.addSceneValue>
+			>().toEqualTypeOf<Promise<ZUISceneRecord<TestValueRef>[]>>()
+			expectTypeOf<
+				ReturnType<typeof service.addSceneValue>
+			>().not.toEqualTypeOf<Promise<unknown>>()
+
+			expectTypeOf<
+				ReturnType<typeof service.removeSceneValue>
+			>().toEqualTypeOf<Promise<ZUISceneRecord<TestValueRef>[]>>()
+			expectTypeOf<
+				ReturnType<typeof service.removeSceneValue>
+			>().not.toEqualTypeOf<Promise<unknown>>()
 		})
 	})
 })

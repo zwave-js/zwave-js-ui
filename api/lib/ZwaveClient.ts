@@ -2515,7 +2515,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		valueId: ZUIValueIdScene,
 		value: any,
 		timeout: number,
-	) {
+	): Promise<ZUIScene[]> {
 		return this._sceneService.addSceneValue(
 			sceneid,
 			valueId,
@@ -2527,7 +2527,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	/**
 	 * Remove a value from scene
 	 */
-	async _removeSceneValue(sceneid: number, valueId: ZUIValueIdScene) {
+	async _removeSceneValue(
+		sceneid: number,
+		valueId: ZUIValueIdScene,
+	): Promise<ZUIScene[]> {
 		return this._sceneService.removeSceneValue(sceneid, valueId)
 	}
 
