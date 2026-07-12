@@ -4152,7 +4152,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		try {
 			// this must be done only after driver is ready
-			this._scheduledConfigCheck().catch(() => {
+			this._scheduledConfigCheck(generation).catch(() => {
 				/* ignore */
 			})
 
@@ -6559,14 +6559,32 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	}
 
 	/**
-	 * Internal function to check for config updates automatically once a day
+	 * Internal function to check for config updates automatically once a day.
 	 *
+	 * @param generation The {@link DriverLifecycle} generation active when this
+	 * check was scheduled. `checkForConfigUpdates()` awaits a driver round-trip,
+	 * during which a `close()`/`restart` (or a replacement driver) may supersede
+	 * this generation. We therefore re-validate the generation and the
+	 * closed/destroyed state AFTER the await, before logging or rearming, so a
+	 * stale in-flight check can never resurrect a ~24h timer that outlives the
+	 * driver or duplicates the replacement generation's own scheduled check. The
+	 * rearm carries the same token forward so the daily chain keeps fencing.
 	 */
-	private async _scheduledConfigCheck() {
+	private async _scheduledConfigCheck(generation: number) {
 		try {
 			await this.checkForConfigUpdates()
 		} catch (error) {
 			logger.warn(`Scheduled update check has failed: ${error.message}`)
+		}
+
+		// Bail if this generation was superseded while the check was in flight,
+		// or the client was closed/destroyed — do not log or rearm a stale timer.
+		if (
+			this._driverLifecycle.generation !== generation ||
+			this.closed ||
+			this.destroyed
+		) {
+			return
 		}
 
 		const nextUpdate = new Date()
@@ -6577,7 +6595,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		logger.info(`Next update scheduled for: ${nextUpdate}`)
 
 		this.updatesCheckTimeout = setTimeout(
-			this._scheduledConfigCheck.bind(this),
+			() => {
+				void this._scheduledConfigCheck(generation)
+			},
 			waitMillis > 0 ? waitMillis : 1000,
 		)
 	}
