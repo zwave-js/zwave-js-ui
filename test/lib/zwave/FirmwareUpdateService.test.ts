@@ -1,6 +1,9 @@
 /* eslint-disable @typescript-eslint/unbound-method */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { FirmwareUpdateService } from '../../../api/lib/zwave/FirmwareUpdateService.ts'
+import {
+	FirmwareUpdateService,
+	FirmwareLifecycleCancelledError,
+} from '../../../api/lib/zwave/FirmwareUpdateService.ts'
 import type {
 	FirmwareBackupPort,
 	FirmwareConfigPort,
@@ -1446,7 +1449,9 @@ describe('FirmwareUpdateService', () => {
 			service.resetGeneration()
 
 			resolveCheck(new Map([[2, [makeUpdate({ version: '4.0.0' })]]]))
-			await checkPromise
+			await expect(checkPromise).rejects.toThrow(
+				'cancelled: service generation advanced',
+			)
 
 			// No store mutation
 			expect(nodes.updateStoreNodes).not.toHaveBeenCalled()
@@ -1582,13 +1587,328 @@ describe('FirmwareUpdateService', () => {
 			service.resetGeneration()
 			expect(service.generation).toBe(genBefore + 1)
 
-			// Old check resolves after reset
+			// Old check resolves after reset — throws lifecycle cancellation
 			resolveCheck(new Map([[1, [makeUpdate()]]]))
-			await checkPromise
+			await expect(checkPromise).rejects.toThrow(
+				'cancelled: service generation advanced',
+			)
 
 			// Fenced: no mutation
 			expect(nodes.updateStoreNodes).not.toHaveBeenCalled()
 			expect(nodes.emitNodeUpdate).not.toHaveBeenCalled()
+		})
+	})
+
+	// -----------------------------------------------------------------
+	// Generation fencing: all async operations
+	// -----------------------------------------------------------------
+	describe('generation fencing on all async operations', () => {
+		it('firmwareUpdateOTW: backup barrier -> reset/driver swap prevents OTW call', async () => {
+			let resolveBackup: () => void
+			const backup: FirmwareBackupPort = {
+				backupOnEvent: true,
+				backupNvm: vi.fn(
+					() =>
+						new Promise<void>((resolve) => {
+							resolveBackup = resolve
+						}),
+				),
+			}
+			const firmwareUpdateOTW = vi
+				.fn()
+				.mockResolvedValue({ success: true })
+			const driver = createDriverPort({
+				getDriver: () => ({
+					controller: {
+						getAvailableFirmwareUpdates: vi.fn(),
+						getAllAvailableFirmwareUpdates: vi.fn(),
+						firmwareUpdateOTA: vi.fn(),
+						nodes: { get: vi.fn() },
+					},
+					firmwareUpdateOTW,
+				}),
+			})
+			const { service } = createService({ driver, backup })
+
+			const otwPromise = service.firmwareUpdateOTW({
+				name: 'fw.bin',
+				data: new Uint8Array([1, 2, 3]),
+			})
+
+			// Reset while paused in backup — simulates driver swap
+			service.resetGeneration()
+
+			// Let backup resolve
+			resolveBackup()
+
+			await expect(otwPromise).rejects.toThrow(
+				FirmwareLifecycleCancelledError,
+			)
+
+			// Driver's firmwareUpdateOTW was never called
+			expect(firmwareUpdateOTW).not.toHaveBeenCalled()
+		})
+
+		it('firmwareUpdateOTW: extraction barrier -> reset/stale node', async () => {
+			const firmwareUpdateOTW = vi
+				.fn()
+				.mockResolvedValue({ success: true })
+			let resolveExtraction: (v: { data: Uint8Array }) => void
+			const extraction: FirmwareExtractionPort = {
+				guessFirmwareFileFormat: vi.fn().mockReturnValue('bin'),
+				extractFirmware: vi.fn(
+					() =>
+						new Promise((resolve) => {
+							resolveExtraction = resolve
+						}),
+				),
+				tryUnzipFirmwareFile: vi.fn(),
+				isUint8Array: (v: unknown): v is Uint8Array =>
+					v instanceof Uint8Array,
+			}
+			const driver = createDriverPort({
+				getDriver: () => ({
+					controller: {
+						getAvailableFirmwareUpdates: vi.fn(),
+						getAllAvailableFirmwareUpdates: vi.fn(),
+						firmwareUpdateOTA: vi.fn(),
+						nodes: { get: vi.fn() },
+					},
+					firmwareUpdateOTW,
+				}),
+			})
+			const backup: FirmwareBackupPort = {
+				backupOnEvent: false,
+				backupNvm: vi.fn(),
+			}
+			const { service } = createService({ driver, backup, extraction })
+
+			const otwPromise = service.firmwareUpdateOTW({
+				name: 'fw.bin',
+				data: new Uint8Array([1, 2, 3]),
+			})
+
+			// Reset while paused in extraction
+			service.resetGeneration()
+
+			// Let extraction resolve
+			resolveExtraction({ data: new Uint8Array([4, 5]) })
+
+			await expect(otwPromise).rejects.toThrow(
+				FirmwareLifecycleCancelledError,
+			)
+
+			// Never called the (now-stale) driver
+			expect(firmwareUpdateOTW).not.toHaveBeenCalled()
+		})
+
+		it('firmwareUpdateOTA: late completion after reset throws cancellation', async () => {
+			let resolveOTA: (v: { success: boolean }) => void
+			const firmwareUpdateOTA = vi.fn(
+				() =>
+					new Promise((resolve) => {
+						resolveOTA = resolve
+					}),
+			)
+			const driver = createDriverPort({
+				getDriver: () => ({
+					controller: {
+						getAvailableFirmwareUpdates: vi.fn(),
+						getAllAvailableFirmwareUpdates: vi.fn(),
+						firmwareUpdateOTA,
+						nodes: { get: vi.fn() },
+					},
+					firmwareUpdateOTW: vi.fn(),
+				}),
+			})
+			const { service } = createService({ driver })
+
+			const otaPromise = service.firmwareUpdateOTA(5, makeUpdate())
+
+			// Reset mid-flight
+			service.resetGeneration()
+
+			// Late resolve from the old driver
+			resolveOTA({ success: true })
+
+			await expect(otaPromise).rejects.toThrow(
+				FirmwareLifecycleCancelledError,
+			)
+		})
+
+		it('abortFirmwareUpdate: late completion after reset does not mutate node/socket', async () => {
+			let resolveAbort: () => void
+			const abortFirmwareUpdate = vi.fn(
+				() =>
+					new Promise<void>((resolve) => {
+						resolveAbort = resolve
+					}),
+			)
+			const nodes = createNodeStorePort()
+			nodes._nodes.set(3, { id: 3, firmwareUpdate: { progress: 50 } })
+			const driver = createDriverPort()
+			const { service } = createService({ driver, nodes })
+
+			const getZwaveNode = () => ({ abortFirmwareUpdate })
+			const abortPromise = service.abortFirmwareUpdate(3, getZwaveNode)
+
+			// Reset while abort is in-flight
+			service.resetGeneration()
+
+			// Abort completes late
+			resolveAbort()
+
+			await expect(abortPromise).rejects.toThrow(
+				FirmwareLifecycleCancelledError,
+			)
+
+			// Node state NOT cleared — fence prevented mutation
+			expect(nodes._nodes.get(3)?.firmwareUpdate).toEqual({
+				progress: 50,
+			})
+			expect(nodes.emitNodeUpdate).not.toHaveBeenCalled()
+		})
+
+		it('updateFirmware: extraction barrier -> reset/stale node', async () => {
+			let resolveExtraction: (v: { data: Uint8Array }) => void
+			const extraction: FirmwareExtractionPort = {
+				guessFirmwareFileFormat: vi.fn().mockReturnValue('bin'),
+				extractFirmware: vi.fn(
+					() =>
+						new Promise((resolve) => {
+							resolveExtraction = resolve
+						}),
+				),
+				tryUnzipFirmwareFile: vi.fn(),
+				isUint8Array: (v: unknown): v is Uint8Array =>
+					v instanceof Uint8Array,
+			}
+			const updateFirmware = vi.fn().mockResolvedValue({ success: true })
+			const getZwaveNode = () => ({ updateFirmware })
+			const { service } = createService({ extraction })
+
+			const updatePromise = service.updateFirmware(
+				5,
+				[{ name: 'fw.bin', data: new Uint8Array([1]) }],
+				getZwaveNode,
+			)
+
+			// Reset while extraction is in-flight
+			service.resetGeneration()
+
+			// Let extraction resolve
+			resolveExtraction({ data: new Uint8Array([2]) })
+
+			await expect(updatePromise).rejects.toThrow(
+				FirmwareLifecycleCancelledError,
+			)
+
+			// Node's updateFirmware was never called
+			expect(updateFirmware).not.toHaveBeenCalled()
+		})
+
+		it('getAvailableFirmwareUpdates: late result after reset throws', async () => {
+			let resolveGet: (v: FirmwareUpdateInfo[]) => void
+			const driver = createDriverPort({
+				getDriver: () => ({
+					controller: {
+						getAvailableFirmwareUpdates: vi.fn(
+							() =>
+								new Promise((resolve) => {
+									resolveGet = resolve
+								}),
+						),
+						getAllAvailableFirmwareUpdates: vi.fn(),
+						firmwareUpdateOTA: vi.fn(),
+						nodes: { get: vi.fn() },
+					},
+					firmwareUpdateOTW: vi.fn(),
+				}),
+			})
+			const { service } = createService({ driver })
+
+			const getPromise = service.getAvailableFirmwareUpdates(7)
+
+			service.resetGeneration()
+
+			resolveGet([makeUpdate()])
+
+			await expect(getPromise).rejects.toThrow(
+				FirmwareLifecycleCancelledError,
+			)
+		})
+
+		it('getAllAvailableFirmwareUpdates: late result after reset throws', async () => {
+			let resolveGetAll: (v: Map<number, FirmwareUpdateInfo[]>) => void
+			const driver = createDriverPort({
+				getDriver: () => ({
+					controller: {
+						getAvailableFirmwareUpdates: vi.fn(),
+						getAllAvailableFirmwareUpdates: vi.fn(
+							() =>
+								new Promise((resolve) => {
+									resolveGetAll = resolve
+								}),
+						),
+						firmwareUpdateOTA: vi.fn(),
+						nodes: { get: vi.fn() },
+					},
+					firmwareUpdateOTW: vi.fn(),
+				}),
+			})
+			const { service } = createService({ driver })
+
+			const getAllPromise = service.getAllAvailableFirmwareUpdates()
+
+			service.resetGeneration()
+
+			resolveGetAll(new Map())
+
+			await expect(getAllPromise).rejects.toThrow(
+				FirmwareLifecycleCancelledError,
+			)
+		})
+
+		it('normal-path errors/payloads preserved when fence is not broken', async () => {
+			// OTA succeeds normally
+			const driver = createDriverPort({
+				getDriver: () => ({
+					controller: {
+						getAvailableFirmwareUpdates: vi.fn(),
+						getAllAvailableFirmwareUpdates: vi.fn(),
+						firmwareUpdateOTA: vi
+							.fn()
+							.mockResolvedValue({ success: true, status: 0 }),
+						nodes: { get: vi.fn() },
+					},
+					firmwareUpdateOTW: vi.fn(),
+				}),
+			})
+			const { service } = createService({ driver })
+
+			const result = await service.firmwareUpdateOTA(1, makeUpdate())
+			expect(result).toEqual({ success: true, status: 0 })
+		})
+
+		it('normal-path error propagated when fence is not broken', async () => {
+			const driver = createDriverPort({
+				getDriver: () => ({
+					controller: {
+						getAvailableFirmwareUpdates: vi.fn(),
+						getAllAvailableFirmwareUpdates: vi.fn(),
+						firmwareUpdateOTA: vi
+							.fn()
+							.mockRejectedValue(new Error('Network timeout')),
+						nodes: { get: vi.fn() },
+					},
+					firmwareUpdateOTW: vi.fn(),
+				}),
+			})
+			const { service } = createService({ driver })
+
+			await expect(
+				service.firmwareUpdateOTA(1, makeUpdate()),
+			).rejects.toThrow('Network timeout')
 		})
 	})
 })
