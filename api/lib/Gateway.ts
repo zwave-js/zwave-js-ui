@@ -27,7 +27,6 @@ import MqttDiscoveryManager, {
 	type MqttDiscoveryManagerOptions,
 } from '../hass/MqttDiscoveryManager.ts'
 import type {
-	HassNode,
 	HassTopicNode,
 	HassValue,
 	HassValueTopic,
@@ -1082,10 +1081,15 @@ export default class Gateway<
 	 * Triggered when a notification is received from a node in Z-Wave Client
 	 */
 	private _onNotification(
-		node: ZUINode,
+		node: ZUINode | undefined,
 		valueId: ZUIValueId,
 		data: Record<string, any>,
 	): void {
+		if (node === undefined) {
+			throw new TypeError(
+				"Cannot read properties of undefined (reading 'deviceId')",
+			)
+		}
 		const topic = this.valueTopic(node, valueId)
 
 		if (this.config.payloadType !== PayloadType.RAW) {
@@ -1411,21 +1415,6 @@ export default class Gateway<
 	 */
 	private _getIdWithoutNode(valueId: HassValue | ZUIValueId): string {
 		return valueId.id.replace(valueId.nodeId + '-', '')
-	}
-
-	private _deviceInfo(node: HassNode, nodeName: string) {
-		return this.discoveryGenerator.deviceInfo(node, nodeName)
-	}
-
-	private _setDiscoveryValue(
-		payload: Record<string, unknown>,
-		property: string,
-		node: ZUINode,
-	): void {
-		if (!node.values) return
-		this.discoveryGenerator.setDiscoveryValue(payload, property, {
-			values: node.values,
-		})
 	}
 
 	private _requireNodeValues(node: ZUINode): Record<string, ZUIValueId> {

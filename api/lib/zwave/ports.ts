@@ -208,7 +208,7 @@ export interface TemplateNodeState {
 }
 
 export interface ScheduleDriverPort {
-	getDriver(): Driver | null
+	getDriver(): Driver | null | undefined
 }
 
 export interface ScheduleNodeStorePort {
@@ -224,11 +224,14 @@ export interface ScheduleUtilsPort {
 }
 
 export interface TemplateDriverPort {
-	getDriver(): {
-		controller: {
-			nodes: { get(nodeId: number): ZWaveNode | undefined }
-		}
-	} | null
+	getDriver():
+		| {
+				controller: {
+					nodes: { get(nodeId: number): ZWaveNode | undefined }
+				}
+		  }
+		| null
+		| undefined
 }
 
 export interface TemplateNodeStorePort {
@@ -351,7 +354,7 @@ export interface GroupVirtualNodeHandle {
 }
 
 export interface GroupDriverPort {
-	isDriverReady(): boolean
+	isDriverReady(): boolean | null | undefined
 	getOwnNodeId(): number | undefined
 	/** True when the driver has no node list to check yet (permissive) or the id is a known physical node */
 	hasPhysicalNode(nodeId: number): boolean
@@ -497,26 +500,29 @@ export interface FwFileRef {
 }
 
 export interface FirmwareDriverPort {
-	getDriver(): {
-		controller: {
-			getAvailableFirmwareUpdates(
-				nodeId: number,
-				options?: unknown,
-			): Promise<FirmwareUpdateInfo[]>
-			getAllAvailableFirmwareUpdates(
-				options?: unknown,
-			): Promise<Map<number, FirmwareUpdateInfo[]>>
-			firmwareUpdateOTA(
-				nodeId: number,
-				updateInfo: FirmwareUpdateInfo,
-			): Promise<FirmwareUpdateResult>
-			nodes: { get(nodeId: number): unknown }
-		}
-		firmwareUpdateOTW(
-			dataOrInfo: Uint8Array<ArrayBuffer> | FirmwareUpdateInfo,
-		): Promise<OTWFirmwareUpdateResult>
-	} | null
-	isDriverReady(): boolean
+	getDriver():
+		| {
+				controller: {
+					getAvailableFirmwareUpdates(
+						nodeId: number,
+						options?: unknown,
+					): Promise<FirmwareUpdateInfo[]>
+					getAllAvailableFirmwareUpdates(
+						options?: unknown,
+					): Promise<Map<number, FirmwareUpdateInfo[]>>
+					firmwareUpdateOTA(
+						nodeId: number,
+						updateInfo: FirmwareUpdateInfo,
+					): Promise<FirmwareUpdateResult>
+					nodes: { get(nodeId: number): unknown }
+				}
+				firmwareUpdateOTW(
+					dataOrInfo: Uint8Array<ArrayBuffer> | FirmwareUpdateInfo,
+				): Promise<OTWFirmwareUpdateResult>
+		  }
+		| null
+		| undefined
+	isDriverReady(): boolean | null | undefined
 }
 
 export interface FirmwareNodeStorePort {
@@ -571,23 +577,28 @@ export interface FirmwareExtractionPort {
 }
 
 export interface InclusionDriverPort {
-	getDriver(): {
-		controller: {
-			inclusionState: InclusionState | undefined
-			beginInclusion(options?: InclusionOptions): Promise<boolean>
-			stopInclusion(): Promise<boolean>
-			beginExclusion(options: unknown): Promise<boolean>
-			stopExclusion(): Promise<boolean>
-			replaceFailedNode(
-				nodeId: number,
-				options?: ReplaceNodeOptions,
-			): Promise<boolean>
-			beginJoiningNetwork(options: unknown): Promise<JoinNetworkResult>
-			stopJoiningNetwork(): Promise<boolean>
-		}
-		updateOptions(options: unknown): void
-	} | null
-	isDriverReady(): boolean
+	getDriver():
+		| {
+				controller: {
+					inclusionState: InclusionState | undefined
+					beginInclusion(options?: InclusionOptions): Promise<boolean>
+					stopInclusion(): Promise<boolean>
+					beginExclusion(options: unknown): Promise<boolean>
+					stopExclusion(): Promise<boolean>
+					replaceFailedNode(
+						nodeId: number,
+						options?: ReplaceNodeOptions,
+					): Promise<boolean>
+					beginJoiningNetwork(
+						options: unknown,
+					): Promise<JoinNetworkResult>
+					stopJoiningNetwork(): Promise<boolean>
+				}
+				updateOptions(options: unknown): void
+		  }
+		| null
+		| undefined
+	isDriverReady(): boolean | null | undefined
 }
 
 export interface InclusionSocketPort {

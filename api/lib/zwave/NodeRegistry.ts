@@ -166,7 +166,7 @@ export interface NodeRegistryHost {
 	registerDevice(node: ZUINode): void
 	throttle(key: string, callback: () => void, wait: number): void
 	clearThrottle(key: string): void
-	isDriverReady(): boolean
+	isDriverReady(): boolean | null | undefined
 }
 
 export class NodeRegistry {
