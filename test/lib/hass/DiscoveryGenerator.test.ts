@@ -160,6 +160,8 @@ function setup(options: {
 		getStatusTopic: () => 'prefix/_CLIENTS/ZWAVE_GATEWAY/status',
 		publish: (topic, payload, publishOptions, prefix) => {
 			if (options.publishError !== undefined) {
+				// Exercise production normalization of non-Error throw values
+				// eslint-disable-next-line @typescript-eslint/only-throw-error
 				throw options.publishError
 			}
 			published.push({

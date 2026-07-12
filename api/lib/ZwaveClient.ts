@@ -250,7 +250,7 @@ function formatLegacyMessage(message: unknown): string {
 	if (typeof message === 'symbol') {
 		throw new TypeError('Cannot convert a Symbol value to a string')
 	}
-	// eslint-disable-next-line @typescript-eslint/no-base-to-string
+
 	return String(message)
 }
 
@@ -4302,7 +4302,6 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				await broadcastNode.setValue(valueId, value, options)
 			} catch (error) {
 				logger.error(
-					// eslint-disable-next-line @typescript-eslint/no-base-to-string
 					`Error while sending broadcast ${value} to CC ${
 						valueId.commandClass
 					} ${valueId.property} ${valueId.propertyKey || ''}: ${formatLegacyErrorMessage(
@@ -4335,7 +4334,6 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 					hasZWaveErrorCode(error) &&
 					error.code === ZWaveErrorCodes.CC_NotSupported
 				logger.error(
-					// eslint-disable-next-line @typescript-eslint/no-base-to-string
 					`Error while sending multicast ${value} to CC ${
 						valueId.commandClass
 					} ${valueId.property} ${valueId.propertyKey || ''}: ${formatLegacyErrorMessage(

@@ -149,7 +149,9 @@ describe('Socket contract: callApi()', () => {
 				zwave.driverReady = true
 				vi.spyOn(zwave, '_getScenes').mockRejectedValueOnce(rejection)
 
-				await expect(zwave.callApi('_getScenes')).rejects.toThrow(message)
+				await expect(zwave.callApi('_getScenes')).rejects.toThrow(
+					message,
+				)
 			},
 		)
 
