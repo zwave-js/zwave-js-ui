@@ -4773,6 +4773,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	private _onInclusionStopped() {
 		const message = 'Inclusion stopped'
 
+		this._inclusionCoordinator.onInclusionStopped()
 		this._updateControllerStatus(message)
 		this.emit('event', EventSource.CONTROLLER, 'inclusion stopped')
 	}
@@ -4848,6 +4849,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		let node: ZUINode
 		// node made it past `node found` — no longer a ghost candidate
 		this._inclusionCoordinator.onNodeAdded(zwaveNode.id)
+		// If this was a replacement, the lifecycle is now complete
+		this._inclusionCoordinator.onReplacementComplete()
 		// the driver is ready so this node has been added on fly
 		if (this.driverReady) {
 			node = this._addNode(zwaveNode)

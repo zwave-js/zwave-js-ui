@@ -2367,4 +2367,77 @@ describe('InclusionCoordinator', () => {
 			expect(coordinator.inclusionState).toBe(0)
 		})
 	})
+
+	describe('_isReplacing cleared at replacement completion', () => {
+		it('onReplacementComplete clears _isReplacing', async () => {
+			const { coordinator } = createCoordinator()
+
+			await coordinator.replaceFailedNode(5, STRATEGY_SECURITY_S2, {})
+			expect(coordinator.isReplacing).toBe(true)
+
+			// Simulate the replacement completion: node added
+			coordinator.onNodeAdded(5)
+			// onNodeAdded does NOT clear isReplacing (it only clears pending tracking)
+			expect(coordinator.isReplacing).toBe(true)
+
+			// onReplacementComplete clears it
+			coordinator.onReplacementComplete()
+			expect(coordinator.isReplacing).toBe(false)
+		})
+
+		it('onInclusionStopped clears _isReplacing for flows without node-added', async () => {
+			const { coordinator } = createCoordinator()
+
+			await coordinator.replaceFailedNode(5, STRATEGY_INSECURE, {})
+			expect(coordinator.isReplacing).toBe(true)
+
+			// No node-added fired, but inclusion stopped
+			coordinator.onInclusionStopped()
+			expect(coordinator.isReplacing).toBe(false)
+		})
+
+		it('full replacement lifecycle: start → removal preserves → onReplacementComplete clears → later removal deletes', async () => {
+			const { coordinator } = createCoordinator()
+
+			// Start replacement
+			await coordinator.replaceFailedNode(5, STRATEGY_SECURITY_S2, {})
+			expect(coordinator.isReplacing).toBe(true)
+
+			// During replacement, isReplacing is true (store preserved externally)
+			expect(coordinator.isReplacing).toBe(true)
+
+			// onNodeAdded (pending tracking) does NOT clear it
+			coordinator.onNodeAdded(5)
+			expect(coordinator.isReplacing).toBe(true)
+
+			// onReplacementComplete completes the lifecycle
+			coordinator.onReplacementComplete()
+			expect(coordinator.isReplacing).toBe(false)
+
+			// After replacement, an unrelated node removal should delete store
+			expect(coordinator.isReplacing).toBe(false)
+		})
+
+		it('onInclusionFailed also clears isReplacing (pre-existing behavior)', async () => {
+			const { coordinator } = createCoordinator()
+
+			await coordinator.replaceFailedNode(5, STRATEGY_SECURITY_S2, {})
+			expect(coordinator.isReplacing).toBe(true)
+
+			coordinator.onInclusionFailed(() => {})
+			expect(coordinator.isReplacing).toBe(false)
+		})
+
+		it('onInclusionStopped does not interfere with normal inclusion (isReplacing starts false)', async () => {
+			const { coordinator } = createCoordinator()
+
+			// Normal inclusion (not replacement)
+			await coordinator.startInclusion(STRATEGY_DEFAULT, {}, undefined)
+			expect(coordinator.isReplacing).toBe(false)
+
+			// Inclusion stopped — isReplacing remains false (no-op)
+			coordinator.onInclusionStopped()
+			expect(coordinator.isReplacing).toBe(false)
+		})
+	})
 })
