@@ -231,7 +231,7 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 	 * Start http/https server and all the manager
 	 */
 	async function startServer(port: number | string, host?: string) {
-		let server: HttpServer
+		let server: HttpServer | undefined
 
 		installProcessHandlers()
 
@@ -281,9 +281,10 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 				server = createHttpServer(app)
 			}
 
-			attachSocket(server)
-			server.listen(port as number, host, function () {
-				const addr = server.address()
+			const listeningServer = server
+			attachSocket(listeningServer)
+			listeningServer.listen(port as number, host, function () {
+				const addr = listeningServer.address()
 				const bind =
 					typeof addr === 'string'
 						? 'pipe ' + addr
@@ -295,7 +296,9 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 				)
 			})
 
-			server.on('error', function (error: NodeJS.ErrnoException) {
+			listeningServer.on(
+				'error',
+				function (error: NodeJS.ErrnoException) {
 				if (error.syscall !== 'listen') {
 					throw error
 				}
@@ -316,7 +319,8 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 					default:
 						throw error
 				}
-			})
+				},
+			)
 
 			const users = jsonStore.get(store.users)
 
@@ -334,7 +338,7 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 			await debugManager.init() // Clean up any old debug temp files
 			await runtime.startGateway(settings)
 
-			return server
+			return listeningServer
 		} catch (error) {
 			try {
 				await close()
@@ -349,16 +353,16 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 	}
 
 	async function loadCertKey(): Promise<{
-		cert: string
-		key: string
+		cert: string | undefined
+		key: string | undefined
 	}> {
 		const certFile =
 			process.env.SSL_CERTIFICATE || utils.joinPath(storeDir, 'cert.pem')
 		const keyFile =
 			process.env.SSL_KEY || utils.joinPath(storeDir, 'key.pem')
 
-		let key: string
-		let cert: string
+		let key: string | undefined
+		let cert: string | undefined
 
 		try {
 			cert = await readFile(certFile, 'utf8')
