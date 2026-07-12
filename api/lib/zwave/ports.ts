@@ -9,7 +9,17 @@ import type {
 	Driver,
 	VirtualValueID,
 	ZWaveController,
+	FirmwareUpdateInfo,
+	FirmwareUpdateResult,
+	OTWFirmwareUpdateResult,
+	InclusionGrant,
+	InclusionOptions,
+	ReplaceNodeOptions,
+	InclusionUserCallbacks,
+	PlannedProvisioningEntry,
+	QRProvisioningInformation,
 } from 'zwave-js'
+import { InclusionStrategy, QRCodeVersion } from 'zwave-js'
 import type {
 	FirmwareFileFormat,
 	SecurityClass,
@@ -18,7 +28,20 @@ import type {
 import type { ConfigManager } from '@zwave-js/config'
 import type { DeepPartial } from '../utils.ts'
 
-export type { FirmwareFileFormat, SecurityClass }
+export type {
+	FirmwareFileFormat,
+	SecurityClass,
+	FirmwareUpdateInfo,
+	FirmwareUpdateResult,
+	OTWFirmwareUpdateResult,
+	InclusionGrant,
+	InclusionOptions,
+	ReplaceNodeOptions,
+	InclusionUserCallbacks,
+	PlannedProvisioningEntry,
+	QRProvisioningInformation,
+}
+export { InclusionStrategy, QRCodeVersion }
 
 // ---------------------------------------------------------------------------
 // Schedule types re-exported so services don't import ZwaveClient
@@ -383,17 +406,9 @@ export interface AssociationLogPort {
 export interface FirmwareUpdateNodeState {
 	id: number
 	firmwareUpdate?: unknown
-	availableFirmwareUpdates?: FirmwareUpdateInfoRef[]
+	availableFirmwareUpdates?: FirmwareUpdateInfo[]
 	firmwareUpdatesDismissed?: { [version: string]: boolean }
 	lastFirmwareUpdateCheck?: number
-}
-
-export interface FirmwareUpdateInfoRef {
-	version: string
-	downgrade: boolean
-	changelog?: string
-	channel?: string
-	files: Array<{ target: number; url: string; integrity: string }>
 }
 
 export interface FwFileRef {
@@ -412,19 +427,19 @@ export interface FirmwareDriverPort {
 			getAvailableFirmwareUpdates(
 				nodeId: number,
 				options?: unknown,
-			): Promise<FirmwareUpdateInfoRef[] | null>
+			): Promise<FirmwareUpdateInfo[]>
 			getAllAvailableFirmwareUpdates(
 				options?: unknown,
-			): Promise<Map<number, FirmwareUpdateInfoRef[]> | null>
+			): Promise<Map<number, FirmwareUpdateInfo[]>>
 			firmwareUpdateOTA(
 				nodeId: number,
-				updateInfo: FirmwareUpdateInfoRef,
-			): Promise<unknown>
+				updateInfo: FirmwareUpdateInfo,
+			): Promise<FirmwareUpdateResult>
 			nodes: { get(nodeId: number): unknown }
 		}
 		firmwareUpdateOTW(
-			dataOrInfo: Uint8Array<ArrayBuffer> | FirmwareUpdateInfoRef,
-		): Promise<unknown>
+			dataOrInfo: Uint8Array<ArrayBuffer> | FirmwareUpdateInfo,
+		): Promise<OTWFirmwareUpdateResult>
 	} | null
 	isDriverReady(): boolean
 }
@@ -495,15 +510,6 @@ export interface FirmwareExtractionPort {
 }
 
 // ---------------------------------------------------------------------------
-// Inclusion/Exclusion types
-// ---------------------------------------------------------------------------
-
-export interface InclusionGrantRef {
-	securityClasses: SecurityClass[]
-	clientSideAuth: boolean
-}
-
-// ---------------------------------------------------------------------------
 // Port: driver access for InclusionCoordinator
 // ---------------------------------------------------------------------------
 
@@ -511,13 +517,13 @@ export interface InclusionDriverPort {
 	getDriver(): {
 		controller: {
 			inclusionState: unknown
-			beginInclusion(options: unknown): Promise<boolean>
+			beginInclusion(options?: InclusionOptions): Promise<boolean>
 			stopInclusion(): Promise<boolean>
 			beginExclusion(options: unknown): Promise<boolean>
 			stopExclusion(): Promise<boolean>
 			replaceFailedNode(
 				nodeId: number,
-				options: unknown,
+				options?: ReplaceNodeOptions,
 			): Promise<boolean>
 			beginJoiningNetwork(options: unknown): Promise<unknown>
 			stopJoiningNetwork(): Promise<boolean>
@@ -558,7 +564,7 @@ export interface InclusionConfigPort {
 // ---------------------------------------------------------------------------
 
 export interface InclusionQRPort {
-	parseQRCodeString(qrString: string): Promise<{ version: number }>
+	parseQRCodeString(qrString: string): Promise<QRProvisioningInformation>
 }
 
 // ---------------------------------------------------------------------------

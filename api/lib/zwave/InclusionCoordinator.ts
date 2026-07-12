@@ -5,36 +5,24 @@
  * callback first/last UI client lifecycle, controller/socket events and
  * timing.
  *
- * Extracted from ZwaveClient to keep the monolith slim. The service is
- * strict-clean (no `any` casts, no non-null assertions, no ts-ignore).
+ * Extracted from ZwaveClient to keep the monolith slim.
  *
- * Preserves #4639 cleanup (ghost node removal on inclusion failure) and all
- * existing edge-case / malformed behavior paths.
- *
- * Ports:
- *   driver        – driver + controller access
- *   socket        – socket emission
- *   backup        – NVM backup before inclusion/exclusion/replace
- *   config        – runtime config (commandsTimeout, serverEnabled)
- *   qr            – QR code parsing
- *   serverManager – HA server manager for handing control back
- *   logger        – structured logging
+ * Preserves #4639 cleanup (ghost node removal on inclusion failure).
  */
 
 import type {
 	InclusionBackupPort,
 	InclusionConfigPort,
 	InclusionDriverPort,
-	InclusionGrantRef,
+	InclusionGrant,
 	InclusionQRPort,
 	InclusionServerManagerPort,
 	InclusionSocketPort,
+	PlannedProvisioningEntry,
+	QRProvisioningInformation,
 	ServiceLogger,
 } from './ports.ts'
-
-/** QR code version constants matching zwave-js */
-const QR_VERSION_S2 = 0
-const QR_VERSION_SMART_START = 1
+import { InclusionStrategy, QRCodeVersion } from './ports.ts'
 
 export class InclusionCoordinator {
 	private readonly _driver: InclusionDriverPort
@@ -48,10 +36,6 @@ export class InclusionCoordinator {
 	private readonly _getServerManager: () =>
 		| InclusionServerManagerPort
 		| undefined
-
-	// ---------------------------------------------------------------
-	// Internal state — maps exactly to ZwaveClient fields
-	// ---------------------------------------------------------------
 
 	/** Store node info before inclusion (name and location) */
 	private _tmpNode: { name?: string; loc?: string } | undefined = undefined
@@ -69,7 +53,7 @@ export class InclusionCoordinator {
 	private _hasUserCallbacks = false
 
 	/** Resolve function for security grant promise */
-	private _grantResolve: ((grant: InclusionGrantRef | false) => void) | null =
+	private _grantResolve: ((grant: InclusionGrant | false) => void) | null =
 		null
 
 	/** Resolve function for DSK validation promise */
@@ -127,10 +111,6 @@ export class InclusionCoordinator {
 		this._socketEvents = socketEvents
 	}
 
-	// ---------------------------------------------------------------
-	// State accessors
-	// ---------------------------------------------------------------
-
 	get inclusionState(): unknown {
 		return this._inclusionState
 	}
@@ -156,18 +136,14 @@ export class InclusionCoordinator {
 		return this._generation
 	}
 
-	// ---------------------------------------------------------------
-	// Inclusion user callbacks (passed to zwave-js driver)
-	// ---------------------------------------------------------------
-
 	/**
 	 * Returns the user callbacks object to pass to the driver.
 	 * Binds to this coordinator instance.
 	 */
 	getUserCallbacks(): {
 		grantSecurityClasses: (
-			requested: InclusionGrantRef,
-		) => Promise<InclusionGrantRef | false>
+			requested: InclusionGrant,
+		) => Promise<InclusionGrant | false>
 		validateDSKAndEnterPIN: (dsk: string) => Promise<string | false>
 		abort: () => void
 	} {
@@ -178,31 +154,22 @@ export class InclusionCoordinator {
 		}
 	}
 
-	// ---------------------------------------------------------------
-	// Public API — exact signatures preserved from ZwaveClient
-	// ---------------------------------------------------------------
-
 	/**
 	 * Start inclusion
 	 */
 	async startInclusion(
-		strategy: number,
+		strategy: InclusionStrategy,
 		options?: {
 			forceSecurity?: boolean
-			provisioning?: unknown
+			provisioning?: PlannedProvisioningEntry
 			qrString?: string
 			name?: string
 			dsk?: string
 			location?: string
 		},
-		provisionSmartStartNode?: (parsed: unknown) => Promise<unknown>,
-		inclusionStrategySmartStart?: number,
-		inclusionStrategySecurity_S2?: number,
-		inclusionStrategyDefault?: number,
-		inclusionStrategyInsecure?: number,
-		inclusionStrategySecurity_S0?: number,
-		qrCodeVersionSmartStart?: number,
-		qrCodeVersionS2?: number,
+		provisionSmartStartNode?: (
+			parsed: QRProvisioningInformation,
+		) => Promise<unknown>,
 	): Promise<boolean> {
 		const drv = this._driver.getDriver()
 		if (!drv || !this._driver.isDriverReady()) {
@@ -218,7 +185,7 @@ export class InclusionCoordinator {
 			await this._backup.backupNvm()
 		}
 
-		// Re-resolve after await — a close/restart may have invalidated drv
+		// Re-resolve after await — close/restart may have invalidated drv
 		if (this._generation !== gen) {
 			throw new Error('Driver was closed during inclusion setup')
 		}
@@ -253,29 +220,35 @@ export class InclusionCoordinator {
 				(this._config.commandsTimeout || 0) * 1000 || 30000,
 			)
 
-			let inclusionOptions: unknown
-
 			if (
-				strategy === inclusionStrategyInsecure ||
-				strategy === inclusionStrategySecurity_S0
+				strategy === InclusionStrategy.Insecure ||
+				strategy === InclusionStrategy.Security_S0
 			) {
-				inclusionOptions = { strategy }
-			} else if (strategy === inclusionStrategySmartStart) {
+				this._isReplacing = false
+				return currentDrv.controller.beginInclusion({ strategy })
+			}
+
+			if (strategy === InclusionStrategy.SmartStart) {
 				throw Error(
 					'In order to use Smart Start add you node to provisioning list',
 				)
-			} else if (strategy === inclusionStrategyDefault) {
-				inclusionOptions = {
+			}
+
+			if (strategy === InclusionStrategy.Default) {
+				this._isReplacing = false
+				return currentDrv.controller.beginInclusion({
 					strategy,
 					forceSecurity: options?.forceSecurity,
-				}
-			} else if (strategy === inclusionStrategySecurity_S2) {
+				})
+			}
+
+			if (strategy === InclusionStrategy.Security_S2) {
 				if (options?.qrString) {
 					const parsedQr = await this._qr.parseQRCodeString(
 						options.qrString,
 					)
 
-					// Re-resolve after QR parse await
+					// Re-resolve after QR parse — close/restart may have invalidated drv
 					if (this._generation !== gen) {
 						throw new Error(
 							'Driver was closed during inclusion setup',
@@ -286,9 +259,9 @@ export class InclusionCoordinator {
 						throw Error(`Invalid QR code string`)
 					}
 
-					if (parsedQr.version === qrCodeVersionS2) {
+					if (parsedQr.version === QRCodeVersion.S2) {
 						options.provisioning = parsedQr
-					} else if (parsedQr.version === qrCodeVersionSmartStart) {
+					} else if (parsedQr.version === QRCodeVersion.SmartStart) {
 						if (provisionSmartStartNode) {
 							await provisionSmartStartNode(parsedQr)
 						}
@@ -298,21 +271,21 @@ export class InclusionCoordinator {
 					}
 				}
 				if (options?.provisioning) {
-					inclusionOptions = {
+					this._isReplacing = false
+					return currentDrv.controller.beginInclusion({
 						strategy,
-						dsk: options.dsk,
 						provisioning: options.provisioning,
-					}
-				} else {
-					inclusionOptions = { strategy, dsk: options?.dsk }
+					})
 				}
-			} else {
-				inclusionOptions = { strategy }
+				this._isReplacing = false
+				return currentDrv.controller.beginInclusion({
+					strategy,
+					dsk: options?.dsk,
+				})
 			}
 
 			this._isReplacing = false
-
-			return currentDrv.controller.beginInclusion(inclusionOptions)
+			return currentDrv.controller.beginInclusion()
 		} catch (error) {
 			this._tmpNode = undefined
 			throw error
@@ -337,7 +310,7 @@ export class InclusionCoordinator {
 			await this._backup.backupNvm()
 		}
 
-		// Re-resolve after await — a close/restart may have invalidated drv
+		// Re-resolve after await — close/restart may have invalidated drv
 		if (this._generation !== gen) {
 			throw new Error('Driver was closed during exclusion setup')
 		}
@@ -402,14 +375,11 @@ export class InclusionCoordinator {
 	 */
 	async replaceFailedNode(
 		nodeId: number,
-		strategy: number,
+		strategy: InclusionStrategy,
 		options?: {
 			qrString?: string
-			provisioning?: unknown
+			provisioning?: PlannedProvisioningEntry
 		},
-		inclusionStrategySecurity_S2?: number,
-		inclusionStrategyInsecure?: number,
-		inclusionStrategySecurity_S0?: number,
 	): Promise<boolean> {
 		try {
 			const drv = this._driver.getDriver()
@@ -426,7 +396,7 @@ export class InclusionCoordinator {
 				await this._backup.backupNvm()
 			}
 
-			// Re-resolve after await — a close/restart may have invalidated drv
+			// Re-resolve after await — close/restart may have invalidated drv
 			if (this._generation !== gen) {
 				throw new Error('Driver was closed during replace setup')
 			}
@@ -453,14 +423,13 @@ export class InclusionCoordinator {
 
 			this._isReplacing = true
 
-			if (strategy === inclusionStrategySecurity_S2) {
-				let inclusionOptions: unknown
+			if (strategy === InclusionStrategy.Security_S2) {
 				if (options?.qrString) {
 					const parsedQr = await this._qr.parseQRCodeString(
 						options.qrString,
 					)
 
-					// Re-resolve after QR parse await
+					// Re-resolve after QR parse — close/restart may have invalidated drv
 					if (this._generation !== gen) {
 						throw new Error(
 							'Driver was closed during replace setup',
@@ -474,31 +443,31 @@ export class InclusionCoordinator {
 					}
 				}
 				if (options?.provisioning) {
-					inclusionOptions = {
-						strategy,
-						provisioning: options.provisioning,
-					}
-				} else {
-					inclusionOptions = {
-						strategy,
-					}
+					return await currentDrv.controller.replaceFailedNode(
+						nodeId,
+						{
+							strategy,
+							provisioning: options.provisioning,
+						},
+					)
 				}
-				return await currentDrv.controller.replaceFailedNode(
-					nodeId,
-					inclusionOptions,
-				)
-			} else if (
-				strategy === inclusionStrategyInsecure ||
-				strategy === inclusionStrategySecurity_S0
+				return await currentDrv.controller.replaceFailedNode(nodeId, {
+					strategy,
+				})
+			}
+
+			if (
+				strategy === InclusionStrategy.Insecure ||
+				strategy === InclusionStrategy.Security_S0
 			) {
 				return await currentDrv.controller.replaceFailedNode(nodeId, {
 					strategy,
 				})
-			} else {
-				throw Error(
-					`Inclusion strategy not supported with replace failed node api`,
-				)
 			}
+
+			throw Error(
+				`Inclusion strategy not supported with replace failed node api`,
+			)
 		} catch (error) {
 			this._isReplacing = false
 			throw error
@@ -553,14 +522,10 @@ export class InclusionCoordinator {
 		return drv.controller.stopJoiningNetwork()
 	}
 
-	// ---------------------------------------------------------------
-	// Security grant / DSK resolution (UI interaction)
-	// ---------------------------------------------------------------
-
 	/**
 	 * Grant security classes (called by UI after user approves)
 	 */
-	grantSecurityClasses(requested: InclusionGrantRef): void {
+	grantSecurityClasses(requested: InclusionGrant): void {
 		if (this._grantResolve) {
 			this._grantResolve(requested)
 			this._grantResolve = null
@@ -595,10 +560,6 @@ export class InclusionCoordinator {
 			this._grantResolve = null
 		}
 	}
-
-	// ---------------------------------------------------------------
-	// User callbacks lifecycle (first/last UI client)
-	// ---------------------------------------------------------------
 
 	/**
 	 * Register user callbacks with the driver (first UI client connected)
@@ -641,10 +602,6 @@ export class InclusionCoordinator {
 			mgr.handInclusionControlBack()
 		}
 	}
-
-	// ---------------------------------------------------------------
-	// Controller event handlers
-	// ---------------------------------------------------------------
 
 	/**
 	 * Handle inclusion state changed event from controller
@@ -703,10 +660,6 @@ export class InclusionCoordinator {
 		}
 	}
 
-	// ---------------------------------------------------------------
-	// Cleanup
-	// ---------------------------------------------------------------
-
 	/**
 	 * Clear commands timeout (called during close)
 	 */
@@ -730,13 +683,9 @@ export class InclusionCoordinator {
 		this._dskResolve = null
 	}
 
-	// ---------------------------------------------------------------
-	// Private callback implementations
-	// ---------------------------------------------------------------
-
 	private _onGrantSecurityClasses(
-		requested: InclusionGrantRef,
-	): Promise<InclusionGrantRef | false> {
+		requested: InclusionGrant,
+	): Promise<InclusionGrant | false> {
 		this._logger.info(
 			`Grant security classes: ${JSON.stringify(requested)}`,
 		)

@@ -748,7 +748,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	private driverInfo: ZUIDriverInfo
 	private status: ZwaveClientStatus
 	// used to store node info before inclusion like name and location
-	private tmpNode: utils.DeepPartial<ZUINode>
+	private tmpNode: { name?: string; loc?: string } | undefined
 	// tells if a node replacement is in progress
 	private isReplacing = false
 	// node ids surfaced to the UI via `node found` that have not yet hit
@@ -1152,7 +1152,6 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			associationLogPort,
 		)
 
-		// --- FirmwareUpdateService wiring ------------------------------------------
 		const firmwareDriverPort = {
 			getDriver: () => this._driver,
 			isDriverReady: () => this.driverReady,
@@ -1218,7 +1217,6 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			},
 		)
 
-		// --- InclusionCoordinator wiring -------------------------------------------
 		const inclusionDriverPort = {
 			getDriver: () => this._driver,
 			isDriverReady: () => this.driverReady,
@@ -3244,10 +3242,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		const result = await this._inclusionCoordinator.replaceFailedNode(
 			nodeId,
 			strategy,
-			options as any,
-			InclusionStrategy.Security_S2,
-			InclusionStrategy.Insecure,
-			InclusionStrategy.Security_S0,
+			options,
 		)
 		this.isReplacing = this._inclusionCoordinator.isReplacing
 		return result
@@ -3295,15 +3290,6 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	}
 
 	/**
-	 * Filter firmware updates to remove downgrades — delegate to service
-	 */
-	private _filterFirmwareUpdates(
-		updates: FirmwareUpdateInfo[] | null,
-	): FirmwareUpdateInfo[] {
-		return (updates || []).filter((update) => !update.downgrade)
-	}
-
-	/**
 	 * Check for firmware updates on a specific node — delegate to service
 	 */
 	private async _checkNodeFirmwareUpdates(nodeId: number) {
@@ -3314,16 +3300,14 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 * Get available non-dismissed firmware updates for a node
 	 */
 	getNodeFirmwareUpdates(nodeId: number): FirmwareUpdateInfo[] {
-		return this._firmwareUpdateService.getNodeFirmwareUpdates(
-			nodeId,
-		) as FirmwareUpdateInfo[]
+		return this._firmwareUpdateService.getNodeFirmwareUpdates(nodeId)
 	}
 
 	async firmwareUpdateOTA(nodeId: number, updateInfo: FirmwareUpdateInfo) {
 		if (this.driverReady) {
 			return this._firmwareUpdateService.firmwareUpdateOTA(
 				nodeId,
-				updateInfo as any,
+				updateInfo,
 			)
 		}
 
@@ -3415,20 +3399,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			const result = await this._inclusionCoordinator.startInclusion(
 				strategy,
 				options,
-				(parsed: unknown) =>
-					this.provisionSmartStartNode(
-						parsed as QRProvisioningInformation,
-					),
-				InclusionStrategy.SmartStart,
-				InclusionStrategy.Security_S2,
-				InclusionStrategy.Default,
-				InclusionStrategy.Insecure,
-				InclusionStrategy.Security_S0,
-				QRCodeVersion.SmartStart,
-				QRCodeVersion.S2,
+				(parsed) => this.provisionSmartStartNode(parsed),
 			)
-			// Sync state from coordinator to ZwaveClient fields
-			this.tmpNode = this._inclusionCoordinator.tmpNode as any
+			this.tmpNode = this._inclusionCoordinator.tmpNode
 			this.isReplacing = this._inclusionCoordinator.isReplacing
 			return result
 		}
@@ -4073,9 +4046,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	async firmwareUpdateOTW(
 		file: FwFile | FirmwareUpdateInfo,
 	): Promise<OTWFirmwareUpdateResult> {
-		return this._firmwareUpdateService.firmwareUpdateOTW(
-			file as any,
-		) as Promise<OTWFirmwareUpdateResult>
+		return this._firmwareUpdateService.firmwareUpdateOTW(file)
 	}
 
 	async updateFirmware(
@@ -4086,7 +4057,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			nodeId,
 			files,
 			(id: number) => this.getNode(id),
-		) as Promise<FirmwareUpdateResult>
+		)
 	}
 
 	async abortFirmwareUpdate(nodeId: number) {
