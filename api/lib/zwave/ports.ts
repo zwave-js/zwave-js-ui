@@ -16,6 +16,7 @@ import type {
 	InclusionOptions,
 	ReplaceNodeOptions,
 	InclusionUserCallbacks,
+	JoinNetworkResult,
 	PlannedProvisioningEntry,
 	QRProvisioningInformation,
 } from 'zwave-js'
@@ -38,6 +39,7 @@ export type {
 	InclusionOptions,
 	ReplaceNodeOptions,
 	InclusionUserCallbacks,
+	JoinNetworkResult,
 	PlannedProvisioningEntry,
 	QRProvisioningInformation,
 }
@@ -525,7 +527,7 @@ export interface InclusionDriverPort {
 				nodeId: number,
 				options?: ReplaceNodeOptions,
 			): Promise<boolean>
-			beginJoiningNetwork(options: unknown): Promise<unknown>
+			beginJoiningNetwork(options: unknown): Promise<JoinNetworkResult>
 			stopJoiningNetwork(): Promise<boolean>
 		}
 		updateOptions(options: unknown): void

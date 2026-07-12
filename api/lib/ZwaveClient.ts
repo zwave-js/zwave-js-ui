@@ -3176,7 +3176,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		if (this.driverReady) {
 			return this._inclusionCoordinator.startLearnMode(
 				JoinNetworkStrategy.Default,
-			) as Promise<JoinNetworkResult>
+			)
 		}
 
 		throw new DriverNotReadyError()
