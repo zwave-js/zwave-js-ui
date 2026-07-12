@@ -1158,18 +1158,13 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 					firmwareUpdatesDismissed: { [version: string]: boolean }
 				}>,
 			) => {
-				// Build a detached snapshot: shallow-clone storeNodes and apply
-				// staged data to the clone only. Shared `this.storeNodes` is NOT
-				// mutated — the caller fences after this resolves, then applies
-				// to shared in-memory state explicitly.
+				// Persist a detached snapshot so lifecycle fencing controls publication
 				const snapshot: NodesStoreRecord = {}
 				for (const key of Object.keys(this.storeNodes)) {
 					snapshot[key] = this.storeNodes[key]
 				}
 				for (const entry of staged) {
 					const existing = snapshot[entry.nodeId]
-					// Clone the individual node entry so the original reference
-					// in this.storeNodes is untouched by the property writes.
 					const cloned: Partial<ZUINode> = existing
 						? { ...existing }
 						: {}
@@ -1181,12 +1176,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 						entry.firmwareUpdatesDismissed
 					snapshot[entry.nodeId] = cloned
 				}
-				// Persist the detached snapshot to disk. NOTE: once the
-				// underlying filesystem write begins it cannot be cancelled.
-				// If a reset races with the write, the on-disk state may
-				// reflect the staged data but the shared in-memory node state
-				// will NOT have been mutated.
-				await this._persistNodesSnapshot(snapshot)
+				await this._updateStoreNodesSnapshot(snapshot)
 			},
 			emitNodeUpdate: (
 				node: ZUINode,
@@ -2458,14 +2448,6 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		}
 	}
 
-	/**
-	 * Low-level helper: persist an explicit `NodesStoreRecord` snapshot for the
-	 * current home-ID without reading from or mutating `this.storeNodes`.
-	 *
-	 * Callers that need to persist a detached snapshot (e.g. firmware staging)
-	 * use this directly so that shared in-memory state remains untouched until
-	 * the caller decides to apply.
-	 */
 	private async _persistNodesSnapshot(
 		snapshot: NodesStoreRecord,
 	): Promise<void> {
@@ -2493,9 +2475,12 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		await jsonStore.put(store.nodes, nodes)
 	}
 
-	async updateStoreNodes(throwError = true) {
+	private async _updateStoreNodesSnapshot(
+		snapshot: NodesStoreRecord,
+		throwError = true,
+	): Promise<void> {
 		try {
-			await this._persistNodesSnapshot(this.storeNodes)
+			await this._persistNodesSnapshot(snapshot)
 		} catch (error) {
 			logger.error(
 				`Error while updating store nodes: ${error.message}`,
@@ -2505,6 +2490,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				throw error
 			}
 		}
+	}
+
+	async updateStoreNodes(throwError = true) {
+		await this._updateStoreNodesSnapshot(this.storeNodes, throwError)
 	}
 
 	/**
