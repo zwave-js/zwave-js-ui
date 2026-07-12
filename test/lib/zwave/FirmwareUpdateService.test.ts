@@ -83,7 +83,7 @@ function createNodeStorePort(): FirmwareNodeStorePort & {
 		persistStagedNodeUpdates: vi
 			.fn()
 			.mockImplementation(
-				async (staged: ReadonlyArray<StagedFirmwareNodeUpdate>) => {
+				(staged: ReadonlyArray<StagedFirmwareNodeUpdate>) => {
 					// Apply staged data to store (simulates real persistence)
 					for (const entry of staged) {
 						if (!store.has(entry.nodeId)) {
@@ -97,6 +97,7 @@ function createNodeStorePort(): FirmwareNodeStorePort & {
 						sn.firmwareUpdatesDismissed =
 							entry.firmwareUpdatesDismissed
 					}
+					return Promise.resolve()
 				},
 			),
 		emitNodeUpdate: vi.fn(),
