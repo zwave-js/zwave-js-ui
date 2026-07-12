@@ -1185,12 +1185,13 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				this.throttle(key, fn, wait),
 			clearThrottle: (key: string) => this.clearThrottle(key),
 		}
+		// eslint-disable-next-line @typescript-eslint/no-this-alias
+		const self = this
 		const firmwareConfigPort = {
 			get disableAutomaticFirmwareUpdateChecks() {
 				return !!self.cfg.disableAutomaticFirmwareUpdateChecks
 			},
 		}
-		const self = this
 		const firmwareBackupPort = {
 			get backupOnEvent() {
 				return backupManager.backupOnEvent
