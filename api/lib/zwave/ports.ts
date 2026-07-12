@@ -568,6 +568,18 @@ export interface InclusionQRPort {
 }
 
 // ---------------------------------------------------------------------------
+// Port: controller event emission for InclusionCoordinator
+// ---------------------------------------------------------------------------
+
+/**
+ * Narrow typed port for emitting controller-level events.
+ * These events are consumed by Gateway for MQTT publishing.
+ */
+export interface InclusionControllerEventPort {
+	emitControllerEvent(eventName: string, ...args: unknown[]): void
+}
+
+// ---------------------------------------------------------------------------
 // Port: server manager interaction for InclusionCoordinator
 // ---------------------------------------------------------------------------
 

@@ -4,6 +4,7 @@ import { InclusionCoordinator } from '../../../api/lib/zwave/InclusionCoordinato
 import type {
 	InclusionBackupPort,
 	InclusionConfigPort,
+	InclusionControllerEventPort,
 	InclusionDriverPort,
 	InclusionGrant,
 	InclusionQRPort,
@@ -86,6 +87,14 @@ function createLogger(): ServiceLogger & {
 	}
 }
 
+function createControllerEventPort(): InclusionControllerEventPort & {
+	emitControllerEvent: ReturnType<typeof vi.fn>
+} {
+	return {
+		emitControllerEvent: vi.fn(),
+	}
+}
+
 const DEFAULT_SOCKET_EVENTS = {
 	grantSecurityClasses: 'GRANT_SECURITY_CLASSES',
 	validateDSK: 'VALIDATE_DSK',
@@ -97,6 +106,7 @@ function createCoordinator(
 	overrides: {
 		driver?: InclusionDriverPort
 		socket?: ReturnType<typeof createSocketPort>
+		controllerEvent?: ReturnType<typeof createControllerEventPort>
 		backup?: ReturnType<typeof createBackupPort>
 		config?: InclusionConfigPort
 		qr?: InclusionQRPort
@@ -107,6 +117,8 @@ function createCoordinator(
 ) {
 	const driver = overrides.driver ?? createDriverPort()
 	const socket = overrides.socket ?? createSocketPort()
+	const controllerEvent =
+		overrides.controllerEvent ?? createControllerEventPort()
 	const backup = overrides.backup ?? createBackupPort()
 	const config = overrides.config ?? createConfigPort()
 	const qr = overrides.qr ?? createQRPort()
@@ -117,6 +129,7 @@ function createCoordinator(
 	const coordinator = new InclusionCoordinator(
 		driver,
 		socket,
+		controllerEvent,
 		backup,
 		config,
 		qr,
@@ -130,6 +143,7 @@ function createCoordinator(
 		coordinator,
 		driver,
 		socket,
+		controllerEvent,
 		backup,
 		config,
 		qr,
@@ -1516,6 +1530,211 @@ describe('InclusionCoordinator', () => {
 
 			expect(coordinator.hasUserCallbacks).toBe(false)
 			expect(serverManager.handInclusionControlBack).toHaveBeenCalled()
+		})
+	})
+
+	// -----------------------------------------------------------------------
+	// Regression: controller event emission (MQTT/Gateway) for callbacks
+	// -----------------------------------------------------------------------
+	describe('controller event emission (MQTT regression)', () => {
+		it('_onGrantSecurityClasses emits socket + controller event with exact payload/order', async () => {
+			const { coordinator, socket, controllerEvent } = createCoordinator()
+			const callbacks = coordinator.getUserCallbacks()
+
+			const requested: InclusionGrant = {
+				securityClasses: [0, 1, 2],
+				clientSideAuth: true,
+			}
+
+			// Start the grant process (returns a Promise)
+			const grantPromise = callbacks.grantSecurityClasses(requested)
+
+			// Socket emission must happen synchronously before promise awaits
+			expect(socket.sendToSocket).toHaveBeenCalledTimes(1)
+			expect(socket.sendToSocket).toHaveBeenCalledWith(
+				'GRANT_SECURITY_CLASSES',
+				requested,
+			)
+
+			// Controller event emission must happen synchronously
+			expect(controllerEvent.emitControllerEvent).toHaveBeenCalledTimes(1)
+			expect(controllerEvent.emitControllerEvent).toHaveBeenCalledWith(
+				'grant security classes',
+				requested,
+			)
+
+			// Verify ordering: socket first, then controller event
+			const socketOrder = socket.sendToSocket.mock.invocationCallOrder[0]
+			const controllerOrder =
+				controllerEvent.emitControllerEvent.mock.invocationCallOrder[0]
+			expect(socketOrder).toBeLessThan(controllerOrder)
+
+			// Resolve to prevent hanging
+			coordinator.grantSecurityClasses(requested)
+			await grantPromise
+		})
+
+		it('_onValidateDSK emits socket + controller event with exact payload/order', async () => {
+			const { coordinator, socket, controllerEvent } = createCoordinator()
+			const callbacks = coordinator.getUserCallbacks()
+
+			const dsk = '12345-67890-11111-22222'
+			const dskPromise = callbacks.validateDSKAndEnterPIN(dsk)
+
+			// Socket emission
+			expect(socket.sendToSocket).toHaveBeenCalledTimes(1)
+			expect(socket.sendToSocket).toHaveBeenCalledWith(
+				'VALIDATE_DSK',
+				dsk,
+			)
+
+			// Controller event emission
+			expect(controllerEvent.emitControllerEvent).toHaveBeenCalledTimes(1)
+			expect(controllerEvent.emitControllerEvent).toHaveBeenCalledWith(
+				'validate dsk',
+				dsk,
+			)
+
+			// Verify ordering: socket first, then controller event
+			const socketOrder = socket.sendToSocket.mock.invocationCallOrder[0]
+			const controllerOrder =
+				controllerEvent.emitControllerEvent.mock.invocationCallOrder[0]
+			expect(socketOrder).toBeLessThan(controllerOrder)
+
+			// Resolve to prevent hanging
+			coordinator.validateDSK(dsk)
+			await dskPromise
+		})
+
+		it('_onAbortInclusion emits socket + controller event with exact payload/order', () => {
+			const { coordinator, socket, controllerEvent } = createCoordinator()
+			const callbacks = coordinator.getUserCallbacks()
+
+			callbacks.abort()
+
+			// Socket emission: inclusionAborted with `true`
+			expect(socket.sendToSocket).toHaveBeenCalledTimes(1)
+			expect(socket.sendToSocket).toHaveBeenCalledWith(
+				'INCLUSION_ABORTED',
+				true,
+			)
+
+			// Controller event: 'inclusion aborted' with no extra args
+			expect(controllerEvent.emitControllerEvent).toHaveBeenCalledTimes(1)
+			expect(controllerEvent.emitControllerEvent).toHaveBeenCalledWith(
+				'inclusion aborted',
+			)
+
+			// Verify ordering: socket first, then controller event
+			const socketOrder = socket.sendToSocket.mock.invocationCallOrder[0]
+			const controllerOrder =
+				controllerEvent.emitControllerEvent.mock.invocationCallOrder[0]
+			expect(socketOrder).toBeLessThan(controllerOrder)
+		})
+
+		it('abort during active DSK/grant resolvers still emits controller event', () => {
+			const { coordinator, socket, controllerEvent } = createCoordinator()
+			const callbacks = coordinator.getUserCallbacks()
+
+			// Start both grant and DSK (creating pending resolvers)
+			void callbacks.grantSecurityClasses({
+				securityClasses: [1],
+				clientSideAuth: false,
+			})
+			void callbacks.validateDSKAndEnterPIN('some-dsk')
+
+			// Clear mock counts from grant/dsk emissions
+			socket.sendToSocket.mockClear()
+			controllerEvent.emitControllerEvent.mockClear()
+
+			// Driver-side abort nulls resolvers and emits events
+			callbacks.abort()
+
+			// Controller event for abort must fire
+			expect(controllerEvent.emitControllerEvent).toHaveBeenCalledTimes(1)
+			expect(controllerEvent.emitControllerEvent).toHaveBeenCalledWith(
+				'inclusion aborted',
+			)
+
+			// Socket event for abort must fire
+			expect(socket.sendToSocket).toHaveBeenCalledTimes(1)
+			expect(socket.sendToSocket).toHaveBeenCalledWith(
+				'INCLUSION_ABORTED',
+				true,
+			)
+
+			// Resolvers are now null (driver-side abort semantics)
+			expect(coordinator.hasUserCallbacks).toBe(false)
+		})
+	})
+
+	// -----------------------------------------------------------------------
+	// Regression: manual stop cancels coordinator timers
+	// -----------------------------------------------------------------------
+	describe('stopInclusion/stopExclusion timer cancellation', () => {
+		it('stopInclusion clears coordinator timeout without duplicate driver call', async () => {
+			vi.useFakeTimers()
+			const { coordinator, driver } = createCoordinator()
+			const drv = driver.getDriver()
+
+			// Start inclusion (sets internal timeout)
+			await coordinator.startInclusion(
+				InclusionStrategy.Default,
+				{},
+				undefined,
+			)
+			expect(drv.controller.beginInclusion).toHaveBeenCalledTimes(1)
+
+			// Manually stop - should clear timeout and call stopInclusion once
+			await coordinator.stopInclusion()
+			expect(drv.controller.stopInclusion).toHaveBeenCalledTimes(1)
+
+			// Advance timers past the timeout - should NOT trigger another stop
+			await vi.advanceTimersByTimeAsync(60_000)
+			expect(drv.controller.stopInclusion).toHaveBeenCalledTimes(1)
+
+			vi.useRealTimers()
+		})
+
+		it('stopExclusion clears coordinator timeout without duplicate driver call', async () => {
+			vi.useFakeTimers()
+			const { coordinator, driver } = createCoordinator()
+			const drv = driver.getDriver()
+
+			// Start exclusion (sets internal timeout)
+			await coordinator.startExclusion({})
+			expect(drv.controller.beginExclusion).toHaveBeenCalledTimes(1)
+
+			// Manually stop
+			await coordinator.stopExclusion()
+			expect(drv.controller.stopExclusion).toHaveBeenCalledTimes(1)
+
+			// Advance timers past the timeout - should NOT trigger another stop
+			await vi.advanceTimersByTimeAsync(60_000)
+			expect(drv.controller.stopExclusion).toHaveBeenCalledTimes(1)
+
+			vi.useRealTimers()
+		})
+
+		it('timeout fires only if stop is not called manually', async () => {
+			vi.useFakeTimers()
+			const config = createConfigPort(2) // 2s timeout
+			const { coordinator, driver } = createCoordinator({ config })
+			const drv = driver.getDriver()
+
+			await coordinator.startInclusion(
+				InclusionStrategy.Default,
+				{},
+				undefined,
+			)
+
+			// Advance past timeout
+			await vi.advanceTimersByTimeAsync(2_100)
+
+			// Timeout should have triggered stop
+			expect(drv.controller.stopInclusion).toHaveBeenCalledTimes(1)
+
+			vi.useRealTimers()
 		})
 	})
 })
