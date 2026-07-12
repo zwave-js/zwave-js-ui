@@ -1015,3 +1015,160 @@ describe('Production integration: listener count stability across repeated init/
 		expect(zwave.listenerCount('driverStatus')).toBe(baselineCount)
 	})
 })
+
+// -----------------------------------------------------------------
+// 9. Inclusion state sole ownership via InclusionCoordinator
+// -----------------------------------------------------------------
+describe('Production integration: inclusion state sole ownership via coordinator', () => {
+	it('active inclusion state → close(true) → getState/getInfo report undefined immediately', async () => {
+		const zwave = realZwave()
+		const fakeDriver = createFakeDriver()
+		fakeDriver.controller.inclusionState = 1 // InclusionState.Including
+		;(zwave as any)._driver = fakeDriver
+		zwave.driverReady = true
+
+		// Simulate driver ready path that syncs state
+		;(zwave as any)._inclusionCoordinator.syncFromDriver()
+		expect(zwave.getState().inclusionState).toBe(1)
+		expect(zwave.getInfo().inclusionState).toBe(1)
+
+		// close(true) resets coordinator
+		await zwave.close(true)
+
+		// State is immediately undefined
+		expect(zwave.getState().inclusionState).toBeUndefined()
+		expect(zwave.getInfo().inclusionState).toBeUndefined()
+	})
+
+	it('active inclusion state → init() → getState/getInfo report undefined immediately', () => {
+		const zwave = realZwave()
+		const fakeDriver = createFakeDriver()
+		fakeDriver.controller.inclusionState = 2 // InclusionState.Excluding
+		;(zwave as any)._driver = fakeDriver
+		zwave.driverReady = true
+
+		;(zwave as any)._inclusionCoordinator.syncFromDriver()
+		expect(zwave.getState().inclusionState).toBe(2)
+
+		// init() resets coordinator
+		zwave.init()
+
+		expect(zwave.getState().inclusionState).toBeUndefined()
+		expect(zwave.getInfo().inclusionState).toBeUndefined()
+	})
+
+	it('active inclusion state → public hardReset() → getState/getInfo report undefined immediately', async () => {
+		const zwave = realZwave()
+		const fakeDriver = createFakeDriver()
+		fakeDriver.controller.inclusionState = 3 // InclusionState.Busy
+		;(zwave as any)._driver = fakeDriver
+		zwave.driverReady = true
+
+		;(zwave as any)._inclusionCoordinator.syncFromDriver()
+		expect(zwave.getState().inclusionState).toBe(3)
+
+		await zwave.hardReset()
+
+		expect(zwave.getState().inclusionState).toBeUndefined()
+		expect(zwave.getInfo().inclusionState).toBeUndefined()
+	})
+
+	it('active inclusion state → server hardReset → getState/getInfo report undefined immediately', () => {
+		const zwave = realZwave()
+		const fakeDriver = createFakeDriver()
+		fakeDriver.controller.inclusionState = 4 // InclusionState.SmartStart
+		;(zwave as any)._driver = fakeDriver
+		zwave.driverReady = true
+
+		;(zwave as any)._inclusionCoordinator.syncFromDriver()
+		expect(zwave.getState().inclusionState).toBe(4)
+
+		zwave.buildServerHost().onHardReset()
+
+		expect(zwave.getState().inclusionState).toBeUndefined()
+		expect(zwave.getInfo().inclusionState).toBeUndefined()
+	})
+
+	it('syncFromDriver() sets correct state after driver ready, onInclusionStateChanged emits on change only', () => {
+		const zwave = realZwave()
+		const fakeDriver = createFakeDriver()
+		fakeDriver.controller.inclusionState = 0 // Idle
+		;(zwave as any)._driver = fakeDriver
+		zwave.driverReady = true
+
+		;(zwave as any)._inclusionCoordinator.syncFromDriver()
+		expect(zwave.getState().inclusionState).toBe(0)
+
+		const sendToSocketSpy = vi.spyOn(zwave as any, 'sendToSocket')
+
+		// Same state → no emit
+		;(zwave as any)._onInclusionStateChanged(0)
+		expect(sendToSocketSpy).not.toHaveBeenCalled()
+
+		// Different state → emit with new state
+		;(zwave as any)._onInclusionStateChanged(1)
+		expect(sendToSocketSpy).toHaveBeenCalledWith(
+			socketEvents.controller,
+			expect.objectContaining({ inclusionState: 1 }),
+		)
+
+		// getState reports the new value
+		expect(zwave.getState().inclusionState).toBe(1)
+
+		// Reset spy and fire same state again → no emit
+		sendToSocketSpy.mockClear()
+		;(zwave as any)._onInclusionStateChanged(1)
+		expect(sendToSocketSpy).not.toHaveBeenCalled()
+	})
+
+	it('_updateControllerStatus reads live inclusion state from coordinator', () => {
+		const zwave = realZwave()
+		const fakeDriver = createFakeDriver()
+		fakeDriver.controller.inclusionState = 1
+		;(zwave as any)._driver = fakeDriver
+		zwave.driverReady = true
+		;(zwave as any)._inclusionCoordinator.syncFromDriver()
+
+		const sendToSocketSpy = vi.spyOn(zwave as any, 'sendToSocket')
+
+		// Force status change to trigger emission
+		;(zwave as any)._cntStatus = ''
+		;(zwave as any)._updateControllerStatus('Testing')
+
+		expect(sendToSocketSpy).toHaveBeenCalledWith(
+			socketEvents.controller,
+			expect.objectContaining({ inclusionState: 1, status: 'Testing' }),
+		)
+	})
+
+	it('init payload contains undefined inclusion state after reset, then sync + event update report current state', () => {
+		const zwave = realZwave()
+		const fakeDriver = createFakeDriver()
+		fakeDriver.controller.inclusionState = 3 // Busy
+		;(zwave as any)._driver = fakeDriver
+		zwave.driverReady = true
+
+		// Sync from driver
+		;(zwave as any)._inclusionCoordinator.syncFromDriver()
+		expect(zwave.getState().inclusionState).toBe(3)
+
+		// Reset via init
+		zwave.init()
+		expect(zwave.getState().inclusionState).toBeUndefined()
+
+		// Re-wire driver with new state
+		const newDriver = createFakeDriver()
+		newDriver.controller.inclusionState = 4 // SmartStart
+		;(zwave as any)._driver = newDriver
+		zwave.driverReady = true
+
+		// Sync from new driver
+		;(zwave as any)._inclusionCoordinator.syncFromDriver()
+		expect(zwave.getState().inclusionState).toBe(4)
+
+		// Event update changes it
+		;(zwave as any)._onInclusionStateChanged(2) // Excluding
+		expect(zwave.getState().inclusionState).toBe(2)
+		expect(zwave.getInfo().inclusionState).toBe(2)
+	})
+})
