@@ -83,20 +83,10 @@ function createNodeStorePort(): FirmwareNodeStorePort & {
 		persistStagedNodeUpdates: vi
 			.fn()
 			.mockImplementation(
-				(staged: ReadonlyArray<StagedFirmwareNodeUpdate>) => {
-					// Apply staged data to store (simulates real persistence)
-					for (const entry of staged) {
-						if (!store.has(entry.nodeId)) {
-							store.set(entry.nodeId, {})
-						}
-						const sn = store.get(entry.nodeId)
-						sn.availableFirmwareUpdates =
-							entry.availableFirmwareUpdates
-						sn.lastFirmwareUpdateCheck =
-							entry.lastFirmwareUpdateCheck
-						sn.firmwareUpdatesDismissed =
-							entry.firmwareUpdatesDismissed
-					}
+				(_staged: ReadonlyArray<StagedFirmwareNodeUpdate>) => {
+					// Real implementation persists a detached snapshot to disk
+					// without mutating shared store. Store is updated later by
+					// _applyNodeFirmwareProjection via ensureStoreNode.
 					return Promise.resolve()
 				},
 			),

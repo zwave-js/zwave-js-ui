@@ -822,6 +822,226 @@ describe('Production integration: firmware service identity survives init/hardRe
 })
 
 // -----------------------------------------------------------------
+// 6b. Snapshot persistence: storeNodes immutability during pending
+//     persistStagedNodeUpdates and generation fence on reset
+// -----------------------------------------------------------------
+describe('Production integration: snapshot persistence does not mutate storeNodes while pending', () => {
+	it('storeNodes remains unchanged during deferred persistence; hardReset fences; no emit/socket after reset', async () => {
+		vi.useFakeTimers()
+		try {
+			// Deferred persistence: intercept _persistNodesSnapshot so we
+			// control when the "disk write" resolves.
+			let resolvePersist: () => void
+			const persistPromise = new Promise<void>((resolve) => {
+				resolvePersist = resolve
+			})
+
+			const firmwareResult = new Map<number, unknown[]>([
+				[
+					3,
+					[
+						{
+							version: '5.0.0',
+							changelog: 'test',
+							channel: 'stable',
+							files: [],
+							downgrade: false,
+							normalizedVersion: '5.0.0',
+							device: {
+								manufacturerId: 1,
+								productType: 2,
+								productId: 3,
+								firmwareVersion: '4.0.0',
+								rfRegion: 0,
+							},
+						},
+					],
+				],
+			])
+			const getAllFirmware = vi.fn().mockResolvedValue(firmwareResult)
+
+			const fakeDriver = createFakeDriver({
+				controller: {
+					...createFakeDriver().controller,
+					getAllAvailableFirmwareUpdates: getAllFirmware,
+					nodes: new Map([[3, { id: 3, isControllerNode: false }]]),
+				},
+			})
+
+			const zwave = realZwave()
+			;(zwave as any)._driver = fakeDriver
+			zwave.driverReady = true
+			// Set initial storeNodes with existing data
+			;(zwave as any).storeNodes = {
+				3: { id: 3, name: 'Existing' },
+			}
+			;(zwave as any)._nodes.set(3, {
+				id: 3,
+				values: {},
+				availableFirmwareUpdates: [],
+				lastFirmwareUpdateCheck: 0,
+				firmwareUpdatesDismissed: {},
+			})
+
+			// Spy on _persistNodesSnapshot to intercept it
+			let persistCalled = false
+			vi.spyOn(zwave as any, '_persistNodesSnapshot').mockImplementation(
+				() => {
+					persistCalled = true
+					return persistPromise
+				},
+			)
+			const sendToSocketSpy = vi.spyOn(zwave as any, 'sendToSocket')
+
+			// Capture storeNodes reference before
+			const storeNodesBefore = { ...(zwave as any).storeNodes[3] }
+
+			// Start firmware check
+			const fwService = (zwave as any)._firmwareUpdateService
+			const checkPromise = fwService.checkAllNodesFirmwareUpdates()
+
+			// Advance microtasks so the check reaches the persistence boundary
+			await vi.advanceTimersByTimeAsync(0)
+
+			// Verify: _persistNodesSnapshot was called (we're at the boundary)
+			expect(persistCalled).toBe(true)
+
+			// CRITICAL ASSERTION: storeNodes has NOT been mutated
+			expect((zwave as any).storeNodes[3]).toEqual(storeNodesBefore)
+			expect(
+				(zwave as any).storeNodes[3].availableFirmwareUpdates,
+			).toBeUndefined()
+			expect(
+				(zwave as any).storeNodes[3].lastFirmwareUpdateCheck,
+			).toBeUndefined()
+
+			// Now perform hardReset while persistence is pending
+			await zwave.hardReset()
+
+			// Resolve persistence AFTER reset
+			resolvePersist()
+
+			// checkAllNodesFirmwareUpdates rethrows FirmwareLifecycleCancelledError
+			// when the generation fence fires — this is expected behavior.
+			await expect(checkPromise).rejects.toThrow(
+				/cancelled.*generation advanced/,
+			)
+
+			// After reset + resolve: storeNodes must remain unchanged (no
+			// stale generation publication)
+			expect((zwave as any).storeNodes[3]).toEqual(storeNodesBefore)
+
+			// ZUINode must NOT have been mutated
+			const liveNode = (zwave as any)._nodes.get(3)
+			if (liveNode) {
+				expect(liveNode.availableFirmwareUpdates).toEqual([])
+				expect(liveNode.lastFirmwareUpdateCheck).toBe(0)
+			}
+
+			// No socket emission from stale generation
+			expect(sendToSocketSpy).not.toHaveBeenCalled()
+		} finally {
+			vi.useRealTimers()
+		}
+	})
+
+	it('successful path (no reset): storeNodes IS updated after persistence + fence', async () => {
+		vi.useFakeTimers()
+		try {
+			let resolvePersist: () => void
+			const persistPromise = new Promise<void>((resolve) => {
+				resolvePersist = resolve
+			})
+
+			const firmwareResult = new Map<number, unknown[]>([
+				[
+					2,
+					[
+						{
+							version: '3.0.0',
+							changelog: 'update',
+							channel: 'stable',
+							files: [],
+							downgrade: false,
+							normalizedVersion: '3.0.0',
+							device: {
+								manufacturerId: 1,
+								productType: 2,
+								productId: 3,
+								firmwareVersion: '2.0.0',
+								rfRegion: 0,
+							},
+						},
+					],
+				],
+			])
+			const getAllFirmware = vi.fn().mockResolvedValue(firmwareResult)
+
+			const fakeDriver = createFakeDriver({
+				controller: {
+					...createFakeDriver().controller,
+					getAllAvailableFirmwareUpdates: getAllFirmware,
+					nodes: new Map([[2, { id: 2, isControllerNode: false }]]),
+				},
+			})
+
+			const zwave = realZwave()
+			;(zwave as any)._driver = fakeDriver
+			zwave.driverReady = true
+			;(zwave as any).storeNodes = { 2: { id: 2 } }
+			;(zwave as any)._nodes.set(2, {
+				id: 2,
+				values: {},
+				availableFirmwareUpdates: [],
+				lastFirmwareUpdateCheck: 0,
+				firmwareUpdatesDismissed: {},
+			})
+
+			// Intercept persistence
+			vi.spyOn(zwave as any, '_persistNodesSnapshot').mockImplementation(
+				() => persistPromise,
+			)
+			const emitNodeUpdateSpy = vi.spyOn(zwave as any, 'emitNodeUpdate')
+
+			const fwService = (zwave as any)._firmwareUpdateService
+			const checkPromise = fwService.checkAllNodesFirmwareUpdates()
+
+			// Advance to persistence boundary
+			await vi.advanceTimersByTimeAsync(0)
+
+			// storeNodes NOT yet mutated
+			expect(
+				(zwave as any).storeNodes[2].availableFirmwareUpdates,
+			).toBeUndefined()
+
+			// Resolve persistence (no reset — fence passes)
+			resolvePersist()
+			await checkPromise
+
+			// Now storeNodes IS updated (post-fence apply)
+			expect(
+				(zwave as any).storeNodes[2].availableFirmwareUpdates,
+			).toBeDefined()
+			expect(
+				(zwave as any).storeNodes[2].availableFirmwareUpdates,
+			).toHaveLength(1)
+			expect(
+				(zwave as any).storeNodes[2].lastFirmwareUpdateCheck,
+			).toBeGreaterThan(0)
+
+			// ZUINode was updated
+			const liveNode = (zwave as any)._nodes.get(2)
+			expect(liveNode.availableFirmwareUpdates).toHaveLength(1)
+
+			// Emit occurred
+			expect(emitNodeUpdateSpy).toHaveBeenCalled()
+		} finally {
+			vi.useRealTimers()
+		}
+	})
+})
+
+// -----------------------------------------------------------------
 // 7. hardReset failure-safe semantics
 // -----------------------------------------------------------------
 describe('Production integration: hardReset failure-safe semantics', () => {
