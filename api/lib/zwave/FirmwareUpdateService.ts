@@ -33,8 +33,7 @@ export class FirmwareLifecycleCancelledError extends Error {
 		super(
 			`Firmware operation "${operation}" cancelled: service generation advanced`,
 		)
-		Object.setPrototypeOf(this, FirmwareLifecycleCancelledError.prototype)
-		Object.getPrototypeOf(this).name = 'FirmwareLifecycleCancelledError'
+		this.name = 'FirmwareLifecycleCancelledError'
 	}
 }
 
@@ -215,6 +214,7 @@ export class FirmwareUpdateService {
 
 				// Save to nodes.json
 				await this._nodes.updateStoreNodes()
+				this._assertFence(gen, 'checkAllNodesFirmwareUpdates')
 			}
 
 			return result
@@ -238,6 +238,7 @@ export class FirmwareUpdateService {
 		nodeId: number,
 		version: string,
 	): Promise<boolean> {
+		const gen = this._generation
 		const storeNode = this._nodes.ensureStoreNode(nodeId)
 
 		if (!storeNode.firmwareUpdatesDismissed) {
@@ -259,6 +260,7 @@ export class FirmwareUpdateService {
 		}
 
 		await this._nodes.updateStoreNodes()
+		this._assertFence(gen, 'dismissFirmwareUpdate')
 		this._logger.info(
 			`Dismissed firmware update ${version} for node ${nodeId}`,
 		)
@@ -681,6 +683,7 @@ export class FirmwareUpdateService {
 			this._updateNodeFirmwareInfo(nodeId, filteredUpdates, timestamp)
 
 			await this._nodes.updateStoreNodes()
+			this._assertFence(gen, 'checkNodeFirmwareUpdates')
 
 			this._logger.info(
 				`Checked firmware updates for node ${nodeId} after update completion. Found ${filteredUpdates.length} update(s)`,
