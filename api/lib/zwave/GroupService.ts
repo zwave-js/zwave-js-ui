@@ -51,6 +51,42 @@ const GROUP_NAME_MAX_LENGTH = 64
  */
 const GROUP_ID_MIN = 0x1000
 
+/**
+ * A cancellation token scoped to exactly one GroupService "generation" - one
+ * `ZwaveClient.init()` call, i.e. one driver/node-registry lifetime.
+ *
+ * `ZwaveClient` constructs a brand-new `GroupService` (wired to its
+ * then-current, closure-backed virtual-node/ZUINode registries) on every
+ * `init()` (called from the constructor and from every `restart()`). If a
+ * mutating call on the OLD `GroupService` instance (`createGroup`,
+ * `updateGroup`, `deleteGroup`, `removeNodeFromGroups`) is still suspended on
+ * its persistence `await` when a restart mints a new generation, that old
+ * instance's own in-memory bookkeeping (`_groups`, `_nodeToGroups`) is no
+ * longer authoritative - a driver-ready handler in the NEW generation may
+ * already be rebuilding virtual nodes from a freshly-loaded groups snapshot.
+ * Letting the old instance's continuation go on to materialize/refresh
+ * virtual nodes after that point would mix old bookkeeping with new
+ * driver/node state.
+ *
+ * Each mutating method re-checks {@link cancelled} immediately after its
+ * persistence `await` and aborts further virtual-node/socket mutation (the
+ * persisted write already happened and is safe to keep) rather than risking
+ * that mix. The next generation's driver-ready handler re-derives virtual
+ * nodes from the (by-then up to date) persisted groups, so this is
+ * self-healing rather than lossy.
+ */
+export class GroupServiceGeneration {
+	private _cancelled = false
+
+	get cancelled(): boolean {
+		return this._cancelled
+	}
+
+	cancel(): void {
+		this._cancelled = true
+	}
+}
+
 export class GroupService {
 	private _groups: ZUIGroup[]
 
@@ -68,6 +104,7 @@ export class GroupService {
 	private readonly _utils: GroupUtilsPort
 	private readonly _persistence: GroupPersistencePort
 	private readonly _logger: ServiceLogger
+	private readonly _generation: GroupServiceGeneration
 
 	constructor(
 		driver: GroupDriverPort,
@@ -77,6 +114,7 @@ export class GroupService {
 		utils: GroupUtilsPort,
 		persistence: GroupPersistencePort,
 		logger: ServiceLogger,
+		generation: GroupServiceGeneration,
 		initialGroups: ZUIGroup[],
 	) {
 		this._driver = driver
@@ -86,6 +124,7 @@ export class GroupService {
 		this._utils = utils
 		this._persistence = persistence
 		this._logger = logger
+		this._generation = generation
 		this._groups = initialGroups
 		this._rebuildNodeToGroupsIndex()
 	}
@@ -370,6 +409,13 @@ export class GroupService {
 			return
 		}
 
+		// A restart minted a new generation while the write above was in
+		// flight - this instance's bookkeeping is no longer authoritative,
+		// so don't refresh/mutate virtual nodes from it. The persisted
+		// write already landed; the new generation's driver-ready handler
+		// re-derives virtual nodes from the (now up to date) groups.
+		if (this._generation.cancelled) return
+
 		this._rebuildNodeToGroupsIndex()
 
 		for (const group of affected) {
@@ -428,6 +474,13 @@ export class GroupService {
 			throw error
 		}
 
+		// A restart minted a new generation while the write above was in
+		// flight - the group IS persisted (safe to keep and return), but
+		// this instance's bookkeeping is stale, so skip materializing the
+		// virtual node from it. The new generation's driver-ready handler
+		// re-derives virtual nodes from the (now up to date) groups.
+		if (this._generation.cancelled) return group
+
 		this._rebuildNodeToGroupsIndex()
 		this.createVirtualNode(group)
 
@@ -474,6 +527,10 @@ export class GroupService {
 			throw error
 		}
 
+		// See createGroup()'s comment: a stale generation must not refresh
+		// virtual nodes from its own (possibly out of sync) bookkeeping.
+		if (this._generation.cancelled) return this._groups[groupIndex]
+
 		this._rebuildNodeToGroupsIndex()
 		this._updateVirtualNode(this._groups[groupIndex])
 
@@ -494,6 +551,11 @@ export class GroupService {
 
 		this._groups.splice(groupIndex, 1)
 		await this._persistence.put(this._groups)
+
+		// See createGroup()'s comment: a stale generation must not go on to
+		// rebuild its index or emit a (redundant, possibly misordered with
+		// the new generation's own bookkeeping) removal notification.
+		if (this._generation.cancelled) return true
 
 		this._rebuildNodeToGroupsIndex()
 

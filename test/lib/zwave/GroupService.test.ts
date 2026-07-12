@@ -1,6 +1,9 @@
 import { describe, it, expect, vi } from 'vitest'
 import { NODE_ID_BROADCAST, NODE_ID_BROADCAST_LR } from '@zwave-js/core'
-import { GroupService } from '../../../api/lib/zwave/GroupService.ts'
+import {
+	GroupService,
+	GroupServiceGeneration,
+} from '../../../api/lib/zwave/GroupService.ts'
 import { socketEvents } from '../../../api/lib/SocketEvents.ts'
 import type {
 	GroupDriverPort,
@@ -138,6 +141,78 @@ function createPersistencePort() {
 	return port
 }
 
+/**
+ * A resolvers-exposed promise, used to deterministically suspend a service
+ * call mid-flight (on its persistence `await`) so a test can drive the
+ * exact interleaving of a simulated restart instead of racing real timers.
+ */
+function createDeferred<T = void>(): {
+	promise: Promise<T>
+	resolve: (value: T | PromiseLike<T>) => void
+	reject: (reason?: unknown) => void
+} {
+	let resolve!: (value: T | PromiseLike<T>) => void
+	let reject!: (reason?: unknown) => void
+	const promise = new Promise<T>((res, rej) => {
+		resolve = res
+		reject = rej
+	})
+	return { promise, resolve, reject }
+}
+
+/**
+ * A persistence port whose next `put()` call can be suspended on demand via
+ * `deferNextPut()`, so a test can start a mutating call, observe it parked
+ * on the persistence `await`, simulate a restart (cancel the generation,
+ * optionally swap other ports), and only then let the write complete -
+ * proving exactly what happens on each side of that boundary.
+ */
+function createDeferredPersistencePort(): GroupPersistencePort & {
+	puts: ZUIGroup[][]
+	deferNextPut(): {
+		resolve: () => void
+		reject: (error: unknown) => void
+	}
+} {
+	let stored: ZUIGroup[] = []
+	const puts: ZUIGroup[][] = []
+	let nextDeferred: ReturnType<typeof createDeferred<void>> | null = null
+	const port = {
+		get: () => stored,
+		put: vi.fn((data: ZUIGroup[]) => {
+			const snapshot = data.map((g) => ({
+				...g,
+				nodeIds: [...g.nodeIds],
+			}))
+			const deferred = nextDeferred
+			nextDeferred = null
+			const record = () => {
+				stored = data
+				puts.push(snapshot)
+				return true
+			}
+			if (!deferred) return Promise.resolve(record())
+			return deferred.promise.then(record)
+		}),
+		puts,
+		deferNextPut: () => {
+			const deferred = createDeferred<void>()
+			nextDeferred = deferred
+			return {
+				resolve: () => deferred.resolve(),
+				reject: (error: unknown) => deferred.reject(error),
+			}
+		},
+	} satisfies GroupPersistencePort & {
+		puts: ZUIGroup[][]
+		deferNextPut: () => {
+			resolve: () => void
+			reject: (error: unknown) => void
+		}
+	}
+	return port
+}
+
 function createLogger(): ServiceLogger & { errors: string[] } {
 	const errors: string[] = []
 	return {
@@ -150,14 +225,28 @@ function createLogger(): ServiceLogger & { errors: string[] } {
 	}
 }
 
-function createService(initialGroups: ZUIGroup[] = []) {
+function createService(
+	initialGroups: ZUIGroup[] = [],
+	overrides: {
+		generation?: GroupServiceGeneration
+		// Deliberately typed from the concrete fake return types (not the
+		// bare `GroupPersistencePort` interface): its method-shorthand
+		// signatures don't declare `this: void`, and pulling that interface
+		// type into this union would make every `expect(persistence.put)...`
+		// call site below trip @typescript-eslint/unbound-method.
+		persistence?:
+			| ReturnType<typeof createPersistencePort>
+			| ReturnType<typeof createDeferredPersistencePort>
+	} = {},
+) {
 	const driver = createDriverPort()
 	const virtualNodes = createVirtualNodeRegistry()
 	const zuiNodes = createZUINodeStore()
 	const socket = createSocketPort()
 	const utils = createUtilsPort()
-	const persistence = createPersistencePort()
+	const persistence = overrides.persistence ?? createPersistencePort()
 	const logger = createLogger()
+	const generation = overrides.generation ?? new GroupServiceGeneration()
 
 	const service = new GroupService(
 		driver,
@@ -167,6 +256,7 @@ function createService(initialGroups: ZUIGroup[] = []) {
 		utils,
 		persistence,
 		logger,
+		generation,
 		initialGroups,
 	)
 
@@ -179,6 +269,7 @@ function createService(initialGroups: ZUIGroup[] = []) {
 		utils,
 		persistence,
 		logger,
+		generation,
 	}
 }
 
@@ -277,7 +368,15 @@ describe('GroupService', () => {
 		})
 
 		it('rolls back in-memory state when persistence fails', async () => {
-			const { service, persistence, virtualNodes } = createService()
+			// Held as its own concretely-typed reference (not destructured
+			// from `createService()`'s return) so `.failNext` stays on the
+			// precise `createPersistencePort()` shape instead of the
+			// `overrides.persistence` union, which omits it for the
+			// deferred-port fake.
+			const persistence = createPersistencePort()
+			const { service, virtualNodes } = createService([], {
+				persistence,
+			})
 			persistence.failNext = true
 
 			await expect(service.createGroup('Fails', [2, 3])).rejects.toThrow(
@@ -345,9 +444,11 @@ describe('GroupService', () => {
 		})
 
 		it('restores the previous group and rethrows when persistence fails', async () => {
-			const { service, persistence } = createService([
-				{ id: 0x1000, name: 'Old', nodeIds: [2, 3] },
-			])
+			const persistence = createPersistencePort()
+			const { service } = createService(
+				[{ id: 0x1000, name: 'Old', nodeIds: [2, 3] }],
+				{ persistence },
+			)
 			persistence.failNext = true
 
 			await expect(
@@ -581,6 +682,7 @@ describe('GroupService', () => {
 				utils,
 				persistence,
 				logger,
+				new GroupServiceGeneration(),
 				[],
 			)
 			const zwaveValue = {
@@ -699,9 +801,11 @@ describe('GroupService', () => {
 		})
 
 		it('logs and returns without mutating the index when persistence fails', async () => {
-			const { service, persistence, logger } = createService([
-				{ id: 0x1000, name: 'A', nodeIds: [2, 3] },
-			])
+			const persistence = createPersistencePort()
+			const { service, logger } = createService(
+				[{ id: 0x1000, name: 'A', nodeIds: [2, 3] }],
+				{ persistence },
+			)
 			persistence.failNext = true
 
 			await service.removeNodeFromGroups(3)
@@ -741,6 +845,228 @@ describe('GroupService', () => {
 			// nodeIds.length (2) >= 2 but driver not ready -> falls into the
 			// "tear down" branch since the condition requires BOTH
 			expect(virtualNodes.map.has(0x1000)).toBe(false)
+		})
+	})
+
+	// -----------------------------------------------------------------------
+	// Generation fencing: a restart (new ZwaveClient.init()) mints a new
+	// GroupServiceGeneration and cancels the previous one. If a mutating call
+	// on the OLD GroupService instance is still suspended on its persistence
+	// `await` when that happens, its continuation must not go on to mutate
+	// virtual-node/index/socket state from stale bookkeeping - the write it
+	// already made is kept (never rolled back), but everything after the
+	// generation check is skipped. These tests deterministically defer the
+	// persistence write to control that exact interleaving, then prove a
+	// fresh "new generation" GroupService - built from the up to date
+	// persisted groups, exactly as ZwaveClient's driver-ready handler
+	// rebuilds virtual nodes from `getGroups()` after a restart - correctly
+	// restores/materializes state, so the restart is self-healing rather
+	// than lossy.
+	// -----------------------------------------------------------------------
+	describe('generation fencing (restart races)', () => {
+		it('createGroup: persists the write but skips ZUI virtual-node creation/notification when cancelled mid-flight, and a new generation restores it', async () => {
+			const persistence = createDeferredPersistencePort()
+			const generation = new GroupServiceGeneration()
+			const { service, virtualNodes, zuiNodes, socket } = createService(
+				[],
+				{ generation, persistence },
+			)
+
+			const deferredPut = persistence.deferNextPut()
+			const createPromise = service.createGroup('Living Room', [2, 3])
+
+			// Still suspended on the persistence await.
+			expect(persistence.puts).toHaveLength(0)
+
+			// Simulate a restart landing while the write is in flight: the
+			// old generation is cancelled and (in production) a new
+			// GroupService would already be constructed at this point.
+			generation.cancel()
+			deferredPut.resolve()
+
+			const group = await createPromise
+
+			// The write completed and the caller still gets the created
+			// group back - the create is NOT lost.
+			expect(persistence.puts).toHaveLength(1)
+			expect(persistence.puts[0]).toEqual([group])
+			expect(group).toEqual({
+				id: 0x1000,
+				name: 'Living Room',
+				nodeIds: [2, 3],
+			})
+
+			// The eager, pre-persistence-await multicast registration is
+			// unaffected by the generation check (unchanged, existing
+			// behavior) ...
+			expect(virtualNodes.map.has(group.id)).toBe(true)
+			// ...but the OLD (cancelled) instance must not go on to rebuild
+			// its index or materialize the ZUI virtual node from stale
+			// bookkeeping.
+			expect(zuiNodes.map.has(group.id)).toBe(false)
+			expect(socket.sent).toHaveLength(0)
+
+			// Current registry restoration: a fresh GroupService for the new
+			// generation - constructed from the up to date persisted groups,
+			// with its own (fresh, as a real restart would have) ports -
+			// must see and be able to materialize the persisted group,
+			// proving the restart is self-healing rather than lossy.
+			const newGeneration = new GroupServiceGeneration()
+			const {
+				service: restartedService,
+				zuiNodes: restartedZuiNodes,
+				socket: restartedSocket,
+			} = createService(persistence.puts[0], {
+				generation: newGeneration,
+				persistence,
+			})
+			expect(restartedService.getGroups()).toEqual([group])
+			restartedService.createVirtualNode(group)
+			expect(restartedZuiNodes.map.has(group.id)).toBe(true)
+			expect(restartedSocket.sent).toContainEqual({
+				event: socketEvents.nodeUpdated,
+				data: restartedZuiNodes.map.get(group.id),
+			})
+		})
+
+		it('updateGroup: persists the write but skips the post-write index rebuild/notification when cancelled mid-flight, and a new generation restores it', async () => {
+			const persistence = createDeferredPersistencePort()
+			await persistence.put([
+				{ id: 0x1000, name: 'Old', nodeIds: [2, 3] },
+			])
+			const generation = new GroupServiceGeneration()
+			const { service, zuiNodes, socket } = createService(
+				[{ id: 0x1000, name: 'Old', nodeIds: [2, 3] }],
+				{ generation, persistence },
+			)
+			zuiNodes.map.set(0x1000, { id: 0x1000, name: 'Old', values: {} })
+
+			const deferredPut = persistence.deferNextPut()
+			const updatePromise = service.updateGroup(0x1000, 'New', [4, 5])
+
+			expect(persistence.puts).toHaveLength(1) // just the seed put above
+
+			generation.cancel()
+			deferredPut.resolve()
+
+			const updated = await updatePromise
+
+			// The rename/membership change was persisted and returned...
+			expect(persistence.puts).toHaveLength(2)
+			expect(persistence.puts[1]).toEqual([
+				{ id: 0x1000, name: 'New', nodeIds: [4, 5] },
+			])
+			expect(updated).toEqual({
+				id: 0x1000,
+				name: 'New',
+				nodeIds: [4, 5],
+			})
+			// ...but the cancelled generation must not go on to project the
+			// rename onto the live ZUI node or notify sockets from stale
+			// bookkeeping.
+			expect(zuiNodes.map.get(0x1000)?.name).toBe('Old')
+			expect(socket.nodeUpdates).toHaveLength(0)
+
+			// Current registry restoration: the new generation sees the
+			// persisted rename and can (re)project it correctly.
+			const newGeneration = new GroupServiceGeneration()
+			const { service: restartedService } = createService(
+				persistence.puts[1],
+				{ generation: newGeneration, persistence },
+			)
+			expect(restartedService.getGroups()).toEqual([updated])
+		})
+
+		it('deleteGroup: persists the removal but skips the post-write index rebuild/notification when cancelled mid-flight, and a new generation restores it', async () => {
+			const persistence = createDeferredPersistencePort()
+			await persistence.put([{ id: 0x1000, name: 'A', nodeIds: [2, 3] }])
+			const generation = new GroupServiceGeneration()
+			const { service, virtualNodes, zuiNodes, socket } = createService(
+				[{ id: 0x1000, name: 'A', nodeIds: [2, 3] }],
+				{ generation, persistence },
+			)
+			virtualNodes.map.set(0x1000, makeVirtualNode([2, 3]))
+			zuiNodes.map.set(0x1000, { id: 0x1000, name: 'A', values: {} })
+
+			const deferredPut = persistence.deferNextPut()
+			const deletePromise = service.deleteGroup(0x1000)
+
+			generation.cancel()
+			deferredPut.resolve()
+
+			const result = await deletePromise
+
+			expect(result).toBe(true)
+			expect(persistence.puts).toHaveLength(2)
+			expect(persistence.puts[1]).toEqual([])
+			// Live virtual/ZUI state was already torn down before the
+			// persistence await (pre-existing, ungated behavior) ...
+			expect(virtualNodes.map.has(0x1000)).toBe(false)
+			expect(zuiNodes.map.has(0x1000)).toBe(false)
+			// ...but the cancelled generation must not emit the removal
+			// notification from stale bookkeeping.
+			expect(socket.sent).toHaveLength(0)
+
+			const newGeneration = new GroupServiceGeneration()
+			const { service: restartedService } = createService(
+				persistence.puts[1],
+				{ generation: newGeneration, persistence },
+			)
+			expect(restartedService.getGroups()).toEqual([])
+		})
+
+		it('removeNodeFromGroups: persists the write but skips the post-write index rebuild/notification when cancelled mid-flight, and a new generation restores it', async () => {
+			const persistence = createDeferredPersistencePort()
+			await persistence.put([{ id: 0x1000, name: 'A', nodeIds: [2, 3] }])
+			const generation = new GroupServiceGeneration()
+			const { service, virtualNodes, zuiNodes, socket } = createService(
+				[{ id: 0x1000, name: 'A', nodeIds: [2, 3] }],
+				{ generation, persistence },
+			)
+			virtualNodes.map.set(0x1000, makeVirtualNode([2, 3]))
+			zuiNodes.map.set(0x1000, { id: 0x1000, name: 'A', values: {} })
+
+			const deferredPut = persistence.deferNextPut()
+			const removePromise = service.removeNodeFromGroups(3)
+
+			generation.cancel()
+			deferredPut.resolve()
+
+			await removePromise
+
+			expect(persistence.puts).toHaveLength(2)
+			expect(persistence.puts[1]).toEqual([
+				{ id: 0x1000, name: 'A', nodeIds: [2] },
+			])
+			// The membership change is persisted, but the cancelled
+			// generation must not go on to tear down / refresh the virtual
+			// node or notify sockets from stale bookkeeping.
+			expect(virtualNodes.map.has(0x1000)).toBe(true)
+			expect(zuiNodes.map.has(0x1000)).toBe(true)
+			expect(socket.sent).toHaveLength(0)
+
+			const newGeneration = new GroupServiceGeneration()
+			const { service: restartedService } = createService(
+				persistence.puts[1],
+				{ generation: newGeneration, persistence },
+			)
+			expect(restartedService.getGroups()).toEqual([
+				{ id: 0x1000, name: 'A', nodeIds: [2] },
+			])
+		})
+
+		it('a normal (non-cancelled) call still rebuilds the index and materializes/notifies as before', async () => {
+			// Guards against the generation check being inverted or always
+			// short-circuiting.
+			const { service, zuiNodes, socket } = createService()
+
+			const group = await service.createGroup('Living Room', [2, 3])
+
+			expect(zuiNodes.map.has(group.id)).toBe(true)
+			expect(socket.sent).toContainEqual({
+				event: socketEvents.nodeUpdated,
+				data: zuiNodes.map.get(group.id),
+			})
 		})
 	})
 })
