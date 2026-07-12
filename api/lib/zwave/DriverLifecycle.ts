@@ -539,6 +539,24 @@ export class DriverLifecycle {
 
 		Object.assign(zwaveOptions, cfg.options)
 
+		// Clone the (possibly user-overridden) logConfig into a driver-only
+		// object BEFORE any runtime enrichment below. `Object.assign` above
+		// aliases `zwaveOptions.logConfig` onto the persisted
+		// `cfg.options.logConfig` whenever a documented `zwave.options.logConfig`
+		// override is present. The steps that follow —
+		// `applyExternalDriverSettings()` (filename/forceConsole) and the
+		// JSON/extra-transport + effective-level enrichment — mutate this object
+		// in place. Without this clone those mutations would leak into the user's
+		// persisted config: e.g. raising the level for a temporary debug transport
+		// would permanently overwrite the configured level, so removing the
+		// transport and restarting could never return to it. A shallow copy is
+		// sufficient because every enrichment step REPLACES a top-level property
+		// (filename, forceConsole, transports, level) rather than mutating a
+		// nested value, so the source object's identity and content stay intact.
+		if (zwaveOptions.logConfig) {
+			zwaveOptions.logConfig = { ...zwaveOptions.logConfig }
+		}
+
 		let s0Key: string | undefined
 
 		// back compatibility
@@ -565,12 +583,11 @@ export class DriverLifecycle {
 		logTransport.format = createDefaultTransportFormat(true, false)
 
 		// Resolve the log transports/level against the FINAL `logConfig` that
-		// the driver will actually receive — i.e. AFTER `Object.assign(cfg.options)`
-		// and `applyExternalDriverSettings()` above may have replaced or mutated
-		// it. Mutating the pre-override local `logConfig` here would silently drop
-		// the required JSON transport (and every registered extra transport) from
-		// the driver whenever a documented `zwave.options.logConfig` override
-		// replaced the object reference.
+		// the driver will actually receive. This is now a driver-only shallow
+		// clone (see the clone right after `Object.assign(cfg.options)` above),
+		// so enriching it here injects the required JSON transport and every
+		// registered extra transport — plus any raised level — into the driver's
+		// copy WITHOUT mutating the user's persisted `cfg.options.logConfig`.
 		const finalLogConfig = zwaveOptions.logConfig
 		if (finalLogConfig) {
 			finalLogConfig.transports = [

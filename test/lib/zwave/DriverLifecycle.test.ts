@@ -1083,6 +1083,89 @@ describe('DriverLifecycle — final logConfig override', () => {
 })
 
 // ===========================================================================
+// connect() — logConfig source isolation (re-review finding 3)
+// ===========================================================================
+//
+// `Object.assign(zwaveOptions, cfg.options)` aliases the driver's `logConfig`
+// onto the user's PERSISTED `cfg.options.logConfig` whenever a documented
+// `zwave.options.logConfig` override is present. The runtime enrichment that
+// follows (JSON transport + registered extra transports, and a raised effective
+// level) must land on a driver-only clone, NOT on that persisted object —
+// otherwise adding a temporary debug transport permanently rewrites the user's
+// configured level, and removing it + restarting can never return to it.
+
+describe('DriverLifecycle — logConfig source isolation', () => {
+	it('does not mutate the persisted cfg.options.logConfig; the driver receives a distinct enriched clone', async () => {
+		const { lifecycle, state } = createHarness({
+			serverEnabled: false,
+			options: {
+				logConfig: { level: 'warn', maxFiles: 5 },
+			} as any,
+		})
+		const source = (state.cfg as any).options.logConfig
+		const sourceSnapshot = JSON.parse(JSON.stringify(source))
+		const extra = { id: 'debug-forwarder' }
+		lifecycle.addExtraLogTransport(extra, 'debug')
+
+		await lifecycle.connect()
+
+		const driverLogConfig = hoisted.drivers[0].options.logConfig
+		// The driver received a DISTINCT object (a clone), enriched for the
+		// driver only: the required JSON transport, the registered extra, and a
+		// level raised to the extra's more-verbose 'debug'.
+		expect(driverLogConfig).not.toBe(source)
+		expect(driverLogConfig.transports).toContain(hoisted.logTransports[0])
+		expect(driverLogConfig.transports).toContain(extra)
+		expect(driverLogConfig.level).toBe('debug')
+
+		// The persisted source object is untouched: SAME reference, deep content
+		// unchanged, no runtime transports leaked in, configured level intact.
+		expect((state.cfg as any).options.logConfig).toBe(source)
+		expect(source).toEqual(sourceSnapshot)
+		expect(source.transports).toBeUndefined()
+		expect(source.level).toBe('warn')
+	})
+
+	it('removing a debug transport and restarting returns the driver to the configured level without leaking runtime transports', async () => {
+		const { lifecycle, state } = createHarness({
+			serverEnabled: false,
+			options: { logConfig: { level: 'info' } } as any,
+		})
+		const source = (state.cfg as any).options.logConfig
+		const sourceSnapshot = JSON.parse(JSON.stringify(source))
+		const extra = { id: 'temp-debug' }
+
+		// Add a debug transport, then connect: the driver runs at the raised
+		// 'debug' level while the persisted source stays at 'info'.
+		lifecycle.addExtraLogTransport(extra, 'debug')
+		await lifecycle.connect()
+		expect(hoisted.drivers[0].options.logConfig.level).toBe('debug')
+		expect(source).toEqual(sourceSnapshot)
+		expect((state.cfg as any).options.logConfig).toBe(source)
+
+		// Remove the extra transport and restart. The real restart is
+		// close()+init()+connect(): close() destroys the driver and nulls the
+		// host field; init() re-opens the client (cleared here via state.closed).
+		lifecycle.removeExtraLogTransport(extra)
+		await lifecycle.close()
+		state.closed = false
+		await lifecycle.connect()
+
+		// The second driver is back at the CONFIGURED level and carries only the
+		// required JSON transport — no leftover runtime transport objects.
+		const restarted = hoisted.drivers[1].options.logConfig
+		expect(restarted.level).toBe('info')
+		expect(restarted.transports).toEqual([hoisted.logTransports[1]])
+
+		// Across the full add → connect → remove → close/restart sequence the
+		// persisted source kept its identity and exact content.
+		expect((state.cfg as any).options.logConfig).toBe(source)
+		expect(source).toEqual(sourceSnapshot)
+		expect(source.level).toBe('info')
+	})
+})
+
+// ===========================================================================
 // close()
 // ===========================================================================
 
