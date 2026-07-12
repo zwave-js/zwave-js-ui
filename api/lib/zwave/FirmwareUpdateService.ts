@@ -37,6 +37,16 @@ export class FirmwareUpdateService {
 	/** Stores nvmEvent label set before OTW backups */
 	private _nvmEventSetter: ((event: string) => void) | undefined
 
+	/**
+	 * Generation counter — incremented on every dispose() so that an
+	 * in-flight async operation can detect that a close/restart happened
+	 * and bail out rather than persisting stale results or rescheduling.
+	 */
+	private _generation = 0
+
+	/** Whether this service instance has been disposed */
+	private _disposed = false
+
 	constructor(
 		driver: FirmwareDriverPort,
 		nodes: FirmwareNodeStorePort,
@@ -55,6 +65,37 @@ export class FirmwareUpdateService {
 		this._extraction = extraction
 		this._logger = logger
 		this._nvmEventSetter = nvmEventSetter
+	}
+
+	/** Current generation (incremented on dispose/reset) — exposed for testing */
+	get generation(): number {
+		return this._generation
+	}
+
+	/** Whether this instance has been disposed */
+	get disposed(): boolean {
+		return this._disposed
+	}
+
+	/**
+	 * Dispose this service instance: cancel pending timers, increment
+	 * generation so in-flight operations bail out. Once disposed, no new
+	 * scheduled checks will fire from this instance.
+	 */
+	dispose(): void {
+		this._disposed = true
+		this._generation++
+		this.clearScheduledCheck()
+	}
+
+	/**
+	 * Reset the service generation without full disposal — used when the
+	 * same instance is reused across a soft restart. Cancels timers and
+	 * increments generation fence.
+	 */
+	resetGeneration(): void {
+		this._generation++
+		this.clearScheduledCheck()
 	}
 
 	async getAvailableFirmwareUpdates(
@@ -89,7 +130,8 @@ export class FirmwareUpdateService {
 	}
 
 	/**
-	 * Check firmware updates for all nodes and store results in nodes.json
+	 * Check firmware updates for all nodes and store results in nodes.json.
+	 * Generation-fenced: bails out before cache/store mutation if disposed/reset.
 	 */
 	async checkAllNodesFirmwareUpdates(
 		options?: unknown,
@@ -106,11 +148,19 @@ export class FirmwareUpdateService {
 			return undefined
 		}
 
+		const gen = this._generation
+
 		this._logger.info('Starting bulk firmware update check for all nodes')
 
 		try {
 			const result =
 				await drv.controller.getAllAvailableFirmwareUpdates(options)
+
+			// Generation fence after await: do not mutate store/cache
+			// if a close/reset happened while the request was in flight.
+			if (this._generation !== gen || this._disposed) {
+				return result
+			}
 
 			if (result) {
 				const now = Date.now()
@@ -454,13 +504,21 @@ export class FirmwareUpdateService {
 	}
 
 	/**
-	 * Schedule periodic firmware update checks
+	 * Schedule periodic firmware update checks.
+	 * Uses generation fencing: if close/reset happens during the await,
+	 * the method bails out without persisting stale results or rescheduling.
 	 */
 	async scheduledFirmwareUpdateCheck(): Promise<void> {
+		if (this._disposed) {
+			return
+		}
+
 		if (this._config.disableAutomaticFirmwareUpdateChecks) {
 			this._logger.info('Automatic firmware update checks are disabled')
 			return
 		}
+
+		const gen = this._generation
 
 		try {
 			await this.checkAllNodesFirmwareUpdates()
@@ -468,6 +526,12 @@ export class FirmwareUpdateService {
 			this._logger.warn(
 				`Scheduled firmware update check has failed: ${getErrorMessage(error)}`,
 			)
+		}
+
+		// Generation fence: if disposed or reset happened during the check,
+		// do NOT reschedule — the old generation must not produce new timers.
+		if (this._generation !== gen || this._disposed) {
+			return
 		}
 
 		// Schedule next check for a random delay between 23 and 25 hours
@@ -489,10 +553,11 @@ export class FirmwareUpdateService {
 	}
 
 	/**
-	 * Check firmware updates for a specific node after an event
+	 * Check firmware updates for a specific node after an event.
+	 * Generation-fenced: bails out before cache/store mutation if disposed/reset.
 	 */
 	async checkNodeFirmwareUpdates(nodeId: number): Promise<void> {
-		if (!this._driver.isDriverReady()) {
+		if (!this._driver.isDriverReady() || this._disposed) {
 			return
 		}
 
@@ -503,6 +568,8 @@ export class FirmwareUpdateService {
 			return
 		}
 
+		const gen = this._generation
+
 		try {
 			const drv = this._driver.getDriver()
 			if (!drv) {
@@ -511,6 +578,11 @@ export class FirmwareUpdateService {
 
 			const updates =
 				await drv.controller.getAvailableFirmwareUpdates(nodeId)
+
+			// Generation fence after await
+			if (this._generation !== gen || this._disposed) {
+				return
+			}
 
 			const filteredUpdates = this._filterFirmwareUpdates(updates)
 			const timestamp = Date.now()
