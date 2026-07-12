@@ -4078,11 +4078,12 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 	async hardReset() {
 		if (this.driverReady) {
-			// Settle pending promises before driver reset so in-flight
-			// operations on the old generation bail out immediately.
-			this._inclusionCoordinator.reset()
-			this._firmwareUpdateService.resetGeneration()
+			// Await driver.hardReset FIRST — if it rejects, no lifecycle
+			// state is touched so timers, callbacks, and pending promises
+			// remain live and public APIs still settle normally.
 			await this._driver.hardReset()
+			// Only on success: init() resets coordinator/firmware service
+			// (bumps generation, clears timers, settles promises) once.
 			this.init()
 		} else {
 			throw new DriverNotReadyError()
