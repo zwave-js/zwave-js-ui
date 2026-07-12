@@ -736,7 +736,7 @@ export interface ZwaveClientEventCallbacks {
 	nodeInited: (node: ZUINode) => void
 	event: (source: EventSource, eventName: string, ...args: any) => void
 	scanComplete: () => void
-	driverStatus: (status: boolean) => void
+	driverStatus: (status: boolean | null | undefined) => void
 	notification: (
 		node: ZUINode | undefined,
 		valueId: ZUIValueId,
@@ -762,7 +762,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	private socket: SocketServer
 	declare private closed: boolean
 	private destroyed = false
-	declare private _driverReady: boolean
+	declare private _driverReady: boolean | null | undefined
 	declare private _nodeRegistry: NodeRegistry
 	private _nodeGeneration = 0
 	declare private _socketEventAdapter: SocketEventAdapter
@@ -903,9 +903,6 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	}
 
 	public set driverReady(ready: boolean | null | undefined) {
-		if (typeof ready !== 'boolean') {
-			throw new TypeError('Driver ready state must be a boolean')
-		}
 		if (this._driverReady !== ready) {
 			this._driverReady = ready
 			this.emit('driverStatus', ready)

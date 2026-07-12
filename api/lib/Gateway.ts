@@ -1203,7 +1203,7 @@ export default class Gateway<
 	/**
 	 * Driver status updates
 	 */
-	private _onDriverStatus(ready: boolean): void {
+	private _onDriverStatus(ready: boolean | null | undefined): void {
 		logger.info(`Driver is ${ready ? 'READY' : 'CLOSED'}`)
 
 		this.cancelJobs()
