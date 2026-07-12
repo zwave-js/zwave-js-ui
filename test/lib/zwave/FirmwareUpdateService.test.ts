@@ -1378,4 +1378,217 @@ describe('FirmwareUpdateService', () => {
 			vi.useRealTimers()
 		})
 	})
+
+	// -----------------------------------------------------------------
+	// Production integration: service preserved across init/hardReset
+	// -----------------------------------------------------------------
+	describe('Production: service preserved across server hardReset and public hardReset', () => {
+		it('resetGeneration fences a pending scheduled check from persisting', async () => {
+			vi.useFakeTimers()
+			let resolveCheck: (v: Map<number, FirmwareUpdateInfo[]>) => void
+			const driver = createDriverPort({
+				getDriver: () => ({
+					controller: {
+						getAvailableFirmwareUpdates: vi.fn(),
+						getAllAvailableFirmwareUpdates: vi.fn().mockReturnValue(
+							new Promise((resolve) => {
+								resolveCheck = resolve
+							}),
+						),
+						firmwareUpdateOTA: vi.fn(),
+						nodes: { get: vi.fn() },
+					},
+					firmwareUpdateOTW: vi.fn(),
+				}),
+			})
+			const nodes = createNodeStorePort()
+			nodes._nodes.set(1, { id: 1 })
+			const { service } = createService({ driver, nodes })
+
+			const schedulePromise = service.scheduledFirmwareUpdateCheck()
+
+			// Simulate hardReset: resetGeneration before old check resolves
+			service.resetGeneration()
+
+			resolveCheck(new Map([[1, [makeUpdate({ version: '3.0.0' })]]]))
+			await schedulePromise
+
+			// No store mutation from the old generation
+			expect(nodes.updateStoreNodes).not.toHaveBeenCalled()
+
+			vi.useRealTimers()
+		})
+
+		it('resetGeneration fences a pending bulk check from persisting', async () => {
+			let resolveCheck: (v: Map<number, FirmwareUpdateInfo[]>) => void
+			const driver = createDriverPort({
+				getDriver: () => ({
+					controller: {
+						getAvailableFirmwareUpdates: vi.fn(),
+						getAllAvailableFirmwareUpdates: vi.fn().mockReturnValue(
+							new Promise((resolve) => {
+								resolveCheck = resolve
+							}),
+						),
+						firmwareUpdateOTA: vi.fn(),
+						nodes: { get: vi.fn() },
+					},
+					firmwareUpdateOTW: vi.fn(),
+				}),
+			})
+			const nodes = createNodeStorePort()
+			nodes._nodes.set(2, { id: 2 })
+			const { service } = createService({ driver, nodes })
+
+			const checkPromise = service.checkAllNodesFirmwareUpdates()
+
+			// Simulate server hard reset
+			service.resetGeneration()
+
+			resolveCheck(new Map([[2, [makeUpdate({ version: '4.0.0' })]]]))
+			await checkPromise
+
+			// No store mutation
+			expect(nodes.updateStoreNodes).not.toHaveBeenCalled()
+		})
+
+		it('resetGeneration fences a pending node check from persisting', async () => {
+			let resolveCheck: (v: FirmwareUpdateInfo[]) => void
+			const driver = createDriverPort({
+				getDriver: () => ({
+					controller: {
+						getAvailableFirmwareUpdates: vi.fn().mockReturnValue(
+							new Promise((resolve) => {
+								resolveCheck = resolve
+							}),
+						),
+						getAllAvailableFirmwareUpdates: vi.fn(),
+						firmwareUpdateOTA: vi.fn(),
+						nodes: { get: vi.fn() },
+					},
+					firmwareUpdateOTW: vi.fn(),
+				}),
+			})
+			const nodes = createNodeStorePort()
+			nodes._nodes.set(3, { id: 3 })
+			const { service } = createService({ driver, nodes })
+
+			const checkPromise = service.checkNodeFirmwareUpdates(3)
+
+			// Simulate public hardReset
+			service.resetGeneration()
+
+			resolveCheck([makeUpdate({ version: '5.0.0' })])
+			await checkPromise
+
+			// No store mutation from old generation
+			expect(nodes.updateStoreNodes).not.toHaveBeenCalled()
+		})
+
+		it('late reject after resetGeneration does not crash', async () => {
+			let rejectCheck: (e: Error) => void
+			const driver = createDriverPort({
+				getDriver: () => ({
+					controller: {
+						getAvailableFirmwareUpdates: vi.fn(),
+						getAllAvailableFirmwareUpdates: vi.fn().mockReturnValue(
+							new Promise((_resolve, reject) => {
+								rejectCheck = reject
+							}),
+						),
+						firmwareUpdateOTA: vi.fn(),
+						nodes: { get: vi.fn() },
+					},
+					firmwareUpdateOTW: vi.fn(),
+				}),
+			})
+			const nodes = createNodeStorePort()
+			const { service } = createService({ driver, nodes })
+
+			const schedulePromise = service.scheduledFirmwareUpdateCheck()
+			service.resetGeneration()
+
+			rejectCheck(new Error('network error'))
+			// Should not throw — the error is caught and logged
+			await schedulePromise
+
+			expect(nodes.updateStoreNodes).not.toHaveBeenCalled()
+		})
+
+		it('no old reschedule: only one timer after new generation schedules', async () => {
+			vi.useFakeTimers()
+			const driver = createDriverPort({
+				getDriver: () => ({
+					controller: {
+						getAvailableFirmwareUpdates: vi.fn(),
+						getAllAvailableFirmwareUpdates: vi
+							.fn()
+							.mockResolvedValue(new Map()),
+						firmwareUpdateOTA: vi.fn(),
+						nodes: { get: vi.fn() },
+					},
+					firmwareUpdateOTW: vi.fn(),
+				}),
+			})
+			const { service } = createService({ driver })
+
+			// Start a scheduled check — completes and reschedules
+			await service.scheduledFirmwareUpdateCheck()
+
+			// A timer is now set for next check
+			const firstTimeout = (service as any)._firmwareUpdateCheckTimeout
+			expect(firstTimeout).not.toBeNull()
+
+			// Simulate hardReset — resets generation and clears timer
+			service.resetGeneration()
+			expect((service as any)._firmwareUpdateCheckTimeout).toBeNull()
+
+			// Start a new scheduled check in the new generation
+			await service.scheduledFirmwareUpdateCheck()
+			const secondTimeout = (service as any)._firmwareUpdateCheckTimeout
+			expect(secondTimeout).not.toBeNull()
+
+			// Only one timer active (the new one)
+			expect(secondTimeout).not.toBe(firstTimeout)
+
+			vi.useRealTimers()
+		})
+
+		it('server onHardReset cannot bypass fencing', async () => {
+			let resolveCheck: (v: Map<number, FirmwareUpdateInfo[]>) => void
+			const driver = createDriverPort({
+				getDriver: () => ({
+					controller: {
+						getAvailableFirmwareUpdates: vi.fn(),
+						getAllAvailableFirmwareUpdates: vi.fn().mockReturnValue(
+							new Promise((resolve) => {
+								resolveCheck = resolve
+							}),
+						),
+						firmwareUpdateOTA: vi.fn(),
+						nodes: { get: vi.fn() },
+					},
+					firmwareUpdateOTW: vi.fn(),
+				}),
+			})
+			const nodes = createNodeStorePort()
+			nodes._nodes.set(1, { id: 1 })
+			const { service } = createService({ driver, nodes })
+
+			const checkPromise = service.checkAllNodesFirmwareUpdates()
+			const genBefore = service.generation
+
+			// Server hard reset: resets generation
+			service.resetGeneration()
+			expect(service.generation).toBe(genBefore + 1)
+
+			// Old check resolves after reset
+			resolveCheck(new Map([[1, [makeUpdate()]]]))
+			await checkPromise
+
+			// Fenced: no mutation
+			expect(nodes.updateStoreNodes).not.toHaveBeenCalled()
+			expect(nodes.emitNodeUpdate).not.toHaveBeenCalled()
+		})
+	})
 })

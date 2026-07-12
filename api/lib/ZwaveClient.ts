@@ -1190,18 +1190,23 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			isUint8Array: (value: unknown): value is Uint8Array =>
 				isUint8Array(value),
 		}
-		this._firmwareUpdateService = new FirmwareUpdateService(
-			firmwareDriverPort,
-			firmwareNodeStorePort,
-			firmwareSocketPort,
-			firmwareConfigPort,
-			firmwareBackupPort,
-			firmwareExtractionPort,
-			logger,
-			(event: string) => {
-				this.nvmEvent = event
-			},
-		)
+		if (this._firmwareUpdateService) {
+			// Reuse existing service — ports are lazy and resolve current state
+			this._firmwareUpdateService.resetGeneration()
+		} else {
+			this._firmwareUpdateService = new FirmwareUpdateService(
+				firmwareDriverPort,
+				firmwareNodeStorePort,
+				firmwareSocketPort,
+				firmwareConfigPort,
+				firmwareBackupPort,
+				firmwareExtractionPort,
+				logger,
+				(event: string) => {
+					this.nvmEvent = event
+				},
+			)
+		}
 
 		const inclusionDriverPort = {
 			getDriver: () => this._driver,
@@ -1234,25 +1239,31 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				this.emit('event', EventSource.CONTROLLER, eventName, ...args)
 			},
 		}
-		this._inclusionCoordinator = new InclusionCoordinator(
-			inclusionDriverPort,
-			inclusionSocketPort,
-			inclusionControllerEventPort,
-			inclusionBackupPort,
-			inclusionConfigPort,
-			inclusionQRPort,
-			logger,
-			() => this._serverManager,
-			(event: string) => {
-				this.nvmEvent = event
-			},
-			{
-				grantSecurityClasses: socketEvents.grantSecurityClasses,
-				validateDSK: socketEvents.validateDSK,
-				inclusionAborted: socketEvents.inclusionAborted,
-				controller: socketEvents.controller,
-			},
-		)
+		if (this._inclusionCoordinator) {
+			// Reuse existing coordinator — ports are lazy and resolve current state.
+			// Reset clears pending promises, timers, tmp metadata, and bumps generation.
+			this._inclusionCoordinator.reset()
+		} else {
+			this._inclusionCoordinator = new InclusionCoordinator(
+				inclusionDriverPort,
+				inclusionSocketPort,
+				inclusionControllerEventPort,
+				inclusionBackupPort,
+				inclusionConfigPort,
+				inclusionQRPort,
+				logger,
+				() => this._serverManager,
+				(event: string) => {
+					this.nvmEvent = event
+				},
+				{
+					grantSecurityClasses: socketEvents.grantSecurityClasses,
+					validateDSK: socketEvents.validateDSK,
+					inclusionAborted: socketEvents.inclusionAborted,
+					controller: socketEvents.controller,
+				},
+			)
+		}
 
 		this._devices = {}
 		this.driverInfo = {}
@@ -4067,9 +4078,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 	async hardReset() {
 		if (this.driverReady) {
-			// Settle pending inclusion promises and reset state before the
-			// driver is reset — callbacks bound to the old generation must
-			// not fire on the new one.
+			// Settle pending promises before driver reset so in-flight
+			// operations on the old generation bail out immediately.
 			this._inclusionCoordinator.reset()
 			this._firmwareUpdateService.resetGeneration()
 			await this._driver.hardReset()
@@ -4472,9 +4482,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 					this._onControllerStatusChanged.bind(this),
 				)
 
-			// After a hard reset or restart the driver is new, but the
-			// coordinator survives. If user callbacks were installed on the
-			// old driver, reinstall them on the current one.
+			// After a hard reset or restart the driver instance is replaced,
+			// but the coordinator survives. Re-register callbacks on the new driver.
 			this._inclusionCoordinator.reinstallUserCallbacks()
 		} catch (error) {
 			// Fixes freak error in "driver ready" handler #1309
@@ -6090,8 +6099,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	}
 
 	private _createNode(nodeId: number) {
-		// set node name and location sent with beginInclusion call
-		const tmpNode = this._inclusionCoordinator.tmpNode
+		// Atomically consume tmpNode metadata set during inclusion
+		const tmpNode = this._inclusionCoordinator.takeTmpNode()
 		if (tmpNode) {
 			if (this.storeNodes[nodeId]) {
 				this.storeNodes[nodeId].name = tmpNode.name
