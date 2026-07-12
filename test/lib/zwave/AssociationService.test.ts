@@ -113,6 +113,47 @@ function createService(
 	return { service, driver, nodeStore, log }
 }
 
+/**
+ * A manually-resolvable promise, used to deterministically control exactly
+ * when an awaited call inside the service resolves, so a test can swap the
+ * driver *while* the service is suspended on that `await` and assert which
+ * driver instance is observed afterwards.
+ */
+function createDeferred<T = void>(): {
+	promise: Promise<T>
+	resolve: (value: T | PromiseLike<T>) => void
+	reject: (reason?: unknown) => void
+} {
+	let resolve!: (value: T | PromiseLike<T>) => void
+	let reject!: (reason?: unknown) => void
+	const promise = new Promise<T>((res, rej) => {
+		resolve = res
+		reject = rej
+	})
+	return { promise, resolve, reject }
+}
+
+/**
+ * A driver port whose `getDriver()` result can be swapped mid-test via
+ * `set()`. Used to deterministically simulate a driver restart occurring
+ * while a service method is suspended on an `await`, proving the *current*
+ * driver is re-resolved at each use site instead of a stale reference
+ * captured before the `await` being reused afterwards.
+ */
+function createMutableDriverPort(
+	initial: Driver | null,
+): AssociationDriverPort & {
+	set: (driver: Driver | null) => void
+} {
+	let current = initial
+	return {
+		getDriver: () => current,
+		set: (driver: Driver | null) => {
+			current = driver
+		},
+	}
+}
+
 const source = { nodeId: 2 }
 const association = { nodeId: 3 }
 
@@ -210,9 +251,9 @@ describe('AssociationService', () => {
 			])
 		})
 
-		it('does nothing at all when the driver is not ready', () => {
+		it('resets groups to empty and logs a warning when the driver is not ready (matches original unconditional reset)', () => {
 			const zui: AssociationNodeState = { id: 2 }
-			const { service } = createService(
+			const { service, nodeStore, log } = createService(
 				{ 2: { zwave: makeZWaveNode({ id: 2 }), zui } },
 				{},
 				true,
@@ -220,7 +261,23 @@ describe('AssociationService', () => {
 
 			service.getGroups(2)
 
-			expect(zui.groups).toBeUndefined()
+			// Original ZwaveClient reset `node.groups = []` unconditionally
+			// whenever the node/ZUI-node pair was found, even if fetching
+			// groups failed (including a torn-down/missing driver) - it was
+			// never left as `undefined`.
+			expect(zui.groups).toEqual([])
+			expect(log.calls).toContainEqual(
+				expect.objectContaining({
+					nodeId: 2,
+					level: 'warn',
+					message: expect.stringContaining(
+						'Error while fetching groups associations',
+					),
+				}),
+			)
+			expect(nodeStore.updates).toEqual([
+				{ node: zui, changed: { groups: [] } },
+			])
 		})
 	})
 
@@ -305,6 +362,81 @@ describe('AssociationService', () => {
 				}),
 			)
 		})
+
+		it('logs a warning and returns an empty array when the node exists but the driver is not ready', async () => {
+			const { service, log } = createService(
+				{ 2: { zwave: makeZWaveNode({ id: 2 }) } },
+				{},
+				true,
+			)
+
+			const result = await service.getAssociations(2)
+
+			expect(result).toEqual([])
+			expect(log.calls).toContainEqual(
+				expect.objectContaining({
+					nodeId: 2,
+					level: 'warn',
+					message: expect.stringContaining('Driver not ready'),
+				}),
+			)
+		})
+
+		it('re-resolves the driver after the refresh awaits, observing a mid-flight restart (mutable port, deferred)', async () => {
+			const oldController = {
+				getAllAssociations: vi.fn(() => new Map()),
+			}
+			const newController = {
+				getAllAssociations: vi.fn(
+					() =>
+						new Map([
+							[
+								{ nodeId: 2, endpoint: undefined },
+								new Map([
+									[1, [{ nodeId: 9, endpoint: undefined }]],
+								]),
+							],
+						]),
+				),
+			}
+			const oldDriver = makeControllerDriver(oldController)
+			const newDriver = makeControllerDriver(newController)
+			const driverPort = createMutableDriverPort(oldDriver)
+
+			const deferred = createDeferred<void>()
+			const refreshCCValues = vi.fn(() => deferred.promise)
+			const zwave = makeZWaveNode({ id: 2, refreshCCValues })
+			const nodeStore = createNodeStorePort({ 2: { zwave } })
+			const log = createLogPort()
+			const service = new AssociationService(driverPort, nodeStore, log)
+
+			const resultPromise = service.getAssociations(2, true)
+
+			// Still suspended on the refresh await - neither driver's
+			// controller has been touched yet.
+			expect(oldController.getAllAssociations).not.toHaveBeenCalled()
+			expect(newController.getAllAssociations).not.toHaveBeenCalled()
+
+			// Simulate a driver restart completing while the CC refresh is
+			// still in flight, then let the refresh resolve.
+			driverPort.set(newDriver)
+			deferred.resolve()
+
+			const result = await resultPromise
+
+			// The post-await driver read must observe the NEW driver, never
+			// the stale one captured (if it had been) before the awaits.
+			expect(oldController.getAllAssociations).not.toHaveBeenCalled()
+			expect(newController.getAllAssociations).toHaveBeenCalledWith(2)
+			expect(result).toEqual([
+				{
+					endpoint: undefined,
+					groupId: 1,
+					nodeId: 9,
+					targetEndpoint: undefined,
+				},
+			])
+		})
 	})
 
 	describe('checkAssociation', () => {
@@ -344,16 +476,33 @@ describe('AssociationService', () => {
 			).rejects.toThrow('Node 2 not found')
 		})
 
-		it('throws when the driver is not ready', async () => {
+		it('throws "Driver not ready" when the driver is not ready (node present, association attempted)', async () => {
 			const { service } = createService(
 				{ 2: { zwave: makeZWaveNode({ id: 2 }) } },
 				{},
 				true,
 			)
 
+			// Original ZwaveClient had no upfront driver guard here either -
+			// it let the (then-uncaught) controller access fail once the
+			// loop actually needed the driver. `associations` is non-empty
+			// here so the loop body runs and the driver is required.
 			await expect(
 				service.addAssociations(source, 1, [association]),
-			).rejects.toThrow('Node 2 not found')
+			).rejects.toThrow('Driver not ready')
+		})
+
+		it('does not require the driver at all when associations is empty (matches original: loop body never runs)', async () => {
+			const { service, driver } = createService(
+				{ 2: { zwave: makeZWaveNode({ id: 2 }) } },
+				{},
+				true,
+			)
+
+			const result = await service.addAssociations(source, 1, [])
+
+			expect(result).toEqual([])
+			expect(driver.controller.checkAssociation).not.toHaveBeenCalled()
 		})
 
 		it('adds an association when the check result is OK', async () => {
@@ -475,6 +624,55 @@ describe('AssociationService', () => {
 			])
 			expect(driver.controller.addAssociations).toHaveBeenCalledTimes(1)
 		})
+
+		it('re-resolves the driver on every iteration, observing a mid-flight restart (mutable port, deferred)', async () => {
+			const deferred = createDeferred<void>()
+			const oldController = {
+				checkAssociation: vi.fn(() => AssociationCheckResult.OK),
+				addAssociations: vi.fn(() => deferred.promise),
+			}
+			const newController = {
+				checkAssociation: vi.fn(() => AssociationCheckResult.OK),
+				addAssociations: vi.fn(() => Promise.resolve()),
+			}
+			const oldDriver = makeControllerDriver(oldController)
+			const newDriver = makeControllerDriver(newController)
+			const driverPort = createMutableDriverPort(oldDriver)
+
+			const zwave = makeZWaveNode({ id: 2 })
+			const nodeStore = createNodeStorePort({ 2: { zwave } })
+			const log = createLogPort()
+			const service = new AssociationService(driverPort, nodeStore, log)
+
+			const resultPromise = service.addAssociations(source, 1, [
+				{ nodeId: 3 },
+				{ nodeId: 4 },
+			])
+
+			// First iteration is in flight against the OLD driver, suspended
+			// on the (deferred) addAssociations call.
+			expect(oldController.checkAssociation).toHaveBeenCalledTimes(1)
+			expect(newController.checkAssociation).not.toHaveBeenCalled()
+
+			// Simulate a driver restart completing while the first
+			// association's addAssociations call is still pending.
+			driverPort.set(newDriver)
+			deferred.resolve()
+
+			const result = await resultPromise
+
+			// The second iteration must re-resolve and observe the NEW
+			// driver - never reuse the stale reference from before the
+			// first iteration's await.
+			expect(oldController.checkAssociation).toHaveBeenCalledTimes(1)
+			expect(newController.checkAssociation).toHaveBeenCalledTimes(1)
+			expect(oldController.addAssociations).toHaveBeenCalledTimes(1)
+			expect(newController.addAssociations).toHaveBeenCalledTimes(1)
+			expect(result).toEqual([
+				AssociationCheckResult.OK,
+				AssociationCheckResult.OK,
+			])
+		})
 	})
 
 	describe('removeAssociations', () => {
@@ -522,6 +720,23 @@ describe('AssociationService', () => {
 				expect.objectContaining({
 					level: 'warn',
 					message: expect.stringContaining('node not found'),
+				}),
+			)
+		})
+
+		it('logs a warning (via the same catch path) when the node exists but the driver is not ready', async () => {
+			const { service, log } = createService(
+				{ 2: { zwave: makeZWaveNode({ id: 2 }) } },
+				{},
+				true,
+			)
+
+			await service.removeAssociations(source, 1, [association])
+
+			expect(log.calls).toContainEqual(
+				expect.objectContaining({
+					level: 'warn',
+					message: expect.stringContaining('Driver not ready'),
 				}),
 			)
 		})
@@ -590,6 +805,85 @@ describe('AssociationService', () => {
 				}),
 			)
 		})
+
+		it('logs a warning (via the same catch path) when the node exists but the driver is not ready', async () => {
+			const { service, log } = createService(
+				{ 2: { zwave: makeZWaveNode({ id: 2 }) } },
+				{},
+				true,
+			)
+
+			await service.removeAllAssociations(2)
+
+			expect(log.calls).toContainEqual(
+				expect.objectContaining({
+					level: 'warn',
+					message: expect.stringContaining('Driver not ready'),
+				}),
+			)
+		})
+
+		it('re-resolves the driver on every inner-loop iteration, observing a mid-flight restart (mutable port, deferred)', async () => {
+			const deferred = createDeferred<void>()
+			const oldController = {
+				getAllAssociations: vi.fn(
+					() =>
+						new Map([
+							[
+								{ nodeId: 2, endpoint: undefined },
+								new Map([
+									[1, [{ nodeId: 3 }]],
+									[2, [{ nodeId: 4 }]],
+								]),
+							],
+						]),
+				),
+				removeAssociations: vi.fn(() => deferred.promise),
+			}
+			const newController = {
+				getAllAssociations: vi.fn(() => new Map()),
+				removeAssociations: vi.fn(() => Promise.resolve()),
+			}
+			const oldDriver = makeControllerDriver(oldController)
+			const newDriver = makeControllerDriver(newController)
+			const driverPort = createMutableDriverPort(oldDriver)
+
+			const zwave = makeZWaveNode({ id: 2 })
+			const nodeStore = createNodeStorePort({ 2: { zwave } })
+			const log = createLogPort()
+			const service = new AssociationService(driverPort, nodeStore, log)
+
+			const resultPromise = service.removeAllAssociations(2)
+
+			// The enumeration call and the first group's removal both hit
+			// the OLD driver; the second group's removal is suspended on
+			// the (deferred) promise.
+			expect(oldController.getAllAssociations).toHaveBeenCalledTimes(1)
+			expect(oldController.removeAssociations).toHaveBeenCalledTimes(1)
+			expect(oldController.removeAssociations).toHaveBeenCalledWith(
+				{ nodeId: 2, endpoint: undefined },
+				1,
+				[{ nodeId: 3 }],
+			)
+
+			// Simulate a driver restart completing while the first group's
+			// removeAssociations call is still pending.
+			driverPort.set(newDriver)
+			deferred.resolve()
+
+			await resultPromise
+
+			// The second group's removal must re-resolve and observe the
+			// NEW driver, never the stale reference from the enumeration
+			// call or the first group's removal.
+			expect(newController.removeAssociations).toHaveBeenCalledTimes(1)
+			expect(newController.removeAssociations).toHaveBeenCalledWith(
+				{ nodeId: 2, endpoint: undefined },
+				2,
+				[{ nodeId: 4 }],
+			)
+			expect(oldController.removeAssociations).toHaveBeenCalledTimes(1)
+		})
 	})
 
 	describe('removeNodeFromAllAssociations', () => {
@@ -635,6 +929,23 @@ describe('AssociationService', () => {
 				expect.objectContaining({
 					level: 'warn',
 					message: expect.stringContaining('Node not found'),
+				}),
+			)
+		})
+
+		it('logs a warning (via the same catch path) when the node exists but the driver is not ready', async () => {
+			const { service, log } = createService(
+				{ 2: { zwave: makeZWaveNode({ id: 2 }) } },
+				{},
+				true,
+			)
+
+			await service.removeNodeFromAllAssociations(2)
+
+			expect(log.calls).toContainEqual(
+				expect.objectContaining({
+					level: 'warn',
+					message: expect.stringContaining('Driver not ready'),
 				}),
 			)
 		})
