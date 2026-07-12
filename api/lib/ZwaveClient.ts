@@ -860,19 +860,11 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	private valuesObservers: Record<string, ValueIdObserver> = {}
 	private hassDeviceStore: HassDeviceStore
 
-	private _grantResolve: (grant: InclusionGrant | false) => void | null
-	private _dskResolve: (dsk: string | false) => void | null
-
 	private throttledFunctions: Map<
 		string,
 		{ lastUpdate: number; fn: () => void; timeout: NodeJS.Timeout }
 	> = new Map()
 
-	private inclusionUserCallbacks: InclusionUserCallbacks = {
-		grantSecurityClasses: this._onGrantSecurityClasses.bind(this),
-		validateDSKAndEnterPIN: this._onValidateDSK.bind(this),
-		abort: this._onAbortInclusion.bind(this),
-	}
 	private _inclusionState: InclusionState = undefined
 
 	public get driverReady() {
@@ -1476,34 +1468,13 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	}
 
 	setUserCallbacks() {
-		this.hasUserCallbacks = true
-		if (!this._driver || !this.cfg.serverEnabled) {
-			return
-		}
-
-		logger.info('Setting user callbacks')
-
-		this.driver.updateOptions({
-			inclusionUserCallbacks: {
-				...this.inclusionUserCallbacks,
-			},
-		})
+		this._inclusionCoordinator.setUserCallbacks()
+		this.hasUserCallbacks = this._inclusionCoordinator.hasUserCallbacks
 	}
 
 	removeUserCallbacks() {
-		this.hasUserCallbacks = false
-		if (!this._driver || !this.cfg.serverEnabled) {
-			return
-		}
-
-		logger.info('Removing user callbacks')
-
-		this.driver.updateOptions({
-			inclusionUserCallbacks: undefined,
-		})
-
-		// when no user is connected, give back the control to HA server
-		this._serverManager?.handInclusionControlBack()
+		this._inclusionCoordinator.removeUserCallbacks()
+		this.hasUserCallbacks = this._inclusionCoordinator.hasUserCallbacks
 	}
 
 	/**
@@ -1643,6 +1614,14 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			clearTimeout(this.firmwareUpdateCheckTimeout)
 			this.firmwareUpdateCheckTimeout = null
 		}
+
+		// Cancel coordinator-owned inclusion/exclusion/replace timeout and
+		// resolve any pending callbacks so they don't fire against a new driver
+		this._inclusionCoordinator.reset()
+
+		// Cancel firmware scheduled check timer so it doesn't leak across
+		// close/restart
+		this._firmwareUpdateService.clearScheduledCheck()
 
 		if (this.statelessTimeouts) {
 			for (const k in this.statelessTimeouts) {
@@ -2122,9 +2101,11 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		// when server is not enabled, disable the user callbacks set/remove
 		// so it can be used through MQTT
 		if (!this.cfg.serverEnabled) {
-			zwaveOptions.inclusionUserCallbacks = {
-				...this.inclusionUserCallbacks,
-			}
+			// The coordinator's callbacks use the narrow InclusionGrantRef
+			// port type; the driver expects the concrete InclusionGrant -
+			// they're structurally compatible at runtime.
+			zwaveOptions.inclusionUserCallbacks =
+				this._inclusionCoordinator.getUserCallbacks() as unknown as InclusionUserCallbacks
 		}
 
 		if (this.cfg.scales) {
@@ -5058,38 +5039,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		this._updateControllerStatus(message)
 	}
 
-	private _onGrantSecurityClasses(
-		requested: InclusionGrant,
-	): Promise<InclusionGrant | false> {
-		logger.log('info', `Grant security classes: %o`, requested)
-		this.sendToSocket(socketEvents.grantSecurityClasses, requested)
-
-		this.emit(
-			'event',
-			EventSource.CONTROLLER,
-			'grant security classes',
-			requested,
-		)
-
-		return new Promise((resolve) => {
-			this._grantResolve = resolve
-		})
-	}
-
 	grantSecurityClasses(requested: InclusionGrant) {
 		this._inclusionCoordinator.grantSecurityClasses(requested as any)
-	}
-
-	private _onValidateDSK(dsk: string): Promise<string | false> {
-		logger.info(`DSK received ${dsk}`)
-
-		this.sendToSocket(socketEvents.validateDSK, dsk)
-
-		this.emit('event', EventSource.CONTROLLER, 'validate dsk', dsk)
-
-		return new Promise((resolve) => {
-			this._dskResolve = resolve
-		})
 	}
 
 	validateDSK(dsk: string) {
@@ -5098,16 +5049,6 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 	abortInclusion() {
 		this._inclusionCoordinator.abortInclusion()
-	}
-
-	private _onAbortInclusion() {
-		this._dskResolve = null
-		this._grantResolve = null
-		this.sendToSocket(socketEvents.inclusionAborted, true)
-
-		this.emit('event', EventSource.CONTROLLER, 'inclusion aborted')
-
-		logger.warn('Inclusion aborted')
 	}
 
 	async backupNVMRaw(): Promise<{ data: Buffer; fileName: string }> {
