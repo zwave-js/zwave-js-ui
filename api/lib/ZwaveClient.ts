@@ -3428,7 +3428,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				'Driver is unavailable while setting the controller power level',
 			).controller.setPowerlevel(powerlevel, measured0dBm)
 
-			await this.updateControllerNodeProps(null, ['powerlevel'])
+			await this.updateControllerNodeProps(undefined, ['powerlevel'])
 
 			return result
 		}
@@ -3466,7 +3466,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				}
 			}
 
-			await this.updateControllerNodeProps(null, propsToUpdate)
+			await this.updateControllerNodeProps(undefined, propsToUpdate)
 			return result
 		}
 
@@ -3479,7 +3479,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				this._driverState,
 				'Driver is unavailable while setting the maximum LR power level',
 			).controller.setMaxLongRangePowerlevel(powerlevel)
-			await this.updateControllerNodeProps(null, [
+			await this.updateControllerNodeProps(undefined, [
 				'maxLongRangePowerlevel',
 			])
 			return result
@@ -5610,7 +5610,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	}
 
 	async updateControllerNodeProps(
-		node?: ZUINode | null,
+		node?: ZUINode,
 		props: Array<'powerlevel' | 'RFRegion' | 'maxLongRangePowerlevel'> = [
 			'powerlevel',
 			'RFRegion',
