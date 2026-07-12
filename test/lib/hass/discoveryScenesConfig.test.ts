@@ -15,8 +15,13 @@ import {
 	discoverValueOnNode,
 	type GatewayHarness,
 } from './gatewayHarness.ts'
-import { buildNode, buildValueId, addValue } from './fixtures.ts'
-import type { ZUINode, ZUIValueId, HassDevice } from '#api/lib/ZwaveClient.ts'
+import {
+	buildNode,
+	buildValueId,
+	addValue,
+	requireDefined,
+} from './fixtures.ts'
+import type { ZUINode, ZUIValueId } from '#api/lib/ZwaveClient.ts'
 import type { GatewayConfig } from '#api/lib/Gateway.ts'
 
 vi.mock('mqtt', () => mqttMockFactory())
@@ -50,9 +55,18 @@ function discover(value: ZUIValueId, node = readyNode()) {
 	}
 }
 
+function discoverExpected(value: ZUIValueId, node = readyNode()) {
+	const result = discover(value, node)
+	return {
+		...result,
+		device: requireDefined(result.device, 'expected a discovered device'),
+		payload: requireDefined(result.payload, 'expected a discovery publish'),
+	}
+}
+
 describe('Central Scene and Scene Activation discovery', () => {
 	it('maps a central scene to a scene_state sensor', () => {
-		const { device, payload } = discover(
+		const { device, payload } = discoverExpected(
 			buildValueId({
 				commandClass: CommandClasses['Central Scene'],
 				property: 'scene',
@@ -76,7 +90,7 @@ describe('Central Scene and Scene Activation discovery', () => {
 	it('maps a numeric Scene Activation sceneId with the plain (non-nested) template', () => {
 		// sceneId is always a plain number on Scene Activation CC, so it takes
 		// the default non-nested template
-		const { device, payload } = discover(
+		const { device, payload } = discoverExpected(
 			buildValueId({
 				commandClass: CommandClasses['Scene Activation'],
 				property: 'sceneId',
@@ -95,7 +109,7 @@ describe('Central Scene and Scene Activation discovery', () => {
 		// dimmingDuration (a zwave-js Duration { value, unit }) is the only
 		// Scene Activation value carrying a unit, so it drives the nested
 		// value_json.value.value template branch
-		const { device, payload } = discover(
+		const { device, payload } = discoverExpected(
 			buildValueId({
 				commandClass: CommandClasses['Scene Activation'],
 				property: 'dimmingDuration',
@@ -115,7 +129,7 @@ describe('Configuration parameter discovery', () => {
 	const cc = CommandClasses.Configuration
 
 	it('maps a 0..1 numeric parameter to a config_switch', () => {
-		const { device, payload } = discover(
+		const { device, payload } = discoverExpected(
 			buildValueId({
 				commandClass: cc,
 				property: 3,
@@ -137,7 +151,7 @@ describe('Configuration parameter discovery', () => {
 	})
 
 	it('maps a wider numeric parameter to a config_number with min/max', () => {
-		const { device, payload } = discover(
+		const { device, payload } = discoverExpected(
 			buildValueId({
 				commandClass: cc,
 				property: 5,
@@ -154,7 +168,7 @@ describe('Configuration parameter discovery', () => {
 	})
 
 	it('omits min/max at the 1..100 defaults', () => {
-		const { payload } = discover(
+		const { payload } = discoverExpected(
 			buildValueId({
 				commandClass: cc,
 				property: 6,
@@ -213,7 +227,7 @@ describe('Configuration parameter discovery', () => {
 			values: [
 				{
 					device: '111-2-3',
-					value: { id: '112-0-9' } as unknown as ZUIValueId,
+					value: buildValueId({ id: '112-0-9' }),
 					ccConfigEnableDiscovery: true,
 				},
 			],
@@ -227,7 +241,10 @@ describe('Configuration parameter discovery', () => {
 			max: 1,
 		})
 		const key = addValue(node, value)
-		const device = discoverValueOnNode(harness.gw, node, key)
+		const device = requireDefined(
+			discoverValueOnNode(harness.gw, node, key),
+			'expected a configuration device',
+		)
 		expect(device.discovery_payload.enabled_by_default).toBe(true)
 	})
 })
@@ -251,7 +268,10 @@ describe('shared entity naming and location behavior', () => {
 			targetValue: '37-2-targetValue',
 		})
 		const key = addValue(node, current)
-		const device = discoverValueOnNode(harness.gw, node, key)
+		const device = requireDefined(
+			discoverValueOnNode(harness.gw, node, key),
+			'expected an endpoint device',
+		)
 		expect(device.object_id).toBe('switch_2')
 		expect(harness.lastDiscovery().payload.state_topic).toBe(
 			'zwave/Dev/switch_binary/endpoint_2/currentValue',
@@ -264,10 +284,16 @@ describe('shared entity naming and location behavior', () => {
 	it('indexes a duplicate type+object_id with the endpoint', () => {
 		// Pre-seed a colliding hass device so the dedup branch triggers
 		const node = readyNode()
-		node.hassDevices['binary_sensor_tamper'] = {
-			placeholder: true,
-		} as unknown as HassDevice
-		const { device } = discover(
+		requireDefined(
+			node.hassDevices,
+			'expected the node to have a HASS device map',
+		).binary_sensor_tamper = {
+			type: 'binary_sensor',
+			object_id: 'tamper',
+			discovery_payload: {},
+			values: [],
+		}
+		const { device } = discoverExpected(
 			buildValueId({
 				commandClass: CommandClasses['Binary Sensor'],
 				property: 'Tamper',
@@ -305,7 +331,10 @@ describe('shared entity naming and location behavior', () => {
 				propertyName: 'level',
 			}),
 		)
-		const device = discoverValueOnNode(harness.gw, node, key)
+		const device = requireDefined(
+			discoverValueOnNode(harness.gw, node, key),
+			'expected a located device',
+		)
 		expect(harness.lastDiscovery().payload.state_topic).toBe(
 			'zwave/Kitchen/Dev/battery/endpoint_0/level',
 		)
@@ -313,7 +342,9 @@ describe('shared entity naming and location behavior', () => {
 		expect(harness.lastDiscovery().topic).toBe(
 			'homeassistant/sensor/Kitchen-Dev/battery_level/config',
 		)
-		expect(device.discovery_payload.device.name).toBe('Kitchen-Dev')
+		expect(device.discovery_payload.device).toMatchObject({
+			name: 'Kitchen-Dev',
+		})
 	})
 
 	it('drops the location when ignoreLoc is set', async () => {

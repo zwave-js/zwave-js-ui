@@ -3,13 +3,12 @@
 import jwt from 'jsonwebtoken'
 import { TEST_SESSION_SECRET } from './env.ts'
 import { hashPsw } from '#api/lib/utils.ts'
+import type { StorageHelper } from '#api/lib/jsonStore.ts'
+import type storeConfig from '#api/config/store.ts'
 
 export interface JsonStoreLike {
-	jsonStore: {
-		get: (model: { file: string }) => unknown
-		put: (model: { file: string }, data: unknown) => Promise<unknown>
-	}
-	store: Record<string, { file: string; default: unknown }>
+	jsonStore: Pick<StorageHelper, 'get' | 'put'>
+	store: Pick<typeof storeConfig, 'settings' | 'users'>
 }
 
 export interface TestUser {

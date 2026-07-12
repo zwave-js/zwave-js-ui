@@ -10,6 +10,7 @@ import {
 } from './gatewayHarness.ts'
 import { ensureTestEnv } from './env.ts'
 import { mqttMockFactory } from './mqttMock.ts'
+import { requireDefined } from './fixtures.ts'
 
 vi.mock('mqtt', () => mqttMockFactory())
 
@@ -69,10 +70,16 @@ it('discovers devices from custom files', async () => {
 	harness.gw.rediscoverNode(customNode.id)
 	harness.gw.rediscoverNode(injectedNode.id)
 
-	expect(customNode.hassDevices.sensor_from_file).toMatchObject({
+	expect(
+		requireDefined(customNode.hassDevices, 'expected file-backed discovery')
+			.sensor_from_file,
+	).toMatchObject({
 		object_id: 'from_file',
 	})
-	expect(injectedNode.hassDevices.sensor_injected).toMatchObject({
+	expect(
+		requireDefined(injectedNode.hassDevices, 'expected injected discovery')
+			.sensor_injected,
+	).toMatchObject({
 		object_id: 'injected',
 	})
 })

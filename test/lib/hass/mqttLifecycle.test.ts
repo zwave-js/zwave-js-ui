@@ -24,7 +24,12 @@ import {
 	discoverValueOnNode,
 	type GatewayHarness,
 } from './gatewayHarness.ts'
-import { buildNode, buildValueId, addValue } from './fixtures.ts'
+import {
+	buildNode,
+	buildValueId,
+	addValue,
+	requireDefined,
+} from './fixtures.ts'
 import type { HassDevice, ZUINode } from '#api/lib/ZwaveClient.ts'
 import type { GatewayConfig } from '#api/lib/Gateway.ts'
 
@@ -402,7 +407,10 @@ describe('inbound MQTT requests drive Z-Wave actions', () => {
 		)
 		expect(
 			harness.mqtt.getTopic(
-				harness.gw.valueTopic(node, targetValue) as string,
+				requireDefined(
+					harness.gw.valueTopic(node, targetValue),
+					'expected a value topic',
+				),
 				true,
 			),
 		).toBe(setTopic)
@@ -441,10 +449,12 @@ describe('inbound MQTT requests drive Z-Wave actions', () => {
 
 		// Feedback echoed to the same topic without /set, carrying the exact
 		// request body back verbatim (broadcast re-publishes the parsed payload)
-		const echoed = harness.broker.published.find(
-			(p) => p.topic === `zwave/_CLIENTS/${cid}/broadcast`,
+		const echoed = requireDefined(
+			harness.broker.published.find(
+				(p) => p.topic === `zwave/_CLIENTS/${cid}/broadcast`,
+			),
+			'expected broadcast feedback',
 		)
-		expect(echoed).toBeDefined()
 		expect(JSON.parse(echoed.payload)).toEqual(payload)
 	})
 
@@ -496,8 +506,10 @@ describe('inbound MQTT requests drive Z-Wave actions', () => {
 		expect(harness.zwave.callApi).toHaveBeenCalledWith('getNodes')
 
 		const ackTopic = `zwave/_CLIENTS/${cid}/api/getNodes`
-		const ack = harness.broker.published.find((p) => p.topic === ackTopic)
-		expect(ack).toBeDefined()
+		const ack = requireDefined(
+			harness.broker.published.find((p) => p.topic === ackTopic),
+			'expected API acknowledgement',
+		)
 		// Exact wire body: the callApi result verbatim plus the request as origin
 		expect(JSON.parse(ack.payload)).toEqual({
 			...apiResult,

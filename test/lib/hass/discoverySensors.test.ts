@@ -41,11 +41,27 @@ function discover(value: ZUIValueId, node = readyNode()) {
 	return { device, node, payload: device ? harness.lastDiscovery() : null }
 }
 
+function discoverExpected(value: ZUIValueId, node = readyNode()) {
+	const result = discover(value, node)
+	expect(result.device).toBeDefined()
+	expect(result.payload).not.toBeNull()
+	if (result.device === undefined || result.payload === null) {
+		throw new Error(
+			'Expected value discovery to produce a device and payload',
+		)
+	}
+	return {
+		device: result.device,
+		node: result.node,
+		payload: result.payload,
+	}
+}
+
 describe('Binary Sensor discovery', () => {
 	const cc = CommandClasses['Binary Sensor']
 
 	it('maps the safety group (tamper) to a safety binary_sensor', () => {
-		const { device, payload } = discover(
+		const { device, payload } = discoverExpected(
 			buildValueId({
 				commandClass: cc,
 				property: 'Tamper',
@@ -68,7 +84,7 @@ describe('Binary Sensor discovery', () => {
 	})
 
 	it('maps water/contact to moisture', () => {
-		const { device, payload } = discover(
+		const { device, payload } = discoverExpected(
 			buildValueId({
 				commandClass: cc,
 				property: 'Water',
@@ -80,7 +96,7 @@ describe('Binary Sensor discovery', () => {
 	})
 
 	it('reverses payloads for the lock sensor type', () => {
-		const { payload } = discover(
+		const { payload } = discoverExpected(
 			buildValueId({
 				commandClass: cc,
 				property: 'lock',
@@ -93,7 +109,7 @@ describe('Binary Sensor discovery', () => {
 	})
 
 	it('falls back to a plain binary_sensor for unknown types', () => {
-		const { device, payload } = discover(
+		const { device, payload } = discoverExpected(
 			buildValueId({
 				commandClass: cc,
 				property: 'Motion',
@@ -110,7 +126,7 @@ describe('Alarm Sensor discovery', () => {
 
 	it('maps state to a problem binary_sensor with the alarm-type suffix', () => {
 		const propertyKey = 1 // AlarmSensorType.Smoke
-		const { device, payload } = discover(
+		const { device, payload } = discoverExpected(
 			buildValueId({
 				commandClass: cc,
 				property: 'state',
@@ -157,7 +173,7 @@ describe('Alarm Sensor discovery', () => {
 
 describe('Basic and Notification discovery', () => {
 	it('maps a 2-state Access Control notification to a reversed-off lock sensor', () => {
-		const { device, payload } = discover(
+		const { device, payload } = discoverExpected(
 			buildValueId({
 				commandClass: CommandClasses.Notification,
 				property: 'Access Control',
@@ -180,7 +196,7 @@ describe('Basic and Notification discovery', () => {
 			state(1, 'detected'),
 			state(2, 'unknown'),
 		]
-		const { device, payload } = discover(
+		const { device, payload } = discoverExpected(
 			buildValueId({
 				commandClass: CommandClasses.Notification,
 				property: 'Home Security',
@@ -216,7 +232,7 @@ describe('Multilevel Sensor discovery', () => {
 	const cc = CommandClasses['Multilevel Sensor']
 
 	it('maps an air-temperature sensor with unit and device class', () => {
-		const { device, payload } = discover(
+		const { device, payload } = discoverExpected(
 			buildValueId({
 				commandClass: cc,
 				property: 'Air temperature',
@@ -236,7 +252,7 @@ describe('Multilevel Sensor discovery', () => {
 	})
 
 	it('abbreviates verbose time units (seconds -> s)', () => {
-		const { payload } = discover(
+		const { payload } = discoverExpected(
 			buildValueId({
 				commandClass: cc,
 				property: 'foo',
@@ -268,7 +284,7 @@ describe('Multilevel Sensor discovery', () => {
 				commandClass: cc,
 				property: 'reset',
 				propertyName: 'reset',
-				ccSpecific: null,
+				ccSpecific: undefined,
 			}),
 		)
 		expect(device).toBeUndefined()
@@ -277,7 +293,7 @@ describe('Multilevel Sensor discovery', () => {
 
 describe('Meter and Pulse Meter discovery', () => {
 	it('maps an electric kWh meter with the property-suffixed object id', () => {
-		const { device, payload } = discover(
+		const { device, payload } = discoverExpected(
 			buildValueId({
 				commandClass: CommandClasses.Meter,
 				property: 'value',
@@ -299,14 +315,14 @@ describe('Meter and Pulse Meter discovery', () => {
 				commandClass: CommandClasses.Meter,
 				property: 'reset',
 				propertyName: 'reset',
-				ccSpecific: null,
+				ccSpecific: undefined,
 			}),
 		)
 		expect(device).toBeUndefined()
 	})
 
 	it('maps a Pulse Meter to a pulse_meter sensor', () => {
-		const { device } = discover(
+		const { device } = discoverExpected(
 			buildValueId({
 				commandClass: CommandClasses['Pulse Meter'],
 				property: 'value',
@@ -320,7 +336,7 @@ describe('Meter and Pulse Meter discovery', () => {
 
 describe('Time discovery', () => {
 	it('maps the current time to a timestamp date sensor', () => {
-		const { device, payload } = discover(
+		const { device, payload } = discoverExpected(
 			buildValueId({
 				commandClass: CommandClasses.Time,
 				property: 'currentTime',
@@ -362,7 +378,7 @@ describe('Energy Production discovery', () => {
 
 describe('Battery discovery', () => {
 	it('maps level to a battery percentage sensor', () => {
-		const { device, payload } = discover(
+		const { device, payload } = discoverExpected(
 			buildValueId({
 				commandClass: CommandClasses.Battery,
 				property: 'level',
@@ -376,7 +392,7 @@ describe('Battery discovery', () => {
 	})
 
 	it('maps isLow to a battery binary_sensor', () => {
-		const { device, payload } = discover(
+		const { device, payload } = discoverExpected(
 			buildValueId({
 				commandClass: CommandClasses.Battery,
 				property: 'isLow',

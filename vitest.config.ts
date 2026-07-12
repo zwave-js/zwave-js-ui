@@ -40,10 +40,8 @@ export default defineConfig({
 		},
 		coverage: {
 			provider: 'v8',
-			// Report every file matched by `include`, not just those imported by
-			// a test, so untested files count against coverage (matches the old
-			// `c8 --all` behaviour and keeps the Coveralls report honest).
-			all: true,
+			// With Vitest 4's v8 provider, explicit `coverage.include` also adds
+			// matching files that tests never import, so they count as uncovered.
 			reporter: ['text', 'lcov'],
 			reportsDirectory: './coverage',
 			include: ['api/**/*.{js,ts}', 'src/**/*.{js,ts}'],

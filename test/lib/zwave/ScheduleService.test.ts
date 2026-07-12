@@ -4,6 +4,8 @@ import { SupervisionStatus } from '@zwave-js/core'
 import {
 	ScheduleEntryLockScheduleKind,
 	ScheduleEntryLockWeekday,
+	ScheduleEntryLockCC,
+	UserCodeCC,
 	UserIDStatus,
 } from 'zwave-js'
 import type {
@@ -82,7 +84,7 @@ function createUtilsPort(): ScheduleUtilsPort {
 	}
 }
 
-async function stubCCStatics(
+function stubCCStatics(
 	overrides: Partial<{
 		supportedUsers: number | undefined
 		numWeekDaySlots: number
@@ -91,7 +93,10 @@ async function stubCCStatics(
 		userIdStatuses: Record<number, number | undefined>
 		scheduleEnabled: Record<number, boolean>
 		scheduleKind: Record<number, number | undefined>
-		cachedSchedules: Record<string, unknown>
+		cachedSchedules: Record<
+			string,
+			ReturnType<typeof ScheduleEntryLockCC.getScheduleCached>
+		>
 	}> = {},
 ) {
 	const supportedUsers =
@@ -105,8 +110,6 @@ async function stubCCStatics(
 		scheduleKind = {},
 		cachedSchedules = {},
 	} = overrides
-
-	const { UserCodeCC, ScheduleEntryLockCC } = await import('zwave-js')
 
 	vi.spyOn(UserCodeCC, 'getSupportedUsersCached').mockReturnValue(
 		supportedUsers,
@@ -202,7 +205,7 @@ describe('ScheduleService', () => {
 				createUtilsPort(),
 			)
 
-			await stubCCStatics({ supportedUsers: 0 })
+			stubCCStatics({ supportedUsers: 0 })
 
 			const p1 = svc.getSchedules(2)
 
@@ -225,7 +228,7 @@ describe('ScheduleService', () => {
 				nodeStore,
 				createUtilsPort(),
 			)
-			await stubCCStatics({ supportedUsers: 0 })
+			stubCCStatics({ supportedUsers: 0 })
 
 			const result = await svc.getSchedules(2)
 			expect(result).toBeUndefined()
@@ -241,7 +244,7 @@ describe('ScheduleService', () => {
 				createUtilsPort(),
 			)
 
-			await stubCCStatics({
+			stubCCStatics({
 				supportedUsers: 1,
 				numWeekDaySlots: 1,
 				numYearDaySlots: 1,
@@ -277,7 +280,7 @@ describe('ScheduleService', () => {
 			const getDriverImpl = driverPort.getDriver.bind(driverPort)
 			driverPort.getDriver = () => null
 
-			await stubCCStatics({ supportedUsers: 0 })
+			stubCCStatics({ supportedUsers: 0 })
 
 			await expect(svc.getSchedules(2)).rejects.toThrow()
 
@@ -574,7 +577,7 @@ describe('ScheduleService', () => {
 				createUtilsPort(),
 			)
 
-			await stubCCStatics({
+			stubCCStatics({
 				supportedUsers: 1,
 				numWeekDaySlots: 1,
 				numYearDaySlots: 0,
@@ -629,7 +632,7 @@ describe('ScheduleService', () => {
 				createUtilsPort(),
 			)
 
-			await stubCCStatics({
+			stubCCStatics({
 				supportedUsers: 1,
 				numWeekDaySlots: 1,
 				numYearDaySlots: 0,
@@ -683,7 +686,7 @@ describe('ScheduleService', () => {
 				createUtilsPort(),
 			)
 
-			await stubCCStatics({
+			stubCCStatics({
 				supportedUsers: 1,
 				numWeekDaySlots: 1,
 				numYearDaySlots: 0,
@@ -795,7 +798,7 @@ describe('ScheduleService', () => {
 				createUtilsPort(),
 			)
 
-			await stubCCStatics({
+			stubCCStatics({
 				supportedUsers: 1,
 				numWeekDaySlots: 2,
 				numYearDaySlots: 0,
@@ -819,7 +822,7 @@ describe('ScheduleService', () => {
 			})
 			expect(result).toBeUndefined()
 
-			await stubCCStatics({ supportedUsers: 0 })
+			stubCCStatics({ supportedUsers: 0 })
 			const result2 = await svc.getSchedules(2, { fromCache: true })
 			expect(result2).toBeDefined()
 		})
@@ -836,7 +839,7 @@ describe('ScheduleService', () => {
 				createUtilsPort(),
 			)
 
-			await stubCCStatics({
+			stubCCStatics({
 				supportedUsers: undefined,
 				numWeekDaySlots: 3,
 				numYearDaySlots: 2,
@@ -877,7 +880,7 @@ describe('ScheduleService', () => {
 				createUtilsPort(),
 			)
 
-			await stubCCStatics({
+			stubCCStatics({
 				supportedUsers: 1,
 				numWeekDaySlots: 1,
 				numYearDaySlots: 1,

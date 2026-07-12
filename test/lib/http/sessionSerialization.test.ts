@@ -33,7 +33,9 @@ function findSessionForUsername(
 	username: string,
 ): SessionFile {
 	const match = sessions.find((s) => s.user?.username === username)
-	expect(match).toBeDefined()
+	if (!match) {
+		throw new Error(`Expected a session for ${username}`)
+	}
 	return match
 }
 
@@ -79,6 +81,9 @@ describe('session store serialization', () => {
 		// PUT /api/password assigns the full User record, including the freshly-hashed password, to req.session.user
 		const sessions = await readAllSessionFiles()
 		const match = findSessionForUsername(sessions, 'session-pw-user')
+		if (!match.user) {
+			throw new Error('Expected the persisted session to contain a user')
+		}
 
 		expect(match.user).toHaveProperty('passwordHash')
 		expect(typeof match.user.passwordHash).toBe('string')

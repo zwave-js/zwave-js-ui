@@ -50,7 +50,16 @@ export function createVirtualValue(
 	}
 }
 
-export function createZWaveNode(overrides: Partial<ZWaveNode> = {}): ZWaveNode {
+export interface ZWaveNodeFixtureSettings {
+	value?: unknown
+	metadata?: ValueMetadata
+	scheduleEntryLockSupported?: boolean
+}
+
+export function createZWaveNode(
+	overrides: Partial<ZWaveNode> = {},
+	settings: ZWaveNodeFixtureSettings = {},
+): ZWaveNode {
 	const node = Object.assign(new EventEmitter(), {
 		id: 2,
 		name: '',
@@ -95,7 +104,11 @@ export function createZWaveNode(overrides: Partial<ZWaveNode> = {}): ZWaveNode {
 			manufacturer: 'Manufacturer',
 		},
 		commandClasses: {
-			'Schedule Entry Lock': { isSupported: vi.fn(() => false) },
+			'Schedule Entry Lock': {
+				isSupported: vi.fn(
+					() => settings.scheduleEntryLockSupported ?? false,
+				),
+			},
 		},
 		getEndpointCount: vi.fn(() => 2),
 		getAllEndpoints: vi.fn(() => [
@@ -117,13 +130,14 @@ export function createZWaveNode(overrides: Partial<ZWaveNode> = {}): ZWaveNode {
 		hasDeviceConfigChanged: vi.fn(() => true),
 		getDefinedValueIDs: vi.fn(() => []),
 		getValueMetadata: vi.fn(
-			(): ValueMetadata => ({
-				type: 'number',
-				readable: true,
-				writeable: true,
-			}),
+			(): ValueMetadata =>
+				settings.metadata ?? {
+					type: 'number',
+					readable: true,
+					writeable: true,
+				},
 		),
-		getValue: vi.fn(() => 1),
+		getValue: vi.fn(() => settings.value ?? 1),
 		getEndpoint: vi.fn(() => ({ getCCVersion: vi.fn(() => 4) })),
 		getCCVersion: vi.fn(() => 3),
 		supportsCC: vi.fn(() => false),
