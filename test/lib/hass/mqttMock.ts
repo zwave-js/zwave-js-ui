@@ -57,11 +57,8 @@ export interface FakeBroker extends EventEmitter {
 	/** Queued deferred subscribe callbacks awaiting `flushSubscribes`. */
 	pendingSubscribes: Array<{
 		topic: string
-		options: Record<string, any> | undefined
-		cb?: (
-			err: Error | null,
-			granted: { topic: string; qos: number }[],
-		) => void
+		options: IClientSubscribeOptions | undefined
+		cb: Parameters<FakeBroker['subscribe']>[2]
 	}>
 	publish(
 		topic: string,
@@ -112,6 +109,14 @@ export interface FakeBroker extends EventEmitter {
 	triggerOffline(): void
 	/** Fire `'reconnect'` (real client between an offline and a re-connect). */
 	triggerReconnect(): void
+}
+
+type ErrorCallback = (err?: Error) => void
+
+function isErrorCallback(
+	value: Parameters<FakeBroker['publish']>[2],
+): value is ErrorCallback {
+	return typeof value === 'function'
 }
 
 /**
@@ -174,7 +179,7 @@ export function createFakeBroker(): FakeBroker {
 		// `'connect'`; only inbound `deliver()` is connection/subscription gated.
 		let opts: IClientPublishOptions | undefined
 		let callback: ((err?: Error) => void) | undefined
-		if (typeof options === 'function') {
+		if (isErrorCallback(options)) {
 			callback = options
 		} else {
 			opts = options
@@ -209,9 +214,7 @@ export function createFakeBroker(): FakeBroker {
 			if (err) {
 				p.cb?.(err, [])
 			} else {
-				p.cb?.(null, [
-					{ topic: p.topic, qos: (p.options?.qos as number) ?? 0 },
-				])
+				p.cb?.(null, [{ topic: p.topic, qos: p.options?.qos ?? 0 }])
 			}
 		}
 	}
@@ -226,7 +229,7 @@ export function createFakeBroker(): FakeBroker {
 		broker.subscribed = broker.subscribed.filter(
 			(s) => !topics.includes(s.topic),
 		)
-		const callback = typeof options === 'function' ? options : cb
+		const callback = isErrorCallback(options) ? options : cb
 		callback?.()
 		return broker
 	}

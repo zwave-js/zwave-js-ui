@@ -16,7 +16,13 @@ import {
 	cleanupGatewayHarnessEnv,
 	createGatewayHarness,
 } from './gatewayHarness.ts'
-import { addValue, buildNode, buildValueId, valueMapKey } from './fixtures.ts'
+import {
+	addValue,
+	buildNode,
+	buildValueId,
+	requireDefined,
+	valueMapKey,
+} from './fixtures.ts'
 import { ensureTestEnv } from './env.ts'
 import { mqttMockFactory } from './mqttMock.ts'
 
@@ -100,12 +106,25 @@ describe('Gateway Home Assistant behavior', () => {
 		second.gw.rediscoverNode(sibling.id)
 
 		expect(
-			Object.values(thermostat.hassDevices).map(({ type }) => type),
+			Object.values(
+				requireDefined(
+					thermostat.hassDevices,
+					'expected thermostat discoveries',
+				),
+			).map(({ type }) => type),
 		).toEqual(expect.arrayContaining(['sensor', 'climate']))
 		expect(
-			Object.values(sibling.hassDevices).map(({ type }) => type),
+			Object.values(
+				requireDefined(
+					sibling.hassDevices,
+					'expected sibling discoveries',
+				),
+			).map(({ type }) => type),
 		).toEqual(['sensor'])
-		expect(sibling.hassDevices.sensor_configured).toMatchObject({
+		expect(
+			requireDefined(sibling.hassDevices, 'expected sibling discoveries')
+				.sensor_configured,
+		).toMatchObject({
 			object_id: 'configured',
 		})
 	})
@@ -133,11 +152,13 @@ describe('Gateway Home Assistant behavior', () => {
 		harness.zwave.nodes.set(node.id, node)
 		harness.gw.discoverValue(node, cachedKey)
 		expect(
-			Object.values(node.hassDevices).some(
-				({ type }) => type === 'cover',
-			),
+			Object.values(
+				requireDefined(node.hassDevices, 'expected cover discoveries'),
+			).some(({ type }) => type === 'cover'),
 		).toBe(true)
-		delete node.values[valueMapKey(target)]
+		delete requireDefined(node.values, 'expected node values')[
+			valueMapKey(target)
+		]
 
 		expect(
 			harness.gw.parsePayload(BarrierState.Stopped, target, undefined),

@@ -31,7 +31,11 @@ import type {
 	InclusionUserCallbacks,
 } from '#api/lib/zwave/ports.ts'
 import { ZwaveClientStatus } from '#api/lib/zwave/ports.ts'
-import { createDeferred, type Deferred } from './serviceTestSupport.ts'
+import {
+	createDeferred,
+	requireDefined,
+	type Deferred,
+} from './serviceTestSupport.ts'
 
 type StartBehavior = 'resolve' | 'reject' | 'hang' | 'deferred'
 type DestroyBehavior = 'resolve' | 'reject' | 'deferred'
@@ -192,10 +196,10 @@ function makeDeps(world: World): DriverLifecycleDeps {
 	}
 }
 
-// The base types `cfg.options` as the full ZWaveOptions, but production only ever
-// Object.assigns partial user overrides, so adapt partial fixtures in one place
-function zwaveOpts(partial: Partial<ZWaveOptions>): ZWaveOptions {
-	return partial as ZWaveOptions
+// The production config currently exposes a full ZWaveOptions while accepting
+// partial user overrides. Keep fixtures partial until that port is narrowed.
+function zwaveOpts(partial: PartialZWaveOptions): ZWaveOptions {
+	return partial
 }
 
 interface HarnessState {
@@ -1590,8 +1594,10 @@ describe('DriverLifecycle — driver options', () => {
 		})
 		await lifecycle.connect()
 
-		const driverStorage = world.drivers[0].options.storage
-		expect(driverStorage).toBeDefined()
+		const driverStorage = requireDefined(
+			world.drivers[0].options.storage,
+			'expected driver storage options',
+		)
 		driverStorage.cacheDir = '/external/cache'
 		driverStorage.throttle = 'fast'
 

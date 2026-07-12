@@ -7,10 +7,11 @@
  * shape-correct literal drives the real production switch without a real
  * `zwave-js` graph. Every builder returns a fresh object.
  */
-import { vi } from 'vitest'
+import { vi, type Mock } from 'vitest'
 import { EventEmitter } from 'node:events'
 import type { StoreHassDevicesResult } from '#api/hass/types.ts'
 import type { MqttConfig } from '#api/lib/MqttClient.ts'
+import type { GatewayZwave } from '#api/lib/Gateway.ts'
 import type {
 	HassDevice,
 	ZUINode,
@@ -102,6 +103,22 @@ export function state(
 	text: string,
 ): ZUIValueIdState {
 	return { value, text }
+}
+
+/** Returns a value after enforcing that a fixture dependency is present. */
+export function requireDefined<T>(value: T, message: string): NonNullable<T> {
+	if (value === undefined || value === null) {
+		throw new TypeError(message)
+	}
+	return value
+}
+
+/** Narrows a previously bound fixture value after enforcing its presence. */
+export function assertDefined<T>(
+	value: T,
+	message: string,
+): asserts value is NonNullable<T> {
+	requireDefined(value, message)
 }
 
 /**
@@ -200,7 +217,11 @@ export function buildNode(partial: Partial<ZUINode> = {}): ZUINode {
  */
 export function addValue(node: ZUINode, valueId: ZUIValueId): string {
 	const key = valueMapKey(valueId)
-	node.values[key] = valueId
+	const values = requireDefined(
+		node.values,
+		`Expected node ${node.id} to have a values map`,
+	)
+	values[key] = valueId
 	return key
 }
 
@@ -225,8 +246,9 @@ export type FakeGatewayZwave = EventEmitter & {
 	writeBroadcast: ReturnType<typeof vi.fn>
 	writeMulticast: ReturnType<typeof vi.fn>
 	callApi: ReturnType<typeof vi.fn>
+	driverFunction: ReturnType<typeof vi.fn>
 	/** Real `Gateway.close()` awaits `zwave.close()` before closing MQTT. */
-	close: ReturnType<typeof vi.fn>
+	close: Mock<GatewayZwave['close']>
 }
 
 export function createFakeGatewayZwave(
@@ -253,9 +275,10 @@ export function createFakeGatewayZwave(
 		callApi: vi.fn(() =>
 			Promise.resolve({ success: true, message: 'ok', result: [] }),
 		),
-		close: vi.fn(() => Promise.resolve(undefined)),
+		driverFunction: vi.fn(() => Promise.resolve(undefined)),
+		close: vi.fn<GatewayZwave['close']>(() => Promise.resolve(undefined)),
 		...overrides,
-	}) as FakeGatewayZwave
+	})
 }
 
 /** Deep-clones a captured discovery payload for stable snapshot assertions. */

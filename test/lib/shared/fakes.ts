@@ -50,7 +50,7 @@ export interface FakeZwaveClient extends ZwaveClientPort {
 }
 
 export function createFakeZwaveClient(
-	overrides: Partial<ZwaveClientPort> = {},
+	overrides: Partial<FakeZwaveClient> = {},
 ): FakeZwaveClient {
 	return {
 		devices: { 2: { name: 'Fake device' } },
@@ -115,7 +115,7 @@ export interface FakeMqttClient extends MqttClientPort {
 }
 
 export function createFakeMqttClient(
-	overrides: Partial<MqttClientPort> = {},
+	overrides: Partial<FakeMqttClient> = {},
 ): FakeMqttClient {
 	return {
 		getStatus: vi.fn(() => ({
@@ -141,8 +141,22 @@ export interface FakeGateway extends GatewayPort {
 	adoptDiscoveryManager: Mock
 }
 
+export type FakeGatewayWithClients = FakeGateway & {
+	zwave: FakeZwaveClient
+	mqtt: FakeMqttClient
+}
+
 export function createFakeGateway(
-	overrides: Partial<GatewayPort> = {},
+	overrides: Partial<FakeGateway> & { zwave: undefined },
+): FakeGateway
+export function createFakeGateway(
+	overrides?: Partial<Omit<FakeGateway, 'zwave' | 'mqtt'>> & {
+		zwave?: FakeZwaveClient
+		mqtt?: FakeMqttClient
+	},
+): FakeGatewayWithClients
+export function createFakeGateway(
+	overrides: Partial<FakeGateway> = {},
 ): FakeGateway {
 	return {
 		zwave: createFakeZwaveClient(),

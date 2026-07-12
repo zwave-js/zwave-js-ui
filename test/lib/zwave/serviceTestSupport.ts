@@ -23,11 +23,32 @@ export interface Deferred<T> {
 }
 
 export function createDeferred<T = void>(): Deferred<T> {
-	let resolve!: Deferred<T>['resolve']
-	let reject!: Deferred<T>['reject']
+	let resolvePromise: Deferred<T>['resolve'] | undefined
+	let rejectPromise: Deferred<T>['reject'] | undefined
 	const promise = new Promise<T>((res, rej) => {
-		resolve = res
-		reject = rej
+		resolvePromise = res
+		rejectPromise = rej
 	})
-	return { promise, resolve, reject }
+	return {
+		promise,
+		resolve: (value) => {
+			if (!resolvePromise) {
+				throw new Error('Deferred promise resolver was not initialized')
+			}
+			resolvePromise(value)
+		},
+		reject: (reason) => {
+			if (!rejectPromise) {
+				throw new Error('Deferred promise rejecter was not initialized')
+			}
+			rejectPromise(reason)
+		},
+	}
+}
+
+export function requireDefined<T>(value: T, message: string): NonNullable<T> {
+	if (value === undefined || value === null) {
+		throw new TypeError(message)
+	}
+	return value
 }
