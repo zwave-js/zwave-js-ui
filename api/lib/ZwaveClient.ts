@@ -1150,6 +1150,33 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				return this.storeNodes[nodeId]
 			},
 			updateStoreNodes: () => this.updateStoreNodes(),
+			persistStagedNodeUpdates: async (
+				staged: ReadonlyArray<{
+					nodeId: number
+					availableFirmwareUpdates: FirmwareUpdateInfo[]
+					lastFirmwareUpdateCheck: number
+					firmwareUpdatesDismissed: { [version: string]: boolean }
+				}>,
+			) => {
+				// Apply staged data to storeNodes (persisted state) without
+				// touching live ZUINodes or emitting socket events.
+				for (const entry of staged) {
+					if (!this.storeNodes[entry.nodeId]) {
+						this.storeNodes[entry.nodeId] = {}
+					}
+					const sn = this.storeNodes[entry.nodeId]
+					sn.availableFirmwareUpdates =
+						entry.availableFirmwareUpdates
+					sn.lastFirmwareUpdateCheck = entry.lastFirmwareUpdateCheck
+					sn.firmwareUpdatesDismissed =
+						entry.firmwareUpdatesDismissed
+				}
+				// Persist to disk. NOTE: once the underlying filesystem write
+				// begins it cannot be cancelled. If a reset races with the
+				// write, the on-disk state may reflect the staged data but the
+				// shared in-memory node state will NOT be mutated.
+				await this.updateStoreNodes()
+			},
 			emitNodeUpdate: (
 				node: ZUINode,
 				changedProps: utils.DeepPartial<ZUINode>,

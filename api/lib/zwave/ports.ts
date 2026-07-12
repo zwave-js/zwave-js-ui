@@ -415,6 +415,18 @@ export interface FirmwareUpdateNodeState {
 	lastFirmwareUpdateCheck?: number
 }
 
+/**
+ * A staged firmware-node projection computed without mutating shared state.
+ * Persisted atomically via `persistStagedNodeUpdates`, then applied to
+ * shared in-memory state only after persistence succeeds and fence holds.
+ */
+export interface StagedFirmwareNodeUpdate {
+	nodeId: number
+	availableFirmwareUpdates: FirmwareUpdateInfo[]
+	lastFirmwareUpdateCheck: number
+	firmwareUpdatesDismissed: { [version: string]: boolean }
+}
+
 export interface FwFileRef {
 	name: string
 	data: Uint8Array<ArrayBuffer>
@@ -457,6 +469,20 @@ export interface FirmwareNodeStorePort {
 	getStoreNode(nodeId: number): Partial<FirmwareUpdateNodeState> | undefined
 	ensureStoreNode(nodeId: number): Partial<FirmwareUpdateNodeState>
 	updateStoreNodes(): Promise<void>
+	/**
+	 * Persist staged firmware-node projections without mutating shared
+	 * in-memory state. Writes the staged data to the store nodes and
+	 * persists to disk. The caller must fence AFTER this resolves, then
+	 * atomically apply to live node/emit.
+	 *
+	 * NOTE: Once the underlying filesystem write begins it cannot be
+	 * cancelled. If a reset races with the write, the on-disk state may
+	 * reflect the staged data but the shared in-memory state will NOT be
+	 * mutated (no post-reset publication).
+	 */
+	persistStagedNodeUpdates(
+		staged: ReadonlyArray<StagedFirmwareNodeUpdate>,
+	): Promise<void>
 	emitNodeUpdate(
 		node: FirmwareUpdateNodeState,
 		changedProps: DeepPartial<FirmwareUpdateNodeState>,
