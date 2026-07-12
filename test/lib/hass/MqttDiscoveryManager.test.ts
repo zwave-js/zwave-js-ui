@@ -14,12 +14,12 @@
  * The end-to-end delivery of a real `homeassistant/status` retained message is
  * covered by `mqttLifecycle.test.ts` through the Gateway harness.
  */
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach, beforeAll, vi } from 'vitest'
 import type { Mock } from 'vitest'
-import MqttDiscoveryManager, {
-	HASS_STATUS_TOPIC,
-	type HassStatusSource,
-	type MqttDiscoveryManagerOptions,
+import type { default as MqttDiscoveryManagerClass } from '#api/hass/MqttDiscoveryManager.ts'
+import type {
+	HassStatusSource,
+	MqttDiscoveryManagerOptions,
 } from '#api/hass/MqttDiscoveryManager.ts'
 import { CustomDeviceRegistry } from '#api/hass/CustomDeviceRegistry.ts'
 import type {
@@ -28,6 +28,27 @@ import type {
 	HassZwavePort,
 } from '#api/hass/ports.ts'
 import type { HassDevice } from '#api/hass/types.ts'
+import { ensureTestEnv } from './env.ts'
+
+// `api/hass/MqttDiscoveryManager.ts` statically imports `./DiscoveryGenerator.ts`,
+// whose chain transitively reaches `sessionSecret` in `../config/app.ts` -
+// whose module-evaluation-time `resolveSessionSecret()` call falls back to
+// the REAL repository `store/` directory whenever `STORE_DIR` isn't already
+// set. A top-of-file value import would be hoisted and evaluated before any
+// `beforeAll` could redirect `STORE_DIR`, so it must be a dynamic `import()`
+// performed after `ensureTestEnv()`. See `http/env.ts` for the full
+// rationale. `CustomDeviceRegistry` takes `storeDir` as a constructor option
+// instead of importing `config/app.ts`, so it is not part of this chain and
+// stays a static import.
+let MqttDiscoveryManager: typeof MqttDiscoveryManagerClass
+let HASS_STATUS_TOPIC: string
+
+beforeAll(async () => {
+	ensureTestEnv()
+	;({ default: MqttDiscoveryManager, HASS_STATUS_TOPIC } = await import(
+		'#api/hass/MqttDiscoveryManager.ts'
+	))
+})
 
 // Methods declared as function-valued properties let tests reference
 // `logger.info` for assertions without the unbound-method rule firing
@@ -153,7 +174,7 @@ function device(overrides: Partial<HassDevice> = {}): HassDevice {
 }
 
 interface Harness {
-	manager: MqttDiscoveryManager
+	manager: MqttDiscoveryManagerClass
 	source: CustomDeviceRegistry
 	logger: MockLogger
 	options: MqttDiscoveryManagerOptions

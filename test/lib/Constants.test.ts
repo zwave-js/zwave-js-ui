@@ -1,6 +1,31 @@
-import { describe, it, expect } from 'vitest'
+/**
+ * `api/lib/Constants.ts` statically imports `storeDir` from
+ * `../config/app.ts`, whose module-evaluation-time `resolveSessionSecret()`
+ * call falls back to the REAL repository `store/` directory and writes a
+ * `.session-secret` file there whenever `STORE_DIR` isn't already set. A
+ * top-level `import * as mod from '../../api/lib/Constants.ts'` is hoisted
+ * and evaluated before any of this file's own code (including a
+ * `beforeAll`) could isolate that env var, so it must be a dynamic
+ * `import()` performed AFTER `ensureTestEnv()` - see `http/env.ts` for the
+ * full rationale. None of the tests below actually exercise `storeDir`
+ * (they're pure classification-table lookups), but merely importing the
+ * module is enough to trigger the real repo write, so isolation is required
+ * regardless.
+ */
+import { describe, it, expect, beforeAll, afterAll } from 'vitest'
+import type * as ConstantsModule from '../../api/lib/Constants.ts'
+import { ensureTestEnv, cleanupTestEnv } from './http/env.ts'
 
-import * as mod from '../../api/lib/Constants.ts'
+let mod: typeof ConstantsModule
+
+beforeAll(async () => {
+	ensureTestEnv()
+	mod = await import('../../api/lib/Constants.ts')
+})
+
+afterAll(() => {
+	cleanupTestEnv()
+})
 
 describe('#Constants', () => {
 	describe('#productionType()', () => {
