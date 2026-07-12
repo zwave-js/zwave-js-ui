@@ -26,7 +26,7 @@ import {
 import { mqttMockFactory, latestBroker, resetMqttBrokers } from './mqttMock.ts'
 import { defaultMqttConfig } from './fixtures.ts'
 import { ensureTestEnv, cleanupTestEnv } from './env.ts'
-import MqttClient from '#api/lib/MqttClient.ts'
+import type MqttClient from '#api/lib/MqttClient.ts'
 
 vi.mock('mqtt', () => mqttMockFactory())
 
@@ -40,8 +40,19 @@ function statusSubscribes(): number {
 }
 
 describe('MqttClient scoped exact-topic subscription', () => {
-	beforeAll(() => {
+	let MqttClientClass: typeof MqttClient
+
+	beforeAll(async () => {
 		ensureTestEnv()
+		// Dynamic import, deliberately AFTER `ensureTestEnv()`: a static
+		// top-of-file `import` is hoisted and would evaluate - triggering
+		// `api/config/app.ts`'s module-eval-time `storeDir`/session-secret
+		// side effects against the REAL repo `store/` directory - before
+		// `ensureTestEnv()` could redirect `STORE_DIR` to a throwaway temp
+		// dir. See `http/env.ts` for the full rationale.
+		;({ default: MqttClientClass } = await import(
+			'../../../api/lib/MqttClient.ts'
+		))
 	})
 
 	afterAll(() => {
@@ -55,7 +66,7 @@ describe('MqttClient scoped exact-topic subscription', () => {
 	function makeClient(): MqttClient {
 		// `store: false` keeps `_init` synchronous and off the filesystem, so
 		// `this.client` (the fake broker) is available immediately.
-		return new MqttClient(defaultMqttConfig())
+		return new MqttClientClass(defaultMqttConfig())
 	}
 
 	it('subscribes the exact topic on connect (never prefixed) and delivers raw payloads', async () => {

@@ -1,6 +1,41 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { StorageHelper } from '../../api/lib/jsonStore.ts'
+/**
+ * `api/lib/jsonStore.ts` statically imports `storeDir`/`storeBackupsDir`
+ * from `../config/app.ts`, whose module-evaluation-time
+ * `resolveSessionSecret()` call falls back to the REAL repository `store/`
+ * directory and writes a `.session-secret` file there whenever `STORE_DIR`
+ * isn't already set. A top-level `import { StorageHelper } from
+ * '../../api/lib/jsonStore.ts'` is hoisted and evaluated before any of this
+ * file's own code (including a `beforeAll`) could isolate that env var, so
+ * it must be a dynamic `import()` performed AFTER `ensureTestEnv()` - see
+ * `http/env.ts` for the full rationale. Every test below constructs its own
+ * `StorageHelper` with injected `readFile`/`writeFile` fakes (no real disk
+ * I/O through `StorageHelper` itself), but merely importing the module is
+ * enough to trigger the real repo write, so isolation is required
+ * regardless.
+ */
+import {
+	describe,
+	it,
+	expect,
+	beforeEach,
+	beforeAll,
+	afterAll,
+	vi,
+} from 'vitest'
+import type { StorageHelper as StorageHelperClass } from '../../api/lib/jsonStore.ts'
 import type { StoreFile, StoreKeys } from '../../api/config/store.ts'
+import { ensureTestEnv, cleanupTestEnv } from './http/env.ts'
+
+let StorageHelper: typeof StorageHelperClass
+
+beforeAll(async () => {
+	ensureTestEnv()
+	;({ StorageHelper } = await import('../../api/lib/jsonStore.ts'))
+})
+
+afterAll(() => {
+	cleanupTestEnv()
+})
 
 describe('#jsonStore', () => {
 	describe('#getFile()', () => {
@@ -86,11 +121,14 @@ describe('#jsonStore', () => {
 		})
 
 		describe('#get()', () => {
-			const mod = new StorageHelper({
-				readFile: vi.fn().mockResolvedValue('bar') as any,
-			})
+			let mod: StorageHelperClass
 
-			beforeEach(async () => await mod.init(fakeStore))
+			beforeEach(async () => {
+				mod = new StorageHelper({
+					readFile: vi.fn().mockResolvedValue('bar') as any,
+				})
+				await mod.init(fakeStore)
+			})
 
 			it('known', () =>
 				expect(
