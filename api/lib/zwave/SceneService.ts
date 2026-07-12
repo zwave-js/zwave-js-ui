@@ -130,7 +130,7 @@ export class SceneService<V extends ZUISceneValueRef = ZUISceneValueRef> {
 		valueId: V,
 		value: unknown,
 		timeout: number,
-	): Promise<unknown> {
+	): Promise<ZUISceneRecord<V>[]> {
 		const scene = this._scenes.find((s) => s.sceneid === sceneid)
 		const node = this._nodes.getNode(valueId.nodeId)
 
@@ -164,7 +164,10 @@ export class SceneService<V extends ZUISceneValueRef = ZUISceneValueRef> {
 	/**
 	 * Remove a value from scene
 	 */
-	async removeSceneValue(sceneid: number, valueId: V): Promise<unknown> {
+	async removeSceneValue(
+		sceneid: number,
+		valueId: V,
+	): Promise<ZUISceneRecord<V>[]> {
 		const scene = this._scenes.find((s) => s.sceneid === sceneid)
 
 		if (!scene) {
