@@ -257,11 +257,11 @@ export class FirmwareUpdateService {
 				throw new Error('Driver is not ready')
 			}
 
-			// If it has `files` property, it's a FirmwareUpdateInfo
+			// If it has `files` property, it's a FirmwareUpdateInfo — pass
+			// it directly (the driver signature accepts both data and info).
 			if ('files' in file && Array.isArray(file.files)) {
-				return await drv.firmwareUpdateOTW(
-					file as unknown as Uint8Array<ArrayBuffer>,
-				)
+				const info: FirmwareUpdateInfoRef = file
+				return await drv.firmwareUpdateOTW(info)
 			}
 
 			const fwFile = file as FwFileRef
