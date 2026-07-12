@@ -81,6 +81,14 @@ export class InclusionCoordinator {
 	/** Commands timeout handle */
 	private _commandsTimeout: ReturnType<typeof setTimeout> | null = null
 
+	/**
+	 * Generation counter — incremented on every reset() so that an
+	 * in-flight operation suspended across an await boundary can detect
+	 * that a close/restart happened and bail out rather than touching a
+	 * stale or freshly-restarted driver.
+	 */
+	private _generation = 0
+
 	/** NVM event setter callback */
 	private _nvmEventSetter: ((event: string) => void) | undefined
 
@@ -143,6 +151,11 @@ export class InclusionCoordinator {
 		return this._hasUserCallbacks
 	}
 
+	/** Current generation (incremented on reset) — exposed for testing */
+	get generation(): number {
+		return this._generation
+	}
+
 	// ---------------------------------------------------------------
 	// Inclusion user callbacks (passed to zwave-js driver)
 	// ---------------------------------------------------------------
@@ -196,11 +209,22 @@ export class InclusionCoordinator {
 			throw new Error('Driver is not ready')
 		}
 
+		const gen = this._generation
+
 		if (this._backup.backupOnEvent) {
 			if (this._nvmEventSetter) {
 				this._nvmEventSetter('before_start_inclusion')
 			}
 			await this._backup.backupNvm()
+		}
+
+		// Re-resolve after await — a close/restart may have invalidated drv
+		if (this._generation !== gen) {
+			throw new Error('Driver was closed during inclusion setup')
+		}
+		const currentDrv = this._driver.getDriver()
+		if (!currentDrv || !this._driver.isDriverReady()) {
+			throw new Error('Driver is not ready')
 		}
 
 		try {
@@ -250,6 +274,14 @@ export class InclusionCoordinator {
 					const parsedQr = await this._qr.parseQRCodeString(
 						options.qrString,
 					)
+
+					// Re-resolve after QR parse await
+					if (this._generation !== gen) {
+						throw new Error(
+							'Driver was closed during inclusion setup',
+						)
+					}
+
 					if (!parsedQr) {
 						throw Error(`Invalid QR code string`)
 					}
@@ -280,7 +312,7 @@ export class InclusionCoordinator {
 
 			this._isReplacing = false
 
-			return drv.controller.beginInclusion(inclusionOptions)
+			return currentDrv.controller.beginInclusion(inclusionOptions)
 		} catch (error) {
 			this._tmpNode = undefined
 			throw error
@@ -296,11 +328,22 @@ export class InclusionCoordinator {
 			throw new Error('Driver is not ready')
 		}
 
+		const gen = this._generation
+
 		if (this._backup.backupOnEvent) {
 			if (this._nvmEventSetter) {
 				this._nvmEventSetter('before_start_exclusion')
 			}
 			await this._backup.backupNvm()
+		}
+
+		// Re-resolve after await — a close/restart may have invalidated drv
+		if (this._generation !== gen) {
+			throw new Error('Driver was closed during exclusion setup')
+		}
+		const currentDrv = this._driver.getDriver()
+		if (!currentDrv || !this._driver.isDriverReady()) {
+			throw new Error('Driver is not ready')
 		}
 
 		if (this._commandsTimeout) {
@@ -319,7 +362,7 @@ export class InclusionCoordinator {
 			(this._config.commandsTimeout || 0) * 1000 || 30000,
 		)
 
-		return drv.controller.beginExclusion(options)
+		return currentDrv.controller.beginExclusion(options)
 	}
 
 	/**
@@ -374,11 +417,22 @@ export class InclusionCoordinator {
 				throw new Error('Driver is not ready')
 			}
 
+			const gen = this._generation
+
 			if (this._backup.backupOnEvent) {
 				if (this._nvmEventSetter) {
 					this._nvmEventSetter('before_replace_failed_node')
 				}
 				await this._backup.backupNvm()
+			}
+
+			// Re-resolve after await — a close/restart may have invalidated drv
+			if (this._generation !== gen) {
+				throw new Error('Driver was closed during replace setup')
+			}
+			const currentDrv = this._driver.getDriver()
+			if (!currentDrv || !this._driver.isDriverReady()) {
+				throw new Error('Driver is not ready')
 			}
 
 			if (this._commandsTimeout) {
@@ -406,6 +460,13 @@ export class InclusionCoordinator {
 						options.qrString,
 					)
 
+					// Re-resolve after QR parse await
+					if (this._generation !== gen) {
+						throw new Error(
+							'Driver was closed during replace setup',
+						)
+					}
+
 					if (parsedQr) {
 						options.provisioning = parsedQr
 					} else {
@@ -422,7 +483,7 @@ export class InclusionCoordinator {
 						strategy,
 					}
 				}
-				return await drv.controller.replaceFailedNode(
+				return await currentDrv.controller.replaceFailedNode(
 					nodeId,
 					inclusionOptions,
 				)
@@ -430,7 +491,7 @@ export class InclusionCoordinator {
 				strategy === inclusionStrategyInsecure ||
 				strategy === inclusionStrategySecurity_S0
 			) {
-				return await drv.controller.replaceFailedNode(nodeId, {
+				return await currentDrv.controller.replaceFailedNode(nodeId, {
 					strategy,
 				})
 			} else {
@@ -660,6 +721,7 @@ export class InclusionCoordinator {
 	 * Reset all state (called during close/restart)
 	 */
 	reset(): void {
+		this._generation++
 		this.clearCommandsTimeout()
 		this._tmpNode = undefined
 		this._isReplacing = false
