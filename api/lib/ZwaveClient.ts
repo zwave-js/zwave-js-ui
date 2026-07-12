@@ -1158,22 +1158,35 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 					firmwareUpdatesDismissed: { [version: string]: boolean }
 				}>,
 			) => {
-				// Apply staged data to storeNodes (persisted state) without
-				// touching live ZUINodes or emitting socket events.
-				for (const entry of staged) {
-					if (!this.storeNodes[entry.nodeId]) {
-						this.storeNodes[entry.nodeId] = {}
-					}
-					const sn = this.storeNodes[entry.nodeId]
-					sn.availableFirmwareUpdates = entry.availableFirmwareUpdates
-					sn.lastFirmwareUpdateCheck = entry.lastFirmwareUpdateCheck
-					sn.firmwareUpdatesDismissed = entry.firmwareUpdatesDismissed
+				// Build a detached snapshot: shallow-clone storeNodes and apply
+				// staged data to the clone only. Shared `this.storeNodes` is NOT
+				// mutated — the caller fences after this resolves, then applies
+				// to shared in-memory state explicitly.
+				const snapshot: NodesStoreRecord = {}
+				for (const key of Object.keys(this.storeNodes)) {
+					snapshot[key] = this.storeNodes[key]
 				}
-				// Persist to disk. NOTE: once the underlying filesystem write
-				// begins it cannot be cancelled. If a reset races with the
-				// write, the on-disk state may reflect the staged data but the
-				// shared in-memory node state will NOT be mutated.
-				await this.updateStoreNodes()
+				for (const entry of staged) {
+					const existing = snapshot[entry.nodeId]
+					// Clone the individual node entry so the original reference
+					// in this.storeNodes is untouched by the property writes.
+					const cloned: Partial<ZUINode> = existing
+						? { ...existing }
+						: {}
+					cloned.availableFirmwareUpdates =
+						entry.availableFirmwareUpdates
+					cloned.lastFirmwareUpdateCheck =
+						entry.lastFirmwareUpdateCheck
+					cloned.firmwareUpdatesDismissed =
+						entry.firmwareUpdatesDismissed
+					snapshot[entry.nodeId] = cloned
+				}
+				// Persist the detached snapshot to disk. NOTE: once the
+				// underlying filesystem write begins it cannot be cancelled.
+				// If a reset races with the write, the on-disk state may
+				// reflect the staged data but the shared in-memory node state
+				// will NOT have been mutated.
+				await this._persistNodesSnapshot(snapshot)
 			},
 			emitNodeUpdate: (
 				node: ZUINode,
@@ -2445,29 +2458,44 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		}
 	}
 
+	/**
+	 * Low-level helper: persist an explicit `NodesStoreRecord` snapshot for the
+	 * current home-ID without reading from or mutating `this.storeNodes`.
+	 *
+	 * Callers that need to persist a detached snapshot (e.g. firmware staging)
+	 * use this directly so that shared in-memory state remains untouched until
+	 * the caller decides to apply.
+	 */
+	private async _persistNodesSnapshot(
+		snapshot: NodesStoreRecord,
+	): Promise<void> {
+		if (!this.homeHex) {
+			logger.warn('HomeHex not set, skipping storeDevices')
+			return
+		}
+
+		// Assumes the on-disk shape is already the current home-ID-keyed
+		// `NodesStoreRecordByHome` - true once `getStoreNodes` has run at
+		// least once (it migrates/persists legacy shapes into this one).
+		// Preserves the pre-existing (previously `any`-typed) assumption
+		// unchanged; no new validation is added.
+		const nodes = jsonStore.get(store.nodes) as NodesStoreRecordByHome
+
+		// remove empty objects keys
+		nodes[this.homeHex] = Object.keys(snapshot).reduce((acc, k) => {
+			if (Object.keys(snapshot[k]).length > 0) {
+				acc[k] = snapshot[k]
+			}
+			return acc
+		}, {} as NodesStoreRecord)
+
+		logger.debug('Updating store nodes.json')
+		await jsonStore.put(store.nodes, nodes)
+	}
+
 	async updateStoreNodes(throwError = true) {
 		try {
-			if (!this.homeHex) {
-				logger.warn('HomeHex not set, skipping storeDevices')
-				return
-			}
-
-			// Assumes store.nodes is keyed by home ID, which is true once getStoreNodes has migrated any legacy on-disk shape
-			const nodes = jsonStore.get(store.nodes) as NodesStoreRecordByHome
-
-			// remove empty objects keys
-			nodes[this.homeHex] = Object.keys(this.storeNodes).reduce(
-				(acc, k) => {
-					if (Object.keys(this.storeNodes[k]).length > 0) {
-						acc[k] = this.storeNodes[k]
-					}
-					return acc
-				},
-				{} as NodesStoreRecord,
-			)
-
-			logger.debug('Updating store nodes.json')
-			await jsonStore.put(store.nodes, nodes)
+			await this._persistNodesSnapshot(this.storeNodes)
 		} catch (error) {
 			logger.error(
 				`Error while updating store nodes: ${error.message}`,

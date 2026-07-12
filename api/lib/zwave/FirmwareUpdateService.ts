@@ -798,12 +798,19 @@ export class FirmwareUpdateService {
 
 	/**
 	 * Atomically apply a staged firmware projection to the shared in-memory
-	 * node state and emit the update. Called only after persistence succeeds
-	 * and fence holds.
+	 * node state (both ZUINode and storeNode) and emit the update. Called only
+	 * after persistence succeeds and fence holds.
 	 */
 	private _applyNodeFirmwareProjection(
 		projection: StagedFirmwareNodeUpdate,
 	): void {
+		// Update the persisted store node (shared in-memory storeNodes cache)
+		const storeNode = this._nodes.ensureStoreNode(projection.nodeId)
+		storeNode.availableFirmwareUpdates = projection.availableFirmwareUpdates
+		storeNode.lastFirmwareUpdateCheck = projection.lastFirmwareUpdateCheck
+		storeNode.firmwareUpdatesDismissed = projection.firmwareUpdatesDismissed
+
+		// Update the live ZUINode and emit
 		const node = this._nodes.getNode(projection.nodeId)
 		if (node) {
 			node.availableFirmwareUpdates = projection.availableFirmwareUpdates
