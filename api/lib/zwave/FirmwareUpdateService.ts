@@ -37,6 +37,18 @@ export class FirmwareUpdateService {
 	private _firmwareUpdateCheckTimeout: ReturnType<typeof setTimeout> | null =
 		null
 
+	/**
+	 * Monotonic token identifying the CURRENT scheduled-check chain. Bumped by
+	 * every {@link scheduledFirmwareUpdateCheck} entry so that repeated
+	 * `all nodes ready` events on the SAME generation (an NVM restore or a
+	 * controller firmware update re-emits it with no dispose/reset) cannot stack
+	 * parallel ~24h chains: the previous chain's armed timer is cleared and its
+	 * in-flight check bails on the token mismatch, leaving exactly one chain.
+	 * Distinct from {@link _generation} (only bumped on dispose/reset), which
+	 * cannot fence a same-generation repeat.
+	 */
+	private _scheduleChain = 0
+
 	private _nvmEventSetter: ((event: string) => void) | undefined
 
 	// Advance on reset so suspended work cannot publish into a new lifecycle
@@ -536,6 +548,15 @@ export class FirmwareUpdateService {
 			return
 		}
 
+		// Enforce a single armed/in-flight chain: cancel any timer a previous
+		// (same-generation) `all nodes ready` armed, and supersede its still
+		// in-flight check, BEFORE starting this one. A repeated `all nodes
+		// ready` (an NVM restore or a controller firmware update re-emits it
+		// with no dispose/reset) otherwise overwrote and leaked the earlier
+		// ~24h handle, stacking parallel daily chains. `_generation` cannot
+		// fence this because it is only bumped on dispose/reset.
+		this.clearScheduledCheck()
+		const chain = ++this._scheduleChain
 		const gen = this._generation
 
 		try {
@@ -546,8 +567,14 @@ export class FirmwareUpdateService {
 			)
 		}
 
-		// Skip rescheduling after reset to prevent duplicate loops
-		if (this._generation !== gen || this._disposed) {
+		// Generation + chain fence: if disposed, reset, or superseded by a
+		// fresh same-generation chain during the check, do NOT reschedule —
+		// the old chain must not produce a new timer.
+		if (
+			this._generation !== gen ||
+			this._scheduleChain !== chain ||
+			this._disposed
+		) {
 			return
 		}
 
