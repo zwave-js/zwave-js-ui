@@ -878,34 +878,120 @@ describe('DriverLifecycle — connect generation fencing', () => {
 })
 
 // ===========================================================================
-// connect() — overlapping-connect ownership (finding 1)
+// connect() — pre-ready reconnect coalescing (re-review finding 1)
 // ===========================================================================
+//
+// A second connect() that lands after driver.start() has resolved (CONNECTED)
+// but before `driver ready` — or while the first connect is still awaiting
+// start() — used to pass the ready-only guard, mint a new generation and
+// construct a REPLACEMENT driver, overwriting the host field and stranding the
+// first, still-live, non-ready driver (unreachable, never torn down, still
+// holding the serial port). connect() now coalesces onto the in-flight connect
+// while a driver is already owned, so no replacement is constructed and nothing
+// leaks. A genuine reconnect (config change / backoff / hard reset) goes through
+// close()/restart(), which nulls the host driver first, so it is never blocked.
 
-describe('DriverLifecycle — overlapping connect ownership', () => {
-	// Deterministically interleave two overlapping connect() calls: the first
-	// (stale) generation's driver.start() is held open via a per-instance
-	// deferred while a second connect() supersedes it and stores a replacement
-	// driver on the host. We then settle the stale start LAST and assert that
-	// only the stale generation's OWN driver is torn down — never the live
-	// replacement — with no leak.
-	async function openTwoOverlappingConnects() {
+describe('DriverLifecycle — pre-ready reconnect coalescing', () => {
+	it('a second connect after start() resolves but before driver ready does NOT construct or leak a replacement', async () => {
+		const { lifecycle, state } = createHarness({ serverEnabled: false })
+
+		// First connect reaches CONNECTED (start resolved) but the driver is NOT
+		// ready yet — driverReady only flips inside onDriverReady().
+		await lifecycle.connect()
+		expect(hoisted.drivers).toHaveLength(1)
+		const driver0 = hoisted.drivers[0]
+		expect(state.driver).toBe(driver0)
+		expect(state.status).toBe(ZwaveClientStatus.CONNECTED)
+		expect(state.driverReady).toBe(false)
+		const genAfterFirst = lifecycle.generation
+
+		// Second connect while driver0 is connecting-but-not-ready.
+		await lifecycle.connect()
+
+		// Coalesced: exactly ONE Driver ever constructed, the host still points
+		// at driver0, it is never destroyed, and the generation did not advance.
+		expect(hoisted.drivers).toHaveLength(1)
+		expect(state.driver).toBe(driver0)
+		expect(driver0.destroy).not.toHaveBeenCalled()
+		expect(lifecycle.generation).toBe(genAfterFirst)
+	})
+
+	it('coalesces a second connect while the first is still awaiting driver.start()', async () => {
+		const { lifecycle, state } = createHarness({ serverEnabled: false })
+		hoisted.startBehavior = 'deferred'
+
+		const first = lifecycle.connect()
+		await until(() => hoisted.startDeferreds.length === 1)
+		expect(hoisted.drivers).toHaveLength(1)
+		const driver0 = hoisted.drivers[0]
+		const gen = lifecycle.generation
+
+		// Second connect while driver0 is mid-start → coalesced: no new Driver
+		// and no second start() call.
+		await lifecycle.connect()
+		expect(hoisted.drivers).toHaveLength(1)
+		expect(hoisted.startDeferreds).toHaveLength(1)
+		expect(state.driver).toBe(driver0)
+		expect(lifecycle.generation).toBe(gen)
+
+		// Let the first connect finish cleanly — still just the one driver.
+		hoisted.startDeferreds[0].resolve()
+		await first
+		expect(state.status).toBe(ZwaveClientStatus.CONNECTED)
+		expect(driver0.destroy).not.toHaveBeenCalled()
+	})
+
+	it('a recovery reconnect after a start failure is NOT coalesced (host cleared) and builds exactly one fresh driver', async () => {
+		const { lifecycle, state } = createHarness({ serverEnabled: false })
+
+		// First connect fails inside start(): driver0 is constructed, then torn
+		// down, and the host field is cleared (a backoff restart is scheduled).
+		hoisted.startBehavior = 'reject'
+		await lifecycle.connect()
+		expect(hoisted.drivers).toHaveLength(1)
+		expect(hoisted.drivers[0].destroy).toHaveBeenCalledTimes(1)
+		expect(state.driver).toBeNull()
+
+		// The real backoff recovery is close()+init()+connect(): close() clears
+		// the pending restart timer and bumps the generation; init() re-opens the
+		// client. Mirror that, then reconnect.
+		await lifecycle.close(true)
+		state.closed = false
+
+		hoisted.startBehavior = 'resolve'
+		await lifecycle.connect()
+
+		// Not coalesced (host field was null): exactly one fresh driver adopted.
+		expect(hoisted.drivers).toHaveLength(2)
+		expect(state.driver).toBe(hoisted.drivers[1])
+		expect(state.status).toBe(ZwaveClientStatus.CONNECTED)
+	})
+
+	// A replacement can only legitimately appear via close()/restart() (which
+	// destroys the current driver and nulls the host field). These two tests
+	// preserve the prior-round ownership guarantee: a stale in-flight start that
+	// settles AFTER such a reconnect tears down only its own driver and never
+	// clobbers the live replacement.
+	async function openCloseReconnectWithStale() {
 		const harness = createHarness({ serverEnabled: false })
 		hoisted.startBehavior = 'deferred'
 
-		// First (soon-to-be-stale) connect: creates driver0, holds at start().
+		// Stale (soon-to-be-superseded) connect: driver0 on host, held at start.
 		const stalePromise = harness.lifecycle.connect()
 		await until(() => hoisted.startDeferreds.length === 1)
-		expect(hoisted.drivers).toHaveLength(1)
+		const driver0 = hoisted.drivers[0]
+		expect(harness.state.driver).toBe(driver0)
 
-		// Second connect supersedes the first (bumps the generation), creates
-		// driver1, stores it on the host and holds at its own start().
+		// close() bumps the generation, destroys driver0 and nulls the host field.
+		await harness.lifecycle.close(true)
+		expect(harness.state.driver).toBeNull()
+		harness.state.closed = false // init() re-opens before the reconnect
+
+		// Reconnect: host field is null → NOT coalesced → builds driver1.
+		hoisted.startBehavior = 'deferred'
 		const freshPromise = harness.lifecycle.connect()
 		await until(() => hoisted.startDeferreds.length === 2)
-		expect(hoisted.drivers).toHaveLength(2)
-
-		const [driver0, driver1] = hoisted.drivers
-
-		// Let the REPLACEMENT finish first so it becomes the live driver.
+		const driver1 = hoisted.drivers[1]
 		hoisted.startDeferreds[1].resolve()
 		await freshPromise
 		expect(harness.state.driver).toBe(driver1)
@@ -914,36 +1000,38 @@ describe('DriverLifecycle — overlapping connect ownership', () => {
 		return { ...harness, stalePromise, driver0, driver1 }
 	}
 
-	it('a stale start that RESOLVES after a replacement tears down only its own driver', async () => {
+	it('a stale start that RESOLVES after a close+reconnect tears down only its own driver', async () => {
 		const { state, stalePromise, driver0, driver1 } =
-			await openTwoOverlappingConnects()
+			await openCloseReconnectWithStale()
 
-		// The stale generation's start finally resolves — it must NOT clobber
-		// the live replacement.
 		hoisted.startDeferreds[0].resolve()
 		await stalePromise
 
-		expect(driver0.destroy).toHaveBeenCalledTimes(1) // stale torn down (no leak)
-		expect(driver1.destroy).not.toHaveBeenCalled() // replacement retained
-		expect(state.driver).toBe(driver1) // host still points at replacement
+		// driver0 was destroyed exactly once (by close(); the stale teardown is
+		// idempotent), the replacement was never destroyed, and the host still
+		// points at it.
+		expect(hoisted.destroyOrder.filter((d) => d === 'driver')).toHaveLength(
+			1,
+		)
+		expect(driver1.destroy).not.toHaveBeenCalled()
+		expect(state.driver).toBe(driver1)
 	})
 
-	it('a stale start that REJECTS after a replacement never destroys the replacement or backs off', async () => {
+	it('a stale start that REJECTS after a close+reconnect never destroys the replacement or backs off', async () => {
 		const { host, state, stalePromise, driver0, driver1 } =
-			await openTwoOverlappingConnects()
+			await openCloseReconnectWithStale()
 
-		// Regression: previously the catch destroyed host.getDriver() BEFORE the
-		// generation check, so a superseded rejected start destroyed the live
-		// replacement. It must now tear down only its own driver and then bail
-		// out on the generation mismatch (no error report, no backoff).
 		hoisted.startDeferreds[0].reject(new Error('late start failure'))
 		await stalePromise
 
-		expect(driver0.destroy).toHaveBeenCalledTimes(1) // stale torn down (no leak)
+		expect(hoisted.destroyOrder.filter((d) => d === 'driver')).toHaveLength(
+			1,
+		)
 		expect(driver1.destroy).not.toHaveBeenCalled() // replacement retained
-		expect(state.driver).toBe(driver1) // host still points at replacement
+		expect(state.driver).toBe(driver1)
 		expect(host.onDriverError).not.toHaveBeenCalled() // stale error swallowed
 		expect(host.restart).not.toHaveBeenCalled() // no stale backoff restart
+		void driver0
 	})
 })
 

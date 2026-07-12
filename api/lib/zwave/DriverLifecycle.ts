@@ -381,6 +381,25 @@ export class DriverLifecycle {
 			return
 		}
 
+		// Coalesce a reconnect onto an already in-flight connect. A previous
+		// connect() may have constructed a driver and stored it on the host, but
+		// that driver has NOT fired `driver ready` yet (its `start()` may have
+		// resolved so the outer connect() has already returned CONNECTED, or it
+		// may still be awaiting `start()`). Either way the ready-only guard above
+		// does not catch it. Proceeding here would mint a new generation,
+		// construct a REPLACEMENT driver and overwrite the host field — stranding
+		// the first, still-live, non-ready driver: unreachable, never torn down,
+		// and still holding the serial port. Coalescing keeps public connect
+		// timing unchanged on the common (no driver yet) path. Callers that
+		// genuinely need a fresh driver (config change, backoff retry, hard
+		// reset) go through close()/restart(), which destroys the current driver
+		// and nulls this field BEFORE reconnecting, so a legitimate restart is
+		// never blocked here.
+		if (this.host.getDriver()) {
+			logger.info(`Driver is already connecting to ${cfg.port}`)
+			return
+		}
+
 		// Commit to a new driver generation. Any obsolete driver's late async
 		// callbacks now detect the bump and abort.
 		const generation = ++this._generation
