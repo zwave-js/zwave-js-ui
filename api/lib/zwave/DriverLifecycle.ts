@@ -1,3 +1,5 @@
+
+
 import { Driver } from 'zwave-js'
 import type {
 	OTWFirmwareUpdateProgress,
@@ -55,7 +57,7 @@ export interface DriverLifecycleHost {
 	setDriver(driver: Driver | null): void
 	isDriverReady(): boolean | null | undefined
 	/** Raw `_driverReady` field without the driver/closed checks `isDriverReady` applies */
-	isDriverReadyRaw(): boolean
+	isDriverReadyRaw(): boolean | null | undefined
 	isClosed(): boolean
 	setClosed(closed: boolean): void
 	isDestroyed(): boolean
