@@ -853,8 +853,6 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		{ lastUpdate: number; fn: () => void; timeout: NodeJS.Timeout }
 	> = new Map()
 
-	private _inclusionState: InclusionState = undefined
-
 	public get driverReady() {
 		return this.driver && this._driverReady && !this.closed
 	}
@@ -1674,7 +1672,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			info: this.getInfo(),
 			error: this.error,
 			cntStatus: this.cntStatus,
-			inclusionState: this._inclusionState,
+			inclusionState: this._inclusionCoordinator.inclusionState,
 		}
 	}
 
@@ -3056,7 +3054,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		info.status = this.status
 		info.error = this.error
 		info.cntStatus = this._cntStatus
-		info.inclusionState = this._inclusionState
+		info.inclusionState = this._inclusionCoordinator.inclusionState
 		info.appVersion = utils.getVersion()
 		info.zwaveVersion = libVersion
 		info.serverVersion = serverVersion
@@ -4446,7 +4444,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		this.driverReady = true
 
-		this._inclusionState = this.driver.controller.inclusionState
+		this._inclusionCoordinator.syncFromDriver()
 
 		logger.info('Z-Wave driver is ready')
 
@@ -4727,7 +4725,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			this.sendToSocket(socketEvents.controller, {
 				status,
 				error: this._error,
-				inclusionState: this._inclusionState,
+				inclusionState: this._inclusionCoordinator.inclusionState,
 			})
 		}
 	}
@@ -4759,15 +4757,11 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	}
 
 	private _onInclusionStateChanged(state: InclusionState) {
-		if (state !== this._inclusionState) {
-			this._inclusionState = state
-
-			this.sendToSocket(socketEvents.controller, {
-				status: this._cntStatus,
-				error: this._error,
-				inclusionState: this._inclusionState,
-			})
-		}
+		this._inclusionCoordinator.onInclusionStateChanged(
+			state,
+			this._cntStatus,
+			this._error,
+		)
 	}
 
 	private _onInclusionFailed() {

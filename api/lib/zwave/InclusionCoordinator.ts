@@ -19,6 +19,7 @@ import type {
 	InclusionQRPort,
 	InclusionServerManagerPort,
 	InclusionSocketPort,
+	InclusionState,
 	PlannedProvisioningEntry,
 	QRProvisioningInformation,
 	ServiceLogger,
@@ -63,7 +64,7 @@ export class InclusionCoordinator {
 	private _dskResolve: ((dsk: string | false) => void) | null = null
 
 	/** Current inclusion state mirror */
-	private _inclusionState: unknown = undefined
+	private _inclusionState: InclusionState | undefined = undefined
 
 	/** Commands timeout handle */
 	private _commandsTimeout: ReturnType<typeof setTimeout> | null = null
@@ -116,7 +117,7 @@ export class InclusionCoordinator {
 		this._socketEvents = socketEvents
 	}
 
-	get inclusionState(): unknown {
+	get inclusionState(): InclusionState | undefined {
 		return this._inclusionState
 	}
 
@@ -638,7 +639,7 @@ export class InclusionCoordinator {
 	 * Handle inclusion state changed event from controller
 	 */
 	onInclusionStateChanged(
-		state: unknown,
+		state: InclusionState,
 		cntStatus: string,
 		error: string | undefined,
 	): void {
@@ -711,6 +712,7 @@ export class InclusionCoordinator {
 		this.clearCommandsTimeout()
 		this._tmpNode = undefined
 		this._isReplacing = false
+		this._inclusionState = undefined
 		this._pendingInclusionNodeIds.clear()
 		this._settlePendingPromises()
 	}

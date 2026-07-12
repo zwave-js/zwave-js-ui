@@ -2301,4 +2301,70 @@ describe('InclusionCoordinator', () => {
 			expect(coordinator.takeTmpNode()).toBeUndefined()
 		})
 	})
+
+	describe('inclusion state sole ownership', () => {
+		it('reset() clears inclusion state to undefined', () => {
+			const { coordinator, driver } = createCoordinator()
+			const drv = driver.getDriver()
+			drv.controller.inclusionState = 1 // Including
+
+			coordinator.syncFromDriver()
+			expect(coordinator.inclusionState).toBe(1)
+
+			coordinator.reset()
+			expect(coordinator.inclusionState).toBeUndefined()
+		})
+
+		it('syncFromDriver() reads from driver controller', () => {
+			const { coordinator, driver } = createCoordinator()
+			const drv = driver.getDriver()
+			drv.controller.inclusionState = 4 // SmartStart
+
+			coordinator.syncFromDriver()
+			expect(coordinator.inclusionState).toBe(4)
+		})
+
+		it('onInclusionStateChanged emits only when state differs', () => {
+			const { coordinator, socket, driver } = createCoordinator()
+			const drv = driver.getDriver()
+			drv.controller.inclusionState = 0 // Idle
+
+			coordinator.syncFromDriver()
+
+			// Same state → no emit
+			coordinator.onInclusionStateChanged(0, 'status', undefined)
+			expect(socket.sendToSocket).not.toHaveBeenCalled()
+
+			// Different state → emit
+			coordinator.onInclusionStateChanged(1, 'Including', undefined)
+			expect(socket.sendToSocket).toHaveBeenCalledWith('CONTROLLER', {
+				status: 'Including',
+				error: undefined,
+				inclusionState: 1,
+			})
+			expect(coordinator.inclusionState).toBe(1)
+
+			// Same again → no emit
+			socket.sendToSocket.mockClear()
+			coordinator.onInclusionStateChanged(1, 'Including', undefined)
+			expect(socket.sendToSocket).not.toHaveBeenCalled()
+		})
+
+		it('active state → reset → syncFromDriver reports new state', () => {
+			const { coordinator, driver } = createCoordinator()
+			const drv = driver.getDriver()
+			drv.controller.inclusionState = 3 // Busy
+
+			coordinator.syncFromDriver()
+			expect(coordinator.inclusionState).toBe(3)
+
+			coordinator.reset()
+			expect(coordinator.inclusionState).toBeUndefined()
+
+			// New driver state
+			drv.controller.inclusionState = 0
+			coordinator.syncFromDriver()
+			expect(coordinator.inclusionState).toBe(0)
+		})
+	})
 })

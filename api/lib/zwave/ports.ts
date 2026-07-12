@@ -16,6 +16,7 @@ import type {
 	InclusionOptions,
 	ReplaceNodeOptions,
 	InclusionUserCallbacks,
+	InclusionState,
 	JoinNetworkResult,
 	PlannedProvisioningEntry,
 	QRProvisioningInformation,
@@ -37,6 +38,7 @@ export type {
 	OTWFirmwareUpdateResult,
 	InclusionGrant,
 	InclusionOptions,
+	InclusionState,
 	ReplaceNodeOptions,
 	InclusionUserCallbacks,
 	JoinNetworkResult,
@@ -518,7 +520,7 @@ export interface FirmwareExtractionPort {
 export interface InclusionDriverPort {
 	getDriver(): {
 		controller: {
-			inclusionState: unknown
+			inclusionState: InclusionState | undefined
 			beginInclusion(options?: InclusionOptions): Promise<boolean>
 			stopInclusion(): Promise<boolean>
 			beginExclusion(options: unknown): Promise<boolean>
