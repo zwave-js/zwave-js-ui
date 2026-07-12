@@ -65,8 +65,47 @@ const hoisted = vi.hoisted(() => ({
 	ensureDirHook: null as null | (() => void),
 	/** When true, the fake `driver.destroy()` rejects. */
 	destroyRejects: false,
+	/**
+	 * How the fake `driver.destroy()` settles:
+	 *  - 'resolve'  (default): tears down cleanly.
+	 *  - 'reject'   : always rejects WITHOUT recording a teardown effect — the
+	 *                 instance stays intact and retryable (models a destroy that
+	 *                 fails while the driver may still hold the serial port).
+	 *  - 'deferred' : returns a promise the test settles via `destroyDeferreds`,
+	 *                 so a test can hold a teardown open and prove no replacement
+	 *                 Driver is constructed while the old owner is being torn
+	 *                 down (teardown ownership).
+	 */
+	destroyBehavior: 'resolve' as 'resolve' | 'reject' | 'deferred',
+	/**
+	 * When `destroyBehavior === 'deferred'`, each `driver.destroy()` call pushes
+	 * a controllable `{ resolve, reject }` here (in call order). `resolve()`
+	 * records the teardown effect once (like a clean idempotent destroy);
+	 * `reject()` leaves the instance intact/retryable.
+	 */
+	destroyDeferreds: [] as Array<{
+		resolve: () => void
+		reject: (err?: Error) => void
+	}>,
+	/**
+	 * Number of LEADING `driver.destroy()` calls that reject (without recording
+	 * a teardown effect) before one succeeds. Lets a test prove a rejected
+	 * destroy retains the exact owner and that a later retry actually tears it
+	 * down. Decremented on each rejecting call.
+	 */
+	destroyRejectCount: 0,
+	/** Total `driver.destroy()` invocations across all fake drivers. */
+	destroyInvocations: 0,
 	/** Every fake JSON log transport constructed (to drive its `data` stream). */
 	logTransports: [] as any[],
+	/**
+	 * When set, overrides `utils.buildLogConfig(...)` for the next `connect()`
+	 * so a test can exercise the driver-log-config enrichment branches that the
+	 * real (always-populated) config never reaches: a driver built with NO
+	 * `logConfig` at all, or one whose `level` is not a string. Returns whatever
+	 * value the function yields (may be `undefined`). Reset in `beforeEach`.
+	 */
+	buildLogConfigOverride: null as null | (() => any),
 }))
 
 // Faithful `zwave-js` Driver fake. Only `Driver` is replaced; every other
@@ -105,18 +144,55 @@ vi.mock('zwave-js', async () => {
 			}
 			return Promise.resolve()
 		})
-		destroy = vi.fn(() => {
-			// The real zwave-js `Driver.destroy()` is idempotent (guarded by an
-			// internal `_destroyPromise`); mirror that so a stale-connect teardown
-			// racing a `close()` records the destroy effect exactly once.
+		destroy = vi.fn((): Promise<void> => {
+			hoisted.destroyInvocations++
+
+			// Record the teardown EFFECT at most once per instance, mirroring
+			// the real zwave-js `Driver.destroy()` idempotency (`_destroyPromise`):
+			// destroying an already-destroyed driver resolves without re-running
+			// teardown, so a stale-connect teardown racing a `close()` records
+			// the effect exactly once.
+			const recordEffect = () => {
+				if (!this._destroyed) {
+					this._destroyed = true
+					hoisted.destroyOrder.push('driver')
+				}
+			}
+
+			if (hoisted.destroyBehavior === 'deferred') {
+				return new Promise<void>((resolve, reject) => {
+					hoisted.destroyDeferreds.push({
+						resolve: () => {
+							recordEffect()
+							resolve()
+						},
+						reject: (err?: Error) =>
+							reject(err ?? new Error('destroy rejected')),
+					})
+				})
+			}
+
+			// Already torn down → idempotent clean resolve.
 			if (this._destroyed) {
 				return Promise.resolve()
 			}
-			this._destroyed = true
-			hoisted.destroyOrder.push('driver')
-			if (hoisted.destroyRejects) {
+
+			// A rejecting destroy (legacy `destroyRejects`, an explicit
+			// 'reject' behavior, or a leading run of `destroyRejectCount`
+			// failures) does NOT mark the instance destroyed or record an
+			// effect: the exact owner must stay intact and RETRYABLE.
+			const rejectThis =
+				hoisted.destroyRejects ||
+				hoisted.destroyBehavior === 'reject' ||
+				hoisted.destroyRejectCount > 0
+			if (rejectThis) {
+				if (hoisted.destroyRejectCount > 0) {
+					hoisted.destroyRejectCount--
+				}
 				return Promise.reject(new Error('destroy failed'))
 			}
+
+			recordEffect()
 			return Promise.resolve()
 		})
 		enableStatistics = vi.fn()
@@ -180,6 +256,11 @@ vi.mock('../../../api/lib/utils.ts', async () => {
 			hoisted.ensureDirHook?.()
 			return Promise.resolve()
 		}),
+		buildLogConfig: vi.fn((...args: any[]) =>
+			hoisted.buildLogConfigOverride
+				? hoisted.buildLogConfigOverride()
+				: actual.buildLogConfig(...args),
+		),
 	}
 })
 
@@ -323,7 +404,12 @@ beforeEach(() => {
 	hoisted.startHook = null
 	hoisted.ensureDirHook = null
 	hoisted.destroyRejects = false
+	hoisted.destroyBehavior = 'resolve'
+	hoisted.destroyDeferreds.length = 0
+	hoisted.destroyRejectCount = 0
+	hoisted.destroyInvocations = 0
 	hoisted.logTransports.length = 0
+	hoisted.buildLogConfigOverride = null
 	delete process.env.ZWAVE_PORT
 })
 
@@ -414,59 +500,163 @@ describe('DriverLifecycle — statistics', () => {
 // ===========================================================================
 
 describe('DriverLifecycle — extra log transports', () => {
-	it('addExtraLogTransport applies immediately when the driver is ready (with level)', () => {
-		const { lifecycle, state } = createHarness()
-		const driver = { updateLogConfig: vi.fn() }
-		state.driver = driver
-		state.driverReadyRaw = true
-		const transport = { id: 't1' }
-		lifecycle.addExtraLogTransport(transport, 'debug')
+	// These live add/remove tests connect first so the required JSON-socket
+	// transport actually exists for the active generation — the whole point of
+	// the fix is that `updateLogConfig({transports})` REPLACES the driver's
+	// custom transport list, so every runtime apply must re-send the JSON
+	// transport plus ALL current extras (not just the one being added, and
+	// never an empty array), and recompute the level from the configured
+	// baseline. `state.driverReadyRaw` is flipped on to model a ready driver.
+	async function connectedReadyHarness(cfgOverrides: any = {}) {
+		const harness = createHarness({ serverEnabled: false, ...cfgOverrides })
+		await harness.lifecycle.connect()
+		const json = hoisted.logTransports[0]
+		const driver = harness.state.driver
+		harness.state.driverReadyRaw = true
+		driver.updateLogConfig.mockClear()
+		return { ...harness, json, driver }
+	}
+
+	it('addExtraLogTransport sends the COMPLETE transport list (JSON socket + extra) and raises the level', async () => {
+		const { lifecycle, json, driver } = await connectedReadyHarness()
+		const extra = { id: 't1' }
+		lifecycle.addExtraLogTransport(extra, 'debug')
+		// Required JSON socket transport retained FIRST, extra appended, level
+		// raised from the configured 'info' baseline to the extra's 'debug'.
+		expect(driver.updateLogConfig).toHaveBeenCalledTimes(1)
 		expect(driver.updateLogConfig).toHaveBeenCalledWith({
-			transports: [transport],
+			transports: [json, extra],
 			level: 'debug',
 		})
 	})
 
-	it('addExtraLogTransport without a level omits the level key', () => {
-		const { lifecycle, state } = createHarness()
-		const driver = { updateLogConfig: vi.fn() }
-		state.driver = driver
-		state.driverReadyRaw = true
-		const transport = { id: 't2' }
-		lifecycle.addExtraLogTransport(transport)
+	it('addExtraLogTransport without a level keeps the configured baseline level and still retains the JSON transport', async () => {
+		const { lifecycle, json, driver } = await connectedReadyHarness()
+		const extra = { id: 't2' }
+		lifecycle.addExtraLogTransport(extra)
+		// No requested level → the recomputed level is the configured baseline
+		// ('info'), and the JSON socket transport is still present.
 		expect(driver.updateLogConfig).toHaveBeenCalledWith({
-			transports: [transport],
+			transports: [json, extra],
+			level: 'info',
 		})
 	})
 
-	it('addExtraLogTransport does not touch the driver when not ready', () => {
-		const { lifecycle, state } = createHarness()
-		const driver = { updateLogConfig: vi.fn() }
-		state.driver = driver
-		state.driverReadyRaw = false
-		lifecycle.addExtraLogTransport({ id: 't3' })
-		expect(driver.updateLogConfig).not.toHaveBeenCalled()
+	it('multiple extras with different levels: full list retained and the MOST verbose level wins', async () => {
+		const { lifecycle, json, driver } = await connectedReadyHarness()
+		const a = { id: 'a' }
+		const b = { id: 'b' }
+		const c = { id: 'c' }
+		lifecycle.addExtraLogTransport(a, 'warn')
+		lifecycle.addExtraLogTransport(b, 'silly')
+		lifecycle.addExtraLogTransport(c, 'verbose')
+		// Last apply carries ALL three extras (plus JSON) and the most verbose
+		// level requested by any of them ('silly').
+		expect(driver.updateLogConfig).toHaveBeenLastCalledWith({
+			transports: [json, a, b, c],
+			level: 'silly',
+		})
 	})
 
-	it('removeExtraLogTransport removes a registered transport and clears on the driver', () => {
-		const { lifecycle, state } = createHarness()
-		const driver = { updateLogConfig: vi.fn() }
-		state.driver = driver
-		state.driverReadyRaw = true
-		const transport = { id: 't4' }
-		lifecycle.addExtraLogTransport(transport)
+	it('removeExtraLogTransport re-sends the remaining transports (never empties the list) and restores the baseline level', async () => {
+		const { lifecycle, json, driver } = await connectedReadyHarness()
+		const keep = { id: 'keep' }
+		const temp = { id: 'temp-debug' }
+		lifecycle.addExtraLogTransport(keep, 'info')
+		lifecycle.addExtraLogTransport(temp, 'debug')
 		driver.updateLogConfig.mockClear()
-		lifecycle.removeExtraLogTransport(transport)
-		expect(driver.updateLogConfig).toHaveBeenCalledWith({ transports: [] })
+
+		// Removing the verbose extra must keep the other extra AND the JSON
+		// transport, and drop the level back to the configured baseline.
+		lifecycle.removeExtraLogTransport(temp)
+		expect(driver.updateLogConfig).toHaveBeenCalledTimes(1)
+		expect(driver.updateLogConfig).toHaveBeenCalledWith({
+			transports: [json, keep],
+			level: 'info',
+		})
 	})
 
-	it('removeExtraLogTransport for an unknown transport still clears when ready', () => {
-		const { lifecycle, state } = createHarness()
-		const driver = { updateLogConfig: vi.fn() }
-		state.driver = driver
+	it('removing the LAST extra still re-sends the required JSON transport (not an empty array) at the baseline level', async () => {
+		const { lifecycle, json, driver } = await connectedReadyHarness()
+		const temp = { id: 'only' }
+		lifecycle.addExtraLogTransport(temp, 'debug')
+		driver.updateLogConfig.mockClear()
+		lifecycle.removeExtraLogTransport(temp)
+		// The whole point of the fix: the JSON socket transport survives even
+		// when the last extra is removed.
+		expect(driver.updateLogConfig).toHaveBeenCalledWith({
+			transports: [json],
+			level: 'info',
+		})
+	})
+
+	it('removal order does not matter: the level tracks the most verbose REMAINING extra', async () => {
+		const { lifecycle, json, driver } = await connectedReadyHarness()
+		const warnT = { id: 'warn' }
+		const debugT = { id: 'debug' }
+		lifecycle.addExtraLogTransport(warnT, 'warn')
+		lifecycle.addExtraLogTransport(debugT, 'debug')
+
+		// Remove the less verbose one first: 'debug' extra still forces 'debug'.
+		lifecycle.removeExtraLogTransport(warnT)
+		expect(driver.updateLogConfig).toHaveBeenLastCalledWith({
+			transports: [json, debugT],
+			level: 'debug',
+		})
+
+		// Now remove the verbose one: back to the baseline with only JSON.
+		lifecycle.removeExtraLogTransport(debugT)
+		expect(driver.updateLogConfig).toHaveBeenLastCalledWith({
+			transports: [json],
+			level: 'info',
+		})
+	})
+
+	it('a configured non-default level is the floor: adding a LESS verbose extra does not lower it', async () => {
+		const { lifecycle, json, driver } = await connectedReadyHarness({
+			logLevel: 'info',
+			options: { logConfig: { level: 'verbose' } } as any,
+		})
+		const extra = { id: 'quiet' }
+		lifecycle.addExtraLogTransport(extra, 'warn')
+		// Baseline 'verbose' is more verbose than the extra's 'warn' → retained.
+		expect(driver.updateLogConfig).toHaveBeenCalledWith({
+			transports: [json, extra],
+			level: 'verbose',
+		})
+	})
+
+	it('addExtraLogTransport does not touch the driver when it is not ready (registration still persists)', async () => {
+		const { lifecycle, state } = createHarness({ serverEnabled: false })
+		await lifecycle.connect()
+		const driver = state.driver
+		state.driverReadyRaw = false
+		driver.updateLogConfig.mockClear()
+		lifecycle.addExtraLogTransport({ id: 't3' }, 'debug')
+		expect(driver.updateLogConfig).not.toHaveBeenCalled()
+
+		// Registration persisted: it is applied the moment a subsequent
+		// (ready) apply runs — proven by a following remove of an unknown id.
 		state.driverReadyRaw = true
 		lifecycle.removeExtraLogTransport({ id: 'unknown' })
-		expect(driver.updateLogConfig).toHaveBeenCalledWith({ transports: [] })
+		expect(driver.updateLogConfig).toHaveBeenCalledWith({
+			transports: [
+				hoisted.logTransports[0],
+				expect.objectContaining({ id: 't3' }),
+			],
+			level: 'debug',
+		})
+	})
+
+	it('before connect there is no driver and add/remove are inert no-ops', () => {
+		const { lifecycle } = createHarness({ serverEnabled: false })
+		// No driver at all (never connected) → nothing to apply, no throw.
+		expect(() =>
+			lifecycle.addExtraLogTransport({ id: 'pre' }, 'debug'),
+		).not.toThrow()
+		expect(() =>
+			lifecycle.removeExtraLogTransport({ id: 'pre' }),
+		).not.toThrow()
 	})
 })
 
@@ -916,7 +1106,7 @@ describe('DriverLifecycle — pre-ready reconnect coalescing', () => {
 		expect(lifecycle.generation).toBe(genAfterFirst)
 	})
 
-	it('coalesces a second connect while the first is still awaiting driver.start()', async () => {
+	it('coalesces a second connect while the first is still awaiting driver.start(): it stays PENDING until the first settles, then settles together', async () => {
 		const { lifecycle, state } = createHarness({ serverEnabled: false })
 		hoisted.startBehavior = 'deferred'
 
@@ -927,18 +1117,95 @@ describe('DriverLifecycle — pre-ready reconnect coalescing', () => {
 		const gen = lifecycle.generation
 
 		// Second connect while driver0 is mid-start → coalesced: no new Driver
-		// and no second start() call.
-		await lifecycle.connect()
+		// and no second start() call…
+		let firstSettled = false
+		let secondSettled = false
+		void first.then(() => {
+			firstSettled = true
+		})
+		const second = lifecycle.connect()
+		void second.then(() => {
+			secondSettled = true
+		})
+
+		// …and, crucially, the second connect does NOT resolve early. It must
+		// remain pending exactly as long as the first does (the old bug returned
+		// success immediately here, before the driver was ever CONNECTED).
+		await until(() => hoisted.startDeferreds.length === 1)
 		expect(hoisted.drivers).toHaveLength(1)
 		expect(hoisted.startDeferreds).toHaveLength(1)
 		expect(state.driver).toBe(driver0)
 		expect(lifecycle.generation).toBe(gen)
+		expect(driver0.start).toHaveBeenCalledTimes(1)
+		expect(firstSettled).toBe(false)
+		expect(secondSettled).toBe(false)
 
-		// Let the first connect finish cleanly — still just the one driver.
+		// Settle the first startup; BOTH callers resolve together off the same
+		// startup promise, and still just the one driver was ever built.
 		hoisted.startDeferreds[0].resolve()
-		await first
+		await Promise.all([first, second])
+		expect(firstSettled).toBe(true)
+		expect(secondSettled).toBe(true)
 		expect(state.status).toBe(ZwaveClientStatus.CONNECTED)
+		expect(hoisted.drivers).toHaveLength(1)
 		expect(driver0.destroy).not.toHaveBeenCalled()
+	})
+
+	it('a coalesced duplicate connect shares the first connect FAILURE settlement (start rejects) and no second Driver is built', async () => {
+		const { lifecycle, state, host } = createHarness({
+			serverEnabled: false,
+		})
+		hoisted.startBehavior = 'deferred'
+
+		const first = lifecycle.connect()
+		await until(() => hoisted.startDeferreds.length === 1)
+		const driver0 = hoisted.drivers[0]
+
+		let firstSettled = false
+		let secondSettled = false
+		void first.then(() => {
+			firstSettled = true
+		})
+		const second = lifecycle.connect()
+		void second.then(() => {
+			secondSettled = true
+		})
+		await until(() => hoisted.startDeferreds.length === 1)
+		expect(firstSettled).toBe(false)
+		expect(secondSettled).toBe(false)
+
+		// The first startup FAILS. The facade contract is that connect() catches
+		// the failure (reports it + schedules a backoff) and RESOLVES rather than
+		// rejecting — so the coalesced caller resolves at the SAME time with the
+		// SAME (non-throwing) settlement. No second driver was ever constructed
+		// and the failure is reported exactly once.
+		hoisted.startDeferreds[0].reject(new Error('start failed'))
+		await expect(Promise.all([first, second])).resolves.toBeDefined()
+		expect(firstSettled).toBe(true)
+		expect(secondSettled).toBe(true)
+		expect(hoisted.drivers).toHaveLength(1)
+		expect(driver0.destroy).toHaveBeenCalledTimes(1)
+		expect(state.driver).toBeNull() // clean teardown cleared the owner
+		expect(host.onDriverError).toHaveBeenCalledTimes(1)
+	})
+
+	it('a duplicate connect AFTER the first start settled but BEFORE driver ready returns compatibly without a replacement', async () => {
+		const { lifecycle, state } = createHarness({ serverEnabled: false })
+
+		// First connect reaches CONNECTED (start resolved) but not ready yet, so
+		// `_activeConnect` is already cleared — the duplicate falls through to
+		// the compatible host-driver guard instead of coalescing.
+		await lifecycle.connect()
+		const driver0 = hoisted.drivers[0]
+		const gen = lifecycle.generation
+		expect(state.status).toBe(ZwaveClientStatus.CONNECTED)
+		expect(state.driverReady).toBe(false)
+
+		await lifecycle.connect()
+		expect(hoisted.drivers).toHaveLength(1)
+		expect(state.driver).toBe(driver0)
+		expect(driver0.destroy).not.toHaveBeenCalled()
+		expect(lifecycle.generation).toBe(gen)
 	})
 
 	it('a recovery reconnect after a start failure is NOT coalesced (host cleared) and builds exactly one fresh driver', async () => {
@@ -1036,6 +1303,145 @@ describe('DriverLifecycle — pre-ready reconnect coalescing', () => {
 })
 
 // ===========================================================================
+// connect() — failed-connect teardown ownership (HIGH)
+// ===========================================================================
+//
+// A failed connect must AWAIT the destruction of the exact instance it created
+// BEFORE it clears the host field or lets a backoff/retry build a replacement.
+// The old code fired `destroy()` unawaited and cleared the field immediately, so
+// a slow/rejected destroy could let a replacement driver be constructed while
+// the old owner still held the serial port (controller unreachable). These
+// tests drive `destroy()` deterministically (deferred / reject-once) to prove
+// the ownership contract.
+
+describe('DriverLifecycle — failed-connect teardown ownership', () => {
+	it('awaits the failed driver destroy before clearing the host or backing off (no replacement built while the owner is torn down)', async () => {
+		vi.useFakeTimers()
+		try {
+			const { lifecycle, state, host } = createHarness({
+				serverEnabled: false,
+			})
+			hoisted.startBehavior = 'reject'
+			hoisted.startError = new Error('start boom')
+			hoisted.destroyBehavior = 'deferred'
+
+			const connectP = lifecycle.connect()
+
+			// The connect is now suspended inside teardownConnectDriver awaiting
+			// driver0.destroy(). Until that destroy settles:
+			await until(() => hoisted.destroyDeferreds.length === 1)
+			expect(hoisted.drivers).toHaveLength(1)
+			const driver0 = hoisted.drivers[0]
+			// …the host STILL owns the exact failed instance (not cleared)…
+			expect(state.driver).toBe(driver0)
+			// …the error has NOT yet been reported and NO backoff scheduled…
+			expect(host.onDriverError).not.toHaveBeenCalled()
+			expect(host.restart).not.toHaveBeenCalled()
+
+			// …and a concurrent connect coalesces onto the in-flight startup
+			// rather than constructing a replacement Driver while the owner is
+			// still being torn down.
+			const concurrent = lifecycle.connect()
+			await until(() => hoisted.destroyDeferreds.length === 1)
+			expect(hoisted.drivers).toHaveLength(1)
+			expect(driver0.start).toHaveBeenCalledTimes(1)
+
+			// Complete the destroy: only now is the host field cleared and the
+			// error reported + backoff scheduled (serialized behind teardown).
+			hoisted.destroyDeferreds[0].resolve()
+			await connectP
+			await concurrent
+			expect(state.driver).toBeNull()
+			expect(hoisted.destroyOrder).toEqual(['driver'])
+			expect(host.onDriverError).toHaveBeenCalledTimes(1)
+			expect(host.onDriverError).toHaveBeenCalledWith(
+				expect.any(Error),
+				true,
+			)
+			await vi.advanceTimersByTimeAsync(1000)
+			expect(host.restart).toHaveBeenCalledTimes(1)
+			// Still exactly one Driver ever built across the whole sequence.
+			expect(hoisted.drivers).toHaveLength(1)
+		} finally {
+			vi.useRealTimers()
+		}
+	})
+
+	it('retains the exact owner when destroy REJECTS and lets a later close retry the cleanup (no leak, no wrong destroy)', async () => {
+		vi.useFakeTimers()
+		try {
+			const { lifecycle, state, host } = createHarness({
+				serverEnabled: false,
+			})
+			hoisted.startBehavior = 'reject'
+			hoisted.startError = new Error('start boom')
+			// First destroy rejects (owner intact/retryable); a later one succeeds.
+			hoisted.destroyRejectCount = 1
+
+			await lifecycle.connect()
+			const driver0 = hoisted.drivers[0]
+
+			// The rejected destroy did NOT drop the owner: the exact failed
+			// instance is still reachable/owned, nothing was recorded as torn
+			// down, and no replacement was built. The failure is still observable.
+			expect(hoisted.drivers).toHaveLength(1)
+			expect(state.driver).toBe(driver0)
+			expect(hoisted.destroyInvocations).toBe(1)
+			expect(hoisted.destroyOrder).toEqual([]) // no teardown effect yet
+			expect(host.onDriverError).toHaveBeenCalledTimes(1)
+
+			// Retry cleanup via close(): it re-invokes destroy() on the SAME
+			// owner, which now succeeds and clears the field. Exactly that
+			// instance is destroyed — no leak, no wrong/replacement destroy.
+			await lifecycle.close(true)
+			expect(hoisted.destroyInvocations).toBe(2)
+			expect(hoisted.destroyOrder).toEqual(['driver'])
+			expect(state.driver).toBeNull()
+			expect(hoisted.drivers).toHaveLength(1)
+			expect(driver0.destroy).toHaveBeenCalledTimes(2)
+		} finally {
+			vi.useRealTimers()
+		}
+	})
+
+	it('a stale post-start exit awaits teardown of its OWN instance and never destroys the live replacement, even with a delayed destroy', async () => {
+		const { lifecycle, state } = createHarness({ serverEnabled: false })
+		hoisted.startBehavior = 'deferred'
+
+		// Stale connect: driver0 on host, held at start().
+		const staleP = lifecycle.connect()
+		await until(() => hoisted.startDeferreds.length === 1)
+		const driver0 = hoisted.drivers[0]
+
+		// close() bumps the generation, destroys driver0 (clean) and nulls the
+		// host field; then a reconnect builds driver1.
+		await lifecycle.close(true)
+		state.closed = false
+		hoisted.startBehavior = 'deferred'
+		const freshP = lifecycle.connect()
+		await until(() => hoisted.startDeferreds.length === 2)
+		const driver1 = hoisted.drivers[1]
+		hoisted.startDeferreds[1].resolve()
+		await freshP
+		expect(state.driver).toBe(driver1)
+
+		// Now the stale start resolves: its post-start generation check fails,
+		// so it tears down driver0 (idempotent — already destroyed by close).
+		hoisted.startDeferreds[0].resolve()
+		await staleP
+
+		// The replacement was never touched and remains owned; driver0's
+		// teardown recorded exactly once.
+		expect(driver1.destroy).not.toHaveBeenCalled()
+		expect(state.driver).toBe(driver1)
+		expect(hoisted.destroyOrder.filter((d) => d === 'driver')).toHaveLength(
+			1,
+		)
+		void driver0
+	})
+})
+
+// ===========================================================================
 // connect() — final logConfig override (finding 4)
 // ===========================================================================
 
@@ -1079,6 +1485,65 @@ describe('DriverLifecycle — final logConfig override', () => {
 		expect(passedLogConfig.transports).toEqual([jsonTransport])
 		// no extra transport → the override's own level is preserved
 		expect(passedLogConfig.level).toBe('warn')
+	})
+
+	it('a driver built with NO logConfig object connects cleanly and leaves the base level unset', async () => {
+		// `utils.buildLogConfig` yields no logConfig object for an exotic
+		// external configuration. `_startDriver` must still construct and start
+		// the driver (there is no logConfig to enrich), and the captured base
+		// level stays unset — so a later runtime add/remove computes the level
+		// purely from the registered extras, with no configured floor.
+		hoisted.buildLogConfigOverride = () => undefined
+		const { lifecycle, state } = createHarness({ serverEnabled: false })
+
+		await lifecycle.connect()
+
+		// Driver constructed + started, and received no logConfig object at all.
+		expect(hoisted.drivers).toHaveLength(1)
+		expect(hoisted.drivers[0].options.logConfig).toBeUndefined()
+		expect(state.driver).toBe(hoisted.drivers[0])
+
+		// Base level unset: a subsequent extra drives the effective level on its
+		// own (its 'warn' is used verbatim, not merged over a configured floor),
+		// and the required JSON-socket transport is still re-sent first.
+		state.driverReadyRaw = true
+		hoisted.drivers[0].updateLogConfig.mockClear()
+		const extra = { id: 'x' }
+		lifecycle.addExtraLogTransport(extra, 'warn')
+		expect(hoisted.drivers[0].updateLogConfig).toHaveBeenCalledWith({
+			transports: [hoisted.logTransports[0], extra],
+			level: 'warn',
+		})
+	})
+
+	it('a driver logConfig with a non-string level leaves the base level unset and never overwrites it', async () => {
+		// A logConfig whose `level` is not a string must not be captured as the
+		// base level (the `typeof === 'string'` guard falls to `undefined`), and
+		// with no extras the computed runtime level is `undefined`, so the
+		// enrichment must NOT rewrite the driver's own level field.
+		hoisted.buildLogConfigOverride = () => ({ level: 42 })
+		const { lifecycle } = createHarness({ serverEnabled: false })
+
+		await lifecycle.connect()
+
+		const passedLogConfig = hoisted.drivers[0].options.logConfig
+		// The required JSON transport was still injected (the `if (finalLogConfig)`
+		// enrichment ran)...
+		expect(passedLogConfig.transports).toEqual([hoisted.logTransports[0]])
+		// ...but the non-string level was left exactly as-is (computed runtime
+		// level was `undefined`, so `if (level)` never overwrote it).
+		expect(passedLogConfig.level).toBe(42)
+
+		// Base level genuinely unset: adding a levelled extra now sets the level
+		// solely from that extra with no configured floor underneath it.
+		lifecycle['host'].isDriverReadyRaw = () => true
+		hoisted.drivers[0].updateLogConfig.mockClear()
+		const extra = { id: 'y' }
+		lifecycle.addExtraLogTransport(extra, 'silly')
+		expect(hoisted.drivers[0].updateLogConfig).toHaveBeenCalledWith({
+			transports: [hoisted.logTransports[0], extra],
+			level: 'silly',
+		})
 	})
 })
 
