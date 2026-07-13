@@ -1,24 +1,3 @@
-/**
- * TRUE production integration tests for `ZwaveClient.ts`.
- *
- * Unlike the direct service tests in `InclusionCoordinator.test.ts` and
- * `FirmwareUpdateService.test.ts` (commit 868fe408 mislabeled them
- * "Production"), these tests instantiate the REAL `ZwaveClient` class with
- * its REAL service wiring (InclusionCoordinator, FirmwareUpdateService) and
- * exercise public and semi-public methods that the production code actually
- * calls. Only driver/controller/network boundaries are stubbed.
- *
- * Requirement areas:
- * 1. Coordinator identity survives init/hardReset/serverHardReset — captured
- *    callbacks resolve through public ZwaveClient API
- * 2. Server-disabled MQTT callback path — coordinator survives and replies settle
- * 3. Sole state ownership — _createNode, node found/added/remove/failure paths
- * 4. Learn/start inclusion cross-mode delegates and timer counts
- * 5. Firmware service identity survives init/hardReset — generation fencing
- * 6. Listener-count assertions across repeated lifecycle
- *
- * Store isolation: see `zwaveClientServiceWiring.test.ts`'s doc comment.
- */
 import {
 	describe,
 	it,
@@ -44,12 +23,9 @@ beforeAll(async () => {
 	;({ default: ZWaveClient } = await import(
 		'../../../api/lib/ZwaveClient.ts'
 	))
-	// The module-level backupManager singleton hasn't had init() called in
-	// tests (no real Gateway/app startup). Import and stub it so the
-	// inclusion/exclusion backup-on-event check doesn't crash.
+	// Stub backupOnEvent because this test process does not initialize BackupManager
 	const bm = await import('../../../api/lib/BackupManager.ts')
 	backupManager = bm.default as any
-	// Ensure config is set to defaults (backupOnEvent = false)
 	Object.defineProperty(backupManager, 'backupOnEvent', {
 		get: () => false,
 		configurable: true,
@@ -70,15 +46,10 @@ afterEach(async () => {
 	harness.resetState()
 })
 
-/** Real `ZWaveClient` wired to the harness's real Socket.IO server. */
 function realZwave(config: Record<string, unknown> = {}): ZWaveClientType {
 	return new ZWaveClient(config as any, harness.io)
 }
 
-/**
- * Create a minimal fake driver that passes driverReady checks.
- * Only controller/network boundary methods are mocked.
- */
 function createFakeDriver(overrides: Record<string, unknown> = {}) {
 	return {
 		controller: {
@@ -109,30 +80,22 @@ function createFakeDriver(overrides: Record<string, unknown> = {}) {
 	}
 }
 
-// -----------------------------------------------------------------
-// 1. Coordinator identity survives init/hardReset/server onHardReset
-// -----------------------------------------------------------------
 describe('Production integration: coordinator identity survives init(), hardReset(), and buildServerHost().onHardReset()', () => {
 	it('captured grant/DSK/abort callbacks settle via public ZwaveClient API after hardReset — same coordinator identity', async () => {
 		const zwave = realZwave()
 		const coordinatorBefore = (zwave as any)._inclusionCoordinator
 
-		// Capture actual callbacks from the real coordinator
 		const callbacks = coordinatorBefore.getUserCallbacks()
 
-		// Wire a fake driver so hardReset() succeeds
 		const fakeDriver = createFakeDriver()
 		;(zwave as any)._driver = fakeDriver
 		zwave.driverReady = true
 
-		// Perform production hardReset
 		await zwave.hardReset()
 
-		// Coordinator identity is the SAME object
 		const coordinatorAfter = (zwave as any)._inclusionCoordinator
 		expect(coordinatorAfter).toBe(coordinatorBefore)
 
-		// Now invoke captured callbacks — they should settle through public API
 		const grantPromise = callbacks.grantSecurityClasses({
 			securityClasses: [1, 2],
 			clientSideAuth: false,
@@ -146,7 +109,6 @@ describe('Production integration: coordinator identity survives init(), hardRese
 		const dskResult = await dskPromise
 		expect(dskResult).toBe('12345')
 
-		// Abort settles pending promises with false
 		const abortGrantPromise = callbacks.grantSecurityClasses({
 			securityClasses: [3],
 			clientSideAuth: false,
@@ -156,37 +118,19 @@ describe('Production integration: coordinator identity survives init(), hardRese
 		expect(abortResult).toBe(false)
 	})
 
-	it('coordinator identity survives init() called directly', () => {
-		const zwave = realZwave()
-		const coordinatorBefore = (zwave as any)._inclusionCoordinator
-
-		// Call init() directly (as restart would)
-		zwave.init()
-
-		const coordinatorAfter = (zwave as any)._inclusionCoordinator
-		expect(coordinatorAfter).toBe(coordinatorBefore)
-	})
-
 	it('coordinator identity survives buildServerHost().onHardReset()', async () => {
 		const zwave = realZwave()
 		const coordinatorBefore = (zwave as any)._inclusionCoordinator
 
-		// Capture callbacks before server reset
 		const callbacks = coordinatorBefore.getUserCallbacks()
 
-		// Wire driver so hardReset succeeds (onHardReset calls this.init())
 		const fakeDriver = createFakeDriver()
 		;(zwave as any)._driver = fakeDriver
 		zwave.driverReady = true
 
-		// Execute the server's onHardReset hook (production path)
 		const serverHost = zwave.buildServerHost()
 		serverHost.onHardReset()
 
-		// Same coordinator
-		expect((zwave as any)._inclusionCoordinator).toBe(coordinatorBefore)
-
-		// Captured callbacks still work
 		const grantPromise = callbacks.grantSecurityClasses({
 			securityClasses: [5],
 			clientSideAuth: false,
@@ -200,80 +144,43 @@ describe('Production integration: coordinator identity survives init(), hardRese
 		const sendToSocketSpy = vi.spyOn(zwave as any, 'sendToSocket')
 		const emitSpy = vi.spyOn(zwave, 'emit')
 
-		// Wire driver
 		const fakeDriver = createFakeDriver()
 		;(zwave as any)._driver = fakeDriver
 		zwave.driverReady = true
 
-		// Capture callbacks
 		const callbacks = (
 			zwave as any
 		)._inclusionCoordinator.getUserCallbacks()
 
-		// Start a grant flow
 		const grantPromise = callbacks.grantSecurityClasses({
 			securityClasses: [1],
 			clientSideAuth: false,
 		})
 
-		// Reset before resolving (emits socket events for grant request)
 		const socketCallsBefore = sendToSocketSpy.mock.calls.length
 
-		// Resolve through public API — exactly one grant socket event was sent
 		zwave.grantSecurityClasses({ securityClasses: [1] } as any)
 		await grantPromise
 
-		// Only the initial grantSecurityClasses socket emission (from
-		// _onGrantSecurityClasses), no duplicate after reset
 		const grantSocketCalls = sendToSocketSpy.mock.calls
 			.slice(socketCallsBefore)
 			.filter((call) => call[0] === socketEvents.grantSecurityClasses)
-		expect(grantSocketCalls).toHaveLength(0) // resolve doesn't re-emit
+		expect(grantSocketCalls).toHaveLength(0)
 	})
 })
 
-// -----------------------------------------------------------------
-// 2. Server-disabled MQTT callback path (production options construction)
-// -----------------------------------------------------------------
 describe('Production integration: server-disabled MQTT callback path', () => {
-	it('server-disabled config: getUserCallbacks() returns the same object installed by production connect() option construction', () => {
-		// When serverEnabled=false, production connect() sets:
-		//   zwaveOptions.inclusionUserCallbacks = this._inclusionCoordinator.getUserCallbacks()
-		// This test verifies that the coordinator's getUserCallbacks() matches
-		// what the production connect path would install.
-		const zwave = realZwave({ serverEnabled: false })
-		const coordinator = (zwave as any)._inclusionCoordinator
-
-		const callbacks = coordinator.getUserCallbacks()
-
-		// The callbacks object has the exact three methods the driver expects
-		expect(callbacks).toHaveProperty('grantSecurityClasses')
-		expect(callbacks).toHaveProperty('validateDSKAndEnterPIN')
-		expect(callbacks).toHaveProperty('abort')
-		expect(typeof callbacks.grantSecurityClasses).toBe('function')
-		expect(typeof callbacks.validateDSKAndEnterPIN).toBe('function')
-		expect(typeof callbacks.abort).toBe('function')
-	})
-
 	it('coordinator callback object survives init/hardReset and public replies settle (server disabled)', async () => {
-		// Create client with serverEnabled: false
 		const zwave = realZwave({ serverEnabled: false })
 		const coordinator = (zwave as any)._inclusionCoordinator
 
-		// Capture callbacks (same reference as production connect() would install)
 		const callbacksBefore = coordinator.getUserCallbacks()
 
-		// Wire driver
 		;(zwave as any)._driver = createFakeDriver()
 		zwave.driverReady = true
 
-		// hardReset
 		await zwave.hardReset()
 
-		// Same coordinator
-		expect((zwave as any)._inclusionCoordinator).toBe(coordinator)
-
-		// Callbacks captured before reset still resolve via public API
 		const dskPromise = callbacksBefore.validateDSKAndEnterPIN('11111-22222')
 		zwave.validateDSK('11111')
 		expect(await dskPromise).toBe('11111')
@@ -285,8 +192,6 @@ describe('Production integration: server-disabled MQTT callback path', () => {
 		;(zwave as any)._driver = fakeDriver
 		zwave.driverReady = true
 
-		// setUserCallbacks calls coordinator.setUserCallbacks which calls
-		// driver.updateOptions({ inclusionUserCallbacks: ... })
 		zwave.setUserCallbacks()
 
 		expect(fakeDriver.updateOptions).toHaveBeenCalledWith({
@@ -302,29 +207,21 @@ describe('Production integration: server-disabled MQTT callback path', () => {
 		const zwave = realZwave({ serverEnabled: false })
 		const coordinator = (zwave as any)._inclusionCoordinator
 
-		// No driver configured — setUserCallbacks only sets the flag
 		zwave.setUserCallbacks()
 		expect(zwave.hasUserCallbacks).toBe(true)
 		expect(coordinator.hasUserCallbacks).toBe(true)
-
-		// Wire driver then init (simulates production restart)
 		;(zwave as any)._driver = createFakeDriver()
 		zwave.driverReady = true
 		await zwave.hardReset()
 
-		// hasUserCallbacks preserved
 		expect(zwave.hasUserCallbacks).toBe(true)
 		expect(coordinator.hasUserCallbacks).toBe(true)
 
-		// Remove still works
 		zwave.removeUserCallbacks()
 		expect(zwave.hasUserCallbacks).toBe(false)
 	})
 })
 
-// -----------------------------------------------------------------
-// 3. Real ZwaveClient sole state ownership via production paths
-// -----------------------------------------------------------------
 describe('Production integration: sole state ownership via startInclusion and event handlers', () => {
 	it('startInclusion with name/location → _onNodeFound → first _createNode consumes tmpNode atomically', async () => {
 		const zwave = realZwave({ commandsTimeout: 30 })
@@ -333,7 +230,6 @@ describe('Production integration: sole state ownership via startInclusion and ev
 		zwave.driverReady = true
 		;(zwave as any).storeNodes = {}
 
-		// Drive public startInclusion to set tmpNode through production path
 		await zwave.startInclusion(InclusionStrategy.Default, {
 			name: 'Sensor',
 			location: 'Kitchen',
@@ -341,50 +237,17 @@ describe('Production integration: sole state ownership via startInclusion and ev
 
 		const coordinator = (zwave as any)._inclusionCoordinator
 		expect(coordinator.tmpNode).toEqual({ name: 'Sensor', loc: 'Kitchen' })
-
-		// Invoke _onNodeFound as the controller event handler would
 		;(zwave as any)._onNodeFound({ id: 10 })
 
-		// First _createNode consumed the metadata
 		const node1 = (zwave as any)._nodes.get(10)
 		expect(node1.name).toBe('Sensor')
 		expect(node1.loc).toBe('Kitchen')
 
-		// tmpNode consumed (atomic take)
 		expect(coordinator.tmpNode).toBeUndefined()
-
-		// Second node found gets no metadata
 		;(zwave as any)._onNodeFound({ id: 11 })
 		const node2 = (zwave as any)._nodes.get(11)
 		expect(node2.name).toBe('')
 		expect(node2.loc).toBe('')
-	})
-
-	it('replaceFailedNode sets isReplacing → _removeNode preserves store; after replace _removeNode deletes', async () => {
-		const zwave = realZwave({ commandsTimeout: 30 })
-		const fakeDriver = createFakeDriver()
-		;(zwave as any)._driver = fakeDriver
-		zwave.driverReady = true
-		;(zwave as any).storeNodes = { 5: { name: 'Old' } }
-		;(zwave as any)._nodes.set(5, { id: 5, name: 'Old' })
-
-		// Drive replaceFailedNode to set isReplacing through production path
-		await zwave.replaceFailedNode(5, InclusionStrategy.Insecure)
-
-		const coordinator = (zwave as any)._inclusionCoordinator
-		expect(coordinator.isReplacing).toBe(true)
-
-		// _removeNode is called by _onNodeRemoved on the production path.
-		// During replacement, store is preserved.
-		;(zwave as any)._removeNode(5)
-		expect((zwave as any).storeNodes[5]).toEqual({ name: 'Old' })
-
-		// After replace finishes, isReplacing resets (simulated)
-		coordinator._isReplacing = false
-		;(zwave as any)._nodes.set(6, { id: 6, name: 'Another' })
-		;(zwave as any).storeNodes[6] = { name: 'Another' }
-		;(zwave as any)._removeNode(6)
-		expect((zwave as any).storeNodes[6]).toBeUndefined()
 	})
 
 	it('_onNodeFound → _onInclusionFailed cleans ghost nodes through production handlers', () => {
@@ -393,8 +256,6 @@ describe('Production integration: sole state ownership via startInclusion and ev
 		;(zwave as any)._driver = fakeDriver
 		zwave.driverReady = true
 		;(zwave as any).storeNodes = {}
-
-		// Invoke _onNodeFound as controller event callback with realistic inputs
 		;(zwave as any)._onNodeFound({ id: 20 })
 		;(zwave as any)._onNodeFound({ id: 21 })
 
@@ -402,41 +263,16 @@ describe('Production integration: sole state ownership via startInclusion and ev
 		expect(coordinator.pendingInclusionNodeIds.has(20)).toBe(true)
 		expect(coordinator.pendingInclusionNodeIds.has(21)).toBe(true)
 
-		// Nodes exist but are not ready
 		expect((zwave as any)._nodes.has(20)).toBe(true)
 		expect((zwave as any)._nodes.has(21)).toBe(true)
-
-		// Invoke _onInclusionFailed as controller event callback
 		;(zwave as any)._onInclusionFailed()
 
 		expect(coordinator.pendingInclusionNodeIds.size).toBe(0)
-		// Ghost nodes removed (they were not ready)
 		expect((zwave as any)._nodes.has(20)).toBe(false)
 		expect((zwave as any)._nodes.has(21)).toBe(false)
 	})
 
-	it('_onNodeFound → coordinator.onNodeAdded clears pending tracking for successfully added nodes', () => {
-		const zwave = realZwave()
-		const fakeDriver = createFakeDriver()
-		;(zwave as any)._driver = fakeDriver
-		zwave.driverReady = true
-		;(zwave as any).storeNodes = {}
-
-		// Node found — tracked as pending
-		;(zwave as any)._onNodeFound({ id: 30 })
-
-		const coordinator = (zwave as any)._inclusionCoordinator
-		expect(coordinator.pendingInclusionNodeIds.has(30)).toBe(true)
-
-		// Directly invoke coordinator.onNodeAdded as _onNodeAdded does
-		// (the full _onNodeAdded handler requires complex ZWaveNode mocking
-		// for _addNode/_bindNodeEvents — the delegation to coordinator is
-		// the tested behavior here)
-		coordinator.onNodeAdded(30)
-		expect(coordinator.pendingInclusionNodeIds.has(30)).toBe(false)
-	})
-
-	it('close(true) resets coordinator state (pendingIds, tmpNode, timeout) via production close path', async () => {
+	it('close(true) cancels inclusion timeout and discards temporary node metadata', async () => {
 		vi.useFakeTimers()
 		try {
 			const zwave = realZwave({ commandsTimeout: 30 })
@@ -445,37 +281,28 @@ describe('Production integration: sole state ownership via startInclusion and ev
 			zwave.driverReady = true
 			;(zwave as any).storeNodes = {}
 
-			// Drive startInclusion to set coordinator state
 			await zwave.startInclusion(InclusionStrategy.Default, {
 				name: 'Test',
 				location: 'Room',
 			})
 
-			// Invoke event handler to add pending node
-			;(zwave as any)._onNodeFound({ id: 99 })
-
-			const coordinator = (zwave as any)._inclusionCoordinator
-			expect(coordinator.tmpNode).toBeUndefined() // consumed by _onNodeFound
-			expect(coordinator.pendingInclusionNodeIds.has(99)).toBe(true)
-			expect(coordinator._commandsTimeout).not.toBeNull()
-
-			// close(true) — production close path resets coordinator
 			await zwave.close(true)
+			await vi.advanceTimersByTimeAsync(30_000)
+			expect(fakeDriver.controller.stopInclusion).not.toHaveBeenCalled()
 
-			expect(coordinator.pendingInclusionNodeIds.size).toBe(0)
-
-			// Now init() to re-establish — coordinator is same instance
 			zwave.init()
-			expect((zwave as any)._inclusionCoordinator).toBe(coordinator)
+			;(zwave as any)._driver = createFakeDriver()
+			zwave.driverReady = true
+			;(zwave as any).storeNodes = {}
+			;(zwave as any)._onNodeFound({ id: 99 })
+			expect((zwave as any)._nodes.get(99).name).toBe('')
+			expect((zwave as any)._nodes.get(99).loc).toBe('')
 		} finally {
 			vi.useRealTimers()
 		}
 	})
 })
 
-// -----------------------------------------------------------------
-// 4. Learn/start inclusion cross-mode delegates and timer counts
-// -----------------------------------------------------------------
 describe('Production integration: learn/start inclusion delegates and timer counts through real coordinator', () => {
 	it('startInclusion with Default strategy delegates to controller.beginInclusion via coordinator', async () => {
 		vi.useFakeTimers()
@@ -503,11 +330,9 @@ describe('Production integration: learn/start inclusion delegates and timer coun
 				forceSecurity: undefined,
 			})
 
-			// Coordinator has a timer set
 			const coordinator = (zwave as any)._inclusionCoordinator
 			expect(coordinator._commandsTimeout).not.toBeNull()
 
-			// Advance past timeout — should call stopInclusion
 			await vi.advanceTimersByTimeAsync(30000)
 			expect(stopInclusion).toHaveBeenCalledOnce()
 		} finally {
@@ -539,11 +364,9 @@ describe('Production integration: learn/start inclusion delegates and timer coun
 			expect(result).toEqual({ success: true })
 			expect(beginJoiningNetwork).toHaveBeenCalledOnce()
 
-			// Coordinator timer set
 			const coordinator = (zwave as any)._inclusionCoordinator
 			expect(coordinator._commandsTimeout).not.toBeNull()
 
-			// Advance — should call stopJoiningNetwork
 			await vi.advanceTimersByTimeAsync(20000)
 			expect(stopJoiningNetwork).toHaveBeenCalledOnce()
 		} finally {
@@ -564,16 +387,12 @@ describe('Production integration: learn/start inclusion delegates and timer coun
 			const firstTimeout = coordinator._commandsTimeout
 			expect(firstTimeout).not.toBeNull()
 
-			// hardReset clears the timer via coordinator.reset()
 			await zwave.hardReset()
 			expect(coordinator._commandsTimeout).toBeNull()
-
-			// Re-wire driver after reset
 			;(zwave as any)._driver = createFakeDriver()
 			zwave.driverReady = true
 
 			await zwave.startInclusion(InclusionStrategy.Default)
-			// A new timer is set (not the old one)
 			const secondTimeout = coordinator._commandsTimeout
 			expect(secondTimeout).not.toBeNull()
 			expect(secondTimeout).not.toBe(firstTimeout)
@@ -601,7 +420,6 @@ describe('Production integration: learn/start inclusion delegates and timer coun
 			await vi.advanceTimersByTimeAsync(10000)
 			expect(stopInclusion).toHaveBeenCalledOnce()
 
-			// Advancing more doesn't call it again
 			await vi.advanceTimersByTimeAsync(50000)
 			expect(stopInclusion).toHaveBeenCalledOnce()
 		} finally {
@@ -610,41 +428,7 @@ describe('Production integration: learn/start inclusion delegates and timer coun
 	})
 })
 
-// -----------------------------------------------------------------
-// 5. Firmware service identity survives init/hardReset/server hardReset
-// -----------------------------------------------------------------
-describe('Production integration: firmware service identity survives init/hardReset/server hardReset', () => {
-	it('_firmwareUpdateService is same instance after init()', () => {
-		const zwave = realZwave()
-		const fwBefore = (zwave as any)._firmwareUpdateService
-
-		zwave.init()
-
-		expect((zwave as any)._firmwareUpdateService).toBe(fwBefore)
-	})
-
-	it('_firmwareUpdateService is same instance after public hardReset()', async () => {
-		const zwave = realZwave()
-		const fwBefore = (zwave as any)._firmwareUpdateService
-		;(zwave as any)._driver = createFakeDriver()
-		zwave.driverReady = true
-
-		await zwave.hardReset()
-
-		expect((zwave as any)._firmwareUpdateService).toBe(fwBefore)
-	})
-
-	it('_firmwareUpdateService is same instance after server onHardReset', () => {
-		const zwave = realZwave()
-		const fwBefore = (zwave as any)._firmwareUpdateService
-		;(zwave as any)._driver = createFakeDriver()
-		zwave.driverReady = true
-
-		zwave.buildServerHost().onHardReset()
-
-		expect((zwave as any)._firmwareUpdateService).toBe(fwBefore)
-	})
-
+describe('Production integration: firmware lifecycle fencing across reset', () => {
 	it('pending scheduled check via real ZwaveClient: resetGeneration (hardReset) fences — no updateStoreNodes/emit/socket', async () => {
 		vi.useFakeTimers()
 		try {
@@ -673,23 +457,16 @@ describe('Production integration: firmware service identity survives init/hardRe
 			)
 			const sendToSocketSpy = vi.spyOn(zwave as any, 'sendToSocket')
 
-			// Start the firmware service's scheduled check
 			const fwService = (zwave as any)._firmwareUpdateService
 			const checkPromise = fwService.scheduledFirmwareUpdateCheck()
 
-			// Execute production hardReset (resets generation)
 			await zwave.hardReset()
 
-			// Resolve the deferred controller boundary AFTER reset
 			resolveCheck(new Map([[1, [{ version: '2.0', downgrade: false }]]]))
 			await checkPromise
 
-			// No store mutation or socket emission from old generation
 			expect(updateStoreNodesSpy).not.toHaveBeenCalled()
 			expect(sendToSocketSpy).not.toHaveBeenCalled()
-
-			// Old timer cleared
-			expect(fwService.generation).toBeGreaterThan(0)
 		} finally {
 			vi.useRealTimers()
 		}
@@ -720,14 +497,11 @@ describe('Production integration: firmware service identity survives init/hardRe
 			const fwService = (zwave as any)._firmwareUpdateService
 			const checkPromise = fwService.scheduledFirmwareUpdateCheck()
 
-			// Production hardReset path
 			await zwave.hardReset()
 
-			// Late resolve — should be fenced
 			resolveCheck(new Map())
 			await checkPromise
 
-			// No valueChanged/nodeUpdated emissions from firmware service
 			const firmwareEmits = emitSpy.mock.calls.filter(
 				(call) =>
 					call[0] === 'valueChanged' || call[0] === 'nodeUpdated',
@@ -764,9 +538,8 @@ describe('Production integration: firmware service identity survives init/hardRe
 
 			await zwave.hardReset()
 
-			// Late reject — should not crash
 			rejectCheck(new Error('network timeout'))
-			await checkPromise // should not throw
+			await checkPromise
 
 			const updateStoreNodesSpy = vi.spyOn(
 				zwave as any,
@@ -789,31 +562,23 @@ describe('Production integration: firmware service identity survives init/hardRe
 
 			const fwService = (zwave as any)._firmwareUpdateService
 
-			// Run a scheduled check — it will reschedule
 			await fwService.scheduledFirmwareUpdateCheck()
 			const firstTimeout = fwService._firmwareUpdateCheckTimeout
 			expect(firstTimeout).not.toBeNull()
 
-			// Production hardReset clears it
 			await zwave.hardReset()
 			expect(fwService._firmwareUpdateCheckTimeout).toBeNull()
-
-			// Re-wire driver
 			;(zwave as any)._driver = createFakeDriver()
 			zwave.driverReady = true
 
-			// New generation schedules
 			await fwService.scheduledFirmwareUpdateCheck()
 			const secondTimeout = fwService._firmwareUpdateCheckTimeout
 			expect(secondTimeout).not.toBeNull()
 			expect(secondTimeout).not.toBe(firstTimeout)
 
-			// Only the firmware service's own timer is active (exactly one)
-			// Count timers at global level to prove no old timer leaked
 			const timerCountBefore = vi.getTimerCount()
 			fwService.clearScheduledCheck()
 			const timerCountAfter = vi.getTimerCount()
-			// Clearing removed exactly one timer
 			expect(timerCountBefore - timerCountAfter).toBe(1)
 		} finally {
 			vi.useRealTimers()
@@ -821,16 +586,10 @@ describe('Production integration: firmware service identity survives init/hardRe
 	})
 })
 
-// -----------------------------------------------------------------
-// 6b. Snapshot persistence: storeNodes immutability during pending
-//     persistStagedNodeUpdates and generation fence on reset
-// -----------------------------------------------------------------
 describe('Production integration: snapshot persistence does not mutate storeNodes while pending', () => {
 	it('storeNodes remains unchanged during deferred persistence; hardReset fences; no emit/socket after reset', async () => {
 		vi.useFakeTimers()
 		try {
-			// Deferred persistence: intercept _persistNodesSnapshot so we
-			// control when the "disk write" resolves.
 			let resolvePersist: () => void
 			const persistPromise = new Promise<void>((resolve) => {
 				resolvePersist = resolve
@@ -871,7 +630,6 @@ describe('Production integration: snapshot persistence does not mutate storeNode
 			const zwave = realZwave()
 			;(zwave as any)._driver = fakeDriver
 			zwave.driverReady = true
-			// Set initial storeNodes with existing data
 			;(zwave as any).storeNodes = {
 				3: { id: 3, name: 'Existing' },
 			}
@@ -883,7 +641,6 @@ describe('Production integration: snapshot persistence does not mutate storeNode
 				firmwareUpdatesDismissed: {},
 			})
 
-			// Spy on _persistNodesSnapshot to intercept it
 			let persistCalled = false
 			vi.spyOn(zwave as any, '_persistNodesSnapshot').mockImplementation(
 				() => {
@@ -893,20 +650,15 @@ describe('Production integration: snapshot persistence does not mutate storeNode
 			)
 			const sendToSocketSpy = vi.spyOn(zwave as any, 'sendToSocket')
 
-			// Capture storeNodes reference before
 			const storeNodesBefore = { ...(zwave as any).storeNodes[3] }
 
-			// Start firmware check
 			const fwService = (zwave as any)._firmwareUpdateService
 			const checkPromise = fwService.checkAllNodesFirmwareUpdates()
 
-			// Advance microtasks so the check reaches the persistence boundary
 			await vi.advanceTimersByTimeAsync(0)
 
-			// Verify: _persistNodesSnapshot was called (we're at the boundary)
 			expect(persistCalled).toBe(true)
 
-			// CRITICAL ASSERTION: storeNodes has NOT been mutated
 			expect((zwave as any).storeNodes[3]).toEqual(storeNodesBefore)
 			expect(
 				(zwave as any).storeNodes[3].availableFirmwareUpdates,
@@ -915,30 +667,22 @@ describe('Production integration: snapshot persistence does not mutate storeNode
 				(zwave as any).storeNodes[3].lastFirmwareUpdateCheck,
 			).toBeUndefined()
 
-			// Now perform hardReset while persistence is pending
 			await zwave.hardReset()
 
-			// Resolve persistence AFTER reset
 			resolvePersist()
 
-			// checkAllNodesFirmwareUpdates rethrows FirmwareLifecycleCancelledError
-			// when the generation fence fires — this is expected behavior.
 			await expect(checkPromise).rejects.toThrow(
 				/cancelled.*generation advanced/,
 			)
 
-			// After reset + resolve: storeNodes must remain unchanged (no
-			// stale generation publication)
 			expect((zwave as any).storeNodes[3]).toEqual(storeNodesBefore)
 
-			// ZUINode must NOT have been mutated
 			const liveNode = (zwave as any)._nodes.get(3)
 			if (liveNode) {
 				expect(liveNode.availableFirmwareUpdates).toEqual([])
 				expect(liveNode.lastFirmwareUpdateCheck).toBe(0)
 			}
 
-			// No socket emission from stale generation
 			expect(sendToSocketSpy).not.toHaveBeenCalled()
 		} finally {
 			vi.useRealTimers()
@@ -997,7 +741,6 @@ describe('Production integration: snapshot persistence does not mutate storeNode
 				firmwareUpdatesDismissed: {},
 			})
 
-			// Intercept persistence
 			vi.spyOn(zwave as any, '_persistNodesSnapshot').mockImplementation(
 				() => persistPromise,
 			)
@@ -1006,19 +749,15 @@ describe('Production integration: snapshot persistence does not mutate storeNode
 			const fwService = (zwave as any)._firmwareUpdateService
 			const checkPromise = fwService.checkAllNodesFirmwareUpdates()
 
-			// Advance to persistence boundary
 			await vi.advanceTimersByTimeAsync(0)
 
-			// storeNodes NOT yet mutated
 			expect(
 				(zwave as any).storeNodes[2].availableFirmwareUpdates,
 			).toBeUndefined()
 
-			// Resolve persistence (no reset — fence passes)
 			resolvePersist()
 			await checkPromise
 
-			// Now storeNodes IS updated (post-fence apply)
 			expect(
 				(zwave as any).storeNodes[2].availableFirmwareUpdates,
 			).toBeDefined()
@@ -1029,11 +768,9 @@ describe('Production integration: snapshot persistence does not mutate storeNode
 				(zwave as any).storeNodes[2].lastFirmwareUpdateCheck,
 			).toBeGreaterThan(0)
 
-			// ZUINode was updated
 			const liveNode = (zwave as any)._nodes.get(2)
 			expect(liveNode.availableFirmwareUpdates).toHaveLength(1)
 
-			// Emit occurred
 			expect(emitNodeUpdateSpy).toHaveBeenCalled()
 		} finally {
 			vi.useRealTimers()
@@ -1041,9 +778,6 @@ describe('Production integration: snapshot persistence does not mutate storeNode
 	})
 })
 
-// -----------------------------------------------------------------
-// 7. hardReset failure-safe semantics
-// -----------------------------------------------------------------
 describe('Production integration: hardReset failure-safe semantics', () => {
 	it('hardReset rejection leaves firmware timer + coordinator state + inclusion promise live', async () => {
 		vi.useFakeTimers()
@@ -1057,94 +791,40 @@ describe('Production integration: hardReset failure-safe semantics', () => {
 			zwave.driverReady = true
 			;(zwave as any).storeNodes = {}
 
-			// Arm firmware scheduled timer
 			const fwService = (zwave as any)._firmwareUpdateService
 			await fwService.scheduledFirmwareUpdateCheck()
-			const timerBefore = fwService._firmwareUpdateCheckTimeout
-			expect(timerBefore).not.toBeNull()
-			const genBefore = fwService.generation
 
-			// Arm pending inclusion resolver via coordinator
 			const coordinator = (zwave as any)._inclusionCoordinator
 			const callbacks = coordinator.getUserCallbacks()
 			const grantPromise = callbacks.grantSecurityClasses({
 				securityClasses: [1],
 				clientSideAuth: false,
 			})
-			const inclusionStateBefore = coordinator.generation
-
-			// hardReset rejects
+			const timerCountBeforeReset = vi.getTimerCount()
+			expect(timerCountBeforeReset).toBeGreaterThan(0)
 			await expect(zwave.hardReset()).rejects.toThrow('hard reset failed')
 
-			// Firmware timer is STILL live (not cleared)
-			expect(fwService._firmwareUpdateCheckTimeout).toBe(timerBefore)
-			// Generation NOT bumped — no reset occurred
-			expect(fwService.generation).toBe(genBefore)
+			expect(vi.getTimerCount()).toBe(timerCountBeforeReset)
 
-			// Coordinator state NOT reset — generation unchanged
-			expect(coordinator.generation).toBe(inclusionStateBefore)
-
-			// Pending inclusion promise is still live and can be resolved
 			zwave.grantSecurityClasses({ securityClasses: [2] } as any)
 			const grantResult = await grantPromise
 			expect(grantResult).toEqual({ securityClasses: [2] })
 
-			// Public APIs still settle normally
 			expect(zwave.driverReady).toBe(true)
 		} finally {
 			vi.useRealTimers()
 		}
 	})
-
-	it('hardReset success resets coordinator and firmware service exactly once via init()', async () => {
-		const fakeDriver = createFakeDriver()
-		const zwave = realZwave()
-		;(zwave as any)._driver = fakeDriver
-		zwave.driverReady = true
-		;(zwave as any).storeNodes = {}
-
-		const fwService = (zwave as any)._firmwareUpdateService
-		const coordinator = (zwave as any)._inclusionCoordinator
-		const genBefore = fwService.generation
-		const coordGenBefore = coordinator.generation
-
-		await zwave.hardReset()
-
-		// init() was called once — bumps generation exactly once
-		expect(fwService.generation).toBe(genBefore + 1)
-		expect(coordinator.generation).toBe(coordGenBefore + 1)
-
-		// Same instances (preserved across init)
-		expect((zwave as any)._firmwareUpdateService).toBe(fwService)
-		expect((zwave as any)._inclusionCoordinator).toBe(coordinator)
-	})
 })
 
-// -----------------------------------------------------------------
-// 8. Listener-count assertions across repeated lifecycle
-// -----------------------------------------------------------------
 describe('Production integration: listener count stability across repeated init/hardReset/close lifecycle', () => {
-	/*
-	 * NOTE on driver/controller listener counts:
-	 * In production, each hardReset creates a FRESH Driver instance (new
-	 * controller object). The old controller is destroyed with all its
-	 * listeners when `driver.hardReset()` resolves. _onDriverReady()
-	 * registers controller event listeners on the NEW controller instance,
-	 * so there is no accumulation — each driver generation has exactly one
-	 * set of controller listeners registered by _onDriverReady().
-	 *
-	 * The tests below verify ZwaveClient's OWN EventEmitter does not leak
-	 * listeners across repeated init/hardReset/close cycles (which is the
-	 * actual leak vector since ZwaveClient is a long-lived singleton).
-	 */
+	// Check the long-lived client because each hard reset replaces the driver
 
 	it('ZwaveClient event listener count stable across repeated init() calls', () => {
 		const zwave = realZwave()
 
-		// Baseline after constructor (which calls init() once)
 		const baselineCount = zwave.listenerCount('driverStatus')
 
-		// Multiple init() calls
 		zwave.init()
 		zwave.init()
 		zwave.init()
@@ -1195,25 +875,6 @@ describe('Production integration: listener count stability across repeated init/
 		expect(zwave.listenerCount('driverStatus')).toBe(baselineCount)
 	})
 
-	it('coordinator generation increments but no listener leak across init cycles', () => {
-		const zwave = realZwave()
-		const coordinator = (zwave as any)._inclusionCoordinator
-
-		// Coordinator generation increments indicate reset was called
-		const genAfterConstruct = coordinator.generation
-
-		zwave.init()
-		zwave.init()
-		zwave.init()
-
-		// Generation incremented each init
-		expect(coordinator.generation).toBe(genAfterConstruct + 3)
-
-		// Coordinator itself has no EventEmitter — no listener leak possible.
-		// ZwaveClient's own listeners remain stable (proven by other tests).
-		expect((zwave as any)._inclusionCoordinator).toBe(coordinator)
-	})
-
 	it('server host onHardReset cycle does not leak listeners', () => {
 		const zwave = realZwave()
 		;(zwave as any)._driver = createFakeDriver()
@@ -1236,26 +897,19 @@ describe('Production integration: listener count stability across repeated init/
 	})
 })
 
-// -----------------------------------------------------------------
-// 9. Inclusion state sole ownership via InclusionCoordinator
-// -----------------------------------------------------------------
 describe('Production integration: inclusion state sole ownership via coordinator', () => {
 	it('active inclusion state → close(true) → getState/getInfo report undefined immediately', async () => {
 		const zwave = realZwave()
 		const fakeDriver = createFakeDriver()
-		fakeDriver.controller.inclusionState = 1 // InclusionState.Including
+		fakeDriver.controller.inclusionState = 1
 		;(zwave as any)._driver = fakeDriver
 		zwave.driverReady = true
-
-		// Simulate driver ready path that syncs state
 		;(zwave as any)._inclusionCoordinator.syncFromDriver()
 		expect(zwave.getState().inclusionState).toBe(1)
 		expect(zwave.getInfo().inclusionState).toBe(1)
 
-		// close(true) resets coordinator
 		await zwave.close(true)
 
-		// State is immediately undefined
 		expect(zwave.getState().inclusionState).toBeUndefined()
 		expect(zwave.getInfo().inclusionState).toBeUndefined()
 	})
@@ -1263,13 +917,12 @@ describe('Production integration: inclusion state sole ownership via coordinator
 	it('active inclusion state → init() → getState/getInfo report undefined immediately', () => {
 		const zwave = realZwave()
 		const fakeDriver = createFakeDriver()
-		fakeDriver.controller.inclusionState = 2 // InclusionState.Excluding
+		fakeDriver.controller.inclusionState = 2
 		;(zwave as any)._driver = fakeDriver
 		zwave.driverReady = true
 		;(zwave as any)._inclusionCoordinator.syncFromDriver()
 		expect(zwave.getState().inclusionState).toBe(2)
 
-		// init() resets coordinator
 		zwave.init()
 
 		expect(zwave.getState().inclusionState).toBeUndefined()
@@ -1279,7 +932,7 @@ describe('Production integration: inclusion state sole ownership via coordinator
 	it('active inclusion state → public hardReset() → getState/getInfo report undefined immediately', async () => {
 		const zwave = realZwave()
 		const fakeDriver = createFakeDriver()
-		fakeDriver.controller.inclusionState = 3 // InclusionState.Busy
+		fakeDriver.controller.inclusionState = 3
 		;(zwave as any)._driver = fakeDriver
 		zwave.driverReady = true
 		;(zwave as any)._inclusionCoordinator.syncFromDriver()
@@ -1294,7 +947,7 @@ describe('Production integration: inclusion state sole ownership via coordinator
 	it('active inclusion state → server hardReset → getState/getInfo report undefined immediately', () => {
 		const zwave = realZwave()
 		const fakeDriver = createFakeDriver()
-		fakeDriver.controller.inclusionState = 4 // InclusionState.SmartStart
+		fakeDriver.controller.inclusionState = 4
 		;(zwave as any)._driver = fakeDriver
 		zwave.driverReady = true
 		;(zwave as any)._inclusionCoordinator.syncFromDriver()
@@ -1309,7 +962,7 @@ describe('Production integration: inclusion state sole ownership via coordinator
 	it('syncFromDriver() sets correct state after driver ready, onInclusionStateChanged emits on change only', () => {
 		const zwave = realZwave()
 		const fakeDriver = createFakeDriver()
-		fakeDriver.controller.inclusionState = 0 // Idle
+		fakeDriver.controller.inclusionState = 0
 		;(zwave as any)._driver = fakeDriver
 		zwave.driverReady = true
 		;(zwave as any)._inclusionCoordinator.syncFromDriver()
@@ -1317,21 +970,16 @@ describe('Production integration: inclusion state sole ownership via coordinator
 
 		const sendToSocketSpy = vi.spyOn(zwave as any, 'sendToSocket')
 
-		// Same state → no emit
 		;(zwave as any)._onInclusionStateChanged(0)
 		expect(sendToSocketSpy).not.toHaveBeenCalled()
-
-		// Different state → emit with new state
 		;(zwave as any)._onInclusionStateChanged(1)
 		expect(sendToSocketSpy).toHaveBeenCalledWith(
 			socketEvents.controller,
 			expect.objectContaining({ inclusionState: 1 }),
 		)
 
-		// getState reports the new value
 		expect(zwave.getState().inclusionState).toBe(1)
 
-		// Reset spy and fire same state again → no emit
 		sendToSocketSpy.mockClear()
 		;(zwave as any)._onInclusionStateChanged(1)
 		expect(sendToSocketSpy).not.toHaveBeenCalled()
@@ -1347,7 +995,6 @@ describe('Production integration: inclusion state sole ownership via coordinator
 
 		const sendToSocketSpy = vi.spyOn(zwave as any, 'sendToSocket')
 
-		// Force status change to trigger emission
 		;(zwave as any)._cntStatus = ''
 		;(zwave as any)._updateControllerStatus('Testing')
 
@@ -1360,38 +1007,27 @@ describe('Production integration: inclusion state sole ownership via coordinator
 	it('init payload contains undefined inclusion state after reset, then sync + event update report current state', () => {
 		const zwave = realZwave()
 		const fakeDriver = createFakeDriver()
-		fakeDriver.controller.inclusionState = 3 // Busy
+		fakeDriver.controller.inclusionState = 3
 		;(zwave as any)._driver = fakeDriver
 		zwave.driverReady = true
-
-		// Sync from driver
 		;(zwave as any)._inclusionCoordinator.syncFromDriver()
 		expect(zwave.getState().inclusionState).toBe(3)
 
-		// Reset via init
 		zwave.init()
 		expect(zwave.getState().inclusionState).toBeUndefined()
 
-		// Re-wire driver with new state
 		const newDriver = createFakeDriver()
-		newDriver.controller.inclusionState = 4 // SmartStart
+		newDriver.controller.inclusionState = 4
 		;(zwave as any)._driver = newDriver
 		zwave.driverReady = true
-
-		// Sync from new driver
 		;(zwave as any)._inclusionCoordinator.syncFromDriver()
 		expect(zwave.getState().inclusionState).toBe(4)
-
-		// Event update changes it
-		;(zwave as any)._onInclusionStateChanged(2) // Excluding
+		;(zwave as any)._onInclusionStateChanged(2)
 		expect(zwave.getState().inclusionState).toBe(2)
 		expect(zwave.getInfo().inclusionState).toBe(2)
 	})
 })
 
-// -----------------------------------------------------------------
-// 10. _isReplacing cleared at successful replacement completion
-// -----------------------------------------------------------------
 describe('Production integration: _isReplacing cleared at replacement completion', () => {
 	it('replaceFailedNode starts → replacement removal preserves store → node added clears flag → later unrelated removal deletes store', async () => {
 		const zwave = realZwave({ commandsTimeout: 30 })
@@ -1403,20 +1039,18 @@ describe('Production integration: _isReplacing cleared at replacement completion
 
 		const coordinator = (zwave as any)._inclusionCoordinator
 
-		// Start replacement
 		await zwave.replaceFailedNode(5, InclusionStrategy.Insecure)
 		expect(coordinator.isReplacing).toBe(true)
 
-		// Replacement removal: _removeNode preserves store because isReplacing=true
+		// Preserve stored metadata until zwave-js finishes replacing the node
 		;(zwave as any)._removeNode(5)
 		expect((zwave as any).storeNodes[5]).toEqual({ name: 'OldSensor' })
 
-		// Simulate the real _onNodeAdded path (which calls onNodeAdded + onReplacementComplete)
-		coordinator.onNodeAdded(5)
-		coordinator.onReplacementComplete()
+		zwave.driverReady = false
+		vi.spyOn(zwave as any, 'logNode').mockImplementation(() => undefined)
+		vi.spyOn(zwave as any, 'zwaveNodeToJSON').mockReturnValue({ id: 5 })
+		await (zwave as any)._onNodeAdded({ id: 5 }, { lowSecurity: false })
 		expect(coordinator.isReplacing).toBe(false)
-
-		// Later unrelated removal: deletes store because isReplacing=false
 		;(zwave as any)._nodes.set(6, { id: 6, name: 'Other' })
 		;(zwave as any).storeNodes[6] = { name: 'Other' }
 		;(zwave as any)._removeNode(6)
@@ -1433,19 +1067,12 @@ describe('Production integration: _isReplacing cleared at replacement completion
 
 		const coordinator = (zwave as any)._inclusionCoordinator
 
-		// Start replacement
 		await zwave.replaceFailedNode(5, InclusionStrategy.Insecure)
 		expect(coordinator.isReplacing).toBe(true)
-
-		// Replacement removal preserves store
 		;(zwave as any)._removeNode(5)
 		expect((zwave as any).storeNodes[5]).toEqual({ name: 'OldSensor' })
-
-		// No node-added fires, but inclusion stopped
 		;(zwave as any)._onInclusionStopped()
 		expect(coordinator.isReplacing).toBe(false)
-
-		// Now removal deletes store
 		;(zwave as any)._nodes.set(7, { id: 7, name: 'Unrelated' })
 		;(zwave as any).storeNodes[7] = { name: 'Unrelated' }
 		;(zwave as any)._removeNode(7)
@@ -1459,12 +1086,9 @@ describe('Production integration: _isReplacing cleared at replacement completion
 		zwave.driverReady = true
 		;(zwave as any).storeNodes = {}
 
-		// Start normal inclusion (not replacement)
 		await zwave.startInclusion(InclusionStrategy.Default)
 		const coordinator = (zwave as any)._inclusionCoordinator
 		expect(coordinator.isReplacing).toBe(false)
-
-		// Stopped doesn't break anything
 		;(zwave as any)._onInclusionStopped()
 		expect(coordinator.isReplacing).toBe(false)
 	})

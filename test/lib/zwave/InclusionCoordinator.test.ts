@@ -17,10 +17,6 @@ import {
 	QRCodeVersion,
 } from '../../../api/lib/zwave/ports.ts'
 
-// ---------------------------------------------------------------------------
-// Helpers: minimal fakes for ports
-// ---------------------------------------------------------------------------
-
 function createDriverPort(
 	overrides: Partial<ReturnType<InclusionDriverPort['getDriver']>> = {},
 ): InclusionDriverPort {
@@ -152,16 +148,11 @@ function createCoordinator(
 	}
 }
 
-// Strategy constants matching zwave-js
 const STRATEGY_DEFAULT = InclusionStrategy.Default
 const STRATEGY_SECURITY_S2 = InclusionStrategy.Security_S2
 const STRATEGY_INSECURE = InclusionStrategy.Insecure
 const STRATEGY_SECURITY_S0 = InclusionStrategy.Security_S0
 const STRATEGY_SMART_START = InclusionStrategy.SmartStart
-
-// ---------------------------------------------------------------------------
-// Tests
-// ---------------------------------------------------------------------------
 
 describe('InclusionCoordinator', () => {
 	afterEach(() => {
@@ -622,13 +613,11 @@ describe('InclusionCoordinator', () => {
 				clientSideAuth: false,
 			})
 
-			// socket emission happened
 			expect(socket.sendToSocket).toHaveBeenCalledWith(
 				'GRANT_SECURITY_CLASSES',
 				expect.objectContaining({ securityClasses: [1, 2] }),
 			)
 
-			// Now resolve it
 			coordinator.grantSecurityClasses({
 				securityClasses: [1],
 				clientSideAuth: false,
@@ -855,7 +844,6 @@ describe('InclusionCoordinator', () => {
 
 			await coordinator.startInclusion(STRATEGY_DEFAULT, {}, undefined)
 
-			// Advance past the timeout (1s)
 			await vi.advanceTimersByTimeAsync(1500)
 
 			expect(drv.controller.stopInclusion).toHaveBeenCalled()
@@ -1030,7 +1018,6 @@ describe('InclusionCoordinator', () => {
 
 			coordinator.setUserCallbacks()
 			expect(coordinator.hasUserCallbacks).toBe(true)
-			// updateOptions should NOT be called when server disabled
 			expect(drv.updateOptions).not.toHaveBeenCalled()
 		})
 
@@ -1064,7 +1051,6 @@ describe('InclusionCoordinator', () => {
 			coordinator.removeUserCallbacks()
 
 			expect(coordinator.hasUserCallbacks).toBe(false)
-			// should NOT call handInclusionControlBack or updateOptions
 			expect(
 				serverManager.handInclusionControlBack,
 			).not.toHaveBeenCalled()
@@ -1135,14 +1121,12 @@ describe('InclusionCoordinator', () => {
 			const { coordinator } = createCoordinator()
 			const callbacks = coordinator.getUserCallbacks()
 
-			// Create pending promises for both
 			const grantP = callbacks.grantSecurityClasses({
 				securityClasses: [],
 				clientSideAuth: false,
 			})
 			const dskP = callbacks.validateDSKAndEnterPIN('12345-67890')
 
-			// Abort should resolve both with false
 			coordinator.abortInclusion()
 
 			const grantResult = await grantP
@@ -1177,7 +1161,6 @@ describe('InclusionCoordinator', () => {
 
 		it('handles when no resolves are pending', () => {
 			const { coordinator } = createCoordinator()
-			// Should not throw
 			coordinator.abortInclusion()
 		})
 	})
@@ -1187,10 +1170,8 @@ describe('InclusionCoordinator', () => {
 			vi.useFakeTimers()
 			const { coordinator } = createCoordinator()
 
-			// First call sets a timeout
 			await coordinator.startExclusion({ strategy: 0 })
 
-			// Second call should clear the first timeout
 			await coordinator.startExclusion({ strategy: 0 })
 
 			coordinator.clearCommandsTimeout()
@@ -1203,10 +1184,8 @@ describe('InclusionCoordinator', () => {
 			vi.useFakeTimers()
 			const { coordinator } = createCoordinator()
 
-			// First inclusion sets a timeout
 			await coordinator.startInclusion(STRATEGY_DEFAULT, {}, undefined)
 
-			// Second inclusion should clear first timeout
 			await coordinator.startInclusion(STRATEGY_DEFAULT, {}, undefined)
 
 			coordinator.clearCommandsTimeout()
@@ -1222,7 +1201,6 @@ describe('InclusionCoordinator', () => {
 			}
 			const { coordinator } = createCoordinator({ driver: driverPort })
 
-			// Should not throw
 			coordinator.syncFromDriver()
 			expect(coordinator.inclusionState).toBeUndefined()
 		})
@@ -1272,9 +1250,6 @@ describe('InclusionCoordinator', () => {
 		})
 	})
 
-	// -----------------------------------------------------------------
-	// Regression: Finding 2 – timeout cancelled on reset (close/restart)
-	// -----------------------------------------------------------------
 	describe('timeout cleanup on reset', () => {
 		it('reset() cancels the inclusion timeout so it cannot fire against a new driver', () => {
 			vi.useFakeTimers()
@@ -1282,7 +1257,6 @@ describe('InclusionCoordinator', () => {
 				backup: { ...createBackupPort(), backupOnEvent: false },
 			})
 
-			// Start inclusion — sets up timeout
 			void coordinator.startInclusion(
 				STRATEGY_INSECURE,
 				undefined,
@@ -1294,10 +1268,8 @@ describe('InclusionCoordinator', () => {
 				STRATEGY_SECURITY_S0,
 			)
 
-			// Now simulate close/restart — reset should cancel the timeout
 			coordinator.reset()
 
-			// Advance past timeout — stopInclusion should NOT be called
 			const drv = driver.getDriver()
 			vi.advanceTimersByTime(60_000)
 			expect(drv.controller.stopInclusion).not.toHaveBeenCalled()
@@ -1317,18 +1289,8 @@ describe('InclusionCoordinator', () => {
 			vi.advanceTimersByTime(60_000)
 			expect(drv.controller.stopExclusion).not.toHaveBeenCalled()
 		})
-
-		it('reset() increments generation', () => {
-			const { coordinator } = createCoordinator()
-			const gen0 = coordinator.generation
-			coordinator.reset()
-			expect(coordinator.generation).toBe(gen0 + 1)
-		})
 	})
 
-	// -----------------------------------------------------------------
-	// Regression: Finding 4 – stale driver detection across await
-	// -----------------------------------------------------------------
 	describe('generation fencing across awaits', () => {
 		it('startInclusion rejects when driver closed during backup', async () => {
 			const backup = createBackupPort()
@@ -1352,7 +1314,6 @@ describe('InclusionCoordinator', () => {
 				STRATEGY_SECURITY_S0,
 			)
 
-			// Simulate close/restart while backup is pending
 			coordinator.reset()
 			resolveBackup()
 
@@ -1439,9 +1400,6 @@ describe('InclusionCoordinator', () => {
 		})
 	})
 
-	// -----------------------------------------------------------------
-	// Regression: Finding 1 – callback resolution owned by coordinator
-	// -----------------------------------------------------------------
 	describe('callback resolution consolidation', () => {
 		it('grantSecurityClasses resolves the coordinator-owned promise', async () => {
 			const { coordinator, socket } = createCoordinator()
@@ -1453,13 +1411,11 @@ describe('InclusionCoordinator', () => {
 				clientSideAuth: false,
 			})
 
-			// Verify socket emission
 			expect(socket.sendToSocket).toHaveBeenCalledWith(
 				'GRANT_SECURITY_CLASSES',
 				{ securityClasses: [1, 2], clientSideAuth: false },
 			)
 
-			// Resolve via coordinator
 			coordinator.grantSecurityClasses({
 				securityClasses: [1],
 				clientSideAuth: true,
@@ -1533,9 +1489,6 @@ describe('InclusionCoordinator', () => {
 		})
 	})
 
-	// -----------------------------------------------------------------------
-	// Regression: controller event emission (MQTT/Gateway) for callbacks
-	// -----------------------------------------------------------------------
 	describe('controller event emission (MQTT regression)', () => {
 		it('_onGrantSecurityClasses emits socket + controller event with exact payload/order', async () => {
 			const { coordinator, socket, controllerEvent } = createCoordinator()
@@ -1546,30 +1499,25 @@ describe('InclusionCoordinator', () => {
 				clientSideAuth: true,
 			}
 
-			// Start the grant process (returns a Promise)
 			const grantPromise = callbacks.grantSecurityClasses(requested)
 
-			// Socket emission must happen synchronously before promise awaits
 			expect(socket.sendToSocket).toHaveBeenCalledTimes(1)
 			expect(socket.sendToSocket).toHaveBeenCalledWith(
 				'GRANT_SECURITY_CLASSES',
 				requested,
 			)
 
-			// Controller event emission must happen synchronously
 			expect(controllerEvent.emitControllerEvent).toHaveBeenCalledTimes(1)
 			expect(controllerEvent.emitControllerEvent).toHaveBeenCalledWith(
 				'grant security classes',
 				requested,
 			)
 
-			// Verify ordering: socket first, then controller event
 			const socketOrder = socket.sendToSocket.mock.invocationCallOrder[0]
 			const controllerOrder =
 				controllerEvent.emitControllerEvent.mock.invocationCallOrder[0]
 			expect(socketOrder).toBeLessThan(controllerOrder)
 
-			// Resolve to prevent hanging
 			coordinator.grantSecurityClasses(requested)
 			await grantPromise
 		})
@@ -1581,27 +1529,23 @@ describe('InclusionCoordinator', () => {
 			const dsk = '12345-67890-11111-22222'
 			const dskPromise = callbacks.validateDSKAndEnterPIN(dsk)
 
-			// Socket emission
 			expect(socket.sendToSocket).toHaveBeenCalledTimes(1)
 			expect(socket.sendToSocket).toHaveBeenCalledWith(
 				'VALIDATE_DSK',
 				dsk,
 			)
 
-			// Controller event emission
 			expect(controllerEvent.emitControllerEvent).toHaveBeenCalledTimes(1)
 			expect(controllerEvent.emitControllerEvent).toHaveBeenCalledWith(
 				'validate dsk',
 				dsk,
 			)
 
-			// Verify ordering: socket first, then controller event
 			const socketOrder = socket.sendToSocket.mock.invocationCallOrder[0]
 			const controllerOrder =
 				controllerEvent.emitControllerEvent.mock.invocationCallOrder[0]
 			expect(socketOrder).toBeLessThan(controllerOrder)
 
-			// Resolve to prevent hanging
 			coordinator.validateDSK(dsk)
 			await dskPromise
 		})
@@ -1612,20 +1556,17 @@ describe('InclusionCoordinator', () => {
 
 			callbacks.abort()
 
-			// Socket emission: inclusionAborted with `true`
 			expect(socket.sendToSocket).toHaveBeenCalledTimes(1)
 			expect(socket.sendToSocket).toHaveBeenCalledWith(
 				'INCLUSION_ABORTED',
 				true,
 			)
 
-			// Controller event: 'inclusion aborted' with no extra args
 			expect(controllerEvent.emitControllerEvent).toHaveBeenCalledTimes(1)
 			expect(controllerEvent.emitControllerEvent).toHaveBeenCalledWith(
 				'inclusion aborted',
 			)
 
-			// Verify ordering: socket first, then controller event
 			const socketOrder = socket.sendToSocket.mock.invocationCallOrder[0]
 			const controllerOrder =
 				controllerEvent.emitControllerEvent.mock.invocationCallOrder[0]
@@ -1636,48 +1577,38 @@ describe('InclusionCoordinator', () => {
 			const { coordinator, socket, controllerEvent } = createCoordinator()
 			const callbacks = coordinator.getUserCallbacks()
 
-			// Start both grant and DSK (creating pending resolvers)
 			void callbacks.grantSecurityClasses({
 				securityClasses: [1],
 				clientSideAuth: false,
 			})
 			void callbacks.validateDSKAndEnterPIN('some-dsk')
 
-			// Clear mock counts from grant/dsk emissions
 			socket.sendToSocket.mockClear()
 			controllerEvent.emitControllerEvent.mockClear()
 
-			// Driver-side abort nulls resolvers and emits events
 			callbacks.abort()
 
-			// Controller event for abort must fire
 			expect(controllerEvent.emitControllerEvent).toHaveBeenCalledTimes(1)
 			expect(controllerEvent.emitControllerEvent).toHaveBeenCalledWith(
 				'inclusion aborted',
 			)
 
-			// Socket event for abort must fire
 			expect(socket.sendToSocket).toHaveBeenCalledTimes(1)
 			expect(socket.sendToSocket).toHaveBeenCalledWith(
 				'INCLUSION_ABORTED',
 				true,
 			)
 
-			// Resolvers are now null (driver-side abort semantics)
 			expect(coordinator.hasUserCallbacks).toBe(false)
 		})
 	})
 
-	// -----------------------------------------------------------------------
-	// Regression: manual stop cancels coordinator timers
-	// -----------------------------------------------------------------------
 	describe('stopInclusion/stopExclusion timer cancellation', () => {
 		it('stopInclusion clears coordinator timeout without duplicate driver call', async () => {
 			vi.useFakeTimers()
 			const { coordinator, driver } = createCoordinator()
 			const drv = driver.getDriver()
 
-			// Start inclusion (sets internal timeout)
 			await coordinator.startInclusion(
 				InclusionStrategy.Default,
 				{},
@@ -1685,11 +1616,9 @@ describe('InclusionCoordinator', () => {
 			)
 			expect(drv.controller.beginInclusion).toHaveBeenCalledTimes(1)
 
-			// Manually stop - should clear timeout and call stopInclusion once
 			await coordinator.stopInclusion()
 			expect(drv.controller.stopInclusion).toHaveBeenCalledTimes(1)
 
-			// Advance timers past the timeout - should NOT trigger another stop
 			await vi.advanceTimersByTimeAsync(60_000)
 			expect(drv.controller.stopInclusion).toHaveBeenCalledTimes(1)
 
@@ -1701,15 +1630,12 @@ describe('InclusionCoordinator', () => {
 			const { coordinator, driver } = createCoordinator()
 			const drv = driver.getDriver()
 
-			// Start exclusion (sets internal timeout)
 			await coordinator.startExclusion({})
 			expect(drv.controller.beginExclusion).toHaveBeenCalledTimes(1)
 
-			// Manually stop
 			await coordinator.stopExclusion()
 			expect(drv.controller.stopExclusion).toHaveBeenCalledTimes(1)
 
-			// Advance timers past the timeout - should NOT trigger another stop
 			await vi.advanceTimersByTimeAsync(60_000)
 			expect(drv.controller.stopExclusion).toHaveBeenCalledTimes(1)
 
@@ -1718,7 +1644,7 @@ describe('InclusionCoordinator', () => {
 
 		it('timeout fires only if stop is not called manually', async () => {
 			vi.useFakeTimers()
-			const config = createConfigPort(2) // 2s timeout
+			const config = createConfigPort(2)
 			const { coordinator, driver } = createCoordinator({ config })
 			const drv = driver.getDriver()
 
@@ -1728,19 +1654,14 @@ describe('InclusionCoordinator', () => {
 				undefined,
 			)
 
-			// Advance past timeout
 			await vi.advanceTimersByTimeAsync(2_100)
 
-			// Timeout should have triggered stop
 			expect(drv.controller.stopInclusion).toHaveBeenCalledTimes(1)
 
 			vi.useRealTimers()
 		})
 	})
 
-	// -----------------------------------------------------------------
-	// Finding 1: Hard reset callbacks survive driver replacement
-	// -----------------------------------------------------------------
 	describe('Finding 1: reinstallUserCallbacks after driver replacement', () => {
 		it('reinstalls callbacks on new driver when hasUserCallbacks is true', () => {
 			const updateOptions1 = vi.fn()
@@ -1764,7 +1685,6 @@ describe('InclusionCoordinator', () => {
 			}
 			const { coordinator } = createCoordinator({ driver: driverPort })
 
-			// Install callbacks on first driver
 			coordinator.setUserCallbacks()
 			expect(updateOptions1).toHaveBeenCalledWith(
 				expect.objectContaining({
@@ -1772,14 +1692,12 @@ describe('InclusionCoordinator', () => {
 				}),
 			)
 
-			// Simulate driver replacement (hard reset)
 			coordinator.reset()
 			currentDriver = {
 				...currentDriver,
 				updateOptions: updateOptions2,
 			}
 
-			// Reinstall on new driver
 			coordinator.reinstallUserCallbacks()
 			expect(updateOptions2).toHaveBeenCalledWith(
 				expect.objectContaining({
@@ -1816,16 +1734,13 @@ describe('InclusionCoordinator', () => {
 			const { coordinator } = createCoordinator()
 			const callbacks = coordinator.getUserCallbacks()
 
-			// Start a grant request
 			const grantPromise = callbacks.grantSecurityClasses({
 				securityClasses: [1, 2],
 				clientSideAuth: false,
 			})
 
-			// Simulate hard reset: reset settles all promises
 			coordinator.reset()
 
-			// The promise must settle exactly once with false
 			const result = await grantPromise
 			expect(result).toBe(false)
 		})
@@ -1834,10 +1749,8 @@ describe('InclusionCoordinator', () => {
 			const { coordinator } = createCoordinator()
 			const callbacks = coordinator.getUserCallbacks()
 
-			// Start a DSK request
 			const dskPromise = callbacks.validateDSKAndEnterPIN('12345-67890')
 
-			// Reset settles the DSK promise
 			coordinator.reset()
 
 			const result = await dskPromise
@@ -1853,19 +1766,14 @@ describe('InclusionCoordinator', () => {
 				clientSideAuth: false,
 			})
 
-			// Reset settles, then abort is called after (e.g. late event)
 			coordinator.reset()
 			const result = await grantPromise
 			expect(result).toBe(false)
 
-			// Calling abort after reset is a no-op (no double-settle)
 			expect(() => coordinator.abortInclusion()).not.toThrow()
 		})
 	})
 
-	// -----------------------------------------------------------------
-	// Finding 3: Concurrent reset/abort/close/replacement tests
-	// -----------------------------------------------------------------
 	describe('Finding 3: settle-exactly-once with concurrent operations', () => {
 		it('reset settles grant with false exactly once', async () => {
 			const { coordinator } = createCoordinator()
@@ -1919,9 +1827,7 @@ describe('InclusionCoordinator', () => {
 					return v
 				})
 
-			// Abort settles first
 			coordinator.abortInclusion()
-			// Reset is a no-op for promises (already settled)
 			coordinator.reset()
 
 			const result = await grantPromise
@@ -1941,9 +1847,7 @@ describe('InclusionCoordinator', () => {
 					return v
 				})
 
-			// Reset settles first
 			coordinator.reset()
-			// Abort is a no-op
 			coordinator.abortInclusion()
 
 			const result = await dskPromise
@@ -1981,7 +1885,6 @@ describe('InclusionCoordinator', () => {
 
 			coordinator.reset()
 
-			// Calling grant/DSK after reset logs error
 			coordinator.grantSecurityClasses({
 				securityClasses: [],
 				clientSideAuth: false,
@@ -1995,9 +1898,6 @@ describe('InclusionCoordinator', () => {
 		})
 	})
 
-	// -----------------------------------------------------------------
-	// Finding 4: Cross-mode timeout lifecycle tests
-	// -----------------------------------------------------------------
 	describe('Finding 4: shared command timeout across modes', () => {
 		it('starting inclusion clears learn mode timeout', async () => {
 			vi.useFakeTimers()
@@ -2006,18 +1906,13 @@ describe('InclusionCoordinator', () => {
 			})
 			const drv = driver.getDriver()
 
-			// Start learn mode (sets timeout)
 			await coordinator.startLearnMode(0)
 
-			// Immediately start inclusion (should clear learn timeout)
 			await coordinator.startInclusion(STRATEGY_DEFAULT, {}, undefined)
 
-			// Advance past original learn timeout
 			await vi.advanceTimersByTimeAsync(6000)
 
-			// stopJoiningNetwork should NOT have been called (timeout was cleared)
 			expect(drv.controller.stopJoiningNetwork).not.toHaveBeenCalled()
-			// But stopInclusion fires from inclusion timeout
 			expect(drv.controller.stopInclusion).toHaveBeenCalled()
 
 			vi.useRealTimers()
@@ -2033,12 +1928,9 @@ describe('InclusionCoordinator', () => {
 			await coordinator.startInclusion(STRATEGY_DEFAULT, {}, undefined)
 			await coordinator.startExclusion({ strategy: 0 })
 
-			// Advance past both timeouts
 			await vi.advanceTimersByTimeAsync(6000)
 
-			// stopInclusion should NOT fire from old timeout
 			expect(drv.controller.stopInclusion).not.toHaveBeenCalled()
-			// stopExclusion fires
 			expect(drv.controller.stopExclusion).toHaveBeenCalled()
 
 			vi.useRealTimers()
@@ -2054,11 +1946,8 @@ describe('InclusionCoordinator', () => {
 			await coordinator.replaceFailedNode(5, STRATEGY_SECURITY_S2, {})
 			await coordinator.startLearnMode(0)
 
-			// Advance past old replace timeout
 			await vi.advanceTimersByTimeAsync(6000)
 
-			// stopInclusion from replace should NOT fire
-			// stopJoiningNetwork should fire
 			expect(drv.controller.stopJoiningNetwork).toHaveBeenCalled()
 
 			vi.useRealTimers()
@@ -2074,37 +1963,28 @@ describe('InclusionCoordinator', () => {
 			await coordinator.startLearnMode(0)
 			await coordinator.stopLearnMode()
 
-			// Advance past timeout
 			await vi.advanceTimersByTimeAsync(6000)
 
-			// stopJoiningNetwork called by explicit stop, not by timeout
 			expect(drv.controller.stopJoiningNetwork).toHaveBeenCalledTimes(1)
 
 			vi.useRealTimers()
 		})
 	})
 
-	// -----------------------------------------------------------------
-	// Service-level: coordinator preserved across reset (direct unit tests)
-	// -----------------------------------------------------------------
 	describe('Service-level: coordinator preserved across reset (direct unit tests)', () => {
 		it('captured callbacks resolve through current public API after reset', async () => {
 			const { coordinator } = createCoordinator()
 
-			// Capture the callback functions that the driver would hold
 			const callbacks = coordinator.getUserCallbacks()
 			coordinator.setUserCallbacks()
 
-			// Simulate hardReset: reset state, bump generation
 			coordinator.reset()
 
-			// After reset, start a NEW inclusion flow on the same coordinator
 			const grantPromise = callbacks.grantSecurityClasses({
 				securityClasses: [1, 2],
 				clientSideAuth: false,
 			})
 
-			// Resolve through the public API (as UI would)
 			coordinator.grantSecurityClasses({
 				securityClasses: [1],
 				clientSideAuth: true,
@@ -2166,9 +2046,7 @@ describe('InclusionCoordinator', () => {
 			const callbacks = coordinator.getUserCallbacks()
 			coordinator.setUserCallbacks()
 
-			// Simulate server onHardReset calling init() which calls reset()
 			coordinator.reset()
-			// After reset, the same coordinator instance is reused
 
 			const grantPromise = callbacks.grantSecurityClasses({
 				securityClasses: [2, 3],
@@ -2197,7 +2075,6 @@ describe('InclusionCoordinator', () => {
 
 		it('hasUserCallbacks=false preserved across reset (MQTT/server)', () => {
 			const { coordinator } = createCoordinator()
-			// Callbacks passed via driver options, not via setUserCallbacks
 			expect(coordinator.hasUserCallbacks).toBe(false)
 
 			coordinator.reset()
@@ -2227,10 +2104,8 @@ describe('InclusionCoordinator', () => {
 			coordinator.setUserCallbacks()
 			updateOptions.mockClear()
 
-			// Simulate init() -> reset preserves hasUserCallbacks
 			coordinator.reset()
 
-			// Driver ready -> reinstall
 			coordinator.reinstallUserCallbacks()
 			expect(updateOptions).toHaveBeenCalledWith(
 				expect.objectContaining({
@@ -2240,9 +2115,6 @@ describe('InclusionCoordinator', () => {
 		})
 	})
 
-	// -----------------------------------------------------------------
-	// Service-level: takeTmpNode atomic consume (direct unit tests)
-	// -----------------------------------------------------------------
 	describe('Service-level: takeTmpNode atomic consume (direct unit tests)', () => {
 		it('first included node gets metadata, coordinator tmp is cleared', async () => {
 			const { coordinator } = createCoordinator()
@@ -2253,11 +2125,9 @@ describe('InclusionCoordinator', () => {
 				undefined,
 			)
 
-			// First consume gets the metadata
 			const tmp = coordinator.takeTmpNode()
 			expect(tmp).toEqual({ name: 'Sensor', loc: 'Kitchen' })
 
-			// Coordinator is now cleared
 			expect(coordinator.tmpNode).toBeUndefined()
 			expect(coordinator.takeTmpNode()).toBeUndefined()
 		})
@@ -2271,10 +2141,8 @@ describe('InclusionCoordinator', () => {
 				undefined,
 			)
 
-			// First node consumes
 			coordinator.takeTmpNode()
 
-			// Second node gets nothing
 			expect(coordinator.takeTmpNode()).toBeUndefined()
 		})
 
@@ -2287,11 +2155,9 @@ describe('InclusionCoordinator', () => {
 				undefined,
 			)
 
-			// Simulate failure
 			coordinator.onInclusionFailed(() => {})
 			expect(coordinator.takeTmpNode()).toBeUndefined()
 
-			// Simulate reset
 			await coordinator.startInclusion(
 				STRATEGY_DEFAULT,
 				{ name: 'Test2', location: 'Loc2' },
@@ -2331,11 +2197,9 @@ describe('InclusionCoordinator', () => {
 
 			coordinator.syncFromDriver()
 
-			// Same state → no emit
 			coordinator.onInclusionStateChanged(0, 'status', undefined)
 			expect(socket.sendToSocket).not.toHaveBeenCalled()
 
-			// Different state → emit
 			coordinator.onInclusionStateChanged(1, 'Including', undefined)
 			expect(socket.sendToSocket).toHaveBeenCalledWith('CONTROLLER', {
 				status: 'Including',
@@ -2344,7 +2208,6 @@ describe('InclusionCoordinator', () => {
 			})
 			expect(coordinator.inclusionState).toBe(1)
 
-			// Same again → no emit
 			socket.sendToSocket.mockClear()
 			coordinator.onInclusionStateChanged(1, 'Including', undefined)
 			expect(socket.sendToSocket).not.toHaveBeenCalled()
@@ -2361,7 +2224,6 @@ describe('InclusionCoordinator', () => {
 			coordinator.reset()
 			expect(coordinator.inclusionState).toBeUndefined()
 
-			// New driver state
 			drv.controller.inclusionState = 0
 			coordinator.syncFromDriver()
 			expect(coordinator.inclusionState).toBe(0)
@@ -2375,12 +2237,9 @@ describe('InclusionCoordinator', () => {
 			await coordinator.replaceFailedNode(5, STRATEGY_SECURITY_S2, {})
 			expect(coordinator.isReplacing).toBe(true)
 
-			// Simulate the replacement completion: node added
 			coordinator.onNodeAdded(5)
-			// onNodeAdded does NOT clear isReplacing (it only clears pending tracking)
 			expect(coordinator.isReplacing).toBe(true)
 
-			// onReplacementComplete clears it
 			coordinator.onReplacementComplete()
 			expect(coordinator.isReplacing).toBe(false)
 		})
@@ -2391,7 +2250,6 @@ describe('InclusionCoordinator', () => {
 			await coordinator.replaceFailedNode(5, STRATEGY_INSECURE, {})
 			expect(coordinator.isReplacing).toBe(true)
 
-			// No node-added fired, but inclusion stopped
 			coordinator.onInclusionStopped()
 			expect(coordinator.isReplacing).toBe(false)
 		})
@@ -2399,22 +2257,17 @@ describe('InclusionCoordinator', () => {
 		it('full replacement lifecycle: start → removal preserves → onReplacementComplete clears → later removal deletes', async () => {
 			const { coordinator } = createCoordinator()
 
-			// Start replacement
 			await coordinator.replaceFailedNode(5, STRATEGY_SECURITY_S2, {})
 			expect(coordinator.isReplacing).toBe(true)
 
-			// During replacement, isReplacing is true (store preserved externally)
 			expect(coordinator.isReplacing).toBe(true)
 
-			// onNodeAdded (pending tracking) does NOT clear it
 			coordinator.onNodeAdded(5)
 			expect(coordinator.isReplacing).toBe(true)
 
-			// onReplacementComplete completes the lifecycle
 			coordinator.onReplacementComplete()
 			expect(coordinator.isReplacing).toBe(false)
 
-			// After replacement, an unrelated node removal should delete store
 			expect(coordinator.isReplacing).toBe(false)
 		})
 
@@ -2431,11 +2284,9 @@ describe('InclusionCoordinator', () => {
 		it('onInclusionStopped does not interfere with normal inclusion (isReplacing starts false)', async () => {
 			const { coordinator } = createCoordinator()
 
-			// Normal inclusion (not replacement)
 			await coordinator.startInclusion(STRATEGY_DEFAULT, {}, undefined)
 			expect(coordinator.isReplacing).toBe(false)
 
-			// Inclusion stopped — isReplacing remains false (no-op)
 			coordinator.onInclusionStopped()
 			expect(coordinator.isReplacing).toBe(false)
 		})

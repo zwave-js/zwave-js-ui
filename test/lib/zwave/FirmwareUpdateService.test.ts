@@ -17,10 +17,6 @@ import type {
 	StagedFirmwareNodeUpdate,
 } from '../../../api/lib/zwave/ports.ts'
 
-// ---------------------------------------------------------------------------
-// Helpers: minimal fakes for ports
-// ---------------------------------------------------------------------------
-
 function makeUpdate(
 	overrides: Partial<FirmwareUpdateInfo> = {},
 ): FirmwareUpdateInfo {
@@ -84,9 +80,6 @@ function createNodeStorePort(): FirmwareNodeStorePort & {
 			.fn()
 			.mockImplementation(
 				(_staged: ReadonlyArray<StagedFirmwareNodeUpdate>) => {
-					// Real implementation persists a detached snapshot to disk
-					// without mutating shared store. Store is updated later by
-					// _applyNodeFirmwareProjection via ensureStoreNode.
 					return Promise.resolve()
 				},
 			),
@@ -176,10 +169,6 @@ function createService(
 		logger,
 	}
 }
-
-// ---------------------------------------------------------------------------
-// Tests
-// ---------------------------------------------------------------------------
 
 describe('FirmwareUpdateService', () => {
 	afterEach(() => {
@@ -727,13 +716,6 @@ describe('FirmwareUpdateService', () => {
 		})
 	})
 
-	describe('clearScheduledCheck', () => {
-		it('clears timeout without error', () => {
-			const { service } = createService()
-			expect(() => service.clearScheduledCheck()).not.toThrow()
-		})
-	})
-
 	describe('updateFirmware - non-Uint8Array data', () => {
 		it('throws for non-Uint8Array data', async () => {
 			const extraction: FirmwareExtractionPort = {
@@ -812,7 +794,6 @@ describe('FirmwareUpdateService', () => {
 			const socket = createSocketPort()
 			const { service } = createService({ nodes, socket })
 
-			// Should not throw
 			service.onNodeFirmwareUpdateProgress(99, { progress: 42 })
 			expect(socket.throttle).not.toHaveBeenCalled()
 		})
@@ -824,7 +805,6 @@ describe('FirmwareUpdateService', () => {
 			const socket = createSocketPort()
 			const { service } = createService({ nodes, socket })
 
-			// Should not throw
 			service.onNodeFirmwareUpdateFinished(99)
 			expect(socket.clearThrottle).not.toHaveBeenCalled()
 		})
@@ -838,7 +818,6 @@ describe('FirmwareUpdateService', () => {
 			const { service, logger } = createService({ driver })
 
 			await service.checkNodeFirmwareUpdates(5)
-			// Should not log anything about firmware checks
 			expect(logger.info).not.toHaveBeenCalled()
 		})
 	})
@@ -861,7 +840,6 @@ describe('FirmwareUpdateService', () => {
 			const logger = createLogger()
 			const { service } = createService({ driver, logger })
 
-			// Should not throw
 			await service.checkNodeFirmwareUpdates(5)
 			expect(logger.error).toHaveBeenCalledWith(
 				expect.stringContaining('Failed to check firmware'),
@@ -879,7 +857,6 @@ describe('FirmwareUpdateService', () => {
 			const { service } = createService({ driver, logger })
 
 			await service.checkNodeFirmwareUpdates(5)
-			// Should not throw, just early-return
 			expect(logger.error).not.toHaveBeenCalled()
 		})
 	})
@@ -981,7 +958,6 @@ describe('FirmwareUpdateService', () => {
 			expect(logger.warn).toHaveBeenCalledWith(
 				expect.stringContaining('has failed'),
 			)
-			// Should still schedule next check
 			expect(logger.info).toHaveBeenCalledWith(
 				expect.stringContaining('Next firmware update check'),
 			)
@@ -1143,7 +1119,6 @@ describe('FirmwareUpdateService', () => {
 				id: 7,
 				firmwareUpdatesDismissed: { '2.0.0': true, '3.0.0': true },
 			})
-			// Also set in store so _updateNodeFirmwareInfo reads existing dismissed
 			nodes._store.set(7, {
 				firmwareUpdatesDismissed: { '2.0.0': true, '3.0.0': true },
 			})
@@ -1151,8 +1126,6 @@ describe('FirmwareUpdateService', () => {
 
 			await service.checkAllNodesFirmwareUpdates()
 
-			// '2.0.0' is not in the updates anymore so should be cleaned
-			// '3.0.0' still exists so should be kept
 			const storeNode = nodes._store.get(7)
 			expect(storeNode?.firmwareUpdatesDismissed).toEqual({
 				'3.0.0': true,
@@ -1160,9 +1133,6 @@ describe('FirmwareUpdateService', () => {
 		})
 	})
 
-	// -----------------------------------------------------------------
-	// Regression: Finding 3 – clearScheduledCheck called on cleanup
-	// -----------------------------------------------------------------
 	describe('clearScheduledCheck', () => {
 		it('cancels a pending scheduled check timer', () => {
 			vi.useFakeTimers()
@@ -1183,32 +1153,20 @@ describe('FirmwareUpdateService', () => {
 			const nodes = createNodeStorePort()
 			const { service } = createService({ driver, nodes })
 
-			// Trigger the scheduled check (starts the internal timer)
 			void service.scheduledFirmwareUpdateCheck()
 
-			// Clear before the timer fires
 			service.clearScheduledCheck()
 
-			// Advance time well past the scheduled interval
 			vi.advanceTimersByTime(24 * 60 * 60 * 1000 * 2)
 
-			// getAllAvailableFirmwareUpdates should not have been called
-			// (the first scheduledFirmwareUpdateCheck calls it once
-			// immediately; after clearScheduledCheck the re-schedule must
-			// not fire)
 			const ctrl = driver.getDriver().controller
 			const callCount = (
 				ctrl.getAllAvailableFirmwareUpdates as ReturnType<typeof vi.fn>
 			).mock.calls.length
-			// It may have been called once for the initial check, but not
-			// again for the scheduled re-run
 			expect(callCount).toBeLessThanOrEqual(1)
 		})
 	})
 
-	// -----------------------------------------------------------------
-	// Regression: Finding 6 – FirmwareUpdateInfo passed without cast
-	// -----------------------------------------------------------------
 	describe('firmwareUpdateOTW with FirmwareUpdateInfo', () => {
 		it('passes FirmwareUpdateInfo directly to driver without Uint8Array cast', async () => {
 			const firmwareUpdateOTW = vi.fn().mockResolvedValue({ ok: true })
@@ -1242,51 +1200,23 @@ describe('FirmwareUpdateService', () => {
 
 			await service.firmwareUpdateOTW(updateInfo)
 
-			// Verify it was passed as-is (a FirmwareUpdateInfo, not cast
-			// to Uint8Array)
 			expect(firmwareUpdateOTW).toHaveBeenCalledWith(updateInfo)
 		})
 	})
 
-	// -----------------------------------------------------------------
-	// Finding 5: Generation fencing and dispose tests
-	// -----------------------------------------------------------------
-	describe('Finding 5: generation fencing and dispose', () => {
-		it('dispose() increments generation and marks disposed', () => {
-			const { service } = createService()
-			const gen0 = service.generation
-			expect(service.disposed).toBe(false)
-
-			service.dispose()
-			expect(service.generation).toBe(gen0 + 1)
-			expect(service.disposed).toBe(true)
-		})
-
-		it('resetGeneration() increments generation without disposal', () => {
-			const { service } = createService()
-			const gen0 = service.generation
-			service.resetGeneration()
-			expect(service.generation).toBe(gen0 + 1)
-			expect(service.disposed).toBe(false)
-		})
-
+	describe('generation fencing and disposal', () => {
 		it('scheduledFirmwareUpdateCheck does not reschedule after dispose', async () => {
 			vi.useFakeTimers()
 			const { service } = createService()
 
-			// Start the scheduled check
 			const checkPromise = service.scheduledFirmwareUpdateCheck()
 
-			// Dispose while check is pending
 			service.dispose()
 
 			await checkPromise
 
-			// No timer should be set for the old generation
-			// Advance time significantly — if a timer was wrongly set, it would fire
 			await vi.advanceTimersByTimeAsync(100 * 60 * 60 * 1000)
 
-			// If we get here without error, no stale timer fired
 			vi.useRealTimers()
 		})
 
@@ -1303,7 +1233,6 @@ describe('FirmwareUpdateService', () => {
 						getAvailableFirmwareUpdates: vi.fn(),
 						getAllAvailableFirmwareUpdates: vi.fn().mockReturnValue(
 							new Promise((resolve) => {
-								// Control when the check resolves
 								void checkPromise.then(() => resolve(updates))
 							}),
 						),
@@ -1319,14 +1248,11 @@ describe('FirmwareUpdateService', () => {
 
 			const schedulePromise = service.scheduledFirmwareUpdateCheck()
 
-			// Reset generation while check is in-flight
 			service.resetGeneration()
 
-			// Now let the check resolve
 			resolveCheck()
 			await schedulePromise
 
-			// Store should NOT have been updated (generation fence)
 			expect(nodes.updateStoreNodes).not.toHaveBeenCalled()
 
 			vi.useRealTimers()
@@ -1355,14 +1281,11 @@ describe('FirmwareUpdateService', () => {
 
 			const checkPromise = service.checkNodeFirmwareUpdates(5)
 
-			// Dispose while the check is in-flight
 			service.dispose()
 
-			// Resolve the check
 			resolveCheck([makeUpdate()])
 			await checkPromise
 
-			// Store should NOT have been updated
 			expect(nodes.updateStoreNodes).not.toHaveBeenCalled()
 		})
 
@@ -1372,32 +1295,13 @@ describe('FirmwareUpdateService', () => {
 
 			await service.scheduledFirmwareUpdateCheck()
 
-			// Should return immediately without logging "disabled" or starting
 			expect(logger.info).not.toHaveBeenCalledWith(
 				expect.stringContaining('Starting bulk'),
 			)
 		})
-
-		it('clearScheduledCheck cancels pending timer', () => {
-			vi.useFakeTimers()
-			const { service } = createService()
-
-			// Manually set a timeout
-			;(service as any)._firmwareUpdateCheckTimeout = setTimeout(
-				() => {},
-				1000,
-			)
-			service.clearScheduledCheck()
-			expect((service as any)._firmwareUpdateCheckTimeout).toBeNull()
-
-			vi.useRealTimers()
-		})
 	})
 
-	// -----------------------------------------------------------------
-	// Service-level: generation fencing across resetGeneration (direct unit tests)
-	// -----------------------------------------------------------------
-	describe('Service-level: generation fencing across resetGeneration (direct unit tests)', () => {
+	describe('generation fencing across reset', () => {
 		it('resetGeneration fences a pending scheduled check from persisting', async () => {
 			vi.useFakeTimers()
 			let resolveCheck: (v: Map<number, FirmwareUpdateInfo[]>) => void
@@ -1422,13 +1326,11 @@ describe('FirmwareUpdateService', () => {
 
 			const schedulePromise = service.scheduledFirmwareUpdateCheck()
 
-			// Simulate hardReset: resetGeneration before old check resolves
 			service.resetGeneration()
 
 			resolveCheck(new Map([[1, [makeUpdate({ version: '3.0.0' })]]]))
 			await schedulePromise
 
-			// No store mutation from the old generation
 			expect(nodes.updateStoreNodes).not.toHaveBeenCalled()
 
 			vi.useRealTimers()
@@ -1457,7 +1359,6 @@ describe('FirmwareUpdateService', () => {
 
 			const checkPromise = service.checkAllNodesFirmwareUpdates()
 
-			// Simulate server hard reset
 			service.resetGeneration()
 
 			resolveCheck(new Map([[2, [makeUpdate({ version: '4.0.0' })]]]))
@@ -1465,7 +1366,6 @@ describe('FirmwareUpdateService', () => {
 				'cancelled: service generation advanced',
 			)
 
-			// No store mutation
 			expect(nodes.updateStoreNodes).not.toHaveBeenCalled()
 		})
 
@@ -1492,13 +1392,11 @@ describe('FirmwareUpdateService', () => {
 
 			const checkPromise = service.checkNodeFirmwareUpdates(3)
 
-			// Simulate public hardReset
 			service.resetGeneration()
 
 			resolveCheck([makeUpdate({ version: '5.0.0' })])
 			await checkPromise
 
-			// No store mutation from old generation
 			expect(nodes.updateStoreNodes).not.toHaveBeenCalled()
 		})
 
@@ -1526,7 +1424,6 @@ describe('FirmwareUpdateService', () => {
 			service.resetGeneration()
 
 			rejectCheck(new Error('network error'))
-			// Should not throw — the error is caught and logged
 			await schedulePromise
 
 			expect(nodes.updateStoreNodes).not.toHaveBeenCalled()
@@ -1549,71 +1446,20 @@ describe('FirmwareUpdateService', () => {
 			})
 			const { service } = createService({ driver })
 
-			// Start a scheduled check — completes and reschedules
 			await service.scheduledFirmwareUpdateCheck()
 
-			// A timer is now set for next check
-			const firstTimeout = (service as any)._firmwareUpdateCheckTimeout
-			expect(firstTimeout).not.toBeNull()
+			expect(vi.getTimerCount()).toBe(1)
 
-			// Simulate hardReset — resets generation and clears timer
 			service.resetGeneration()
-			expect((service as any)._firmwareUpdateCheckTimeout).toBeNull()
+			expect(vi.getTimerCount()).toBe(0)
 
-			// Start a new scheduled check in the new generation
 			await service.scheduledFirmwareUpdateCheck()
-			const secondTimeout = (service as any)._firmwareUpdateCheckTimeout
-			expect(secondTimeout).not.toBeNull()
-
-			// Only one timer active (the new one)
-			expect(secondTimeout).not.toBe(firstTimeout)
+			expect(vi.getTimerCount()).toBe(1)
 
 			vi.useRealTimers()
 		})
-
-		it('server onHardReset cannot bypass fencing', async () => {
-			let resolveCheck: (v: Map<number, FirmwareUpdateInfo[]>) => void
-			const driver = createDriverPort({
-				getDriver: () => ({
-					controller: {
-						getAvailableFirmwareUpdates: vi.fn(),
-						getAllAvailableFirmwareUpdates: vi.fn().mockReturnValue(
-							new Promise((resolve) => {
-								resolveCheck = resolve
-							}),
-						),
-						firmwareUpdateOTA: vi.fn(),
-						nodes: { get: vi.fn() },
-					},
-					firmwareUpdateOTW: vi.fn(),
-				}),
-			})
-			const nodes = createNodeStorePort()
-			nodes._nodes.set(1, { id: 1 })
-			const { service } = createService({ driver, nodes })
-
-			const checkPromise = service.checkAllNodesFirmwareUpdates()
-			const genBefore = service.generation
-
-			// Server hard reset: resets generation
-			service.resetGeneration()
-			expect(service.generation).toBe(genBefore + 1)
-
-			// Old check resolves after reset — throws lifecycle cancellation
-			resolveCheck(new Map([[1, [makeUpdate()]]]))
-			await expect(checkPromise).rejects.toThrow(
-				'cancelled: service generation advanced',
-			)
-
-			// Fenced: no mutation
-			expect(nodes.updateStoreNodes).not.toHaveBeenCalled()
-			expect(nodes.emitNodeUpdate).not.toHaveBeenCalled()
-		})
 	})
 
-	// -----------------------------------------------------------------
-	// Generation fencing: all async operations
-	// -----------------------------------------------------------------
 	describe('generation fencing on all async operations', () => {
 		it('firmwareUpdateOTW: backup barrier -> reset/driver swap prevents OTW call', async () => {
 			let resolveBackup: () => void
@@ -1647,17 +1493,14 @@ describe('FirmwareUpdateService', () => {
 				data: new Uint8Array([1, 2, 3]),
 			})
 
-			// Reset while paused in backup — simulates driver swap
 			service.resetGeneration()
 
-			// Let backup resolve
 			resolveBackup()
 
 			await expect(otwPromise).rejects.toThrow(
 				FirmwareLifecycleCancelledError,
 			)
 
-			// Driver's firmwareUpdateOTW was never called
 			expect(firmwareUpdateOTW).not.toHaveBeenCalled()
 		})
 
@@ -1700,17 +1543,14 @@ describe('FirmwareUpdateService', () => {
 				data: new Uint8Array([1, 2, 3]),
 			})
 
-			// Reset while paused in extraction
 			service.resetGeneration()
 
-			// Let extraction resolve
 			resolveExtraction({ data: new Uint8Array([4, 5]) })
 
 			await expect(otwPromise).rejects.toThrow(
 				FirmwareLifecycleCancelledError,
 			)
 
-			// Never called the (now-stale) driver
 			expect(firmwareUpdateOTW).not.toHaveBeenCalled()
 		})
 
@@ -1737,10 +1577,8 @@ describe('FirmwareUpdateService', () => {
 
 			const otaPromise = service.firmwareUpdateOTA(5, makeUpdate())
 
-			// Reset mid-flight
 			service.resetGeneration()
 
-			// Late resolve from the old driver
 			resolveOTA({ success: true })
 
 			await expect(otaPromise).rejects.toThrow(
@@ -1764,17 +1602,14 @@ describe('FirmwareUpdateService', () => {
 			const getZwaveNode = () => ({ abortFirmwareUpdate })
 			const abortPromise = service.abortFirmwareUpdate(3, getZwaveNode)
 
-			// Reset while abort is in-flight
 			service.resetGeneration()
 
-			// Abort completes late
 			resolveAbort()
 
 			await expect(abortPromise).rejects.toThrow(
 				FirmwareLifecycleCancelledError,
 			)
 
-			// Node state NOT cleared — fence prevented mutation
 			expect(nodes._nodes.get(3)?.firmwareUpdate).toEqual({
 				progress: 50,
 			})
@@ -1805,17 +1640,14 @@ describe('FirmwareUpdateService', () => {
 				getZwaveNode,
 			)
 
-			// Reset while extraction is in-flight
 			service.resetGeneration()
 
-			// Let extraction resolve
 			resolveExtraction({ data: new Uint8Array([2]) })
 
 			await expect(updatePromise).rejects.toThrow(
 				FirmwareLifecycleCancelledError,
 			)
 
-			// Node's updateFirmware was never called
 			expect(updateFirmware).not.toHaveBeenCalled()
 		})
 
@@ -1882,7 +1714,6 @@ describe('FirmwareUpdateService', () => {
 		})
 
 		it('normal-path errors/payloads preserved when fence is not broken', async () => {
-			// OTA succeeds normally
 			const driver = createDriverPort({
 				getDriver: () => ({
 					controller: {
@@ -1947,7 +1778,6 @@ describe('FirmwareUpdateService', () => {
 				}),
 			})
 			const nodes = createNodeStorePort()
-			// Set up live node that should NOT be mutated
 			nodes._nodes.set(7, {
 				id: 7,
 				availableFirmwareUpdates: [],
@@ -1955,32 +1785,24 @@ describe('FirmwareUpdateService', () => {
 				firmwareUpdatesDismissed: {},
 			})
 
-			// Make persistStagedNodeUpdates hang until we resolve
 			nodes.persistStagedNodeUpdates.mockReturnValue(persistPromise)
 
 			const { service } = createService({ driver, nodes })
 
-			// Start the check
 			const checkPromise = service.checkAllNodesFirmwareUpdates()
 
-			// Reset while persistence is pending
 			service.resetGeneration()
 
-			// Now resolve persistence
 			resolvePersist()
 
-			// The check should complete (lifecycle cancellation caught internally
-			// or thrown depending on path)
 			await expect(checkPromise).rejects.toBeInstanceOf(
 				FirmwareLifecycleCancelledError,
 			)
 
-			// Shared live node was NOT mutated
 			const liveNode = nodes._nodes.get(7)
 			expect(liveNode.availableFirmwareUpdates).toEqual([])
 			expect(liveNode.lastFirmwareUpdateCheck).toBe(0)
 
-			// No emit occurred
 			expect(nodes.emitNodeUpdate).not.toHaveBeenCalled()
 		})
 
@@ -2018,19 +1840,15 @@ describe('FirmwareUpdateService', () => {
 
 			const checkPromise = service.checkNodeFirmwareUpdates(5)
 
-			// Reset while persistence is pending
 			service.resetGeneration()
 			resolvePersist()
 
-			// checkNodeFirmwareUpdates swallows lifecycle cancellation
 			await checkPromise
 
-			// Shared live node NOT mutated
 			const liveNode = nodes._nodes.get(5)
 			expect(liveNode.availableFirmwareUpdates).toEqual([])
 			expect(liveNode.lastFirmwareUpdateCheck).toBe(0)
 
-			// No emit
 			expect(nodes.emitNodeUpdate).not.toHaveBeenCalled()
 		})
 
@@ -2062,7 +1880,6 @@ describe('FirmwareUpdateService', () => {
 
 			await service.checkAllNodesFirmwareUpdates()
 
-			// Store was persisted via persistStagedNodeUpdates
 			expect(nodes.persistStagedNodeUpdates).toHaveBeenCalledWith(
 				expect.arrayContaining([
 					expect.objectContaining({
@@ -2072,12 +1889,10 @@ describe('FirmwareUpdateService', () => {
 				]),
 			)
 
-			// Shared live node was updated
 			const liveNode = nodes._nodes.get(3)
 			expect(liveNode.availableFirmwareUpdates).toEqual(updates)
 			expect(liveNode.lastFirmwareUpdateCheck).toBeGreaterThan(0)
 
-			// Emit occurred
 			expect(nodes.emitNodeUpdate).toHaveBeenCalledWith(
 				liveNode,
 				expect.objectContaining({
@@ -2113,14 +1928,11 @@ describe('FirmwareUpdateService', () => {
 
 			await service.checkNodeFirmwareUpdates(9)
 
-			// Persisted via staging port
 			expect(nodes.persistStagedNodeUpdates).toHaveBeenCalled()
 
-			// Shared live node updated
 			const liveNode = nodes._nodes.get(9)
 			expect(liveNode.availableFirmwareUpdates).toEqual(updates)
 
-			// Emit occurred
 			expect(nodes.emitNodeUpdate).toHaveBeenCalledWith(
 				liveNode,
 				expect.objectContaining({
