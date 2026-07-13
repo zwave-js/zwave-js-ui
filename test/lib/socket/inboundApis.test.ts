@@ -5,6 +5,7 @@ import { ALL_CHANNELS } from '#api/lib/SocketEvents.ts'
 import type ZWaveClientType from '#api/lib/ZwaveClient.ts'
 import { useSocketHarness, type SocketHarness } from './harness.ts'
 import { createFakeGateway, createFakeZniffer } from './fakes.ts'
+import { internals } from './internals.ts'
 
 function emit<T = any>(
 	client: ReturnType<SocketHarness['createClient']>,
@@ -129,8 +130,10 @@ describe('Socket contract: inbound ACK APIs', () => {
 			const gateway = createFakeGateway({ zwave: undefined })
 			const harness = await getHarness({ gateway })
 			const zwave = new ZWaveClient({} as any, harness.io)
-			zwave.scenes = [{ sceneid: 1, label: 'Party', values: [] }]
-			;(zwave as any)._driver = {}
+			internals(zwave).scenes = [
+				{ sceneid: 1, label: 'Party', values: [] },
+			]
+			internals(zwave)._driver = {}
 			zwave.driverReady = true
 			// gw (held by the already-running app) references this same gateway object, so mutating it here is observed exactly like a live reconnect would be - no post-construction app/harness API involved
 			gateway.zwave = zwave as any
