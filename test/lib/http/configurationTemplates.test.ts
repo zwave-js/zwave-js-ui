@@ -20,6 +20,8 @@ import type { AppRuntime } from '../../../api/runtime/AppRuntime.ts'
  * Used only for the three `if (!id)` guards (PUT/DELETE/POST `:id` routes),
  * which are unreachable via real HTTP since Express 4's `path-to-regexp`
  * requires `:id` to match at least one character
+ *
+ * The guards stay in place as deliberate defensive code
  */
 function captureConfigurationTemplatesHandler(
 	method: 'get' | 'post' | 'put' | 'delete',

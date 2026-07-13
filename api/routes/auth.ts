@@ -85,6 +85,7 @@ export async function isAuthenticated(
 		return next()
 	}
 
+	// Falls back to a JWT token here because session-cookie auth requires third-party cookies to be allowed
 	try {
 		const user = await parseJWT(req)
 		req.session.user = user

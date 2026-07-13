@@ -214,6 +214,7 @@ describe('HTTP contract: import/export config', () => {
 				harness.testHooks.setGateway(gwA)
 
 				// Swaps the gateway inside the first awaited Z-Wave call, simulating a concurrent restart landing mid-import
+				// Guards against a route caching the gateway once instead of re-resolving it per operation
 				gwA.zwave.callApi.mockImplementationOnce(() => {
 					harness.testHooks.setGateway(gwB)
 					return { success: true, message: 'OK' }

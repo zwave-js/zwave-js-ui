@@ -49,6 +49,7 @@ export default defineConfig({
 			include: ['api/**/*.{js,ts}', 'src/**/*.{js,ts}'],
 			exclude: ['**/*.test.*', 'test/**'],
 			// Exact-file threshold keys are checked independently of each other, so one full-repo run also enforces a stricter bar for the extracted runtime/router files without a separate backend-only coverage run
+			// Running backend tests once here also produces the file-level api/** line data Coveralls needs
 			thresholds: {
 				'api/runtime/AppRuntime.ts': {
 					statements: 90,

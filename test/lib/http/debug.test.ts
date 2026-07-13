@@ -227,7 +227,8 @@ describe('HTTP contract: debug capture', () => {
 				message: 'driver rejected log config update',
 			})
 
-			// restoreSession() throws before clearing session, leaving status active; resets debugManager's session directly since re-calling cancelSession()/stopSession() would hang re-ending an already-ended winston transport
+			// restoreSession() throws before clearing session, leaving status active
+			// Resets debugManager's session directly since re-calling cancelSession()/stopSession() would re-end an already-ended winston transport and hang awaiting a 'finish' event that only fires once
 			const status = await harness.request.get('/api/debug/status')
 			expect(status.body).toEqual({ success: true, active: true })
 			;(debugManager as unknown as { session: unknown }).session = null

@@ -62,6 +62,7 @@ export class AppRuntime {
 	private enumerateSerialPortsFn: typeof Driver.enumerateSerialPorts =
 		Driver.enumerateSerialPorts.bind(Driver)
 	// Tracks whether enumerateSerialPortsFn is the real implementation or a test-injected fake
+	// Only isEnumerateSerialPortsProductionDefault() reads this, for tests; production logic never consults it
 	private enumerateSerialPortsIsProductionDefault = true
 
 	private defaultSnippets: utils.Snippet[] = []

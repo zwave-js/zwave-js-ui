@@ -26,7 +26,7 @@ export function registerHealthRoutes(
 			zwave = gw.zwave?.getStatus().status ?? false
 		}
 
-		// Disabled mqtt reports a status object, not a boolean, but still counts as healthy
+		// Disabled mqtt reports a status object, not a boolean, but still counts as healthy (see #469)
 		if (mqtt && typeof mqtt !== 'boolean') {
 			mqtt = mqtt.status || mqtt.config.disabled
 		}
