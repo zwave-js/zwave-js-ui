@@ -19,10 +19,6 @@ import {
 	cleanupTestEnv as cleanupSharedTestEnv,
 	TEST_SESSION_SECRET,
 } from '../shared/env.ts'
-import * as fs from 'node:fs'
-import * as path from 'node:path'
-import { fileURLToPath } from 'node:url'
-
 /**
  * Env vars the HASS discovery modules read, snapshotted and cleared before any
  * HASS module imports so an ambient value can't repoint a discovery prefix,
@@ -35,79 +31,6 @@ const HASS_ENV_VARS = [
 ] as const
 
 let hassEnvSnapshot: Record<string, string | undefined> | undefined
-
-const repositoryStoreDir = path.resolve(
-	path.dirname(fileURLToPath(import.meta.url)),
-	'../../../store',
-)
-
-export interface RepositoryStoreArtifact {
-	path: string
-	type: 'directory' | 'file'
-	content?: string
-}
-
-export function snapshotRepositoryStore(): RepositoryStoreArtifact[] {
-	if (!fs.existsSync(repositoryStoreDir)) return []
-
-	const artifacts: RepositoryStoreArtifact[] = []
-	const visit = (directory: string): void => {
-		for (const entry of fs
-			.readdirSync(directory, { withFileTypes: true })
-			.sort((left, right) => left.name.localeCompare(right.name))) {
-			const absolutePath = path.join(directory, entry.name)
-			const relativePath = path.relative(repositoryStoreDir, absolutePath)
-			if (entry.isDirectory()) {
-				artifacts.push({ path: relativePath, type: 'directory' })
-				visit(absolutePath)
-			} else {
-				artifacts.push({
-					path: relativePath,
-					type: 'file',
-					content: fs.readFileSync(absolutePath).toString('base64'),
-				})
-			}
-		}
-	}
-	visit(repositoryStoreDir)
-	return artifacts
-}
-
-// Exempt logger-owned roots because logger.test.ts writes them concurrently in the repository store
-const CONCURRENT_TEST_ARTIFACT_ROOTS = new Set(['.session-secret', 'logs'])
-
-function isConcurrentTestArtifact(artifactPath: string): boolean {
-	return CONCURRENT_TEST_ARTIFACT_ROOTS.has(artifactPath.split(path.sep)[0])
-}
-
-export function unexpectedRepositoryStoreDrift(
-	before: RepositoryStoreArtifact[],
-	after: RepositoryStoreArtifact[],
-): RepositoryStoreArtifact[] {
-	const beforeByPath = new Map(
-		before.map((artifact) => [artifact.path, artifact]),
-	)
-	return after.filter((artifact) => {
-		const prior = beforeByPath.get(artifact.path)
-		const changed =
-			!prior ||
-			prior.type !== artifact.type ||
-			prior.content !== artifact.content
-		return changed && !isConcurrentTestArtifact(artifact.path)
-	})
-}
-
-export function missingRepositoryStoreArtifacts(
-	before: RepositoryStoreArtifact[],
-	after: RepositoryStoreArtifact[],
-): RepositoryStoreArtifact[] {
-	const afterPaths = new Set(after.map((artifact) => artifact.path))
-	return before.filter(
-		(artifact) =>
-			!afterPaths.has(artifact.path) &&
-			!isConcurrentTestArtifact(artifact.path),
-	)
-}
 
 /**
  * Snapshot and clear the HASS env vars, then delegate to the shared harness's

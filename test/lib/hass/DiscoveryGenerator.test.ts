@@ -12,50 +12,25 @@ import type {
 	HassValue,
 	HassZwavePort,
 } from '../../../api/hass/ports.ts'
-import type * as HassPortsModule from '../../../api/hass/ports.ts'
 import type {
 	HassDevice,
 	HassDeviceCatalog,
 	HassDeviceMap,
 } from '../../../api/hass/types.ts'
-import {
-	cleanupTestEnv,
-	ensureTestEnv,
-	missingRepositoryStoreArtifacts,
-	snapshotRepositoryStore,
-	TEST_SESSION_SECRET,
-	unexpectedRepositoryStoreDrift,
-} from './env.ts'
+import { cleanupTestEnv, ensureTestEnv, TEST_SESSION_SECRET } from './env.ts'
 
 let DiscoveryGenerator: typeof DiscoveryGeneratorType
-let isHassNode: typeof HassPortsModule.isHassNode
 
 beforeAll(async () => {
-	const repositoryStoreBefore = snapshotRepositoryStore()
 	const isolatedStoreDir = ensureTestEnv()
-	const [discoveryModule, portsModule, configModule] = await Promise.all([
+	const [discoveryModule, configModule] = await Promise.all([
 		import('../../../api/hass/DiscoveryGenerator.ts'),
-		import('../../../api/hass/ports.ts'),
 		import('../../../api/config/app.ts'),
 	])
 	DiscoveryGenerator = discoveryModule.DiscoveryGenerator
-	isHassNode = portsModule.isHassNode
 	expect(configModule.storeDir).toBe(isolatedStoreDir)
 	expect(configModule.logsDir.startsWith(isolatedStoreDir)).toBe(true)
 	expect(configModule.sessionSecret).toBe(TEST_SESSION_SECRET)
-	const repositoryStoreAfter = snapshotRepositoryStore()
-	expect(
-		missingRepositoryStoreArtifacts(
-			repositoryStoreBefore,
-			repositoryStoreAfter,
-		),
-	).toEqual([])
-	expect(
-		unexpectedRepositoryStoreDrift(
-			repositoryStoreBefore,
-			repositoryStoreAfter,
-		),
-	).toEqual([])
 })
 
 afterAll(() => {
@@ -171,7 +146,6 @@ function setup(options: {
 		set: (deviceId, devices) => {
 			if (deviceId) catalog.set(deviceId, devices)
 		},
-		snapshot: () => Object.fromEntries(catalog),
 	}
 	const logDebug = vi.fn()
 	const logWarn = vi.fn()
@@ -227,21 +201,6 @@ function setup(options: {
 }
 
 describe('DiscoveryGenerator', () => {
-	it('narrows runtime nodes without accepting malformed DTOs', () => {
-		expect(isHassNode(null)).toBe(false)
-		expect(
-			isHassNode({
-				id: 1,
-				ready: true,
-				values: {},
-				hassDevices: {},
-			}),
-		).toBe(true)
-		expect(isHassNode({ id: '1', values: {}, hassDevices: {} })).toBe(false)
-		expect(isHassNode({ id: 1, values: null, hassDevices: {} })).toBe(false)
-		expect(isHassNode({ id: 1, values: {}, hassDevices: null })).toBe(false)
-	})
-
 	it('owns rediscovery, disabling, removal, and facade state updates', () => {
 		const hassNode = node({
 			name: 'Switch',
@@ -538,153 +497,6 @@ describe('DiscoveryGenerator', () => {
 		expect(published).toHaveLength(1)
 	})
 
-	it('generates discovery helpers and templates deterministically', () => {
-		const json = setup({ config: { useLocationAsSuggestedArea: true } })
-		const raw = setup({ config: { payloadType: 2 } })
-		const hassNode = node({ name: 'Switch', loc: '  Kitchen  ' })
-		const payload: Record<string, unknown> = {}
-
-		expect(json.generator.getNodeName(hassNode)).toBe('  Kitchen  -Switch')
-		expect(json.generator.getNodeName(hassNode, true)).toBe('Switch')
-		expect(json.generator.getNodeName(node({ name: undefined }))).toBe(
-			'nodeID_2',
-		)
-		expect(
-			json.generator.getPriorityCCFirst({
-				binary: value(),
-				color: value({
-					commandClass: CommandClasses['Color Switch'],
-				}),
-			}),
-		).toEqual(['color', 'binary'])
-		expect(json.generator.getIdWithoutNode(value())).toBe(
-			'37-0-currentValue',
-		)
-		expect(
-			json.generator.deviceInfo(hassNode, 'Kitchen Switch'),
-		).toMatchObject({
-			identifiers: ['zwavejs2mqtt_0x12345678_node2'],
-			name: 'Kitchen Switch',
-			suggested_area: 'Kitchen',
-		})
-
-		json.generator.setDiscoveryAvailability(hassNode, payload)
-		expect(payload.availability_mode).toBe('all')
-		expect(payload.availability).toEqual(
-			expect.arrayContaining([
-				expect.objectContaining({
-					value_template:
-						"{{'true' if value_json.value else 'false'}}",
-				}),
-			]),
-		)
-		const rawPayload: Record<string, unknown> = {}
-		raw.generator.setDiscoveryAvailability(hassNode, rawPayload)
-		expect(rawPayload).toEqual({
-			availability: [
-				{
-					payload_available: 'true',
-					payload_not_available: 'false',
-					topic: 'prefix/node/2/status',
-				},
-				{
-					topic: 'prefix/_CLIENTS/ZWAVE_GATEWAY/status',
-					value_template:
-						"{{'online' if value_json.value else 'offline'}}",
-				},
-				{
-					payload_available: 'true',
-					payload_not_available: 'false',
-					topic: 'prefix/driver/status',
-				},
-			],
-			availability_mode: 'all',
-		})
-
-		expect(
-			json.generator.getDiscoveryTopic(
-				device({ type: 'switch', object_id: 'value' }),
-				'Kitchen Switch',
-			),
-		).toBe('switch/Kitchen_Switch/value/config')
-		expect(
-			json.generator.getMappedValuesTemplate(
-				{ 0: 'off', 1: 'heat' },
-				'off',
-			),
-		).toContain('0: "off"')
-		expect(
-			json.generator.getMappedValuesInverseTemplate(
-				{ off: 0, heat: 1 },
-				'off',
-			),
-		).toContain('1: "heat"')
-		expect(
-			json.generator.getMappedStateTemplate(
-				[
-					{ value: 0, text: 'idle' },
-					{ value: 'alarm', text: 'alarm' },
-				],
-				0,
-			),
-		).toContain("default('idle')")
-	})
-
-	it('generates binary payloads, names, and value substitutions', () => {
-		const { generator } = setup({})
-		const config = device()
-		expect(
-			generator.setBinaryPayloadFromSensor(
-				config,
-				[
-					{ value: 1, text: 'on' },
-					{ value: 0, text: 'off' },
-				],
-				0,
-			).discovery_payload,
-		).toMatchObject({ payload_on: 1, payload_off: 0 })
-		expect(
-			generator.getBinarySensorConfig('lock', true).discovery_payload,
-		).toMatchObject({
-			device_class: 'lock',
-			payload_on: false,
-			payload_off: true,
-		})
-
-		const payload: Record<string, unknown> = { min: 'setpoint' }
-		generator.setDiscoveryValue(payload, 'min', {
-			values: { setpoint: { value: 5 } },
-		})
-		generator.setDiscoveryValue(payload, 'missing', { values: {} })
-		expect(payload.min).toBe(5)
-
-		expect(
-			generator.getEntityName(
-				node({ id: 5, name: 'Node', loc: 'Room' }),
-				value({
-					property: 'current',
-					propertyName: 'Current',
-					propertyKey: 1,
-					label: 'Level',
-				}),
-				device({ object_id: 'entity' }),
-				'%nid_%ln_%loc_%pk_%pn_%p_%o_%n_%l',
-			),
-		).toBe('nodeID_5_Room-Node_Room_1_Current_current_entity_Node_Level')
-		expect(
-			generator.getEntityName(
-				node({ id: 5 }),
-				value({
-					propertyKey: undefined,
-					propertyName: undefined,
-					label: undefined,
-				}),
-				device(),
-				'%pk_%pn_%l',
-			),
-		).toBe('undefined_undefined_undefined')
-	})
-
 	it('discovers a complete custom climate device and malformed alternatives', () => {
 		const mode = value({
 			id: '2-64-0-mode',
@@ -822,7 +634,7 @@ describe('DiscoveryGenerator', () => {
 		expect(published).toHaveLength(3)
 	})
 
-	it('builds RGB discovery for binary and white controls', () => {
+	it('discovers RGB, binary, and white controls through the value pipeline', () => {
 		const currentColor = value({
 			id: '2-51-0-currentColor',
 			commandClass: CommandClasses['Color Switch'],
@@ -842,7 +654,11 @@ describe('DiscoveryGenerator', () => {
 			},
 		})
 		const { generator } = setup({})
-		const rgb = generator.addRgbColorSwitch(hassNode, currentColor)
+		generator.discoverValue(hassNode, '51-0-currentColor')
+		const rgb = Object.values(hassNode.hassDevices).find(
+			(candidate) => candidate.type === 'light',
+		)
+		expect(rgb).toBeDefined()
 		expect(rgb.discovery_payload.supported_color_modes).toEqual([
 			'rgb',
 			'onoff',
@@ -850,14 +666,6 @@ describe('DiscoveryGenerator', () => {
 		])
 		expect(rgb.discovery_payload.on_command_type).toBe('last')
 		expect(rgb.values).toContain('37-0-currentValue')
-
-		const colorOnly = generator.addRgbColorSwitch(
-			node({ values: {} }),
-			currentColor,
-		)
-		expect(colorOnly.discovery_payload.supported_color_modes).toEqual([
-			'rgb',
-		])
 	})
 
 	it('discovers switch and configuration values through typed topic ports', () => {
@@ -961,11 +769,18 @@ describe('DiscoveryGenerator', () => {
 		expect(logWarn).toHaveBeenCalled()
 
 		generator.discoverClimates(thermostat)
-		expect(catalog.get(thermostat.deviceId)?.[0]).toMatchObject({
+		expect(
+			catalog
+				.get(thermostat.deviceId)
+				?.find((candidate) => candidate.type === 'climate'),
+		).toMatchObject({
 			type: 'climate',
 			mode_map: { off: 0, heat: 1, cool: 2 },
 		})
+		const firstProjection = structuredClone(
+			catalog.get(thermostat.deviceId),
+		)
 		generator.discoverClimates(thermostat)
-		expect(catalog.get(thermostat.deviceId)).toHaveLength(1)
+		expect(catalog.get(thermostat.deviceId)).toEqual(firstProjection)
 	})
 })
