@@ -37,7 +37,7 @@ export class FirmwareUpdateService {
 	private _firmwareUpdateCheckTimeout: ReturnType<typeof setTimeout> | null =
 		null
 
-	/** Dedupes same-generation scheduled-check chains; `_generation` can't, because `all nodes ready` re-fires without a dispose/reset (NVM restore, controller firmware update) */
+	/** Dedupes same-generation scheduled-check chains that `_generation` can't, because `all nodes ready` re-fires without a dispose or reset on NVM restore and controller firmware update */
 	private _scheduleChain = 0
 
 	private _nvmEventSetter: ((event: string) => void) | undefined

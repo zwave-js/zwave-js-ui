@@ -1,15 +1,3 @@
-/**
- * Owns the low-level lifecycle of one `zwave-js` {@link Driver} for `ZwaveClient`:
- * creation, `@zwave-js/server` coordination, backoff restarts, statistics, log
- * transports and idempotent teardown.
- *
- * A monotonic generation counter lets late `driver ready`/`error`/`all nodes
- * ready`/OTW callbacks from an obsolete driver be ignored so they can't mutate a
- * replacement driver's state. All client state is reached through
- * {@link DriverLifecycleHost}, so this service never imports `ZwaveClient` (no
- * import cycle) and every accessor resolves live state across driver/config swaps.
- */
-
 import { Driver } from 'zwave-js'
 import type {
 	OTWFirmwareUpdateProgress,
@@ -41,7 +29,7 @@ const logger = LogManager.module('Z-Wave')
 // Least-to-most verbose ordering so the most verbose extra-transport level wins
 const LOG_LEVEL_ORDER = ['error', 'warn', 'info', 'verbose', 'debug', 'silly']
 
-/** Narrow port into `ZwaveClient`; every method resolves live client state so nothing is captured at construction across driver/config swaps */
+/** Every method resolves live client state so nothing is captured at construction across driver/config swaps */
 export interface DriverLifecycleHost {
 	getConfig(): ZwaveConfig
 	getDriver(): Driver | null
@@ -66,7 +54,7 @@ export interface DriverLifecycleHost {
 	/** Runs mid-close, after the lifecycle's own timers are cleared and before the server/driver are destroyed */
 	clearRuntimeOnClose(): void
 	finalizeClose(): void
-	/** Node-registry restoration stays on `ZwaveClient`; the lifecycle only drives the generation */
+	/** Lifecycle drives only the generation, leaving node-registry restoration to ZwaveClient */
 	onDriverReady(generation: number): Promise<void>
 	onDriverError(error: unknown, skipRestart: boolean): void
 	onScanComplete(): void
@@ -78,21 +66,21 @@ export interface DriverLifecycleHost {
 export class DriverLifecycle {
 	private readonly host: DriverLifecycleHost
 
-	/** Bumped when a new driver starts connecting and when the client closes, so in-flight work from an obsolete driver detects the mismatch and aborts; never reset by init() */
+	/** Bumped when a new driver starts connecting and when the client closes, so in-flight work from an obsolete driver detects the mismatch and aborts */
 	private _generation = 0
 
 	private _backoffRetry = 0
 	private _restartTimeout: NodeJS.Timeout | null = null
 
-	/** In-flight startup promise for the current connect generation; a duplicate connect coalesces onto this exact promise instead of returning a premature success or building a second Driver */
+	/** In-flight startup promise the current generation's duplicate connect coalesces onto instead of building a second Driver */
 	private _activeConnect: Promise<void> | null = null
 
-	/** Generation `_activeConnect` belongs to; a duplicate connect only coalesces while this equals `_generation`, so once close/connect bumps it a later connect builds a new driver */
+	/** Generation `_activeConnect` belongs to, so a duplicate connect coalesces only while this still equals `_generation` */
 	private _activeConnectGeneration = 0
 
 	private _extraLogTransports: Array<{ transport: any; level?: string }> = []
 
-	/** JSON-socket transport for the current driver generation; `updateLogConfig({transports})` replaces the driver's whole custom list, so every live add/remove must re-send this one first or drop the debug stream */
+	/** JSON-socket transport for the current generation, re-sent first on every live add/remove because `updateLogConfig` replaces the driver's whole custom transport list */
 	private _driverLogTransport: JSONTransport | null = null
 
 	/** Configured log level captured before any extra-transport elevation, so removing a verbose extra recomputes back to this baseline instead of leaving the driver stuck high */
@@ -108,12 +96,7 @@ export class DriverLifecycle {
 		return this._generation
 	}
 
-	/**
-	 * The lifecycle-managed `@zwave-js/server` subsystem. In production this is
-	 * the HA-owned manager adopted via {@link adoptServerManager}; a
-	 * directly-constructed client lazily builds a standalone fallback here on
-	 * first access so its server lifecycle keeps working with no coordinator.
-	 */
+	/** Lazily builds a standalone fallback manager on first access so a directly-constructed client's server lifecycle works with no coordinator to adopt one */
 	get zwaveServer(): ZwaveServerManager {
 		if (!this._serverManager) {
 			this._serverManager = new ZwaveServerManager(
@@ -136,17 +119,13 @@ export class DriverLifecycle {
 		this.zwaveServer.server = value
 	}
 
-	/**
-	 * Adopt the HA-owned server manager. Called by `HomeAssistantManager` once,
-	 * before the driver connects, so `create()/startIfNeeded()/destroy()` all
-	 * drive the manager the coordinator owns.
-	 */
 	adoptServerManager(manager: ZwaveServerManager): void {
+		// Set before the driver connects so create/startIfNeeded/destroy all drive the HA-owned manager
 		this._serverManager = manager
 	}
 
-	/** Constructs but does not start the server; called from connect() only when serverEnabled, so the server exists before the driver becomes ready */
 	createServer(): void {
+		// Construct without starting so the server exists before the driver becomes ready
 		this.zwaveServer.create()
 	}
 
@@ -180,8 +159,8 @@ export class DriverLifecycle {
 		)
 	}
 
-	/** Registers an extra log transport that persists across driver restarts */
 	addExtraLogTransport(transport: any, level?: string): void {
+		// Store on the lifecycle so the transport survives driver restarts
 		this._extraLogTransports.push({ transport, level })
 		this.applyRuntimeLogConfig()
 	}
@@ -196,7 +175,6 @@ export class DriverLifecycle {
 		this.applyRuntimeLogConfig()
 	}
 
-	/** Full transport list (JSON-socket transport first, then extras); `updateLogConfig({transports})` replaces the driver's custom transports wholesale, so a partial list drops the socket stream or other extras */
 	private computeRuntimeLogTransports(): any[] {
 		const transports: any[] = []
 		if (this._driverLogTransport) {
@@ -208,7 +186,6 @@ export class DriverLifecycle {
 		return transports
 	}
 
-	/** Configured base level raised to the most verbose registered extra, recomputed from baseline so dropping a verbose extra restores the configured level */
 	private computeRuntimeLogLevel(): string | undefined {
 		let level = this._baseLogLevel
 		let bestIdx =
@@ -224,8 +201,8 @@ export class DriverLifecycle {
 		return level
 	}
 
-	/** No-op until the driver is ready, since connect() builds the identical config into the driver options up front */
 	private applyRuntimeLogConfig(): void {
+		// No-op until the driver is ready, since connect() builds the identical config into the driver options up front
 		const driver = this.host.getDriver()
 		if (!driver || !this.host.isDriverReadyRaw()) {
 			return
@@ -245,7 +222,7 @@ export class DriverLifecycle {
 	}
 
 	backoffRestart(): void {
-		// fix edge case where client is half closed and restart is called
+		// Abort the restart when the client is half-closed
 		if (this.checkIfDestroyed()) {
 			return
 		}
@@ -278,10 +255,6 @@ export class DriverLifecycle {
 		}, timeout)
 	}
 
-	/**
-	 * Checks if the client is destroyed and if so closes it.
-	 * @returns True if the client is destroyed
-	 */
 	checkIfDestroyed(): boolean {
 		if (this.host.isDestroyed()) {
 			logger.debug(
@@ -315,7 +288,7 @@ export class DriverLifecycle {
 			return
 		}
 
-		// this could happen when the driver fails the connect and a reconnect timeout triggers
+		// Bail when a failed connect's reconnect timeout races an already-closed client
 		if (this.host.isClosed() || this.checkIfDestroyed()) {
 			return
 		}
@@ -328,7 +301,7 @@ export class DriverLifecycle {
 		// Capture the narrowed port before the host calls below, which reset TypeScript's property narrowing
 		const port = cfg.port
 
-		// Coalesce a duplicate connect onto the in-flight startup of the current generation so callers share its outcome and no second Driver is built; a close/restart bumps the generation and clears `_activeConnect`, so a later connect builds fresh
+		// Coalesce a duplicate connect onto the in-flight startup of the current generation so callers share its outcome and no second Driver is built
 		if (
 			this._activeConnect &&
 			this._activeConnectGeneration === this._generation
@@ -357,11 +330,7 @@ export class DriverLifecycle {
 		}
 	}
 
-	/**
-	 * Builds, wires and starts a new `Driver` for the committed generation. Its
-	 * internal catch logs and backs off instead of rejecting, matching connect()'s
-	 * no-throw contract, so a coalesced caller sees the same completion.
-	 */
+	/** Catches internally and backs off instead of rejecting so a coalesced connect() caller sees the same no-throw completion */
 	private async _startDriver(cfg: ZwaveConfig, port: string): Promise<void> {
 		// Bump the generation so any obsolete driver's late callbacks detect the change and abort
 		const generation = ++this._generation
@@ -523,8 +492,7 @@ export class DriverLifecycle {
 
 		utils.parseSecurityKeys(cfg, zwaveOptions)
 
-		// Apply driver-only external settings (storage, presets, logFilename, forceConsole).
-		// These are not in ZwaveConfig/settings.json, so they must be applied directly to driver options.
+		// Apply storage, presets, logFilename and forceConsole directly to driver options since they aren't in ZwaveConfig
 		applyExternalDriverSettings(zwaveOptions)
 
 		const logTransport = new JSONTransport()
@@ -533,7 +501,7 @@ export class DriverLifecycle {
 		// Bind this generation's JSON-socket transport so live add/remove re-sends it in the full replacement list
 		this._driverLogTransport = logTransport
 
-		// Enrich the driver-only clone via the same helpers as the runtime path so startup and live configs can't diverge; capture `_baseLogLevel` first so a later transport removal can restore it
+		// Enrich the driver-only clone via the same helpers as the runtime path so startup and live configs can't diverge
 		const finalLogConfig = zwaveOptions.logConfig
 		if (finalLogConfig) {
 			this._baseLogLevel =
@@ -553,7 +521,7 @@ export class DriverLifecycle {
 			this.host.emitDebug(data.message.toString())
 		})
 
-		// Hold the exact instance this generation creates so a stale/error exit tears down this driver, never a replacement stored by a newer generation
+		// Hold the exact instance this generation creates so a stale/error exit tears down this driver rather than a newer generation's replacement
 		let createdDriver: Driver | null = null
 
 		try {
@@ -563,8 +531,7 @@ export class DriverLifecycle {
 					return
 				}
 			}
-			// init driver here because if connect fails the driver is destroyed
-			// this could throw so include in the try/catch
+			// Constructing the Driver can throw, so keep it inside the try/catch that destroys it on a failed connect
 			const driver = new Driver(port, zwaveOptions)
 			createdDriver = driver
 			this.host.setDriver(driver)
@@ -622,7 +589,7 @@ export class DriverLifecycle {
 
 			this.host.setStatus(ZwaveClientStatus.CONNECTED)
 		} catch (error) {
-			// Tear down the instance this generation created, not `host.getDriver()`, which may already point at a newer generation's replacement; awaited so the failed instance releases the port before backoff builds a replacement
+			// Tear down the instance this generation created and await it so the failed driver releases the port before backoff builds a replacement
 			if (createdDriver) {
 				await this.teardownConnectDriver(createdDriver, error)
 			}
@@ -651,15 +618,7 @@ export class DriverLifecycle {
 		}
 	}
 
-	/**
-	 * Destroys a specific driver instance from a stale/error exit, awaiting
-	 * `destroy()` before clearing host state so the failed driver releases the
-	 * serial port before a backoff/retry or coalesced connect builds a
-	 * replacement. On a clean destroy the host field is cleared only while it
-	 * still references this exact instance; on a rejected destroy the instance is
-	 * retained as owner (field left set, no replacement), since it may still hold
-	 * the port, and a later {@link close}/retry re-invokes `destroy()` on it.
-	 */
+	/** Awaits destroy() before clearing the host's driver field so the failed driver releases the serial port before a retry or coalesced connect builds a replacement */
 	private async teardownConnectDriver(
 		driver: Driver,
 		cause?: unknown,
@@ -671,7 +630,7 @@ export class DriverLifecycle {
 				`Error while destroying driver ${(err as Error).message}`,
 				cause,
 			)
-			// Keep this instance as owner so a later close/retry can destroy it again; clearing the field now would strand the port it may still hold
+			// Keep this instance as owner so a later close/retry can destroy it again instead of stranding the port it may still hold
 			return
 		}
 		if (this.host.getDriver() === driver) {
@@ -679,12 +638,12 @@ export class DriverLifecycle {
 		}
 	}
 
-	/** Closes the connection, destroying the server before the driver and clearing every lifecycle timer; idempotent and safe to retry */
+	/** Idempotent and safe to retry */
 	async close(keepListeners = false): Promise<void> {
 		// Bump the generation so a driver that becomes ready or errors after this cannot mutate replacement state
 		this._generation++
 
-		// Stop a post-close duplicate connect from coalescing onto the superseded startup; callers already awaiting it still settle when it does
+		// Stop a post-close duplicate connect from coalescing onto the superseded startup
 		this._activeConnect = null
 
 		this.host.setStatus(ZwaveClientStatus.CLOSED)
@@ -715,7 +674,7 @@ export class DriverLifecycle {
 		logger.info('Client closed')
 	}
 
-	// Generation-guarded dispatch drops events from an obsolete driver generation; handler bodies that touch node/controller state stay in ZwaveClient behind the host port
+	// Generation-guarded dispatch drops events from an obsolete driver generation
 	private dispatchDriverReady(generation: number): void {
 		if (this._generation !== generation) {
 			return

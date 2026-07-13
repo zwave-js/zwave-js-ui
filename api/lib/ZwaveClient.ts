@@ -747,7 +747,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	private statelessTimeouts: Record<string, NodeJS.Timeout>
 	private healTimeout: NodeJS.Timeout
 	private updatesCheckTimeout: NodeJS.Timeout
-	/** Invalidated on every init/hardReset/close/restart boundary to fence the daily config-check chain; the DriverLifecycle generation can't, since init/hardReset deliberately don't bump it */
+	/** Invalidated on every init/hardReset/close/restart boundary to fence the daily config-check chain that the DriverLifecycle generation can't, since init and hardReset keep the generation */
 	private _configCheckEpoch = 0
 	/** Dedupes same-generation config-check chains that `_configCheckEpoch` can't: `driver ready` re-fires without a boundary on NVM restore or controller firmware update */
 	private _configCheckChain = 0
@@ -4141,7 +4141,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		this._updateControllerStatus('Driver ready')
 
 		try {
-			// Only after the driver is ready; a fresh chain supersedes any prior same-generation ready
+			// Arm only after the driver is ready so a fresh chain supersedes any prior same-generation ready
 			this._startScheduledConfigCheck(generation)
 
 			this.driver.controller
@@ -6556,7 +6556,6 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		})
 	}
 
-	/** Runs the daily config-update check, then re-validates generation/epoch/chain after the awaited round-trip before logging or rearming */
 	private async _scheduledConfigCheck(
 		generation: number,
 		epoch: number,

@@ -1,21 +1,4 @@
 /* eslint-disable @typescript-eslint/unbound-method */
-/**
- * Direct state-machine tests for the extracted {@link DriverLifecycle}
- * service (`api/lib/zwave/DriverLifecycle.ts`).
- *
- * The service reaches everything it needs from `ZwaveClient` through the
- * narrow {@link DriverLifecycleHost} port, so these tests drive it with a
- * fully-faked host whose accessors read/write a small mutable state object.
- * `zwave-js`'s `Driver` is replaced with an `EventEmitter` fake so the real
- * `connect()` body runs verbatim (real option building, real event wiring),
- * and `@zwave-js/server` + `utils.ensureDir` are stubbed so no real server
- * binds a port and no directory is written to disk.
- *
- * The complementary end-to-end flow through the `ZwaveClient` facade (real
- * `connect()` → driver-ready → `_onDriverReady()` → server start → `close()`),
- * including generation fencing of a late `_onDriverReady()`, is characterized
- * in `test/lib/hass/server.test.ts` and the socket production-integration suite.
- */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { ZWaveError, ZWaveErrorCodes } from '@zwave-js/core'
 
@@ -26,13 +9,11 @@ import type {
 } from '../../../api/lib/zwave/ports.ts'
 import { ZwaveClientStatus } from '../../../api/lib/zwave/ports.ts'
 
-// vi.hoisted holders the mock factories push into, reset in beforeEach
 const hoisted = vi.hoisted(() => ({
 	drivers: [] as any[],
 	destroyOrder: [] as string[],
 	startBehavior: 'resolve' as 'resolve' | 'reject' | 'hang' | 'deferred',
 	startError: new Error('start failed'),
-	/** In 'deferred' mode each start() pushes a controllable settler here so a test can interleave two overlapping connect() calls with no timers */
 	startDeferreds: [] as Array<{
 		resolve: () => void
 		reject: (err: unknown) => void
@@ -40,22 +21,17 @@ const hoisted = vi.hoisted(() => ({
 	startHook: null as null | (() => void),
 	ensureDirHook: null as null | (() => void),
 	destroyRejects: false,
-	/** 'reject' keeps the instance intact/retryable (models a destroy that fails while the driver may still hold the port); 'deferred' lets a test hold teardown open to prove no replacement is built mid-teardown */
 	destroyBehavior: 'resolve' as 'resolve' | 'reject' | 'deferred',
-	/** In 'deferred' mode each destroy() pushes a settler here; resolve() records the teardown effect once, reject() leaves the instance intact/retryable */
 	destroyDeferreds: [] as Array<{
 		resolve: () => void
 		reject: (err?: Error) => void
 	}>,
-	/** Leading destroy() calls that reject before one succeeds, so a test can prove a rejected destroy keeps the owner and a later retry tears it down */
 	destroyRejectCount: 0,
 	destroyInvocations: 0,
 	logTransports: [] as any[],
-	/** Overrides buildLogConfig() for the next connect() to reach enrichment branches the always-populated real config never hits (no logConfig, or a non-string level) */
 	buildLogConfigOverride: null as null | (() => any),
 }))
 
-// zwave-js Driver fake: extends EventEmitter so production wires real handlers; start()/destroy() honour the controllable hoisted behavior
 vi.mock('zwave-js', async () => {
 	const actual = await vi.importActual<any>('zwave-js')
 	const { EventEmitter } = await import('node:events')
@@ -77,9 +53,7 @@ vi.mock('zwave-js', async () => {
 				return Promise.reject(hoisted.startError)
 			}
 			if (hoisted.startBehavior === 'hang') {
-				return new Promise<void>(() => {
-					/* never resolves */
-				})
+				return new Promise<void>(() => {})
 			}
 			if (hoisted.startBehavior === 'deferred') {
 				return new Promise<void>((resolve, reject) => {
@@ -91,7 +65,6 @@ vi.mock('zwave-js', async () => {
 		destroy = vi.fn((): Promise<void> => {
 			hoisted.destroyInvocations++
 
-			// Record the teardown effect at most once per instance, mirroring real zwave-js Driver.destroy() idempotency so a stale-connect teardown racing close() records it exactly once
 			const recordEffect = () => {
 				if (!this._destroyed) {
 					this._destroyed = true
@@ -112,12 +85,10 @@ vi.mock('zwave-js', async () => {
 				})
 			}
 
-			// Already torn down: idempotent clean resolve
 			if (this._destroyed) {
 				return Promise.resolve()
 			}
 
-			// A rejecting destroy must not mark the instance destroyed or record an effect, so the exact owner stays intact and retryable
 			const rejectThis =
 				hoisted.destroyRejects ||
 				hoisted.destroyBehavior === 'reject' ||
@@ -147,7 +118,6 @@ vi.mock('zwave-js', async () => {
 	return { ...actual, Driver: FakeDriver }
 })
 
-// @zwave-js/server stub so the lazy fallback ZwaveServerManager never binds a real port
 vi.mock('@zwave-js/server', async () => {
 	const { EventEmitter } = await import('node:events')
 	class ZwavejsServerMock extends EventEmitter {
@@ -167,7 +137,6 @@ vi.mock('@zwave-js/server', async () => {
 	return { serverVersion: '0.0.0-test', ZwavejsServer: ZwavejsServerMock }
 })
 
-// JSON log transport fake whose `.stream` we can drive to exercise the production stream.on('data') → host.emitDebug wiring
 vi.mock('@zwave-js/log-transport-json', async () => {
 	const { EventEmitter } = await import('node:events')
 	class JSONTransportMock {
@@ -180,7 +149,6 @@ vi.mock('@zwave-js/log-transport-json', async () => {
 	return { JSONTransport: JSONTransportMock }
 })
 
-// Stub only utils.ensureDir to avoid a real mkdir and to hook the generation mid-await; every other util stays real
 vi.mock('../../../api/lib/utils.ts', async () => {
 	const actual = await vi.importActual<any>('../../../api/lib/utils.ts')
 	return {
@@ -197,7 +165,6 @@ vi.mock('../../../api/lib/utils.ts', async () => {
 	}
 })
 
-// Import after the mocks are registered
 const { DriverLifecycle } = await import(
 	'../../../api/lib/zwave/DriverLifecycle.ts'
 )
@@ -292,7 +259,6 @@ function createHarness(cfgOverrides: Partial<ZwaveConfig> = {}) {
 	return { lifecycle, host, state, serverHost }
 }
 
-/** Fake adopted server manager that records its destroy into the order log */
 function fakeManager() {
 	return {
 		create: vi.fn(),
@@ -307,7 +273,6 @@ function fakeManager() {
 
 const flush = () => Promise.resolve()
 
-/** Pump the microtask queue until pred() holds; deterministic since every awaited step resolves synchronously (no timers) */
 async function until(pred: () => boolean, max = 100): Promise<void> {
 	for (let i = 0; i < max; i++) {
 		if (pred()) return
@@ -410,7 +375,6 @@ describe('DriverLifecycle — statistics', () => {
 })
 
 describe('DriverLifecycle — extra log transports', () => {
-	// Connect first so the JSON-socket transport exists; updateLogConfig({transports}) replaces the whole list, so every apply re-sends it plus all current extras
 	async function connectedReadyHarness(cfgOverrides: any = {}) {
 		const harness = createHarness({ serverEnabled: false, ...cfgOverrides })
 		await harness.lifecycle.connect()
@@ -629,7 +593,6 @@ describe('DriverLifecycle — backoff restart coalescing & fencing', () => {
 
 		lifecycle.backoffRestart()
 
-		// Connecting bumps the generation but does not clear the pending timer, so only the generation fence stops the stale restart
 		await lifecycle.connect()
 		expect(lifecycle.generation).toBe(1)
 
