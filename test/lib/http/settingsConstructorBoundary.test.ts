@@ -51,13 +51,13 @@ vi.mock('#api/lib/ZnifferManager.ts', () => ({
 // factories `startGateway()` injects, mocked as no-ops so this file's concern
 // — constructor-arg passthrough into Mqtt/Zwave/Gateway/Zniffer — never spins
 // up a real MQTT-discovery engine or `@zwave-js/server`.
-vi.mock('../../../api/hass/MqttDiscoveryManager.ts', () => ({
+vi.mock('#api/hass/MqttDiscoveryManager.ts', () => ({
 	default: class MockMqttDiscoveryManager {
 		stop = vi.fn()
 	},
 }))
 
-vi.mock('../../../api/hass/ZwaveServerManager.ts', () => ({
+vi.mock('#api/hass/ZwaveServerManager.ts', () => ({
 	default: class MockZwaveServerManager {
 		get version(): string {
 			return '0.0.0-test'

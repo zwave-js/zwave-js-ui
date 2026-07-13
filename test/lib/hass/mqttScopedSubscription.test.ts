@@ -26,7 +26,7 @@ import {
 import { mqttMockFactory, latestBroker, resetMqttBrokers } from './mqttMock.ts'
 import { defaultMqttConfig } from './fixtures.ts'
 import { ensureTestEnv, cleanupTestEnv } from './env.ts'
-import MqttClient from '../../../api/lib/MqttClient.ts'
+import MqttClient from '#api/lib/MqttClient.ts'
 
 vi.mock('mqtt', () => mqttMockFactory())
 
