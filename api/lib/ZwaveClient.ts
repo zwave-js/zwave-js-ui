@@ -1256,7 +1256,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		nodeId: number,
 		remove: unknown,
 	) {
-		await this.hassDeviceStore.storeDevices(devices, nodeId, remove)
+		return this.hassDeviceStore.storeDevices(devices, nodeId, remove)
 	}
 
 	/**
