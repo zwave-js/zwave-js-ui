@@ -179,7 +179,7 @@ describe('ScheduleService', () => {
 		vi.restoreAllMocks()
 	})
 
-	describe('getSchedules', () => {
+	describe('retrieving schedules', () => {
 		it('throws if Schedule Entry Lock CC is not supported', async () => {
 			const zwaveNode = createFakeZwaveNode(false)
 			const svc = new ScheduleService(
@@ -264,7 +264,7 @@ describe('ScheduleService', () => {
 			expect(result?.yearly?.numSlots).toBe(1)
 		})
 
-		it('allows a subsequent getSchedules call after a rejection', async () => {
+		it('allows another retrieval after a rejection', async () => {
 			const zwaveNode = createFakeZwaveNode(true)
 			const driverPort = createDriverPort(zwaveNode)
 			const nodeStore = createNodeStorePort()
@@ -287,7 +287,7 @@ describe('ScheduleService', () => {
 		})
 	})
 
-	describe('setSchedule', () => {
+	describe('updating schedules', () => {
 		it('throws for unsupported CC', async () => {
 			const zwaveNode = createFakeZwaveNode(false)
 			const svc = new ScheduleService(
@@ -325,7 +325,7 @@ describe('ScheduleService', () => {
 			).rejects.toThrow('Invalid schedule type')
 		})
 
-		it('sets a weekly schedule, calls setWeekDaySchedule, and verifies success via readback', async () => {
+		it('verifies an unsupervised weekly update through readback', async () => {
 			const zwaveNode = createFakeZwaveNode(true)
 			const cc = zwaveNode.commandClasses['Schedule Entry Lock']
 			cc.setWeekDaySchedule.mockResolvedValue(undefined)
@@ -370,7 +370,7 @@ describe('ScheduleService', () => {
 			expect(cc.getDailyRepeatingSchedule).not.toHaveBeenCalled()
 		})
 
-		it('handles delete (empty schedule) via readback', async () => {
+		it('removes a weekly schedule after readback confirms deletion', async () => {
 			const zwaveNode = createFakeZwaveNode(true)
 			const cc = zwaveNode.commandClasses['Schedule Entry Lock']
 			cc.setWeekDaySchedule.mockResolvedValue(undefined)
@@ -410,7 +410,7 @@ describe('ScheduleService', () => {
 			expect(result?.status).toBe(SupervisionStatus.Success)
 		})
 
-		it('returns supervision result directly when supervised (daily)', async () => {
+		it('accepts a supervised daily update without readback', async () => {
 			const zwaveNode = createFakeZwaveNode(true)
 			const cc = zwaveNode.commandClasses['Schedule Entry Lock']
 			cc.setDailyRepeatingSchedule.mockResolvedValue({
@@ -454,7 +454,7 @@ describe('ScheduleService', () => {
 		})
 	})
 
-	describe('setEnabledSchedule', () => {
+	describe('enabling schedules', () => {
 		it('throws when node not found', async () => {
 			const driverPort: ScheduleDriverPort = {
 				getDriver: () =>
@@ -516,7 +516,7 @@ describe('ScheduleService', () => {
 			expect(node?.userCodes?.enabled).not.toContain(1)
 		})
 
-		it('enables all users when userId is 0', async () => {
+		it('enables all users when no individual user is selected', async () => {
 			const zwaveNode = createFakeZwaveNode(true)
 			zwaveNode.commandClasses[
 				'Schedule Entry Lock'
@@ -537,7 +537,7 @@ describe('ScheduleService', () => {
 			expect(node?.userCodes?.enabled).toEqual([1, 2, 3])
 		})
 
-		it('disables all users when userId is 0', async () => {
+		it('disables all users when no individual user is selected', async () => {
 			const zwaveNode = createFakeZwaveNode(true)
 			zwaveNode.commandClasses[
 				'Schedule Entry Lock'
@@ -563,7 +563,7 @@ describe('ScheduleService', () => {
 		})
 	})
 
-	describe('getSchedules – slot management via cache', () => {
+	describe('refreshing cached schedules', () => {
 		it('adds a new cached slot to the returned schedule', async () => {
 			const zwaveNode = createFakeZwaveNode(true)
 			const driverPort = createDriverPort(zwaveNode)
@@ -702,8 +702,8 @@ describe('ScheduleService', () => {
 		})
 	})
 
-	describe('setSchedule – yearly', () => {
-		it('sets a yearly schedule via supervision, does not call weekly/daily', async () => {
+	describe('yearly schedules', () => {
+		it('updates only the requested yearly schedule', async () => {
 			const zwaveNode = createFakeZwaveNode(true)
 			const cc = zwaveNode.commandClasses['Schedule Entry Lock']
 			cc.setYearDaySchedule.mockResolvedValue({
@@ -746,8 +746,8 @@ describe('ScheduleService', () => {
 		})
 	})
 
-	describe('setSchedule – readback mismatch', () => {
-		it('returns Fail when readback does not match', async () => {
+	describe('schedule verification', () => {
+		it('reports failure when readback does not match', async () => {
 			const zwaveNode = createFakeZwaveNode(true)
 			const cc = zwaveNode.commandClasses['Schedule Entry Lock']
 			cc.setWeekDaySchedule.mockResolvedValue(undefined)
@@ -784,7 +784,7 @@ describe('ScheduleService', () => {
 		})
 	})
 
-	describe('getSchedules – cancellation', () => {
+	describe('schedule retrieval cancellation', () => {
 		it('returns undefined when cancelled during iteration', async () => {
 			const zwaveNode = createFakeZwaveNode(true)
 			const driverPort = createDriverPort(zwaveNode)
@@ -825,8 +825,8 @@ describe('ScheduleService', () => {
 		})
 	})
 
-	describe('getSchedules – unknown userCodes', () => {
-		it('populates slot counts and emits node update when userCodes is undefined', async () => {
+	describe('schedule retrieval without a known user count', () => {
+		it('populates schedule state when the supported user count is unknown', async () => {
 			const zwaveNode = createFakeZwaveNode(true)
 			const driverPort = createDriverPort(zwaveNode)
 			const nodeStore = createNodeStorePort()
@@ -866,8 +866,8 @@ describe('ScheduleService', () => {
 		})
 	})
 
-	describe('getSchedules – mode filtering', () => {
-		it('only fetches weekly schedules when mode is WEEKLY', async () => {
+	describe('schedule retrieval by mode', () => {
+		it('fetches only weekly schedules when requested', async () => {
 			const zwaveNode = createFakeZwaveNode(true)
 			const driverPort = createDriverPort(zwaveNode)
 			const nodeStore = createNodeStorePort()
@@ -902,7 +902,7 @@ describe('ScheduleService', () => {
 		})
 	})
 
-	describe('setSchedule – updates existing slot', () => {
+	describe('updating an existing schedule', () => {
 		it('updates an existing slot in the schedule on success', async () => {
 			const zwaveNode = createFakeZwaveNode(true)
 			const updatedData: ScheduleEntryLockWeekDaySchedule = {
@@ -959,7 +959,7 @@ describe('ScheduleService', () => {
 		})
 	})
 
-	describe('setSchedule – no schedule on node', () => {
+	describe('updating a node without cached schedules', () => {
 		it('returns result when node has no schedule object', async () => {
 			const zwaveNode = createFakeZwaveNode(true)
 			zwaveNode.commandClasses[
@@ -989,8 +989,8 @@ describe('ScheduleService', () => {
 		})
 	})
 
-	describe('setEnabledSchedule – no userCodes', () => {
-		it('does not throw when node has no userCodes', async () => {
+	describe('schedule enablement without cached user codes', () => {
+		it('emits unchanged state when a user update has no cached user codes', async () => {
 			const zwaveNode = createFakeZwaveNode(true)
 			zwaveNode.commandClasses[
 				'Schedule Entry Lock'
@@ -1012,7 +1012,7 @@ describe('ScheduleService', () => {
 			])
 		})
 
-		it('emits unchanged state for an all-users update when node has no userCodes', async () => {
+		it('emits unchanged state when a bulk update has no cached user codes', async () => {
 			const zwaveNode = createFakeZwaveNode(true)
 			zwaveNode.commandClasses[
 				'Schedule Entry Lock'

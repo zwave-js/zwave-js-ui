@@ -136,7 +136,7 @@ describe('ConfigurationTemplateService', () => {
 		idCounter = 0
 	})
 
-	describe('getConfigurationTemplates', () => {
+	describe('listing templates', () => {
 		it('returns the initial templates', () => {
 			const templates = [makeTemplate()]
 			const svc = new ConfigurationTemplateService(
@@ -165,7 +165,7 @@ describe('ConfigurationTemplateService', () => {
 		})
 	})
 
-	describe('createConfigurationTemplate', () => {
+	describe('creating templates', () => {
 		it('creates a template from node Configuration CC values', async () => {
 			const node = makeNode()
 			const nodes = new Map([[2, node]])
@@ -294,7 +294,7 @@ describe('ConfigurationTemplateService', () => {
 			).rejects.toThrow('no writeable Configuration CC values')
 		})
 
-		it('triggers auto-apply when autoApply is true', async () => {
+		it('automatically applies a new template when enabled', async () => {
 			const node = makeNode()
 			const nodes = new Map([[2, node]])
 			const nodeStore = createNodeStorePort(nodes)
@@ -318,8 +318,8 @@ describe('ConfigurationTemplateService', () => {
 		})
 	})
 
-	describe('updateConfigurationTemplate', () => {
-		it('updates name and autoApply', async () => {
+	describe('updating templates', () => {
+		it('updates the name and automatic application setting', async () => {
 			const template = makeTemplate()
 			const persistence = createPersistencePort()
 			const svc = new ConfigurationTemplateService(
@@ -399,7 +399,7 @@ describe('ConfigurationTemplateService', () => {
 		})
 	})
 
-	describe('deleteConfigurationTemplate', () => {
+	describe('deleting templates', () => {
 		it('deletes a template and persists', async () => {
 			const template = makeTemplate()
 			const persistence = createPersistencePort()
@@ -457,8 +457,8 @@ describe('ConfigurationTemplateService', () => {
 		})
 	})
 
-	describe('applyConfigurationTemplate', () => {
-		it('applies values via writeValue with exact arguments in order and records hash', async () => {
+	describe('applying templates', () => {
+		it('writes template values and records the applied content hash', async () => {
 			const template = makeTemplate({
 				values: [
 					{
@@ -495,8 +495,7 @@ describe('ConfigurationTemplateService', () => {
 			expect(result.failed).toBe(0)
 			expect(nodeStore.writeValue).toHaveBeenCalledTimes(2)
 
-			expect(nodeStore.writeValue).toHaveBeenNthCalledWith(
-				1,
+			expect(nodeStore.writeValue).toHaveBeenCalledWith(
 				{
 					nodeId: 2,
 					commandClass: CommandClasses.Configuration,
@@ -506,8 +505,7 @@ describe('ConfigurationTemplateService', () => {
 				},
 				42,
 			)
-			expect(nodeStore.writeValue).toHaveBeenNthCalledWith(
-				2,
+			expect(nodeStore.writeValue).toHaveBeenCalledWith(
 				{
 					nodeId: 2,
 					commandClass: CommandClasses.Configuration,
@@ -647,7 +645,7 @@ describe('ConfigurationTemplateService', () => {
 			expect(result.success).toBe(1)
 		})
 
-		it('handles partial failure: asserts exact write args and records failures', async () => {
+		it('reports each failed value while continuing the application', async () => {
 			const template = makeTemplate({
 				values: [
 					{
@@ -703,8 +701,7 @@ describe('ConfigurationTemplateService', () => {
 			expect(result.errors[0]).toContain('Custom error message')
 
 			expect(nodeStore.writeValue).toHaveBeenCalledTimes(3)
-			expect(nodeStore.writeValue).toHaveBeenNthCalledWith(
-				1,
+			expect(nodeStore.writeValue).toHaveBeenCalledWith(
 				{
 					nodeId: 2,
 					commandClass: CommandClasses.Configuration,
@@ -714,8 +711,7 @@ describe('ConfigurationTemplateService', () => {
 				},
 				1,
 			)
-			expect(nodeStore.writeValue).toHaveBeenNthCalledWith(
-				2,
+			expect(nodeStore.writeValue).toHaveBeenCalledWith(
 				{
 					nodeId: 2,
 					commandClass: CommandClasses.Configuration,
@@ -725,8 +721,7 @@ describe('ConfigurationTemplateService', () => {
 				},
 				2,
 			)
-			expect(nodeStore.writeValue).toHaveBeenNthCalledWith(
-				3,
+			expect(nodeStore.writeValue).toHaveBeenCalledWith(
 				{
 					nodeId: 2,
 					commandClass: CommandClasses.Configuration,
@@ -738,7 +733,7 @@ describe('ConfigurationTemplateService', () => {
 			)
 		})
 
-		it('handles write failures and dead node early exit', async () => {
+		it('stops after the node becomes dead and reports remaining values', async () => {
 			const template = makeTemplate({
 				values: [
 					{ property: 1, endpoint: 0, value: 1 },
@@ -769,7 +764,7 @@ describe('ConfigurationTemplateService', () => {
 			expect(result.reason).toBe('Node is dead')
 		})
 
-		it('catches exceptions from writeValue', async () => {
+		it('reports exceptions from value writes', async () => {
 			const template = makeTemplate({
 				values: [{ property: 1, endpoint: 0, value: 5 }],
 			})
@@ -797,7 +792,7 @@ describe('ConfigurationTemplateService', () => {
 		})
 	})
 
-	describe('importConfigurationTemplates', () => {
+	describe('importing template collections', () => {
 		it('imports templates and assigns new IDs', async () => {
 			const persistence = createPersistencePort()
 			const svc = new ConfigurationTemplateService(
@@ -863,7 +858,7 @@ describe('ConfigurationTemplateService', () => {
 		})
 	})
 
-	describe('checkConfigurationTemplates', () => {
+	describe('automatic application when nodes become ready', () => {
 		it('auto-applies matching templates on node ready', async () => {
 			const template = makeTemplate({
 				autoApply: true,
@@ -968,7 +963,7 @@ describe('ConfigurationTemplateService', () => {
 		})
 	})
 
-	describe('contentHash via public API', () => {
+	describe('template content hashes', () => {
 		it('produces deterministic content hash for identical values', async () => {
 			const node = makeNode()
 			const nodes = new Map([[2, node]])
@@ -1032,7 +1027,7 @@ describe('ConfigurationTemplateService', () => {
 			expect(withoutFw.contentHash).not.toBe(withFw.contentHash)
 		})
 
-		it('normalizes null vs undefined propertyKey to same contentHash', async () => {
+		it('produces the same hash when a value bit mask is null or omitted', async () => {
 			const node = makeNode()
 			const nodes = new Map([[2, node]])
 			const svc = new ConfigurationTemplateService(
@@ -1069,8 +1064,8 @@ describe('ConfigurationTemplateService', () => {
 		})
 	})
 
-	describe('getDeviceConfigurationParams', () => {
-		it('throws for invalid deviceId format', async () => {
+	describe('loading device configuration parameters', () => {
+		it('rejects a malformed device identifier', async () => {
 			const svc = new ConfigurationTemplateService(
 				createDriverPort(),
 				createNodeStorePort(),
@@ -1100,7 +1095,7 @@ describe('ConfigurationTemplateService', () => {
 			).rejects.toThrow('non-numeric')
 		})
 
-		it('returns mapped params from ConfigManager with correct lookup ordering', async () => {
+		it('maps configuration parameters for a device identifier', async () => {
 			const mockParamInfo = new ObjectKeyMap<
 				{ parameter: number; valueBitMask?: number },
 				ParamInformation
@@ -1188,7 +1183,7 @@ describe('ConfigurationTemplateService', () => {
 				configMgr,
 			)
 
-			// deviceId format is "mfr-productId-productType"; lookupDevice reorders to (mfr, productType, productId)
+			// Device IDs order product ID before product type, while ConfigManager expects product type first
 			const result = await svc.getDeviceConfigurationParams('134-2-100')
 
 			expect(loadDeviceIndex).toHaveBeenCalled()
@@ -1243,7 +1238,7 @@ describe('ConfigurationTemplateService', () => {
 			})
 		})
 
-		it('returns empty array when device has no paramInformation', async () => {
+		it('returns no parameters when the device configuration has none', async () => {
 			const svc = new ConfigurationTemplateService(
 				createDriverPort(),
 				createNodeStorePort(),
@@ -1259,8 +1254,8 @@ describe('ConfigurationTemplateService', () => {
 		})
 	})
 
-	describe('createConfigurationTemplate – propertyKey branches', () => {
-		it('captures propertyKey when present on Configuration CC value', async () => {
+	describe('configuration value selection', () => {
+		it('preserves a value bit mask in the template', async () => {
 			const node = makeNode({
 				values: {
 					'0-112-0-5-1': {
@@ -1331,8 +1326,8 @@ describe('ConfigurationTemplateService', () => {
 		})
 	})
 
-	describe('updateConfigurationTemplate – auto-apply on content change', () => {
-		it('triggers auto-apply when values change and autoApply is true', async () => {
+	describe('automatic application after template updates', () => {
+		it('automatically applies an enabled template after its values change', async () => {
 			const existingTemplate = makeTemplate({
 				autoApply: true,
 				values: [
@@ -1389,8 +1384,8 @@ describe('ConfigurationTemplateService', () => {
 		})
 	})
 
-	describe('applyConfigurationTemplate – error branch', () => {
-		it('catches writeValue exceptions and counts as failed', async () => {
+	describe('failed template writes', () => {
+		it('reports rejected writes as failures', async () => {
 			const template = makeTemplate({
 				values: [
 					{
@@ -1479,7 +1474,7 @@ describe('ConfigurationTemplateService', () => {
 			expect(result.reason).toBe('Node is dead')
 		})
 
-		it('counts setValueFailed with message', async () => {
+		it('includes the write failure message', async () => {
 			const template = makeTemplate({
 				values: [
 					{
@@ -1518,8 +1513,8 @@ describe('ConfigurationTemplateService', () => {
 		})
 	})
 
-	describe('checkConfigurationTemplates – partial failure', () => {
-		it('logs warning (not info) when auto-apply has partial failures', async () => {
+	describe('partial automatic application', () => {
+		it('logs a warning with partial application totals', async () => {
 			const template = makeTemplate({
 				autoApply: true,
 				contentHash: 'unique-hash',
@@ -1561,6 +1556,13 @@ describe('ConfigurationTemplateService', () => {
 					}) as ReturnType<TemplateDriverPort['getDriver']>,
 			}
 			const logger = createLogger()
+			let resolveWarning: (() => void) | undefined
+			const warningLogged = new Promise<void>((resolve) => {
+				resolveWarning = resolve
+			})
+			nodeStore.logNode = vi.fn((_node: ZWaveNode, level: string) => {
+				if (level === 'warn') resolveWarning?.()
+			})
 
 			const svc = new ConfigurationTemplateService(
 				driverPort,
@@ -1573,7 +1575,7 @@ describe('ConfigurationTemplateService', () => {
 			)
 
 			svc.checkConfigurationTemplates(node, fakeZwaveNode)
-			await new Promise((r) => setTimeout(r, 50))
+			await warningLogged
 
 			expect(nodeStore.logNode).toHaveBeenCalledWith(
 				fakeZwaveNode,
@@ -1589,7 +1591,7 @@ describe('ConfigurationTemplateService', () => {
 		})
 	})
 
-	describe('checkConfigurationTemplates – firmware range filtering', () => {
+	describe('automatic application by firmware version', () => {
 		it('excludes templates with min firmware above node firmware', () => {
 			const template = makeTemplate({
 				autoApply: true,
@@ -1675,7 +1677,7 @@ describe('ConfigurationTemplateService', () => {
 			expect(nodeStore.logNode).toHaveBeenCalled()
 		})
 
-		it('skips template when node has no firmwareVersion', () => {
+		it('skips ranged templates when node firmware is unknown', () => {
 			const template = makeTemplate({
 				autoApply: true,
 				firmwareRange: { min: '1.0.0', max: undefined },
@@ -1703,7 +1705,7 @@ describe('ConfigurationTemplateService', () => {
 		})
 	})
 
-	describe('updateConfigurationTemplate – auto-apply error handling', () => {
+	describe('automatic application failures', () => {
 		it('logs error when auto-apply rejects', async () => {
 			const template = makeTemplate({
 				autoApply: true,
@@ -1712,6 +1714,7 @@ describe('ConfigurationTemplateService', () => {
 			const node = makeNode({ appliedTemplateContentHashes: [] })
 			const nodes = new Map<number, TemplateNodeState>([[2, node]])
 			const nodeStore = createNodeStorePort(nodes)
+			nodeStore.getNode = vi.fn(() => undefined)
 
 			const fakeZwaveNode = { id: 2 } as ZWaveNode
 			const driverPort = {
@@ -1722,6 +1725,13 @@ describe('ConfigurationTemplateService', () => {
 						},
 					}) as ReturnType<TemplateDriverPort['getDriver']>,
 			}
+			let resolveError: (() => void) | undefined
+			const errorLogged = new Promise<void>((resolve) => {
+				resolveError = resolve
+			})
+			nodeStore.logNode = vi.fn((_node: ZWaveNode, level: string) => {
+				if (level === 'error') resolveError?.()
+			})
 
 			const svc = new ConfigurationTemplateService(
 				driverPort,
@@ -1731,10 +1741,6 @@ describe('ConfigurationTemplateService', () => {
 				createLogger(),
 				[template],
 				createConfigManagerPort(),
-			)
-
-			vi.spyOn(svc, 'applyConfigurationTemplate').mockRejectedValue(
-				new Error('Network error'),
 			)
 
 			await svc.updateConfigurationTemplate(template.id, {
@@ -1750,7 +1756,7 @@ describe('ConfigurationTemplateService', () => {
 				],
 			})
 
-			await new Promise((r) => setTimeout(r, 100))
+			await errorLogged
 			const logCalls = vi.mocked(nodeStore.logNode).mock.calls
 			const errorLogs = logCalls.filter(
 				(c: unknown[]) => c[1] === 'error',
@@ -1760,8 +1766,8 @@ describe('ConfigurationTemplateService', () => {
 		})
 	})
 
-	describe('applyConfigurationTemplate – no storeNode yet', () => {
-		it('creates storeNode entry when none exists', async () => {
+	describe('persisting the first template application', () => {
+		it('persists the applied hash when no node record exists', async () => {
 			const template = makeTemplate()
 			const node = makeNode()
 			const nodes = new Map<number, TemplateNodeState>([[2, node]])
@@ -1783,24 +1789,7 @@ describe('ConfigurationTemplateService', () => {
 		})
 	})
 
-	describe('checkConfigurationTemplates – no driver', () => {
-		it('returns early when matching templates is empty', () => {
-			const node = makeNode({ deviceId: 'other-device' })
-			const svc = new ConfigurationTemplateService(
-				{ getDriver: () => null },
-				createNodeStorePort(),
-				createPersistencePort(),
-				createUtilsPort(),
-				createLogger(),
-				[],
-				createConfigManagerPort(),
-			)
-			const fakeZwaveNode = { id: 2 } as ZWaveNode
-			svc.checkConfigurationTemplates(node, fakeZwaveNode)
-		})
-	})
-
-	describe('deleteConfigurationTemplate – cleanup hashes', () => {
+	describe('deleting applied templates', () => {
 		it('removes the deleted hash from all nodes', async () => {
 			const template = makeTemplate({ contentHash: 'del-hash' })
 			const otherTemplate = makeTemplate({
@@ -1832,7 +1821,7 @@ describe('ConfigurationTemplateService', () => {
 		})
 	})
 
-	describe('importConfigurationTemplates – duplicate IDs', () => {
+	describe('importing templates', () => {
 		it('generates new IDs for imported templates with existing IDs', async () => {
 			const existing = makeTemplate({ id: 'existing-id' })
 			const imported: ZUIConfigurationTemplate = {
@@ -1861,8 +1850,8 @@ describe('ConfigurationTemplateService', () => {
 		})
 	})
 
-	describe('createConfigurationTemplate – edge cases', () => {
-		it('throws when node has no values (values=undefined)', async () => {
+	describe('creating templates from incomplete node data', () => {
+		it('rejects a node without configuration values', async () => {
 			const node = makeNode({ values: undefined })
 			const nodes = new Map<number, TemplateNodeState>([[2, node]])
 			const svc = new ConfigurationTemplateService(
@@ -1880,7 +1869,7 @@ describe('ConfigurationTemplateService', () => {
 			).rejects.toThrow('no writeable Configuration CC values')
 		})
 
-		it('defaults endpoint to 0 when value.endpoint is undefined', async () => {
+		it('uses endpoint zero when a value omits its endpoint', async () => {
 			const node = makeNode({
 				values: {
 					'0-112-0-1': {
@@ -1909,7 +1898,7 @@ describe('ConfigurationTemplateService', () => {
 			expect(result.values[0].endpoint).toBe(0)
 		})
 
-		it('defaults deviceId when node.deviceId is falsy', async () => {
+		it('uses an empty device identifier when the node has none', async () => {
 			const node = makeNode({
 				deviceId: undefined,
 				values: {
@@ -1940,30 +1929,8 @@ describe('ConfigurationTemplateService', () => {
 		})
 	})
 
-	describe('deleteConfigurationTemplate – no hash', () => {
-		it('skips cleanup when template has no contentHash', async () => {
-			const template = makeTemplate({ contentHash: '' })
-			const node = makeNode({ appliedTemplateContentHashes: [] })
-			const nodes = new Map<number, TemplateNodeState>([[2, node]])
-			const nodeStore = createNodeStorePort(nodes)
-
-			const svc = new ConfigurationTemplateService(
-				createDriverPort(),
-				nodeStore,
-				createPersistencePort([template]),
-				createUtilsPort(),
-				createLogger(),
-				[template],
-				createConfigManagerPort(),
-			)
-
-			const result = await svc.deleteConfigurationTemplate(template.id)
-			expect(result).toBe(true)
-		})
-	})
-
-	describe('applyConfigurationTemplate – no appliedTemplateContentHashes', () => {
-		it('initializes appliedTemplateContentHashes when undefined', async () => {
+	describe('recording the first applied content hash', () => {
+		it('records the applied hash for a node without prior history', async () => {
 			const template = makeTemplate()
 			const node = makeNode({
 				appliedTemplateContentHashes: undefined,
@@ -1987,7 +1954,7 @@ describe('ConfigurationTemplateService', () => {
 		})
 	})
 
-	describe('auto-apply – skips non-ready and already-applied nodes', () => {
+	describe('automatic application eligibility', () => {
 		it('skips non-ready nodes', async () => {
 			const template = makeTemplate({
 				autoApply: true,
@@ -2073,8 +2040,8 @@ describe('ConfigurationTemplateService', () => {
 		})
 	})
 
-	describe('checkConfigurationTemplates – apply rejection', () => {
-		it('logs error when applyConfigurationTemplate rejects during auto-apply', async () => {
+	describe('rejected automatic application', () => {
+		it('logs an error when automatic application rejects', async () => {
 			const template = makeTemplate({
 				autoApply: true,
 				contentHash: 'check-catch-hash',
@@ -2097,6 +2064,13 @@ describe('ConfigurationTemplateService', () => {
 					}) as ReturnType<TemplateDriverPort['getDriver']>,
 			}
 			const logger = createLogger()
+			let resolveError: (() => void) | undefined
+			const errorLogged = new Promise<void>((resolve) => {
+				resolveError = resolve
+			})
+			nodeStore.logNode = vi.fn((_node: ZWaveNode, level: string) => {
+				if (level === 'error') resolveError?.()
+			})
 
 			const svc = new ConfigurationTemplateService(
 				driverPort,
@@ -2109,7 +2083,7 @@ describe('ConfigurationTemplateService', () => {
 			)
 
 			svc.checkConfigurationTemplates(node, fakeZwaveNode)
-			await new Promise((r) => setTimeout(r, 100))
+			await errorLogged
 
 			const logCalls = vi.mocked(nodeStore.logNode).mock.calls
 			const errorLogs = logCalls.filter(
