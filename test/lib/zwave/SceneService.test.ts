@@ -435,7 +435,7 @@ describe('SceneService', () => {
 	})
 
 	// expectTypeOf assertions have no effect under `vitest run` - esbuild erases types without checking them - so only `npx tsc --noEmit -p tsconfig.eslint.json` catches a type regression here
-	describe('facade return type precision (Finding #3)', () => {
+	describe('facade return type precision', () => {
 		it('ScenePersistencePort.put resolves with the persisted scenes array, not unknown', () => {
 			expectTypeOf<
 				ReturnType<ScenePersistencePort<TestValueRef>['put']>
