@@ -1,7 +1,3 @@
-/**
- * Inbound `ZNIFFER_API` Socket.IO handler, extracted verbatim (same
- * behavior, same wire contract) from `api/app.ts`'s `setupSocket()`.
- */
 import type { Socket } from 'socket.io'
 import * as loggers from '../lib/logger.ts'
 import { inboundEvents } from '../lib/SocketEvents.ts'
@@ -10,20 +6,7 @@ import { getLegacyErrorMessage, noop, type SocketAck } from './types.ts'
 
 const logger = loggers.module('App')
 
-/**
- * Valid `ZNIFFER_API` request payloads. Actions without parameters omit
- * action-specific fields, while frequency, channel configuration, and capture
- * data are required only by the operation that consumes each one. Socket.IO
- * still performs no runtime validation, preserving malformed-wire behavior.
- */
 interface ZnifferApiRequestBase {
-	/**
-	 * Preserved quirk: only ever read by this handler's log line below,
-	 * never by the ack itself. The real wire payload names the action
-	 * `apiName`, not `api` - so this always logs "Zniffer api call:
-	 * undefined" (this field is never actually sent by the real client),
-	 * not new behavior.
-	 */
 	api?: string
 }
 
@@ -49,15 +32,6 @@ export interface ZnifferApiAck {
 	api?: string
 }
 
-/**
- * Registers the `ZNIFFER_API` handler: dispatches `data.apiName` to the
- * matching `ZnifferManager` method. Preserved quirks:
- *  - `loadCaptureFromBuffer` is called WITHOUT `await` - `result` on the
- *    ack ends up an unresolved (and thus, over the wire, empty-object
- *    serialized) `Promise`, not the resolved value.
- *  - An unknown `apiName` throws (unlike HASS_API's silent-success quirk),
- *    reported as `Unknown ZNIFFER api <apiName>`.
- */
 export function registerZnifferApiHandler(
 	socket: Socket,
 	runtime: AppRuntime,
@@ -68,6 +42,7 @@ export function registerZnifferApiHandler(
 			data: ZnifferApiRequest,
 			cb: SocketAck<ZnifferApiAck> = noop,
 		) => {
+			// Client sends "apiName" not "api" so this always logs undefined
 			logger.info(`Zniffer api call: ${data.api}`)
 
 			const apiName: string = data.apiName
@@ -116,14 +91,14 @@ export function registerZnifferApiHandler(
 						break
 					case 'loadCaptureFromBuffer': {
 						const buffer = Buffer.from(data.buffer)
-						// Preserved quirk: NOT awaited - `res` ends up the
-						// pending `Promise` itself, not its resolved value.
+						// Deliberately not awaited so res is the pending promise, not the resolved value
 						res = runtime
 							.requireZniffer('loadCaptureFromBuffer')
 							.loadCaptureFromBuffer(buffer)
 						break
 					}
 					default:
+						// Unknown actions fail here while HASS_API silently succeeds
 						throw new Error(`Unknown ZNIFFER api ${apiName}`)
 				}
 			} catch (error) {

@@ -94,11 +94,6 @@ describe('Socket contract: first/last client callback lifecycle', () => {
 	})
 
 	it('a gateway swapped in via testHooks between disconnect and reconnect is the one observed - the NEW gateway gets setUserCallbacks(), never a stale captured reference to the old one', async () => {
-		// Real-Socket.IO counterpart to `registerSocketApi.ts`'s unit-level
-		// "resolves the gateway fresh on every 'clients' firing" test
-		// (`handlerUnits.test.ts`): here the swap happens between two REAL
-		// connect/disconnect events on the real `SocketManager`, not by
-		// directly re-invoking a captured callback.
 		const gwA = createFakeGateway()
 		harness.testHooks.setGateway(gwA as any)
 
@@ -110,8 +105,6 @@ describe('Socket contract: first/last client callback lifecycle', () => {
 		await harness.waitForServerSocketCount(0)
 		expect(gwA.zwave.removeUserCallbacks).toHaveBeenCalledOnce()
 
-		// Swap the gateway entirely before the next connection - production
-		// would do this across a restart; here `testHooks` does it directly.
 		const gwB = createFakeGateway()
 		harness.testHooks.setGateway(gwB as any)
 
@@ -119,15 +112,12 @@ describe('Socket contract: first/last client callback lifecycle', () => {
 		await harness.connectClient(clientB)
 
 		expect(gwB.zwave.setUserCallbacks).toHaveBeenCalledOnce()
-		// The OLD gateway must never be touched again by a later event.
 		expect(gwA.zwave.setUserCallbacks).toHaveBeenCalledOnce()
 		expect(gwA.zwave.removeUserCallbacks).toHaveBeenCalledOnce()
 
 		clientB.disconnect()
 		await harness.waitForServerSocketCount(0)
 		expect(gwB.zwave.removeUserCallbacks).toHaveBeenCalledOnce()
-		// Still just the one call from earlier - the last-client disconnect
-		// after the swap must resolve gwB, never re-trigger gwA.
 		expect(gwA.zwave.removeUserCallbacks).toHaveBeenCalledOnce()
 	})
 })

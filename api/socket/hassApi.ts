@@ -1,7 +1,3 @@
-/**
- * Inbound `HASS_API` Socket.IO handler, extracted verbatim (same behavior,
- * same wire contract) from `api/app.ts`'s `setupSocket()`.
- */
 import type { Socket } from 'socket.io'
 import type { HassDevice } from '../lib/ZwaveClient.ts'
 import * as loggers from '../lib/logger.ts'
@@ -11,13 +7,6 @@ import { getLegacyErrorMessage, noop, type SocketAck } from './types.ts'
 
 const logger = loggers.module('App')
 
-/**
- * Request payload accepted by the `HASS_API` handler below. Every field
- * beyond `apiName` is only meaningful for a subset of actions (see the
- * switch below) - all are optional here, reflecting that the real wire
- * payload is never validated before use, exactly like the original
- * untyped handler.
- */
 export interface HassApiRequest {
 	apiName?: string
 	device?: HassDevice
@@ -33,12 +22,6 @@ export interface HassApiAck {
 	api?: string
 }
 
-/**
- * Registers the `HASS_API` handler: dispatches `data.apiName` to the
- * matching `Gateway`/`ZwaveClient` method. Preserved quirk: the `switch` has
- * no `default` case, so an unknown `apiName` silently "succeeds" (`res`/
- * `err` both stay `undefined`).
- */
 export function registerHassApiHandler(
 	socket: Socket,
 	runtime: AppRuntime,
@@ -51,6 +34,7 @@ export function registerHassApiHandler(
 			let res: void
 			let err: unknown = undefined
 			try {
+				// No default case so an unknown apiName silently succeeds with res/err undefined
 				switch (data.apiName) {
 					case 'delete':
 						{
