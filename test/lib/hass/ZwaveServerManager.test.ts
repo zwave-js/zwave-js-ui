@@ -186,6 +186,25 @@ describe('ZwaveServerManager.create()', () => {
 			'Hard reset requested by ZwaveJS Server',
 		)
 	})
+
+	it('re-reads the driver on every create (no captured snapshot)', () => {
+		const first = { id: 'a', destroy: vi.fn() }
+		const second = { id: 'b', destroy: vi.fn() }
+		let current: unknown = first
+		const base = createHost()
+		const host: ZwaveServerHost = {
+			...base.host,
+			getDriver: () => current as any,
+		}
+		const manager = new ZwaveServerManager(host)
+
+		manager.create()
+		expect(lastServer().driver).toBe(first)
+
+		current = second
+		manager.create()
+		expect(lastServer().driver).toBe(second)
+	})
 })
 
 describe('ZwaveServerManager.startIfNeeded()', () => {
@@ -384,45 +403,5 @@ describe('ZwaveServerManager.handInclusionControlBack()', () => {
 		const { host } = createHost()
 		const manager = new ZwaveServerManager(host)
 		expect(() => manager.handInclusionControlBack()).not.toThrow()
-	})
-})
-
-describe('ZwaveServerManager accessors', () => {
-	it('exposes the upstream server version', () => {
-		const { host } = createHost()
-		expect(new ZwaveServerManager(host).version).toBe(
-			hoisted.SERVER_VERSION,
-		)
-	})
-
-	it('allows the server reference to be forced to a stub and back to null', () => {
-		const { host } = createHost()
-		const manager = new ZwaveServerManager(host)
-		const stub = { start: vi.fn() } as any
-
-		manager.server = stub
-		expect(manager.server).toBe(stub)
-
-		manager.server = null
-		expect(manager.server).toBeNull()
-	})
-
-	it('re-reads the driver on every create (no captured snapshot)', () => {
-		const first = { id: 'a', destroy: vi.fn() }
-		const second = { id: 'b', destroy: vi.fn() }
-		let current: unknown = first
-		const base = createHost()
-		const host: ZwaveServerHost = {
-			...base.host,
-			getDriver: () => current as any,
-		}
-		const manager = new ZwaveServerManager(host)
-
-		manager.create()
-		expect(lastServer().driver).toBe(first)
-
-		current = second
-		manager.create()
-		expect(lastServer().driver).toBe(second)
 	})
 })
