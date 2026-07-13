@@ -5,23 +5,7 @@ import { createHttpHarness, type HttpHarness } from './harness.ts'
 import { seedUser } from './authHelpers.ts'
 import { getTestStoreDir } from './env.ts'
 
-/**
- * Characterizes what `express-session`'s file-based store (`storeDir/
- * sessions/*.json`, see `api/app.ts`'s `session({ store: new FileStore(...)
- * })` setup) actually persists to disk for `req.session.user`, across every
- * code path that assigns it.
- *
- * This is a type-honesty regression, not a behavior test: `SessionData.user`
- * is typed `User | PublicUser` (see `api/app.ts`) specifically because the
- * two paths below genuinely persist different shapes. Neither shape is
- * changed here - this suite exists to prove that fact stays true (and to
- * document, rather than fix, the `passwordHash`-in-session quirk on the
- * `PUT /api/password` path) across future refactors.
- *
- * Parsed session file contents are intentionally left as `any`: they're
- * arbitrary on-disk JSON blobs owned by a third-party session store, not
- * something this test suite has (or needs) a static type for.
- */
+// Proves req.session.user's on-disk shape differs by login path, since SessionData.user is typed User | PublicUser for exactly that reason
 async function readAllSessionFiles(): Promise<any[]> {
 	const sessionsDir = path.join(getTestStoreDir(), 'sessions')
 	let files: string[]
@@ -69,9 +53,7 @@ describe('session store serialization (passwordHash-in-session quirk)', () => {
 		const sessions = await readAllSessionFiles()
 		const match = findSessionForUsername(sessions, 'session-auth-user')
 
-		// Documented current behavior: `/api/authenticate` assigns a
-		// PublicUser (passwordHash already stripped) to `req.session.user`,
-		// so the on-disk session file for this login never contains it.
+		// /api/authenticate assigns a PublicUser with passwordHash already stripped to req.session.user
 		expect(match.user).not.toHaveProperty('passwordHash')
 	})
 
@@ -91,15 +73,9 @@ describe('session store serialization (passwordHash-in-session quirk)', () => {
 			confirmNew: 'new-password',
 		})
 		expect(res.body.success).toBe(true)
-		// The HTTP response itself never leaks the hash...
 		expect(res.body.user).not.toHaveProperty('passwordHash')
 
-		// ...but the on-disk session file genuinely does: `PUT /api/password`
-		// assigns the full `User` record (with the freshly-hashed password)
-		// to `req.session.user`. This is a real, pre-existing quirk
-		// (SessionData.user is honestly typed `User | PublicUser` because of
-		// it) - documented and characterized here as a follow-up, not
-		// changed by this suite.
+		// PUT /api/password assigns the full User record, including the freshly-hashed password, to req.session.user
 		const sessions = await readAllSessionFiles()
 		const match = findSessionForUsername(sessions, 'session-pw-user')
 

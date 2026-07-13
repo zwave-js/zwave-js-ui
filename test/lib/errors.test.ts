@@ -114,14 +114,8 @@ describe('#errors', () => {
 				},
 			}
 			expect(() => getErrorMessage(hostile)).not.toThrow()
-			// JSON.stringify() succeeds here (no toJSON, and the hostile
-			// coercion methods are never invoked by JSON.stringify itself),
-			// so the message is the JSON form, not the constant fallback.
-			expect(getErrorMessage(hostile)).toBe(
-				JSON.stringify({
-					// jsonify only serializes own enumerable non-symbol keys
-				}),
-			)
+			// JSON.stringify never invokes toString/valueOf/Symbol.toPrimitive, so it succeeds here and the constant fallback is never reached
+			expect(getErrorMessage(hostile)).toBe(JSON.stringify({}))
 		})
 
 		it('never throws, and returns the constant fallback, for a Proxy whose has/get/getPrototypeOf traps all throw', () => {

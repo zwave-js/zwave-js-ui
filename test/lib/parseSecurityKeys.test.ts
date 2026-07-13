@@ -2,24 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { parseSecurityKeys } from '../../api/lib/utils.ts'
 import type { ZwaveConfig } from '../../api/lib/ZwaveClient.ts'
 
-/**
- * Characterizes `parseSecurityKeys()` (api/lib/utils.ts), specifically the
- * two consumer-visible behaviors a prior refactor pass accidentally changed
- * and this pass reverts (see the doc comments at the top of the function):
- *
- *  1. Setting a `KEY_LR_*` env var when no `zwave.securityKeysLongRange`
- *     object was ever persisted must still fail startup - now via an
- *     explicit, characterized `TypeError` instead of an incidental one from
- *     indexing into `undefined`. This is a preserved latent footgun, not
- *     something this pass fixes.
- *  2. A persisted `null` security-key value must still fail (rather than
- *     being silently treated as "no key configured") - now via an explicit
- *     `TypeError` instead of an incidental one from calling `.length` on
- *     `null`.
- *
- * Every `KEY_*`/`KEY_LR_*`/`NETWORK_KEY` env var is snapshotted and restored
- * around each test so nothing leaks between tests or other files.
- */
+// Proves parseSecurityKeys() still fails on a missing securityKeysLongRange map or a null persisted key value, now via an explicit TypeError instead of an incidental one
 
 type PartialZWaveOptionsLike = {
 	securityKeys?: Record<string, Buffer>
@@ -215,19 +198,13 @@ describe('#parseSecurityKeys()', () => {
 
 	describe('ordering', () => {
 		it('defaults securityKeys unconditionally, but only defaults securityKeysLongRange right before its own conversion loop', () => {
-			// No KEY_LR_* env var set, so the preserved missing-map crash
-			// path is never reached - proving `securityKeys` alone (no
-			// `securityKeysLongRange` at all) is a completely valid,
-			// non-throwing input, matching pre-existing behavior where
-			// `securityKeysLongRange` is optional unless a `KEY_LR_*` env
-			// var forces the issue.
+			// With no KEY_LR_* env var, securityKeysLongRange is optional and the missing-map crash path is never reached
 			const config: ZwaveConfig = {
 				securityKeys: { S0_Legacy: STANDARD_KEY_A },
 			}
 
 			expect(() => parse(config)).not.toThrow()
-			// `securityKeysLongRange` ends up defaulted to `{}` as a
-			// side-effect on `config` itself, matching prior behavior.
+			// Defaulted to {} as a side-effect on config itself
 			expect(config.securityKeysLongRange).toEqual({})
 		})
 

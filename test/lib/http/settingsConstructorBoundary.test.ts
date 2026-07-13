@@ -1,20 +1,6 @@
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest'
 
-/**
- * Characterizes the exact boundary introduced while fixing the review
- * finding "removes the unsafe `PersistedSettings as Settings` cast" (see
- * `startGateway()`/`startZniffer()` in `api/app.ts`): a sparse (partial)
- * persisted `mqtt`/`zwave`/`gateway`/`zniffer` settings object must reach
- * `MqttClient`/`ZWaveClient`/`Gateway`/`ZnifferManager`'s constructors
- * completely unchanged - no field added, defaulted, or dropped - because
- * the type change threading `PersistedSettings` through `startGateway()`
- * must be purely a type-level correction, not a behavior change.
- *
- * `MqttClient`/`ZWaveClient`/`Gateway`/`ZnifferManager` are mocked here (this
- * file's own isolated module graph - see `authRateLimit.test.ts` for why
- * that's safe) purely to capture constructor arguments; nothing else in the
- * suite relies on their real behavior.
- */
+// Proves a sparse persisted mqtt/zwave/gateway/zniffer settings object reaches its constructor completely unchanged, since threading PersistedSettings through startGateway()/startZniffer() must be a type-only correction
 
 const mqttCtor = vi.fn()
 const zwaveCtor = vi.fn()
@@ -84,10 +70,7 @@ describe('startGateway()/startZniffer() constructor boundary (sparse PersistedSe
 			gateway: sparseGateway,
 		})
 
-		// `POST /api/restart` closes the currently-attached gateway before
-		// calling the real `startGateway()` - give it a closeable fake so
-		// the route reaches `startGateway()` (whose constructor calls are
-		// what this test actually characterizes).
+		// POST /api/restart closes the currently-attached gateway before calling startGateway(), so it needs a closeable fake to reach it
 		harness.testHooks.setGateway(createFakeGateway())
 
 		mqttCtor.mockClear()
@@ -102,11 +85,7 @@ describe('startGateway()/startZniffer() constructor boundary (sparse PersistedSe
 			message: 'Gateway restarted successfully',
 		})
 
-		// Exactly the persisted sparse objects, verbatim - no added keys,
-		// no defaults synthesized by the type change. The harness never
-		// calls `startServer()` (see `harness.ts`), so `socketManager.io`
-		// is genuinely `undefined` here - that's an accurate reflection of
-		// this test environment, not a behavior change.
+		// socketManager.io is genuinely undefined here since the harness never calls startServer()
 		expect(mqttCtor).toHaveBeenCalledExactlyOnceWith(sparseMqtt)
 		expect(zwaveCtor).toHaveBeenCalledExactlyOnceWith(
 			sparseZwave,
@@ -131,8 +110,7 @@ describe('startGateway()/startZniffer() constructor boundary (sparse PersistedSe
 		expect(res.body.success).toBe(true)
 		expect(mqttCtor).not.toHaveBeenCalled()
 		expect(zwaveCtor).not.toHaveBeenCalled()
-		// Gateway is always constructed, even with zwave/mqtt both absent -
-		// preserved pre-existing behavior, untouched by this fix.
+		// Gateway is always constructed even with zwave/mqtt both absent, preserved pre-existing behavior
 		expect(gatewayCtor).toHaveBeenCalledOnce()
 	})
 

@@ -151,10 +151,7 @@ describe('#json', () => {
 		})
 
 		it('does NOT reject two separate (non-cyclic) references to the same valid nested object', () => {
-			// A DAG-shaped structure (same object value referenced from two
-			// places) is genuinely JSON-serializable - `JSON.stringify`
-			// happily serializes it twice, just without any shared-identity
-			// tracking. Only actual cycles are invalid.
+			// A DAG (same object referenced from two places) is genuinely JSON-serializable, only actual cycles are invalid
 			const shared = { x: 1 }
 			expect(isJsonValue({ a: shared, b: shared })).toBe(true)
 		})
@@ -173,11 +170,7 @@ describe('#json', () => {
 			]
 
 			for (const value of values) {
-				// The type-level assertion above is the real point of this
-				// test: if `JsonValue` regresses, this file fails to compile
-				// under `tsc --noEmit`. This runtime check just guards
-				// against `JSON.stringify`/`JSON.parse` round-tripping
-				// losing information for each accepted shape.
+				// The compile-time JsonValue[] assertion above is the real point of this test, this runtime check only guards against lossy round-tripping
 				expect(JSON.parse(JSON.stringify(value))).toEqual(value)
 			}
 		})
