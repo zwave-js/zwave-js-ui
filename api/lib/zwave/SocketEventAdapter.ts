@@ -23,6 +23,7 @@ export class SocketEventAdapter {
 		if (!socket) return
 
 		const generation = this.port.getGeneration()
+		// Revalidate the generation and socket on the next tick so queued work cannot outlive a restart
 		process.nextTick(() => {
 			if (!this.port.isCurrent(generation, socket)) return
 

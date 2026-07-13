@@ -604,6 +604,7 @@ export class NodeRegistry {
 	}
 
 	onInterviewCompleted(zwaveNode: ZWaveNode): void {
+		// Interview completion arrives after zwave-js has published all values and metadata
 		const node = this.nodes.get(zwaveNode.id)
 		if (!node) return
 		if (node.manufacturerId === undefined) this.projectNode(zwaveNode)
@@ -1371,6 +1372,7 @@ export class NodeRegistry {
 		const ready = () => guard(() => this.onReady(zwaveNode))
 		zwaveNode.on('ready', ready)
 		cleanup.push(() => zwaveNode.off('ready', ready))
+		// zwave-js emits interview start and completion only for initial or manually restarted interviews
 		const interviewStarted = () =>
 			guard(() => this.onInterviewStarted(zwaveNode))
 		zwaveNode.on('interview started', interviewStarted)
