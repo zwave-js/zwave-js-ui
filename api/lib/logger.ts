@@ -247,15 +247,6 @@ export function setupAll(config: DeepPartial<GatewayConfig>) {
 	})
 }
 
-// Resets the logger/transport singletons between tests so shuffled suites (test/lib/logger.test.ts) don't leak config across each other; production never calls this
-export const __testHooks = {
-	reset(): void {
-		stopCleanJob()
-		closeCachedTransports()
-		logContainer.close()
-	},
-}
-
 let cleanJob: NodeJS.Timeout | undefined
 
 export function setupCleanJob(settings: CleanJobSettings) {
