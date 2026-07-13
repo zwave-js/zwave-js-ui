@@ -1185,7 +1185,7 @@ export class DiscoveryGenerator {
 		}
 	}
 
-	public getNodeName(
+	private getNodeName(
 		node: Pick<HassNode, 'id' | 'loc' | 'name'>,
 		ignoreLoc = false,
 	): string {
@@ -1195,7 +1195,7 @@ export class DiscoveryGenerator {
 		)
 	}
 
-	public getPriorityCCFirst(values: Record<string, HassValue>): string[] {
+	private getPriorityCCFirst(values: Record<string, HassValue>): string[] {
 		const prioritizedValueIds: string[] = []
 		for (const [id, value] of Object.entries(values)) {
 			if (value.commandClass === CommandClasses['Color Switch']) {
@@ -1242,7 +1242,7 @@ export class DiscoveryGenerator {
 		return deviceInfo
 	}
 
-	public setDiscoveryAvailability(
+	private setDiscoveryAvailability(
 		node: HassNode,
 		payload: HassDiscoveryPayload,
 	): void {
@@ -1271,13 +1271,16 @@ export class DiscoveryGenerator {
 		payload.availability_mode = 'all'
 	}
 
-	public getDiscoveryTopic(hassDevice: HassDevice, nodeName: string): string {
+	private getDiscoveryTopic(
+		hassDevice: HassDevice,
+		nodeName: string,
+	): string {
 		return `${hassDevice.type}/${utils.sanitizeTopic(nodeName, true)}/${
 			hassDevice.object_id
 		}/config`
 	}
 
-	public getMappedValuesTemplate(
+	private getMappedValuesTemplate(
 		valueMap: Record<string | number, string | number | boolean>,
 		defaultValue: string,
 	): string {
@@ -1290,7 +1293,7 @@ export class DiscoveryGenerator {
 		)}}[value_json.value] | default('${defaultValue}') }}`
 	}
 
-	public getMappedValuesInverseTemplate(
+	private getMappedValuesInverseTemplate(
 		valueMap: Record<string, number>,
 		defaultValue: string,
 	): string {
@@ -1303,7 +1306,7 @@ export class DiscoveryGenerator {
 		)}}[value_json.value] | default('${defaultValue}') }}`
 	}
 
-	public getMappedStateTemplate(
+	private getMappedStateTemplate(
 		states: HassValueState[],
 		defaultValueKey: unknown,
 	): string {
@@ -1326,7 +1329,7 @@ export class DiscoveryGenerator {
 		)}}[value_json.value] | default(${defaultValue}) }}`
 	}
 
-	public setBinaryPayloadFromSensor(
+	private setBinaryPayloadFromSensor(
 		config: HassDevice,
 		states: HassValueState[],
 		offStateValue = 0,
@@ -1342,7 +1345,7 @@ export class DiscoveryGenerator {
 		return config
 	}
 
-	public getBinarySensorConfig(
+	private getBinarySensorConfig(
 		deviceClass: string,
 		reversePayload = false,
 	): HassDevice {
@@ -1366,7 +1369,7 @@ export class DiscoveryGenerator {
 		if (valueId?.value != null) payload[property] = valueId.value
 	}
 
-	public addRgbColorSwitch(
+	private addRgbColorSwitch(
 		node: HassNode,
 		currentColorValue: HassValue,
 	): HassDevice {
@@ -1452,7 +1455,7 @@ export class DiscoveryGenerator {
 		return config
 	}
 
-	public getEntityName(
+	private getEntityName(
 		node: HassNode,
 		valueId: HassValue | undefined,
 		config: HassDevice,
