@@ -1,21 +1,9 @@
-import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest'
-import { createHttpHarness, type HttpHarness } from './harness.ts'
+import { describe, it, expect } from 'vitest'
+import { useHttpHarness } from './harness.ts'
 import { createFakeGateway } from './fakes.ts'
 
 describe('HTTP contract: configuration templates', () => {
-	let harness: HttpHarness
-
-	beforeAll(async () => {
-		harness = await createHttpHarness()
-	})
-
-	afterAll(async () => {
-		await harness.close()
-	})
-
-	afterEach(() => {
-		harness.resetState()
-	})
+	const getHarness = useHttpHarness()
 
 	describe('GET /api/configuration-templates', () => {
 		it('returns the templates from gw.zwave.getConfigurationTemplates()', async () => {
@@ -23,7 +11,7 @@ describe('HTTP contract: configuration templates', () => {
 			gw.zwave.getConfigurationTemplates.mockReturnValue([
 				{ id: 't1', name: 'Template 1' },
 			])
-			harness.testHooks.setGateway(gw)
+			const harness = await getHarness({ gateway: gw })
 
 			const res = await harness.request.get(
 				'/api/configuration-templates',
@@ -36,7 +24,8 @@ describe('HTTP contract: configuration templates', () => {
 			})
 		})
 
-		it('fails with a generic error when no gateway is attached', async () => {
+		it('fails with the clean "Z-Wave client not inited" error when no gateway is attached', async () => {
+			const harness = await getHarness()
 			const res = await harness.request.get(
 				'/api/configuration-templates',
 			)
@@ -44,8 +33,7 @@ describe('HTTP contract: configuration templates', () => {
 			expect(res.status).toBe(200)
 			expect(res.body).toEqual({
 				success: false,
-				message:
-					"Cannot read properties of undefined (reading 'zwave')",
+				message: 'Z-Wave client not inited',
 			})
 		})
 	})
@@ -53,7 +41,7 @@ describe('HTTP contract: configuration templates', () => {
 	describe('POST /api/configuration-templates', () => {
 		it('rejects when nodeId or name is missing, without calling the collaborator', async () => {
 			const gw = createFakeGateway()
-			harness.testHooks.setGateway(gw)
+			const harness = await getHarness({ gateway: gw })
 
 			const res = await harness.request
 				.post('/api/configuration-templates')
@@ -72,7 +60,7 @@ describe('HTTP contract: configuration templates', () => {
 			gw.zwave.createConfigurationTemplate.mockResolvedValue({
 				id: 'template-42',
 			})
-			harness.testHooks.setGateway(gw)
+			const harness = await getHarness({ gateway: gw })
 
 			const res = await harness.request
 				.post('/api/configuration-templates')
@@ -104,7 +92,7 @@ describe('HTTP contract: configuration templates', () => {
 		it('returns all templates with the export-specific message', async () => {
 			const gw = createFakeGateway()
 			gw.zwave.getConfigurationTemplates.mockReturnValue([{ id: 't1' }])
-			harness.testHooks.setGateway(gw)
+			const harness = await getHarness({ gateway: gw })
 
 			const res = await harness.request.get(
 				'/api/configuration-templates/export',
@@ -122,7 +110,7 @@ describe('HTTP contract: configuration templates', () => {
 	describe('POST /api/configuration-templates/import', () => {
 		it('rejects a non-array data payload without calling the collaborator', async () => {
 			const gw = createFakeGateway()
-			harness.testHooks.setGateway(gw)
+			const harness = await getHarness({ gateway: gw })
 
 			const res = await harness.request
 				.post('/api/configuration-templates/import')
@@ -138,7 +126,7 @@ describe('HTTP contract: configuration templates', () => {
 
 		it('rejects a template missing required fields without calling the collaborator', async () => {
 			const gw = createFakeGateway()
-			harness.testHooks.setGateway(gw)
+			const harness = await getHarness({ gateway: gw })
 
 			const res = await harness.request
 				.post('/api/configuration-templates/import')
@@ -159,7 +147,7 @@ describe('HTTP contract: configuration templates', () => {
 				imported: 1,
 				skipped: 0,
 			})
-			harness.testHooks.setGateway(gw)
+			const harness = await getHarness({ gateway: gw })
 
 			const templates = [{ name: 'T1', deviceId: '1:1:1:1', values: [] }]
 			const res = await harness.request
@@ -184,7 +172,7 @@ describe('HTTP contract: configuration templates', () => {
 			gw.zwave.getDeviceConfigurationParams.mockResolvedValue([
 				{ parameterId: 1 },
 			])
-			harness.testHooks.setGateway(gw)
+			const harness = await getHarness({ gateway: gw })
 
 			const res = await harness.request.get(
 				'/api/configuration-templates/device-params/0x0086:0x0002:0x0064',
@@ -208,7 +196,7 @@ describe('HTTP contract: configuration templates', () => {
 				id: 'template-1',
 				name: 'Renamed',
 			})
-			harness.testHooks.setGateway(gw)
+			const harness = await getHarness({ gateway: gw })
 
 			const res = await harness.request
 				.put('/api/configuration-templates/template-1')
@@ -235,7 +223,7 @@ describe('HTTP contract: configuration templates', () => {
 	describe('DELETE /api/configuration-templates/:id', () => {
 		it('deletes the template by id', async () => {
 			const gw = createFakeGateway()
-			harness.testHooks.setGateway(gw)
+			const harness = await getHarness({ gateway: gw })
 
 			const res = await harness.request.delete(
 				'/api/configuration-templates/template-1',
@@ -255,7 +243,7 @@ describe('HTTP contract: configuration templates', () => {
 	describe('POST /api/configuration-templates/:id/apply', () => {
 		it('rejects when nodeId is missing, without calling the collaborator', async () => {
 			const gw = createFakeGateway()
-			harness.testHooks.setGateway(gw)
+			const harness = await getHarness({ gateway: gw })
 
 			const res = await harness.request
 				.post('/api/configuration-templates/template-1/apply')
@@ -269,13 +257,13 @@ describe('HTTP contract: configuration templates', () => {
 			expect(gw.zwave.applyConfigurationTemplate).not.toHaveBeenCalled()
 		})
 
-		it('applies the template to the node, coercing force to a strict boolean', async () => {
+		it('applies the template to the node, coercing an omitted force to false', async () => {
 			const gw = createFakeGateway()
 			gw.zwave.applyConfigurationTemplate.mockResolvedValue({
 				success: 3,
 				failed: 1,
 			})
-			harness.testHooks.setGateway(gw)
+			const harness = await getHarness({ gateway: gw })
 
 			const res = await harness.request
 				.post('/api/configuration-templates/template-1/apply')
@@ -291,6 +279,26 @@ describe('HTTP contract: configuration templates', () => {
 				'template-1',
 				2,
 				false,
+			)
+		})
+
+		it('coerces a truthy non-boolean force (e.g. "yes") to the literal boolean true', async () => {
+			const gw = createFakeGateway()
+			gw.zwave.applyConfigurationTemplate.mockResolvedValue({
+				success: 1,
+				failed: 0,
+			})
+			const harness = await getHarness({ gateway: gw })
+
+			const res = await harness.request
+				.post('/api/configuration-templates/template-1/apply')
+				.send({ nodeId: 2, force: 'yes' })
+
+			expect(res.status).toBe(200)
+			expect(gw.zwave.applyConfigurationTemplate).toHaveBeenCalledWith(
+				'template-1',
+				2,
+				true,
 			)
 		})
 	})

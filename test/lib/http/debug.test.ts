@@ -1,5 +1,5 @@
-import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest'
-import { createHttpHarness, type HttpHarness } from './harness.ts'
+import { describe, it, expect, beforeAll, afterEach } from 'vitest'
+import { useHttpHarness, bufferResponse } from './harness.ts'
 import { createFakeGateway } from './fakes.ts'
 
 interface DebugManagerLike {
@@ -8,22 +8,16 @@ interface DebugManagerLike {
 }
 
 describe('HTTP contract: debug capture', () => {
-	let harness: HttpHarness
+	const getHarness = useHttpHarness()
 	let debugManager: DebugManagerLike
 
 	beforeAll(async () => {
-		harness = await createHttpHarness()
 		// Import after harness setup so DebugManager uses the isolated store
 		debugManager = (await import('#api/lib/DebugManager.ts'))
 			.default as DebugManagerLike
 	})
 
-	afterAll(async () => {
-		await harness.close()
-	})
-
 	afterEach(async () => {
-		harness.resetState()
 		if (debugManager.isSessionActive()) {
 			await debugManager.cancelSession()
 		}
@@ -31,6 +25,7 @@ describe('HTTP contract: debug capture', () => {
 
 	describe('GET /api/debug/status', () => {
 		it('reports inactive when no session has been started', async () => {
+			const harness = await getHarness()
 			const res = await harness.request.get('/api/debug/status')
 			expect(res.status).toBe(200)
 			expect(res.body).toEqual({ success: true, active: false })
@@ -39,7 +34,7 @@ describe('HTTP contract: debug capture', () => {
 		it('reports active once a session has been started', async () => {
 			const gw = createFakeGateway()
 			gw.zwave.driverReady = false
-			harness.testHooks.setGateway(gw)
+			const harness = await getHarness({ gateway: gw })
 
 			await harness.request.post('/api/debug/start').send({})
 
@@ -53,7 +48,7 @@ describe('HTTP contract: debug capture', () => {
 		it('starts a session and registers the extra log transport on the fake driver', async () => {
 			const gw = createFakeGateway()
 			gw.zwave.driverReady = false
-			harness.testHooks.setGateway(gw)
+			const harness = await getHarness({ gateway: gw })
 
 			const res = await harness.request.post('/api/debug/start').send({})
 
@@ -69,7 +64,7 @@ describe('HTTP contract: debug capture', () => {
 		it('restarts the driver when restartDriver is requested and the driver is ready', async () => {
 			const gw = createFakeGateway()
 			gw.zwave.driverReady = true
-			harness.testHooks.setGateway(gw)
+			const harness = await getHarness({ gateway: gw })
 
 			const res = await harness.request
 				.post('/api/debug/start')
@@ -83,7 +78,7 @@ describe('HTTP contract: debug capture', () => {
 		it('rejects starting a second session while one is already active', async () => {
 			const gw = createFakeGateway()
 			gw.zwave.driverReady = false
-			harness.testHooks.setGateway(gw)
+			const harness = await getHarness({ gateway: gw })
 
 			await harness.request.post('/api/debug/start').send({})
 
@@ -99,6 +94,7 @@ describe('HTTP contract: debug capture', () => {
 
 	describe('POST /api/debug/stop', () => {
 		it('rejects when there is no active session', async () => {
+			const harness = await getHarness()
 			const res = await harness.request.post('/api/debug/stop').send({
 				nodeIds: [],
 			})
@@ -113,26 +109,19 @@ describe('HTTP contract: debug capture', () => {
 		it('streams a ZIP archive with the ZIP content type/attachment header', async () => {
 			const gw = createFakeGateway()
 			gw.zwave.driverReady = false
-			harness.testHooks.setGateway(gw)
+			const harness = await getHarness({ gateway: gw })
 			await harness.request.post('/api/debug/start').send({})
 
-			const res = await harness.request
-				.post('/api/debug/stop')
-				.send({ nodeIds: [] })
-				.buffer(true)
-				.parse((response, callback) => {
-					const chunks: Buffer[] = []
-					response.on('data', (chunk: Buffer) => chunks.push(chunk))
-					response.on('end', () =>
-						callback(null, Buffer.concat(chunks)),
-					)
-				})
+			const res = await bufferResponse(
+				harness.request.post('/api/debug/stop').send({ nodeIds: [] }),
+			)
 
 			expect(res.status).toBe(200)
 			expect(res.headers['content-type']).toBe('application/zip')
 			expect(res.headers['content-disposition']).toMatch(
 				/^attachment; filename="zwave-debug-.+\.zip"$/,
 			)
+			// PK\x03\x04 is the ZIP local-file-header signature, proving the body is a real archive
 			expect((res.body as Buffer).subarray(0, 4).toString('hex')).toBe(
 				'504b0304',
 			)
@@ -145,6 +134,7 @@ describe('HTTP contract: debug capture', () => {
 
 	describe('POST /api/debug/cancel', () => {
 		it('rejects when there is no active session', async () => {
+			const harness = await getHarness()
 			const res = await harness.request.post('/api/debug/cancel')
 
 			expect(res.status).toBe(200)
@@ -157,7 +147,7 @@ describe('HTTP contract: debug capture', () => {
 		it('cancels an active session and reports inactive afterwards', async () => {
 			const gw = createFakeGateway()
 			gw.zwave.driverReady = false
-			harness.testHooks.setGateway(gw)
+			const harness = await getHarness({ gateway: gw })
 			await harness.request.post('/api/debug/start').send({})
 
 			const res = await harness.request.post('/api/debug/cancel')

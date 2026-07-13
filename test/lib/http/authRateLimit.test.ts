@@ -1,20 +1,14 @@
-import { describe, it, expect, beforeAll, afterAll } from 'vitest'
-import { createHttpHarness, type HttpHarness } from './harness.ts'
+import { describe, it, expect } from 'vitest'
+import { useHttpHarness } from './harness.ts'
 
-describe('HTTP contract: login rate limiting (preserved quirk)', () => {
-	let harness: HttpHarness
-
-	beforeAll(async () => {
-		harness = await createHttpHarness()
-	})
-
-	afterAll(async () => {
-		await harness.close()
-	})
+describe('HTTP contract: rate limiting', () => {
+	const getHarness = useHttpHarness()
 
 	it('replies with the HTTP-200 rate-limit envelope once the login budget is exhausted', async () => {
+		const harness = await getHarness()
 		let lastBody: unknown
 		let lastStatus: number | undefined
+		// max: 5 lets 5 failures through, the 6th consecutive one trips the limiter
 		for (let attempt = 1; attempt <= 6; attempt++) {
 			const res = await harness.request
 				.post('/api/authenticate')
@@ -32,6 +26,35 @@ describe('HTTP contract: login rate limiting (preserved quirk)', () => {
 		}
 
 		expect(lastStatus).toBe(200)
+		expect(lastBody).toEqual({
+			success: false,
+			message: 'Max requests limit reached',
+		})
+	})
+
+	it('trips storeLimiter (100 requests / 15 minutes) with its own handler envelope', async () => {
+		const harness = await getHarness()
+		let lastBody: unknown
+		for (let attempt = 1; attempt <= 101; attempt++) {
+			const res = await harness.request.get('/api/store')
+			lastBody = res.body
+		}
+
+		expect(lastBody).toEqual({
+			success: false,
+			message:
+				'Request limit reached. You can make only 100 requests every 15 minutes',
+		})
+	})
+
+	it('trips apisLimiter (500 requests / hour) with its own handler envelope', async () => {
+		const harness = await getHarness()
+		let lastBody: unknown
+		for (let attempt = 1; attempt <= 501; attempt++) {
+			const res = await harness.request.get('/health')
+			lastBody = res.body
+		}
+
 		expect(lastBody).toEqual({
 			success: false,
 			message: 'Max requests limit reached',

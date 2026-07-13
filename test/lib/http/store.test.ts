@@ -1,8 +1,8 @@
-import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest'
+import { describe, it, expect } from 'vitest'
 import { mkdirSync, writeFileSync, existsSync, readFileSync } from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { createHttpHarness, type HttpHarness } from './harness.ts'
+import { useHttpHarness, bufferResponse } from './harness.ts'
 import { getTestStoreDir } from './env.ts'
 import { createFakeGateway } from './fakes.ts'
 
@@ -22,22 +22,11 @@ const EXPECTED_BUNDLED_SNIPPET_NAMES = [
 ]
 
 describe('HTTP contract: store, upload, snippets', () => {
-	let harness: HttpHarness
-
-	beforeAll(async () => {
-		harness = await createHttpHarness()
-	})
-
-	afterAll(async () => {
-		await harness.close()
-	})
-
-	afterEach(() => {
-		harness.resetState()
-	})
+	const getHarness = useHttpHarness()
 
 	describe('GET /api/store', () => {
 		it('returns the root store tree with an isRoot entry when no path is given', async () => {
+			const harness = await getHarness()
 			const res = await harness.request.get('/api/store')
 
 			expect(res.status).toBe(200)
@@ -52,6 +41,7 @@ describe('HTTP contract: store, upload, snippets', () => {
 		})
 
 		it('returns file contents verbatim for an existing file path', async () => {
+			const harness = await getHarness()
 			writeFileSync(
 				path.join(getTestStoreDir(), 'note.txt'),
 				'hello store',
@@ -66,6 +56,7 @@ describe('HTTP contract: store, upload, snippets', () => {
 		})
 
 		it('rejects a path that escapes the store dir, without reading anything', async () => {
+			const harness = await getHarness()
 			const res = await harness.request
 				.get('/api/store')
 				.query({ path: '../../etc/passwd' })
@@ -80,6 +71,7 @@ describe('HTTP contract: store, upload, snippets', () => {
 
 	describe('PUT /api/store', () => {
 		it('writes file content at the given path', async () => {
+			const harness = await getHarness()
 			const res = await harness.request
 				.put('/api/store')
 				.query({ path: 'written.txt', isNew: 'true' })
@@ -96,6 +88,7 @@ describe('HTTP contract: store, upload, snippets', () => {
 		})
 
 		it('creates a directory when isDirectory=true', async () => {
+			const harness = await getHarness()
 			const res = await harness.request.put('/api/store').query({
 				path: 'new-folder',
 				isNew: 'true',
@@ -110,6 +103,7 @@ describe('HTTP contract: store, upload, snippets', () => {
 		})
 
 		it('rejects writing to a path outside the store, without creating anything', async () => {
+			const harness = await getHarness()
 			const res = await harness.request
 				.put('/api/store')
 				.query({ path: '../escape.txt', isNew: 'true' })
@@ -123,6 +117,7 @@ describe('HTTP contract: store, upload, snippets', () => {
 		})
 
 		it('rejects overwriting an existing directory as a file (isNew omitted)', async () => {
+			const harness = await getHarness()
 			mkdirSync(path.join(getTestStoreDir(), 'a-real-dir'), {
 				recursive: true,
 			})
@@ -142,6 +137,7 @@ describe('HTTP contract: store, upload, snippets', () => {
 
 	describe('DELETE /api/store', () => {
 		it('removes the file/directory at the given path', async () => {
+			const harness = await getHarness()
 			writeFileSync(path.join(getTestStoreDir(), 'to-delete.txt'), 'bye')
 
 			const res = await harness.request
@@ -156,6 +152,7 @@ describe('HTTP contract: store, upload, snippets', () => {
 		})
 
 		it('rejects a path outside the store', async () => {
+			const harness = await getHarness()
 			const res = await harness.request
 				.delete('/api/store')
 				.query({ path: '../outside.txt' })
@@ -170,6 +167,7 @@ describe('HTTP contract: store, upload, snippets', () => {
 
 	describe('PUT /api/store-multi', () => {
 		it('removes every listed file', async () => {
+			const harness = await getHarness()
 			writeFileSync(path.join(getTestStoreDir(), 'multi-a.txt'), 'a')
 			writeFileSync(path.join(getTestStoreDir(), 'multi-b.txt'), 'b')
 
@@ -188,6 +186,7 @@ describe('HTTP contract: store, upload, snippets', () => {
 		})
 
 		it('defaults to an empty file list and still succeeds', async () => {
+			const harness = await getHarness()
 			const res = await harness.request.put('/api/store-multi').send({})
 
 			expect(res.status).toBe(200)
@@ -197,45 +196,36 @@ describe('HTTP contract: store, upload, snippets', () => {
 
 	describe('POST /api/store-multi', () => {
 		it('streams a ZIP archive of the requested files with the ZIP content type/attachment header', async () => {
+			const harness = await getHarness()
 			writeFileSync(
 				path.join(getTestStoreDir(), 'zippable.txt'),
 				'contents',
 			)
 
-			const res = await harness.request
-				.post('/api/store-multi')
-				.send({ files: ['zippable.txt'] })
-				.buffer(true)
-				.parse((response, callback) => {
-					const chunks: Buffer[] = []
-					response.on('data', (chunk: Buffer) => chunks.push(chunk))
-					response.on('end', () =>
-						callback(null, Buffer.concat(chunks)),
-					)
-				})
+			const res = await bufferResponse(
+				harness.request
+					.post('/api/store-multi')
+					.send({ files: ['zippable.txt'] }),
+			)
 
 			expect(res.status).toBe(200)
 			expect(res.headers['content-type']).toBe('application/zip')
 			expect(res.headers['content-disposition']).toMatch(
 				/attachment; filename="zwave-js-ui-store\.zip"/,
 			)
+			// PK\x03\x04 is the ZIP local-file-header signature, proving the body is a real archive
 			expect((res.body as Buffer).subarray(0, 4).toString('hex')).toBe(
 				'504b0304',
 			)
 		})
 
 		it('silently skips files that resolve outside the store, producing a valid (possibly empty) archive', async () => {
-			const res = await harness.request
-				.post('/api/store-multi')
-				.send({ files: ['../outside.txt'] })
-				.buffer(true)
-				.parse((response, callback) => {
-					const chunks: Buffer[] = []
-					response.on('data', (chunk: Buffer) => chunks.push(chunk))
-					response.on('end', () =>
-						callback(null, Buffer.concat(chunks)),
-					)
-				})
+			const harness = await getHarness()
+			const res = await bufferResponse(
+				harness.request
+					.post('/api/store-multi')
+					.send({ files: ['../outside.txt'] }),
+			)
 
 			expect(res.status).toBe(200)
 			expect(res.headers['content-type']).toBe('application/zip')
@@ -247,26 +237,19 @@ describe('HTTP contract: store, upload, snippets', () => {
 			'streams a ZIP archive body while advertising Content-Type: application/json ' +
 				'(preserved quirk: jsonStore.backup() never overrides the default JSON content type)',
 			async () => {
+				const harness = await getHarness()
 				// Persist one file because backups only include files already on disk
 				await harness.jsonStore.put(harness.store.settings, {
 					zwave: {},
 				})
 
-				const res = await harness.request
-					.get('/api/store/backup')
-					.buffer(true)
-					.parse((response, callback) => {
-						const chunks: Buffer[] = []
-						response.on('data', (chunk: Buffer) =>
-							chunks.push(chunk),
-						)
-						response.on('end', () =>
-							callback(null, Buffer.concat(chunks)),
-						)
-					})
+				const res = await bufferResponse(
+					harness.request.get('/api/store/backup'),
+				)
 
 				expect(res.status).toBe(200)
 				expect(res.headers['content-type']).toMatch(/application\/json/)
+				// PK\x03\x04 is the ZIP local-file-header signature, proving the body is a real archive
 				expect(
 					(res.body as Buffer).subarray(0, 4).toString('hex'),
 				).toBe('504b0304')
@@ -275,22 +258,19 @@ describe('HTTP contract: store, upload, snippets', () => {
 	})
 
 	describe('POST /api/store/upload', () => {
-		it(
-			'preserved quirk: a request with no multipart body at all crashes past the ' +
-				'"No file uploaded" guard (req.files is undefined, not an empty array)',
-			async () => {
-				const res = await harness.request.post('/api/store/upload')
+		it('rejects with "No file uploaded" for a request with no multipart body at all', async () => {
+			const harness = await getHarness()
+			const res = await harness.request.post('/api/store/upload')
 
-				expect(res.status).toBe(200)
-				expect(res.body).toEqual({
-					success: false,
-					message:
-						"Cannot read properties of undefined (reading '0')",
-				})
-			},
-		)
+			expect(res.status).toBe(200)
+			expect(res.body).toEqual({
+				success: false,
+				message: 'No file uploaded',
+			})
+		})
 
 		it('rejects with "No file uploaded" for a real multipart request with no file field', async () => {
+			const harness = await getHarness()
 			const res = await harness.request
 				.post('/api/store/upload')
 				.field('folder', 'uploads')
@@ -303,6 +283,7 @@ describe('HTTP contract: store, upload, snippets', () => {
 		})
 
 		it('saves a simple (non-restore) upload under the given folder', async () => {
+			const harness = await getHarness()
 			mkdirSync(path.join(getTestStoreDir(), 'uploads'), {
 				recursive: true,
 			})
@@ -326,6 +307,7 @@ describe('HTTP contract: store, upload, snippets', () => {
 		})
 
 		it('rejects an upload whose destination escapes the store', async () => {
+			const harness = await getHarness()
 			const res = await harness.request
 				.post('/api/store/upload')
 				.field('folder', '../../etc')
@@ -342,7 +324,7 @@ describe('HTTP contract: store, upload, snippets', () => {
 	describe('GET /api/snippet', () => {
 		it('includes every real bundled snippet (loaded via the production loadSnippets() seam), verbatim', async () => {
 			const gw = createFakeGateway()
-			harness.testHooks.setGateway(gw)
+			const harness = await getHarness({ gateway: gw })
 
 			const res = await harness.request.get('/api/snippet')
 
@@ -367,7 +349,7 @@ describe('HTTP contract: store, upload, snippets', () => {
 
 		it('includes a real snippet written to the isolated on-disk snippets dir', async () => {
 			const gw = createFakeGateway()
-			harness.testHooks.setGateway(gw)
+			const harness = await getHarness({ gateway: gw })
 
 			writeFileSync(
 				path.join(getTestStoreDir(), 'snippets', 'my-on-disk.js'),
@@ -390,7 +372,7 @@ describe('HTTP contract: store, upload, snippets', () => {
 		it('returns the cached snippets plus bundled and on-disk snippets when a gateway is attached', async () => {
 			const gw = createFakeGateway()
 			gw.zwave.cacheSnippets = [{ name: 'cached', content: '//x' }]
-			harness.testHooks.setGateway(gw)
+			const harness = await getHarness({ gateway: gw })
 
 			const res = await harness.request.get('/api/snippet')
 
@@ -401,19 +383,41 @@ describe('HTTP contract: store, upload, snippets', () => {
 			)
 		})
 
-		it(
-			'preserved quirk: with no gateway attached, gw.zwave throws (not ' +
-				'optional-chained on gw itself), surfacing as a generic failure',
-			async () => {
-				const res = await harness.request.get('/api/snippet')
+		it('returns bundled and on-disk snippets (but no cached ones) when no gateway is attached', async () => {
+			const harness = await getHarness()
+			const res = await harness.request.get('/api/snippet')
 
-				expect(res.status).toBe(200)
-				expect(res.body).toEqual({
-					success: false,
-					message:
-						"Cannot read properties of undefined (reading 'zwave')",
-				})
-			},
-		)
+			expect(res.status).toBe(200)
+			expect(res.body.success).toBe(true)
+			const names = (res.body.data as Array<{ name: string }>).map(
+				(s) => s.name,
+			)
+			expect(names).toEqual(
+				expect.arrayContaining(EXPECTED_BUNDLED_SNIPPET_NAMES),
+			)
+		})
+
+		it('does not duplicate bundled snippets when loadSnippets() runs more than once', async () => {
+			const gw = createFakeGateway()
+			const harness = await getHarness({ gateway: gw })
+
+			await harness.loadSnippets()
+			await harness.loadSnippets()
+
+			const res = await harness.request.get('/api/snippet')
+			expect(res.status).toBe(200)
+
+			const names = (res.body.data as Array<{ name: string }>).map(
+				(s) => s.name,
+			)
+			const counts = new Map<string, number>()
+			for (const name of names) {
+				counts.set(name, (counts.get(name) ?? 0) + 1)
+			}
+			const duplicated = [...counts.entries()].filter(
+				([, count]) => count > 1,
+			)
+			expect(duplicated).toEqual([])
+		})
 	})
 })

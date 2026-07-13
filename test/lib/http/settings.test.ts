@@ -1,34 +1,15 @@
-import {
-	describe,
-	it,
-	expect,
-	beforeAll,
-	afterAll,
-	afterEach,
-	vi,
-} from 'vitest'
-import { createHttpHarness, type HttpHarness } from './harness.ts'
+import { describe, it, expect, vi } from 'vitest'
+import { useHttpHarness } from './harness.ts'
 import { createFakeGateway } from './fakes.ts'
 import { setSettings } from './authHelpers.ts'
 import { enumerateSerialPorts } from '#api/lib/serialPorts.ts'
 
 describe('HTTP contract: settings, restart, statistics, versions', () => {
-	let harness: HttpHarness
-
-	beforeAll(async () => {
-		harness = await createHttpHarness()
-	})
-
-	afterAll(async () => {
-		await harness.close()
-	})
-
-	afterEach(() => {
-		harness.resetState()
-	})
+	const getHarness = useHttpHarness()
 
 	describe('GET /api/settings', () => {
 		it('returns the settings envelope with devices/scales/flags', async () => {
+			const harness = await getHarness()
 			const res = await harness.request.get('/api/settings')
 			expect(res.status).toBe(200)
 			expect(res.body.success).toBe(true)
@@ -47,7 +28,7 @@ describe('HTTP contract: settings, restart, statistics, versions', () => {
 		it("reflects a fake gateway's zwave.devices", async () => {
 			const gw = createFakeGateway()
 			gw.zwave.devices = { 2: { name: 'Fake device' } }
-			harness.testHooks.setGateway(gw)
+			const harness = await getHarness({ gateway: gw })
 
 			const res = await harness.request.get('/api/settings')
 			expect(res.body.devices).toEqual({ 2: { name: 'Fake device' } })
@@ -61,6 +42,7 @@ describe('HTTP contract: settings, restart, statistics, versions', () => {
 				return Promise.resolve(['/dev/ttyFAKE0', '/dev/ttyFAKE1'])
 			})
 
+			const harness = await getHarness()
 			const res = await harness.request.get('/api/serial-ports')
 
 			expect(res.status).toBe(200)
@@ -73,6 +55,7 @@ describe('HTTP contract: settings, restart, statistics, versions', () => {
 		it('returns an empty list without throwing when the enumerator resolves none', async () => {
 			vi.mocked(enumerateSerialPorts).mockResolvedValue([])
 
+			const harness = await getHarness()
 			const res = await harness.request.get('/api/serial-ports')
 
 			expect(res.status).toBe(200)
@@ -82,6 +65,7 @@ describe('HTTP contract: settings, restart, statistics, versions', () => {
 		it('an enumerator rejection is caught and reported as a failed-but-200 envelope with an empty list', async () => {
 			vi.mocked(enumerateSerialPorts).mockRejectedValue(new Error('boom'))
 
+			const harness = await getHarness()
 			const res = await harness.request.get('/api/serial-ports')
 
 			expect(res.status).toBe(200)
@@ -91,7 +75,7 @@ describe('HTTP contract: settings, restart, statistics, versions', () => {
 
 	describe('POST /api/settings', () => {
 		it('rejects immediately while a restart is already in progress, without touching the store', async () => {
-			harness.testHooks.setRestarting(true)
+			const harness = await getHarness({ restarting: true })
 
 			const res = await harness.request
 				.post('/api/settings')
@@ -106,6 +90,7 @@ describe('HTTP contract: settings, restart, statistics, versions', () => {
 		})
 
 		it('treats an empty body as a forced restart request, echoing the stored settings back', async () => {
+			const harness = await getHarness()
 			const res = await harness.request.post('/api/settings').send({})
 
 			expect(res.status).toBe(200)
@@ -120,6 +105,7 @@ describe('HTTP contract: settings, restart, statistics, versions', () => {
 		})
 
 		it('requires a restart when gateway settings changed', async () => {
+			const harness = await getHarness()
 			const current = harness.jsonStore.get(
 				harness.store.settings,
 			) as Record<string, unknown>
@@ -142,7 +128,7 @@ describe('HTTP contract: settings, restart, statistics, versions', () => {
 
 		it('updates the driver in-place (no restart) when only editable Z-Wave options changed and a driver is attached', async () => {
 			const gw = createFakeGateway()
-			harness.testHooks.setGateway(gw)
+			const harness = await getHarness({ gateway: gw })
 
 			const current = harness.jsonStore.get(
 				harness.store.settings,
@@ -173,7 +159,7 @@ describe('HTTP contract: settings, restart, statistics, versions', () => {
 
 	describe('POST /api/restart', () => {
 		it('rejects immediately while a restart is already in progress', async () => {
-			harness.testHooks.setRestarting(true)
+			const harness = await getHarness({ restarting: true })
 
 			const res = await harness.request.post('/api/restart')
 
@@ -186,6 +172,7 @@ describe('HTTP contract: settings, restart, statistics, versions', () => {
 		})
 
 		it('fails cleanly with the generic error envelope when there is no gateway to close', async () => {
+			const harness = await getHarness()
 			const res = await harness.request.post('/api/restart')
 
 			expect(res.status).toBe(200)
@@ -193,10 +180,10 @@ describe('HTTP contract: settings, restart, statistics, versions', () => {
 			expect(res.body.message).toMatch(/close/)
 		})
 
-		it('restarts successfully end-to-end (real startGateway(), zwave/mqtt kept disabled)', async () => {
-			await setSettings(harness, { zwave: undefined, mqtt: undefined })
+		it('restarts successfully end-to-end (real startGateway(), zwave/mqtt kept disabled), and clears the restarting flag so a follow-up restart is accepted', async () => {
 			const gw = createFakeGateway()
-			harness.testHooks.setGateway(gw)
+			const harness = await getHarness({ gateway: gw })
+			await setSettings(harness, { zwave: undefined, mqtt: undefined })
 
 			const res = await harness.request.post('/api/restart')
 
@@ -206,13 +193,16 @@ describe('HTTP contract: settings, restart, statistics, versions', () => {
 				message: 'Gateway restarted successfully',
 			})
 			expect(gw.close).toHaveBeenCalledOnce()
-			expect(harness.testHooks.isRestarting()).toBe(false)
+
+			// A follow-up restart being accepted proves `restarting` was cleared after the first one
+			const followUp = await harness.request.post('/api/restart')
+			expect(followUp.body.message).not.toMatch(/already restarting/)
 		})
 	})
 
 	describe('POST /api/statistics', () => {
 		it('rejects immediately while a restart is already in progress', async () => {
-			harness.testHooks.setRestarting(true)
+			const harness = await getHarness({ restarting: true })
 
 			const res = await harness.request
 				.post('/api/statistics')
@@ -228,7 +218,7 @@ describe('HTTP contract: settings, restart, statistics, versions', () => {
 
 		it('persists the opt-in flag and calls gw.zwave.enableStatistics() when a gateway is attached', async () => {
 			const gw = createFakeGateway()
-			harness.testHooks.setGateway(gw)
+			const harness = await getHarness({ gateway: gw })
 
 			const res = await harness.request
 				.post('/api/statistics')
@@ -252,7 +242,7 @@ describe('HTTP contract: settings, restart, statistics, versions', () => {
 
 		it('calls gw.zwave.disableStatistics() when opting out', async () => {
 			const gw = createFakeGateway()
-			harness.testHooks.setGateway(gw)
+			const harness = await getHarness({ gateway: gw })
 
 			const res = await harness.request
 				.post('/api/statistics')
@@ -265,6 +255,7 @@ describe('HTTP contract: settings, restart, statistics, versions', () => {
 		})
 
 		it('does not touch gw when no gateway is attached, but still persists settings', async () => {
+			const harness = await getHarness()
 			const res = await harness.request
 				.post('/api/statistics')
 				.send({ enableStatistics: true })
@@ -276,6 +267,7 @@ describe('HTTP contract: settings, restart, statistics, versions', () => {
 
 	describe('POST /api/versions', () => {
 		it('persists gateway.versions and disableChangelog, and returns the success envelope', async () => {
+			const harness = await getHarness()
 			const res = await harness.request
 				.post('/api/versions')
 				.send({ disableChangelog: true })

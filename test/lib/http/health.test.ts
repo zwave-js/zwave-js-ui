@@ -1,24 +1,13 @@
-import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest'
-import { createHttpHarness, type HttpHarness } from './harness.ts'
+import { describe, it, expect } from 'vitest'
+import { useHttpHarness } from './harness.ts'
 import { createFakeGateway } from './fakes.ts'
 
 describe('HTTP contract: health & version', () => {
-	let harness: HttpHarness
-
-	beforeAll(async () => {
-		harness = await createHttpHarness()
-	})
-
-	afterAll(async () => {
-		await harness.close()
-	})
-
-	afterEach(() => {
-		harness.resetState()
-	})
+	const getHarness = useHttpHarness()
 
 	describe('GET /health', () => {
 		it('returns 500 "Error" (text) when no gateway has been started', async () => {
+			const harness = await getHarness()
 			const res = await harness.request.get('/health')
 			expect(res.status).toBe(500)
 			expect(res.type).toBe('text/html')
@@ -27,7 +16,7 @@ describe('HTTP contract: health & version', () => {
 
 		it('returns 200 "Ok" when both mqtt and zwave are connected', async () => {
 			const gw = createFakeGateway()
-			harness.testHooks.setGateway(gw)
+			const harness = await getHarness({ gateway: gw })
 
 			const res = await harness.request.get('/health')
 			expect(res.status).toBe(200)
@@ -41,7 +30,7 @@ describe('HTTP contract: health & version', () => {
 				status: false,
 				config: {},
 			})
-			harness.testHooks.setGateway(gw)
+			const harness = await getHarness({ gateway: gw })
 
 			const res = await harness.request.get('/health')
 			expect(res.status).toBe(500)
@@ -56,7 +45,7 @@ describe('HTTP contract: health & version', () => {
 				config: { disabled: true },
 			})
 
-			harness.testHooks.setGateway(gw)
+			const harness = await getHarness({ gateway: gw })
 
 			const res = await harness.request.get('/health')
 			expect(res.status).toBe(200)
@@ -66,6 +55,7 @@ describe('HTTP contract: health & version', () => {
 
 	describe('GET /health/:client', () => {
 		it('returns 500 "Error" for zwave when no gateway is set', async () => {
+			const harness = await getHarness()
 			const res = await harness.request.get('/health/zwave')
 			expect(res.status).toBe(500)
 			expect(res.text).toBe('Error')
@@ -73,7 +63,7 @@ describe('HTTP contract: health & version', () => {
 
 		it('returns 200 "Ok" for a connected mqtt client', async () => {
 			const gw = createFakeGateway()
-			harness.testHooks.setGateway(gw)
+			const harness = await getHarness({ gateway: gw })
 
 			const res = await harness.request.get('/health/mqtt')
 			expect(res.status).toBe(200)
@@ -82,27 +72,25 @@ describe('HTTP contract: health & version', () => {
 
 		it('returns 200 "Ok" for a connected zwave client', async () => {
 			const gw = createFakeGateway()
-			harness.testHooks.setGateway(gw)
+			const harness = await getHarness({ gateway: gw })
 
 			const res = await harness.request.get('/health/zwave')
 			expect(res.status).toBe(200)
 			expect(res.text).toBe('Ok')
 		})
 
-		it(
-			'preserved quirk: an invalid client name sends the 500 error body ' +
-				'then falls through into a second res.send() for the same request',
-			async () => {
-				const res = await harness.request.get('/health/not-a-client')
+		it('returns exactly one 500 response with the corrected message for an invalid client name', async () => {
+			const harness = await getHarness()
+			const res = await harness.request.get('/health/not-a-client')
 
-				expect(res.status).toBe(500)
-				expect(res.text).toBe("Requested client doesn 't exist")
-			},
-		)
+			expect(res.status).toBe(500)
+			expect(res.text).toBe("Requested client doesn't exist")
+		})
 	})
 
 	describe('GET /version', () => {
 		it('returns the app/zwavejs/zwavejs-server version triplet', async () => {
+			const harness = await getHarness()
 			const res = await harness.request.get('/version')
 			expect(res.status).toBe(200)
 			expect(res.body).toEqual({

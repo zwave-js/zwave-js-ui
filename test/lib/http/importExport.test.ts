@@ -1,24 +1,13 @@
-import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest'
-import { createHttpHarness, type HttpHarness } from './harness.ts'
+import { describe, it, expect } from 'vitest'
+import { useHttpHarness } from './harness.ts'
 import { createFakeGateway } from './fakes.ts'
 
 describe('HTTP contract: import/export config', () => {
-	let harness: HttpHarness
-
-	beforeAll(async () => {
-		harness = await createHttpHarness()
-	})
-
-	afterAll(async () => {
-		await harness.close()
-	})
-
-	afterEach(() => {
-		harness.resetState()
-	})
+	const getHarness = useHttpHarness()
 
 	describe('GET /api/exportConfig', () => {
 		it('returns the stored nodes JSON verbatim', async () => {
+			const harness = await getHarness()
 			await harness.jsonStore.put(harness.store.nodes, {
 				2: { name: 'Kitchen light', loc: 'Kitchen' },
 			})
@@ -36,38 +25,34 @@ describe('HTTP contract: import/export config', () => {
 	})
 
 	describe('POST /api/importConfig', () => {
-		it('fails with a generic error when no gateway is attached at all', async () => {
-			const res = await harness.request.post('/api/importConfig').send({
-				data: { 2: { name: 'New name' } },
-			})
-
-			expect(res.status).toBe(200)
-			expect(res.body).toEqual({
-				success: false,
-				message:
-					"Cannot read properties of undefined (reading 'zwave')",
-			})
-		})
-
-		it('fails with "Z-Wave client not inited" when a gateway is attached but has no zwave client', async () => {
-			harness.testHooks.setGateway(
+		it.each([
+			['no gateway attached at all', undefined],
+			[
+				'a gateway attached but with no zwave client',
 				createFakeGateway({ zwave: undefined }),
-			)
+			],
+		])(
+			'fails with the clean "Z-Wave client not inited" error with %s',
+			async (_label, gateway) => {
+				const harness = await getHarness({ gateway })
 
-			const res = await harness.request.post('/api/importConfig').send({
-				data: { 2: { name: 'New name' } },
-			})
+				const res = await harness.request
+					.post('/api/importConfig')
+					.send({
+						data: { 2: { name: 'New name' } },
+					})
 
-			expect(res.status).toBe(200)
-			expect(res.body).toEqual({
-				success: false,
-				message: 'Z-Wave client not inited',
-			})
-		})
+				expect(res.status).toBe(200)
+				expect(res.body).toEqual({
+					success: false,
+					message: 'Z-Wave client not inited',
+				})
+			},
+		)
 
 		it('applies name/location/hassDevices via gw.zwave.callApi and storeDevices, in encounter order', async () => {
 			const gw = createFakeGateway()
-			harness.testHooks.setGateway(gw)
+			const harness = await getHarness({ gateway: gw })
 
 			const res = await harness.request.post('/api/importConfig').send({
 				data: {
@@ -106,7 +91,7 @@ describe('HTTP contract: import/export config', () => {
 
 		it('skips non-numeric node-id keys without calling any collaborator', async () => {
 			const gw = createFakeGateway()
-			harness.testHooks.setGateway(gw)
+			const harness = await getHarness({ gateway: gw })
 
 			const res = await harness.request.post('/api/importConfig').send({
 				data: { notANodeId: { name: 'Ignored' } },
@@ -121,7 +106,7 @@ describe('HTTP contract: import/export config', () => {
 		it('reports skipped home ids and imports nothing when a wrapped backup has no home id matching the controller', async () => {
 			const gw = createFakeGateway()
 			gw.zwave.homeHex = '0xCAFEBABE'
-			harness.testHooks.setGateway(gw)
+			const harness = await getHarness({ gateway: gw })
 
 			const res = await harness.request.post('/api/importConfig').send({
 				data: {
