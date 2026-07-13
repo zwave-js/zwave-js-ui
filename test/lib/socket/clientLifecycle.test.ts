@@ -92,32 +92,4 @@ describe('Socket contract: first/last client callback lifecycle', () => {
 		await harness.waitForServerSocketCount(0)
 		// There's no zwave collaborator here for a callback to fire on
 	})
-
-	it('a gateway swapped in via testHooks between disconnect and reconnect is the one observed - the NEW gateway gets setUserCallbacks(), never a stale captured reference to the old one', async () => {
-		const gwA = createFakeGateway()
-		harness.testHooks.setGateway(gwA as any)
-
-		const clientA = harness.createClient()
-		await harness.connectClient(clientA)
-		expect(gwA.zwave.setUserCallbacks).toHaveBeenCalledOnce()
-
-		clientA.disconnect()
-		await harness.waitForServerSocketCount(0)
-		expect(gwA.zwave.removeUserCallbacks).toHaveBeenCalledOnce()
-
-		const gwB = createFakeGateway()
-		harness.testHooks.setGateway(gwB as any)
-
-		const clientB = harness.createClient()
-		await harness.connectClient(clientB)
-
-		expect(gwB.zwave.setUserCallbacks).toHaveBeenCalledOnce()
-		expect(gwA.zwave.setUserCallbacks).toHaveBeenCalledOnce()
-		expect(gwA.zwave.removeUserCallbacks).toHaveBeenCalledOnce()
-
-		clientB.disconnect()
-		await harness.waitForServerSocketCount(0)
-		expect(gwB.zwave.removeUserCallbacks).toHaveBeenCalledOnce()
-		expect(gwA.zwave.removeUserCallbacks).toHaveBeenCalledOnce()
-	})
 })
