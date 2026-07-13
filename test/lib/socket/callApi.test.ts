@@ -33,10 +33,7 @@ describe('Socket contract: callApi()', () => {
 	describe('callApi() dispatch', () => {
 		it('success: calls a real allowed method and returns its result, message, and echoed args', async () => {
 			const zwave = await realZwave()
-			// Seed SceneService's internal scene list directly; _sceneService is TS-private (not JS #-private) and stays in-memory only, so it can't leak to other tests
-			;(zwave as any)._sceneService._scenes = [
-				{ sceneid: 1, label: 'Test', values: [] },
-			]
+			await zwave._setScenes([{ sceneid: 1, label: 'Test', values: [] }])
 			zwave['_driver'] = {} as unknown as Driver
 			zwave.driverReady = true
 
@@ -100,6 +97,7 @@ describe('Socket contract: callApi()', () => {
 
 		it('bootloader: allows the call when driver.mode is Bootloader even though driverReady is false', async () => {
 			const zwave = await realZwave()
+			await zwave._setScenes([])
 			zwave['_driver'] = {
 				mode: DriverMode.Bootloader,
 			} as unknown as Driver
@@ -207,9 +205,7 @@ describe('Socket contract: callApi()', () => {
 
 		it('argument echo: `args` is set to the exact array passed in, in order, for a multi-arg call', async () => {
 			const zwave = await realZwave()
-			;(zwave as any)._sceneService._scenes = [
-				{ sceneid: 1, label: 'A', values: [] },
-			]
+			await zwave._setScenes([{ sceneid: 1, label: 'A', values: [] }])
 			zwave['_driver'] = {} as unknown as Driver
 			zwave.driverReady = true
 
