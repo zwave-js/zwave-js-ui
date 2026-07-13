@@ -158,7 +158,11 @@ import { regionSupportsAutoPowerlevel } from './shared.ts'
 import { deviceConfigPriorityDir } from './Constants.ts'
 import { createRequire } from 'node:module'
 import { HassDeviceStore } from '../hass/DeviceStore.ts'
-import type { HassDevice } from '../hass/types.ts'
+import type {
+	HassDevice,
+	HassDeviceMap,
+	StoreHassDevicesResult,
+} from '../hass/types.ts'
 
 export type { HassDevice } from '../hass/types.ts'
 
@@ -1252,10 +1256,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 *
 	 */
 	async storeDevices(
-		devices: { [key: string]: HassDevice },
+		devices: HassDeviceMap,
 		nodeId: number,
 		remove: unknown,
-	) {
+	): Promise<StoreHassDevicesResult> {
 		return this.hassDeviceStore.storeDevices(devices, nodeId, remove)
 	}
 
