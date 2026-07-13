@@ -678,6 +678,32 @@ describe('FirmwareUpdateService', () => {
 				expect.stringContaining('Starting bulk'),
 			)
 		})
+
+		it('runs the next scheduled firmware check', async () => {
+			const getAllAvailableFirmwareUpdates = vi
+				.fn()
+				.mockResolvedValue(new Map())
+			const driver = createDriverPort({
+				getDriver: () => ({
+					controller: {
+						getAvailableFirmwareUpdates: vi.fn(),
+						getAllAvailableFirmwareUpdates,
+						firmwareUpdateOTA: vi.fn(),
+						nodes: { get: vi.fn() },
+					},
+					firmwareUpdateOTW: vi.fn(),
+				}),
+			})
+			const { service } = createService({ driver })
+
+			await service.scheduledFirmwareUpdateCheck()
+			expect(getAllAvailableFirmwareUpdates).toHaveBeenCalledOnce()
+
+			await vi.runOnlyPendingTimersAsync()
+			expect(getAllAvailableFirmwareUpdates).toHaveBeenCalledTimes(2)
+
+			service.clearScheduledCheck()
+		})
 	})
 
 	describe('checkNodeFirmwareUpdates', () => {
