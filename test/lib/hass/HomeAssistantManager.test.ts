@@ -2,19 +2,17 @@
  * Direct unit tests for {@link HomeAssistantManager}, the single
  * process-lifetime owner of the built-in Home Assistant subsystem.
  *
- * Unlike the earlier hollow coordinator (which reached into the live
- * `Gateway`/`ZwaveClient` through always-current resolvers), this manager
- * genuinely OWNS a generation of sub-managers: it constructs them through the
- * injected {@link HomeAssistantClientFactories} (which also adopt them into the
- * current clients), holds the concrete instances plus their disposers, and
+ * This manager owns a generation of sub-managers: it constructs them through
+ * the injected {@link HomeAssistantClientFactories} (which also adopt them into
+ * the current clients), holds the concrete instances plus their disposers, and
  * drives an explicit, idempotent lifecycle state machine
  * (`idle -> initialized -> starting -> started -> stopping -> initialized`,
  * plus `failed`). These tests drive it in isolation with hand-rolled factories
- * so every transition, the exact teardown call order, idempotency from every
- * state, concurrent-stop de-duplication, restart (fresh generation), partial
- * attach (no server) and the failed-then-quiesce path are proven against the
- * manager itself. The end-to-end wiring into `AppRuntime` (ordering relative to
- * the clients) is covered by `test/runtime/AppRuntime.test.ts`.
+ * so every transition, the teardown call order, idempotency from every state,
+ * concurrent-stop de-duplication, restart (fresh generation), partial attach
+ * (no server) and the failed-then-quiesce path are proven against the manager
+ * itself. The end-to-end wiring into `AppRuntime` is covered by
+ * `test/runtime/AppRuntime.test.ts`.
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import type { Mock } from 'vitest'
@@ -24,9 +22,8 @@ import HomeAssistantManager, {
 	type HomeAssistantClientFactories,
 } from '../../../api/hass/HomeAssistantManager.ts'
 
-// A logger whose methods are function-valued PROPERTIES (not method
-// signatures) so tests can reference `logger.info` for assertions without the
-// unbound-method rule firing; structurally satisfies `HassLogger`.
+// Methods declared as function-valued properties let tests reference
+// `logger.info` for assertions without the unbound-method rule firing
 interface MockLogger {
 	debug: Mock
 	info: Mock
@@ -124,8 +121,8 @@ describe('HomeAssistantManager', () => {
 			// Exactly one of each was constructed...
 			expect(factories.createDiscovery).toHaveBeenCalledTimes(1)
 			expect(factories.createServer).toHaveBeenCalledTimes(1)
-			// ...and the manager holds the EXACT concrete instances returned
-			// (direct ownership, not a resolver into a client).
+			// the manager holds the concrete instances returned, owning them
+			// directly rather than resolving into a client
 			expect(manager.discovery).toBe(discovery)
 			expect(manager.server).toBe(server)
 			expect(manager.state).toBe('starting')
@@ -377,8 +374,8 @@ describe('HomeAssistantManager', () => {
 		it('de-duplicates concurrent stops onto a single in-flight teardown', async () => {
 			const manager = new HomeAssistantManager({ logger })
 			const discovery = makeDiscovery()
-			// A server whose destroy we control, so both stop() calls observe
-			// the SAME in-flight teardown before it settles.
+			// A server whose destroy we control, so both stop() calls observe the
+			// same in-flight teardown before it settles
 			let releaseDestroy: () => void = () => undefined
 			const destroyGate = new Promise<void>((resolve) => {
 				releaseDestroy = resolve
@@ -392,7 +389,7 @@ describe('HomeAssistantManager', () => {
 
 			const first = manager.stop()
 			const second = manager.stop()
-			// Both callers share ONE teardown: destroy invoked exactly once.
+			// Both callers share a single teardown, so destroy runs once
 			expect(server.destroy).toHaveBeenCalledTimes(1)
 
 			releaseDestroy()
@@ -439,8 +436,8 @@ describe('HomeAssistantManager', () => {
 			const stopping = manager.stop()
 			expect(manager.state).toBe('stopping')
 
-			// A brand-new generation is wired + started WHILE gen 1's stop is
-			// mid-flight (awaiting the gated destroy).
+			// A brand-new generation is wired and started while gen 1's stop is
+			// mid-flight, awaiting the gated destroy
 			const discovery2 = makeDiscovery()
 			const server2 = makeServer('2')
 			manager.attachClients(makeFactories(discovery2, server2))
@@ -448,7 +445,7 @@ describe('HomeAssistantManager', () => {
 			expect(manager.generation).toBe(2)
 			expect(manager.state).toBe('started')
 
-			// Let the stale gen 1 teardown settle: it must NOT clear gen 2.
+			// Let the stale gen 1 teardown settle; it must not clear gen 2
 			releaseDestroy()
 			await stopping
 
@@ -506,7 +503,7 @@ describe('HomeAssistantManager', () => {
 
 			const first = manager.stop()
 			const second = manager.stop()
-			// Both callers observe the SAME in-flight teardown: one destroy.
+			// Both callers observe the same in-flight teardown, so one destroy
 			expect(server.destroy).toHaveBeenCalledTimes(1)
 
 			await expect(first).rejects.toThrow('boom')
@@ -542,7 +539,8 @@ describe('HomeAssistantManager', () => {
 			rejectDestroy(new Error('late failure'))
 			await expect(stopping).rejects.toThrow('late failure')
 
-			// The new generation is untouched: still started, not failed.
+			// A late teardown failure from the prior generation leaves the new
+			// one started and unaffected
 			expect(manager.state).toBe('started')
 			expect(manager.generation).toBe(2)
 			expect(manager.discovery).toBe(discovery2)
@@ -576,7 +574,8 @@ describe('HomeAssistantManager', () => {
 			expect(manager.generation).toBe(2)
 			expect(manager.discovery).toBe(discovery2)
 			expect(manager.server).toBe(server2)
-			// The old generation was never touched again by the restart.
+			// Generation 1's pair was disposed once and never revived by the
+			// restart
 			expect(discovery1.stop).toHaveBeenCalledTimes(1)
 			expect(server1.destroy).toHaveBeenCalledTimes(1)
 

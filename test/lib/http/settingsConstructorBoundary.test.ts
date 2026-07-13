@@ -48,9 +48,9 @@ vi.mock('#api/lib/ZnifferManager.ts', () => ({
 }))
 
 // The Home Assistant sub-managers the coordinator constructs through the
-// factories `startGateway()` injects. Mocked no-ops here so this file's
-// concern (verbatim constructor-arg passthrough into Mqtt/Zwave/Gateway/
-// Zniffer) never spins up a real MQTT-discovery engine or `@zwave-js/server`.
+// factories `startGateway()` injects, mocked as no-ops so this file's concern
+// — constructor-arg passthrough into Mqtt/Zwave/Gateway/Zniffer — never spins
+// up a real MQTT-discovery engine or `@zwave-js/server`.
 vi.mock('../../../api/hass/MqttDiscoveryManager.ts', () => ({
 	default: class MockMqttDiscoveryManager {
 		stop = vi.fn()

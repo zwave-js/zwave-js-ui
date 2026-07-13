@@ -1,11 +1,11 @@
 /**
  * Direct unit/characterization tests for {@link ZwaveServerManager}, the
- * extracted owner of the official `@zwave-js/server` (`ZwavejsServer`)
- * lifecycle. These exercise the manager in isolation (a fake host port, no
- * `ZwaveClient`) so every construction-option mapping, guard branch, teardown
- * ordering and idempotency path is proven against the manager itself. The
- * end-to-end `connect() -> driver ready -> close()` flow through `ZwaveClient`
- * is still covered by `server.test.ts`.
+ * owner of the official `@zwave-js/server` (`ZwavejsServer`) lifecycle. These
+ * exercise the manager in isolation (a fake host port, no `ZwaveClient`) so
+ * every construction-option mapping, guard branch, teardown ordering and
+ * idempotency path is proven against the manager itself. The end-to-end
+ * `connect() -> driver ready -> close()` flow through `ZwaveClient` is covered
+ * by `server.test.ts`.
  *
  * `@zwave-js/server` is replaced with a faithful EventEmitter fake so
  * `emit('error')` keeps real Node semantics (throws with no listener) and
