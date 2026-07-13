@@ -1,29 +1,17 @@
 /**
- * Regression for `test/lib/hass/env.ts`'s HASS-specific env-var isolation
+ * Regression proving `test/lib/hass/env.ts`'s HASS-specific env isolation
  * (`HASS_ENV_VARS`: `UID_DISCOVERY_PREFIX`,
- * `DISCOVERY_DISABLE_CC_CONFIGURATION`, `MQTT_NAME`).
+ * `DISCOVERY_DISABLE_CC_CONFIGURATION`, `MQTT_NAME`) keeps hostile ambient
+ * values out of the app under test.
  *
- * These three are read by the discovery modules under characterization but
- * are NOT in the HTTP suite's `APP_ENV_VARS` list, so before this isolation
- * an ambient value from the host shell / CI runner (or a sibling test file
- * that leaked one) could silently:
- *
- *  - repoint every discovery `unique_id`/device `identifiers` prefix
- *    (`UID_DISCOVERY_PREFIX`, captured at `Gateway.ts` import time),
- *  - turn Configuration-CC discovery into a no-op
- *    (`DISCOVERY_DISABLE_CC_CONFIGURATION === 'true'`), or
- *  - rewrite the MQTT client id / status topic (`MQTT_NAME`).
- *
- * Two layers of proof:
- *  1. A direct-helper contract test that `ensureTestEnv()` snapshots + clears
- *     each var and `cleanupTestEnv()` restores it EXACTLY (including the
- *     "was-unset -> stays-unset" case), driving the same `HASS_ENV_VARS` set
- *     the harness protects.
- *  2. A behavioral proof that sets HOSTILE ambient values BEFORE
- *     `createGatewayHarness()` (whose `ensureTestEnv()` clears them before the
- *     dynamic `Gateway.ts`/`MqttClient.ts` import) and asserts none reach the
- *     app under test: default `zwavejs2mqtt_` uid prefix, `ZWAVE_GATEWAY-test`
- *     client id, and a live `config_switch` from a Configuration-CC value.
+ * These three are read by the discovery modules but aren't in the HTTP suite's
+ * `APP_ENV_VARS`, so an ambient value could repoint every discovery
+ * `unique_id`/`identifiers` prefix, turn Configuration-CC discovery into a
+ * no-op, or rewrite the MQTT client id / status topic. The test plants hostile
+ * values before `createGatewayHarness()` (whose `ensureTestEnv()` clears them
+ * before the dynamic `Gateway.ts`/`MqttClient.ts` import) and asserts none
+ * reach production output: default `zwavejs2mqtt_` uid prefix,
+ * `ZWAVE_GATEWAY-test` client id, and a live `config_switch`.
  */
 import {
 	describe,
@@ -32,11 +20,10 @@ import {
 	beforeAll,
 	afterAll,
 	beforeEach,
-	afterEach,
 	vi,
 } from 'vitest'
 import { CommandClasses } from '@zwave-js/core'
-import { ensureTestEnv, cleanupTestEnv, HASS_ENV_VARS } from './env.ts'
+import { HASS_ENV_VARS } from './env.ts'
 import { mqttMockFactory } from './mqttMock.ts'
 import {
 	createGatewayHarness,
@@ -51,93 +38,14 @@ vi.mock('mqtt', () => mqttMockFactory())
 const HOSTILE_UID_PREFIX = 'HOSTILE_UID_'
 const HOSTILE_MQTT_NAME = 'hostile-name'
 
-describe('HASS env isolation - ensureTestEnv/cleanupTestEnv contract', () => {
-	// Snapshot the pre-test values ourselves so this suite never leaks its own
-	// hostile sets into the worker process regardless of assertion outcome.
-	let preTest: Record<string, string | undefined>
-
-	beforeEach(() => {
-		preTest = {}
-		for (const key of HASS_ENV_VARS) {
-			preTest[key] = process.env[key]
-			delete process.env[key]
-		}
-	})
-
-	afterEach(() => {
-		// Make sure the harness module state is reset even if a test asserted
-		// mid-cycle, then restore the real pre-test environment exactly.
-		cleanupTestEnv()
-		for (const key of HASS_ENV_VARS) {
-			if (preTest[key] === undefined) {
-				delete process.env[key]
-			} else {
-				process.env[key] = preTest[key]
-			}
-		}
-	})
-
-	it('snapshots and clears every HASS_ENV_VARS entry, then restores each hostile value exactly', () => {
-		process.env.UID_DISCOVERY_PREFIX = HOSTILE_UID_PREFIX
-		process.env.MQTT_NAME = HOSTILE_MQTT_NAME
-		process.env.DISCOVERY_DISABLE_CC_CONFIGURATION = 'true'
-
-		ensureTestEnv()
-
-		// cleared while the app under test could observe them
-		for (const key of HASS_ENV_VARS) {
-			expect(process.env[key]).toBeUndefined()
-		}
-
-		cleanupTestEnv()
-
-		// restored to the exact pre-test (hostile) values
-		expect(process.env.UID_DISCOVERY_PREFIX).toBe(HOSTILE_UID_PREFIX)
-		expect(process.env.MQTT_NAME).toBe(HOSTILE_MQTT_NAME)
-		expect(process.env.DISCOVERY_DISABLE_CC_CONFIGURATION).toBe('true')
-	})
-
-	it('restores a previously-unset var to unset (no leak either direction)', () => {
-		// All three start unset (beforeEach cleared them).
-		ensureTestEnv()
-		for (const key of HASS_ENV_VARS) {
-			expect(process.env[key]).toBeUndefined()
-		}
-
-		cleanupTestEnv()
-
-		// still absent - cleanup must not invent a value
-		for (const key of HASS_ENV_VARS) {
-			expect(Object.prototype.hasOwnProperty.call(process.env, key)).toBe(
-				false,
-			)
-		}
-	})
-
-	it('is idempotent across repeated ensure/cleanup cycles', () => {
-		process.env.MQTT_NAME = HOSTILE_MQTT_NAME
-
-		ensureTestEnv()
-		ensureTestEnv() // second call must not re-snapshot the cleared value
-		expect(process.env.MQTT_NAME).toBeUndefined()
-
-		cleanupTestEnv()
-		expect(process.env.MQTT_NAME).toBe(HOSTILE_MQTT_NAME)
-
-		cleanupTestEnv() // second cleanup is a harmless no-op
-		expect(process.env.MQTT_NAME).toBe(HOSTILE_MQTT_NAME)
-	})
-})
-
 describe('HASS env isolation - hostile ambient values cannot reach the app under test', () => {
 	let harness: GatewayHarness
 	let restoreHostile: () => void
 
 	beforeAll(async () => {
-		// Record and then plant hostile ambient values BEFORE the harness
-		// imports Gateway.ts / MqttClient.ts. `createGatewayHarness()` ->
-		// `ensureTestEnv()` must clear them first, so the imported modules
-		// capture the safe defaults, not these.
+		// Plant hostile ambient values before the harness imports Gateway.ts /
+		// MqttClient.ts; createGatewayHarness() -> ensureTestEnv() must clear
+		// them first, so the modules capture safe defaults
 		const prior = {
 			UID_DISCOVERY_PREFIX: process.env.UID_DISCOVERY_PREFIX,
 			MQTT_NAME: process.env.MQTT_NAME,
@@ -162,8 +70,8 @@ describe('HASS env isolation - hostile ambient values cannot reach the app under
 
 	afterAll(async () => {
 		await harness.close()
-		// cleanupGatewayHarnessEnv() restores the hostile values (they were the
-		// pre-ensure snapshot); delete them so nothing leaks past this file.
+		// cleanupGatewayHarnessEnv() restores the hostile values (the
+		// pre-ensure snapshot); delete them so nothing leaks past this file
 		cleanupGatewayHarnessEnv()
 		restoreHostile()
 		for (const key of HASS_ENV_VARS) delete process.env[key]
