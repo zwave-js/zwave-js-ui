@@ -94,8 +94,7 @@ const customDevicesJsonPath = CUSTOM_DEVICES + '.json'
  * dedup sha, the raw custom-device count, and the resolved path. Returns null
  * when neither file exists or parsing fails, so the caller keeps the previous
  * catalog. `.js` wins over `.json` because a `.js` can compute entries a static
- * `.json` can't. Exported so tests exercise the real loader against a fixture
- * path instead of the module-global `allDevices`/`fs.watch` state.
+ * `.json` can't.
  */
 export function loadCustomDevicesCatalog(
 	basePath: string,
