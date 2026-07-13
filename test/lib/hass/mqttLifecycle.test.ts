@@ -35,6 +35,7 @@ import {
 } from './gatewayHarness.ts'
 import { buildNode, buildValueId, addValue } from './fixtures.ts'
 import type { HassDevice, ZUINode } from '#api/lib/ZwaveClient.ts'
+import type { GatewayConfig } from '#api/lib/Gateway.ts'
 
 vi.mock('mqtt', () => mqttMockFactory())
 
@@ -60,6 +61,11 @@ afterEach(async () => {
 afterAll(() => {
 	cleanupGatewayHarnessEnv()
 })
+
+async function replaceHarness(config: Partial<GatewayConfig>) {
+	await harness.close()
+	harness = await createGatewayHarness({ config })
+}
 
 /** Runs the real switch discovery and returns the produced HassDevice. */
 function discoverSwitch(
@@ -184,15 +190,14 @@ describe('MQTT connection lifecycle', () => {
 })
 
 describe('HASS discovery publish and delete over MQTT', () => {
-	it('publishes with qos 0 and retain from config.retainedDiscovery', () => {
+	it('publishes with qos 0 and retain from config.retainedDiscovery', async () => {
 		harness.resetState()
-		const { device } = discoverSwitch('dev-retain-off')
+		discoverSwitch('dev-retain-off')
 		const pub =
 			harness.broker.published[harness.broker.published.length - 1]
 		expect(pub.options).toEqual({ qos: 0, retain: false })
 
-		harness.resetState()
-		harness.config.retainedDiscovery = true
+		await replaceHarness({ retainedDiscovery: true })
 		const { device: d2 } = discoverSwitch('dev-retain-on', 3)
 		const pub2 =
 			harness.broker.published[harness.broker.published.length - 1]
@@ -200,7 +205,7 @@ describe('HASS discovery publish and delete over MQTT', () => {
 		expect(d2.discovery_payload).toBeDefined()
 	})
 
-	it('a delete request publishes to the device discovery topic with retain following config', () => {
+	it('a delete request publishes to the device discovery topic with retain following config', async () => {
 		harness.resetState()
 		const { device } = discoverSwitch('dev-delete')
 		harness.resetPublishes()
@@ -213,8 +218,7 @@ describe('HASS discovery publish and delete over MQTT', () => {
 		// Default config leaves discovery unretained; the delete payload shape is tracked in #4737
 		expect(pub.options).toEqual({ qos: 0, retain: false })
 
-		harness.resetState()
-		harness.config.retainedDiscovery = true
+		await replaceHarness({ retainedDiscovery: true })
 		const { device: d2 } = discoverSwitch('dev-delete-retained', 4)
 		harness.resetPublishes()
 
@@ -242,11 +246,10 @@ describe('HASS discovery publish and delete over MQTT', () => {
 		)
 	})
 
-	it('manualDiscovery suppresses the publish unless forceUpdate is set', () => {
-		harness.resetState()
+	it('manualDiscovery suppresses the publish unless forceUpdate is set', async () => {
+		await replaceHarness({ manualDiscovery: true })
 		const { device } = discoverSwitch('dev-manual')
 		harness.resetPublishes()
-		harness.config.manualDiscovery = true
 
 		harness.gw.publishDiscovery(device, 2)
 		expect(harness.broker.published).toHaveLength(0)

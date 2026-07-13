@@ -22,13 +22,6 @@ import {
 	type FakeGatewayZwave,
 } from './fixtures.ts'
 
-/** Mirrors `Gateway`'s numeric gateway-type discriminants. */
-export const GATEWAY_TYPE = {
-	VALUEID: 0,
-	NAMED: 1,
-	MANUAL: 2,
-} as const
-
 export interface PublishedDiscovery {
 	topic: string
 	/** Parsed JSON payload, or the raw string for a delete (empty payload). */
@@ -41,12 +34,6 @@ export interface GatewayHarness {
 	mqtt: MqttClientType
 	zwave: FakeGatewayZwave
 	broker: FakeBroker
-	/**
-	 * Live `GatewayConfig` (same reference the `Gateway` holds) so tests can
-	 * push a `config.values` entry to exercise value-config plumbing and
-	 * restore it afterward.
-	 */
-	config: GatewayConfig
 	publishedDiscoveries(): PublishedDiscovery[]
 	lastDiscovery(): PublishedDiscovery
 	resetPublishes(): void
@@ -79,17 +66,19 @@ export async function createGatewayHarness(
 ): Promise<GatewayHarness> {
 	ensureTestEnv()
 
-	const [{ default: Gateway, closeWatchers }, { default: MqttClient }] =
-		await Promise.all([
-			import('#api/lib/Gateway.ts'),
-			import('#api/lib/MqttClient.ts'),
-		])
+	const [
+		{ default: Gateway, closeWatchers, GatewayType },
+		{ default: MqttClient },
+	] = await Promise.all([
+		import('#api/lib/Gateway.ts'),
+		import('#api/lib/MqttClient.ts'),
+	])
 
 	const mqtt = new MqttClient(defaultMqttConfig(options.mqttConfig))
 	const zwave = createFakeGatewayZwave(options.zwave)
 
 	const config: GatewayConfig = {
-		type: GATEWAY_TYPE.NAMED,
+		type: GatewayType.NAMED,
 		hassDiscovery: true,
 		discoveryPrefix: 'homeassistant',
 		...options.config,
@@ -124,7 +113,6 @@ export async function createGatewayHarness(
 		mqtt,
 		zwave,
 		broker,
-		config,
 		publishedDiscoveries,
 		lastDiscovery() {
 			const all = publishedDiscoveries()

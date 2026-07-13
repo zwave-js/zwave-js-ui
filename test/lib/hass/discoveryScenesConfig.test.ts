@@ -26,6 +26,7 @@ import {
 } from './gatewayHarness.ts'
 import { buildNode, buildValueId, addValue } from './fixtures.ts'
 import type { ZUINode, ZUIValueId, HassDevice } from '#api/lib/ZwaveClient.ts'
+import type { GatewayConfig } from '#api/lib/Gateway.ts'
 
 vi.mock('mqtt', () => mqttMockFactory())
 
@@ -41,12 +42,15 @@ afterEach(async () => {
 
 afterAll(() => {
 	cleanupGatewayHarnessEnv()
-	// Restore config knobs individual tests may have toggled
-	harness.config.hassDiscovery = true
-	harness.config.entityTemplate = undefined
-	harness.config.ignoreLoc = undefined
-	harness.config.values = []
 })
+
+async function replaceHarness(config: Partial<GatewayConfig>) {
+	await harness.close()
+	harness = await createGatewayHarness({
+		config,
+		zwave: { homeHex: '0xabcdef01' },
+	})
+}
 
 function readyNode(over: Partial<ZUINode> = {}): ZUINode {
 	return buildNode({ id: 2, name: 'Dev', firmwareVersion: '1.0.0', ...over })
@@ -220,15 +224,17 @@ describe('Configuration parameter discovery', () => {
 		}
 	})
 
-	it('enables the entity when ccConfigEnableDiscovery is set on the value config', () => {
+	it('enables the entity when ccConfigEnableDiscovery is set on the value config', async () => {
 		const node = readyNode({ deviceId: '111-2-3' })
-		harness.config.values = [
-			{
-				device: '111-2-3',
-				value: { id: '112-0-9' } as unknown as ZUIValueId,
-				ccConfigEnableDiscovery: true,
-			},
-		]
+		await replaceHarness({
+			values: [
+				{
+					device: '111-2-3',
+					value: { id: '112-0-9' } as unknown as ZUIValueId,
+					ccConfigEnableDiscovery: true,
+				},
+			],
+		})
 		const value = buildValueId({
 			commandClass: cc,
 			property: 9,
@@ -289,8 +295,8 @@ describe('shared entity naming and location behavior', () => {
 		expect(device.object_id).toBe('tamper_0')
 	})
 
-	it('honors a custom entity name template', () => {
-		harness.config.entityTemplate = '%n - %o (%nid)'
+	it('honors a custom entity name template', async () => {
+		await replaceHarness({ entityTemplate: '%n - %o (%nid)' })
 		const node = readyNode()
 		const key = addValue(
 			node,
@@ -327,8 +333,8 @@ describe('shared entity naming and location behavior', () => {
 		expect(device.discovery_payload.device.name).toBe('Kitchen-Dev')
 	})
 
-	it('drops the location when ignoreLoc is set', () => {
-		harness.config.ignoreLoc = true
+	it('drops the location when ignoreLoc is set', async () => {
+		await replaceHarness({ ignoreLoc: true })
 		const node = readyNode({ loc: 'Kitchen' })
 		const key = addValue(
 			node,
@@ -403,8 +409,8 @@ describe('values skipped during discovery', () => {
 		expect(harness.publishedDiscoveries()).toHaveLength(0)
 	})
 
-	it('skips discovery when hassDiscovery is disabled', () => {
-		harness.config.hassDiscovery = false
+	it('skips discovery when hassDiscovery is disabled', async () => {
+		await replaceHarness({ hassDiscovery: false })
 		const node = readyNode()
 		const key = addValue(
 			node,
