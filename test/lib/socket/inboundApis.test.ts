@@ -1,16 +1,8 @@
 // Event names are hard-coded literals, not imported from SocketEvents.ts, since a real client's wire format doesn't know the server's internal constant names
 // Every test installs at least a bare gateway fake since connecting a client triggers the real 'clients' callback, which calls gw.zwave?.setUserCallbacks() and throws if gw is undefined
-import {
-	describe,
-	it,
-	expect,
-	beforeAll,
-	afterAll,
-	afterEach,
-	vi,
-} from 'vitest'
-import type ZWaveClientType from '../../../api/lib/ZwaveClient.ts'
-import { createSocketHarness, type SocketHarness } from './harness.ts'
+import { describe, it, expect, beforeAll, vi } from 'vitest'
+import type ZWaveClientType from '#api/lib/ZwaveClient.ts'
+import { useSocketHarness, type SocketHarness } from './harness.ts'
 import { createFakeGateway, createFakeZniffer } from './fakes.ts'
 
 function emit<T = any>(
@@ -24,27 +16,15 @@ function emit<T = any>(
 }
 
 describe('Socket contract: inbound ACK APIs', () => {
-	let harness: SocketHarness
+	const getHarness = useSocketHarness()
 	let ZWaveClient: typeof ZWaveClientType
 
 	beforeAll(async () => {
-		// Isolate STORE_DIR before importing ZwaveClient.ts because module evaluation binds its jsonStore to that directory
-		harness = await createSocketHarness()
-		;({ default: ZWaveClient } = await import(
-			'../../../api/lib/ZwaveClient.ts'
-		))
+		// Runs after useSocketHarness()'s own beforeAll (registered first, so FIFO order isolates STORE_DIR first) since real ZwaveClient.ts binds its jsonStore at module-evaluation time
+		;({ default: ZWaveClient } = await import('#api/lib/ZwaveClient.ts'))
 	})
 
-	afterAll(async () => {
-		await harness.close()
-	})
-
-	afterEach(async () => {
-		await harness.disconnectAllClients()
-		harness.resetState()
-	})
-
-	async function connectedClient() {
+	async function connectedClient(harness: SocketHarness) {
 		const client = harness.createClient()
 		await harness.connectClient(client)
 		return client
@@ -52,10 +32,10 @@ describe('Socket contract: inbound ACK APIs', () => {
 
 	describe('INITED', () => {
 		it('returns an empty-ish state when gw.zwave is not connected', async () => {
-			harness.testHooks.setGateway(
-				createFakeGateway({ zwave: undefined }) as any,
-			)
-			const client = await connectedClient()
+			const harness = await getHarness({
+				gateway: createFakeGateway({ zwave: undefined }),
+			})
+			const client = await connectedClient(harness)
 
 			const state = await emit(client, 'INITED', {})
 			expect(state).toStrictEqual({ debugCaptureActive: false })
@@ -63,8 +43,8 @@ describe('Socket contract: inbound ACK APIs', () => {
 
 		it('returns gw.zwave.getState() plus debugCaptureActive when connected', async () => {
 			const gateway = createFakeGateway()
-			harness.testHooks.setGateway(gateway as any)
-			const client = await connectedClient()
+			const harness = await getHarness({ gateway })
+			const client = await connectedClient(harness)
 
 			const state = await emit(client, 'INITED', {})
 			expect(gateway.zwave.getState).toHaveBeenCalledOnce()
@@ -77,12 +57,14 @@ describe('Socket contract: inbound ACK APIs', () => {
 		})
 
 		it('adds a zniffer key from zniffer.status() when a zniffer is set', async () => {
-			harness.testHooks.setGateway(createFakeGateway() as any)
 			const zniffer = createFakeZniffer({
 				status: () => ({ active: true, frequency: 'us_lr' }) as any,
 			})
-			harness.testHooks.setZniffer(zniffer as any)
-			const client = await connectedClient()
+			const harness = await getHarness({
+				gateway: createFakeGateway(),
+				zniffer,
+			})
+			const client = await connectedClient(harness)
 
 			const state = await emit<any>(client, 'INITED', {})
 			expect(state.zniffer).toStrictEqual({
@@ -94,10 +76,10 @@ describe('Socket contract: inbound ACK APIs', () => {
 
 	describe('ZWAVE_API', () => {
 		it('replies with exactly {success:false, message} and omits result/api when zwave is disconnected', async () => {
-			harness.testHooks.setGateway(
-				createFakeGateway({ zwave: undefined }) as any,
-			)
-			const client = await connectedClient()
+			const harness = await getHarness({
+				gateway: createFakeGateway({ zwave: undefined }),
+			})
+			const client = await connectedClient(harness)
 
 			const result = await emit(client, 'ZWAVE_API', {
 				api: 'anything',
@@ -111,8 +93,8 @@ describe('Socket contract: inbound ACK APIs', () => {
 
 		it('calls gw.zwave.callApi(api, ...args), echoes back api, and defaults args to [] when omitted', async () => {
 			const gateway = createFakeGateway()
-			harness.testHooks.setGateway(gateway as any)
-			const client = await connectedClient()
+			const harness = await getHarness({ gateway })
+			const client = await connectedClient(harness)
 
 			const result = await emit(client, 'ZWAVE_API', {
 				api: '_getScenes',
@@ -127,8 +109,8 @@ describe('Socket contract: inbound ACK APIs', () => {
 
 		it('echoes call arguments in order through to callApi', async () => {
 			const gateway = createFakeGateway()
-			harness.testHooks.setGateway(gateway as any)
-			const client = await connectedClient()
+			const harness = await getHarness({ gateway })
+			const client = await connectedClient(harness)
 
 			await emit(client, 'ZWAVE_API', {
 				api: '_createScene',
@@ -143,14 +125,15 @@ describe('Socket contract: inbound ACK APIs', () => {
 
 		it('routes through the REAL ZwaveClient.callApi() dispatcher (not a mocked gw.zwave.callApi) for a real allowed method, echoing its real success/result/args (ZwaveClient.ts:6032-6070, app.ts:708-726)', async () => {
 			// Every other test in this block uses createFakeGateway()'s mocked zwave.callApi; this one wires a real ZWaveClient so the real callApi() dispatcher actually runs
+			const gateway = createFakeGateway({ zwave: undefined })
+			const harness = await getHarness({ gateway })
 			const zwave = new ZWaveClient({} as any, harness.io)
 			zwave.scenes = [{ sceneid: 1, label: 'Party', values: [] }]
 			;(zwave as any)._driver = {}
 			zwave.driverReady = true
-			harness.testHooks.setGateway(
-				createFakeGateway({ zwave: zwave as any }) as any,
-			)
-			const client = await connectedClient()
+			// gw (held by the already-running app) references this same gateway object, so mutating it here is observed exactly like a live reconnect would be - no post-construction app/harness API involved
+			gateway.zwave = zwave as any
+			const client = await connectedClient(harness)
 
 			const result = await emit(client, 'ZWAVE_API', {
 				api: '_sceneGetValues',
@@ -170,8 +153,8 @@ describe('Socket contract: inbound ACK APIs', () => {
 	describe('MQTT_API', () => {
 		it('calls gw.updateNodeTopics(args[0]) for the known "updateNodeTopics" action', async () => {
 			const gateway = createFakeGateway()
-			harness.testHooks.setGateway(gateway as any)
-			const client = await connectedClient()
+			const harness = await getHarness({ gateway })
+			const client = await connectedClient(harness)
 
 			const result = await emit(client, 'MQTT_API', {
 				api: 'updateNodeTopics',
@@ -185,9 +168,10 @@ describe('Socket contract: inbound ACK APIs', () => {
 			})
 		})
 
+		// See #4740 for the tracked follow-up on this asymmetry
 		it('quirk: an unknown action reports "Unknown MQTT api undefined" (default branch reads data.apiName, not data.api)', async () => {
-			harness.testHooks.setGateway(createFakeGateway() as any)
-			const client = await connectedClient()
+			const harness = await getHarness({ gateway: createFakeGateway() })
+			const client = await connectedClient(harness)
 
 			const result = await emit(client, 'MQTT_API', {
 				api: 'notARealAction',
@@ -206,8 +190,8 @@ describe('Socket contract: inbound ACK APIs', () => {
 					throw new Error('boom')
 				},
 			} as any)
-			harness.testHooks.setGateway(gateway as any)
-			const client = await connectedClient()
+			const harness = await getHarness({ gateway })
+			const client = await connectedClient(harness)
 
 			const result = await emit(client, 'MQTT_API', {
 				api: 'updateNodeTopics',
@@ -227,8 +211,8 @@ describe('Socket contract: inbound ACK APIs', () => {
 			const gateway = createFakeGateway({
 				rediscoverNode: vi.fn(),
 			} as any)
-			harness.testHooks.setGateway(gateway as any)
-			const client = await connectedClient()
+			const harness = await getHarness({ gateway })
+			const client = await connectedClient(harness)
 
 			const result = await emit(client, 'HASS_API', {
 				apiName: 'rediscoverNode',
@@ -243,9 +227,10 @@ describe('Socket contract: inbound ACK APIs', () => {
 			expect('result' in result).toBe(false)
 		})
 
+		// See #4740 for the tracked follow-up on this asymmetry
 		it('quirk: an unknown apiName silently "succeeds" (switch has no default case, res/err stay undefined)', async () => {
-			harness.testHooks.setGateway(createFakeGateway() as any)
-			const client = await connectedClient()
+			const harness = await getHarness({ gateway: createFakeGateway() })
+			const client = await connectedClient(harness)
 
 			const result = await emit(client, 'HASS_API', {
 				apiName: 'notARealAction',
@@ -263,8 +248,8 @@ describe('Socket contract: inbound ACK APIs', () => {
 					throw new Error('hass boom')
 				},
 			} as any)
-			harness.testHooks.setGateway(gateway as any)
-			const client = await connectedClient()
+			const harness = await getHarness({ gateway })
+			const client = await connectedClient(harness)
 
 			const result = await emit(client, 'HASS_API', {
 				apiName: 'disableDiscovery',
@@ -281,12 +266,14 @@ describe('Socket contract: inbound ACK APIs', () => {
 	describe('ZNIFFER_API', () => {
 		it('awaits zniffer.start() for the known "start" action - real signature is Promise<void>, so `result` is stripped from the wire ack (ZnifferManager.ts:276-290, app.ts:858-901)', async () => {
 			// Matches the real Promise<void> signature so the ack strips the undefined result key, the same regression-masking risk as rediscoverNode above
-			harness.testHooks.setGateway(createFakeGateway() as any)
 			const zniffer = createFakeZniffer({
 				start: vi.fn(() => Promise.resolve(undefined)),
-			} as any)
-			harness.testHooks.setZniffer(zniffer as any)
-			const client = await connectedClient()
+			})
+			const harness = await getHarness({
+				gateway: createFakeGateway(),
+				zniffer,
+			})
+			const client = await connectedClient(harness)
 
 			const result = await emit(client, 'ZNIFFER_API', {
 				apiName: 'start',
@@ -301,9 +288,11 @@ describe('Socket contract: inbound ACK APIs', () => {
 		})
 
 		it('reports success:false with "Unknown ZNIFFER api <name>" for an unknown apiName', async () => {
-			harness.testHooks.setGateway(createFakeGateway() as any)
-			harness.testHooks.setZniffer(createFakeZniffer() as any)
-			const client = await connectedClient()
+			const harness = await getHarness({
+				gateway: createFakeGateway(),
+				zniffer: createFakeZniffer(),
+			})
+			const client = await connectedClient(harness)
 
 			const result = await emit(client, 'ZNIFFER_API', {
 				apiName: 'notARealAction',
@@ -315,15 +304,18 @@ describe('Socket contract: inbound ACK APIs', () => {
 			})
 		})
 
+		// See #4740 for the tracked follow-up on this bug
 		it('quirk: loadCaptureFromBuffer is called WITHOUT await, so result is an unresolved Promise, not the resolved value', async () => {
-			harness.testHooks.setGateway(createFakeGateway() as any)
 			const zniffer = createFakeZniffer({
 				loadCaptureFromBuffer: vi.fn(() =>
 					Promise.resolve('parsed-capture'),
 				),
-			} as any)
-			harness.testHooks.setZniffer(zniffer as any)
-			const client = await connectedClient()
+			})
+			const harness = await getHarness({
+				gateway: createFakeGateway(),
+				zniffer,
+			})
+			const client = await connectedClient(harness)
 
 			const result = await emit<any>(client, 'ZNIFFER_API', {
 				apiName: 'loadCaptureFromBuffer',
@@ -341,8 +333,8 @@ describe('Socket contract: inbound ACK APIs', () => {
 
 	describe('SUBSCRIBE', () => {
 		it('joins exactly the requested valid channel and acks with the current subscription list', async () => {
-			harness.testHooks.setGateway(createFakeGateway() as any)
-			const client = await connectedClient()
+			const harness = await getHarness({ gateway: createFakeGateway() })
+			const client = await connectedClient(harness)
 
 			const result = await emit<any>(client, 'SUBSCRIBE', {
 				channels: ['nodes'],
@@ -351,8 +343,8 @@ describe('Socket contract: inbound ACK APIs', () => {
 		})
 
 		it('filters out invalid channels while keeping valid ones from a mixed list', async () => {
-			harness.testHooks.setGateway(createFakeGateway() as any)
-			const client = await connectedClient()
+			const harness = await getHarness({ gateway: createFakeGateway() })
+			const client = await connectedClient(harness)
 
 			const result = await emit<any>(client, 'SUBSCRIBE', {
 				channels: ['nodes', 'not-a-real-channel', 'values'],
@@ -361,8 +353,8 @@ describe('Socket contract: inbound ACK APIs', () => {
 		})
 
 		it('"all" expands to every channel, in channelMap declaration order', async () => {
-			harness.testHooks.setGateway(createFakeGateway() as any)
-			const client = await connectedClient()
+			const harness = await getHarness({ gateway: createFakeGateway() })
+			const client = await connectedClient(harness)
 
 			const result = await emit<any>(client, 'SUBSCRIBE', {
 				channels: ['all'],
@@ -382,8 +374,8 @@ describe('Socket contract: inbound ACK APIs', () => {
 		})
 
 		it('acks with an empty channel list when data.channels is missing/not an array', async () => {
-			harness.testHooks.setGateway(createFakeGateway() as any)
-			const client = await connectedClient()
+			const harness = await getHarness({ gateway: createFakeGateway() })
+			const client = await connectedClient(harness)
 
 			const result = await emit<any>(client, 'SUBSCRIBE', {})
 			expect(result).toStrictEqual({ channels: [] })
@@ -392,8 +384,8 @@ describe('Socket contract: inbound ACK APIs', () => {
 
 	describe('UNSUBSCRIBE', () => {
 		it('leaves exactly the requested valid channel and acks with what remains', async () => {
-			harness.testHooks.setGateway(createFakeGateway() as any)
-			const client = await connectedClient()
+			const harness = await getHarness({ gateway: createFakeGateway() })
+			const client = await connectedClient(harness)
 
 			await emit(client, 'SUBSCRIBE', { channels: ['nodes', 'values'] })
 			const result = await emit<any>(client, 'UNSUBSCRIBE', {
@@ -402,9 +394,10 @@ describe('Socket contract: inbound ACK APIs', () => {
 			expect(result).toStrictEqual({ channels: ['values'] })
 		})
 
+		// See #4740 for the tracked follow-up on this asymmetry
 		it('quirk: "all" is NOT special-cased for unsubscribe (asymmetric with subscribe) - it matches no real channel, so nothing is removed', async () => {
-			harness.testHooks.setGateway(createFakeGateway() as any)
-			const client = await connectedClient()
+			const harness = await getHarness({ gateway: createFakeGateway() })
+			const client = await connectedClient(harness)
 
 			await emit(client, 'SUBSCRIBE', { channels: ['nodes', 'values'] })
 			const result = await emit<any>(client, 'UNSUBSCRIBE', {
