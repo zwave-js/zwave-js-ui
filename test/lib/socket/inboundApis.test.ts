@@ -169,8 +169,9 @@ describe('Socket contract: inbound ACK APIs', () => {
 			})
 		})
 
-		// See #4740 for the tracked follow-up on this asymmetry
-		it('quirk: an unknown action reports "Unknown MQTT api undefined" (default branch reads data.apiName, not data.api)', async () => {
+		// Regression coverage for the #4740 dispatch bug: the default branch used to read the
+		// nonexistent data.apiName, always reporting "undefined" regardless of the actual action
+		it('reports "Unknown MQTT api <api>" for an unrecognized action', async () => {
 			const harness = await getHarness({ gateway: createFakeGateway() })
 			const client = await connectedClient(harness)
 
@@ -180,7 +181,7 @@ describe('Socket contract: inbound ACK APIs', () => {
 			})
 			expect(result).toStrictEqual({
 				success: false,
-				message: 'Unknown MQTT api undefined',
+				message: 'Unknown MQTT api notARealAction',
 				api: 'notARealAction',
 			})
 		})

@@ -813,7 +813,7 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 							res = gw.removeNodeRetained(data.args[0])
 							break
 						default:
-							err = `Unknown MQTT api ${data.apiName}`
+							err = `Unknown MQTT api ${data.api}`
 					}
 				} catch (error) {
 					logger.error('Error while calling MQTT api', error)
