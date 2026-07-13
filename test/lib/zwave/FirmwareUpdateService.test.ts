@@ -353,6 +353,47 @@ describe('FirmwareUpdateService', () => {
 				'1.0.0': true,
 			})
 		})
+
+		it('persists current dismissals when reset interrupts a write', async () => {
+			const persistenceStarted = createDeferred<void>()
+			const persistenceBarrier = createDeferred<void>()
+			const nodes = createNodeStorePort()
+			nodes._nodes.set(5, { id: 5 })
+
+			let persistenceCount = 0
+			let persisted: Record<string, boolean> = {}
+			vi.mocked(nodes.updateStoreNodes).mockImplementation(async () => {
+				const snapshot = {
+					...nodes._store.get(5)?.firmwareUpdatesDismissed,
+				}
+				persistenceCount++
+				if (persistenceCount === 1) {
+					persistenceStarted.resolve()
+					await persistenceBarrier.promise
+				}
+				persisted = snapshot
+			})
+
+			const { service } = createService({ nodes })
+			const interruptedDismissal = service.dismissFirmwareUpdate(
+				5,
+				'1.0.0',
+			)
+
+			await persistenceStarted.promise
+			service.resetGeneration()
+			const currentDismissal = service.dismissFirmwareUpdate(5, '2.0.0')
+			persistenceBarrier.resolve()
+
+			await expect(interruptedDismissal).rejects.toBeInstanceOf(
+				FirmwareLifecycleCancelledError,
+			)
+			await expect(currentDismissal).resolves.toBe(true)
+			expect(persisted).toEqual({
+				'1.0.0': true,
+				'2.0.0': true,
+			})
+		})
 	})
 
 	describe('getNodeFirmwareUpdates', () => {

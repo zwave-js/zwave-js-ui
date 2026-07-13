@@ -220,8 +220,9 @@ export class FirmwareUpdateService {
 			})
 		}
 
-		await this._nodes.updateStoreNodes()
-		this._assertFence(gen, 'dismissFirmwareUpdate')
+		await this._serializePersistence(gen, 'dismissFirmwareUpdate', () =>
+			this._nodes.updateStoreNodes(),
+		)
 		this._logger.info(
 			`Dismissed firmware update ${version} for node ${nodeId}`,
 		)
@@ -646,9 +647,19 @@ export class FirmwareUpdateService {
 		gen: number,
 		operation: string,
 	): Promise<void> {
+		await this._serializePersistence(gen, operation, () =>
+			this._nodes.persistStagedNodeUpdates(staged),
+		)
+	}
+
+	private async _serializePersistence(
+		gen: number,
+		operation: string,
+		persist: () => Promise<void>,
+	): Promise<void> {
 		const persistence = this._persistenceTail.then(async () => {
 			this._assertFence(gen, operation)
-			await this._nodes.persistStagedNodeUpdates(staged)
+			await persist()
 
 			if (this._generation !== gen || this._disposed) {
 				// Restore current state because an in-flight filesystem write cannot be cancelled
