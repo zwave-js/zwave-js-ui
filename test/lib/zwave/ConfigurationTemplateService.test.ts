@@ -1112,6 +1112,7 @@ describe('ConfigurationTemplateService', () => {
 				[],
 			)
 
+			// deviceId format is "mfr-productId-productType"; lookupDevice reorders to (mfr, productType, productId)
 			const result = await svc.getDeviceConfigurationParams('134-2-100')
 
 			expect(loadSpy).toHaveBeenCalled()

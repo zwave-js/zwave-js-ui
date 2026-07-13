@@ -1004,6 +1004,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		this._nodeToGroups = new Map()
 		this._rebuildNodeToGroupsIndex()
 
+		// Resolve current driver via closure so services survive a restart-driven swap
 		const scheduleDriverPort = {
 			getDriver: () => this._driver,
 		}
