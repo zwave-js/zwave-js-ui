@@ -579,7 +579,7 @@ describe('ScheduleService', () => {
 				numWeekDaySlots: 1,
 				numYearDaySlots: 0,
 				numDailyRepeatingSlots: 0,
-				userIdStatuses: { 1: 1 },
+				userIdStatuses: { 1: UserIDStatus.Enabled },
 				scheduleEnabled: { 1: true },
 				scheduleKind: {
 					1: ScheduleEntryLockScheduleKind.WeekDay,
@@ -634,7 +634,7 @@ describe('ScheduleService', () => {
 				numWeekDaySlots: 1,
 				numYearDaySlots: 0,
 				numDailyRepeatingSlots: 0,
-				userIdStatuses: { 1: 1 },
+				userIdStatuses: { 1: UserIDStatus.Enabled },
 				scheduleEnabled: { 1: true },
 				scheduleKind: {
 					1: ScheduleEntryLockScheduleKind.WeekDay,
@@ -688,7 +688,7 @@ describe('ScheduleService', () => {
 				numWeekDaySlots: 1,
 				numYearDaySlots: 0,
 				numDailyRepeatingSlots: 0,
-				userIdStatuses: { 1: 1 },
+				userIdStatuses: { 1: UserIDStatus.Enabled },
 				scheduleEnabled: { 1: true },
 				scheduleKind: {
 					1: ScheduleEntryLockScheduleKind.WeekDay,
@@ -800,7 +800,7 @@ describe('ScheduleService', () => {
 				numWeekDaySlots: 2,
 				numYearDaySlots: 0,
 				numDailyRepeatingSlots: 0,
-				userIdStatuses: { 1: 1 },
+				userIdStatuses: { 1: UserIDStatus.Enabled },
 				scheduleEnabled: { 1: true },
 				scheduleKind: {
 					1: ScheduleEntryLockScheduleKind.WeekDay,
@@ -882,7 +882,7 @@ describe('ScheduleService', () => {
 				numWeekDaySlots: 1,
 				numYearDaySlots: 1,
 				numDailyRepeatingSlots: 1,
-				userIdStatuses: { 1: 1 },
+				userIdStatuses: { 1: UserIDStatus.Enabled },
 				scheduleEnabled: { 1: true },
 				scheduleKind: {
 					1: ScheduleEntryLockScheduleKind.WeekDay,

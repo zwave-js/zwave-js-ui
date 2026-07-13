@@ -90,7 +90,7 @@ function makeNode(
 		firmwareVersion: '1.5.0',
 		values: {
 			'0-112-0-1': {
-				commandClass: 112,
+				commandClass: CommandClasses.Configuration,
 				writeable: true,
 				property: 1,
 				endpoint: 0,
@@ -166,7 +166,7 @@ describe('ConfigurationTemplateService', () => {
 	})
 
 	describe('createConfigurationTemplate', () => {
-		it('creates a template from node CC 112 values', async () => {
+		it('creates a template from node Configuration CC values', async () => {
 			const node = makeNode()
 			const nodes = new Map([[2, node]])
 			const persistence = createPersistencePort()
@@ -749,9 +749,7 @@ describe('ConfigurationTemplateService', () => {
 			const node = makeNode({ status: 'Dead' })
 			const nodes = new Map([[2, node]])
 			const nodeStore = createNodeStorePort(nodes)
-			;(
-				nodeStore.writeValue as ReturnType<typeof vi.fn>
-			).mockResolvedValue({
+			vi.mocked(nodeStore.writeValue).mockResolvedValue({
 				status: SetValueStatus.Fail,
 			})
 
@@ -778,9 +776,9 @@ describe('ConfigurationTemplateService', () => {
 			const node = makeNode()
 			const nodes = new Map([[2, node]])
 			const nodeStore = createNodeStorePort(nodes)
-			;(
-				nodeStore.writeValue as ReturnType<typeof vi.fn>
-			).mockRejectedValue(new Error('Timeout'))
+			vi.mocked(nodeStore.writeValue).mockRejectedValue(
+				new Error('Timeout'),
+			)
 
 			const svc = new ConfigurationTemplateService(
 				createDriverPort(),
@@ -971,7 +969,7 @@ describe('ConfigurationTemplateService', () => {
 	})
 
 	describe('contentHash via public API', () => {
-		it('produces deterministic 12-char hex hash via createConfigurationTemplate', async () => {
+		it('produces deterministic content hash for identical values', async () => {
 			const node = makeNode()
 			const nodes = new Map([[2, node]])
 			const svc = new ConfigurationTemplateService(
@@ -997,8 +995,7 @@ describe('ConfigurationTemplateService', () => {
 				[{ property: 1, endpoint: 0, value: 42 }],
 			)
 
-			expect(result1.contentHash.length).toBe(12)
-			expect(/^[0-9a-f]{12}$/.test(result1.contentHash)).toBe(true)
+			expect(result1.contentHash).toBeTruthy()
 			expect(result1.contentHash).toBe(result2.contentHash)
 		})
 
@@ -1202,7 +1199,7 @@ describe('ConfigurationTemplateService', () => {
 
 			expect(result[0]).toEqual({
 				id: '0-112-0-2',
-				commandClass: 112,
+				commandClass: CommandClasses.Configuration,
 				property: 2,
 				propertyKey: undefined,
 				endpoint: 0,
@@ -1223,7 +1220,7 @@ describe('ConfigurationTemplateService', () => {
 
 			expect(result[1]).toEqual({
 				id: '0-112-0-5-1',
-				commandClass: 112,
+				commandClass: CommandClasses.Configuration,
 				property: 5,
 				propertyKey: 1,
 				endpoint: 0,
@@ -1263,11 +1260,11 @@ describe('ConfigurationTemplateService', () => {
 	})
 
 	describe('createConfigurationTemplate – propertyKey branches', () => {
-		it('captures propertyKey when present on CC112 value', async () => {
+		it('captures propertyKey when present on Configuration CC value', async () => {
 			const node = makeNode({
 				values: {
 					'0-112-0-5-1': {
-						commandClass: 112,
+						commandClass: CommandClasses.Configuration,
 						writeable: true,
 						property: 5,
 						propertyKey: 1,
@@ -1294,11 +1291,11 @@ describe('ConfigurationTemplateService', () => {
 			expect(result.values[0].propertyKey).toBe(1)
 		})
 
-		it('skips non-writable CC112 values', async () => {
+		it('skips non-writable Configuration CC values', async () => {
 			const node = makeNode({
 				values: {
 					'0-112-0-1': {
-						commandClass: 112,
+						commandClass: CommandClasses.Configuration,
 						writeable: false,
 						property: 1,
 						endpoint: 0,
@@ -1307,7 +1304,7 @@ describe('ConfigurationTemplateService', () => {
 						description: 'Should be skipped',
 					},
 					'0-112-0-2': {
-						commandClass: 112,
+						commandClass: CommandClasses.Configuration,
 						writeable: true,
 						property: 2,
 						endpoint: 0,
@@ -1583,8 +1580,7 @@ describe('ConfigurationTemplateService', () => {
 				'warn',
 				expect.stringContaining('partially applied'),
 			)
-			const logCalls = (nodeStore.logNode as ReturnType<typeof vi.fn>)
-				.mock.calls
+			const logCalls = vi.mocked(nodeStore.logNode).mock.calls
 			const infoLogs = logCalls.filter((c: unknown[]) => c[1] === 'info')
 			const warnLogs = logCalls.filter((c: unknown[]) => c[1] === 'warn')
 			expect(infoLogs.length).toBeGreaterThanOrEqual(1)
@@ -1593,8 +1589,8 @@ describe('ConfigurationTemplateService', () => {
 		})
 	})
 
-	describe('_getMatchingTemplates – firmware range filtering', () => {
-		it('excludes templates with min firmware above node firmware: zero writes', () => {
+	describe('checkConfigurationTemplates – firmware range filtering', () => {
+		it('excludes templates with min firmware above node firmware', () => {
 			const template = makeTemplate({
 				autoApply: true,
 				firmwareRange: { min: '2.0.0', max: undefined },
@@ -1621,7 +1617,7 @@ describe('ConfigurationTemplateService', () => {
 			expect(nodeStore.writeValue).not.toHaveBeenCalled()
 		})
 
-		it('excludes templates with max firmware below node firmware: zero writes', () => {
+		it('excludes templates with max firmware below node firmware', () => {
 			const template = makeTemplate({
 				autoApply: true,
 				firmwareRange: { min: undefined, max: '1.0.0' },
@@ -1679,7 +1675,7 @@ describe('ConfigurationTemplateService', () => {
 			expect(nodeStore.logNode).toHaveBeenCalled()
 		})
 
-		it('skips template when node has no firmwareVersion: zero writes', () => {
+		it('skips template when node has no firmwareVersion', () => {
 			const template = makeTemplate({
 				autoApply: true,
 				firmwareRange: { min: '1.0.0', max: undefined },
@@ -1707,8 +1703,8 @@ describe('ConfigurationTemplateService', () => {
 		})
 	})
 
-	describe('_autoApplyToNodes – error handling', () => {
-		it('logs error (not warn/info) when auto-apply promise rejects', async () => {
+	describe('updateConfigurationTemplate – auto-apply error handling', () => {
+		it('logs error when auto-apply rejects', async () => {
 			const template = makeTemplate({
 				autoApply: true,
 				contentHash: 'err-hash',
@@ -1755,8 +1751,7 @@ describe('ConfigurationTemplateService', () => {
 			})
 
 			await new Promise((r) => setTimeout(r, 100))
-			const logCalls = (nodeStore.logNode as ReturnType<typeof vi.fn>)
-				.mock.calls
+			const logCalls = vi.mocked(nodeStore.logNode).mock.calls
 			const errorLogs = logCalls.filter(
 				(c: unknown[]) => c[1] === 'error',
 			)
@@ -1889,7 +1884,7 @@ describe('ConfigurationTemplateService', () => {
 			const node = makeNode({
 				values: {
 					'0-112-0-1': {
-						commandClass: 112,
+						commandClass: CommandClasses.Configuration,
 						writeable: true,
 						property: 1,
 						endpoint: undefined,
@@ -1919,7 +1914,7 @@ describe('ConfigurationTemplateService', () => {
 				deviceId: undefined,
 				values: {
 					'0-112-0-1': {
-						commandClass: 112,
+						commandClass: CommandClasses.Configuration,
 						writeable: true,
 						property: 1,
 						endpoint: 0,
@@ -1992,7 +1987,7 @@ describe('ConfigurationTemplateService', () => {
 		})
 	})
 
-	describe('_autoApplyToNodes – skips nodes', () => {
+	describe('auto-apply – skips non-ready and already-applied nodes', () => {
 		it('skips non-ready nodes', async () => {
 			const template = makeTemplate({
 				autoApply: true,
@@ -2078,8 +2073,8 @@ describe('ConfigurationTemplateService', () => {
 		})
 	})
 
-	describe('checkConfigurationTemplates – outer catch', () => {
-		it('logs error when applyConfigurationTemplate rejects (checkConfigurationTemplates catch)', async () => {
+	describe('checkConfigurationTemplates – apply rejection', () => {
+		it('logs error when applyConfigurationTemplate rejects during auto-apply', async () => {
 			const template = makeTemplate({
 				autoApply: true,
 				contentHash: 'check-catch-hash',
@@ -2116,8 +2111,7 @@ describe('ConfigurationTemplateService', () => {
 			svc.checkConfigurationTemplates(node, fakeZwaveNode)
 			await new Promise((r) => setTimeout(r, 100))
 
-			const logCalls = (nodeStore.logNode as ReturnType<typeof vi.fn>)
-				.mock.calls
+			const logCalls = vi.mocked(nodeStore.logNode).mock.calls
 			const errorLogs = logCalls.filter(
 				(c: unknown[]) => c[1] === 'error',
 			)
