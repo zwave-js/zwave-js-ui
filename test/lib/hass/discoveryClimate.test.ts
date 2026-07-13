@@ -17,6 +17,7 @@
  *    discoverValue's node-level identifiers).
  */
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest'
+import { CommandClasses } from '@zwave-js/core'
 import { mqttMockFactory } from './mqttMock.ts'
 import {
 	createGatewayHarness,
@@ -79,7 +80,7 @@ function buildThermostatNode(opts: ThermostatOptions): ZUINode {
 			node,
 			buildValueId({
 				nodeId: id,
-				commandClass: 64, // Thermostat Mode
+				commandClass: CommandClasses['Thermostat Mode'],
 				endpoint: 0,
 				property: 'mode',
 				propertyName: 'mode',
@@ -95,7 +96,7 @@ function buildThermostatNode(opts: ThermostatOptions): ZUINode {
 			node,
 			buildValueId({
 				nodeId: id,
-				commandClass: 67, // Thermostat Setpoint
+				commandClass: CommandClasses['Thermostat Setpoint'],
 				endpoint: 0,
 				property: 'setpoint',
 				propertyKey: pk,
@@ -112,7 +113,7 @@ function buildThermostatNode(opts: ThermostatOptions): ZUINode {
 			node,
 			buildValueId({
 				nodeId: id,
-				commandClass: 49, // Multilevel Sensor
+				commandClass: CommandClasses['Multilevel Sensor'],
 				endpoint: 0,
 				property: 'Air temperature',
 				propertyName: 'Air temperature',
@@ -129,7 +130,7 @@ function buildThermostatNode(opts: ThermostatOptions): ZUINode {
 			node,
 			buildValueId({
 				nodeId: id,
-				commandClass: 66, // Thermostat Operating State
+				commandClass: CommandClasses['Thermostat Operating State'],
 				endpoint: 0,
 				property: 'state',
 				propertyName: 'state',
@@ -343,7 +344,7 @@ describe('discoverDevice (generic composite topic-rewrite)', () => {
 			node,
 			buildValueId({
 				nodeId: 7,
-				commandClass: 49,
+				commandClass: CommandClasses['Multilevel Sensor'],
 				endpoint: 0,
 				property: 'Air temperature',
 				propertyName: 'Air temperature',
@@ -395,7 +396,7 @@ describe('discoverDevice (generic composite topic-rewrite)', () => {
 			node,
 			buildValueId({
 				nodeId: 8,
-				commandClass: 49,
+				commandClass: CommandClasses['Multilevel Sensor'],
 				endpoint: 0,
 				property: 'Air temperature',
 				propertyName: 'Air temperature',
