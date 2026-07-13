@@ -1,5 +1,5 @@
 import jwt from 'jsonwebtoken'
-import { TEST_SESSION_SECRET } from './env.ts'
+import { TEST_SESSION_SECRET } from '../shared/env.ts'
 import type { HttpHarness } from './harness.ts'
 import { hashPsw } from '#api/lib/utils.ts'
 

@@ -1,3 +1,6 @@
+// Shared by both the HTTP and socket suites, so both transports get one STORE_DIR/dotenv isolation
+// implementation instead of two copies. Vitest isolates modules per test file, so this shared code
+// still gives each test file its own independent storeDir/envSnapshot.
 import { vi } from 'vitest'
 import { mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
@@ -45,7 +48,7 @@ vi.mock('#api/config/app.ts', () => ({
 }))
 
 export function ensureTestEnv(): string {
-	storeDir ??= mkdtempSync(path.join(tmpdir(), 'zwave-js-ui-http-contract-'))
+	storeDir ??= mkdtempSync(path.join(tmpdir(), 'zwave-js-ui-test-contract-'))
 	return storeDir
 }
 

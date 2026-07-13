@@ -1,6 +1,6 @@
 // Structurally typed against { jsonStore, store } so it works with either harness without importing its full type
 import jwt from 'jsonwebtoken'
-import { TEST_SESSION_SECRET } from './env.ts'
+import { TEST_SESSION_SECRET } from '../shared/env.ts'
 import { hashPsw } from '#api/lib/utils.ts'
 
 interface JsonStoreLike {

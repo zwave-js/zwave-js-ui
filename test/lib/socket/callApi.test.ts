@@ -9,7 +9,7 @@ import path from 'node:path'
 import { DriverMode } from 'zwave-js'
 import type ZWaveClientType from '#api/lib/ZwaveClient.ts'
 import { useSocketHarness } from './harness.ts'
-import { getTestStoreDir } from './env.ts'
+import { getTestStoreDir } from '../shared/env.ts'
 import { createFakeGateway } from './fakes.ts'
 
 // Populated in beforeAll, after useSocketHarness()'s own beforeAll has isolated STORE_DIR, so this dynamic import can't evaluate ZwaveClient.ts against the wrong store dir
