@@ -2659,7 +2659,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	): ZUIValueId | null {
 		const existing =
 			this._nodes.get(nodeId)?.values?.[
-				this._getValueID(zwaveValue as unknown as ZUIValueId)
+				NodeProjector.getValueId(zwaveValue)
 			]
 		return NodeProjector.buildVirtualValue(
 			nodeId,

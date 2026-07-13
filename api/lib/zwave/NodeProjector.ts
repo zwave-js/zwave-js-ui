@@ -1,5 +1,4 @@
 import type {
-	ConfigurationMetadata,
 	Route,
 	ValueMetadata,
 	ValueMetadataNumeric,
@@ -107,9 +106,8 @@ export class NodeProjector {
 
 			if (numMeta.states && Object.keys(numMeta.states).length > 0) {
 				valueId.list = true
-				valueId.allowManualEntry = (
-					numMeta as ConfigurationMetadata
-				).allowManualEntry
+				// Ranged states need manual entry because zwave-js 15.21+ exposes ranges alongside labels
+				valueId.allowManualEntry = numMeta.allowManualEntry
 				if (
 					valueId.allowManualEntry === undefined &&
 					numMeta.allowed?.some(
@@ -172,12 +170,14 @@ export class NodeProjector {
 		const meta = zwaveValue.metadata
 		if (!meta) return null
 
+		// Synthesized Basic CC value IDs may omit ccVersion
 		const ccVersion =
 			typeof zwaveValue.ccVersion === 'number' && zwaveValue.ccVersion > 0
 				? zwaveValue.ccVersion
 				: 1
 		const withNode = { ...zwaveValue, nodeId }
 		const valueId: ZUIValueId = {
+			// Preserve user poll settings when rebuilding virtual values
 			...(existing || {}),
 			id: NodeProjector.getValueId(withNode, true),
 			nodeId,
