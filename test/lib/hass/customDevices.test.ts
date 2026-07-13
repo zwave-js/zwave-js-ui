@@ -1,55 +1,59 @@
 /**
- * Characterization tests for the custom-devices loader in `api/lib/Gateway.ts`
- * (`loadCustomDevices` + its `allDevices` projection + the `fs.watch` reload).
+ * Characterization tests for the custom-devices loader in `api/lib/Gateway.ts`.
  *
- * The state is module-global, mutated at import and on `fs.watch` events. To
- * characterize the loader deterministically without racing `fs.watch`, these
- * tests import the real module against an isolated STORE_DIR, `closeWatchers()`
- * so no live watcher fires mid-test, then write real files and re-invoke the
- * real loader through `__loadCustomDevicesForTests()`, observing the projection
- * via `__getAllDevicesForTests()`.
+ * `loadCustomDevicesCatalog(basePath, baseCatalog)` is the pure core the
+ * `fs.watch`-driven projection is built on: it resolves `<basePath>.js`
+ * (preferred) or `<basePath>.json`, overlays the parsed entries onto
+ * `baseCatalog`, and returns the merged catalog plus a dedup sha, the custom
+ * count, and the resolved path - or null when neither file exists or parsing
+ * fails. Driving it with an injected basePath/baseCatalog exercises the real
+ * loader without reaching into the module-global `allDevices`/`fs.watch` state.
+ * Gateway.ts is imported dynamically after `ensureTestEnv()` so its
+ * module-evaluation watches the throwaway STORE_DIR, never the repo store/.
  */
-import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest'
-import { writeFileSync, rmSync, existsSync } from 'node:fs'
+import { describe, it, expect, beforeAll, afterAll } from 'vitest'
+import { writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { ensureTestEnv, cleanupTestEnv } from './env.ts'
-import type * as GatewayModuleNS from '../../../api/lib/Gateway.ts'
+import type * as GatewayModuleNS from '#api/lib/Gateway.ts'
+import type { HassDevice } from '#api/lib/ZwaveClient.ts'
 
 type GatewayModule = typeof GatewayModuleNS
 
 let mod: GatewayModule
 let storeDir: string
-let jsPath: string
-let jsonPath: string
-let importTimeWatcherCount: number
+let counter = 0
 
-// A known key from the base `api/hass/devices.ts` catalog, used to prove the
-// loader merges custom devices over the catalog rather than replacing it
-const CATALOG_KEY = '89-3-1'
+// A distinct base path per test: `require()` caches a loaded `.js` by resolved
+// path, so a fresh path guarantees each `.js` fixture is read from disk
+function freshBase(): string {
+	return join(storeDir, `customDevices-${counter++}`)
+}
+
+function device(objectId: string): HassDevice {
+	return { type: 'sensor', object_id: objectId, discovery_payload: {} }
+}
+
+// Injected base catalog so the merge assertions don't depend on the real
+// `hassDevices` contents
+const baseCatalog: Record<string, HassDevice[]> = {
+	'base-only': [device('base')],
+}
+
+function loadOrFail(base: string, cat?: Record<string, HassDevice[]>) {
+	const result = mod.loadCustomDevicesCatalog(base, cat)
+	if (!result) {
+		throw new Error(`expected a custom-devices catalog for ${base}`)
+	}
+	return result
+}
 
 beforeAll(async () => {
 	storeDir = ensureTestEnv()
-	mod = await import('../../../api/lib/Gateway.ts')
-	// Snapshot the watchers installed at import time (with the files absent,
-	// both fall back to watching the parent dir)
-	importTimeWatcherCount = mod.__getWatcherCountForTests()
-	// Stop the live fs.watch handlers so an async reload can't perturb the
-	// deterministic seam-driven tests below
+	mod = await import('#api/lib/Gateway.ts')
+	// Stop the live fs.watch handlers the module installs so an async reload
+	// can't perturb these deterministic file-driven loads
 	mod.closeWatchers()
-	jsPath = join(storeDir, 'customDevices.js')
-	jsonPath = join(storeDir, 'customDevices.json')
-})
-
-afterEach(() => {
-	// Reset process-global loader state and remove any files a test created
-	mod.__resetCustomDevicesStateForTests()
-	// Evict any require.cache entry a .js fixture created so a later test's
-	// require() re-reads from disk; do this before removing the file, while
-	// it's still resolvable
-	mod.__evictCustomDevicesRequireCacheForTests()
-	for (const p of [jsPath, jsonPath]) {
-		if (existsSync(p)) rmSync(p, { force: true })
-	}
 })
 
 afterAll(() => {
@@ -57,160 +61,86 @@ afterAll(() => {
 	cleanupTestEnv()
 })
 
-describe('loadCustomDevices projection', () => {
-	it('installs two watchers at import time and releases them all', () => {
-		expect(importTimeWatcherCount).toBe(2)
-		expect(mod.__getWatcherCountForTests()).toBe(0)
+describe('loadCustomDevicesCatalog', () => {
+	it('returns null when neither .js nor .json exists', () => {
+		expect(mod.loadCustomDevicesCatalog(freshBase(), baseCatalog)).toBeNull()
 	})
 
-	it('is a no-op when no custom-devices file exists', () => {
-		mod.__resetCustomDevicesStateForTests()
-		expect(mod.__getCustomDevicesShaForTests()).toBeNull()
-		mod.__loadCustomDevicesForTests()
-		expect(mod.__getCustomDevicesShaForTests()).toBeNull()
-		expect(mod.__getAllDevicesForTests()['test-custom']).toBeUndefined()
-	})
-
-	it('loads a .json custom-devices file, merged over the base catalog', () => {
-		const config = {
-			'test-custom-json': [
-				{
-					type: 'sensor',
-					object_id: 'custom',
-					values: ['49-0-Air temperature'],
-					discovery_payload: {
-						state_topic: 'x',
-						unit_of_measurement: '°C',
-					},
-				},
-			],
-		}
-		writeFileSync(jsonPath, JSON.stringify(config))
-		mod.__resetCustomDevicesStateForTests()
-		mod.__loadCustomDevicesForTests()
-
-		const all = mod.__getAllDevicesForTests()
-		expect(all['test-custom-json']).toEqual(config['test-custom-json'])
-		expect(all[CATALOG_KEY]).toBeDefined()
-	})
-
-	it('prefers customDevices.js over customDevices.json when both exist', () => {
+	it('loads a .json file overlaid on the base catalog', () => {
+		const base = freshBase()
 		writeFileSync(
-			jsonPath,
-			JSON.stringify({ 'test-precedence': [{ marker: 'json' }] }),
+			base + '.json',
+			JSON.stringify({ 'custom-json': [device('c')] }),
+		)
+
+		const result = loadOrFail(base, baseCatalog)
+
+		expect(result.loaded).toBe(base + '.json')
+		expect(result.customCount).toBe(1)
+		// The base entry survives and the custom entry is added
+		expect(result.catalog['base-only']).toEqual(baseCatalog['base-only'])
+		expect(result.catalog['custom-json']).toEqual([device('c')])
+	})
+
+	it('prefers a .js file over .json when both exist', () => {
+		const base = freshBase()
+		writeFileSync(
+			base + '.json',
+			JSON.stringify({ shared: [device('json')] }),
 		)
 		writeFileSync(
-			jsPath,
-			"module.exports = { 'test-precedence': [{ marker: 'js' }] }\n",
-		)
-		mod.__resetCustomDevicesStateForTests()
-		mod.__loadCustomDevicesForTests()
-
-		const all = mod.__getAllDevicesForTests()
-		expect(all['test-precedence']).toBeDefined()
-		expect((all['test-precedence'] as any)[0].marker).toBe('js')
-	})
-
-	it('swallows a JSON parse failure and leaves the projection unchanged', () => {
-		writeFileSync(jsonPath, '{ this is not valid json ]')
-		mod.__resetCustomDevicesStateForTests()
-		const before = mod.__getAllDevicesForTests()
-
-		expect(() => mod.__loadCustomDevicesForTests()).not.toThrow()
-		expect(mod.__getCustomDevicesShaForTests()).toBeNull()
-		expect(mod.__getAllDevicesForTests()).toEqual(before)
-		expect(mod.__getAllDevicesForTests()['test-bad']).toBeUndefined()
-	})
-
-	it('sha-dedups an unchanged file (no reassignment on second load)', () => {
-		writeFileSync(jsonPath, JSON.stringify({ 'test-dedup': [{ v: 1 }] }))
-		mod.__resetCustomDevicesStateForTests()
-
-		mod.__loadCustomDevicesForTests()
-		const shaAfterFirst = mod.__getCustomDevicesShaForTests()
-		expect(shaAfterFirst).not.toBeNull()
-		expect(mod.__getAllDevicesForTests()['test-dedup']).toBeDefined()
-
-		mod.__loadCustomDevicesForTests()
-		expect(mod.__getCustomDevicesShaForTests()).toBe(shaAfterFirst)
-	})
-
-	it('reloads when the file content changes (dedup sha changes)', () => {
-		writeFileSync(jsonPath, JSON.stringify({ 'test-reload': [{ v: 1 }] }))
-		mod.__resetCustomDevicesStateForTests()
-		mod.__loadCustomDevicesForTests()
-		const shaAfterFirst = mod.__getCustomDevicesShaForTests()
-		expect((mod.__getAllDevicesForTests()['test-reload'] as any)[0].v).toBe(
-			1,
+			base + '.js',
+			"module.exports = { shared: [{ type: 'sensor', object_id: 'js', discovery_payload: {} }] }\n",
 		)
 
-		writeFileSync(jsonPath, JSON.stringify({ 'test-reload': [{ v: 2 }] }))
-		mod.__loadCustomDevicesForTests()
-		expect(mod.__getCustomDevicesShaForTests()).not.toBe(shaAfterFirst)
-		expect((mod.__getAllDevicesForTests()['test-reload'] as any)[0].v).toBe(
-			2,
-		)
+		const result = loadOrFail(base, baseCatalog)
+
+		expect(result.loaded).toBe(base + '.js')
+		expect(result.catalog.shared[0].object_id).toBe('js')
 	})
 
-	it('reset clears the dedup sha so identical content re-applies', () => {
-		writeFileSync(jsonPath, JSON.stringify({ 'test-reset': [{ v: 1 }] }))
-		mod.__resetCustomDevicesStateForTests()
-		mod.__loadCustomDevicesForTests()
-		expect(mod.__getCustomDevicesShaForTests()).not.toBeNull()
+	it('returns null (without throwing) on a JSON parse failure', () => {
+		const base = freshBase()
+		writeFileSync(base + '.json', '{ not valid json ]')
 
-		mod.__resetCustomDevicesStateForTests()
-		expect(mod.__getCustomDevicesShaForTests()).toBeNull()
-		mod.__loadCustomDevicesForTests()
-		expect(mod.__getCustomDevicesShaForTests()).not.toBeNull()
-		expect(mod.__getAllDevicesForTests()['test-reset']).toBeDefined()
-	})
-})
-
-describe('preferred .js loader require.cache staleness (finding 2)', () => {
-	it('QUIRK: a rewritten customDevices.js is served STALE from require.cache on reload', () => {
-		writeFileSync(jsPath, "module.exports = { 'js-stale': [{ v: 1 }] }\n")
-		mod.__resetCustomDevicesStateForTests()
-		mod.__loadCustomDevicesForTests()
-		expect((mod.__getAllDevicesForTests()['js-stale'] as any)[0].v).toBe(1)
-
-		// Rewrite the same .js with v2 and reload; reset the dedup sha first so
-		// sha-dedup can't be what suppresses the change, isolating the
-		// require.cache effect
-		writeFileSync(jsPath, "module.exports = { 'js-stale': [{ v: 2 }] }\n")
-		mod.__resetCustomDevicesStateForTests()
-		mod.__loadCustomDevicesForTests()
-
-		// QUIRK (pinned, not endorsed): the projection is still v1. require()
-		// caches by resolved path, so rewriting the .js in-process isn't
-		// observed. Production loads customDevices once per process (a runtime
-		// .js change already needs a restart), so this never surfaces at runtime
-		expect((mod.__getAllDevicesForTests()['js-stale'] as any)[0].v).toBe(1)
-
-		// The eviction seam is what refreshes it, proving the staleness is
-		// precisely require.cache and that teardown's eviction re-reads from
-		// disk; production reload semantics are unchanged
-		mod.__evictCustomDevicesRequireCacheForTests()
-		mod.__resetCustomDevicesStateForTests()
-		mod.__loadCustomDevicesForTests()
-		expect((mod.__getAllDevicesForTests()['js-stale'] as any)[0].v).toBe(2)
+		let result: ReturnType<GatewayModule['loadCustomDevicesCatalog']>
+		expect(() => {
+			result = mod.loadCustomDevicesCatalog(base, baseCatalog)
+		}).not.toThrow()
+		expect(result).toBeNull()
 	})
 
-	it('a .json rewrite is NOT stale (read fresh via fs, contrasting the .js quirk)', () => {
-		// The .json fallback uses fs.readFileSync, not require, so it has no
-		// cache and always reflects the current file, the contrast that makes
-		// the .js staleness a genuine quirk
-		writeFileSync(jsonPath, JSON.stringify({ 'json-fresh': [{ v: 1 }] }))
-		mod.__resetCustomDevicesStateForTests()
-		mod.__loadCustomDevicesForTests()
-		expect((mod.__getAllDevicesForTests()['json-fresh'] as any)[0].v).toBe(
-			1,
+	it('derives a stable sha for identical bytes and a different sha when content changes', () => {
+		const a = freshBase()
+		writeFileSync(a + '.json', JSON.stringify({ x: [device('x')] }))
+		const b = freshBase()
+		writeFileSync(b + '.json', JSON.stringify({ x: [device('x')] }))
+		const c = freshBase()
+		writeFileSync(c + '.json', JSON.stringify({ x: [device('y')] }))
+
+		const shaA = loadOrFail(a, baseCatalog).sha
+		const shaB = loadOrFail(b, baseCatalog).sha
+		const shaC = loadOrFail(c, baseCatalog).sha
+
+		// Identical bytes hash equal - the invariant the production reload
+		// dedup (`lastCustomDevicesLoad === sha`) relies on to skip no-op reloads
+		expect(shaB).toBe(shaA)
+		expect(shaC).not.toBe(shaA)
+	})
+
+	it('overlays onto the real hass catalog when no base catalog is injected', () => {
+		const base = freshBase()
+		writeFileSync(
+			base + '.json',
+			JSON.stringify({ 'custom-default': [device('d')] }),
 		)
 
-		writeFileSync(jsonPath, JSON.stringify({ 'json-fresh': [{ v: 2 }] }))
-		mod.__resetCustomDevicesStateForTests()
-		mod.__loadCustomDevicesForTests()
-		expect((mod.__getAllDevicesForTests()['json-fresh'] as any)[0].v).toBe(
-			2,
-		)
+		const result = loadOrFail(base)
+
+		expect(result.customCount).toBe(1)
+		// Omitting baseCatalog merges over the non-empty `hassDevices`, so the
+		// result carries more than just the single custom entry
+		expect(Object.keys(result.catalog).length).toBeGreaterThan(1)
+		expect(result.catalog['custom-default']).toBeDefined()
 	})
 })

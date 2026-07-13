@@ -88,47 +88,73 @@ const watch = (filename: string, fn: () => void) => {
 const customDevicesJsPath = CUSTOM_DEVICES + '.js'
 const customDevicesJsonPath = CUSTOM_DEVICES + '.json'
 
-let lastCustomDevicesLoad = null
-// loadCustomDevices attempts to load a custom devices file, preferring `.js`
-// but falling back to `.json` only if a `.js` file does not exist. It stores
-// a sha of the loaded data, and will skip re-loading any time the data has
-// not changed.
-const loadCustomDevices = () => {
+/**
+ * Overlays the custom-devices file at `<basePath>.js` (preferred) or
+ * `<basePath>.json` onto `baseCatalog`, returning the merged catalog plus the
+ * dedup sha, the raw custom-device count, and the resolved path. Returns null
+ * when neither file exists or parsing fails, so the caller keeps the previous
+ * catalog. `.js` wins over `.json` because a `.js` can compute entries a static
+ * `.json` can't. Exported so tests exercise the real loader against a fixture
+ * path instead of the module-global `allDevices`/`fs.watch` state.
+ */
+export function loadCustomDevicesCatalog(
+	basePath: string,
+	baseCatalog: Record<string, HassDevice[]> = hassDevices,
+): {
+	catalog: Record<string, HassDevice[]>
+	customCount: number
+	sha: string
+	loaded: string
+} | null {
+	const jsPath = basePath + '.js'
+	const jsonPath = basePath + '.json'
 	let loaded = ''
-	let devices = null
+	let devices: Record<string, HassDevice[]> | null = null
 
 	try {
-		if (fs.existsSync(customDevicesJsPath)) {
-			loaded = customDevicesJsPath
-			devices = require(CUSTOM_DEVICES)
-		} else if (fs.existsSync(customDevicesJsonPath)) {
-			loaded = customDevicesJsonPath
-			devices = JSON.parse(fs.readFileSync(loaded).toString())
+		if (fs.existsSync(jsPath)) {
+			loaded = jsPath
+			devices = require(basePath)
+		} else if (fs.existsSync(jsonPath)) {
+			loaded = jsonPath
+			devices = JSON.parse(fs.readFileSync(jsonPath).toString())
 		} else {
-			return
+			return null
 		}
 	} catch (error) {
 		logger.error(`Failed to load ${loaded}:`, error)
-		return
+		return null
 	}
 
 	const sha = crypto
 		.createHash('sha256')
 		.update(JSON.stringify(devices))
 		.digest('hex')
-	if (lastCustomDevicesLoad === sha) {
+
+	return {
+		catalog: Object.assign({}, baseCatalog, devices),
+		customCount: Object.keys(devices).length,
+		sha,
+		loaded,
+	}
+}
+
+let lastCustomDevicesLoad: string | null = null
+// Projects the custom-devices file onto the module-global `allDevices`,
+// skipping the reassignment whenever the sha shows the data is unchanged.
+const loadCustomDevices = () => {
+	const result = loadCustomDevicesCatalog(CUSTOM_DEVICES)
+	if (!result || lastCustomDevicesLoad === result.sha) {
 		return
 	}
 
-	logger.info(`Loading custom devices from ${loaded}`)
+	logger.info(`Loading custom devices from ${result.loaded}`)
 
-	lastCustomDevicesLoad = sha
+	lastCustomDevicesLoad = result.sha
 
-	allDevices = Object.assign({}, hassDevices, devices)
+	allDevices = result.catalog
 	logger.info(
-		`Loaded ${
-			Object.keys(devices).length
-		} custom Hass devices configurations`,
+		`Loaded ${result.customCount} custom Hass devices configurations`,
 	)
 }
 
@@ -150,42 +176,6 @@ export function __rebindWatchersForTests(): void {
 	closeWatchers()
 	watch(customDevicesJsPath, loadCustomDevices)
 	watch(customDevicesJsonPath, loadCustomDevices)
-}
-
-// Test-only: re-run the exact loader the file watcher fires, so tests can
-// drive custom-device reload deterministically instead of racing fs.watch
-export function __loadCustomDevicesForTests(): void {
-	loadCustomDevices()
-}
-
-// Test-only: return a deep snapshot so a test can't mutate the live discovery
-// catalog that production reads
-export function __getAllDevicesForTests(): Record<string, HassDevice[]> {
-	return structuredClone(
-		allDevices as unknown as Record<string, HassDevice[]>,
-	)
-}
-
-// Test-only: expose the dedup sha so a test can distinguish a real reload from
-// a sha-deduped no-op
-export function __getCustomDevicesShaForTests(): string | null {
-	return lastCustomDevicesLoad
-}
-
-// Test-only: evict the require.cache entry the .js loader created so a later
-// test re-reads from disk instead of the cached module
-export function __evictCustomDevicesRequireCacheForTests(): void {
-	// Delete by literal path, not require.resolve(CUSTOM_DEVICES): under
-	// Vitest's module runner that resolve pins the extension-less specifier and
-	// corrupts the .js-over-.json precedence these tests characterize
-	for (const key of [customDevicesJsPath, customDevicesJsonPath]) {
-		delete require.cache[key]
-	}
-}
-
-export function __resetCustomDevicesStateForTests(): void {
-	lastCustomDevicesLoad = null
-	allDevices = hassDevices
 }
 
 export const GatewayType = GATEWAY_TYPE
