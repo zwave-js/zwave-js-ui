@@ -42,6 +42,7 @@ export class FirmwareUpdateService {
 	private _generation = 0
 
 	private _disposed = false
+	private _persistenceTail: Promise<void> = Promise.resolve()
 
 	constructor(
 		driver: FirmwareDriverPort,
@@ -167,7 +168,11 @@ export class FirmwareUpdateService {
 				}
 
 				// Persist a detached snapshot because filesystem writes cannot be cancelled after reset
-				await this._nodes.persistStagedNodeUpdates(staged)
+				await this._persistStagedNodeUpdates(
+					staged,
+					gen,
+					'checkAllNodesFirmwareUpdates',
+				)
 
 				// Fence publication because the completed write may belong to an obsolete generation
 				this._assertFence(gen, 'checkAllNodesFirmwareUpdates')
@@ -599,7 +604,11 @@ export class FirmwareUpdateService {
 			)
 
 			// Persist a detached snapshot because filesystem writes cannot be cancelled after reset
-			await this._nodes.persistStagedNodeUpdates([projection])
+			await this._persistStagedNodeUpdates(
+				[projection],
+				gen,
+				'checkNodeFirmwareUpdates',
+			)
 
 			// Fence publication because the completed write may belong to an obsolete generation
 			this._assertFence(gen, 'checkNodeFirmwareUpdates')
@@ -630,6 +639,27 @@ export class FirmwareUpdateService {
 		updates: FirmwareUpdateInfo[] | null,
 	): FirmwareUpdateInfo[] {
 		return (updates || []).filter((update) => !update.downgrade)
+	}
+
+	private async _persistStagedNodeUpdates(
+		staged: ReadonlyArray<StagedFirmwareNodeUpdate>,
+		gen: number,
+		operation: string,
+	): Promise<void> {
+		const persistence = this._persistenceTail.then(async () => {
+			this._assertFence(gen, operation)
+			await this._nodes.persistStagedNodeUpdates(staged)
+
+			if (this._generation !== gen || this._disposed) {
+				// Restore current state because an in-flight filesystem write cannot be cancelled
+				await this._nodes.updateStoreNodes()
+			}
+
+			this._assertFence(gen, operation)
+		})
+
+		this._persistenceTail = persistence.catch(() => undefined)
+		await persistence
 	}
 
 	private _cleanDismissedUpdates(
