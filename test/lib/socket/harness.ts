@@ -2,7 +2,7 @@
 // layers Socket.IO-specific setup (server, io, client helpers) on top.
 import { createServer, type Server as HttpServer } from 'node:http'
 import type { AddressInfo } from 'node:net'
-import type { Express, Router } from 'express'
+import type { Express } from 'express'
 import type { Server as SocketIOServer } from 'socket.io'
 import { io as ioClient, type Socket as ClientSocket } from 'socket.io-client'
 import type { FakeGateway, FakeZniffer } from './fakes.ts'
@@ -21,7 +21,6 @@ type RealZniffer = InstanceType<ZnifferModule['default']>
 export interface SocketHarnessOptions {
 	gateway?: FakeGateway
 	zniffer?: FakeZniffer
-	pluginsRouter?: Router
 	restarting?: boolean
 }
 
@@ -51,7 +50,6 @@ async function createHarnessInstance(
 			// Gateway/ZnifferManager have private fields, so structural mocks like FakeGateway/FakeZniffer need this cast to satisfy them
 			gateway: options.gateway as unknown as RealGateway | undefined,
 			zniffer: options.zniffer as unknown as RealZniffer | undefined,
-			pluginsRouter: options.pluginsRouter,
 			restarting: options.restarting,
 		},
 	})

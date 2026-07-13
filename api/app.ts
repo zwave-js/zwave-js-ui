@@ -1,20 +1,12 @@
-import type {
-	Express,
-	Request,
-	RequestHandler,
-	Response,
-	Router,
-} from 'express'
+import type { Express, Request, RequestHandler, Response } from 'express'
 import express from 'express'
 import history from 'connect-history-api-fallback'
 import cors from 'cors'
 import compression from 'compression'
 import morgan from 'morgan'
 import store from './config/store.ts'
-import type Gateway from './lib/Gateway.ts'
 import jsonStore from './lib/jsonStore.ts'
 import * as loggers from './lib/logger.ts'
-import { logContainer } from './lib/logger.ts'
 import SocketManager from './lib/SocketManager.ts'
 import type { CallAPIResult } from './lib/ZwaveClient.ts'
 import rateLimit from 'express-rate-limit'
@@ -28,7 +20,6 @@ import path from 'node:path'
 import sessionStore from 'session-file-store'
 import type { Server as SocketIOServer, Socket } from 'socket.io'
 import { inspect, promisify } from 'node:util'
-import { Driver } from 'zwave-js'
 import {
 	defaultPsw,
 	defaultUser,
@@ -49,9 +40,9 @@ import {
 } from './lib/externalSettings.ts'
 import { readFile, writeFile } from 'node:fs/promises'
 import { generate } from 'selfsigned'
-import type ZnifferManager from './lib/ZnifferManager.ts'
 import debugManager from './lib/DebugManager.ts'
 import { AppRuntime, isAuthEnabled } from './runtime/AppRuntime.ts'
+import type { GatewayPort, ZnifferPort } from './runtime/ports.ts'
 import type { JwtUserPayload } from './routes/auth.ts'
 import { registerAuthRoutes } from './routes/auth.ts'
 import { registerHealthRoutes } from './routes/health.ts'
@@ -62,7 +53,6 @@ import { registerStoreRoutes } from './routes/store.ts'
 import { registerDebugRoutes } from './routes/debug.ts'
 
 const createCertificate = promisify(generate)
-
 const FileStore = sessionStore(session)
 
 export interface AppInstance {
@@ -77,11 +67,9 @@ export interface AppInstance {
 
 export interface CreateAppOptions {
 	test?: {
-		gateway?: Gateway
-		zniffer?: ZnifferManager
-		pluginsRouter?: Router
+		gateway?: GatewayPort
+		zniffer?: ZnifferPort
 		restarting?: boolean
-		enumerateSerialPorts?: typeof Driver.enumerateSerialPorts
 		logFatalError?: (message: string) => void
 	}
 }
@@ -105,9 +93,6 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 	const testOptions =
 		process.env.NODE_ENV === 'test' ? options.test : undefined
 
-	const enumerateSerialPorts: typeof Driver.enumerateSerialPorts =
-		testOptions?.enumerateSerialPorts ??
-		Driver.enumerateSerialPorts.bind(Driver)
 	const logFatalError =
 		testOptions?.logFatalError ??
 		((message: string) => logger.error(message))
@@ -169,18 +154,10 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 
 	const runtime = new AppRuntime({
 		getSocketServer: () => socketManager.io,
+		gateway: testOptions?.gateway,
+		zniffer: testOptions?.zniffer,
+		restarting: testOptions?.restarting,
 	})
-	// `CreateAppOptions.test.{gateway,zniffer,pluginsRouter,restarting}` are
-	// this (base) layer's test-injection seams for the state `AppRuntime`
-	// now owns (previously plain `let gw`/`let zniffer`/`let pluginsRouter`/
-	// `let restarting` locals in this same function). Forwarding them
-	// through connects the two - each is a harmless no-op (`undefined`, or
-	// `false` for `restarting`) in the non-test-override case, leaving
-	// `runtime`'s own production defaults in place.
-	runtime.setGateway(testOptions?.gateway)
-	runtime.setZniffer(testOptions?.zniffer)
-	runtime.setPluginsRouter(testOptions?.pluginsRouter)
-	runtime.setRestarting(testOptions?.restarting ?? false)
 
 	socketManager.authMiddleware = function (
 		socket: Socket & { user?: JwtUserPayload },
@@ -521,22 +498,15 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 			// Server: https://socket.io/docs/v4/server-application-structure/#all-event-handlers-are-registered-in-the-indexjs-file
 			// Client: https://socket.io/docs/v4/client-api/#socketemiteventname-args
 			socket.on(inboundEvents.init, (data, cb = noop) => {
-				let state = {} as any
-
 				const currentGw = runtime.requireGateway()
-				if (currentGw.zwave) {
-					state = currentGw.zwave.getState()
-				}
-
 				const currentZniffer = runtime.getZniffer()
-				if (currentZniffer) {
-					state.zniffer = currentZniffer.status()
-				}
-
-				// Add debug session status
-				state.debugCaptureActive = debugManager.isSessionActive()
-
-				cb(state)
+				cb({
+					...(currentGw.zwave?.getState() ?? {}),
+					...(currentZniffer
+						? { zniffer: currentZniffer.status() }
+						: {}),
+					debugCaptureActive: debugManager.isSessionActive(),
+				})
 			})
 
 			socket.on(
@@ -697,9 +667,10 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 						)
 					: []
 
-				const validChannels = channels.filter((c) =>
-					Object.hasOwn(channelMap, c),
-				)
+				const isAll = channels.includes('all')
+				const validChannels = isAll
+					? ALL_CHANNELS
+					: channels.filter((c) => Object.hasOwn(channelMap, c))
 
 				for (const channel of validChannels) {
 					await socket.leave(channel)
@@ -799,10 +770,7 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 
 	registerAuthRoutes(app, { apisLimiter, loginLimiter })
 	registerHealthRoutes(app, runtime, { apisLimiter })
-	registerSettingsRoutes(app, runtime, {
-		apisLimiter,
-		getEnumerateSerialPorts: () => enumerateSerialPorts,
-	})
+	registerSettingsRoutes(app, runtime, { apisLimiter })
 	registerImportExportRoutes(app, runtime, { apisLimiter })
 	registerConfigurationTemplatesRoutes(app, runtime, { apisLimiter })
 	registerStoreRoutes(app, runtime, { apisLimiter, storeLimiter })
@@ -841,6 +809,18 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 		if (logStreamInterceptor) {
 			loggers.logStream.off('data', logStreamInterceptor)
 			logStreamInterceptor = undefined
+		}
+
+		try {
+			if (
+				runtime.isOwningDebugSession() &&
+				debugManager.isSessionActive()
+			) {
+				await debugManager.cancelSession()
+				runtime.setOwnsDebugSession(false)
+			}
+		} catch (error) {
+			logger.error('Error while cancelling debug session', error)
 		}
 
 		await runtime.shutdown()

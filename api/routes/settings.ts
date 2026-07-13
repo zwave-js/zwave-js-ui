@@ -3,7 +3,6 @@ import type { RateLimitRequestHandler } from 'express-rate-limit'
 import { libVersion } from 'zwave-js'
 import { serverVersion } from '@zwave-js/server'
 import { getAllNamedScaleGroups, getAllSensors } from '@zwave-js/core'
-import type { Driver } from 'zwave-js'
 import type { PersistedSettings } from '../config/store.ts'
 import store from '../config/store.ts'
 import { logsDir, sslDisabled } from '../config/app.ts'
@@ -14,10 +13,9 @@ import * as loggers from '../lib/logger.ts'
 import * as utils from '../lib/utils.ts'
 import { getExternallyManagedPaths } from '../lib/externalSettings.ts'
 import { getErrorMessage } from '../lib/errors.ts'
-import backupManager from '../lib/BackupManager.ts'
+import { enumerateSerialPorts } from '../lib/serialPorts.ts'
 import debugManager from '../lib/DebugManager.ts'
 import type { AppRuntime } from '../runtime/AppRuntime.ts'
-import { backupManagerOwner } from '../runtime/AppRuntime.ts'
 import { isAuthenticated } from './auth.ts'
 
 const logger = loggers.module('App')
@@ -32,13 +30,12 @@ function getZwaveConfigValue(
 
 export interface SettingsRoutesDeps {
 	apisLimiter: RateLimitRequestHandler
-	getEnumerateSerialPorts: () => typeof Driver.enumerateSerialPorts
 }
 
 export function registerSettingsRoutes(
 	app: express.Express,
 	runtime: AppRuntime,
-	{ apisLimiter, getEnumerateSerialPorts }: SettingsRoutesDeps,
+	{ apisLimiter }: SettingsRoutesDeps,
 ): void {
 	app.get('/api/settings', apisLimiter, isAuthenticated, function (req, res) {
 		const allSensors = getAllSensors()
@@ -103,7 +100,7 @@ export function registerSettingsRoutes(
 
 			if (process.platform !== 'sunos' && !process.env.ZWAVE_PORT) {
 				try {
-					serial_ports = await getEnumerateSerialPorts()({
+					serial_ports = await enumerateSerialPorts({
 						local: true,
 						remote: true,
 					})
@@ -347,6 +344,7 @@ export function registerSettingsRoutes(
 
 				if (debugManager.isSessionActive()) {
 					await debugManager.cancelSession()
+					runtime.setOwnsDebugSession(false)
 				}
 
 				await runtime.requireGateway().close()
@@ -355,11 +353,6 @@ export function registerSettingsRoutes(
 					runtime.setupLogging({ gateway: settings.gateway })
 				}
 				await runtime.startGateway(settings)
-				// Resolved after startGateway() reassigns the gateway so this doesn't observe the just-closed instance
-				backupManager.init(
-					runtime.requireGateway().zwave,
-					backupManagerOwner,
-				)
 
 				const oldZniffer = runtime.getZniffer()
 				if (oldZniffer) {

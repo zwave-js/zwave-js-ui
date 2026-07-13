@@ -20,41 +20,42 @@ import type { PersistedSettings } from '../config/store.ts'
 import * as loggers from '../lib/logger.ts'
 import * as utils from '../lib/utils.ts'
 import { snippetsDir } from '../config/app.ts'
+import type { GatewayPort, ZnifferPort, ZwaveClientPort } from './ports.ts'
 
 const logger = loggers.module('Runtime')
 
-// `BackupManager.init()`/`.close()`'s `owner` parameter doesn't exist in
-// this layer's own `BackupManager.ts` - it's this (base) layer's own,
-// independently-added ownership token. A single shared constant (mirroring
-// how `api/app.ts`'s pre-extraction code passes its own module-level
-// `backupManagerOwner` to the same calls) is the minimal way to keep every
-// `backupManager.init()` call site (here and in `routes/settings.ts`)
-// type-checking against it.
-export const backupManagerOwner = Symbol()
-
-// Standalone rather than an AppRuntime method so routes and the runtime can both call it without a circular import
 export function isAuthEnabled(): boolean {
 	return jsonStore.get(store.settings).gateway?.authEnabled === true
 }
 
-// Structural type for anything AppRuntime shuts down (Gateway, ZnifferManager), used only by the shutdown helper below
 export interface ManagedService {
 	close(): Promise<void>
 }
 
 export interface AppRuntimeDeps {
-	// Getter, not a direct value, since AppRuntime is constructed before setupSocket() binds the real server
 	getSocketServer(): SocketServer
+	gateway?: GatewayPort
+	zniffer?: ZnifferPort
+	restarting?: boolean
 }
 
-// Owns the backend collaborators whose identity changes across the process lifetime (gateway, zniffer, plugins)
-// Accessors always resolve the current value rather than caching, so a mid-restart replacement is immediately visible to every consumer
 export class AppRuntime {
-	private gateway?: Gateway
-	private zniffer?: ZnifferManager
+	private gateway?: GatewayPort
+	private zniffer?: ZnifferPort
 	private pluginsRouter?: Router
 	private plugins: CustomPlugin[] = []
 	private restarting = false
+	private ownsDebugSession = false
+
+	// `BackupManager.init()`/`.close()`'s `owner` parameter doesn't exist in
+	// this layer's own `BackupManager.ts` - it's this (base) layer's own,
+	// independently-added ownership token. Scoping it per `AppRuntime`
+	// instance (mirroring `api/app.ts`'s pre-extraction per-`createApp()`
+	// local) keeps one instance's shutdown from tearing down a different,
+	// concurrently-live instance's backup manager state (e.g. two
+	// `AppRuntime`s constructed by separate test suites within the same
+	// process).
+	private readonly backupManagerOwner = Symbol('AppRuntime.backupManager')
 
 	private defaultSnippets: utils.Snippet[] = []
 
@@ -62,40 +63,42 @@ export class AppRuntime {
 
 	constructor(deps: AppRuntimeDeps) {
 		this.deps = deps
+		this.gateway = deps.gateway
+		this.zniffer = deps.zniffer
+		this.restarting = deps.restarting ?? false
 	}
 
-	getGateway(): Gateway | undefined {
+	getGateway(): GatewayPort | undefined {
 		return this.gateway
 	}
 
-	setGateway(value: Gateway | undefined): void {
+	private setGateway(value: GatewayPort | undefined): void {
 		this.gateway = value
 	}
 
-	requireGateway(): Gateway {
+	requireGateway(): GatewayPort {
 		if (this.gateway === undefined) {
 			throw new Error('Gateway is not initialized')
 		}
 		return this.gateway
 	}
 
-	// Covers both "no gateway attached" and "gateway attached without a zwave client" in one clean typed failure
-	requireZwaveClient(): ZWaveClient {
+	requireZwaveClient(): ZwaveClientPort {
 		if (this.gateway?.zwave === undefined) {
 			throw new Error('Z-Wave client not inited')
 		}
 		return this.gateway.zwave
 	}
 
-	getZniffer(): ZnifferManager | undefined {
+	getZniffer(): ZnifferPort | undefined {
 		return this.zniffer
 	}
 
-	setZniffer(value: ZnifferManager | undefined): void {
+	private setZniffer(value: ZnifferPort | undefined): void {
 		this.zniffer = value
 	}
 
-	requireZniffer(): ZnifferManager {
+	requireZniffer(): ZnifferPort {
 		if (this.zniffer === undefined) {
 			throw new Error('Zniffer is not initialized')
 		}
@@ -106,12 +109,8 @@ export class AppRuntime {
 		return this.pluginsRouter
 	}
 
-	setPluginsRouter(value: Router | undefined): void {
+	private setPluginsRouter(value: Router | undefined): void {
 		this.pluginsRouter = value
-	}
-
-	getPlugins(): readonly CustomPlugin[] {
-		return this.plugins
 	}
 
 	isRestarting(): boolean {
@@ -122,7 +121,17 @@ export class AppRuntime {
 		this.restarting = value
 	}
 
-	// Clears defaultSnippets first so repeated calls can't duplicate entries, though production only calls this once at startup
+	// Tracks whether this instance's own routes started the currently-active
+	// debug session, so shutdown only auto-cancels a session it owns instead
+	// of a different, concurrently-live instance's active capture.
+	isOwningDebugSession(): boolean {
+		return this.ownsDebugSession
+	}
+
+	setOwnsDebugSession(value: boolean): void {
+		this.ownsDebugSession = value
+	}
+
 	async loadSnippets(): Promise<void> {
 		this.defaultSnippets.length = 0
 		const localSnippetsDir = utils.joinPath(false, 'snippets')
@@ -161,12 +170,10 @@ export class AppRuntime {
 	setupLogging(
 		settings: { gateway?: utils.DeepPartial<GatewayConfig> } | undefined,
 	): void {
-		// sanitizedConfig() normalizes null, undefined, and {} identically, so falling back to {} here is safe
 		loggers.setupAll(settings?.gateway ?? {})
 	}
 
 	async startGateway(settings: PersistedSettings): Promise<void> {
-		// Definite assignment (!) centralizes a known type/runtime mismatch here instead of scattering | undefined handling across each call site below
 		let mqtt!: MqttClient
 		let zwave!: ZWaveClient
 
@@ -178,22 +185,19 @@ export class AppRuntime {
 		}
 
 		if (settings.mqtt) {
-			// Cast is safe since the frontend always persists a complete mqtt section, never a sparse partial
 			mqtt = new MqttClient(settings.mqtt as MqttConfig)
 		}
 
 		if (settings.zwave) {
-			// Same boundary as settings.mqtt above, for ZwaveConfig
 			zwave = new ZWaveClient(
 				settings.zwave as ZwaveConfig,
 				this.deps.getSocketServer(),
 			)
 		}
 
-		// zwave/mqtt may be undefined here despite their non-optional type; the mismatch is tolerated, matching BackupManager/Gateway's own accepted types
-		backupManager.init(zwave, backupManagerOwner)
+		// Backup initialization is valid when Z-Wave is disabled.
+		backupManager.init(zwave, this.backupManagerOwner)
 
-		// Gateway is always constructed, unlike mqtt/zwave, since its constructor already accepts GatewayConfig | undefined
 		const gw = new Gateway(settings.gateway as GatewayConfig, zwave, mqtt)
 		this.setGateway(gw)
 
@@ -234,7 +238,6 @@ export class AppRuntime {
 
 	startZniffer(settings: utils.DeepPartial<ZnifferConfig> | undefined): void {
 		if (settings) {
-			// Same cast boundary as startGateway's mqtt/zwave construction, for ZnifferConfig
 			this.setZniffer(
 				new ZnifferManager(
 					settings as ZnifferConfig,
@@ -262,10 +265,22 @@ export class AppRuntime {
 		}
 	}
 
-	// Guards for a missing gateway, unlike requireGateway's throw, matching gracefulShutdown's existing pattern
 	async shutdown(): Promise<void> {
 		await this.closeIfPresent(this.gateway)
+
+		try {
+			await this.closeIfPresent(this.zniffer)
+		} catch (error) {
+			logger.error('Error while closing zniffer', error)
+		}
+
 		await this.destroyPlugins()
+
+		try {
+			backupManager.close(this.backupManagerOwner)
+		} catch (error) {
+			logger.error('Error while closing backup manager', error)
+		}
 	}
 }
 

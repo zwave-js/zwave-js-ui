@@ -35,18 +35,16 @@ export function registerHealthRoutes(
 
 		res.status(status ? 200 : 500).send(status ? 'Ok' : 'Error')
 	})
-
 	app.get('/health/:client', apisLimiter, function (req, res) {
 		const client = req.params.client
-		let status: boolean = false
 
 		if (client !== 'zwave' && client !== 'mqtt') {
-			// Falls through without returning into the no-op res.send below, on an already-sent response
-			res.status(500).send("Requested client doesn 't exist")
-		} else {
-			status = runtime.getGateway()?.[client]?.getStatus().status ?? false
+			res.status(500).send("Requested client doesn't exist")
+			return
 		}
 
+		const status =
+			runtime.getGateway()?.[client]?.getStatus().status ?? false
 		res.status(status ? 200 : 500).send(status ? 'Ok' : 'Error')
 	})
 

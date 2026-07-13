@@ -142,6 +142,7 @@ export function registerConfigurationTemplatesRoutes(
 		},
 	)
 
+	// Express requires :id, but these guards also protect direct callers.
 	app.put(
 		'/api/configuration-templates/:id',
 		apisLimiter,

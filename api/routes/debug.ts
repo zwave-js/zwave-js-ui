@@ -55,6 +55,7 @@ export function registerDebugRoutes(
 					originalLogLevel,
 					restartDriver,
 				)
+				runtime.setOwnsDebugSession(true)
 
 				res.json({
 					success: true,
@@ -83,10 +84,14 @@ export function registerDebugRoutes(
 					})
 				}
 
-				const nodeIds: number[] = req.body.nodeIds || []
+				const nodeIds: unknown = req.body.nodeIds ?? []
+				if (!Array.isArray(nodeIds)) {
+					throw new Error('nodeIds must be an array')
+				}
 
 				const { archive, cleanup } =
 					await debugManager.stopSession(nodeIds)
+				runtime.setOwnsDebugSession(false)
 
 				const timestamp = new Date().toISOString().replace(/[:.]/g, '-')
 				res.attachment(`zwave-debug-${timestamp}.zip`)
@@ -122,6 +127,7 @@ export function registerDebugRoutes(
 				}
 
 				await debugManager.cancelSession()
+				runtime.setOwnsDebugSession(false)
 
 				res.json({
 					success: true,

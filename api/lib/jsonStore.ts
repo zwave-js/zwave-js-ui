@@ -81,7 +81,7 @@ export class StorageHelper {
 
 			if (res) {
 				res.set({
-					'Content-Type': 'application/json',
+					'Content-Type': 'application/zip',
 					'Content-Disposition': `attachment; filename="${backupFile}"`,
 				})
 

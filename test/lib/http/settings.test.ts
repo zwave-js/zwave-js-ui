@@ -1,4 +1,17 @@
 import { describe, it, expect, vi } from 'vitest'
+
+const enumerateSerialPortsMock = vi.fn(
+	(_options?: { local?: boolean; remote?: boolean }) =>
+		Promise.resolve<string[]>([]),
+)
+
+// settings.ts imports enumerateSerialPorts as a static module boundary (api/lib/serialPorts.ts)
+// rather than accepting it as a constructor-injected collaborator, so it's mocked at the module
+// level here instead of threaded through createApp()/harness options.
+vi.mock('../../../api/lib/serialPorts.ts', () => ({
+	enumerateSerialPorts: enumerateSerialPortsMock,
+}))
+
 import { useHttpHarness } from './harness.ts'
 import { createFakeGateway } from '../shared/fakes.ts'
 import { createFakeZniffer } from '../socket/fakes.ts'
@@ -58,7 +71,7 @@ describe('HTTP contract: settings, restart, statistics, versions', () => {
 	describe('GET /api/serial-ports', () => {
 		it('returns exactly the ports the (mocked) enumerator resolves, with no real serial/mDNS I/O', async () => {
 			const harness = await getHarness()
-			harness.enumerateSerialPorts.mockImplementation((options) => {
+			enumerateSerialPortsMock.mockImplementation((options) => {
 				expect(options).toEqual({ local: true, remote: true })
 				return Promise.resolve(['/dev/ttyFAKE0', '/dev/ttyFAKE1'])
 			})
@@ -74,7 +87,7 @@ describe('HTTP contract: settings, restart, statistics, versions', () => {
 
 		it('returns an empty list without throwing when the enumerator resolves none', async () => {
 			const harness = await getHarness()
-			harness.enumerateSerialPorts.mockResolvedValue([])
+			enumerateSerialPortsMock.mockResolvedValue([])
 
 			const res = await harness.request.get('/api/serial-ports')
 
@@ -84,7 +97,7 @@ describe('HTTP contract: settings, restart, statistics, versions', () => {
 
 		it('an enumerator rejection is caught and reported as a failed-but-200 envelope with an empty list', async () => {
 			const harness = await getHarness()
-			harness.enumerateSerialPorts.mockRejectedValue(new Error('boom'))
+			enumerateSerialPortsMock.mockRejectedValue(new Error('boom'))
 
 			const res = await harness.request.get('/api/serial-ports')
 
@@ -94,7 +107,7 @@ describe('HTTP contract: settings, restart, statistics, versions', () => {
 
 		it('skips enumeration entirely (no enumerator call) when ZWAVE_PORT is set via env var (if-condition false branch)', async () => {
 			const harness = await getHarness()
-			harness.enumerateSerialPorts.mockImplementation(() => {
+			enumerateSerialPortsMock.mockImplementation(() => {
 				throw new Error('must not be called when ZWAVE_PORT is set')
 			})
 
