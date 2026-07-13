@@ -387,7 +387,7 @@ describe('Socket contract: outbound producers', () => {
 			expect(data.node.ready).toBe(false)
 		})
 
-		it('NODE_ADDED: {node, result} shape - DOCUMENTED BOUNDARY, not reached through its real caller', async () => {
+		it('NODE_ADDED: {node, result} shape', async () => {
 			// _onNodeAdded() dumps a full ZWaveNode via _dumpNode(), which needs a driver/node graph too broad to fake honestly, so this drives sendToSocket directly with the real call site's payload shape
 			const harness = await getHarness({ gateway: benignGateway() })
 			const zwave = realZwave(harness)
@@ -404,7 +404,7 @@ describe('Socket contract: outbound producers', () => {
 			})
 		})
 
-		it('REBUILD_ROUTES_PROGRESS: array-of-tuples shape - DOCUMENTED BOUNDARY, needs a real zwave-js rebuild-routes controller call', async () => {
+		it('REBUILD_ROUTES_PROGRESS: array-of-tuples shape', async () => {
 			// Every real producer sits inside a rebuildNodeRoutes()/beginRebuildingRoutes() controller callback that needs a full zwave-js Driver/Controller to reach, so sendToSocket is driven directly with the real payload shape instead
 			const harness = await getHarness({ gateway: benignGateway() })
 			const zwave = realZwave(harness)
@@ -417,7 +417,7 @@ describe('Socket contract: outbound producers', () => {
 			expect(await received).toEqual([[2, 'pending']])
 		})
 
-		it('HEALTH_CHECK_PROGRESS: {nodeId, ...} shape - DOCUMENTED BOUNDARY, needs a real zwave-js health-check controller call', async () => {
+		it('HEALTH_CHECK_PROGRESS: {nodeId, ...} shape', async () => {
 			// Same full-driver constraint as REBUILD_ROUTES_PROGRESS above: the real producer sits inside a checkLifelineHealth()/checkRouteHealth() controller callback
 			const harness = await getHarness({ gateway: benignGateway() })
 			const zwave = realZwave(harness)
@@ -431,7 +431,7 @@ describe('Socket contract: outbound producers', () => {
 			expect(await received).toEqual({ nodeId: 2, rounds: 1 })
 		})
 
-		it('LINK_RELIABILITY: {nodeId, ...} shape - DOCUMENTED BOUNDARY, needs a real zwave-js link-reliability controller call', async () => {
+		it('LINK_RELIABILITY: {nodeId, ...} shape', async () => {
 			// Same full-driver constraint as the two tests above
 			const harness = await getHarness({ gateway: benignGateway() })
 			const zwave = realZwave(harness)
@@ -485,8 +485,8 @@ describe('Socket contract: outbound producers', () => {
 			])
 		})
 
-		it('METADATA_UPDATED: value-metadata shape routed to "values" - DOCUMENTED BOUNDARY, needs a real zwave-js value-metadata-updated node event', async () => {
-			// Real producer sits inside _parseValue(), which reads zwaveNode.getValue()/getDefinedValueIDs() off a real ZWaveNode, the same full-driver constraint as the other DOCUMENTED BOUNDARY cases above
+		it('METADATA_UPDATED: value-metadata shape routed to "values"', async () => {
+			// Real producer sits inside _parseValue(), which reads zwaveNode.getValue()/getDefinedValueIDs() off a real ZWaveNode, the same full-driver constraint as the tests above
 			const harness = await getHarness({ gateway: benignGateway() })
 			const zwave = realZwave(harness)
 			const client = await connectedSubscriber(harness, 'values')
@@ -504,7 +504,7 @@ describe('Socket contract: outbound producers', () => {
 			})
 		})
 
-		it('VALUE_REMOVED: value-id shape routed to "values" - DOCUMENTED BOUNDARY, needs a real zwave-js "value removed" node event', async () => {
+		it('VALUE_REMOVED: value-id shape routed to "values"', async () => {
 			// Same full-driver constraint as METADATA_UPDATED above: the real producer is a zwaveNode.on('value removed', ...) callback fed a real zwave-js ValueID
 			const harness = await getHarness({ gateway: benignGateway() })
 			const zwave = realZwave(harness)
@@ -541,7 +541,7 @@ describe('Socket contract: outbound producers', () => {
 			expect(await received).toBe('a debug log line\n')
 		})
 
-		describe('API_RETURN: documented boundary - its only real producer is unreachable in an automated test', () => {
+		describe('API_RETURN: its only real producer is unreachable in an automated test', () => {
 			// The only real producer sits inside emulateFwUpdate(), a private "testing purposes" helper that uses Math.random()/setInterval; verified structurally below instead of via a fabricated socket.emit() call
 			it('is not in allowedApis, so it is unreachable through callApi() too', async () => {
 				const { allowedApis } = await import('#api/lib/ZwaveClient.ts')
