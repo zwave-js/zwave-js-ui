@@ -1,34 +1,23 @@
 /**
- * Characterization tests for the HASS MQTT lifecycle: how `Gateway` publishes
- * and deletes discovery packets (QoS/retain/payload quirks), how it reacts to
- * broker-reconnect and Home-Assistant birth/will status, and how inbound MQTT
- * messages are routed through the REAL `MqttClient._onMessageReceived` into
- * the REAL `Gateway` write/broadcast/multicast/api handlers.
+ * Characterizes the HASS MQTT lifecycle: how Gateway publishes and deletes
+ * discovery packets (QoS/retain/payload quirks), reacts to broker-reconnect and
+ * Home-Assistant birth/will status, and routes inbound MQTT through the real
+ * MqttClient._onMessageReceived into the real Gateway handlers.
  *
- * Everything runs against the real `Gateway` + real `MqttClient`; only the
- * upstream `mqtt` package is mocked (see `mqttMock.ts`). The fake broker is
- * production-faithful about connection state: it starts DISCONNECTED, only
- * routes inbound packets once `triggerConnect()` has fired AND a matching
- * subscription exists, and models `offline`/`reconnect` transitions. Inbound
- * packets are delivered through the genuine `'message'`/`'connect'` client
- * events, so the production parsing/subscription/routing code is exercised
- * end to end.
+ * Everything runs against the real Gateway + real MqttClient; only the upstream
+ * mqtt package is mocked (mqttMock.ts). The fake broker is production-faithful
+ * about connection state: starts DISCONNECTED, routes inbound only after
+ * triggerConnect() and a matching subscription, and models offline/reconnect.
  *
- * Locked quirks (characterized here, NOT endorsed):
- *  - INVALID RETAINED-DELETION QUIRK: deleting a discovery publishes the
- *    2-byte literal `""` (an empty JSON string run through `stringifyJSON`),
- *    NOT the zero-length payload a real HA discovery deletion requires, and
- *    with `retain` taken from `config.retainedDiscovery` (default `false`).
- *    A correct deletion would publish an empty (zero-byte) payload with
- *    `retain: true` so the broker evicts the retained config; this does
- *    neither, so a retained discovery message is NOT actually cleared. These
- *    tests pin the exact broken wire bytes so a future fix is forced to change
- *    them - they must NOT be read as validating correct MQTT deletion.
- *  - discovery publishes carry `{ qos: 0, retain: config.retainedDiscovery }`.
- *  - HA online status is case-insensitive and keyed off the FIXED literal
- *    `homeassistant/status` (never prefixed).
- *  - broker reconnect (`brokerStatus true`) and HA `online` both trigger a
- *    full `rediscoverAll`.
+ * Locked quirks (characterized, NOT endorsed):
+ *  - Deleting a discovery publishes the 2-byte literal "" (an empty JSON string
+ *    through stringifyJSON), not the zero-byte payload a real HA tombstone
+ *    needs, with retain from config.retainedDiscovery (default false) - so a
+ *    retained discovery is never actually cleared. Tests pin the broken bytes.
+ *  - discovery publishes carry { qos: 0, retain: config.retainedDiscovery }.
+ *  - HA online status is case-insensitive, keyed off the fixed literal
+ *    homeassistant/status (never prefixed).
+ *  - broker reconnect and HA online both trigger a full rediscoverAll.
  */
 import {
 	describe,
@@ -57,10 +46,9 @@ let harness: GatewayHarness
 const tick = () => new Promise<void>((r) => setImmediate(r))
 
 /**
- * The exact discovery-config topic the seeded switch node ('Dev') republishes
- * on a `rediscoverAll`. Hard-coded (not derived from a producer helper) so the
- * rediscovery assertions pin the real wire topic - version/status publishes,
- * which also land during a connect, can never satisfy it.
+ * The exact discovery-config topic the seeded 'Dev' switch republishes on
+ * rediscoverAll. Hard-coded (not derived) so assertions pin the real wire
+ * topic - version/status publishes that also land on connect can't satisfy it.
  */
 const SWITCH_DISCOVERY_TOPIC = 'homeassistant/switch/Dev/switch/config'
 
@@ -74,7 +62,7 @@ afterAll(async () => {
 })
 
 afterEach(() => {
-	// restore any per-test config mutations
+	// Restore per-test config mutations
 	harness.config.retainedDiscovery = false
 	harness.config.manualDiscovery = false
 })
@@ -107,13 +95,10 @@ function discoverSwitch(
 }
 
 describe('MQTT connection lifecycle (production-faithful fake)', () => {
-	// The harness broker is constructed ONCE (file-level `beforeAll`) and shared,
-	// so its `connected` flag accumulates across tests. Every scenario in this
-	// describe models a specific connection transition and drives its own
-	// `triggerConnect()` when it needs a live link, so re-establishing the
-	// freshly-constructed DISCONNECTED precondition before each test makes them
-	// order-independent (a prior test leaving the shared broker connected must
-	// not bleed into the "starts DISCONNECTED" characterization under shuffle).
+	// The broker is constructed once (file-level beforeAll) and shared, so its
+	// connected flag accumulates. Re-establish the DISCONNECTED precondition
+	// before each test so the "starts DISCONNECTED" characterization is
+	// order-independent under shuffle.
 	beforeEach(() => {
 		harness.broker.forceDisconnected()
 	})
@@ -128,12 +113,12 @@ describe('MQTT connection lifecycle (production-faithful fake)', () => {
 		harness.resetState()
 		harness.zwave.nodes.clear()
 
-		// A freshly constructed client is not yet connected, exactly like the
-		// real `mqtt` client before its handshake completes.
+		// A fresh client is not yet connected, like the real mqtt client
+		// pre-handshake
 		expect(harness.broker.connected).toBe(false)
 
-		// Publishing does NOT require a connection (the real `MqttClient.publish`
-		// only checks `this.client`), so discovery still records a packet.
+		// Publishing doesn't require a connection (real MqttClient.publish only
+		// checks this.client), so discovery still records a packet
 		seed(2, 'dev-pre-connect')
 		expect(
 			harness.broker.published.some(
@@ -141,8 +126,8 @@ describe('MQTT connection lifecycle (production-faithful fake)', () => {
 			),
 		).toBe(true)
 
-		// Inbound, however, is dropped while offline: a real broker never
-		// pushes a packet to a disconnected client.
+		// Inbound is dropped while offline: a real broker never pushes to a
+		// disconnected client
 		harness.resetPublishes()
 		harness.broker.deliver('homeassistant/status', 'online')
 		await tick()
@@ -157,14 +142,14 @@ describe('MQTT connection lifecycle (production-faithful fake)', () => {
 
 		harness.broker.triggerConnect()
 		expect(harness.broker.connected).toBe(true)
-		// _onConnect subscribed the fixed HA status topic + the action wildcards
+		// _onConnect subscribed the fixed HA status topic + action wildcards
 		expect(harness.broker.subscribed.map((s) => s.topic)).toContain(
 			'homeassistant/status',
 		)
 		await tick()
 
-		// The connect itself rediscovered (brokerStatus true) - clear it so we
-		// isolate the ONLINE-triggered republish below.
+		// Connect itself rediscovered (brokerStatus true); clear it to isolate
+		// the ONLINE republish below
 		harness.resetPublishes()
 		harness.broker.deliver('homeassistant/status', 'online')
 		await tick()
@@ -190,7 +175,7 @@ describe('MQTT connection lifecycle (production-faithful fake)', () => {
 		await tick()
 		expect(harness.broker.published).toHaveLength(0)
 
-		// a subsequent reconnect restores routing (models the real reconnect)
+		// A reconnect restores routing
 		harness.broker.triggerReconnect()
 		harness.broker.triggerConnect()
 		await tick()
@@ -213,7 +198,6 @@ describe('publishDiscovery wire behavior', () => {
 			harness.broker.published[harness.broker.published.length - 1]
 		expect(pub.options).toEqual({ qos: 0, retain: false })
 
-		// flip retainedDiscovery -> retain true
 		harness.resetState()
 		harness.config.retainedDiscovery = true
 		const { device: d2 } = discoverSwitch('dev-retain-on', 3)
@@ -232,16 +216,14 @@ describe('publishDiscovery wire behavior', () => {
 
 		const pub =
 			harness.broker.published[harness.broker.published.length - 1]
-		// INVALID RETAINED-DELETION QUIRK: a correct HA discovery deletion must
-		// publish a ZERO-LENGTH payload so the broker evicts the retained
-		// config. Instead the producer runs `''` through `stringifyJSON`, which
-		// yields the 2-byte, NON-empty literal `""`. Pin the exact broken bytes
-		// (length 2, not 0) so a future correct fix is forced to change them.
+		// A correct HA deletion publishes a zero-length payload; instead the
+		// producer runs '' through stringifyJSON, yielding the 2-byte literal
+		// "". Pin the exact broken bytes so a fix is forced to change them.
 		expect(pub.payload).toBe('""')
 		expect(pub.payload.length).toBe(2)
 		expect(pub.payload.length).not.toBe(0)
 		expect(pub.topic).toBe('homeassistant/' + device.discoveryTopic)
-		// ...and by default it is not even retained, so nothing is cleared.
+		// ...and by default it isn't retained, so nothing is cleared
 		expect(pub.options).toEqual({ qos: 0, retain: false })
 	})
 
@@ -255,11 +237,9 @@ describe('publishDiscovery wire behavior', () => {
 
 		const pub =
 			harness.broker.published[harness.broker.published.length - 1]
-		// retain now follows config (true), but the payload is STILL the 2-byte
-		// `""` rather than an empty buffer - so the retained discovery message
-		// is overwritten with a bogus `""` body instead of being deleted. This
-		// remains broken; the test documents it and must not be read as proof
-		// of a correct retained deletion.
+		// retain now follows config (true), but the payload is still the 2-byte
+		// "" rather than an empty buffer - the retained discovery is overwritten
+		// with a bogus body, not deleted
 		expect(pub.payload).toBe('""')
 		expect(pub.options).toEqual({ qos: 0, retain: true })
 	})
@@ -286,11 +266,9 @@ describe('publishDiscovery wire behavior', () => {
 		harness.resetPublishes()
 		harness.config.manualDiscovery = true
 
-		// no forceUpdate -> skipped
 		harness.gw.publishDiscovery(device, 2)
 		expect(harness.broker.published).toHaveLength(0)
 
-		// forceUpdate -> published
 		harness.gw.publishDiscovery(device, 2, { forceUpdate: true })
 		expect(harness.broker.published).toHaveLength(1)
 	})
@@ -318,8 +296,8 @@ describe('broker + Home Assistant status -> rediscoverAll', () => {
 		harness.resetState()
 		harness.broker.subscribed.length = 0
 
-		// triggerConnect() sets connected BEFORE firing 'connect' so the real
-		// `subscribe()` (which rejects when the client is offline) succeeds.
+		// triggerConnect() sets connected before firing 'connect' so the real
+		// subscribe() (which rejects offline) succeeds
 		harness.broker.triggerConnect()
 
 		const topics = harness.broker.subscribed.map((s) => s.topic)
@@ -336,23 +314,22 @@ describe('broker + Home Assistant status -> rediscoverAll', () => {
 		harness.zwave.nodes.clear()
 		seedDiscoveredNode(2, 'dev-online')
 
-		// connect first so `homeassistant/status` is subscribed and routable,
-		// then clear the connect-time rediscovery to isolate the ONLINE one.
+		// Connect first so homeassistant/status is routable, then clear the
+		// connect-time rediscovery to isolate the ONLINE one
 		harness.broker.triggerConnect()
 		await tick()
 		harness.resetPublishes()
 
 		harness.broker.deliver('homeassistant/status', 'online')
 		await tick()
-		// exact rediscovered discovery topic - NOT `length > 0`, which the
-		// version/status publishes emitted on connect would also satisfy.
+		// Exact rediscovered topic, not length > 0 which connect-time
+		// version/status publishes would also satisfy
 		expect(
 			harness.broker.published.some(
 				(p) => p.topic === SWITCH_DISCOVERY_TOPIC,
 			),
 		).toBe(true)
 
-		// uppercase is accepted too (case-insensitive)
 		harness.resetPublishes()
 		harness.broker.deliver('homeassistant/status', 'ONLINE')
 		await tick()
@@ -387,8 +364,8 @@ describe('broker + Home Assistant status -> rediscoverAll', () => {
 		seedDiscoveredNode(2, 'dev-reconnect')
 		harness.resetPublishes()
 
-		// a full connect cycle emits brokerStatus(true) after subscribing,
-		// which drives rediscoverAll.
+		// A full connect cycle emits brokerStatus(true) after subscribing,
+		// driving rediscoverAll
 		harness.broker.triggerConnect()
 		await tick()
 		expect(
@@ -400,10 +377,9 @@ describe('broker + Home Assistant status -> rediscoverAll', () => {
 })
 
 describe('inbound MQTT routing through real MqttClient -> Gateway', () => {
-	// Inbound routing requires a live subscription, which in turn requires the
-	// client to be connected (the real `subscribe()` rejects while offline).
-	// Connect once up front so `_onConnect` subscribes the action wildcards and
-	// per-value `valueChanged` subscriptions land.
+	// Inbound routing needs a live subscription, which needs a connected client
+	// (real subscribe() rejects offline). Connect once so _onConnect subscribes
+	// the action wildcards and per-value valueChanged subscriptions land.
 	beforeAll(async () => {
 		harness.broker.triggerConnect()
 		await tick()
@@ -426,14 +402,13 @@ describe('inbound MQTT routing through real MqttClient -> Gateway', () => {
 		addValue(node, targetValue)
 		harness.zwave.nodes.set(id, node)
 
-		// real producer: value change registers topicValues + subscribes the
-		// `zwave/+/+/+/+/set` wildcard (needs the connection established above).
+		// Real producer: valueChanged registers topicValues and subscribes the
+		// set wildcard (needs the connection above)
 		harness.zwave.emit('valueChanged', targetValue, node, true)
 		await tick()
 
-		// Hard-coded delivery topic (NOT computed from a producer helper) so the
-		// test pins the exact wire topic a real broker would route. The two
-		// pins below independently assert the producer still builds that topic.
+		// Hard-coded delivery topic so the test pins the exact wire topic; the
+		// two pins below assert the producer still builds it
 		const setTopic =
 			'zwave/Dev/switch_multilevel/endpoint_0/targetValue/set'
 		expect(harness.gw.valueTopic(node, targetValue)).toBe(
@@ -478,7 +453,7 @@ describe('inbound MQTT routing through real MqttClient -> Gateway', () => {
 		expect(value).toBe(true)
 		expect(vId.commandClass).toBe(37)
 
-		// feedback echoed to the same topic without /set
+		// Feedback echoed to the same topic without /set
 		const echoed = harness.broker.published.find(
 			(p) => p.topic === `zwave/_CLIENTS/${cid}/broadcast`,
 		)
@@ -529,7 +504,7 @@ describe('inbound MQTT routing through real MqttClient -> Gateway', () => {
 		expect(ack).toBeDefined()
 		const parsed = JSON.parse(ack.payload)
 		expect(parsed.success).toBe(true)
-		// the original request is echoed back as `origin`
+		// Original request echoed back as origin
 		expect(parsed.origin).toEqual(payload)
 	})
 
@@ -537,10 +512,9 @@ describe('inbound MQTT routing through real MqttClient -> Gateway', () => {
 		harness.resetState()
 		harness.zwave.callApi.mockClear()
 
-		// deliverRaw BYPASSES the broker's subscription filter, handing the
-		// foreign-addressed packet straight to `_onMessageReceived`. That proves
-		// `MqttClient`'s OWN guard (`parts[1] !== this._clientID`) drops it -
-		// not merely that the fake broker never routed a non-matching topic.
+		// deliverRaw bypasses the broker's subscription filter, handing the
+		// foreign packet straight to _onMessageReceived, so this proves
+		// MqttClient's own guard (parts[1] !== this._clientID) drops it
 		harness.broker.deliverRaw(
 			`zwave/_CLIENTS/ZWAVE_GATEWAY-someone-else/api/getNodes/set`,
 			JSON.stringify({ args: [] }),

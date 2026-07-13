@@ -374,10 +374,9 @@ describe('Socket contract: inbound ACK APIs', () => {
 		})
 
 		it('proves "store" is AWAITED: a rejected storeDevices promise is caught, yielding success:false (app.ts:789-800)', async () => {
-			// `store` is the ONLY HASS action the handler `await`s. If the
-			// `await` were dropped, this rejection would escape the try/catch
-			// and the ack would (wrongly) report success. success:false here
-			// is the observable proof the `await` is really there.
+			// store is the only HASS action the handler awaits; if the await
+			// were dropped this rejection would escape the try/catch and the ack
+			// would wrongly report success, so success:false proves the await
 			const gateway = createFakeGateway({
 				zwave: createFakeZwaveClient({
 					storeDevices: vi.fn(() =>

@@ -1,14 +1,12 @@
 /**
- * Characterization of `Gateway.discoverValue` for the sensor / metering
- * command classes: Binary Sensor, Alarm Sensor, Basic/Notification (2-state
- * binary and >2-state mapped sensor), Multilevel Sensor, Meter, Pulse Meter,
- * Time, Energy Production (unsupported) and Battery (level sensor + isLow
- * binary).
+ * Characterizes Gateway.discoverValue for the sensor / metering command
+ * classes: Binary Sensor, Alarm Sensor, Basic/Notification (2-state binary and
+ * >2-state mapped sensor), Multilevel Sensor, Meter, Pulse Meter, Time, Energy
+ * Production (unsupported) and Battery (level sensor + isLow binary).
  *
- * Real `Gateway` + real `MqttClient`; only `mqtt` is mocked. Locks exact
- * object ids, device classes, state classes, units (incl. abbreviation
- * quirks), templates, payload on/off inversions and the "no ccSpecific ->
- * skip" guards.
+ * Real Gateway + real MqttClient; only mqtt is mocked. Locks exact object ids,
+ * device/state classes, units (incl. abbreviation quirks), templates, payload
+ * on/off inversions and the "no ccSpecific -> skip" guards.
  */
 import {
 	describe,
@@ -81,7 +79,6 @@ describe('discoverValue - Binary Sensor', () => {
 		expect(payload.topic).toBe(
 			'homeassistant/binary_sensor/Dev/tamper/config',
 		)
-		// binary_sensor is in the json_attributes list
 		expect(payload.payload.json_attributes_topic).toBe(
 			payload.payload.state_topic,
 		)
@@ -121,7 +118,6 @@ describe('discoverValue - Binary Sensor', () => {
 			}),
 		)
 		expect(device.object_id).toBe('motion')
-		// no device_class in the fallback config
 		expect('device_class' in payload.payload).toBe(false)
 	})
 })
@@ -140,7 +136,7 @@ describe('discoverValue - Alarm Sensor', () => {
 			}),
 		)
 		expect(device.type).toBe('binary_sensor')
-		// 'event' + '_' + AlarmSensorType[1], lowercased in the common tail
+		// 'event_' + AlarmSensorType[key], lowercased in the common tail
 		const expectedObjectId = (
 			'event_' + AlarmSensorType[propertyKey]
 		).toLocaleLowerCase()

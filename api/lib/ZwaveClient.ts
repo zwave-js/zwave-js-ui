@@ -1307,11 +1307,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	}
 
 	/**
-	 * Construct the official `@zwave-js/server` instance and wire its
-	 * `error`/`hard reset` listeners. Called from `connect()` right after the
-	 * driver is created (and only when `serverEnabled`), so the server always
-	 * exists BEFORE the driver becomes ready. Extracted verbatim from
-	 * `connect()` so its behavior is unchanged.
+	 * Construct the `@zwave-js/server` and wire its `error`/`hard reset`
+	 * listeners. Called from `connect()` right after the driver is created, so
+	 * the server always exists before the driver becomes ready.
 	 */
 	private _createServer() {
 		this.server = new ZwavejsServer(this._driver, {
@@ -1333,11 +1331,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	}
 
 	/**
-	 * Start the official `@zwave-js/server` once the driver is ready and nodes
-	 * are restored (called from `_onDriverReady`). The `!this.server['server']`
+	 * Start the `@zwave-js/server` once the driver is ready and nodes are
+	 * restored (called from `_onDriverReady`). The `!this.server['server']`
 	 * guard prevents a second `start()` when the driver re-emits `driver ready`
-	 * (see #602). Extracted verbatim from `_onDriverReady` so its behavior is
-	 * unchanged.
+	 * (see #602).
 	 */
 	private _startServerIfNeeded() {
 		if (this.cfg.serverEnabled && this.server) {

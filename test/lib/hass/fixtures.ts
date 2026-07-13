@@ -1,16 +1,11 @@
 /**
- * Typed, production-faithful fixtures for the HASS characterization suite:
- * Z-Wave node/valueId builders, a recording Socket.IO stand-in, a default
- * MQTT config, and a minimal `ZwaveClient` fake usable as the `Gateway`'s
- * `zwave` collaborator.
+ * Typed fixtures for the HASS suite: Z-Wave node/valueId builders, a recording
+ * Socket.IO stand-in, a default MQTT config, and a minimal `ZwaveClient` fake.
  *
- * These are deliberately plain builders (not deep clones of real driver
- * objects): `Gateway`'s discovery code only ever reads a well-defined subset
- * of `ZUINode`/`ZUIValueId` (device class, endpoints, values, command class,
- * property, states, ...), and TypeScript's structural typing lets a
- * shape-correct literal drive the real production switch without a real
- * `zwave-js` `Driver`/`Node` graph. Every builder returns a fresh object so
- * tests never share mutable state.
+ * These are plain builders, not clones of real driver objects: `Gateway`'s
+ * discovery reads only a well-defined subset of `ZUINode`/`ZUIValueId`, so a
+ * shape-correct literal drives the real production switch without a real
+ * `zwave-js` graph. Every builder returns a fresh object.
  */
 import { vi } from 'vitest'
 import { EventEmitter } from 'node:events'
@@ -23,10 +18,9 @@ import type {
 } from '../../../api/lib/ZwaveClient.ts'
 
 /**
- * A complete `MqttConfig` with the network fully local/self-contained and
- * `store: false` (so `MqttClient._init` never touches the filesystem and
- * assigns `this.client` synchronously - see `mqttMock.ts`). `disabled` is
- * `false` so `Gateway.mqttEnabled` is `true`.
+ * A complete `MqttConfig` that stays local with `store: false` (so
+ * `MqttClient._init` skips the filesystem and assigns `this.client`
+ * synchronously) and `disabled: false` (so `Gateway.mqttEnabled` is true).
  */
 export function defaultMqttConfig(
 	overrides: Partial<MqttConfig> = {},
@@ -57,10 +51,9 @@ export function defaultMqttConfig(
 }
 
 /**
- * The minimal shape of a persisted HASS device as the `ZwaveClient`
- * persistence methods (`addDevice`/`updateDevice`/`storeDevices`) read/write
- * it. `id` is the transient wire-only key that those methods strip off before
- * storing; everything else is what actually lands in `node.hassDevices`.
+ * Minimal persisted-HASS-device shape the `ZwaveClient` persistence methods
+ * read/write. `id` is the transient wire-only key they strip before storing;
+ * the rest is what lands in `node.hassDevices`.
  */
 export interface HassDeviceLike {
 	id?: string
@@ -73,7 +66,6 @@ export interface HassDeviceLike {
 	[key: string]: any
 }
 
-/** One captured socket emission (broadcast or room-scoped). */
 export interface RecordedEmit {
 	/** Room passed to `.to(room)`, or `undefined` for a bare `.emit`. */
 	room?: string
@@ -89,11 +81,10 @@ export interface RecordingSocket {
 }
 
 /**
- * A stand-in for the Socket.IO server that `ZwaveClient.sendToSocket()` (and
- * `connect()`'s `fetchSockets()`) reads through. Records every emission so a
- * test can assert exactly what was broadcast, and to which room, and prove
- * ordering (e.g. that `node.hassDevices` is mutated synchronously BEFORE the
- * `nodeUpdated` emission that `sendToSocket` schedules on `process.nextTick`).
+ * Stand-in for the Socket.IO server `ZwaveClient.sendToSocket()` and
+ * `connect()`'s `fetchSockets()` read through. Records every emission so a
+ * test can assert what was broadcast to which room, and prove ordering (e.g.
+ * `node.hassDevices` is mutated before the `nextTick` `nodeUpdated` emission).
  */
 export function createRecordingSocket(
 	connectedSockets: unknown[] = [],
@@ -117,7 +108,6 @@ export function createRecordingSocket(
 	}
 }
 
-/** Convenience builder for a `ZUIValueIdState` (`{ text, value }`). */
 export function state(
 	value: number | string | boolean,
 	text: string,
@@ -126,13 +116,10 @@ export function state(
 }
 
 /**
- * The key `ZwaveClient` uses for a valueId inside `node.values` -
- * `<cc>-<endpoint>-<property>[-<propertyKey>]`, WITHOUT the node id
- * (`ZwaveClient._getValueID(valueId)` with `withNode = false`). This is the
- * exact `vId` string `Gateway.discoverValue(node, vId)` expects, and the one
- * pushed into `hassDevice.values` (which `setDiscovery`/delete then match
- * against `valueId.id`). Distinct from `valueId.id`, which is the SAME parts
- * but WITH the node id prefixed.
+ * The key `ZwaveClient` uses inside `node.values`:
+ * `<cc>-<endpoint>-<property>[-<propertyKey>]`, without the node id (unlike
+ * `valueId.id`, which prefixes it). This is the exact `vId`
+ * `Gateway.discoverValue(node, vId)` expects.
  */
 export function valueMapKey(valueId: {
 	commandClass: number
@@ -152,14 +139,10 @@ export function valueMapKey(valueId: {
 }
 
 /**
- * Builds a `ZUIValueId`. Only the members `Gateway`'s discovery code reads
- * have opinionated defaults; everything else is filled with inert values so
- * the object satisfies the type without influencing behavior.
- *
- * `id` is the production WITH-node id (`<nodeId>-<cc>-<endpoint>-<property>`),
- * used verbatim in the discovery `unique_id`. Register the value on a node
- * with `addValue()` (which keys `node.values` by the WITHOUT-node id, exactly
- * like `ZwaveClient`).
+ * Builds a `ZUIValueId`: only the members discovery reads get opinionated
+ * defaults, the rest are inert. `id` is the with-node id
+ * (`<nodeId>-<cc>-<endpoint>-<property>`) used in the discovery `unique_id`;
+ * register it on a node with `addValue()`.
  */
 export function buildValueId(partial: Partial<ZUIValueId> = {}): ZUIValueId {
 	const commandClass = partial.commandClass ?? 0
@@ -197,10 +180,10 @@ export function buildValueId(partial: Partial<ZUIValueId> = {}): ZUIValueId {
 }
 
 /**
- * Builds a `ZUINode`. Defaults to a `ready`, physical node with empty
- * `values`/`hassDevices` and a generic device class, so discovery can run.
- * `endpoints` defaults to `[]` (so `node.endpoints[endpoint]?.deviceClass`
- * safely falls back to `node.deviceClass`, exactly as production does).
+ * Builds a `ZUINode`: a `ready` node with empty `values`/`hassDevices` and a
+ * generic device class. `endpoints` defaults to `[]`, so
+ * `node.endpoints[endpoint]?.deviceClass` falls back to `node.deviceClass`,
+ * exactly as production does.
  */
 export function buildNode(partial: Partial<ZUINode> = {}): ZUINode {
 	return {
@@ -223,9 +206,8 @@ export function buildNode(partial: Partial<ZUINode> = {}): ZUINode {
 }
 
 /**
- * Registers a valueId on a node's `values` map (keyed by the same
- * `commandClass-endpoint-property[-propertyKey]` id Gateway expects) and
- * returns the value-map key, ready to pass to `gw.discoverValue(node, key)`.
+ * Registers a valueId on `node.values` (keyed as `Gateway` expects) and
+ * returns the value-map key to pass to `gw.discoverValue(node, key)`.
  */
 export function addValue(node: ZUINode, valueId: ZUIValueId): string {
 	const key = valueMapKey(valueId)
@@ -234,18 +216,11 @@ export function addValue(node: ZUINode, valueId: ZUIValueId): string {
 }
 
 /**
- * Minimal `ZwaveClient` fake for use as the `Gateway`'s `zwave`
- * collaborator. It is a real `EventEmitter` (so `Gateway.start()` wires its
- * listeners on it and tests can drive genuine producer events like
- * `emit('nodeInited', node)` / `emit('valueChanged', ...)` through the real
- * `Gateway` handlers). Discovery reads `homeHex` (for `unique_id`/
- * `identifiers`) and `nodes` (for `rediscoverNode`/`disableDiscovery`/
- * `rediscoverAll`), and routes `forceUpdate` publishes back through
- * `updateDevice`; the collaborator methods are `vi.fn()`s so tests can assert
- * exact call arguments. `emitNodeUpdate` is a spy too, so
- * `rediscoverNode`/`disableDiscovery` node-update emissions are observable
- * without a real client. `connect`/`setPollInterval` are spies so the real
- * `Gateway.start()` / `_onNodeInited` can run.
+ * Minimal `ZwaveClient` fake for the `Gateway`'s `zwave` collaborator. It's a
+ * real `EventEmitter`, so `Gateway.start()` wires its listeners and tests can
+ * drive genuine producer events (`emit('nodeInited', node)`). Discovery reads
+ * `homeHex` and `nodes`; the methods are `vi.fn()`s so tests can assert call
+ * arguments without a real client.
  */
 export type FakeGatewayZwave = EventEmitter & {
 	homeHex: string

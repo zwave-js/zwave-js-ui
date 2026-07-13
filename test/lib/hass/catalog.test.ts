@@ -1,26 +1,14 @@
 /**
  * Characterizes the two static Home Assistant discovery catalogs:
- *   - `api/hass/configurations.ts` - the per-entity-type discovery templates
- *     `Gateway.discoverValue()` clones (`hassCfg.switch`, `hassCfg.lock`, ...).
- *   - `api/hass/devices.ts` - the per-`deviceId` override list
- *     `Gateway.discoverDevice()`/`rediscoverNode()` look up in `allDevices`.
+ * `api/hass/configurations.ts` (per-entity-type templates
+ * `Gateway.discoverValue()` clones) and `api/hass/devices.ts` (the per-deviceId
+ * override list `discoverDevice()`/`rediscoverNode()` look up in `allDevices`).
  *
- * These are pure data modules (only `import type`, zero filesystem/runtime
- * side effects), so they're imported statically here - no STORE_DIR
- * isolation needed.
- *
- * The point of these tests is NOT "the module imports" (that proves
- * nothing): each assertion pins a specific, semantically-meaningful value -
- * an entity `type`, an `object_id`, a Jinja template string, a mode/setpoint
- * map, a device-id -> config wiring - so that an accidental edit to a
- * template, a renamed key, a dropped device mapping, or a changed default
- * (all of which silently change what entities Home Assistant creates and how
- * they behave) fails loudly here and must be updated deliberately.
- *
- * Several locked values are known quirks (e.g. the Intermatic PE653
- * `circuit_4` switch whose `state_topic` points at circuit *1*); they are
- * pinned exactly as-is, with a comment, so the characterization reflects
- * real current behavior rather than an idealized version of it.
+ * These are pure data modules, imported statically (no STORE_DIR isolation
+ * needed). Each assertion pins a specific semantic value - an entity `type`,
+ * `object_id`, Jinja template, mode/setpoint map, or device-id wiring - so an
+ * accidental template edit, renamed key, or dropped mapping fails loudly.
+ * Known quirks (e.g. the PE653 `circuit_4` state_topic) are pinned as-is.
  */
 import { describe, it, expect } from 'vitest'
 import hassCfg from '../../../api/hass/configurations.ts'
@@ -124,8 +112,8 @@ describe('HASS catalog: configurations.ts', () => {
 		expect(p.on_command_type).toBe('last')
 		expect(p.payload_on).toBe(25)
 		expect(p.payload_off).toBe(0)
-		// `state_topic: false` is a sentinel the discovery tail deletes -
-		// locked here so that quirk can't silently flip to a real topic.
+		// state_topic: false is a sentinel the discovery tail deletes; locked
+		// so the quirk can't silently flip to a real topic
 		expect(p.state_topic).toBe(false)
 	})
 
@@ -355,7 +343,7 @@ describe('HASS catalog: devices.ts', () => {
 		]
 		const first = hassDevices[ids[0]][0]
 		for (const id of ids) {
-			// referential identity: they're the same shared `FAN_DIMMER` const
+			// Referential identity: the same shared FAN_DIMMER const
 			expect(hassDevices[id][0], `${id} shares FAN_DIMMER`).toBe(first)
 		}
 		expect(first.type).toBe('fan')
@@ -434,9 +422,8 @@ describe('HASS catalog: devices.ts', () => {
 	it('QUIRK: PE653 circuit_4 state_topic points at circuit_1 currentValue (locked as-is)', () => {
 		const list = hassDevices['5-1619-20549']
 		const circuit4 = list.find((d) => d.object_id === 'circuit_4')
-		// This is almost certainly a copy/paste bug in the catalog, but it
-		// is CURRENT behavior; lock it so a "fix" is a deliberate, reviewed
-		// change, not an accidental characterization break.
+		// Almost certainly a copy/paste bug, but it's current behavior; locked
+		// so a "fix" is a deliberate, reviewed change
 		expect(circuit4.discovery_payload.state_topic).toBe('37-1-currentValue')
 		expect(circuit4.discovery_payload.command_topic).toBe(
 			'37-4-targetValue',

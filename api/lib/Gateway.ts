@@ -143,79 +143,41 @@ export function closeWatchers() {
 	watchers.clear()
 }
 
-// ### TEST-ONLY SEAM
-//
-// Re-installs the module-global custom-device file watchers that
-// `closeWatchers()` tears down. The watches are created exactly once at
-// module import; a lifecycle test that wants to prove teardown releases them
-// must first guarantee they are present (an earlier harness `close()` in the
-// same worker may already have closed them, since they are shared module
-// state). This closes any existing watchers and rebinds both the `.js` and
-// `.json` watches to their real `loadCustomDevices` handler, exactly as the
-// import-time bootstrap does. Production (`api/bin/www.ts`) never calls this;
-// it only affects the test-owned watcher registry, never runtime reload
-// behavior.
+// Test-only: reinstall the shared custom-device watchers so a teardown test
+// can guarantee they are present before asserting release; production never
+// calls this
 export function __rebindWatchersForTests(): void {
 	closeWatchers()
 	watch(customDevicesJsPath, loadCustomDevices)
 	watch(customDevicesJsonPath, loadCustomDevices)
 }
 
-// ### TEST-ONLY SEAMS (custom devices)
-//
-// The custom-devices loader (`loadCustomDevices`) and its `allDevices`
-// projection are module-private process-global state, mutated at import time
-// and again whenever the `customDevices.js`/`.json` file watcher fires. These
-// read-only / re-invocation seams let the HASS characterization suite drive
-// and observe that loader DETERMINISTICALLY (write a file, re-run the loader,
-// inspect the projection) instead of racing the OS-level `fs.watch` event.
-// `loadCustomDevices` is the exact function the watcher invokes, so this
-// exercises the real precedence/sha-dedup/parse-failure code path. Nothing in
-// the production entrypoint (`api/bin/www.ts`) reads or calls these.
+// Test-only: re-run the exact loader the file watcher fires, so tests can
+// drive custom-device reload deterministically instead of racing fs.watch
 export function __loadCustomDevicesForTests(): void {
 	loadCustomDevices()
 }
 
-// Returns a DEEP SNAPSHOT of the live `allDevices` catalog, never the live
-// reference. Production discovery reads `allDevices` directly, so handing a
-// test the live object would let an assertion (or an accidental mutation)
-// corrupt the discovery catalog for every subsequent lookup in the process.
-// The snapshot is a structural copy, so mutating the returned value has no
-// effect on the module's state (proven by the mutation regression in
-// `customDevices.test.ts`). Tests that need to observe reassignment vs
-// sha-dedup use `__getCustomDevicesShaForTests()` instead of reference
-// identity on this snapshot.
+// Test-only: return a deep snapshot so a test can't mutate the live discovery
+// catalog that production reads
 export function __getAllDevicesForTests(): Record<string, HassDevice[]> {
 	return structuredClone(
 		allDevices as unknown as Record<string, HassDevice[]>,
 	)
 }
 
-// Exposes the dedup sha (`lastCustomDevicesLoad`) so tests can assert whether
-// a given `loadCustomDevices()` invocation REASSIGNED the projection (sha
-// changes) or was sha-deduped/short-circuited (sha unchanged) without relying
-// on reference identity of the snapshot above. `null` before any load / after
-// a reset.
+// Test-only: expose the dedup sha so a test can distinguish a real reload from
+// a sha-deduped no-op
 export function __getCustomDevicesShaForTests(): string | null {
 	return lastCustomDevicesLoad
 }
 
-// Evicts any `require.cache` entry the preferred `.js` custom-devices loader
-// created. `loadCustomDevices()` loads the `.js` form via `require()`, whose
-// module cache serves a REWRITTEN `.js` file staler (production loads
-// customDevices once per process, so a runtime `.js` change already requires a
-// restart - this seam does NOT alter that). Tests that write a `.js` fixture
-// call this in teardown so a later test's `require()` re-reads from disk
-// instead of being served this test's cached module, keeping the suite
-// isolated. See the stale-cache quirk characterization in
-// `customDevices.test.ts`.
+// Test-only: evict the require.cache entry the .js loader created so a later
+// test re-reads from disk instead of the cached module
 export function __evictCustomDevicesRequireCacheForTests(): void {
-	// Delete by the literal absolute paths, which are exactly the keys Node's
-	// CJS loader uses for these on-disk files. Deliberately does NOT call
-	// `require.resolve(CUSTOM_DEVICES)`: under Vitest's module runner that has
-	// a side effect (it pins the extension-less specifier's resolution to
-	// whichever file currently exists), which would corrupt the very
-	// `.js`-over-`.json` precedence these tests characterize.
+	// Delete by literal path, not require.resolve(CUSTOM_DEVICES): under
+	// Vitest's module runner that resolve pins the extension-less specifier and
+	// corrupts the .js-over-.json precedence these tests characterize
 	for (const key of [customDevicesJsPath, customDevicesJsonPath]) {
 		delete require.cache[key]
 	}

@@ -43,7 +43,7 @@ afterAll(async () => {
 
 beforeEach(() => {
 	harness.resetState()
-	// restore config knobs individual tests may have toggled
+	// Restore config knobs individual tests may have toggled
 	harness.config.hassDiscovery = true
 	harness.config.entityTemplate = undefined
 	harness.config.ignoreLoc = undefined
@@ -89,10 +89,8 @@ describe('discoverValue - Central Scene / Scene Activation', () => {
 	})
 
 	it('maps a numeric Scene Activation sceneId with the plain (non-nested) template', () => {
-		// `sceneId` is ALWAYS a plain number on Scene Activation CC, so it
-		// takes the default, non-nested template. (This is the production-real
-		// counterpart to the nested case below - the previous fixture forced a
-		// unit onto `sceneId`, which cannot happen in production.)
+		// sceneId is always a plain number on Scene Activation CC, so it takes
+		// the default non-nested template
 		const { device, payload } = discover(
 			buildValueId({
 				commandClass: CommandClasses['Scene Activation'],
@@ -109,11 +107,9 @@ describe('discoverValue - Central Scene / Scene Activation', () => {
 	})
 
 	it('uses a nested value template when a Scene Activation value carries a unit (dimmingDuration)', () => {
-		// The ONLY Scene Activation CC value that carries a unit is
-		// `dimmingDuration`, a zwave-js Duration (`{ value, unit }`). Drive the
-		// nested `value_json.value.value` template branch with that real,
-		// production-possible value instead of an impossible unit-bearing
-		// `sceneId`.
+		// dimmingDuration (a zwave-js Duration { value, unit }) is the only
+		// Scene Activation value carrying a unit, so it drives the nested
+		// value_json.value.value template branch
 		const { device, payload } = discover(
 			buildValueId({
 				commandClass: CommandClasses['Scene Activation'],
@@ -279,7 +275,7 @@ describe('discoverValue - common tail behavior', () => {
 	})
 
 	it('indexes a duplicate type+object_id with the endpoint', () => {
-		// Pre-seed a colliding hass device so the dedup branch triggers.
+		// Pre-seed a colliding hass device so the dedup branch triggers
 		const node = readyNode()
 		node.hassDevices['binary_sensor_tamper'] = { placeholder: true } as any
 		const { device } = discover(

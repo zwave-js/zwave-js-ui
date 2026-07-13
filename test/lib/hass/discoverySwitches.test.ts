@@ -1,15 +1,13 @@
 /**
- * Characterization of `Gateway.discoverValue` for the actuator command
- * classes it handles: Binary/All/Binary-Toggle Switch, Barrier Operator,
- * Multilevel Switch (cover-position vs light-dimmer), Door Lock, Sound Switch
- * (volume) and Color Switch (RGB).
+ * Characterizes Gateway.discoverValue for the actuator command classes it
+ * handles: Binary/All/Binary-Toggle Switch, Barrier Operator, Multilevel Switch
+ * (cover-position vs light-dimmer), Door Lock, Sound Switch (volume), Color
+ * Switch (RGB).
  *
- * These run the REAL `Gateway` + REAL `MqttClient` (only the `mqtt` package is
- * mocked) so every asserted topic/template/payload/device/availability block
- * is the exact production output captured at the broker publish boundary. The
- * intent is to lock the current wire contract precisely - IDs, topics, names,
- * device info, availability, command/state topics, templates, and which
- * fields are present vs omitted - not to endorse it.
+ * Runs the real Gateway + real MqttClient (only mqtt is mocked), so every
+ * asserted topic/template/payload/device/availability block is the exact
+ * production output captured at the broker publish boundary - locking the
+ * current wire contract, not endorsing it.
  */
 import {
 	describe,
@@ -64,9 +62,8 @@ function readyNode(over: Partial<ZUINode> = {}): ZUINode {
 }
 
 /**
- * Registers a `currentValue`/`targetValue` sibling pair on a node (the shape
- * `ZwaveClient` produces for actuator CCs) and returns the value-map key of
- * the current value, ready for `discoverValue`.
+ * Registers a currentValue/targetValue sibling pair (the shape ZwaveClient
+ * produces for actuator CCs) and returns the current value's map key.
  */
 function addCurrentTargetPair(
 	node: ZUINode,
@@ -117,12 +114,9 @@ describe('discoverValue - Binary Switch (full contract)', () => {
 		expect(device.object_id).toBe('switch')
 
 		const published = harness.lastDiscovery()
-		// exact discovery topic (prefix + type/nodeName/object_id/config)
 		expect(published.topic).toBe('homeassistant/switch/Dev/switch/config')
-		// QoS/retain locked by publishDiscovery
 		expect(published.options).toEqual({ qos: 0, retain: false })
 
-		// full payload contract
 		expect(published.payload).toEqual({
 			payload_off: false,
 			payload_on: true,
@@ -138,10 +132,8 @@ describe('discoverValue - Binary Switch (full contract)', () => {
 						"{{'true' if value_json.value else 'false'}}",
 				},
 				{
-					// Literal status topic (NOT computed via the producer helper
-					// `mqtt.getStatusTopic()`, which would let a helper change go
-					// unnoticed). The independent pin below asserts the producer
-					// still emits exactly this.
+					// Literal status topic (not via mqtt.getStatusTopic()); the
+					// pin below asserts the producer still emits exactly this
 					topic: 'zwave/_CLIENTS/ZWAVE_GATEWAY-test/status',
 					value_template:
 						"{{'online' if value_json.value else 'offline'}}",
@@ -164,9 +156,8 @@ describe('discoverValue - Binary Switch (full contract)', () => {
 			unique_id: 'zwavejs2mqtt_0xabcdef01_2-37-0-currentValue',
 		})
 
-		// Independently pin the producer helper to the SAME literal, so the
-		// literal used in the payload assertion above and the helper's output
-		// are each locked without one deriving from the other.
+		// Independently pin the producer helper to the same literal, so neither
+		// derives from the other
 		expect(harness.mqtt.getStatusTopic()).toBe(
 			'zwave/_CLIENTS/ZWAVE_GATEWAY-test/status',
 		)
@@ -265,7 +256,7 @@ describe('discoverValue - Multilevel Switch', () => {
 		expect(p.position_closed).toBe(0)
 		expect(p.payload_open).toBe(99)
 		expect(p.payload_close).toBe(0)
-		// cover_position sets state_topic:false -> omitted from the payload
+		// cover_position sets state_topic:false -> omitted
 		expect('state_topic' in p).toBe(false)
 	})
 
@@ -334,7 +325,6 @@ describe('discoverValue - Door Lock', () => {
 		expect(p.state_topic).toBe(
 			'zwave/Dev/door_lock/endpoint_0/currentValue',
 		)
-		// lock is in the json_attributes list
 		expect(p.json_attributes_topic).toBe(p.state_topic)
 	})
 })

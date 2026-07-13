@@ -1,23 +1,20 @@
 /**
- * Characterization tests for the climate / composite discovery pipeline:
- * `Gateway.discoverClimates` (builds the `thermostat` config into the
- * module-global `allDevices`, mutating it) and the two branches of
- * `Gateway.discoverDevice` (the `climate` topic/template resolver and the
- * generic composite topic-rewrite). The full node pipeline is driven through
- * the REAL producer - `zwave.emit('nodeInited', node)` -> `_onNodeInited` ->
- * `discoverClimates` + `discoverDevice` + `discoverValue` - so the captured
- * topics/templates/payloads are exactly what production emits.
+ * Characterizes the climate / composite discovery pipeline: Gateway.discoverClimates
+ * (builds the thermostat config into the module-global allDevices) and the two
+ * branches of Gateway.discoverDevice (climate topic/template resolver and the
+ * generic composite topic-rewrite). Driven through the real producer
+ * (zwave.emit('nodeInited') -> _onNodeInited -> discoverClimates/discoverDevice/
+ * discoverValue), so captured topics/templates/payloads are what production emits.
  *
  * Faithfulness notes locked here:
- *  - a thermostat node yields exactly ONE discovery packet: the composite
- *    climate device "claims" its member values (setpoints/mode/state/air-temp)
- *    via the `discovered[valueId.id]` guard, so `discoverValue` skips the
- *    Air-temperature Multilevel Sensor that would otherwise be its own entity.
- *  - `mode_state_template`/`action_template` are literal inverted/forward maps.
- *  - the current `temperature_state_topic` follows the CURRENT mode value
- *    (`setpoint_topic[mode.value]`), i.e. it changes with the active mode.
- *  - `unique_id` for a composite device uses the capital `_Node<id>_` infix
- *    (distinct from `discoverValue`'s node-level identifiers).
+ *  - a thermostat node yields exactly ONE packet: the composite climate device
+ *    claims its member values via the discovered[valueId.id] guard, so
+ *    discoverValue skips the Air-temperature Multilevel Sensor.
+ *  - mode_state_template/action_template are literal inverted/forward maps.
+ *  - temperature_state_topic follows the current mode value
+ *    (setpoint_topic[mode.value]), i.e. it changes with the active mode.
+ *  - a composite unique_id uses the capital _Node<id>_ infix (distinct from
+ *    discoverValue's node-level identifiers).
  */
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest'
 import { mqttMockFactory } from './mqttMock.ts'
@@ -175,7 +172,6 @@ describe('discoverClimates + discoverDevice (climate)', () => {
 		expect(climate.ignoreDiscovery).toBe(false)
 		expect(climate.discoveryTopic).toBe('climate/Thermostat/climate/config')
 
-		// mode/setpoint/action maps survive on the stored device
 		expect(climate.mode_map).toEqual({ off: 0, heat: 1, cool: 2 })
 		expect(climate.setpoint_topic).toEqual({
 			1: '67-0-setpoint-1',
@@ -190,9 +186,9 @@ describe('discoverClimates + discoverDevice (climate)', () => {
 		const node = buildThermostatNode({ deviceId: 'test-climate-claim' })
 		initNode(node)
 
-		// The Air-temperature Multilevel Sensor is a member of the climate
-		// device, so `discovered[...]` makes `discoverValue` skip it: the whole
-		// thermostat node maps to a single climate entity.
+		// The Air-temperature Multilevel Sensor is a climate member, so
+		// discovered[...] makes discoverValue skip it: the node maps to a single
+		// climate entity
 		const all = harness.publishedDiscoveries()
 		expect(all).toHaveLength(1)
 		expect(all[0].topic).toBe(
@@ -210,7 +206,6 @@ describe('discoverClimates + discoverDevice (climate)', () => {
 		expect(packet.options).toEqual({ qos: 0, retain: false })
 
 		const p = packet.payload
-		// modes list and mode topics/template
 		expect(p.modes).toEqual(['off', 'heat', 'cool'])
 		expect(p.mode_state_topic).toBe(
 			'zwave/Thermostat/thermostat_mode/endpoint_0/mode',
@@ -222,7 +217,7 @@ describe('discoverClimates + discoverDevice (climate)', () => {
 			'{{ {0: "off", 1: "heat", 2: "cool"}[value_json.value] | default(\'off\') }}',
 		)
 
-		// current mode is Heat (value 1) -> temperature topic points at setpoint 1
+		// current mode Heat (value 1) -> temperature topic points at setpoint 1
 		expect(p.temperature_state_topic).toBe(
 			'zwave/Thermostat/thermostat_setpoint/endpoint_0/setpoint/1',
 		)
@@ -230,7 +225,6 @@ describe('discoverClimates + discoverDevice (climate)', () => {
 			'zwave/Thermostat/thermostat_setpoint/endpoint_0/setpoint/1/set',
 		)
 
-		// action topic/template
 		expect(p.action_topic).toBe(
 			'zwave/Thermostat/thermostat_operating_state/endpoint_0/state',
 		)
@@ -238,7 +232,6 @@ describe('discoverClimates + discoverDevice (climate)', () => {
 			'{{ {0: "idle", 1: "heating"}[value_json.value] | default(\'idle\') }}',
 		)
 
-		// current temperature + unit + precision
 		expect(p.current_temperature_topic).toBe(
 			'zwave/Thermostat/sensor_multilevel/endpoint_0/Air_temperature',
 		)
@@ -252,7 +245,6 @@ describe('discoverClimates + discoverDevice (climate)', () => {
 		expect(p.temperature_state_template).toBe('{{ value_json.value }}')
 		expect(p.current_temperature_template).toBe('{{ value_json.value }}')
 
-		// identifiers / availability / name
 		expect(p.unique_id).toBe('zwavejs2mqtt_0xabcdef01_Node2_climate')
 		expect(p.device.identifiers).toEqual(['zwavejs2mqtt_0xabcdef01_node2'])
 		expect(p.name).toBe('Thermostat_climate')
@@ -331,8 +323,8 @@ describe('discoverClimates + discoverDevice (climate)', () => {
 		initNode(node)
 		expect(harness.publishedDiscoveries()).toHaveLength(1)
 
-		// Re-init: the climate device already exists on the node, and every
-		// member value is already in `discovered`, so nothing is republished.
+		// Re-init: the climate device and all member values already exist in
+		// discovered, so nothing is republished
 		harness.resetPublishes()
 		harness.zwave.emit('nodeInited', node)
 		expect(harness.publishedDiscoveries()).toHaveLength(0)
@@ -422,7 +414,7 @@ describe('discoverDevice (generic composite topic-rewrite)', () => {
 		harness.gw.discoverDevice(node as any, composite)
 		expect(harness.publishedDiscoveries()).toHaveLength(1)
 
-		// second call: node.hassDevices['sensor_dup'] already set -> no-op
+		// second call: sensor_dup already set -> no-op
 		harness.resetPublishes()
 		harness.gw.discoverDevice(node as any, composite)
 		expect(harness.publishedDiscoveries()).toHaveLength(0)
