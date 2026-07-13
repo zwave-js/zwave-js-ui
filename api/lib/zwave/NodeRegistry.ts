@@ -60,8 +60,7 @@ import type { ServiceLogger } from './ports.ts'
 
 type NodeUpdate = utils.DeepPartial<ZUINode> | { firmwareUpdate: false }
 type ValueUpdateArgs = (
-	| ZWaveNodeValueUpdatedArgs
-	| ZWaveNodeValueNotificationArgs
+	ZWaveNodeValueUpdatedArgs | ZWaveNodeValueNotificationArgs
 ) & {
 	prevValue?: unknown
 	newValue?: unknown
@@ -80,9 +79,6 @@ type StatisticsUpdate = Pick<
 type Controller = Driver['controller']
 
 function formatLogValue(value: unknown): string {
-	if (typeof value === 'symbol') {
-		throw new TypeError('Cannot convert a Symbol value to a string')
-	}
 	// eslint-disable-next-line @typescript-eslint/no-base-to-string
 	return String(value)
 }
@@ -232,7 +228,8 @@ export class NodeRegistry {
 
 		const keys = Object.keys(nodes)
 		if (keys.length > 0 && !keys[0].startsWith('0x')) {
-			const legacy = nodes as NodesStoreRecord
+			// Persist legacy node stores under the home ID before exposing restored state
+			const legacy = nodes
 			await this.host.persistNodes({ [homeHex]: legacy })
 			if (!this.current) return
 			this.storeNodes = legacy
@@ -249,6 +246,7 @@ export class NodeRegistry {
 			this.logger.warn('HomeHex not set, skipping storeDevices')
 			return
 		}
+		// Restoration migrates legacy stores before snapshots update the home-ID-keyed shape
 		const nodes = this.host.getPersistedNodes() as NodesStoreRecordByHome
 		nodes[homeHex] = Object.keys(snapshot).reduce((result, key) => {
 			if (Object.keys(snapshot[key]).length > 0) {
@@ -480,6 +478,7 @@ export class NodeRegistry {
 			reason,
 		)
 		this.removeNode(zwaveNode.id)
+		// Persist group cleanup before rebuilding live broadcast projections
 		await this.host.removeNodeFromGroups(zwaveNode.id)
 		if (!this.current) return
 		this.host.refreshBroadcastNodes()
@@ -505,6 +504,7 @@ export class NodeRegistry {
 		const updateStatusOnly = options?.updateStatusOnly ?? false
 		node.status = NodeStatus[zwaveNode.status] as keyof typeof NodeStatus
 		node.available = zwaveNode.status !== NodeStatus.Dead
+		// Update interview stage only when explicitly seeded so status events cannot regress progress
 		if (options?.updateInterviewStage) {
 			node.interviewStage = InterviewStage[
 				zwaveNode.interviewStage
@@ -805,6 +805,7 @@ export class NodeRegistry {
 			})
 		}
 
+		// Long Range uses star topology and has no return or priority routes
 		if (
 			!zwaveNode.isControllerNode &&
 			zwaveNode.protocol !== Protocols.ZWaveLongRange
@@ -907,20 +908,18 @@ export class NodeRegistry {
 		let skipUpdate = false
 		node.values ||= {}
 		const valueKey = NodeProjector.getValueId(args)
+		// Create notification values on first use because they may be absent from the defined inventory
 		if (!node.values[valueKey]) {
 			this.addValue(zwaveNode, args)
 			skipUpdate = true
 		}
 		const valueId = node.values[valueKey]
 		if (!valueId) {
+			// Handle Naming and Location updates without a defined value on unsupported nodes (#3591)
 			if (
 				args.commandClass === CommandClasses['Node Naming and Location']
 			) {
-				this.host.onNameLocationChanged(
-					node,
-					args as ZUIValueId,
-					args.newValue as string,
-				)
+				this.host.onNameLocationChanged(node, args, args.newValue)
 			}
 			return
 		}
@@ -961,6 +960,7 @@ export class NodeRegistry {
 					return
 				}
 				valueId.value = undefined
+				// Publish every stateless reset because repeated notifications still clear observable state
 				this.host.emitValueChanged(valueId, node, true)
 			}, 1000)
 			this.statelessTimeouts.set(valueId.id, timeout)
@@ -1021,6 +1021,7 @@ export class NodeRegistry {
 			stateless: boolean
 		},
 	): void {
+		// Map notification value to the stateless update shape used by shared handlers
 		args.newValue = args.value
 		args.stateless = true
 		this.onValueUpdated(zwaveNode, args)
@@ -1306,6 +1307,7 @@ export class NodeRegistry {
 				data = args.direction
 				break
 			case CommandClasses.Powerlevel:
+				// Ignore Powerlevel notifications because zwave-js handles them
 				return
 			case CommandClasses.Battery:
 				valueId.property = args.eventType
@@ -1331,6 +1333,7 @@ export class NodeRegistry {
 			},
 			true,
 		)
+		// Define propertyName because named MQTT topics require it
 		valueId.propertyName = valueId.property
 		this.host.logNode(
 			zwaveNode,
