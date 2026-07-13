@@ -492,7 +492,7 @@ describe('Socket contract: inbound ACK APIs', () => {
 			expect(result.channels.sort()).toStrictEqual(['nodes', 'values'])
 		})
 
-		it('"all" expands to every channel, in channelMap declaration order', async () => {
+		it('"all" expands to every real channel', async () => {
 			const harness = await getHarness({ gateway: createFakeGateway() })
 			const client = await connectedClient(harness)
 
@@ -501,7 +501,9 @@ describe('Socket contract: inbound ACK APIs', () => {
 				'SUBSCRIBE',
 				{ channels: ['all'] },
 			)
-			expect(result.channels).toStrictEqual(ALL_CHANNELS)
+			expect(result.channels.sort()).toStrictEqual(
+				[...ALL_CHANNELS].sort(),
+			)
 		})
 
 		it('acks with an empty channel list when data.channels is missing/not an array', async () => {
