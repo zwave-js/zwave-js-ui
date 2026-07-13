@@ -1,19 +1,12 @@
 import type { HassDeviceStorePort } from './ports.ts'
-import type { HassDevice, HassDeviceMap } from './types.ts'
+import type {
+	HassDevice,
+	HassDeviceMap,
+	StoreHassDevicesResult,
+} from './types.ts'
 
 function copyDevices(devices: HassDeviceMap): HassDeviceMap {
 	return JSON.parse(JSON.stringify(devices))
-}
-
-function requireStoredNode(
-	port: HassDeviceStorePort,
-	nodeId: number,
-): NonNullable<ReturnType<HassDeviceStorePort['getStoredNode']>> {
-	const storedNode = port.getStoredNode(nodeId)
-	if (storedNode === null || storedNode === undefined) {
-		throw new TypeError('Stored node must be an object')
-	}
-	return storedNode
 }
 
 export class HassDeviceStore {
@@ -57,14 +50,22 @@ export class HassDeviceStore {
 		devices: HassDeviceMap,
 		nodeId: number,
 		remove: unknown,
-	): Promise<void> {
-		if (!this.port.hasNode(nodeId)) return
+	): Promise<StoreHassDevicesResult> {
+		if (!this.port.hasNode(nodeId)) return { status: 'node-not-found' }
+
+		const storedNode = this.port.getStoredNode(nodeId)
+		if (
+			storedNode === null ||
+			storedNode === undefined ||
+			typeof storedNode !== 'object'
+		) {
+			return { status: 'invalid-stored-node' }
+		}
 
 		for (const device of Object.values(devices)) {
 			device.persistent = !remove
 		}
 
-		const storedNode = requireStoredNode(this.port, nodeId)
 		if (remove) delete storedNode.hassDevices
 		else storedNode.hassDevices = devices
 
@@ -75,5 +76,6 @@ export class HassDeviceStore {
 			nodeId,
 			this.port.getNodeDevices(nodeId) ?? copiedDevices,
 		)
+		return { status: 'stored' }
 	}
 }
