@@ -48,28 +48,7 @@ export default defineConfig({
 			reportsDirectory: './coverage',
 			include: ['api/**/*.{js,ts}', 'src/**/*.{js,ts}'],
 			exclude: ['**/*.test.*', 'test/**'],
-			// Glob-scoped/exact-file thresholds (matched against each covered
-			// file's path, independently of the top-level `lines`/
-			// `statements`/etc. keys, which aren't set here) let this single,
-			// full-repo `npm run coverage` run double as backend-only
-			// threshold enforcement (exact-file keys, not `perFile`, so this
-			// stays scoped to just these files below). This avoids running
-			// the backend test suite a second time in CI just to check its
-			// coverage (`coverage:server` is a local-only convenience script,
-			// not part of the CI pipeline); running backend tests once, in
-			// the full combined run, is enough to both enforce the
-			// thresholds below AND produce the file-level line data
-			// Coveralls needs for `api/**`.
-			//
-			// `'api/runtime/AppRuntime.ts'` and each `'api/routes/*.ts'` file
-			// are independently-accumulated exact-file groups (a file under
-			// `api/routes/` counts toward its own exact-file group's
-			// coverage map - see the coverage v8 provider's
-			// `resolveThresholds()`), enforcing a stricter bar for the
-			// runtime/HTTP-router extraction
-			// (`refactor(api): extract runtime and http routers`) than the
-			// rest of the codebase, per-file rather than pooled across the
-			// whole directory.
+			// Exact-file threshold keys are checked independently of each other, so one full-repo run also enforces a stricter bar for the extracted runtime/router files without a separate backend-only coverage run
 			thresholds: {
 				'api/runtime/AppRuntime.ts': {
 					statements: 90,
