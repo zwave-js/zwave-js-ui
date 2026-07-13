@@ -1211,7 +1211,7 @@ export class DiscoveryGenerator {
 		return valueId.id.replace(valueId.nodeId + '-', '')
 	}
 
-	public deviceInfo(
+	private deviceInfo(
 		node: {
 			id: number
 			manufacturer?: string
@@ -1358,7 +1358,7 @@ export class DiscoveryGenerator {
 		return config
 	}
 
-	public setDiscoveryValue(
+	private setDiscoveryValue(
 		payload: HassDiscoveryPayload,
 		property: string,
 		node: { values: Record<string, { value?: unknown }> },
