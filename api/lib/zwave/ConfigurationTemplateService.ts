@@ -12,8 +12,6 @@ import {
 	gte as semverGte,
 	lte as semverLte,
 } from 'semver'
-import { ConfigManager } from '@zwave-js/config'
-import { deviceConfigPriorityDir } from '../Constants.ts'
 import { getErrorMessage } from '../errors.ts'
 
 import type {
@@ -24,13 +22,12 @@ import type {
 	TemplatePersistencePort,
 	TemplateUtilsPort,
 	TemplateNodeState,
+	TemplateConfigManagerPort,
 	ServiceLogger,
 } from './ports.ts'
 
 // Re-export types so ZwaveClient can import from one place
 export type { ZUIConfigurationTemplate, ZUIConfigurationTemplateValue }
-
-const configManager = new ConfigManager({ deviceConfigPriorityDir })
 
 export class ConfigurationTemplateService {
 	private _templates: ZUIConfigurationTemplate[]
@@ -39,6 +36,7 @@ export class ConfigurationTemplateService {
 	private readonly _nodes: TemplateNodeStorePort
 	private readonly _persistence: TemplatePersistencePort
 	private readonly _utils: TemplateUtilsPort
+	private readonly _configManager: TemplateConfigManagerPort
 	private readonly _logger: ServiceLogger
 
 	constructor(
@@ -48,6 +46,7 @@ export class ConfigurationTemplateService {
 		utils: TemplateUtilsPort,
 		logger: ServiceLogger,
 		initialTemplates: ZUIConfigurationTemplate[],
+		configManager: TemplateConfigManagerPort,
 	) {
 		this._driver = driver
 		this._nodes = nodes
@@ -55,6 +54,7 @@ export class ConfigurationTemplateService {
 		this._utils = utils
 		this._logger = logger
 		this._templates = initialTemplates
+		this._configManager = configManager
 	}
 
 	getConfigurationTemplates(): ZUIConfigurationTemplate[] {
@@ -79,9 +79,9 @@ export class ConfigurationTemplateService {
 			throw new Error('Invalid deviceId: non-numeric components')
 		}
 
-		await configManager.loadDeviceIndex()
+		await this._configManager.loadDeviceIndex()
 
-		const device = await configManager.lookupDevice(
+		const device = await this._configManager.lookupDevice(
 			manufacturerId,
 			productType,
 			productId,

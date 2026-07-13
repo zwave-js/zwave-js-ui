@@ -1073,6 +1073,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			templateUtilsPort,
 			logger,
 			jsonStore.get(store.configurationTemplates),
+			configManager,
 		)
 
 		this._devices = {}
