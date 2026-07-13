@@ -369,6 +369,7 @@ export class NodeProjector {
 		zwaveNode: ZWaveNode,
 		port: PhysicalNodeProjectionPort,
 	): void {
+		// Resolve the driver per projection so restarted generations cannot remain captured
 		const driver = port.getDriver()
 		const toHex = (value: number | undefined): string =>
 			value === undefined ? '0xXXXX' : utils.num2hex(value)
