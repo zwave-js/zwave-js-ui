@@ -471,6 +471,126 @@ describe('Socket contract: inbound ACK APIs', () => {
 			expect(result.result).toStrictEqual({})
 			expect(result.result).not.toBe('parsed-capture')
 		})
+
+		it('awaits zniffer.stop() for "stop" and strips the undefined result from the ack', async () => {
+			harness.testHooks.setGateway(createFakeGateway() as any)
+			const zniffer = createFakeZniffer()
+			harness.testHooks.setZnifferManager(zniffer as any)
+			const client = await connectedClient()
+
+			const result = await emit(client, 'ZNIFFER_API', {
+				apiName: 'stop',
+			})
+			expect(zniffer.stop).toHaveBeenCalledOnce()
+			expect(result).toStrictEqual({
+				success: true,
+				message: 'Success ZNIFFER api call',
+				api: 'stop',
+			})
+			expect('result' in result).toBe(false)
+		})
+
+		it('routes "clear" to the synchronous zniffer.clear() and strips the undefined result', async () => {
+			harness.testHooks.setGateway(createFakeGateway() as any)
+			const zniffer = createFakeZniffer()
+			harness.testHooks.setZnifferManager(zniffer as any)
+			const client = await connectedClient()
+
+			const result = await emit(client, 'ZNIFFER_API', {
+				apiName: 'clear',
+			})
+			expect(zniffer.clear).toHaveBeenCalledOnce()
+			expect(result).toStrictEqual({
+				success: true,
+				message: 'Success ZNIFFER api call',
+				api: 'clear',
+			})
+			expect('result' in result).toBe(false)
+		})
+
+		it('routes "getFrames" to zniffer.getFrames() and returns the frames array as result', async () => {
+			harness.testHooks.setGateway(createFakeGateway() as any)
+			const frames = [{ id: 1 }, { id: 2 }]
+			const zniffer = createFakeZniffer({
+				getFrames: vi.fn(() => frames),
+			} as any)
+			harness.testHooks.setZnifferManager(zniffer as any)
+			const client = await connectedClient()
+
+			const result = await emit(client, 'ZNIFFER_API', {
+				apiName: 'getFrames',
+			})
+			expect(zniffer.getFrames).toHaveBeenCalledOnce()
+			expect(result).toStrictEqual({
+				success: true,
+				message: 'Success ZNIFFER api call',
+				result: frames,
+				api: 'getFrames',
+			})
+		})
+
+		it('forwards data.frequency to zniffer.setFrequency() for "setFrequency"', async () => {
+			harness.testHooks.setGateway(createFakeGateway() as any)
+			const zniffer = createFakeZniffer()
+			harness.testHooks.setZnifferManager(zniffer as any)
+			const client = await connectedClient()
+
+			const result = await emit(client, 'ZNIFFER_API', {
+				apiName: 'setFrequency',
+				frequency: 2,
+			})
+			expect(zniffer.setFrequency).toHaveBeenCalledWith(2)
+			expect(result).toStrictEqual({
+				success: true,
+				message: 'Success ZNIFFER api call',
+				api: 'setFrequency',
+			})
+			expect('result' in result).toBe(false)
+		})
+
+		it('forwards data.channelConfig to zniffer.setLRChannelConfig() for "setLRChannelConfig"', async () => {
+			harness.testHooks.setGateway(createFakeGateway() as any)
+			const zniffer = createFakeZniffer()
+			harness.testHooks.setZnifferManager(zniffer as any)
+			const client = await connectedClient()
+
+			const channelConfig = { channel1: 0, channel2: 1, channel3: 2 }
+			const result = await emit(client, 'ZNIFFER_API', {
+				apiName: 'setLRChannelConfig',
+				channelConfig,
+			})
+			expect(zniffer.setLRChannelConfig).toHaveBeenCalledWith(
+				channelConfig,
+			)
+			expect(result).toStrictEqual({
+				success: true,
+				message: 'Success ZNIFFER api call',
+				api: 'setLRChannelConfig',
+			})
+			expect('result' in result).toBe(false)
+		})
+
+		it('routes "saveCaptureToFile" to zniffer.saveCaptureToFile() and returns the saved path', async () => {
+			harness.testHooks.setGateway(createFakeGateway() as any)
+			const zniffer = createFakeZniffer({
+				saveCaptureToFile: vi.fn(() =>
+					Promise.resolve('/tmp/capture.zlf'),
+				),
+			} as any)
+			harness.testHooks.setZnifferManager(zniffer as any)
+			const client = await connectedClient()
+
+			const result = await emit(client, 'ZNIFFER_API', {
+				apiName: 'saveCaptureToFile',
+			})
+			expect(zniffer.saveCaptureToFile).toHaveBeenCalledOnce()
+			expect(result).toStrictEqual({
+				success: true,
+				message: 'Success ZNIFFER api call',
+				result: '/tmp/capture.zlf',
+				api: 'saveCaptureToFile',
+			})
+		})
 	})
 
 	describe('SUBSCRIBE', () => {
