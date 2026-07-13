@@ -136,9 +136,9 @@ function createStoreConfig<T>(
 async function loadFile<T>(
 	mod: StorageHelperClass,
 	config: StoreFile<T>,
-): Promise<{ file: string; data: unknown }> {
+): Promise<unknown> {
 	await mod.init(createStoreConfig(config))
-	return { file: config.file, data: mod.store[config.file] }
+	return mod.store[config.file]
 }
 
 beforeAll(async () => {
@@ -162,17 +162,14 @@ describe('#jsonStore', () => {
 		})
 
 		it('data returned', async () => {
-			const toReturn = {
-				file: 'foo',
-				data: { bar: 'mybar', a: 'a', b: 'c' },
-			}
+			const data = { bar: 'mybar', a: 'a', b: 'c' }
 			const mod = new StorageHelper({
-				readFile: readFileResolves(toReturn.data),
+				readFile: readFileResolves(data),
 			})
 
 			await expect(loadFile(mod, config)).resolves.toEqual({
-				file: toReturn.file,
-				data: { ...toReturn.data, ...config.default },
+				...data,
+				...config.default,
 			})
 		})
 
@@ -180,10 +177,7 @@ describe('#jsonStore', () => {
 			const mod = new StorageHelper({
 				readFile: readFileResolves(null),
 			})
-			await expect(loadFile(mod, config)).resolves.toEqual({
-				file: 'foo',
-				data: config.default,
-			})
+			await expect(loadFile(mod, config)).resolves.toEqual(config.default)
 		})
 
 		it('file not found, return default', async () => {
@@ -192,10 +186,7 @@ describe('#jsonStore', () => {
 					Object.assign(new Error('not found'), { code: 'ENOENT' }),
 				),
 			})
-			await expect(loadFile(mod, config)).resolves.toEqual({
-				file: 'foo',
-				data: config.default,
-			})
+			await expect(loadFile(mod, config)).resolves.toEqual(config.default)
 		})
 	})
 
