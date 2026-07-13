@@ -43,7 +43,7 @@ import {
 	createValue,
 	createZWaveNode,
 } from './nodeFixtures.ts'
-import { requireDefined } from './serviceTestSupport.ts'
+import { requireDefined } from '../testUtils.ts'
 
 class ControllerNodeMap extends Map<number, ZWaveNode> {
 	getOrThrow(key: number): ZWaveNode {

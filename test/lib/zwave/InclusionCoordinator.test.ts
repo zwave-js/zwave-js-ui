@@ -25,7 +25,8 @@ import type {
 	InclusionServerManagerPort,
 	InclusionSocketPort,
 } from '#api/lib/zwave/ports.ts'
-import { createDeferred, createServiceLogger } from './serviceTestSupport.ts'
+import { createServiceLogger } from './serviceTestSupport.ts'
+import { createDeferred } from '../testUtils.ts'
 
 function createDriverPort(
 	overrides: Partial<

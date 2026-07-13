@@ -28,10 +28,9 @@ import type {
 	StagedFirmwareNodeUpdate,
 } from '#api/lib/zwave/ports.ts'
 import {
-	createDeferred,
 	createServiceLogger,
-	requireDefined,
 } from './serviceTestSupport.ts'
+import { createDeferred, requireDefined } from '../testUtils.ts'
 
 const successfulFirmwareUpdate: FirmwareUpdateResult = {
 	success: true,

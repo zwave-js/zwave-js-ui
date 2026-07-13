@@ -18,6 +18,9 @@ import type {
 	ZUIValueId,
 	ZUIValueIdState,
 } from '#api/lib/ZwaveClient.ts'
+import { assertDefined, requireDefined } from '../testUtils.ts'
+
+export { assertDefined, requireDefined }
 
 /**
  * A complete `MqttConfig` that stays local with `store: false` (so
@@ -103,21 +106,6 @@ export function state(
 	text: string,
 ): ZUIValueIdState {
 	return { value, text }
-}
-
-export function requireDefined<T>(value: T, message: string): NonNullable<T> {
-	if (value === undefined || value === null) {
-		throw new TypeError(message)
-	}
-	return value
-}
-
-/** Narrows a previously bound fixture value after enforcing its presence. */
-export function assertDefined<T>(
-	value: T,
-	message: string,
-): asserts value is NonNullable<T> {
-	requireDefined(value, message)
 }
 
 /**
