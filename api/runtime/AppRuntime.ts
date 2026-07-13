@@ -34,65 +34,23 @@ const logger = loggers.module('Runtime')
 // type-checking against it.
 export const backupManagerOwner = Symbol()
 
-/**
- * Whether authentication is currently enabled, per the persisted settings.
- *
- * Pure read-through of `jsonStore`/`store` (both already stable, always
- * "live" singletons - `jsonStore.get()` never returns a stale snapshot), so
- * this doesn't need to be an `AppRuntime` instance method: there is no
- * separate "current" state to resolve here beyond what `jsonStore` itself
- * already tracks. Exported standalone (rather than nested inside
- * `api/routes/auth.ts`, which needs it too) so `AppRuntime` itself can also
- * call it - during `startGateway()`'s `SESSION_SECRET` check - without a
- * runtime-depends-on-routes import.
- */
+// Standalone rather than an AppRuntime method so routes and the runtime can both call it without a circular import
 export function isAuthEnabled(): boolean {
 	return jsonStore.get(store.settings).gateway?.authEnabled === true
 }
 
-/**
- * Minimal shape shared by the collaborators `AppRuntime` starts/stops across
- * the process's lifetime (`Gateway`, `ZnifferManager` both structurally
- * satisfy this). Not load-bearing for behavior - `AppRuntime` still calls
- * each collaborator's own concrete methods directly, since their real
- * signatures/semantics differ - this only documents "these are the things
- * with a start/stop lifecycle `AppRuntime` coordinates" and gives the
- * shutdown helper below a single, honest type to accept.
- */
+// Structural type for anything AppRuntime shuts down (Gateway, ZnifferManager), used only by the shutdown helper below
 export interface ManagedService {
 	close(): Promise<void>
 }
 
 export interface AppRuntimeDeps {
-	/**
-	 * Resolves the live Socket.IO server bound by `setupSocket()`
-	 * (`socketManager.bindServer()`). This is a getter - not the `SocketServer`
-	 * itself - because `AppRuntime` is constructed once at module load,
-	 * before `startServer()` has bound Socket.IO to an HTTP server; by the
-	 * time `startGateway()`/`startZniffer()` actually run (after
-	 * `setupSocket(server)` in `startServer()`), the getter resolves to a
-	 * real, bound server.
-	 */
+	// Getter, not a direct value, since AppRuntime is constructed before setupSocket() binds the real server
 	getSocketServer(): SocketServer
 }
 
-/**
- * Owns every backend collaborator whose identity/presence changes across
- * the process's lifetime - the live `Gateway`, the live `ZnifferManager`,
- * the dynamically-loaded plugin instances and their mount router, the
- * in-progress-restart flag, and the (test-replaceable) serial-port
- * enumerator - plus read-through access to the backup/debug manager
- * singletons, persisted settings, and bootstrapped snippets.
- *
- * Every accessor resolves the CURRENT value on each call - nothing is
- * captured once and cached - so a gateway/zniffer replaced mid-restart (or
- * reset by a test via the harness's `__testHooks`) is immediately visible
- * to the very next call, from any consumer (HTTP route handler, Socket.IO
- * handler, etc.), without needing to reconstruct or re-fetch the runtime
- * itself. See `test/runtime/AppRuntime.test.ts`'s "a later call observes a
- * replaced gateway" regression, and the equivalent HTTP-level regression in
- * `test/lib/http/settings.test.ts`.
- */
+// Owns the backend collaborators whose identity changes across the process lifetime (gateway, zniffer, plugins)
+// Accessors always resolve the current value rather than caching, so a mid-restart replacement is immediately visible to every consumer
 export class AppRuntime {
 	private gateway?: Gateway
 	private zniffer?: ZnifferManager
@@ -100,17 +58,10 @@ export class AppRuntime {
 	private plugins: CustomPlugin[] = []
 	private restarting = false
 
-	// Indirection around `Driver.enumerateSerialPorts` (real local/mDNS
-	// enumeration) so `GET /api/serial-ports` can have its collaborator
-	// replaced with a deterministic fake in tests, without ever touching
-	// real serial hardware or the network. Production always uses the real
-	// implementation; only the test-only seam ever replaces it.
+	// Indirection so tests can replace serial-port enumeration with a fake, without touching real hardware
 	private enumerateSerialPortsFn: typeof Driver.enumerateSerialPorts =
 		Driver.enumerateSerialPorts.bind(Driver)
-	// Tracks whether `enumerateSerialPortsFn` currently points at the real
-	// production collaborator (true) or a test-injected fake (false). Only
-	// read by the `__testHooks` observability seam in `api/app.ts` -
-	// production never consults it.
+	// Tracks whether enumerateSerialPortsFn is the real implementation or a test-injected fake
 	private enumerateSerialPortsIsProductionDefault = true
 
 	private defaultSnippets: utils.Snippet[] = []
@@ -121,8 +72,6 @@ export class AppRuntime {
 		this.deps = deps
 	}
 
-	// ### Gateway ###
-
 	getGateway(): Gateway | undefined {
 		return this.gateway
 	}
@@ -131,11 +80,7 @@ export class AppRuntime {
 		this.gateway = value
 	}
 
-	/**
-	 * Resolves the current gateway and preserves the legacy native-TypeError
-	 * message when it is absent. The property is supplied by the caller so
-	 * each existing failure retains the property name it historically exposed.
-	 */
+	// Hand-crafts the same TypeError a missing gateway would throw natively, so callers preserve their pre-refactor error text
 	requireGateway(property: string): Gateway {
 		if (this.gateway === undefined) {
 			throw new TypeError(
@@ -144,8 +89,6 @@ export class AppRuntime {
 		}
 		return this.gateway
 	}
-
-	// ### Zniffer ###
 
 	getZniffer(): ZnifferManager | undefined {
 		return this.zniffer
@@ -164,8 +107,6 @@ export class AppRuntime {
 		return this.zniffer
 	}
 
-	// ### Plugins / plugin router ###
-
 	getPluginsRouter(): Router | undefined {
 		return this.pluginsRouter
 	}
@@ -178,8 +119,6 @@ export class AppRuntime {
 		return this.plugins
 	}
 
-	// ### Restart state ###
-
 	isRestarting(): boolean {
 		return this.restarting
 	}
@@ -188,17 +127,11 @@ export class AppRuntime {
 		this.restarting = value
 	}
 
-	// ### Serial port enumerator ###
-
 	getEnumerateSerialPorts(): typeof Driver.enumerateSerialPorts {
 		return this.enumerateSerialPortsFn
 	}
 
-	/**
-	 * Replaces the collaborator `GET /api/serial-ports` calls to enumerate
-	 * local/mDNS-remote serial ports. Passing `undefined` restores the real
-	 * production `Driver.enumerateSerialPorts` implementation.
-	 */
+	// Passing undefined restores the real production enumerateSerialPorts implementation
 	setEnumerateSerialPorts(
 		value: typeof Driver.enumerateSerialPorts | undefined,
 	): void {
@@ -216,13 +149,7 @@ export class AppRuntime {
 		return this.enumerateSerialPortsIsProductionDefault
 	}
 
-	// ### Backup / debug managers ###
-	//
-	// Both are stable-identity singletons (never replaced/swapped, unlike
-	// the gateway/zniffer above) - these accessors exist so routes reach
-	// them through the same single seam as everything else `AppRuntime`
-	// owns, rather than importing the module-level singletons directly.
-
+	// Stable-identity singletons, exposed here so routes reach them through the same seam as everything else AppRuntime owns
 	getBackupManager(): typeof backupManager {
 		return backupManager
 	}
@@ -231,21 +158,11 @@ export class AppRuntime {
 		return debugManager
 	}
 
-	// ### Settings ###
-
 	getSettings(): PersistedSettings {
 		return jsonStore.get(store.settings)
 	}
 
-	// ### Snippets ###
-
-	/**
-	 * Idempotent by construction: clears `defaultSnippets` before
-	 * repopulating, so calling this more than once (e.g. an HTTP test
-	 * harness invoking the `__testHooks` seam for more than one suite
-	 * sharing this module's cache) can never duplicate entries. Production
-	 * only ever calls this once, at startup, so this is purely defensive.
-	 */
+	// Clears defaultSnippets first so repeated calls can't duplicate entries, though production only calls this once at startup
 	async loadSnippets(): Promise<void> {
 		this.defaultSnippets.length = 0
 		const localSnippetsDir = utils.joinPath(false, 'snippets')
@@ -282,31 +199,15 @@ export class AppRuntime {
 		return [...snippetsCache, ...this.defaultSnippets, ...snippets]
 	}
 
-	// ### Startup / shutdown coordination ###
-
 	setupLogging(
 		settings: { gateway?: utils.DeepPartial<GatewayConfig> } | undefined,
 	): void {
-		// Original: `settings ? settings.gateway : null`. `setupAll`'s `config`
-		// param has no `| undefined`/`| null` in its own declared type, but
-		// `sanitizedConfig()` (which it delegates to) normalizes any falsy
-		// value - `null`, `undefined`, or `{}` - identically via
-		// `config || ({} as LoggerConfig)`, so falling back to `{}` here has
-		// the exact same effect at runtime as the original's `null`.
+		// sanitizedConfig() normalizes null, undefined, and {} identically, so falling back to {} here is safe
 		loggers.setupAll(settings?.gateway ?? {})
 	}
 
 	async startGateway(settings: PersistedSettings): Promise<void> {
-		// Definite assignment assertions (`!`), not non-null assertions - these
-		// mirror `SocketManager.ts`'s pre-existing `io!: SocketServer` pattern:
-		// each is assigned conditionally just below (only when
-		// `settings.mqtt`/`settings.zwave` is present) and then passed on to
-		// `backupManager.init`/`Gateway`'s constructor/`PluginContext`, all of
-		// which are themselves typed as requiring an always-present
-		// `MqttClient`/`ZwaveClient` (see the comment below). Declaring these
-		// as `MqttClient | undefined` instead would only push the same
-		// already-tolerated mismatch to three separate call sites below
-		// instead of one declaration.
+		// Definite assignment (!) centralizes a known type/runtime mismatch here instead of scattering | undefined handling across each call site below
 		let mqtt!: MqttClient
 		let zwave!: ZWaveClient
 
@@ -318,42 +219,22 @@ export class AppRuntime {
 		}
 
 		if (settings.mqtt) {
-			// Narrow, documented boundary: `settings.mqtt` is a `DeepPartial
-			// <MqttConfig>` here (whatever subset was actually persisted), but
-			// `MqttClient`'s constructor is typed against the fully-populated
-			// `MqttConfig` it's actually written against. In practice the
-			// frontend always saves a complete `mqtt` section (never a sparse
-			// partial), so this holds at runtime; this cast documents that
-			// assumption instead of asserting it three-plus call sites up via
-			// a blanket `as Settings`. No new validation is added.
+			// Cast is safe since the frontend always persists a complete mqtt section, never a sparse partial
 			mqtt = new MqttClient(settings.mqtt as MqttConfig)
 		}
 
 		if (settings.zwave) {
-			// Same boundary as `settings.mqtt` above, for `ZwaveConfig`.
+			// Same boundary as settings.mqtt above, for ZwaveConfig
 			zwave = new ZWaveClient(
 				settings.zwave as ZwaveConfig,
 				this.deps.getSocketServer(),
 			)
 		}
 
-		// Same boundary as `settings.mqtt`/`settings.zwave` above: `zwave`/
-		// `mqtt` are declared `ZWaveClient`/`MqttClient` (not `| undefined`)
-		// above so every other use below type-checks against their real,
-		// fully-populated constructor parameter types; they may genuinely be
-		// `undefined` here if `settings.zwave`/`settings.mqtt` was falsy.
-		// `BackupManager.init`/`Gateway`'s constructor/`PluginContext` are
-		// themselves typed as always requiring a `ZwaveClient`/`MqttClient` -
-		// tightening that (out of scope here, and true of `Gateway`'s own
-		// `zwave`/`mqtt` getters too) would be a `BackupManager.ts`/
-		// `Gateway.ts`/`CustomPlugin.ts` change, not part of this layer.
-		// Passing possibly-`undefined` values through this pre-existing,
-		// tolerated mismatch is intentional, preserved behavior, not new.
+		// zwave/mqtt may be undefined here despite their non-optional type; the mismatch is tolerated, matching BackupManager/Gateway's own accepted types
 		backupManager.init(zwave, backupManagerOwner)
 
-		// Unlike `mqtt`/`zwave`, `Gateway` is always constructed (even when
-		// `settings.gateway` itself is `undefined`) - `GatewayConfig |
-		// undefined` is what `Gateway`'s constructor already accepts.
+		// Gateway is always constructed, unlike mqtt/zwave, since its constructor already accepts GatewayConfig | undefined
 		const gw = new Gateway(settings.gateway as GatewayConfig, zwave, mqtt)
 		this.setGateway(gw)
 
@@ -363,7 +244,6 @@ export class AppRuntime {
 		const pluginsRouter = express.Router()
 		this.setPluginsRouter(pluginsRouter)
 
-		// load custom plugins
 		if (pluginsConfig && Array.isArray(pluginsConfig)) {
 			for (const plugin of pluginsConfig) {
 				try {
@@ -395,11 +275,7 @@ export class AppRuntime {
 
 	startZniffer(settings: utils.DeepPartial<ZnifferConfig> | undefined): void {
 		if (settings) {
-			// Same documented boundary as `startGateway`'s MqttClient/Gateway/
-			// ZWaveClient construction: `settings` here is whatever (possibly
-			// sparse) subset of `ZnifferConfig` was actually persisted, cast to
-			// the fully-populated shape `ZnifferManager`'s constructor is
-			// written against.
+			// Same cast boundary as startGateway's mqtt/zwave construction, for ZnifferConfig
 			this.setZniffer(
 				new ZnifferManager(
 					settings as ZnifferConfig,
@@ -427,14 +303,7 @@ export class AppRuntime {
 		}
 	}
 
-	/**
-	 * Closes the current gateway (if any) and destroys any loaded plugins -
-	 * exactly what `gracefuShutdown()` in `api/app.ts` does on
-	 * `SIGINT`/`SIGTERM`. Safe (guarded) - unlike route access above,
-	 * `gracefuShutdown()`'s pre-existing `if (gw) await gw.close()` already
-	 * guards against a missing gateway, so this preserves that same
-	 * guarded behavior rather than the unguarded quirk.
-	 */
+	// Guards for a missing gateway, unlike requireGateway's throw, matching gracefulShutdown's existing pattern
 	async shutdown(): Promise<void> {
 		await this.closeIfPresent(this.gateway)
 		await this.destroyPlugins()

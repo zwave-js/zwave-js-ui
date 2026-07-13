@@ -36,10 +36,7 @@ interface StoreFileEntry {
 	isRoot?: boolean
 }
 
-/**
- *
- * Sort children folders first and files after
- */
+// Sort children folders first and files after
 function sortStore(store: StoreFileEntry[]) {
 	return store.sort((a, b) => {
 		if (a.children && !b.children) {
@@ -85,9 +82,7 @@ async function parseDir(dir: string): Promise<StoreFileEntry[]> {
 	return toReturn
 }
 
-/**
- * Get the `path` param from a request. Throws if the path is not safe - that is if it escapes the storeDir.
- */
+// Throws if the resolved path escapes storeDir
 async function getSafePath(req: Request | string, resolveReal = true) {
 	const reqPath = typeof req === 'string' ? req : req.query.path
 	return utils.resolveSafeStorePath(reqPath, storeDir, resolveReal)
@@ -121,7 +116,7 @@ const Storage = diskStorage({
 
 const multerUpload = multer({
 	storage: Storage,
-}).array('upload', 1) // Field name and max count
+}).array('upload', 1)
 
 export interface StoreRoutesDeps {
 	apisLimiter: RateLimitRequestHandler
@@ -133,7 +128,6 @@ export function registerStoreRoutes(
 	runtime: AppRuntime,
 	{ apisLimiter, storeLimiter }: StoreRoutesDeps,
 ): void {
-	// if no path provided return all store dir files/folders, otherwise return the file content
 	app.get(
 		'/api/store',
 		storeLimiter,
@@ -157,7 +151,6 @@ export function registerStoreRoutes(
 						// lgtm [js/path-injection]
 						data = await readFile(reqPath, 'utf8')
 					} else {
-						// read directory
 						// lgtm [js/path-injection]
 						data = await parseDir(reqPath)
 					}
@@ -283,16 +276,14 @@ export function registerStoreRoutes(
 				})
 			})
 
-			// on stream closed we can end the request
 			archive.on('end', function () {
 				logger.debug('zip archive ready')
 			})
 
-			// set the archive name
 			res.attachment('zwave-js-ui-store.zip')
 			res.setHeader('Content-Type', 'application/zip')
 
-			// use res as stream so I don't need to create a temp file
+			// Pipes directly to res to avoid staging a temp file
 			archive.pipe(res)
 
 			for (const f of files) {
@@ -342,26 +333,12 @@ export function registerStoreRoutes(
 			let file: any
 			let isRestore = false
 			try {
-				// read files from request
 				await multerPromise(multerUpload, req, res)
 
 				isRestore = req.body.restore === 'true'
 				const folder = req.body.folder
 
-				// Preserved quirk: intentionally unguarded. `req.files` is
-				// typed as possibly `undefined` (and possibly a
-				// `{ [fieldname]: File[] }` map for other multer configs),
-				// but this route's `multerUpload` is always `.array(...)`
-				// so it's a `File[]` whenever multer actually ran. A
-				// non-multipart request never invokes multer's file
-				// handling at all, leaving `req.files` `undefined` - in
-				// that case this line must throw the same native
-				// "Cannot read properties of undefined (reading '0')"
-				// TypeError as before (see the "preserved quirk" test in
-				// store.test.ts), not silently fall through to the
-				// friendlier "No file uploaded" guard below. A single
-				// narrow cast (rather than optional chaining) keeps that
-				// throw behavior identical.
+				// Cast rather than optional chaining, so a non-multipart request still throws the native TypeError instead of falling through silently
 				file = (req.files as Express.Multer.File[])[0]
 
 				if (!file || !file.path) {
@@ -369,7 +346,7 @@ export function registerStoreRoutes(
 				}
 
 				if (isRestore) {
-					// Stage, reject symlinks escaping the store, then merge in.
+					// Stage, reject symlinks escaping the store, then merge in
 					const stageDir = await mkdtemp(
 						path.join(storeDir, '.restore-'),
 					)
@@ -378,7 +355,7 @@ export function registerStoreRoutes(
 						await utils.assertNoEscapingSymlinks(stageDir, stageDir)
 						await cp(stageDir, storeDir, {
 							recursive: true,
-							// keep in-store links (e.g. *_current.log) as links, don't copy their targets
+							// Keep in-store links (e.g. *_current.log) as links rather than copying their targets
 							verbatimSymlinks: true,
 						})
 					} finally {

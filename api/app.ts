@@ -520,8 +520,7 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 	/**
 	 * Binds socketManager to `server`
 	 */
-	
-function setupSocket(server: HttpServer) {
+	function setupSocket(server: HttpServer) {
 		socketManager.bindServer(server)
 
 		socketManager.io.on('connection', (socket) => {
@@ -530,8 +529,6 @@ function setupSocket(server: HttpServer) {
 			socket.on(inboundEvents.init, (data, cb = noop) => {
 				let state = {} as any
 
-				// Preserved quirk: throws the historical TypeError if no gateway
-				// is currently attached.
 				const currentGw = runtime.requireGateway('zwave')
 				if (currentGw.zwave) {
 					state = currentGw.zwave.getState()

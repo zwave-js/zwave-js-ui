@@ -23,7 +23,6 @@ export function registerImportExportRoutes(
 	runtime: AppRuntime,
 	{ apisLimiter }: ImportExportRoutesDeps,
 ): void {
-	// get config
 	app.get(
 		'/api/exportConfig',
 		apisLimiter,
@@ -37,28 +36,15 @@ export function registerImportExportRoutes(
 		},
 	)
 
-	// import config
 	app.post(
 		'/api/importConfig',
 		apisLimiter,
 		isAuthenticated,
 		async function (req, res) {
 			try {
-				// Preserved quirk: a missing gateway reports the historical
-				// native-TypeError message.
-				//
-				// `runtime.requireGateway('zwave')` is deliberately re-resolved
-				// immediately before every distinct use below - including each
-				// individual `callApi`/`storeDevices` call inside the loop -
-				// rather than captured once into a local `gw` and reused
-				// across the many `await`s this handler crosses. This mirrors
-				// the pre-extraction original (a module-scope, reassignable
-				// `gw` binding that every access re-read live): a gateway
-				// replaced mid-import (e.g. a concurrent `POST /api/restart`)
-				// must be honored by every subsequent operation, never masked
-				// by a stale reference captured before the replacement. See
-				// `test/lib/http/importExport.test.ts`'s "gateway swapped
-				// mid-import" regression.
+				// Re-resolved before each call rather than captured once, so a
+				// gateway swapped mid-import (e.g. a concurrent restart) is
+				// honored by every subsequent operation
 				if (!runtime.requireGateway('zwave').zwave) {
 					throw Error('Z-Wave client not inited')
 				}
@@ -106,7 +92,6 @@ export function registerImportExportRoutes(
 						continue
 					}
 
-					// All API calls expect nodeId to be a number, so convert it here.
 					const nodeIdNumber = Number(nodeId)
 
 					if (utils.hasProperty(node, 'name')) {

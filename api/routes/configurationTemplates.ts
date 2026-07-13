@@ -9,18 +9,15 @@ export interface ConfigurationTemplatesRoutesDeps {
 }
 
 /**
- * All routes below intentionally call `runtime.requireGateway('zwave')`, which
- * throws a bare, unguarded `TypeError` if no gateway is currently attached.
- * This preserves the original code's unguarded `gw.zwave.xxx()` access -
- * see `AppRuntime.requireGateway()`'s doc comment for the full rationale.
- * Callers must NOT add a presence guard before using the result.
+ * Every `runtime.requireGateway('zwave')` call below is deliberately unguarded,
+ * preserving the legacy crash-on-missing-gateway behavior - see
+ * `AppRuntime.requireGateway()` for the full rationale
  */
 export function registerConfigurationTemplatesRoutes(
 	app: express.Express,
 	runtime: AppRuntime,
 	{ apisLimiter }: ConfigurationTemplatesRoutesDeps,
 ): void {
-	// get all configuration templates
 	app.get(
 		'/api/configuration-templates',
 		apisLimiter,
@@ -37,7 +34,6 @@ export function registerConfigurationTemplatesRoutes(
 		},
 	)
 
-	// create a configuration template from a node
 	app.post(
 		'/api/configuration-templates',
 		apisLimiter,
@@ -72,7 +68,7 @@ export function registerConfigurationTemplatesRoutes(
 		},
 	)
 
-	// export all configuration templates (must be before :id routes)
+	// Placed before the :id routes so Express doesn't match "export" as an :id
 	app.get(
 		'/api/configuration-templates/export',
 		apisLimiter,
@@ -93,7 +89,7 @@ export function registerConfigurationTemplatesRoutes(
 		},
 	)
 
-	// import configuration templates (must be before :id routes)
+	// Placed before the :id routes so Express doesn't match "import" as an :id
 	app.post(
 		'/api/configuration-templates/import',
 		apisLimiter,
@@ -107,7 +103,6 @@ export function registerConfigurationTemplatesRoutes(
 						message: 'data must be an array of templates',
 					})
 				}
-				// Validate each template has required fields
 				for (const t of templates) {
 					if (!t.name || !t.deviceId || !Array.isArray(t.values)) {
 						return res.json({
@@ -131,7 +126,6 @@ export function registerConfigurationTemplatesRoutes(
 		},
 	)
 
-	// get device configuration params from zwave-js config DB
 	app.get(
 		'/api/configuration-templates/device-params/:deviceId',
 		apisLimiter,
@@ -148,7 +142,6 @@ export function registerConfigurationTemplatesRoutes(
 		},
 	)
 
-	// update a configuration template
 	app.put(
 		'/api/configuration-templates/:id',
 		apisLimiter,
@@ -182,7 +175,6 @@ export function registerConfigurationTemplatesRoutes(
 		},
 	)
 
-	// delete a configuration template
 	app.delete(
 		'/api/configuration-templates/:id',
 		apisLimiter,
@@ -209,7 +201,6 @@ export function registerConfigurationTemplatesRoutes(
 		},
 	)
 
-	// apply a configuration template to a node
 	app.post(
 		'/api/configuration-templates/:id/apply',
 		apisLimiter,

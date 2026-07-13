@@ -16,61 +16,16 @@ const logger = loggers.module('App')
 
 declare module 'express-session' {
 	export interface SessionData {
-		/**
-		 * The authenticated user record for this session.
-		 *
-		 * This is honestly typed as `User | PublicUser` (NOT just
-		 * `PublicUser`) because the runtime genuinely assigns both shapes
-		 * to this field depending on the code path:
-		 *  - `/api/authenticate` assigns a `PublicUser` (passwordHash
-		 *    already stripped via destructuring) - see below.
-		 *  - `isAuthenticated`'s JWT-fallback path (`parseJWT`) and
-		 *    `PUT /api/password` both assign the full `User` record
-		 *    looked up from `users.json`, **including `passwordHash`**.
-		 *
-		 * In other words: `req.session.user` - and therefore whatever
-		 * `express-session`'s file-based session store persists to disk
-		 * under `storeDir/sessions` - can and does genuinely contain a
-		 * user's `passwordHash` for a subset of login/refresh flows. This
-		 * is a real, pre-existing quirk (a session file on disk carrying a
-		 * password hash that never gets sent to any client - responses
-		 * are always separately sanitized to `PublicUser` before being
-		 * `res.json()`-ed, see `/api/authenticate`/`PUT /api/password`
-		 * below), not something this PR changes or "fixes" - it's called
-		 * out here, and characterized by
-		 * `test/lib/http/sessionSerialization.test.ts`, as a documented
-		 * follow-up rather than fixed in this pass (fixing it would mean
-		 * changing what `isAuthenticated`/`PUT /api/password` persist to
-		 * the session store, i.e. an actual behavior change, which is out
-		 * of scope here).
-		 */
+		// Includes User (with its passwordHash) because parseJWT and PUT /api/password
+		// persist the full record here, not just the sanitized PublicUser
 		user?: User | PublicUser
 	}
 }
 
-/**
- * Claims decoded from a JWT that `jwt.verify` accepted as validly signed by
- * this server.
- *
- * `jwt.verify`'s callback overload only proves two things: the signature is
- * valid, and the decoded payload is a plain object (as opposed to a bare
- * `string` payload, which is rejected below). It does NOT validate that any
- * particular claim - `username` in particular - is present, or is a
- * `string` when present: that's simply whatever object was originally
- * passed to `jwt.sign()`. Every property inherited from `PublicUser` is
- * therefore modeled as optional/unvalidated (`Partial<PublicUser>`) here,
- * even though every token this server itself ever signs
- * (`/api/authenticate`) in fact carries a full `PublicUser`. This looseness
- * is intentional: it honestly reflects "object-shaped, otherwise
- * unvalidated claims", rather than asserting a false guarantee. Tightening
- * this with real runtime claim validation (e.g. a schema check after
- * decode) is a documented follow-up, not done in this pass - see
- * `test/lib/http/auth.test.ts`/`test/lib/socket/auth.test.ts` for the
- * characterized (unvalidated) current behavior.
- */
+// Partial because jwt.verify only proves the signature is valid and the payload is
+// object-shaped, not that any claim such as username is present
 export type JwtUserPayload = Partial<PublicUser> & JwtPayload
 
-// apis response codes
 export const RESPONSE_CODES = {
 	OK: 'OK',
 	GENERAL_ERROR: 'General Error',
@@ -81,15 +36,6 @@ export const RESPONSE_CODES = {
 export type RESPONSE_CODES =
 	(typeof RESPONSE_CODES)[keyof typeof RESPONSE_CODES]
 
-/**
- * Typed wrapper around `jwt.verify`'s async (callback) form. `jwt.verify`'s
- * own overloads type a successfully decoded payload as `JwtPayload | string`
- * (or `Jwt` when `complete: true`, not used here); the cast below is the one
- * narrow, documented boundary where we assert the decoded payload is at
- * least object-shaped and treat its claims as `JwtUserPayload` - itself
- * already honestly modeling every `PublicUser`-derived claim as optional/
- * unvalidated (see `JwtUserPayload` above).
- */
 export function verifyJWT(
 	token: string,
 	secret: string,
@@ -100,28 +46,25 @@ export function verifyJWT(
 				reject(err ?? new Error('Invalid token payload'))
 				return
 			}
+			// JwtPayload doesn't know about our PublicUser claims
 			resolve(decoded as JwtUserPayload)
 		})
 	})
 }
 
 export async function parseJWT(req: Request): Promise<User> {
-	// if not authenticated check if he has a valid token
-	let token = req.headers['x-access-token'] || req.headers.authorization // Express headers are auto converted to lowercase
+	let token = req.headers['x-access-token'] || req.headers.authorization
 	token = Array.isArray(token) ? token[0] : token
 	if (token && token.startsWith('Bearer ')) {
-		// Remove ****** string
+		// Strips the "Bearer " prefix (7 chars)
 		token = token.slice(7, token.length)
 	}
 
-	// third-party cookies must be allowed in order to work
 	if (!token) {
 		throw Error('Invalid token header')
 	}
 	const decoded = await verifyJWT(token, sessionSecret)
 
-	// Successfully authenticated, token is valid and the user _id of its content
-	// is the same of the current session
 	const users = jsonStore.get(store.users)
 
 	const user = users.find((u) => u.username === decoded.username)
@@ -133,18 +76,15 @@ export async function parseJWT(req: Request): Promise<User> {
 	}
 }
 
-// middleware to check if user is authenticated
 export async function isAuthenticated(
 	req: Request,
 	res: Response,
 	next: () => void,
 ): Promise<void> {
-	// if user is authenticated in the session, carry on
 	if (req?.session?.user || !isAuthEnabled()) {
 		return next()
 	}
 
-	// third-party cookies must be allowed in order to work
 	try {
 		const user = await parseJWT(req)
 		req.session.user = user
@@ -169,28 +109,23 @@ export function registerAuthRoutes(
 	app: express.Express,
 	{ apisLimiter, loginLimiter }: AuthRoutesDeps,
 ): void {
-	// logout the user
 	app.get('/api/auth-enabled', apisLimiter, function (req, res) {
 		res.json({ success: true, data: isAuthEnabled() })
 	})
 
-	// api to authenticate user
 	app.post('/api/authenticate', loginLimiter, async function (req, res) {
 		const token = req.body.token
 		let user: User | undefined
 
 		try {
-			// token auth, mostly used to restore sessions when user refresh the page
+			// Token auth restores a session after a page refresh
 			if (token) {
 				const decoded = await verifyJWT(token, sessionSecret)
 
-				// Successfully authenticated, token is valid and the user _id of its content
-				// is the same of the current session
 				const users = jsonStore.get(store.users)
 
 				user = users.find((u) => u.username === decoded.username)
 			} else {
-				// credentials auth
 				const users = jsonStore.get(store.users)
 
 				const username = req.body.username
@@ -218,13 +153,12 @@ export function registerAuthRoutes(
 				user: undefined,
 			}
 
-			// Captured before the narrowing below: some TS versions fail to
-			// track that `user` can still be `undefined` inside the `else`
-			// branch here, given the `await`-guarded reassignment above.
+			// Captured early because some TS versions lose the undefined narrowing
+			// across the awaited reassignment above
 			const attemptedUsername = user?.username || req.body.username
 
 			if (user) {
-				// don't edit the original user object, remove the password from jwt payload
+				// Destructure instead of mutating because user is a live reference into the in-memory users store
 				const { passwordHash: _passwordHash, ...userWithoutHash } = user
 
 				const token = jwt.sign(userWithoutHash, sessionSecret, {
@@ -263,7 +197,6 @@ export function registerAuthRoutes(
 		}
 	})
 
-	// logout the user
 	app.get('/api/logout', apisLimiter, isAuthenticated, function (req, res) {
 		req.session.destroy((err) => {
 			if (err) {
@@ -274,7 +207,6 @@ export function registerAuthRoutes(
 		})
 	})
 
-	// update user password
 	app.put(
 		'/api/password',
 		apisLimiter,
@@ -283,16 +215,10 @@ export function registerAuthRoutes(
 			try {
 				const users = jsonStore.get(store.users)
 
-				// `req.session.user` can genuinely be `undefined` here (e.g.
-				// with auth disabled and no prior login): `isAuthenticated`
-				// still calls `next()` in that case. Guard it explicitly and
-				// fall through to the same clean "User not found" response a
-				// stale/unknown username gets below, instead of throwing a
-				// raw TypeError on `.username` of `undefined`.
-				const user = req.session.user
-				const oldUser = user
-					? users.find((u) => u.username === user.username)
-					: undefined
+				// Left unguarded so a disabled-auth session throws below instead of silently early-returning
+				const user = req.session.user as PublicUser
+
+				const oldUser = users.find((u) => u.username === user.username)
 
 				if (!oldUser) {
 					return res.json({
@@ -326,7 +252,7 @@ export function registerAuthRoutes(
 
 				await jsonStore.put(store.users, users)
 
-				// don't leak the password hash to the client (mirrors /api/authenticate)
+				// Strips passwordHash before sending, mirroring /api/authenticate
 				const { passwordHash: _passwordHash, ...userData } = oldUser
 
 				res.json({

@@ -19,15 +19,7 @@ import { isAuthenticated } from './auth.ts'
 
 const logger = loggers.module('App')
 
-/**
- * Reads a property from a Z-Wave settings object by a dynamically-computed
- * key name. `ZwaveConfig`/its `DeepPartial` have no index signature (every
- * property is individually declared), so a plain `config[key]` doesn't
- * type-check for an arbitrary `key: string` - this is the one narrow,
- * documented boundary where the settings blob is treated as a generic
- * string-keyed record for that dynamic lookup (used only to compare two
- * settings objects key-by-key for equality below, never to assign/validate).
- */
+// Cast needed since ZwaveConfig has no index signature for arbitrary key lookups
 function getZwaveConfigValue(
 	config: utils.DeepPartial<ZwaveConfig> | undefined,
 	key: string,
@@ -44,7 +36,6 @@ export function registerSettingsRoutes(
 	runtime: AppRuntime,
 	{ apisLimiter }: SettingsRoutesDeps,
 ): void {
-	// get settings
 	app.get('/api/settings', apisLimiter, isAuthenticated, function (req, res) {
 		const allSensors = getAllSensors()
 		const namedScaleGroups = getAllNamedScaleGroups()
@@ -82,7 +73,6 @@ export function registerSettingsRoutes(
 			managedExternally.push('zwave.port')
 			managedExternally.push('zwave.enabled')
 		}
-		// Add paths from external settings file
 		managedExternally.push(...getExternallyManagedPaths())
 
 		const data = {
@@ -100,7 +90,6 @@ export function registerSettingsRoutes(
 		res.json(data)
 	})
 
-	// get serial ports
 	app.get(
 		'/api/serial-ports',
 		apisLimiter,
@@ -108,7 +97,6 @@ export function registerSettingsRoutes(
 		async function (req, res) {
 			let serial_ports: string[] = []
 
-			// Only enumerate serial ports if ZWAVE_PORT is not set via env var
 			if (process.platform !== 'sunos' && !process.env.ZWAVE_PORT) {
 				try {
 					serial_ports = await runtime.getEnumerateSerialPorts()({
@@ -125,7 +113,6 @@ export function registerSettingsRoutes(
 		},
 	)
 
-	// update settings
 	app.post(
 		'/api/settings',
 		apisLimiter,
@@ -147,9 +134,7 @@ export function registerSettingsRoutes(
 				const actualSettings = jsonStore.get(store.settings)
 
 				// TODO: validate settings using calss-validator
-				// when settings is null consider a force restart
 				if (settings && Object.keys(settings).length > 0) {
-					// Check if gateway settings changed
 					const gatewayChanged = !utils.deepEqual(
 						actualSettings.gateway,
 						settings.gateway,
@@ -166,16 +151,10 @@ export function registerSettingsRoutes(
 
 					let changedZwaveKeys: string[] = []
 
-					// Check if Z-Wave settings changed
 					if (
 						!utils.deepEqual(actualSettings.zwave, settings.zwave)
 					) {
-						// These are ZwaveClient configuration properties that map to
-						// driver.updateOptions() parameters. The commented names show
-						// the corresponding driver option keys:
-						// - 'scales' maps to 'preferences.scales'
-						// - 'logEnabled', 'logLevel', etc. map to 'logConfig' properties
-						// - 'disableOptimisticValueUpdate' maps directly
+						// Keys here map to driver.updateOptions() parameters (preferences/logConfig) and can apply without a restart
 						const editableZWaveSettings = [
 							'disableOptimisticValueUpdate',
 							// preferences
@@ -188,9 +167,6 @@ export function registerSettingsRoutes(
 							'nodeFilter',
 						]
 
-						// Find which Z-Wave settings actually changed
-						// Only check keys that exist in actual settings to avoid detecting
-						// new default properties added by the UI as "changed"
 						const allKeys = new Set([
 							...Object.keys(actualSettings.zwave || {}),
 							...Object.keys(settings.zwave || {}),
@@ -207,7 +183,6 @@ export function registerSettingsRoutes(
 							hasDriver: !!runtime.getGateway()?.zwave?.driver,
 						})
 
-						// Check if only editable options changed
 						const onlyEditableChanged = changedZwaveKeys.every(
 							(key) => editableZWaveSettings.includes(key),
 						)
@@ -228,13 +203,11 @@ export function registerSettingsRoutes(
 							changedZwaveKeys.length > 0 &&
 							runtime.getGateway()?.zwave?.driver
 						) {
-							// Can update options without restart
 							canUpdateZwaveOptions = true
 							logger.info(
 								'Z-Wave settings can be updated without restart',
 							)
 						} else {
-							// Need full restart
 							shouldRestartGw = true
 							shouldRestart = true
 							logger.info(
@@ -250,7 +223,6 @@ export function registerSettingsRoutes(
 						}
 					}
 
-					// Check if Zniffer settings changed
 					shouldRestartZniffer = !utils.deepEqual(
 						actualSettings.zniffer,
 						settings.zniffer,
@@ -259,24 +231,17 @@ export function registerSettingsRoutes(
 						shouldRestart = true
 					}
 
-					// Save settings to file
 					await jsonStore.put(store.settings, settings)
 
-					// Update driver options if only editable options changed
-					// Freshly resolved (not reusing the pre-`await jsonStore.put`
-					// checks above) - a concurrent restart could otherwise leave
-					// this observing a stale gateway.
+					// Freshly resolved, not reused from above, so a concurrent restart can't leave this observing a stale gateway
 					const gwForDriverUpdate = runtime.getGateway()
 					if (
 						canUpdateZwaveOptions &&
 						gwForDriverUpdate?.zwave?.driver
 					) {
 						try {
-							// Build editable options object with only changed properties
-							// Map our settings to PartialZWaveOptions format
 							const editableOptions: any = {}
 
-							// Check disableOptimisticValueUpdate
 							if (
 								changedZwaveKeys.includes(
 									'disableOptimisticValueUpdate',
@@ -288,7 +253,7 @@ export function registerSettingsRoutes(
 									settings.zwave.disableOptimisticValueUpdate
 							}
 
-							// Check scales (maps to preferences.scales)
+							// Scales key maps to preferences.scales
 							if (
 								changedZwaveKeys.includes('scales') &&
 								settings.zwave?.scales !== undefined
@@ -301,7 +266,6 @@ export function registerSettingsRoutes(
 								}
 							}
 
-							// Check logConfig properties
 							const logConfigChanged =
 								[
 									'logEnabled',
@@ -317,7 +281,6 @@ export function registerSettingsRoutes(
 								}).length > 0
 
 							if (logConfigChanged) {
-								// Build logConfig object from our settings
 								editableOptions.logConfig =
 									utils.buildLogConfig(
 										settings.zwave || {},
@@ -336,7 +299,6 @@ export function registerSettingsRoutes(
 							}
 						} catch (error) {
 							logger.error('Error updating driver options', error)
-							// If update fails, require restart
 							shouldRestart = true
 							shouldRestartGw = true
 						}
@@ -363,7 +325,6 @@ export function registerSettingsRoutes(
 		},
 	)
 
-	// restart gateway
 	app.post(
 		'/api/restart',
 		apisLimiter,
@@ -384,22 +345,17 @@ export function registerSettingsRoutes(
 					await runtime.getDebugManager().cancelSession()
 				}
 
-				// Close gateway and restart. Preserve the historical TypeError
-				// when no gateway is attached.
 				await runtime.requireGateway('close').close()
 				await runtime.destroyPlugins()
 				if (settings.gateway) {
 					runtime.setupLogging({ gateway: settings.gateway })
 				}
 				await runtime.startGateway(settings)
-				// Resolved AFTER `startGateway()` reassigns the gateway - reusing
-				// an earlier local here would observe the just-closed gateway
-				// instead of the new one.
+				// Resolved after startGateway() reassigns the gateway so this doesn't observe the just-closed instance
 				runtime
 					.getBackupManager()
 					.init(runtime.requireGateway('zwave').zwave, backupManagerOwner)
 
-				// Restart Zniffer if enabled
 				const oldZniffer = runtime.getZniffer()
 				if (oldZniffer) {
 					await oldZniffer.close()
@@ -418,7 +374,6 @@ export function registerSettingsRoutes(
 		},
 	)
 
-	// update settings
 	app.post(
 		'/api/statistics',
 		apisLimiter,
@@ -473,7 +428,6 @@ export function registerSettingsRoutes(
 		},
 	)
 
-	// update versions
 	app.post(
 		'/api/versions',
 		apisLimiter,
@@ -491,9 +445,8 @@ export function registerSettingsRoutes(
 					settings.gateway.versions = {}
 				}
 
-				// update versions to actual ones
 				settings.gateway.versions = {
-					app: utils.pkgJson.version, // don't use getVersion here as it may include commit sha
+					app: utils.pkgJson.version, // Skips getVersion() since it may include a commit sha
 					driver: libVersion,
 					server: serverVersion,
 				}

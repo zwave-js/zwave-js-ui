@@ -19,7 +19,6 @@ export function registerDebugRoutes(
 	runtime: AppRuntime,
 	{ apisLimiter }: DebugRoutesDeps,
 ): void {
-	// Debug capture endpoints
 	app.get(
 		'/api/debug/status',
 		apisLimiter,

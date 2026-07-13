@@ -15,12 +15,8 @@ export function registerHealthRoutes(
 	{ apisLimiter }: HealthRoutesDeps,
 ): void {
 	app.get('/health', apisLimiter, function (req, res) {
-		// Initialized to `false` (not left implicitly `undefined`) purely to
-		// satisfy strict "used before being assigned" analysis - both are
-		// falsy, and every use below (`if (mqtt && ...)`, `mqtt && zwave`,
-		// `status ? ... : ...`) only ever branches on truthiness, so this is
-		// behaviorally identical to the original's uninitialized `let` in
-		// every case where `gw` is absent (see `test/lib/http/health.test.ts`).
+		// Initialized to false only to satisfy strict definite-assignment analysis
+		// since every check below just tests truthiness
 		let mqtt: Record<string, any> | boolean = false
 		let zwave: boolean = false
 
@@ -30,7 +26,7 @@ export function registerHealthRoutes(
 			zwave = gw.zwave?.getStatus().status ?? false
 		}
 
-		// if mqtt is disabled, return true. Fixes #469
+		// Disabled mqtt reports a status object, not a boolean, but still counts as healthy
 		if (mqtt && typeof mqtt !== 'boolean') {
 			mqtt = mqtt.status || mqtt.config.disabled
 		}
@@ -42,14 +38,10 @@ export function registerHealthRoutes(
 
 	app.get('/health/:client', apisLimiter, function (req, res) {
 		const client = req.params.client
-		// Same "initialize to a falsy default" reasoning as `/health` above -
-		// preserves the tested fallthrough quirk (an invalid `client` sends a
-		// 500 response, then falls through - no `return` - into a second,
-		// no-op `res.status(...).send(...)` on the same, already-sent
-		// response; see `test/lib/http/health.test.ts`).
 		let status: boolean = false
 
 		if (client !== 'zwave' && client !== 'mqtt') {
+			// Falls through without returning into the no-op res.send below, on an already-sent response
 			res.status(500).send("Requested client doesn 't exist")
 		} else {
 			status = runtime.getGateway()?.[client]?.getStatus().status ?? false
