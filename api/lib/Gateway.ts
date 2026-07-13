@@ -5,6 +5,7 @@ import { CommandClasses } from '@zwave-js/core'
 import * as Constants from './Constants.ts'
 import type { LogLevel } from './logger.ts'
 import { module } from './logger.ts'
+import { PayloadType } from './shared.ts'
 import type { IClientPublishOptions } from 'mqtt'
 import MqttClient from './MqttClient.ts'
 import type {
@@ -39,17 +40,10 @@ const GATEWAY_TYPE = {
 	MANUAL: 2,
 } as const
 
-const PAYLOAD_TYPE = {
-	JSON_TIME_VALUE: 0,
-	VALUEID: 1,
-	RAW: 2,
-} as const
-
 export const GatewayType = GATEWAY_TYPE
 export type GatewayType = (typeof GATEWAY_TYPE)[keyof typeof GATEWAY_TYPE]
 
-export const PayloadType = PAYLOAD_TYPE
-export type PayloadType = (typeof PAYLOAD_TYPE)[keyof typeof PAYLOAD_TYPE]
+export { PayloadType }
 
 export type GatewayValue = {
 	device: string
@@ -837,12 +831,12 @@ export default class Gateway<
 		let data: Record<string, any>
 
 		switch (this.config.payloadType) {
-			case PAYLOAD_TYPE.VALUEID:
+			case PayloadType.VALUEID:
 				data = utils.copy(valueId)
 				data.value = tmpVal
 
 				break
-			case PAYLOAD_TYPE.RAW:
+			case PayloadType.RAW:
 				data = tmpVal
 				break
 			default:
@@ -928,7 +922,7 @@ export default class Gateway<
 	): void {
 		const topic = this.valueTopic(node, valueId) as string
 
-		if (this.config.payloadType !== PAYLOAD_TYPE.RAW) {
+		if (this.config.payloadType !== PayloadType.RAW) {
 			data = { time: Date.now(), value: data }
 		}
 
@@ -976,7 +970,7 @@ export default class Gateway<
 		if (!this.config.ignoreStatus) {
 			let data: any
 
-			if (this.config.payloadType === PAYLOAD_TYPE.RAW) {
+			if (this.config.payloadType === PayloadType.RAW) {
 				data = node.available
 			} else {
 				data = {
@@ -1016,7 +1010,7 @@ export default class Gateway<
 		if (!this.config.ignoreStatus) {
 			let data: any
 
-			if (this.config.payloadType === PAYLOAD_TYPE.RAW) {
+			if (this.config.payloadType === PayloadType.RAW) {
 				data = node.lastActive
 			} else {
 				data = {

@@ -1,7 +1,9 @@
 import { CommandClasses } from '@zwave-js/core'
-import { AlarmSensorType } from 'zwave-js'
+import { AlarmSensorType, ThermostatSetpointType } from 'zwave-js'
 import hassCfg, { type ColorMode } from './configurations.ts'
 import * as Constants from '../lib/Constants.ts'
+import { getErrorMessage } from '../lib/errors.ts'
+import { PayloadType } from '../lib/shared.ts'
 import * as utils from '../lib/utils.ts'
 import type {
 	HassDeviceRegistryPort,
@@ -19,7 +21,6 @@ import type {
 import { isHassNode } from './ports.ts'
 import {
 	HASS_NODE_PREFIX,
-	RAW_PAYLOAD_TYPE,
 	type HassDevice,
 	type HassDiscoveryPayload,
 	type PublishDiscoveryOptions,
@@ -55,16 +56,6 @@ export interface DiscoveryGeneratorOptions {
 	registry: HassDeviceRegistryPort
 	state: HassDiscoveryState
 	logger: HassLogger
-}
-
-function errorMessage(error: unknown): string {
-	if (error instanceof Error) return error.message
-	if (typeof error === 'string') return error
-	try {
-		return JSON.stringify(error)
-	} catch {
-		return 'Unknown error'
-	}
 }
 
 function valueUnit(value: unknown): string | undefined {
@@ -143,7 +134,7 @@ export class DiscoveryGenerator {
 
 			this.setDiscovery(nodeId, hassDevice, options.deleteDevice)
 
-			if (this.config.payloadType === RAW_PAYLOAD_TYPE) {
+			if (this.config.payloadType === PayloadType.RAW) {
 				const payload = hassDevice.discovery_payload
 				const template =
 					'value' +
@@ -188,7 +179,7 @@ export class DiscoveryGenerator {
 		} catch (error) {
 			this.logger.log(
 				'error',
-				`Error while publishing discovery for node ${nodeId}: ${errorMessage(
+				`Error while publishing discovery for node ${nodeId}: ${getErrorMessage(
 					error,
 				)}. Hass device: %o`,
 				hassDevice,
@@ -397,7 +388,7 @@ export class DiscoveryGenerator {
 			this.logger.error(
 				`Error while discovering device ${hassId} of node ${
 					node.id
-				}: ${errorMessage(error)}`,
+				}: ${getErrorMessage(error)}`,
 				error,
 			)
 		}
@@ -543,7 +534,7 @@ export class DiscoveryGenerator {
 				config.mode_map = modeMap
 				config.setpoint_topic = setpointTopics
 				config.default_setpoint =
-					setpointTopics[1] ??
+					setpointTopics[ThermostatSetpointType.Heating] ??
 					setpointTopics[Number(Object.keys(setpointTopics)[0])]
 			} else {
 				config.default_setpoint = setpoints[0]
@@ -1080,7 +1071,7 @@ export class DiscoveryGenerator {
 			this.logger.error(
 				`Error while discovering value ${valueId.id} of node ${
 					node.id
-				}: ${errorMessage(error)}`,
+				}: ${getErrorMessage(error)}`,
 				error,
 			)
 		}
@@ -1264,7 +1255,7 @@ export class DiscoveryGenerator {
 				topic: this.mqtt.getTopic('driver/status'),
 			},
 		]
-		if (this.config.payloadType !== RAW_PAYLOAD_TYPE) {
+		if (this.config.payloadType !== PayloadType.RAW) {
 			nodeAvailability.value_template =
 				"{{'true' if value_json.value else 'false'}}"
 		}
@@ -1393,12 +1384,23 @@ export class DiscoveryGenerator {
 
 		let brightnessValue: string | undefined
 		let switchValue: string | undefined
-		if (node.values[`38-${endpoint}-currentValue`]) {
-			brightnessValue = `38-${endpoint}-currentValue`
-		} else if (endpoint === 0 && node.values['38-1-currentValue']) {
-			brightnessValue = '38-1-currentValue'
-		} else if (node.values[`37-${endpoint}-currentValue`]) {
-			switchValue = `37-${endpoint}-currentValue`
+		if (
+			node.values[
+				`${CommandClasses['Multilevel Switch']}-${endpoint}-currentValue`
+			]
+		) {
+			brightnessValue = `${CommandClasses['Multilevel Switch']}-${endpoint}-currentValue`
+		} else if (
+			endpoint === 0 &&
+			node.values[`${CommandClasses['Multilevel Switch']}-1-currentValue`]
+		) {
+			brightnessValue = `${CommandClasses['Multilevel Switch']}-1-currentValue`
+		} else if (
+			node.values[
+				`${CommandClasses['Binary Switch']}-${endpoint}-currentValue`
+			]
+		) {
+			switchValue = `${CommandClasses['Binary Switch']}-${endpoint}-currentValue`
 		}
 
 		let discoveredStateTopic: string | undefined
@@ -1440,7 +1442,10 @@ export class DiscoveryGenerator {
 			config.discovery_payload.on_command_type = 'last'
 		}
 
-		const whiteValue = node.values[`51-${endpoint}-currentColor-0`]
+		const whiteValue =
+			node.values[
+				`${CommandClasses['Color Switch']}-${endpoint}-currentColor-0`
+			]
 		if (whiteValue && currentColorValue) {
 			supportedColors.push('white')
 			config.discovery_payload.color_temp_state_topic =

@@ -43,4 +43,3 @@ export type StoreHassDevicesResult =
 	| { status: 'invalid-stored-node' }
 
 export const HASS_NODE_PREFIX = 'nodeID_'
-export const RAW_PAYLOAD_TYPE = 2

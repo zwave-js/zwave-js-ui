@@ -6,6 +6,7 @@ import type {
 	ZUIValueId,
 	ZUIValueIdState,
 } from '../lib/ZwaveClient.ts'
+import type { PayloadType } from '../lib/shared.ts'
 import type { HassDevice, HassDeviceMap } from './types.ts'
 
 export interface HassLogger {
@@ -92,7 +93,7 @@ export interface HassDiscoveryConfig {
 	manualDiscovery?: boolean
 	retainedDiscovery?: boolean
 	discoveryPrefix?: string
-	payloadType?: number
+	payloadType?: PayloadType
 	entityTemplate?: string
 	ignoreLoc?: boolean
 	useLocationAsSuggestedArea?: boolean
