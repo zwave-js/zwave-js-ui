@@ -101,16 +101,13 @@ async function main() {
 		'./snippets',
 		'./dist',
 	]
+	const useJsEntrypoint = process.argv.includes('--js-entrypoint')
 
 	/** @type { import('esbuild').BuildOptions } */
 	const config = {
-		entryPoints: [
-			process.argv.includes('--js-entrypoint')
-				? 'server/bin/www.js'
-				: 'api/bin/www.ts',
-		],
+		entryPoints: [useJsEntrypoint ? 'server/bin/www.js' : 'api/bin/www.ts'],
 		plugins: [nativeNodeModulesPlugin],
-		conditions: ['development'],
+		conditions: useJsEntrypoint ? [] : ['development'],
 		bundle: true,
 		platform: 'node',
 		target: 'node18',
