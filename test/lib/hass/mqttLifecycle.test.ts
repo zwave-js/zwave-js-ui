@@ -20,7 +20,6 @@ import {
 	describe,
 	it,
 	expect,
-	beforeAll,
 	beforeEach,
 	afterAll,
 	afterEach,
@@ -50,19 +49,16 @@ const tick = () => new Promise<void>((r) => setImmediate(r))
  */
 const SWITCH_DISCOVERY_TOPIC = 'homeassistant/switch/Dev/switch/config'
 
-beforeAll(async () => {
+beforeEach(async () => {
 	harness = await createGatewayHarness()
 })
 
-afterAll(async () => {
+afterEach(async () => {
 	await harness.close()
-	cleanupGatewayHarnessEnv()
 })
 
-afterEach(() => {
-	// Restore per-test config mutations
-	harness.config.retainedDiscovery = false
-	harness.config.manualDiscovery = false
+afterAll(() => {
+	cleanupGatewayHarnessEnv()
 })
 
 /** Runs the real switch discovery and returns the produced HassDevice. */
@@ -93,10 +89,9 @@ function discoverSwitch(
 }
 
 describe('MQTT connection lifecycle', () => {
-	// The broker is constructed once (file-level beforeAll) and shared, so its
-	// connected flag accumulates. Re-establish the DISCONNECTED precondition
-	// before each test so the "starts DISCONNECTED" characterization is
-	// order-independent under shuffle.
+	// Force the DISCONNECTED precondition before each test so the "starts
+	// disconnected" characterization holds regardless of the fresh broker's
+	// initial flag, and stays order-independent under shuffle.
 	beforeEach(() => {
 		harness.broker.forceDisconnected()
 	})
@@ -364,9 +359,9 @@ describe('Home Assistant status and broker reconnect re-announce all devices', (
 
 describe('inbound MQTT requests drive Z-Wave actions', () => {
 	// Inbound routing needs a live subscription, which needs a connected client
-	// (subscribing rejects while offline). Connect once so the action wildcards
-	// and per-value valueChanged subscriptions land.
-	beforeAll(async () => {
+	// (subscribing rejects while offline). Connect so the action wildcards and
+	// per-value valueChanged subscriptions land.
+	beforeEach(async () => {
 		harness.broker.triggerConnect()
 		await tick()
 	})

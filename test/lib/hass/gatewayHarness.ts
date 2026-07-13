@@ -51,9 +51,8 @@ export interface GatewayHarness {
 	lastDiscovery(): PublishedDiscovery
 	resetPublishes(): void
 	/**
-	 * Per-test reset: clears recorded publishes and the gateway's `discovered`
-	 * de-dup map, so a fresh node reusing an earlier value id is not skipped by
-	 * the `discovered[valueId.id]` guard.
+	 * Clears the recorded publishes between phases of a single test. Each test
+	 * builds its own harness, so the gateway's de-dup maps already start empty.
 	 */
 	resetState(): void
 	/**
@@ -106,14 +105,6 @@ export async function createGatewayHarness(
 
 	const broker = latestBroker()
 
-	// The de-dup guards live in private maps with no public reset; expose just
-	// those two fields as a typed view so per-test isolation can clear them
-	// without an app-wide `any`
-	const dedupState = gw as unknown as {
-		discovered: Record<string, unknown>
-		topicValues: Record<string, unknown>
-	}
-
 	function publishedDiscoveries(): PublishedDiscovery[] {
 		return broker.published.map((p) => {
 			let payload: any = p.payload
@@ -147,8 +138,6 @@ export async function createGatewayHarness(
 		},
 		resetState() {
 			broker.published.length = 0
-			dedupState.discovered = {}
-			dedupState.topicValues = {}
 		},
 		async close() {
 			// Drive the real Gateway.close teardown (zwave.close, cancelJobs,

@@ -14,7 +14,15 @@
  *  - a composite unique_id uses the capital _Node<id>_ infix, distinct from a
  *    per-value entity's identifiers.
  */
-import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest'
+import {
+	describe,
+	it,
+	expect,
+	beforeEach,
+	afterEach,
+	afterAll,
+	vi,
+} from 'vitest'
 import { CommandClasses } from '@zwave-js/core'
 import { mqttMockFactory } from './mqttMock.ts'
 import {
@@ -33,12 +41,15 @@ vi.mock('mqtt', () => mqttMockFactory())
 
 let harness: GatewayHarness
 
-beforeAll(async () => {
+beforeEach(async () => {
 	harness = await createGatewayHarness()
 })
 
-afterAll(async () => {
+afterEach(async () => {
 	await harness.close()
+})
+
+afterAll(() => {
 	cleanupGatewayHarnessEnv()
 })
 

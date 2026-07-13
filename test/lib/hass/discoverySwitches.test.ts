@@ -12,9 +12,9 @@ import {
 	describe,
 	it,
 	expect,
-	beforeAll,
 	afterAll,
 	beforeEach,
+	afterEach,
 	vi,
 } from 'vitest'
 import { CommandClasses } from '@zwave-js/core'
@@ -34,17 +34,16 @@ const HOME_HEX = '0xabcdef01'
 
 let harness: GatewayHarness
 
-beforeAll(async () => {
+beforeEach(async () => {
 	harness = await createGatewayHarness({ zwave: { homeHex: HOME_HEX } })
 })
 
-afterAll(async () => {
+afterEach(async () => {
 	await harness.close()
-	cleanupGatewayHarnessEnv()
 })
 
-beforeEach(() => {
-	harness.resetState()
+afterAll(() => {
+	cleanupGatewayHarnessEnv()
 })
 
 /** A ready, physical node with deterministic identity fields. */

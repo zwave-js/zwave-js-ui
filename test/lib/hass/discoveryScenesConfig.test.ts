@@ -11,9 +11,9 @@ import {
 	describe,
 	it,
 	expect,
-	beforeAll,
 	afterAll,
 	beforeEach,
+	afterEach,
 	vi,
 } from 'vitest'
 import { CommandClasses } from '@zwave-js/core'
@@ -31,17 +31,16 @@ vi.mock('mqtt', () => mqttMockFactory())
 
 let harness: GatewayHarness
 
-beforeAll(async () => {
+beforeEach(async () => {
 	harness = await createGatewayHarness({ zwave: { homeHex: '0xabcdef01' } })
 })
 
-afterAll(async () => {
+afterEach(async () => {
 	await harness.close()
-	cleanupGatewayHarnessEnv()
 })
 
-beforeEach(() => {
-	harness.resetState()
+afterAll(() => {
+	cleanupGatewayHarnessEnv()
 	// Restore config knobs individual tests may have toggled
 	harness.config.hassDiscovery = true
 	harness.config.entityTemplate = undefined
