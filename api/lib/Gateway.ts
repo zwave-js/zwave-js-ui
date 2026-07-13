@@ -46,7 +46,7 @@ const PAYLOAD_TYPE = {
 	RAW: 2,
 } as const
 
-// Runtime Gateways share this one loader/watcher pair instead of duplicating watchers per instance
+// Share one import-time loader and its two file watchers across all runtime Gateways
 const defaultCustomDeviceRegistry = new CustomDeviceRegistry({
 	storeDir,
 	logger,
@@ -524,6 +524,7 @@ export default class Gateway {
 				this.cancelJobs()
 			} finally {
 				try {
+					// Preserve the Z-Wave-before-MQTT shutdown contract
 					if (this.mqttEnabled) {
 						await this._mqtt.close()
 					}

@@ -16,13 +16,13 @@ export interface CustomDeviceRegistryOptions {
 }
 
 function copyCatalog(catalog: unknown): HassDeviceCatalog {
-	// Merge shallowly so malformed per-device entries stay in the projection and get() treats them as having no devices
+	// Copy shallowly so malformed entries remain visible while get() treats them as empty
 	return Object.assign({}, catalog) as HassDeviceCatalog
 }
 
 function copyCatalogProjection(catalog: HassDeviceCatalog): HassDeviceCatalog {
 	const projection = copyCatalog(catalog)
-	// Reslice each device array so a get-mutate-set on one fork can't touch the source or a sibling fork's array
+	// Clone each device array so mutations in one fork cannot reach its source or siblings
 	for (const deviceId of Object.keys(projection)) {
 		const devices = projection[deviceId]
 		if (Array.isArray(devices)) projection[deviceId] = [...devices]
@@ -68,6 +68,7 @@ export class CustomDeviceRegistry implements HassDeviceRegistryPort {
 			return
 		}
 
+		// Load before watching both catalog paths to preserve import-time bootstrap semantics
 		this.load()
 		this.watch(this.customDevicesJsPath)
 		this.watch(this.customDevicesJsonPath)

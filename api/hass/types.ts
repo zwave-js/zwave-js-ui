@@ -1,4 +1,4 @@
-// Keep permissive because these DTOs round-trip through nodes.json and customDevices.js may set values JSON can't represent
+// Keep permissive because these DTOs persist in nodes.json, pass unchanged over Socket.IO, and may contain non-JSON customDevices.js values
 export type HassComponentType =
 	| 'sensor'
 	| 'light'
