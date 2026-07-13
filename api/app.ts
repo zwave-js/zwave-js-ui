@@ -369,19 +369,24 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 		return { cert, key }
 	}
 
-	function setupInterceptor() {
+	function setupInterceptor(server: HttpServer) {
 		// Replace this instance's interceptor because the log stream is shared
 		if (logStreamInterceptor) {
 			loggers.logStream.off('data', logStreamInterceptor)
 		}
 
 		// intercept logs and redirect them to socket
-		logStreamInterceptor = (chunk) => {
+		const interceptor: (chunk: Buffer | string) => void = (chunk) => {
 			socketManager.io
 				.to('debug')
 				.emit(socketEvents.debug, chunk.toString())
 		}
-		loggers.logStream.on('data', logStreamInterceptor)
+		logStreamInterceptor = interceptor
+		loggers.logStream.on('data', interceptor)
+		// The shared log stream can outlive multiple server instances.
+		server.once('close', () => {
+			loggers.logStream.off('data', interceptor)
+		})
 	}
 
 	// ### EXPRESS SETUP
@@ -763,7 +768,7 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 		}
 		socketAttached = true
 		setupSocket(server)
-		setupInterceptor()
+		setupInterceptor(server)
 	}
 
 	// ### APIs
