@@ -1,7 +1,7 @@
 /// <reference path="types.d.ts" />
 // @ts-check
 
-const { authorizedUsers } = require("./authorizedUsers");
+const { authorizedUsers } = require("./authorizedUsers.cjs");
 
 /**
  * @param {{github: Github, context: Context}} param
