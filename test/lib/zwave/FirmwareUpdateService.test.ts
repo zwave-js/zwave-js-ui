@@ -1388,8 +1388,8 @@ describe('FirmwareUpdateService', () => {
 			service.resetGeneration()
 
 			resolveCheck(new Map([[2, [makeUpdate({ version: '4.0.0' })]]]))
-			await expect(checkPromise).rejects.toThrow(
-				'cancelled: service generation advanced',
+			await expect(checkPromise).rejects.toBeInstanceOf(
+				FirmwareLifecycleCancelledError,
 			)
 
 			expect(nodes.updateStoreNodes).not.toHaveBeenCalled()

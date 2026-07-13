@@ -15,6 +15,13 @@ import type {
 import { InclusionStrategy, QRCodeVersion } from './ports.ts'
 import type { JoinNetworkResult } from './ports.ts'
 
+export class InclusionLifecycleCancelledError extends Error {
+	constructor(operation: string) {
+		super(`Driver was closed during ${operation} setup`)
+		this.name = 'InclusionLifecycleCancelledError'
+	}
+}
+
 export class InclusionCoordinator {
 	private readonly _driver: InclusionDriverPort
 	private readonly _socket: InclusionSocketPort
@@ -114,10 +121,6 @@ export class InclusionCoordinator {
 		return this._hasUserCallbacks
 	}
 
-	get generation(): number {
-		return this._generation
-	}
-
 	getUserCallbacks(): {
 		grantSecurityClasses: (
 			requested: InclusionGrant,
@@ -162,7 +165,7 @@ export class InclusionCoordinator {
 
 		// Re-resolve because close or restart may replace the driver during await
 		if (this._generation !== gen) {
-			throw new Error('Driver was closed during inclusion setup')
+			throw new InclusionLifecycleCancelledError('inclusion')
 		}
 		const currentDrv = this._driver.getDriver()
 		if (!currentDrv || !this._driver.isDriverReady()) {
@@ -225,9 +228,7 @@ export class InclusionCoordinator {
 
 					// Re-resolve because QR parsing may overlap driver replacement
 					if (this._generation !== gen) {
-						throw new Error(
-							'Driver was closed during inclusion setup',
-						)
+						throw new InclusionLifecycleCancelledError('inclusion')
 					}
 
 					if (!parsedQr) {
@@ -284,7 +285,7 @@ export class InclusionCoordinator {
 
 		// Re-resolve because close or restart may replace the driver during await
 		if (this._generation !== gen) {
-			throw new Error('Driver was closed during exclusion setup')
+			throw new InclusionLifecycleCancelledError('exclusion')
 		}
 		const currentDrv = this._driver.getDriver()
 		if (!currentDrv || !this._driver.isDriverReady()) {
@@ -361,7 +362,7 @@ export class InclusionCoordinator {
 
 			// Re-resolve because close or restart may replace the driver during await
 			if (this._generation !== gen) {
-				throw new Error('Driver was closed during replace setup')
+				throw new InclusionLifecycleCancelledError('replace')
 			}
 			const currentDrv = this._driver.getDriver()
 			if (!currentDrv || !this._driver.isDriverReady()) {
@@ -394,9 +395,7 @@ export class InclusionCoordinator {
 
 					// Re-resolve because QR parsing may overlap driver replacement
 					if (this._generation !== gen) {
-						throw new Error(
-							'Driver was closed during replace setup',
-						)
+						throw new InclusionLifecycleCancelledError('replace')
 					}
 
 					if (parsedQr) {
