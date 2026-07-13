@@ -357,7 +357,7 @@ describe('Socket contract: inbound ACK APIs', () => {
 			})
 		})
 
-		it('"store" persists the device set and acks success', async () => {
+		it('returns the typed result from the awaited "store" operation', async () => {
 			const devices = { switch_sw: { type: 'switch' } }
 			const gateway = createFakeGateway()
 			const harness = await getHarness({ gateway })
@@ -377,6 +377,7 @@ describe('Socket contract: inbound ACK APIs', () => {
 			expect(result).toStrictEqual({
 				success: true,
 				message: 'Success HASS api call',
+				result: { status: 'stored' },
 				api: 'store',
 			})
 		})

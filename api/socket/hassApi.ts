@@ -1,4 +1,5 @@
 import type { Socket } from 'socket.io'
+import type { StoreHassDevicesResult } from '../hass/types.ts'
 import type { HassDevice } from '../lib/ZwaveClient.ts'
 import { getErrorMessage } from '../lib/errors.ts'
 import * as loggers from '../lib/logger.ts'
@@ -30,7 +31,7 @@ export type HassApiRequest =
 			remove: boolean
 	  }
 
-export type HassApiAck = ApiAck<void>
+export type HassApiAck = ApiAck<StoreHassDevicesResult | void>
 
 export function registerHassApiHandler(
 	socket: Socket,
@@ -42,7 +43,7 @@ export function registerHassApiHandler(
 			const apiName: string = data.apiName
 			logger.info(`Hass api call: ${safeOperationName(apiName)}`)
 
-			let res: void
+			let res: StoreHassDevicesResult | void
 			let err: string | undefined
 			try {
 				switch (data.apiName) {
