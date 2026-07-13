@@ -1,6 +1,6 @@
 /**
- * Environment bootstrap for the HASS characterization suite, layered on
- * `test/lib/http/env.ts`'s isolated `STORE_DIR`/env/`dotenv` setup.
+ * Environment bootstrap for the HASS characterization suite, layered on the
+ * shared transport suite's isolated `STORE_DIR` setup.
  *
  * `Gateway.ts` installs real `fs.watch()` watchers under `storeDir` at
  * module-evaluation time and `api/config/app.ts` computes `storeDir` once at
@@ -15,16 +15,15 @@
  * them, so ambient values can't leak in or out.
  */
 import {
-	ensureTestEnv as ensureHttpTestEnv,
-	cleanupTestEnv as cleanupHttpTestEnv,
+	ensureTestEnv as ensureSharedTestEnv,
+	cleanupTestEnv as cleanupSharedTestEnv,
 	TEST_SESSION_SECRET,
-} from '../http/env.ts'
+} from '../shared/env.ts'
 
 /**
- * Env vars the HASS discovery modules read that the HTTP suite's
- * `APP_ENV_VARS` doesn't cover, snapshotted and cleared before any HASS module
- * imports so an ambient value can't repoint a discovery prefix, disable
- * Configuration-CC discovery, or rewrite the MQTT client id.
+ * Env vars the HASS discovery modules read, snapshotted and cleared before any
+ * HASS module imports so an ambient value can't repoint a discovery prefix,
+ * disable Configuration-CC discovery, or rewrite the MQTT client id.
  */
 const HASS_ENV_VARS = [
 	'UID_DISCOVERY_PREFIX',
@@ -35,7 +34,7 @@ const HASS_ENV_VARS = [
 let hassEnvSnapshot: Record<string, string | undefined> | undefined
 
 /**
- * Snapshot and clear the HASS env vars, then delegate to the HTTP harness's
+ * Snapshot and clear the HASS env vars, then delegate to the shared harness's
  * `ensureTestEnv()`. Clearing happens first, before any caller imports
  * `Gateway.ts`, so its module-level `UID_DISCOVERY_PREFIX` sees the cleared
  * default. Idempotent; returns the isolated store dir.
@@ -48,7 +47,7 @@ export function ensureTestEnv(): string {
 			delete process.env[key]
 		}
 	}
-	return ensureHttpTestEnv()
+	return ensureSharedTestEnv()
 }
 
 export function getTestStoreDir(): string {
@@ -56,12 +55,12 @@ export function getTestStoreDir(): string {
 }
 
 /**
- * Restore the HTTP-suite env and each `HASS_ENV_VARS` entry to its
+ * Restore the shared-suite env and each `HASS_ENV_VARS` entry to its
  * pre-`ensureTestEnv()` value (or remove it), so nothing leaks into whatever
  * runs next.
  */
 export function cleanupTestEnv(): void {
-	cleanupHttpTestEnv()
+	cleanupSharedTestEnv()
 	if (hassEnvSnapshot) {
 		for (const key of HASS_ENV_VARS) {
 			const original = hassEnvSnapshot[key]
