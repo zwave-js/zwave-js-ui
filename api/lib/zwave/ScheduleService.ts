@@ -26,9 +26,6 @@ import {
 	type ScheduleNodeState,
 } from './ports.ts'
 
-// Re-export so ZwaveClient doesn't need two imports
-export { ZUIScheduleEntryLockMode }
-
 type AnySchedule =
 	| ScheduleEntryLockDailyRepeatingSchedule
 	| ScheduleEntryLockWeekDaySchedule

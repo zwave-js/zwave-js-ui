@@ -26,9 +26,6 @@ import type {
 	ServiceLogger,
 } from './ports.ts'
 
-// Re-export types so ZwaveClient can import from one place
-export type { ZUIConfigurationTemplate, ZUIConfigurationTemplateValue }
-
 export class ConfigurationTemplateService {
 	private _templates: ZUIConfigurationTemplate[]
 
