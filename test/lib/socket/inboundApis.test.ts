@@ -1,6 +1,7 @@
 // Event names are hard-coded literals, not imported from SocketEvents.ts, since a real client's wire format doesn't know the server's internal constant names
 // Every test installs at least a bare gateway fake since connecting a client triggers the real 'clients' callback, which calls gw.zwave?.setUserCallbacks() and throws if gw is undefined
 import { describe, it, expect, beforeAll, vi } from 'vitest'
+import { ALL_CHANNELS } from '#api/lib/SocketEvents.ts'
 import type ZWaveClientType from '#api/lib/ZwaveClient.ts'
 import { useSocketHarness, type SocketHarness } from './harness.ts'
 import { createFakeGateway, createFakeZniffer } from './fakes.ts'
@@ -359,18 +360,7 @@ describe('Socket contract: inbound ACK APIs', () => {
 			const result = await emit<any>(client, 'SUBSCRIBE', {
 				channels: ['all'],
 			})
-			expect(result.channels).toStrictEqual([
-				'controller',
-				'nodes',
-				'values',
-				'statistics',
-				'firmware',
-				'debug',
-				'znifferFrames',
-				'znifferState',
-				'rebuild',
-				'diagnostics',
-			])
+			expect(result.channels).toStrictEqual(ALL_CHANNELS)
 		})
 
 		it('acks with an empty channel list when data.channels is missing/not an array', async () => {
