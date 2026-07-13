@@ -102,7 +102,11 @@ export function missingRepositoryStoreArtifacts(
 	after: RepositoryStoreArtifact[],
 ): RepositoryStoreArtifact[] {
 	const afterPaths = new Set(after.map((artifact) => artifact.path))
-	return before.filter((artifact) => !afterPaths.has(artifact.path))
+	return before.filter(
+		(artifact) =>
+			!afterPaths.has(artifact.path) &&
+			!isConcurrentTestArtifact(artifact.path),
+	)
 }
 
 /**

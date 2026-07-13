@@ -14,8 +14,10 @@ import type { HassDevice } from '../../../api/hass/types.ts'
 import {
 	cleanupTestEnv,
 	ensureTestEnv,
+	missingRepositoryStoreArtifacts,
 	snapshotRepositoryStore,
 	TEST_SESSION_SECRET,
+	unexpectedRepositoryStoreDrift,
 } from './env.ts'
 
 let Gateway: typeof GatewayType
@@ -57,7 +59,19 @@ beforeAll(async () => {
 			.__getWatcherPathsForTests()
 			.every((watcherPath) => watcherPath.startsWith(isolatedStoreDir)),
 	).toBe(true)
-	expect(snapshotRepositoryStore()).toEqual(repositoryStoreBefore)
+	const repositoryStoreAfter = snapshotRepositoryStore()
+	expect(
+		missingRepositoryStoreArtifacts(
+			repositoryStoreBefore,
+			repositoryStoreAfter,
+		),
+	).toEqual([])
+	expect(
+		unexpectedRepositoryStoreDrift(
+			repositoryStoreBefore,
+			repositoryStoreAfter,
+		),
+	).toEqual([])
 })
 
 afterEach(() => {
