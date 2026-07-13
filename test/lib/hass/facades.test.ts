@@ -8,273 +8,148 @@ import {
 	vi,
 } from 'vitest'
 import { CommandClasses } from '@zwave-js/core'
-import { existsSync } from 'node:fs'
-import type GatewayType from '../../../api/lib/Gateway.ts'
-import type * as GatewayModuleType from '../../../api/lib/Gateway.ts'
-import type { HassNode, HassValue } from '../../../api/hass/ports.ts'
+import type { GatewayFactory as GatewayFactoryType } from '../../../api/hass/GatewayFactory.ts'
 import type { HassDevice } from '../../../api/hass/types.ts'
+import type { GatewayHarness } from './gatewayHarness.ts'
 import {
-	cleanupTestEnv,
-	ensureTestEnv,
-	missingRepositoryStoreArtifacts,
-	snapshotRepositoryStore,
-	TEST_SESSION_SECRET,
-	unexpectedRepositoryStoreDrift,
-} from './env.ts'
+	cleanupGatewayHarnessEnv,
+	createGatewayHarness,
+} from './gatewayHarness.ts'
+import { addValue, buildNode, buildValueId, valueMapKey } from './fixtures.ts'
+import { ensureTestEnv } from './env.ts'
+import { mqttMockFactory } from './mqttMock.ts'
 
-let Gateway: typeof GatewayType
-let gatewayModule: typeof GatewayModuleType
-const gateways: GatewayType[] = []
+vi.mock('mqtt', () => mqttMockFactory())
 
-function gateway(): GatewayType {
-	const instance = new Gateway({ type: 0 }, null, null)
-	gateways.push(instance)
-	return instance
-}
+describe('Gateway HASS facades', () => {
+	const harnesses: GatewayHarness[] = []
+	const factories: GatewayFactoryType[] = []
+	let storeDir: string
 
-function device(): HassDevice {
-	return {
-		type: 'sensor',
-		object_id: 'test',
-		discovery_payload: {},
-		values: ['value'],
-	}
-}
-
-// This built-in Honeywell fan control pre-populates the shared catalog without a climate entry
-const FAN_DIMMER_DEVICE_ID = '57-12593-18756'
-
-function thermostatNode(nodeId: number): HassNode {
-	const setpoint: HassValue = {
-		id: `${nodeId}-67-0-setpoint-1`,
-		nodeId,
-		commandClass: CommandClasses['Thermostat Setpoint'],
-		property: 'setpoint',
-		propertyKey: 1,
-		type: 'number',
-		readable: true,
-		writeable: true,
-		default: 0,
-		stateless: false,
-		ccSpecific: {},
-	}
-	return {
-		id: nodeId,
-		ready: true,
-		hassDevices: {},
-		deviceId: FAN_DIMMER_DEVICE_ID,
-		deviceClass: { basic: 1, generic: 0x08, specific: 1 },
-		values: { setpoint },
-	}
-}
-
-beforeAll(async () => {
-	const repositoryStoreBefore = snapshotRepositoryStore()
-	const isolatedStoreDir = ensureTestEnv()
-	const [loadedGatewayModule, configModule] = await Promise.all([
-		import('../../../api/lib/Gateway.ts'),
-		import('../../../api/config/app.ts'),
-	])
-	gatewayModule = loadedGatewayModule
-	Gateway = loadedGatewayModule.default
-	expect(configModule.storeDir).toBe(isolatedStoreDir)
-	expect(configModule.logsDir.startsWith(isolatedStoreDir)).toBe(true)
-	expect(configModule.sessionSecret).toBe(TEST_SESSION_SECRET)
-	expect(existsSync(configModule.logsDir)).toBe(true)
-	expect(gatewayModule.__getWatcherCountForTests()).toBe(2)
-	expect(gatewayModule.__getActiveWatcherCountForTests()).toBe(2)
-	expect(
-		gatewayModule
-			.__getWatcherPathsForTests()
-			.every((watcherPath) => watcherPath.startsWith(isolatedStoreDir)),
-	).toBe(true)
-	const repositoryStoreAfter = snapshotRepositoryStore()
-	expect(
-		missingRepositoryStoreArtifacts(
-			repositoryStoreBefore,
-			repositoryStoreAfter,
-		),
-	).toEqual([])
-	expect(
-		unexpectedRepositoryStoreDrift(
-			repositoryStoreBefore,
-			repositoryStoreAfter,
-		),
-	).toEqual([])
-})
-
-afterEach(() => {
-	for (const instance of gateways.splice(0)) {
-		instance['customDeviceRegistry'].dispose()
-	}
-})
-
-afterAll(() => {
-	gatewayModule.closeWatchers()
-	expect(gatewayModule.__getWatcherCountForTests()).toBe(0)
-	expect(gatewayModule.__getActiveWatcherCountForTests()).toBe(0)
-	expect(gatewayModule.__getRegistrySubscriberCountForTests()).toBe(0)
-	cleanupTestEnv()
-	vi.resetModules()
-})
-
-describe('Gateway HASS compatibility facades', () => {
-	it('delegates public discovery operations to the extracted domain', () => {
-		const instance = gateway()
-		Reflect.set(instance, '_zwave', { nodes: new Map() })
-		const generator = instance['discoveryGenerator']
-		const rediscoverNode = vi
-			.spyOn(generator, 'rediscoverNode')
-			.mockImplementation(() => {})
-		const disableDiscovery = vi
-			.spyOn(generator, 'disableDiscovery')
-			.mockImplementation(() => {})
-		const publishDiscovery = vi
-			.spyOn(generator, 'publishDiscovery')
-			.mockImplementation(() => {})
-		const setDiscovery = vi
-			.spyOn(generator, 'setDiscovery')
-			.mockImplementation(() => {})
-		const rediscoverAll = vi
-			.spyOn(generator, 'rediscoverAll')
-			.mockImplementation(() => {})
-		const hassDevice = device()
-
-		instance.rediscoverNode(7)
-		instance.disableDiscovery(7)
-		instance.publishDiscovery(hassDevice, 7, { forceUpdate: true })
-		instance.setDiscovery(7, hassDevice, true)
-		instance.rediscoverAll()
-
-		expect(rediscoverNode).toHaveBeenCalledWith(7)
-		expect(disableDiscovery).toHaveBeenCalledWith(7)
-		expect(publishDiscovery).toHaveBeenCalledWith(hassDevice, 7, {
-			forceUpdate: true,
-		})
-		expect(setDiscovery).toHaveBeenCalledWith(7, hassDevice, true)
-		expect(rediscoverAll).toHaveBeenCalledOnce()
+	beforeAll(() => {
+		storeDir = ensureTestEnv()
 	})
 
-	it('keeps custom-device catalogs isolated across simultaneous Gateways', () => {
-		const first = gateway()
-		const second = gateway()
-		const custom = device()
-
-		first['customDeviceRegistry'].set('custom-device', [custom])
-
-		expect(first['customDeviceRegistry'].get('custom-device')).toEqual([
-			custom,
-		])
-		expect(second['customDeviceRegistry'].get('custom-device')).toEqual([])
+	afterEach(async () => {
+		for (const harness of harnesses.splice(0)) await harness.close()
+		for (const factory of factories.splice(0)) factory.dispose()
 	})
 
-	it('keeps a dynamically discovered climate device isolated across simultaneous Gateways for a pre-existing catalog entry', () => {
-		const first = gateway()
-		const second = gateway()
-		const before =
-			gatewayModule.__getAllDevicesForTests()[FAN_DIMMER_DEVICE_ID]
-		expect(before).toHaveLength(1)
-		expect(before[0].type).toBe('fan')
-		expect(
-			first['customDeviceRegistry'].get(FAN_DIMMER_DEVICE_ID),
-		).toHaveLength(1)
-		expect(
-			second['customDeviceRegistry'].get(FAN_DIMMER_DEVICE_ID),
-		).toHaveLength(1)
+	afterAll(() => {
+		cleanupGatewayHarnessEnv()
+	})
 
-		first['discoveryGenerator'].discoverClimates(thermostatNode(7))
-
-		const firstDevices =
-			first['customDeviceRegistry'].get(FAN_DIMMER_DEVICE_ID)
-		expect(firstDevices).toHaveLength(2)
-		expect(firstDevices.some((entry) => entry.type === 'climate')).toBe(
-			true,
+	it('discovers injected catalog content without leaking dynamic devices across gateways', async () => {
+		const deviceId = 'test-thermostat'
+		const configuredDevice: HassDevice = {
+			type: 'sensor',
+			object_id: 'configured',
+			discovery_payload: {},
+			values: [],
+		}
+		const { GatewayFactory } = await import(
+			'../../../api/hass/GatewayFactory.ts'
 		)
-		const secondDevices =
-			second['customDeviceRegistry'].get(FAN_DIMMER_DEVICE_ID)
-		expect(secondDevices).toHaveLength(1)
-		expect(secondDevices.some((entry) => entry.type === 'climate')).toBe(
-			false,
-		)
-		const after =
-			gatewayModule.__getAllDevicesForTests()[FAN_DIMMER_DEVICE_ID]
-		expect(after).toHaveLength(1)
-		expect(after.some((entry) => entry.type === 'climate')).toBe(false)
-	})
-
-	it('clears generic MQTT topic mappings before rediscovering a node', () => {
-		const instance = gateway()
-		Reflect.set(instance, '_zwave', {
-			nodes: new Map([[7, { id: 7, virtual: false }]]),
+		const factory = new GatewayFactory({
+			storeDir,
+			logger: {
+				error: vi.fn(),
+				info: vi.fn(),
+			},
+			devices: { [deviceId]: [configuredDevice] },
 		})
-		Reflect.set(instance, 'topicValues', {
-			'old/topic': { nodeId: 7 },
-			'other/topic': { nodeId: 8 },
+		factories.push(factory)
+		const first = await createGatewayHarness({ gatewayFactory: factory })
+		const second = await createGatewayHarness({ gatewayFactory: factory })
+		harnesses.push(first, second)
+		const thermostat = buildNode({
+			id: 7,
+			deviceId,
+			deviceClass: { basic: 1, generic: 0x08, specific: 1 },
+			hassDevices: {},
 		})
-		vi.spyOn(
-			instance['discoveryGenerator'],
-			'rediscoverNode',
-		).mockImplementation(() => {})
-
-		instance.rediscoverNode(7)
-
-		expect(Reflect.get(instance, 'topicValues')).toEqual({
-			'other/topic': { nodeId: 8 },
-		})
-	})
-
-	it('treats an absent MQTT client as disabled during node initialization', () => {
-		const instance = gateway()
-
-		expect(() =>
-			instance['discoveryGenerator'].onNodeInited({
-				id: 7,
-				ready: true,
-				values: {},
-				hassDevices: {},
+		addValue(
+			thermostat,
+			buildValueId({
+				id: '7-67-0-setpoint-1',
+				nodeId: 7,
+				commandClass: CommandClasses['Thermostat Setpoint'],
+				property: 'setpoint',
+				propertyKey: 1,
+				type: 'number',
+				min: 5,
+				max: 30,
+				unit: '°C',
 			}),
-		).not.toThrow()
+		)
+		const sibling = buildNode({
+			id: 8,
+			deviceId,
+			hassDevices: {},
+		})
+
+		first.zwave.nodes.set(thermostat.id, thermostat)
+		second.zwave.nodes.set(sibling.id, sibling)
+		first.gw.discoverClimates(thermostat)
+		first.gw.rediscoverNode(thermostat.id)
+		second.gw.rediscoverNode(sibling.id)
+
+		expect(
+			Object.values(thermostat.hassDevices).map(({ type }) => type),
+		).toEqual(expect.arrayContaining(['sensor', 'climate']))
+		expect(
+			Object.values(sibling.hassDevices).map(({ type }) => type),
+		).toEqual(['sensor'])
+		expect(sibling.hassDevices.sensor_configured).toMatchObject({
+			object_id: 'configured',
+		})
+	})
+
+	it('clears stale node topics before public rediscovery', async () => {
+		const harness = await createGatewayHarness()
+		harnesses.push(harness)
+		const stale = buildValueId({ id: '7-37-0-currentValue', nodeId: 7 })
+		const other = buildValueId({ id: '8-37-0-currentValue', nodeId: 8 })
+		harness.zwave.nodes.set(7, buildNode({ id: 7 }))
+		harness.gw.topicValues = {
+			'old/topic': stale,
+			'other/topic': other,
+		}
+
+		harness.gw.rediscoverNode(7)
+
+		expect(harness.gw.topicValues).toEqual({ 'other/topic': other })
 	})
 
 	it('writes the cached cover mapping when its live node value is gone', async () => {
-		const instance = gateway()
-		const cachedValue = {
+		const harness = await createGatewayHarness()
+		harnesses.push(harness)
+		const cachedValue = buildValueId({
 			id: '7-38-0-targetValue',
 			nodeId: 7,
-			commandClass: 38,
-			endpoint: 0,
+			commandClass: CommandClasses['Multilevel Switch'],
 			property: 'targetValue',
 			type: 'number',
-			readable: true,
-			writeable: true,
-			default: 0,
-			stateless: false,
-			ccSpecific: {},
-		}
-		const writeValue = vi.fn().mockResolvedValue(undefined)
-		const values = { '38-0-targetValue': cachedValue }
-		Reflect.set(instance, '_zwave', {
-			nodes: new Map([[7, { values }]]),
-			writeValue,
 		})
-		Reflect.set(instance, 'discovered', {
-			[cachedValue.id]: device(),
-		})
-		instance['discovered'][cachedValue.id] = {
-			...device(),
+		const node = buildNode({ id: 7 })
+		addValue(node, cachedValue)
+		harness.zwave.nodes.set(node.id, node)
+		harness.gw.discovered[cachedValue.id] = {
 			type: 'cover',
+			object_id: 'test',
 			discovery_payload: { payload_stop: 'STOP' },
+			values: [valueMapKey(cachedValue)],
 		}
-		delete values['38-0-targetValue']
+		delete node.values[valueMapKey(cachedValue)]
 
 		expect(
-			instance.parsePayload('STOP', cachedValue as any, undefined),
+			harness.gw.parsePayload('STOP', cachedValue, undefined),
 		).toBeNull()
-		await vi.waitFor(() =>
-			expect(writeValue).toHaveBeenCalledWith(
+		await vi.waitFor(() => {
+			expect(harness.zwave.writeValue).toHaveBeenCalledWith(
 				{ ...cachedValue, property: 'Up' },
 				false,
-			),
-		)
+			)
+		})
 	})
 })

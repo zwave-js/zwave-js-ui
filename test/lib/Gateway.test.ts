@@ -1,10 +1,30 @@
-import { describe, it, expect, beforeEach } from 'vitest'
-import Gateway, { closeWatchers } from '../../api/lib/Gateway.ts'
-import type { ZUINode } from '../../api/lib/ZwaveClient.ts'
+import { afterAll, describe, it, expect, beforeEach } from 'vitest'
+import { mkdtempSync, rmSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
+import { GatewayFactory } from '../../api/hass/GatewayFactory.ts'
+import { createFakeGatewayZwave } from './hass/fixtures.ts'
 
 describe('#Gateway', () => {
-	const gw = new Gateway({ type: 0 }, null as any, null as any)
-	closeWatchers()
+	const storeDir = mkdtempSync(join(tmpdir(), 'zui-gateway-test-'))
+	const factory = new GatewayFactory({
+		storeDir,
+		logger: {
+			error: () => undefined,
+			info: () => undefined,
+		},
+		devices: {},
+	})
+	const gw = factory.create(
+		{ type: 0 },
+		createFakeGatewayZwave({ homeHex: 'abcdef01' }),
+		null,
+	)
+
+	afterAll(() => {
+		factory.dispose()
+		rmSync(storeDir, { recursive: true, force: true })
+	})
 	describe('#setDiscoveryValue()', () => {
 		let untouchedPayload: Record<string | number, any>
 		let payload: Record<string | number, any>
@@ -27,41 +47,25 @@ describe('#Gateway', () => {
 
 		describe('payload prop not string', () => {
 			it('should not change payload', () => {
-				gw['_setDiscoveryValue'](
-					payload,
-					'a',
-					node as unknown as ZUINode,
-				)
+				gw['_setDiscoveryValue'](payload, 'a', node)
 				return expect(payload).to.deep.equal(untouchedPayload)
 			})
 		})
 		describe('no valueId', () => {
 			it('should not change payload', () => {
-				gw['_setDiscoveryValue'](
-					payload,
-					'd',
-					node as unknown as ZUINode,
-				)
+				gw['_setDiscoveryValue'](payload, 'd', node)
 				return expect(payload).to.deep.equal(untouchedPayload)
 			})
 		})
 		describe('no valueId.value', () => {
 			it('should not change payload', () => {
-				gw['_setDiscoveryValue'](
-					payload,
-					'c',
-					node as unknown as ZUINode,
-				)
+				gw['_setDiscoveryValue'](payload, 'c', node)
 				return expect(payload).to.deep.equal(untouchedPayload)
 			})
 		})
 		describe('happy path', () => {
 			it('should not change payload', () => {
-				gw['_setDiscoveryValue'](
-					payload,
-					'b',
-					node as unknown as ZUINode,
-				)
+				gw['_setDiscoveryValue'](payload, 'b', node)
 				return expect(payload).to.deep.equal({
 					a: 1,
 					b: 'a',
@@ -73,17 +77,13 @@ describe('#Gateway', () => {
 	})
 
 	describe('#_deviceInfo()', () => {
-		beforeEach(() => {
-			gw['_zwave'] = { homeHex: 'abcdef01' } as any
-		})
-
 		const baseNode = {
 			id: 7,
 			manufacturer: 'Zooz',
 			productDescription: 'Dimmer Switch',
 			productLabel: 'ZEN77',
 			firmwareVersion: '1.2.3',
-		} as ZUINode
+		}
 
 		it('omits suggested_area by default', () => {
 			const deviceInfo = gw['_deviceInfo'](
@@ -95,12 +95,11 @@ describe('#Gateway', () => {
 		})
 
 		it('sets suggested_area when enabled and location exists', () => {
-			const gwWithSuggestedArea = new Gateway(
+			const gwWithSuggestedArea = factory.create(
 				{ type: 0, useLocationAsSuggestedArea: true },
-				null as any,
-				null as any,
+				createFakeGatewayZwave({ homeHex: 'abcdef01' }),
+				null,
 			)
-			gwWithSuggestedArea['_zwave'] = { homeHex: 'abcdef01' } as any
 
 			const deviceInfo = gwWithSuggestedArea['_deviceInfo'](
 				{ ...baseNode, loc: 'Kitchen' },
@@ -108,16 +107,14 @@ describe('#Gateway', () => {
 			)
 
 			expect(deviceInfo.suggested_area).to.equal('Kitchen')
-			closeWatchers()
 		})
 
 		it('trims suggested_area and omits blank locations', () => {
-			const gwWithSuggestedArea = new Gateway(
+			const gwWithSuggestedArea = factory.create(
 				{ type: 0, useLocationAsSuggestedArea: true },
-				null as any,
-				null as any,
+				createFakeGatewayZwave({ homeHex: 'abcdef01' }),
+				null,
 			)
-			gwWithSuggestedArea['_zwave'] = { homeHex: 'abcdef01' } as any
 
 			const trimmed = gwWithSuggestedArea['_deviceInfo'](
 				{ ...baseNode, loc: '  Kitchen  ' },
@@ -130,7 +127,6 @@ describe('#Gateway', () => {
 
 			expect(trimmed.suggested_area).to.equal('Kitchen')
 			expect(blank).to.not.have.property('suggested_area')
-			closeWatchers()
 		})
 	})
 })

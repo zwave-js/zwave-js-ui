@@ -2,8 +2,11 @@ import * as crypto from 'node:crypto'
 import * as fs from 'node:fs'
 import { createRequire } from 'node:module'
 import * as path from 'node:path'
-import builtInDevices from './devices.ts'
-import type { HassDevice, HassDeviceCatalog } from './types.ts'
+import type {
+	HassDevice,
+	HassDeviceCatalog,
+	HassDeviceCatalogSource,
+} from './types.ts'
 import type { HassDeviceRegistryPort, HassLogger } from './ports.ts'
 
 const require = createRequire(import.meta.url)
@@ -15,14 +18,17 @@ export interface CustomDeviceRegistryOptions {
 	source?: CustomDeviceRegistry
 }
 
-function copyCatalog(catalog: unknown): HassDeviceCatalog {
-	// Copy shallowly so malformed entries remain visible while get() treats them as empty
-	return Object.assign({}, catalog) as HassDeviceCatalog
+function copyCatalog(catalog: unknown): HassDeviceCatalogSource {
+	const copy: HassDeviceCatalogSource = {}
+	// Preserve malformed custom-JS entries so lookups can ignore them without rejecting the whole catalog
+	return Object.assign(copy, Object(catalog))
 }
 
-function copyCatalogProjection(catalog: HassDeviceCatalog): HassDeviceCatalog {
+function copyCatalogProjection(
+	catalog: HassDeviceCatalogSource,
+): HassDeviceCatalogSource {
 	const projection = copyCatalog(catalog)
-	// Clone each device array so mutations in one fork cannot reach its source or siblings
+	// Clone device arrays so dynamic discovery in one fork cannot mutate its source or siblings
 	for (const deviceId of Object.keys(projection)) {
 		const devices = projection[deviceId]
 		if (Array.isArray(devices)) projection[deviceId] = [...devices]
@@ -31,7 +37,7 @@ function copyCatalogProjection(catalog: HassDeviceCatalog): HassDeviceCatalog {
 }
 
 export class CustomDeviceRegistry implements HassDeviceRegistryPort {
-	private readonly baseDevices: HassDeviceCatalog
+	private readonly baseDevices: HassDeviceCatalogSource
 	private readonly logger: Pick<HassLogger, 'error' | 'info'>
 	private readonly customDevicesPath: string
 	private readonly customDevicesJsPath: string
@@ -39,14 +45,14 @@ export class CustomDeviceRegistry implements HassDeviceRegistryPort {
 	private readonly watchers = new Map<string, fs.FSWatcher>()
 	private readonly listeners = new Set<() => void>()
 	private readonly source: CustomDeviceRegistry | undefined
-	private allDevices: HassDeviceCatalog
+	private allDevices: HassDeviceCatalogSource
 	private lastCustomDevicesLoad: string | null = null
 	private unsubscribeSource: (() => void) | undefined
 	private started = false
 
 	public constructor(options: CustomDeviceRegistryOptions) {
 		this.source = options.source
-		this.baseDevices = copyCatalog(options.devices ?? builtInDevices)
+		this.baseDevices = copyCatalog(options.devices)
 		this.allDevices = options.source
 			? options.source.copyProjection()
 			: copyCatalog(this.baseDevices)
@@ -74,14 +80,16 @@ export class CustomDeviceRegistry implements HassDeviceRegistryPort {
 		this.watch(this.customDevicesJsonPath)
 	}
 
-	public load(): void {
+	private load(): void {
 		let loaded = ''
 		let devices: unknown
 
 		try {
 			if (fs.existsSync(this.customDevicesJsPath)) {
 				loaded = this.customDevicesJsPath
-				devices = require(this.customDevicesPath)
+				const modulePath = require.resolve(this.customDevicesPath)
+				delete require.cache[modulePath]
+				devices = require(modulePath)
 			} else if (fs.existsSync(this.customDevicesJsonPath)) {
 				loaded = this.customDevicesJsonPath
 				devices = JSON.parse(fs.readFileSync(loaded).toString())
@@ -102,7 +110,7 @@ export class CustomDeviceRegistry implements HassDeviceRegistryPort {
 
 			const replacement = Object.assign(
 				copyCatalog(this.baseDevices),
-				devices,
+				Object(devices),
 			)
 			const loadedCount =
 				devices !== null &&
@@ -131,39 +139,6 @@ export class CustomDeviceRegistry implements HassDeviceRegistryPort {
 		if (deviceId !== undefined) this.allDevices[deviceId] = devices
 	}
 
-	public snapshot(): HassDeviceCatalog {
-		return structuredClone(this.allDevices)
-	}
-
-	public get sha(): string | null {
-		return this.lastCustomDevicesLoad
-	}
-
-	public get watcherCount(): number {
-		return this.watchers.size
-	}
-
-	public get activeWatcherCount(): number {
-		const getActiveHandles = Reflect.get(process, '_getActiveHandles')
-		if (typeof getActiveHandles !== 'function') return 0
-		const activeHandles: unknown[] = Reflect.apply(
-			getActiveHandles,
-			process,
-			[],
-		)
-		return [...this.watchers.values()].filter((watcher) =>
-			activeHandles.includes(watcher),
-		).length
-	}
-
-	public get watcherPaths(): string[] {
-		return [...this.watchers.keys()]
-	}
-
-	public get subscriberCount(): number {
-		return this.listeners.size
-	}
-
 	public fork(): CustomDeviceRegistry {
 		return new CustomDeviceRegistry({
 			storeDir: path.dirname(this.customDevicesPath),
@@ -172,35 +147,16 @@ export class CustomDeviceRegistry implements HassDeviceRegistryPort {
 		})
 	}
 
-	public reset(): void {
-		this.lastCustomDevicesLoad = null
-		this.allDevices = copyCatalog(this.baseDevices)
-		this.notify()
-	}
-
-	public evictRequireCache(): void {
-		for (const key of [
-			this.customDevicesJsPath,
-			this.customDevicesJsonPath,
-		]) {
-			delete require.cache[key]
-		}
-	}
-
-	public rebind(): void {
-		this.dispose()
-		this.start()
-	}
-
 	public dispose(): void {
 		this.unsubscribeSource?.()
 		this.unsubscribeSource = undefined
 		for (const watcher of this.watchers.values()) watcher.close()
 		this.watchers.clear()
+		this.listeners.clear()
 		this.started = false
 	}
 
-	private copyProjection(): HassDeviceCatalog {
+	private copyProjection(): HassDeviceCatalogSource {
 		return copyCatalogProjection(this.allDevices)
 	}
 
