@@ -16,10 +16,6 @@ function requireStoredNode(
 	return storedNode
 }
 
-/**
- * Applies legacy HASS editor mutations while storage and socket effects remain
- * behind the ZwaveClient-owned port.
- */
 export class HassDeviceStore {
 	private readonly port: HassDeviceStorePort
 

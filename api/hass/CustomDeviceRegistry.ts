@@ -16,18 +16,10 @@ export interface CustomDeviceRegistryOptions {
 }
 
 function copyCatalog(catalog: unknown): HassDeviceCatalog {
-	// The legacy loader used Object.assign({}, builtIns, customDevices). Keep
-	// that deliberately shallow and permissive: malformed per-device entries
-	// remain in the projection, while get() treats them as having no devices.
+	// Merge shallowly so malformed per-device entries stay in the projection and get() treats them as having no devices
 	return Object.assign({}, catalog) as HassDeviceCatalog
 }
 
-/**
- * Instance-owned legacy customDevices.js/customDevices.json catalog.
- *
- * A registry loads before installing its two watchers, matching the original
- * Gateway module bootstrap. dispose() releases every watcher and is reentrant.
- */
 export class CustomDeviceRegistry implements HassDeviceRegistryPort {
 	private readonly baseDevices: HassDeviceCatalog
 	private readonly logger: Pick<HassLogger, 'error' | 'info'>

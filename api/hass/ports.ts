@@ -162,10 +162,6 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 	return value !== null && typeof value === 'object' && !Array.isArray(value)
 }
 
-/**
- * Narrows the legacy Z-Wave node DTO to the state discovery actually needs.
- * Runtime nodes always own both maps, while partially-built/test DTOs may not.
- */
 export function isHassNode(value: unknown): value is HassNode {
 	if (!isRecord(value)) return false
 
