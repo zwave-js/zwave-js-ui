@@ -87,9 +87,7 @@ export class CustomDeviceRegistry implements HassDeviceRegistryPort {
 		try {
 			if (fs.existsSync(this.customDevicesJsPath)) {
 				loaded = this.customDevicesJsPath
-				const modulePath = require.resolve(this.customDevicesPath)
-				delete require.cache[modulePath]
-				devices = require(modulePath)
+				devices = require(this.customDevicesPath)
 			} else if (fs.existsSync(this.customDevicesJsonPath)) {
 				loaded = this.customDevicesJsonPath
 				devices = JSON.parse(fs.readFileSync(loaded).toString())
