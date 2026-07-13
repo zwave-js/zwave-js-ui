@@ -45,14 +45,10 @@ export function registerImportExportRoutes(
 				// Re-resolved before each call rather than captured once, so a
 				// gateway swapped mid-import (e.g. a concurrent restart) is
 				// honored by every subsequent operation
-				if (!runtime.requireGateway('zwave').zwave) {
-					throw Error('Z-Wave client not inited')
-				}
-
 				const { nodes, selectedHomeId, skippedHomeIds } =
 					normalizeImportedNodesConfig(
 						req.body.data,
-						runtime.requireGateway('zwave').zwave.homeHex,
+						runtime.requireZwaveClient().homeHex,
 						{
 							homeId:
 								typeof req.body.homeId === 'string'
@@ -79,7 +75,7 @@ export function registerImportExportRoutes(
 						message: `Import skipped: the backup contains nodes for home ids ${skippedHomeIds.join(
 							', ',
 						)}, none of which match the connected controller (${
-							runtime.requireGateway('zwave').zwave.homeHex
+							runtime.requireZwaveClient().homeHex
 						}).`,
 					})
 				}
@@ -96,8 +92,8 @@ export function registerImportExportRoutes(
 
 					if (utils.hasProperty(node, 'name')) {
 						await runtime
-							.requireGateway('zwave')
-							.zwave.callApi(
+							.requireZwaveClient()
+							.callApi(
 								'setNodeName',
 								nodeIdNumber,
 								typeof node.name === 'string' ? node.name : '',
@@ -109,8 +105,8 @@ export function registerImportExportRoutes(
 						utils.hasProperty(node, 'location')
 					) {
 						await runtime
-							.requireGateway('zwave')
-							.zwave.callApi(
+							.requireZwaveClient()
+							.callApi(
 								'setNodeLocation',
 								nodeIdNumber,
 								getImportedNodeLocation(node),
@@ -119,12 +115,8 @@ export function registerImportExportRoutes(
 
 					if (utils.isRecord(node.hassDevices)) {
 						await runtime
-							.requireGateway('zwave')
-							.zwave.storeDevices(
-								node.hassDevices,
-								nodeIdNumber,
-								false,
-							)
+							.requireZwaveClient()
+							.storeDevices(node.hassDevices, nodeIdNumber, false)
 					}
 				}
 

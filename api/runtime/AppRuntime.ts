@@ -3,7 +3,6 @@ import express from 'express'
 import path from 'node:path'
 import { readdir, readFile, stat } from 'node:fs/promises'
 import type { Server as SocketServer } from 'socket.io'
-import { Driver } from 'zwave-js'
 import type { GatewayConfig } from '../lib/Gateway.ts'
 import Gateway from '../lib/Gateway.ts'
 import type { MqttConfig } from '../lib/MqttClient.ts'
@@ -15,7 +14,6 @@ import ZnifferManager from '../lib/ZnifferManager.ts'
 import type { CustomPlugin, PluginConstructor } from '../lib/CustomPlugin.ts'
 import { createPlugin } from '../lib/CustomPlugin.ts'
 import backupManager from '../lib/BackupManager.ts'
-import debugManager from '../lib/DebugManager.ts'
 import jsonStore from '../lib/jsonStore.ts'
 import store from '../config/store.ts'
 import type { PersistedSettings } from '../config/store.ts'
@@ -58,13 +56,6 @@ export class AppRuntime {
 	private plugins: CustomPlugin[] = []
 	private restarting = false
 
-	// Indirection so tests can replace serial-port enumeration with a fake, without touching real hardware
-	private enumerateSerialPortsFn: typeof Driver.enumerateSerialPorts =
-		Driver.enumerateSerialPorts.bind(Driver)
-	// Tracks whether enumerateSerialPortsFn is the real implementation or a test-injected fake
-	// Only isEnumerateSerialPortsProductionDefault() reads this, for tests; production logic never consults it
-	private enumerateSerialPortsIsProductionDefault = true
-
 	private defaultSnippets: utils.Snippet[] = []
 
 	private readonly deps: AppRuntimeDeps
@@ -81,14 +72,19 @@ export class AppRuntime {
 		this.gateway = value
 	}
 
-	// Hand-crafts the same TypeError a missing gateway would throw natively, so callers preserve their pre-refactor error text
-	requireGateway(property: string): Gateway {
+	requireGateway(): Gateway {
 		if (this.gateway === undefined) {
-			throw new TypeError(
-				`Cannot read properties of undefined (reading '${property}')`,
-			)
+			throw new Error('Gateway is not initialized')
 		}
 		return this.gateway
+	}
+
+	// Covers both "no gateway attached" and "gateway attached without a zwave client" in one clean typed failure
+	requireZwaveClient(): ZWaveClient {
+		if (this.gateway?.zwave === undefined) {
+			throw new Error('Z-Wave client not inited')
+		}
+		return this.gateway.zwave
 	}
 
 	getZniffer(): ZnifferManager | undefined {
@@ -99,11 +95,9 @@ export class AppRuntime {
 		this.zniffer = value
 	}
 
-	requireZniffer(property: string): ZnifferManager {
+	requireZniffer(): ZnifferManager {
 		if (this.zniffer === undefined) {
-			throw new TypeError(
-				`Cannot read properties of undefined (reading '${property}')`,
-			)
+			throw new Error('Zniffer is not initialized')
 		}
 		return this.zniffer
 	}
@@ -126,41 +120,6 @@ export class AppRuntime {
 
 	setRestarting(value: boolean): void {
 		this.restarting = value
-	}
-
-	getEnumerateSerialPorts(): typeof Driver.enumerateSerialPorts {
-		return this.enumerateSerialPortsFn
-	}
-
-	// Passing undefined restores the real production enumerateSerialPorts implementation
-	setEnumerateSerialPorts(
-		value: typeof Driver.enumerateSerialPorts | undefined,
-	): void {
-		if (value === undefined) {
-			this.enumerateSerialPortsFn =
-				Driver.enumerateSerialPorts.bind(Driver)
-			this.enumerateSerialPortsIsProductionDefault = true
-		} else {
-			this.enumerateSerialPortsFn = value
-			this.enumerateSerialPortsIsProductionDefault = false
-		}
-	}
-
-	isEnumerateSerialPortsProductionDefault(): boolean {
-		return this.enumerateSerialPortsIsProductionDefault
-	}
-
-	// Stable-identity singletons, exposed here so routes reach them through the same seam as everything else AppRuntime owns
-	getBackupManager(): typeof backupManager {
-		return backupManager
-	}
-
-	getDebugManager(): typeof debugManager {
-		return debugManager
-	}
-
-	getSettings(): PersistedSettings {
-		return jsonStore.get(store.settings)
 	}
 
 	// Clears defaultSnippets first so repeated calls can't duplicate entries, though production only calls this once at startup
@@ -195,8 +154,7 @@ export class AppRuntime {
 			}
 		}
 
-		const snippetsCache =
-			this.requireGateway('zwave').zwave?.cacheSnippets ?? []
+		const snippetsCache = this.gateway?.zwave?.cacheSnippets ?? []
 		return [...snippetsCache, ...this.defaultSnippets, ...snippets]
 	}
 

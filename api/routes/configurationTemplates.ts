@@ -9,9 +9,9 @@ export interface ConfigurationTemplatesRoutesDeps {
 }
 
 /**
- * Every `runtime.requireGateway('zwave')` call below is deliberately unguarded,
- * preserving the legacy crash-on-missing-gateway behavior - see
- * `AppRuntime.requireGateway()` for the full rationale
+ * Every route below resolves the Z-Wave client via `runtime.requireZwaveClient()`,
+ * which throws a clean typed error when none is attached, caught by each
+ * route's own try/catch
  */
 export function registerConfigurationTemplatesRoutes(
 	app: express.Express,
@@ -25,8 +25,8 @@ export function registerConfigurationTemplatesRoutes(
 		function (req, res) {
 			try {
 				const templates = runtime
-					.requireGateway('zwave')
-					.zwave.getConfigurationTemplates()
+					.requireZwaveClient()
+					.getConfigurationTemplates()
 				res.json({ success: true, data: templates })
 			} catch (error) {
 				res.json({ success: false, message: getErrorMessage(error) })
@@ -49,8 +49,8 @@ export function registerConfigurationTemplatesRoutes(
 					})
 				}
 				const template = await runtime
-					.requireGateway('zwave')
-					.zwave.createConfigurationTemplate(
+					.requireZwaveClient()
+					.createConfigurationTemplate(
 						nodeId,
 						name,
 						autoApply,
@@ -76,8 +76,8 @@ export function registerConfigurationTemplatesRoutes(
 		function (req, res) {
 			try {
 				const templates = runtime
-					.requireGateway('zwave')
-					.zwave.getConfigurationTemplates()
+					.requireZwaveClient()
+					.getConfigurationTemplates()
 				res.json({
 					success: true,
 					data: templates,
@@ -113,8 +113,8 @@ export function registerConfigurationTemplatesRoutes(
 					}
 				}
 				const result = await runtime
-					.requireGateway('zwave')
-					.zwave.importConfigurationTemplates(templates)
+					.requireZwaveClient()
+					.importConfigurationTemplates(templates)
 				res.json({
 					success: true,
 					data: result,
@@ -133,8 +133,8 @@ export function registerConfigurationTemplatesRoutes(
 		async function (req, res) {
 			try {
 				const params = await runtime
-					.requireGateway('zwave')
-					.zwave.getDeviceConfigurationParams(req.params.deviceId)
+					.requireZwaveClient()
+					.getDeviceConfigurationParams(req.params.deviceId)
 				res.json({ success: true, data: params })
 			} catch (error) {
 				res.json({ success: false, message: getErrorMessage(error) })
@@ -157,8 +157,8 @@ export function registerConfigurationTemplatesRoutes(
 				}
 				const { name, autoApply, firmwareRange, values } = req.body
 				const template = await runtime
-					.requireGateway('zwave')
-					.zwave.updateConfigurationTemplate(id, {
+					.requireZwaveClient()
+					.updateConfigurationTemplate(id, {
 						name,
 						autoApply,
 						firmwareRange,
@@ -189,8 +189,8 @@ export function registerConfigurationTemplatesRoutes(
 					})
 				}
 				await runtime
-					.requireGateway('zwave')
-					.zwave.deleteConfigurationTemplate(id)
+					.requireZwaveClient()
+					.deleteConfigurationTemplate(id)
 				res.json({
 					success: true,
 					message: 'Template deleted successfully',
@@ -222,8 +222,8 @@ export function registerConfigurationTemplatesRoutes(
 					})
 				}
 				const result = await runtime
-					.requireGateway('zwave')
-					.zwave.applyConfigurationTemplate(id, nodeId, !!force)
+					.requireZwaveClient()
+					.applyConfigurationTemplate(id, nodeId, !!force)
 				res.json({
 					success: true,
 					data: result,

@@ -5,6 +5,7 @@ import store from '../config/store.ts'
 import jsonStore from '../lib/jsonStore.ts'
 import * as loggers from '../lib/logger.ts'
 import { getErrorMessage } from '../lib/errors.ts'
+import debugManager from '../lib/DebugManager.ts'
 import type { AppRuntime } from '../runtime/AppRuntime.ts'
 import { isAuthenticated } from './auth.ts'
 
@@ -26,7 +27,7 @@ export function registerDebugRoutes(
 		function (req, res) {
 			res.json({
 				success: true,
-				active: runtime.getDebugManager().isSessionActive(),
+				active: debugManager.isSessionActive(),
 			})
 		},
 	)
@@ -37,7 +38,6 @@ export function registerDebugRoutes(
 		isAuthenticated,
 		async function (req, res) {
 			try {
-				const debugManager = runtime.getDebugManager()
 				if (debugManager.isSessionActive()) {
 					return res.json({
 						success: false,
@@ -51,7 +51,7 @@ export function registerDebugRoutes(
 				const restartDriver = req.body.restartDriver || false
 
 				await debugManager.startSession(
-					runtime.requireGateway('zwave').zwave,
+					runtime.requireZwaveClient(),
 					originalLogLevel,
 					restartDriver,
 				)
@@ -76,7 +76,6 @@ export function registerDebugRoutes(
 		isAuthenticated,
 		async function (req, res) {
 			try {
-				const debugManager = runtime.getDebugManager()
 				if (!debugManager.isSessionActive()) {
 					return res.json({
 						success: false,
@@ -115,7 +114,6 @@ export function registerDebugRoutes(
 		isAuthenticated,
 		async function (req, res) {
 			try {
-				const debugManager = runtime.getDebugManager()
 				if (!debugManager.isSessionActive()) {
 					return res.json({
 						success: false,

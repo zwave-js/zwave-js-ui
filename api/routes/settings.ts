@@ -3,6 +3,7 @@ import type { RateLimitRequestHandler } from 'express-rate-limit'
 import { libVersion } from 'zwave-js'
 import { serverVersion } from '@zwave-js/server'
 import { getAllNamedScaleGroups, getAllSensors } from '@zwave-js/core'
+import type { Driver } from 'zwave-js'
 import type { PersistedSettings } from '../config/store.ts'
 import store from '../config/store.ts'
 import { logsDir, sslDisabled } from '../config/app.ts'
@@ -13,6 +14,8 @@ import * as loggers from '../lib/logger.ts'
 import * as utils from '../lib/utils.ts'
 import { getExternallyManagedPaths } from '../lib/externalSettings.ts'
 import { getErrorMessage } from '../lib/errors.ts'
+import backupManager from '../lib/BackupManager.ts'
+import debugManager from '../lib/DebugManager.ts'
 import type { AppRuntime } from '../runtime/AppRuntime.ts'
 import { backupManagerOwner } from '../runtime/AppRuntime.ts'
 import { isAuthenticated } from './auth.ts'
@@ -29,12 +32,13 @@ function getZwaveConfigValue(
 
 export interface SettingsRoutesDeps {
 	apisLimiter: RateLimitRequestHandler
+	getEnumerateSerialPorts: () => typeof Driver.enumerateSerialPorts
 }
 
 export function registerSettingsRoutes(
 	app: express.Express,
 	runtime: AppRuntime,
-	{ apisLimiter }: SettingsRoutesDeps,
+	{ apisLimiter, getEnumerateSerialPorts }: SettingsRoutesDeps,
 ): void {
 	app.get('/api/settings', apisLimiter, isAuthenticated, function (req, res) {
 		const allSensors = getAllSensors()
@@ -99,7 +103,7 @@ export function registerSettingsRoutes(
 
 			if (process.platform !== 'sunos' && !process.env.ZWAVE_PORT) {
 				try {
-					serial_ports = await runtime.getEnumerateSerialPorts()({
+					serial_ports = await getEnumerateSerialPorts()({
 						local: true,
 						remote: true,
 					})
@@ -341,20 +345,21 @@ export function registerSettingsRoutes(
 
 				runtime.setRestarting(true)
 
-				if (runtime.getDebugManager().isSessionActive()) {
-					await runtime.getDebugManager().cancelSession()
+				if (debugManager.isSessionActive()) {
+					await debugManager.cancelSession()
 				}
 
-				await runtime.requireGateway('close').close()
+				await runtime.requireGateway().close()
 				await runtime.destroyPlugins()
 				if (settings.gateway) {
 					runtime.setupLogging({ gateway: settings.gateway })
 				}
 				await runtime.startGateway(settings)
 				// Resolved after startGateway() reassigns the gateway so this doesn't observe the just-closed instance
-				runtime
-					.getBackupManager()
-					.init(runtime.requireGateway('zwave').zwave, backupManagerOwner)
+				backupManager.init(
+					runtime.requireZwaveClient(),
+					backupManagerOwner,
+				)
 
 				const oldZniffer = runtime.getZniffer()
 				if (oldZniffer) {

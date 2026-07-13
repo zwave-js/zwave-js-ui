@@ -338,8 +338,8 @@ export function registerStoreRoutes(
 				isRestore = req.body.restore === 'true'
 				const folder = req.body.folder
 
-				// Cast rather than optional chaining, so a non-multipart request still throws the native TypeError instead of falling through silently
-				file = (req.files as Express.Multer.File[])[0]
+				// Optional chaining: a non-multipart request has no req.files array at all, which falls through to the same "No file uploaded" error below
+				file = (req.files as Express.Multer.File[] | undefined)?.[0]
 
 				if (!file || !file.path) {
 					throw Error('No file uploaded')

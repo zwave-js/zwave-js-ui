@@ -50,6 +50,7 @@ import {
 import { readFile, writeFile } from 'node:fs/promises'
 import { generate } from 'selfsigned'
 import type ZnifferManager from './lib/ZnifferManager.ts'
+import debugManager from './lib/DebugManager.ts'
 import { AppRuntime, isAuthEnabled } from './runtime/AppRuntime.ts'
 import type { JwtUserPayload } from './routes/auth.ts'
 import { registerAuthRoutes } from './routes/auth.ts'
@@ -180,13 +181,6 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 	runtime.setZniffer(testOptions?.zniffer)
 	runtime.setPluginsRouter(testOptions?.pluginsRouter)
 	runtime.setRestarting(testOptions?.restarting ?? false)
-	// `CreateAppOptions.test.enumerateSerialPorts` is this (base) layer's
-	// test-injection seam; `AppRuntime` owns the actual
-	// `enumerateSerialPortsFn` state consumed by `GET /api/serial-ports`
-	// (see `routes/settings.ts`). Forwarding it through connects the two -
-	// `undefined` (the non-test-override case) is a harmless no-op that
-	// leaves `runtime`'s own production default in place.
-	runtime.setEnumerateSerialPorts(testOptions?.enumerateSerialPorts)
 
 	socketManager.authMiddleware = function (
 		socket: Socket & { user?: JwtUserPayload },
@@ -342,7 +336,7 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 		attachSocket(server)
 		await runtime.loadSnippets()
 		runtime.startZniffer(settings.zniffer)
-		await runtime.getDebugManager().init() // Clean up any old debug temp files
+		await debugManager.init() // Clean up any old debug temp files
 		await runtime.startGateway(settings)
 
 		return server
@@ -529,7 +523,7 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 			socket.on(inboundEvents.init, (data, cb = noop) => {
 				let state = {} as any
 
-				const currentGw = runtime.requireGateway('zwave')
+				const currentGw = runtime.requireGateway()
 				if (currentGw.zwave) {
 					state = currentGw.zwave.getState()
 				}
@@ -540,9 +534,7 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 				}
 
 				// Add debug session status
-				state.debugCaptureActive = runtime
-					.getDebugManager()
-					.isSessionActive()
+				state.debugCaptureActive = debugManager.isSessionActive()
 
 				cb(state)
 			})
@@ -551,7 +543,7 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 				inboundEvents.zwave,
 
 				async (data, cb = noop) => {
-					const currentGw = runtime.requireGateway('zwave')
+					const currentGw = runtime.requireGateway()
 					if (currentGw.zwave) {
 						if (!data.args) data.args = []
 						const result: CallAPIResult<any> & {
@@ -580,12 +572,12 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 					switch (data.api) {
 						case 'updateNodeTopics':
 							res = runtime
-								.requireGateway('updateNodeTopics')
+								.requireGateway()
 								.updateNodeTopics(data.args[0])
 							break
 						case 'removeNodeRetained':
 							res = runtime
-								.requireGateway('removeNodeRetained')
+								.requireGateway()
 								.removeNodeRetained(data.args[0])
 							break
 						default:
@@ -614,7 +606,7 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 					switch (data.apiName) {
 						case 'delete':
 							res = runtime
-								.requireGateway('publishDiscovery')
+								.requireGateway()
 								.publishDiscovery(data.device, data.nodeId, {
 									deleteDevice: true,
 									forceUpdate: true,
@@ -622,7 +614,7 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 							break
 						case 'discover':
 							res = runtime
-								.requireGateway('publishDiscovery')
+								.requireGateway()
 								.publishDiscovery(data.device, data.nodeId, {
 									deleteDevice: false,
 									forceUpdate: true,
@@ -630,28 +622,28 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 							break
 						case 'rediscoverNode':
 							res = runtime
-								.requireGateway('rediscoverNode')
+								.requireGateway()
 								.rediscoverNode(data.nodeId)
 							break
 						case 'disableDiscovery':
 							res = runtime
-								.requireGateway('disableDiscovery')
+								.requireGateway()
 								.disableDiscovery(data.nodeId)
 							break
 						case 'update':
 							res = runtime
-								.requireGateway('zwave')
-								.zwave.updateDevice(data.device, data.nodeId)
+								.requireZwaveClient()
+								.updateDevice(data.device, data.nodeId)
 							break
 						case 'add':
 							res = runtime
-								.requireGateway('zwave')
-								.zwave.addDevice(data.device, data.nodeId)
+								.requireZwaveClient()
+								.addDevice(data.device, data.nodeId)
 							break
 						case 'store':
 							res = await runtime
-								.requireGateway('zwave')
-								.zwave.storeDevices(
+								.requireZwaveClient()
+								.storeDevices(
 									data.devices,
 									data.nodeId,
 									data.remove,
@@ -726,38 +718,36 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 				try {
 					switch (data.apiName) {
 						case 'start':
-							res = await runtime.requireZniffer('start').start()
+							res = await runtime.requireZniffer().start()
 							break
 						case 'stop':
-							res = await runtime.requireZniffer('stop').stop()
+							res = await runtime.requireZniffer().stop()
 							break
 						case 'clear':
-							res = runtime.requireZniffer('clear').clear()
+							res = runtime.requireZniffer().clear()
 							break
 						case 'getFrames':
-							res = runtime.requireZniffer('getFrames').getFrames()
+							res = runtime.requireZniffer().getFrames()
 							break
 						case 'setFrequency':
 							res = await runtime
-								.requireZniffer('setFrequency')
-								.setFrequency(
-								data.frequency,
-							)
+								.requireZniffer()
+								.setFrequency(data.frequency)
 							break
 						case 'setLRChannelConfig':
 							res = await runtime
-								.requireZniffer('setLRChannelConfig')
+								.requireZniffer()
 								.setLRChannelConfig(data.channelConfig)
 							break
 						case 'saveCaptureToFile':
 							res = await runtime
-								.requireZniffer('saveCaptureToFile')
+								.requireZniffer()
 								.saveCaptureToFile()
 							break
 						case 'loadCaptureFromBuffer': {
 							const buffer = Buffer.from(data.buffer)
 							res = await runtime
-								.requireZniffer('loadCaptureFromBuffer')
+								.requireZniffer()
 								.loadCaptureFromBuffer(buffer)
 							break
 						}
@@ -784,7 +774,7 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 
 		// emitted every time a new client connects/disconnects
 		socketManager.on('clients', (event, activeSockets) => {
-			const currentGw = runtime.requireGateway('zwave')
+			const currentGw = runtime.requireGateway()
 			if (event === 'connection' && activeSockets.size === 1) {
 				currentGw.zwave?.setUserCallbacks()
 			} else if (event === 'disconnect' && activeSockets.size === 0) {
@@ -809,7 +799,10 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 
 	registerAuthRoutes(app, { apisLimiter, loginLimiter })
 	registerHealthRoutes(app, runtime, { apisLimiter })
-	registerSettingsRoutes(app, runtime, { apisLimiter })
+	registerSettingsRoutes(app, runtime, {
+		apisLimiter,
+		getEnumerateSerialPorts: () => enumerateSerialPorts,
+	})
 	registerImportExportRoutes(app, runtime, { apisLimiter })
 	registerConfigurationTemplatesRoutes(app, runtime, { apisLimiter })
 	registerStoreRoutes(app, runtime, { apisLimiter, storeLimiter })
