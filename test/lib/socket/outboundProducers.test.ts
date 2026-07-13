@@ -1,7 +1,9 @@
 /**
  * Characterizes each outbound producer call site in `ZwaveClient.ts`/`ZnifferManager.ts`/`app.ts`: literal event name, payload shape, argument order, channel routing, and `process.nextTick` deferral where the real code defers.
  *
- * `ZwaveClient.sendToSocket` is the shared routing point for most of these events, looking up `eventToChannel[evtName]` to room-route or falling back to an unrouted broadcast - a real `ZWaveClient` drives this against the harness's real `io`, not a mock.
+ * `ZwaveClient.sendToSocket` is the shared routing point for most of these events, looking up `eventToChannel[evtName]` to room-route - a real `ZWaveClient` drives this against the harness's real `io`, not a mock.
+ *
+ * Producers reachable only through a private method with no real public caller (e.g. handlers only ever bound inside `connect()` against a real zwave-js `Driver`) are intentionally not covered here - faking that much of the driver/node graph would test the fake more than the real code. Producers reachable through a genuinely public method (`rebuildNodeRoutes`, `checkLifelineHealth`, `checkLinkReliability`, `setUserCallbacks`, `emitNodeUpdate`, ...) are driven through that method instead.
  */
 import {
 	describe,
@@ -13,15 +15,21 @@ import {
 	vi,
 	type MockInstance,
 } from 'vitest'
-import { CommandClasses, NODE_ID_BROADCAST_LR } from '@zwave-js/core'
-import { OTWFirmwareUpdateStatus, Zniffer } from 'zwave-js'
+import { CommandClasses, ZWaveDataRate, type Route } from '@zwave-js/core'
+import {
+	Zniffer,
+	type Driver,
+	type InclusionGrant,
+	type InclusionUserCallbacks,
+} from 'zwave-js'
 import type ZWaveClientType from '#api/lib/ZwaveClient.ts'
+import type { ZwaveConfig, ZUINode, ZUIValueId } from '#api/lib/ZwaveClient.ts'
 import type ZnifferManagerType from '#api/lib/ZnifferManager.ts'
 import { eventToChannel } from '#api/lib/SocketEvents.ts'
 import { buffer2hex } from '#api/lib/utils.ts'
 import { useSocketHarness, type SocketHarness } from './harness.ts'
 import { createFakeGateway } from './fakes.ts'
-import { internals, znifferManagerInternals } from './internals.ts'
+import { connectedSubscriber, waitForEvent, waitForArgs } from './helpers.ts'
 
 describe('Socket contract: outbound producers', () => {
 	const getHarness = useSocketHarness()
@@ -29,102 +37,78 @@ describe('Socket contract: outbound producers', () => {
 	let ZnifferManager: typeof ZnifferManagerType
 
 	beforeAll(async () => {
-		// Runs after useSocketHarness()'s own beforeAll (registered first, so FIFO order isolates STORE_DIR first) since real ZwaveClient.ts/ZnifferManager.ts bind their jsonStore at module-evaluation time
+		// Registered after useSocketHarness()'s beforeAll, so STORE_DIR is isolated first
 		;({ default: ZWaveClient } = await import('#api/lib/ZwaveClient.ts'))
 		;({ default: ZnifferManager } = await import(
 			'#api/lib/ZnifferManager.ts'
 		))
 	})
 
-	// Every test needs at least a bare gateway stub since connecting a client triggers the real 'clients' callback, which reads gw.zwave?.setUserCallbacks() and throws if gw itself is undefined
+	// Connecting a client always runs the real 'clients' callback, which calls
+	// gw.zwave?.setUserCallbacks() and throws if gw is undefined
 	function benignGateway() {
 		return createFakeGateway({ zwave: undefined })
 	}
 
-	// Wires the real ZWaveClient to the harness's real Socket.IO server
-	// Safe to construct directly since the constructor only touches jsonStore, never a real driver or serial port, unless connect() is called
-	function realZwave(harness: SocketHarness): ZWaveClientType {
-		return new ZWaveClient({} as any, harness.io)
-	}
-
-	// Subscribes client to channel and resolves once the ack lands
-	function subscribe(client: any, channels: string[]): Promise<any> {
-		return new Promise((resolve) => {
-			client.emit('SUBSCRIBE', { channels }, resolve)
-		})
-	}
-
-	async function connectedSubscriber(
+	// Wires the real ZWaveClient to the harness's real Socket.IO server.
+	// The constructor only touches jsonStore, so this is safe without a real driver
+	function realZwave(
 		harness: SocketHarness,
-		channel: string,
-	) {
-		const client = harness.createClient()
-		await harness.connectClient(client)
-		await subscribe(client, [channel])
-		return client
+		config: ZwaveConfig = {},
+	): ZWaveClientType {
+		return new ZWaveClient(config, harness.io)
 	}
 
-	// Resolves with the payload the next time event is received on client, so delivery assertions are event-driven instead of timer-based
-	function waitForEvent<T = unknown>(client: any, event: string): Promise<T> {
-		return new Promise((resolve) => client.once(event, resolve))
+	// Minimal ZUINode fixture covering its required fields
+	function fakeNode(overrides: Partial<ZUINode> & { id: number }): ZUINode {
+		return {
+			ready: false,
+			available: true,
+			failed: false,
+			inited: false,
+			eventsQueue: [],
+			...overrides,
+		}
 	}
 
-	// Like waitForEvent, but captures every argument for events that pass more than one, e.g. NODE_UPDATED's (node, isPartial)
-	function waitForArgs(client: any, event: string): Promise<unknown[]> {
-		return new Promise((resolve) =>
-			client.once(event, (...args: unknown[]) => resolve(args)),
-		)
+	// Minimal ZUIValueId fixture; nodeId/property vary per test
+	function fakeValueId(
+		overrides: Partial<ZUIValueId> &
+			Pick<ZUIValueId, 'nodeId' | 'property'>,
+	): ZUIValueId {
+		return {
+			id: 'fake-value-id',
+			type: 'any',
+			readable: true,
+			writeable: true,
+			default: undefined,
+			stateless: false,
+			ccSpecific: {},
+			commandClass: CommandClasses['Binary Switch'],
+			commandClassName: 'Binary Switch',
+			...overrides,
+		}
 	}
 
 	describe('sendToSocket mechanics (shared by most producers)', () => {
-		it('routes to eventToChannel[event] and defers the actual emit via process.nextTick', async () => {
+		it('routes NODE_UPDATED to its mapped channel and defers the actual emit via process.nextTick', async () => {
 			const harness = await getHarness({ gateway: benignGateway() })
 			const zwave = realZwave(harness)
 			const client = await connectedSubscriber(harness, 'nodes')
-			const received = waitForEvent(client, 'NODE_ADDED')
+			const received = waitForArgs(client, 'NODE_UPDATED')
 
 			// Spies on the real io.to() call to prove the nextTick deferral directly in-process, rather than inferring it from wire-delivery timing
 			const toSpy = vi.spyOn(harness.io, 'to')
-			internals(zwave).sendToSocket('NODE_ADDED', { node: { id: 9 } })
+			const node = fakeNode({ id: 9 })
+			zwave.emitNodeUpdate(node)
 			expect(toSpy).not.toHaveBeenCalled()
 
 			await new Promise<void>((resolve) => process.nextTick(resolve))
 			expect(toSpy).toHaveBeenCalledWith('nodes')
 			toSpy.mockRestore()
 
-			expect(eventToChannel.NODE_ADDED).toBe('nodes')
-			expect(await received).toEqual({ node: { id: 9 } })
-		})
-
-		it('falls back to an unrouted broadcast for an event with no channel mapping', async () => {
-			const harness = await getHarness({ gateway: benignGateway() })
-			const zwave = realZwave(harness)
-			const client = harness.createClient()
-			await harness.connectClient(client)
-			// Not subscribed to any channel, since the broadcast fallback must still reach it unlike the routed case above
-			const received = waitForEvent(client, 'SOME_UNMAPPED_EVENT')
-
-			expect(eventToChannel.SOME_UNMAPPED_EVENT).toBeUndefined()
-			internals(zwave).sendToSocket('SOME_UNMAPPED_EVENT', {
-				hello: 'world',
-			})
-
-			expect(await received).toEqual({ hello: 'world' })
-		})
-
-		it('passes every extra argument through, in order, after the payload', async () => {
-			const harness = await getHarness({ gateway: benignGateway() })
-			const zwave = realZwave(harness)
-			const client = await connectedSubscriber(harness, 'nodes')
-			const received = waitForArgs(client, 'NODE_UPDATED')
-			internals(zwave).sendToSocket(
-				'NODE_UPDATED',
-				{ id: 2 },
-				true,
-				'extra-arg',
-			)
-
-			expect(await received).toEqual([{ id: 2 }, true, 'extra-arg'])
+			expect(eventToChannel.NODE_UPDATED).toBe('nodes')
+			expect(await received).toEqual([node, false])
 		})
 	})
 
@@ -132,18 +116,17 @@ describe('Socket contract: outbound producers', () => {
 		it('emitValueChanged() sends VALUE_UPDATED with the mutated valueId when changed=true', async () => {
 			const harness = await getHarness({ gateway: benignGateway() })
 			const zwave = realZwave(harness)
-			internals(zwave)._driver = {
+			zwave['_driver'] = {
 				controller: { nodes: { get: () => undefined } },
-			}
+			} as unknown as Driver
 			const client = await connectedSubscriber(harness, 'values')
-			const received = waitForEvent<any>(client, 'VALUE_UPDATED')
+			const received = waitForEvent<{
+				nodeId: number
+				lastUpdate: number
+			}>(client, 'VALUE_UPDATED')
 
-			const valueId: any = {
-				nodeId: 2,
-				commandClass: CommandClasses['Binary Switch'],
-				property: 'x',
-			}
-			zwave.emitValueChanged(valueId, { id: 2 } as any, true)
+			const valueId = fakeValueId({ nodeId: 2, property: 'x' })
+			zwave.emitValueChanged(valueId, fakeNode({ id: 2 }), true)
 
 			const data = await received
 			expect(data.nodeId).toBe(2)
@@ -153,38 +136,33 @@ describe('Socket contract: outbound producers', () => {
 		it('emitValueChanged() sends nothing when changed=false', async () => {
 			const harness = await getHarness({ gateway: benignGateway() })
 			const zwave = realZwave(harness)
-			internals(zwave)._driver = {
+			zwave['_driver'] = {
 				controller: { nodes: { get: () => undefined } },
-			}
+			} as unknown as Driver
 			const client = await connectedSubscriber(harness, 'values')
 			const box: unknown[] = []
 			client.on('VALUE_UPDATED', (data: unknown) => box.push(data))
 
 			zwave.emitValueChanged(
-				{
-					nodeId: 2,
-					commandClass: CommandClasses['Binary Switch'],
-					property: 'x',
-				} as any,
-				{ id: 2 } as any,
+				fakeValueId({ nodeId: 2, property: 'x' }),
+				fakeNode({ id: 2 }),
 				false,
 			)
 
 			// Fires a second, distinct, definitely-emitting call on the same channel and awaits that instead of a fixed sleep: FIFO per-connection delivery means an incorrect emit above would already have arrived
-			const marker = waitForEvent<any>(client, 'VALUE_UPDATED')
+			const marker = waitForEvent<{ nodeId: number }>(
+				client,
+				'VALUE_UPDATED',
+			)
 			zwave.emitValueChanged(
-				{
-					nodeId: 99,
-					commandClass: CommandClasses['Binary Switch'],
-					property: 'marker',
-				} as any,
-				{ id: 99 } as any,
+				fakeValueId({ nodeId: 99, property: 'marker' }),
+				fakeNode({ id: 99 }),
 				true,
 			)
 			await marker
 
 			expect(box).toHaveLength(1)
-			expect((box[0] as any).nodeId).toBe(99)
+			expect((box[0] as { nodeId: number }).nodeId).toBe(99)
 		})
 
 		it('emitStatistics() converts every null prop to false, leaves others untouched', async () => {
@@ -193,20 +171,21 @@ describe('Socket contract: outbound producers', () => {
 			const client = await connectedSubscriber(harness, 'statistics')
 			const received = waitForEvent(client, 'STATISTICS')
 
-			zwave.emitStatistics(
-				{ id: 5 } as any,
-				{
-					statistics: null,
-					lastActive: null,
-					applicationRoute: { hops: [] } as any,
-				} as any,
-			)
+			const applicationRoute: Route = {
+				repeaters: [],
+				routeSpeed: ZWaveDataRate['9k6'],
+			}
+			zwave.emitStatistics(fakeNode({ id: 5 }), {
+				statistics: null,
+				lastActive: null,
+				applicationRoute,
+			})
 
 			expect(await received).toEqual({
 				nodeId: 5,
 				statistics: false,
 				lastActive: false,
-				applicationRoute: { hops: [] },
+				applicationRoute,
 			})
 		})
 
@@ -216,7 +195,7 @@ describe('Socket contract: outbound producers', () => {
 			const client = await connectedSubscriber(harness, 'nodes')
 			const received = waitForArgs(client, 'NODE_UPDATED')
 
-			const node = { id: 7, ready: true } as any
+			const node = fakeNode({ id: 7, ready: true })
 			zwave.emitNodeUpdate(node)
 
 			expect(await received).toEqual([node, false])
@@ -228,54 +207,24 @@ describe('Socket contract: outbound producers', () => {
 			const client = await connectedSubscriber(harness, 'nodes')
 			const received = waitForArgs(client, 'NODE_UPDATED')
 
-			const node = { id: 7, ready: true } as any
-			zwave.emitNodeUpdate(node, { status: 'alive' } as any)
+			const node = fakeNode({ id: 7, ready: true })
+			zwave.emitNodeUpdate(node, { status: 'Alive' })
 
-			expect(await received).toEqual([{ status: 'alive', id: 7 }, true])
-		})
-
-		it('_updateControllerStatus() sends CONTROLLER_CMD with status (error/inclusionState default to undefined, stripped over the wire)', async () => {
-			const harness = await getHarness({ gateway: benignGateway() })
-			const zwave = realZwave(harness)
-			const client = await connectedSubscriber(harness, 'controller')
-			const received = waitForEvent(client, 'CONTROLLER_CMD')
-			internals(zwave)._updateControllerStatus('Removing failed node')
-
-			// error/inclusionState default to undefined on a fresh client, and undefined-valued keys are stripped by JSON serialization, so only status survives the wire
-			expect(await received).toEqual({ status: 'Removing failed node' })
-		})
-
-		it('_updateControllerStatus() is a no-op (no emit) when the status has not actually changed', async () => {
-			const harness = await getHarness({ gateway: benignGateway() })
-			const zwave = realZwave(harness)
-			const client = await connectedSubscriber(harness, 'controller')
-			const box: unknown[] = []
-			client.on('CONTROLLER_CMD', (data: unknown) => box.push(data))
-
-			const first = waitForEvent(client, 'CONTROLLER_CMD')
-			internals(zwave)._updateControllerStatus('Idle')
-			await first
-
-			// Repeats the same status (expected no-op), then fires a different status and awaits that instead of a fixed sleep, since FIFO delivery means the repeat's absent emit would have arrived first
-			const marker = waitForEvent(client, 'CONTROLLER_CMD')
-			internals(zwave)._updateControllerStatus('Idle')
-			internals(zwave)._updateControllerStatus('Removing failed node')
-			await marker
-
-			expect(box).toHaveLength(2)
-			expect((box[0] as any).status).toBe('Idle')
-			expect((box[1] as any).status).toBe('Removing failed node')
+			expect(await received).toEqual([{ status: 'Alive', id: 7 }, true])
 		})
 
 		it("checkForConfigUpdates() sends INFO with getInfo()'s real payload", async () => {
 			const harness = await getHarness({ gateway: benignGateway() })
 			const zwave = realZwave(harness)
-			internals(zwave)._driver = {
+			zwave['_driver'] = {
 				checkForConfigUpdates: vi.fn(() => Promise.resolve('1.2.3')),
-			}
+			} as unknown as Driver
 			zwave.driverReady = true
 			const client = await connectedSubscriber(harness, 'controller')
-			const received = waitForEvent<any>(client, 'INFO')
+			const received = waitForEvent<{
+				appVersion: string
+				zwaveVersion: string
+			}>(client, 'INFO')
 
 			const newVersion = await zwave.checkForConfigUpdates()
 
@@ -285,10 +234,10 @@ describe('Socket contract: outbound producers', () => {
 			expect(data.zwaveVersion).toEqual(expect.any(String))
 		})
 
-		it("_deleteGroup() sends NODE_REMOVED with just {id}, one of NODE_REMOVED's 3 real shapes", async () => {
+		it("_deleteGroup() sends NODE_REMOVED with just {id}, one of NODE_REMOVED's real shapes", async () => {
 			const harness = await getHarness({ gateway: benignGateway() })
 			const zwave = realZwave(harness)
-			internals(zwave).groups = [{ id: 42, name: 'Test group' } as any]
+			zwave['groups'] = [{ id: 42, name: 'Test group', nodeIds: [] }]
 			const client = await connectedSubscriber(harness, 'nodes')
 			const received = waitForEvent(client, 'NODE_REMOVED')
 
@@ -299,236 +248,128 @@ describe('Socket contract: outbound producers', () => {
 		})
 	})
 
-	describe('additional real literals/shapes: driven through their real producing method/handler', () => {
-		it('NODE_REMOVED: {id: NODE_ID_BROADCAST_LR} via the real _refreshBroadcastLRNode() deletion branch', async () => {
+	describe('additional real literals/shapes: driven through their real public method', () => {
+		it('REBUILD_ROUTES_PROGRESS: array-of-tuples shape, via the real public rebuildNodeRoutes()', async () => {
 			const harness = await getHarness({ gateway: benignGateway() })
 			const zwave = realZwave(harness)
 			zwave.driverReady = true
-			internals(zwave)._driver = {
-				controller: { supportsLongRange: false, nodes: new Map() },
-			}
-			// Pre-populates as if the LR broadcast virtual node already existed, so the real method's deletion branch fires since hasLRNodes is false
-			internals(zwave)._virtualNodes.set(NODE_ID_BROADCAST_LR, {} as any)
-			internals(zwave)._nodes.set(NODE_ID_BROADCAST_LR, {} as any)
-			const client = await connectedSubscriber(harness, 'nodes')
-			const received = waitForEvent(client, 'NODE_REMOVED')
-			internals(zwave)._refreshBroadcastLRNode()
-
-			expect(NODE_ID_BROADCAST_LR).toBe(4095)
-			expect(await received).toEqual({ id: 4095 })
-			expect(
-				internals(zwave)._virtualNodes.has(NODE_ID_BROADCAST_LR),
-			).toBe(false)
-		})
-
-		it('NODE_REMOVED: full node object shape via the real _removeNode()', async () => {
-			const harness = await getHarness({ gateway: benignGateway() })
-			const zwave = realZwave(harness)
-			internals(zwave).storeNodes = {}
-			const node = { id: 12, name: 'Removed node', ready: false }
-			// ZUINode also requires available/failed/inited/eventsQueue, left off since the removal payload assertion below only checks this literal shape
-			internals(zwave)._nodes.set(12, node as any)
-			const client = await connectedSubscriber(harness, 'nodes')
-			const received = waitForEvent(client, 'NODE_REMOVED')
-			internals(zwave)._removeNode(12)
-
-			expect(await received).toEqual(node)
-			expect(internals(zwave)._nodes.has(12)).toBe(false)
-		})
-
-		it('OTW_FIRMWARE_UPDATE: {progress} via the real, throttled _onOTWFirmwareUpdateProgress()', async () => {
-			const harness = await getHarness({ gateway: benignGateway() })
-			const zwave = realZwave(harness)
-			const client = await connectedSubscriber(harness, 'firmware')
-			const received = waitForEvent(client, 'OTW_FIRMWARE_UPDATE')
-
-			// throttle() invokes synchronously on its leading edge, so no fake timers are needed
-			// OTWFirmwareUpdateProgress also requires `progress`, left out since the assertion below doesn't check it
-			internals(zwave)._onOTWFirmwareUpdateProgress({
-				sentFragments: 3,
-				totalFragments: 10,
-			} as any)
-
-			expect(await received).toEqual({
-				progress: { sentFragments: 3, totalFragments: 10 },
-			})
-		})
-
-		it('OTW_FIRMWARE_UPDATE: {result:{success,status}} via the real _onOTWFirmwareUpdateFinished()', async () => {
-			const harness = await getHarness({ gateway: benignGateway() })
-			const zwave = realZwave(harness)
-			const client = await connectedSubscriber(harness, 'firmware')
-			const received = waitForEvent(client, 'OTW_FIRMWARE_UPDATE')
-
-			internals(zwave)._onOTWFirmwareUpdateFinished({
-				success: true,
-				// Real code runs status through getEnumMemberName(), so the wire payload asserts the string name below
-				status: OTWFirmwareUpdateStatus.OK,
-			})
-
-			expect(await received).toEqual({
-				result: { success: true, status: 'OK' },
-			})
-		})
-
-		it('NODE_FOUND: {node} via the real _onNodeFound()', async () => {
-			const harness = await getHarness({ gateway: benignGateway() })
-			const zwave = realZwave(harness)
-			zwave.driverReady = true
-			internals(zwave).storeNodes = {}
-			internals(zwave)._driver = {
+			zwave.nodes.set(2, fakeNode({ id: 2 }))
+			zwave['_driver'] = {
 				controller: {
-					getPrioritySUCReturnRouteCached: () => ({}),
+					rebuildNodeRoutes: vi.fn(() => Promise.resolve(true)),
 					getCustomSUCReturnRoutesCached: () => [],
+					getPrioritySUCReturnRouteCached: () => ({}),
 				},
-			}
-			const client = await connectedSubscriber(harness, 'nodes')
-			const received = waitForEvent<any>(client, 'NODE_FOUND')
-			internals(zwave)._onNodeFound({ id: 3 })
-
-			const data = await received
-			expect(data.node.id).toBe(3)
-			expect(data.node.ready).toBe(false)
-		})
-
-		it('NODE_ADDED: {node, result} shape', async () => {
-			// _onNodeAdded() dumps a full ZWaveNode via _dumpNode(), which needs a driver/node graph too broad to fake honestly, so this drives sendToSocket directly with the real call site's payload shape
-			const harness = await getHarness({ gateway: benignGateway() })
-			const zwave = realZwave(harness)
-			const client = await connectedSubscriber(harness, 'nodes')
-			const received = waitForEvent(client, 'NODE_ADDED')
-			internals(zwave).sendToSocket('NODE_ADDED', {
-				node: { id: 3 },
-				result: { success: true },
-			})
-
-			expect(await received).toEqual({
-				node: { id: 3 },
-				result: { success: true },
-			})
-		})
-
-		it('REBUILD_ROUTES_PROGRESS: array-of-tuples shape', async () => {
-			// Every real producer sits inside a rebuildNodeRoutes()/beginRebuildingRoutes() controller callback that needs a full zwave-js Driver/Controller to reach, so sendToSocket is driven directly with the real payload shape instead
-			const harness = await getHarness({ gateway: benignGateway() })
-			const zwave = realZwave(harness)
+			} as unknown as Driver
 			const client = await connectedSubscriber(harness, 'rebuild')
 			const received = waitForEvent(client, 'REBUILD_ROUTES_PROGRESS')
-			internals(zwave).sendToSocket('REBUILD_ROUTES_PROGRESS', [
-				[2, 'pending'],
-			])
 
+			const result = await zwave.rebuildNodeRoutes(2)
+
+			expect(result).toBe(true)
+			// waitForEvent's `once` only captures the first of the 2 real emits (pending, then done/failed)
 			expect(await received).toEqual([[2, 'pending']])
 		})
 
-		it('HEALTH_CHECK_PROGRESS: {nodeId, ...} shape', async () => {
-			// Same full-driver constraint as REBUILD_ROUTES_PROGRESS above: the real producer sits inside a checkLifelineHealth()/checkRouteHealth() controller callback
+		it('HEALTH_CHECK_PROGRESS: {request, round, totalRounds, lastRating, lastResult} shape, via the real public checkLifelineHealth()', async () => {
 			const harness = await getHarness({ gateway: benignGateway() })
 			const zwave = realZwave(harness)
+			zwave.driverReady = true
+			const fakeZwaveNode = {
+				checkLifelineHealth: (
+					rounds: number,
+					onProgress: (
+						round: number,
+						totalRounds: number,
+						lastRating: number,
+						lastResult: unknown,
+					) => void,
+				) => {
+					onProgress(1, rounds, 8, { rating: 8 })
+					return Promise.resolve({ rating: 8 })
+				},
+			}
+			zwave['_driver'] = {
+				controller: {
+					ownNodeId: 1,
+					nodes: { get: () => fakeZwaveNode },
+				},
+			} as unknown as Driver
 			const client = await connectedSubscriber(harness, 'diagnostics')
 			const received = waitForEvent(client, 'HEALTH_CHECK_PROGRESS')
-			internals(zwave).sendToSocket('HEALTH_CHECK_PROGRESS', {
-				nodeId: 2,
-				rounds: 1,
-			})
 
-			expect(await received).toEqual({ nodeId: 2, rounds: 1 })
+			const result = await zwave.checkLifelineHealth(2, 3)
+
+			expect(await received).toEqual({
+				request: { nodeId: 2, targetNodeId: 1 },
+				round: 1,
+				totalRounds: 3,
+				lastRating: 8,
+				lastResult: { rating: 8 },
+			})
+			expect(result).toEqual({ rating: 8, targetNodeId: 1 })
 		})
 
-		it('LINK_RELIABILITY: {nodeId, ...} shape', async () => {
-			// Same full-driver constraint as the two tests above
+		it('LINK_RELIABILITY: {request, args} shape, via the real public checkLinkReliability()', async () => {
 			const harness = await getHarness({ gateway: benignGateway() })
 			const zwave = realZwave(harness)
+			zwave.driverReady = true
+			const fakeZwaveNode = {
+				checkLinkReliability: (options: {
+					onProgress: (progress: unknown) => void
+				}) => {
+					options.onProgress({ rssi: -70 })
+					return Promise.resolve({ rssi: -70 })
+				},
+			}
+			zwave['_driver'] = {
+				controller: { nodes: { get: () => fakeZwaveNode } },
+			} as unknown as Driver
 			const client = await connectedSubscriber(harness, 'diagnostics')
 			const received = waitForEvent(client, 'LINK_RELIABILITY')
-			internals(zwave).sendToSocket('LINK_RELIABILITY', {
-				nodeId: 2,
-				rssi: -70,
-			})
 
-			expect(await received).toEqual({ nodeId: 2, rssi: -70 })
+			const result = await zwave.checkLinkReliability(2, {})
+
+			expect(await received).toEqual({
+				request: { nodeId: 2 },
+				args: [{ rssi: -70 }],
+			})
+			expect(result).toEqual({ rssi: -70 })
 		})
 
-		it('GRANT_SECURITY_CLASSES/VALIDATE_DSK/INCLUSION_ABORTED: via the real _onGrantSecurityClasses()/_onValidateDSK()/_onAbortInclusion() handlers', async () => {
+		it('GRANT_SECURITY_CLASSES/VALIDATE_DSK/INCLUSION_ABORTED: real _onGrantSecurityClasses()/_onValidateDSK()/_onAbortInclusion(), reached via the real public setUserCallbacks() hookup', async () => {
 			const harness = await getHarness({ gateway: benignGateway() })
-			const zwave = realZwave(harness)
+			const zwave = realZwave(harness, { serverEnabled: true })
+			let inclusionUserCallbacks: InclusionUserCallbacks | undefined
+			zwave['_driver'] = {
+				updateOptions: (opts: {
+					inclusionUserCallbacks?: InclusionUserCallbacks
+				}) => {
+					inclusionUserCallbacks = opts.inclusionUserCallbacks
+				},
+			} as unknown as Driver
+
 			const client = await connectedSubscriber(harness, 'nodes')
 			const grantReceived = waitForEvent(client, 'GRANT_SECURITY_CLASSES')
 			const dskReceived = waitForEvent(client, 'VALIDATE_DSK')
 			const abortReceived = waitForEvent(client, 'INCLUSION_ABORTED')
 
-			// These 3 real handlers have zero driver/node dependencies, callable directly the same way zwave-js's own driver would invoke them
-			// _onGrantSecurityClasses()/_onValidateDSK() return a Promise that only settles via a separate confirmation call this test never makes, so both are intentionally unawaited
+			// setUserCallbacks() is the public hookup point a real driver uses to reach these handlers.
+			// Invoking the same bound functions it hands off drives the identical code path.
+			zwave.setUserCallbacks()
+			expect(inclusionUserCallbacks).toBeDefined()
+
+			// Both promises only settle via a separate confirmation call this test never makes, so both are intentionally unawaited
 			// InclusionGrant also requires `clientSideAuth`, left out since the assertion below doesn't check it
-			void internals(zwave)._onGrantSecurityClasses({
+			void inclusionUserCallbacks.grantSecurityClasses({
 				securityClasses: [0],
-			} as any)
-			void internals(zwave)._onValidateDSK('abc')
-			internals(zwave)._onAbortInclusion()
+			} as InclusionGrant)
+			void inclusionUserCallbacks.validateDSKAndEnterPIN('abc')
+			inclusionUserCallbacks.abort()
 
 			expect(await grantReceived).toEqual({ securityClasses: [0] })
 			expect(await dskReceived).toBe('abc')
 			expect(await abortReceived).toBe(true)
-		})
-
-		it('NODE_EVENT: {nodeId, ...} via the real _onNodeEvent() handler', async () => {
-			const harness = await getHarness({ gateway: benignGateway() })
-			const zwave = realZwave(harness)
-			const node: any = { id: 2, eventsQueue: [] }
-			internals(zwave)._nodes.set(2, node)
-			const client = await connectedSubscriber(harness, 'nodes')
-			const received = waitForEvent<any>(client, 'NODE_EVENT')
-			internals(zwave)._onNodeEvent('wake up', { id: 2 } as any)
-
-			const data = await received
-			expect(data.nodeId).toBe(2)
-			expect(data.event.event).toBe('wake up')
-			// Survives Socket.IO's JSON wire serialization as an ISO string rather than a Date instance, so assert it round-trips to a valid date instead
-			expect(new Date(data.event.time).toString()).not.toBe(
-				'Invalid Date',
-			)
-			// Proves this ran the real handler logic, not a hand-copied literal, by checking the same event object was appended to the node's own eventsQueue
-			expect(node.eventsQueue).toEqual([
-				{ time: expect.any(Date), event: 'wake up', args: [] },
-			])
-		})
-
-		it('METADATA_UPDATED: value-metadata shape routed to "values"', async () => {
-			// Real producer sits inside _parseValue(), which reads zwaveNode.getValue()/getDefinedValueIDs() off a real ZWaveNode, the same full-driver constraint as the tests above
-			const harness = await getHarness({ gateway: benignGateway() })
-			const zwave = realZwave(harness)
-			const client = await connectedSubscriber(harness, 'values')
-			const received = waitForEvent(client, 'METADATA_UPDATED')
-			internals(zwave).sendToSocket('METADATA_UPDATED', {
-				nodeId: 2,
-				commandClass: CommandClasses['Binary Switch'],
-				metadata: { readable: true },
-			})
-
-			expect(await received).toEqual({
-				nodeId: 2,
-				commandClass: CommandClasses['Binary Switch'],
-				metadata: { readable: true },
-			})
-		})
-
-		it('VALUE_REMOVED: value-id shape routed to "values"', async () => {
-			// Same full-driver constraint as METADATA_UPDATED above: the real producer is a zwaveNode.on('value removed', ...) callback fed a real zwave-js ValueID
-			const harness = await getHarness({ gateway: benignGateway() })
-			const zwave = realZwave(harness)
-			const client = await connectedSubscriber(harness, 'values')
-			const received = waitForEvent(client, 'VALUE_REMOVED')
-			internals(zwave).sendToSocket('VALUE_REMOVED', {
-				nodeId: 2,
-				commandClass: CommandClasses['Binary Switch'],
-				property: 'targetValue',
-			})
-
-			expect(await received).toEqual({
-				nodeId: 2,
-				commandClass: CommandClasses['Binary Switch'],
-				property: 'targetValue',
-			})
 		})
 	})
 
@@ -539,9 +380,7 @@ describe('Socket contract: outbound producers', () => {
 				interceptor: true,
 			})
 			const { logStream } = await import('#api/lib/logger.ts')
-			const client = harness.createClient()
-			await harness.connectClient(client)
-			await subscribe(client, ['debug'])
+			const client = await connectedSubscriber(harness, 'debug')
 
 			const received = waitForEvent(client, 'DEBUG')
 			logStream.write('a debug log line\n')
@@ -550,7 +389,8 @@ describe('Socket contract: outbound producers', () => {
 		})
 
 		describe('API_RETURN: its only real producer is unreachable in an automated test', () => {
-			// The only real producer sits inside emulateFwUpdate(), a private "testing purposes" helper that uses Math.random()/setInterval; verified structurally below instead of via a fabricated socket.emit() call
+			// The only real producer sits inside emulateFwUpdate(), a private helper gated behind
+			// Math.random()/setInterval timing. Verified structurally, not via a fabricated emit.
 			it('is not in allowedApis, so it is unreachable through callApi() too', async () => {
 				const { allowedApis } = await import('#api/lib/ZwaveClient.ts')
 				expect(allowedApis).not.toContain('emulateFwUpdate')
@@ -561,71 +401,68 @@ describe('Socket contract: outbound producers', () => {
 			})
 		})
 
-		it('INIT: sendInitToSockets() force-emits the current state to every connected socket, bypassing channel routing', async () => {
-			const harness = await getHarness({ gateway: benignGateway() })
-			const zwave = realZwave(harness)
-			const client = harness.createClient()
-			await harness.connectClient(client)
-			const received = waitForEvent<any>(client, 'INIT')
-
-			expect(eventToChannel.INIT).toBeUndefined()
-			await internals(zwave).sendInitToSockets()
-
-			const data = await received
-			// info.uptime ticks between the real send and this assertion, and several fields default to undefined and are stripped over the wire, so assert the stable parts instead of a fresh snapshot
-			expect(data.nodes).toEqual([])
-			expect(data.info).toMatchObject({
-				status: 'closed',
-				appVersion: expect.any(String),
-				zwaveVersion: expect.any(String),
-				serverVersion: expect.any(String),
-				uptime: expect.any(Number),
+		describe('INIT: its only real producer is unreachable in an automated test', () => {
+			// sendInitToSockets() is private, reachable only via _onDriverReady() inside connect()
+			// against a real Driver. Too broad to fake honestly, so verified structurally instead.
+			it('is declared with no channel mapping (force-sent to every connected socket, bypassing room routing entirely)', () => {
+				expect(eventToChannel.INIT).toBeUndefined()
 			})
 		})
 
-		it('ZNIFFER_STATE: ZnifferManager emits synchronously (no process.nextTick), directly to the "znifferState" room', async () => {
-			const harness = await getHarness({ gateway: benignGateway() })
-			const zniffer = new ZnifferManager(
-				{ enabled: false } as any,
-				harness.io,
-			)
-			const client = await connectedSubscriber(harness, 'znifferState')
-			const received = waitForEvent(client, 'ZNIFFER_STATE')
-
-			const toSpy = vi.spyOn(harness.io, 'to')
-			znifferManagerInternals(zniffer).onStateChange()
-
-			// Unlike ZwaveClient.sendToSocket, which defers via process.nextTick, this call site routes immediately and synchronously from within onStateChange() itself
-			expect(toSpy).toHaveBeenCalledWith('znifferState')
-			toSpy.mockRestore()
-
-			expect(await received).toEqual(zniffer.status())
-		})
-
-		describe('ZNIFFER_FRAME: real producer, driven through the real internal Zniffer instance', () => {
-			// Zniffer's constructor only validates port's type and does no real serial I/O until .init() is called, so only Zniffer.prototype.init is stubbed while ZnifferManager's real 'frame'/'corrupted frame' listeners stay live for this test to drive with a real .emit() call
+		describe('Zniffer producers: driven through the real internal Zniffer instance', () => {
+			// Zniffer's constructor validates only port's type; real serial I/O starts in
+			// .init()/.setFrequency(), so only those (plus .destroy() for teardown) are stubbed.
+			// ZnifferManager's own logic - onStateChange(), the frame listeners - stays live.
 			let initSpy: MockInstance<() => Promise<void>>
+			let setFrequencySpy: MockInstance<
+				(frequency: number) => Promise<void>
+			>
 			let destroySpy: MockInstance<() => Promise<void>>
 
 			beforeEach(() => {
 				initSpy = vi
 					.spyOn(Zniffer.prototype, 'init')
-					.mockResolvedValue(undefined as any)
+					.mockResolvedValue(undefined)
+				setFrequencySpy = vi
+					.spyOn(Zniffer.prototype, 'setFrequency')
+					.mockResolvedValue(undefined)
 				// Real .destroy() tears down internal loggers only set up by a real .init(), so it's stubbed too purely to keep ZnifferManager.close() a safe no-crash cleanup step
 				destroySpy = vi
 					.spyOn(Zniffer.prototype, 'destroy')
-					.mockResolvedValue(undefined as any)
+					.mockResolvedValue(undefined)
 			})
 
 			afterEach(() => {
 				initSpy.mockRestore()
+				setFrequencySpy.mockRestore()
 				destroySpy.mockRestore()
+			})
+
+			it('ZNIFFER_STATE: real ZnifferManager.setFrequency() routes its status() payload to the "znifferState" room', async () => {
+				const harness = await getHarness({ gateway: benignGateway() })
+				const znifferManager = new ZnifferManager(
+					{ enabled: true, port: '/dev/ttyFAKE' },
+					harness.io,
+				)
+				try {
+					const client = await connectedSubscriber(
+						harness,
+						'znifferState',
+					)
+					const received = waitForEvent(client, 'ZNIFFER_STATE')
+
+					await znifferManager.setFrequency(916)
+
+					expect(await received).toEqual(znifferManager.status())
+				} finally {
+					await znifferManager.close()
+				}
 			})
 
 			it('a real "frame" event -> parseFrame() -> ZNIFFER_FRAME on "znifferFrames", uncorrupted (has `protocol`)', async () => {
 				const harness = await getHarness({ gateway: benignGateway() })
 				const znifferManager = new ZnifferManager(
-					{ enabled: true, port: '/dev/ttyFAKE' } as any,
+					{ enabled: true, port: '/dev/ttyFAKE' },
 					harness.io,
 				)
 				try {
@@ -633,16 +470,16 @@ describe('Socket contract: outbound producers', () => {
 						harness,
 						'znifferFrames',
 					)
-					const received = waitForEvent<any>(client, 'ZNIFFER_FRAME')
+					const received = waitForEvent<{
+						corrupted: boolean
+						protocol: string
+						raw: string
+					}>(client, 'ZNIFFER_FRAME')
 
 					const rawData = Uint8Array.from([0xaa, 0xbb, 0xcc])
 					// A non-corrupted Frame only needs a protocol key for parseFrame()'s check, so omitting payload keeps buffer2hex() out of the picture for this variant
-					const frame = { protocol: 'Z-Wave' } as any
-					znifferManagerInternals(znifferManager).zniffer.emit(
-						'frame',
-						frame,
-						rawData,
-					)
+					const frame = { protocol: 'Z-Wave' }
+					znifferManager['zniffer'].emit('frame', frame, rawData)
 
 					const data = await received
 					expect(data.corrupted).toBe(false)
@@ -656,7 +493,7 @@ describe('Socket contract: outbound producers', () => {
 			it('a real "corrupted frame" event -> parseFrame() -> ZNIFFER_FRAME, marked corrupted (no `protocol`)', async () => {
 				const harness = await getHarness({ gateway: benignGateway() })
 				const znifferManager = new ZnifferManager(
-					{ enabled: true, port: '/dev/ttyFAKE' } as any,
+					{ enabled: true, port: '/dev/ttyFAKE' },
 					harness.io,
 				)
 				try {
@@ -664,12 +501,15 @@ describe('Socket contract: outbound producers', () => {
 						harness,
 						'znifferFrames',
 					)
-					const received = waitForEvent<any>(client, 'ZNIFFER_FRAME')
+					const received = waitForEvent<{
+						corrupted: boolean
+						raw: string
+					}>(client, 'ZNIFFER_FRAME')
 
 					const rawData = Uint8Array.from([0x01])
 					// A corrupted frame has no protocol key at all
-					const frame = { reason: 'bad checksum' } as any
-					znifferManagerInternals(znifferManager).zniffer.emit(
+					const frame = { reason: 'bad checksum' }
+					znifferManager['zniffer'].emit(
 						'corrupted frame',
 						frame,
 						rawData,
