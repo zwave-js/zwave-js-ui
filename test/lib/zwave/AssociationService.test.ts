@@ -413,7 +413,7 @@ describe('AssociationService', () => {
 	})
 
 	describe('checkAssociation', () => {
-		it('delegates to driver.controller.checkAssociation', () => {
+		it('returns the real driver check result for the given source/group/association', () => {
 			const { service, driver } = createService({})
 			driver.controller.checkAssociation = vi.fn(
 				() => AssociationCheckResult.Forbidden_SelfAssociation,
