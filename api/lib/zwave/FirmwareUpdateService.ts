@@ -687,35 +687,4 @@ export class FirmwareUpdateService {
 			})
 		}
 	}
-
-	private _updateNodeFirmwareInfo(
-		nodeId: number,
-		filteredUpdates: FirmwareUpdateInfo[],
-		timestamp: number,
-	): void {
-		const storeNode = this._nodes.ensureStoreNode(nodeId)
-
-		storeNode.availableFirmwareUpdates = filteredUpdates
-		storeNode.lastFirmwareUpdateCheck = timestamp
-
-		const existingDismissed = storeNode.firmwareUpdatesDismissed || {}
-		const cleanedDismissed = this._cleanDismissedUpdates(
-			filteredUpdates,
-			existingDismissed,
-		)
-		storeNode.firmwareUpdatesDismissed = cleanedDismissed
-
-		const node = this._nodes.getNode(nodeId)
-		if (node) {
-			node.availableFirmwareUpdates = filteredUpdates
-			node.lastFirmwareUpdateCheck = timestamp
-			node.firmwareUpdatesDismissed = cleanedDismissed
-
-			this._nodes.emitNodeUpdate(node, {
-				availableFirmwareUpdates: node.availableFirmwareUpdates,
-				lastFirmwareUpdateCheck: node.lastFirmwareUpdateCheck,
-				firmwareUpdatesDismissed: node.firmwareUpdatesDismissed,
-			})
-		}
-	}
 }
