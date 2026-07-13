@@ -925,60 +925,102 @@ describe('ConfigurationTemplateService', () => {
 		})
 	})
 
-	describe('_generateContentHash (static)', () => {
-		it('produces deterministic 12-char hex hash', () => {
-			const values: ZUIConfigurationTemplateValue[] = [
-				{ property: 1, endpoint: 0, value: 42 },
-			]
-			const hash1 =
-				ConfigurationTemplateService._generateContentHash(values)
-			const hash2 =
-				ConfigurationTemplateService._generateContentHash(values)
+	describe('contentHash via public API', () => {
+		it('produces deterministic 12-char hex hash via createConfigurationTemplate', async () => {
+			const node = makeNode()
+			const nodes = new Map([[2, node]])
+			const svc = new ConfigurationTemplateService(
+				createDriverPort(),
+				createNodeStorePort(nodes),
+				createPersistencePort(),
+				createUtilsPort(),
+				createLogger(),
+				[],
+			)
 
-			expect(hash1).toBe(hash2)
-			expect(hash1.length).toBe(12)
-			expect(/^[0-9a-f]{12}$/.test(hash1)).toBe(true)
+			const result1 = await svc.createConfigurationTemplate(
+				2,
+				'Template A',
+				false,
+				[{ property: 1, endpoint: 0, value: 42 }],
+			)
+			const result2 = await svc.createConfigurationTemplate(
+				2,
+				'Template B',
+				false,
+				[{ property: 1, endpoint: 0, value: 42 }],
+			)
+
+			expect(result1.contentHash.length).toBe(12)
+			expect(/^[0-9a-f]{12}$/.test(result1.contentHash)).toBe(true)
+			expect(result1.contentHash).toBe(result2.contentHash)
 		})
 
-		it('includes firmware range in hash', () => {
+		it('firmware range affects persisted contentHash', async () => {
+			const node = makeNode()
+			const nodes = new Map([[2, node]])
+			const svc = new ConfigurationTemplateService(
+				createDriverPort(),
+				createNodeStorePort(nodes),
+				createPersistencePort(),
+				createUtilsPort(),
+				createLogger(),
+				[],
+			)
+
 			const values: ZUIConfigurationTemplateValue[] = [
 				{ property: 1, endpoint: 0, value: 42 },
 			]
-			const hash1 =
-				ConfigurationTemplateService._generateContentHash(values)
-			const hash2 = ConfigurationTemplateService._generateContentHash(
+			const withoutFw = await svc.createConfigurationTemplate(
+				2,
+				'No FW',
+				false,
+				values,
+			)
+			const withFw = await svc.createConfigurationTemplate(
+				2,
+				'With FW',
+				false,
 				values,
 				{ min: '1.0' },
 			)
 
-			expect(hash1).not.toBe(hash2)
+			expect(withoutFw.contentHash).not.toBe(withFw.contentHash)
 		})
 
-		it('normalizes propertyKey null vs undefined', () => {
-			const v1: ZUIConfigurationTemplateValue[] = [
-				{ property: 1, propertyKey: null, endpoint: 0, value: 42 },
-			]
-			const v2: ZUIConfigurationTemplateValue[] = [
-				{ property: 1, propertyKey: undefined, endpoint: 0, value: 42 },
-			]
-			expect(ConfigurationTemplateService._generateContentHash(v1)).toBe(
-				ConfigurationTemplateService._generateContentHash(v2),
-			)
-		})
-	})
-
-	describe('templates accessor', () => {
-		it('returns the live template array', () => {
-			const templates = [makeTemplate()]
+		it('normalizes null vs undefined propertyKey to same contentHash', async () => {
+			const node = makeNode()
+			const nodes = new Map([[2, node]])
 			const svc = new ConfigurationTemplateService(
 				createDriverPort(),
-				createNodeStorePort(),
+				createNodeStorePort(nodes),
 				createPersistencePort(),
 				createUtilsPort(),
 				createLogger(),
-				templates,
+				[],
 			)
-			expect(svc.templates).toBe(templates)
+
+			const resultNull = await svc.createConfigurationTemplate(
+				2,
+				'Null Key',
+				false,
+				[{ property: 1, propertyKey: null, endpoint: 0, value: 42 }],
+			)
+			const resultUndefined = await svc.createConfigurationTemplate(
+				2,
+				'Undef Key',
+				false,
+				[
+					{
+						property: 1,
+						propertyKey: undefined,
+						endpoint: 0,
+						value: 42,
+					},
+				],
+			)
+
+			expect(resultNull.contentHash).toBe(resultUndefined.contentHash)
 		})
 	})
 
