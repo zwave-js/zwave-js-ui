@@ -134,6 +134,8 @@ export interface AppInstance {
 export interface CreateAppOptions {
 	test?: {
 		gateway?: Gateway
+		zniffer?: ZnifferManager
+		pluginsRouter?: Router
 		restarting?: boolean
 		// Constructed by the caller so it can keep reading `.io`/room membership itself - no getter is exposed after construction
 		socketManager?: SocketManager
@@ -267,9 +269,9 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 	}
 
 	let gw: Gateway | undefined = testOptions?.gateway // the gateway instance
-	let zniffer: ZnifferManager // the zniffer instance
+	let zniffer: ZnifferManager | undefined = testOptions?.zniffer // the zniffer instance
 	const plugins: CustomPlugin[] = []
-	let pluginsRouter: Router
+	let pluginsRouter: Router | undefined = testOptions?.pluginsRouter
 
 	// flag used to prevent multiple restarts while one is already in progress
 	let restarting = testOptions?.restarting ?? false

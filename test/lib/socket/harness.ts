@@ -1,106 +1,117 @@
 // Shares the HTTP suite's loadAppModule/loadJsonStore loaders so both suites reuse one isolated import per test file, then layers Socket.IO setup on top
 import { createServer, type Server as HttpServer } from 'node:http'
 import type { AddressInfo } from 'node:net'
-import type { Express } from 'express'
+import type { Express, Router } from 'express'
 import type { Server as SocketIOServer } from 'socket.io'
 import { io as ioClient, type Socket as ClientSocket } from 'socket.io-client'
+import { beforeAll, afterEach, afterAll } from 'vitest'
 import { cleanupTestEnv } from './env.ts'
 import { loadAppModule, loadJsonStore } from '../http/harness.ts'
 import type { FakeGateway, FakeZniffer } from './fakes.ts'
+import SocketManager from '#api/lib/SocketManager.ts'
+import type * as AppModuleNamespace from '#api/app.ts'
+import type * as GatewayModuleNamespace from '#api/lib/Gateway.ts'
+import type * as ZnifferModuleNamespace from '#api/lib/ZnifferManager.ts'
+import type * as LoggerModuleNamespace from '#api/lib/logger.ts'
 
-export interface SocketAppTestHooks {
-	setGateway(value: FakeGateway | undefined): void
-	setZniffer(value: FakeZniffer | undefined): void
-	setPluginsRouter(value: unknown): void
-	setRestarting(value: boolean): void
-	setEnumerateSerialPorts(value: unknown): void
-	setupSocket(server: HttpServer): void
-	setupInterceptor(): void
-	teardownInterceptor(): void
-	getSocketManager(): { io: SocketIOServer; authMiddleware: unknown }
-	loadSnippets(): Promise<void>
-}
+type AppModule = typeof AppModuleNamespace
+type GatewayModule = typeof GatewayModuleNamespace
+type ZnifferModule = typeof ZnifferModuleNamespace
+type RealGateway = InstanceType<GatewayModule['default']>
+type RealZniffer = InstanceType<ZnifferModule['default']>
+type JsonStoreContext = Awaited<ReturnType<typeof loadJsonStore>>
 
-interface SocketAppModule {
-	default: Express
-	__testHooks: SocketAppTestHooks
-}
-
-interface JsonStoreModule {
-	jsonStore: {
-		init: (config: unknown) => Promise<unknown>
-		get: (model: { file: string }) => unknown
-		put: (model: { file: string }, data: unknown) => Promise<unknown>
-		store: Record<string, unknown>
-	}
-	store: Record<string, { file: string; default: unknown }>
-}
-
-let gatewayModulePromise: Promise<{ closeWatchers: () => void }> | undefined
+let gatewayModulePromise: Promise<GatewayModule> | undefined
 
 // Releases the Gateway.ts fs.watch() watchers since api/app.ts always pulls this module in transitively
-async function loadGatewayModule() {
-	if (!gatewayModulePromise) {
-		gatewayModulePromise = import('../../../api/lib/Gateway.ts')
-	}
+async function loadGatewayModule(): Promise<GatewayModule> {
+	gatewayModulePromise ??= import('#api/lib/Gateway.ts')
 	return gatewayModulePromise
+}
+
+let loggerModulePromise: Promise<typeof LoggerModuleNamespace> | undefined
+
+// Loaded lazily (api/app.ts already pulled it in by the time this can run) so files that never use the `interceptor` option don't force it
+async function loadLoggerModule(): Promise<typeof LoggerModuleNamespace> {
+	loggerModulePromise ??= import('#api/lib/logger.ts')
+	return loggerModulePromise
+}
+
+export interface SocketHarnessOptions {
+	gateway?: FakeGateway
+	zniffer?: FakeZniffer
+	pluginsRouter?: Router
+	restarting?: boolean
+	// Mirrors startServer()'s log interceptor wiring so debug-room tests see real socketEvents.debug emissions; opt-in since logStream is a shared per-process singleton most tests don't touch
+	interceptor?: boolean
 }
 
 export interface SocketHarness {
 	app: Express
-	testHooks: SocketAppTestHooks
 	io: SocketIOServer
-	jsonStore: JsonStoreModule['jsonStore']
-	store: JsonStoreModule['store']
+	jsonStore: JsonStoreContext['jsonStore']
+	store: JsonStoreContext['store']
 	server: HttpServer
 	// Base URL is http://127.0.0.1:<ephemeral port>
 	url: string
-	// autoConnect defaults false so tests can attach connect_error listeners before connecting; every client is tracked and force-disconnected by close()
+	// autoConnect defaults false so tests can attach connect_error listeners before connecting; every client is tracked and force-disconnected on teardown
 	createClient(opts?: Record<string, unknown>): ClientSocket
 	// Connects client and resolves on connect, or rejects on connect_error
 	connectClient(client: ClientSocket): Promise<ClientSocket>
 	// Polls the real server-side connected-socket count until it matches count
 	waitForServerSocketCount(count: number, timeoutMs?: number): Promise<void>
-	// Per-test cleanup for files that share one harness across it() blocks via beforeAll/afterAll instead of recreating it per test
 	disconnectAllClients(): Promise<void>
-	// Resets every __testHooks seam (gw/zniffer/etc.) to its harness default
-	resetState(): void
-	// Call this at most once per file in afterAll because storeDir is computed once per module graph and close() deletes it from disk
-	close(): Promise<void>
 }
 
-export async function createSocketHarness(): Promise<SocketHarness> {
-	const [{ default: app, __testHooks }, { jsonStore, store }] =
+interface SharedTestContext {
+	createApp: AppModule['createApp']
+	jsonStore: JsonStoreContext['jsonStore']
+	store: JsonStoreContext['store']
+	closeWatchers: GatewayModule['closeWatchers']
+}
+
+async function createSharedTestContext(): Promise<SharedTestContext> {
+	const [{ createApp }, { jsonStore, store }, { closeWatchers }] =
 		await Promise.all([
-			loadAppModule().then((mod) => mod as unknown as SocketAppModule),
-			loadJsonStore().then((mod) => mod as unknown as JsonStoreModule),
+			loadAppModule(),
+			loadJsonStore(),
+			loadGatewayModule(),
 		])
-
 	await jsonStore.init(store)
+	return { createApp, jsonStore, store, closeWatchers }
+}
 
-	const server = createServer(app)
+async function createHarnessInstance(
+	shared: SharedTestContext,
+	options: SocketHarnessOptions,
+): Promise<SocketHarness & { closeInstance(): Promise<void> }> {
+	// No request listener yet - createApp() attaches socket.io, then we attach the Express app right below
+	const server = createServer()
+	const socketManager = new SocketManager()
+
+	const instance = shared.createApp({
+		test: {
+			// Gateway/ZnifferManager have private fields, so structural mocks like FakeGateway/FakeZniffer need this cast to satisfy them
+			gateway: options.gateway as unknown as RealGateway | undefined,
+			zniffer: options.zniffer as unknown as RealZniffer | undefined,
+			pluginsRouter: options.pluginsRouter,
+			restarting: options.restarting,
+			socketManager,
+			server,
+			interceptor: options.interceptor,
+		},
+	})
+	await instance.loadSnippets()
+
+	server.on('request', instance.app)
 	await new Promise<void>((resolve) => {
 		server.listen(0, '127.0.0.1', () => resolve())
 	})
 	const port = (server.address() as AddressInfo).port
 	const url = `http://127.0.0.1:${port}`
 
-	function resetState() {
-		__testHooks.setGateway(undefined)
-		__testHooks.setZniffer(undefined)
-		__testHooks.setPluginsRouter(undefined)
-		__testHooks.setRestarting(false)
-		// Guards against a stray fake leaking in from another test file sharing the module cache, since socket tests never hit GET /api/serial-ports
-		__testHooks.setEnumerateSerialPorts(undefined)
-	}
-	resetState()
-
-	// Bind the server before reading socketManager.io because SocketManager initializes io during bindServer()
-	__testHooks.setupSocket(server)
-	__testHooks.setupInterceptor()
-
-	const { io } = __testHooks.getSocketManager()
-
+	// createApp() already bound this via bindServer() before returning, since test.server was set above
+	const { io } = socketManager
 	const clients = new Set<ClientSocket>()
 
 	function createClient(opts: Record<string, unknown> = {}): ClientSocket {
@@ -157,35 +168,67 @@ export async function createSocketHarness(): Promise<SocketHarness> {
 	}
 
 	return {
-		app,
-		testHooks: __testHooks,
+		app: instance.app,
 		io,
-		jsonStore,
-		store,
+		jsonStore: shared.jsonStore,
+		store: shared.store,
 		server,
 		url,
 		createClient,
 		connectClient,
 		waitForServerSocketCount,
 		disconnectAllClients,
-		resetState,
-		async close() {
+		async closeInstance() {
 			await disconnectAllClients()
-
-			__testHooks.teardownInterceptor()
-			resetState()
 
 			// io.close() also closes the underlying http.Server, so calling server.close() afterwards would throw ERR_SERVER_NOT_RUNNING
 			await io.close()
 
-			const { closeWatchers } = await loadGatewayModule()
-			closeWatchers()
-
-			for (const key of Object.keys(jsonStore.store)) {
-				delete jsonStore.store[key]
-			}
-
-			cleanupTestEnv()
+			// Removes this instance's interceptor listener (if any) from the shared logStream singleton before the next instance is created; a no-op when `interceptor` was never requested
+			const { logStream } = await loadLoggerModule()
+			logStream.removeAllListeners('data')
 		},
+	}
+}
+
+// Gives each test a fresh createApp() instance + server, so tests never leak state and need no reset hooks
+export function useSocketHarness(): (
+	options?: SocketHarnessOptions,
+) => Promise<SocketHarness> {
+	let shared: SharedTestContext | undefined
+	let current:
+		| (SocketHarness & { closeInstance(): Promise<void> })
+		| undefined
+
+	beforeAll(async () => {
+		shared = await createSharedTestContext()
+	})
+
+	afterEach(async () => {
+		if (current) {
+			await current.closeInstance()
+			current = undefined
+		}
+	})
+
+	afterAll(() => {
+		if (!shared) return
+		shared.closeWatchers()
+		for (const key of Object.keys(shared.jsonStore.store)) {
+			delete shared.jsonStore.store[key]
+		}
+		cleanupTestEnv()
+	})
+
+	return async function getHarness(
+		options: SocketHarnessOptions = {},
+	): Promise<SocketHarness> {
+		if (!shared) {
+			throw new Error(
+				'useSocketHarness(): beforeAll has not run yet, call the accessor from within a test',
+			)
+		}
+		current ??= await createHarnessInstance(shared, options)
+		return current
 	}
 }
