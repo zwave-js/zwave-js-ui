@@ -21,8 +21,10 @@ import type {
 import {
 	cleanupTestEnv,
 	ensureTestEnv,
+	missingRepositoryStoreArtifacts,
 	snapshotRepositoryStore,
 	TEST_SESSION_SECRET,
+	unexpectedRepositoryStoreDrift,
 } from './env.ts'
 
 let DiscoveryGenerator: typeof DiscoveryGeneratorType
@@ -41,7 +43,19 @@ beforeAll(async () => {
 	expect(configModule.storeDir).toBe(isolatedStoreDir)
 	expect(configModule.logsDir.startsWith(isolatedStoreDir)).toBe(true)
 	expect(configModule.sessionSecret).toBe(TEST_SESSION_SECRET)
-	expect(snapshotRepositoryStore()).toEqual(repositoryStoreBefore)
+	const repositoryStoreAfter = snapshotRepositoryStore()
+	expect(
+		missingRepositoryStoreArtifacts(
+			repositoryStoreBefore,
+			repositoryStoreAfter,
+		),
+	).toEqual([])
+	expect(
+		unexpectedRepositoryStoreDrift(
+			repositoryStoreBefore,
+			repositoryStoreAfter,
+		),
+	).toEqual([])
 })
 
 afterAll(() => {

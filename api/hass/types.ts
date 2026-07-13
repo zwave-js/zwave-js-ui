@@ -1,10 +1,4 @@
-/**
- * Legacy Home Assistant MQTT discovery DTOs.
- *
- * These shapes are persisted in nodes.json and sent unchanged over Socket.IO,
- * so keep them deliberately permissive. In particular, customDevices.js may
- * provide values that JSON cannot represent.
- */
+// Keep permissive because these DTOs round-trip through nodes.json and customDevices.js may set values JSON can't represent
 export type HassComponentType =
 	| 'sensor'
 	| 'light'

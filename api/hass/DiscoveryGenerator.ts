@@ -72,11 +72,6 @@ function valueUnit(value: unknown): string | undefined {
 	return typeof value.unit === 'string' ? value.unit : undefined
 }
 
-/**
- * Legacy Home Assistant MQTT discovery behavior without Gateway lifecycle or
- * generic MQTT responsibilities. All effects are expressed through narrow
- * ports owned by the compatibility Gateway facade.
- */
 export class DiscoveryGenerator {
 	private readonly config: HassDiscoveryConfig
 	private readonly mqtt: HassMqttPort

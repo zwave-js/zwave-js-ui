@@ -47,11 +47,6 @@ export interface RepositoryStoreArtifact {
 	content?: string
 }
 
-/**
- * Byte-for-byte inventory of the repository store directory. Tests snapshot
- * this before isolated imports and compare it after teardown, proving logger,
- * config, and session-secret side effects never escape the temporary STORE_DIR.
- */
 export function snapshotRepositoryStore(): RepositoryStoreArtifact[] {
 	if (!fs.existsSync(repositoryStoreDir)) return []
 
@@ -76,6 +71,38 @@ export function snapshotRepositoryStore(): RepositoryStoreArtifact[] {
 	}
 	visit(repositoryStoreDir)
 	return artifacts
+}
+
+// Exempt logger-owned roots because logger.test.ts writes them concurrently in the repository store
+const CONCURRENT_TEST_ARTIFACT_ROOTS = new Set(['.session-secret', 'logs'])
+
+function isConcurrentTestArtifact(artifactPath: string): boolean {
+	return CONCURRENT_TEST_ARTIFACT_ROOTS.has(artifactPath.split(path.sep)[0])
+}
+
+export function unexpectedRepositoryStoreDrift(
+	before: RepositoryStoreArtifact[],
+	after: RepositoryStoreArtifact[],
+): RepositoryStoreArtifact[] {
+	const beforeByPath = new Map(
+		before.map((artifact) => [artifact.path, artifact]),
+	)
+	return after.filter((artifact) => {
+		const prior = beforeByPath.get(artifact.path)
+		const changed =
+			!prior ||
+			prior.type !== artifact.type ||
+			prior.content !== artifact.content
+		return changed && !isConcurrentTestArtifact(artifact.path)
+	})
+}
+
+export function missingRepositoryStoreArtifacts(
+	before: RepositoryStoreArtifact[],
+	after: RepositoryStoreArtifact[],
+): RepositoryStoreArtifact[] {
+	const afterPaths = new Set(after.map((artifact) => artifact.path))
+	return before.filter((artifact) => !afterPaths.has(artifact.path))
 }
 
 /**

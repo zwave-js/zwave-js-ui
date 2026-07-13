@@ -46,10 +46,7 @@ const PAYLOAD_TYPE = {
 	RAW: 2,
 } as const
 
-// The default registry preserves the legacy import-time watcher lifecycle.
-// Runtime Gateways own lightweight catalog views of this source, so every
-// process has one loader/two file watchers rather than one duplicate pair per
-// Gateway instance.
+// Runtime Gateways share this one loader/watcher pair instead of duplicating watchers per instance
 const defaultCustomDeviceRegistry = new CustomDeviceRegistry({
 	storeDir,
 	logger,
@@ -527,7 +524,6 @@ export default class Gateway {
 				this.cancelJobs()
 			} finally {
 				try {
-					// close mqtt client after zwave connection is closed
 					if (this.mqttEnabled) {
 						await this._mqtt.close()
 					}
