@@ -1,48 +1,17 @@
-// Proves an event is absent using barrier(): a marker event is emitted directly to the client's own
-// server-side socket, and Socket.IO's documented per-connection ordered delivery guarantees anything
-// routed earlier already arrived by the time that resolves
+// Proves an event is absent using barrier(): see helpers.ts for the automatic-id-room mechanism
+// and ordered-delivery rationale
 import { describe, it, expect } from 'vitest'
 import { CommandClasses } from '@zwave-js/core'
-import { useSocketHarness, type SocketHarness } from './harness.ts'
+import { useSocketHarness } from './harness.ts'
 import { createFakeGateway } from './fakes.ts'
-
-function subscribe(client: any, channels: string[]): Promise<any> {
-	return new Promise((resolve) => {
-		client.emit('SUBSCRIBE', { channels }, resolve)
-	})
-}
-
-function unsubscribe(client: any, channels: string[]): Promise<any> {
-	return new Promise((resolve) => {
-		client.emit('UNSUBSCRIBE', { channels }, resolve)
-	})
-}
-
-// Collects every payload received for event on client
-function collector(client: any, event: string): { received: unknown[] } {
-	const box = { received: [] as unknown[] }
-	client.on(event, (data: unknown) => box.received.push(data))
-	return box
-}
-
-/** Resolves the next time `event` fires on `client`, with its payload. */
-function waitForEvent<T = unknown>(client: any, event: string): Promise<T> {
-	return new Promise((resolve) => client.once(event, resolve))
-}
-
-async function connectedClient(harness: SocketHarness) {
-	const client = harness.createClient()
-	await harness.connectClient(client)
-	return client
-}
-
-// Round-trips a marker event directly to client's own server-side socket (io.sockets.sockets is a
-// public Map<SocketId, Socket>) to deterministically flush anything already in flight
-function barrier(harness: SocketHarness, client: any): Promise<void> {
-	const arrived = waitForEvent(client, '__TEST_BARRIER__')
-	harness.io.sockets.sockets.get(client.id).emit('__TEST_BARRIER__')
-	return arrived.then(() => undefined)
-}
+import {
+	barrier,
+	collector,
+	connectedClient,
+	subscribe,
+	unsubscribe,
+	waitForEvent,
+} from './helpers.ts'
 
 describe('Socket contract: multi-client room routing', () => {
 	const getHarness = useSocketHarness()

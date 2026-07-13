@@ -1,8 +1,10 @@
-// Characterizes the real handshake gate: auth disabled skips the token check, auth enabled requires a valid JWT via handshake.auth.token or its query.token fallback else rejects with connect_error 'Authentication error'
+// Characterizes the real handshake gate: skips the token check when auth is disabled, otherwise
+// requires a valid JWT via handshake.auth.token or its query.token fallback
 import { describe, it, expect, afterEach } from 'vitest'
 import { useSocketHarness } from './harness.ts'
 import { createFakeGateway } from './fakes.ts'
 import { seedUser, setSettings, signUserToken } from '../shared/authHelpers.ts'
+import { emit } from './helpers.ts'
 
 describe('Socket contract: auth middleware', () => {
 	const getHarness = useSocketHarness()
@@ -54,9 +56,7 @@ describe('Socket contract: auth middleware', () => {
 		expect(client.connected).toBe(true)
 
 		// Proves the real INITED handler runs behind the gate, not just that the handshake passes
-		const state = await new Promise((resolve) => {
-			client.emit('INITED', {}, resolve)
-		})
+		const state = await emit(client, 'INITED', {})
 		expect(state).toMatchObject({ nodes: [], info: {}, error: null })
 	})
 
