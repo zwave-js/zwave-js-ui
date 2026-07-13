@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { parseSecurityKeys } from '../../api/lib/utils.ts'
 import type { ZwaveConfig } from '../../api/lib/ZwaveClient.ts'
 
-// Proves parseSecurityKeys() still fails on a missing securityKeysLongRange map or a null persisted key value, now via an explicit TypeError instead of an incidental one
+// Proves parseSecurityKeys() still fails on a missing securityKeysLongRange map or a null persisted key value, now via an explicit TypeError instead of an incidental one; fix owned by #4736
 
 type PartialZWaveOptionsLike = {
 	securityKeys?: Record<string, Buffer>

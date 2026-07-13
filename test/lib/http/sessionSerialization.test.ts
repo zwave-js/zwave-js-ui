@@ -4,9 +4,14 @@ import path from 'node:path'
 import { createHttpHarness, type HttpHarness } from './harness.ts'
 import { seedUser } from './authHelpers.ts'
 import { getTestStoreDir } from './env.ts'
+import type { User } from '../../../api/config/store.ts'
+
+interface SessionFile {
+	user?: Partial<User>
+}
 
 // Proves req.session.user's on-disk shape differs by login path, since SessionData.user is typed User | PublicUser for exactly that reason
-async function readAllSessionFiles(): Promise<any[]> {
+async function readAllSessionFiles(): Promise<SessionFile[]> {
 	const sessionsDir = path.join(getTestStoreDir(), 'sessions')
 	let files: string[]
 	try {
@@ -14,22 +19,25 @@ async function readAllSessionFiles(): Promise<any[]> {
 	} catch {
 		return []
 	}
-	const sessions: any[] = []
+	const sessions: SessionFile[] = []
 	for (const file of files) {
 		if (!file.endsWith('.json')) continue
 		const raw = await readFile(path.join(sessionsDir, file), 'utf8')
-		sessions.push(JSON.parse(raw))
+		sessions.push(JSON.parse(raw) as SessionFile)
 	}
 	return sessions
 }
 
-function findSessionForUsername(sessions: any[], username: string): any {
-	const match = sessions.find((s) => s?.user?.username === username)
+function findSessionForUsername(
+	sessions: SessionFile[],
+	username: string,
+): SessionFile {
+	const match = sessions.find((s) => s.user?.username === username)
 	expect(match).toBeDefined()
 	return match
 }
 
-describe('session store serialization (passwordHash-in-session quirk)', () => {
+describe('session store serialization (passwordHash-in-session quirk, fix owned by #4739)', () => {
 	let harness: HttpHarness
 
 	beforeAll(async () => {

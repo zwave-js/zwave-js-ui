@@ -437,7 +437,7 @@ describe('home-id scoping of persisted nodes', () => {
 	})
 
 	it('preserved quirk: a malformed per-node entry (null instead of an object) crashes when storeDevices() removes hass devices', async () => {
-		// Neither getStoreNodes/updateStoreNodes nor storeDevices validates per-node entry shape at runtime, so a corrupted nodes.json loads successfully but crashes downstream
+		// Neither getStoreNodes/updateStoreNodes nor storeDevices validates per-node entry shape at runtime, so a corrupted nodes.json loads successfully but crashes downstream; fix owned by #4736
 		const node: any = { id: 9, hassDevices: {} }
 		const { zwave } = await makeLoadedClient(9, node, { 9: null })
 

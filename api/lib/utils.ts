@@ -395,7 +395,7 @@ export function parseSecurityKeys(
 	options: PartialZWaveOptions | ZnifferOptions,
 ): void {
 	config.securityKeys = config.securityKeys || {}
-	// Preserves a pre-existing quirk: setting a KEY_LR_* env var without any persisted securityKeysLongRange map throws below instead of silently creating one
+	// Preserves a pre-existing quirk: setting a KEY_LR_* env var without any persisted securityKeysLongRange map throws below instead of silently creating one; fix owned by #4736
 
 	if (process.env.NETWORK_KEY) {
 		config.securityKeys.S0_Legacy = process.env.NETWORK_KEY
