@@ -12,8 +12,7 @@
  * `Gateway.ts`, so it must be cleared before import),
  * `DISCOVERY_DISABLE_CC_CONFIGURATION`, and `MQTT_NAME`. `ensureTestEnv()`
  * snapshots and clears them before delegating; `cleanupTestEnv()` restores
- * them, so ambient values can't leak in or out. `envIsolation.test.ts` proves
- * this.
+ * them, so ambient values can't leak in or out.
  */
 import {
 	ensureTestEnv as ensureHttpTestEnv,
@@ -23,10 +22,11 @@ import {
 
 /**
  * Env vars the HASS discovery modules read that the HTTP suite's
- * `APP_ENV_VARS` doesn't cover. Exported so `envIsolation.test.ts` drives the
- * same set it protects.
+ * `APP_ENV_VARS` doesn't cover, snapshotted and cleared before any HASS module
+ * imports so an ambient value can't repoint a discovery prefix, disable
+ * Configuration-CC discovery, or rewrite the MQTT client id.
  */
-export const HASS_ENV_VARS = [
+const HASS_ENV_VARS = [
 	'UID_DISCOVERY_PREFIX',
 	'DISCOVERY_DISABLE_CC_CONFIGURATION',
 	'MQTT_NAME',
