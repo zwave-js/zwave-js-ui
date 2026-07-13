@@ -1,6 +1,6 @@
 // Proves an event is absent using barrier(): a client's own private id-room gets a distinguishable event, and FIFO per-connection delivery guarantees anything routed earlier already arrived by the time that resolves
-import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest'
-import { createSocketHarness, type SocketHarness } from './harness.ts'
+import { describe, it, expect } from 'vitest'
+import { useSocketHarness, type SocketHarness } from './harness.ts'
 import { createFakeGateway } from './fakes.ts'
 
 function subscribe(client: any, channels: string[]): Promise<any> {
@@ -27,40 +27,27 @@ function waitForEvent<T = unknown>(client: any, event: string): Promise<T> {
 	return new Promise((resolve) => client.once(event, resolve))
 }
 
+async function connectedClient(harness: SocketHarness) {
+	const client = harness.createClient()
+	await harness.connectClient(client)
+	return client
+}
+
+// Every socket auto-joins a room named after its own id as a Socket.IO built-in, unrelated to SUBSCRIBE/channelMap
+// Round-trips a marker event through client's own private auto-joined room to deterministically flush anything already in flight
+function barrier(harness: SocketHarness, client: any): Promise<void> {
+	const arrived = waitForEvent(client, '__TEST_BARRIER__')
+	harness.io.to(client.id).emit('__TEST_BARRIER__')
+	return arrived.then(() => undefined)
+}
+
 describe('Socket contract: multi-client room routing', () => {
-	let harness: SocketHarness
-
-	beforeAll(async () => {
-		harness = await createSocketHarness()
-	})
-
-	afterAll(async () => {
-		await harness.close()
-	})
-
-	afterEach(async () => {
-		await harness.disconnectAllClients()
-		harness.resetState()
-	})
-
-	async function connectedClient() {
-		const client = harness.createClient()
-		await harness.connectClient(client)
-		return client
-	}
-
-	// Every socket auto-joins a room named after its own id as a Socket.IO built-in, unrelated to SUBSCRIBE/channelMap
-	// Round-trips a marker event through client's own private auto-joined room to deterministically flush anything already in flight
-	function barrier(client: any): Promise<void> {
-		const arrived = waitForEvent(client, '__TEST_BARRIER__')
-		harness.io.to(client.id).emit('__TEST_BARRIER__')
-		return arrived.then(() => undefined)
-	}
+	const getHarness = useSocketHarness()
 
 	it('routes an event only to clients subscribed to its channel', async () => {
-		harness.testHooks.setGateway(createFakeGateway() as any)
-		const clientA = await connectedClient()
-		const clientB = await connectedClient()
+		const harness = await getHarness({ gateway: createFakeGateway() })
+		const clientA = await connectedClient(harness)
+		const clientB = await connectedClient(harness)
 
 		await subscribe(clientA, ['nodes'])
 		await subscribe(clientB, ['values'])
@@ -71,14 +58,14 @@ describe('Socket contract: multi-client room routing', () => {
 		harness.io.to('nodes').emit('NODE_UPDATED', { id: 2, ready: true })
 
 		expect(await receivedA).toEqual({ id: 2, ready: true })
-		await barrier(clientB)
+		await barrier(harness, clientB)
 		expect(nodesBoxB.received).toEqual([])
 	})
 
 	it('delivers an event to every client subscribed to the same channel', async () => {
-		harness.testHooks.setGateway(createFakeGateway() as any)
-		const clientA = await connectedClient()
-		const clientB = await connectedClient()
+		const harness = await getHarness({ gateway: createFakeGateway() })
+		const clientA = await connectedClient(harness)
+		const clientB = await connectedClient(harness)
 
 		await subscribe(clientA, ['statistics'])
 		await subscribe(clientB, ['statistics'])
@@ -93,8 +80,8 @@ describe('Socket contract: multi-client room routing', () => {
 	})
 
 	it('"all" subscribes a client to every real channel at once', async () => {
-		harness.testHooks.setGateway(createFakeGateway() as any)
-		const client = await connectedClient()
+		const harness = await getHarness({ gateway: createFakeGateway() })
+		const client = await connectedClient(harness)
 
 		await subscribe(client, ['all'])
 
@@ -118,8 +105,8 @@ describe('Socket contract: multi-client room routing', () => {
 	})
 
 	it('ignores invalid channels mixed into a subscribe request, still routing the valid one', async () => {
-		harness.testHooks.setGateway(createFakeGateway() as any)
-		const client = await connectedClient()
+		const harness = await getHarness({ gateway: createFakeGateway() })
+		const client = await connectedClient(harness)
 
 		const ack = await subscribe(client, ['bogus-channel', 'rebuild'])
 		expect(ack).toStrictEqual({ channels: ['rebuild'] })
@@ -131,8 +118,8 @@ describe('Socket contract: multi-client room routing', () => {
 	})
 
 	it('stops delivering events to a channel once the client unsubscribes from it', async () => {
-		harness.testHooks.setGateway(createFakeGateway() as any)
-		const client = await connectedClient()
+		const harness = await getHarness({ gateway: createFakeGateway() })
+		const client = await connectedClient(harness)
 
 		await subscribe(client, ['firmware', 'controller'])
 		const box = collector(client, 'OTW_FIRMWARE_UPDATE')
@@ -147,15 +134,15 @@ describe('Socket contract: multi-client room routing', () => {
 
 		// FIFO delivery means a firmware event routed to this client would already be in box.received once the barrier resolves
 		harness.io.to('firmware').emit('OTW_FIRMWARE_UPDATE', { progress: 20 })
-		await barrier(client)
+		await barrier(harness, client)
 
 		expect(box.received).toEqual([{ progress: 10 }])
 	})
 
 	it('a still-subscribed client keeps receiving events after an unrelated client unsubscribes', async () => {
-		harness.testHooks.setGateway(createFakeGateway() as any)
-		const clientA = await connectedClient()
-		const clientB = await connectedClient()
+		const harness = await getHarness({ gateway: createFakeGateway() })
+		const clientA = await connectedClient(harness)
+		const clientB = await connectedClient(harness)
 
 		await subscribe(clientA, ['controller'])
 		await subscribe(clientB, ['controller'])
@@ -167,7 +154,7 @@ describe('Socket contract: multi-client room routing', () => {
 		harness.io.to('controller').emit('CONTROLLER_CMD', { status: 'idle' })
 
 		expect(await receivedA).toEqual({ status: 'idle' })
-		await barrier(clientB)
+		await barrier(harness, clientB)
 		expect(boxB.received).toEqual([])
 	})
 })

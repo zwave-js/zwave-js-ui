@@ -1,27 +1,14 @@
 // Characterizes the real activeSockets-driven lifecycle: setUserCallbacks() fires once for the first connection, removeUserCallbacks() fires once when the last client disconnects
-import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest'
-import { createSocketHarness, type SocketHarness } from './harness.ts'
+import { describe, it, expect } from 'vitest'
+import { useSocketHarness } from './harness.ts'
 import { createFakeGateway } from './fakes.ts'
 
 describe('Socket contract: first/last client callback lifecycle', () => {
-	let harness: SocketHarness
-
-	beforeAll(async () => {
-		harness = await createSocketHarness()
-	})
-
-	afterAll(async () => {
-		await harness.close()
-	})
-
-	afterEach(async () => {
-		await harness.disconnectAllClients()
-		harness.resetState()
-	})
+	const getHarness = useSocketHarness()
 
 	it('calls setUserCallbacks() exactly once when the first client connects, not again for a second', async () => {
 		const gateway = createFakeGateway()
-		harness.testHooks.setGateway(gateway as any)
+		const harness = await getHarness({ gateway })
 
 		const clientA = harness.createClient()
 		await harness.connectClient(clientA)
@@ -35,7 +22,7 @@ describe('Socket contract: first/last client callback lifecycle', () => {
 
 	it('does not call removeUserCallbacks() while at least one client remains connected', async () => {
 		const gateway = createFakeGateway()
-		harness.testHooks.setGateway(gateway as any)
+		const harness = await getHarness({ gateway })
 
 		const clientA = harness.createClient()
 		const clientB = harness.createClient()
@@ -53,7 +40,7 @@ describe('Socket contract: first/last client callback lifecycle', () => {
 
 	it('calls removeUserCallbacks() exactly once when the last client disconnects', async () => {
 		const gateway = createFakeGateway()
-		harness.testHooks.setGateway(gateway as any)
+		const harness = await getHarness({ gateway })
 
 		const clientA = harness.createClient()
 		const clientB = harness.createClient()
@@ -73,7 +60,7 @@ describe('Socket contract: first/last client callback lifecycle', () => {
 
 	it('re-fires setUserCallbacks()/removeUserCallbacks() across a full disconnect + reconnect cycle', async () => {
 		const gateway = createFakeGateway()
-		harness.testHooks.setGateway(gateway as any)
+		const harness = await getHarness({ gateway })
 
 		const client = harness.createClient()
 		await harness.connectClient(client)
@@ -95,9 +82,9 @@ describe('Socket contract: first/last client callback lifecycle', () => {
 	})
 
 	it('never throws/blocks when gw.zwave is undefined (optional chaining tolerates a disconnected client)', async () => {
-		harness.testHooks.setGateway(
-			createFakeGateway({ zwave: undefined }) as any,
-		)
+		const harness = await getHarness({
+			gateway: createFakeGateway({ zwave: undefined }),
+		})
 
 		const client = harness.createClient()
 		await expect(harness.connectClient(client)).resolves.toBe(client)

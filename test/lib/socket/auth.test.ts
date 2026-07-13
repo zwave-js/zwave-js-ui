@@ -1,28 +1,19 @@
 // Characterizes the real handshake gate: auth disabled skips the token check, auth enabled requires a valid JWT via handshake.auth.token or its query.token fallback else rejects with connect_error 'Authentication error'
-import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest'
-import { createSocketHarness, type SocketHarness } from './harness.ts'
+import { describe, it, expect, afterEach } from 'vitest'
+import { useSocketHarness } from './harness.ts'
 import { createFakeGateway } from './fakes.ts'
 import { seedUser, setSettings, signUserToken } from './authHelpers.ts'
 
 describe('Socket contract: auth middleware', () => {
-	let harness: SocketHarness
-
-	beforeAll(async () => {
-		harness = await createSocketHarness()
-	})
-
-	afterAll(async () => {
-		await harness.close()
-	})
+	const getHarness = useSocketHarness()
 
 	afterEach(async () => {
-		await harness.disconnectAllClients()
-		harness.resetState()
+		const harness = await getHarness()
 		await setSettings(harness, { gateway: {} })
 	})
 
 	it('accepts a connection with no token when auth is disabled (default)', async () => {
-		harness.testHooks.setGateway(createFakeGateway() as any)
+		const harness = await getHarness({ gateway: createFakeGateway() })
 
 		const client = harness.createClient()
 		await expect(harness.connectClient(client)).resolves.toBe(client)
@@ -30,7 +21,7 @@ describe('Socket contract: auth middleware', () => {
 	})
 
 	it('rejects a connection with no token once auth is enabled, with the exact "Authentication error" message', async () => {
-		harness.testHooks.setGateway(createFakeGateway() as any)
+		const harness = await getHarness({ gateway: createFakeGateway() })
 		await setSettings(harness, { gateway: { authEnabled: true } })
 
 		const client = harness.createClient()
@@ -41,7 +32,7 @@ describe('Socket contract: auth middleware', () => {
 	})
 
 	it('rejects an invalid/garbage token with the exact "Authentication error" message', async () => {
-		harness.testHooks.setGateway(createFakeGateway() as any)
+		const harness = await getHarness({ gateway: createFakeGateway() })
 		await setSettings(harness, { gateway: { authEnabled: true } })
 
 		const client = harness.createClient({
@@ -53,7 +44,7 @@ describe('Socket contract: auth middleware', () => {
 	})
 
 	it('accepts a valid token in handshake.auth.token', async () => {
-		harness.testHooks.setGateway(createFakeGateway() as any)
+		const harness = await getHarness({ gateway: createFakeGateway() })
 		await setSettings(harness, { gateway: { authEnabled: true } })
 		const user = await seedUser(harness, 'alice', 'irrelevant-password')
 		const token = signUserToken(user)
@@ -70,7 +61,7 @@ describe('Socket contract: auth middleware', () => {
 	})
 
 	it('falls back to handshake.query.token when auth.token is absent', async () => {
-		harness.testHooks.setGateway(createFakeGateway() as any)
+		const harness = await getHarness({ gateway: createFakeGateway() })
 		await setSettings(harness, { gateway: { authEnabled: true } })
 		const user = await seedUser(harness, 'bob', 'irrelevant-password')
 		const token = signUserToken(user)
@@ -81,7 +72,7 @@ describe('Socket contract: auth middleware', () => {
 	})
 
 	it('prefers auth.token over query.token when both are present', async () => {
-		harness.testHooks.setGateway(createFakeGateway() as any)
+		const harness = await getHarness({ gateway: createFakeGateway() })
 		await setSettings(harness, { gateway: { authEnabled: true } })
 		const user = await seedUser(harness, 'carol', 'irrelevant-password')
 		const token = signUserToken(user)
