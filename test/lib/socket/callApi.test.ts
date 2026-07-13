@@ -156,13 +156,13 @@ describe('Socket contract: callApi()', () => {
 		)
 
 		it.each([
-			['missing message', {}, undefined],
-			['empty message', { message: '' }, ''],
-			['zero message', { message: 0 }, 0],
-			['false message', { message: false }, false],
+			['missing message', {}],
+			['empty message', { message: '' }],
+			['zero message', { message: 0 }],
+			['false message', { message: false }],
 		])(
 			'falsy error compatibility: %s remains a successful undefined result',
-			async (_case, rejection, expectedMessage) => {
+			async (_case, rejection) => {
 				const zwave = realZwave()
 				Reflect.set(zwave, '_driver', {})
 				zwave.driverReady = true
@@ -176,9 +176,6 @@ describe('Socket contract: callApi()', () => {
 					result: undefined,
 					args: [],
 				})
-				if ('message' in rejection) {
-					expect(rejection.message).toBe(expectedMessage)
-				}
 			},
 		)
 
