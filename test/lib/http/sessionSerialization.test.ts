@@ -10,7 +10,7 @@ interface SessionFile {
 	user?: Partial<User>
 }
 
-// Proves req.session.user's on-disk shape differs by login path, since SessionData.user is typed User | PublicUser for exactly that reason
+// Reads back the on-disk session files to inspect req.session.user's actual persisted shape, which is typed User | PublicUser
 async function readAllSessionFiles(): Promise<SessionFile[]> {
 	const sessionsDir = path.join(getTestStoreDir(), 'sessions')
 	let files: string[]
@@ -37,7 +37,7 @@ function findSessionForUsername(
 	return match
 }
 
-describe('session store serialization (passwordHash-in-session quirk, fix owned by #4739)', () => {
+describe('session store serialization (see #4739 for tracked passwordHash-in-session behavior)', () => {
 	let harness: HttpHarness
 
 	beforeAll(async () => {
@@ -65,7 +65,7 @@ describe('session store serialization (passwordHash-in-session quirk, fix owned 
 		expect(match.user).not.toHaveProperty('passwordHash')
 	})
 
-	it('DOES persist passwordHash in the session after PUT /api/password (documented quirk, not fixed here)', async () => {
+	it('persists passwordHash in the session after PUT /api/password (see #4739)', async () => {
 		await seedUser(harness, 'session-pw-user', 'old-password')
 		const agent = harness.agent
 
