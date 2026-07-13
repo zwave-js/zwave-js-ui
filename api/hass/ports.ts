@@ -75,7 +75,7 @@ export interface HassMqttPort {
 }
 
 export interface HassZwavePort {
-	readonly homeHex: string
+	readonly homeHex: string | undefined
 	getNode(nodeId: number): unknown
 	getNodes(): Iterable<readonly [number, unknown]>
 	updateDevice(

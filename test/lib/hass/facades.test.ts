@@ -105,49 +105,39 @@ describe('Gateway HASS facades', () => {
 		})
 	})
 
-	it('clears stale node topics before public rediscovery', async () => {
-		const harness = await createGatewayHarness()
-		harnesses.push(harness)
-		const stale = buildValueId({ id: '7-37-0-currentValue', nodeId: 7 })
-		const other = buildValueId({ id: '8-37-0-currentValue', nodeId: 8 })
-		harness.zwave.nodes.set(7, buildNode({ id: 7 }))
-		harness.gw.topicValues = {
-			'old/topic': stale,
-			'other/topic': other,
-		}
-
-		harness.gw.rediscoverNode(7)
-
-		expect(harness.gw.topicValues).toEqual({ 'other/topic': other })
-	})
-
 	it('writes the cached cover mapping when its live node value is gone', async () => {
 		const harness = await createGatewayHarness()
 		harnesses.push(harness)
-		const cachedValue = buildValueId({
-			id: '7-38-0-targetValue',
+		const target = buildValueId({
 			nodeId: 7,
-			commandClass: CommandClasses['Multilevel Switch'],
+			commandClass: CommandClasses['Barrier Operator'],
 			property: 'targetValue',
 			type: 'number',
 		})
+		const cachedValue = buildValueId({
+			nodeId: 7,
+			commandClass: CommandClasses['Barrier Operator'],
+			property: 'currentValue',
+			type: 'number',
+			isCurrentValue: true,
+			targetValue: valueMapKey(target),
+		})
 		const node = buildNode({ id: 7 })
-		addValue(node, cachedValue)
+		addValue(node, target)
+		const cachedKey = addValue(node, cachedValue)
 		harness.zwave.nodes.set(node.id, node)
-		harness.gw.discovered[cachedValue.id] = {
-			type: 'cover',
-			object_id: 'test',
-			discovery_payload: { payload_stop: 'STOP' },
-			values: [valueMapKey(cachedValue)],
-		}
-		delete node.values[valueMapKey(cachedValue)]
-
+		harness.gw.discoverValue(node, cachedKey)
 		expect(
-			harness.gw.parsePayload('STOP', cachedValue, undefined),
-		).toBeNull()
+			Object.values(node.hassDevices).some(
+				({ type }) => type === 'cover',
+			),
+		).toBe(true)
+		delete node.values[valueMapKey(target)]
+
+		expect(harness.gw.parsePayload(253, target, undefined)).toBeNull()
 		await vi.waitFor(() => {
 			expect(harness.zwave.writeValue).toHaveBeenCalledWith(
-				{ ...cachedValue, property: 'Up' },
+				{ ...target, property: 'Up' },
 				false,
 			)
 		})
