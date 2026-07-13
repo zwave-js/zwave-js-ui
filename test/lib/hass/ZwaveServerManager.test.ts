@@ -232,7 +232,7 @@ describe('ZwaveServerManager.startIfNeeded()', () => {
 		expect(lastServer().start).toHaveBeenCalledWith(false)
 	})
 
-	it('duplicate-start guard: does not start again once server prop is set', () => {
+	it('does not start again once the server is already running', () => {
 		const { host } = createHost()
 		const manager = new ZwaveServerManager(host)
 		manager.create()

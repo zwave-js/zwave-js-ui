@@ -4,9 +4,9 @@
  * subsystem uses to own the `homeassistant/status` subscription.
  *
  * Everything runs against the real `api/lib/MqttClient.ts`; only the upstream
- * `mqtt` package is mocked (see `mqttMock.ts`), so the genuine
- * `_onConnect`/`_onMessageReceived`/`subscribe`/`unsubscribe` code paths run
- * end to end, driven by real emitted `connect`/`message` events.
+ * `mqtt` package is mocked (see `mqttMock.ts`), so the genuine connect,
+ * message, subscribe and unsubscribe handling runs end to end, driven by real
+ * emitted `connect`/`message` events.
  *
  * Proven here: an exact topic is resubscribed on every connect and never
  * prefixed; inbound messages reach the registered listener with the raw
@@ -199,7 +199,7 @@ describe('MqttClient scoped exact-topic subscription', () => {
 		await client.close()
 
 		// Even a delivery that slips through after close is ignored (the
-		// `_onMessageReceived` closed-guard drops it) and nothing is re-armed.
+		// client's closed-state guard drops it) and nothing is re-armed.
 		broker.deliver(STATUS_TOPIC, 'online')
 		await tick()
 		expect(received).toEqual([])
@@ -216,10 +216,9 @@ describe('MqttClient scoped exact-topic subscription', () => {
 
 		await client.close()
 
-		// The `close()` guard `if (this.client?.connected)` holds only before
-		// `client.end()` flips the link down, so a recorded unsubscribe of the
-		// exact topic proves it happened while still connected, clearing a
-		// clean:false server-side subscription
+		// close() unsubscribes while the link is still up, before it ends the
+		// connection, so a recorded unsubscribe of the exact topic proves the
+		// clean:false server-side subscription was cleared before disconnect
 		expect(broker.unsubscribed).toContain(STATUS_TOPIC)
 		expect(broker.ended).toBe(true)
 	})
@@ -279,8 +278,8 @@ describe('MqttClient scoped exact-topic subscription', () => {
 		)
 		sub.dispose()
 		// A broker subscribe error lands after dispose. The desired-state-aware
-		// path must not requeue the disposed topic into `toSubscribe`, so it can
-		// never be re-subscribed on a later connect
+		// path must not requeue the disposed topic, so it can never be
+		// re-subscribed on a later connect
 		broker.flushSubscribes(new Error('not authorized'))
 
 		broker.deferSubscribe = false
@@ -311,7 +310,7 @@ describe('MqttClient scoped exact-topic subscription', () => {
 
 		client.subscribeExact(STATUS_TOPIC, (p) => received.push(p ?? ''))
 		// The subscribe fails but the owner never disposed: the topic stays
-		// desired (in `exactSubscriptions`) and is retried by the next connect.
+		// desired and is retried by the next connect.
 		broker.flushSubscribes(new Error('transient'))
 
 		broker.deferSubscribe = false

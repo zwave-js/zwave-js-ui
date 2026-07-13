@@ -235,7 +235,6 @@ describe('MqttDiscoveryManager scoped status subscription', () => {
 		manager.subscribeStatus(status)
 
 		expect(status.exactCount('homeassistant/status')).toBe(1)
-		expect(HASS_STATUS_TOPIC).toBe('homeassistant/status')
 	})
 
 	it('an online HA status triggers a full rediscovery and logs ONLINE', () => {
@@ -314,7 +313,7 @@ describe('MqttDiscoveryManager scoped status subscription', () => {
 		expect(status.hassStatusEmits).toEqual([])
 	})
 
-	it('a non-string payload logs the legacy Invalid payload complaint and does not rediscover', () => {
+	it('a non-string status payload is rejected and does not rediscover', () => {
 		const { manager, logger } = makeManager()
 		const rediscoverAll = vi
 			.spyOn(manager.discoveryGenerator, 'rediscoverAll')
