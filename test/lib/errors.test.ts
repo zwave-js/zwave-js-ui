@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { hasErrorCode, getErrorMessage } from '#api/lib/errors.ts'
+import { hasErrorCode, getErrorMessage } from '#api/lib/errors'
 
 describe('error boundaries', () => {
 	describe('error code recognition', () => {

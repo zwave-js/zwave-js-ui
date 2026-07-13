@@ -9,8 +9,8 @@ import {
 } from 'vitest'
 import { BasicDeviceClass, CommandClasses } from '@zwave-js/core'
 import { BarrierState, ThermostatSetpointType } from 'zwave-js'
-import type { GatewayFactory as GatewayFactoryType } from '#api/runtime/GatewayFactory.ts'
-import type { HassDevice } from '#api/hass/types.ts'
+import type { GatewayFactory as GatewayFactoryType } from '#api/runtime/GatewayFactory'
+import type { HassDevice } from '#api/hass/types'
 import type { GatewayHarness } from './gatewayHarness.ts'
 import {
 	cleanupGatewayHarnessEnv,
@@ -59,7 +59,7 @@ describe('Gateway Home Assistant behavior', () => {
 			values: [],
 		}
 		const { GatewayFactory } = await import(
-			'#api/runtime/GatewayFactory.ts'
+			'#api/runtime/GatewayFactory'
 		)
 		const factory = new GatewayFactory({
 			storeDir,
@@ -134,8 +134,8 @@ describe('Gateway Home Assistant behavior', () => {
 
 	it('skips node discovery when MQTT is not configured', async () => {
 		const [{ GatewayFactory }, { GatewayType }] = await Promise.all([
-			import('#api/runtime/GatewayFactory.ts'),
-			import('#api/lib/Gateway.ts'),
+			import('#api/runtime/GatewayFactory'),
+			import('#api/lib/Gateway'),
 		])
 		const factory = new GatewayFactory({
 			storeDir,

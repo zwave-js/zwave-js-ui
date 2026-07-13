@@ -1,4 +1,4 @@
-import type { HassLogger } from './ports.ts'
+import type { HassLogger } from '#api/hass/ports'
 
 /**
  * Control handle for the discovery subsystem the coordinator owns; exposes only

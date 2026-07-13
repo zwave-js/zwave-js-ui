@@ -16,7 +16,7 @@ vi.mock('@zwave-js/core/bindings/fs/node', () => ({
 	fs: nodeFsMock,
 }))
 
-const { PkgFsBindings } = await import('#api/lib/PkgFsBindings.ts')
+const { PkgFsBindings } = await import('#api/lib/PkgFsBindings')
 
 describe('packaged filesystem bindings', () => {
 	let bindings: InstanceType<typeof PkgFsBindings>

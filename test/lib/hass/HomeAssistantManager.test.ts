@@ -20,7 +20,7 @@ import HomeAssistantManager, {
 	type HassManagedDiscovery,
 	type HassManagedServer,
 	type HomeAssistantClientFactories,
-} from '#api/hass/HomeAssistantManager.ts'
+} from '#api/hass/HomeAssistantManager'
 
 // Methods declared as function-valued properties let tests reference
 // `logger.info` for assertions without the unbound-method rule firing

@@ -1,16 +1,16 @@
 import type winston from 'winston'
 import { transports } from 'winston'
-import { customFormat, logContainer } from './logger.ts'
+import { customFormat, logContainer } from '#api/lib/logger'
 import archiver from 'archiver'
-import type { ZwaveClientPort } from '../runtime/ports.ts'
-import { joinPath, pathExists } from './utils.ts'
-import { storeDir } from '../config/app.ts'
+import type { ZwaveClientPort } from '#api/runtime/ports'
+import { joinPath, pathExists } from '#api/lib/utils'
+import { storeDir } from '#api/config/app'
 import { rm, mkdir } from 'node:fs/promises'
 import { createWriteStream } from 'node:fs'
 import { setTimeout } from 'node:timers/promises'
 import { createDefaultTransportFormat } from '@zwave-js/core/bindings/log/node'
 import { JSONTransport } from '@zwave-js/log-transport-json'
-import { getErrorMessage } from './errors.ts'
+import { getErrorMessage } from '#api/lib/errors'
 
 const debugTempDir = joinPath(storeDir, '.debug-temp')
 

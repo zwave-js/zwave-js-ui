@@ -27,7 +27,7 @@ import type {
 	HassDevice,
 	ZUINode,
 	ZUIValueIdState,
-} from '#api/lib/ZwaveClient.ts'
+} from '#api/lib/ZwaveClient'
 import { requireDefined } from '../testUtils.ts'
 
 vi.mock('mqtt', () => mqttMockFactory())

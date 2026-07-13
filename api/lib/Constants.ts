@@ -1,6 +1,6 @@
 import { getMeter, getMeterScale } from '@zwave-js/core'
 import { join } from 'node:path'
-import { storeDir } from '../config/app.ts'
+import { storeDir } from '#api/config/app'
 
 interface IGenericMap {
 	[key: number]: string

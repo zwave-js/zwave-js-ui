@@ -1,4 +1,4 @@
-import { DiscoveryGenerator } from './DiscoveryGenerator.ts'
+import { DiscoveryGenerator } from '#api/hass/DiscoveryGenerator'
 import type {
 	HassDiscoveryConfig,
 	HassDeviceRegistryLifecyclePort,
@@ -8,7 +8,7 @@ import type {
 	HassNodeUpdatePort,
 	HassTopicPort,
 	HassZwavePort,
-} from './ports.ts'
+} from '#api/hass/ports'
 
 /**
  * A disposable scoped subscription handle; kept local so the manager never

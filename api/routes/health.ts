@@ -2,8 +2,8 @@ import type express from 'express'
 import type { RateLimitRequestHandler } from 'express-rate-limit'
 import { libVersion } from 'zwave-js'
 import { serverVersion } from '@zwave-js/server'
-import * as utils from '../lib/utils.ts'
-import type { AppRuntime } from '../runtime/AppRuntime.ts'
+import * as utils from '#api/lib/utils'
+import type { AppRuntime } from '#api/runtime/AppRuntime'
 
 export interface HealthRoutesDeps {
 	apisLimiter: RateLimitRequestHandler

@@ -1,6 +1,6 @@
 import type { Socket } from 'socket.io'
-import { ALL_CHANNELS, channelMap, inboundEvents } from '../lib/SocketEvents.ts'
-import type { SocketAck } from './api.ts'
+import { ALL_CHANNELS, channelMap, inboundEvents } from '#api/lib/SocketEvents'
+import type { SocketAck } from '#api/socket/api'
 
 export interface ChannelSubscriptionRequest {
 	channels?: unknown

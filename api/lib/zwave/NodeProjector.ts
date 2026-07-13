@@ -15,8 +15,8 @@ import { getEnumMemberName } from 'zwave-js/Utils'
 import { RFRegion } from 'zwave-js'
 import { isUint8Array } from 'node:util/types'
 
-import * as utils from '../utils.ts'
-import type { ZUINode, ZUIValueId } from '../ZwaveClient.ts'
+import * as utils from '#api/lib/utils'
+import type { ZUINode, ZUIValueId } from '#api/lib/ZwaveClient'
 
 export interface PhysicalNodeProjectionPort {
 	getDriver(): NodeProjectionDriver

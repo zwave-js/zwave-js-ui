@@ -1,4 +1,4 @@
-import { isRecord, isValidNodeIdString } from './utils.ts'
+import { isRecord, isValidNodeIdString } from '#api/lib/utils'
 type ImportedNodeConfig = Record<string, unknown>
 
 export interface NormalizedImportConfig {

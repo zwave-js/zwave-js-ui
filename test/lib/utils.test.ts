@@ -20,7 +20,7 @@ import {
 	isValidNodeIdString,
 	isValidOperation,
 	applyOperation,
-} from '../../api/lib/utils.ts'
+} from '#api/lib/utils'
 
 declare let process: NodeJS.Process & {
 	pkg?: boolean

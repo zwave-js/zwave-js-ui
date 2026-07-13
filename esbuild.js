@@ -110,6 +110,7 @@ async function main() {
 				: 'api/bin/www.ts',
 		],
 		plugins: [nativeNodeModulesPlugin],
+		conditions: ['development'],
 		bundle: true,
 		platform: 'node',
 		target: 'node18',

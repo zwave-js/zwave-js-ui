@@ -1,5 +1,5 @@
-import { eventToChannel } from '../SocketEvents.ts'
-import type { ServiceLogger } from './ports.ts'
+import { eventToChannel } from '#api/lib/SocketEvents'
+import type { ServiceLogger } from '#api/lib/zwave/ports'
 
 export interface SocketServerPort {
 	to(channel: string): {

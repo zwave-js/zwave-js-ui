@@ -29,15 +29,15 @@ import type {
 	NodesStoreFile,
 	NodesStoreRecord,
 	NodesStoreRecordByHome,
-} from '#api/config/store.ts'
-import { socketEvents } from '#api/lib/SocketEvents.ts'
-import type { ZUINode, ZUIValueId } from '#api/lib/ZwaveClient.ts'
+} from '#api/config/store'
+import { socketEvents } from '#api/lib/SocketEvents'
+import type { ZUINode, ZUIValueId } from '#api/lib/ZwaveClient'
 import {
 	NodeRegistry,
 	type NodeRegistryController,
 	type NodeRegistryDriver,
 	type NodeRegistryHost,
-} from '#api/lib/zwave/NodeRegistry.ts'
+} from '#api/lib/zwave/NodeRegistry'
 import {
 	createServiceLogger,
 	createValue,

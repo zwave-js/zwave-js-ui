@@ -9,7 +9,7 @@ import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
 import type {
 	DiscoveryGenerator as DiscoveryGeneratorType,
 	DiscoveryGeneratorOptions,
-} from '#api/hass/DiscoveryGenerator.ts'
+} from '#api/hass/DiscoveryGenerator'
 import type {
 	HassDeviceRegistryPort,
 	HassLogger,
@@ -17,14 +17,14 @@ import type {
 	HassNode,
 	HassValue,
 	HassZwavePort,
-} from '#api/hass/ports.ts'
+} from '#api/hass/ports'
 import { ensureHassNode } from '#api/hass/ports.ts'
 import type {
 	HassDevice,
 	HassDeviceCatalog,
 	HassDeviceMap,
-} from '#api/hass/types.ts'
-import { getIdWithoutNode, PayloadType } from '#api/lib/shared.ts'
+} from '#api/hass/types'
+import { getIdWithoutNode, PayloadType } from '#api/lib/shared'
 import { cleanupTestEnv, ensureTestEnv, TEST_SESSION_SECRET } from './env.ts'
 import { buildNode } from './fixtures.ts'
 import { assertDefined } from '../testUtils.ts'
@@ -68,8 +68,8 @@ let hassCommandHandled: symbol
 beforeAll(async () => {
 	const isolatedStoreDir = ensureTestEnv()
 	const [discoveryModule, configModule] = await Promise.all([
-		import('#api/hass/DiscoveryGenerator.ts'),
-		import('#api/config/app.ts'),
+		import('#api/hass/DiscoveryGenerator'),
+		import('#api/config/app'),
 	])
 	DiscoveryGenerator = discoveryModule.DiscoveryGenerator
 	hassCommandHandled = discoveryModule.HASS_COMMAND_HANDLED

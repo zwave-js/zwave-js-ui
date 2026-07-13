@@ -32,8 +32,8 @@ import type {
 	SupervisionResult,
 } from '@zwave-js/core'
 import type { ConfigManager } from '@zwave-js/config'
-import type { DeepPartial } from '../utils.ts'
-import type * as LogManager from '../logger.ts'
+import type { DeepPartial } from '#api/lib/utils'
+import type * as LogManager from '#api/lib/logger'
 
 export type {
 	FirmwareFileFormat,

@@ -2,7 +2,7 @@ import type { PartialZWaveOptions, ValueID, ZnifferOptions } from 'zwave-js'
 import path, { resolve } from 'node:path'
 import crypto from 'node:crypto'
 import { readFileSync, statSync } from 'node:fs'
-import type { ZwaveConfig } from './ZwaveClient.ts'
+import type { ZwaveConfig } from '#api/lib/ZwaveClient'
 import { isUint8Array } from 'node:util/types'
 import { createRequire } from 'node:module'
 import { mkdir, access, readdir, readlink, realpath } from 'node:fs/promises'
@@ -11,7 +11,7 @@ import tripleBeam from 'triple-beam'
 import { MAX_NODES_LR } from '@zwave-js/core'
 import type { LogConfig } from '@zwave-js/core'
 import type { BytesView } from '@zwave-js/shared'
-import { hasErrorCode } from './errors.ts'
+import { hasErrorCode } from '#api/lib/errors'
 
 const loglevels = tripleBeam.configs.npm.levels
 
