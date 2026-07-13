@@ -1,24 +1,25 @@
 /**
- * logger.ts transitively imports logsDir/storeDir from config/app.ts, which
+ * logger.ts statically imports logsDir/storeDir from config/app.ts, which
  * writes a session-secret file and creates a real logs/ dir under the repo
  * store/ if STORE_DIR isn't set yet; logger.ts/config/app.ts/utils.ts must
  * all be dynamic import()s performed after ensureTestEnv() (see
  * http/env.ts).
  *
- * logger.ts also memoizes its transports list in a module-level
- * winston.Container singleton for this file's whole isolated module graph
- * (see issue #2937's "setup transports only once" comment). Without
- * resetting, describe blocks asserting on transport count/silent/level
- * depend on run order - under --sequence.seed=4732 a later-declared
- * logEnabled: false block ran before describe('module()') and left its
- * disabled transports cached, failing it. Each block now calls
- * __testHooks.reset() first so assertions hold regardless of order.
+ * logger.ts also memoizes its transports list and keeps every named logger
+ * in a module-level winston.Container singleton for this file's whole
+ * isolated module graph (see issue #2937's "setup transports only once"
+ * comment). Without resetting, describe blocks asserting on transport
+ * count/silent/level depend on run order - under --sequence.seed=4732 a
+ * later-declared logEnabled: false block ran before describe('module()')
+ * and left its disabled transports cached, failing it. Each block now
+ * calls __testHooks.reset() first so assertions hold regardless of order.
  *
  * DISABLE_LOG_ROTATION=true makes the logToFile: true scenarios use a plain
  * winston.transports.File instead of DailyRotateFile, whose
- * setupCleanJob() fires an un-awaited clean() promise that can still be in
- * flight when afterAll deletes the throwaway STORE_DIR - a pre-existing
- * characteristic of setupCleanJob, otherwise surfacing as noisy ENOENT
+ * setupCleanJob() fires an un-awaited clean() promise - sharing this
+ * file's transports cache via its own logger.info(...) calls - that can
+ * still be in flight when afterAll deletes the throwaway STORE_DIR, a
+ * pre-existing characteristic otherwise surfacing as noisy ENOENT
  * rejections.
  */
 import {

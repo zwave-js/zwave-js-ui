@@ -1,5 +1,5 @@
 /**
- * Constants.ts transitively imports storeDir from config/app.ts, which
+ * Constants.ts statically imports storeDir from config/app.ts, which
  * writes a session-secret file to the real repo store/ dir if STORE_DIR
  * isn't set yet - importing the module (even though these tests are pure
  * classification-table lookups that never touch storeDir) is enough to
