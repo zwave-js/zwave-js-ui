@@ -1,33 +1,23 @@
-// Shares the HTTP suite's loadAppModule/loadJsonStore loaders so both suites reuse one isolated import per test file, then layers Socket.IO setup on top
+// Shares the module loaders and beforeAll/afterEach/afterAll lifecycle from shared/harness.ts, then
+// layers Socket.IO-specific setup (server, io, client helpers) on top.
 import { createServer, type Server as HttpServer } from 'node:http'
 import type { AddressInfo } from 'node:net'
 import type { Express, Router } from 'express'
 import type { Server as SocketIOServer } from 'socket.io'
 import { io as ioClient, type Socket as ClientSocket } from 'socket.io-client'
-import { beforeAll, afterEach, afterAll } from 'vitest'
-import { cleanupTestEnv } from '../shared/env.ts'
-import { loadAppModule, loadJsonStore } from '../http/harness.ts'
 import type { FakeGateway, FakeZniffer } from './fakes.ts'
 import SocketManager from '#api/lib/SocketManager.ts'
-import type * as AppModuleNamespace from '#api/app.ts'
-import type * as GatewayModuleNamespace from '#api/lib/Gateway.ts'
 import type * as ZnifferModuleNamespace from '#api/lib/ZnifferManager.ts'
 import type * as LoggerModuleNamespace from '#api/lib/logger.ts'
+import {
+	useHarnessLifecycle,
+	type GatewayModule,
+	type SharedTestContext,
+} from '../shared/harness.ts'
 
-type AppModule = typeof AppModuleNamespace
-type GatewayModule = typeof GatewayModuleNamespace
 type ZnifferModule = typeof ZnifferModuleNamespace
 type RealGateway = InstanceType<GatewayModule['default']>
 type RealZniffer = InstanceType<ZnifferModule['default']>
-type JsonStoreContext = Awaited<ReturnType<typeof loadJsonStore>>
-
-let gatewayModulePromise: Promise<GatewayModule> | undefined
-
-// Releases the Gateway.ts fs.watch() watchers since api/app.ts always pulls this module in transitively
-async function loadGatewayModule(): Promise<GatewayModule> {
-	gatewayModulePromise ??= import('#api/lib/Gateway.ts')
-	return gatewayModulePromise
-}
 
 let loggerModulePromise: Promise<typeof LoggerModuleNamespace> | undefined
 
@@ -49,8 +39,8 @@ export interface SocketHarnessOptions {
 export interface SocketHarness {
 	app: Express
 	io: SocketIOServer
-	jsonStore: JsonStoreContext['jsonStore']
-	store: JsonStoreContext['store']
+	jsonStore: SharedTestContext['jsonStore']
+	store: SharedTestContext['store']
 	server: HttpServer
 	// Base URL is http://127.0.0.1:<ephemeral port>
 	url: string
@@ -61,24 +51,6 @@ export interface SocketHarness {
 	// Polls the real server-side connected-socket count until it matches count
 	waitForServerSocketCount(count: number, timeoutMs?: number): Promise<void>
 	disconnectAllClients(): Promise<void>
-}
-
-interface SharedTestContext {
-	createApp: AppModule['createApp']
-	jsonStore: JsonStoreContext['jsonStore']
-	store: JsonStoreContext['store']
-	closeWatchers: GatewayModule['closeWatchers']
-}
-
-async function createSharedTestContext(): Promise<SharedTestContext> {
-	const [{ createApp }, { jsonStore, store }, { closeWatchers }] =
-		await Promise.all([
-			loadAppModule(),
-			loadJsonStore(),
-			loadGatewayModule(),
-		])
-	await jsonStore.init(store)
-	return { createApp, jsonStore, store, closeWatchers }
 }
 
 async function createHarnessInstance(
@@ -195,40 +167,5 @@ async function createHarnessInstance(
 export function useSocketHarness(): (
 	options?: SocketHarnessOptions,
 ) => Promise<SocketHarness> {
-	let shared: SharedTestContext | undefined
-	let current:
-		| (SocketHarness & { closeInstance(): Promise<void> })
-		| undefined
-
-	beforeAll(async () => {
-		shared = await createSharedTestContext()
-	})
-
-	afterEach(async () => {
-		if (current) {
-			await current.closeInstance()
-			current = undefined
-		}
-	})
-
-	afterAll(() => {
-		if (!shared) return
-		shared.closeWatchers()
-		for (const key of Object.keys(shared.jsonStore.store)) {
-			delete shared.jsonStore.store[key]
-		}
-		cleanupTestEnv()
-	})
-
-	return async function getHarness(
-		options: SocketHarnessOptions = {},
-	): Promise<SocketHarness> {
-		if (!shared) {
-			throw new Error(
-				'useSocketHarness(): beforeAll has not run yet, call the accessor from within a test',
-			)
-		}
-		current ??= await createHarnessInstance(shared, options)
-		return current
-	}
+	return useHarnessLifecycle(createHarnessInstance)
 }

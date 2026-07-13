@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import express, { type Express } from 'express'
-import { loadAppModule, useHttpHarness } from './harness.ts'
+import { useHttpHarness } from './harness.ts'
+import { loadAppModule } from '../shared/harness.ts'
 
 const EXPECTED_REGISTERED_ROUTES: Array<{
 	method: 'get' | 'post' | 'put' | 'delete'

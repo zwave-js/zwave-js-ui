@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
-import { loadAppModule } from './harness.ts'
+import { loadAppModule } from '../shared/harness.ts'
 
 describe('AppInstance: fatal-error labeling', () => {
 	it('labels each installed fatal-event handler from the event that fired', async () => {
