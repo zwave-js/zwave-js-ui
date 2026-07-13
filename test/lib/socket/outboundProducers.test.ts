@@ -22,6 +22,7 @@ import {
 	type Driver,
 	type InclusionGrant,
 	type InclusionUserCallbacks,
+OTWFirmwareUpdateStatus,
 } from 'zwave-js'
 import type ZWaveClientType from '#api/lib/ZwaveClient.ts'
 import type { ZwaveConfig, ZUINode, ZUIValueId } from '#api/lib/ZwaveClient.ts'
@@ -437,8 +438,7 @@ describe('Socket contract: outbound producers', () => {
 			const received = waitForEvent(client, 'NODE_REMOVED')
 			;(zwave as any)._refreshBroadcastLRNode()
 
-			expect(NODE_ID_BROADCAST_LR).toBe(4095)
-			expect(await received).toEqual({ id: 4095 })
+			expect(await received).toEqual({ id: NODE_ID_BROADCAST_LR })
 			expect((zwave as any)._virtualNodes.has(NODE_ID_BROADCAST_LR)).toBe(
 				false,
 			)
@@ -484,11 +484,10 @@ describe('Socket contract: outbound producers', () => {
 
 			;(zwave as any)._onOTWFirmwareUpdateFinished({
 				success: true,
-				// `255` is the real zwave-js `OTWFirmwareUpdateStatus.OK`
-				// member - the real method runs it through
+				// The real method runs the status through
 				// `getEnumMemberName()`, which is why the wire payload
-				// below asserts the STRING name, not the raw number.
-				status: 255,
+				// below asserts the STRING name, not the enum value.
+				status: OTWFirmwareUpdateStatus.OK,
 			})
 
 			expect(await received).toEqual({
