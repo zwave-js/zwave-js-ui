@@ -1,19 +1,3 @@
-/**
- * ConfigurationTemplateService – owns configuration template CRUD,
- * persistence, auto-apply logic, and content-hash bookkeeping.
- *
- * Extracted from ZwaveClient to keep the monolith slim. The service is
- * strict-clean (no broad `any` casts, no non-null assertions, no
- * ts-ignore).
- *
- * Ports:
- *   driver      – resolves current driver/controller/nodes across restarts
- *   nodes       – read/update in-memory ZUINode state, write values, log
- *   persistence – read/write configurationTemplates.json via jsonStore
- *   utils       – ID generation
- *   logger      – structured logging
- */
-
 import { createHash } from 'node:crypto'
 import { CommandClasses } from '@zwave-js/core'
 import {
@@ -46,7 +30,6 @@ import type {
 // Re-export types so ZwaveClient can import from one place
 export type { ZUIConfigurationTemplate, ZUIConfigurationTemplateValue }
 
-/** Shared config manager for device parameter lookups. */
 const configManager = new ConfigManager({ deviceConfigPriorityDir })
 
 export class ConfigurationTemplateService {
@@ -74,17 +57,9 @@ export class ConfigurationTemplateService {
 		this._templates = initialTemplates
 	}
 
-	// ---------------------------------------------------------------
-	// Accessors
-	// ---------------------------------------------------------------
-
 	get templates(): ZUIConfigurationTemplate[] {
 		return this._templates
 	}
-
-	// ---------------------------------------------------------------
-	// Public API – exact signatures preserved from ZwaveClient
-	// ---------------------------------------------------------------
 
 	getConfigurationTemplates(): ZUIConfigurationTemplate[] {
 		return this._templates
@@ -473,10 +448,6 @@ export class ConfigurationTemplateService {
 		return this._templates
 	}
 
-	// ---------------------------------------------------------------
-	// Node-ready hook – called from ZwaveClient._onNodeReady
-	// ---------------------------------------------------------------
-
 	checkConfigurationTemplates(
 		node: TemplateNodeState,
 		zwaveNode: ZWaveNode,
@@ -525,10 +496,6 @@ export class ConfigurationTemplateService {
 				})
 		}
 	}
-
-	// ---------------------------------------------------------------
-	// Private helpers
-	// ---------------------------------------------------------------
 
 	static _generateContentHash(
 		values: ZUIConfigurationTemplateValue[],

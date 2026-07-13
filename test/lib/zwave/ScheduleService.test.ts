@@ -19,10 +19,6 @@ import type {
 	ScheduleNodeState,
 } from '../../../api/lib/zwave/ports.ts'
 
-// ---------------------------------------------------------------------------
-// Helpers: minimal fakes for ports
-// ---------------------------------------------------------------------------
-
 function createFakeEndpoint() {
 	return { id: 0 }
 }
@@ -86,7 +82,6 @@ function createUtilsPort(): ScheduleUtilsPort {
 	}
 }
 
-// Stub out the CC statics so we don't need a real driver
 async function stubCCStatics(
 	overrides: Partial<{
 		supportedUsers: number | undefined
@@ -111,7 +106,6 @@ async function stubCCStatics(
 		cachedSchedules = {},
 	} = overrides
 
-	// We need to mock static methods on the CC classes
 	const { UserCodeCC, ScheduleEntryLockCC } = await import('zwave-js')
 
 	vi.spyOn(UserCodeCC, 'getSupportedUsersCached').mockReturnValue(
@@ -151,7 +145,6 @@ async function stubCCStatics(
 	return { UserCodeCC, ScheduleEntryLockCC }
 }
 
-// Production-valid typed payloads per upstream zwave-js types
 const weeklyPayload: ScheduleEntryLockWeekDaySchedule = {
 	weekday: ScheduleEntryLockWeekday.Monday,
 	startHour: 8,
@@ -180,10 +173,6 @@ const yearlyPayload: ScheduleEntryLockYearDaySchedule = {
 	stopHour: 18,
 	stopMinute: 0,
 }
-
-// ---------------------------------------------------------------------------
-// Tests
-// ---------------------------------------------------------------------------
 
 describe('ScheduleService', () => {
 	beforeEach(() => {
@@ -237,12 +226,9 @@ describe('ScheduleService', () => {
 				createUtilsPort(),
 			)
 
-			// Stub CC statics to return 0 users so the first call resolves quickly
 			await stubCCStatics({ supportedUsers: 0 })
 
-			// Start a long request
 			const p1 = svc.getSchedules(2)
-			// A second one should throw
 			await expect(svc.getSchedules(2)).rejects.toThrow(
 				'Another request is in progress',
 			)
@@ -299,7 +285,6 @@ describe('ScheduleService', () => {
 			expect(result?.weekly?.numSlots).toBe(1)
 			expect(result?.daily?.numSlots).toBe(1)
 			expect(result?.yearly?.numSlots).toBe(1)
-			// Verify lock is released
 			expect(svc.lockGetSchedule).toBe(false)
 		})
 
@@ -362,9 +347,7 @@ describe('ScheduleService', () => {
 		it('sets a weekly schedule, calls setWeekDaySchedule, and verifies success via readback', async () => {
 			const zwaveNode = createFakeZwaveNode(true)
 			const cc = zwaveNode.commandClasses['Schedule Entry Lock']
-			// setWeekDaySchedule returns undefined (no supervision)
 			cc.setWeekDaySchedule.mockResolvedValue(undefined)
-			// readback returns matching data
 			cc.getWeekDaySchedule.mockResolvedValue(weeklyPayload)
 
 			const nodeStore = createNodeStorePort({
@@ -391,7 +374,6 @@ describe('ScheduleService', () => {
 			expect(result?.status).toBe(SupervisionStatus.Success)
 			expect(nodeStore.emitCalls.length).toBeGreaterThan(0)
 
-			// Exact upstream method used
 			expect(cc.setWeekDaySchedule).toHaveBeenCalledWith(
 				{ userId: 1, slotId: 1 },
 				weeklyPayload,
@@ -401,10 +383,8 @@ describe('ScheduleService', () => {
 				slotId: 1,
 			})
 
-			// Other mode writers NOT called
 			expect(cc.setYearDaySchedule).not.toHaveBeenCalled()
 			expect(cc.setDailyRepeatingSchedule).not.toHaveBeenCalled()
-			// Other mode readers NOT called
 			expect(cc.getYearDaySchedule).not.toHaveBeenCalled()
 			expect(cc.getDailyRepeatingSchedule).not.toHaveBeenCalled()
 		})
@@ -413,7 +393,6 @@ describe('ScheduleService', () => {
 			const zwaveNode = createFakeZwaveNode(true)
 			const cc = zwaveNode.commandClasses['Schedule Entry Lock']
 			cc.setWeekDaySchedule.mockResolvedValue(undefined)
-			// readback returns undefined (deleted)
 			cc.getWeekDaySchedule.mockResolvedValue(undefined)
 
 			const existingSlot: ScheduleEntryLockSlotId &
@@ -481,13 +460,11 @@ describe('ScheduleService', () => {
 
 			expect(result?.status).toBe(SupervisionStatus.Success)
 
-			// Exact upstream method used
 			expect(cc.setDailyRepeatingSchedule).toHaveBeenCalledWith(
 				{ userId: 1, slotId: 1 },
 				dailyPayload,
 			)
 
-			// Other mode writers/readers NOT called
 			expect(cc.setWeekDaySchedule).not.toHaveBeenCalled()
 			expect(cc.setYearDaySchedule).not.toHaveBeenCalled()
 			expect(cc.getWeekDaySchedule).not.toHaveBeenCalled()
@@ -705,13 +682,11 @@ describe('ScheduleService', () => {
 
 			expect(result?.status).toBe(SupervisionStatus.Success)
 
-			// Exact upstream method used
 			expect(cc.setYearDaySchedule).toHaveBeenCalledWith(
 				{ userId: 1, slotId: 1 },
 				yearlyPayload,
 			)
 
-			// Other mode writers/readers NOT called
 			expect(cc.setWeekDaySchedule).not.toHaveBeenCalled()
 			expect(cc.setDailyRepeatingSchedule).not.toHaveBeenCalled()
 			expect(cc.getWeekDaySchedule).not.toHaveBeenCalled()
@@ -725,7 +700,6 @@ describe('ScheduleService', () => {
 			const zwaveNode = createFakeZwaveNode(true)
 			const cc = zwaveNode.commandClasses['Schedule Entry Lock']
 			cc.setWeekDaySchedule.mockResolvedValue(undefined)
-			// Readback returns different data
 			cc.getWeekDaySchedule.mockResolvedValue({
 				weekday: ScheduleEntryLockWeekday.Saturday,
 				startHour: 0,
@@ -782,7 +756,6 @@ describe('ScheduleService', () => {
 				},
 			})
 
-			// Get from device (not cache), mock getWeekDaySchedule to set cancel
 			zwaveNode.commandClasses[
 				'Schedule Entry Lock'
 			].getWeekDaySchedule.mockImplementation(() => {
@@ -794,7 +767,6 @@ describe('ScheduleService', () => {
 				fromCache: false,
 			})
 			expect(result).toBeUndefined()
-			// Lock is released
 			expect(svc.lockGetSchedule).toBe(false)
 		})
 	})
@@ -819,17 +791,14 @@ describe('ScheduleService', () => {
 
 			const result = await svc.getSchedules(2)
 
-			// Must return node.schedule, not undefined
 			expect(result).toBeDefined()
 			expect(result?.weekly?.numSlots).toBe(3)
 			expect(result?.yearly?.numSlots).toBe(2)
 			expect(result?.daily?.numSlots).toBe(1)
-			// Slots are empty (zero user iterations)
 			expect(result?.weekly?.slots).toEqual([])
 			expect(result?.yearly?.slots).toEqual([])
 			expect(result?.daily?.slots).toEqual([])
 
-			// emitNodeUpdate must have been called exactly once
 			expect(nodeStore.emitCalls.length).toBe(1)
 			const [emittedNode, emittedProps] = nodeStore.emitCalls[0] as [
 				ScheduleNodeState,
@@ -839,10 +808,8 @@ describe('ScheduleService', () => {
 			expect(emittedProps).toHaveProperty('schedule')
 			expect(emittedProps).toHaveProperty('userCodes')
 
-			// userCodes.total should be 0 (null ?? 0)
 			expect(emittedNode.userCodes?.total).toBe(0)
 
-			// Lock is released
 			expect(svc.lockGetSchedule).toBe(false)
 		})
 
@@ -876,13 +843,11 @@ describe('ScheduleService', () => {
 
 			const result = await svc.getSchedules(2)
 
-			// Must return schedule (not undefined)
 			expect(result).toBeDefined()
 			expect(result?.weekly?.numSlots).toBe(2)
 			expect(result?.yearly?.numSlots).toBe(1)
 			expect(result?.daily?.numSlots).toBe(0)
 
-			// Node update emitted
 			expect(nodeStore.emitCalls.length).toBe(1)
 			expect(svc.lockGetSchedule).toBe(false)
 		})
@@ -973,7 +938,6 @@ describe('ScheduleService', () => {
 			} as ScheduleEntryLockSlotId & ScheduleEntryLockWeekDaySchedule)
 
 			expect(result?.status).toBe(SupervisionStatus.Success)
-			// The existing slot should be updated
 			const node = nodeStore.getNode(2)
 			expect(node?.schedule?.weekly?.slots?.length).toBe(1)
 			const slot = node?.schedule?.weekly?.slots?.[0]
@@ -1030,7 +994,6 @@ describe('ScheduleService', () => {
 			)
 
 			await svc.setEnabledSchedule(2, true, 1)
-			// Should not throw
 		})
 	})
 })
