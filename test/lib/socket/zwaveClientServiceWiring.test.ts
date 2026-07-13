@@ -21,8 +21,9 @@
  * this file (`afterEach`'s `resetState()` doesn't clear it, see
  * `harness.ts`). Most tests seed `_groupService._groups` directly after
  * constructing; the tests characterizing construction-time disk loading
- * (and node removal, which reads an index only rebuilt from `_groups` at
- * construction) seed `groups.json` itself beforehand instead.
+ * (and node removal, whose index a direct post-construction `_groups`
+ * overwrite would leave stale until the next mutating call) seed
+ * `groups.json` itself beforehand instead.
  */
 import {
 	describe,

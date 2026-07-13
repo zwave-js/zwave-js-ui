@@ -48,7 +48,7 @@ export class GroupService {
 	private readonly _nodeToGroups: Map<number, Set<number>> = new Map()
 
 	private readonly _driver: GroupDriverPort
-	// Shared with ZwaveClient's broadcast (standard + LR) virtual-node lifecycle, so this is a pass-through to that Map rather than state owned here
+	// Shared with ZwaveClient's broadcast (standard + LR) virtual-node lifecycle, so this is a pass-through to that Map rather than state owned here; ZwaveClient._updateBroadcastNodeValues() owns refreshing the broadcast entries
 	private readonly _virtualNodes: GroupVirtualNodeRegistryPort
 	private readonly _zuiNodes: GroupZUINodeStorePort
 	private readonly _socket: GroupSocketPort
