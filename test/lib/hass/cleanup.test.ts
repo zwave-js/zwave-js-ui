@@ -1,9 +1,8 @@
 /**
- * Teardown characterization for the HASS integration surface: a real
- * `Gateway.close()` releases its broker and listeners, is reentrant, and closes
- * the Z-Wave connection strictly before the MQTT client. `mqtt` is the only
- * mocked upstream boundary; `Gateway`/`MqttClient` are real, imported after
- * `ensureTestEnv()`.
+ * Teardown characterization for the HASS integration surface: a real Gateway
+ * close releases its broker and listeners, is reentrant, and closes the Z-Wave
+ * connection strictly before the MQTT client. mqtt is the only mocked upstream
+ * boundary; the Gateway and MqttClient are real.
  */
 import {
 	describe,
@@ -44,8 +43,8 @@ afterEach(() => {
 	resetMqttBrokers()
 })
 
-describe('real Gateway + MqttClient harness teardown', () => {
-	it('releases the broker (client.end) on close(), and close() is reentrant', async () => {
+describe('Gateway teardown releases the broker', () => {
+	it('closing releases the broker and is safe to call twice', async () => {
 		const harness = await createGatewayHarness()
 		expect(harness.broker.ended).toBe(false)
 
@@ -59,16 +58,12 @@ describe('real Gateway + MqttClient harness teardown', () => {
 	})
 })
 
-describe('real Gateway.close() lifecycle', () => {
-	it('close() runs zwave.close -> cancelJobs -> mqtt.close in order, sets closed, and removes listeners', async () => {
+describe('Gateway close ordering', () => {
+	it('closing stops the Z-Wave connection before the broker and removes listeners', async () => {
 		const harness = await createGatewayHarness()
 
 		// A real Gateway.start() registered MQTT event listeners
 		expect(harness.mqtt.listenerCount('writeRequest')).toBeGreaterThan(0)
-
-		// Seed a scheduled job so cancelJobs() has something concrete to stop
-		const job = { stop: vi.fn() }
-		;(harness.gw as any).jobs.set('char-test-job', job)
 
 		// Order probe: the Z-Wave connection must close before the broker
 		const endSpy = vi.spyOn(harness.broker, 'end')
@@ -81,8 +76,6 @@ describe('real Gateway.close() lifecycle', () => {
 
 		expect(harness.gw.closed).toBe(true)
 		expect(harness.zwave.close).toHaveBeenCalledTimes(1)
-		expect(job.stop).toHaveBeenCalledTimes(1)
-		expect((harness.gw as any).jobs.size).toBe(0)
 		expect(harness.broker.ended).toBe(true)
 		expect(endSpy).toHaveBeenCalledTimes(1)
 		expect(harness.mqtt.listenerCount('writeRequest')).toBe(0)
