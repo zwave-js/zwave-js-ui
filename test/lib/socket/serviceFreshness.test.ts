@@ -1,21 +1,99 @@
+import { createServer } from 'node:http'
+import type { AddressInfo } from 'node:net'
 import {
-	describe,
-	it,
-	expect,
-	beforeAll,
 	afterAll,
 	afterEach,
+	beforeAll,
+	describe,
+	expect,
+	it,
 	vi,
 } from 'vitest'
-import { createSocketHarness, type SocketHarness } from './harness.ts'
+import {
+	io as createSocketClient,
+	type Socket as ClientSocket,
+} from 'socket.io-client'
+import type Gateway from '#api/lib/Gateway.ts'
+import type ZnifferManager from '#api/lib/ZnifferManager.ts'
+import type SocketManager from '#api/lib/SocketManager.ts'
+import type { AppRuntime } from '#api/runtime/AppRuntime.ts'
+import type { ZnifferApiRequest } from '#api/socket/znifferApi.ts'
+import { cleanupTestEnv, ensureTestEnv } from './env.ts'
 import {
 	createFakeGateway,
 	createFakeZniffer,
 	createFakeZwaveClient,
+	type FakeGateway,
+	type FakeZniffer,
 } from './fakes.ts'
 
-function emit<T = any>(
-	client: ReturnType<SocketHarness['createClient']>,
+interface RuntimeSocketHarness {
+	runtime: AppRuntime
+	socketManager: SocketManager
+	url: string
+	clients: Set<ClientSocket>
+}
+
+function asGateway(value: FakeGateway): Gateway {
+	return value as unknown as Gateway
+}
+
+function asZniffer(value: FakeZniffer): ZnifferManager {
+	return value as unknown as ZnifferManager
+}
+
+async function createRuntimeSocketHarness(): Promise<RuntimeSocketHarness> {
+	ensureTestEnv()
+
+	const [{ AppRuntime }, { default: SocketManager }, { registerSocketApi }] =
+		await Promise.all([
+			import('#api/runtime/AppRuntime.ts'),
+			import('#api/lib/SocketManager.ts'),
+			import('#api/socket/registerSocketApi.ts'),
+		])
+
+	const server = createServer()
+	const socketManager = new SocketManager()
+	socketManager.bindServer(server)
+	const runtime = new AppRuntime({
+		getSocketServer: () => socketManager.io,
+	})
+	registerSocketApi(socketManager, runtime)
+
+	await new Promise<void>((resolve) => {
+		server.listen(0, '127.0.0.1', resolve)
+	})
+
+	const port = (server.address() as AddressInfo).port
+	return {
+		runtime,
+		socketManager,
+		url: `http://127.0.0.1:${port}`,
+		clients: new Set(),
+	}
+}
+
+function createClient(harness: RuntimeSocketHarness): ClientSocket {
+	const client = createSocketClient(harness.url, {
+		path: '/socket.io',
+		autoConnect: false,
+		reconnection: false,
+		transports: ['websocket'],
+	})
+	harness.clients.add(client)
+	return client
+}
+
+function connect(client: ClientSocket): Promise<void> {
+	return new Promise((resolve, reject) => {
+		client.once('connect', resolve)
+		client.once('connect_error', reject)
+		client.connect()
+	})
+}
+
+function emit<T>(
+	client: ClientSocket,
 	event: string,
 	data: unknown,
 ): Promise<T> {
@@ -24,211 +102,273 @@ function emit<T = any>(
 	})
 }
 
-async function connectedClient(harness: SocketHarness) {
-	const client = harness.createClient()
-	await harness.connectClient(client)
-	return client
+async function waitForSocketCount(
+	harness: RuntimeSocketHarness,
+	count: number,
+): Promise<void> {
+	const deadline = Date.now() + 2000
+	while (harness.socketManager.io.sockets.sockets.size !== count) {
+		if (Date.now() >= deadline) {
+			throw new Error(`Timed out waiting for ${count} connected sockets`)
+		}
+		await new Promise((resolve) => setTimeout(resolve, 10))
+	}
 }
 
-let harness: SocketHarness
+async function disconnectClients(harness: RuntimeSocketHarness): Promise<void> {
+	for (const client of harness.clients) {
+		client.removeAllListeners()
+		client.disconnect()
+	}
+	harness.clients.clear()
+	await waitForSocketCount(harness, 0)
+}
 
-// Share one harness because the cached SocketManager retains each clients listener for the file lifetime
+let harness: RuntimeSocketHarness
+
 beforeAll(async () => {
-	harness = await createSocketHarness()
+	harness = await createRuntimeSocketHarness()
 })
 
 afterEach(async () => {
-	await harness.disconnectAllClients()
-	harness.resetState()
+	await disconnectClients(harness)
+	harness.runtime.setGateway(undefined)
+	harness.runtime.setZniffer(undefined)
 })
 
 afterAll(async () => {
-	await harness.close()
+	await harness.socketManager.io.close()
+	const { closeWatchers } = await import('#api/lib/Gateway.ts')
+	closeWatchers()
+	cleanupTestEnv()
 })
 
-describe('Socket contract: service freshness between calls on one connected client', () => {
-	it('INITED resolves the gateway fresh on each call - a mid-session gateway swap is observed by the very next call, not the one the connection started with', async () => {
-		const gwA = createFakeGateway({
-			zwave: createFakeZwaveClient({
-				getState: vi.fn(() => ({
-					nodes: [],
-					info: { label: 'A' },
-					error: null,
-				})),
+describe('Socket protocol runtime freshness', () => {
+	it.each([
+		['false', false],
+		['zero', 0],
+		['empty string', ''],
+		['null', null],
+		['undefined', undefined],
+	])('defaults %s Z-Wave args to an empty list', async (_label, args) => {
+		const gateway = createFakeGateway()
+		harness.runtime.setGateway(asGateway(gateway))
+		const client = createClient(harness)
+		await connect(client)
+
+		await expect(
+			emit(client, 'ZWAVE_API', {
+				api: '_getScenes',
+				args,
 			}),
+		).resolves.toStrictEqual({
+			success: true,
+			message: 'OK',
+			api: '_getScenes',
 		})
-		harness.testHooks.setGateway(gwA as any)
-		const client = await connectedClient(harness)
-
-		const first = await emit(client, 'INITED', {})
-		expect(first).toStrictEqual({
-			nodes: [],
-			info: { label: 'A' },
-			error: null,
-			debugCaptureActive: false,
-		})
-
-		const gwB = createFakeGateway({
-			zwave: createFakeZwaveClient({
-				getState: vi.fn(() => ({
-					nodes: [],
-					info: { label: 'B' },
-					error: null,
-				})),
-			}),
-		})
-		harness.testHooks.setGateway(gwB as any)
-
-		const second = await emit(client, 'INITED', {})
-		expect(second).toStrictEqual({
-			nodes: [],
-			info: { label: 'B' },
-			error: null,
-			debugCaptureActive: false,
-		})
-		expect(gwA.zwave.getState).toHaveBeenCalledOnce()
-		expect(gwB.zwave.getState).toHaveBeenCalledOnce()
+		expect(gateway.zwave.callApi).toHaveBeenCalledWith('_getScenes')
 	})
 
-	it('ZWAVE_API resolves the gateway fresh on each call - a mid-session swap changes which gw.zwave.callApi() the very next call hits', async () => {
-		const gwA = createFakeGateway({
+	it('passes malformed iterable Z-Wave args in wire order', async () => {
+		const gateway = createFakeGateway()
+		harness.runtime.setGateway(asGateway(gateway))
+		const client = createClient(harness)
+		await connect(client)
+
+		await emit(client, 'ZWAVE_API', {
+			api: '_createScene',
+			args: 'ab',
+		})
+
+		expect(gateway.zwave.callApi).toHaveBeenCalledWith(
+			'_createScene',
+			'a',
+			'b',
+		)
+	})
+
+	it('resolves a replacement gateway on the next ZWAVE_API call', async () => {
+		const gatewayA = createFakeGateway({
 			zwave: createFakeZwaveClient({
 				callApi: vi.fn(() =>
 					Promise.resolve({ success: true, message: 'from A' }),
 				),
 			}),
 		})
-		harness.testHooks.setGateway(gwA as any)
-		const client = await connectedClient(harness)
+		harness.runtime.setGateway(asGateway(gatewayA))
+		const client = createClient(harness)
+		await connect(client)
 
-		const first = await emit(client, 'ZWAVE_API', { api: 'x' })
-		expect(first).toStrictEqual({
+		await expect(
+			emit(client, 'ZWAVE_API', { api: 'status' }),
+		).resolves.toStrictEqual({
 			success: true,
 			message: 'from A',
-			api: 'x',
+			api: 'status',
 		})
 
-		const gwB = createFakeGateway({
+		const gatewayB = createFakeGateway({
 			zwave: createFakeZwaveClient({
 				callApi: vi.fn(() =>
 					Promise.resolve({ success: true, message: 'from B' }),
 				),
 			}),
 		})
-		harness.testHooks.setGateway(gwB as any)
+		harness.runtime.setGateway(asGateway(gatewayB))
 
-		const second = await emit(client, 'ZWAVE_API', { api: 'x' })
-		expect(second).toStrictEqual({
+		await expect(
+			emit(client, 'ZWAVE_API', { api: 'status' }),
+		).resolves.toStrictEqual({
 			success: true,
 			message: 'from B',
-			api: 'x',
+			api: 'status',
 		})
-		expect(gwA.zwave.callApi).toHaveBeenCalledTimes(1)
-		expect(gwB.zwave.callApi).toHaveBeenCalledTimes(1)
+		expect(gatewayA.zwave.callApi).toHaveBeenCalledOnce()
+		expect(gatewayB.zwave.callApi).toHaveBeenCalledOnce()
 	})
 
-	it('ZNIFFER_API getFrames resolves the zniffer fresh on each call - a mid-session zniffer swap is observed immediately', async () => {
-		harness.testHooks.setGateway(createFakeGateway() as any)
-		const znifferA = createFakeZniffer({
-			getFrames: vi.fn(() => ['frame-a']),
-		})
-		harness.testHooks.setZniffer(znifferA as any)
-		const client = await connectedClient(harness)
-
-		const first = await emit(client, 'ZNIFFER_API', {
-			apiName: 'getFrames',
-		})
-		expect(first).toStrictEqual({
-			success: true,
-			message: 'Success ZNIFFER api call',
-			result: ['frame-a'],
-			api: 'getFrames',
-		})
-
-		const znifferB = createFakeZniffer({
-			getFrames: vi.fn(() => ['frame-b']),
-		})
-		harness.testHooks.setZniffer(znifferB as any)
-
-		const second = await emit(client, 'ZNIFFER_API', {
-			apiName: 'getFrames',
-		})
-		expect(second).toStrictEqual({
-			success: true,
-			message: 'Success ZNIFFER api call',
-			result: ['frame-b'],
-			api: 'getFrames',
-		})
-	})
-})
-
-describe('Socket contract: per-call service freshness under concurrent in-flight requests', () => {
-	it('a slow ZWAVE_API call already in flight when the gateway is swapped still resolves against the gateway it started with, while a call started after the swap resolves against the new one', async () => {
+	it('keeps an in-flight call on its original gateway after replacement', async () => {
 		let resolveSlow!: (value: unknown) => void
-		const slow = new Promise((resolve) => {
+		const slowResult = new Promise((resolve) => {
 			resolveSlow = resolve
 		})
-		// Wait for call #1 to enter callApi before swapping because network delivery is asynchronous
-		let markCallApiStarted!: () => void
-		const callApiStarted = new Promise<void>((resolve) => {
-			markCallApiStarted = resolve
+		let markStarted!: () => void
+		const started = new Promise<void>((resolve) => {
+			markStarted = resolve
 		})
-		const gwA = createFakeGateway({
+		const gatewayA = createFakeGateway({
 			zwave: createFakeZwaveClient({
 				callApi: vi.fn(() => {
-					markCallApiStarted()
-					return slow
+					markStarted()
+					return slowResult
 				}),
 			}),
 		})
-		harness.testHooks.setGateway(gwA as any)
-		const client = await connectedClient(harness)
+		harness.runtime.setGateway(asGateway(gatewayA))
+		const client = createClient(harness)
+		await connect(client)
 
-		const firstAck = emit(client, 'ZWAVE_API', { api: 'slowOp' })
-		await callApiStarted
+		const firstAck = emit(client, 'ZWAVE_API', { api: 'slow' })
+		await started
 
-		const gwB = createFakeGateway({
+		const gatewayB = createFakeGateway({
 			zwave: createFakeZwaveClient({
 				callApi: vi.fn(() =>
 					Promise.resolve({ success: true, message: 'fast' }),
 				),
 			}),
 		})
-		harness.testHooks.setGateway(gwB as any)
+		harness.runtime.setGateway(asGateway(gatewayB))
 
-		const secondAck = await emit(client, 'ZWAVE_API', { api: 'fastOp' })
-		expect(secondAck).toStrictEqual({
+		await expect(
+			emit(client, 'ZWAVE_API', { api: 'fast' }),
+		).resolves.toStrictEqual({
 			success: true,
 			message: 'fast',
-			api: 'fastOp',
+			api: 'fast',
 		})
-		expect(gwB.zwave.callApi).toHaveBeenCalledWith('fastOp')
-		expect(gwA.zwave.callApi).not.toHaveBeenCalledWith('fastOp')
 
-		// Resolve the first call after the swap to prove its gateway remains stable across await
-		resolveSlow({ success: true, message: 'slow-done' })
-		const firstResult = await firstAck
-		expect(firstResult).toStrictEqual({
+		resolveSlow({ success: true, message: 'slow' })
+		await expect(firstAck).resolves.toStrictEqual({
 			success: true,
-			message: 'slow-done',
-			api: 'slowOp',
+			message: 'slow',
+			api: 'slow',
 		})
-		expect(gwA.zwave.callApi).toHaveBeenCalledWith('slowOp')
-		expect(gwB.zwave.callApi).not.toHaveBeenCalledWith('slowOp')
+		expect(gatewayA.zwave.callApi).toHaveBeenCalledWith('slow')
+		expect(gatewayB.zwave.callApi).toHaveBeenCalledWith('fast')
 	})
-})
 
-describe('Socket contract: default (no-op) ACK when a client omits the callback', () => {
-	it('processes ZWAVE_API side effects even when the client supplies no ack callback at all (defaults to the shared no-op)', async () => {
+	it('resolves a replacement Zniffer on the next ZNIFFER_API call', async () => {
 		const gateway = createFakeGateway()
-		harness.testHooks.setGateway(gateway as any)
-		const client = await connectedClient(harness)
+		const znifferA = createFakeZniffer({
+			getFrames: vi.fn(() => ['frame-a']),
+		})
+		harness.runtime.setGateway(asGateway(gateway))
+		harness.runtime.setZniffer(asZniffer(znifferA))
+		const client = createClient(harness)
+		await connect(client)
+
+		await expect(
+			emit(client, 'ZNIFFER_API', {
+				apiName: 'getFrames',
+			} satisfies ZnifferApiRequest),
+		).resolves.toMatchObject({ result: ['frame-a'] })
+
+		const znifferB = createFakeZniffer({
+			getFrames: vi.fn(() => ['frame-b']),
+		})
+		harness.runtime.setZniffer(asZniffer(znifferB))
+
+		await expect(
+			emit(client, 'ZNIFFER_API', {
+				apiName: 'getFrames',
+			} satisfies ZnifferApiRequest),
+		).resolves.toMatchObject({ result: ['frame-b'] })
+	})
+
+	it('accepts a stop request without a buffer', async () => {
+		const gateway = createFakeGateway()
+		const zniffer = createFakeZniffer()
+		harness.runtime.setGateway(asGateway(gateway))
+		harness.runtime.setZniffer(asZniffer(zniffer))
+		const client = createClient(harness)
+		await connect(client)
+
+		await emit(client, 'ZNIFFER_API', {
+			apiName: 'stop',
+		} satisfies ZnifferApiRequest)
+
+		expect(zniffer.stop).toHaveBeenCalledOnce()
+	})
+
+	it('accepts a clear request without a buffer', async () => {
+		const gateway = createFakeGateway()
+		const zniffer = createFakeZniffer()
+		harness.runtime.setGateway(asGateway(gateway))
+		harness.runtime.setZniffer(asZniffer(zniffer))
+		const client = createClient(harness)
+		await connect(client)
+
+		await emit(client, 'ZNIFFER_API', {
+			apiName: 'clear',
+		} satisfies ZnifferApiRequest)
+
+		expect(zniffer.clear).toHaveBeenCalledOnce()
+	})
+
+	it('uses the current gateway for each first-client and last-client event', async () => {
+		const gatewayA = createFakeGateway()
+		harness.runtime.setGateway(asGateway(gatewayA))
+		const clientA = createClient(harness)
+		await connect(clientA)
+		expect(gatewayA.zwave.setUserCallbacks).toHaveBeenCalledOnce()
+
+		clientA.disconnect()
+		await waitForSocketCount(harness, 0)
+		expect(gatewayA.zwave.removeUserCallbacks).toHaveBeenCalledOnce()
+
+		const gatewayB = createFakeGateway()
+		harness.runtime.setGateway(asGateway(gatewayB))
+		const clientB = createClient(harness)
+		await connect(clientB)
+		expect(gatewayB.zwave.setUserCallbacks).toHaveBeenCalledOnce()
+
+		clientB.disconnect()
+		await waitForSocketCount(harness, 0)
+		expect(gatewayB.zwave.removeUserCallbacks).toHaveBeenCalledOnce()
+		expect(gatewayA.zwave.removeUserCallbacks).toHaveBeenCalledOnce()
+	})
+
+	it('processes an event without an acknowledgement callback', async () => {
+		const gateway = createFakeGateway()
+		harness.runtime.setGateway(asGateway(gateway))
+		const client = createClient(harness)
+		await connect(client)
 
 		client.emit('ZWAVE_API', { api: 'fireAndForget' })
 
-		// Use the acknowledged second call as a FIFO barrier for the unacknowledged call
+		// The acknowledged call is a FIFO barrier for the unacknowledged event
 		await emit(client, 'ZWAVE_API', { api: 'barrier' })
-
 		expect(gateway.zwave.callApi).toHaveBeenCalledWith('fireAndForget')
 	})
 })
