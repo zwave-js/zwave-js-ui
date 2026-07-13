@@ -384,6 +384,7 @@ export class ScheduleService {
 			throw new Error('Invalid schedule type')
 		}
 
+		// Without supervision confirmation, verify the write via slot readback
 		if (!result) {
 			const methods = {
 				daily: 'getDailyRepeatingSchedule',
@@ -414,6 +415,7 @@ export class ScheduleService {
 			const node = this._nodes.getNode(nodeId)
 			if (!node?.schedule) return result
 
+			// Schedule Entry Lock CC allows only one active mode at a time
 			for (const mode in node.schedule) {
 				const scheduleMode = node.schedule[mode as keyof ZUISchedule]
 				if (scheduleMode) {

@@ -1,3 +1,4 @@
+// Port accessors return live values so a driver swap on restart is honoured
 import type {
 	ScheduleEntryLockDailyRepeatingSchedule,
 	ScheduleEntryLockSlotId,
