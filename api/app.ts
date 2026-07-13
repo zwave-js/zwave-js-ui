@@ -10,7 +10,7 @@ import hassDevices from './hass/devices.ts'
 import jsonStore from './lib/jsonStore.ts'
 import * as loggers from './lib/logger.ts'
 import SocketManager from './lib/SocketManager.ts'
-import rateLimit from 'express-rate-limit'
+import rateLimit, { MemoryStore } from 'express-rate-limit'
 import session from 'express-session'
 import type { Server as HttpServer } from 'node:http'
 import { createServer as createHttpServer } from 'node:http'
@@ -96,9 +96,14 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 		testOptions?.logFatalError ??
 		((message: string) => logger.error(message))
 
+	const storeLimiterStore = new MemoryStore()
+	const loginLimiterStore = new MemoryStore()
+	const apisLimiterStore = new MemoryStore()
+
 	const storeLimiter = rateLimit({
 		windowMs: 15 * 60 * 1000, // 15 minutes
 		max: 100,
+		store: storeLimiterStore,
 		handler: function (req, res) {
 			res.json({
 				success: false,
@@ -111,6 +116,7 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 	const loginLimiter = rateLimit({
 		windowMs: 60 * 60 * 1000, // keep in memory for 1 hour
 		max: 5, // start blocking after 5 requests
+		store: loginLimiterStore,
 		handler: function (req, res) {
 			res.json({ success: false, message: 'Max requests limit reached' })
 		},
@@ -119,6 +125,7 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 	const apisLimiter = rateLimit({
 		windowMs: 60 * 60 * 1000, // keep in memory for 1 hour
 		max: 500, // start blocking after 500 requests
+		store: apisLimiterStore,
 		handler: function (req, res) {
 			res.json({ success: false, message: 'Max requests limit reached' })
 		},
@@ -483,6 +490,19 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 
 	app.use(cors({ credentials: true, origin: true }))
 
+	const sessionStoreOptions: sessionStore.Options = {
+		path: path.join(storeDir, 'sessions'),
+		logFn: (...args: any[]) => {
+			// skip ENOENT errors
+			if (
+				args &&
+				args.filter((a) => a.indexOf('ENOENT') >= 0).length === 0
+			) {
+				logger.debug(args[0])
+			}
+		},
+	}
+
 	// enable sessions management
 	app.use(
 		session({
@@ -490,19 +510,7 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 			secret: sessionSecret,
 			resave: false,
 			saveUninitialized: false,
-			store: new FileStore({
-				path: path.join(storeDir, 'sessions'),
-				logFn: (...args: any[]) => {
-					// skip ENOENT errors
-					if (
-						args &&
-						args.filter((a) => a.indexOf('ENOENT') >= 0).length ===
-							0
-					) {
-						logger.debug(args[0])
-					}
-				},
-			}),
+			store: new FileStore(sessionStoreOptions),
 			cookie: {
 				secure: !!process.env.HTTPS || !!process.env.USE_SECURE_COOKIE,
 				httpOnly: true, // prevents cookie to be sent by client javascript
@@ -589,12 +597,20 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 			logger.error('Error while cancelling debug session', error)
 		}
 
-		await runtime.shutdown()
-
 		try {
-			await socketManager.close()
-		} catch (error) {
-			logger.error('Error while closing socket.io server', error)
+			await runtime.shutdown()
+		} finally {
+			storeLimiterStore.shutdown()
+			loginLimiterStore.shutdown()
+			apisLimiterStore.shutdown()
+			clearInterval(sessionStoreOptions.reapIntervalObject)
+			sessionStoreOptions.reapIntervalObject = undefined
+
+			try {
+				await socketManager.close()
+			} catch (error) {
+				logger.error('Error while closing socket.io server', error)
+			}
 		}
 	}
 
@@ -630,5 +646,6 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 		loadSnippets: () => runtime.loadSnippets(),
 		installProcessHandlers,
 		close,
+		shutdown,
 	}
 }
