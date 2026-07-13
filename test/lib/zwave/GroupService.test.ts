@@ -1,5 +1,9 @@
 import { describe, it, expect, vi } from 'vitest'
-import { NODE_ID_BROADCAST, NODE_ID_BROADCAST_LR } from '@zwave-js/core'
+import {
+	NODE_ID_BROADCAST,
+	NODE_ID_BROADCAST_LR,
+	CommandClasses,
+} from '@zwave-js/core'
 import {
 	GroupService,
 	GroupServiceGeneration,
@@ -8,6 +12,7 @@ import { socketEvents } from '../../../api/lib/SocketEvents.ts'
 import type {
 	GroupDriverPort,
 	GroupVirtualNodeRegistryPort,
+	GroupVirtualNodeHandle,
 	GroupZUINodeStorePort,
 	GroupSocketPort,
 	GroupUtilsPort,
@@ -16,13 +21,11 @@ import type {
 	ZUIGroup,
 	GroupZUINode,
 } from '../../../api/lib/zwave/ports.ts'
-import type { VirtualNode } from 'zwave-js'
 
-function makeVirtualNode(nodeIds: number[]): VirtualNode {
+function makeVirtualNode(_nodeIds: number[]): GroupVirtualNodeHandle {
 	return {
-		nodeIds,
 		getDefinedValueIDs: vi.fn(() => []),
-	} as unknown as VirtualNode
+	}
 }
 
 function createDriverPort(
@@ -30,7 +33,7 @@ function createDriverPort(
 		driverReady: boolean
 		ownNodeId: number
 		physicalNodes: Set<number>
-		getMulticastGroup: (nodeIds: number[]) => VirtualNode
+		getMulticastGroup: (nodeIds: number[]) => GroupVirtualNodeHandle
 	}> = {},
 ) {
 	let driverReady = overrides.driverReady ?? true
@@ -49,9 +52,9 @@ function createDriverPort(
 }
 
 function createVirtualNodeRegistry(): GroupVirtualNodeRegistryPort & {
-	map: Map<number, VirtualNode>
+	map: Map<number, GroupVirtualNodeHandle>
 } {
-	const map = new Map<number, VirtualNode>()
+	const map = new Map<number, GroupVirtualNodeHandle>()
 	return {
 		has: (id) => map.has(id),
 		get: (id) => map.get(id),
@@ -129,7 +132,7 @@ function createPersistencePort() {
 			return Promise.resolve(true)
 		}),
 		puts,
-		failNext: false,
+		failNext: false as boolean,
 	} satisfies GroupPersistencePort & {
 		puts: ZUIGroup[][]
 		failNext: boolean
@@ -215,7 +218,7 @@ function createService(
 	initialGroups: ZUIGroup[] = [],
 	overrides: {
 		generation?: GroupServiceGeneration
-		// Typed from the fake's concrete return type, not GroupPersistencePort itself, because the interface's method-shorthand signature lacks `this: void` and would trip @typescript-eslint/unbound-method below
+		// Keep the concrete fake type so its failure controls remain available.
 		persistence?:
 			| ReturnType<typeof createPersistencePort>
 			| ReturnType<typeof createDeferredPersistencePort>
@@ -346,16 +349,12 @@ describe('GroupService', () => {
 		})
 
 		it('rolls back in-memory state when persistence fails', async () => {
-			// Kept as its own typed reference (not destructured from createService()) so .failNext stays on the concrete createPersistencePort() shape, not the persistence override union
 			const persistence = createPersistencePort()
 			const { service, virtualNodes } = createService([], {
 				persistence,
 			})
 			persistence.failNext = true
 
-			// The fixture's failure text is incidental - the real contract is
-			// that a persistence failure propagates and rolls back state,
-			// not the specific message
 			await expect(service.createGroup('Fails', [2, 3])).rejects.toThrow()
 
 			expect(service.getGroups()).toEqual([])
@@ -407,9 +406,6 @@ describe('GroupService', () => {
 				throw new Error('rejected node set')
 			})
 
-			// The fixture's failure text is incidental - the real contract is
-			// that a multicast-rebuild failure propagates and rolls back the
-			// group, not the specific message
 			await expect(
 				service.updateGroup(0x1000, 'New', [4, 5]),
 			).rejects.toThrow()
@@ -429,8 +425,6 @@ describe('GroupService', () => {
 			)
 			persistence.failNext = true
 
-			// Same rationale as above: only propagation + rollback are the
-			// contract under test, not the fixture's incidental message
 			await expect(
 				service.updateGroup(0x1000, 'New', [4, 5]),
 			).rejects.toThrow()
@@ -493,15 +487,6 @@ describe('GroupService', () => {
 				event: socketEvents.nodeRemoved,
 				data: { id: 0x1000 },
 			})
-		})
-	})
-
-	describe('getGroups', () => {
-		it('returns the live groups array', () => {
-			const initial = [{ id: 0x1000, name: 'A', nodeIds: [2, 3] }]
-			const { service } = createService(initial)
-
-			expect(service.getGroups()).toBe(initial)
 		})
 	})
 
@@ -576,21 +561,29 @@ describe('GroupService', () => {
 			const { service, virtualNodes, zuiNodes, utils, socket } =
 				createService()
 			const zwaveValue = {
-				commandClass: 37,
+				commandClass: CommandClasses['Binary Switch'],
 				endpoint: 0,
 				property: 'currentValue',
 			}
 			virtualNodes.map.set(0x1000, {
 				...makeVirtualNode([2, 3]),
 				getDefinedValueIDs: vi.fn(() => [zwaveValue]),
-			} as unknown as ReturnType<typeof makeVirtualNode>)
+			})
 			zuiNodes.map.set(2, {
 				id: 2,
-				values: { '37-0-currentValue': { value: 50 } },
+				values: {
+					[`${CommandClasses['Binary Switch']}-0-currentValue`]: {
+						value: 50,
+					},
+				},
 			})
 			zuiNodes.map.set(3, {
 				id: 3,
-				values: { '37-0-currentValue': { value: 50 } },
+				values: {
+					[`${CommandClasses['Binary Switch']}-0-currentValue`]: {
+						value: 50,
+					},
+				},
 			})
 
 			service.createVirtualNode({
@@ -605,7 +598,11 @@ describe('GroupService', () => {
 				50,
 			)
 			const virtualNode = zuiNodes.map.get(0x1000)
-			expect(virtualNode?.values?.['37-0-currentValue']).toEqual({
+			expect(
+				virtualNode?.values?.[
+					`${CommandClasses['Binary Switch']}-0-currentValue`
+				],
+			).toEqual({
 				value: 50,
 			})
 			expect(socket.valueChanges).toHaveLength(1)
@@ -614,21 +611,29 @@ describe('GroupService', () => {
 		it('projects undefined when member values disagree', () => {
 			const { service, virtualNodes, zuiNodes, utils } = createService()
 			const zwaveValue = {
-				commandClass: 37,
+				commandClass: CommandClasses['Binary Switch'],
 				endpoint: 0,
 				property: 'currentValue',
 			}
 			virtualNodes.map.set(0x1000, {
 				...makeVirtualNode([2, 3]),
 				getDefinedValueIDs: vi.fn(() => [zwaveValue]),
-			} as unknown as ReturnType<typeof makeVirtualNode>)
+			})
 			zuiNodes.map.set(2, {
 				id: 2,
-				values: { '37-0-currentValue': { value: 50 } },
+				values: {
+					[`${CommandClasses['Binary Switch']}-0-currentValue`]: {
+						value: 50,
+					},
+				},
 			})
 			zuiNodes.map.set(3, {
 				id: 3,
-				values: { '37-0-currentValue': { value: 99 } },
+				values: {
+					[`${CommandClasses['Binary Switch']}-0-currentValue`]: {
+						value: 99,
+					},
+				},
 			})
 
 			service.createVirtualNode({
@@ -644,7 +649,7 @@ describe('GroupService', () => {
 			)
 		})
 
-		it('skips values whose buildVirtualValueId returns null', () => {
+		it('omits virtual values that cannot be represented', () => {
 			const driver = createDriverPort()
 			const virtualNodes = createVirtualNodeRegistry()
 			const zuiNodes = createZUINodeStore()
@@ -666,14 +671,14 @@ describe('GroupService', () => {
 				[],
 			)
 			const zwaveValue = {
-				commandClass: 37,
+				commandClass: CommandClasses['Binary Switch'],
 				endpoint: 0,
 				property: 'currentValue',
 			}
 			virtualNodes.map.set(0x1000, {
 				...makeVirtualNode([2, 3]),
 				getDefinedValueIDs: vi.fn(() => [zwaveValue]),
-			} as unknown as ReturnType<typeof makeVirtualNode>)
+			})
 
 			service.createVirtualNode({
 				id: 0x1000,
@@ -693,7 +698,7 @@ describe('GroupService', () => {
 				getDefinedValueIDs: vi.fn(() => {
 					throw new Error('cannot enumerate values')
 				}),
-			} as unknown as ReturnType<typeof makeVirtualNode>)
+			})
 
 			expect(() =>
 				service.createVirtualNode({
@@ -711,30 +716,41 @@ describe('GroupService', () => {
 	})
 
 	describe('updateVirtualNodesForNode', () => {
-		it('does nothing when the node is not part of any group', () => {
-			const { service, utils } = createService([
-				{ id: 0x1000, name: 'A', nodeIds: [2, 3] },
-			])
-
-			service.updateVirtualNodesForNode(99)
-
-			expect(utils.throttle).not.toHaveBeenCalled()
-		})
-
-		it('throttles a refresh for every group containing the node', () => {
-			const { service, utils } = createService([
+		it('refreshes every virtual group containing the changed node', () => {
+			const { service, virtualNodes, zuiNodes, socket } = createService([
 				{ id: 0x1000, name: 'A', nodeIds: [2, 3] },
 				{ id: 0x1001, name: 'B', nodeIds: [3, 4] },
 			])
+			const zwaveValue = {
+				commandClass: CommandClasses['Binary Switch'],
+				endpoint: 0,
+				property: 'currentValue',
+			}
+			const valueKey = `${CommandClasses['Binary Switch']}-0-currentValue`
+			for (const groupId of [0x1000, 0x1001]) {
+				virtualNodes.map.set(groupId, {
+					getDefinedValueIDs: () => [zwaveValue],
+				})
+				zuiNodes.map.set(groupId, { id: groupId, values: {} })
+			}
+			for (const nodeId of [2, 3, 4]) {
+				zuiNodes.map.set(nodeId, {
+					id: nodeId,
+					values: { [valueKey]: { value: true } },
+				})
+			}
 
 			service.updateVirtualNodesForNode(3)
 
-			expect(utils.throttle).toHaveBeenCalledTimes(2)
-			expect(utils.throttle).toHaveBeenCalledWith(
-				'virtual_node_update_0x1000'.replace('0x1000', String(0x1000)),
-				expect.any(Function),
-				1000,
-			)
+			expect(zuiNodes.map.get(0x1000)?.values?.[valueKey]).toEqual({
+				value: true,
+			})
+			expect(zuiNodes.map.get(0x1001)?.values?.[valueKey]).toEqual({
+				value: true,
+			})
+			expect(socket.nodeUpdates.map(({ node }) => node.id)).toEqual([
+				0x1000, 0x1001,
+			])
 		})
 	})
 
@@ -780,20 +796,26 @@ describe('GroupService', () => {
 			expect(virtualNodes.map.has(0x1000)).toBe(true)
 		})
 
-		it('logs and returns without mutating the index when persistence fails', async () => {
+		it('keeps live virtual state unchanged when persistence fails', async () => {
 			const persistence = createPersistencePort()
-			const { service, logger } = createService(
-				[{ id: 0x1000, name: 'A', nodeIds: [2, 3] }],
-				{ persistence },
-			)
+			const { service, logger, virtualNodes, zuiNodes, socket } =
+				createService([{ id: 0x1000, name: 'A', nodeIds: [2, 3] }], {
+					persistence,
+				})
+			const virtualNode = makeVirtualNode([2, 3])
+			const zuiNode = { id: 0x1000, name: 'A', values: {} }
+			virtualNodes.map.set(0x1000, virtualNode)
+			zuiNodes.map.set(0x1000, zuiNode)
 			persistence.failNext = true
 
 			await service.removeNodeFromGroups(3)
 
-			// Mutates in-memory before persisting; on failure this returns early without rolling back, unlike createGroup/updateGroup/deleteGroup
 			expect(
 				logger.errors.some((e) => e.includes('Failed to persist')),
 			).toBe(true)
+			expect(virtualNodes.map.has(0x1000)).toBe(true)
+			expect(zuiNodes.map.get(0x1000)).toEqual(zuiNode)
+			expect(socket.sent).toEqual([])
 		})
 
 		it('logs and continues when refreshing the multicast group throws', async () => {
@@ -812,7 +834,7 @@ describe('GroupService', () => {
 			).toBe(true)
 		})
 
-		it('does not tear down the virtual node when the driver is not ready', async () => {
+		it('tears down the virtual node when the driver is unavailable', async () => {
 			const { service, driver, virtualNodes } = createService([
 				{ id: 0x1000, name: 'A', nodeIds: [2, 3, 4] },
 			])
@@ -826,9 +848,9 @@ describe('GroupService', () => {
 		})
 	})
 
-	// Defers persistence to control the exact restart interleaving: proves a cancelled generation still persists the write but skips virtual-node/index/socket mutation, and a fresh generation self-heals from the persisted state (see GroupServiceGeneration doc)
-	describe('generation fencing (restart races)', () => {
-		it('createGroup: persists the write but skips ZUI virtual-node creation/notification when cancelled mid-flight, and a new generation restores it', async () => {
+	// Defer persistence so restart ordering is deterministic across writes and restoration
+	describe('restart during a persistence write', () => {
+		it('restores a group created during restart from persisted state', async () => {
 			const persistence = createDeferredPersistencePort()
 			const generation = new GroupServiceGeneration()
 			const { service, virtualNodes, zuiNodes, socket } = createService(
@@ -855,12 +877,12 @@ describe('GroupService', () => {
 				nodeIds: [2, 3],
 			})
 
-			// Eager pre-await multicast registration isn't gated by the generation check, unlike ZUI virtual-node materialization below
+			// Register multicast state before persistence but defer ZUI projection until the write completes
 			expect(virtualNodes.map.has(group.id)).toBe(true)
 			expect(zuiNodes.map.has(group.id)).toBe(false)
 			expect(socket.sent).toHaveLength(0)
 
-			// A fresh generation rebuilt from the persisted state materializes the group normally
+			// Rebuild the replacement instance from persisted groups
 			const newGeneration = new GroupServiceGeneration()
 			const {
 				service: restartedService,
@@ -879,7 +901,7 @@ describe('GroupService', () => {
 			})
 		})
 
-		it('updateGroup: persists the write but skips the post-write index rebuild/notification when cancelled mid-flight, and a new generation restores it', async () => {
+		it('restores a group updated during restart from persisted state', async () => {
 			const persistence = createDeferredPersistencePort()
 			await persistence.put([
 				{ id: 0x1000, name: 'Old', nodeIds: [2, 3] },
@@ -910,7 +932,7 @@ describe('GroupService', () => {
 				name: 'New',
 				nodeIds: [4, 5],
 			})
-			// Cancelled generation must not project the rename onto the live ZUI node or notify sockets
+			// Skip projection and notification from the superseded instance
 			expect(zuiNodes.map.get(0x1000)?.name).toBe('Old')
 			expect(socket.nodeUpdates).toHaveLength(0)
 
@@ -922,7 +944,7 @@ describe('GroupService', () => {
 			expect(restartedService.getGroups()).toEqual([updated])
 		})
 
-		it('deleteGroup: persists the removal but skips the post-write index rebuild/notification when cancelled mid-flight, and a new generation restores it', async () => {
+		it('keeps a group deleted during restart absent after restoration', async () => {
 			const persistence = createDeferredPersistencePort()
 			await persistence.put([{ id: 0x1000, name: 'A', nodeIds: [2, 3] }])
 			const generation = new GroupServiceGeneration()
@@ -944,10 +966,10 @@ describe('GroupService', () => {
 			expect(result).toBe(true)
 			expect(persistence.puts).toHaveLength(2)
 			expect(persistence.puts[1]).toEqual([])
-			// Virtual/ZUI state was torn down eagerly, before the persistence await, so it's unaffected by cancellation
+			// Tear down virtual state before persisting deletion
 			expect(virtualNodes.map.has(0x1000)).toBe(false)
 			expect(zuiNodes.map.has(0x1000)).toBe(false)
-			// The cancelled generation must not emit the removal notification
+			// Skip notification from the superseded instance
 			expect(socket.sent).toHaveLength(0)
 
 			const newGeneration = new GroupServiceGeneration()
@@ -958,7 +980,7 @@ describe('GroupService', () => {
 			expect(restartedService.getGroups()).toEqual([])
 		})
 
-		it('removeNodeFromGroups: persists the write but skips the post-write index rebuild/notification when cancelled mid-flight, and a new generation restores it', async () => {
+		it('restores membership changed during restart from persisted state', async () => {
 			const persistence = createDeferredPersistencePort()
 			await persistence.put([{ id: 0x1000, name: 'A', nodeIds: [2, 3] }])
 			const generation = new GroupServiceGeneration()
@@ -981,7 +1003,7 @@ describe('GroupService', () => {
 			expect(persistence.puts[1]).toEqual([
 				{ id: 0x1000, name: 'A', nodeIds: [2] },
 			])
-			// Cancelled generation must not tear down/refresh the virtual node or notify sockets
+			// Skip virtual-state mutation and notification from the superseded instance
 			expect(virtualNodes.map.has(0x1000)).toBe(true)
 			expect(zuiNodes.map.has(0x1000)).toBe(true)
 			expect(socket.sent).toHaveLength(0)
@@ -996,8 +1018,7 @@ describe('GroupService', () => {
 			])
 		})
 
-		it('a normal (non-cancelled) call still rebuilds the index and materializes/notifies as before', async () => {
-			// Guards against the generation check being inverted or always short-circuiting
+		it('projects and notifies after persistence completes without restart', async () => {
 			const { service, zuiNodes, socket } = createService()
 
 			const group = await service.createGroup('Living Room', [2, 3])

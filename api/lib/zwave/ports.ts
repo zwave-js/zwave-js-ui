@@ -7,8 +7,8 @@ import type {
 	SetValueResult,
 	ZWaveNode,
 	Driver,
-	VirtualNode,
 	VirtualValueID,
+	ZWaveController,
 } from 'zwave-js'
 import type { SupervisionResult } from '@zwave-js/core'
 import type { ConfigManager } from '@zwave-js/config'
@@ -233,19 +233,28 @@ export interface GroupZUINode {
 	values?: Record<string, GroupValueEntry>
 }
 
+export type GroupVirtualValueId = Pick<
+	VirtualValueID,
+	'commandClass' | 'endpoint' | 'property' | 'propertyKey'
+>
+
+export interface GroupVirtualNodeHandle {
+	getDefinedValueIDs(): GroupVirtualValueId[]
+}
+
 export interface GroupDriverPort {
 	isDriverReady(): boolean
 	getOwnNodeId(): number | undefined
 	/** True when the driver has no node list to check yet (permissive) or the id is a known physical node */
 	hasPhysicalNode(nodeId: number): boolean
-	getMulticastGroup(nodeIds: number[]): VirtualNode
+	getMulticastGroup(nodeIds: number[]): GroupVirtualNodeHandle
 }
 
 /** Shared with ZwaveClient's broadcast (standard + LR) virtual-node instances, not just multicast groups */
 export interface GroupVirtualNodeRegistryPort {
 	has(id: number): boolean
-	get(id: number): VirtualNode | undefined
-	set(id: number, node: VirtualNode): void
+	get(id: number): GroupVirtualNodeHandle | undefined
+	set(id: number, node: GroupVirtualNodeHandle): void
 	delete(id: number): boolean
 }
 
@@ -279,7 +288,7 @@ export interface GroupUtilsPort {
 	}): string
 	buildVirtualValueId(
 		nodeId: number,
-		zwaveValue: VirtualValueID,
+		zwaveValue: GroupVirtualValueId,
 		value: unknown,
 	): GroupValueEntry | null
 	newVirtualZUINode(
@@ -317,13 +326,29 @@ export interface AssociationEntry {
 	targetEndpoint?: number
 }
 
-export interface AssociationDriverPort {
-	getDriver(): Driver | null
+export type AssociationControllerHandle = Pick<
+	ZWaveController,
+	| 'getAllAssociationGroups'
+	| 'getAllAssociations'
+	| 'checkAssociation'
+	| 'addAssociations'
+	| 'removeAssociations'
+	| 'removeNodeFromAllAssociations'
+>
+
+export interface AssociationDriverHandle {
+	controller: AssociationControllerHandle
 }
+
+export interface AssociationDriverPort {
+	getDriver(): AssociationDriverHandle | null
+}
+
+export type AssociationZWaveNodeHandle = Pick<ZWaveNode, 'refreshCCValues'>
 
 export interface AssociationNodeStorePort {
 	/** Undefined only when the nodeId was never included or has since been removed from the controller */
-	getZWaveNode(nodeId: number): ZWaveNode | undefined
+	getZWaveNode(nodeId: number): AssociationZWaveNodeHandle | undefined
 	/** ZUINode registry lookup, used to store the projected groups list */
 	getZUINode(nodeId: number): AssociationNodeState | undefined
 	emitNodeUpdate(
