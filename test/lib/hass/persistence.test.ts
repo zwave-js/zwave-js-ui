@@ -22,17 +22,15 @@ import { createRecordingSocket, type RecordingSocket } from './fixtures.ts'
 import { socketEvents } from '#api/lib/SocketEvents.ts'
 import type ZWaveClientType from '#api/lib/ZwaveClient.ts'
 import type { HassDevice } from '#api/lib/ZwaveClient.ts'
+import type * as JsonStoreModuleNamespace from '#api/lib/jsonStore.ts'
+import type * as StoreConfigModuleNamespace from '#api/config/store.ts'
 
-type JsonStore = {
-	init(config: any): Promise<any>
-	get(model: any): any
-	put(model: any, data: any): Promise<any>
-	store: Record<string, any>
-}
+type JsonStoreModule = typeof JsonStoreModuleNamespace
+type StoreConfigModule = typeof StoreConfigModuleNamespace
 
 let ZWaveClient: typeof ZWaveClientType
-let jsonStore: JsonStore
-let store: any
+let jsonStore: JsonStoreModule['default']
+let store: StoreConfigModule['default']
 let storeDir: string
 
 // A live-in-store home id: the 0x prefix makes getStoreNodes() treat it as
@@ -98,8 +96,8 @@ function nodeUpdatedEmits(socket: RecordingSocket) {
 
 beforeAll(async () => {
 	storeDir = ensureTestEnv()
-	;({ default: jsonStore } = (await import('#api/lib/jsonStore.ts')) as any)
-	;({ default: store } = (await import('#api/config/store.ts')) as any)
+	;({ default: jsonStore } = await import('#api/lib/jsonStore.ts'))
+	;({ default: store } = await import('#api/config/store.ts'))
 	;({ default: ZWaveClient } = await import('#api/lib/ZwaveClient.ts'))
 	await jsonStore.init(store)
 })

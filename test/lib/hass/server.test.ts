@@ -188,10 +188,8 @@ async function driveConnectToReady(
 
 beforeAll(async () => {
 	ensureTestEnv()
-	const { default: jsonStore } = (await import(
-		'#api/lib/jsonStore.ts'
-	)) as any
-	const { default: store } = (await import('#api/config/store.ts')) as any
+	const { default: jsonStore } = await import('#api/lib/jsonStore.ts')
+	const { default: store } = await import('#api/config/store.ts')
 	;({ default: ZWaveClient } = await import('#api/lib/ZwaveClient.ts'))
 	await jsonStore.init(store)
 })
