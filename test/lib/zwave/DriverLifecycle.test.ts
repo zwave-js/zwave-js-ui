@@ -27,14 +27,10 @@ import type {
 	InclusionUserCallbacks,
 } from '#api/lib/zwave/ports.ts'
 import { ZwaveClientStatus } from '#api/lib/zwave/ports.ts'
+import { createDeferred, type Deferred } from './serviceTestSupport.ts'
 
 type StartBehavior = 'resolve' | 'reject' | 'hang' | 'deferred'
 type DestroyBehavior = 'resolve' | 'reject' | 'deferred'
-
-interface Deferred {
-	resolve: () => void
-	reject: (err?: unknown) => void
-}
 
 interface DestroyDeferred {
 	resolve: () => void
@@ -48,7 +44,7 @@ interface World {
 	destroyOrder: string[]
 	startBehavior: StartBehavior
 	startError: Error
-	startDeferreds: Deferred[]
+	startDeferreds: Deferred<void>[]
 	startHook: (() => void) | null
 	ensureDirHook: (() => void) | null
 	destroyBehavior: DestroyBehavior
@@ -83,9 +79,9 @@ class FakeDriver extends EventEmitter {
 				return new Promise<void>(() => {})
 			}
 			if (world.startBehavior === 'deferred') {
-				return new Promise<void>((resolve, reject) => {
-					world.startDeferreds.push({ resolve, reject })
-				})
+				const deferred = createDeferred<void>()
+				world.startDeferreds.push(deferred)
+				return deferred.promise
 			}
 			return Promise.resolve()
 		})
@@ -101,16 +97,16 @@ class FakeDriver extends EventEmitter {
 			}
 
 			if (world.destroyBehavior === 'deferred') {
-				return new Promise<void>((resolve, reject) => {
-					world.destroyDeferreds.push({
-						resolve: () => {
-							recordEffect()
-							resolve()
-						},
-						reject: (err?: Error) =>
-							reject(err ?? new Error('destroy rejected')),
-					})
+				const deferred = createDeferred<void>()
+				world.destroyDeferreds.push({
+					resolve: () => {
+						recordEffect()
+						deferred.resolve()
+					},
+					reject: (err?: Error) =>
+						deferred.reject(err ?? new Error('destroy rejected')),
 				})
+				return deferred.promise
 			}
 
 			if (this._destroyed) {
