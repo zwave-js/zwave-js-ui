@@ -1304,6 +1304,70 @@ describe('InclusionCoordinator', () => {
 				InclusionLifecycleCancelledError,
 			)
 		})
+
+		it('SmartStart provisioning rejects after reset', async () => {
+			const provisioningStarted = createDeferred<void>()
+			const provisioningBarrier = createDeferred<void>()
+			const qr: InclusionQRPort = {
+				parseQRCodeString: vi
+					.fn()
+					.mockResolvedValue(
+						makeQRCode({ version: QRCodeVersion.SmartStart }),
+					),
+			}
+			const provisionSmartStartNode = vi.fn(async () => {
+				provisioningStarted.resolve()
+				await provisioningBarrier.promise
+			})
+			const { coordinator } = createCoordinator({ qr })
+
+			const interruptedInclusion = coordinator.startInclusion(
+				InclusionStrategy.Security_S2,
+				{ qrString: 'test-qr' },
+				provisionSmartStartNode,
+			)
+
+			await provisioningStarted.promise
+			coordinator.reset()
+			const currentInclusion = coordinator.startInclusion(
+				InclusionStrategy.Insecure,
+			)
+			provisioningBarrier.resolve()
+
+			await expect(interruptedInclusion).rejects.toBeInstanceOf(
+				InclusionLifecycleCancelledError,
+			)
+			await expect(currentInclusion).resolves.toBe(true)
+		})
+
+		it('replacement rejects when reset during the controller command', async () => {
+			const replacementStarted = createDeferred<void>()
+			const replacementBarrier = createDeferred<boolean>()
+			const driver = createDriverPort({
+				replaceFailedNode: vi.fn(() => {
+					replacementStarted.resolve()
+					return replacementBarrier.promise
+				}),
+			})
+			const { coordinator } = createCoordinator({ driver })
+
+			const interruptedReplacement = coordinator.replaceFailedNode(
+				5,
+				InclusionStrategy.Insecure,
+			)
+
+			await replacementStarted.promise
+			coordinator.reset()
+			const currentInclusion = coordinator.startInclusion(
+				InclusionStrategy.Insecure,
+			)
+			replacementBarrier.resolve(true)
+
+			await expect(interruptedReplacement).rejects.toBeInstanceOf(
+				InclusionLifecycleCancelledError,
+			)
+			await expect(currentInclusion).resolves.toBe(true)
+		})
 	})
 
 	describe('security prompt events', () => {

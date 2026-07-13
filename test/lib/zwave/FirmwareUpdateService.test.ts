@@ -204,7 +204,7 @@ describe('FirmwareUpdateService', () => {
 	})
 
 	describe('getAvailableFirmwareUpdates', () => {
-		it('calls driver and returns result', async () => {
+		it('returns available updates for a node', async () => {
 			const updates = [makeUpdate()]
 			const driver = createDriverPort({
 				getDriver: () => ({
@@ -236,7 +236,7 @@ describe('FirmwareUpdateService', () => {
 	})
 
 	describe('getAllAvailableFirmwareUpdates', () => {
-		it('calls driver and returns result', async () => {
+		it('returns available updates by node', async () => {
 			const map = new Map([[5, [makeUpdate()]]])
 			const driver = createDriverPort({
 				getDriver: () => ({
@@ -254,7 +254,7 @@ describe('FirmwareUpdateService', () => {
 			const { service } = createService({ driver })
 
 			const result = await service.getAllAvailableFirmwareUpdates()
-			expect(result).toBe(map)
+			expect(result).toEqual(map)
 		})
 	})
 
@@ -1899,6 +1899,8 @@ describe('FirmwareUpdateService', () => {
 		})
 
 		it('persists network updates before publishing them', async () => {
+			const checkTime = 1_700_000_000_000
+			vi.spyOn(Date, 'now').mockReturnValue(checkTime)
 			const updates = [makeUpdate({ version: '2.0.0' })]
 			const map = new Map([[3, updates]])
 			const driver = createDriverPort({
@@ -1937,7 +1939,7 @@ describe('FirmwareUpdateService', () => {
 
 			const liveNode = nodes._nodes.get(3)
 			expect(liveNode.availableFirmwareUpdates).toEqual(updates)
-			expect(liveNode.lastFirmwareUpdateCheck).toBeGreaterThan(0)
+			expect(liveNode.lastFirmwareUpdateCheck).toBe(checkTime)
 
 			expect(nodes.emitNodeUpdate).toHaveBeenCalledWith(
 				liveNode,
