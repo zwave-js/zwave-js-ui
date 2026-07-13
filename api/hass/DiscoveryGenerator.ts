@@ -1207,7 +1207,7 @@ export class DiscoveryGenerator {
 		return prioritizedValueIds
 	}
 
-	public getIdWithoutNode(valueId: HassValue): string {
+	private getIdWithoutNode(valueId: HassValue): string {
 		return valueId.id.replace(valueId.nodeId + '-', '')
 	}
 
