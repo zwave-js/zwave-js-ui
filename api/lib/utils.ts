@@ -17,6 +17,7 @@ const loglevels = tripleBeam.configs.npm.levels
 
 // don't use import here, it will break the build
 const require = createRequire(import.meta.url)
+// eslint-disable-next-line no-restricted-syntax -- package.json is outside api/
 const pkg = require('../../package.json')
 
 let VERSION: string
