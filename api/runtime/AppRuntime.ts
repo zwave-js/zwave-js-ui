@@ -549,9 +549,9 @@ export class AppRuntime {
 	 *  3. Close the gateway (which closes the Z-Wave client, destroying the
 	 *     driver, then the MQTT client), then destroy the plugins.
 	 *
-	 * `requireProperty` selects the close-quirk: `/api/restart` passes `'close'`
-	 * to preserve the native `TypeError` when no gateway is attached; graceful
-	 * shutdown omits it to keep the guarded `if (gw) await gw.close()` behavior.
+	 * `requireProperty` selects the close path: `/api/restart` passes `'close'`
+	 * so a restart with no gateway attached surfaces as a caller error, while
+	 * graceful shutdown omits it to close the gateway only when one is present.
 	 */
 	async teardownGateway(options?: {
 		requireProperty?: string
@@ -591,10 +591,9 @@ export class AppRuntime {
 	/**
 	 * Closes the current gateway (if any) and destroys any loaded plugins -
 	 * exactly what `gracefuShutdown()` in `api/app.ts` does on
-	 * `SIGINT`/`SIGTERM`. Safe (guarded) - unlike route access above,
-	 * `gracefuShutdown()`'s pre-existing `if (gw) await gw.close()` already
-	 * guards against a missing gateway, so this preserves that same
-	 * guarded behavior rather than the unguarded quirk.
+	 * `SIGINT`/`SIGTERM`. This path is guarded: like `gracefuShutdown()`'s
+	 * `if (gw) await gw.close()`, it closes the gateway only when one is
+	 * present, so a signal received during startup never faults.
 	 *
 	 * The Home Assistant subsystem is stopped before the collaborators are
 	 * closed, quiescing its discovery producers/subscriptions and awaiting the
