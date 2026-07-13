@@ -18,10 +18,7 @@ import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest'
 import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { ensureTestEnv, cleanupTestEnv, getTestStoreDir } from './env.ts'
-import {
-	createRecordingSocket,
-	type RecordingSocket,
-} from './fixtures.ts'
+import { createRecordingSocket, type RecordingSocket } from './fixtures.ts'
 import { socketEvents } from '#api/lib/SocketEvents.ts'
 import type ZWaveClientType from '#api/lib/ZwaveClient.ts'
 import type { HassDevice } from '#api/lib/ZwaveClient.ts'
@@ -101,15 +98,9 @@ function nodeUpdatedEmits(socket: RecordingSocket) {
 
 beforeAll(async () => {
 	storeDir = ensureTestEnv()
-	;({ default: jsonStore } = (await import(
-		'#api/lib/jsonStore.ts'
-	)) as any)
-	;({ default: store } = (await import(
-		'#api/config/store.ts'
-	)) as any)
-	;({ default: ZWaveClient } = await import(
-		'#api/lib/ZwaveClient.ts'
-	))
+	;({ default: jsonStore } = (await import('#api/lib/jsonStore.ts')) as any)
+	;({ default: store } = (await import('#api/config/store.ts')) as any)
+	;({ default: ZWaveClient } = await import('#api/lib/ZwaveClient.ts'))
 	await jsonStore.init(store)
 })
 

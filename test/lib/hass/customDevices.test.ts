@@ -63,7 +63,9 @@ afterAll(() => {
 
 describe('loadCustomDevicesCatalog', () => {
 	it('returns null when neither .js nor .json exists', () => {
-		expect(mod.loadCustomDevicesCatalog(freshBase(), baseCatalog)).toBeNull()
+		expect(
+			mod.loadCustomDevicesCatalog(freshBase(), baseCatalog),
+		).toBeNull()
 	})
 
 	it('loads a .json file overlaid on the base catalog', () => {

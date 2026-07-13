@@ -191,12 +191,8 @@ beforeAll(async () => {
 	const { default: jsonStore } = (await import(
 		'#api/lib/jsonStore.ts'
 	)) as any
-	const { default: store } = (await import(
-		'#api/config/store.ts'
-	)) as any
-	;({ default: ZWaveClient } = await import(
-		'#api/lib/ZwaveClient.ts'
-	))
+	const { default: store } = (await import('#api/config/store.ts')) as any
+	;({ default: ZWaveClient } = await import('#api/lib/ZwaveClient.ts'))
 	await jsonStore.init(store)
 })
 
@@ -307,7 +303,9 @@ describe('server construction options (via the real connect flow)', () => {
 	})
 
 	it('honors an explicit serverPort', async () => {
-		const { zwave, server } = await driveConnectToReady({ serverPort: 9999 })
+		const { zwave, server } = await driveConnectToReady({
+			serverPort: 9999,
+		})
 		expect(server.options.port).toBe(9999)
 		await zwave.close(true)
 	})
