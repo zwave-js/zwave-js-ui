@@ -58,7 +58,7 @@ function discover(value: ZUIValueId, node = readyNode()) {
 	return { device, node, payload: device ? harness.lastDiscovery() : null }
 }
 
-describe('discoverValue - Binary Sensor', () => {
+describe('Binary Sensor discovery', () => {
 	const cc = CommandClasses['Binary Sensor']
 
 	it('maps the safety group (tamper) to a safety binary_sensor', () => {
@@ -122,7 +122,7 @@ describe('discoverValue - Binary Sensor', () => {
 	})
 })
 
-describe('discoverValue - Alarm Sensor', () => {
+describe('Alarm Sensor discovery', () => {
 	const cc = CommandClasses['Alarm Sensor']
 
 	it('maps state to a problem binary_sensor with the alarm-type suffix', () => {
@@ -156,7 +156,7 @@ describe('discoverValue - Alarm Sensor', () => {
 	})
 })
 
-describe('discoverValue - Basic / Notification', () => {
+describe('Basic and Notification discovery', () => {
 	it('maps a 2-state Access Control notification to a reversed-off lock sensor', () => {
 		const { device, payload } = discover(
 			buildValueId({
@@ -213,7 +213,7 @@ describe('discoverValue - Basic / Notification', () => {
 	})
 })
 
-describe('discoverValue - Multilevel Sensor', () => {
+describe('Multilevel Sensor discovery', () => {
 	const cc = CommandClasses['Multilevel Sensor']
 
 	it('maps an air-temperature sensor with unit and device class', () => {
@@ -262,7 +262,7 @@ describe('discoverValue - Multilevel Sensor', () => {
 	})
 })
 
-describe('discoverValue - Meter & Pulse Meter', () => {
+describe('Meter and Pulse Meter discovery', () => {
 	it('maps an electric kWh meter with the property-suffixed object id', () => {
 		const { device, payload } = discover(
 			buildValueId({
@@ -305,7 +305,7 @@ describe('discoverValue - Meter & Pulse Meter', () => {
 	})
 })
 
-describe('discoverValue - Time', () => {
+describe('Time discovery', () => {
 	it('maps the current time to a timestamp date sensor', () => {
 		const { device, payload } = discover(
 			buildValueId({
@@ -333,7 +333,7 @@ describe('discoverValue - Time', () => {
 	})
 })
 
-describe('discoverValue - Energy Production (unsupported)', () => {
+describe('Energy Production discovery', () => {
 	it('does not discover any entity', () => {
 		const { device } = discover(
 			buildValueId({
@@ -347,7 +347,7 @@ describe('discoverValue - Energy Production (unsupported)', () => {
 	})
 })
 
-describe('discoverValue - Battery', () => {
+describe('Battery discovery', () => {
 	it('maps level to a battery percentage sensor', () => {
 		const { device, payload } = discover(
 			buildValueId({

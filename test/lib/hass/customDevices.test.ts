@@ -1,15 +1,11 @@
 /**
- * Characterization tests for the custom-devices loader in `api/lib/Gateway.ts`.
- *
- * `loadCustomDevicesCatalog(basePath, baseCatalog)` is the pure core the
- * `fs.watch`-driven projection is built on: it resolves `<basePath>.js`
- * (preferred) or `<basePath>.json`, overlays the parsed entries onto
- * `baseCatalog`, and returns the merged catalog plus a dedup sha, the custom
- * count, and the resolved path - or null when neither file exists or parsing
- * fails. Driving it with an injected basePath/baseCatalog exercises the real
- * loader without reaching into the module-global `allDevices`/`fs.watch` state.
- * Gateway.ts is imported dynamically after `ensureTestEnv()` so its
- * module-evaluation watches the throwaway STORE_DIR, never the repo store/.
+ * Characterizes how custom Home Assistant device definitions are loaded: the
+ * loader resolves a `.js` file (preferred) or `.json`, overlays its entries onto
+ * the base catalog, and reports the merged catalog, a dedup hash, the
+ * custom-device count, and which file was used - or nothing when neither file
+ * exists or the JSON is malformed. Tests inject a base path and base catalog so
+ * they drive the real loader against throwaway fixtures under an isolated store
+ * dir, never the repo store/.
  */
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import { writeFileSync } from 'node:fs'
@@ -61,8 +57,8 @@ afterAll(() => {
 	cleanupTestEnv()
 })
 
-describe('loadCustomDevicesCatalog', () => {
-	it('returns null when neither .js nor .json exists', () => {
+describe('loading the custom devices catalog', () => {
+	it('loads nothing when neither a .js nor .json file exists', () => {
 		expect(
 			mod.loadCustomDevicesCatalog(freshBase(), baseCatalog),
 		).toBeNull()
@@ -101,7 +97,7 @@ describe('loadCustomDevicesCatalog', () => {
 		expect(result.catalog.shared[0].object_id).toBe('js')
 	})
 
-	it('returns null (without throwing) on a JSON parse failure', () => {
+	it('ignores a malformed JSON file instead of throwing', () => {
 		const base = freshBase()
 		writeFileSync(base + '.json', '{ not valid json ]')
 
@@ -112,7 +108,7 @@ describe('loadCustomDevicesCatalog', () => {
 		expect(result).toBeNull()
 	})
 
-	it('derives a stable sha for identical bytes and a different sha when content changes', () => {
+	it('derives a stable hash for identical bytes and a new one when content changes', () => {
 		const a = freshBase()
 		writeFileSync(a + '.json', JSON.stringify({ x: [device('x')] }))
 		const b = freshBase()
@@ -124,8 +120,8 @@ describe('loadCustomDevicesCatalog', () => {
 		const shaB = loadOrFail(b, baseCatalog).sha
 		const shaC = loadOrFail(c, baseCatalog).sha
 
-		// Identical bytes hash equal - the invariant the production reload
-		// dedup (`lastCustomDevicesLoad === sha`) relies on to skip no-op reloads
+		// Identical bytes hash equal, which is what lets an unchanged file skip
+		// a no-op reload
 		expect(shaB).toBe(shaA)
 		expect(shaC).not.toBe(shaA)
 	})

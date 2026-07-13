@@ -101,8 +101,8 @@ function addCurrentTargetPair(
 	return addValue(node, current)
 }
 
-describe('discoverValue - Binary Switch (full contract)', () => {
-	it('produces the exact switch discovery packet', () => {
+describe('Binary Switch discovery', () => {
+	it('builds the binary switch discovery entity', () => {
 		const node = readyNode()
 		const key = addCurrentTargetPair(node, {
 			cc: CommandClasses['Binary Switch'],
@@ -193,7 +193,7 @@ describe('discoverValue - Binary Switch (full contract)', () => {
 	})
 })
 
-describe('discoverValue - Barrier Operator', () => {
+describe('Barrier Operator discovery', () => {
 	it('maps to a garage cover with numeric position/state', () => {
 		const node = readyNode()
 		const key = addCurrentTargetPair(node, {
@@ -228,7 +228,7 @@ describe('discoverValue - Barrier Operator', () => {
 	})
 })
 
-describe('discoverValue - Multilevel Switch', () => {
+describe('Multilevel Switch discovery', () => {
 	it('maps a motor-control device to cover_position', () => {
 		const node = readyNode({
 			// generic_type_switch_multilevel + class-A motor control
@@ -291,7 +291,9 @@ describe('discoverValue - Multilevel Switch', () => {
 		)
 	})
 
-	it('honors the 615-0-258 deviceId cover override (issue #3088)', () => {
+	it('maps the 615-0-258 device to a cover through its compatibility override', () => {
+		// This device reports as a Multilevel Switch but is physically a motor
+		// cover; the bundled device config overrides the mapping (#3088)
 		const node = readyNode({ deviceId: '615-0-258' })
 		const key = addCurrentTargetPair(node, {
 			cc: CommandClasses['Multilevel Switch'],
@@ -302,7 +304,7 @@ describe('discoverValue - Multilevel Switch', () => {
 	})
 })
 
-describe('discoverValue - Door Lock', () => {
+describe('Door Lock discovery', () => {
 	it('maps the current lock state to a lock entity', () => {
 		const node = readyNode()
 		const key = addCurrentTargetPair(node, {
@@ -329,7 +331,7 @@ describe('discoverValue - Door Lock', () => {
 	})
 })
 
-describe('discoverValue - Sound Switch (volume)', () => {
+describe('Sound Switch volume discovery', () => {
 	it('maps the volume property to a volume_dimmer light', () => {
 		const node = readyNode()
 		const value = buildValueId({
@@ -374,7 +376,7 @@ describe('discoverValue - Sound Switch (volume)', () => {
 	})
 })
 
-describe('discoverValue - Color Switch (RGB)', () => {
+describe('Color Switch RGB discovery', () => {
 	it('maps currentColor to an rgb light with brightness from ML switch', () => {
 		const node = readyNode()
 

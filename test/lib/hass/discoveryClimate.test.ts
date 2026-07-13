@@ -159,8 +159,8 @@ function climatePacket(nodeName = 'Thermostat') {
 		)
 }
 
-describe('discoverClimates + discoverDevice (climate)', () => {
-	it('discovers a full thermostat: mode map, setpoint topics, action map', () => {
+describe('climate thermostat discovery', () => {
+	it('discovers a thermostat with mode, setpoint, and action mappings', () => {
 		harness.resetState()
 		const node = buildThermostatNode({ deviceId: 'test-climate-full' })
 		initNode(node)
@@ -182,7 +182,7 @@ describe('discoverClimates + discoverDevice (climate)', () => {
 		expect(climate.action_map).toEqual({ 0: 'idle', 1: 'heating' })
 	})
 
-	it('publishes exactly one packet (climate claims its member values)', () => {
+	it('consolidates the thermostat member values into a single published entity', () => {
 		harness.resetState()
 		const node = buildThermostatNode({ deviceId: 'test-climate-claim' })
 		initNode(node)
@@ -197,7 +197,7 @@ describe('discoverClimates + discoverDevice (climate)', () => {
 		)
 	})
 
-	it('resolves climate topics/templates and QoS/retain faithfully', () => {
+	it('resolves climate topics, templates, and QoS/retain from the value config', () => {
 		harness.resetState()
 		const node = buildThermostatNode({ deviceId: 'test-climate-topics' })
 		initNode(node)
@@ -253,7 +253,7 @@ describe('discoverClimates + discoverDevice (climate)', () => {
 		expect(p.availability).toHaveLength(3)
 	})
 
-	it('temperature topic follows the CURRENT mode value (cool)', () => {
+	it('follows the current mode when choosing the temperature setpoint topic', () => {
 		harness.resetState()
 		const node = buildThermostatNode({
 			deviceId: 'test-climate-cool',
@@ -268,7 +268,7 @@ describe('discoverClimates + discoverDevice (climate)', () => {
 		)
 	})
 
-	it('single-setpoint thermostat with no mode CC: no modes, default setpoint', () => {
+	it('exposes a default setpoint for a single-setpoint thermostat with no mode command class', () => {
 		harness.resetState()
 		const node = buildThermostatNode({
 			deviceId: 'test-climate-nomode',
@@ -292,7 +292,7 @@ describe('discoverClimates + discoverDevice (climate)', () => {
 		)
 	})
 
-	it('thermostat without an Air-temperature value omits current temp fields', () => {
+	it('omits current-temperature fields when the thermostat has no air-temperature value', () => {
 		harness.resetState()
 		const node = buildThermostatNode({
 			deviceId: 'test-climate-notemp',
@@ -318,7 +318,7 @@ describe('discoverClimates + discoverDevice (climate)', () => {
 		expect(climatePacket().payload.temperature_unit).toBe('F')
 	})
 
-	it('re-running the node pipeline is idempotent (no duplicate publishes)', () => {
+	it('does not republish when the node pipeline runs again', () => {
 		harness.resetState()
 		const node = buildThermostatNode({ deviceId: 'test-climate-idem' })
 		initNode(node)
@@ -332,7 +332,7 @@ describe('discoverClimates + discoverDevice (climate)', () => {
 	})
 })
 
-describe('discoverDevice (generic composite topic-rewrite)', () => {
+describe('generic composite device discovery', () => {
 	it('resolves value ids to topics and appends /set for command topics', () => {
 		harness.resetState()
 		const node = buildNode({

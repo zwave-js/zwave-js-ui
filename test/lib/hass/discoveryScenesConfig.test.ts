@@ -65,7 +65,7 @@ function discover(value: ZUIValueId, node = readyNode()) {
 	}
 }
 
-describe('discoverValue - Central Scene / Scene Activation', () => {
+describe('Central Scene and Scene Activation discovery', () => {
 	it('maps a central scene to a scene_state sensor', () => {
 		const { device, payload } = discover(
 			buildValueId({
@@ -126,7 +126,7 @@ describe('discoverValue - Central Scene / Scene Activation', () => {
 	})
 })
 
-describe('discoverValue - Configuration CC', () => {
+describe('Configuration parameter discovery', () => {
 	const cc = CommandClasses.Configuration
 
 	it('maps a 0..1 numeric parameter to a config_switch', () => {
@@ -245,7 +245,7 @@ describe('discoverValue - Configuration CC', () => {
 	})
 })
 
-describe('discoverValue - common tail behavior', () => {
+describe('shared entity naming and location behavior', () => {
 	it('appends the endpoint to the object id for multi-instance devices', () => {
 		const node = readyNode()
 		const target = buildValueId({
@@ -345,7 +345,7 @@ describe('discoverValue - common tail behavior', () => {
 	})
 })
 
-describe('discoverValue - guards', () => {
+describe('values skipped during discovery', () => {
 	it('skips an unknown command class', () => {
 		const { device } = discover(
 			buildValueId({
