@@ -274,8 +274,6 @@ function createHarness(cfgOverrides: Partial<ZwaveConfig> = {}) {
 	return { lifecycle, host, state, world }
 }
 
-const flush = () => Promise.resolve()
-
 async function until(pred: () => boolean, max = 100): Promise<void> {
 	for (let i = 0; i < max; i++) {
 		if (pred()) return
@@ -1276,7 +1274,7 @@ describe('DriverLifecycle — stale driver events after close', () => {
 
 		host.onDriverReady = vi.fn(async () => {})
 		driver.emit('driver ready')
-		await flush()
+		await Promise.resolve()
 		expect(host.onDriverReady).not.toHaveBeenCalled()
 	})
 
