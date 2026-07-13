@@ -105,7 +105,6 @@ export function state(
 	return { value, text }
 }
 
-/** Returns a value after enforcing that a fixture dependency is present. */
 export function requireDefined<T>(value: T, message: string): NonNullable<T> {
 	if (value === undefined || value === null) {
 		throw new TypeError(message)
