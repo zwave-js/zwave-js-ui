@@ -1,18 +1,13 @@
 /**
- * Characterizes HASS-device persistence + projection in `api/lib/ZwaveClient.ts`
- * (addDevice/updateDevice/storeDevices, getStoreNodes home-id scoping,
- * updateStoreNodes write, and the synchronous emitNodeUpdate projection that
- * precedes the nextTick-deferred NODE_UPDATED emission).
+ * Characterizes HASS-device persistence and projection: adding, updating, and
+ * storing a node's hassDevices, home-id scoping of the persisted nodes file,
+ * and the synchronous node projection that precedes the nextTick-deferred node
+ * update emission.
  *
- * These drive the real store-dependent ZwaveClient against an isolated
- * STORE_DIR with a recording socket. ZwaveClient is imported dynamically after
- * ensureTestEnv() repoints STORE_DIR, so every jsonStore.put() lands in a
- * throwaway dir, never the repo store/. No real Driver is constructed.
- *
- * Fixture strategy: makeLoadedClient() seeds a home-scoped nodes.json and fills
- * storeNodes through the real getStoreNodes() loader; makeMutatorClient()
- * injects state directly and is used only for the in-memory
- * addDevice/updateDevice/emitNodeUpdate unit tests.
+ * Tests drive the real store-backed client against an isolated STORE_DIR with a
+ * recording socket, so every write lands in a throwaway dir, never the repo
+ * store/. No real Driver is constructed; the home id and live nodes are seeded
+ * at the injection boundary the Driver would otherwise supply.
  */
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest'
 import { existsSync, readFileSync } from 'node:fs'
@@ -21,12 +16,29 @@ import { ensureTestEnv, cleanupTestEnv, getTestStoreDir } from './env.ts'
 import { createRecordingSocket, type RecordingSocket } from './fixtures.ts'
 import { socketEvents } from '#api/lib/SocketEvents.ts'
 import type ZWaveClientType from '#api/lib/ZwaveClient.ts'
-import type { HassDevice } from '#api/lib/ZwaveClient.ts'
+import type {
+	HassDevice,
+	ZUINode,
+	ZUIDriverInfo,
+} from '#api/lib/ZwaveClient.ts'
 import type * as JsonStoreModuleNamespace from '#api/lib/jsonStore.ts'
 import type * as StoreConfigModuleNamespace from '#api/config/store.ts'
 
 type JsonStoreModule = typeof JsonStoreModuleNamespace
 type StoreConfigModule = typeof StoreConfigModuleNamespace
+
+/**
+ * Narrow view of the two internals the Driver would normally own: the home id
+ * (driverInfo) that has no public setter, and the store projection cache that
+ * has no public getter. Used only to seed the home id and to read the load
+ * target where no observable file rewrite happens.
+ */
+type ClientInternals = {
+	driverInfo: ZUIDriverInfo
+	storeNodes: Record<number, Partial<ZUINode>>
+}
+const internals = (zwave: ZWaveClientType) =>
+	zwave as unknown as ClientInternals
 
 let ZWaveClient: typeof ZWaveClientType
 let jsonStore: JsonStoreModule['default']
@@ -41,9 +53,8 @@ const HOME = '0xtesthome'
 const flush = () => new Promise<void>((r) => setImmediate(r))
 
 /**
- * Real init-only ZwaveClient (no Driver) with a recording socket and
- * driverInfo.name set so homeHex resolves; callers choose load path vs
- * injection.
+ * Real init-only client (no Driver) with a recording socket and the home id
+ * seeded so homeHex resolves; callers choose the load path or direct node seed.
  */
 function newInitClient(home: string | undefined = HOME): {
 	zwave: ZWaveClientType
@@ -52,41 +63,39 @@ function newInitClient(home: string | undefined = HOME): {
 	const socket = createRecordingSocket()
 	const zwave = new ZWaveClient({} as any, socket as any)
 	if (home !== undefined) {
-		;(zwave as any).driverInfo = { name: home }
+		internals(zwave).driverInfo = { name: home }
 	}
 	return { zwave, socket }
 }
 
 /**
- * Narrow mutator-unit fixture: injects storeNodes/_nodes directly, for the
- * addDevice/updateDevice/emitNodeUpdate in-memory unit tests only. Anything
- * exercising real persistence uses makeLoadedClient.
+ * In-memory fixture for the add/update/projection paths, which read and mutate
+ * only the live node. The node is registered through the public nodes map.
  */
 function makeMutatorClient(
 	nodeId: number,
-	node: any,
+	node: Partial<ZUINode>,
 ): { zwave: ZWaveClientType; socket: RecordingSocket } {
 	const { zwave, socket } = newInitClient()
-	;(zwave as any).storeNodes = { [nodeId]: {} }
-	;(zwave as any)._nodes.set(nodeId, node)
+	zwave.nodes.set(nodeId, node as ZUINode)
 	return { zwave, socket }
 }
 
 /**
- * Real-load fixture: seeds a home-scoped nodes.json, then fills storeNodes via
- * the production getStoreNodes() loader (not assignment). The ZUINode is still
- * placed into _nodes directly - the one unavoidable injection, because
- * _createNode() needs a live Driver.controller this init-only client omits.
+ * Real-load fixture: seeds a home-scoped nodes.json, then fills the store
+ * projection through the production getStoreNodes() loader. The live node is
+ * registered through the public nodes map, since building it for real needs a
+ * Driver.controller this init-only client omits.
  */
 async function makeLoadedClient(
 	nodeId: number,
-	node: any,
+	node: Partial<ZUINode>,
 	seedBucket: Record<string, any> = { [nodeId]: {} },
 ): Promise<{ zwave: ZWaveClientType; socket: RecordingSocket }> {
 	await jsonStore.put(store.nodes, { [HOME]: seedBucket })
 	const { zwave, socket } = newInitClient()
 	await zwave.getStoreNodes()
-	;(zwave as any)._nodes.set(nodeId, node)
+	zwave.nodes.set(nodeId, node as ZUINode)
 	return { zwave, socket }
 }
 
@@ -111,8 +120,8 @@ beforeEach(async () => {
 	await jsonStore.put(store.nodes, {})
 })
 
-describe('ZwaveClient.addDevice()', () => {
-	it('keys the device by `type_object_id` (NOT the passed `.id`), strips `.id`, and forces persistent:false', async () => {
+describe('adding a HASS device to a node', () => {
+	it('keys an added device by type_object_id, drops the incoming id, and marks it non-persistent', async () => {
 		const node: any = { id: 5, hassDevices: {} }
 		const { zwave, socket } = makeMutatorClient(5, node)
 
@@ -134,13 +143,13 @@ describe('ZwaveClient.addDevice()', () => {
 		const emits = nodeUpdatedEmits(socket)
 		expect(emits).toHaveLength(1)
 		expect(emits[0].room).toBe('nodes')
-		// args = [changedProps, isPartial=true]
+		// Emission carries the changed props and a partial-update flag
 		expect(emits[0].args[1]).toBe(true)
 		expect(emits[0].args[0].hassDevices).toBe(node.hassDevices)
 		expect(emits[0].args[0].id).toBe(5)
 	})
 
-	it('is a no-op (no emission) when the node is unknown', async () => {
+	it('does nothing when the node is unknown', async () => {
 		const { zwave, socket } = makeMutatorClient(5, {
 			id: 5,
 			hassDevices: {},
@@ -153,7 +162,7 @@ describe('ZwaveClient.addDevice()', () => {
 		expect(nodeUpdatedEmits(socket)).toHaveLength(0)
 	})
 
-	it('is a no-op when the incoming device has no `.id`', async () => {
+	it('does nothing when the incoming device has no id', async () => {
 		const node: any = { id: 5, hassDevices: {} }
 		const { zwave, socket } = makeMutatorClient(5, node)
 		zwave.addDevice(
@@ -166,8 +175,8 @@ describe('ZwaveClient.addDevice()', () => {
 	})
 })
 
-describe('ZwaveClient.updateDevice()', () => {
-	it('re-keys an EXISTING device under its `.id`, stripping the `.id` field', async () => {
+describe('updating a HASS device on a node', () => {
+	it('re-keys an existing device under its id and drops the id field', async () => {
 		const existing = { type: 'switch', object_id: 'sw', persistent: true }
 		const node: any = {
 			id: 7,
@@ -193,7 +202,7 @@ describe('ZwaveClient.updateDevice()', () => {
 		expect(nodeUpdatedEmits(socket)).toHaveLength(1)
 	})
 
-	it('deletes the device when `deleteDevice` is true', async () => {
+	it('deletes the device when deleteDevice is set', async () => {
 		const node: any = {
 			id: 7,
 			hassDevices: { switch_sw: { type: 'switch', object_id: 'sw' } },
@@ -207,7 +216,7 @@ describe('ZwaveClient.updateDevice()', () => {
 		expect(nodeUpdatedEmits(socket)).toHaveLength(1)
 	})
 
-	it('is a no-op when the id does not match any existing device (guard)', async () => {
+	it('does nothing when the id matches no existing device', async () => {
 		const node: any = { id: 7, hassDevices: {} }
 		const { zwave, socket } = makeMutatorClient(7, node)
 		zwave.updateDevice({ id: 'nope' } as any, 7)
@@ -217,8 +226,8 @@ describe('ZwaveClient.updateDevice()', () => {
 	})
 })
 
-describe('ZwaveClient.storeDevices()', () => {
-	it('sets persistent=!remove, projects a deep COPY onto the node, and writes nodes.json under homeHex', async () => {
+describe('persisting HASS devices for a node', () => {
+	it('marks devices persistent, projects a copy onto the node, and persists them under the home id', async () => {
 		const node: any = { id: 9, hassDevices: {} }
 		const { zwave, socket } = await makeLoadedClient(9, node)
 
@@ -231,8 +240,7 @@ describe('ZwaveClient.storeDevices()', () => {
 		expect(devices.sensor_a).toHaveProperty('persistent', true)
 		expect(devices.sensor_b).toHaveProperty('persistent', true)
 
-		expect((zwave as any).storeNodes[9].hassDevices).toBe(devices)
-
+		// The node receives a copy, not the caller's object
 		expect(node.hassDevices).not.toBe(devices)
 		expect(node.hassDevices).toEqual(devices)
 
@@ -245,24 +253,25 @@ describe('ZwaveClient.storeDevices()', () => {
 		expect(nodeUpdatedEmits(socket)).toHaveLength(1)
 	})
 
-	it('removes the stored hassDevices when remove is true and sets persistent:false', async () => {
+	it('removes the stored devices under the home id and marks them non-persistent', async () => {
 		const node: any = { id: 9, hassDevices: {} }
-		// Seed a persisted device and load it for real, so the remove path
-		// deletes a genuinely loaded storeNodes[9].hassDevices
+		// Seed and load a real persisted device so the remove path clears a
+		// genuinely loaded entry
 		const { zwave } = await makeLoadedClient(9, node, {
 			9: { hassDevices: { old: { type: 'sensor', object_id: 'old' } } },
 		})
-		expect((zwave as any).storeNodes[9].hassDevices.old).toBeDefined()
 
 		const devices = { sensor_a: { type: 'sensor', object_id: 'a' } }
 		await zwave.storeDevices(devices as any, 9, true)
 
 		expect(devices.sensor_a).toHaveProperty('persistent', false)
-		expect('hassDevices' in (zwave as any).storeNodes[9]).toBe(false)
 		expect(node.hassDevices).toEqual(devices)
+		// Removal leaves nothing to persist, so the node drops out of the file
+		const persisted = jsonStore.get(store.nodes)
+		expect(persisted[HOME]['9']).toBeUndefined()
 	})
 
-	it('drops undefined-valued fields but keeps null in the persisted deep copy (utils.copy = JSON round-trip)', async () => {
+	it('keeps null but drops undefined-valued fields in the persisted copy', async () => {
 		const node: any = { id: 9, hassDevices: {} }
 		const { zwave } = await makeLoadedClient(9, node)
 
@@ -281,7 +290,7 @@ describe('ZwaveClient.storeDevices()', () => {
 		expect('dropUndef' in node.hassDevices.sensor_a).toBe(false)
 	})
 
-	it('is a no-op when the node is unknown', async () => {
+	it('does nothing when the node is unknown', async () => {
 		const { zwave, socket } = await makeLoadedClient(9, {
 			id: 9,
 			hassDevices: {},
@@ -295,7 +304,7 @@ describe('ZwaveClient.storeDevices()', () => {
 		expect(nodeUpdatedEmits(socket)).toHaveLength(0)
 	})
 
-	it('loads a previously-persisted home-scoped device, then round-trips a new set through nodes.json', async () => {
+	it('replaces persisted devices under the home id and preserves the node name', async () => {
 		const node: any = { id: 11, hassDevices: {} }
 		const { zwave } = await makeLoadedClient(11, node, {
 			11: {
@@ -309,18 +318,14 @@ describe('ZwaveClient.storeDevices()', () => {
 				},
 			},
 		})
-		expect((zwave as any).storeNodes[11].name).toBe('Kitchen')
-		expect(
-			(zwave as any).storeNodes[11].hassDevices.sensor_old.persistent,
-		).toBe(true)
 
 		const devices = { climate_x: { type: 'climate', object_id: 'x' } }
 		await zwave.storeDevices(devices as any, 11, false)
 
 		expect(node.hassDevices.climate_x.persistent).toBe(true)
 
-		// storeDevices replaces (not merges): the new set lands under homeHex,
-		// the node name survives, the old device is gone
+		// storeDevices replaces rather than merges: the new set lands under the
+		// home id, the node name survives, the old device is gone
 		const persisted = jsonStore.get(store.nodes)
 		expect(persisted[HOME]['11'].name).toBe('Kitchen')
 		expect(persisted[HOME]['11'].hassDevices.climate_x.persistent).toBe(
@@ -330,8 +335,8 @@ describe('ZwaveClient.storeDevices()', () => {
 	})
 })
 
-describe('ZwaveClient.getStoreNodes() home-id scoping', () => {
-	it('loads only the current homeHex bucket from a scoped nodes.json', async () => {
+describe('home-id scoping of persisted nodes', () => {
+	it('loads only the current home from a multi-home file', async () => {
 		await jsonStore.put(store.nodes, {
 			[HOME]: { '3': { name: 'Mine' } },
 			'0xother': { '3': { name: 'Theirs' } },
@@ -340,32 +345,30 @@ describe('ZwaveClient.getStoreNodes() home-id scoping', () => {
 
 		await zwave.getStoreNodes()
 
-		expect((zwave as any).storeNodes).toEqual({ '3': { name: 'Mine' } })
+		expect(internals(zwave).storeNodes).toEqual({ '3': { name: 'Mine' } })
 	})
 
-	it('returns {} when the homeHex bucket is absent', async () => {
+	it('loads nothing when the current home is absent', async () => {
 		await jsonStore.put(store.nodes, { '0xother': { '3': {} } })
 		const { zwave } = newInitClient()
 
 		await zwave.getStoreNodes()
 
-		expect((zwave as any).storeNodes).toEqual({})
+		expect(internals(zwave).storeNodes).toEqual({})
 	})
 
-	it('migrates a legacy flat (non-0x-keyed) nodes.json to a homeHex-scoped file', async () => {
+	it('migrates a legacy flat nodes.json to a home-scoped file', async () => {
 		await jsonStore.put(store.nodes, { '3': { name: 'Legacy' } })
 		const { zwave } = newInitClient()
 
 		await zwave.getStoreNodes()
 
-		// Quirk: storeNodes becomes the whole flat object (pre-migration shape)
-		expect((zwave as any).storeNodes).toEqual({ '3': { name: 'Legacy' } })
-		// ...but the on-disk file is rewritten scoped under homeHex
+		// The on-disk file is rewritten scoped under the home id
 		const persisted = jsonStore.get(store.nodes)
 		expect(persisted).toEqual({ [HOME]: { '3': { name: 'Legacy' } } })
 	})
 
-	it('converts a legacy ARRAY nodes.json (sparse) to an index-keyed object under homeHex', async () => {
+	it('converts a legacy array nodes.json to an index-keyed object under the home id', async () => {
 		await jsonStore.put(store.nodes, [
 			null,
 			{ name: 'One' },
@@ -375,10 +378,6 @@ describe('ZwaveClient.getStoreNodes() home-id scoping', () => {
 
 		await zwave.getStoreNodes()
 
-		expect((zwave as any).storeNodes).toEqual({
-			'1': { name: 'One' },
-			'2': { name: 'Two' },
-		})
 		const persisted = jsonStore.get(store.nodes)
 		expect(persisted[HOME]).toEqual({
 			'1': { name: 'One' },
@@ -386,20 +385,18 @@ describe('ZwaveClient.getStoreNodes() home-id scoping', () => {
 		})
 	})
 
-	it('throws when homeHex is not set', async () => {
+	it('rejects when the home id is not set', async () => {
 		const socket = createRecordingSocket()
 		const zwave = new ZWaveClient({} as any, socket as any)
-		// driverInfo.name is unset -> homeHex is undefined, so the load refuses
-		// to persist against an undefined home id. Assert the rejection contract
-		// without pinning the internal message text.
+		// With no home id, the load refuses to run against an undefined home.
+		// Assert the rejection contract without pinning the message text.
 		await expect(zwave.getStoreNodes()).rejects.toThrow()
 	})
 })
 
-describe('synchronous projection ordering (emitNodeUpdate)', () => {
-	it('mutates node.hassDevices synchronously BEFORE the deferred NODE_UPDATED emission', async () => {
-		// Doubles as proof that HASS persistence is fake-node compatible: the
-		// projection is applied directly to whatever object sits in _nodes
+describe('node update projection ordering', () => {
+	it('applies the device to the node synchronously before the deferred node update', async () => {
+		// The projection is applied directly to the live node object
 		const node: any = { id: 5, hassDevices: {} }
 		const { zwave, socket } = makeMutatorClient(5, node)
 
