@@ -1,13 +1,9 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { parseSecurityKeys } from '../../api/lib/utils.ts'
 import type { ZwaveConfig } from '../../api/lib/ZwaveClient.ts'
+import type { PartialZWaveOptions } from 'zwave-js'
 
-// Proves parseSecurityKeys() still fails on a missing securityKeysLongRange map or a null persisted key value, now via an explicit TypeError instead of an incidental one; fix owned by #4736
-
-type PartialZWaveOptionsLike = {
-	securityKeys?: Record<string, Buffer>
-	securityKeysLongRange?: Record<string, Buffer>
-}
+// Proves parseSecurityKeys() still fails on a missing securityKeysLongRange map or a null persisted key value, now via an explicit TypeError instead of an incidental one (see #4736)
 
 const ENV_KEYS = [
 	'NETWORK_KEY',
@@ -44,9 +40,9 @@ const STANDARD_KEY_B = 'b'.repeat(32)
 const LR_KEY_A = 'c'.repeat(32)
 const LR_KEY_B = 'd'.repeat(32)
 
-function parse(config: ZwaveConfig) {
-	const options: PartialZWaveOptionsLike = {}
-	parseSecurityKeys(config, options as never)
+function parse(config: ZwaveConfig): PartialZWaveOptions {
+	const options: PartialZWaveOptions = {}
+	parseSecurityKeys(config, options)
 	return options
 }
 
@@ -116,7 +112,7 @@ describe('#parseSecurityKeys()', () => {
 		)
 	})
 
-	describe('preserved quirk: missing securityKeysLongRange map + KEY_LR_* env var', () => {
+	describe('missing securityKeysLongRange map + KEY_LR_* env var (see #4736)', () => {
 		it('throws a characterized TypeError instead of silently creating the map', () => {
 			process.env.KEY_LR_S2_Authenticated = LR_KEY_A
 
@@ -148,7 +144,7 @@ describe('#parseSecurityKeys()', () => {
 		})
 	})
 
-	describe('preserved quirk: null persisted key values', () => {
+	describe('null persisted key values (see #4736)', () => {
 		it('throws a characterized TypeError for a null standard security key', () => {
 			expect(() =>
 				parse({
