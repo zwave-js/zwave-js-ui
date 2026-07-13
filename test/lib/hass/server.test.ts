@@ -1,15 +1,17 @@
 /**
  * Characterization tests for the `@zwave-js/server` integration lifecycle in
- * `api/lib/ZwaveClient.ts`.
+ * `api/lib/ZwaveClient.ts`, driven entirely through the real `connect()` entry
+ * point.
  *
  * A real end-to-end flow (`connect()` -> driver `'driver ready'` ->
- * `_onDriverReady()` -> `_startServerIfNeeded()` -> `close()`) runs the
- * production `connect()` body verbatim against a faithful EventEmitter `Driver`
- * fake, so the duplicate-start guard and the driver-waits-for-server teardown
- * are proven through the real async event. Direct-helper tests then cover the
- * `_createServer()` option matrix and `_startServerIfNeeded()` guard branches.
- * The `ZwavejsServer` fake defers `destroy()` to a later tick to prove teardown
- * awaits server shutdown. `ZwaveClient.ts` is imported after `ensureTestEnv()`.
+ * `_onDriverReady()` -> server `start()` -> `close()`) runs the production
+ * `connect()` body verbatim against a faithful EventEmitter `Driver` fake, so
+ * the option mapping, the duplicate-start guard, the user-callback start flag,
+ * the `error`/`hard reset` listeners, and the driver-waits-for-server teardown
+ * are all proven through the real async event rather than by calling private
+ * helpers. The `ZwavejsServer` fake defers `destroy()` to a later tick to prove
+ * teardown awaits server shutdown. `ZwaveClient.ts` is imported after
+ * `ensureTestEnv()`.
  */
 import {
 	describe,
@@ -77,8 +79,8 @@ vi.mock('@zwave-js/server', async () => {
 
 // Faithful `zwave-js` Driver fake: only `Driver` is replaced (importActual
 // preserves the other exports). `start()` emits `'driver ready'`
-// asynchronously (setImmediate) like the real driver, so `_createServer()`
-// (which runs after `await driver.start()`) exists before the ready handler.
+// asynchronously (setImmediate) like the real driver, so the server (built
+// after `await driver.start()`) exists before the ready handler fires.
 vi.mock('zwave-js', async () => {
 	const actual = await vi.importActual<any>('zwave-js')
 	const { EventEmitter } = await import('node:events')
@@ -111,6 +113,9 @@ vi.mock('zwave-js', async () => {
 			return Promise.resolve()
 		})
 		checkForConfigUpdates = vi.fn(() => Promise.resolve(undefined))
+		// The real Driver exposes updateOptions; connect() calls it through
+		// setUserCallbacks() when a user socket is already connected
+		updateOptions = vi.fn()
 
 		constructor(port: any, options: any) {
 			super()
@@ -129,24 +134,6 @@ function lastServer() {
 	return hoisted.servers[hoisted.servers.length - 1]
 }
 
-/** Minimal fake Driver for the direct-helper tests (never start()-ed). */
-function fakeDriver() {
-	return {
-		destroy: vi.fn(() => {
-			hoisted.destroyOrder.push('driver')
-			return Promise.resolve()
-		}),
-	}
-}
-
-/** Real ZwaveClient (driver pre-injected) for direct-helper tests that skip connect(). */
-function makeClient(cfg: Record<string, any>): ZWaveClientType {
-	const socket = createRecordingSocket()
-	const zwave = new ZWaveClient(cfg as any, socket as any)
-	;(zwave as any)._driver = fakeDriver()
-	return zwave
-}
-
 /** Flush one macrotask so pending `setImmediate` callbacks run. */
 function tick(): Promise<void> {
 	return new Promise((resolve) => setImmediate(resolve))
@@ -155,11 +142,15 @@ function tick(): Promise<void> {
 /**
  * Drive the real connect -> driver-ready flow and return the client, driver,
  * and server. Only `_scheduledConfigCheck` is stubbed (orthogonal, otherwise
- * arms a ~24h timer); option building, `driver.start()`, `_createServer()`,
- * the async `'driver ready'` event, and `_startServerIfNeeded()` run for real.
+ * arms a ~24h timer); option building, `driver.start()`, the server
+ * construction, the async `'driver ready'` event, and the server start run for
+ * real. Pass `connectedSockets` to model already-connected user sockets.
  */
-async function driveConnectToReady(cfg: Record<string, any> = {}) {
-	const socket = createRecordingSocket()
+async function driveConnectToReady(
+	cfg: Record<string, any> = {},
+	connectedSockets: unknown[] = [],
+) {
+	const socket = createRecordingSocket(connectedSockets)
 	const zwave = new ZWaveClient(
 		{
 			enabled: true,
@@ -284,161 +275,91 @@ describe('real connect() -> driver ready event flow', () => {
 	})
 })
 
-describe('faithful EventEmitter error semantics', () => {
-	it('_createServer() attaches an error listener that swallows the event (no throw)', () => {
-		const zwave = makeClient({ serverEnabled: true })
-		;(zwave as any)._createServer()
-		expect(() => lastServer().emit('error', new Error('x'))).not.toThrow()
+describe('server error + hard-reset listeners (via the real connect flow)', () => {
+	it('swallows a server `error` event so it never crashes the process', async () => {
+		const { zwave, server } = await driveConnectToReady()
+		// connect() attaches an 'error' listener purely to absorb the event;
+		// without a listener Node re-throws an emitted 'error' and crashes
+		expect(() => server.emit('error', new Error('boom'))).not.toThrow()
+		await zwave.close(true)
 	})
 
-	it('_createServer() attaches a `hard reset` listener that re-runs client init()', () => {
-		const zwave = makeClient({ serverEnabled: true })
-		;(zwave as any)._createServer()
-		const initSpy = vi.spyOn(zwave, 'init')
+	it('re-runs client init() when the server emits `hard reset`', async () => {
+		const { zwave, server } = await driveConnectToReady()
+		const initSpy = vi.spyOn(zwave, 'init').mockResolvedValue(undefined)
 
-		lastServer().emit('hard reset')
+		server.emit('hard reset')
 
 		expect(initSpy).toHaveBeenCalledOnce()
+		await zwave.close(true)
 	})
 })
 
-describe('_createServer() construction options', () => {
-	it('constructs ZwavejsServer with the already-created driver and defaults port to 3000', () => {
-		const zwave = makeClient({ serverEnabled: true })
-		const driver = (zwave as any)._driver
-		;(zwave as any)._createServer()
-
-		const server = lastServer()
-		expect(server).toBeDefined()
-		// Built with the same driver instance (server created after the driver)
+describe('server construction options (via the real connect flow)', () => {
+	it('builds the server with the created driver and defaults the port to 3000', async () => {
+		const { zwave, driver, server } = await driveConnectToReady()
+		// The server is constructed with the same driver instance connect() just
+		// created, so it always exists before the driver becomes ready
 		expect(server.driver).toBe(driver)
 		expect(server.options.port).toBe(3000)
 		expect((zwave as any).server).toBe(server)
+		await zwave.close(true)
 	})
 
-	it('honors an explicit serverPort', () => {
-		const zwave = makeClient({ serverEnabled: true, serverPort: 9999 })
-		;(zwave as any)._createServer()
-		expect(lastServer().options.port).toBe(9999)
+	it('honors an explicit serverPort', async () => {
+		const { zwave, server } = await driveConnectToReady({ serverPort: 9999 })
+		expect(server.options.port).toBe(9999)
+		await zwave.close(true)
 	})
 
-	it('maps serverHost to the host option', () => {
-		const zwave = makeClient({
-			serverEnabled: true,
+	it('maps serverHost to the host option', async () => {
+		const { zwave, server } = await driveConnectToReady({
 			serverHost: '10.0.0.5',
 		})
-		;(zwave as any)._createServer()
-		expect(lastServer().options.host).toBe('10.0.0.5')
+		expect(server.options.host).toBe('10.0.0.5')
+		await zwave.close(true)
 	})
 
-	it('maps serverServiceDiscoveryDisabled -> enableDNSServiceDiscovery (inverted)', () => {
-		const off = makeClient({
-			serverEnabled: true,
+	it('inverts serverServiceDiscoveryDisabled into enableDNSServiceDiscovery', async () => {
+		const off = await driveConnectToReady({
 			serverServiceDiscoveryDisabled: true,
 		})
-		;(off as any)._createServer()
-		expect(lastServer().options.enableDNSServiceDiscovery).toBe(false)
+		expect(off.server.options.enableDNSServiceDiscovery).toBe(false)
+		await off.zwave.close(true)
 
-		const on = makeClient({
-			serverEnabled: true,
+		const on = await driveConnectToReady({
 			serverServiceDiscoveryDisabled: false,
 		})
-		;(on as any)._createServer()
-		expect(lastServer().options.enableDNSServiceDiscovery).toBe(true)
+		expect(on.server.options.enableDNSServiceDiscovery).toBe(true)
+		await on.zwave.close(true)
 
-		// Unset -> defaults to enabled
-		const dflt = makeClient({ serverEnabled: true })
-		;(dflt as any)._createServer()
-		expect(lastServer().options.enableDNSServiceDiscovery).toBe(true)
+		// Unset defaults to enabled
+		const dflt = await driveConnectToReady()
+		expect(dflt.server.options.enableDNSServiceDiscovery).toBe(true)
+		await dflt.zwave.close(true)
 	})
 })
 
-describe('_startServerIfNeeded() direct-helper guard branches', () => {
-	it('starts the server with start(!hasUserCallbacks) === true when there are NO user callbacks', () => {
-		const zwave = makeClient({ serverEnabled: true })
-		;(zwave as any)._createServer()
-		;(zwave as any).hasUserCallbacks = false
-		;(zwave as any)._startServerIfNeeded()
-
-		const server = lastServer()
-		expect(server.start).toHaveBeenCalledOnce()
-		expect(server.start).toHaveBeenCalledWith(true)
-	})
-
-	it('passes start(false) when user callbacks ARE present', () => {
-		const zwave = makeClient({ serverEnabled: true })
-		;(zwave as any)._createServer()
-		;(zwave as any).hasUserCallbacks = true
-		;(zwave as any)._startServerIfNeeded()
-
-		expect(lastServer().start).toHaveBeenCalledWith(false)
-	})
-
-	it('duplicate-start guard: does NOT start again once the internal `server` prop is set', () => {
-		const zwave = makeClient({ serverEnabled: true })
-		;(zwave as any)._createServer()
-		const server = lastServer()
-
-		;(zwave as any)._startServerIfNeeded()
-		expect(server.start).toHaveBeenCalledTimes(1)
-		// start() armed the internal server prop; a second call is a no-op
-		expect(server.server).toBeDefined()
-		;(zwave as any)._startServerIfNeeded()
-		expect(server.start).toHaveBeenCalledTimes(1)
-	})
-
-	it('does nothing when serverEnabled is false (even if a server object exists)', () => {
-		const zwave = makeClient({ serverEnabled: false })
-		// Force a server object on so the cfg guard, not the null-check, is
-		// what stops the start
-		;(zwave as any).server = lastServerStub()
-		;(zwave as any)._startServerIfNeeded()
-
-		expect((zwave as any).server.start).not.toHaveBeenCalled()
-	})
-
-	it('does nothing when there is no server instance', () => {
-		const zwave = makeClient({ serverEnabled: true })
-		;(zwave as any).server = null
-		expect(() => (zwave as any)._startServerIfNeeded()).not.toThrow()
-	})
-})
-
-describe('close() teardown order (direct helper)', () => {
-	it('destroys the server BEFORE the driver and nulls both', async () => {
-		const zwave = makeClient({ serverEnabled: true })
-		;(zwave as any)._createServer()
-		const server = lastServer()
-		const driver = (zwave as any)._driver
-
+describe('server start flag from connected user sockets', () => {
+	it('passes start(false) when a user socket is already connected', async () => {
+		// hasUserCallbacks = (await socket.fetchSockets()).length > 0, so a
+		// connected socket makes _onDriverReady start the server with start(false).
+		// The stand-in needs emit() because _onDriverReady pushes init state to
+		// each connected socket
+		const { zwave, server } = await driveConnectToReady({}, [
+			{ emit: vi.fn() },
+		])
+		expect(server.start).toHaveBeenCalledWith(false)
 		await zwave.close(true)
-
-		expect(server.destroy).toHaveBeenCalledOnce()
-		expect(driver.destroy).toHaveBeenCalledOnce()
-		// Server destroyed strictly before the driver (deferred destroy proves
-		// the await, not mere call ordering)
-		expect(hoisted.destroyOrder).toEqual(['server', 'driver'])
-		expect((zwave as any).server).toBeNull()
-		expect((zwave as any)._driver).toBeNull()
-	})
-
-	it('is a no-op for the server branch when no server was ever created', async () => {
-		const zwave = makeClient({ serverEnabled: false })
-		const driver = (zwave as any)._driver
-		await zwave.close(true)
-		expect(driver.destroy).toHaveBeenCalledOnce()
-		expect(hoisted.destroyOrder).toEqual(['driver'])
 	})
 })
 
 describe('getInfo().serverVersion', () => {
 	it('exposes the upstream @zwave-js/server version', () => {
-		const zwave = makeClient({ serverEnabled: true })
+		const zwave = new ZWaveClient(
+			{ serverEnabled: true } as any,
+			createRecordingSocket() as any,
+		)
 		expect(zwave.getInfo().serverVersion).toBe(hoisted.SERVER_VERSION)
 	})
 })
-
-/** A bare server stand-in with just a `start` spy for the disabled-path test. */
-function lastServerStub() {
-	return { start: vi.fn(() => Promise.resolve()), server: undefined }
-}
