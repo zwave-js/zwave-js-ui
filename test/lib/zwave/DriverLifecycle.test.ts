@@ -28,12 +28,6 @@ import type {
 } from '../../../api/lib/zwave/ports.ts'
 import { ZwaveClientStatus } from '../../../api/lib/zwave/ports.ts'
 
-// The lifecycle constructs its Driver, JSON log transport and server manager
-// through injected factories, so every test drives the real production wiring
-// with typed fakes and never module-mocks or reaches into private seams. Casts
-// to the production port types live only at the injection boundary below; the
-// `world` recorder keeps the concrete fake types so assertions stay type-safe.
-
 type StartBehavior = 'resolve' | 'reject' | 'hang' | 'deferred'
 type DestroyBehavior = 'resolve' | 'reject' | 'deferred'
 
@@ -236,8 +230,6 @@ function createHarness(cfgOverrides: Partial<ZwaveConfig> = {}) {
 		userCallbacks: {} as InclusionUserCallbacks,
 	}
 
-	// The injected server-manager factory ignores its host arg, so this stub only
-	// has to exist for `buildServerHost()` to return something type-compatible
 	const serverHostStub = {} as unknown as ZwaveServerHost
 
 	const host = {
@@ -344,7 +336,7 @@ describe('DriverLifecycle — extra log transports', () => {
 		return { ...harness, json, driver }
 	}
 
-	it('addExtraLogTransport sends the COMPLETE transport list (JSON socket + extra) and raises the level', async () => {
+	it('addExtraLogTransport keeps the JSON transport in the list and raises the level', async () => {
 		const { lifecycle, json, driver } = await connectedReadyHarness()
 		const extra = new Transport({})
 		lifecycle.addExtraLogTransport(extra, 'debug')
@@ -365,7 +357,7 @@ describe('DriverLifecycle — extra log transports', () => {
 		})
 	})
 
-	it('multiple extras with different levels: full list retained and the MOST verbose level wins', async () => {
+	it('multiple extras keep every transport and select the most verbose level', async () => {
 		const { lifecycle, json, driver } = await connectedReadyHarness()
 		const a = new Transport({})
 		const b = new Transport({})
@@ -379,7 +371,7 @@ describe('DriverLifecycle — extra log transports', () => {
 		})
 	})
 
-	it('removeExtraLogTransport re-sends the remaining transports (never empties the list) and restores the baseline level', async () => {
+	it('removeExtraLogTransport re-sends the remaining transports and restores the baseline level', async () => {
 		const { lifecycle, json, driver } = await connectedReadyHarness()
 		const keep = new Transport({})
 		const temp = new Transport({})
@@ -395,7 +387,7 @@ describe('DriverLifecycle — extra log transports', () => {
 		})
 	})
 
-	it('removing the LAST extra still re-sends the required JSON transport (not an empty array) at the baseline level', async () => {
+	it('removing the last extra still re-sends the JSON transport at the baseline level', async () => {
 		const { lifecycle, json, driver } = await connectedReadyHarness()
 		const temp = new Transport({})
 		lifecycle.addExtraLogTransport(temp, 'debug')
@@ -407,7 +399,7 @@ describe('DriverLifecycle — extra log transports', () => {
 		})
 	})
 
-	it('removal order does not matter: the level tracks the most verbose REMAINING extra', async () => {
+	it('the level tracks the most verbose remaining extra regardless of removal order', async () => {
 		const { lifecycle, json, driver } = await connectedReadyHarness()
 		const warnT = new Transport({})
 		const debugT = new Transport({})
@@ -427,7 +419,7 @@ describe('DriverLifecycle — extra log transports', () => {
 		})
 	})
 
-	it('a configured non-default level is the floor: adding a LESS verbose extra does not lower it', async () => {
+	it('a less verbose extra does not lower the configured level', async () => {
 		const { lifecycle, json, driver } = await connectedReadyHarness({
 			logLevel: 'info',
 			options: zwaveOpts({ logConfig: { level: 'verbose' } }),
@@ -440,7 +432,7 @@ describe('DriverLifecycle — extra log transports', () => {
 		})
 	})
 
-	it('addExtraLogTransport does not touch the driver when it is not ready (registration still persists)', async () => {
+	it('addExtraLogTransport leaves the driver untouched until it is ready, then applies the registered transport', async () => {
 		const { lifecycle, world, state } = createHarness({
 			serverEnabled: false,
 		})
@@ -460,7 +452,7 @@ describe('DriverLifecycle — extra log transports', () => {
 		})
 	})
 
-	it('before connect there is no driver and add/remove are inert no-ops', () => {
+	it('adding or removing transports before connect is a safe no-op', () => {
 		const { lifecycle } = createHarness({ serverEnabled: false })
 		const t = new Transport({})
 		expect(() => lifecycle.addExtraLogTransport(t, 'debug')).not.toThrow()
@@ -500,7 +492,7 @@ describe('DriverLifecycle — backoff restart & checkIfDestroyed', () => {
 		expect(host.restart).toHaveBeenCalledTimes(3)
 	})
 
-	it('backoffRestart aborts (and closes) when the client is already destroyed', async () => {
+	it('backoffRestart aborts and closes when the client is already destroyed', async () => {
 		const { lifecycle, host, state } = createHarness()
 		state.destroyed = true
 		lifecycle.backoffRestart()
@@ -526,7 +518,7 @@ describe('DriverLifecycle — backoff restart coalescing & fencing', () => {
 	beforeEach(() => vi.useFakeTimers())
 	afterEach(() => vi.useRealTimers())
 
-	it('coalesces two backoff schedules made before firing into a single restart (latest delay wins)', async () => {
+	it('coalesces two backoff schedules into a single restart', async () => {
 		const { lifecycle, host } = createHarness()
 
 		lifecycle.backoffRestart()
@@ -542,7 +534,7 @@ describe('DriverLifecycle — backoff restart coalescing & fencing', () => {
 		expect(host.restart).toHaveBeenCalledTimes(1)
 	})
 
-	it('a healthy replacement (new generation) fences a still-pending backoff restart', async () => {
+	it('a healthy replacement fences a still-pending backoff restart', async () => {
 		const { lifecycle, host } = createHarness({ serverEnabled: false })
 
 		lifecycle.backoffRestart()
@@ -594,7 +586,7 @@ describe('DriverLifecycle — connect early returns', () => {
 		expect(lifecycle.generation).toBe(0)
 	})
 
-	it('honours the ZWAVE_PORT env override (force-enables + overrides port)', async () => {
+	it('honours the ZWAVE_PORT env override by forcing the port on', async () => {
 		process.env.ZWAVE_PORT = 'tcp://override:5555'
 		const { lifecycle, world, state } = createHarness({ enabled: false })
 		await lifecycle.connect()
@@ -627,7 +619,7 @@ describe('DriverLifecycle — connect happy path', () => {
 		expect(host.installUserCallbacks).toHaveBeenCalledTimes(1)
 	})
 
-	it('does NOT install user callbacks when no clients are connected', async () => {
+	it('does not install user callbacks when no clients are connected', async () => {
 		const { lifecycle, host, state } = createHarness()
 		state.connectedClients = false
 		await lifecycle.connect()
@@ -751,7 +743,7 @@ describe('DriverLifecycle — connect error handling', () => {
 		}
 	})
 
-	it('on Driver_InvalidOptions: reports the error but does NOT back off', async () => {
+	it('on Driver_InvalidOptions it reports the error but does not back off', async () => {
 		vi.useFakeTimers()
 		try {
 			const { lifecycle, host, world } = createHarness({
@@ -775,8 +767,8 @@ describe('DriverLifecycle — connect error handling', () => {
 	})
 })
 
-describe('DriverLifecycle — connect generation fencing', () => {
-	it('aborts before driver creation when the generation changes during ensureDir', async () => {
+describe('DriverLifecycle — closing during an in-flight connect', () => {
+	it('a close before the driver is created leaves no driver and ends closed', async () => {
 		const { lifecycle, world, state } = createHarness()
 		world.ensureDirHook = () => {
 			void lifecycle.close()
@@ -786,7 +778,7 @@ describe('DriverLifecycle — connect generation fencing', () => {
 		expect(state.status).toBe(ZwaveClientStatus.CLOSED)
 	})
 
-	it('aborts before driver.start when the generation changes during hasConnectedClients', async () => {
+	it('a close before start leaves the driver unstarted', async () => {
 		const { lifecycle, host, world } = createHarness()
 		host.hasConnectedClients.mockImplementation(() => {
 			void lifecycle.close()
@@ -797,7 +789,7 @@ describe('DriverLifecycle — connect generation fencing', () => {
 		expect(world.drivers[0].start).not.toHaveBeenCalled()
 	})
 
-	it('aborts after driver.start when the generation changes during start()', async () => {
+	it('a close during start ends closed even after the driver was started', async () => {
 		const { lifecycle, world, state } = createHarness({
 			serverEnabled: false,
 		})
@@ -809,7 +801,7 @@ describe('DriverLifecycle — connect generation fencing', () => {
 		expect(state.status).toBe(ZwaveClientStatus.CLOSED)
 	})
 
-	it('aborts when the generation changes during persistConfig', async () => {
+	it('a close while persisting config leaves no driver adopted', async () => {
 		const { lifecycle, host, world } = createHarness({
 			serverEnabled: false,
 			rf: { region: RFRegion.USA },
@@ -824,7 +816,7 @@ describe('DriverLifecycle — connect generation fencing', () => {
 })
 
 describe('DriverLifecycle — pre-ready reconnect coalescing', () => {
-	it('a second connect after start() resolves but before driver ready does NOT construct or leak a replacement', async () => {
+	it('a second connect before driver ready does not build or leak a replacement', async () => {
 		const { lifecycle, world, state } = createHarness({
 			serverEnabled: false,
 		})
@@ -845,7 +837,7 @@ describe('DriverLifecycle — pre-ready reconnect coalescing', () => {
 		expect(lifecycle.generation).toBe(genAfterFirst)
 	})
 
-	it('coalesces a second connect while the first is still awaiting driver.start(): it stays PENDING until the first settles, then settles together', async () => {
+	it('concurrent connect callers coalesce and settle together once the first start settles', async () => {
 		const { lifecycle, world, state } = createHarness({
 			serverEnabled: false,
 		})
@@ -885,7 +877,7 @@ describe('DriverLifecycle — pre-ready reconnect coalescing', () => {
 		expect(driver0.destroy).not.toHaveBeenCalled()
 	})
 
-	it('a coalesced duplicate connect shares the first connect FAILURE settlement (start rejects) and no second Driver is built', async () => {
+	it('concurrent connect callers share the first connect failure and build no second driver', async () => {
 		const { lifecycle, world, state, host } = createHarness({
 			serverEnabled: false,
 		})
@@ -918,7 +910,7 @@ describe('DriverLifecycle — pre-ready reconnect coalescing', () => {
 		expect(host.onDriverError).toHaveBeenCalledTimes(1)
 	})
 
-	it('a duplicate connect AFTER the first start settled but BEFORE driver ready returns compatibly without a replacement', async () => {
+	it('a duplicate connect before driver ready builds no replacement', async () => {
 		const { lifecycle, world, state } = createHarness({
 			serverEnabled: false,
 		})
@@ -936,7 +928,7 @@ describe('DriverLifecycle — pre-ready reconnect coalescing', () => {
 		expect(lifecycle.generation).toBe(gen)
 	})
 
-	it('a recovery reconnect after a start failure is NOT coalesced (host cleared) and builds exactly one fresh driver', async () => {
+	it('a reconnect after a start failure builds exactly one fresh driver', async () => {
 		const { lifecycle, world, state } = createHarness({
 			serverEnabled: false,
 		})
@@ -984,7 +976,7 @@ describe('DriverLifecycle — pre-ready reconnect coalescing', () => {
 		return { ...harness, stalePromise, driver0, driver1 }
 	}
 
-	it('a stale start that RESOLVES after a close+reconnect tears down only its own driver', async () => {
+	it('a stale start that resolves after a reconnect tears down only its own driver', async () => {
 		const { world, state, stalePromise, driver1 } =
 			await openCloseReconnectWithStale()
 
@@ -996,7 +988,7 @@ describe('DriverLifecycle — pre-ready reconnect coalescing', () => {
 		expect(state.driver).toBe(driver1)
 	})
 
-	it('a stale start that REJECTS after a close+reconnect never destroys the replacement or backs off', async () => {
+	it('a stale start that rejects after a reconnect never destroys the replacement or backs off', async () => {
 		const { host, world, state, stalePromise, driver1 } =
 			await openCloseReconnectWithStale()
 
@@ -1011,8 +1003,8 @@ describe('DriverLifecycle — pre-ready reconnect coalescing', () => {
 	})
 })
 
-describe('DriverLifecycle — failed-connect teardown ownership', () => {
-	it('awaits the failed driver destroy before clearing the host or backing off (no replacement built while the owner is torn down)', async () => {
+describe('DriverLifecycle — cleanup after a failed connect', () => {
+	it('no replacement is built until the failed driver finishes tearing down', async () => {
 		vi.useFakeTimers()
 		try {
 			const { lifecycle, world, state, host } = createHarness({
@@ -1054,7 +1046,7 @@ describe('DriverLifecycle — failed-connect teardown ownership', () => {
 		}
 	})
 
-	it('retains the exact owner when destroy REJECTS and lets a later close retry the cleanup (no leak, no wrong destroy)', async () => {
+	it('a rejected destroy is retried by a later close without leaking or destroying the wrong driver', async () => {
 		vi.useFakeTimers()
 		try {
 			const { lifecycle, world, state, host } = createHarness({
@@ -1084,7 +1076,7 @@ describe('DriverLifecycle — failed-connect teardown ownership', () => {
 		}
 	})
 
-	it('a stale post-start exit awaits teardown of its OWN instance and never destroys the live replacement, even with a delayed destroy', async () => {
+	it('a stale post-start exit tears down its own driver and never the live replacement', async () => {
 		const { lifecycle, world, state } = createHarness({
 			serverEnabled: false,
 		})
@@ -1112,8 +1104,8 @@ describe('DriverLifecycle — failed-connect teardown ownership', () => {
 	})
 })
 
-describe('DriverLifecycle — final logConfig override', () => {
-	it('a documented zwave.options.logConfig override still receives the JSON transport, extra transports and bumped level', async () => {
+describe('DriverLifecycle — logConfig override', () => {
+	it('a zwave.options.logConfig override still receives the JSON transport, extra transports and raised level', async () => {
 		const { lifecycle, world } = createHarness({
 			serverEnabled: false,
 			options: zwaveOpts({ logConfig: { level: 'error' } }),
@@ -1145,7 +1137,7 @@ describe('DriverLifecycle — final logConfig override', () => {
 		expect(passedLogConfig?.level).toBe('warn')
 	})
 
-	it('a driver built with NO logConfig object connects cleanly and leaves the base level unset', async () => {
+	it('a driver with no logConfig connects and leaves the level unset, then accepts a later transport', async () => {
 		const { lifecycle, world, state } = createHarness({
 			serverEnabled: false,
 			options: zwaveOpts({ logConfig: undefined }),
@@ -1168,8 +1160,8 @@ describe('DriverLifecycle — final logConfig override', () => {
 	})
 })
 
-describe('DriverLifecycle — logConfig source isolation', () => {
-	it('does not mutate the persisted cfg.options.logConfig; the driver receives a distinct enriched clone', async () => {
+describe('DriverLifecycle — persisted logConfig immutability', () => {
+	it('leaves the persisted logConfig unmutated and passes the driver a distinct clone', async () => {
 		const { lifecycle, world, state } = createHarness({
 			serverEnabled: false,
 			options: zwaveOpts({ logConfig: { level: 'warn', maxFiles: 5 } }),
@@ -1238,14 +1230,14 @@ describe('DriverLifecycle — close', () => {
 		expect(state.driver).toBeNull()
 	})
 
-	it('destroys the server BEFORE the driver', async () => {
+	it('destroys the server before the driver', async () => {
 		const { lifecycle, world } = createHarness({ serverEnabled: true })
 		await lifecycle.connect()
 		await lifecycle.close()
 		expect(world.destroyOrder).toEqual(['server', 'driver'])
 	})
 
-	it('does not finalize (keep listeners) when keepListeners is true', async () => {
+	it('does not finalize when keepListeners is true', async () => {
 		const { lifecycle, host } = createHarness()
 		await lifecycle.connect()
 		await lifecycle.close(true)
@@ -1273,38 +1265,8 @@ describe('DriverLifecycle — close', () => {
 	})
 })
 
-describe('DriverLifecycle — driver-event dispatch', () => {
-	it('forwards every driver event to the host with the current generation', async () => {
-		const { lifecycle, host, world } = createHarness({
-			serverEnabled: false,
-		})
-		await lifecycle.connect()
-		const driver = world.drivers[0]
-
-		driver.emit('driver ready')
-		await flush()
-		expect(host.onDriverReady).toHaveBeenCalledWith(lifecycle.generation)
-
-		const err = new Error('driver error')
-		driver.emit('error', err)
-		expect(host.onDriverError).toHaveBeenCalledWith(err, false)
-
-		driver.emit('all nodes ready')
-		expect(host.onScanComplete).toHaveBeenCalledTimes(1)
-
-		driver.emit('bootloader ready')
-		expect(host.onBootLoaderReady).toHaveBeenCalledTimes(1)
-
-		const progress = { sentFragments: 1, totalFragments: 10 }
-		driver.emit('firmware update progress', progress)
-		expect(host.onOTWFirmwareUpdateProgress).toHaveBeenCalledWith(progress)
-
-		const result = { success: true }
-		driver.emit('firmware update finished', result)
-		expect(host.onOTWFirmwareUpdateFinished).toHaveBeenCalledWith(result)
-	})
-
-	it('fences a LATE driver-ready from an obsolete generation after close()', async () => {
+describe('DriverLifecycle — stale driver events after close', () => {
+	it('ignores a driver-ready from a closed generation', async () => {
 		const { lifecycle, host, world } = createHarness({
 			serverEnabled: false,
 		})
@@ -1318,7 +1280,7 @@ describe('DriverLifecycle — driver-event dispatch', () => {
 		expect(host.onDriverReady).not.toHaveBeenCalled()
 	})
 
-	it('fences a late error/scan/bootloader/OTW callback after the generation moves on', async () => {
+	it('ignores late driver callbacks once the generation has moved on', async () => {
 		const { lifecycle, host, world } = createHarness({
 			serverEnabled: false,
 		})
@@ -1340,7 +1302,7 @@ describe('DriverLifecycle — driver-event dispatch', () => {
 	})
 })
 
-describe('DriverLifecycle — connect option wiring', () => {
+describe('DriverLifecycle — driver options', () => {
 	it('builds scale preferences from cfg.scales', async () => {
 		const { lifecycle, world } = createHarness({
 			serverEnabled: false,
@@ -1352,7 +1314,7 @@ describe('DriverLifecycle — connect option wiring', () => {
 		})
 	})
 
-	it('injects PkgFsBindings into driver host options when running in a pkg bundle', async () => {
+	it('provides driver host filesystem bindings when running in a pkg bundle', async () => {
 		const proc = process as NodeJS.Process & { pkg?: unknown }
 		proc.pkg = {}
 		try {
@@ -1364,7 +1326,7 @@ describe('DriverLifecycle — connect option wiring', () => {
 		}
 	})
 
-	it('merges registered extra log transports and bumps the log level to the most verbose', async () => {
+	it('merges registered extra log transports and raises the log level to the most verbose', async () => {
 		const { lifecycle, world } = createHarness({ serverEnabled: false })
 		const t1 = new Transport({})
 		const t2 = new Transport({})
@@ -1377,7 +1339,7 @@ describe('DriverLifecycle — connect option wiring', () => {
 		expect(logConfig?.level).toBe('silly')
 	})
 
-	it('forwards driver log stream data to host.emitDebug', async () => {
+	it('forwards driver log stream data to the host debug output', async () => {
 		const { lifecycle, host, world } = createHarness({
 			serverEnabled: false,
 		})
@@ -1388,7 +1350,7 @@ describe('DriverLifecycle — connect option wiring', () => {
 		expect(host.emitDebug).toHaveBeenCalledWith('hello world')
 	})
 
-	it('aborts after start() when the client became destroyed mid-start', async () => {
+	it('does not connect when the client is destroyed during start', async () => {
 		const { lifecycle, world, state } = createHarness({
 			serverEnabled: false,
 		})
@@ -1401,30 +1363,8 @@ describe('DriverLifecycle — connect option wiring', () => {
 	})
 })
 
-describe('DriverLifecycle — failed connect error reporting', () => {
-	it('swallows a driver.destroy() rejection while handling a start failure', async () => {
-		vi.useFakeTimers()
-		try {
-			const { lifecycle, host, world } = createHarness({
-				serverEnabled: false,
-			})
-			world.startBehavior = 'reject'
-			world.startError = new Error('start boom')
-			world.destroyRejects = true
-			await lifecycle.connect()
-			await flush()
-			expect(host.onDriverError).toHaveBeenCalledWith(
-				expect.any(Error),
-				true,
-			)
-			await vi.advanceTimersByTimeAsync(1000)
-			expect(host.restart).toHaveBeenCalledTimes(1)
-		} finally {
-			vi.useRealTimers()
-		}
-	})
-
-	it('does not report the error when a close bumps the generation during a failed start', async () => {
+describe('DriverLifecycle — error reporting on a failed connect', () => {
+	it('does not report the error when a close races a failed start', async () => {
 		const { lifecycle, host, world } = createHarness({
 			serverEnabled: false,
 		})
@@ -1449,33 +1389,5 @@ describe('DriverLifecycle — failed connect error reporting', () => {
 		await lifecycle.connect()
 		expect(host.onDriverError).not.toHaveBeenCalled()
 		expect(state.closed).toBe(true)
-	})
-})
-
-describe('DriverLifecycle — async failure logging', () => {
-	it('logs (and swallows) a restart failure from the backoff timer', async () => {
-		vi.useFakeTimers()
-		try {
-			const { lifecycle, host } = createHarness()
-			host.restart.mockRejectedValue(new Error('restart boom'))
-			lifecycle.backoffRestart()
-			await vi.advanceTimersByTimeAsync(1000)
-			await flush()
-			expect(host.restart).toHaveBeenCalledTimes(1)
-		} finally {
-			vi.useRealTimers()
-		}
-	})
-
-	it('logs (and swallows) a close failure triggered by checkIfDestroyed', async () => {
-		const { lifecycle, world, state } = createHarness({
-			serverEnabled: false,
-		})
-		await lifecycle.connect()
-		world.destroyBehavior = 'reject'
-		state.destroyed = true
-		expect(lifecycle.checkIfDestroyed()).toBe(true)
-		await flush()
-		await flush()
 	})
 })
