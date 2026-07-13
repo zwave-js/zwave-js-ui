@@ -179,30 +179,6 @@ describe('ScheduleService', () => {
 		vi.restoreAllMocks()
 	})
 
-	describe('construction and initial state', () => {
-		it('starts with lock=false and cancel=false', () => {
-			const svc = new ScheduleService(
-				createDriverPort(),
-				createNodeStorePort(),
-				createUtilsPort(),
-			)
-			expect(svc.lockGetSchedule).toBe(false)
-			expect(svc.cancelGetScheduleFlag).toBe(false)
-		})
-	})
-
-	describe('cancelGetSchedule', () => {
-		it('sets the cancel flag', () => {
-			const svc = new ScheduleService(
-				createDriverPort(),
-				createNodeStorePort(),
-				createUtilsPort(),
-			)
-			svc.cancelGetSchedule()
-			expect(svc.cancelGetScheduleFlag).toBe(true)
-		})
-	})
-
 	describe('getSchedules', () => {
 		it('throws if Schedule Entry Lock CC is not supported', async () => {
 			const zwaveNode = createFakeZwaveNode(false)
@@ -229,10 +205,17 @@ describe('ScheduleService', () => {
 			await stubCCStatics({ supportedUsers: 0 })
 
 			const p1 = svc.getSchedules(2)
+
+			// Consumer-observable lock state while request is in-flight
+			expect(svc.lockGetSchedule).toBe(true)
+
 			await expect(svc.getSchedules(2)).rejects.toThrow(
 				'Another request is in progress',
 			)
 			await p1
+
+			// Lock released after completion
+			expect(svc.lockGetSchedule).toBe(false)
 		})
 
 		it('returns undefined if node is not in store', async () => {
@@ -285,14 +268,11 @@ describe('ScheduleService', () => {
 			expect(result?.weekly?.numSlots).toBe(1)
 			expect(result?.daily?.numSlots).toBe(1)
 			expect(result?.yearly?.numSlots).toBe(1)
-			expect(svc.lockGetSchedule).toBe(false)
 		})
 
-		it('releases lock even if promise rejects', async () => {
+		it('allows a subsequent getSchedules call after a rejection', async () => {
 			const zwaveNode = createFakeZwaveNode(true)
-			const driverPort: ScheduleDriverPort = {
-				getDriver: () => null, // will cause NPE inside
-			}
+			const driverPort = createDriverPort(zwaveNode)
 			const nodeStore = createNodeStorePort()
 			const svc = new ScheduleService(
 				driverPort,
@@ -300,9 +280,18 @@ describe('ScheduleService', () => {
 				createUtilsPort(),
 			)
 
+			// First call: force a throw inside by returning null driver
+			const getDriverImpl = driverPort.getDriver.bind(driverPort)
+			driverPort.getDriver = () => null
+
+			await stubCCStatics({ supportedUsers: 0 })
+
 			await expect(svc.getSchedules(2)).rejects.toThrow()
-			expect(svc.lockGetSchedule).toBe(false)
-			expect(svc.cancelGetScheduleFlag).toBe(false)
+
+			// Recovery: restore driver, subsequent call succeeds (no concurrency rejection)
+			driverPort.getDriver = getDriverImpl
+			const result = await svc.getSchedules(2, { fromCache: true })
+			expect(result).toBeDefined()
 		})
 	})
 
@@ -582,72 +571,142 @@ describe('ScheduleService', () => {
 		})
 	})
 
-	describe('_pushSchedule (static)', () => {
-		it('updates an existing slot in place', () => {
-			const arr: (ScheduleEntryLockSlotId &
-				ScheduleEntryLockWeekDaySchedule & { enabled: boolean })[] = [
-				{
-					userId: 1,
-					slotId: 1,
-					weekday: ScheduleEntryLockWeekday.Monday,
-					startHour: 8,
-					startMinute: 0,
-					stopHour: 17,
-					stopMinute: 0,
-					enabled: false,
+	describe('getSchedules – slot management via cache', () => {
+		it('adds a new cached slot to the returned schedule', async () => {
+			const zwaveNode = createFakeZwaveNode(true)
+			const driverPort = createDriverPort(zwaveNode)
+			const nodeStore = createNodeStorePort()
+			const svc = new ScheduleService(
+				driverPort,
+				nodeStore,
+				createUtilsPort(),
+			)
+
+			await stubCCStatics({
+				supportedUsers: 1,
+				numWeekDaySlots: 1,
+				numYearDaySlots: 0,
+				numDailyRepeatingSlots: 0,
+				userIdStatuses: { 1: 1 },
+				scheduleEnabled: { 1: true },
+				scheduleKind: {
+					1: ScheduleEntryLockScheduleKind.WeekDay,
 				},
-			]
-			const updated: ScheduleEntryLockWeekDaySchedule = {
-				weekday: ScheduleEntryLockWeekday.Tuesday,
-				startHour: 9,
+				cachedSchedules: {
+					[`${ScheduleEntryLockScheduleKind.WeekDay}-1-1`]:
+						weeklyPayload,
+				},
+			})
+
+			const result = await svc.getSchedules(2, { fromCache: true })
+
+			expect(result?.weekly?.slots?.length).toBe(1)
+			const slot = result?.weekly?.slots?.[0]
+			expect(slot?.userId).toBe(1)
+			expect(slot?.slotId).toBe(1)
+			expect(slot?.weekday).toBe(ScheduleEntryLockWeekday.Monday)
+			expect(slot?.startHour).toBe(8)
+		})
+
+		it('replaces an existing slot with the same userId/slotId on cache refresh', async () => {
+			const zwaveNode = createFakeZwaveNode(true)
+			const driverPort = createDriverPort(zwaveNode)
+
+			const existingSlot = {
+				userId: 1,
+				slotId: 1,
+				weekday: ScheduleEntryLockWeekday.Saturday,
+				startHour: 0,
 				startMinute: 0,
-				stopHour: 18,
+				stopHour: 1,
 				stopMinute: 0,
+				enabled: true,
 			}
-			ScheduleService._pushSchedule(
-				arr,
-				{ userId: 1, slotId: 1 },
-				updated,
-				true,
-			)
-			expect(arr.length).toBe(1)
-			expect(arr[0].weekday).toBe(ScheduleEntryLockWeekday.Tuesday)
-			expect(arr[0].enabled).toBe(true)
-		})
-
-		it('removes a slot when schedule is undefined and slot exists', () => {
-			const arr: (ScheduleEntryLockSlotId &
-				ScheduleEntryLockWeekDaySchedule & { enabled: boolean })[] = [
-				{
-					userId: 1,
-					slotId: 1,
-					weekday: ScheduleEntryLockWeekday.Monday,
-					startHour: 8,
-					startMinute: 0,
-					stopHour: 17,
-					stopMinute: 0,
-					enabled: true,
+			const nodeStore = createNodeStorePort({
+				id: 2,
+				schedule: {
+					daily: { numSlots: 0, slots: [] },
+					weekly: { numSlots: 1, slots: [existingSlot] },
+					yearly: { numSlots: 0, slots: [] },
 				},
-			]
-			ScheduleService._pushSchedule(
-				arr,
-				{ userId: 1, slotId: 1 },
-				undefined,
-				false,
+				userCodes: undefined,
+			})
+			const svc = new ScheduleService(
+				driverPort,
+				nodeStore,
+				createUtilsPort(),
 			)
-			expect(arr.length).toBe(0)
+
+			await stubCCStatics({
+				supportedUsers: 1,
+				numWeekDaySlots: 1,
+				numYearDaySlots: 0,
+				numDailyRepeatingSlots: 0,
+				userIdStatuses: { 1: 1 },
+				scheduleEnabled: { 1: true },
+				scheduleKind: {
+					1: ScheduleEntryLockScheduleKind.WeekDay,
+				},
+				cachedSchedules: {
+					[`${ScheduleEntryLockScheduleKind.WeekDay}-1-1`]:
+						weeklyPayload,
+				},
+			})
+
+			const result = await svc.getSchedules(2, { fromCache: true })
+
+			expect(result?.weekly?.slots?.length).toBe(1)
+			const slot = result?.weekly?.slots?.[0]
+			expect(slot?.weekday).toBe(ScheduleEntryLockWeekday.Monday)
+			expect(slot?.startHour).toBe(8)
+			expect(slot?.stopHour).toBe(17)
 		})
 
-		it('does nothing when schedule is undefined and slot does not exist', () => {
-			const arr: (ScheduleEntryLockSlotId &
-				ScheduleEntryLockWeekDaySchedule & { enabled: boolean })[] = []
-			ScheduleService._pushSchedule(
-				arr,
-				{ userId: 1, slotId: 1 },
-				undefined,
-				false,
+		it('removes an existing slot when cache returns undefined', async () => {
+			const zwaveNode = createFakeZwaveNode(true)
+			const driverPort = createDriverPort(zwaveNode)
+
+			const existingSlot = {
+				userId: 1,
+				slotId: 1,
+				weekday: ScheduleEntryLockWeekday.Monday,
+				startHour: 8,
+				startMinute: 0,
+				stopHour: 17,
+				stopMinute: 0,
+				enabled: true,
+			}
+			const nodeStore = createNodeStorePort({
+				id: 2,
+				schedule: {
+					daily: { numSlots: 0, slots: [] },
+					weekly: { numSlots: 1, slots: [existingSlot] },
+					yearly: { numSlots: 0, slots: [] },
+				},
+				userCodes: undefined,
+			})
+			const svc = new ScheduleService(
+				driverPort,
+				nodeStore,
+				createUtilsPort(),
 			)
-			expect(arr.length).toBe(0)
+
+			await stubCCStatics({
+				supportedUsers: 1,
+				numWeekDaySlots: 1,
+				numYearDaySlots: 0,
+				numDailyRepeatingSlots: 0,
+				userIdStatuses: { 1: 1 },
+				scheduleEnabled: { 1: true },
+				scheduleKind: {
+					1: ScheduleEntryLockScheduleKind.WeekDay,
+				},
+				cachedSchedules: {},
+			})
+
+			const result = await svc.getSchedules(2, { fromCache: true })
+
+			expect(result?.weekly?.slots?.length).toBe(0)
 		})
 	})
 
@@ -760,6 +819,8 @@ describe('ScheduleService', () => {
 				'Schedule Entry Lock'
 			].getWeekDaySchedule.mockImplementation(() => {
 				svc.cancelGetSchedule()
+				// Consumer-observable: flag reflects active cancellation
+				expect(svc.cancelGetScheduleFlag).toBe(true)
 				return Promise.resolve(weeklyPayload)
 			})
 
@@ -767,7 +828,11 @@ describe('ScheduleService', () => {
 				fromCache: false,
 			})
 			expect(result).toBeUndefined()
-			expect(svc.lockGetSchedule).toBe(false)
+
+			// Recovery: subsequent call does not throw concurrency rejection
+			await stubCCStatics({ supportedUsers: 0 })
+			const result2 = await svc.getSchedules(2, { fromCache: true })
+			expect(result2).toBeDefined()
 		})
 	})
 
@@ -809,8 +874,6 @@ describe('ScheduleService', () => {
 			expect(emittedProps).toHaveProperty('userCodes')
 
 			expect(emittedNode.userCodes?.total).toBe(0)
-
-			expect(svc.lockGetSchedule).toBe(false)
 		})
 
 		it('populates slot counts when userCodes is null (upstream permits)', async () => {
@@ -849,7 +912,6 @@ describe('ScheduleService', () => {
 			expect(result?.daily?.numSlots).toBe(0)
 
 			expect(nodeStore.emitCalls.length).toBe(1)
-			expect(svc.lockGetSchedule).toBe(false)
 		})
 	})
 
