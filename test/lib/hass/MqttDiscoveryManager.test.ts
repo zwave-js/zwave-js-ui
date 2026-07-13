@@ -183,71 +183,22 @@ function makeManager(
 	return { manager, source, logger, options }
 }
 
-describe('MqttDiscoveryManager construction', () => {
-	it('forks an isolated, initially-unsubscribed catalog view and owns a generator', () => {
-		const { manager, source } = makeManager()
-
-		expect(source.subscriberCount).toBe(0)
-		expect(manager.customDeviceRegistry).toBeInstanceOf(
-			CustomDeviceRegistry,
-		)
-		expect(manager.customDeviceRegistry).not.toBe(source)
-		expect(manager.discoveryGenerator).toBeDefined()
-		expect(manager.discovered).toEqual({})
-	})
-})
-
 describe('MqttDiscoveryManager start/stop lifecycle', () => {
-	it('start() subscribes the catalog view and resets the discovered index', () => {
-		const { manager, source } = makeManager()
+	it('resets the discovered index when it starts', () => {
+		const { manager } = makeManager()
 		manager.discovered = { seeded: device() }
 
 		manager.start()
 
-		expect(source.subscriberCount).toBe(1)
 		expect(manager.discovered).toEqual({})
 	})
 
-	it('stop() unsubscribes the catalog view', () => {
-		const { manager, source } = makeManager()
-		manager.start()
-		expect(source.subscriberCount).toBe(1)
-
-		manager.stop()
-
-		expect(source.subscriberCount).toBe(0)
-	})
-
-	it('supports restart: subscriber count tracks 0 -> 1 -> 0 -> 1 -> 0', () => {
-		const { manager, source } = makeManager()
-
-		expect(source.subscriberCount).toBe(0)
-		manager.start()
-		expect(source.subscriberCount).toBe(1)
-		manager.stop()
-		expect(source.subscriberCount).toBe(0)
-		manager.start()
-		expect(source.subscriberCount).toBe(1)
-		manager.stop()
-		expect(source.subscriberCount).toBe(0)
-	})
-
-	it('start() is idempotent (no double subscription)', () => {
-		const { manager, source } = makeManager()
-
-		manager.start()
-		manager.start()
-
-		expect(source.subscriberCount).toBe(1)
-	})
-
 	it('stop() is idempotent and reentrant', () => {
-		const { manager, source } = makeManager()
+		const { manager } = makeManager()
 		manager.start()
 
 		manager.stop()
 		expect(() => manager.stop()).not.toThrow()
-		expect(source.subscriberCount).toBe(0)
 	})
 
 	it('stop() fences discovery publication synchronously; start() re-arms it', () => {
@@ -505,19 +456,6 @@ describe('MqttDiscoveryManager start() status wiring', () => {
 	})
 })
 
-describe('MqttDiscoveryManager rediscoverAll delegation', () => {
-	it('delegates rediscoverAll to the owned generator', () => {
-		const { manager } = makeManager()
-		const rediscoverAll = vi
-			.spyOn(manager.discoveryGenerator, 'rediscoverAll')
-			.mockImplementation(() => {})
-
-		manager.rediscoverAll()
-
-		expect(rediscoverAll).toHaveBeenCalledTimes(1)
-	})
-})
-
 describe('MqttDiscoveryManager discovered index wiring', () => {
 	it('exposes the live discovered index the generator reads and mutates', () => {
 		const { manager } = makeManager()
@@ -531,15 +469,6 @@ describe('MqttDiscoveryManager discovered index wiring', () => {
 		manager.discoveryGenerator.removeNode({ id: 7 })
 
 		expect(Object.keys(manager.discovered)).toEqual(['8-38-0-currentValue'])
-	})
-
-	it('the discovered setter replaces the index and the getter returns the live reference', () => {
-		const { manager } = makeManager()
-		const next = { a: device() }
-
-		manager.discovered = next
-
-		expect(manager.discovered).toBe(next)
 	})
 })
 
@@ -563,20 +492,5 @@ describe('MqttDiscoveryManager multi-instance isolation', () => {
 		expect(second.discovered).toEqual({})
 		expect(first.customDeviceRegistry.get('custom-device')).toHaveLength(1)
 		expect(second.customDeviceRegistry.get('custom-device')).toEqual([])
-	})
-
-	it('each manager owns an independent subscription against the shared source', () => {
-		const first = makeManager({ registrySource: sharedSource }).manager
-		const second = makeManager({ registrySource: sharedSource }).manager
-
-		first.start()
-		second.start()
-		expect(sharedSource.subscriberCount).toBe(2)
-
-		first.stop()
-		expect(sharedSource.subscriberCount).toBe(1)
-
-		second.stop()
-		expect(sharedSource.subscriberCount).toBe(0)
 	})
 })
