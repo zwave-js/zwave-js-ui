@@ -2,7 +2,7 @@
 import { describe, it, expect, afterEach } from 'vitest'
 import { useSocketHarness } from './harness.ts'
 import { createFakeGateway } from './fakes.ts'
-import { seedUser, setSettings, signUserToken } from './authHelpers.ts'
+import { seedUser, setSettings, signUserToken } from '../shared/authHelpers.ts'
 
 describe('Socket contract: auth middleware', () => {
 	const getHarness = useSocketHarness()

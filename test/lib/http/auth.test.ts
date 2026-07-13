@@ -1,6 +1,6 @@
 import { describe, it, expect, afterEach } from 'vitest'
 import { useHttpHarness } from './harness.ts'
-import { seedUser, signUserToken, setSettings } from './authHelpers.ts'
+import { seedUser, signUserToken, setSettings } from '../shared/authHelpers.ts'
 
 describe('HTTP contract: auth & password', () => {
 	const getHarness = useHttpHarness()
