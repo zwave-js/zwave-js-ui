@@ -9,10 +9,6 @@ import type {
 } from '../../../api/lib/zwave/ports.ts'
 import type { Driver, ZWaveNode } from 'zwave-js'
 
-// ---------------------------------------------------------------------------
-// Helpers: minimal fakes for ports
-// ---------------------------------------------------------------------------
-
 function makeZWaveNode(
 	overrides: Partial<{
 		id: number
@@ -113,12 +109,7 @@ function createService(
 	return { service, driver, nodeStore, log }
 }
 
-/**
- * A manually-resolvable promise, used to deterministically control exactly
- * when an awaited call inside the service resolves, so a test can swap the
- * driver *while* the service is suspended on that `await` and assert which
- * driver instance is observed afterwards.
- */
+// A promise a test resolves manually, to swap the driver mid-await and check the service re-resolves the current instance
 function createDeferred<T = void>(): {
 	promise: Promise<T>
 	resolve: (value: T | PromiseLike<T>) => void
@@ -133,13 +124,7 @@ function createDeferred<T = void>(): {
 	return { promise, resolve, reject }
 }
 
-/**
- * A driver port whose `getDriver()` result can be swapped mid-test via
- * `set()`. Used to deterministically simulate a driver restart occurring
- * while a service method is suspended on an `await`, proving the *current*
- * driver is re-resolved at each use site instead of a stale reference
- * captured before the `await` being reused afterwards.
- */
+// Simulates a mid-await driver restart via set(), to confirm the service re-resolves the current driver instead of a stale captured one
 function createMutableDriverPort(
 	initial: Driver | null,
 ): AssociationDriverPort & {
@@ -156,10 +141,6 @@ function createMutableDriverPort(
 
 const source = { nodeId: 2 }
 const association = { nodeId: 3 }
-
-// ---------------------------------------------------------------------------
-// Tests
-// ---------------------------------------------------------------------------
 
 describe('AssociationService', () => {
 	describe('getGroups', () => {
@@ -261,10 +242,6 @@ describe('AssociationService', () => {
 
 			service.getGroups(2)
 
-			// Original ZwaveClient reset `node.groups = []` unconditionally
-			// whenever the node/ZUI-node pair was found, even if fetching
-			// groups failed (including a torn-down/missing driver) - it was
-			// never left as `undefined`.
 			expect(zui.groups).toEqual([])
 			expect(log.calls).toContainEqual(
 				expect.objectContaining({
@@ -412,20 +389,16 @@ describe('AssociationService', () => {
 
 			const resultPromise = service.getAssociations(2, true)
 
-			// Still suspended on the refresh await - neither driver's
-			// controller has been touched yet.
 			expect(oldController.getAllAssociations).not.toHaveBeenCalled()
 			expect(newController.getAllAssociations).not.toHaveBeenCalled()
 
-			// Simulate a driver restart completing while the CC refresh is
-			// still in flight, then let the refresh resolve.
+			// Restart lands while the CC refresh is still in flight
 			driverPort.set(newDriver)
 			deferred.resolve()
 
 			const result = await resultPromise
 
-			// The post-await driver read must observe the NEW driver, never
-			// the stale one captured (if it had been) before the awaits.
+			// Must observe the new driver post-await, not a stale reference captured before it
 			expect(oldController.getAllAssociations).not.toHaveBeenCalled()
 			expect(newController.getAllAssociations).toHaveBeenCalledWith(2)
 			expect(result).toEqual([
@@ -483,10 +456,7 @@ describe('AssociationService', () => {
 				true,
 			)
 
-			// Original ZwaveClient had no upfront driver guard here either -
-			// it let the (then-uncaught) controller access fail once the
-			// loop actually needed the driver. `associations` is non-empty
-			// here so the loop body runs and the driver is required.
+			// No upfront driver guard - the loop only needs the driver once it processes a non-empty associations array
 			await expect(
 				service.addAssociations(source, 1, [association]),
 			).rejects.toThrow('Driver not ready')
@@ -649,21 +619,16 @@ describe('AssociationService', () => {
 				{ nodeId: 4 },
 			])
 
-			// First iteration is in flight against the OLD driver, suspended
-			// on the (deferred) addAssociations call.
 			expect(oldController.checkAssociation).toHaveBeenCalledTimes(1)
 			expect(newController.checkAssociation).not.toHaveBeenCalled()
 
-			// Simulate a driver restart completing while the first
-			// association's addAssociations call is still pending.
+			// Restart lands while the first association's addAssociations call is still pending
 			driverPort.set(newDriver)
 			deferred.resolve()
 
 			const result = await resultPromise
 
-			// The second iteration must re-resolve and observe the NEW
-			// driver - never reuse the stale reference from before the
-			// first iteration's await.
+			// Second iteration must re-resolve the new driver, not reuse the stale reference from the first
 			expect(oldController.checkAssociation).toHaveBeenCalledTimes(1)
 			expect(newController.checkAssociation).toHaveBeenCalledTimes(1)
 			expect(oldController.addAssociations).toHaveBeenCalledTimes(1)
@@ -855,9 +820,7 @@ describe('AssociationService', () => {
 
 			const resultPromise = service.removeAllAssociations(2)
 
-			// The enumeration call and the first group's removal both hit
-			// the OLD driver; the second group's removal is suspended on
-			// the (deferred) promise.
+			// Enumeration and the first group's removal both hit the OLD driver; the second group's removal is still pending
 			expect(oldController.getAllAssociations).toHaveBeenCalledTimes(1)
 			expect(oldController.removeAssociations).toHaveBeenCalledTimes(1)
 			expect(oldController.removeAssociations).toHaveBeenCalledWith(
@@ -866,16 +829,13 @@ describe('AssociationService', () => {
 				[{ nodeId: 3 }],
 			)
 
-			// Simulate a driver restart completing while the first group's
-			// removeAssociations call is still pending.
+			// Restart lands while the first group's removeAssociations call is still pending
 			driverPort.set(newDriver)
 			deferred.resolve()
 
 			await resultPromise
 
-			// The second group's removal must re-resolve and observe the
-			// NEW driver, never the stale reference from the enumeration
-			// call or the first group's removal.
+			// Second group's removal must re-resolve the new driver, not the stale one from enumeration or the first group
 			expect(newController.removeAssociations).toHaveBeenCalledTimes(1)
 			expect(newController.removeAssociations).toHaveBeenCalledWith(
 				{ nodeId: 2, endpoint: undefined },

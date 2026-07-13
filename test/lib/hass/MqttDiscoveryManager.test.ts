@@ -30,16 +30,7 @@ import type {
 import type { HassDevice } from '#api/hass/types.ts'
 import { ensureTestEnv } from './env.ts'
 
-// `api/hass/MqttDiscoveryManager.ts` statically imports `./DiscoveryGenerator.ts`,
-// whose chain transitively reaches `sessionSecret` in `../config/app.ts` -
-// whose module-evaluation-time `resolveSessionSecret()` call falls back to
-// the REAL repository `store/` directory whenever `STORE_DIR` isn't already
-// set. A top-of-file value import would be hoisted and evaluated before any
-// `beforeAll` could redirect `STORE_DIR`, so it must be a dynamic `import()`
-// performed after `ensureTestEnv()`. See `http/env.ts` for the full
-// rationale. `CustomDeviceRegistry` takes `storeDir` as a constructor option
-// instead of importing `config/app.ts`, so it is not part of this chain and
-// stays a static import.
+// This module transitively imports sessionSecret from config/app.ts, which falls back to the real repo store/ dir if STORE_DIR isn't set yet; must be a dynamic import() after ensureTestEnv() (see http/env.ts). CustomDeviceRegistry takes storeDir as a constructor option instead, so it's unaffected and stays a static import
 let MqttDiscoveryManager: typeof MqttDiscoveryManagerClass
 let HASS_STATUS_TOPIC: string
 

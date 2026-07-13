@@ -1,41 +1,25 @@
 /**
- * `api/lib/logger.ts` statically imports `logsDir`/`storeDir` from
- * `../config/app.ts`, whose module-evaluation-time `resolveSessionSecret()`
- * call falls back to the REAL repository `store/` directory and writes a
- * `.session-secret` file there (and creates a real `logs/` directory)
- * whenever `STORE_DIR` isn't already set. Top-level `import` statements are
- * hoisted and evaluated before any of this file's own code (including a
- * `beforeAll`) could isolate that env var, so the module under test - and
- * `../../api/config/app.ts`/`../../api/lib/utils.ts`, whose exports this
- * file also needs - must be dynamic `import()`s performed AFTER
- * `ensureTestEnv()`. See `http/env.ts` for the full rationale.
+ * logger.ts transitively imports logsDir/storeDir from config/app.ts, which
+ * writes a session-secret file and creates a real logs/ dir under the repo
+ * store/ if STORE_DIR isn't set yet; logger.ts/config/app.ts/utils.ts must
+ * all be dynamic import()s performed after ensureTestEnv() (see
+ * http/env.ts).
  *
- * Separately: `api/lib/logger.ts` memoizes its transports list and keeps
- * every named logger in a module-level `winston.Container` singleton for
- * the lifetime of this file's isolated module graph (see issue #2937's
- * "setup transports only once" comment in the source). Several `describe`
- * blocks below each create differently-configured loggers and assert on
- * transport count/`silent`/level - assertions that would otherwise depend on
- * whichever block happened to run first and populate that shared cache
- * (observed exactly this way under `--sequence.shuffle --sequence.seed=4732`,
- * where a later-declared `logEnabled: false` block running BEFORE
- * `describe('module()')` left its disabled transports cached, failing
- * `describe('module()')`'s "should have logging enabled by default"). Each
- * block below now resets the logger singleton via `__testHooks.reset()`
- * (the seam `logger.ts` exports for exactly this) before establishing its
- * own loggers, so every block's assertions hold regardless of run order.
+ * logger.ts also memoizes its transports list in a module-level
+ * winston.Container singleton for this file's whole isolated module graph
+ * (see issue #2937's "setup transports only once" comment). Without
+ * resetting, describe blocks asserting on transport count/silent/level
+ * depend on run order - under --sequence.seed=4732 a later-declared
+ * logEnabled: false block ran before describe('module()') and left its
+ * disabled transports cached, failing it. Each block now calls
+ * __testHooks.reset() first so assertions hold regardless of order.
  *
- * `DISABLE_LOG_ROTATION=true` is set for this file so that the `logToFile:
- * true` scenarios below exercise a plain `winston.transports.File` instead
- * of `DailyRotateFile`. The latter's construction also calls the
- * production `setupCleanJob()`, which fires an un-awaited, best-effort
- * `clean()` promise (`readdir`/`stat`/`unlink` against `logsDir`, plus its
- * own `logger.info(...)` calls sharing this file's transports cache) - that
- * background work can still be in flight when this suite's `afterAll`
- * removes the throwaway `STORE_DIR`, which is a pre-existing characteristic
- * of `setupCleanJob` (not something this file's isolation fix is meant to
- * change) but would otherwise surface as noisy `ENOENT` unhandled
- * rejections against a directory this file itself deleted.
+ * DISABLE_LOG_ROTATION=true makes the logToFile: true scenarios use a plain
+ * winston.transports.File instead of DailyRotateFile, whose
+ * setupCleanJob() fires an un-awaited clean() promise that can still be in
+ * flight when afterAll deletes the throwaway STORE_DIR - a pre-existing
+ * characteristic of setupCleanJob, otherwise surfacing as noisy ENOENT
+ * rejections.
  */
 import {
 	describe,
@@ -260,10 +244,7 @@ describe('logger.js', () => {
 			expect(logger2.transports.length).to.be.equal(3)
 		})
 		it('should not create file transport when logEnabled is false', () => {
-			// Establishes its own "3 transports, enabled" starting state via
-			// an explicit setupAll() call (rather than relying on a sibling
-			// test's leftover transportsList cache), so this test holds
-			// regardless of run order relative to the other `it`s here.
+			// Explicit setupAll() establishes this test's starting state instead of relying on a sibling test's leftover transports cache
 			logger1 = module('mod3')
 			setupAll({
 				logEnabled: true,
