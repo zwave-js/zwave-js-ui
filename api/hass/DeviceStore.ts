@@ -1,17 +1,10 @@
+import * as utils from '../lib/utils.ts'
 import type { HassDeviceStorePort, HassPersistenceNode } from './ports.ts'
 import type {
 	HassDevice,
 	HassDeviceMap,
 	StoreHassDevicesResult,
 } from './types.ts'
-
-function copyDevices(devices: HassDeviceMap): HassDeviceMap {
-	return JSON.parse(JSON.stringify(devices))
-}
-
-function isPersistenceNode(value: unknown): value is HassPersistenceNode {
-	return typeof value === 'object' && value !== null && !Array.isArray(value)
-}
 
 export class HassDeviceStore {
 	private readonly port: HassDeviceStorePort
@@ -58,18 +51,19 @@ export class HassDeviceStore {
 		if (!this.port.hasNode(nodeId)) return { status: 'node-not-found' }
 
 		const storedNode = this.port.getStoredNode(nodeId)
-		if (!isPersistenceNode(storedNode)) {
+		if (!utils.isRecord(storedNode)) {
 			return { status: 'invalid-stored-node' }
 		}
+		const persistenceNode: HassPersistenceNode = storedNode
 
 		for (const device of Object.values(devices)) {
 			device.persistent = !remove
 		}
 
-		if (remove) delete storedNode.hassDevices
-		else storedNode.hassDevices = devices
+		if (remove) delete persistenceNode.hassDevices
+		else persistenceNode.hassDevices = devices
 
-		const copiedDevices = copyDevices(devices)
+		const copiedDevices = utils.copy(devices)
 		this.port.setNodeDevices(nodeId, copiedDevices)
 		await this.port.updateStoreNodes()
 		this.port.emitNodeUpdate(
