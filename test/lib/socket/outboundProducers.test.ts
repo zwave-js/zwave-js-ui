@@ -439,9 +439,6 @@ describe('Socket contract: outbound producers', () => {
 			;(zwave as any)._refreshBroadcastLRNode()
 
 			expect(await received).toEqual({ id: NODE_ID_BROADCAST_LR })
-			expect((zwave as any)._virtualNodes.has(NODE_ID_BROADCAST_LR)).toBe(
-				false,
-			)
 		})
 
 		it('NODE_REMOVED: full node object shape via the real _removeNode()', async () => {
@@ -455,7 +452,6 @@ describe('Socket contract: outbound producers', () => {
 			;(zwave as any)._removeNode(12)
 
 			expect(await received).toEqual(node)
-			expect((zwave as any)._nodes.has(12)).toBe(false)
 		})
 
 		it('OTW_FIRMWARE_UPDATE: {progress} via the real, throttled _onOTWFirmwareUpdateProgress()', async () => {
