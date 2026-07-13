@@ -15,16 +15,23 @@
  */
 import { EventEmitter } from 'node:events'
 import { vi } from 'vitest'
+import type {
+	IClientOptions,
+	IClientPublishOptions,
+	IClientSubscribeOptions,
+	ISubscriptionGrant,
+	IDisconnectPacket,
+} from 'mqtt'
 
 export interface RecordedPublish {
 	topic: string
 	payload: string
-	options: Record<string, any> | undefined
+	options: IClientPublishOptions | undefined
 }
 
 export interface RecordedSubscribe {
 	topic: string
-	options: Record<string, any> | undefined
+	options: IClientSubscribeOptions | undefined
 }
 
 /**
@@ -40,20 +47,17 @@ export interface FakeBroker extends EventEmitter {
 	publish(
 		topic: string,
 		payload: string,
-		options?: Record<string, any> | ((err?: Error) => void),
+		options?: IClientPublishOptions | ((err?: Error) => void),
 		cb?: (err?: Error) => void,
 	): FakeBroker
 	subscribe(
 		topic: string,
-		options?: Record<string, any>,
-		cb?: (
-			err: Error | null,
-			granted: { topic: string; qos: number }[],
-		) => void,
+		options?: IClientSubscribeOptions,
+		cb?: (err: Error | null, granted: ISubscriptionGrant[]) => void,
 	): FakeBroker
 	end(
 		force?: boolean,
-		opts?: Record<string, any>,
+		opts?: Partial<IDisconnectPacket>,
 		cb?: () => void,
 	): FakeBroker
 	/**
@@ -142,7 +146,7 @@ export function createFakeBroker(): FakeBroker {
 		// arg is the callback. Like the real client, publishing isn't gated on
 		// `connected` (only `this.client`), so publishes record before
 		// `'connect'`; only inbound `deliver()` is connection/subscription gated.
-		let opts: Record<string, any> | undefined
+		let opts: IClientPublishOptions | undefined
 		let callback: ((err?: Error) => void) | undefined
 		if (typeof options === 'function') {
 			callback = options
@@ -163,7 +167,7 @@ export function createFakeBroker(): FakeBroker {
 		broker.subscribed.push({ topic, options })
 		// Real `mqtt` grants `{ topic, qos }[]`; the wrapper treats qos 128 as
 		// a permission error, so return the requested qos to model a grant.
-		cb?.(null, [{ topic, qos: (options?.qos as number) ?? 0 }])
+		cb?.(null, [{ topic, qos: options?.qos ?? 0 }])
 		return broker
 	}
 
@@ -223,7 +227,7 @@ export function createFakeBroker(): FakeBroker {
  */
 export function mqttMockFactory() {
 	return {
-		connect: vi.fn((_url?: string, _options?: Record<string, any>) =>
+		connect: vi.fn((_url?: string, _options?: IClientOptions) =>
 			createFakeBroker(),
 		),
 	}

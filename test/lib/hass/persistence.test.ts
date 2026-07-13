@@ -21,10 +21,10 @@ import { ensureTestEnv, cleanupTestEnv, getTestStoreDir } from './env.ts'
 import {
 	createRecordingSocket,
 	type RecordingSocket,
-	type HassDeviceLike,
 } from './fixtures.ts'
 import { socketEvents } from '../../../api/lib/SocketEvents.ts'
 import type ZWaveClientType from '../../../api/lib/ZwaveClient.ts'
+import type { HassDevice } from '../../../api/lib/ZwaveClient.ts'
 
 type JsonStore = {
 	init(config: any): Promise<any>
@@ -127,13 +127,13 @@ describe('ZwaveClient.addDevice()', () => {
 		const node: any = { id: 5, hassDevices: {} }
 		const { zwave, socket } = makeMutatorClient(5, node)
 
-		const device: HassDeviceLike = {
+		const device: HassDevice = {
 			id: 'ignored-incoming-id',
 			type: 'sensor',
 			object_id: 'temperature',
 			discovery_payload: { name: 'Temp' },
 		}
-		zwave.addDevice(device as any, 5)
+		zwave.addDevice(device, 5)
 
 		expect(Object.keys(node.hassDevices)).toEqual(['sensor_temperature'])
 		const stored = node.hassDevices.sensor_temperature
@@ -157,7 +157,7 @@ describe('ZwaveClient.addDevice()', () => {
 			hassDevices: {},
 		})
 		zwave.addDevice(
-			{ id: 'x', type: 'sensor', object_id: 'y' } as any,
+			{ id: 'x', type: 'sensor', object_id: 'y', discovery_payload: {} },
 			999, // no such node
 		)
 		await flush()
@@ -167,7 +167,10 @@ describe('ZwaveClient.addDevice()', () => {
 	it('is a no-op when the incoming device has no `.id`', async () => {
 		const node: any = { id: 5, hassDevices: {} }
 		const { zwave, socket } = makeMutatorClient(5, node)
-		zwave.addDevice({ type: 'sensor', object_id: 'y' } as any, 5)
+		zwave.addDevice(
+			{ type: 'sensor', object_id: 'y', discovery_payload: {} },
+			5,
+		)
 		await flush()
 		expect(node.hassDevices).toEqual({})
 		expect(nodeUpdatedEmits(socket)).toHaveLength(0)
@@ -183,13 +186,13 @@ describe('ZwaveClient.updateDevice()', () => {
 		}
 		const { zwave, socket } = makeMutatorClient(7, node)
 
-		const incoming: HassDeviceLike = {
+		const incoming: HassDevice = {
 			id: 'switch_sw', // must match an existing key
 			type: 'switch',
 			object_id: 'sw',
 			discovery_payload: { name: 'renamed' },
 		}
-		zwave.updateDevice(incoming as any, 7)
+		zwave.updateDevice(incoming, 7)
 
 		expect('id' in node.hassDevices.switch_sw).toBe(false)
 		expect(node.hassDevices.switch_sw).toBe(incoming)

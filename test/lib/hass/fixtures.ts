@@ -51,21 +51,9 @@ export function defaultMqttConfig(
 }
 
 /**
- * Minimal persisted-HASS-device shape the `ZwaveClient` persistence methods
- * read/write. `id` is the transient wire-only key they strip before storing;
- * the rest is what lands in `node.hassDevices`.
+ * A recorded Socket.IO emission. `args` is the variadic Socket.IO payload, so
+ * it stays `any[]` to mirror the real `emit(event, ...args)` contract.
  */
-export interface HassDeviceLike {
-	id?: string
-	type?: string
-	object_id?: string
-	persistent?: boolean
-	discovery_payload?: Record<string, any>
-	discoveryTopic?: string
-	values?: string[]
-	[key: string]: any
-}
-
 export interface RecordedEmit {
 	/** Room passed to `.to(room)`, or `undefined` for a bare `.emit`. */
 	room?: string
@@ -266,6 +254,8 @@ export function createFakeGatewayZwave(
 }
 
 /** Deep-clones a captured discovery payload for stable snapshot assertions. */
-export function clonePayload(device: HassDevice): Record<string, any> {
+export function clonePayload(
+	device: HassDevice,
+): HassDevice['discovery_payload'] {
 	return JSON.parse(JSON.stringify(device.discovery_payload))
 }

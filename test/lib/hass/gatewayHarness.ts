@@ -12,6 +12,7 @@ import type { GatewayConfig } from '../../../api/lib/Gateway.ts'
 import type MqttClientType from '../../../api/lib/MqttClient.ts'
 import type { MqttConfig } from '../../../api/lib/MqttClient.ts'
 import type { HassDevice } from '../../../api/lib/ZwaveClient.ts'
+import type { IClientPublishOptions } from 'mqtt'
 import { ensureTestEnv, cleanupTestEnv } from './env.ts'
 import { latestBroker, type FakeBroker } from './mqttMock.ts'
 import {
@@ -31,7 +32,7 @@ export interface PublishedDiscovery {
 	topic: string
 	/** Parsed JSON payload, or the raw string for a delete (empty payload). */
 	payload: any
-	options: Record<string, any> | undefined
+	options: IClientPublishOptions | undefined
 }
 
 export interface GatewayHarness {
