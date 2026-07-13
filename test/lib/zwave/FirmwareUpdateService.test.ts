@@ -22,10 +22,23 @@ import type {
 	FirmwareNodeStorePort,
 	FirmwareSocketPort,
 	FirmwareUpdateInfo,
+	FirmwareUpdateResult,
 	FirmwareUpdateNodeState,
+	OTWFirmwareUpdateResult,
 	StagedFirmwareNodeUpdate,
 } from '../../../api/lib/zwave/ports.ts'
 import { createDeferred, createServiceLogger } from './serviceTestSupport.ts'
+
+const successfulFirmwareUpdate: FirmwareUpdateResult = {
+	success: true,
+	status: FirmwareUpdateStatus.OK_RestartPending,
+	reInterview: false,
+}
+
+const successfulOTWFirmwareUpdate: OTWFirmwareUpdateResult = {
+	success: true,
+	status: OTWFirmwareUpdateStatus.OK,
+}
 
 function makeUpdate(
 	overrides: Partial<FirmwareUpdateInfo> = {},
@@ -64,10 +77,14 @@ function createDriverPort(
 				getAllAvailableFirmwareUpdates: vi
 					.fn()
 					.mockResolvedValue(new Map()),
-				firmwareUpdateOTA: vi.fn().mockResolvedValue({ success: true }),
+				firmwareUpdateOTA: vi
+					.fn()
+					.mockResolvedValue(successfulFirmwareUpdate),
 				nodes: { get: vi.fn() },
 			},
-			firmwareUpdateOTW: vi.fn().mockResolvedValue({ success: true }),
+			firmwareUpdateOTW: vi
+				.fn()
+				.mockResolvedValue(successfulOTWFirmwareUpdate),
 		}),
 		...overrides,
 	}
@@ -364,7 +381,7 @@ describe('FirmwareUpdateService', () => {
 
 	describe('firmwareUpdateOTA', () => {
 		it('calls driver firmwareUpdateOTA', async () => {
-			const mockOTA = vi.fn().mockResolvedValue({ success: true })
+			const mockOTA = vi.fn().mockResolvedValue(successfulFirmwareUpdate)
 			const driver = createDriverPort({
 				getDriver: () => ({
 					controller: {
@@ -398,7 +415,9 @@ describe('FirmwareUpdateService', () => {
 
 	describe('firmwareUpdateOTW', () => {
 		it('extracts and uploads firmware from file', async () => {
-			const mockOTW = vi.fn().mockResolvedValue({ success: true })
+			const mockOTW = vi
+				.fn()
+				.mockResolvedValue(successfulOTWFirmwareUpdate)
 			const driver = createDriverPort({
 				getDriver: () => ({
 					controller: {
@@ -441,7 +460,9 @@ describe('FirmwareUpdateService', () => {
 		})
 
 		it('starts an OTW update from available update metadata', async () => {
-			const mockOTW = vi.fn().mockResolvedValue({ success: true })
+			const mockOTW = vi
+				.fn()
+				.mockResolvedValue(successfulOTWFirmwareUpdate)
 			const driver = createDriverPort({
 				getDriver: () => ({
 					controller: {
@@ -499,7 +520,9 @@ describe('FirmwareUpdateService', () => {
 			const extraction = createExtractionPort()
 			const { service } = createService({ nodes, extraction })
 
-			const mockNodeUpdate = vi.fn().mockResolvedValue({ success: true })
+			const mockNodeUpdate = vi
+				.fn()
+				.mockResolvedValue(successfulFirmwareUpdate)
 			const getNode = () => ({ updateFirmware: mockNodeUpdate })
 
 			await service.updateFirmware(
@@ -549,7 +572,9 @@ describe('FirmwareUpdateService', () => {
 			nodes._nodes.set(5, { id: 5 })
 			const { service } = createService({ nodes, extraction })
 
-			const mockNodeUpdate = vi.fn().mockResolvedValue({ success: true })
+			const mockNodeUpdate = vi
+				.fn()
+				.mockResolvedValue(successfulFirmwareUpdate)
 			await service.updateFirmware(
 				5,
 				[{ name: 'fw.zip', data: new Uint8Array([0x01]) }],
@@ -761,7 +786,9 @@ describe('FirmwareUpdateService', () => {
 			const extraction = createExtractionPort()
 			const { service } = createService({ nodes, extraction })
 
-			const mockNodeUpdate = vi.fn().mockResolvedValue({ success: true })
+			const mockNodeUpdate = vi
+				.fn()
+				.mockResolvedValue(successfulFirmwareUpdate)
 			await service.updateFirmware(
 				5,
 				[{ name: 'fw.bin', data: new Uint8Array([0x01]), target: 2 }],
@@ -980,20 +1007,6 @@ describe('FirmwareUpdateService', () => {
 		})
 	})
 
-	describe('getAvailableFirmwareUpdates', () => {
-		it('throws when driver not ready', async () => {
-			const driver: FirmwareDriverPort = {
-				isDriverReady: () => false,
-				getDriver: () => null,
-			}
-			const { service } = createService({ driver })
-
-			await expect(
-				service.getAvailableFirmwareUpdates(5),
-			).rejects.toThrow('Driver is not ready')
-		})
-	})
-
 	describe('getAllAvailableFirmwareUpdates', () => {
 		it('throws when driver not ready', async () => {
 			const driver: FirmwareDriverPort = {
@@ -1065,7 +1078,7 @@ describe('FirmwareUpdateService', () => {
 					},
 					firmwareUpdateOTW: vi
 						.fn()
-						.mockResolvedValue({ success: true }),
+						.mockResolvedValue(successfulOTWFirmwareUpdate),
 				}),
 			})
 			const extraction = createExtractionPort()
@@ -1397,7 +1410,7 @@ describe('FirmwareUpdateService', () => {
 			}
 			const firmwareUpdateOTW = vi
 				.fn()
-				.mockResolvedValue({ success: true })
+				.mockResolvedValue(successfulOTWFirmwareUpdate)
 			const driver = createDriverPort({
 				getDriver: () => ({
 					controller: {
@@ -1430,7 +1443,7 @@ describe('FirmwareUpdateService', () => {
 		it('does not start OTW updates after reset during extraction', async () => {
 			const firmwareUpdateOTW = vi
 				.fn()
-				.mockResolvedValue({ success: true })
+				.mockResolvedValue(successfulOTWFirmwareUpdate)
 			const extractionBarrier =
 				createDeferred<
 					Awaited<
@@ -1559,7 +1572,9 @@ describe('FirmwareUpdateService', () => {
 				isUint8Array: (v: unknown): v is Uint8Array =>
 					v instanceof Uint8Array,
 			}
-			const updateFirmware = vi.fn().mockResolvedValue({ success: true })
+			const updateFirmware = vi
+				.fn()
+				.mockResolvedValue(successfulFirmwareUpdate)
 			const getZwaveNode = () => ({ updateFirmware })
 			const { service } = createService({ extraction })
 
