@@ -28,6 +28,7 @@ describe('Socket contract: inbound ACK APIs', () => {
 	let ZWaveClient: typeof ZWaveClientType
 
 	beforeAll(async () => {
+		// Isolate STORE_DIR before importing ZwaveClient.ts because module evaluation binds its jsonStore to that directory
 		harness = await createSocketHarness()
 		;({ default: ZWaveClient } = await import(
 			'../../../api/lib/ZwaveClient.ts'

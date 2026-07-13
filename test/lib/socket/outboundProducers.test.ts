@@ -3,7 +3,7 @@
  *
  * `ZwaveClient.sendToSocket` is the shared routing point for ~21 of the 24 events, looking up `eventToChannel[evtName]` to room-route or falling back to an unrouted broadcast - a real `ZWaveClient` drives this against the harness's real `io`, not a mock.
  *
- * Store isolation follows the same import-type/dynamic-import fix as `callApi.test.ts` (see its doc comment), since this file also drives real `ZwaveClient`/`ZnifferManager` instances that read `storeDir` at module-evaluation time.
+ * Store isolation precedes dynamic imports because real `ZwaveClient` and `ZnifferManager` instances bind `storeDir` at module-evaluation time
  */
 import {
 	describe,
