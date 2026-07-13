@@ -5,9 +5,11 @@ import type {
 	PartialZWaveOptions,
 } from 'zwave-js'
 import { ZWaveErrorCodes, isZWaveError } from '@zwave-js/core'
+import type { LogConfig } from '@zwave-js/core'
 import { createDefaultTransportFormat } from '@zwave-js/core/bindings/log/node'
 import { JSONTransport } from '@zwave-js/log-transport-json'
 import type { ZwavejsServer } from '@zwave-js/server'
+import type Transport from 'winston-transport'
 
 import * as LogManager from '../logger.ts'
 import * as utils from '../utils.ts'
@@ -28,6 +30,21 @@ const logger = LogManager.module('Z-Wave')
 
 // Least-to-most verbose ordering so the most verbose extra-transport level wins
 const LOG_LEVEL_ORDER = ['error', 'warn', 'info', 'verbose', 'debug', 'silly']
+
+/** Constructor-injected builders for the external objects the lifecycle constructs, so callers (production or tests) supply them without module-level mocking */
+export interface DriverLifecycleDeps {
+	createDriver(port: string, options: PartialZWaveOptions): Driver
+	createLogTransport(): JSONTransport
+	createServerManager(host: ZwaveServerHost): ZwaveServerManager
+	ensureDir(dir: string): Promise<void>
+}
+
+const defaultDriverLifecycleDeps: DriverLifecycleDeps = {
+	createDriver: (port, options) => new Driver(port, options),
+	createLogTransport: () => new JSONTransport(),
+	createServerManager: (host) => new ZwaveServerManager(host),
+	ensureDir: (dir) => utils.ensureDir(dir),
+}
 
 /** Every method resolves live client state so nothing is captured at construction across driver/config swaps */
 export interface DriverLifecycleHost {
@@ -78,7 +95,10 @@ export class DriverLifecycle {
 	/** Generation `_activeConnect` belongs to, so a duplicate connect coalesces only while this still equals `_generation` */
 	private _activeConnectGeneration = 0
 
-	private _extraLogTransports: Array<{ transport: any; level?: string }> = []
+	private _extraLogTransports: Array<{
+		transport: Transport
+		level?: string
+	}> = []
 
 	/** JSON-socket transport for the current generation, re-sent first on every live add/remove because `updateLogConfig` replaces the driver's whole custom transport list */
 	private _driverLogTransport: JSONTransport | null = null
@@ -88,8 +108,14 @@ export class DriverLifecycle {
 
 	private _serverManager?: ZwaveServerManager
 
-	constructor(host: DriverLifecycleHost) {
+	private readonly deps: DriverLifecycleDeps
+
+	constructor(
+		host: DriverLifecycleHost,
+		deps: DriverLifecycleDeps = defaultDriverLifecycleDeps,
+	) {
 		this.host = host
+		this.deps = deps
 	}
 
 	get generation(): number {
@@ -99,7 +125,7 @@ export class DriverLifecycle {
 	/** Lazily builds a standalone fallback manager on first access so a directly-constructed client's server lifecycle works with no coordinator to adopt one */
 	get zwaveServer(): ZwaveServerManager {
 		if (!this._serverManager) {
-			this._serverManager = new ZwaveServerManager(
+			this._serverManager = this.deps.createServerManager(
 				this.host.buildServerHost(),
 			)
 		}
@@ -159,13 +185,13 @@ export class DriverLifecycle {
 		)
 	}
 
-	addExtraLogTransport(transport: any, level?: string): void {
+	addExtraLogTransport(transport: Transport, level?: string): void {
 		// Store on the lifecycle so the transport survives driver restarts
 		this._extraLogTransports.push({ transport, level })
 		this.applyRuntimeLogConfig()
 	}
 
-	removeExtraLogTransport(transport: any): void {
+	removeExtraLogTransport(transport: Transport): void {
 		const idx = this._extraLogTransports.findIndex(
 			(e) => e.transport === transport,
 		)
@@ -175,8 +201,8 @@ export class DriverLifecycle {
 		this.applyRuntimeLogConfig()
 	}
 
-	private computeRuntimeLogTransports(): any[] {
-		const transports: any[] = []
+	private computeRuntimeLogTransports(): Transport[] {
+		const transports: Transport[] = []
 		if (this._driverLogTransport) {
 			transports.push(this._driverLogTransport)
 		}
@@ -207,7 +233,7 @@ export class DriverLifecycle {
 		if (!driver || !this.host.isDriverReadyRaw()) {
 			return
 		}
-		const config: any = {
+		const config: Partial<LogConfig> = {
 			transports: this.computeRuntimeLogTransports(),
 		}
 		const level = this.computeRuntimeLogLevel()
@@ -442,7 +468,7 @@ export class DriverLifecycle {
 
 		// ensure deviceConfigPriorityDir exists to prevent warnings #2374
 		// lgtm [js/path-injection]
-		await utils.ensureDir(priorityDir)
+		await this.deps.ensureDir(priorityDir)
 
 		if (this._generation !== generation) {
 			return
@@ -495,7 +521,7 @@ export class DriverLifecycle {
 		// Apply storage, presets, logFilename and forceConsole directly to driver options since they aren't in ZwaveConfig
 		applyExternalDriverSettings(zwaveOptions)
 
-		const logTransport = new JSONTransport()
+		const logTransport = this.deps.createLogTransport()
 		logTransport.format = createDefaultTransportFormat(true, false)
 
 		// Bind this generation's JSON-socket transport so live add/remove re-sends it in the full replacement list
@@ -532,7 +558,7 @@ export class DriverLifecycle {
 				}
 			}
 			// Constructing the Driver can throw, so keep it inside the try/catch that destroys it on a failed connect
-			const driver = new Driver(port, zwaveOptions)
+			const driver = this.deps.createDriver(port, zwaveOptions)
 			createdDriver = driver
 			this.host.setDriver(driver)
 			driver.on('error', (error) =>
