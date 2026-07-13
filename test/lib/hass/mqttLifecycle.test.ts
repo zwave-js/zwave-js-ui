@@ -13,7 +13,8 @@
  *  - Deleting a discovery publishes the 2-byte literal "" (an empty JSON string
  *    through stringifyJSON), not the zero-byte payload a real HA tombstone
  *    needs, with retain from config.retainedDiscovery (default false) - so a
- *    retained discovery is never actually cleared. Tests pin the broken bytes.
+ *    retained discovery is never actually cleared (tracked in #4737). Tests pin
+ *    the broken bytes so a fix is a deliberate, reviewed change.
  *  - discovery publishes carry { qos: 0, retain: config.retainedDiscovery }.
  *  - HA online status is case-insensitive, keyed off the fixed literal
  *    homeassistant/status (never prefixed).
@@ -218,7 +219,8 @@ describe('publishDiscovery wire behavior', () => {
 			harness.broker.published[harness.broker.published.length - 1]
 		// A correct HA deletion publishes a zero-length payload; instead the
 		// producer runs '' through stringifyJSON, yielding the 2-byte literal
-		// "". Pin the exact broken bytes so a fix is forced to change them.
+		// "". Known bug tracked in #4737; pin the exact broken bytes so a fix
+		// is forced to change them.
 		expect(pub.payload).toBe('""')
 		expect(pub.payload.length).toBe(2)
 		expect(pub.payload.length).not.toBe(0)
@@ -239,7 +241,7 @@ describe('publishDiscovery wire behavior', () => {
 			harness.broker.published[harness.broker.published.length - 1]
 		// retain now follows config (true), but the payload is still the 2-byte
 		// "" rather than an empty buffer - the retained discovery is overwritten
-		// with a bogus body, not deleted
+		// with a bogus body, not deleted (#4737)
 		expect(pub.payload).toBe('""')
 		expect(pub.options).toEqual({ qos: 0, retain: true })
 	})

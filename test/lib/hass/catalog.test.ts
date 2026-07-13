@@ -8,7 +8,8 @@
  * needed). Each assertion pins a specific semantic value - an entity `type`,
  * `object_id`, Jinja template, mode/setpoint map, or device-id wiring - so an
  * accidental template edit, renamed key, or dropped mapping fails loudly.
- * Known quirks (e.g. the PE653 `circuit_4` state_topic) are pinned as-is.
+ * Known quirks (e.g. the PE653 `circuit_4` state_topic, tracked in #4738) are
+ * pinned as-is.
  */
 import { describe, it, expect } from 'vitest'
 import hassCfg from '../../../api/hass/configurations.ts'
@@ -342,8 +343,9 @@ describe('HASS catalog: devices.ts', () => {
 	it('QUIRK: PE653 circuit_4 state_topic points at circuit_1 currentValue (locked as-is)', () => {
 		const list = hassDevices['5-1619-20549']
 		const circuit4 = list.find((d) => d.object_id === 'circuit_4')
-		// Almost certainly a copy/paste bug, but it's current behavior; locked
-		// so a "fix" is a deliberate, reviewed change
+		// Almost certainly a copy/paste bug, but it's current behavior; known
+		// bug tracked in #4738, locked so a "fix" is a deliberate, reviewed
+		// change
 		expect(circuit4.discovery_payload.state_topic).toBe('37-1-currentValue')
 		expect(circuit4.discovery_payload.command_topic).toBe(
 			'37-4-targetValue',
