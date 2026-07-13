@@ -7,7 +7,8 @@ import {
 	it,
 	vi,
 } from 'vitest'
-import { CommandClasses } from '@zwave-js/core'
+import { BasicDeviceClass, CommandClasses } from '@zwave-js/core'
+import { BarrierState, ThermostatSetpointType } from 'zwave-js'
 import type { GatewayFactory as GatewayFactoryType } from '../../../api/hass/GatewayFactory.ts'
 import type { HassDevice } from '../../../api/hass/types.ts'
 import type { GatewayHarness } from './gatewayHarness.ts'
@@ -19,9 +20,12 @@ import { addValue, buildNode, buildValueId, valueMapKey } from './fixtures.ts'
 import { ensureTestEnv } from './env.ts'
 import { mqttMockFactory } from './mqttMock.ts'
 
+const GENERIC_DEVICE_CLASS_THERMOSTAT = 0x08
+const HEATING_THERMOSTAT_SPECIFIC_DEVICE_CLASS = 1
+
 vi.mock('mqtt', () => mqttMockFactory())
 
-describe('Gateway HASS facades', () => {
+describe('Gateway Home Assistant behavior', () => {
 	const harnesses: GatewayHarness[] = []
 	const factories: GatewayFactoryType[] = []
 	let storeDir: string
@@ -39,7 +43,7 @@ describe('Gateway HASS facades', () => {
 		cleanupGatewayHarnessEnv()
 	})
 
-	it('discovers injected catalog content without leaking dynamic devices across gateways', async () => {
+	it('discovers configured devices independently across gateways', async () => {
 		const deviceId = 'test-thermostat'
 		const configuredDevice: HassDevice = {
 			type: 'sensor',
@@ -65,17 +69,20 @@ describe('Gateway HASS facades', () => {
 		const thermostat = buildNode({
 			id: 7,
 			deviceId,
-			deviceClass: { basic: 1, generic: 0x08, specific: 1 },
+			deviceClass: {
+				basic: BasicDeviceClass.Controller,
+				generic: GENERIC_DEVICE_CLASS_THERMOSTAT,
+				specific: HEATING_THERMOSTAT_SPECIFIC_DEVICE_CLASS,
+			},
 			hassDevices: {},
 		})
 		addValue(
 			thermostat,
 			buildValueId({
-				id: '7-67-0-setpoint-1',
 				nodeId: 7,
 				commandClass: CommandClasses['Thermostat Setpoint'],
 				property: 'setpoint',
-				propertyKey: 1,
+				propertyKey: ThermostatSetpointType.Heating,
 				type: 'number',
 				min: 5,
 				max: 30,
@@ -105,7 +112,7 @@ describe('Gateway HASS facades', () => {
 		})
 	})
 
-	it('writes the cached cover mapping when its live node value is gone', async () => {
+	it('stops a cover after its target value leaves the node', async () => {
 		const harness = await createGatewayHarness()
 		harnesses.push(harness)
 		const target = buildValueId({
@@ -134,7 +141,9 @@ describe('Gateway HASS facades', () => {
 		).toBe(true)
 		delete node.values[valueMapKey(target)]
 
-		expect(harness.gw.parsePayload(253, target, undefined)).toBeNull()
+		expect(
+			harness.gw.parsePayload(BarrierState.Stopped, target, undefined),
+		).toBeNull()
 		await vi.waitFor(() => {
 			expect(harness.zwave.writeValue).toHaveBeenCalledWith(
 				{ ...target, property: 'Up' },

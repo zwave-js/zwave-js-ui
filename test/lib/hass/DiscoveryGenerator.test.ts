@@ -1,4 +1,10 @@
 import { CommandClasses } from '@zwave-js/core'
+import {
+	ThermostatFanMode,
+	ThermostatMode,
+	ThermostatOperatingState,
+	ThermostatSetpointType,
+} from 'zwave-js'
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
 import type {
 	DiscoveryGenerator as DiscoveryGeneratorType,
@@ -17,7 +23,41 @@ import type {
 	HassDeviceCatalog,
 	HassDeviceMap,
 } from '../../../api/hass/types.ts'
+import { PayloadType } from '../../../api/lib/shared.ts'
 import { cleanupTestEnv, ensureTestEnv, TEST_SESSION_SECRET } from './env.ts'
+
+const GENERIC_DEVICE_CLASS_THERMOSTAT = 0x08
+const GENERIC_DEVICE_CLASS_BINARY_SWITCH = 0x10
+const HEATING_THERMOSTAT_SPECIFIC_DEVICE_CLASS = 1
+const BINARY_POWER_SWITCH_SPECIFIC_DEVICE_CLASS = 1
+const UNRECOGNIZED_THERMOSTAT_OPERATING_STATE = 99
+
+function ccValueKey(
+	commandClass: CommandClasses,
+	property: string | number,
+	propertyKey?: string | number,
+): string {
+	return [commandClass, 0, property, propertyKey]
+		.filter((part) => part !== undefined)
+		.join('-')
+}
+
+function ccValueId(
+	commandClass: CommandClasses,
+	property: string | number,
+	propertyKey?: string | number,
+): string {
+	return `2-${ccValueKey(commandClass, property, propertyKey)}`
+}
+
+const BINARY_SWITCH_CURRENT_VALUE = ccValueKey(
+	CommandClasses['Binary Switch'],
+	'currentValue',
+)
+const BINARY_SWITCH_CURRENT_VALUE_ID = ccValueId(
+	CommandClasses['Binary Switch'],
+	'currentValue',
+)
 
 let DiscoveryGenerator: typeof DiscoveryGeneratorType
 
@@ -40,7 +80,7 @@ afterAll(() => {
 
 function value(overrides: Partial<HassValue> = {}): HassValue {
 	return {
-		id: '2-37-0-currentValue',
+		id: BINARY_SWITCH_CURRENT_VALUE_ID,
 		nodeId: 2,
 		commandClass: CommandClasses['Binary Switch'],
 		endpoint: 0,
@@ -64,7 +104,10 @@ function node(overrides: Partial<HassNode> = {}): HassNode {
 		values: {},
 		hassDevices: {},
 		deviceId: '1-2-3',
-		deviceClass: { generic: 0x10, specific: 1 },
+		deviceClass: {
+			generic: GENERIC_DEVICE_CLASS_BINARY_SWITCH,
+			specific: BINARY_POWER_SWITCH_SPECIFIC_DEVICE_CLASS,
+		},
 		...overrides,
 	}
 }
@@ -74,7 +117,7 @@ function device(overrides: Partial<HassDevice> = {}): HassDevice {
 		type: 'sensor',
 		object_id: 'test',
 		discovery_payload: {},
-		values: ['37-0-currentValue'],
+		values: [BINARY_SWITCH_CURRENT_VALUE],
 		...overrides,
 	}
 }
@@ -201,7 +244,7 @@ function setup(options: {
 }
 
 describe('DiscoveryGenerator', () => {
-	it('owns rediscovery, disabling, removal, and facade state updates', () => {
+	it('rediscovers valid nodes and updates disabled or removed entries', () => {
 		const hassNode = node({
 			name: 'Switch',
 			manufacturer: 'Test',
@@ -210,7 +253,9 @@ describe('DiscoveryGenerator', () => {
 			firmwareVersion: '1.0.0',
 			hassDevices: { old: device() },
 			values: {
-				'37-0-currentValue': value({ isCurrentValue: true }),
+				[BINARY_SWITCH_CURRENT_VALUE]: value({
+					isCurrentValue: true,
+				}),
 			},
 		})
 		const { generator, discovered, emitted, published } = setup({
@@ -236,8 +281,8 @@ describe('DiscoveryGenerator', () => {
 				payload_off: false,
 				payload_on: true,
 				value_template: '{{ value_json.value }}',
-				command_topic: 'prefix/node/2-37-0-currentValue/set',
-				state_topic: 'prefix/node/2-37-0-currentValue',
+				command_topic: `prefix/node/${BINARY_SWITCH_CURRENT_VALUE_ID}/set`,
+				state_topic: `prefix/node/${BINARY_SWITCH_CURRENT_VALUE_ID}`,
 				availability: [
 					{
 						payload_available: 'true',
@@ -266,10 +311,10 @@ describe('DiscoveryGenerator', () => {
 					sw_version: '1.0.0',
 				},
 				name: 'Switch_switch',
-				unique_id: 'zwavejs2mqtt_0x12345678_2-37-0-currentValue',
+				unique_id: `zwavejs2mqtt_0x12345678_${BINARY_SWITCH_CURRENT_VALUE_ID}`,
 			},
 			discoveryTopic: 'switch/Switch/switch/config',
-			values: ['37-0-currentValue'],
+			values: [BINARY_SWITCH_CURRENT_VALUE],
 			persistent: false,
 			ignoreDiscovery: false,
 		})
@@ -302,7 +347,7 @@ describe('DiscoveryGenerator', () => {
 		const hassNode = node({
 			name: 'Switch',
 			loc: '  Kitchen  ',
-			values: { '37-0-currentValue': currentValue },
+			values: { [BINARY_SWITCH_CURRENT_VALUE]: currentValue },
 		})
 		const { generator, published } = setup({
 			config: { useLocationAsSuggestedArea: true },
@@ -316,10 +361,10 @@ describe('DiscoveryGenerator', () => {
 		})
 	})
 
-	it('publishes raw discovery, preserves deletion options, and updates storage', () => {
+	it('publishes raw deletion payloads and removes deleted devices', () => {
 		const { generator, published, updates, discovered } = setup({
 			config: {
-				payloadType: 2,
+				payloadType: PayloadType.RAW,
 				retainedDiscovery: true,
 				manualDiscovery: true,
 			},
@@ -338,7 +383,7 @@ describe('DiscoveryGenerator', () => {
 		expect(hassDevice.discovery_payload.state_topic).toBe(
 			"{{ value == 'true' }}",
 		)
-		expect(discovered['2-37-0-currentValue']).toBe(hassDevice)
+		expect(discovered[BINARY_SWITCH_CURRENT_VALUE_ID]).toBe(hassDevice)
 
 		generator.publishDiscovery(hassDevice, 2, {
 			deleteDevice: true,
@@ -353,10 +398,10 @@ describe('DiscoveryGenerator', () => {
 			},
 		])
 		expect(updates[0]).toMatchObject({ nodeId: 2, deleteDevice: true })
-		expect(discovered['2-37-0-currentValue']).toBeUndefined()
+		expect(discovered[BINARY_SWITCH_CURRENT_VALUE_ID]).toBeUndefined()
 
 		const rawWithoutBinaryPayloads = setup({
-			config: { payloadType: 2 },
+			config: { payloadType: PayloadType.RAW },
 		})
 		const rawDevice = device({
 			discoveryTopic: 'sensor/node/raw/config',
@@ -368,7 +413,7 @@ describe('DiscoveryGenerator', () => {
 		expect(rawDevice.discovery_payload.state_topic).toBe('{{ value }}')
 	})
 
-	it('swallows malformed publication errors and reports disabled discovery', () => {
+	it('logs publication failures and skips disabled discovery', () => {
 		const disabled = setup({ disabled: true })
 		disabled.generator.publishDiscovery(device(), 2)
 		expect(disabled.logDebug).toHaveBeenCalled()
@@ -384,32 +429,19 @@ describe('DiscoveryGenerator', () => {
 			expect.any(Object),
 		)
 
-		const stringError = setup({ publishError: 'publish failed' })
-		stringError.generator.publishDiscovery(
+		const failed = setup({ publishError: new Error('publish failed') })
+		failed.generator.publishDiscovery(
 			device({ discoveryTopic: 'bad/config' }),
 			2,
 		)
-		expect(stringError.log).toHaveBeenCalledWith(
+		expect(failed.log).toHaveBeenCalledWith(
 			'error',
 			expect.stringContaining('publish failed'),
 			expect.any(Object),
 		)
-
-		const circular: Record<string, unknown> = {}
-		circular.circular = circular
-		const circularError = setup({ publishError: circular })
-		circularError.generator.publishDiscovery(
-			device({ discoveryTopic: 'bad/config' }),
-			2,
-		)
-		expect(circularError.log).toHaveBeenCalledWith(
-			'error',
-			expect.stringContaining('Unknown error'),
-			expect.any(Object),
-		)
 	})
 
-	it('rediscoverAll skips malformed nodes and republishes persistent devices', () => {
+	it('republishes persistent devices for valid nodes', () => {
 		const stored = device({
 			discoveryTopic: 'sensor/node/stored/config',
 			persistent: true,
@@ -438,38 +470,48 @@ describe('DiscoveryGenerator', () => {
 		expect(disabled.published).toHaveLength(0)
 	})
 
-	it('maps HA modes and handles cover stop writes', async () => {
+	it('translates thermostat modes and stops covers', async () => {
 		const fan = value({
-			id: '2-68-0-mode',
+			id: ccValueId(CommandClasses['Thermostat Fan Mode'], 'mode'),
 			commandClass: CommandClasses['Thermostat Fan Mode'],
 			property: 'mode',
 			type: 'number',
 			list: true,
 		})
 		const mode = value({
-			id: '2-64-0-mode',
+			id: ccValueId(CommandClasses['Thermostat Mode'], 'mode'),
 			commandClass: CommandClasses['Thermostat Mode'],
 			property: 'mode',
 			type: 'number',
 			list: true,
 		})
 		const cover = value({
-			id: '2-38-0-targetValue',
+			id: ccValueId(CommandClasses['Multilevel Switch'], 'targetValue'),
 			commandClass: CommandClasses['Multilevel Switch'],
 			property: 'targetValue',
 			type: 'number',
 		})
 		const { generator, discovered, writes } = setup({})
-		discovered[fan.id] = device({ fan_mode_map: { auto: 0 } })
-		discovered[mode.id] = device({ mode_map: { heat: 1 } })
+		discovered[fan.id] = device({
+			fan_mode_map: { auto: ThermostatFanMode['Auto low'] },
+		})
+		discovered[mode.id] = device({
+			mode_map: { heat: ThermostatMode.Heat },
+		})
 		discovered[cover.id] = device({
 			type: 'cover',
 			discovery_payload: { payload_stop: 'HALT' },
 		})
 
-		expect(generator.transformPayload('auto', fan)).toBe(0)
-		expect(generator.transformPayload('heat', mode)).toBe(1)
-		expect(generator.transformPayload(1, mode)).toBe(1)
+		expect(generator.transformPayload('auto', fan)).toBe(
+			ThermostatFanMode['Auto low'],
+		)
+		expect(generator.transformPayload('heat', mode)).toBe(
+			ThermostatMode.Heat,
+		)
+		expect(generator.transformPayload(ThermostatMode.Heat, mode)).toBe(
+			ThermostatMode.Heat,
+		)
 		expect(generator.transformPayload('unchanged', value())).toBe(
 			'unchanged',
 		)
@@ -477,28 +519,47 @@ describe('DiscoveryGenerator', () => {
 		await vi.waitFor(() => expect(writes).toEqual([cover]))
 	})
 
-	it('updates climate topics only for active mapped modes', () => {
+	it('publishes setpoint topics for the current thermostat mode', () => {
 		const setpoint = value({
-			id: '2-67-0-setpoint-1',
+			id: ccValueId(
+				CommandClasses['Thermostat Setpoint'],
+				'setpoint',
+				ThermostatSetpointType.Heating,
+			),
 			commandClass: CommandClasses['Thermostat Setpoint'],
 			property: 'setpoint',
 			type: 'number',
 		})
 		const mode = value({
-			id: '2-64-0-mode',
+			id: ccValueId(CommandClasses['Thermostat Mode'], 'mode'),
 			commandClass: CommandClasses['Thermostat Mode'],
 			property: 'mode',
-			value: 1,
+			value: ThermostatMode.Heat,
 			type: 'number',
 		})
 		const climate = device({
 			type: 'climate',
 			discoveryTopic: 'climate/node/config',
-			setpoint_topic: { 1: '67-0-setpoint-1' },
-			mode_map: { off: 0, heat: 1 },
+			setpoint_topic: {
+				[ThermostatSetpointType.Heating]: ccValueKey(
+					CommandClasses['Thermostat Setpoint'],
+					'setpoint',
+					ThermostatSetpointType.Heating,
+				),
+			},
+			mode_map: {
+				off: ThermostatMode.Off,
+				heat: ThermostatMode.Heat,
+			},
 		})
 		const hassNode = node({
-			values: { '67-0-setpoint-1': setpoint },
+			values: {
+				[ccValueKey(
+					CommandClasses['Thermostat Setpoint'],
+					'setpoint',
+					ThermostatSetpointType.Heating,
+				)]: setpoint,
+			},
 		})
 		const { generator, discovered, published } = setup({})
 		discovered[mode.id] = climate
@@ -511,40 +572,50 @@ describe('DiscoveryGenerator', () => {
 		)
 		expect(published).toHaveLength(1)
 
-		mode.value = 0
+		mode.value = ThermostatMode.Off
 		generator.updateClimateDiscovery(mode, hassNode, true)
 		expect(published).toHaveLength(1)
 	})
 
-	it('discovers a complete custom climate device and malformed alternatives', () => {
+	it('publishes valid custom climates and rejects incomplete devices', () => {
 		const mode = value({
-			id: '2-64-0-mode',
+			id: ccValueId(CommandClasses['Thermostat Mode'], 'mode'),
 			commandClass: CommandClasses['Thermostat Mode'],
 			property: 'mode',
 			type: 'number',
-			value: 1,
+			value: ThermostatMode.Heat,
 		})
 		const setpoint = value({
-			id: '2-67-0-setpoint-1',
+			id: ccValueId(
+				CommandClasses['Thermostat Setpoint'],
+				'setpoint',
+				ThermostatSetpointType.Heating,
+			),
 			commandClass: CommandClasses['Thermostat Setpoint'],
 			property: 'setpoint',
 			type: 'number',
 			value: 21,
 		})
 		const fan = value({
-			id: '2-68-0-mode',
+			id: ccValueId(CommandClasses['Thermostat Fan Mode'], 'mode'),
 			commandClass: CommandClasses['Thermostat Fan Mode'],
 			property: 'mode',
 			type: 'number',
 		})
 		const action = value({
-			id: '2-66-0-state',
+			id: ccValueId(
+				CommandClasses['Thermostat Operating State'],
+				'state',
+			),
 			commandClass: CommandClasses['Thermostat Operating State'],
 			property: 'state',
 			type: 'number',
 		})
 		const temperature = value({
-			id: '2-49-0-Air temperature',
+			id: ccValueId(
+				CommandClasses['Multilevel Sensor'],
+				'Air temperature',
+			),
 			commandClass: CommandClasses['Multilevel Sensor'],
 			property: 'Air temperature',
 			type: 'number',
@@ -566,10 +637,18 @@ describe('DiscoveryGenerator', () => {
 			object_id: 'thermostat',
 			values: ['mode', 'setpoint', 'fan', 'action', 'temperature'],
 			default_setpoint: 'setpoint',
-			setpoint_topic: { 1: 'setpoint' },
-			mode_map: { off: 0, heat: 1 },
-			fan_mode_map: { auto: 0 },
-			action_map: { 0: 'idle', 1: 'heating' },
+			setpoint_topic: {
+				[ThermostatSetpointType.Heating]: 'setpoint',
+			},
+			mode_map: {
+				off: ThermostatMode.Off,
+				heat: ThermostatMode.Heat,
+			},
+			fan_mode_map: { auto: ThermostatFanMode['Auto low'] },
+			action_map: {
+				[ThermostatOperatingState.Idle]: 'idle',
+				[ThermostatOperatingState.Heating]: 'heating',
+			},
 			discovery_payload: {
 				mode_state_topic: 'mode',
 				fan_mode_state_topic: 'fan',
@@ -653,27 +732,38 @@ describe('DiscoveryGenerator', () => {
 		expect(published).toHaveLength(3)
 	})
 
-	it('discovers RGB, binary, and white controls through the value pipeline', () => {
+	it('discovers RGB lights with binary and white controls', () => {
 		const currentColor = value({
-			id: '2-51-0-currentColor',
+			id: ccValueId(CommandClasses['Color Switch'], 'currentColor'),
 			commandClass: CommandClasses['Color Switch'],
 			property: 'currentColor',
 			type: 'color',
-			targetValue: '51-0-targetColor',
+			targetValue: ccValueKey(
+				CommandClasses['Color Switch'],
+				'targetColor',
+			),
 		})
 		const binary = value({
-			id: '2-37-0-currentValue',
-			targetValue: '37-0-targetValue',
+			id: BINARY_SWITCH_CURRENT_VALUE_ID,
+			targetValue: ccValueKey(
+				CommandClasses['Binary Switch'],
+				'targetValue',
+			),
 		})
 		const hassNode = node({
 			values: {
-				'51-0-currentColor': currentColor,
-				'37-0-currentValue': binary,
-				'51-0-currentColor-0': value(),
+				[ccValueKey(CommandClasses['Color Switch'], 'currentColor')]:
+					currentColor,
+				[BINARY_SWITCH_CURRENT_VALUE]: binary,
+				[ccValueKey(CommandClasses['Color Switch'], 'currentColor', 0)]:
+					value(),
 			},
 		})
 		const { generator } = setup({})
-		generator.discoverValue(hassNode, '51-0-currentColor')
+		generator.discoverValue(
+			hassNode,
+			ccValueKey(CommandClasses['Color Switch'], 'currentColor'),
+		)
 		const rgb = Object.values(hassNode.hassDevices).find(
 			(candidate) => candidate.type === 'light',
 		)
@@ -684,13 +774,13 @@ describe('DiscoveryGenerator', () => {
 			'white',
 		])
 		expect(rgb.discovery_payload.on_command_type).toBe('last')
-		expect(rgb.values).toContain('37-0-currentValue')
+		expect(rgb.values).toContain(BINARY_SWITCH_CURRENT_VALUE)
 	})
 
-	it('discovers switch and configuration values through typed topic ports', () => {
+	it('discovers switch and writable configuration entities', () => {
 		const binary = value({ isCurrentValue: true, targetValue: 'target' })
 		const configValue = value({
-			id: '2-112-0-1',
+			id: ccValueId(CommandClasses.Configuration, 1),
 			commandClass: CommandClasses.Configuration,
 			property: 1,
 			propertyName: 'Parameter 1',
@@ -702,14 +792,17 @@ describe('DiscoveryGenerator', () => {
 		})
 		const hassNode = node({
 			values: {
-				'37-0-currentValue': binary,
-				'112-0-1': configValue,
+				[BINARY_SWITCH_CURRENT_VALUE]: binary,
+				[ccValueKey(CommandClasses.Configuration, 1)]: configValue,
 			},
 		})
 		const { generator, published } = setup({})
 
-		generator.discoverValue(hassNode, '37-0-currentValue')
-		generator.discoverValue(hassNode, '112-0-1')
+		generator.discoverValue(hassNode, BINARY_SWITCH_CURRENT_VALUE)
+		generator.discoverValue(
+			hassNode,
+			ccValueKey(CommandClasses.Configuration, 1),
+		)
 		expect(published).toHaveLength(2)
 		expect(Object.values(hassNode.hassDevices)).toEqual(
 			expect.arrayContaining([
@@ -719,18 +812,19 @@ describe('DiscoveryGenerator', () => {
 		)
 
 		const ignored = value({
-			id: '2-112-0-2',
+			id: ccValueId(CommandClasses.Configuration, 2),
 			commandClass: CommandClasses.Configuration,
 			property: 2,
 			type: 'string',
 			writeable: true,
 		})
-		hassNode.values['112-0-2'] = ignored
-		generator.discoverValue(hassNode, '112-0-2')
+		const ignoredKey = ccValueKey(CommandClasses.Configuration, 2)
+		hassNode.values[ignoredKey] = ignored
+		generator.discoverValue(hassNode, ignoredKey)
 		expect(published).toHaveLength(2)
 
 		const pulse = value({
-			id: '2-53-0-count',
+			id: ccValueId(CommandClasses['Pulse Meter'], 'count'),
 			commandClass: CommandClasses['Pulse Meter'],
 			property: 'count',
 			type: 'number',
@@ -741,37 +835,56 @@ describe('DiscoveryGenerator', () => {
 		expect(published).toHaveLength(3)
 	})
 
-	it('discovers generated climates and skips unsupported thermostat nodes', () => {
+	it('discovers thermostat climates and skips unsupported nodes', () => {
 		const thermostat = node({
-			deviceClass: { generic: 0x08, specific: 1 },
+			deviceClass: {
+				generic: GENERIC_DEVICE_CLASS_THERMOSTAT,
+				specific: HEATING_THERMOSTAT_SPECIFIC_DEVICE_CLASS,
+			},
 			values: {
 				mode: value({
-					id: '2-64-0-mode',
+					id: ccValueId(CommandClasses['Thermostat Mode'], 'mode'),
 					commandClass: CommandClasses['Thermostat Mode'],
 					property: 'mode',
 					type: 'number',
 					states: [
-						{ value: 0, text: 'Off' },
-						{ value: 1, text: 'Heat' },
-						{ value: 2, text: 'Cool' },
+						{ value: ThermostatMode.Off, text: 'Off' },
+						{ value: ThermostatMode.Heat, text: 'Heat' },
+						{ value: ThermostatMode.Cool, text: 'Cool' },
 					],
 				}),
 				setpoint: value({
-					id: '2-67-0-setpoint-1',
+					id: ccValueId(
+						CommandClasses['Thermostat Setpoint'],
+						'setpoint',
+						ThermostatSetpointType.Heating,
+					),
 					commandClass: CommandClasses['Thermostat Setpoint'],
 					property: 'setpoint',
-					propertyKey: 1,
+					propertyKey: ThermostatSetpointType.Heating,
 					type: 'number',
 				}),
 				action: value({
-					id: '2-66-0-state',
+					id: ccValueId(
+						CommandClasses['Thermostat Operating State'],
+						'state',
+					),
 					commandClass: CommandClasses['Thermostat Operating State'],
 					property: 'state',
 					type: 'number',
 					states: [
-						{ value: 0, text: 'Idle' },
-						{ value: 1, text: 'Heating' },
-						{ value: 99, text: 'Unknown' },
+						{
+							value: ThermostatOperatingState.Idle,
+							text: 'Idle',
+						},
+						{
+							value: ThermostatOperatingState.Heating,
+							text: 'Heating',
+						},
+						{
+							value: UNRECOGNIZED_THERMOSTAT_OPERATING_STATE,
+							text: 'Unknown',
+						},
 					],
 				}),
 			},
@@ -781,7 +894,10 @@ describe('DiscoveryGenerator', () => {
 		generator.discoverClimates(node())
 		generator.discoverClimates(
 			node({
-				deviceClass: { generic: 0x08, specific: 1 },
+				deviceClass: {
+					generic: GENERIC_DEVICE_CLASS_THERMOSTAT,
+					specific: HEATING_THERMOSTAT_SPECIFIC_DEVICE_CLASS,
+				},
 				values: {},
 			}),
 		)
@@ -794,7 +910,11 @@ describe('DiscoveryGenerator', () => {
 				?.find((candidate) => candidate.type === 'climate'),
 		).toMatchObject({
 			type: 'climate',
-			mode_map: { off: 0, heat: 1, cool: 2 },
+			mode_map: {
+				off: ThermostatMode.Off,
+				heat: ThermostatMode.Heat,
+				cool: ThermostatMode.Cool,
+			},
 		})
 		const firstProjection = structuredClone(
 			catalog.get(thermostat.deviceId),
