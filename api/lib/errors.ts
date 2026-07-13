@@ -53,6 +53,7 @@ export function getErrorMessage(value: unknown): string {
 		return value
 	}
 
+	// A hostile Proxy's has/get traps can make the 'in' check and property read themselves throw
 	const messageCarrierMessage = tryOrUndefined(() =>
 		hasMessage(value) ? value.message : undefined,
 	)
@@ -66,6 +67,7 @@ export function getErrorMessage(value: unknown): string {
 		return stringified
 	}
 
+	// String() invokes Symbol.toPrimitive/toString/valueOf, any of which can throw on a hostile value
 	const coerced = tryOrUndefined(() =>
 		// eslint-disable-next-line @typescript-eslint/no-base-to-string -- intentional best-effort fallback for values with no useful string form
 		String(value),
