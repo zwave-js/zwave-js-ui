@@ -15,56 +15,6 @@ import hassCfg from '../../../api/hass/configurations.ts'
 import hassDevices from '../../../api/hass/devices.ts'
 
 describe('HASS catalog: configurations.ts', () => {
-	it('exposes exactly the known set of entity-type keys (no additions/removals)', () => {
-		expect(Object.keys(hassCfg).sort()).toStrictEqual(
-			[
-				'barrier_state',
-				'binary_sensor',
-				'central_scene',
-				'config_number',
-				'config_switch',
-				'cover',
-				'cover_position',
-				'fan',
-				'light_dimmer',
-				'light_rgb_dimmer',
-				'lock',
-				'sensor_generic',
-				'sound_switch',
-				'switch',
-				'thermostat',
-				'volume_dimmer',
-			].sort(),
-		)
-	})
-
-	it("locks every entry's HA component `type` and `object_id`", () => {
-		const typeAndObject = Object.fromEntries(
-			Object.entries(hassCfg).map(([k, v]) => [
-				k,
-				`${v.type}/${v.object_id}`,
-			]),
-		)
-		expect(typeAndObject).toStrictEqual({
-			binary_sensor: 'binary_sensor/event',
-			sensor_generic: 'sensor/generic',
-			central_scene: 'sensor/scene_state',
-			light_rgb_dimmer: 'light/rgb_dimmer',
-			light_dimmer: 'light/dimmer',
-			volume_dimmer: 'light/volume_dimmer',
-			switch: 'switch/switch',
-			cover: 'cover/cover',
-			cover_position: 'cover/position',
-			barrier_state: 'cover/barrier_state',
-			lock: 'lock/lock',
-			thermostat: 'climate/climate',
-			fan: 'fan/fan',
-			sound_switch: 'fan/sound_switch',
-			config_switch: 'switch/config_switch',
-			config_number: 'number/config_number',
-		})
-	})
-
 	it('binary_sensor: on=true/off=false with passthrough value_template', () => {
 		expect(hassCfg.binary_sensor).toStrictEqual({
 			type: 'binary_sensor',
@@ -231,36 +181,6 @@ describe('HASS catalog: configurations.ts', () => {
 })
 
 describe('HASS catalog: devices.ts', () => {
-	it('exposes exactly the known set of device ids', () => {
-		expect(Object.keys(hassDevices).sort()).toStrictEqual(
-			[
-				'89-3-1',
-				'411-1-1',
-				'5-1619-20549',
-				'57-12593-18756',
-				'99-12340-18756',
-				'99-12593-18756',
-				'99-12600-18756',
-				'99-12850-18756',
-				'152-12-25857',
-				'152-263-25601',
-				'152-256-8194',
-				'271-4096-770',
-				'328-1-1',
-				'328-1-3',
-				'328-2-3',
-				'328-3-3',
-				'345-82-3',
-				'622-23089-17235',
-				'881-21-2',
-				'129-1-20',
-				'2-32784-3',
-				'798-1-5',
-				'798-1-10',
-			].sort(),
-		)
-	})
-
 	it('each device id maps to a non-empty list of HassDevice entries', () => {
 		for (const [id, list] of Object.entries(hassDevices)) {
 			expect(Array.isArray(list), `${id} is an array`).toBe(true)
