@@ -1,32 +1,3 @@
-/**
- * GroupService – owns all multicast-group collection/persistence state, CRUD
- * with physical-node validation, and the group virtual-node lifecycle
- * (creation/update/value-projection/socket emission) driven by group
- * membership changes.
- *
- * Extracted from ZwaveClient to keep the monolith slim. The service is
- * strict-clean (no `any` casts, no non-null assertions, no ts-ignore).
- *
- * Broadcast virtual nodes (standard + LR) are NOT part of this service –
- * they're lifecycle-owned by ZwaveClient (driver-ready / node-added /
- * node-removed hooks) and out of scope for this extraction. They share the
- * same live virtual-node instance registry, so `GroupVirtualNodeRegistryPort`
- * is a thin pass-through to that shared `Map` rather than state owned here.
- *
- * Ports:
- *   driver        – resolves current driver/controller readiness + multicast
- *                    group creation across restarts
- *   virtualNodes  – shared live VirtualNode instance registry (multicast +
- *                    broadcast), owned by ZwaveClient
- *   zuiNodes      – ZUINode registry access (get/set/delete by id)
- *   socket        – socket emission + event bus notifications
- *   utils         – shared helpers ZwaveClient still owns (ValueID
- *                    stringification, virtual ZUINode/value-id construction –
- *                    reused by the broadcast lifecycle too – and throttling,
- *                    plus a logger for internal error reporting)
- *   persistence   – read/write groups.json via jsonStore
- */
-
 import { NODE_ID_BROADCAST, NODE_ID_BROADCAST_LR } from '@zwave-js/core'
 import { getErrorMessage } from '../errors.ts'
 import { socketEvents } from '../SocketEvents.ts'
@@ -41,39 +12,22 @@ import type {
 	ZUIGroup,
 } from './ports.ts'
 
-/** Maximum length of a multicast group name (avoids bloating MQTT topics). */
+/** Maximum length of a multicast group name, kept short to avoid bloating MQTT topics */
 const GROUP_NAME_MAX_LENGTH = 64
 
-/**
- * Lower bound for auto-assigned multicast-group virtual-node IDs. Chosen
- * above the LR address space so they never collide with physical or
- * broadcast nodes.
- */
+/** Set above the LR address space so auto-assigned multicast-group virtual-node IDs never collide with physical or broadcast nodes */
 const GROUP_ID_MIN = 0x1000
 
 /**
- * A cancellation token scoped to exactly one GroupService "generation" - one
- * `ZwaveClient.init()` call, i.e. one driver/node-registry lifetime.
+ * Cancellation token for one GroupService generation (one ZwaveClient.init()/restart() lifetime).
  *
- * `ZwaveClient` constructs a brand-new `GroupService` (wired to its
- * then-current, closure-backed virtual-node/ZUINode registries) on every
- * `init()` (called from the constructor and from every `restart()`). If a
- * mutating call on the OLD `GroupService` instance (`createGroup`,
- * `updateGroup`, `deleteGroup`, `removeNodeFromGroups`) is still suspended on
- * its persistence `await` when a restart mints a new generation, that old
- * instance's own in-memory bookkeeping (`_groups`, `_nodeToGroups`) is no
- * longer authoritative - a driver-ready handler in the NEW generation may
- * already be rebuilding virtual nodes from a freshly-loaded groups snapshot.
- * Letting the old instance's continuation go on to materialize/refresh
- * virtual nodes after that point would mix old bookkeeping with new
- * driver/node state.
+ * A restart replaces GroupService with a fresh instance while a mutating call (createGroup/updateGroup/deleteGroup/removeNodeFromGroups)
+ * on the old instance may still be suspended on its persistence await, with in-memory bookkeeping (_groups/_nodeToGroups) that's no
+ * longer authoritative once the new generation starts rebuilding virtual nodes from a freshly-loaded groups snapshot.
  *
- * Each mutating method re-checks {@link cancelled} immediately after its
- * persistence `await` and aborts further virtual-node/socket mutation (the
- * persisted write already happened and is safe to keep) rather than risking
- * that mix. The next generation's driver-ready handler re-derives virtual
- * nodes from the (by-then up to date) persisted groups, so this is
- * self-healing rather than lossy.
+ * Each mutating method checks `cancelled` right after its persistence await and stops mutating virtual-node/socket state if a new
+ * generation has since started - the write already persisted, and the new generation's driver-ready handler re-derives virtual nodes
+ * from it, so nothing is lost.
  */
 export class GroupServiceGeneration {
 	private _cancelled = false
@@ -90,14 +44,11 @@ export class GroupServiceGeneration {
 export class GroupService {
 	private _groups: ZUIGroup[]
 
-	/**
-	 * Index of physical nodeId → groupIds containing it. Rebuilt on group
-	 * create/update/delete so per-value-change lookups are O(1) instead of
-	 * O(groups).
-	 */
+	// Reverse nodeId → groupIds index, rebuilt on every group create/update/delete, kept for O(1) lookups instead of O(groups)
 	private readonly _nodeToGroups: Map<number, Set<number>> = new Map()
 
 	private readonly _driver: GroupDriverPort
+	// Shared with ZwaveClient's broadcast (standard + LR) virtual-node lifecycle, so this is a pass-through to that Map rather than state owned here
 	private readonly _virtualNodes: GroupVirtualNodeRegistryPort
 	private readonly _zuiNodes: GroupZUINodeStorePort
 	private readonly _socket: GroupSocketPort
@@ -129,13 +80,6 @@ export class GroupService {
 		this._rebuildNodeToGroupsIndex()
 	}
 
-	// ---------------------------------------------------------------
-	// Internal helpers
-	// ---------------------------------------------------------------
-
-	/**
-	 * Validate and normalize a group name.
-	 */
 	private _validateGroupName(name: string): string {
 		const trimmed = name?.trim()
 		if (!trimmed) {
@@ -150,9 +94,7 @@ export class GroupService {
 	}
 
 	/**
-	 * Filter and validate node IDs for group creation/update.
-	 * Removes duplicates, controller node, broadcast IDs, virtual-group IDs,
-	 * and any IDs not present in the controller's physical nodes map.
+	 * Drop duplicates, the controller, broadcast targets, and virtual-group IDs, keeping only known physical nodes
 	 */
 	private _filterGroupNodeIds(nodeIds: number[]): number[] {
 		const ownNodeId = this._driver.getOwnNodeId()
@@ -175,9 +117,6 @@ export class GroupService {
 		return filtered
 	}
 
-	/**
-	 * Get next available group ID (>= GROUP_ID_MIN).
-	 */
 	private _getNextGroupId(): number {
 		const existingIds = new Set(this._groups.map((g) => g.id))
 		let nextId = GROUP_ID_MIN
@@ -187,10 +126,6 @@ export class GroupService {
 		return nextId
 	}
 
-	/**
-	 * Rebuild the nodeId → groupIds index. Called whenever the groups list
-	 * changes so per-value-change lookups stay O(1) instead of O(groups).
-	 */
 	private _rebuildNodeToGroupsIndex(): void {
 		this._nodeToGroups.clear()
 		for (const group of this._groups) {
@@ -205,37 +140,23 @@ export class GroupService {
 		}
 	}
 
-	/**
-	 * Update virtual node for multicast group.
-	 */
 	private _updateVirtualNode(group: ZUIGroup): void {
 		const virtualNode = this._zuiNodes.get(group.id)
 		if (!virtualNode) {
-			// Create if doesn't exist
 			this.createVirtualNode(group)
 			return
 		}
 
 		virtualNode.name = group.name
 
-		// Update virtual node values based on member nodes
 		this._updateVirtualNodeValues(group)
 
-		// Emit node updated event
 		this._socket.emitNodeUpdate(virtualNode, { name: virtualNode.name })
 	}
 
 	/**
-	 * Populate values for a multicast group virtual node.
-	 *
-	 * zwave-js `VirtualNode.getDefinedValueIDs()` returns the **union** of all
-	 * writeable actuator value IDs across every physical member node, plus
-	 * Basic CC (always added so heterogeneous groups can be controlled
-	 * together). This means a group may expose CCs that only some members
-	 * support — nodes that don't will simply ignore the command.
-	 *
-	 * For each value we aggregate the current state of all member nodes:
-	 * if every member has the same value it is shown, otherwise `undefined`.
+	 * zwave-js's `getDefinedValueIDs()` unions every member's writeable actuator values plus Basic CC, so a group can expose CCs
+	 * that only some members support - those members simply ignore the command
 	 */
 	private _updateVirtualNodeValues(group: ZUIGroup): void {
 		const virtualNode = this._zuiNodes.get(group.id)
@@ -252,9 +173,7 @@ export class GroupService {
 			for (const zwaveValue of definedValueIDs) {
 				const vId = this._utils.getValueId(zwaveValue)
 
-				// Aggregate values from member nodes that support this CC.
-				// Show the value if all supporting members agree, otherwise
-				// undefined.
+				// Show the value only if all supporting members agree, using deep equality so object-valued CCs like Color compare correctly
 				const memberValues = group.nodeIds
 					.map((id) => this._zuiNodes.get(id)?.values?.[vId]?.value)
 					.filter((v) => v !== undefined && v !== null)
@@ -274,8 +193,7 @@ export class GroupService {
 				virtualNode.values[vId] = valueId
 			}
 
-			// Emit valueChanged for each value so the MQTT gateway
-			// publishes them and registers topics for write-back
+			// Emit valueChanged for each value so the MQTT gateway publishes them and registers topics for write-back
 			for (const vId in virtualNode.values) {
 				this._socket.emitValueChanged(
 					virtualNode.values[vId],
@@ -296,33 +214,11 @@ export class GroupService {
 		}
 	}
 
-	// ---------------------------------------------------------------
-	// Public API – exact signatures preserved from ZwaveClient
-	// ---------------------------------------------------------------
-
-	/**
-	 * Materialize (or re-materialize) the ZUINode shell + initial values for a
-	 * multicast group.
-	 *
-	 * Despite the name, this runs in three scenarios:
-	 *   1. **Driver startup / restore** — ZwaveClient's driver-ready handler
-	 *      iterates persisted groups and calls this to (re)build their live
-	 *      `VirtualNode` instance and ZUI shell. The live instance is *not*
-	 *      yet registered, so it is created here.
-	 *   2. **After `createGroup` succeeds** — the live `VirtualNode` was
-	 *      already eagerly registered (so a driver-side rejection happens
-	 *      before we mutate persistent state); this call only needs to build
-	 *      the ZUI shell.
-	 *   3. **As a fallback inside `_updateVirtualNode`** when the ZUI shell is
-	 *      missing for an existing live instance.
-	 *
-	 * The registry `has(group.id)` guard short-circuits case (2)/(3) and
-	 * lazily creates the live instance for case (1).
-	 */
 	createVirtualNode(group: ZUIGroup): void {
 		if (!this._driver.isDriverReady()) return
 
 		try {
+			// createGroup registers the live VirtualNode eagerly; driver restart and _updateVirtualNode's fallback create it lazily here
 			if (!this._virtualNodes.has(group.id)) {
 				const multicastGroup = this._driver.getMulticastGroup(
 					group.nodeIds,
@@ -338,8 +234,7 @@ export class GroupService {
 
 			this._zuiNodes.set(group.id, virtualNode)
 
-			// Emit node update (not nodeAdded, which expects {node, result}
-			// and shows a confirmation dialog)
+			// Emit nodeUpdated, not nodeAdded, since nodeAdded expects {node, result} and triggers a confirmation dialog in the UI
 			this._socket.sendToSocket(socketEvents.nodeUpdated, virtualNode)
 
 			this._updateVirtualNodeValues(group)
@@ -352,10 +247,7 @@ export class GroupService {
 		}
 	}
 
-	/**
-	 * Update virtual nodes when a member node's value changes.
-	 * Throttled to avoid excessive rebuilds on frequent value updates.
-	 */
+	// Throttled per group to avoid rebuilding a virtual node on every single member-value update
 	updateVirtualNodesForNode(nodeId: number): void {
 		const groupIds = this._nodeToGroups.get(nodeId)
 		if (!groupIds || groupIds.size === 0) return
@@ -371,19 +263,9 @@ export class GroupService {
 				1000,
 			)
 		}
-		// Note: broadcast node values are not updated here because they are
-		// write-only and don't need to reflect individual node value changes.
-		// They are rebuilt when nodes are added/removed or become ready
-		// (ZwaveClient owns that lifecycle).
 	}
 
-	/**
-	 * Drop a removed physical node from any group containing it. Persists
-	 * groups.json before touching live virtual instances, so a crash between
-	 * the in-memory mutation and the disk write can never resurrect the
-	 * removed node on restart. Refreshes the corresponding multicast
-	 * instances and virtual ZUI nodes after the write succeeds.
-	 */
+	// Persists groups.json before touching virtual instances, so a crash between the mutation and the disk write can never resurrect the removed node on restart
 	async removeNodeFromGroups(nodeId: number): Promise<void> {
 		const groupIds = this._nodeToGroups.get(nodeId)
 		if (!groupIds || groupIds.size === 0) return
@@ -409,11 +291,7 @@ export class GroupService {
 			return
 		}
 
-		// A restart minted a new generation while the write above was in
-		// flight - this instance's bookkeeping is no longer authoritative,
-		// so don't refresh/mutate virtual nodes from it. The persisted
-		// write already landed; the new generation's driver-ready handler
-		// re-derives virtual nodes from the (now up to date) groups.
+		// This generation was cancelled by a restart; the persisted removal already stands, so skip refreshing virtual nodes here
 		if (this._generation.cancelled) return
 
 		this._rebuildNodeToGroupsIndex()
@@ -434,9 +312,7 @@ export class GroupService {
 				}
 				this._updateVirtualNode(group)
 			} else {
-				// Group dropped below the 2-node minimum; tear down the live
-				// virtual node but leave the persisted entry so the user can
-				// fix it from the Groups page.
+				// Group dropped below the 2-node minimum; tear down the live virtual node but leave the persisted entry so the user can fix it from the Groups page
 				this._virtualNodes.delete(group.id)
 				this._zuiNodes.delete(group.id)
 				this._socket.sendToSocket(socketEvents.nodeRemoved, {
@@ -446,10 +322,6 @@ export class GroupService {
 		}
 	}
 
-	/**
-	 * Create a new group. Builds the multicast instance before persisting so a
-	 * failure leaves no phantom group in `groups.json`.
-	 */
 	async createGroup(name: string, nodeIds: number[]): Promise<ZUIGroup> {
 		const trimmedName = this._validateGroupName(name)
 		const validNodeIds = this._filterGroupNodeIds(nodeIds)
@@ -457,8 +329,7 @@ export class GroupService {
 		const id = this._getNextGroupId()
 		const group: ZUIGroup = { id, name: trimmedName, nodeIds: validNodeIds }
 
-		// Build the live multicast instance up-front: if zwave-js rejects the
-		// node set, throw before we touch persistent state.
+		// Build the live multicast instance up-front: if zwave-js rejects the node set, throw before we touch persistent state
 		if (this._driver.isDriverReady()) {
 			const multicastGroup = this._driver.getMulticastGroup(validNodeIds)
 			this._virtualNodes.set(id, multicastGroup)
@@ -468,17 +339,12 @@ export class GroupService {
 		try {
 			await this._persistence.put(this._groups)
 		} catch (error) {
-			// Rollback in-memory state on persistence failure
 			this._groups.pop()
 			this._virtualNodes.delete(id)
 			throw error
 		}
 
-		// A restart minted a new generation while the write above was in
-		// flight - the group IS persisted (safe to keep and return), but
-		// this instance's bookkeeping is stale, so skip materializing the
-		// virtual node from it. The new generation's driver-ready handler
-		// re-derives virtual nodes from the (now up to date) groups.
+		// This generation was cancelled by a restart; the persisted group already stands, so skip materializing its virtual node here
 		if (this._generation.cancelled) return group
 
 		this._rebuildNodeToGroupsIndex()
@@ -487,9 +353,6 @@ export class GroupService {
 		return group
 	}
 
-	/**
-	 * Update an existing group.
-	 */
 	async updateGroup(
 		id: number,
 		name: string,
@@ -507,8 +370,7 @@ export class GroupService {
 		this._groups[groupIndex].name = trimmedName
 		this._groups[groupIndex].nodeIds = validNodeIds
 
-		// Refresh the multicast instance with the validated node list before
-		// persisting — if zwave-js rejects, restore previous state and throw.
+		// Refresh the multicast instance before persisting; restore the previous group and rethrow if zwave-js rejects the node list
 		if (this._driver.isDriverReady()) {
 			try {
 				const multicastGroup =
@@ -527,8 +389,7 @@ export class GroupService {
 			throw error
 		}
 
-		// See createGroup()'s comment: a stale generation must not refresh
-		// virtual nodes from its own (possibly out of sync) bookkeeping.
+		// This generation was cancelled by a restart; the persisted update already stands, so skip refreshing the virtual node here
 		if (this._generation.cancelled) return this._groups[groupIndex]
 
 		this._rebuildNodeToGroupsIndex()
@@ -537,9 +398,6 @@ export class GroupService {
 		return this._groups[groupIndex]
 	}
 
-	/**
-	 * Delete a group.
-	 */
 	async deleteGroup(id: number): Promise<boolean> {
 		const groupIndex = this._groups.findIndex((g) => g.id === id)
 		if (groupIndex === -1) {
@@ -552,9 +410,7 @@ export class GroupService {
 		this._groups.splice(groupIndex, 1)
 		await this._persistence.put(this._groups)
 
-		// See createGroup()'s comment: a stale generation must not go on to
-		// rebuild its index or emit a (redundant, possibly misordered with
-		// the new generation's own bookkeeping) removal notification.
+		// This generation was cancelled by a restart; the persisted removal already stands, so skip rebuilding the index and emitting a notification that could race the new generation's own bookkeeping
 		if (this._generation.cancelled) return true
 
 		this._rebuildNodeToGroupsIndex()
@@ -564,9 +420,6 @@ export class GroupService {
 		return true
 	}
 
-	/**
-	 * Get all groups
-	 */
 	getGroups(): ZUIGroup[] {
 		return this._groups
 	}

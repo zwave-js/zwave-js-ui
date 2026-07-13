@@ -839,15 +839,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	private _configTemplateService: ConfigurationTemplateService
 	private _sceneService: SceneService<ZUIValueIdScene>
 	private _groupService: GroupService
-	/**
-	 * The current GroupService's generation token (see
-	 * {@link GroupServiceGeneration}). Cancelled at the top of every
-	 * `init()` (before a new one is minted) so any mutating call still in
-	 * flight on the OLD GroupService instance detects it after its
-	 * persistence `await` and aborts further virtual-node mutation instead
-	 * of mixing old bookkeeping with the new generation's driver/node
-	 * state.
-	 */
+	// Generation token for the current GroupService instance; cancelled and replaced on every init(), see GroupServiceGeneration for the cancellation mechanism
 	private _groupServiceGeneration: GroupServiceGeneration | undefined
 	private _associationService: AssociationService
 
@@ -1036,7 +1028,6 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			configManager,
 		)
 
-		// --- SceneService wiring -------------------------------------------------
 		const scenePersistencePort = {
 			get: () => jsonStore.get(store.scenes),
 			put: (data: ZUIScene[]) => jsonStore.put(store.scenes, data),
@@ -1060,7 +1051,6 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			jsonStore.get(store.scenes),
 		)
 
-		// --- GroupService wiring --------------------------------------------------
 		const groupDriverPort = {
 			isDriverReady: () => this.driverReady,
 			getOwnNodeId: () => this._driver?.controller?.ownNodeId,
@@ -1071,14 +1061,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			getMulticastGroup: (nodeIds: number[]) =>
 				this._driver.controller.getMulticastGroup(nodeIds),
 		}
-		// Closure-backed, like every other Group port above: `init()`
-		// replaces `this._virtualNodes` with a brand-new Map on every
-		// restart, so this must resolve the CURRENT map on each call rather
-		// than closing over the Map instance that happened to be live when
-		// GroupService was constructed - otherwise a GroupService instance
-		// whose in-flight call outlives a restart would read/write an
-		// orphaned, abandoned map instead of the one the rest of
-		// ZwaveClient (and the next GroupService generation) actually uses.
+		// this._virtualNodes is replaced with a new Map on every restart; resolving it fresh here (not capturing a reference) keeps an in-flight call from a superseded generation from writing into an abandoned map
 		const groupVirtualNodeRegistryPort = {
 			has: (id: number) => this._virtualNodes.has(id),
 			get: (id: number) => this._virtualNodes.get(id),
@@ -1125,12 +1108,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			get: () => jsonStore.get(store.groups),
 			put: (data: Group[]) => jsonStore.put(store.groups, data),
 		}
-		// Cancel the previous generation (if any) before minting a new one,
-		// so any mutating call still in flight on the OLD GroupService
-		// instance aborts further virtual-node mutation after its
-		// persistence await instead of mixing stale bookkeeping with this
-		// new generation's driver/node state. See GroupServiceGeneration's
-		// doc comment for the full rationale.
+		// Cancels the previous generation before minting a new one so its in-flight mutations stop touching virtual-node state once superseded; see GroupServiceGeneration for the full mechanism
 		this._groupServiceGeneration?.cancel()
 		this._groupServiceGeneration = new GroupServiceGeneration()
 		this._groupService = new GroupService(
@@ -1145,7 +1123,6 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			jsonStore.get(store.groups),
 		)
 
-		// --- AssociationService wiring ---------------------------------------------
 		const associationDriverPort = {
 			getDriver: () => this._driver,
 		}
@@ -1645,7 +1622,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	}
 
 	/**
-	 * Populate node `groups`. Delegates to AssociationService.
+	 * Populate node `groups`
 	 */
 	getGroups(nodeId: number, ignoreUpdate = false) {
 		return this._associationService.getGroups(nodeId, ignoreUpdate)
@@ -2540,16 +2517,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 	// === GROUPS MANAGEMENT ===
 
-	/**
-	 * Create a new group. Delegates to GroupService.
-	 */
 	async _createGroup(name: string, nodeIds: number[]): Promise<Group> {
 		return this._groupService.createGroup(name, nodeIds)
 	}
 
-	/**
-	 * Update an existing group. Delegates to GroupService.
-	 */
 	async _updateGroup(
 		id: number,
 		name: string,
@@ -2558,9 +2529,6 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		return this._groupService.updateGroup(id, name, nodeIds)
 	}
 
-	/**
-	 * Delete a group. Delegates to GroupService.
-	 */
 	async _deleteGroup(id: number): Promise<boolean> {
 		return this._groupService.deleteGroup(id)
 	}

@@ -222,13 +222,7 @@ export function module(module: string): ModuleLogger {
 	return setupLogger(logContainer, module, activeConfig)
 }
 
-/**
- * Closes every cached transport (if closeable) and drops the memoized
- * `transportsList`, so the next `customTransports()` call rebuilds it from
- * scratch instead of returning the stale, already-configured array (see
- * issue #2937's "setup transports only once" memoization above). Shared by
- * `setupAll()` and the test-only reset seam below so both stay in sync.
- */
+// Drops the issue #2937 transport memoization so the next customTransports() call rebuilds instead of reusing stale transports
 function closeCachedTransports(): void {
 	transportGenerations.forEach((generation) => {
 		generation.forEach((transport) => {
@@ -253,20 +247,8 @@ export function setupAll(config: DeepPartial<GatewayConfig>) {
 	})
 }
 
-// ### TEST-ONLY SEAM
-//
-// `module()`/`customTransports()` intentionally memoize the transports list
-// and register every named logger in the module-level `logContainer`
-// singleton (production never needs to un-create a logger). A test file
-// that exercises several module names/configs in the same process (e.g.
-// `test/lib/logger.test.ts`) would otherwise leak that singleton state
-// across `describe`/`it` blocks - and, under `--sequence.shuffle`, whichever
-// block happens to run first "wins" the shared cache, making the rest
-// order-dependent. Nothing in the production entrypoint (`api/bin/www.ts`)
-// imports or calls this - it only exists so tests can reset the logger
-// singleton to a clean slate between suites.
+// Resets the logger/transport singletons between tests so shuffled suites (test/lib/logger.test.ts) don't leak config across each other; production never calls this
 export const __testHooks = {
-	/** Closes and forgets every registered logger and cached transport. */
 	reset(): void {
 		stopCleanJob()
 		closeCachedTransports()
