@@ -3,14 +3,12 @@ import { CommandClasses, SecurityClass } from '@zwave-js/core'
 import { EventEmitter } from 'node:events'
 import type {
 	ControllerStatistics,
-	Driver,
 	FirmwareUpdateResult,
 	FoundNode,
 	InclusionResult,
 	InterviewProgress,
 	NodeInterviewFailedEventArgs,
 	NodeStatistics,
-	TranslatedValueID,
 	ZWaveNode,
 	ZWaveNodeMetadataUpdatedArgs,
 	ZWaveNodeValueAddedArgs,
@@ -23,7 +21,6 @@ import {
 	FirmwareUpdateStatus,
 	InterviewStage,
 	NodeStatus,
-	Protocols,
 	RemoveNodeReason,
 } from 'zwave-js'
 import { afterEach, describe, expect, it, vi } from 'vitest'
@@ -33,101 +30,14 @@ import { socketEvents } from '../../../api/lib/SocketEvents.ts'
 import type { ZUINode, ZUIValueId } from '../../../api/lib/ZwaveClient.ts'
 import {
 	NodeRegistry,
+	type NodeRegistryDriver,
 	type NodeRegistryHost,
 } from '../../../api/lib/zwave/NodeRegistry.ts'
-
-type RegistryValue = TranslatedValueID & {
-	newValue?: unknown
-	prevValue?: unknown
-	stateless?: boolean
-}
-
-function createValue(overrides: Partial<RegistryValue> = {}): RegistryValue {
-	return {
-		commandClass: CommandClasses['Binary Switch'],
-		commandClassName: 'Binary Switch',
-		endpoint: 0,
-		property: 'currentValue',
-		propertyName: 'currentValue',
-		...overrides,
-	}
-}
-
-function createZwaveNode(overrides: Partial<ZWaveNode> = {}): ZWaveNode {
-	const emitter = new EventEmitter()
-	Object.assign(emitter, {
-		id: 2,
-		name: '',
-		location: '',
-		status: NodeStatus.Alive,
-		interviewStage: InterviewStage.Complete,
-		ready: true,
-		isControllerNode: false,
-		isListening: true,
-		isFrequentListening: false,
-		canSleep: false,
-		isRouting: true,
-		supportedDataRates: [40000],
-		maxDataRate: 40000,
-		supportsSecurity: true,
-		isSecure: true,
-		supportsBeaming: true,
-		protocolVersion: '7.19',
-		sdkVersion: '7.19',
-		firmwareVersion: '1.0',
-		manufacturerId: 1,
-		productId: 2,
-		productType: 3,
-		zwavePlusVersion: 2,
-		zwavePlusRoleType: 5,
-		zwavePlusNodeType: 0,
-		nodeType: 0,
-		deviceClass: {
-			basic: 1,
-			generic: { key: 2 },
-			specific: { key: 3 },
-		},
-		lastSeen: new Date(100),
-		defaultVolume: 20,
-		protocol: Protocols.ZWave,
-		deviceConfig: {
-			label: 'Switch',
-			description: 'A switch',
-			manufacturer: 'Maker',
-		},
-		commandClasses: {
-			'Schedule Entry Lock': { isSupported: vi.fn(() => false) },
-		},
-		getEndpointCount: vi.fn(() => 1),
-		getAllEndpoints: vi.fn(() => [
-			{
-				index: 0,
-				endpointLabel: '',
-				deviceClass: {
-					basic: 1,
-					generic: { key: 2 },
-					specific: { key: 3 },
-				},
-			},
-		]),
-		getHighestSecurityClass: vi.fn(() => SecurityClass.S2_Authenticated),
-		getFirmwareUpdateCapabilitiesCached: vi.fn(() => undefined),
-		hasDeviceConfigChanged: vi.fn(() => true),
-		getDefinedValueIDs: vi.fn(() => []),
-		getValueMetadata: vi.fn(() => ({
-			type: 'number',
-			readable: true,
-			writeable: true,
-		})),
-		getValue: vi.fn(() => 1),
-		getEndpoint: vi.fn(() => ({ getCCVersion: vi.fn(() => 3) })),
-		getCCVersion: vi.fn(() => 3),
-		supportsCC: vi.fn(() => false),
-		dsk: undefined,
-	})
-	Object.assign(emitter, overrides)
-	return emitter as unknown as ZWaveNode
-}
+import {
+	createServiceLogger,
+	createValue,
+	createZWaveNode,
+} from './nodeFixtures.ts'
 
 function createHarness(
 	options: {
@@ -139,25 +49,26 @@ function createHarness(
 ) {
 	let generation = 1
 	let current = true
-	const zwaveNode = options.node ?? createZwaveNode()
+	const zwaveNode = options.node ?? createZWaveNode()
 	const controllerNodes = new Map<number, ZWaveNode>([
 		[zwaveNode.id, zwaveNode],
 	])
 	const persisted: NodesStoreFile = options.persisted ?? {}
+	const controller = Object.assign(new EventEmitter(), {
+		nodes: controllerNodes,
+		ownNodeId: 1,
+		supportsLongRange: true,
+		getPrioritySUCReturnRouteCached: vi.fn(() => undefined),
+		getCustomSUCReturnRoutesCached: vi.fn(() => undefined),
+		getProvisioningEntry: vi.fn(() => undefined),
+		getSupportedRFRegions: vi.fn(() => []),
+	})
 	const driver = {
 		configManager: { lookupManufacturer: vi.fn(() => 'Maker') },
-		controller: {
-			nodes: controllerNodes,
-			ownNodeId: 1,
-			supportsLongRange: true,
-			getPrioritySUCReturnRouteCached: vi.fn(() => undefined),
-			getCustomSUCReturnRoutesCached: vi.fn(() => undefined),
-			getProvisioningEntry: vi.fn(() => undefined),
-			getSupportedRFRegions: vi.fn(() => []),
-		},
-	}
+		controller,
+	} satisfies NodeRegistryDriver
 	const host: NodeRegistryHost = {
-		getDriver: () => driver as unknown as Driver,
+		getDriver: () => driver,
 		getZWaveNode: (nodeId) => controllerNodes.get(nodeId),
 		getGeneration: () => generation,
 		isCurrent: (candidate, captured) =>
@@ -202,11 +113,7 @@ function createHarness(
 		clearThrottle: vi.fn(),
 		isDriverReady: vi.fn(() => options.driverReady ?? true),
 	}
-	const logger = {
-		info: vi.fn(),
-		warn: vi.fn(),
-		error: vi.fn(),
-	}
+	const logger = createServiceLogger()
 	const registry = new NodeRegistry(host, logger, options.fakeNodesReader)
 	return {
 		registry,
@@ -229,7 +136,7 @@ afterEach(() => {
 })
 
 describe('NodeRegistry persistence and lifecycle', () => {
-	it('restores array, legacy, and home-scoped persistence and publishes snapshots', async () => {
+	it('restores supported persisted node formats', async () => {
 		const arrayHarness = createHarness({
 			persisted: [undefined, { name: 'Controller' }, { name: 'Kitchen' }],
 		})
@@ -265,7 +172,7 @@ describe('NodeRegistry persistence and lifecycle', () => {
 		expect(missingHome.logger.warn).toHaveBeenCalled()
 	})
 
-	it('handles persistence failures and fences late restoration', async () => {
+	it('reports persistence failures and skips state restored after restart', async () => {
 		const harness = createHarness({ persisted: { 2: { name: 'Legacy' } } })
 		vi.mocked(harness.host.persistNodes).mockRejectedValueOnce(
 			new Error('disk failed'),
@@ -313,22 +220,9 @@ describe('NodeRegistry persistence and lifecycle', () => {
 		await staleScoped.registry.restorePersistedNodes()
 		await staleScoped.registry.updateStoreNodes()
 		expect(staleScoped.registry.storeNodes).toEqual({})
-
-		const latePersist = createHarness()
-		let finishPersist!: () => void
-		vi.mocked(latePersist.host.persistNodes).mockImplementationOnce(
-			() =>
-				new Promise((resolve) => {
-					finishPersist = () => resolve(undefined)
-				}),
-		)
-		const pending = latePersist.registry.updateStoreNodes()
-		latePersist.stale()
-		finishPersist()
-		await pending
 	})
 
-	it('creates, adds, finds, replaces, and removes physical nodes', async () => {
+	it('publishes node discovery, inclusion, and removal', async () => {
 		const harness = createHarness()
 		vi.mocked(harness.host.takeTmpNode).mockReturnValueOnce({
 			name: 'New',
@@ -358,7 +252,7 @@ describe('NodeRegistry persistence and lifecycle', () => {
 
 		const added = harness.registry.createNode(4)
 		added.ready = false
-		const addedZwave = createZwaveNode({
+		const addedZwave = createZWaveNode({
 			id: 4,
 			dsk: new Uint8Array(16),
 			getHighestSecurityClass: vi.fn(
@@ -403,16 +297,10 @@ describe('NodeRegistry persistence and lifecycle', () => {
 		})
 	})
 
-	it('updates node settings through the registry and fences late publication', async () => {
+	it('does not publish node settings completed after restart', async () => {
 		const harness = createHarness()
 		const node = harness.registry.createNode(2)
 
-		await expect(harness.registry.setNodeName(2, 'Kitchen')).resolves.toBe(
-			true,
-		)
-		await expect(
-			harness.registry.setNodeLocation(2, 'Downstairs'),
-		).resolves.toBe(true)
 		await expect(harness.registry.setNodeName(2, 'Kitchen')).resolves.toBe(
 			true,
 		)
@@ -445,7 +333,7 @@ describe('NodeRegistry persistence and lifecycle', () => {
 		harness.stale()
 		finishPersist()
 		await update
-		expect(harness.host.emitNodeUpdate).not.toHaveBeenLastCalledWith(node, {
+		expect(harness.host.emitNodeUpdate).not.toHaveBeenCalledWith(node, {
 			name: 'Late',
 		})
 
@@ -469,7 +357,7 @@ describe('NodeRegistry persistence and lifecycle', () => {
 		expect(driverOnly.zwaveNode.defaultVolume).toBe(12)
 	})
 
-	it('suppresses persistence failures without aborting value projection', async () => {
+	it('continues value updates when persistence fails', async () => {
 		const harness = createHarness()
 		harness.registry.createNode(2)
 		vi.mocked(harness.host.persistNodes).mockRejectedValueOnce(
@@ -487,7 +375,7 @@ describe('NodeRegistry persistence and lifecycle', () => {
 		expect(result?.valueId.value).toBe(symbol)
 	})
 
-	it('loads fake nodes as registry values and fences stale reads', async () => {
+	it('publishes configured fake node values only before restart', async () => {
 		const harness = createHarness({
 			fakeNodesReader: () =>
 				Promise.resolve(
@@ -499,7 +387,8 @@ describe('NodeRegistry persistence and lifecycle', () => {
 								{
 									id: '8-37-0-currentValue',
 									nodeId: 8,
-									commandClass: 37,
+									commandClass:
+										CommandClasses['Binary Switch'],
 									endpoint: 0,
 									property: 'currentValue',
 									value: true,
@@ -545,7 +434,7 @@ describe('NodeRegistry persistence and lifecycle', () => {
 })
 
 describe('NodeRegistry node events and values', () => {
-	it('projects status, interview, liveness, and queue order', async () => {
+	it('publishes status, interview, and liveness events in order', async () => {
 		const harness = createHarness()
 		const node = harness.registry.createNode(2)
 		harness.registry.projectNode(harness.zwaveNode)
@@ -633,14 +522,14 @@ describe('NodeRegistry node events and values', () => {
 		)
 	})
 
-	it('adds, updates, resets, removes, and reprojects values', async () => {
+	it('publishes value lifecycle events with current node data', async () => {
 		vi.useFakeTimers()
 		const zwaveValue = createValue()
 		const target = createValue({
 			property: 'targetValue',
 			propertyName: 'targetValue',
 		})
-		const zwaveNode = createZwaveNode({
+		const zwaveNode = createZWaveNode({
 			getDefinedValueIDs: vi.fn(() => [zwaveValue, target]),
 			getValue: vi.fn(() => 1),
 			getValueMetadata: vi.fn(() => ({
@@ -715,9 +604,9 @@ describe('NodeRegistry node events and values', () => {
 		expect(harness.host.onNameLocationChanged).toHaveBeenCalled()
 	})
 
-	it('projects ready values and physical statistics despite route failures', async () => {
+	it('publishes ready node values and statistics when routes fail', async () => {
 		const value = createValue()
-		const zwaveNode = createZwaveNode({
+		const zwaveNode = createZWaveNode({
 			getDefinedValueIDs: vi.fn(() => [value]),
 			commandClasses: {
 				'Schedule Entry Lock': { isSupported: vi.fn(() => true) },
@@ -763,13 +652,14 @@ describe('NodeRegistry node events and values', () => {
 })
 
 describe('NodeRegistry notifications, firmware, statistics, and listeners', () => {
-	it('adapts notifications and firmware state', () => {
+	it('publishes notifications and firmware updates', () => {
 		const harness = createHarness()
 		const node = harness.registry.createNode(2)
-		const endpoint = {
+		const endpoint = harness.zwaveNode
+		Object.assign(endpoint, {
 			nodeId: 2,
 			tryGetNode: () => harness.zwaveNode,
-		} as unknown as ZWaveNotificationCallbackParams_NotificationCC[0]
+		})
 		const notification: ZWaveNotificationCallbackParams_NotificationCC = [
 			endpoint,
 			CommandClasses.Notification,
@@ -808,8 +698,8 @@ describe('NodeRegistry notifications, firmware, statistics, and listeners', () =
 		expect(node.firmwareUpdate).toBeUndefined()
 	})
 
-	it('tracks controller background RSSI and emits controller events', () => {
-		const controller = createZwaveNode({ id: 1, isControllerNode: true })
+	it('retains three hours of RSSI and publishes controller statistics', () => {
+		const controller = createZWaveNode({ id: 1, isControllerNode: true })
 		const harness = createHarness({ node: controller })
 		const node = harness.registry.createNode(1)
 		node.statistics = { messagesRX: 1 } satisfies ControllerStatistics
@@ -825,7 +715,19 @@ describe('NodeRegistry notifications, firmware, statistics, and listeners', () =
 			} satisfies ControllerStatistics)
 		}
 		expect(node.lastActive).toEqual(expect.any(Number))
-		expect(node.bgRSSIPoints?.length).toBeLessThanOrEqual(361)
+		const points = node.bgRSSIPoints
+		if (!points?.length) throw new Error('Expected background RSSI samples')
+		const newest = points.at(-1)
+		const oldest = points.at(0)
+		if (!newest || !oldest)
+			throw new Error('Expected background RSSI samples')
+		expect(
+			points.every(
+				(point) =>
+					newest.timestamp - point.timestamp <= 3 * 60 * 60 * 1000,
+			),
+		).toBe(true)
+		expect(oldest.timestamp).toBe(181 * 60_000)
 		expect(harness.host.emitEvent).toHaveBeenLastCalledWith(
 			'controller',
 			'statistics updated',
@@ -835,17 +737,11 @@ describe('NodeRegistry notifications, firmware, statistics, and listeners', () =
 
 	it('stops controller event publication after close', () => {
 		const harness = createHarness({
-			node: createZwaveNode({ id: 1, isControllerNode: true }),
+			node: createZWaveNode({ id: 1, isControllerNode: true }),
 		})
 		const node = harness.registry.createNode(1)
-		const controller = Object.assign(
-			new EventEmitter(),
-			harness.driver.controller,
-		)
-		harness.driver.controller = controller
-		harness.registry.bindControllerEvents(
-			controller as unknown as Driver['controller'],
-		)
+		const controller = harness.driver.controller
+		harness.registry.bindControllerEvents(controller)
 		controller.emit('statistics updated', {
 			messagesRX: 2,
 		} satisfies ControllerStatistics)
@@ -858,7 +754,7 @@ describe('NodeRegistry notifications, firmware, statistics, and listeners', () =
 		expect(node.statistics).toMatchObject({ messagesRX: 2 })
 	})
 
-	it('closes active listeners and stateless value timers', async () => {
+	it('removes listeners and pending stateless values on close', async () => {
 		vi.useFakeTimers()
 		try {
 			const harness = createHarness()
