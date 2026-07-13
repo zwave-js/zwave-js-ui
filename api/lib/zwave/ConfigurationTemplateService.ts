@@ -95,11 +95,11 @@ export class ConfigurationTemplateService {
 
 		for (const [key, param] of device.paramInformation.entries()) {
 			const propertyKey = key.valueBitMask
-			const id = `0-112-0-${key.parameter}${propertyKey != null ? '-' + String(propertyKey) : ''}`
+			const id = `0-${CommandClasses.Configuration}-0-${key.parameter}${propertyKey != null ? '-' + String(propertyKey) : ''}`
 
 			result.push({
 				id,
-				commandClass: 112,
+				commandClass: CommandClasses.Configuration,
 				property: key.parameter,
 				propertyKey: propertyKey,
 				endpoint: 0,
