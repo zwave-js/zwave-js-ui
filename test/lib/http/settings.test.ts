@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { useHttpHarness } from './harness.ts'
-import { createFakeGateway } from './fakes.ts'
+import { createFakeGateway } from '../shared/fakes.ts'
 import { setSettings } from './authHelpers.ts'
 
 describe('HTTP contract: settings, restart, statistics, versions', () => {

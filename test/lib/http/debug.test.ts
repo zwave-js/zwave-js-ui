@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll, afterEach } from 'vitest'
 import { useHttpHarness, bufferResponse } from './harness.ts'
-import { createFakeGateway } from './fakes.ts'
+import { createFakeGateway } from '../shared/fakes.ts'
 
 interface DebugManagerLike {
 	isSessionActive(): boolean

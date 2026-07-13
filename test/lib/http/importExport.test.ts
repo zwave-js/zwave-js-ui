@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { useHttpHarness } from './harness.ts'
-import { createFakeGateway } from './fakes.ts'
+import { createFakeGateway } from '../shared/fakes.ts'
 
 describe('HTTP contract: import/export config', () => {
 	const getHarness = useHttpHarness()

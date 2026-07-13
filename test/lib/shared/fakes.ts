@@ -1,3 +1,5 @@
+// Base zwave/mqtt/gateway fakes shared by both the HTTP and socket suites. Neither is HTTP- or
+// socket-specific; each transport layers its own transport-only members on top (see socket/fakes.ts).
 import { vi } from 'vitest'
 
 export interface FakeZwaveClient {
