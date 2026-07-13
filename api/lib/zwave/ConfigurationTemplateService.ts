@@ -421,12 +421,15 @@ export class ConfigurationTemplateService {
 		templates: ZUIConfigurationTemplate[],
 	): Promise<ZUIConfigurationTemplate[]> {
 		for (const t of templates) {
-			const legacy = t as unknown as { minFirmwareVersion?: string }
-			if (legacy.minFirmwareVersion && !t.firmwareRange) {
+			if (
+				'minFirmwareVersion' in t &&
+				typeof t.minFirmwareVersion === 'string' &&
+				!t.firmwareRange
+			) {
 				t.firmwareRange = {
-					min: legacy.minFirmwareVersion,
+					min: t.minFirmwareVersion,
 				}
-				delete legacy.minFirmwareVersion
+				delete t.minFirmwareVersion
 			}
 			t.id = this._utils.generateId()
 			if (!t.contentHash) {

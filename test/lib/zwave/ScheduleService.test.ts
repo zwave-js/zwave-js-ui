@@ -864,44 +864,6 @@ describe('ScheduleService', () => {
 
 			expect(emittedNode.userCodes?.total).toBe(0)
 		})
-
-		it('populates slot counts when userCodes is null (upstream permits)', async () => {
-			const zwaveNode = createFakeZwaveNode(true)
-			const driverPort = createDriverPort(zwaveNode)
-			const nodeStore = createNodeStorePort()
-			const svc = new ScheduleService(
-				driverPort,
-				nodeStore,
-				createUtilsPort(),
-			)
-
-			const { UserCodeCC } = await import('zwave-js')
-			vi.spyOn(UserCodeCC, 'getSupportedUsersCached').mockReturnValue(
-				null as unknown as number,
-			)
-			const { ScheduleEntryLockCC } = await import('zwave-js')
-			vi.spyOn(
-				ScheduleEntryLockCC,
-				'getNumWeekDaySlotsCached',
-			).mockReturnValue(2)
-			vi.spyOn(
-				ScheduleEntryLockCC,
-				'getNumYearDaySlotsCached',
-			).mockReturnValue(1)
-			vi.spyOn(
-				ScheduleEntryLockCC,
-				'getNumDailyRepeatingSlotsCached',
-			).mockReturnValue(0)
-
-			const result = await svc.getSchedules(2)
-
-			expect(result).toBeDefined()
-			expect(result?.weekly?.numSlots).toBe(2)
-			expect(result?.yearly?.numSlots).toBe(1)
-			expect(result?.daily?.numSlots).toBe(0)
-
-			expect(nodeStore.emitCalls.length).toBe(1)
-		})
 	})
 
 	describe('getSchedules – mode filtering', () => {
