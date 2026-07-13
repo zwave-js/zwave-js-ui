@@ -37,16 +37,7 @@ export class FirmwareUpdateService {
 	private _firmwareUpdateCheckTimeout: ReturnType<typeof setTimeout> | null =
 		null
 
-	/**
-	 * Monotonic token identifying the CURRENT scheduled-check chain. Bumped by
-	 * every {@link scheduledFirmwareUpdateCheck} entry so that repeated
-	 * `all nodes ready` events on the SAME generation (an NVM restore or a
-	 * controller firmware update re-emits it with no dispose/reset) cannot stack
-	 * parallel ~24h chains: the previous chain's armed timer is cleared and its
-	 * in-flight check bails on the token mismatch, leaving exactly one chain.
-	 * Distinct from {@link _generation} (only bumped on dispose/reset), which
-	 * cannot fence a same-generation repeat.
-	 */
+	/** Dedupes same-generation scheduled-check chains; `_generation` can't, because `all nodes ready` re-fires without a dispose/reset (NVM restore, controller firmware update) */
 	private _scheduleChain = 0
 
 	private _nvmEventSetter: ((event: string) => void) | undefined
@@ -548,13 +539,7 @@ export class FirmwareUpdateService {
 			return
 		}
 
-		// Enforce a single armed/in-flight chain: cancel any timer a previous
-		// (same-generation) `all nodes ready` armed, and supersede its still
-		// in-flight check, BEFORE starting this one. A repeated `all nodes
-		// ready` (an NVM restore or a controller firmware update re-emits it
-		// with no dispose/reset) otherwise overwrote and leaked the earlier
-		// ~24h handle, stacking parallel daily chains. `_generation` cannot
-		// fence this because it is only bumped on dispose/reset.
+		// Supersede any prior same-generation chain before starting so daily checks can't stack
 		this.clearScheduledCheck()
 		const chain = ++this._scheduleChain
 		const gen = this._generation
@@ -567,9 +552,7 @@ export class FirmwareUpdateService {
 			)
 		}
 
-		// Generation + chain fence: if disposed, reset, or superseded by a
-		// fresh same-generation chain during the check, do NOT reschedule —
-		// the old chain must not produce a new timer.
+		// Skip the reschedule if this chain was superseded or torn down mid-check, so it can't leak a stale timer
 		if (
 			this._generation !== gen ||
 			this._scheduleChain !== chain ||

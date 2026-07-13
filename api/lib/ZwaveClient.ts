@@ -183,9 +183,7 @@ import {
 	type SensorTypeScale,
 } from './zwave/ports.ts'
 
-// Re-exported so every existing importer of these types/const from
-// `ZwaveClient` keeps working after they moved to `./zwave/ports.ts`
-// (where extracted services can use them without importing this module).
+// Re-export to preserve the public type surface for existing ZwaveClient importers
 export { ZwaveClientStatus }
 export type { ZwaveConfig, SensorTypeScale }
 
@@ -696,18 +694,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 	private _driver: Driver
 
-	/**
-	 * Owns the low-level driver lifecycle (creation/options/log transports,
-	 * connect/start, retry-backoff timers, statistics, extra log transports,
-	 * the official `@zwave-js/server` coordination and idempotent close) plus a
-	 * monotonic **generation** counter so a late `driver ready`/`error`/`all
-	 * nodes ready`/OTW callback from an obsolete driver can never mutate a
-	 * replacement generation's state. The public lifecycle methods below
-	 * (`connect`/`close`/`enableStatistics`/…) and the server accessors delegate
-	 * to it so the legacy internal/API surface is unchanged. Constructed once
-	 * (and reused across `init()`) so the generation/transports/server manager
-	 * persist across restarts.
-	 */
+	/** Reused across init() rather than reconstructed so its generation counter, log transports and adopted server manager survive restarts */
 	private _driverLifecycle: DriverLifecycle
 
 	/**
@@ -760,34 +747,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	private statelessTimeouts: Record<string, NodeJS.Timeout>
 	private healTimeout: NodeJS.Timeout
 	private updatesCheckTimeout: NodeJS.Timeout
-	/**
-	 * Scheduling epoch for the daily config-update check chain
-	 * ({@link _scheduledConfigCheck}). Distinct from the {@link DriverLifecycle}
-	 * generation on purpose: that generation is deliberately NOT bumped by
-	 * {@link init} or {@link hardReset} (so a post-hard-reset `driver ready`
-	 * still runs on the same generation), which means it cannot fence the
-	 * config-check chain across those boundaries. This epoch instead is
-	 * invalidated on EVERY boundary that (re)starts the driver-ready chain — see
-	 * {@link _invalidateScheduledConfigCheck}. A scheduled check captures the
-	 * epoch live and, after its awaited driver round-trip, only logs/re-arms
-	 * while the epoch is still current, so a hard reset can neither leave an
-	 * older chain's in-flight check re-arming a duplicate ~24h timer nor let
-	 * repeated init()/hardReset() accumulate chains.
-	 */
+	/** Invalidated on every init/hardReset/close/restart boundary to fence the daily config-check chain; the DriverLifecycle generation can't, since init/hardReset deliberately don't bump it */
 	private _configCheckEpoch = 0
-	/**
-	 * Monotonic token identifying the CURRENT config-update-check chain
-	 * ({@link _startScheduledConfigCheck}). Distinct from {@link _configCheckEpoch}
-	 * (a lifecycle-boundary token bumped by init/hardReset/close) because a
-	 * single driver generation can legitimately re-emit `driver ready` WITHOUT
-	 * any such boundary — an NVM restore or a controller firmware update
-	 * re-initialises the controller and fires `driver ready` again while both
-	 * the generation AND the epoch stay valid. Each ready starts a fresh chain
-	 * that bumps this token and cancels the previous one (armed timer cleared +
-	 * any in-flight check bails on the mismatch), so exactly one daily
-	 * ~24h-check chain is ever armed/in-flight regardless of how many times the
-	 * same generation becomes ready. Never reset; only ever incremented.
-	 */
+	/** Dedupes same-generation config-check chains that `_configCheckEpoch` can't: `driver ready` re-fires without a boundary on NVM restore or controller firmware update */
 	private _configCheckChain = 0
 	private pollIntervals: Record<string, NodeJS.Timeout>
 
@@ -917,12 +879,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		this.closed = false
 		this.driverReady = false
 
-		// init() is a config-check-chain boundary: it runs on construction, on
-		// restart() (after close()) and on hardReset() (which does NOT bump the
-		// DriverLifecycle generation). Invalidate the scheduling epoch and clear
-		// any armed daily timer here so a hard reset's re-emitted `driver ready`
-		// starts exactly one fresh chain and an older chain's in-flight check
-		// can never re-arm a duplicate/stale timer.
+		// hardReset() routes through init() without bumping the generation, so retire any older config-check chain here
 		this._invalidateScheduledConfigCheck()
 
 		this._nodes = new Map()
@@ -1284,10 +1241,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		}
 
 		if (this._driverLifecycle) {
-			// Reuse the existing lifecycle across restarts so its monotonic
-			// generation counter, adopted server manager and registered extra
-			// log transports persist. The host closures resolve current state,
-			// so nothing needs re-binding here.
+			// Reuse the existing lifecycle across restarts so its generation, adopted server manager and log transports persist
 		} else {
 			this._driverLifecycle = new DriverLifecycle(
 				this._buildDriverLifecycleHost(),
@@ -1301,12 +1255,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		this.status = ZwaveClientStatus.CLOSED
 	}
 
-	/**
-	 * Build the narrow {@link DriverLifecycleHost} port the
-	 * {@link DriverLifecycle} service uses to reach back into this client.
-	 * Every accessor resolves the CURRENT value so a driver/config swap on
-	 * restart is honoured with nothing captured at construction time.
-	 */
+	/** Accessors resolve live client state so a driver/config swap on restart is honoured with nothing captured at construction */
 	private _buildDriverLifecycleHost(): DriverLifecycleHost {
 		return {
 			getConfig: () => this.cfg,
@@ -1359,23 +1308,14 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		}
 	}
 
-	/**
-	 * Clear the per-run timers/throttles owned by this client and reset the
-	 * inclusion coordinator + firmware update service generations. Called by
-	 * the {@link DriverLifecycle} during {@link close}, after it has cleared its
-	 * own restart timer and before it destroys the server and driver. Extracted
-	 * verbatim from the middle of the old `close()` so the ordering is
-	 * unchanged.
-	 */
+	/** Runs mid-close (after DriverLifecycle clears its restart timer, before it destroys server and driver) so teardown ordering is preserved */
 	private _clearRuntimeOnClose(): void {
 		if (this.healTimeout) {
 			clearTimeout(this.healTimeout)
 			this.healTimeout = null
 		}
 
-		// close() (and, via restart(), the pre-init close) is a config-check-chain
-		// boundary. Invalidate the scheduling epoch and clear the armed daily
-		// timer so an in-flight check that settles after close cannot re-arm.
+		// Retire the config-check chain on close so an in-flight check settling afterward can't re-arm
 		this._invalidateScheduledConfigCheck()
 
 		this._inclusionCoordinator.reset()
@@ -1402,28 +1342,12 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		}
 	}
 
-	/**
-	 * Invalidate the scheduled config-update-check chain: bump the scheduling
-	 * epoch (so any in-flight {@link _scheduledConfigCheck} bails after its
-	 * awaited driver round-trip instead of logging/re-arming) and clear the
-	 * currently-armed daily timer handle. Called from every boundary that starts
-	 * or restarts the driver-ready chain — {@link init} (which covers
-	 * construction, restart() and hardReset()) and the close path
-	 * ({@link _clearRuntimeOnClose}) — so repeated init()/hardReset() can never
-	 * leave more than one live chain, and no stale handle is ever leaked.
-	 */
+	/** Bump the epoch and clear the armed timer so any in-flight config check bails after its await instead of re-arming */
 	private _invalidateScheduledConfigCheck(): void {
 		this._configCheckEpoch++
 		this._clearConfigCheckTimer()
 	}
 
-	/**
-	 * Clear and forget the currently-armed daily config-update-check timer, if
-	 * any. Sole owner of the `updatesCheckTimeout` teardown so both the
-	 * lifecycle-boundary invalidation ({@link _invalidateScheduledConfigCheck})
-	 * and a fresh same-generation chain ({@link _startScheduledConfigCheck})
-	 * release the previous handle through one place and never leak it.
-	 */
 	private _clearConfigCheckTimer(): void {
 		if (this.updatesCheckTimeout) {
 			clearTimeout(this.updatesCheckTimeout)
@@ -4217,12 +4141,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		this._updateControllerStatus('Driver ready')
 
 		try {
-			// this must be done only after driver is ready. Start a FRESH
-			// config-check chain: this cancels any chain a previous
-			// (same-generation) `driver ready` armed — an NVM restore or
-			// controller firmware update re-emits `driver ready` without a
-			// lifecycle boundary, so the generation+epoch fencing alone cannot
-			// stop a second ready from stacking a duplicate ~24h timer.
+			// Only after the driver is ready; a fresh chain supersedes any prior same-generation ready
 			this._startScheduledConfigCheck(generation)
 
 			this.driver.controller
@@ -4273,10 +4192,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		// needs home hex to be set
 		await this.getStoreNodes()
 
-		// A close()/restart() (or a newer driver) may have replaced this
-		// generation while the store was loading. Abort before touching the
-		// node registry / server so a late `driver ready` from an obsolete
-		// driver can never mutate the replacement generation's state.
+		// Abort if a newer generation replaced this one while the store loaded, so a late `driver ready` from an obsolete driver can't mutate the replacement's state
 		if (this._driverLifecycle.generation !== generation) {
 			return
 		}
@@ -6627,26 +6543,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		}`
 	}
 
-	/**
-	 * Start (or restart) the daily config-update-check chain for a fresh
-	 * `driver ready`, enforcing that AT MOST ONE chain is ever armed/in-flight.
-	 *
-	 * A single {@link DriverLifecycle} generation can legitimately re-emit
-	 * `driver ready` more than once with NO intervening lifecycle boundary — an
-	 * NVM restore or a controller firmware update re-initialises the controller
-	 * and fires `driver ready` again while the generation AND
-	 * {@link _configCheckEpoch} both stay valid. Without this guard each such
-	 * ready armed its own ~24h {@link updatesCheckTimeout} and the later arm
-	 * overwrote (and leaked) the earlier handle, so a live timer fired an
-	 * unwanted duplicate check and then re-armed a parallel daily chain forever.
-	 *
-	 * This clears any already-armed timer and bumps {@link _configCheckChain}
-	 * BEFORE scheduling, so both an armed timer from a previous ready AND a
-	 * still-in-flight previous check (which re-validates the chain token after
-	 * its awaited driver round-trip in {@link _scheduledConfigCheck}) are
-	 * cancelled. The fresh chain then arms exactly once. Independent of the
-	 * epoch, whose lifecycle-boundary semantics are preserved unchanged.
-	 */
+	/** Arms exactly one daily config-check chain per `driver ready`, clearing any prior armed timer and superseding an in-flight check via `_configCheckChain` */
 	private _startScheduledConfigCheck(generation: number): void {
 		this._clearConfigCheckTimer()
 		const chain = ++this._configCheckChain
@@ -6659,31 +6556,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		})
 	}
 
-	/**
-	 * Internal function to check for config updates automatically once a day.
-	 *
-	 * @param generation The {@link DriverLifecycle} generation active when this
-	 * check was scheduled. `checkForConfigUpdates()` awaits a driver round-trip,
-	 * during which a `close()`/`restart` (or a replacement driver) may supersede
-	 * this generation. We therefore re-validate the generation and the
-	 * closed/destroyed state AFTER the await, before logging or rearming, so a
-	 * stale in-flight check can never resurrect a ~24h timer that outlives the
-	 * driver or duplicates the replacement generation's own scheduled check.
-	 * @param epoch The config-check scheduling epoch ({@link _configCheckEpoch})
-	 * captured when this check was scheduled. The generation alone cannot fence
-	 * hardReset()/repeated-init() boundaries because those deliberately keep the
-	 * same generation; the epoch is bumped on every such boundary (see
-	 * {@link _invalidateScheduledConfigCheck}), so an in-flight check from before
-	 * the boundary bails here instead of re-arming a duplicate chain. The rearm
-	 * carries all tokens forward so the daily chain keeps fencing.
-	 * @param chain The config-check chain token ({@link _configCheckChain})
-	 * captured when this chain was started ({@link _startScheduledConfigCheck}).
-	 * Fences the case the epoch cannot: a repeated same-generation `driver ready`
-	 * (NVM restore / controller firmware) starts a new chain and bumps this
-	 * token, so a previous chain's in-flight check bails here instead of arming a
-	 * second parallel ~24h timer. The rearm carries the same token so the daily
-	 * chain keeps running until the next ready supersedes it.
-	 */
+	/** Runs the daily config-update check, then re-validates generation/epoch/chain after the awaited round-trip before logging or rearming */
 	private async _scheduledConfigCheck(
 		generation: number,
 		epoch: number,
@@ -6695,11 +6568,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			logger.warn(`Scheduled update check has failed: ${error.message}`)
 		}
 
-		// Bail if this generation was superseded while the check was in flight,
-		// the scheduling epoch was invalidated by a lifecycle boundary
-		// (init/hardReset/close/restart), this chain was superseded by a fresh
-		// same-generation `driver ready`, or the client was closed/destroyed —
-		// do not log or rearm a stale timer.
+		// Re-check every token after the in-flight check: a lifecycle boundary or newer chain during the await means bail instead of rearming a stale timer
 		if (
 			this._driverLifecycle.generation !== generation ||
 			this._configCheckEpoch !== epoch ||
