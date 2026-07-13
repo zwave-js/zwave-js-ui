@@ -347,8 +347,8 @@ export function registerSettingsRoutes(
 					runtime.setOwnsDebugSession(false)
 				}
 
-				// `requireProperty: 'close'` preserves the native TypeError when
-				// no gateway is attached
+				// `/api/restart` requires a running gateway to close before it
+				// restarts, so a missing one is surfaced as a caller error
 				await runtime.teardownGateway({ requireProperty: 'close' })
 				if (settings.gateway) {
 					runtime.setupLogging({ gateway: settings.gateway })
