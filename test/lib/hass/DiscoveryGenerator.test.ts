@@ -25,7 +25,7 @@ import type {
 } from '#api/hass/types.ts'
 import { PayloadType } from '#api/lib/shared.ts'
 import { cleanupTestEnv, ensureTestEnv, TEST_SESSION_SECRET } from './env.ts'
-import { assertDefined } from './fixtures.ts'
+import { assertDefined } from '../testUtils.ts'
 
 const GENERIC_DEVICE_CLASS_THERMOSTAT = 0x08
 const GENERIC_DEVICE_CLASS_BINARY_SWITCH = 0x10

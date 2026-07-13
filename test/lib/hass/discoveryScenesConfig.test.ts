@@ -19,10 +19,10 @@ import {
 	buildNode,
 	buildValueId,
 	addValue,
-	requireDefined,
 } from './fixtures.ts'
 import type { ZUINode, ZUIValueId } from '#api/lib/ZwaveClient.ts'
 import type { GatewayConfig } from '#api/lib/Gateway.ts'
+import { requireDefined } from '../testUtils.ts'
 
 vi.mock('mqtt', () => mqttMockFactory())
 

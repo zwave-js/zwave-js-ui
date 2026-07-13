@@ -27,13 +27,13 @@ import {
 	buildValueId,
 	addValue,
 	state,
-	requireDefined,
 } from './fixtures.ts'
 import type {
 	HassDevice,
 	ZUINode,
 	ZUIValueIdState,
 } from '#api/lib/ZwaveClient.ts'
+import { requireDefined } from '../testUtils.ts'
 
 vi.mock('mqtt', () => mqttMockFactory())
 

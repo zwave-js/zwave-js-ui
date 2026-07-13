@@ -18,13 +18,13 @@ import {
 } from './gatewayHarness.ts'
 import {
 	addValue,
-	assertDefined,
 	buildNode,
 	buildValueId,
 	requireDefined,
 	valueMapKey,
 } from './fixtures.ts'
 import type { ZUINode, ZUIValueId } from '#api/lib/ZwaveClient.ts'
+import { assertDefined } from '../testUtils.ts'
 
 vi.mock('mqtt', () => mqttMockFactory())
 
