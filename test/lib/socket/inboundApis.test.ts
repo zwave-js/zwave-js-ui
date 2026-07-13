@@ -328,6 +328,23 @@ describe('Socket contract: inbound ACK APIs', () => {
 				result: { status: 'stored' },
 				api: 'store',
 			})
+
+			gateway.zwave.storeDevices.mockResolvedValueOnce({
+				status: 'invalid-stored-node',
+			})
+			const failedResult = await emit(client, 'HASS_API', {
+				apiName: 'store',
+				devices,
+				nodeId: 2,
+				remove: false,
+			})
+			expect(failedResult).toStrictEqual({
+				success: false,
+				message:
+					'Unable to store Home Assistant devices: stored node is invalid',
+				result: { status: 'invalid-stored-node' },
+				api: 'store',
+			})
 		})
 
 		it('"store" is awaited so a rejected persistence acks failure', async () => {

@@ -34,7 +34,7 @@ export function registerHassApiHandler(
 		async (data: HassApiRequest, cb: SocketAck<HassApiAck> = noop) => {
 			logger.info(`Hass api call: ${data.apiName}`)
 
-			let res: StoreHassDevicesResult | void
+			let res: StoreHassDevicesResult | undefined
 			let err: string | undefined
 			try {
 				switch (data.apiName) {
@@ -120,6 +120,13 @@ export function registerHassApiHandler(
 								undefined,
 								[data.devices, data.nodeId, data.remove],
 							)
+							if (res?.status === 'node-not-found') {
+								err =
+									'Unable to store Home Assistant devices: node not found'
+							} else if (res?.status === 'invalid-stored-node') {
+								err =
+									'Unable to store Home Assistant devices: stored node is invalid'
+							}
 						}
 						break
 					default:
