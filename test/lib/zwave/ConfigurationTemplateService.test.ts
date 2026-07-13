@@ -1,12 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { ConfigurationTemplateService } from '../../../api/lib/zwave/ConfigurationTemplateService.ts'
+import { ConfigurationTemplateService } from '#api/lib/zwave/ConfigurationTemplateService.ts'
 import type {
 	ZUIConfigurationTemplate,
 	ZUIConfigurationTemplateValue,
 	TemplateNodeState,
 	TemplateDriverPort,
 	TemplateConfigManagerPort,
-} from '../../../api/lib/zwave/ports.ts'
+} from '#api/lib/zwave/ports.ts'
 import type { ZWaveNode } from 'zwave-js'
 import { CommandClasses } from '@zwave-js/core'
 import { SetValueStatus } from 'zwave-js'
@@ -870,6 +870,14 @@ describe('ConfigurationTemplateService', () => {
 			const nodes = new Map([[2, node]])
 			const nodeStore = createNodeStorePort(nodes)
 			const loggerFake = createLogger()
+			let resolveWrite: (() => void) | undefined
+			const valueWritten = new Promise<void>((resolve) => {
+				resolveWrite = resolve
+			})
+			nodeStore.writeValue = vi.fn(() => {
+				resolveWrite?.()
+				return Promise.resolve({ status: SetValueStatus.Success })
+			})
 			const svc = new ConfigurationTemplateService(
 				createDriverPort(),
 				nodeStore,
@@ -882,8 +890,7 @@ describe('ConfigurationTemplateService', () => {
 
 			const zwaveNode = { id: 2 } as ZWaveNode
 			svc.checkConfigurationTemplates(node, zwaveNode)
-
-			await new Promise((r) => setTimeout(r, 10))
+			await valueWritten
 
 			expect(nodeStore.writeValue).toHaveBeenCalled()
 		})
@@ -1661,6 +1668,14 @@ describe('ConfigurationTemplateService', () => {
 
 			const fakeZwaveNode = { id: 2 } as ZWaveNode
 			const nodeStore = createNodeStorePort(nodes)
+			let resolveWrite: (() => void) | undefined
+			const valueWritten = new Promise<void>((resolve) => {
+				resolveWrite = resolve
+			})
+			nodeStore.writeValue = vi.fn(() => {
+				resolveWrite?.()
+				return Promise.resolve({ status: SetValueStatus.Success })
+			})
 
 			const svc = new ConfigurationTemplateService(
 				createDriverPort(),
@@ -1673,7 +1688,7 @@ describe('ConfigurationTemplateService', () => {
 			)
 
 			svc.checkConfigurationTemplates(node, fakeZwaveNode)
-			await new Promise((r) => setTimeout(r, 50))
+			await valueWritten
 			expect(nodeStore.logNode).toHaveBeenCalled()
 		})
 
@@ -1999,7 +2014,6 @@ describe('ConfigurationTemplateService', () => {
 				],
 			})
 
-			await new Promise((r) => setTimeout(r, 50))
 			expect(nodeStore.writeValue).not.toHaveBeenCalled()
 		})
 

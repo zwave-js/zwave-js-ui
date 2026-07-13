@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { ScheduleService } from '../../../api/lib/zwave/ScheduleService.ts'
+import { ScheduleService } from '#api/lib/zwave/ScheduleService.ts'
 import { SupervisionStatus } from '@zwave-js/core'
 import {
 	ScheduleEntryLockScheduleKind,
@@ -17,7 +17,7 @@ import type {
 	ScheduleNodeStorePort,
 	ScheduleUtilsPort,
 	ScheduleNodeState,
-} from '../../../api/lib/zwave/ports.ts'
+} from '#api/lib/zwave/ports.ts'
 
 function createFakeEndpoint() {
 	return { id: 0 }
