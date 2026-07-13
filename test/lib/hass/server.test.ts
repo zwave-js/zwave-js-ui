@@ -145,6 +145,10 @@ function lastServer() {
 	return hoisted.servers[hoisted.servers.length - 1]
 }
 
+function lastDriver() {
+	return hoisted.drivers[hoisted.drivers.length - 1]
+}
+
 /** Flush one macrotask so pending `setImmediate` callbacks run. */
 function tick(): Promise<void> {
 	return new Promise((resolve) => setImmediate(resolve))
@@ -193,7 +197,7 @@ async function driveConnectToReady(
 
 	return {
 		zwave,
-		driver: zwave.driver,
+		driver: lastDriver(),
 		server: lastServer(),
 		beforeReady,
 	}
