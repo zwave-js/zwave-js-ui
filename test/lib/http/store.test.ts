@@ -1,9 +1,4 @@
-import {
-	describe,
-	it,
-	expect,
-	vi,
-} from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import {
 	mkdirSync,
 	mkdtempSync,
@@ -470,7 +465,7 @@ describe('HTTP contract: store, upload, snippets', () => {
 	})
 
 	describe('POST /api/store/upload', () => {
-		it('rejects with "No file uploaded" for a request with no multipart body at all', async () => {
+		it('rejects with "No file uploaded" for a request with no multipart body at all (req.files is undefined, not an empty array)', async () => {
 			const harness = await getHarness()
 			const res = await harness.request.post('/api/store/upload')
 

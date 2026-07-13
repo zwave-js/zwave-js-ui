@@ -1,15 +1,10 @@
-import {
-	describe,
-	it,
-	expect,
-	vi,
-} from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import type { Express } from 'express'
 import type { RateLimitRequestHandler } from 'express-rate-limit'
 import { useHttpHarness } from './harness.ts'
 import { createFakeGateway } from '../shared/fakes.ts'
-import { registerConfigurationTemplatesRoutes } from '../../../api/routes/configurationTemplates.ts'
-import type { AppRuntime } from '../../../api/runtime/AppRuntime.ts'
+import { registerConfigurationTemplatesRoutes } from '#api/routes/configurationTemplates.ts'
+import type { AppRuntime } from '#api/runtime/AppRuntime.ts'
 
 /**
  * Registers the real `registerConfigurationTemplatesRoutes` against a
@@ -65,11 +60,11 @@ function captureConfigurationTemplatesHandler(
 		},
 	}
 
-	// The if (!id) branches return before touching runtime; a requireGateway that throws makes that precondition explicit, so this test fails loudly if the route ever checked runtime before id
+	// The if (!id) branches return before touching runtime; a requireZwaveClient that throws makes that precondition explicit, so this test fails loudly if the route ever checked runtime before id
 	const fakeRuntime = {
-		requireGateway: vi.fn(() => {
+		requireZwaveClient: vi.fn(() => {
 			throw new Error(
-				'requireGateway must not be reached: the empty-id guard should return first',
+				'requireZwaveClient must not be reached: the empty-id guard should return first',
 			)
 		}),
 	}
@@ -155,8 +150,7 @@ describe('HTTP contract: configuration templates', () => {
 			expect(res.status).toBe(200)
 			expect(res.body).toEqual({
 				success: false,
-				message:
-					"Cannot read properties of undefined (reading 'zwave')",
+				message: 'Z-Wave client not inited',
 			})
 		})
 
@@ -257,8 +251,7 @@ describe('HTTP contract: configuration templates', () => {
 			expect(res.status).toBe(200)
 			expect(res.body).toEqual({
 				success: false,
-				message:
-					"Cannot read properties of undefined (reading 'zwave')",
+				message: 'Z-Wave client not inited',
 			})
 		})
 
@@ -387,8 +380,7 @@ describe('HTTP contract: configuration templates', () => {
 			expect(res.status).toBe(200)
 			expect(res.body).toEqual({
 				success: false,
-				message:
-					"Cannot read properties of undefined (reading 'zwave')",
+				message: 'Z-Wave client not inited',
 			})
 		})
 

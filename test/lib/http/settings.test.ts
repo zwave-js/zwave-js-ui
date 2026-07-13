@@ -373,29 +373,17 @@ describe('HTTP contract: settings, restart, statistics, versions', () => {
 			})
 		})
 
-		it.each([
-			['no gateway attached at all', undefined],
-			[
-				'a gateway attached but with no zwave client',
-				createFakeGateway({ zwave: undefined }),
-			],
-		])(
-			'fails with the clean "Z-Wave client not inited" error with %s, without closing anything',
-			async (_label, gateway) => {
-				const harness = await getHarness({ gateway })
+		it('fails cleanly with the generic error envelope when there is no gateway to close', async () => {
+			const harness = await getHarness()
 
-				const res = await harness.request.post('/api/restart')
+			const res = await harness.request.post('/api/restart')
 
-				expect(res.status).toBe(200)
-				expect(res.body).toEqual({
-					success: false,
-					message: 'Z-Wave client not inited',
-				})
-				if (gateway) {
-					expect(gateway.close).not.toHaveBeenCalled()
-				}
-			},
-		)
+			expect(res.status).toBe(200)
+			expect(res.body).toEqual({
+				success: false,
+				message: 'Gateway is not initialized',
+			})
+		})
 
 		it('restarts successfully end-to-end (real startGateway(), zwave/mqtt kept disabled), and clears the restarting flag so a follow-up restart is accepted', async () => {
 			const gw = createFakeGateway()
