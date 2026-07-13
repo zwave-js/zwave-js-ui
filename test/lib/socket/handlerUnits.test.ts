@@ -28,6 +28,7 @@ let registerSocketApi: typeof RegisterSocketApiModule.registerSocketApi
 
 beforeAll(async () => {
 	ensureTestEnv()
+	// Import every handler after STORE_DIR isolation because logger creates paths during module evaluation
 	;[
 		{ registerInitHandler, registerZwaveApiHandler },
 		{ registerMqttApiHandler },
@@ -333,7 +334,7 @@ describe('registerZwaveApiHandler: per-call gateway freshness + default ack (uni
 	})
 
 	it('quirk: a malformed truthy, non-iterable `args` (e.g. a plain object) crashes synchronously while spreading - BEFORE callApi is ever invoked - producing no ACK at all', async () => {
-		// Truthy non-iterable args fail during spread before callApi
+		// Drive this directly because the rejected listener would leave a wire-level ACK pending
 		const socket = new FakeSocket()
 		const gateway = createFakeGateway()
 		const runtime = createFakeRuntime({ requireGateway: () => gateway })
@@ -396,7 +397,7 @@ describe('registerMqttApiHandler: removeNodeRetained + default ack (unit-level; 
 	})
 
 	it('quirk: a thrown `null` crashes INSIDE the catch block itself (direct `.message` read on null) - the handler throws synchronously, producing no ACK at all', () => {
-		// The non-async listener propagates this as a synchronous exception
+		// Direct invocation exposes the synchronous throw that would leave a wire ACK pending
 		const socket = new FakeSocket()
 		const gateway = createFakeGateway({
 			removeNodeRetained: vi.fn(() => {
@@ -462,7 +463,7 @@ describe('registerHassApiHandler: disableDiscovery success + default ack (unit-l
 	})
 
 	it('quirk: a thrown `null` crashes INSIDE the catch block itself (direct `.message` read on null) - the handler REJECTS with no ACK ever sent', async () => {
-		// The async listener surfaces this as a rejected promise
+		// Direct invocation exposes the rejection that would leave a wire ACK pending
 		const socket = new FakeSocket()
 		const gateway = createFakeGateway({
 			disableDiscovery: vi.fn(() => {
@@ -593,7 +594,7 @@ describe('registerZnifferApiHandler: remaining actions + default ack (unit-level
 	})
 
 	it('quirk: a thrown `null` crashes INSIDE the catch block itself (direct `.message` read on null) - the handler REJECTS with no ACK ever sent', async () => {
-		// The async listener rejects instead of acknowledging
+		// Direct invocation exposes the rejection that would leave a wire ACK pending
 		const zniffer = createFakeZniffer({
 			clear: vi.fn(() => {
 				// eslint-disable-next-line @typescript-eslint/only-throw-error -- Non-Error throws preserve direct message access
@@ -671,7 +672,7 @@ describe('ZnifferApiRequest: discriminated union enforces required fields per ap
 		await emitAck(handler, missingChannelConfig)
 		expect(zniffer.setLRChannelConfig).toHaveBeenCalledWith(undefined)
 
-		// Buffer conversion fails before the collaborator receives a missing buffer
+		// Buffer conversion fails first, yielding a messaged TypeError ACK before the collaborator runs
 		const result = await emitAck(handler, missingBuffer)
 		expect(zniffer.loadCaptureFromBuffer).not.toHaveBeenCalled()
 		expect(result.success).toBe(false)

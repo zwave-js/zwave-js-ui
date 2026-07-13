@@ -7,6 +7,7 @@ import { getLegacyErrorMessage, noop, type SocketAck } from './types.ts'
 
 const logger = loggers.module('App')
 
+// Optional action fields mirror the unvalidated wire payload
 export interface HassApiRequest {
 	apiName?: string
 	device?: HassDevice

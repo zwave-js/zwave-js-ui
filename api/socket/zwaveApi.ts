@@ -20,7 +20,7 @@ export function registerInitHandler(socket: Socket, runtime: AppRuntime): void {
 		(_data: unknown, cb: SocketAck<InitAckState> = noop) => {
 			let state: Partial<ZwaveState> & { zniffer?: ZnifferStatus } = {}
 
-			// Throws when no gateway is attached yet
+			// Preserve the historical TypeError when no gateway is attached
 			const currentGw = runtime.requireGateway('zwave')
 			if (currentGw.zwave) {
 				state = currentGw.zwave.getState()

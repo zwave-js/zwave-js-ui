@@ -6,6 +6,7 @@ import { getLegacyErrorMessage, noop, type SocketAck } from './types.ts'
 
 const logger = loggers.module('App')
 
+// Action-specific fields remain compile-time-only because wire payloads are not validated
 interface ZnifferApiRequestBase {
 	api?: string
 }
