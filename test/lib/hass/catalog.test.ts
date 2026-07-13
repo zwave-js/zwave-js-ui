@@ -12,8 +12,8 @@
  * pinned as-is.
  */
 import { describe, it, expect } from 'vitest'
-import hassCfg from '../../../api/hass/configurations.ts'
-import hassDevices from '../../../api/hass/devices.ts'
+import hassCfg from '#api/hass/configurations.ts'
+import hassDevices from '#api/hass/devices.ts'
 
 describe('HASS catalog: configurations.ts', () => {
 	it('binary_sensor: on=true/off=false with passthrough value_template', () => {

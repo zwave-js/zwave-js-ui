@@ -7,11 +7,11 @@
  * `store/`. `start()` is awaited and the fake `zwave` is a real `EventEmitter`,
  * so a test can `zwave.emit(...)` to drive the real discovery pipeline.
  */
-import type GatewayType from '../../../api/lib/Gateway.ts'
-import type { GatewayConfig } from '../../../api/lib/Gateway.ts'
-import type MqttClientType from '../../../api/lib/MqttClient.ts'
-import type { MqttConfig } from '../../../api/lib/MqttClient.ts'
-import type { HassDevice } from '../../../api/lib/ZwaveClient.ts'
+import type GatewayType from '#api/lib/Gateway.ts'
+import type { GatewayConfig } from '#api/lib/Gateway.ts'
+import type MqttClientType from '#api/lib/MqttClient.ts'
+import type { MqttConfig } from '#api/lib/MqttClient.ts'
+import type { HassDevice } from '#api/lib/ZwaveClient.ts'
 import type { IClientPublishOptions } from 'mqtt'
 import { ensureTestEnv, cleanupTestEnv } from './env.ts'
 import { latestBroker, type FakeBroker } from './mqttMock.ts'
@@ -81,8 +81,8 @@ export async function createGatewayHarness(
 
 	const [{ default: Gateway, closeWatchers }, { default: MqttClient }] =
 		await Promise.all([
-			import('../../../api/lib/Gateway.ts'),
-			import('../../../api/lib/MqttClient.ts'),
+			import('#api/lib/Gateway.ts'),
+			import('#api/lib/MqttClient.ts'),
 		])
 
 	const mqtt = new MqttClient(defaultMqttConfig(options.mqttConfig))

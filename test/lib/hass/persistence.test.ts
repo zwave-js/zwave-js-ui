@@ -22,9 +22,9 @@ import {
 	createRecordingSocket,
 	type RecordingSocket,
 } from './fixtures.ts'
-import { socketEvents } from '../../../api/lib/SocketEvents.ts'
-import type ZWaveClientType from '../../../api/lib/ZwaveClient.ts'
-import type { HassDevice } from '../../../api/lib/ZwaveClient.ts'
+import { socketEvents } from '#api/lib/SocketEvents.ts'
+import type ZWaveClientType from '#api/lib/ZwaveClient.ts'
+import type { HassDevice } from '#api/lib/ZwaveClient.ts'
 
 type JsonStore = {
 	init(config: any): Promise<any>
@@ -102,13 +102,13 @@ function nodeUpdatedEmits(socket: RecordingSocket) {
 beforeAll(async () => {
 	storeDir = ensureTestEnv()
 	;({ default: jsonStore } = (await import(
-		'../../../api/lib/jsonStore.ts'
+		'#api/lib/jsonStore.ts'
 	)) as any)
 	;({ default: store } = (await import(
-		'../../../api/config/store.ts'
+		'#api/config/store.ts'
 	)) as any)
 	;({ default: ZWaveClient } = await import(
-		'../../../api/lib/ZwaveClient.ts'
+		'#api/lib/ZwaveClient.ts'
 	))
 	await jsonStore.init(store)
 })

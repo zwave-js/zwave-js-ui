@@ -20,7 +20,7 @@ import {
 	createGatewayHarness,
 	cleanupGatewayHarnessEnv,
 } from './gatewayHarness.ts'
-import type * as GatewayModuleNS from '../../../api/lib/Gateway.ts'
+import type * as GatewayModuleNS from '#api/lib/Gateway.ts'
 
 vi.mock('mqtt', () => mqttMockFactory())
 
@@ -30,7 +30,7 @@ let gwMod: GatewayModule
 
 beforeAll(async () => {
 	ensureTestEnv()
-	gwMod = await import('../../../api/lib/Gateway.ts')
+	gwMod = await import('#api/lib/Gateway.ts')
 })
 
 afterAll(() => {

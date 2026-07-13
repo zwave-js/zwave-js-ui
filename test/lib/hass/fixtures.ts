@@ -9,13 +9,13 @@
  */
 import { vi } from 'vitest'
 import { EventEmitter } from 'node:events'
-import type { MqttConfig } from '../../../api/lib/MqttClient.ts'
+import type { MqttConfig } from '#api/lib/MqttClient.ts'
 import type {
 	HassDevice,
 	ZUINode,
 	ZUIValueId,
 	ZUIValueIdState,
-} from '../../../api/lib/ZwaveClient.ts'
+} from '#api/lib/ZwaveClient.ts'
 
 /**
  * A complete `MqttConfig` that stays local with `store: false` (so

@@ -27,7 +27,7 @@ import {
 	type GatewayHarness,
 } from './gatewayHarness.ts'
 import { buildNode, buildValueId, addValue, valueMapKey } from './fixtures.ts'
-import type { ZUINode, ZUIValueId } from '../../../api/lib/ZwaveClient.ts'
+import type { ZUINode, ZUIValueId } from '#api/lib/ZwaveClient.ts'
 
 vi.mock('mqtt', () => mqttMockFactory())
 

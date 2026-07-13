@@ -25,7 +25,7 @@ import {
 } from 'vitest'
 import { ensureTestEnv, cleanupTestEnv } from './env.ts'
 import { createRecordingSocket } from './fixtures.ts'
-import type ZWaveClientType from '../../../api/lib/ZwaveClient.ts'
+import type ZWaveClientType from '#api/lib/ZwaveClient.ts'
 
 // Class-free holders the (lazy) vi.mock factories below push instances /
 // teardown order into; vi.hoisted guarantees they exist before any factory runs
@@ -189,13 +189,13 @@ async function driveConnectToReady(
 beforeAll(async () => {
 	ensureTestEnv()
 	const { default: jsonStore } = (await import(
-		'../../../api/lib/jsonStore.ts'
+		'#api/lib/jsonStore.ts'
 	)) as any
 	const { default: store } = (await import(
-		'../../../api/config/store.ts'
+		'#api/config/store.ts'
 	)) as any
 	;({ default: ZWaveClient } = await import(
-		'../../../api/lib/ZwaveClient.ts'
+		'#api/lib/ZwaveClient.ts'
 	))
 	await jsonStore.init(store)
 })
