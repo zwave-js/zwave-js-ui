@@ -42,6 +42,7 @@ import { AssociationCheckResult, RemoveNodeReason } from 'zwave-js'
 import type { VirtualValueID } from 'zwave-js'
 import { socketEvents } from '../../../api/lib/SocketEvents.ts'
 import type ZWaveClientType from '../../../api/lib/ZwaveClient.ts'
+import type { ZUIValueId, ZUINode } from '../../../api/lib/ZwaveClient.ts'
 import { createSocketHarness, type SocketHarness } from './harness.ts'
 import { createFakeGateway } from './fakes.ts'
 import { getTestStoreDir } from './env.ts'
@@ -148,112 +149,211 @@ describe('ZwaveClient service wiring: association/group facades, buildVirtualVal
 		})
 	}
 
-	describe('association delegates (ZwaveClient.ts:1695-1805) - thin pass-through wiring to the real, independently-tested AssociationService', () => {
-		// Stubbing the real _associationService instance's methods proves delegation without needing driver fakery, which AssociationService's own tests already require
+	describe('association facade (ZwaveClient.ts:1695-1805) - thin wiring to the real, independently-tested AssociationService', () => {
+		/**
+		 * A stateful fake controller association table (source nodeId ->
+		 * groupId -> AssociationAddress[]), driving the real, unmocked
+		 * AssociationService - whose own exhaustive business-logic tests live
+		 * in AssociationService.test.ts - through ZwaveClient's real public
+		 * API. Forbids self-association like a real controller would, so
+		 * checkAssociation()/addAssociations() have a genuine allow/forbid
+		 * branch to prove the facade threads real driver results through
+		 * rather than a mocked method's canned return value.
+		 */
+		function fakeAssociationDriver(
+			nodeIds: number[],
+			initial: Record<number, Record<number, { nodeId: number }[]>> = {},
+		) {
+			const table = new Map<number, Map<number, { nodeId: number }[]>>(
+				Object.entries(initial).map(([nodeId, groups]) => [
+					Number(nodeId),
+					new Map(
+						Object.entries(groups).map(([groupId, assocs]) => [
+							Number(groupId),
+							assocs,
+						]),
+					),
+				]),
+			)
+			function groupsFor(nodeId: number) {
+				let groups = table.get(nodeId)
+				if (!groups) {
+					groups = new Map()
+					table.set(nodeId, groups)
+				}
+				return groups
+			}
+			return {
+				controller: {
+					ownNodeId: 1,
+					nodes: new Map(
+						nodeIds.map((id) => [
+							id,
+							{ id, refreshCCValues: () => Promise.resolve() },
+						]),
+					),
+					getAllAssociations: (nodeId: number) =>
+						new Map([[{ nodeId }, groupsFor(nodeId)]]),
+					checkAssociation: (
+						source: { nodeId: number },
+						_groupId: number,
+						association: { nodeId: number },
+					) =>
+						source.nodeId === association.nodeId
+							? AssociationCheckResult.Forbidden_SelfAssociation
+							: AssociationCheckResult.OK,
+					addAssociations: (
+						source: { nodeId: number },
+						groupId: number,
+						associations: { nodeId: number }[],
+					) => {
+						const groups = groupsFor(source.nodeId)
+						groups.set(groupId, [
+							...(groups.get(groupId) ?? []),
+							...associations,
+						])
+						return Promise.resolve()
+					},
+					removeAssociations: (
+						source: { nodeId: number },
+						groupId: number,
+						associations: { nodeId: number }[],
+					) => {
+						const groups = groupsFor(source.nodeId)
+						groups.set(
+							groupId,
+							(groups.get(groupId) ?? []).filter(
+								(a) =>
+									!associations.some(
+										(r) => r.nodeId === a.nodeId,
+									),
+							),
+						)
+						return Promise.resolve()
+					},
+					removeNodeFromAllAssociations: (nodeId: number) => {
+						for (const groups of table.values()) {
+							for (const [groupId, assocs] of groups) {
+								groups.set(
+									groupId,
+									assocs.filter((a) => a.nodeId !== nodeId),
+								)
+							}
+						}
+						return Promise.resolve()
+					},
+				},
+			}
+		}
 
-		it('getAssociations() delegates to AssociationService.getAssociations(nodeId, refresh) and returns its result', async () => {
+		it('getAssociations() returns the real controller associations for a node, and an empty array for a node with none', async () => {
 			const zwave = realZwave()
-			const expected = [
+			;(zwave as any)._driver = fakeAssociationDriver([2, 5], {
+				2: { 1: [{ nodeId: 5 }] },
+			})
+
+			await expect(zwave.getAssociations(2, true)).resolves.toEqual([
 				{
-					endpoint: 0,
+					endpoint: undefined,
 					groupId: 1,
 					nodeId: 5,
 					targetEndpoint: undefined,
 				},
-			]
-			const spy = vi
-				.spyOn((zwave as any)._associationService, 'getAssociations')
-				.mockResolvedValue(expected)
-
-			const result = await zwave.getAssociations(5, true)
-
-			expect(spy).toHaveBeenCalledOnce()
-			expect(spy).toHaveBeenCalledWith(5, true)
-			expect(result).toBe(expected)
+			])
+			await expect(zwave.getAssociations(5)).resolves.toEqual([])
 		})
 
-		it('checkAssociation() delegates to AssociationService.checkAssociation(source, groupId, association) and returns its result', () => {
+		it('checkAssociation() returns the real controller check result, forbidding self-association and allowing a distinct target', () => {
 			const zwave = realZwave()
-			const source = { nodeId: 1 }
-			const association = { nodeId: 2 }
-			const spy = vi
-				.spyOn((zwave as any)._associationService, 'checkAssociation')
-				.mockReturnValue(AssociationCheckResult.OK)
+			;(zwave as any)._driver = fakeAssociationDriver([2, 3])
 
-			const result = zwave.checkAssociation(source, 3, association)
-
-			expect(spy).toHaveBeenCalledOnce()
-			expect(spy).toHaveBeenCalledWith(source, 3, association)
-			expect(result).toBe(AssociationCheckResult.OK)
+			expect(
+				zwave.checkAssociation({ nodeId: 2 }, 1, { nodeId: 2 }),
+			).toBe(AssociationCheckResult.Forbidden_SelfAssociation)
+			expect(
+				zwave.checkAssociation({ nodeId: 2 }, 1, { nodeId: 3 }),
+			).toBe(AssociationCheckResult.OK)
 		})
 
-		it('addAssociations() delegates to AssociationService.addAssociations(source, groupId, associations, options) and returns its result', async () => {
+		it('addAssociations() adds only the associations the real controller check allows, returns the real per-candidate check results, and getAssociations() reflects the addition', async () => {
 			const zwave = realZwave()
-			const source = { nodeId: 1 }
-			const associations = [{ nodeId: 2 }]
-			const expected = [AssociationCheckResult.OK]
-			const spy = vi
-				.spyOn((zwave as any)._associationService, 'addAssociations')
-				.mockResolvedValue(expected)
+			;(zwave as any)._driver = fakeAssociationDriver([2, 3])
 
-			const result = await zwave.addAssociations(
-				source,
-				3,
-				associations,
+			const results = await zwave.addAssociations({ nodeId: 2 }, 1, [
+				{ nodeId: 2 },
+				{ nodeId: 3 },
+			])
+
+			expect(results).toEqual([
+				AssociationCheckResult.Forbidden_SelfAssociation,
+				AssociationCheckResult.OK,
+			])
+			expect(await zwave.getAssociations(2)).toEqual([
 				{
-					force: true,
+					endpoint: undefined,
+					groupId: 1,
+					nodeId: 3,
+					targetEndpoint: undefined,
 				},
-			)
+			])
+		})
 
-			expect(spy).toHaveBeenCalledOnce()
-			expect(spy).toHaveBeenCalledWith(source, 3, associations, {
+		it('addAssociations() with force:true bypasses a forbidden real check result and adds it anyway', async () => {
+			const zwave = realZwave()
+			;(zwave as any)._driver = fakeAssociationDriver([2])
+
+			await zwave.addAssociations({ nodeId: 2 }, 1, [{ nodeId: 2 }], {
 				force: true,
 			})
-			expect(result).toBe(expected)
+
+			expect(await zwave.getAssociations(2)).toEqual([
+				{
+					endpoint: undefined,
+					groupId: 1,
+					nodeId: 2,
+					targetEndpoint: undefined,
+				},
+			])
 		})
 
-		it('removeAssociations() delegates to AssociationService.removeAssociations(source, groupId, associations)', async () => {
+		it('removeAssociations() removes only the targeted association, leaving the rest of the same group intact', async () => {
 			const zwave = realZwave()
-			const source = { nodeId: 1 }
-			const associations = [{ nodeId: 2 }]
-			const spy = vi
-				.spyOn((zwave as any)._associationService, 'removeAssociations')
-				.mockResolvedValue(undefined)
+			;(zwave as any)._driver = fakeAssociationDriver([2, 3, 4], {
+				2: { 1: [{ nodeId: 3 }, { nodeId: 4 }] },
+			})
 
-			await zwave.removeAssociations(source, 3, associations)
+			await zwave.removeAssociations({ nodeId: 2 }, 1, [{ nodeId: 3 }])
 
-			expect(spy).toHaveBeenCalledOnce()
-			expect(spy).toHaveBeenCalledWith(source, 3, associations)
+			expect(await zwave.getAssociations(2)).toEqual([
+				{
+					endpoint: undefined,
+					groupId: 1,
+					nodeId: 4,
+					targetEndpoint: undefined,
+				},
+			])
 		})
 
-		it('removeAllAssociations() delegates to AssociationService.removeAllAssociations(nodeId)', async () => {
+		it('removeAllAssociations() clears every group for the node', async () => {
 			const zwave = realZwave()
-			const spy = vi
-				.spyOn(
-					(zwave as any)._associationService,
-					'removeAllAssociations',
-				)
-				.mockResolvedValue(undefined)
+			;(zwave as any)._driver = fakeAssociationDriver([2, 3, 4], {
+				2: { 1: [{ nodeId: 3 }], 2: [{ nodeId: 4 }] },
+			})
 
-			await zwave.removeAllAssociations(7)
+			await zwave.removeAllAssociations(2)
 
-			expect(spy).toHaveBeenCalledOnce()
-			expect(spy).toHaveBeenCalledWith(7)
+			expect(await zwave.getAssociations(2)).toEqual([])
 		})
 
-		it('removeNodeFromAllAssociations() delegates to AssociationService.removeNodeFromAllAssociations(nodeId)', async () => {
+		it('removeNodeFromAllAssociations() removes the target node from every source/group it belonged to', async () => {
 			const zwave = realZwave()
-			const spy = vi
-				.spyOn(
-					(zwave as any)._associationService,
-					'removeNodeFromAllAssociations',
-				)
-				.mockResolvedValue(undefined)
+			;(zwave as any)._driver = fakeAssociationDriver([2, 3], {
+				2: { 1: [{ nodeId: 3 }] },
+			})
 
-			await zwave.removeNodeFromAllAssociations(7)
+			await zwave.removeNodeFromAllAssociations(3)
 
-			expect(spy).toHaveBeenCalledOnce()
-			expect(spy).toHaveBeenCalledWith(7)
+			expect(await zwave.getAssociations(2)).toEqual([])
 		})
 	})
 
@@ -353,29 +453,42 @@ describe('ZwaveClient service wiring: association/group facades, buildVirtualVal
 			)
 			expect(persisted).toEqual([])
 		})
-
-		it('_getGroups() delegates to GroupService.getGroups(), returning the exact same array reference', () => {
-			const zwave = realZwave()
-			const groups = [{ id: 0x1000, name: 'G', nodeIds: [10, 11] }]
-			;(zwave as any)._groupService._groups = groups
-
-			expect(zwave._getGroups()).toBe(groups)
-		})
 	})
 
-	describe('_buildVirtualValueId (ZwaveClient.ts:2750-2804) - real ValueMetadata presets from @zwave-js/core', () => {
-		it('builds a full ZUIValueId from a real boolean VirtualValueID, deriving id/type/readable/writeable/label/commandClassVersion from real zwave-js metadata', () => {
+	describe('virtual node values (ZwaveClient.ts:2719-2773 _buildVirtualValueId, invoked by GroupService._updateVirtualNodeValues) - real ValueMetadata presets from @zwave-js/core, exercised end-to-end through _createGroup()/_updateGroup()', () => {
+		function fakeDriverWithDefinedValueIds(
+			nodeIds: number[],
+			valueIds: VirtualValueID[],
+		) {
+			return {
+				controller: {
+					ownNodeId: 1,
+					nodes: new Map(nodeIds.map((id) => [id, {}])),
+					getMulticastGroup: () => ({
+						getDefinedValueIDs: () => valueIds,
+					}),
+				},
+			}
+		}
+
+		it('builds full ZUIValueId entries for each real virtual value id, deriving type/readable/writeable/label/commandClassVersion from real zwave-js metadata (boolean + numeric-specific min/max/unit)', async () => {
 			const zwave = realZwave()
-
-			const result = (zwave as any)._buildVirtualValueId(
-				0x1000,
-				booleanVirtualValueId,
-				true,
+			zwave.driverReady = true
+			;(zwave as any)._driver = fakeDriverWithDefinedValueIds(
+				[10, 11],
+				[booleanVirtualValueId, numericVirtualValueId],
 			)
+			;(zwave as any)._groupService._groups = []
 
-			expect(result).toMatchObject({
-				id: '4096-37-0-currentValue',
-				nodeId: 0x1000,
+			const client = await connectedSubscriber('nodes')
+			const updatedWithValues = waitForNodeUpdatedWithValues(client)
+
+			const group = await zwave._createGroup('Kitchen', [10, 11])
+
+			const payload = await updatedWithValues
+			expect(payload.values['37-0-currentValue']).toMatchObject({
+				id: `${group.id}-37-0-currentValue`,
+				nodeId: group.id,
 				commandClass: CommandClasses['Binary Switch'],
 				commandClassName: 'Binary Switch',
 				endpoint: 0,
@@ -386,78 +499,77 @@ describe('ZwaveClient service wiring: association/group facades, buildVirtualVal
 				writeable: true,
 				label: 'Current value',
 				commandClassVersion: 2,
-				value: true,
 				list: false,
 			})
-		})
-
-		it('builds a full ZUIValueId from a real numeric VirtualValueID, applying numeric-specific fields (min/max/unit) via _applyValueMetadataFields', () => {
-			const zwave = realZwave()
-
-			const result = (zwave as any)._buildVirtualValueId(
-				0x1000,
-				numericVirtualValueId,
-				42,
-			)
-
-			expect(result).toMatchObject({
-				id: '4096-38-0-currentValue',
+			expect(payload.values['38-0-currentValue']).toMatchObject({
+				id: `${group.id}-38-0-currentValue`,
 				type: 'number',
 				min: 0,
 				max: 99,
 				unit: '%',
-				value: 42,
 				list: false,
 				commandClassVersion: 4,
 			})
 		})
 
-		it('defaults commandClassVersion to 1 when ccVersion is 0 (defensive fallback documented at ZwaveClient.ts:2758-2763)', () => {
+		it('defaults commandClassVersion to 1 when the real zwave-js metadata reports ccVersion 0 (defensive fallback for an older zwave-js build, ZwaveClient.ts:2729-2732)', async () => {
 			const zwave = realZwave()
-
-			const result = (zwave as any)._buildVirtualValueId(
-				0x1000,
-				{ ...booleanVirtualValueId, ccVersion: 0 },
-				false,
+			zwave.driverReady = true
+			;(zwave as any)._driver = fakeDriverWithDefinedValueIds(
+				[10, 11],
+				[{ ...booleanVirtualValueId, ccVersion: 0 }],
 			)
+			;(zwave as any)._groupService._groups = []
 
-			expect(result.commandClassVersion).toBe(1)
+			const client = await connectedSubscriber('nodes')
+			const updatedWithValues = waitForNodeUpdatedWithValues(client)
+
+			await zwave._createGroup('Kitchen', [10, 11])
+
+			const payload = await updatedWithValues
+			expect(
+				payload.values['37-0-currentValue'].commandClassVersion,
+			).toBe(1)
 		})
 
-		it('returns null when the VirtualValueID carries no metadata (ZwaveClient.ts:2755-2756 guard)', () => {
+		it('omits a virtual value id from the emitted values entirely when its real zwave-js metadata is missing (defensive guard for an older zwave-js build, ZwaveClient.ts:2724-2725), while still emitting the rest', async () => {
 			const zwave = realZwave()
-			// Simulates an older zwave-js build omitting metadata; the `as VirtualValueID` cast only satisfies the private method's compile-time param type, a no-op at runtime
+			zwave.driverReady = true
+			// Simulates an older zwave-js build omitting metadata for a synthesized entry; the cast only satisfies this fake driver's own compile-time return type, a no-op at runtime
 			const malformed: Partial<VirtualValueID> = {
 				...booleanVirtualValueId,
 			}
 			delete malformed.metadata
-
-			const result = (zwave as any)._buildVirtualValueId(
-				0x1000,
-				malformed as VirtualValueID,
-				true,
+			;(zwave as any)._driver = fakeDriverWithDefinedValueIds(
+				[10, 11],
+				[malformed as VirtualValueID, numericVirtualValueId],
 			)
+			;(zwave as any)._groupService._groups = []
 
-			expect(result).toBeNull()
+			const client = await connectedSubscriber('nodes')
+			const updatedWithValues = waitForNodeUpdatedWithValues(client)
+
+			await zwave._createGroup('Kitchen', [10, 11])
+
+			const payload = await updatedWithValues
+			expect(payload.values['37-0-currentValue']).toBeUndefined()
+			expect(payload.values['38-0-currentValue']).toBeDefined()
 		})
 
-		it('preserves existing fields from a previously-built value id when rebuilding (ZwaveClient.ts:2765-2771 merge)', () => {
-			const zwave = realZwave()
-			;(zwave as any)._nodes.set(0x1000, {
-				id: 0x1000,
-				values: {
-					'37-0-currentValue': { isCurrentValue: true },
-				},
-			})
-
-			const result = (zwave as any)._buildVirtualValueId(
-				0x1000,
-				booleanVirtualValueId,
-				true,
-			)
-
-			expect(result.isCurrentValue).toBe(true)
-		})
+		// _buildVirtualValueId (ZwaveClient.ts:2737-2743) merges in any
+		// existing valueId fields (e.g. a user-set poll config) before
+		// applying the freshly-built ones - mirroring `_updateValueMetadata`'s
+		// physical-node behavior. Both real callers of _buildVirtualValueId
+		// (GroupService._updateVirtualNodeValues and
+		// ZwaveClient._doUpdateBroadcastNodeValues) reset the target
+		// ZUINode's `values` to `{}` immediately before the rebuild loop that
+		// reads "existing" from that same values map, so the merge can never
+		// actually see a prior value through either real call path today -
+		// confirmed by attempting this test through _createGroup()/
+		// _updateGroup() and observing the merged field always come back
+		// undefined. Since it isn't reachable via any real facade/production
+		// path, it's intentionally not covered here rather than restoring a
+		// private-method-call test for unreachable mechanics.
 	})
 
 	describe('startup group restoration (ZwaveClient.ts:5051-5053) - the exact loop _onDriverReady() runs on every driver-ready/restart', () => {
@@ -511,8 +623,8 @@ describe('ZwaveClient service wiring: association/group facades, buildVirtualVal
 		})
 	})
 
-	describe('node removal delegates group cleanup to GroupService (ZwaveClient.ts:5442-5446)', () => {
-		it('_onNodeRemoved() removes the physical node AND delegates to the real GroupService.removeNodeFromGroups(), which persists the removal from every affected group', async () => {
+	describe('node removal (ZwaveClient.ts:5442-5446)', () => {
+		it('_onNodeRemoved() removes the physical node and persists its removal from every affected group, through the real GroupService', async () => {
 			await harness.jsonStore.put(harness.store.groups, [
 				{ id: 0x1000, name: 'G', nodeIds: [10, 11, 12] },
 			])
@@ -532,11 +644,6 @@ describe('ZwaveClient service wiring: association/group facades, buildVirtualVal
 				name: 'Removed physical node',
 			})
 
-			const removeNodeFromGroupsSpy = vi.spyOn(
-				(zwave as any)._groupService,
-				'removeNodeFromGroups',
-			)
-
 			const fakeZwaveNode: any = { id: 11, removeAllListeners: vi.fn() }
 			await (zwave as any)._onNodeRemoved(
 				fakeZwaveNode,
@@ -544,8 +651,6 @@ describe('ZwaveClient service wiring: association/group facades, buildVirtualVal
 			)
 
 			expect((zwave as any)._nodes.has(11)).toBe(false)
-			expect(removeNodeFromGroupsSpy).toHaveBeenCalledOnce()
-			expect(removeNodeFromGroupsSpy).toHaveBeenCalledWith(11)
 			expect(zwave._getGroups()).toEqual([
 				{ id: 0x1000, name: 'G', nodeIds: [10, 12] },
 			])
@@ -583,9 +688,18 @@ describe('ZwaveClient service wiring: association/group facades, buildVirtualVal
 			const client = await connectedSubscriber('nodes')
 			const sendToSocketSpy = vi.spyOn(zwave as any, 'sendToSocket')
 			const updatedWithValues = waitForNodeUpdatedWithValues(client)
-			const internalValueChanged = new Promise<unknown[]>((resolve) =>
-				zwave.once('valueChanged', (...args: unknown[]) =>
-					resolve(args),
+			// No cast needed: TypedEventEmitter.once() infers valueId/node/changed
+			// as the real ZUIValueId/ZUINode/boolean types from the
+			// 'valueChanged' event signature; only the Promise's own result
+			// type is spelled out, since inference doesn't flow back through
+			// the nested once() callback
+			const internalValueChanged = new Promise<{
+				valueId: ZUIValueId
+				node: ZUINode
+				changed?: boolean
+			}>((resolve) =>
+				zwave.once('valueChanged', (valueId, node, changed) =>
+					resolve({ valueId, node, changed }),
 				),
 			)
 
@@ -600,9 +714,9 @@ describe('ZwaveClient service wiring: association/group facades, buildVirtualVal
 				commandClass: CommandClasses['Binary Switch'],
 			})
 
-			const [valueId, node, changed] = await internalValueChanged
-			expect((valueId as any).id).toBe(`${group.id}-37-0-currentValue`)
-			expect((node as any).id).toBe(group.id)
+			const { valueId, node, changed } = await internalValueChanged
+			expect(valueId.id).toBe(`${group.id}-37-0-currentValue`)
+			expect(node.id).toBe(group.id)
 			expect(changed).toBe(true)
 
 			// Asserting the spy's full call history (not a timed wait) proves no VALUE_UPDATED was ever sent, deterministically
