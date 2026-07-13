@@ -813,26 +813,23 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	private _driver: Driver
 
 	/**
-	 * Owns the official `@zwave-js/server` lifecycle. The `server` accessor
-	 * below delegates to it so the legacy internal/API surface is unchanged.
+	 * Owns the `@zwave-js/server` lifecycle; the `server` accessor below
+	 * delegates to it.
 	 *
-	 * Optional because it is now HA-owned: in production the
-	 * `AppRuntime`-owned `HomeAssistantManager` constructs the manager (via
-	 * {@link buildServerHost}) and adopts it into this client through
-	 * {@link adoptServerManager} BEFORE the driver connects; a client
-	 * constructed directly (standalone / tests) lazily builds its own fallback
-	 * on first access to {@link zwaveServer}. Either way exactly one manager is
-	 * owned per client and the create/start/destroy points are unchanged.
+	 * Optional because in production the `AppRuntime`-owned
+	 * `HomeAssistantManager` constructs the manager (via {@link buildServerHost})
+	 * and adopts it through {@link adoptServerManager} before the driver
+	 * connects, while a directly-constructed client (standalone/tests) lazily
+	 * builds its own fallback on first access to {@link zwaveServer}.
 	 */
 	private _serverManager?: ZwaveServerManager
 
 	/**
 	 * The narrow {@link ZwaveServerHost} port the server manager uses to reach
-	 * back into this client (current driver/config/user-callbacks + hard-reset
-	 * re-init). Every accessor resolves the CURRENT value, so a driver/config
-	 * swap on restart is honoured with nothing captured at construction time.
-	 * Public so the `HomeAssistantManager` factory can build a manager that this
-	 * client then adopts.
+	 * back into this client. Every accessor resolves the current value so a
+	 * driver/config swap on restart is honoured with nothing captured at
+	 * construction time. Public so the `HomeAssistantManager` factory can build a
+	 * manager this client then adopts.
 	 */
 	public buildServerHost(): ZwaveServerHost {
 		return {
@@ -855,12 +852,11 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	}
 
 	/**
-	 * The lifecycle-managed `@zwave-js/server` (`ZwavejsServer`) subsystem this
-	 * client owns. In production this is the HA-owned manager adopted via
+	 * The `@zwave-js/server` (`ZwavejsServer`) subsystem this client owns. In
+	 * production it is the HA-owned manager adopted via
 	 * {@link adoptServerManager}; a directly-constructed client lazily builds a
-	 * standalone fallback here on first access so its server lifecycle keeps
-	 * working with no coordinator. Exposed so the `HomeAssistantManager` can
-	 * resolve the CURRENT server manager across restarts.
+	 * standalone fallback here on first access. Exposed so the
+	 * `HomeAssistantManager` can resolve the current manager across restarts.
 	 */
 	public get zwaveServer(): ZwaveServerManager {
 		if (!this._serverManager) {
@@ -874,11 +870,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	}
 
 	private set server(value: ZwavejsServer | null) {
-		// Route through the lazy accessor so a directly-constructed client
-		// (standalone / tests) that assigns `server` before any create() still
-		// has a manager to hold it. In production this setter is never used
-		// (the manager owns its own `_server`); it exists for the compatibility
-		// surface only.
+		// Route through the lazy accessor so a directly-constructed client that
+		// assigns `server` before any create() still has a manager to hold it
 		this.zwaveServer.server = value
 	}
 
@@ -1246,9 +1239,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			inclusionUserCallbacks: undefined,
 		})
 
-		// when no user is connected, give back the control to HA server. When no
-		// server manager has been built yet (server disabled, never accessed)
-		// there is nothing to hand back, so this is a guarded no-op.
+		// when no user is connected, give back the control to HA server
 		this._serverManager?.handInclusionControlBack()
 	}
 

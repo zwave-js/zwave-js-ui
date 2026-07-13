@@ -47,12 +47,11 @@ export interface FakeBroker extends EventEmitter {
 	unsubscribed: string[]
 	ended: boolean
 	/**
-	 * When true, `subscribe` records the SUBSCRIBE but WITHHOLDS its SUBACK
-	 * callback (queued in `pendingSubscribes`) instead of firing it
-	 * synchronously, so a test can land the broker's grant/error later - after
-	 * an interleaved dispose/close - via `flushSubscribes`. Models the real
-	 * network round-trip a subscribe incurs. Defaults to false (synchronous
-	 * success), preserving the simple behavior every other suite relies on.
+	 * When true, `subscribe` records the subscribe but withholds its callback
+	 * (queued in `pendingSubscribes`) instead of firing it synchronously, so a
+	 * test can land the broker's grant/error later — after an interleaved
+	 * dispose/close — via `flushSubscribes`, modelling the real network
+	 * round-trip. Defaults to false (synchronous success).
 	 */
 	deferSubscribe: boolean
 	/** Queued deferred subscribe callbacks awaiting `flushSubscribes`. */
@@ -192,8 +191,8 @@ export function createFakeBroker(): FakeBroker {
 
 	broker.subscribe = (topic, options, cb) => {
 		broker.subscribed.push({ topic, options })
-		// Deferred mode: withhold the SUBACK so a test can land it later (after
-		// an interleaved dispose/close) via `flushSubscribes`.
+		// Deferred mode: withhold the callback so a test can land it later (after
+		// an interleaved dispose/close) via `flushSubscribes`
 		if (broker.deferSubscribe) {
 			broker.pendingSubscribes.push({ topic, options, cb })
 			return broker

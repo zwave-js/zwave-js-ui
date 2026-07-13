@@ -327,8 +327,8 @@ describe('Home Assistant status and broker reconnect re-announce all devices', (
 		harness.resetState()
 		harness.zwave.nodes.clear()
 
-		// A concrete-MqttClient plugin subscribes the public compatibility
-		// event exactly as before the refactor.
+		// A plugin subscribes the public compatibility event through the concrete
+		// MqttClient
 		const emits: boolean[] = []
 		const listener = (online: boolean): void => {
 			emits.push(online)
@@ -342,18 +342,17 @@ describe('Home Assistant status and broker reconnect re-announce all devices', (
 			harness.broker.deliver('homeassistant/status', 'offline')
 			harness.broker.deliver('homeassistant/status', 'ONLINE')
 			await tick()
-			// Same boolean values, one per message, same order.
 			expect(emits).toEqual([true, false, true])
 
-			// A broker reconnect re-subscribes the topic but must NOT surface a
-			// spurious hassStatus (that path only emits brokerStatus).
+			// A broker reconnect re-subscribes the topic but must not surface a
+			// spurious hassStatus, since that path emits only brokerStatus
 			harness.broker.triggerReconnect()
 			harness.broker.triggerConnect()
 			await tick()
 			expect(emits).toEqual([true, false, true])
 
-			// ...and the single manager-owned subscription still delivers the
-			// next real message exactly once (no duplicate listener leaked).
+			// The single manager-owned subscription still delivers the next real
+			// message once, proving no duplicate listener leaked
 			harness.broker.deliver('homeassistant/status', 'offline')
 			await tick()
 			expect(emits).toEqual([true, false, true, false])

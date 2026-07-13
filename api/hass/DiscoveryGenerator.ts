@@ -73,10 +73,9 @@ export class DiscoveryGenerator {
 	private readonly logger: HassLogger
 
 	// Publication fence. While `false` every retained-discovery producer is a
-	// no-op, so no node/value/remove/status event can emit a retained MQTT
+	// no-op, so no node/value/remove/status event emits a retained MQTT
 	// discovery message once the owning manager has begun its (possibly
-	// deferred) teardown. Starts active; the owner flips it via
-	// {@link deactivate}/{@link activate}.
+	// deferred) teardown. Starts active
 	private _active = true
 
 	public constructor(options: DiscoveryGeneratorOptions) {
@@ -101,19 +100,19 @@ export class DiscoveryGenerator {
 	/**
 	 * Re-arm retained-discovery publication. Called by the owning
 	 * {@link MqttDiscoveryManager} on start, including a restart that reuses the
-	 * very same generator instance (the standalone `Gateway` path memoizes it).
+	 * same generator instance (the standalone `Gateway` path memoizes it).
 	 */
 	public activate(): void {
 		this._active = true
 	}
 
 	/**
-	 * Fence off ALL retained-discovery publication synchronously. Called at the
-	 * very beginning of the owning manager's stop - BEFORE it disposes the
-	 * scoped status subscription and BEFORE the coordinator awaits the server
-	 * destroy - so any node/value/remove/status event that fires during the
-	 * (deferred) teardown window cannot publish a retained MQTT discovery
-	 * message or adopt resources against a subsystem that is going away.
+	 * Fence off retained-discovery publication synchronously, at the very start
+	 * of the owning manager's stop (before it disposes the scoped status
+	 * subscription and before the coordinator awaits the server destroy), so any
+	 * node/value/remove/status event during the deferred teardown window cannot
+	 * publish a retained MQTT discovery message or adopt resources against a
+	 * subsystem that is going away.
 	 */
 	public deactivate(): void {
 		this._active = false
@@ -152,10 +151,8 @@ export class DiscoveryGenerator {
 		options: PublishDiscoveryOptions = {},
 	): void {
 		try {
-			// Publication fence: once the owning manager has begun its teardown
-			// every retained-discovery producer funnels here and must no-op, so
-			// no late node/value/remove/status event publishes a retained
-			// discovery message during the deferred quiesce window.
+			// Publication fence: skip once the owning manager has begun teardown
+			// so no late event publishes a retained discovery message
 			if (!this._active) {
 				this.logger.debug(
 					'Discovery is quiesced; skipping retained publication',

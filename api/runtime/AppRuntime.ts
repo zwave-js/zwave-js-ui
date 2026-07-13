@@ -35,20 +35,18 @@ export interface ManagedService {
 }
 
 /**
- * Explicit lifecycle states of the gateway generation `AppRuntime` owns. This
- * replaced the former lone `restarting` boolean so the restart/close
- * coordination (quiesce HA before closing clients) and concurrency
- * (shutdown-during-start) are driven by state rather than an ad-hoc flag:
+ * Explicit lifecycle states of the gateway generation `AppRuntime` owns, so the
+ * restart/close coordination (quiesce HA before closing clients) and
+ * shutdown-during-start concurrency are driven by state rather than a flag:
  *
  *  - `idle`: no start attempted yet, or a restart was reset/aborted.
  *  - `starting`: a boot-time `startGateway()` is in progress.
  *  - `started`: a `startGateway()` completed successfully.
- *  - `stopping`: an explicit restart is in progress - from `setRestarting(true)`
- *    through its subsequent `startGateway()` - OR a teardown is quiescing.
- *    This is the only state `isRestarting()` reports, so a restart stays
- *    "restarting" across both its teardown and start phases exactly as the old
- *    boolean did, while a boot-time start (which never enters `stopping`) does
- *    not.
+ *  - `stopping`: an explicit restart is in progress (from `setRestarting(true)`
+ *    through its subsequent `startGateway()`) or a teardown is quiescing. Only
+ *    this state is reported by `isRestarting()`, so a restart stays "restarting"
+ *    across both its teardown and start phases while a boot-time start (which
+ *    never enters `stopping`) does not.
  *  - `failed`: the last `startGateway()` threw.
  */
 export type GatewayLifecycleState =
@@ -80,17 +78,15 @@ export interface AppRuntimeDeps {
  *
  * A concurrent teardown/shutdown/restart cancels the in-flight start through
  * this token instead of blocking on it: `runStartGateway()` re-reads
- * {@link cancelled} at each continuation checkpoint that follows an `await`
- * whose settling it does NOT control - after the awaited `gw.start()`, and
- * around each awaited plugin `import()` - and bails there without starting the
- * Home Assistant subsystem, adopting anything, or publishing. That is what
- * lets a teardown quiesce PROMPTLY (see {@link AppRuntime.teardownGateway})
- * even while a `gw.start()`/plugin top-level `await` is still hung: the
- * teardown closes the gateway (which unblocks a hung `gw.start()` by
- * destroying the driver) and returns; whenever the start's promise finally
- * settles - immediately, late, or never - its continuation observes the
- * cancellation and cannot resurrect the torn-down generation. No timeout is
- * involved; cancellation is edge-triggered and generation-exact.
+ * {@link cancelled} at each continuation checkpoint following an `await` whose
+ * settling it does not control (after `gw.start()`, and around each plugin
+ * `import()`) and bails without starting Home Assistant, adopting, or
+ * publishing. That lets a teardown quiesce even while a `gw.start()`/plugin
+ * top-level `await` is still hung: the teardown closes the gateway (unblocking a
+ * hung `gw.start()` by destroying the driver) and returns, and whenever the
+ * start's promise settles its continuation observes the cancellation and cannot
+ * resurrect the torn-down generation. Cancellation is edge-triggered and
+ * generation-exact, with no timeout involved.
  */
 class StartGeneration {
 	private _cancelled = false
@@ -110,21 +106,16 @@ export class AppRuntime {
 	private pluginsRouter?: Router
 	private plugins: CustomPlugin[] = []
 
-	// The gateway generation's lifecycle state - the explicit machine that
-	// replaced the former lone `restarting` boolean. It drives the
-	// quiesce-before-close ordering and the restart guard (see
-	// `isRestarting()`/`setRestarting()` and `startGateway()`/
-	// `teardownGateway()` below). `stopping` is only ever entered by an
-	// explicit restart request, so boot-time startup is never observed as
-	// "restarting" (preserving the original quirk that settings/statistics
-	// stay reachable during initial startup).
+	// The gateway generation's lifecycle state driving the quiesce-before-close
+	// ordering and the restart guard (see `isRestarting()`/`setRestarting()` and
+	// `startGateway()`/`teardownGateway()`). Only an explicit restart enters
+	// `stopping`, so boot-time startup is never observed as "restarting",
+	// keeping settings/statistics reachable during initial startup
 	private lifecycle: GatewayLifecycleState = 'idle'
-	// The in-flight `startGateway()` run, if any. A concurrent teardown/
-	// shutdown captures this so it can attach a rejection sink (it must NOT
-	// block on it - a hung `gw.start()`/plugin import would never settle) and
-	// so `startGateway()`'s `finally` only clears the shared handle when it
-	// still points at its own run (a newer start may already have replaced
-	// it).
+	// The in-flight `startGateway()` run, if any. A concurrent teardown/shutdown
+	// captures this to attach a rejection sink without blocking on it (a hung
+	// `gw.start()`/plugin import would never settle); `startGateway()`'s
+	// `finally` clears the shared handle only when it still points at its own run
 	private startInFlight: Promise<void> | undefined
 	private ownsDebugSession = false
 
@@ -149,12 +140,12 @@ export class AppRuntime {
 
 	private readonly deps: AppRuntimeDeps
 
-	// The built-in Home Assistant subsystem's process-lifetime owner. Created
-	// once here so it exists BEFORE any MQTT/Z-Wave client is constructed in
-	// `startGateway()`; it genuinely owns the live discovery/`@zwave-js/server`
+	// The Home Assistant subsystem's process-lifetime owner, created once here so
+	// it exists before any MQTT/Z-Wave client is constructed in
+	// `startGateway()`. It owns the live discovery/`@zwave-js/server`
 	// sub-managers (constructed through factories that also adopt them into the
-	// current `Gateway`/`ZwaveClient`), so a gateway/client replaced
-	// mid-restart gets a brand-new generation with nothing stale surviving.
+	// current `Gateway`/`ZwaveClient`), so a gateway/client replaced mid-restart
+	// gets a fresh generation with nothing stale surviving
 	private readonly homeAssistant: HomeAssistantManager
 
 	constructor(deps: AppRuntimeDeps) {
@@ -169,8 +160,6 @@ export class AppRuntime {
 			logger: loggers.module('HomeAssistant'),
 		})
 	}
-
-	// ### Home Assistant subsystem ###
 
 	getHomeAssistant(): HomeAssistantManager {
 		return this.homeAssistant
@@ -222,13 +211,11 @@ export class AppRuntime {
 	}
 
 	/**
-	 * Whether a restart is in progress. Backed by the lifecycle machine: only
-	 * an explicit restart drives the state into `stopping` (and it stays there
-	 * across the restart's teardown AND its subsequent `startGateway()`, until
-	 * that start completes), so this reproduces the old boolean's exact
-	 * observable behavior - including that a boot-time start is NOT reported as
-	 * restarting. Preserves the `/api/settings`, `/api/restart` and
-	 * `/api/statistics` guard messages verbatim.
+	 * Whether a restart is in progress. Only an explicit restart drives the
+	 * lifecycle into `stopping` (and it stays there across the restart's teardown
+	 * and its subsequent `startGateway()` until that start completes), so a
+	 * boot-time start is not reported as restarting. Preserves the
+	 * `/api/settings`, `/api/restart` and `/api/statistics` guard messages.
 	 */
 	isRestarting(): boolean {
 		return this.lifecycle === 'stopping'
@@ -291,47 +278,43 @@ export class AppRuntime {
 	}
 
 	async startGateway(settings: PersistedSettings): Promise<void> {
-		// A restart drives the machine into `stopping` (via
-		// `setRestarting(true)`) and keeps reporting "restarting" across both
-		// its teardown AND this start, until the start settles; a boot-time
-		// start (lifecycle `idle`) instead moves through `starting`, which is
-		// NOT reported as restarting - preserving the original quirk that
-		// settings/statistics stay reachable during initial startup.
+		// A restart is already in `stopping` and keeps reporting "restarting"
+		// across its teardown and this start until the start settles; a boot-time
+		// start (lifecycle `idle`) moves through `starting`, which is not reported
+		// as restarting, keeping settings/statistics reachable during startup
 		const isRestart = this.lifecycle === 'stopping'
 		if (!isRestart) this.lifecycle = 'starting'
 
-		// Mint a fresh cancellation token for THIS start generation and publish
-		// it (with the in-flight run) so a concurrent teardown/shutdown can
-		// cancel this exact generation and detach from it promptly rather than
-		// serialize behind a possibly-hung start. Both are set synchronously:
-		// `runStartGateway()` executes up to its first `await` (past
-		// `attachClients()`) before yielding, so the generation is attached by
-		// the time any caller can observe them.
+		// Mint a fresh cancellation token for this start generation and publish
+		// it (with the in-flight run) so a concurrent teardown/shutdown can cancel
+		// this generation and detach promptly rather than serialize behind a
+		// possibly-hung start. Both are set synchronously: `runStartGateway()`
+		// runs up to its first `await` (past `attachClients()`) before yielding,
+		// so the generation is attached before any caller can observe them
 		const generation = new StartGeneration()
 		this.currentStart = generation
 		const run = this.runStartGateway(settings, generation)
 		this.startInFlight = run
 		try {
 			await run
-			// A start that a concurrent teardown cancelled must never report
-			// success or overwrite the `stopping` state the teardown owns now -
-			// its continuation already bailed without adopting/publishing.
+			// A start a concurrent teardown cancelled must not report success or
+			// overwrite the `stopping` state the teardown now owns; its
+			// continuation already bailed without adopting/publishing
 			if (!generation.cancelled) {
 				this.lifecycle = 'started'
 			}
 		} catch (error) {
-			// A rejection from a cancelled generation is an expected
-			// consequence of the teardown (e.g. it closed the gateway out from
-			// under a hung `gw.start()`): swallow it - the teardown owns the
-			// cleanup and the lifecycle - so it neither surfaces to this
-			// caller nor flips the state to `failed`.
+			// A rejection from a cancelled generation is an expected consequence
+			// of the teardown (e.g. it closed the gateway out from under a hung
+			// `gw.start()`), so swallow it: the teardown owns the cleanup and the
+			// lifecycle, so it neither surfaces here nor flips the state to failed
 			if (generation.cancelled) return
 			this.lifecycle = 'failed'
 			throw error
 		} finally {
-			// Only relinquish the shared handles if they still point at THIS
-			// generation - a newer start (e.g. the start half of a restart)
-			// may already have replaced them.
+			// Relinquish the shared handles only if they still point at this
+			// generation; a newer start (e.g. the start half of a restart) may
+			// already have replaced them
 			if (this.startInFlight === run) this.startInFlight = undefined
 			if (this.currentStart === generation) {
 				this.currentStart = undefined
@@ -378,15 +361,14 @@ export class AppRuntime {
 		)
 		this.setGateway(gw)
 
-		// Construct + adopt a fresh HA-owned generation of the discovery and
-		// `@zwave-js/server` managers into the just-built clients BEFORE they
+		// Construct and adopt a fresh HA-owned generation of the discovery and
+		// `@zwave-js/server` managers into the just-built clients before they
 		// start, so the sub-managers the clients drive at their locked timing
-		// points (discovery at `Gateway.start()`, server at driver-ready) are
-		// the very instances the coordinator owns. Each factory constructs the
-		// concrete manager against this generation's clients and adopts it into
-		// them; the coordinator holds the returned handle. A restart re-enters
-		// with brand-new clients, so this always wires a fresh generation with
-		// nothing stale surviving.
+		// points (discovery at `Gateway.start()`, server at driver-ready) are the
+		// instances the coordinator owns. Each factory builds the manager against
+		// this generation's clients and adopts it; the coordinator holds the
+		// returned handle, so a restart wires a fresh generation with nothing
+		// stale surviving
 		this.homeAssistant.attachClients({
 			createDiscovery: () => {
 				const discovery = new MqttDiscoveryManager(
@@ -396,8 +378,8 @@ export class AppRuntime {
 				return discovery
 			},
 			createServer: () => {
-				// No Z-Wave client this generation (settings.zwave absent) ->
-				// no server subsystem to own.
+				// no Z-Wave client this generation (settings.zwave absent), so
+				// no server subsystem to own
 				if (!zwave) return undefined
 				const server = new ZwaveServerManager(zwave.buildServerHost())
 				zwave.adoptServerManager(server)
@@ -414,23 +396,20 @@ export class AppRuntime {
 			// cleanup, so bail without touching the shared state or rethrowing.
 			if (generation.cancelled) return
 
-			// Genuine startup failure: close the EXACT failed generation -
-			// quiesce the partially-started HA subsystem, then close the
-			// gateway (Z-Wave driver + MQTT client) and destroy any plugins -
-			// before propagating, so no producer/listener/subscription, server
-			// port, or open client leaks past a failed start. Cleanup errors
-			// are logged/aggregated and NEVER replace the caller's original
-			// error.
+			// Genuine startup failure: close the failed generation (quiesce the
+			// partially-started HA subsystem, then close the gateway and destroy
+			// any plugins) before propagating, so no producer, listener,
+			// subscription, server port, or open client leaks past a failed
+			// start. Cleanup errors are logged and aggregated, never replacing
+			// the caller's original error
 			await this.quiesceFailedStart(gw)
 			throw error
 		}
 
 		// A teardown may have cancelled this generation while `gw.start()` was
-		// resolving. Bail WITHOUT starting HA, loading plugins, or publishing -
-		// and WITHOUT re-running cleanup: the concurrent teardown already
-		// quiesced HA and closed this exact generation's gateway, so a second
-		// pass here would be a redundant double-close. Exact-once cleanup is
-		// owned by whoever cancelled.
+		// resolving, so bail without starting HA, loading plugins, or publishing,
+		// and without re-running cleanup: the teardown already quiesced HA and
+		// closed this generation's gateway, so a second pass would double-close
 		if (generation.cancelled) return
 
 		// Confirm the subsystem is up now that the gateway (and, through it,
@@ -478,22 +457,19 @@ export class AppRuntime {
 	}
 
 	/**
-	 * Closes the EXACT gateway generation whose `gw.start()` just failed:
-	 * quiesce the partially-started Home Assistant subsystem (halt discovery,
-	 * await the `@zwave-js/server` destroy), then close the gateway (Z-Wave
-	 * driver + MQTT client) and destroy any loaded plugins, so nothing -
-	 * producer, listener, MQTT subscription, server port, or open client -
-	 * leaks past the failed start.
+	 * Closes the gateway generation whose `gw.start()` just failed: quiesce the
+	 * partially-started Home Assistant subsystem (halt discovery, await the
+	 * `@zwave-js/server` destroy), then close the gateway and destroy any loaded
+	 * plugins, so no producer, listener, MQTT subscription, server port, or open
+	 * client leaks past the failed start.
 	 *
-	 * This runs ONLY on a genuine (uncancelled) startup failure. A start that a
-	 * concurrent teardown cancelled does NOT come here - the teardown owns that
-	 * generation's cleanup, so the continuation just bails, keeping cleanup
-	 * exactly-once.
+	 * Runs only on a genuine (uncancelled) startup failure; a start a concurrent
+	 * teardown cancelled does not come here, since the teardown owns that
+	 * generation's cleanup, keeping cleanup exactly-once.
 	 *
-	 * Each step is isolated so one cleanup failure cannot mask another, and -
-	 * critically - NONE of them may replace the caller's ORIGINAL startup
-	 * error: they are collected and logged here, never rethrown. The caller
-	 * rethrows its own primary error after this returns.
+	 * Each step is isolated so one cleanup failure cannot mask another, and none
+	 * may replace the caller's original startup error: they are collected and
+	 * logged here, never rethrown.
 	 */
 	private async quiesceFailedStart(gw: Gateway): Promise<void> {
 		const cleanupErrors: unknown[] = []
@@ -556,42 +532,38 @@ export class AppRuntime {
 
 	/**
 	 * The single, centralized teardown of the current gateway generation. Every
-	 * caller that closes the gateway - graceful {@link shutdown}, `/api/restart`,
-	 * and a settings-change restart - routes through here so the ordering is
-	 * always identical:
+	 * caller that closes the gateway (graceful {@link shutdown}, `/api/restart`,
+	 * and a settings-change restart) routes through here for one identical order:
 	 *
-	 *  1. CANCEL any in-flight `startGateway()` generation and detach from it.
-	 *     A teardown never blocks on the start (a hung `gw.start()` or plugin
-	 *     top-level `await import()` would never settle); it cancels the
-	 *     generation's token so, whenever that start finally settles, its
-	 *     continuation bails without adopting/publishing, and it attaches a
-	 *     rejection sink so a late rejection can't become unhandled. Closing
-	 *     the gateway in step 3 is what actually unblocks a hung `gw.start()`
-	 *     (by destroying the driver).
-	 *  2. QUIESCE the Home Assistant subsystem: halt every discovery producer/
-	 *     listener/subscription and AWAIT the `@zwave-js/server` destroy, so no
+	 *  1. Cancel any in-flight `startGateway()` generation and detach from it.
+	 *     The teardown never blocks on the start (a hung `gw.start()` or plugin
+	 *     top-level `await import()` would never settle); cancelling the token
+	 *     makes that start's continuation bail without adopting/publishing
+	 *     whenever it settles, and a rejection sink keeps a late rejection from
+	 *     going unhandled. Closing the gateway in step 3 unblocks a hung
+	 *     `gw.start()` by destroying the driver.
+	 *  2. Quiesce the Home Assistant subsystem: halt every discovery producer/
+	 *     listener/subscription and await the `@zwave-js/server` destroy, so no
 	 *     rediscovery races the shutdown and the server (and its port) is gone
 	 *     before the driver.
-	 *  3. CLOSE the gateway (which closes the Z-Wave client - driver destroy -
-	 *     then the MQTT client), then DESTROY the plugins.
+	 *  3. Close the gateway (which closes the Z-Wave client, destroying the
+	 *     driver, then the MQTT client), then destroy the plugins.
 	 *
-	 * `requireProperty` selects the historical close-quirk: `/api/restart`
-	 * passes `'close'` to preserve the native `TypeError` when no gateway is
-	 * attached; graceful shutdown omits it to keep the pre-existing guarded
-	 * `if (gw) await gw.close()` behavior.
+	 * `requireProperty` selects the close-quirk: `/api/restart` passes `'close'`
+	 * to preserve the native `TypeError` when no gateway is attached; graceful
+	 * shutdown omits it to keep the guarded `if (gw) await gw.close()` behavior.
 	 */
 	async teardownGateway(options?: {
 		requireProperty?: string
 	}): Promise<void> {
-		// (1) Cancel the in-flight start's generation and capture its run. We
-		// deliberately do NOT await the run: a hung `gw.start()`/plugin import
-		// would never settle, so awaiting would hang the teardown. The
-		// cancellation guarantees that whenever the start DOES settle, its
-		// continuation observes the cancelled token and cannot adopt/publish
-		// into this torn-down generation; closing the gateway below unblocks a
-		// hung `gw.start()`. The rejection sink prevents a late rejection from
-		// surfacing as an unhandled rejection (the start's own caller still
-		// observes it through `startGateway()`).
+		// (1) Cancel the in-flight start's generation and capture its run without
+		// awaiting it: a hung `gw.start()`/plugin import would never settle, so
+		// awaiting would hang the teardown. Cancellation guarantees the start's
+		// continuation observes the cancelled token whenever it settles and
+		// cannot adopt/publish into this torn-down generation; closing the
+		// gateway below unblocks a hung `gw.start()`. The rejection sink keeps a
+		// late rejection from surfacing as unhandled (the start's own caller
+		// still observes it through `startGateway()`)
 		this.currentStart?.cancel()
 		const inFlight = this.startInFlight
 		if (inFlight) {
@@ -624,12 +596,12 @@ export class AppRuntime {
 	 * guards against a missing gateway, so this preserves that same
 	 * guarded behavior rather than the unguarded quirk.
 	 *
-	 * The Home Assistant subsystem is stopped BEFORE the collaborators are
+	 * The Home Assistant subsystem is stopped before the collaborators are
 	 * closed, quiescing its discovery producers/subscriptions and awaiting the
 	 * `@zwave-js/server` destroy so no rediscovery races the client shutdown
 	 * and the server is gone before the driver; the structural discovery/server
 	 * teardown still runs inside `Gateway.close()`/`ZwaveClient.close()` at
-	 * their locked positions (idempotent second passes).
+	 * their locked positions as idempotent second passes.
 	 */
 	async shutdown(): Promise<void> {
 		try {

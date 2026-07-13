@@ -1,10 +1,10 @@
 /**
- * Direct unit/characterization tests for {@link MqttDiscoveryManager}, the
- * extracted owner of the legacy Home Assistant MQTT discovery subsystem that
- * used to live inline in `Gateway`: the mutable `discovered` device index, the
- * per-instance custom-device catalog fork, the {@link DiscoveryGenerator}
- * instance, and the scoped `homeassistant/status`/broker-reconnect
- * subscription that drives a full rediscovery.
+ * Direct unit/characterization tests for {@link MqttDiscoveryManager}, the owner
+ * of the Home Assistant MQTT discovery subsystem: the mutable `discovered`
+ * device index, the per-instance custom-device catalog fork, the
+ * {@link DiscoveryGenerator} instance, and the scoped
+ * `homeassistant/status`/broker-reconnect subscription that drives a full
+ * rediscovery.
  *
  * These exercise the manager in isolation (fake ports, a real but unstarted
  * `CustomDeviceRegistry` source so no `fs.watch` handles are created, and a
@@ -12,7 +12,7 @@
  * scoped-subscription disposer, two-manager isolation path and the
  * generator<->manager `discovered` wiring is proven against the manager itself.
  * The end-to-end delivery of a real `homeassistant/status` retained message is
- * still covered by `mqttLifecycle.test.ts` through the Gateway harness.
+ * covered by `mqttLifecycle.test.ts` through the Gateway harness.
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import type { Mock } from 'vitest'
@@ -29,9 +29,8 @@ import type {
 } from '../../../api/hass/ports.ts'
 import type { HassDevice } from '../../../api/hass/types.ts'
 
-// A logger whose methods are function-valued PROPERTIES (not method
-// signatures) so tests can reference `logger.info` for assertions without the
-// unbound-method rule firing; structurally satisfies `HassLogger`.
+// Methods declared as function-valued properties let tests reference
+// `logger.info` for assertions without the unbound-method rule firing
 interface MockLogger {
 	debug: Mock
 	info: Mock
@@ -164,9 +163,9 @@ function makeManager(
 	overrides: Partial<MqttDiscoveryManagerOptions> = {},
 ): Harness {
 	const logger = makeLogger()
-	// A real registry source, deliberately NOT started: the manager forks a
+	// A real registry source, deliberately not started: the manager forks a
 	// child in its constructor and the fork subscribes to this source on
-	// start()/unsubscribes on stop(), so no file watchers are ever installed.
+	// start()/unsubscribes on stop(), so no file watchers are ever installed
 	const source = new CustomDeviceRegistry({
 		storeDir: '/tmp/mqtt-discovery-manager-test',
 		logger,
@@ -355,10 +354,10 @@ describe('MqttDiscoveryManager scoped status subscription', () => {
 		const status = makeStatusSource()
 
 		manager.subscribeStatus(status)
-		// Non-string payload: legacy complaint, no compat emit.
+		// Non-string payload logs a complaint with no compat emit
 		status.deliver(HASS_STATUS_TOPIC, undefined)
-		// Broker reconnect drives an internal rediscovery but is NOT a HA
-		// birth/will message, so it must not surface as a hassStatus event.
+		// Broker reconnect drives an internal rediscovery but is not a HA
+		// birth/will message, so it must not surface as a hassStatus event
 		status.emitBroker(true)
 
 		expect(status.hassStatusEmits).toEqual([])

@@ -347,10 +347,8 @@ export function registerSettingsRoutes(
 					runtime.setOwnsDebugSession(false)
 				}
 
-				// Quiesce Home Assistant, then close the gateway and destroy
-				// plugins through the single centralized teardown. Passing
-				// `requireProperty: 'close'` preserves the historical TypeError
-				// when no gateway is attached.
+				// `requireProperty: 'close'` preserves the native TypeError when
+				// no gateway is attached
 				await runtime.teardownGateway({ requireProperty: 'close' })
 				if (settings.gateway) {
 					runtime.setupLogging({ gateway: settings.gateway })

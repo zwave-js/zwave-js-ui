@@ -183,15 +183,13 @@ export default class Gateway<
 	}
 
 	/**
-	 * The lifecycle-managed legacy Home Assistant MQTT discovery subsystem this
-	 * gateway owns. In production the `AppRuntime`-owned `HomeAssistantManager`
+	 * The lifecycle-managed Home Assistant MQTT discovery subsystem this gateway
+	 * owns. In production the `AppRuntime`-owned `HomeAssistantManager`
 	 * constructs the manager (via {@link buildDiscoveryOptions}) and adopts it
-	 * through {@link adoptDiscoveryManager} BEFORE the gateway starts; a gateway
-	 * constructed directly (standalone / tests) lazily builds its own fallback
-	 * here on first access. Either way exactly one manager is owned per gateway
-	 * and the discovery facades below delegate to it. Exposed so the
-	 * `HomeAssistantManager` can resolve the CURRENT discovery manager (never a
-	 * stale capture) across restarts.
+	 * through {@link adoptDiscoveryManager} before the gateway starts; a gateway
+	 * constructed directly lazily builds its own fallback here on first access.
+	 * Exposed so the `HomeAssistantManager` can resolve the current discovery
+	 * manager across restarts.
 	 */
 	public get mqttDiscovery(): MqttDiscoveryManager {
 		if (!this._mqttDiscovery) {
@@ -203,10 +201,9 @@ export default class Gateway<
 	}
 
 	/**
-	 * Adopt the HA-owned discovery manager. Called by `HomeAssistantManager`
-	 * once, before the gateway starts, so the discovery facades and `start()`
-	 * below all drive the manager the coordinator owns. Idempotent per
-	 * generation.
+	 * Adopt the HA-owned discovery manager, before the gateway starts, so the
+	 * discovery facades and `start()` below drive the manager the coordinator
+	 * owns. Idempotent per generation.
 	 */
 	public adoptDiscoveryManager(manager: MqttDiscoveryManager): void {
 		this._mqttDiscovery = manager
@@ -234,17 +231,10 @@ export default class Gateway<
 
 	/**
 	 * Build the {@link MqttDiscoveryManagerOptions} that wire a discovery
-	 * manager to THIS gateway's live clients. Public so the HA-owned
-	 * `HomeAssistantManager` can construct the manager it owns (and this gateway
-	 * then adopts via {@link adoptDiscoveryManager}); it is also used to lazily
-	 * build the standalone fallback in {@link mqttDiscovery}.
-	 *
-	 * The legacy Home Assistant MQTT discovery subsystem (discovered index,
-	 * per-instance custom-device catalog fork, DiscoveryGenerator, and the
-	 * scoped HA/broker status subscription) is owned by a lifecycle-managed
-	 * domain object. The Gateway keeps its public discovery facades by
-	 * delegating through the compatibility accessors below. Ports adapt the
-	 * live clients so the manager never binds to a concrete client.
+	 * manager to this gateway's live clients. Public so the HA-owned
+	 * `HomeAssistantManager` can construct the manager it owns, and reused to
+	 * lazily build the standalone fallback in {@link mqttDiscovery}. The ports
+	 * adapt the live clients so the manager never binds to a concrete client.
 	 */
 	public buildDiscoveryOptions(): MqttDiscoveryManagerOptions {
 		const getMqtt = () => this._mqtt
@@ -293,13 +283,7 @@ export default class Gateway<
 		}
 	}
 
-	// ### HASS compatibility accessors
-	//
-	// The discovery subsystem moved into `MqttDiscoveryManager`, but the
-	// Gateway's public discovery facades (and the reach-in characterization
-	// tests) still address `discoveryGenerator`, `customDeviceRegistry`, and
-	// `discovered` on the Gateway. These accessors delegate to the owned
-	// manager so the behavior and internal surface are unchanged.
+	// Discovery facades kept on the Gateway that delegate to the owned manager
 	private get discoveryGenerator(): DiscoveryGenerator {
 		return this.mqttDiscovery.discoveryGenerator
 	}
@@ -317,9 +301,6 @@ export default class Gateway<
 	}
 
 	async start(): Promise<void> {
-		// Start the Home Assistant discovery subsystem: fork/start the catalog
-		// view, reset the discovered index, and (when MQTT is enabled) wire the
-		// scoped HA/broker status subscription that drives a full rediscovery.
 		this.mqttDiscovery.start(this._mqtt, this.mqttEnabled)
 		// gateway configuration
 		this.config.values = this.config.values || []
@@ -521,12 +502,10 @@ export default class Gateway<
 				this.cancelJobs()
 			} finally {
 				try {
-					// Quiesce discovery BEFORE closing MQTT: disposing the
-					// scoped `homeassistant/status` subscription must unsubscribe
-					// from the broker while the client is still connected (so a
-					// clean:false session isn't left with a server-side
-					// subscription), and the publication fence must drop before
-					// the client goes away so nothing publishes during teardown.
+					// Stop discovery before closing MQTT so the scoped
+					// `homeassistant/status` subscription unsubscribes while the
+					// client is still connected, leaving a clean:false session no
+					// server-side subscription, and the fence drops before teardown
 					this.detachListeners()
 					this.mqttDiscovery.stop()
 				} finally {
