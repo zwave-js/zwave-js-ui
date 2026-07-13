@@ -19,10 +19,15 @@ import * as utils from '../utils.ts'
 import type { ZUINode, ZUIValueId } from '../ZwaveClient.ts'
 
 export interface PhysicalNodeProjectionPort {
-	getDriver(): Driver
+	getDriver(): NodeProjectionDriver
 	getStoredNode(nodeId: number): Partial<ZUINode> | undefined
 	ensureStoredNode(nodeId: number): void
 	log(node: ZWaveNode, level: 'debug', message: string): void
+}
+
+export interface NodeProjectionDriver {
+	configManager: Pick<Driver['configManager'], 'lookupManufacturer'>
+	controller: Pick<Driver['controller'], 'getSupportedRFRegions'>
 }
 
 export class NodeProjector {
