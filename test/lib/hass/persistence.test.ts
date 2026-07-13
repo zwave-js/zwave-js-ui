@@ -209,7 +209,7 @@ describe('updating a HASS device on a node', () => {
 		}
 		const { zwave, socket } = makeMutatorClient(7, node)
 
-		zwave.updateDevice({ id: 'switch_sw' } as any, 7, true)
+		zwave.updateDevice({ id: 'switch_sw' } as unknown as HassDevice, 7, true)
 
 		expect('switch_sw' in node.hassDevices).toBe(false)
 		await flush()
@@ -219,7 +219,7 @@ describe('updating a HASS device on a node', () => {
 	it('does nothing when the id matches no existing device', async () => {
 		const node: any = { id: 7, hassDevices: {} }
 		const { zwave, socket } = makeMutatorClient(7, node)
-		zwave.updateDevice({ id: 'nope' } as any, 7)
+		zwave.updateDevice({ id: 'nope' } as unknown as HassDevice, 7)
 		await flush()
 		expect(node.hassDevices).toEqual({})
 		expect(nodeUpdatedEmits(socket)).toHaveLength(0)
@@ -235,7 +235,11 @@ describe('persisting HASS devices for a node', () => {
 			sensor_a: { type: 'sensor', object_id: 'a' },
 			sensor_b: { type: 'sensor', object_id: 'b' },
 		}
-		await zwave.storeDevices(devices as any, 9, false)
+		await zwave.storeDevices(
+			devices as unknown as Record<string, HassDevice>,
+			9,
+			false,
+		)
 
 		expect(devices.sensor_a).toHaveProperty('persistent', true)
 		expect(devices.sensor_b).toHaveProperty('persistent', true)
@@ -262,7 +266,11 @@ describe('persisting HASS devices for a node', () => {
 		})
 
 		const devices = { sensor_a: { type: 'sensor', object_id: 'a' } }
-		await zwave.storeDevices(devices as any, 9, true)
+		await zwave.storeDevices(
+			devices as unknown as Record<string, HassDevice>,
+			9,
+			true,
+		)
 
 		expect(devices.sensor_a).toHaveProperty('persistent', false)
 		expect(node.hassDevices).toEqual(devices)
@@ -296,7 +304,10 @@ describe('persisting HASS devices for a node', () => {
 			hassDevices: {},
 		})
 		await zwave.storeDevices(
-			{ x: { type: 't', object_id: 'o' } } as any,
+			{ x: { type: 't', object_id: 'o' } } as unknown as Record<
+				string,
+				HassDevice
+			>,
 			42,
 			false,
 		)
@@ -320,7 +331,11 @@ describe('persisting HASS devices for a node', () => {
 		})
 
 		const devices = { climate_x: { type: 'climate', object_id: 'x' } }
-		await zwave.storeDevices(devices as any, 11, false)
+		await zwave.storeDevices(
+			devices as unknown as Record<string, HassDevice>,
+			11,
+			false,
+		)
 
 		expect(node.hassDevices.climate_x.persistent).toBe(true)
 
@@ -401,7 +416,7 @@ describe('node update projection ordering', () => {
 		const { zwave, socket } = makeMutatorClient(5, node)
 
 		zwave.addDevice(
-			{ id: 'x', type: 'sensor', object_id: 'temp' } as any,
+			{ id: 'x', type: 'sensor', object_id: 'temp' } as unknown as HassDevice,
 			5,
 		)
 
