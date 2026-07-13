@@ -175,10 +175,6 @@ async function driveConnectToReady(
 		} as any,
 		socket as any,
 	)
-	// Stub the orthogonal scheduler so no real long-lived timer leaks
-	vi.spyOn(internals(zwave), '_scheduledConfigCheck').mockResolvedValue(
-		undefined,
-	)
 
 	await zwave.connect()
 
@@ -220,9 +216,14 @@ beforeEach(() => {
 	hoisted.drivers.length = 0
 	hoisted.destroyOrder.length = 0
 	vi.clearAllMocks()
+	// Fake only setTimeout so the real driver-ready handler runs its config-check
+	// scheduler without arming a ~24h timer; setImmediate stays real so the
+	// 'driver ready' event and deferred server destroy still fire
+	vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })
 })
 
 afterEach(() => {
+	vi.useRealTimers()
 	vi.restoreAllMocks()
 })
 
