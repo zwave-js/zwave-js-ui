@@ -1,6 +1,9 @@
 /* eslint-disable @typescript-eslint/unbound-method */
 import { describe, it, expect, vi, afterEach } from 'vitest'
-import { InclusionCoordinator } from '../../../api/lib/zwave/InclusionCoordinator.ts'
+import {
+	InclusionCoordinator,
+	InclusionLifecycleCancelledError,
+} from '../../../api/lib/zwave/InclusionCoordinator.ts'
 import type {
 	InclusionBackupPort,
 	InclusionConfigPort,
@@ -12,16 +15,15 @@ import type {
 	InclusionSocketPort,
 	ServiceLogger,
 } from '../../../api/lib/zwave/ports.ts'
-import {
-	InclusionStrategy,
-	QRCodeVersion,
-} from '../../../api/lib/zwave/ports.ts'
+import { InclusionState, InclusionStrategy, QRCodeVersion } from 'zwave-js'
 
 function createDriverPort(
-	overrides: Partial<ReturnType<InclusionDriverPort['getDriver']>> = {},
+	overrides: Partial<
+		NonNullable<ReturnType<InclusionDriverPort['getDriver']>>['controller']
+	> = {},
 ): InclusionDriverPort {
 	const controller = {
-		inclusionState: undefined as unknown,
+		inclusionState: undefined,
 		beginInclusion: vi.fn().mockResolvedValue(true),
 		stopInclusion: vi.fn().mockResolvedValue(true),
 		beginExclusion: vi.fn().mockResolvedValue(true),
@@ -36,9 +38,8 @@ function createDriverPort(
 		getDriver: () => ({
 			controller,
 			updateOptions: vi.fn(),
-			...overrides,
 		}),
-	} as InclusionDriverPort
+	}
 }
 
 function createSocketPort(): InclusionSocketPort & {
@@ -801,11 +802,13 @@ describe('InclusionCoordinator', () => {
 
 	describe('syncFromDriver', () => {
 		it('reads inclusion state from driver', () => {
-			const driver = createDriverPort({ inclusionState: 'idle' } as any)
+			const driver = createDriverPort({
+				inclusionState: InclusionState.Idle,
+			})
 			const { coordinator } = createCoordinator({ driver })
 
 			coordinator.syncFromDriver()
-			expect(coordinator.inclusionState).toBe('idle')
+			expect(coordinator.inclusionState).toBe(InclusionState.Idle)
 		})
 	})
 
@@ -1317,8 +1320,8 @@ describe('InclusionCoordinator', () => {
 			coordinator.reset()
 			resolveBackup()
 
-			await expect(promise).rejects.toThrow(
-				'Driver was closed during inclusion setup',
+			await expect(promise).rejects.toBeInstanceOf(
+				InclusionLifecycleCancelledError,
 			)
 		})
 
@@ -1338,8 +1341,8 @@ describe('InclusionCoordinator', () => {
 			coordinator.reset()
 			resolveBackup()
 
-			await expect(promise).rejects.toThrow(
-				'Driver was closed during exclusion setup',
+			await expect(promise).rejects.toBeInstanceOf(
+				InclusionLifecycleCancelledError,
 			)
 		})
 
@@ -1363,8 +1366,8 @@ describe('InclusionCoordinator', () => {
 			coordinator.reset()
 			resolveBackup()
 
-			await expect(promise).rejects.toThrow(
-				'Driver was closed during replace setup',
+			await expect(promise).rejects.toBeInstanceOf(
+				InclusionLifecycleCancelledError,
 			)
 		})
 
@@ -1394,8 +1397,8 @@ describe('InclusionCoordinator', () => {
 				dsk: '00000',
 			})
 
-			await expect(promise).rejects.toThrow(
-				'Driver was closed during inclusion setup',
+			await expect(promise).rejects.toBeInstanceOf(
+				InclusionLifecycleCancelledError,
 			)
 		})
 	})

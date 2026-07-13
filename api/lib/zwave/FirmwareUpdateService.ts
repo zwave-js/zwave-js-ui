@@ -63,14 +63,6 @@ export class FirmwareUpdateService {
 		this._nvmEventSetter = nvmEventSetter
 	}
 
-	get generation(): number {
-		return this._generation
-	}
-
-	get disposed(): boolean {
-		return this._disposed
-	}
-
 	dispose(): void {
 		this._disposed = true
 		this._generation++
