@@ -50,7 +50,7 @@ export type {
 }
 export { InclusionStrategy, QRCodeVersion }
 
-// Define shared lifecycle types here to avoid a ZwaveClient import cycle
+// Defined here so extracted services like DriverLifecycle can reference client config/status types without an import cycle on ZwaveClient
 export type SensorTypeScale = {
 	key: string | number
 	sensor: string
