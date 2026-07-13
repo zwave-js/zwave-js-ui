@@ -12,8 +12,13 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest'
 import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
+import type { Server as SocketServer } from 'socket.io'
 import { ensureTestEnv, cleanupTestEnv, getTestStoreDir } from './env.ts'
-import { createRecordingSocket, type RecordingSocket } from './fixtures.ts'
+import {
+	buildNode,
+	createRecordingSocket,
+	type RecordingSocket,
+} from './fixtures.ts'
 import { socketEvents } from '#api/lib/SocketEvents.ts'
 import type ZWaveClientType from '#api/lib/ZwaveClient.ts'
 import type {
@@ -28,14 +33,11 @@ type JsonStoreModule = typeof JsonStoreModuleNamespace
 type StoreConfigModule = typeof StoreConfigModuleNamespace
 
 /**
- * Narrow view of the two internals the Driver would normally own: the home id
- * (driverInfo) that has no public setter, and the store projection cache that
- * has no public getter. Used only to seed the home id and to read the load
- * target where no observable file rewrite happens.
+ * Narrow view of the home id the Driver would normally own. It has no public
+ * setter and is seeded only at the driver-less construction boundary.
  */
 type ClientInternals = {
 	driverInfo: ZUIDriverInfo
-	storeNodes: Record<number, Partial<ZUINode>>
 }
 const internals = (zwave: ZWaveClientType) =>
 	zwave as unknown as ClientInternals
@@ -56,13 +58,13 @@ const flush = () => new Promise<void>((r) => setImmediate(r))
  * Real init-only client (no Driver) with a recording socket and the home id
  * seeded so homeHex resolves; callers choose the load path or direct node seed.
  */
-function newInitClient(home: string | undefined = HOME): {
+function newInitClient(home: string | null = HOME): {
 	zwave: ZWaveClientType
 	socket: RecordingSocket
 } {
 	const socket = createRecordingSocket()
-	const zwave = new ZWaveClient({} as any, socket as any)
-	if (home !== undefined) {
+	const zwave = new ZWaveClient({}, socket as unknown as SocketServer)
+	if (home !== null) {
 		// homeHex derives from the driver-supplied home id and has no public
 		// setter; seed it at the injection boundary since these tests run
 		// without a real Driver by design
@@ -77,10 +79,10 @@ function newInitClient(home: string | undefined = HOME): {
  */
 function makeMutatorClient(
 	nodeId: number,
-	node: Partial<ZUINode>,
+	node: ZUINode,
 ): { zwave: ZWaveClientType; socket: RecordingSocket } {
 	const { zwave, socket } = newInitClient()
-	zwave.nodes.set(nodeId, node as ZUINode)
+	zwave.nodes.set(nodeId, node)
 	return { zwave, socket }
 }
 
@@ -92,13 +94,13 @@ function makeMutatorClient(
  */
 async function makeLoadedClient(
 	nodeId: number,
-	node: Partial<ZUINode>,
-	seedBucket: Record<string, any> = { [nodeId]: {} },
+	node: ZUINode,
+	seedBucket: Record<string, Record<string, unknown>> = { [nodeId]: {} },
 ): Promise<{ zwave: ZWaveClientType; socket: RecordingSocket }> {
 	await jsonStore.put(store.nodes, { [HOME]: seedBucket })
 	const { zwave, socket } = newInitClient()
 	await zwave.getStoreNodes()
-	zwave.nodes.set(nodeId, node as ZUINode)
+	zwave.nodes.set(nodeId, node)
 	return { zwave, socket }
 }
 
@@ -125,7 +127,7 @@ beforeEach(async () => {
 
 describe('adding a HASS device to a node', () => {
 	it('keys an added device by type_object_id, drops the incoming id, and marks it non-persistent', async () => {
-		const node: any = { id: 5, hassDevices: {} }
+		const node = buildNode({ id: 5 })
 		const { zwave, socket } = makeMutatorClient(5, node)
 
 		const device: HassDevice = {
@@ -153,10 +155,7 @@ describe('adding a HASS device to a node', () => {
 	})
 
 	it('does nothing when the node is unknown', async () => {
-		const { zwave, socket } = makeMutatorClient(5, {
-			id: 5,
-			hassDevices: {},
-		})
+		const { zwave, socket } = makeMutatorClient(5, buildNode({ id: 5 }))
 		zwave.addDevice(
 			{ id: 'x', type: 'sensor', object_id: 'y', discovery_payload: {} },
 			999, // no such node
@@ -166,7 +165,7 @@ describe('adding a HASS device to a node', () => {
 	})
 
 	it('does nothing when the incoming device has no id', async () => {
-		const node: any = { id: 5, hassDevices: {} }
+		const node = buildNode({ id: 5 })
 		const { zwave, socket } = makeMutatorClient(5, node)
 		zwave.addDevice(
 			{ type: 'sensor', object_id: 'y', discovery_payload: {} },
@@ -180,11 +179,16 @@ describe('adding a HASS device to a node', () => {
 
 describe('updating a HASS device on a node', () => {
 	it('re-keys an existing device under its id and drops the id field', async () => {
-		const existing = { type: 'switch', object_id: 'sw', persistent: true }
-		const node: any = {
+		const existing: HassDevice = {
+			type: 'switch',
+			object_id: 'sw',
+			discovery_payload: {},
+			persistent: true,
+		}
+		const node = buildNode({
 			id: 7,
 			hassDevices: { switch_sw: { ...existing } },
-		}
+		})
 		const { zwave, socket } = makeMutatorClient(7, node)
 
 		const incoming: HassDevice = {
@@ -206,10 +210,16 @@ describe('updating a HASS device on a node', () => {
 	})
 
 	it('deletes the device when deleteDevice is set', async () => {
-		const node: any = {
+		const node = buildNode({
 			id: 7,
-			hassDevices: { switch_sw: { type: 'switch', object_id: 'sw' } },
-		}
+			hassDevices: {
+				switch_sw: {
+					type: 'switch',
+					object_id: 'sw',
+					discovery_payload: {},
+				},
+			},
+		})
 		const { zwave, socket } = makeMutatorClient(7, node)
 
 		zwave.updateDevice(
@@ -224,7 +234,7 @@ describe('updating a HASS device on a node', () => {
 	})
 
 	it('does nothing when the id matches no existing device', async () => {
-		const node: any = { id: 7, hassDevices: {} }
+		const node = buildNode({ id: 7 })
 		const { zwave, socket } = makeMutatorClient(7, node)
 		zwave.updateDevice({ id: 'nope' } as unknown as HassDevice, 7)
 		await flush()
@@ -235,7 +245,7 @@ describe('updating a HASS device on a node', () => {
 
 describe('persisting HASS devices for a node', () => {
 	it('marks devices persistent, projects a copy onto the node, and persists them under the home id', async () => {
-		const node: any = { id: 9, hassDevices: {} }
+		const node = buildNode({ id: 9 })
 		const { zwave, socket } = await makeLoadedClient(9, node)
 
 		const devices = {
@@ -265,7 +275,7 @@ describe('persisting HASS devices for a node', () => {
 	})
 
 	it('removes the stored devices under the home id and marks them non-persistent', async () => {
-		const node: any = { id: 9, hassDevices: {} }
+		const node = buildNode({ id: 9 })
 		// Seed and load a real persisted device so the remove path clears a
 		// genuinely loaded entry
 		const { zwave } = await makeLoadedClient(9, node, {
@@ -287,13 +297,17 @@ describe('persisting HASS devices for a node', () => {
 	})
 
 	it('keeps null but drops undefined-valued fields in the persisted copy', async () => {
-		const node: any = { id: 9, hassDevices: {} }
+		const node = buildNode({ id: 9 })
 		const { zwave } = await makeLoadedClient(9, node)
 
-		const devices: any = {
+		const devices: Record<
+			string,
+			HassDevice & { keepNull: null; dropUndef?: undefined }
+		> = {
 			sensor_a: {
 				type: 'sensor',
 				object_id: 'a',
+				discovery_payload: {},
 				keepNull: null,
 				dropUndef: undefined,
 			},
@@ -306,10 +320,10 @@ describe('persisting HASS devices for a node', () => {
 	})
 
 	it('does nothing when the node is unknown', async () => {
-		const { zwave, socket } = await makeLoadedClient(9, {
-			id: 9,
-			hassDevices: {},
-		})
+		const { zwave, socket } = await makeLoadedClient(
+			9,
+			buildNode({ id: 9 }),
+		)
 		await zwave.storeDevices(
 			{ x: { type: 't', object_id: 'o' } } as unknown as Record<
 				string,
@@ -323,7 +337,7 @@ describe('persisting HASS devices for a node', () => {
 	})
 
 	it('replaces persisted devices under the home id and preserves the node name', async () => {
-		const node: any = { id: 11, hassDevices: {} }
+		const node = buildNode({ id: 11 })
 		const { zwave } = await makeLoadedClient(11, node, {
 			11: {
 				name: 'Kitchen',
@@ -366,8 +380,12 @@ describe('home-id scoping of persisted nodes', () => {
 		const { zwave } = newInitClient()
 
 		await zwave.getStoreNodes()
+		await zwave.updateStoreNodes()
 
-		expect(internals(zwave).storeNodes).toEqual({ '3': { name: 'Mine' } })
+		expect(jsonStore.get(store.nodes)).toEqual({
+			[HOME]: { '3': { name: 'Mine' } },
+			'0xother': { '3': { name: 'Theirs' } },
+		})
 	})
 
 	it('loads nothing when the current home is absent', async () => {
@@ -375,8 +393,12 @@ describe('home-id scoping of persisted nodes', () => {
 		const { zwave } = newInitClient()
 
 		await zwave.getStoreNodes()
+		await zwave.updateStoreNodes()
 
-		expect(internals(zwave).storeNodes).toEqual({})
+		expect(jsonStore.get(store.nodes)).toEqual({
+			'0xother': { '3': {} },
+			[HOME]: {},
+		})
 	})
 
 	it('migrates a legacy flat nodes.json to a home-scoped file', async () => {
@@ -408,8 +430,7 @@ describe('home-id scoping of persisted nodes', () => {
 	})
 
 	it('rejects when the home id is not set', async () => {
-		const socket = createRecordingSocket()
-		const zwave = new ZWaveClient({} as any, socket as any)
+		const { zwave } = newInitClient(null)
 		// With no home id, the load refuses to run against an undefined home.
 		// Assert the rejection contract without pinning the message text.
 		await expect(zwave.getStoreNodes()).rejects.toThrow()
@@ -419,7 +440,7 @@ describe('home-id scoping of persisted nodes', () => {
 describe('node update projection ordering', () => {
 	it('applies the device to the node synchronously before the deferred node update', async () => {
 		// The projection is applied directly to the live node object
-		const node: any = { id: 5, hassDevices: {} }
+		const node = buildNode({ id: 5 })
 		const { zwave, socket } = makeMutatorClient(5, node)
 
 		zwave.addDevice(

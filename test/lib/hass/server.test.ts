@@ -24,6 +24,7 @@ import { ensureTestEnv, cleanupTestEnv } from './env.ts'
 import { createRecordingSocket } from './fixtures.ts'
 import type ZWaveClientType from '#api/lib/ZwaveClient.ts'
 import { ZwaveClientStatus } from '#api/lib/ZwaveClient.ts'
+import { NODE_ID_BROADCAST, NODE_ID_BROADCAST_LR } from '@zwave-js/core'
 
 /**
  * Narrow view of the lifecycle internals with no public accessor: the status
@@ -101,10 +102,10 @@ vi.mock('zwave-js', async () => {
 		nodes = new Map()
 		supportsLongRange = false
 		getBroadcastNode() {
-			return { nodeId: 255, commandClasses: {} }
+			return { nodeId: NODE_ID_BROADCAST, commandClasses: {} }
 		}
 		getBroadcastNodeLR() {
-			return { nodeId: 254, commandClasses: {} }
+			return { nodeId: NODE_ID_BROADCAST_LR, commandClasses: {} }
 		}
 	}
 
