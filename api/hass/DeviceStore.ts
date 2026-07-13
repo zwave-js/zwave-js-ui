@@ -1,4 +1,4 @@
-import type { HassDeviceStorePort } from './ports.ts'
+import type { HassDeviceStorePort, HassPersistenceNode } from './ports.ts'
 import type {
 	HassDevice,
 	HassDeviceMap,
@@ -7,6 +7,10 @@ import type {
 
 function copyDevices(devices: HassDeviceMap): HassDeviceMap {
 	return JSON.parse(JSON.stringify(devices))
+}
+
+function isPersistenceNode(value: unknown): value is HassPersistenceNode {
+	return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
 
 export class HassDeviceStore {
@@ -54,11 +58,7 @@ export class HassDeviceStore {
 		if (!this.port.hasNode(nodeId)) return { status: 'node-not-found' }
 
 		const storedNode = this.port.getStoredNode(nodeId)
-		if (
-			storedNode === null ||
-			storedNode === undefined ||
-			typeof storedNode !== 'object'
-		) {
+		if (!isPersistenceNode(storedNode)) {
 			return { status: 'invalid-stored-node' }
 		}
 
