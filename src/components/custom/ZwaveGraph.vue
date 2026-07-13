@@ -305,7 +305,7 @@ export default {
 			})
 		},
 		allNodes() {
-			return this.nodes // replace this with `fakeNodes` when testing
+			return this.nodes.filter((node) => !node.virtual) // replace this with `fakeNodes` when testing
 		},
 	},
 	network: null, // do not make this reactive, see https://github.com/visjs/vis-network/issues/173#issuecomment-541435420

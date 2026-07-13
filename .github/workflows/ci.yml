@@ -64,14 +64,15 @@ jobs:
           name: lint-fix
           path: fix.patch
 
+      # On 20.x the coverage step below runs the full suite, so only run the
+      # plain test step on the other matrix versions to avoid testing twice.
       - name: Test
+        if: matrix['node-version'] != '20.x'
         run: npm run test
 
       - name: Generate coverage report
         if: matrix['node-version'] == '20.x'
-        run: |
-          npm run coverage
-          npm run record-coverage
+        run: npm run coverage
 
       - name: Coveralls
         uses: coverallsapp/github-action@master

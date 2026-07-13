@@ -1,10 +1,4 @@
-import chai, { expect } from 'chai'
-// const sinon = require('sinon')
-// const _ = require('lodash')
-
-import sinonChai from 'sinon-chai'
-
-chai.use(sinonChai)
+import { describe, it, expect } from 'vitest'
 
 import * as mod from '../../api/lib/Constants.ts'
 

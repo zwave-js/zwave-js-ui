@@ -1,9 +1,6 @@
-import chai, { expect } from 'chai'
+import { describe, it, expect, beforeEach } from 'vitest'
 import Gateway, { closeWatchers } from '../../api/lib/Gateway.ts'
 import type { ZUINode } from '../../api/lib/ZwaveClient.ts'
-import sinonChai from 'sinon-chai'
-
-chai.use(sinonChai)
 
 describe('#Gateway', () => {
 	const gw = new Gateway({ type: 0 }, null as any, null as any)

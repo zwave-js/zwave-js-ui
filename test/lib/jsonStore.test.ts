@@ -1,54 +1,48 @@
-import chai, { expect } from 'chai'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { StorageHelper } from '../../api/lib/jsonStore.ts'
-import sinon from 'sinon'
 import type { StoreFile, StoreKeys } from '../../api/config/store.ts'
-import sinonChai from 'sinon-chai'
-import chaiAsPromised from 'chai-as-promised'
-
-chai.use(sinonChai)
-chai.use(chaiAsPromised)
 
 describe('#jsonStore', () => {
 	describe('#getFile()', () => {
 		const config = { file: 'foo', default: { foo: 'defaultbar' } }
 
-		it("doesn't throw error", () => {
+		it("doesn't throw error", async () => {
 			const mod = new StorageHelper({
-				readFile: sinon.stub().rejects(Error('FOO')) as any,
+				readFile: vi.fn().mockRejectedValue(Error('FOO')) as any,
 			})
-			return expect(mod._getFile(config)).to.not.be.rejected
+			await expect(mod._getFile(config)).resolves.toBeDefined()
 		})
 
-		it('data returned', () => {
+		it('data returned', async () => {
 			const toReturn = {
 				file: 'foo',
 				data: { bar: 'mybar', a: 'a', b: 'c' },
 			}
 			const mod = new StorageHelper({
-				readFile: sinon.stub().resolves(toReturn.data) as any,
+				readFile: vi.fn().mockResolvedValue(toReturn.data) as any,
 			})
 
-			return expect(mod._getFile(config)).to.eventually.deep.equal({
+			await expect(mod._getFile(config)).resolves.toEqual({
 				file: toReturn.file,
 				data: { ...toReturn.data, ...config.default },
 			})
 		})
 
-		it('no data, return default', () => {
+		it('no data, return default', async () => {
 			const mod = new StorageHelper({
-				readFile: sinon.stub().resolves(null) as any,
+				readFile: vi.fn().mockResolvedValue(null) as any,
 			})
-			return expect(mod._getFile(config)).to.eventually.deep.equal({
+			await expect(mod._getFile(config)).resolves.toEqual({
 				file: 'foo',
 				data: config.default,
 			})
 		})
 
-		it('file not found, return default', () => {
+		it('file not found, return default', async () => {
 			const mod = new StorageHelper({
-				readFile: sinon.stub().rejects({ code: 'ENOENT' }) as any,
+				readFile: vi.fn().mockRejectedValue({ code: 'ENOENT' }) as any,
 			})
-			return expect(mod._getFile(config)).to.eventually.deep.equal({
+			await expect(mod._getFile(config)).resolves.toEqual({
 				file: 'foo',
 				data: config.default,
 			})
@@ -61,31 +55,31 @@ describe('#jsonStore', () => {
 		} as Record<StoreKeys, StoreFile>
 		it('class test', () => {
 			const jsonStore = new StorageHelper()
-			return expect(jsonStore.store).to.deep.equal({})
+			expect(jsonStore.store).to.deep.equal({})
 		})
 
 		describe('#init()', () => {
 			it('ok', async () => {
 				const data = { foo: 'bar' }
 				const mod = new StorageHelper({
-					readFile: sinon.stub().resolves(data) as any,
+					readFile: vi.fn().mockResolvedValue(data) as any,
 				})
 
 				await mod.init(fakeStore)
 
-				return expect(mod.store).to.deep.equal({
+				expect(mod.store).to.deep.equal({
 					[fakeStore.settings.file]: data,
 				})
 			})
 
 			it('error', async () => {
 				const mod = new StorageHelper({
-					readFile: sinon.stub().rejects(Error('foo')) as any,
+					readFile: vi.fn().mockRejectedValue(Error('foo')) as any,
 				})
 
 				await mod.init(fakeStore)
 
-				return expect(mod.store).to.deep.equal({
+				expect(mod.store).to.deep.equal({
 					[fakeStore.settings.file]: fakeStore.settings.default,
 				})
 			})
@@ -93,7 +87,7 @@ describe('#jsonStore', () => {
 
 		describe('#get()', () => {
 			const mod = new StorageHelper({
-				readFile: sinon.stub().resolves('bar') as any,
+				readFile: vi.fn().mockResolvedValue('bar') as any,
 			})
 
 			beforeEach(async () => await mod.init(fakeStore))
@@ -114,23 +108,23 @@ describe('#jsonStore', () => {
 		})
 
 		describe('#put()', () => {
-			it('ok', () => {
+			it('ok', async () => {
 				const mod = new StorageHelper({
-					writeFile: sinon.stub().resolves('bar') as any,
+					writeFile: vi.fn().mockResolvedValue('bar') as any,
 				})
 
-				return expect(
+				await expect(
 					mod.put({ file: 'foo' } as StoreFile, 'bardata'),
-				).to.eventually.equal('bardata')
+				).resolves.toBe('bardata')
 			})
-			it('error', () => {
+			it('error', async () => {
 				const mod = new StorageHelper({
-					writeFile: sinon.stub().rejects(Error('foo')) as any,
+					writeFile: vi.fn().mockRejectedValue(Error('foo')) as any,
 				})
 
-				return expect(
+				await expect(
 					mod.put({ file: 'foo' } as StoreFile, ''),
-				).to.be.rejectedWith('foo')
+				).rejects.toThrow('foo')
 			})
 		})
 	})

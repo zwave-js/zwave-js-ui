@@ -1,5 +1,28 @@
 # Changelog
 
+## [11.21.1](https://github.com/zwave-js/zwave-js-ui/compare/v11.21.0...v11.21.1) (2026-06-23)
+
+### 🐛 Bug Fixes
+
+* confine store paths against the resolved store dir ([#4685](https://github.com/zwave-js/zwave-js-ui/issues/4685)) ([a5dc881](https://github.com/zwave-js/zwave-js-ui/commit/a5dc881fdfbeadfb016563a770d729d757f5f152)), closes [pre-#4678](https://github.com/zwave-js/pre-/issues/4678) [#4678](https://github.com/zwave-js/zwave-js-ui/issues/4678)
+* don't return password hash in `PUT /api/password` response ([#4687](https://github.com/zwave-js/zwave-js-ui/issues/4687)) ([4b0b7d6](https://github.com/zwave-js/zwave-js-ui/commit/4b0b7d6be496f3b5c49b6fb55757ddf539e7675b))
+* prevent symlinks from escaping the store directory ([#4678](https://github.com/zwave-js/zwave-js-ui/issues/4678)) ([592e1b8](https://github.com/zwave-js/zwave-js-ui/commit/592e1b86d9479d943f04003c56d16e40beab0f66))
+* refresh broadcast virtual nodes to avoid querying removed nodes ([#4688](https://github.com/zwave-js/zwave-js-ui/issues/4688)) ([8c1981e](https://github.com/zwave-js/zwave-js-ui/commit/8c1981e1ced2b01e98edbb2ee0f8b4db790f4033)), closes [#4677](https://github.com/zwave-js/zwave-js-ui/issues/4677) [#4677](https://github.com/zwave-js/zwave-js-ui/issues/4677)
+* **ui:** separate virtual and physical devices in nodes table ([#4673](https://github.com/zwave-js/zwave-js-ui/issues/4673)) ([3a80ce6](https://github.com/zwave-js/zwave-js-ui/commit/3a80ce6e6d9dc2a9134f3e32e41d85bd2a08392e)), closes [#4672](https://github.com/zwave-js/zwave-js-ui/issues/4672)
+* write self-signed TLS key/cert with owner-only permissions ([#4686](https://github.com/zwave-js/zwave-js-ui/issues/4686)) ([2f62656](https://github.com/zwave-js/zwave-js-ui/commit/2f626565557204daa3c5114615d38efa4a37f159))
+
+## [11.21.0](https://github.com/zwave-js/zwave-js-ui/compare/v11.20.0...v11.21.0) (2026-06-22)
+
+### ✨ Features
+
+* bump @zwave-js/server@3.10.0 ([#4684](https://github.com/zwave-js/zwave-js-ui/issues/4684)) ([e13dc1d](https://github.com/zwave-js/zwave-js-ui/commit/e13dc1de744087f761bff3a628a9048289128d06))
+* bump zwave-js@15.25.0 ([#4675](https://github.com/zwave-js/zwave-js-ui/issues/4675)) ([c11b6b7](https://github.com/zwave-js/zwave-js-ui/commit/c11b6b7557c97baf353421685792fce43641e2eb))
+* support reporting interview progress as a percentage ([#4674](https://github.com/zwave-js/zwave-js-ui/issues/4674)) ([1409807](https://github.com/zwave-js/zwave-js-ui/commit/14098076a7f7cb64c5a1c61e36a681645c799d28))
+
+### 🐛 Bug Fixes
+
+* exclude virtual nodes from network map rendering ([#4683](https://github.com/zwave-js/zwave-js-ui/issues/4683)) ([edd36fb](https://github.com/zwave-js/zwave-js-ui/commit/edd36fb97ecaadd51f924747de8b80668e8b103d))
+
 ## [11.20.0](https://github.com/zwave-js/zwave-js-ui/compare/v11.19.1...v11.20.0) (2026-06-17)
 
 ### ✨ Features

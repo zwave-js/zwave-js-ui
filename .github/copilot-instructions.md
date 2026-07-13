@@ -298,8 +298,8 @@ npm run test
 ```
 
 -   **NEVER CANCEL**: Tests take ~3 seconds total, but set 30+ minute timeout for safety
--   Backend tests: 51 tests using Mocha + TypeScript
--   Frontend tests: 52 tests using Mocha + Babel
+-   Backend tests: 109 tests using Vitest (TypeScript)
+-   Frontend tests: 52 tests using Vitest
 -   All tests must pass before committing
 
 ### Individual Test Suites
@@ -423,7 +423,7 @@ After making changes, ALWAYS test these complete user scenarios:
 -   **tsconfig.json**: TypeScript configuration (compiles api/ to server/)
 -   **vite.config.mjs**: Frontend build configuration
 -   **nodemon.json**: Backend development server configuration
--   **.mocharc.yml**: Test configuration
+-   **vitest.config.ts**: Test configuration (Vitest)
 -   **server_config.js**: Mock Z-Wave controller configuration
 
 ## Environment Configuration

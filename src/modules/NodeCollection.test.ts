@@ -1,5 +1,5 @@
-import { expect } from 'chai'
-import { NodeCollection } from './NodeCollection'
+import { describe, it, expect } from 'vitest'
+import { NodeCollection } from './NodeCollection.js'
 
 describe('NodeCollection', () => {
 	describe('#constructor', () => {
@@ -9,7 +9,7 @@ describe('NodeCollection', () => {
 		})
 	})
 	describe('#filter', () => {
-		const isOdd = (num) => num % 2
+		const isOdd = (num: number) => num % 2
 		it('returns nodes with the property matching the filter', () => {
 			const collection = new NodeCollection([
 				{ id: 1 },

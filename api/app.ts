@@ -33,6 +33,7 @@ import { Driver, libVersion } from 'zwave-js'
 import {
 	defaultPsw,
 	defaultUser,
+	logsDir,
 	sessionSecret,
 	snippetsDir,
 	storeDir,
@@ -63,6 +64,8 @@ import {
 	writeFile,
 	lstat,
 	mkdir,
+	mkdtemp,
+	cp,
 } from 'node:fs/promises'
 import { generate } from 'selfsigned'
 import type { ZnifferConfig } from './lib/ZnifferManager.ts'
@@ -360,22 +363,11 @@ async function getSnippets() {
 }
 
 /**
- * Get the `path` param from a request. Throws if the path is not safe
+ * Get the `path` param from a request. Throws if the path is not safe - that is if it escapes the storeDir.
  */
-function getSafePath(req: Request | string) {
-	let reqPath = typeof req === 'string' ? req : req.query.path
-
-	if (typeof reqPath !== 'string') {
-		throw Error('Invalid path')
-	}
-
-	reqPath = path.normalize(reqPath)
-
-	if (!reqPath.startsWith(storeDir) || reqPath === storeDir) {
-		throw Error('Path not allowed')
-	}
-
-	return reqPath
+async function getSafePath(req: Request | string, resolveReal = true) {
+	const reqPath = typeof req === 'string' ? req : req.query.path
+	return utils.resolveSafeStorePath(reqPath, storeDir, resolveReal)
 }
 
 async function loadCertKey(): Promise<{
@@ -410,8 +402,14 @@ async function loadCertKey(): Promise<{
 			key = result.private
 			cert = result.cert
 
-			await writeFile(utils.joinPath(storeDir, 'key.pem'), key)
-			await writeFile(utils.joinPath(storeDir, 'cert.pem'), cert)
+			// restrict the private key (and cert) to the owner so a permissive
+			// umask can't leave the self-signed TLS key world/group-readable
+			await writeFile(utils.joinPath(storeDir, 'key.pem'), key, {
+				mode: 0o600,
+			})
+			await writeFile(utils.joinPath(storeDir, 'cert.pem'), cert, {
+				mode: 0o600,
+			})
 			logger.info('New cert and key created')
 		} catch (error) {
 			logger.error('Error creating cert and key for HTTPS', error)
@@ -1079,10 +1077,14 @@ app.put(
 
 			await jsonStore.put(store.users, users)
 
+			// don't leak the password hash to the client (mirrors /api/authenticate)
+			const userData: User = Object.assign({}, oldUser)
+			delete userData.passwordHash
+
 			res.json({
 				success: true,
 				message: 'Password updated',
-				user: oldUser,
+				user: userData,
 			})
 		} catch (error) {
 			res.json({
@@ -1398,6 +1400,7 @@ app.post(
 							// Build logConfig object from our settings
 							editableOptions.logConfig = utils.buildLogConfig(
 								settings.zwave || {},
+								logsDir,
 							)
 						}
 
@@ -1496,6 +1499,12 @@ app.post(
 				throw Error(
 					'Gateway is restarting, wait a moment before doing another request',
 				)
+			}
+			// Reject changes when the statistics opt-in belongs to the managing application
+			if (
+				getExternallyManagedPaths().includes('zwave.enableStatistics')
+			) {
+				throw Error('Statistics are managed externally')
 			}
 			const { enableStatistics } = req.body
 
@@ -1900,14 +1909,14 @@ app.get('/api/store', storeLimiter, isAuthenticated, async function (req, res) {
 	try {
 		let data: StoreFileEntry[] | string
 		if (req.query.path) {
-			const reqPath = getSafePath(req)
+			const reqPath = await getSafePath(req)
 			// lgtm [js/path-injection]
 			let stat = await lstat(reqPath)
 
 			// check symlink is secure
 			if (stat.isSymbolicLink()) {
 				const realPath = await realpath(reqPath)
-				getSafePath(realPath)
+				await getSafePath(realPath)
 				stat = await lstat(realPath)
 			}
 
@@ -1939,7 +1948,7 @@ app.get('/api/store', storeLimiter, isAuthenticated, async function (req, res) {
 
 app.put('/api/store', storeLimiter, isAuthenticated, async function (req, res) {
 	try {
-		const reqPath = getSafePath(req)
+		const reqPath = await getSafePath(req)
 
 		const isNew = req.query.isNew === 'true'
 		const isDirectory = req.query.isDirectory === 'true'
@@ -1974,7 +1983,7 @@ app.delete(
 	isAuthenticated,
 	async function (req, res) {
 		try {
-			const reqPath = getSafePath(req)
+			const reqPath = await getSafePath(req)
 
 			// lgtm [js/path-injection]
 			await rm(reqPath, { recursive: true, force: true })
@@ -1995,7 +2004,7 @@ app.put(
 		try {
 			const files = req.body.files || []
 			for (const f of files) {
-				await rm(f, { recursive: true, force: true })
+				await rm(await getSafePath(f), { recursive: true, force: true })
 			}
 			res.json({ success: true })
 		} catch (error) {
@@ -2033,19 +2042,22 @@ app.post(
 		archive.pipe(res)
 
 		for (const f of files) {
-			const s = await lstat(f)
-			const name = f.replace(storeDir, '')
-			if (s.isFile()) {
-				archive.file(f, { name })
-			} else if (s.isSymbolicLink()) {
-				const targetPath = await realpath(f)
-				try {
-					// check path is secure, if so add it as file
-					getSafePath(targetPath)
+			try {
+				// confine the path to the store *before* touching the
+				// filesystem, so unsafe paths can't be probed via lstat/realpath
+				const safe = await getSafePath(f)
+				const s = await lstat(safe)
+				const name = safe.replace(storeDir, '')
+				if (s.isFile()) {
+					archive.file(safe, { name })
+				} else if (s.isSymbolicLink()) {
+					// getSafePath already resolved the link target and checked
+					// it stays in the store; add the dereferenced target
+					const targetPath = await realpath(safe)
 					archive.file(targetPath, { name })
-				} catch (e) {
-					// ignore
 				}
+			} catch (e) {
+				// ignore unsafe or unreadable entries
 			}
 		}
 
@@ -2089,9 +2101,21 @@ app.post(
 			}
 
 			if (isRestore) {
-				await extract(file.path, { dir: storeDir })
+				// Stage, reject symlinks escaping the store, then merge in.
+				const stageDir = await mkdtemp(path.join(storeDir, '.restore-'))
+				try {
+					await extract(file.path, { dir: stageDir })
+					await utils.assertNoEscapingSymlinks(stageDir, stageDir)
+					await cp(stageDir, storeDir, {
+						recursive: true,
+						// keep in-store links (e.g. *_current.log) as links, don't copy their targets
+						verbatimSymlinks: true,
+					})
+				} finally {
+					await rm(stageDir, { recursive: true, force: true })
+				}
 			} else {
-				const destinationPath = getSafePath(
+				const destinationPath = await getSafePath(
 					path.join(storeDir, folder, file.originalname),
 				)
 				await rename(file.path, destinationPath)

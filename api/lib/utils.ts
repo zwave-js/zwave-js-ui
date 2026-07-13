@@ -5,9 +5,8 @@ import { readFileSync, statSync } from 'node:fs'
 import type { ZwaveConfig } from './ZwaveClient.ts'
 import { isUint8Array } from 'node:util/types'
 import { createRequire } from 'node:module'
-import { mkdir, access } from 'node:fs/promises'
+import { mkdir, access, readdir, readlink, realpath } from 'node:fs/promises'
 import { fileURLToPath } from 'node:url'
-import { logsDir } from '../config/app.ts'
 import tripleBeam from 'triple-beam'
 import { MAX_NODES_LR } from '@zwave-js/core'
 
@@ -537,10 +536,118 @@ export function buildPreferences(
 }
 
 /**
+ * Throw if any symlink under `dir` resolves outside `root`. Targets are
+ * resolved literally (not followed), so dangling links work and the walk
+ * never leaves `root`. Permits in-store links (e.g. `*_current.log`).
+ */
+export async function assertNoEscapingSymlinks(
+	dir: string,
+	root: string,
+): Promise<void> {
+	const entries = await readdir(dir, { withFileTypes: true })
+
+	for (const entry of entries) {
+		const full = path.join(dir, entry.name)
+
+		if (entry.isSymbolicLink()) {
+			const target = await readlink(full)
+			const resolved = path.resolve(path.dirname(full), target)
+
+			if (resolved !== root && !resolved.startsWith(root + path.sep)) {
+				throw Error(
+					`Archive contains a symlink escaping the store: ${entry.name}`,
+				)
+			}
+		} else if (entry.isDirectory()) {
+			await assertNoEscapingSymlinks(full, root)
+		}
+	}
+}
+
+/**
+ * Resolve the real path of the nearest existing ancestor of `target` and
+ * ensure it is still confined within `storeDir`. This defeats symlinked
+ * path components (which a plain string prefix check is blind to) for both
+ * existing and not-yet-created paths.
+ *
+ * The comparison is made against the *resolved* `storeDir` because the
+ * configured store path may itself traverse a symlink (e.g. a bind-mounted
+ * data dir, or `/tmp` -> `/private/tmp`); comparing a resolved target against
+ * an unresolved root would reject every legitimate path on such setups.
+ */
+export async function assertRealPathInStore(
+	target: string,
+	storeDir: string,
+): Promise<void> {
+	const realStoreDir = await realpath(storeDir)
+	let current = target
+
+	// Walk up until we hit an existing ancestor (the target itself may be new)
+
+	while (true) {
+		try {
+			// If the path exists, check if it is a symlink that escapes the store
+			const real = await realpath(current)
+			if (
+				real !== realStoreDir &&
+				!real.startsWith(realStoreDir + path.sep)
+			) {
+				throw Error('Path not allowed')
+			}
+			// We found an existing non-symlink target within the store,
+			// so the given path is safe to use (whether it exists or not)
+			return
+		} catch (err) {
+			// If the path does not exist, e.g. when creating a directory,
+			// walk up to the nearest existing ancestor and check that.
+			if (err?.code !== 'ENOENT') {
+				throw err
+			}
+			const parent = path.dirname(current)
+			if (parent === current) {
+				// reached filesystem root without finding an existing ancestor
+				throw Error('Path not allowed')
+			}
+			current = parent
+		}
+	}
+}
+
+/**
+ * Resolve `reqPath` against `storeDir` and throw if it is not safe - that is
+ * if it escapes the storeDir. When `resolveReal` is set, symlinked path
+ * components are resolved too (see {@link assertRealPathInStore}).
+ */
+export async function resolveSafeStorePath(
+	reqPath: unknown,
+	storeDir: string,
+	resolveReal = true,
+): Promise<string> {
+	if (typeof reqPath !== 'string') {
+		throw Error('Invalid path')
+	}
+
+	// path.resolve collapses any `..` segments and yields an absolute path, so
+	// the prefix check below cannot be bypassed with traversal sequences.
+	const safePath = path.resolve(storeDir, reqPath)
+
+	if (safePath === storeDir || !safePath.startsWith(storeDir + path.sep)) {
+		throw Error('Path not allowed')
+	}
+
+	if (resolveReal) {
+		await assertRealPathInStore(safePath, storeDir)
+	}
+
+	return safePath
+}
+
+/**
  * Build logConfig object for Z-Wave driver options from Z-Wave configuration
  */
 export function buildLogConfig(
 	config: ZwaveConfig,
+	logsDir: string,
 ): PartialZWaveOptions['logConfig'] {
 	return {
 		enabled: config.logEnabled,

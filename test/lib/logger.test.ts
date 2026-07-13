@@ -1,4 +1,4 @@
-import { expect } from 'chai'
+import { describe, it, expect, beforeAll, afterEach } from 'vitest'
 import * as utils from '../../api/lib/utils.ts'
 import { logsDir } from '../../api/config/app.ts'
 import type { ModuleLogger } from '../../api/lib/logger.ts'
@@ -61,7 +61,7 @@ describe('logger.js', () => {
 	})
 
 	describe('module()', () => {
-		before(() => {
+		beforeAll(() => {
 			logger1 = module('foo')
 		})
 		it('should set the module name', () =>
@@ -77,7 +77,7 @@ describe('logger.js', () => {
 	})
 
 	describe('setup() (init)', () => {
-		before(() => {
+		beforeAll(() => {
 			logger1 = module('bar')
 			logger2 = logger1.setup({
 				logEnabled: false,
@@ -104,7 +104,7 @@ describe('logger.js', () => {
 	})
 
 	describe('setup() (reconfigure)', () => {
-		before(() => {
+		beforeAll(() => {
 			logger1 = module('mod').setup({
 				logEnabled: true,
 				logLevel: 'warn',

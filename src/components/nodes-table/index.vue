@@ -3,13 +3,14 @@
 		v-if="managedNodes"
 		v-model="managedNodes.selected"
 		:headers="managedNodes.tableHeaders"
-		:items="managedNodes.filteredItems"
+		:items="displayedNodes"
 		v-model:expanded="expanded"
 		@update:options="managedNodes.tableOptions = $event"
 		:items-per-page="managedNodes.tableOptions.itemsPerPage"
 		:group-by="managedNodes.groupBy"
 		:sort-by="managedNodes.tableOptions.sortBy"
 		item-key="id"
+		:item-selectable="(item) => !item.virtual"
 		class="elevation-1 nodes-table"
 		expand-on-click
 		show-expand
@@ -34,6 +35,31 @@
 					prepend-inner-icon="search"
 					label="Search"
 				></v-text-field>
+				<v-btn-toggle
+					v-model="nodeView"
+					mandatory
+					density="comfortable"
+					variant="outlined"
+					color="primary"
+					class="my-auto ma-2"
+				>
+					<v-btn
+						value="physical"
+						v-tooltip:bottom="'Physical devices'"
+					>
+						<v-icon start size="small">device_hub</v-icon>
+						Physical
+					</v-btn>
+					<v-btn
+						value="virtual"
+						v-tooltip:bottom="
+							'Virtual devices (broadcast / multicast groups)'
+						"
+					>
+						<v-icon start size="small">cloud</v-icon>
+						Virtual
+					</v-btn>
+				</v-btn-toggle>
 				<v-menu
 					v-model="headersMenu"
 					:close-on-content-click="false"
@@ -332,16 +358,23 @@
 			>
 				<v-chip
 					size="small"
-					:color="interviewStageColor(`${item.interviewStage}`)"
+					:color="interviewStageColor(item.interviewStage)"
 					>{{ item.interviewStage }}</v-chip
 				>
 				<v-progress-circular
-					v-if="item.interviewStage !== 'Complete'"
-					indeterminate
+					v-if="showInterviewProgress(item)"
+					:indeterminate="item.interviewProgress == null"
+					:model-value="item.interviewProgress ?? 0"
 					class="mt-1"
-					size="20"
+					size="32"
 					color="primary"
-				></v-progress-circular>
+				>
+					<span
+						v-if="item.interviewProgress != null"
+						class="text-caption"
+						>{{ item.interviewProgress }}</span
+					>
+				</v-progress-circular>
 			</div>
 			<div v-else></div>
 		</template>
