@@ -26,13 +26,6 @@ export interface PhysicalNodeProjectionPort {
 	log(node: ZWaveNode, level: 'debug', message: string): void
 }
 
-/**
- * Stable construction and projection helpers for physical and virtual nodes.
- *
- * The projector owns no registry or lifecycle state. Callers provide the
- * current node/driver explicitly, which makes every operation deterministic
- * and prevents an obsolete driver generation from being captured here.
- */
 export class NodeProjector {
 	static getValueId(
 		value: Pick<
