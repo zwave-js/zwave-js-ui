@@ -7,9 +7,11 @@ import {
 	it,
 	vi,
 } from 'vitest'
+import { CommandClasses } from '@zwave-js/core'
 import { existsSync } from 'node:fs'
 import type GatewayType from '../../../api/lib/Gateway.ts'
 import type * as GatewayModuleType from '../../../api/lib/Gateway.ts'
+import type { HassNode, HassValue } from '../../../api/hass/ports.ts'
 import type { HassDevice } from '../../../api/hass/types.ts'
 import {
 	cleanupTestEnv,
@@ -36,6 +38,33 @@ function device(): HassDevice {
 		object_id: 'test',
 		discovery_payload: {},
 		values: ['value'],
+	}
+}
+
+// This built-in Honeywell fan control pre-populates the shared catalog without a climate entry
+const FAN_DIMMER_DEVICE_ID = '57-12593-18756'
+
+function thermostatNode(nodeId: number): HassNode {
+	const setpoint: HassValue = {
+		id: `${nodeId}-67-0-setpoint-1`,
+		nodeId,
+		commandClass: CommandClasses['Thermostat Setpoint'],
+		property: 'setpoint',
+		propertyKey: 1,
+		type: 'number',
+		readable: true,
+		writeable: true,
+		default: 0,
+		stateless: false,
+		ccSpecific: {},
+	}
+	return {
+		id: nodeId,
+		ready: true,
+		hassDevices: {},
+		deviceId: FAN_DIMMER_DEVICE_ID,
+		deviceClass: { basic: 1, generic: 0x08, specific: 1 },
+		values: { setpoint },
 	}
 }
 
@@ -137,6 +166,40 @@ describe('Gateway HASS compatibility facades', () => {
 			custom,
 		])
 		expect(second['customDeviceRegistry'].get('custom-device')).toEqual([])
+	})
+
+	it('keeps a dynamically discovered climate device isolated across simultaneous Gateways for a pre-existing catalog entry', () => {
+		const first = gateway()
+		const second = gateway()
+		const before =
+			gatewayModule.__getAllDevicesForTests()[FAN_DIMMER_DEVICE_ID]
+		expect(before).toHaveLength(1)
+		expect(before[0].type).toBe('fan')
+		expect(
+			first['customDeviceRegistry'].get(FAN_DIMMER_DEVICE_ID),
+		).toHaveLength(1)
+		expect(
+			second['customDeviceRegistry'].get(FAN_DIMMER_DEVICE_ID),
+		).toHaveLength(1)
+
+		first['discoveryGenerator'].discoverClimates(thermostatNode(7))
+
+		const firstDevices =
+			first['customDeviceRegistry'].get(FAN_DIMMER_DEVICE_ID)
+		expect(firstDevices).toHaveLength(2)
+		expect(firstDevices.some((entry) => entry.type === 'climate')).toBe(
+			true,
+		)
+		const secondDevices =
+			second['customDeviceRegistry'].get(FAN_DIMMER_DEVICE_ID)
+		expect(secondDevices).toHaveLength(1)
+		expect(secondDevices.some((entry) => entry.type === 'climate')).toBe(
+			false,
+		)
+		const after =
+			gatewayModule.__getAllDevicesForTests()[FAN_DIMMER_DEVICE_ID]
+		expect(after).toHaveLength(1)
+		expect(after.some((entry) => entry.type === 'climate')).toBe(false)
 	})
 
 	it('clears generic MQTT topic mappings before rediscovering a node', () => {

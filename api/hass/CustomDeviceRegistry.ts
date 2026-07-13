@@ -20,6 +20,16 @@ function copyCatalog(catalog: unknown): HassDeviceCatalog {
 	return Object.assign({}, catalog) as HassDeviceCatalog
 }
 
+function copyCatalogProjection(catalog: HassDeviceCatalog): HassDeviceCatalog {
+	const projection = copyCatalog(catalog)
+	// Reslice each device array so a get-mutate-set on one fork can't touch the source or a sibling fork's array
+	for (const deviceId of Object.keys(projection)) {
+		const devices = projection[deviceId]
+		if (Array.isArray(devices)) projection[deviceId] = [...devices]
+	}
+	return projection
+}
+
 export class CustomDeviceRegistry implements HassDeviceRegistryPort {
 	private readonly baseDevices: HassDeviceCatalog
 	private readonly logger: Pick<HassLogger, 'error' | 'info'>
@@ -190,7 +200,7 @@ export class CustomDeviceRegistry implements HassDeviceRegistryPort {
 	}
 
 	private copyProjection(): HassDeviceCatalog {
-		return copyCatalog(this.allDevices)
+		return copyCatalogProjection(this.allDevices)
 	}
 
 	private subscribe(listener: () => void): () => void {
