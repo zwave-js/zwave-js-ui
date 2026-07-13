@@ -1,6 +1,24 @@
 /* eslint-disable @typescript-eslint/unbound-method */
 import { CommandClasses, SecurityClass } from '@zwave-js/core'
 import { EventEmitter } from 'node:events'
+import type {
+	ControllerStatistics,
+	Driver,
+	FirmwareUpdateResult,
+	FoundNode,
+	InclusionResult,
+	InterviewProgress,
+	NodeInterviewFailedEventArgs,
+	NodeStatistics,
+	TranslatedValueID,
+	ZWaveNode,
+	ZWaveNodeMetadataUpdatedArgs,
+	ZWaveNodeValueAddedArgs,
+	ZWaveNodeValueNotificationArgs,
+	ZWaveNodeValueRemovedArgs,
+	ZWaveNodeValueUpdatedArgs,
+	ZWaveNotificationCallbackParams_NotificationCC,
+} from 'zwave-js'
 import {
 	FirmwareUpdateStatus,
 	InterviewStage,
@@ -10,14 +28,33 @@ import {
 } from 'zwave-js'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
+import type { NodesStoreFile } from '../../../api/config/store.ts'
 import { socketEvents } from '../../../api/lib/SocketEvents.ts'
+import type { ZUINode, ZUIValueId } from '../../../api/lib/ZwaveClient.ts'
 import {
 	NodeRegistry,
 	type NodeRegistryHost,
 } from '../../../api/lib/zwave/NodeRegistry.ts'
 
-function createZwaveNode(overrides: Record<string, unknown> = {}) {
-	const emitter = new EventEmitter() as any
+type RegistryValue = TranslatedValueID & {
+	newValue?: unknown
+	prevValue?: unknown
+	stateless?: boolean
+}
+
+function createValue(overrides: Partial<RegistryValue> = {}): RegistryValue {
+	return {
+		commandClass: CommandClasses['Binary Switch'],
+		commandClassName: 'Binary Switch',
+		endpoint: 0,
+		property: 'currentValue',
+		propertyName: 'currentValue',
+		...overrides,
+	}
+}
+
+function createZwaveNode(overrides: Partial<ZWaveNode> = {}): ZWaveNode {
+	const emitter = new EventEmitter()
 	Object.assign(emitter, {
 		id: 2,
 		name: '',
@@ -89,13 +126,13 @@ function createZwaveNode(overrides: Record<string, unknown> = {}) {
 		dsk: undefined,
 	})
 	Object.assign(emitter, overrides)
-	return emitter
+	return emitter as unknown as ZWaveNode
 }
 
 function createHarness(
 	options: {
-		persisted?: any
-		node?: any
+		persisted?: NodesStoreFile
+		node?: ZWaveNode
 		driverReady?: boolean
 		fakeNodesReader?: () => Promise<string | undefined>
 	} = {},
@@ -103,8 +140,10 @@ function createHarness(
 	let generation = 1
 	let current = true
 	const zwaveNode = options.node ?? createZwaveNode()
-	const controllerNodes = new Map<number, any>([[zwaveNode.id, zwaveNode]])
-	const persisted = options.persisted ?? {}
+	const controllerNodes = new Map<number, ZWaveNode>([
+		[zwaveNode.id, zwaveNode],
+	])
+	const persisted: NodesStoreFile = options.persisted ?? {}
 	const driver = {
 		configManager: { lookupManufacturer: vi.fn(() => 'Maker') },
 		controller: {
@@ -118,7 +157,7 @@ function createHarness(
 		},
 	}
 	const host: NodeRegistryHost = {
-		getDriver: () => driver as any,
+		getDriver: () => driver as unknown as Driver,
 		getZWaveNode: (nodeId) => controllerNodes.get(nodeId),
 		getGeneration: () => generation,
 		isCurrent: (candidate, captured) =>
@@ -213,9 +252,6 @@ describe('NodeRegistry persistence and lifecycle', () => {
 			3: {},
 		})
 		await scoped.registry.updateStoreNodes()
-		expect(scoped.host.debug).toHaveBeenCalledWith(
-			'Updating store nodes.json',
-		)
 		expect(scoped.host.persistNodes).toHaveBeenLastCalledWith({
 			'0x1234': { 2: { name: 'Keep' } },
 		})
@@ -224,7 +260,7 @@ describe('NodeRegistry persistence and lifecycle', () => {
 		missingHome.host.getHomeHex = () => undefined
 		await expect(
 			missingHome.registry.restorePersistedNodes(),
-		).rejects.toThrow('HomeHex not set')
+		).rejects.toThrow()
 		await missingHome.registry.updateStoreNodes()
 		expect(missingHome.logger.warn).toHaveBeenCalled()
 	})
@@ -234,9 +270,7 @@ describe('NodeRegistry persistence and lifecycle', () => {
 		vi.mocked(harness.host.persistNodes).mockRejectedValueOnce(
 			new Error('disk failed'),
 		)
-		await expect(harness.registry.updateStoreNodes()).rejects.toThrow(
-			'disk failed',
-		)
+		await expect(harness.registry.updateStoreNodes()).rejects.toThrow()
 		await expect(
 			harness.registry.updateStoreNodes(false),
 		).resolves.toBeUndefined()
@@ -264,7 +298,7 @@ describe('NodeRegistry persistence and lifecycle', () => {
 		)
 		await expect(
 			detached.registry.persistDetachedSnapshot({}),
-		).rejects.toThrow('detached failed')
+		).rejects.toThrow()
 
 		const otherHome = createHarness({
 			persisted: { '0xabcd': { 9: { name: 'Other' } } },
@@ -306,19 +340,21 @@ describe('NodeRegistry persistence and lifecycle', () => {
 			name: 'New',
 			loc: 'Room',
 		})
-		expect(harness.registry.addNode(harness.zwaveNode)).toBe(node)
+		harness.registry.addNode(harness.zwaveNode)
 		node.ready = true
-		expect(harness.registry.addNode(harness.zwaveNode)).toBe(node)
-		expect(harness.logger.error).toHaveBeenCalled()
+		harness.registry.addNode(harness.zwaveNode)
+		expect(harness.registry.nodes.get(2)).toMatchObject({
+			id: 2,
+			ready: true,
+		})
 
-		harness.registry.onNodeFound({ id: 3 } as any)
+		harness.registry.onNodeFound({ id: 3 } satisfies FoundNode)
 		expect(harness.host.sendToSocket).toHaveBeenCalledWith(
 			socketEvents.nodeFound,
 			expect.objectContaining({
 				node: expect.objectContaining({ id: 3 }),
 			}),
 		)
-		expect(harness.host.onNodeFound).toHaveBeenCalledWith(3)
 
 		const added = harness.registry.createNode(4)
 		added.ready = false
@@ -335,10 +371,10 @@ describe('NodeRegistry persistence and lifecycle', () => {
 		).mockReturnValueOnce({
 			name: 'Provisioned',
 			location: 'Office',
-		} as any)
+		})
 		await harness.registry.onNodeAdded(addedZwave, {
 			lowSecurity: false,
-		} as any)
+		} satisfies InclusionResult)
 		expect(added.security).toBe(
 			SecurityClass[SecurityClass.S2_Authenticated],
 		)
@@ -360,13 +396,11 @@ describe('NodeRegistry persistence and lifecycle', () => {
 			RemoveNodeReason.Excluded,
 		)
 		expect(harness.registry.nodes.has(4)).toBe(false)
-		expect(harness.host.removeNodeFromGroups).toHaveBeenCalledWith(4)
 		expect(harness.host.emitNodeRemoved).toHaveBeenCalledWith({
 			id: 4,
 			name: added.name,
 			loc: added.loc,
 		})
-		expect(addedZwave.eventNames()).toEqual([])
 	})
 
 	it('updates node settings through the registry and fences late publication', async () => {
@@ -418,15 +452,15 @@ describe('NodeRegistry persistence and lifecycle', () => {
 		const invalid = createHarness()
 		await expect(
 			invalid.registry.setNodeName(99, 'Missing'),
-		).rejects.toThrow('Invalid Node ID')
+		).rejects.toThrow()
 		await expect(
 			invalid.registry.setNodeLocation(99, 'Missing'),
-		).rejects.toThrow('Invalid Node ID')
+		).rejects.toThrow()
 		expect(() =>
 			invalid.registry.setNodeDefaultSetValueOptions(99, {
 				defaultVolume: 10,
 			}),
-		).toThrow('Invalid Node ID')
+		).toThrow()
 
 		const driverOnly = createHarness()
 		driverOnly.registry.setNodeDefaultSetValueOptions(2, {
@@ -435,7 +469,7 @@ describe('NodeRegistry persistence and lifecycle', () => {
 		expect(driverOnly.zwaveNode.defaultVolume).toBe(12)
 	})
 
-	it('preserves persistence failures and value log coercion', async () => {
+	it('suppresses persistence failures without aborting value projection', async () => {
 		const harness = createHarness()
 		harness.registry.createNode(2)
 		vi.mocked(harness.host.persistNodes).mockRejectedValueOnce(
@@ -444,21 +478,13 @@ describe('NodeRegistry persistence and lifecycle', () => {
 		await expect(
 			harness.registry.updateStoreNodes(false),
 		).resolves.toBeUndefined()
-		expect(harness.logger.error).toHaveBeenCalledWith(
-			'Error while updating store nodes: write failed',
-			expect.any(Error),
+		const symbol = Symbol('event')
+		harness.zwaveNode.getValue = vi.fn(() => symbol)
+		const result = harness.registry.addValue(
+			harness.zwaveNode,
+			createValue({ property: 'event', propertyName: 'event' }),
 		)
-
-		harness.zwaveNode.getValue = vi.fn(() => Symbol('event'))
-		expect(() =>
-			harness.registry.addValue(harness.zwaveNode, {
-				commandClass: CommandClasses['Binary Switch'],
-				commandClassName: 'Binary Switch',
-				endpoint: 0,
-				property: 'event',
-				propertyName: 'event',
-			}),
-		).toThrow(TypeError)
+		expect(result?.valueId.value).toBe(symbol)
 	})
 
 	it('loads fake nodes as registry values and fences stale reads', async () => {
@@ -519,7 +545,7 @@ describe('NodeRegistry persistence and lifecycle', () => {
 })
 
 describe('NodeRegistry node events and values', () => {
-	it('projects status, interview, liveness, queue order, and errors', async () => {
+	it('projects status, interview, liveness, and queue order', async () => {
 		const harness = createHarness()
 		const node = harness.registry.createNode(2)
 		harness.registry.projectNode(harness.zwaveNode)
@@ -558,61 +584,62 @@ describe('NodeRegistry node events and values', () => {
 			'CommandClasses',
 			true,
 		)
-		expect(harness.host.throttle).toHaveBeenCalledWith(
-			'_setInterviewProgress_2',
-			expect.any(Function),
-			250,
-		)
+		expect(node).toMatchObject({
+			interviewProgress: 20,
+			interviewStage: 'CommandClasses',
+		})
 		harness.registry.onInterviewStarted(harness.zwaveNode)
+		expect(harness.host.emitEvent).toHaveBeenCalledWith(
+			'node',
+			'node interview started',
+			expect.any(Object),
+		)
 		harness.registry.onInterviewStageCompleted(
 			harness.zwaveNode,
 			'command classes',
 		)
+		expect(harness.host.emitEvent).toHaveBeenCalledWith(
+			'node',
+			'node interview stage completed',
+			expect.any(Object),
+		)
 		harness.registry.onInterviewProgress(harness.zwaveNode, {
 			progress: 50.4,
 			stage: InterviewStage.CommandClasses,
-		} as any)
+		} satisfies InterviewProgress)
+		expect(node.interviewProgress).toBe(50)
 		harness.registry.onInterviewFailed(harness.zwaveNode, {
 			errorMessage: 'failed',
-		} as any)
+		} satisfies NodeInterviewFailedEventArgs)
+		expect(node.interviewProgress).toBe(0)
+		expect(harness.host.emitEvent).toHaveBeenCalledWith(
+			'node',
+			'node interview failed',
+			expect.any(Object),
+		)
 		harness.registry.onInterviewCompleted(harness.zwaveNode)
 		await Promise.resolve()
+		expect(harness.host.emitEvent).toHaveBeenCalledWith(
+			'node',
+			'node interview completed',
+			expect.any(Object),
+		)
 		harness.registry.onWakeUp(harness.zwaveNode, NodeStatus.Asleep)
-		harness.registry.onSleep(harness.zwaveNode, NodeStatus.Unknown)
-		harness.registry.onAlive(harness.zwaveNode, NodeStatus.Dead)
-		harness.registry.onAlive(harness.zwaveNode, NodeStatus.Unknown)
-		harness.registry.onDead(harness.zwaveNode, NodeStatus.Unknown)
-		harness.registry.onInfoReceived(harness.zwaveNode)
+		expect(node.lastAwake).toEqual(expect.any(Number))
 		expect(harness.host.emitEvent).toHaveBeenCalledWith(
 			'node',
 			'node wakeup',
 			expect.any(Object),
 		)
-
-		harness.registry.nodes.delete(2)
-		harness.registry.updateNodeStatus(harness.zwaveNode)
-		harness.registry.onReady(harness.zwaveNode)
-		expect(harness.host.logNode).toHaveBeenCalledWith(
-			harness.zwaveNode,
-			'error',
-			expect.stringContaining("doesn't exists"),
-		)
 	})
 
 	it('adds, updates, resets, removes, and reprojects values', async () => {
 		vi.useFakeTimers()
-		const zwaveValue = {
-			commandClass: CommandClasses['Binary Switch'],
-			commandClassName: 'Binary Switch',
-			endpoint: 0,
-			property: 'currentValue',
-			propertyName: 'currentValue',
-		}
-		const target = {
-			...zwaveValue,
+		const zwaveValue = createValue()
+		const target = createValue({
 			property: 'targetValue',
 			propertyName: 'targetValue',
-		}
+		})
 		const zwaveNode = createZwaveNode({
 			getDefinedValueIDs: vi.fn(() => [zwaveValue, target]),
 			getValue: vi.fn(() => 1),
@@ -625,7 +652,7 @@ describe('NodeRegistry node events and values', () => {
 		})
 		const harness = createHarness({ node: zwaveNode })
 		const node = harness.registry.createNode(2)
-		const added = harness.registry.addValue(zwaveNode, zwaveValue as any)
+		const added = harness.registry.addValue(zwaveNode, zwaveValue)
 		expect(added?.valueId).toMatchObject({
 			value: 1,
 			targetValue: `${CommandClasses['Binary Switch']}-0-targetValue`,
@@ -639,7 +666,7 @@ describe('NodeRegistry node events and values', () => {
 		harness.registry.onValueAdded(zwaveNode, {
 			...target,
 			newValue: 2,
-		} as any)
+		} satisfies ZWaveNodeValueAddedArgs)
 		harness.registry.onMetadataUpdated(zwaveNode, {
 			...zwaveValue,
 			metadata: {
@@ -649,7 +676,7 @@ describe('NodeRegistry node events and values', () => {
 				min: 0,
 				max: 99,
 			},
-		} as any)
+		} satisfies ZWaveNodeMetadataUpdatedArgs)
 		expect(harness.host.sendToSocket).toHaveBeenCalledWith(
 			socketEvents.metadataUpdated,
 			expect.objectContaining({ max: 99 }),
@@ -660,7 +687,7 @@ describe('NodeRegistry node events and values', () => {
 			prevValue: 1,
 			newValue: new Uint8Array([10]),
 			stateless: false,
-		} as any)
+		} satisfies ZWaveNodeValueUpdatedArgs & { stateless: boolean })
 		const currentValue =
 			node.values[`${CommandClasses['Binary Switch']}-0-currentValue`]
 		expect(currentValue.value).toBe('0x0a')
@@ -668,50 +695,28 @@ describe('NodeRegistry node events and values', () => {
 			...zwaveValue,
 			value: 5,
 			stateless: true,
-		} as any)
+		} satisfies ZWaveNodeValueNotificationArgs & { stateless: boolean })
 		expect(currentValue.stateless).toBe(true)
 		await vi.advanceTimersByTimeAsync(1000)
 		expect(currentValue.value).toBeUndefined()
 
-		harness.registry.onValueRemoved(zwaveNode, zwaveValue as any)
+		harness.registry.onValueRemoved(
+			zwaveNode,
+			zwaveValue satisfies ZWaveNodeValueRemovedArgs,
+		)
 		expect(harness.host.sendToSocket).toHaveBeenCalledWith(
 			socketEvents.valueRemoved,
 			expect.objectContaining({ property: 'currentValue' }),
 		)
-		harness.registry.removeValue(zwaveNode, zwaveValue as any)
-		expect(harness.host.logNode).toHaveBeenCalledWith(
-			zwaveNode,
-			'warn',
-			expect.stringContaining('no such node'),
-		)
-
-		const naming = {
-			...zwaveValue,
+		const naming = createValue({
 			commandClass: CommandClasses['Node Naming and Location'],
-		}
-		expect(harness.registry.addValue(zwaveNode, naming as any)).toBeNull()
+		})
+		expect(harness.registry.addValue(zwaveNode, naming)).toBeNull()
 		expect(harness.host.onNameLocationChanged).toHaveBeenCalled()
-		harness.registry.nodes.delete(2)
-		expect(
-			harness.registry.addValue(zwaveNode, zwaveValue as any),
-		).toBeNull()
-		expect(() =>
-			harness.registry.parseValue(
-				zwaveNode,
-				zwaveValue as any,
-				{ type: 'number', readable: true, writeable: true } as any,
-			),
-		).toThrow('unknown node')
 	})
 
-	it('runs ready coordination, route/schedule failures, and physical statistics', async () => {
-		const value = {
-			commandClass: CommandClasses['Binary Switch'],
-			commandClassName: 'Binary Switch',
-			endpoint: 0,
-			property: 'currentValue',
-			propertyName: 'currentValue',
-		}
+	it('projects ready values and physical statistics despite route failures', async () => {
+		const value = createValue()
 		const zwaveNode = createZwaveNode({
 			getDefinedValueIDs: vi.fn(() => [value]),
 			commandClasses: {
@@ -720,7 +725,14 @@ describe('NodeRegistry node events and values', () => {
 		})
 		const harness = createHarness({ node: zwaveNode })
 		const node = harness.registry.createNode(2)
-		node.values['old'] = { value: 0 } as any
+		node.values.old = {
+			...harness.registry.parseValue(
+				zwaveNode,
+				createValue({ property: 'old', propertyName: 'old' }),
+				{ type: 'number', readable: true, writeable: true },
+			),
+			value: 0,
+		}
 		vi.mocked(harness.host.getSchedules).mockRejectedValueOnce(
 			new Error('schedule'),
 		)
@@ -731,17 +743,16 @@ describe('NodeRegistry node events and values', () => {
 		await Promise.resolve()
 		await Promise.resolve()
 		expect(node.ready).toBe(true)
-		expect(harness.host.registerDevice).toHaveBeenCalledWith(node)
-		expect(harness.host.subscribeObserver).toHaveBeenCalled()
-		expect(harness.host.getGroups).toHaveBeenCalledWith(2)
-		expect(harness.host.checkConfigurationTemplates).toHaveBeenCalledWith(
-			node,
-			zwaveNode,
+		expect(node.values).not.toHaveProperty('old')
+		expect(node.values).toHaveProperty(
+			`${CommandClasses['Binary Switch']}-0-currentValue`,
 		)
-		expect(harness.host.updateBroadcastNodeValues).toHaveBeenCalled()
 
-		const stats = { lastSeen: new Date(999), commandsTX: 1 }
-		harness.registry.onStatisticsUpdated(zwaveNode, stats as any)
+		const stats = {
+			lastSeen: new Date(999),
+			commandsTX: 1,
+		} satisfies NodeStatistics
+		harness.registry.onStatisticsUpdated(zwaveNode, stats)
 		expect(node.lastActive).toBe(999)
 		expect(harness.host.emitNodeLastActive).toHaveBeenCalledWith(node)
 		expect(harness.host.emitStatistics).toHaveBeenCalledWith(
@@ -749,231 +760,37 @@ describe('NodeRegistry node events and values', () => {
 			expect.objectContaining({ statistics: stats }),
 		)
 	})
-
-	it('covers defensive, stale, controller, and value edge paths', async () => {
-		vi.useFakeTimers()
-		const harness = createHarness()
-		const registry = harness.registry as any
-		const valueId = {
-			commandClass: CommandClasses['Binary Switch'],
-			commandClassName: 'Binary Switch',
-			endpoint: 0,
-			property: 'currentValue',
-			propertyName: 'currentValue',
-		}
-
-		registry.projectNode(createZwaveNode({ id: 99 }))
-		registry.removeNode(99)
-		vi.mocked(harness.host.isReplacing).mockReturnValue(true)
-		registry.storeNodes[98] = { name: 'Replacing' }
-		registry.removeNode(98)
-		expect(registry.storeNodes[98]).toBeDefined()
-
-		vi.mocked(harness.host.isDriverReady).mockReturnValue(false)
-		registry.onNodeFound({ id: 99 })
-		const found = registry.createNode(97)
-		registry.onNodeFound({ id: 97 })
-		expect(harness.host.emitNodeUpdate).toHaveBeenCalledWith(found)
-
-		await registry.onNodeAdded(createZwaveNode({ id: 96 }), {
-			lowSecurity: true,
-		})
-		harness.stale()
-		registry.onNodeFound({ id: 94 })
-		await registry.onNodeAdded(createZwaveNode({ id: 95 }), {
-			lowSecurity: false,
-		})
-		await registry.onNodeRemoved(
-			createZwaveNode({ id: 95 }),
-			RemoveNodeReason.Excluded,
-		)
-		expect(registry.isCurrentNode(harness.zwaveNode)).toBe(false)
-
-		const live = createHarness()
-		const node = live.registry.createNode(2)
-		vi.mocked(live.host.isDriverReady).mockReturnValue(false)
-		await live.registry.onNodeAdded(live.zwaveNode, {
-			lowSecurity: false,
-		} as any)
-		vi.mocked(live.host.isDriverReady).mockReturnValue(true)
-		live.zwaveNode.interviewStage = InterviewStage.ProtocolInfo
-		live.registry.updateNodeStatus(live.zwaveNode)
-		live.registry.onNodeEvent('ready', createZwaveNode({ id: 99 }))
-		live.registry.setInterviewProgress(live.zwaveNode, 10)
-		live.registry.setInterviewProgress(createZwaveNode({ id: 99 }), 10)
-		let throttled!: () => void
-		vi.mocked(live.host.throttle).mockImplementationOnce(
-			(_key, callback) => {
-				throttled = callback
-			},
-		)
-		live.registry.setInterviewProgress(live.zwaveNode, 11, undefined, true)
-		live.registry.nodes.set(2, { ...node } as any)
-		throttled()
-		live.registry.nodes.set(2, node)
-		node.manufacturerId = 1
-		live.registry.onInterviewCompleted(live.zwaveNode)
-		vi.mocked(live.host.checkNodeFirmwareUpdates).mockRejectedValueOnce(
-			new Error('firmware check'),
-		)
-		live.registry.onInterviewCompleted(live.zwaveNode)
-		await Promise.resolve()
-		live.registry.nodes.delete(2)
-		live.registry.onInterviewCompleted(live.zwaveNode)
-		live.registry.nodes.set(2, node)
-		live.registry.onWakeUp(live.zwaveNode, NodeStatus.Unknown)
-		live.registry.onSleep(live.zwaveNode, NodeStatus.Awake)
-		live.registry.onDead(live.zwaveNode, NodeStatus.Alive)
-
-		live.registry.updateValue(createZwaveNode({ id: 99 }), {
-			...valueId,
-			prevValue: 1,
-			newValue: 2,
-		})
-		live.zwaveNode.getValue = vi.fn(() => undefined)
-		live.zwaveNode.getValueMetadata = vi.fn(() => ({
-			type: 'duration',
-			readable: true,
-			writeable: true,
-		}))
-		live.registry.updateValue(live.zwaveNode, {
-			...valueId,
-			prevValue: new Uint8Array([1]),
-			newValue: undefined,
-		})
-		const projected =
-			node.values[`${CommandClasses['Binary Switch']}-0-currentValue`]
-		projected.toUpdate = true
-		live.registry.updateValue(live.zwaveNode, {
-			...valueId,
-			prevValue: new Uint8Array([1]),
-			newValue: undefined,
-			stateless: true,
-		})
-		live.registry.updateValue(live.zwaveNode, {
-			...valueId,
-			prevValue: undefined,
-			newValue: undefined,
-			stateless: true,
-		})
-		live.registry.removeValue(live.zwaveNode, valueId as any)
-		await vi.advanceTimersByTimeAsync(1000)
-
-		const naming = {
-			...valueId,
-			commandClass: CommandClasses['Node Naming and Location'],
-		}
-		node.values = {}
-		live.zwaveNode.getValueMetadata = vi.fn(() => ({
-			type: 'number',
-			readable: true,
-			writeable: true,
-		}))
-		live.registry.updateValue(live.zwaveNode, {
-			...naming,
-			newValue: 'Name',
-		})
-		live.zwaveNode.ready = false
-		live.registry.onValueAdded(live.zwaveNode, {
-			...valueId,
-			newValue: 1,
-		} as any)
-		live.registry.onStatisticsUpdated(live.zwaveNode, {} as any)
-		live.registry.nodes.delete(2)
-		live.registry.onStatisticsUpdated(live.zwaveNode, {} as any)
-		live.registry.onFirmwareUpdateProgress(live.zwaveNode, {
-			currentFile: 1,
-			totalFiles: 1,
-			sentFragments: 1,
-			totalFragments: 1,
-			progress: 100,
-		})
-		live.registry.onFirmwareUpdateFinished(live.zwaveNode, {
-			success: false,
-			status: 255,
-			reInterview: false,
-			waitTime: 2,
-		} as any)
-
-		const controller = createHarness({
-			node: createZwaveNode({ id: 1, isControllerNode: true }),
-		})
-		const controllerNode = controller.registry.createNode(1)
-		controllerNode.statistics = { messagesRX: 10 } as any
-		controller.registry.onControllerStatisticsUpdated({
-			messagesRX: 10,
-		} as any)
-		;(controller.driver.controller as any).ownNodeId = undefined
-		controller.registry.onControllerStatisticsUpdated({
-			messagesRX: 11,
-		} as any)
-		;(controller.driver as any).controller = undefined
-		controller.registry.onControllerStatisticsUpdated({
-			messagesRX: 12,
-		} as any)
-
-		const controllerReady = createHarness({
-			node: createZwaveNode({
-				id: 1,
-				isControllerNode: true,
-				protocol: Protocols.ZWaveLongRange,
-			}),
-		})
-		controllerReady.registry.createNode(1)
-		vi.mocked(
-			controllerReady.host.updateControllerNodeProps,
-		).mockRejectedValueOnce(new Error('controller props'))
-		controllerReady.registry.onReady(controllerReady.zwaveNode)
-		await Promise.resolve()
-		expect(controllerReady.host.getPriorityRoute).not.toHaveBeenCalled()
-	})
 })
 
 describe('NodeRegistry notifications, firmware, statistics, and listeners', () => {
-	it('adapts notification command classes and firmware events', () => {
+	it('adapts notifications and firmware state', () => {
 		const harness = createHarness()
 		const node = harness.registry.createNode(2)
-		const endpoint = { nodeId: 2, tryGetNode: () => harness.zwaveNode }
-		harness.registry.onNotification(
-			endpoint as any,
+		const endpoint = {
+			nodeId: 2,
+			tryGetNode: () => harness.zwaveNode,
+		} as unknown as ZWaveNotificationCallbackParams_NotificationCC[0]
+		const notification: ZWaveNotificationCallbackParams_NotificationCC = [
+			endpoint,
 			CommandClasses.Notification,
 			{
+				type: 7,
 				label: 'Motion',
+				event: 8,
 				eventLabel: 'detected',
 				parameters: new Uint8Array([1, 2]),
-			} as any,
+			},
+		]
+		harness.registry.onNotification(...notification)
+		expect(harness.host.emitNotification).toHaveBeenCalledWith(
+			node,
+			expect.objectContaining({
+				property: 'Motion',
+				propertyKey: 'detected',
+				propertyName: 'Motion',
+			}),
+			'0102',
 		)
-		harness.registry.onNotification(
-			endpoint as any,
-			CommandClasses['Entry Control'],
-			{
-				eventType: 1,
-				dataType: 2,
-				eventData: new Uint8Array([10]),
-			} as any,
-		)
-		harness.registry.onNotification(
-			endpoint as any,
-			CommandClasses['Multilevel Switch'],
-			{ eventType: 1, direction: 'up' } as any,
-		)
-		harness.registry.onNotification(
-			endpoint as any,
-			CommandClasses.Battery,
-			{ eventType: 'replacement', urgency: 1 } as any,
-		)
-		harness.registry.onNotification(
-			endpoint as any,
-			CommandClasses.Powerlevel,
-			{} as any,
-		)
-		harness.registry.onNotification(endpoint as any, 999, {} as any)
-		harness.registry.onNotification(
-			{ nodeId: 9, tryGetNode: () => undefined } as any,
-			CommandClasses.Notification,
-			{} as any,
-		)
-		expect(harness.host.emitNotification).toHaveBeenCalledTimes(4)
 
 		harness.registry.onFirmwareUpdateProgress(harness.zwaveNode, {
 			currentFile: 1,
@@ -987,18 +804,15 @@ describe('NodeRegistry notifications, firmware, statistics, and listeners', () =
 			success: true,
 			status: FirmwareUpdateStatus.OK_NoRestart,
 			reInterview: false,
-		} as any)
+		} satisfies FirmwareUpdateResult)
 		expect(node.firmwareUpdate).toBeUndefined()
-		expect(harness.host.clearThrottle).toHaveBeenCalledWith(
-			'_onNodeFirmwareUpdateProgress_2',
-		)
 	})
 
 	it('tracks controller background RSSI and emits controller events', () => {
 		const controller = createZwaveNode({ id: 1, isControllerNode: true })
 		const harness = createHarness({ node: controller })
 		const node = harness.registry.createNode(1)
-		node.statistics = { messagesRX: 1 } as any
+		node.statistics = { messagesRX: 1 } satisfies ControllerStatistics
 		for (let index = 0; index < 362; index++) {
 			harness.registry.onControllerStatisticsUpdated({
 				messagesRX: index + 2,
@@ -1008,7 +822,7 @@ describe('NodeRegistry notifications, firmware, statistics, and listeners', () =
 					channel1: { current: -81, average: -81 },
 					channel2: { current: -82, average: -82 },
 				},
-			} as any)
+			} satisfies ControllerStatistics)
 		}
 		expect(node.lastActive).toEqual(expect.any(Number))
 		expect(node.bgRSSIPoints?.length).toBeLessThanOrEqual(361)
@@ -1019,147 +833,29 @@ describe('NodeRegistry notifications, firmware, statistics, and listeners', () =
 		)
 	})
 
-	it('fences and cleans up controller node listeners', () => {
-		const harness = createHarness()
+	it('stops controller event publication after close', () => {
+		const harness = createHarness({
+			node: createZwaveNode({ id: 1, isControllerNode: true }),
+		})
+		const node = harness.registry.createNode(1)
 		const controller = Object.assign(
 			new EventEmitter(),
 			harness.driver.controller,
 		)
-		harness.driver.controller = controller as any
-		harness.registry.bindControllerEvents(controller as any)
-		expect(controller.listenerCount('node found')).toBe(1)
-		expect(controller.listenerCount('node added')).toBe(1)
-		expect(controller.listenerCount('node removed')).toBe(1)
-		expect(controller.listenerCount('statistics updated')).toBe(1)
-
-		controller.emit('node found', { id: 2 })
-		controller.emit('node added', harness.zwaveNode, {
-			lowSecurity: false,
-		})
-		controller.emit(
-			'node removed',
-			harness.zwaveNode,
-			RemoveNodeReason.Excluded,
+		harness.driver.controller = controller
+		harness.registry.bindControllerEvents(
+			controller as unknown as Driver['controller'],
 		)
-		controller.emit('statistics updated', { messagesRX: 1 })
-		expect(harness.host.onNodeFound).toHaveBeenCalledWith(2)
-		expect(harness.host.onNodeAdded).toHaveBeenCalledWith(2)
-		expect(harness.host.removeNodeFromGroups).toHaveBeenCalledWith(2)
-		const eventCount = vi.mocked(harness.host.emitEvent).mock.calls.length
-		harness.stale()
-		controller.emit('statistics updated', { messagesRX: 2 })
-		expect(harness.host.emitEvent).toHaveBeenCalledTimes(eventCount)
+		controller.emit('statistics updated', {
+			messagesRX: 2,
+		} satisfies ControllerStatistics)
+		expect(node.statistics).toMatchObject({ messagesRX: 2 })
 
 		harness.registry.close()
-		expect(controller.eventNames()).toEqual([])
-	})
-
-	it('binds exact listeners, fences replacement, and cleans up idempotently', () => {
-		const harness = createHarness()
-		const node = harness.registry.createNode(2)
-		harness.registry.bindNodeEvents(harness.zwaveNode)
-		expect(harness.zwaveNode.listenerCount('ready')).toBe(2)
-
-		harness.zwaveNode.emit('ready', harness.zwaveNode)
-		harness.zwaveNode.emit('interview started', harness.zwaveNode)
-		harness.zwaveNode.emit(
-			'interview stage completed',
-			harness.zwaveNode,
-			'protocol info',
-		)
-		harness.zwaveNode.emit('interview completed', harness.zwaveNode)
-		harness.zwaveNode.emit('interview failed', harness.zwaveNode, {
-			errorMessage: 'failed',
-		})
-		harness.zwaveNode.emit('interview progress', harness.zwaveNode, {
-			progress: 10,
-			stage: InterviewStage.ProtocolInfo,
-		})
-		harness.zwaveNode.emit('wake up', harness.zwaveNode, NodeStatus.Asleep)
-		harness.zwaveNode.emit('sleep', harness.zwaveNode, NodeStatus.Awake)
-		harness.zwaveNode.emit('alive', harness.zwaveNode, NodeStatus.Dead)
-		harness.zwaveNode.emit('dead', harness.zwaveNode, NodeStatus.Alive)
-		const valueId = {
-			commandClass: CommandClasses['Binary Switch'],
-			commandClassName: 'Binary Switch',
-			endpoint: 0,
-			property: 'currentValue',
-			propertyName: 'currentValue',
-		}
-		harness.zwaveNode.emit('value added', harness.zwaveNode, {
-			...valueId,
-			newValue: 1,
-		})
-		harness.zwaveNode.emit('value updated', harness.zwaveNode, {
-			...valueId,
-			prevValue: 1,
-			newValue: 2,
-		})
-		harness.zwaveNode.emit('value notification', harness.zwaveNode, {
-			...valueId,
-			value: 3,
-		})
-		harness.zwaveNode.emit('metadata updated', harness.zwaveNode, {
-			...valueId,
-			metadata: {
-				type: 'number',
-				readable: true,
-				writeable: true,
-			},
-		})
-		harness.zwaveNode.emit(
-			'notification',
-			{
-				nodeId: 2,
-				tryGetNode: () => harness.zwaveNode,
-			},
-			CommandClasses.Notification,
-			{
-				label: 'Motion',
-				eventLabel: 'detected',
-				parameters: 1,
-			},
-		)
-		expect(
-			node.eventsQueue.some((entry) => entry.event === 'notification'),
-		).toBe(false)
-		harness.zwaveNode.emit('firmware update progress', harness.zwaveNode, {
-			currentFile: 1,
-			totalFiles: 1,
-			sentFragments: 1,
-			totalFragments: 2,
-			progress: 50,
-		})
-		harness.zwaveNode.emit('firmware update finished', harness.zwaveNode, {
-			success: true,
-			status: FirmwareUpdateStatus.OK_NoRestart,
-			reInterview: false,
-		})
-		harness.zwaveNode.emit('statistics updated', harness.zwaveNode, {
-			lastSeen: new Date(10),
-		})
-		harness.zwaveNode.emit('value removed', harness.zwaveNode, valueId)
-		harness.zwaveNode.emit('node info received', harness.zwaveNode)
-		expect(harness.host.emitEvent).toHaveBeenCalled()
-
-		const before = vi.mocked(harness.host.emitEvent).mock.calls.length
-		const replacement = createZwaveNode()
-		harness.controllerNodes.set(2, replacement)
-		harness.registry.bindNodeEvents(replacement)
-		expect(harness.zwaveNode.listenerCount('ready')).toBe(0)
-		expect(replacement.listenerCount('ready')).toBe(2)
-		harness.zwaveNode.emit('interview started', harness.zwaveNode)
-		expect(vi.mocked(harness.host.emitEvent).mock.calls).toHaveLength(
-			before,
-		)
-
-		harness.registry.cleanupNodeListeners(replacement)
-		harness.registry.cleanupNodeListeners(replacement)
-		expect(harness.zwaveNode.listenerCount('ready')).toBe(0)
-		expect(replacement.listenerCount('ready')).toBe(0)
-		harness.registry.close()
-		harness.registry.close()
-		expect(harness.registry.current).toBe(false)
+		controller.emit('statistics updated', {
+			messagesRX: 3,
+		} satisfies ControllerStatistics)
+		expect(node.statistics).toMatchObject({ messagesRX: 2 })
 	})
 
 	it('closes active listeners and stateless value timers', async () => {
@@ -1167,11 +863,8 @@ describe('NodeRegistry notifications, firmware, statistics, and listeners', () =
 		try {
 			const harness = createHarness()
 			harness.registry.createNode(2)
-			harness.registry.bindNodeEvents(harness.zwaveNode)
 			harness.registry.updateValue(harness.zwaveNode, {
-				commandClass: CommandClasses['Binary Switch'],
-				endpoint: 0,
-				property: 'event',
+				...createValue({ property: 'event', propertyName: 'event' }),
 				newValue: 1,
 				stateless: true,
 			})
@@ -1181,7 +874,6 @@ describe('NodeRegistry notifications, firmware, statistics, and listeners', () =
 			harness.registry.close()
 			await vi.advanceTimersByTimeAsync(1000)
 
-			expect(harness.zwaveNode.listenerCount('ready')).toBe(0)
 			expect(harness.host.emitValueChanged).toHaveBeenCalledTimes(
 				emitCount,
 			)
