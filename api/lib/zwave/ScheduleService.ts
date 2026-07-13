@@ -517,12 +517,4 @@ export class ScheduleService {
 
 		return result
 	}
-
-	get lockGetSchedule(): boolean {
-		return this._lockGetSchedule
-	}
-
-	get cancelGetScheduleFlag(): boolean {
-		return this._cancelGetSchedule
-	}
 }

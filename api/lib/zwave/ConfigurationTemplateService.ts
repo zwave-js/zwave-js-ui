@@ -57,10 +57,6 @@ export class ConfigurationTemplateService {
 		this._templates = initialTemplates
 	}
 
-	get templates(): ZUIConfigurationTemplate[] {
-		return this._templates
-	}
-
 	getConfigurationTemplates(): ZUIConfigurationTemplate[] {
 		return this._templates
 	}
