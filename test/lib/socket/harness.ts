@@ -95,7 +95,7 @@ export async function createSocketHarness(): Promise<SocketHarness> {
 	}
 	resetState()
 
-	// setupSocket() must run first since setupInterceptor()'s log-forwarding callback reads socketManager.io, which setupSocket() binds
+	// Bind the server before reading socketManager.io because SocketManager initializes io during bindServer()
 	__testHooks.setupSocket(server)
 	__testHooks.setupInterceptor()
 
