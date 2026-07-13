@@ -396,7 +396,7 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 			}
 		}
 
-		const snippetsCache = gw.zwave?.cacheSnippets ?? []
+		const snippetsCache = gw?.zwave?.cacheSnippets ?? []
 		return [...snippetsCache, ...defaultSnippets, ...snippets]
 	}
 
@@ -1192,14 +1192,12 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 
 	app.get('/health/:client', apisLimiter, function (req, res) {
 		const client = req.params.client
-		let status: boolean
 
 		if (client !== 'zwave' && client !== 'mqtt') {
-			res.status(500).send("Requested client doesn 't exist")
-		} else {
-			status = gw?.[client]?.getStatus().status ?? false
+			return res.status(500).send("Requested client doesn't exist")
 		}
 
+		const status = gw?.[client]?.getStatus().status ?? false
 		res.status(status ? 200 : 500).send(status ? 'Ok' : 'Error')
 	})
 
@@ -1683,7 +1681,7 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 		isAuthenticated,
 		async function (req, res) {
 			try {
-				if (!gw.zwave) throw Error('Z-Wave client not inited')
+				if (!gw?.zwave) throw Error('Z-Wave client not inited')
 
 				const { nodes, selectedHomeId, skippedHomeIds } =
 					normalizeImportedNodesConfig(
@@ -1779,6 +1777,7 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 		isAuthenticated,
 		function (req, res) {
 			try {
+				if (!gw?.zwave) throw Error('Z-Wave client not inited')
 				const templates = gw.zwave.getConfigurationTemplates()
 				res.json({ success: true, data: templates })
 			} catch (error) {
@@ -1794,6 +1793,7 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 		isAuthenticated,
 		async function (req, res) {
 			try {
+				if (!gw?.zwave) throw Error('Z-Wave client not inited')
 				const { nodeId, name, autoApply, values, firmwareRange } =
 					req.body
 				if (!nodeId || !name) {
@@ -1827,6 +1827,7 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 		isAuthenticated,
 		function (req, res) {
 			try {
+				if (!gw?.zwave) throw Error('Z-Wave client not inited')
 				const templates = gw.zwave.getConfigurationTemplates()
 				res.json({
 					success: true,
@@ -1863,6 +1864,7 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 						})
 					}
 				}
+				if (!gw?.zwave) throw Error('Z-Wave client not inited')
 				const result =
 					await gw.zwave.importConfigurationTemplates(templates)
 				res.json({
@@ -1883,6 +1885,7 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 		isAuthenticated,
 		async function (req, res) {
 			try {
+				if (!gw?.zwave) throw Error('Z-Wave client not inited')
 				const params = await gw.zwave.getDeviceConfigurationParams(
 					req.params.deviceId,
 				)
@@ -1908,6 +1911,7 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 					})
 				}
 				const { name, autoApply, firmwareRange, values } = req.body
+				if (!gw?.zwave) throw Error('Z-Wave client not inited')
 				const template = await gw.zwave.updateConfigurationTemplate(
 					id,
 					{
@@ -1942,6 +1946,7 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 						message: 'Invalid template ID',
 					})
 				}
+				if (!gw?.zwave) throw Error('Z-Wave client not inited')
 				await gw.zwave.deleteConfigurationTemplate(id)
 				res.json({
 					success: true,
@@ -1974,6 +1979,7 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 						message: 'nodeId is required',
 					})
 				}
+				if (!gw?.zwave) throw Error('Z-Wave client not inited')
 				const result = await gw.zwave.applyConfigurationTemplate(
 					id,
 					nodeId,
@@ -2202,7 +2208,7 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 				isRestore = req.body.restore === 'true'
 				const folder = req.body.folder
 
-				file = req.files[0]
+				file = req.files?.[0]
 
 				if (!file || !file.path) {
 					throw Error('No file uploaded')
