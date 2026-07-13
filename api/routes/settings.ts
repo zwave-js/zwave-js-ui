@@ -357,7 +357,7 @@ export function registerSettingsRoutes(
 				await runtime.startGateway(settings)
 				// Resolved after startGateway() reassigns the gateway so this doesn't observe the just-closed instance
 				backupManager.init(
-					runtime.requireZwaveClient(),
+					runtime.requireGateway().zwave,
 					backupManagerOwner,
 				)
 
