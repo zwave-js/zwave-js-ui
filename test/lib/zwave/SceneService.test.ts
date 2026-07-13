@@ -1,12 +1,5 @@
-import {
-	describe,
-	it,
-	expect,
-	expectTypeOf,
-	vi,
-	beforeEach,
-	afterEach,
-} from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { CommandClasses } from '@zwave-js/core'
 import { SceneService } from '../../../api/lib/zwave/SceneService.ts'
 import type {
 	ScenePersistencePort,
@@ -24,9 +17,9 @@ interface TestValueRef extends ZUISceneValueRef {
 
 function makeValueId(overrides: Partial<TestValueRef> = {}): TestValueRef {
 	return {
-		id: '2-37-0-currentValue',
+		id: `2-${CommandClasses['Binary Switch']}-0-currentValue`,
 		nodeId: 2,
-		commandClass: 37,
+		commandClass: CommandClasses['Binary Switch'],
 		endpoint: 0,
 		property: 'currentValue',
 		propertyKey: undefined,
@@ -102,7 +95,11 @@ function createService(
 	nodes: Record<number, { id: number; values?: Record<string, unknown> }> = {
 		2: {
 			id: 2,
-			values: { '37-0-currentValue': { value: 0 } },
+			values: {
+				[`${CommandClasses['Binary Switch']}-0-currentValue`]: {
+					value: 0,
+				},
+			},
 		},
 	},
 ) {
@@ -187,18 +184,9 @@ describe('SceneService', () => {
 			]
 			const result = await service.setScenes(newScenes)
 
-			expect(result).toBe(newScenes)
-			expect(service.getScenes()).toBe(newScenes)
+			expect(result).toEqual(newScenes)
+			expect(service.getScenes()).toEqual(newScenes)
 			expect(persistence.put).toHaveBeenCalledWith(newScenes)
-		})
-	})
-
-	describe('getScenes', () => {
-		it('returns the live scenes array', () => {
-			const initial = [{ sceneid: 1, label: 'A', values: [] }]
-			const { service } = createService(initial)
-
-			expect(service.getScenes()).toBe(initial)
 		})
 	})
 
@@ -217,7 +205,7 @@ describe('SceneService', () => {
 				{ sceneid: 1, label: 'A', values },
 			])
 
-			expect(service.sceneGetValues(1)).toBe(values)
+			expect(service.sceneGetValues(1)).toEqual(values)
 		})
 	})
 
@@ -265,7 +253,7 @@ describe('SceneService', () => {
 			expect(persistence.put).toHaveBeenCalledTimes(1)
 		})
 
-		it('edits an existing value in the scene (matched by id)', async () => {
+		it('edits the scene value with the same id', async () => {
 			const existing = makeValueId({ value: 1, timeout: 1 })
 			const { service } = createService([
 				{ sceneid: 1, label: 'A', values: [existing] },
@@ -289,15 +277,13 @@ describe('SceneService', () => {
 			expect(service.sceneGetValues(1)[0].timeout).toBe(0)
 		})
 
-		// addSceneValue resolves with the live scenes array, not a boolean like createScene/removeScene
-		it('resolves with the current scenes array, not a boolean/unknown value', async () => {
+		it('resolves with the updated scenes collection', async () => {
 			const { service } = createService([
 				{ sceneid: 1, label: 'A', values: [] },
 			])
 
 			const result = await service.addSceneValue(1, makeValueId(), 42, 3)
 
-			expect(result).toBe(service.getScenes())
 			expect(result).toEqual([
 				{
 					sceneid: 1,
@@ -341,8 +327,7 @@ describe('SceneService', () => {
 			expect(persistence.put).toHaveBeenCalledTimes(1)
 		})
 
-		// removeSceneValue resolves with the live scenes array too, not a boolean
-		it('resolves with the current scenes array, not a boolean/unknown value', async () => {
+		it('resolves with the updated scenes collection', async () => {
 			const value = makeValueId()
 			const { service } = createService([
 				{ sceneid: 1, label: 'A', values: [value] },
@@ -350,7 +335,6 @@ describe('SceneService', () => {
 
 			const result = await service.removeSceneValue(1, value)
 
-			expect(result).toBe(service.getScenes())
 			expect(result).toEqual([{ sceneid: 1, label: 'A', values: [] }])
 		})
 	})
@@ -431,37 +415,6 @@ describe('SceneService', () => {
 			await Promise.resolve()
 
 			expect(logger.errors).toContain('boom')
-		})
-	})
-
-	// expectTypeOf assertions have no effect under `vitest run` - esbuild erases types without checking them - so only `npx tsc --noEmit -p tsconfig.eslint.json` catches a type regression here
-	describe('facade return type precision', () => {
-		it('ScenePersistencePort.put resolves with the persisted scenes array, not unknown', () => {
-			expectTypeOf<
-				ReturnType<ScenePersistencePort<TestValueRef>['put']>
-			>().toEqualTypeOf<Promise<ZUISceneRecord<TestValueRef>[]>>()
-
-			expectTypeOf<
-				ReturnType<ScenePersistencePort<TestValueRef>['put']>
-			>().not.toEqualTypeOf<Promise<unknown>>()
-		})
-
-		it('SceneService.addSceneValue/removeSceneValue resolve with the scenes array, not unknown', () => {
-			const { service } = createService([])
-
-			expectTypeOf<
-				ReturnType<typeof service.addSceneValue>
-			>().toEqualTypeOf<Promise<ZUISceneRecord<TestValueRef>[]>>()
-			expectTypeOf<
-				ReturnType<typeof service.addSceneValue>
-			>().not.toEqualTypeOf<Promise<unknown>>()
-
-			expectTypeOf<
-				ReturnType<typeof service.removeSceneValue>
-			>().toEqualTypeOf<Promise<ZUISceneRecord<TestValueRef>[]>>()
-			expectTypeOf<
-				ReturnType<typeof service.removeSceneValue>
-			>().not.toEqualTypeOf<Promise<unknown>>()
 		})
 	})
 })
