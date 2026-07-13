@@ -1,11 +1,9 @@
-import type { ValueMetadata } from '@zwave-js/core'
-import { Duration, SecurityClass } from '@zwave-js/core'
-import type {
-	Driver,
-	TranslatedValueID,
-	VirtualValueID,
-	ZWaveNode,
-} from 'zwave-js'
+import {
+	CommandClasses,
+	Duration,
+	NODE_ID_BROADCAST,
+	SecurityClass,
+} from '@zwave-js/core'
 import { RFRegion } from 'zwave-js'
 import { describe, expect, it, vi } from 'vitest'
 
@@ -14,112 +12,24 @@ import {
 	NodeProjector,
 	type PhysicalNodeProjectionPort,
 } from '../../../api/lib/zwave/NodeProjector.ts'
-
-type ProjectorValue = TranslatedValueID & {
-	nodeId?: number
-	newValue?: unknown
-	stateless?: boolean
-}
-
-function value(overrides: Partial<ProjectorValue> = {}): ProjectorValue {
-	return {
-		commandClass: 37,
-		commandClassName: 'Binary Switch',
-		endpoint: 0,
-		property: 'currentValue',
-		propertyName: 'currentValue',
-		...overrides,
-	}
-}
-
-function virtualValue(
-	metadata: ValueMetadata,
-	overrides: Partial<VirtualValueID> = {},
-): VirtualValueID {
-	return {
-		...value(),
-		metadata,
-		ccVersion: 1,
-		...overrides,
-	}
-}
-
-function physicalNode(overrides: Partial<ZWaveNode> = {}): ZWaveNode {
-	const node = {
-		id: 2,
-		name: '',
-		location: '',
-		status: 4,
-		interviewStage: 7,
-		isControllerNode: false,
-		ready: true,
-		isListening: true,
-		isFrequentListening: false,
-		canSleep: false,
-		isRouting: true,
-		supportedDataRates: [40000],
-		maxDataRate: 40000,
-		supportsSecurity: true,
-		isSecure: true,
-		supportsBeaming: true,
-		protocolVersion: '7.19',
-		sdkVersion: '7.19.0',
-		firmwareVersion: '1.2',
-		manufacturerId: 1,
-		productId: 2,
-		productType: 3,
-		deviceDatabaseUrl: 'db',
-		keepAwake: false,
-		protocol: 0,
-		zwavePlusVersion: 2,
-		zwavePlusRoleType: 5,
-		zwavePlusNodeType: 0,
-		nodeType: 0,
-		deviceClass: {
-			basic: 1,
-			generic: { key: 2 },
-			specific: { key: 3 },
-		},
-		lastSeen: new Date(1234),
-		defaultTransitionDuration: undefined,
-		defaultVolume: 50,
-		deviceConfig: {
-			label: 'Product',
-			description: 'Description',
-			manufacturer: 'Manufacturer',
-		},
-		getEndpointCount: vi.fn(() => 2),
-		getAllEndpoints: vi.fn(() => [
-			{
-				index: 0,
-				endpointLabel: '',
-				deviceClass: {
-					basic: 1,
-					generic: { key: 2 },
-					specific: { key: 3 },
-				},
-			},
-			{ index: 1, endpointLabel: 'Lamp', deviceClass: undefined },
-		]),
-		getHighestSecurityClass: vi.fn(() => SecurityClass.S2_Authenticated),
-		getFirmwareUpdateCapabilitiesCached: vi.fn(() => ({
-			firmwareUpgradable: true,
-		})),
-		hasDeviceConfigChanged: vi.fn(() => true),
-		getValue: vi.fn(() => undefined),
-		getDefinedValueIDs: vi.fn(() => []),
-		getEndpoint: vi.fn(() => ({ getCCVersion: vi.fn(() => 4) })),
-		getCCVersion: vi.fn(() => 3),
-	}
-	return Object.assign(node, overrides)
-}
+import {
+	createValue,
+	createVirtualValue,
+	createZWaveNode,
+} from './nodeFixtures.ts'
 
 describe('NodeProjector', () => {
-	it('constructs stable physical and virtual shells', () => {
+	const binarySwitch = CommandClasses['Binary Switch']
+
+	it('creates physical and virtual nodes with stable defaults', () => {
 		expect(
-			NodeProjector.newVirtualNode(255, 'Broadcast', 'broadcast'),
+			NodeProjector.newVirtualNode(
+				NODE_ID_BROADCAST,
+				'Broadcast',
+				'broadcast',
+			),
 		).toMatchObject({
-			id: 255,
+			id: NODE_ID_BROADCAST,
 			name: 'Broadcast',
 			virtual: true,
 			kind: 'broadcast',
@@ -165,18 +75,20 @@ describe('NodeProjector', () => {
 		})
 	})
 
-	it('builds identifiers and virtual values with metadata defaults', () => {
-		expect(NodeProjector.getValueId(value())).toBe('37-0-currentValue')
+	it('uses metadata defaults in value identifiers and values', () => {
+		expect(NodeProjector.getValueId(createValue())).toBe(
+			`${binarySwitch}-0-currentValue`,
+		)
 		expect(
 			NodeProjector.getValueId(
-				value({ nodeId: 2, endpoint: 1, propertyKey: 4 }),
+				createValue({ nodeId: 2, endpoint: 1, propertyKey: 4 }),
 				true,
 			),
-		).toBe('2-37-1-currentValue-4')
+		).toBe(`2-${binarySwitch}-1-currentValue-4`)
 		expect(
 			NodeProjector.buildVirtualValue(
-				255,
-				virtualValue(
+				NODE_ID_BROADCAST,
+				createVirtualValue(
 					{
 						type: 'string',
 						readable: undefined,
@@ -191,7 +103,7 @@ describe('NodeProjector', () => {
 				123,
 			),
 		).toMatchObject({
-			id: '255-37-0-currentValue',
+			id: `${NODE_ID_BROADCAST}-${binarySwitch}-0-currentValue`,
 			readable: false,
 			writeable: true,
 			commandClassVersion: 1,
@@ -202,10 +114,10 @@ describe('NodeProjector', () => {
 		})
 	})
 
-	it('projects numeric, boolean, string, color, and fallback metadata', () => {
+	it('normalizes metadata for supported value types', () => {
 		const numeric = NodeProjector.buildVirtualValue(
 			2,
-			virtualValue(
+			createVirtualValue(
 				{
 					type: 'number',
 					readable: true,
@@ -289,16 +201,19 @@ describe('NodeProjector', () => {
 		expect(booleanValue.list).toBe(false)
 	})
 
-	it('updates and projects physical values, preserving existing fields', () => {
-		const node = physicalNode({
+	it('preserves publication settings when physical values change', () => {
+		const node = createZWaveNode({
 			getValue: vi.fn(() => undefined),
 			getDefinedValueIDs: vi.fn(() => [
-				value({ property: 'targetValue', propertyName: 'targetValue' }),
+				createValue({
+					property: 'targetValue',
+					propertyName: 'targetValue',
+				}),
 			]),
 		})
 		const existing = NodeProjector.projectValue(
 			node,
-			value(),
+			createValue(),
 			{
 				type: 'number',
 				readable: true,
@@ -316,7 +231,7 @@ describe('NodeProjector', () => {
 		}
 		const projected = NodeProjector.projectValue(
 			node,
-			value({ newValue: 7, stateless: true }),
+			createValue({ newValue: 7, stateless: true }),
 			{
 				type: 'number',
 				readable: true,
@@ -327,11 +242,11 @@ describe('NodeProjector', () => {
 			2,
 		)
 		expect(projected).toMatchObject({
-			id: '2-37-0-currentValue',
+			id: `2-${binarySwitch}-0-currentValue`,
 			value: 7,
 			stateless: true,
 			isCurrentValue: true,
-			targetValue: '37-0-targetValue',
+			targetValue: `${binarySwitch}-0-targetValue`,
 			commandClassVersion: 4,
 			conf: expect.objectContaining({
 				enablePoll: true,
@@ -341,7 +256,7 @@ describe('NodeProjector', () => {
 
 		const previous = NodeProjector.projectValue(
 			node,
-			value({ property: 'other', propertyName: 'other' }),
+			createValue({ property: 'other', propertyName: 'other' }),
 			{ type: 'number', readable: true, writeable: true },
 			undefined,
 			9,
@@ -350,21 +265,23 @@ describe('NodeProjector', () => {
 
 		const duration = NodeProjector.projectValue(
 			node,
-			value({ property: 'duration', propertyName: 'duration' }),
+			createValue({ property: 'duration', propertyName: 'duration' }),
 			{ type: 'duration', readable: true, writeable: true },
 		)
 		expect(duration.value).toBeInstanceOf(Duration)
 	})
 
-	it('finds targets, identifies current values, and projects notifications', () => {
-		expect(NodeProjector.isCurrentValue(value())).toBe(true)
+	it('resolves current values, targets, and notification updates', () => {
+		expect(NodeProjector.isCurrentValue(createValue())).toBe(true)
 		expect(
-			NodeProjector.isCurrentValue(value({ propertyName: undefined })),
+			NodeProjector.isCurrentValue(
+				createValue({ propertyName: undefined }),
+			),
 		).toBe(false)
 		expect(
-			NodeProjector.findTargetValue(value(), [
-				value({ endpoint: 1, property: 'targetValue' }),
-				value({ property: 'targetValue' }),
+			NodeProjector.findTargetValue(createValue(), [
+				createValue({ endpoint: 1, property: 'targetValue' }),
+				createValue({ property: 'targetValue' }),
 			]),
 		).toMatchObject({ property: 'targetValue' })
 		expect(NodeProjector.getDeviceId(undefined)).toBe('')
@@ -386,8 +303,8 @@ describe('NodeProjector', () => {
 		expect(NodeProjector.parseNotification('unchanged')).toBe('unchanged')
 	})
 
-	it('serializes the stable node event payload', () => {
-		const node = physicalNode()
+	it('serializes node events without runtime-only fields', () => {
+		const node = createZWaveNode()
 		const projectedNode = NodeProjector.createPhysicalNode(
 			2,
 			undefined,
@@ -414,14 +331,14 @@ describe('NodeProjector', () => {
 		})
 	})
 
-	it('projects full physical node data and stored publication settings', () => {
+	it('includes physical node data and stored publication settings', () => {
 		const node = NodeProjector.createPhysicalNode(
 			2,
 			undefined,
 			undefined,
 			undefined,
 		)
-		const zwaveNode = physicalNode()
+		const zwaveNode = createZWaveNode()
 		const storedNodes: Record<number, Partial<ZUINode>> = {
 			2: {
 				name: 'Kitchen',
@@ -438,7 +355,7 @@ describe('NodeProjector', () => {
 					RFRegion['Default (EU)'],
 				]),
 			},
-		} as unknown as Driver
+		}
 		const port: PhysicalNodeProjectionPort = {
 			getDriver: () => driver,
 			getStoredNode: (nodeId) => storedNodes[nodeId],
@@ -474,7 +391,7 @@ describe('NodeProjector', () => {
 		)
 		NodeProjector.projectPhysicalNode(
 			controller,
-			physicalNode({
+			createZWaveNode({
 				id: 1,
 				isControllerNode: true,
 				manufacturerId: undefined,

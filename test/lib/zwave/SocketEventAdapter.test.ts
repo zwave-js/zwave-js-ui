@@ -1,11 +1,12 @@
-import type { Server as SocketServer } from 'socket.io'
 import { describe, expect, it, vi } from 'vitest'
 
 import { socketEvents } from '../../../api/lib/SocketEvents.ts'
 import {
 	SocketEventAdapter,
 	type SocketEventAdapterPort,
+	type SocketServerPort,
 } from '../../../api/lib/zwave/SocketEventAdapter.ts'
+import { createServiceLogger } from './nodeFixtures.ts'
 
 function createSocket() {
 	const emit = vi.fn()
@@ -13,12 +14,12 @@ function createSocket() {
 	return {
 		emit,
 		to,
-		socket: { emit, to } as unknown as SocketServer,
+		socket: { emit, to } satisfies SocketServerPort,
 	}
 }
 
 describe('SocketEventAdapter', () => {
-	it('preserves room, payload arity, order, and next-tick timing', async () => {
+	it('delivers current room events asynchronously with all arguments', async () => {
 		const { emit, socket, to } = createSocket()
 		let generation = 4
 		const adapter = new SocketEventAdapter(
@@ -27,7 +28,7 @@ describe('SocketEventAdapter', () => {
 				getGeneration: () => generation,
 				isCurrent: (captured) => captured === generation,
 			},
-			{ info: vi.fn(), warn: vi.fn(), error: vi.fn() },
+			createServiceLogger(),
 		)
 
 		adapter.send(socketEvents.nodeUpdated, { id: 2 }, true, 'tail')
@@ -54,11 +55,7 @@ describe('SocketEventAdapter', () => {
 			getGeneration: () => 1,
 			isCurrent: () => true,
 		}
-		const adapter = new SocketEventAdapter(port, {
-			info: vi.fn(),
-			warn: vi.fn(),
-			error: vi.fn(),
-		})
+		const adapter = new SocketEventAdapter(port, createServiceLogger())
 		expect(() =>
 			adapter.send(socketEvents.nodeAdded, { id: 3 }),
 		).not.toThrow()
@@ -66,7 +63,7 @@ describe('SocketEventAdapter', () => {
 
 	it('warns and broadcasts unmapped events with every argument', async () => {
 		const { emit, socket, to } = createSocket()
-		const logger = { info: vi.fn(), warn: vi.fn(), error: vi.fn() }
+		const logger = createServiceLogger()
 		const adapter = new SocketEventAdapter(
 			{
 				getSocket: () => socket,
@@ -77,7 +74,7 @@ describe('SocketEventAdapter', () => {
 		)
 		adapter.send('UNMAPPED', { value: 1 }, 'second', 3)
 		await new Promise<void>((resolve) => process.nextTick(resolve))
-		expect(logger.warn).toHaveBeenCalledOnce()
+		expect(logger.warn.mock.calls).toHaveLength(1)
 		expect(emit).toHaveBeenCalledWith('UNMAPPED', { value: 1 }, 'second', 3)
 		expect(to).not.toHaveBeenCalled()
 	})
