@@ -1,5 +1,5 @@
 /**
- * jsonStore.ts transitively imports storeDir/storeBackupsDir from
+ * jsonStore.ts statically imports storeDir/storeBackupsDir from
  * config/app.ts, which writes a session-secret file to the real repo
  * store/ dir if STORE_DIR isn't set yet - importing the module (even
  * though every test here injects its own readFile/writeFile fakes, with no
