@@ -1255,6 +1255,6 @@ export default class Gateway<
 	 * Get node name from node object
 	 */
 	private _getIdWithoutNode(valueId: HassValue): string {
-		return this.discoveryGenerator.getIdWithoutNode(valueId)
+		return valueId.id.replace(valueId.nodeId + '-', '')
 	}
 }
