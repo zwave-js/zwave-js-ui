@@ -8,7 +8,7 @@ describe('HTTP contract: rate limiting', () => {
 		const harness = await getHarness()
 		let lastBody: unknown
 		let lastStatus: number | undefined
-		// max: 5 lets 5 failures through, the 6th consecutive one trips the limiter
+		// Count six attempts because max: 5 lets the first five failures through
 		for (let attempt = 1; attempt <= 6; attempt++) {
 			const res = await harness.request
 				.post('/api/authenticate')
