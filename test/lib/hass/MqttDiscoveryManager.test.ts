@@ -20,14 +20,14 @@ import MqttDiscoveryManager, {
 	HASS_STATUS_TOPIC,
 	type HassStatusSource,
 	type MqttDiscoveryManagerOptions,
-} from '../../../api/hass/MqttDiscoveryManager.ts'
-import { CustomDeviceRegistry } from '../../../api/hass/CustomDeviceRegistry.ts'
+} from '#api/hass/MqttDiscoveryManager.ts'
+import { CustomDeviceRegistry } from '#api/hass/CustomDeviceRegistry.ts'
 import type {
 	HassMqttPort,
 	HassTopicPort,
 	HassZwavePort,
-} from '../../../api/hass/ports.ts'
-import type { HassDevice } from '../../../api/hass/types.ts'
+} from '#api/hass/ports.ts'
+import type { HassDevice } from '#api/hass/types.ts'
 
 // Methods declared as function-valued properties let tests reference
 // `logger.info` for assertions without the unbound-method rule firing

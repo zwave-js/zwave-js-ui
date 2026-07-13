@@ -15,7 +15,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import ZwaveServerManager, {
 	type ZwaveServerConfig,
 	type ZwaveServerHost,
-} from '../../../api/hass/ZwaveServerManager.ts'
+} from '#api/hass/ZwaveServerManager.ts'
 
 const hoisted = vi.hoisted(() => ({
 	servers: [] as any[],
