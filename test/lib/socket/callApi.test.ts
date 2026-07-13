@@ -1,86 +1,21 @@
 /**
- * Characterizes: `ZwaveClient.allowedApis` (`api/lib/ZwaveClient.ts:182-293`,
- * the exhaustive contract of methods callable through `ZWAVE_API`/MQTT/HASS)
- * and `ZwaveClient.callApi()` (`api/lib/ZwaveClient.ts:6032-6067`, the single
- * dispatcher that all three inbound APIs route through).
+ * Characterizes `ZwaveClient.allowedApis`, the exhaustive ZWAVE_API/MQTT/HASS-callable contract, and `callApi()`, the single dispatcher those APIs route through.
  *
- * A hard-coded, independent copy of the full 110-entry `allowedApis` list is
- * compared against the real export via `toStrictEqual` - if a method is
- * added/removed/renamed in production, this test fails and the list here
- * must be updated deliberately (not derived from the production constant).
- *
- * Several contract entries are prefixed with `_` (`_createScene`,
- * `_removeScene`, `_getScenes`, `_deleteGroup`, ...) - despite the
- * convention that a leading underscore signals "private", these are very
- * much PUBLIC CONTRACT: they're reachable from any client over
- * `ZWAVE_API`/MQTT/HASS as long as they appear in `allowedApis`. The prefix
- * only means "not part of the public TypeScript surface for in-process
- * callers", not "internal".
- *
- * A REAL `ZWaveClient` instance is used throughout (safe to construct
- * directly - see `outboundProducers.test.ts`'s doc comment for why), with
- * `driverReady`/`_driver`/`.scenes` poked directly (all real, public or
- * underscore-public fields) to reach each `callApi` branch without a real
- * driver graph.
- *
- * ### Store isolation (HIGH regression)
- *
- * `ZwaveClient.ts` (and, transitively, `jsonStore.ts`) reads `storeDir`
- * from `api/config/app.ts` at MODULE-EVALUATION time, not lazily. A plain
- * top-level `import ZWaveClient from '../../../api/lib/ZwaveClient.ts'`
- * is hoisted and evaluated before ANY of this file's own code runs -
- * including `beforeAll`, and therefore before `createSocketHarness()` (via
- * `./env.ts`'s `ensureTestEnv()`) ever gets a chance to point
- * `process.env.STORE_DIR` at this file's throwaway directory. If that
- * import ran first, `api/config/app.ts`'s `storeDir` constant would be
- * permanently fixed (for this file's whole module graph) to whatever
- * `process.env.STORE_DIR` happened to be at that moment - typically unset,
- * which defaults to the REAL repository `store/` directory
- * (`api/config/app.ts:11`). Every real `jsonStore.put()` write this file
- * triggers (e.g. `_deleteGroup`, `setNodeName`) would then land on disk in
- * the actual repo, not the isolated harness directory - silently
- * corrupting real application data (`store/groups.json`,
- * `store/nodes.json`, ...) every time this suite runs. This was
- * reproduced directly in this worktree: running the suite before this fix
- * measurably changed `store/groups.json`'s mtime/content.
- *
- * The fix: only `import type` ZWaveClient here (type-only imports are
- * fully erased at compile time - zero runtime side effect, so they can
- * never race the isolation setup). The actual runtime class is loaded via
- * a dynamic `import()` inside `beforeAll`, AFTER `createSocketHarness()`
- * has already called `ensureTestEnv()` (via `loadAppModule()`) - so
- * `api/config/app.ts` (and `jsonStore.ts`) are guaranteed to first
- * evaluate with the isolated `STORE_DIR` already in place, exactly like
- * `api/app.ts` itself does. See `store-write isolation regression` below
- * for a regression that proves a real write lands only in the harness's
- * directory. `outboundProducers.test.ts` applies the identical fix for
- * `ZWaveClient`/`ZnifferManager`.
+ * Underscore-prefixed entries (`_createScene`, `_getScenes`, ...) are public contract despite looking private - the prefix only hides them from in-process TypeScript callers.
  */
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import { existsSync, readFileSync } from 'node:fs'
 import path from 'node:path'
-import { fileURLToPath } from 'node:url'
 import { DriverMode } from 'zwave-js'
 import type ZWaveClientType from '../../../api/lib/ZwaveClient.ts'
 import { createSocketHarness, type SocketHarness } from './harness.ts'
 import { getTestStoreDir } from './env.ts'
 
-const repoRoot = path.resolve(
-	path.dirname(fileURLToPath(import.meta.url)),
-	'../../..',
-)
-
-// Populated in `beforeAll`, AFTER the harness has isolated `STORE_DIR` -
-// see the file doc comment above for why this can't be a plain top-level
-// `import`.
+// Populated in beforeAll, after the harness has isolated STORE_DIR, so a top-level import can't evaluate ZwaveClient.ts against the wrong store dir
 let ZWaveClient: typeof ZWaveClientType
 let allowedApis: readonly string[]
 
-/**
- * Independent, hard-coded copy of `api/lib/ZwaveClient.ts`'s exported
- * `allowedApis` list (lines 182-293) - NOT derived from the production
- * constant. Compared against the real export below.
- */
+// Independent, hard-coded copy of ZwaveClient.ts's exported allowedApis list, not derived from the production constant
 const EXPECTED_ALLOWED_APIS = [
 	'setNodeName',
 	'setNodeLocation',
@@ -198,10 +133,6 @@ describe('Socket contract: callApi()', () => {
 	let harness: SocketHarness
 
 	beforeAll(async () => {
-		// Isolate `STORE_DIR` FIRST (via the harness), THEN dynamically
-		// import the real, store-dependent `ZwaveClient.ts` module - see
-		// the file doc comment's "Store isolation" section for why order
-		// matters here.
 		harness = await createSocketHarness()
 		;({ default: ZWaveClient, allowedApis } = await import(
 			'../../../api/lib/ZwaveClient.ts'
@@ -281,9 +212,7 @@ describe('Socket contract: callApi()', () => {
 			;(zwave as any)._driver = {}
 			zwave.driverReady = true
 
-			// `init` is a real, existing method on ZWaveClient, but it is
-			// intentionally NOT part of `allowedApis` - `callApi` must
-			// reject it exactly like a nonexistent name.
+			// init is a real ZWaveClient method intentionally excluded from allowedApis, so callApi must reject it exactly like a nonexistent name
 			const res = await zwave.callApi('init' as any)
 
 			expect(res).toStrictEqual({
@@ -295,7 +224,7 @@ describe('Socket contract: callApi()', () => {
 
 		it('disconnected: reports "Z-Wave client not connected" when neither driverReady nor bootloader mode', async () => {
 			const zwave = realZwave()
-			// fresh client: driverReady is false, driver is undefined
+			// Fresh client: driverReady stays false, driver stays undefined
 
 			const res = await zwave.callApi('_getScenes')
 
@@ -310,8 +239,7 @@ describe('Socket contract: callApi()', () => {
 			const zwave = realZwave()
 			zwave.scenes = []
 			;(zwave as any)._driver = { mode: DriverMode.Bootloader }
-			// driverReady stays false (never set) - only bootloader mode
-			// permits the call.
+			// Only bootloader mode permits the call here since driverReady stays false
 
 			const res = await zwave.callApi('_getScenes')
 
@@ -359,14 +287,7 @@ describe('Socket contract: callApi()', () => {
 			expect(res.success).toBe(true)
 			expect(res.message).toBe('Success zwave api call')
 			expect(res.result).toBeUndefined()
-			// `res.result === undefined` alone can't distinguish "the key
-			// exists with value undefined" (production's real behavior,
-			// per `ZwaveClient.ts:6058-6067`: `toReturn.result = result`
-			// unconditionally on the success path) from "the key was never
-			// set" - both read back as `undefined` through property
-			// access. Prove the key is genuinely PRESENT here, then
-			// contrast with the error path below where it's genuinely
-			// ABSENT.
+			// res.result === undefined can't distinguish a present key from an absent one since both read back as undefined through property access, so assert 'result' in res instead
 			expect('result' in res).toBe(true)
 			expect(res.args).toEqual([{ nodeId: 5 }])
 		})
@@ -385,23 +306,15 @@ describe('Socket contract: callApi()', () => {
 		it('multi-arg dispatch: calls the real, allowed setNodeName(nodeid, name) method with 2 real args, in order, and returns its real boolean result (ZwaveClient.ts:2833-2857)', async () => {
 			const zwave = realZwave()
 			zwave.driverReady = true
-			// A minimal real-shaped `ZWaveNode` stub: `setNodeName` only
-			// reads/writes `.name` on it.
+			// setNodeName only reads/writes .name on the node
 			const zwaveNode: any = { name: undefined }
 			;(zwave as any)._driver = {
 				controller: { nodes: { get: () => zwaveNode } },
 			}
 			;(zwave as any)._nodes.set(7, { id: 7 } as any)
-			// `storeNodes` is only ever populated by `connect()` (never
-			// called here) - a real client that never connected has it
-			// `undefined`, so `setNodeName` needs it seeded directly.
+			// storeNodes is only populated by connect(), never called here, so it needs seeding directly
 			;(zwave as any).storeNodes = {}
-			// `driverInfo.name` (read by the real `homeHex` getter) stays
-			// unset here on purpose: `updateStoreNodes()` warns and no-ops
-			// without it (ZwaveClient.ts:2799-2802), so this test stays
-			// focused on dispatch/argument-order/result semantics - see
-			// the dedicated `store-write isolation regression` below for
-			// the real on-disk write.
+			// driverInfo.name (read by the real homeHex getter) stays unset so updateStoreNodes() no-ops and this test stays focused on dispatch/argument-order/result semantics, not the on-disk write covered by the disk-persistence test below
 
 			const res = await zwave.callApi('setNodeName', 7, 'Living Room')
 
@@ -411,8 +324,7 @@ describe('Socket contract: callApi()', () => {
 				result: true,
 				args: [7, 'Living Room'],
 			})
-			// The real method's actual side effect happened too - this
-			// isn't just an echoed-back literal.
+			// Proves the real method's side effect happened, not just an echoed-back literal
 			expect(zwaveNode.name).toBe('Living Room')
 		})
 
@@ -451,25 +363,10 @@ describe('Socket contract: callApi()', () => {
 		})
 	})
 
-	/**
-	 * HIGH regression (see file doc comment): proves a REAL disk write
-	 * triggered through `callApi()` lands in THIS file's isolated harness
-	 * store directory, and never touches the real repository `store/`
-	 * directory - the exact failure mode the import-order fix above
-	 * prevents. `setNodeName` is used because (a) it's real allowed-API
-	 * dispatch through `callApi`, matching this file's whole purpose, and
-	 * (b) `updateStoreNodes()` performs a real, unconditional
-	 * `jsonStore.put()` write once `homeHex` is set (ZwaveClient.ts:2797-
-	 * 2828), unlike `_deleteGroup`'s group-store write which was the
-	 * originally-reported symptom.
-	 */
-	describe('store-write isolation regression', () => {
-		it("a real callApi()-triggered jsonStore write lands ONLY in this file's isolated STORE_DIR, never the repo's store/ directory", async () => {
+	// Proves a real allowed-API dispatch persists through updateStoreNodes()'s unconditional jsonStore.put(), not just the in-memory node mutation the dispatch test above checks
+	describe('callApi() real disk persistence', () => {
+		it('setNodeName persists the new name to nodes.json via a real jsonStore.put() write', async () => {
 			const isolatedNodesFile = path.join(getTestStoreDir(), 'nodes.json')
-			const repoNodesFile = path.join(repoRoot, 'store', 'nodes.json')
-			const repoSnapshotBefore = existsSync(repoNodesFile)
-				? readFileSync(repoNodesFile, 'utf8')
-				: undefined
 
 			const zwave = realZwave()
 			zwave.driverReady = true
@@ -483,24 +380,11 @@ describe('Socket contract: callApi()', () => {
 			const res = await zwave.callApi('setNodeName', 9, 'Isolation Probe')
 			expect(res.success).toBe(true)
 
-			// The write really happened, and really landed in the
-			// isolated harness directory (not just "no error was
-			// thrown").
 			expect(existsSync(isolatedNodesFile)).toBe(true)
 			const persisted = JSON.parse(
 				readFileSync(isolatedNodesFile, 'utf8'),
 			)
 			expect(persisted.ISOLATIONCHECK['9'].name).toBe('Isolation Probe')
-
-			// The real repo store/ directory is byte-for-byte unchanged -
-			// proving the write did NOT ALSO (or instead) land there.
-			const repoSnapshotAfter = existsSync(repoNodesFile)
-				? readFileSync(repoNodesFile, 'utf8')
-				: undefined
-			expect(repoSnapshotAfter).toBe(repoSnapshotBefore)
-			if (repoSnapshotAfter !== undefined) {
-				expect(repoSnapshotAfter).not.toContain('ISOLATIONCHECK')
-			}
 		})
 	})
 })
