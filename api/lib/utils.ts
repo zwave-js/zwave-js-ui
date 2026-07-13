@@ -395,7 +395,7 @@ export function parseSecurityKeys(
 	options: PartialZWaveOptions | ZnifferOptions,
 ): void {
 	config.securityKeys = config.securityKeys || {}
-	// Setting a KEY_LR_* env var without a persisted securityKeysLongRange map throws below instead of silently creating one (see #4736)
+	// Long Range environment keys require persisted key storage (see #4736)
 
 	if (process.env.NETWORK_KEY) {
 		config.securityKeys.S0_Legacy = process.env.NETWORK_KEY
@@ -430,7 +430,7 @@ export function parseSecurityKeys(
 	for (const k of longRangeEnvKeys) {
 		if (isKeyOf(k, availableLongRangeKeys)) {
 			if (!config.securityKeysLongRange) {
-				// Throws to characterize the missing-map failure instead of fixing it (see #4736)
+				// Rejects missing Long Range key storage (see #4736)
 				throw new TypeError(
 					`Cannot set Long Range security key '${k}' from env var 'KEY_LR_${k}': ` +
 						"no 'zwave.securityKeysLongRange' object exists in the persisted settings. " +
@@ -447,7 +447,7 @@ export function parseSecurityKeys(
 	for (const key in config.securityKeys) {
 		if (isKeyOf(key, availableKeys)) {
 			const value = config.securityKeys[key]
-			// A persisted null value throws explicitly here instead of the incidental TypeError value?.length used to silently avoid (see #4736)
+			// Rejects persisted null standard keys (see #4736)
 			if (value === null) {
 				throw new TypeError(
 					`config.securityKeys.${key} is null; remove the key entirely instead of persisting it as null`,
@@ -472,7 +472,7 @@ export function parseSecurityKeys(
 	for (const key in config.securityKeysLongRange) {
 		if (isKeyOf(key, availableLongRangeKeys)) {
 			const value = config.securityKeysLongRange[key]
-			// Same null-value behavior as securityKeys above (see #4736)
+			// Rejects persisted null Long Range keys (see #4736)
 			if (value === null) {
 				throw new TypeError(
 					`config.securityKeysLongRange.${key} is null; remove the key entirely instead of persisting it as null`,

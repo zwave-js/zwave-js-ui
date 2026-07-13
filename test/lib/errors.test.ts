@@ -8,8 +8,8 @@ import {
 } from '../../api/lib/errors.ts'
 import type { ErrnoException } from '../../api/lib/errors.ts'
 
-describe('#errors', () => {
-	describe('#isError()', () => {
+describe('error boundaries', () => {
+	describe('Error recognition', () => {
 		it('returns true for Error instances', () => {
 			expect(isError(new Error('boom'))).toBe(true)
 		})
@@ -27,7 +27,7 @@ describe('#errors', () => {
 		})
 	})
 
-	describe('#hasMessage()', () => {
+	describe('message carrier recognition', () => {
 		it('returns true for objects with a string message', () => {
 			expect(hasMessage({ message: 'boom' })).toBe(true)
 			expect(hasMessage(new Error('boom'))).toBe(true)
@@ -42,7 +42,7 @@ describe('#errors', () => {
 		})
 	})
 
-	describe('#hasErrorCode()', () => {
+	describe('error code recognition', () => {
 		it('returns true for objects with a string code', () => {
 			const err: ErrnoException = Object.assign(new Error('boom'), {
 				code: 'ENOENT',
@@ -58,7 +58,7 @@ describe('#errors', () => {
 		})
 	})
 
-	describe('#getErrorMessage()', () => {
+	describe('error message extraction', () => {
 		it('returns the message of an Error instance', () => {
 			expect(getErrorMessage(new Error('boom'))).toBe('boom')
 		})
@@ -71,11 +71,11 @@ describe('#errors', () => {
 			expect(getErrorMessage({ message: 'boom' })).toBe('boom')
 		})
 
-		it('falls back to JSON.stringify for plain objects', () => {
+		it('serializes plain objects', () => {
 			expect(getErrorMessage({ foo: 'bar' })).toBe('{"foo":"bar"}')
 		})
 
-		it('falls back to String() when JSON.stringify throws', () => {
+		it('uses string coercion for cyclic objects', () => {
 			const circular: Record<string, unknown> = {}
 			circular.self = circular
 			expect(getErrorMessage(circular)).toBe('[object Object]')
@@ -101,7 +101,7 @@ describe('#errors', () => {
 			)
 		})
 
-		it('never throws for an object with a throwing Symbol.toPrimitive (and no usable toJSON)', () => {
+		it('handles objects whose primitive coercion throws', () => {
 			const hostile = {
 				[Symbol.toPrimitive]() {
 					throw new Error('toPrimitive boom')
@@ -114,11 +114,10 @@ describe('#errors', () => {
 				},
 			}
 			expect(() => getErrorMessage(hostile)).not.toThrow()
-			// JSON.stringify never invokes toString/valueOf/Symbol.toPrimitive, so it succeeds here and the constant fallback is never reached
 			expect(getErrorMessage(hostile)).toBe(JSON.stringify({}))
 		})
 
-		it('never throws, and returns the constant fallback, for a Proxy whose has/get/getPrototypeOf traps all throw', () => {
+		it('returns the stable fallback when all Proxy inspection traps throw', () => {
 			const hostile = new Proxy(
 				{},
 				{
@@ -139,7 +138,7 @@ describe('#errors', () => {
 			)
 		})
 
-		it('never throws for a value whose JSON.stringify AND String() coercion both throw', () => {
+		it('returns the stable fallback when serialization and coercion throw', () => {
 			const hostile = {
 				toJSON() {
 					throw new Error('toJSON boom')
@@ -160,18 +159,18 @@ describe('#errors', () => {
 			)
 		})
 
-		it('never throws for a BigInt (JSON.stringify throws, String() succeeds)', () => {
+		it('extracts a message from a BigInt', () => {
 			expect(() => getErrorMessage(BigInt(42))).not.toThrow()
 			expect(getErrorMessage(BigInt(42))).toBe('42')
 		})
 
-		it('never throws for a Symbol value (JSON.stringify/String() both usable)', () => {
+		it('extracts a message from a Symbol', () => {
 			expect(() => getErrorMessage(Symbol('boom'))).not.toThrow()
 			expect(getErrorMessage(Symbol('boom'))).toBe('Symbol(boom)')
 		})
 	})
 
-	describe('#toError()', () => {
+	describe('Error conversion', () => {
 		it('returns the same Error instance when given one', () => {
 			const err = new Error('boom')
 			expect(toError(err)).toBe(err)

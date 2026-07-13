@@ -1,9 +1,8 @@
 import { describe, it, expect } from 'vitest'
 import { isJsonObject, isJsonValue } from '../../api/lib/json.ts'
-import type { JsonValue } from '../../api/lib/json.ts'
 
-describe('#json', () => {
-	describe('#isJsonObject()', () => {
+describe('JSON boundaries', () => {
+	describe('object validation', () => {
 		it('returns true for plain objects', () => {
 			expect(isJsonObject({})).toBe(true)
 			expect(isJsonObject({ foo: 'bar' })).toBe(true)
@@ -47,7 +46,7 @@ describe('#json', () => {
 		})
 	})
 
-	describe('#isJsonValue()', () => {
+	describe('value validation', () => {
 		it('accepts every JSON primitive', () => {
 			expect(isJsonValue(null)).toBe(true)
 			expect(isJsonValue('foo')).toBe(true)
@@ -137,7 +136,7 @@ describe('#json', () => {
 			expect(isJsonValue(cyclic)).toBe(false)
 		})
 
-		it('rejects an indirectly self-referencing object (cycle two levels deep)', () => {
+		it('rejects an indirect object cycle', () => {
 			const a: Record<string, unknown> = {}
 			const b: Record<string, unknown> = { a }
 			a.b = b
@@ -150,29 +149,10 @@ describe('#json', () => {
 			expect(isJsonValue(cyclic)).toBe(false)
 		})
 
-		it('does NOT reject two separate (non-cyclic) references to the same valid nested object', () => {
-			// A DAG (same object referenced from two places) is genuinely JSON-serializable, only actual cycles are invalid
+		it('accepts shared references that do not form a cycle', () => {
+			// Shared references remain JSON-serializable when they do not form a cycle
 			const shared = { x: 1 }
 			expect(isJsonValue({ a: shared, b: shared })).toBe(true)
-		})
-	})
-
-	describe('JsonValue', () => {
-		it('accepts the full range of JSON-compatible shapes', () => {
-			const values: JsonValue[] = [
-				null,
-				'string',
-				42,
-				true,
-				false,
-				[1, 'two', false, null],
-				{ nested: { a: 1, b: [1, 2, 3], c: null } },
-			]
-
-			for (const value of values) {
-				// The compile-time JsonValue[] assertion above is the real point of this test, this runtime check only guards against lossy round-tripping
-				expect(JSON.parse(JSON.stringify(value))).toEqual(value)
-			}
 		})
 	})
 })

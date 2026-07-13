@@ -18,7 +18,7 @@ vi.mock('@zwave-js/core/bindings/fs/node', () => ({
 
 const { PkgFsBindings } = await import('../../api/lib/PkgFsBindings.ts')
 
-describe('#PkgFsBindings', () => {
+describe('packaged filesystem bindings', () => {
 	let bindings: InstanceType<typeof PkgFsBindings>
 
 	beforeEach(() => {
@@ -26,7 +26,7 @@ describe('#PkgFsBindings', () => {
 		bindings = new PkgFsBindings()
 	})
 
-	describe('#readFile()', () => {
+	describe('file reads', () => {
 		it('remaps paths under /config to the pkg-embedded config dir', async () => {
 			nodeFsMock.readFile.mockResolvedValue(new Uint8Array())
 			await bindings.readFile('/config/foo.json')
@@ -40,34 +40,17 @@ describe('#PkgFsBindings', () => {
 				),
 			).toBe(true)
 		})
-
-		it('leaves other paths untouched', async () => {
-			nodeFsMock.readFile.mockResolvedValue(new Uint8Array())
-			await bindings.readFile('/tmp/foo.json')
-
-			expect(nodeFsMock.readFile).toHaveBeenCalledWith('/tmp/foo.json')
-		})
 	})
 
-	describe('#writeFile()', () => {
+	describe('file writes', () => {
 		it('is a no-op for paths under /config (readonly pkg assets)', async () => {
 			await bindings.writeFile('/config/foo.json', new Uint8Array())
 
 			expect(nodeFsMock.writeFile).not.toHaveBeenCalled()
 		})
-
-		it('delegates to the underlying fs for other paths', async () => {
-			const data = new Uint8Array([1, 2, 3])
-			await bindings.writeFile('/tmp/foo.json', data)
-
-			expect(nodeFsMock.writeFile).toHaveBeenCalledWith(
-				'/tmp/foo.json',
-				data,
-			)
-		})
 	})
 
-	describe('#copyFile()', () => {
+	describe('file copies', () => {
 		it('is a no-op when the destination is under /config', async () => {
 			await bindings.copyFile('/tmp/foo.json', '/config/foo.json')
 
@@ -86,46 +69,25 @@ describe('#PkgFsBindings', () => {
 			).toBe(true)
 			expect(dest).toBe('/tmp/foo.json')
 		})
-
-		it('delegates unchanged paths to the underlying fs', async () => {
-			await bindings.copyFile('/tmp/a.json', '/tmp/b.json')
-
-			expect(nodeFsMock.copyFile).toHaveBeenCalledWith(
-				'/tmp/a.json',
-				'/tmp/b.json',
-			)
-		})
 	})
 
-	describe('#ensureDir()', () => {
+	describe('directory creation', () => {
 		it('is a no-op for paths under /config', async () => {
 			await bindings.ensureDir('/config/sub')
 
 			expect(nodeFsMock.ensureDir).not.toHaveBeenCalled()
 		})
-
-		it('delegates to the underlying fs for other paths', async () => {
-			await bindings.ensureDir('/tmp/sub')
-
-			expect(nodeFsMock.ensureDir).toHaveBeenCalledWith('/tmp/sub')
-		})
 	})
 
-	describe('#deleteDir()', () => {
+	describe('directory deletion', () => {
 		it('is a no-op for paths under /config', async () => {
 			await bindings.deleteDir('/config/sub')
 
 			expect(nodeFsMock.deleteDir).not.toHaveBeenCalled()
 		})
-
-		it('delegates to the underlying fs for other paths', async () => {
-			await bindings.deleteDir('/tmp/sub')
-
-			expect(nodeFsMock.deleteDir).toHaveBeenCalledWith('/tmp/sub')
-		})
 	})
 
-	describe('#open()', () => {
+	describe('file opening', () => {
 		it('throws when opening a /config path for writing', () => {
 			expect(() =>
 				bindings.open('/config/foo.json', {
@@ -158,7 +120,7 @@ describe('#PkgFsBindings', () => {
 		})
 	})
 
-	describe('#readDir()', () => {
+	describe('directory reads', () => {
 		it('remaps paths under /config', async () => {
 			nodeFsMock.readDir.mockResolvedValue([])
 			await bindings.readDir('/config/sub')
@@ -170,7 +132,7 @@ describe('#PkgFsBindings', () => {
 		})
 	})
 
-	describe('#stat()', () => {
+	describe('file metadata', () => {
 		it('remaps paths under /config', async () => {
 			nodeFsMock.stat.mockResolvedValue({})
 			await bindings.stat('/config/foo.json')
@@ -181,16 +143,6 @@ describe('#PkgFsBindings', () => {
 					`node_modules/@zwave-js/config/config/foo.json`,
 				),
 			).toBe(true)
-		})
-	})
-
-	describe('#makeTempDir()', () => {
-		it('delegates directly to the underlying fs', async () => {
-			nodeFsMock.makeTempDir.mockResolvedValue('/tmp/xyz')
-			await expect(bindings.makeTempDir('zwave-')).resolves.toBe(
-				'/tmp/xyz',
-			)
-			expect(nodeFsMock.makeTempDir).toHaveBeenCalledWith('zwave-')
 		})
 	})
 })

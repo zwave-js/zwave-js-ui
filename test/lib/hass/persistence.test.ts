@@ -436,8 +436,8 @@ describe('home-id scoping of persisted nodes', () => {
 		await expect(zwave.getStoreNodes()).rejects.toThrow()
 	})
 
-	it('crashes storeDevices() when removing hass devices for a malformed (null) per-node entry (see #4736)', async () => {
-		// Neither getStoreNodes/updateStoreNodes nor storeDevices validates per-node entry shape at runtime, so a corrupted nodes.json loads successfully but crashes downstream
+	it('rejects a malformed null node record during Home Assistant device removal (see #4736)', async () => {
+		// A corrupted nodes.json loads without shape validation and fails during downstream device removal
 		const node: any = { id: 9, hassDevices: {} }
 		const { zwave } = await makeLoadedClient(9, node, { 9: null })
 

@@ -3,36 +3,22 @@ import { parseSecurityKeys } from '../../api/lib/utils.ts'
 import type { ZwaveConfig } from '../../api/lib/ZwaveClient.ts'
 import type { PartialZWaveOptions } from 'zwave-js'
 
-// Proves parseSecurityKeys() still fails on a missing securityKeysLongRange map or a null persisted key value, now via an explicit TypeError instead of an incidental one (see #4736)
-
-const ENV_KEYS = [
-	'NETWORK_KEY',
-	'KEY_S2_Unauthenticated',
-	'KEY_S2_Authenticated',
-	'KEY_S2_AccessControl',
-	'KEY_S0_Legacy',
-	'KEY_LR_S2_Authenticated',
-	'KEY_LR_S2_AccessControl',
-] as const
-
-let envSnapshot: Record<string, string | undefined>
+let envSnapshot: NodeJS.ProcessEnv
 
 beforeEach(() => {
-	envSnapshot = {}
-	for (const key of ENV_KEYS) {
-		envSnapshot[key] = process.env[key]
-		delete process.env[key]
+	envSnapshot = { ...process.env }
+	for (const key of Object.keys(process.env)) {
+		if (key === 'NETWORK_KEY' || key.startsWith('KEY_')) {
+			delete process.env[key]
+		}
 	}
 })
 
 afterEach(() => {
-	for (const key of ENV_KEYS) {
-		if (envSnapshot[key] === undefined) {
-			delete process.env[key]
-		} else {
-			process.env[key] = envSnapshot[key]
-		}
+	for (const key of Object.keys(process.env)) {
+		delete process.env[key]
 	}
+	Object.assign(process.env, envSnapshot)
 })
 
 const STANDARD_KEY_A = 'a'.repeat(32)
@@ -46,7 +32,7 @@ function parse(config: ZwaveConfig): PartialZWaveOptions {
 	return options
 }
 
-describe('#parseSecurityKeys()', () => {
+describe('security key parsing', () => {
 	it('converts valid standard security keys to 16-byte buffers', () => {
 		const options = parse({
 			securityKeys: {
@@ -113,12 +99,11 @@ describe('#parseSecurityKeys()', () => {
 	})
 
 	describe('missing securityKeysLongRange map + KEY_LR_* env var (see #4736)', () => {
-		it('throws a characterized TypeError instead of silently creating the map', () => {
+		it('rejects the environment key when persisted Long Range storage is absent', () => {
 			process.env.KEY_LR_S2_Authenticated = LR_KEY_A
 
 			expect(() =>
 				parse({
-					// no securityKeysLongRange at all
 					securityKeys: {},
 				}),
 			).toThrow(TypeError)
@@ -132,7 +117,7 @@ describe('#parseSecurityKeys()', () => {
 			).not.toThrow()
 		})
 
-		it('does not throw when securityKeysLongRange is already an (empty) object', () => {
+		it('accepts the environment key when persisted Long Range storage exists', () => {
 			process.env.KEY_LR_S2_Authenticated = LR_KEY_A
 
 			expect(() =>
@@ -145,26 +130,22 @@ describe('#parseSecurityKeys()', () => {
 	})
 
 	describe('null persisted key values (see #4736)', () => {
-		it('throws a characterized TypeError for a null standard security key', () => {
-			expect(() =>
-				parse({
-					securityKeys: { S0_Legacy: null as unknown as string },
-				}),
-			).toThrow(TypeError)
+		it('rejects a null standard security key', () => {
+			const config: ZwaveConfig = JSON.parse(
+				'{"securityKeys":{"S0_Legacy":null}}',
+			)
+			expect(() => parse(config)).toThrow(TypeError)
 		})
 
-		it('throws a characterized TypeError for a null Long Range security key', () => {
-			expect(() =>
-				parse({
-					securityKeysLongRange: {
-						S2_Authenticated: null as unknown as string,
-					},
-				}),
-			).toThrow(TypeError)
+		it('rejects a null Long Range security key', () => {
+			const config: ZwaveConfig = JSON.parse(
+				'{"securityKeysLongRange":{"S2_Authenticated":null}}',
+			)
+			expect(() => parse(config)).toThrow(TypeError)
 		})
 	})
 
-	describe('invalid-length keys are silently omitted (unchanged, pre-existing behavior)', () => {
+	describe('invalid-length keys', () => {
 		it('omits a standard security key of the wrong length', () => {
 			const options = parse({
 				securityKeys: { S0_Legacy: 'too-short' },
@@ -192,19 +173,17 @@ describe('#parseSecurityKeys()', () => {
 		})
 	})
 
-	describe('ordering', () => {
-		it('defaults securityKeys unconditionally, but only defaults securityKeysLongRange right before its own conversion loop', () => {
-			// With no KEY_LR_* env var, securityKeysLongRange is optional and the missing-map crash path is never reached
+	describe('provided settings updates', () => {
+		it('initializes missing Long Range storage when no Long Range environment key is present', () => {
 			const config: ZwaveConfig = {
 				securityKeys: { S0_Legacy: STANDARD_KEY_A },
 			}
 
 			expect(() => parse(config)).not.toThrow()
-			// Defaulted to {} as a side-effect on config itself
 			expect(config.securityKeysLongRange).toEqual({})
 		})
 
-		it('mutates config.securityKeys/config.securityKeysLongRange in place with defaults + env overrides', () => {
+		it('applies defaults and environment overrides to the provided settings', () => {
 			process.env.KEY_S0_Legacy = STANDARD_KEY_A
 			const config: ZwaveConfig = {}
 

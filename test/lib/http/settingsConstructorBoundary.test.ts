@@ -1,7 +1,5 @@
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest'
 
-// Proves a sparse persisted mqtt/zwave/gateway/zniffer settings object reaches its constructor completely unchanged, since threading PersistedSettings through startGateway()/startZniffer() must be a type-only correction
-
 const mqttCtor = vi.fn()
 const zwaveCtor = vi.fn()
 const gatewayCtor = vi.fn()
@@ -27,8 +25,6 @@ vi.mock('../../../api/lib/ZwaveClient.ts', () => ({
 }))
 
 vi.mock('../../../api/lib/Gateway.ts', () => ({
-	// Mirrors the real GatewayType values so sparseGateway below can reference a named member instead of a raw number
-	GatewayType: { VALUEID: 0, NAMED: 1, MANUAL: 2 } as const,
 	default: class MockGateway {
 		constructor(...args: unknown[]) {
 			gatewayCtor(...args)
@@ -49,9 +45,8 @@ vi.mock('../../../api/lib/ZnifferManager.ts', () => ({
 import { createHttpHarness, type HttpHarness } from './harness.ts'
 import { setSettings } from './authHelpers.ts'
 import { createFakeGateway } from './fakes.ts'
-import { GatewayType } from '../../../api/lib/Gateway.ts'
 
-describe('startGateway()/startZniffer() constructor boundary (sparse PersistedSettings)', () => {
+describe('sparse persisted settings', () => {
 	let harness: HttpHarness
 
 	beforeAll(async () => {
@@ -62,10 +57,10 @@ describe('startGateway()/startZniffer() constructor boundary (sparse PersistedSe
 		await harness.close()
 	})
 
-	it('passes a sparse persisted mqtt/zwave/gateway settings object through to the constructors unchanged', async () => {
+	it('accepts sparse persisted MQTT, Z-Wave, and gateway settings unchanged', async () => {
 		const sparseMqtt = { name: 'sparse-mqtt-only-one-field' }
 		const sparseZwave = { port: '/dev/ttySPARSE' }
-		const sparseGateway = { type: GatewayType.NAMED }
+		const sparseGateway = { sendEvents: true }
 
 		await setSettings(harness, {
 			mqtt: sparseMqtt,
@@ -73,7 +68,7 @@ describe('startGateway()/startZniffer() constructor boundary (sparse PersistedSe
 			gateway: sparseGateway,
 		})
 
-		// POST /api/restart closes the currently-attached gateway before calling startGateway(), so it needs a closeable fake to reach it
+		// The restart route closes the active gateway before constructing its replacement
 		harness.testHooks.setGateway(createFakeGateway())
 
 		mqttCtor.mockClear()
@@ -88,7 +83,7 @@ describe('startGateway()/startZniffer() constructor boundary (sparse PersistedSe
 			message: 'Gateway restarted successfully',
 		})
 
-		// socketManager.io is genuinely undefined here since the harness never calls startServer()
+		// The harness leaves the Socket.IO server unset
 		expect(mqttCtor).toHaveBeenCalledExactlyOnceWith(sparseMqtt)
 		expect(zwaveCtor).toHaveBeenCalledExactlyOnceWith(
 			sparseZwave,
@@ -99,7 +94,7 @@ describe('startGateway()/startZniffer() constructor boundary (sparse PersistedSe
 		expect(gatewayArgs?.[0]).toEqual(sparseGateway)
 	})
 
-	it('never constructs MqttClient/ZWaveClient when their settings sections are falsy, but still constructs Gateway', async () => {
+	it('skips absent MQTT and Z-Wave settings while still starting the gateway', async () => {
 		await setSettings(harness, { mqtt: undefined, zwave: undefined })
 		harness.testHooks.setGateway(createFakeGateway())
 
@@ -113,11 +108,10 @@ describe('startGateway()/startZniffer() constructor boundary (sparse PersistedSe
 		expect(res.body.success).toBe(true)
 		expect(mqttCtor).not.toHaveBeenCalled()
 		expect(zwaveCtor).not.toHaveBeenCalled()
-		// Gateway is always constructed even with zwave/mqtt both absent, preserved pre-existing behavior
 		expect(gatewayCtor).toHaveBeenCalledOnce()
 	})
 
-	it('passes a sparse persisted zniffer settings object through to ZnifferManager unchanged', async () => {
+	it('accepts sparse persisted Zniffer settings unchanged', async () => {
 		const sparseZniffer = { securityKeys: {} }
 
 		await setSettings(harness, {
