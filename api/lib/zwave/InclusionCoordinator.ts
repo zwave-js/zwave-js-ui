@@ -241,6 +241,11 @@ export class InclusionCoordinator {
 						if (provisionSmartStartNode) {
 							await provisionSmartStartNode(parsedQr)
 						}
+						if (this._generation !== gen) {
+							throw new InclusionLifecycleCancelledError(
+								'inclusion',
+							)
+						}
 						return true
 					} else {
 						throw Error(`Invalid QR code version`)
@@ -263,7 +268,9 @@ export class InclusionCoordinator {
 			this._isReplacing = false
 			return currentDrv.controller.beginInclusion()
 		} catch (error) {
-			this._tmpNode = undefined
+			if (this._generation === gen) {
+				this._tmpNode = undefined
+			}
 			throw error
 		}
 	}
@@ -345,13 +352,12 @@ export class InclusionCoordinator {
 			provisioning?: PlannedProvisioningEntry
 		},
 	): Promise<boolean> {
+		const gen = this._generation
 		try {
 			const drv = this._driver.getDriver()
 			if (!drv || !this._driver.isDriverReady()) {
 				throw new Error('Driver is not ready')
 			}
-
-			const gen = this._generation
 
 			if (this._backup.backupOnEvent) {
 				if (this._nvmEventSetter) {
@@ -387,6 +393,7 @@ export class InclusionCoordinator {
 
 			this._isReplacing = true
 
+			let result: boolean
 			if (strategy === InclusionStrategy.Security_S2) {
 				if (options?.qrString) {
 					const parsedQr = await this._qr.parseQRCodeString(
@@ -405,33 +412,42 @@ export class InclusionCoordinator {
 					}
 				}
 				if (options?.provisioning) {
-					return await currentDrv.controller.replaceFailedNode(
+					result = await currentDrv.controller.replaceFailedNode(
 						nodeId,
 						{
 							strategy,
 							provisioning: options.provisioning,
 						},
 					)
+				} else {
+					result = await currentDrv.controller.replaceFailedNode(
+						nodeId,
+						{
+							strategy,
+						},
+					)
 				}
-				return await currentDrv.controller.replaceFailedNode(nodeId, {
-					strategy,
-				})
-			}
-
-			if (
+			} else if (
 				strategy === InclusionStrategy.Insecure ||
 				strategy === InclusionStrategy.Security_S0
 			) {
-				return await currentDrv.controller.replaceFailedNode(nodeId, {
+				result = await currentDrv.controller.replaceFailedNode(nodeId, {
 					strategy,
 				})
+			} else {
+				throw Error(
+					`Inclusion strategy not supported with replace failed node api`,
+				)
 			}
 
-			throw Error(
-				`Inclusion strategy not supported with replace failed node api`,
-			)
+			if (this._generation !== gen) {
+				throw new InclusionLifecycleCancelledError('replace')
+			}
+			return result
 		} catch (error) {
-			this._isReplacing = false
+			if (this._generation === gen) {
+				this._isReplacing = false
+			}
 			throw error
 		}
 	}
