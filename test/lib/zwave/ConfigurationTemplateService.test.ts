@@ -5,6 +5,7 @@ import type {
 	ZUIConfigurationTemplateValue,
 	TemplateNodeState,
 	TemplateDriverPort,
+	TemplateConfigManagerPort,
 } from '../../../api/lib/zwave/ports.ts'
 import type { ZWaveNode } from 'zwave-js'
 import { CommandClasses } from '@zwave-js/core'
@@ -117,6 +118,16 @@ function makeTemplate(
 	}
 }
 
+function createConfigManagerPort(
+	overrides: Partial<TemplateConfigManagerPort> = {},
+): TemplateConfigManagerPort {
+	return {
+		loadDeviceIndex: vi.fn(() => Promise.resolve()),
+		lookupDevice: vi.fn(() => Promise.resolve(undefined)),
+		...overrides,
+	}
+}
+
 describe('ConfigurationTemplateService', () => {
 	beforeEach(() => {
 		vi.restoreAllMocks()
@@ -133,6 +144,7 @@ describe('ConfigurationTemplateService', () => {
 				createUtilsPort(),
 				createLogger(),
 				templates,
+				createConfigManagerPort(),
 			)
 			expect(svc.getConfigurationTemplates()).toEqual(templates)
 		})
@@ -145,6 +157,7 @@ describe('ConfigurationTemplateService', () => {
 				createUtilsPort(),
 				createLogger(),
 				[],
+				createConfigManagerPort(),
 			)
 			expect(svc.getConfigurationTemplates()).toEqual([])
 		})
@@ -162,6 +175,7 @@ describe('ConfigurationTemplateService', () => {
 				createUtilsPort(),
 				createLogger(),
 				[],
+				createConfigManagerPort(),
 			)
 
 			const result = await svc.createConfigurationTemplate(
@@ -186,6 +200,7 @@ describe('ConfigurationTemplateService', () => {
 				createUtilsPort(),
 				createLogger(),
 				[],
+				createConfigManagerPort(),
 			)
 
 			const values: ZUIConfigurationTemplateValue[] = [
@@ -211,6 +226,7 @@ describe('ConfigurationTemplateService', () => {
 				createUtilsPort(),
 				createLogger(),
 				[],
+				createConfigManagerPort(),
 			)
 
 			const result = await svc.createConfigurationTemplate(
@@ -232,6 +248,7 @@ describe('ConfigurationTemplateService', () => {
 				createUtilsPort(),
 				createLogger(),
 				[],
+				createConfigManagerPort(),
 			)
 
 			await expect(
@@ -249,6 +266,7 @@ describe('ConfigurationTemplateService', () => {
 				createUtilsPort(),
 				createLogger(),
 				[],
+				createConfigManagerPort(),
 			)
 
 			await expect(
@@ -266,6 +284,7 @@ describe('ConfigurationTemplateService', () => {
 				createUtilsPort(),
 				createLogger(),
 				[],
+				createConfigManagerPort(),
 			)
 
 			await expect(
@@ -284,6 +303,7 @@ describe('ConfigurationTemplateService', () => {
 				createUtilsPort(),
 				createLogger(),
 				[],
+				createConfigManagerPort(),
 			)
 
 			const result = await svc.createConfigurationTemplate(
@@ -307,6 +327,7 @@ describe('ConfigurationTemplateService', () => {
 				createUtilsPort(),
 				createLogger(),
 				[template],
+				createConfigManagerPort(),
 			)
 
 			const result = await svc.updateConfigurationTemplate('tmpl-1', {
@@ -329,6 +350,7 @@ describe('ConfigurationTemplateService', () => {
 				createUtilsPort(),
 				createLogger(),
 				[template],
+				createConfigManagerPort(),
 			)
 
 			const result = await svc.updateConfigurationTemplate('tmpl-1', {
@@ -348,6 +370,7 @@ describe('ConfigurationTemplateService', () => {
 				createUtilsPort(),
 				createLogger(),
 				[template],
+				createConfigManagerPort(),
 			)
 
 			const result = await svc.updateConfigurationTemplate('tmpl-1', {
@@ -365,6 +388,7 @@ describe('ConfigurationTemplateService', () => {
 				createUtilsPort(),
 				createLogger(),
 				[],
+				createConfigManagerPort(),
 			)
 
 			await expect(
@@ -384,6 +408,7 @@ describe('ConfigurationTemplateService', () => {
 				createUtilsPort(),
 				createLogger(),
 				[template],
+				createConfigManagerPort(),
 			)
 
 			const result = await svc.deleteConfigurationTemplate('tmpl-1')
@@ -401,6 +426,7 @@ describe('ConfigurationTemplateService', () => {
 				createUtilsPort(),
 				createLogger(),
 				[],
+				createConfigManagerPort(),
 			)
 
 			await expect(
@@ -420,6 +446,7 @@ describe('ConfigurationTemplateService', () => {
 				createUtilsPort(),
 				createLogger(),
 				[template],
+				createConfigManagerPort(),
 			)
 
 			await svc.deleteConfigurationTemplate('tmpl-1')
@@ -457,6 +484,7 @@ describe('ConfigurationTemplateService', () => {
 				createUtilsPort(),
 				loggerFake,
 				[template],
+				createConfigManagerPort(),
 			)
 
 			const result = await svc.applyConfigurationTemplate('tmpl-1', 2)
@@ -506,6 +534,7 @@ describe('ConfigurationTemplateService', () => {
 				createUtilsPort(),
 				createLogger(),
 				[template],
+				createConfigManagerPort(),
 			)
 
 			const result = await svc.applyConfigurationTemplate('tmpl-1', 2)
@@ -522,6 +551,7 @@ describe('ConfigurationTemplateService', () => {
 				createUtilsPort(),
 				createLogger(),
 				[],
+				createConfigManagerPort(),
 			)
 
 			await expect(
@@ -538,6 +568,7 @@ describe('ConfigurationTemplateService', () => {
 				createUtilsPort(),
 				createLogger(),
 				[template],
+				createConfigManagerPort(),
 			)
 
 			await expect(
@@ -556,6 +587,7 @@ describe('ConfigurationTemplateService', () => {
 				createUtilsPort(),
 				createLogger(),
 				[template],
+				createConfigManagerPort(),
 			)
 
 			await expect(
@@ -578,6 +610,7 @@ describe('ConfigurationTemplateService', () => {
 				createUtilsPort(),
 				createLogger(),
 				[template],
+				createConfigManagerPort(),
 			)
 
 			await expect(
@@ -601,6 +634,7 @@ describe('ConfigurationTemplateService', () => {
 				createUtilsPort(),
 				createLogger(),
 				[template],
+				createConfigManagerPort(),
 			)
 
 			const result = await svc.applyConfigurationTemplate(
@@ -657,6 +691,7 @@ describe('ConfigurationTemplateService', () => {
 				createUtilsPort(),
 				loggerFake,
 				[template],
+				createConfigManagerPort(),
 			)
 
 			const result = await svc.applyConfigurationTemplate('tmpl-1', 2)
@@ -725,6 +760,7 @@ describe('ConfigurationTemplateService', () => {
 				createUtilsPort(),
 				createLogger(),
 				[template],
+				createConfigManagerPort(),
 			)
 
 			const result = await svc.applyConfigurationTemplate('tmpl-1', 2)
@@ -751,6 +787,7 @@ describe('ConfigurationTemplateService', () => {
 				createUtilsPort(),
 				createLogger(),
 				[template],
+				createConfigManagerPort(),
 			)
 
 			const result = await svc.applyConfigurationTemplate('tmpl-1', 2)
@@ -770,6 +807,7 @@ describe('ConfigurationTemplateService', () => {
 				createUtilsPort(),
 				createLogger(),
 				[],
+				createConfigManagerPort(),
 			)
 
 			const imported = [makeTemplate({ id: 'old-id', contentHash: '' })]
@@ -789,6 +827,7 @@ describe('ConfigurationTemplateService', () => {
 				createUtilsPort(),
 				createLogger(),
 				[],
+				createConfigManagerPort(),
 			)
 
 			const legacyTemplate = {
@@ -815,6 +854,7 @@ describe('ConfigurationTemplateService', () => {
 				createUtilsPort(),
 				createLogger(),
 				[],
+				createConfigManagerPort(),
 			)
 
 			const template = makeTemplate({ contentHash: 'existing-hash' })
@@ -843,6 +883,7 @@ describe('ConfigurationTemplateService', () => {
 				createUtilsPort(),
 				loggerFake,
 				[template],
+				createConfigManagerPort(),
 			)
 
 			const zwaveNode = { id: 2 } as ZWaveNode
@@ -870,6 +911,7 @@ describe('ConfigurationTemplateService', () => {
 				createUtilsPort(),
 				createLogger(),
 				[template],
+				createConfigManagerPort(),
 			)
 
 			const zwaveNode = { id: 2 } as ZWaveNode
@@ -893,6 +935,7 @@ describe('ConfigurationTemplateService', () => {
 				createUtilsPort(),
 				createLogger(),
 				[template],
+				createConfigManagerPort(),
 			)
 
 			const zwaveNode = { id: 2 } as ZWaveNode
@@ -916,6 +959,7 @@ describe('ConfigurationTemplateService', () => {
 				createUtilsPort(),
 				createLogger(),
 				[template],
+				createConfigManagerPort(),
 			)
 
 			const zwaveNode = { id: 2 } as ZWaveNode
@@ -936,6 +980,7 @@ describe('ConfigurationTemplateService', () => {
 				createUtilsPort(),
 				createLogger(),
 				[],
+				createConfigManagerPort(),
 			)
 
 			const result1 = await svc.createConfigurationTemplate(
@@ -966,6 +1011,7 @@ describe('ConfigurationTemplateService', () => {
 				createUtilsPort(),
 				createLogger(),
 				[],
+				createConfigManagerPort(),
 			)
 
 			const values: ZUIConfigurationTemplateValue[] = [
@@ -998,6 +1044,7 @@ describe('ConfigurationTemplateService', () => {
 				createUtilsPort(),
 				createLogger(),
 				[],
+				createConfigManagerPort(),
 			)
 
 			const resultNull = await svc.createConfigurationTemplate(
@@ -1033,6 +1080,7 @@ describe('ConfigurationTemplateService', () => {
 				createUtilsPort(),
 				createLogger(),
 				[],
+				createConfigManagerPort(),
 			)
 			await expect(
 				svc.getDeviceConfigurationParams('invalid'),
@@ -1047,6 +1095,7 @@ describe('ConfigurationTemplateService', () => {
 				createUtilsPort(),
 				createLogger(),
 				[],
+				createConfigManagerPort(),
 			)
 			await expect(
 				svc.getDeviceConfigurationParams('abc-def-ghi'),
@@ -1091,17 +1140,12 @@ describe('ConfigurationTemplateService', () => {
 				paramInformation: mockParamInfo,
 			}
 
-			const configModule = await import('@zwave-js/config')
-			const loadSpy = vi
-				.spyOn(configModule.ConfigManager.prototype, 'loadDeviceIndex')
-				.mockResolvedValue(undefined)
-			const lookupSpy = vi
-				.spyOn(configModule.ConfigManager.prototype, 'lookupDevice')
-				.mockResolvedValue(
-					mockDevice as ReturnType<
-						typeof configModule.ConfigManager.prototype.lookupDevice
-					>,
-				)
+			const loadDeviceIndex = vi.fn(() => Promise.resolve())
+			const lookupDevice = vi.fn(() => Promise.resolve(mockDevice))
+			const configMgr = createConfigManagerPort({
+				loadDeviceIndex,
+				lookupDevice,
+			})
 
 			const svc = new ConfigurationTemplateService(
 				createDriverPort(),
@@ -1110,14 +1154,15 @@ describe('ConfigurationTemplateService', () => {
 				createUtilsPort(),
 				createLogger(),
 				[],
+				configMgr,
 			)
 
 			// deviceId format is "mfr-productId-productType"; lookupDevice reorders to (mfr, productType, productId)
 			const result = await svc.getDeviceConfigurationParams('134-2-100')
 
-			expect(loadSpy).toHaveBeenCalled()
+			expect(loadDeviceIndex).toHaveBeenCalled()
 
-			expect(lookupSpy).toHaveBeenCalledWith(134, 100, 2)
+			expect(lookupDevice).toHaveBeenCalledWith(134, 100, 2)
 
 			expect(result.length).toBe(2)
 
@@ -1168,16 +1213,6 @@ describe('ConfigurationTemplateService', () => {
 		})
 
 		it('returns empty array when device has no paramInformation', async () => {
-			const configModule = await import('@zwave-js/config')
-			vi.spyOn(
-				configModule.ConfigManager.prototype,
-				'loadDeviceIndex',
-			).mockResolvedValue(undefined)
-			vi.spyOn(
-				configModule.ConfigManager.prototype,
-				'lookupDevice',
-			).mockResolvedValue(undefined)
-
 			const svc = new ConfigurationTemplateService(
 				createDriverPort(),
 				createNodeStorePort(),
@@ -1185,6 +1220,7 @@ describe('ConfigurationTemplateService', () => {
 				createUtilsPort(),
 				createLogger(),
 				[],
+				createConfigManagerPort(),
 			)
 
 			const result = await svc.getDeviceConfigurationParams('134-2-100')
@@ -1216,6 +1252,7 @@ describe('ConfigurationTemplateService', () => {
 				createUtilsPort(),
 				createLogger(),
 				[],
+				createConfigManagerPort(),
 			)
 
 			const result = await svc.createConfigurationTemplate(2, 'Test')
@@ -1254,6 +1291,7 @@ describe('ConfigurationTemplateService', () => {
 				createUtilsPort(),
 				createLogger(),
 				[],
+				createConfigManagerPort(),
 			)
 
 			const result = await svc.createConfigurationTemplate(2, 'Test')
@@ -1298,6 +1336,7 @@ describe('ConfigurationTemplateService', () => {
 				createUtilsPort(),
 				createLogger(),
 				[existingTemplate],
+				createConfigManagerPort(),
 			)
 
 			const updated = await svc.updateConfigurationTemplate(
@@ -1347,6 +1386,7 @@ describe('ConfigurationTemplateService', () => {
 				createUtilsPort(),
 				createLogger(),
 				[template],
+				createConfigManagerPort(),
 			)
 
 			const result = await svc.applyConfigurationTemplate(template.id, 2)
@@ -1400,6 +1440,7 @@ describe('ConfigurationTemplateService', () => {
 				createUtilsPort(),
 				createLogger(),
 				[template],
+				createConfigManagerPort(),
 			)
 
 			const result = await svc.applyConfigurationTemplate(template.id, 2)
@@ -1437,6 +1478,7 @@ describe('ConfigurationTemplateService', () => {
 				createUtilsPort(),
 				createLogger(),
 				[template],
+				createConfigManagerPort(),
 			)
 
 			const result = await svc.applyConfigurationTemplate(template.id, 2)
@@ -1496,6 +1538,7 @@ describe('ConfigurationTemplateService', () => {
 				createUtilsPort(),
 				logger,
 				[template],
+				createConfigManagerPort(),
 			)
 
 			svc.checkConfigurationTemplates(node, fakeZwaveNode)
@@ -1536,6 +1579,7 @@ describe('ConfigurationTemplateService', () => {
 				createUtilsPort(),
 				createLogger(),
 				[template],
+				createConfigManagerPort(),
 			)
 
 			const fakeZwaveNode = { id: 2 } as ZWaveNode
@@ -1564,6 +1608,7 @@ describe('ConfigurationTemplateService', () => {
 				createUtilsPort(),
 				createLogger(),
 				[template],
+				createConfigManagerPort(),
 			)
 
 			svc.checkConfigurationTemplates(node, fakeZwaveNode)
@@ -1592,6 +1637,7 @@ describe('ConfigurationTemplateService', () => {
 				createUtilsPort(),
 				createLogger(),
 				[template],
+				createConfigManagerPort(),
 			)
 
 			svc.checkConfigurationTemplates(node, fakeZwaveNode)
@@ -1618,6 +1664,7 @@ describe('ConfigurationTemplateService', () => {
 				createUtilsPort(),
 				createLogger(),
 				[template],
+				createConfigManagerPort(),
 			)
 
 			const fakeZwaveNode = { id: 2 } as ZWaveNode
@@ -1653,6 +1700,7 @@ describe('ConfigurationTemplateService', () => {
 				createUtilsPort(),
 				createLogger(),
 				[template],
+				createConfigManagerPort(),
 			)
 
 			vi.spyOn(svc, 'applyConfigurationTemplate').mockRejectedValue(
@@ -1698,6 +1746,7 @@ describe('ConfigurationTemplateService', () => {
 				createUtilsPort(),
 				createLogger(),
 				[template],
+				createConfigManagerPort(),
 			)
 
 			await svc.applyConfigurationTemplate(template.id, 2)
@@ -1715,6 +1764,7 @@ describe('ConfigurationTemplateService', () => {
 				createUtilsPort(),
 				createLogger(),
 				[],
+				createConfigManagerPort(),
 			)
 			const fakeZwaveNode = { id: 2 } as ZWaveNode
 			svc.checkConfigurationTemplates(node, fakeZwaveNode)
@@ -1744,6 +1794,7 @@ describe('ConfigurationTemplateService', () => {
 				createUtilsPort(),
 				createLogger(),
 				[template, otherTemplate],
+				createConfigManagerPort(),
 			)
 
 			await svc.deleteConfigurationTemplate(template.id)
@@ -1767,6 +1818,7 @@ describe('ConfigurationTemplateService', () => {
 				createUtilsPort(),
 				createLogger(),
 				[existing],
+				createConfigManagerPort(),
 			)
 
 			await svc.importConfigurationTemplates([imported])
@@ -1791,6 +1843,7 @@ describe('ConfigurationTemplateService', () => {
 				createUtilsPort(),
 				createLogger(),
 				[],
+				createConfigManagerPort(),
 			)
 
 			await expect(
@@ -1820,6 +1873,7 @@ describe('ConfigurationTemplateService', () => {
 				createUtilsPort(),
 				createLogger(),
 				[],
+				createConfigManagerPort(),
 			)
 
 			const result = await svc.createConfigurationTemplate(2, 'Test')
@@ -1849,6 +1903,7 @@ describe('ConfigurationTemplateService', () => {
 				createUtilsPort(),
 				createLogger(),
 				[],
+				createConfigManagerPort(),
 			)
 
 			const result = await svc.createConfigurationTemplate(2, 'Test')
@@ -1870,6 +1925,7 @@ describe('ConfigurationTemplateService', () => {
 				createUtilsPort(),
 				createLogger(),
 				[template],
+				createConfigManagerPort(),
 			)
 
 			const result = await svc.deleteConfigurationTemplate(template.id)
@@ -1893,6 +1949,7 @@ describe('ConfigurationTemplateService', () => {
 				createUtilsPort(),
 				createLogger(),
 				[template],
+				createConfigManagerPort(),
 			)
 
 			await svc.applyConfigurationTemplate(template.id, 2)
@@ -1930,6 +1987,7 @@ describe('ConfigurationTemplateService', () => {
 				createUtilsPort(),
 				createLogger(),
 				[template],
+				createConfigManagerPort(),
 			)
 
 			await svc.updateConfigurationTemplate(template.id, {
@@ -1976,6 +2034,7 @@ describe('ConfigurationTemplateService', () => {
 				createUtilsPort(),
 				createLogger(),
 				[template],
+				createConfigManagerPort(),
 			)
 
 			const fakeZwaveNode = { id: 2 } as ZWaveNode
@@ -2017,6 +2076,7 @@ describe('ConfigurationTemplateService', () => {
 				createUtilsPort(),
 				logger,
 				[template],
+				createConfigManagerPort(),
 			)
 
 			svc.checkConfigurationTemplates(node, fakeZwaveNode)
