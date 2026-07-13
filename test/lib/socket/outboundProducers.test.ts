@@ -12,7 +12,7 @@ import {
 	afterEach,
 	vi,
 } from 'vitest'
-import { NODE_ID_BROADCAST_LR } from '@zwave-js/core'
+import { CommandClasses, NODE_ID_BROADCAST_LR } from '@zwave-js/core'
 import { Zniffer } from 'zwave-js'
 import type ZWaveClientType from '#api/lib/ZwaveClient.ts'
 import type ZnifferManagerType from '#api/lib/ZnifferManager.ts'
@@ -136,7 +136,11 @@ describe('Socket contract: outbound producers', () => {
 			const client = await connectedSubscriber(harness, 'values')
 			const received = waitForEvent<any>(client, 'VALUE_UPDATED')
 
-			const valueId: any = { nodeId: 2, commandClass: 37, property: 'x' }
+			const valueId: any = {
+				nodeId: 2,
+				commandClass: CommandClasses['Binary Switch'],
+				property: 'x',
+			}
 			zwave.emitValueChanged(valueId, { id: 2 } as any, true)
 
 			const data = await received
@@ -155,7 +159,11 @@ describe('Socket contract: outbound producers', () => {
 			client.on('VALUE_UPDATED', (data: unknown) => box.push(data))
 
 			zwave.emitValueChanged(
-				{ nodeId: 2, commandClass: 37, property: 'x' } as any,
+				{
+					nodeId: 2,
+					commandClass: CommandClasses['Binary Switch'],
+					property: 'x',
+				} as any,
 				{ id: 2 } as any,
 				false,
 			)
@@ -163,7 +171,11 @@ describe('Socket contract: outbound producers', () => {
 			// Fires a second, distinct, definitely-emitting call on the same channel and awaits that instead of a fixed sleep: FIFO per-connection delivery means an incorrect emit above would already have arrived
 			const marker = waitForEvent<any>(client, 'VALUE_UPDATED')
 			zwave.emitValueChanged(
-				{ nodeId: 99, commandClass: 37, property: 'marker' } as any,
+				{
+					nodeId: 99,
+					commandClass: CommandClasses['Binary Switch'],
+					property: 'marker',
+				} as any,
 				{ id: 99 } as any,
 				true,
 			)
@@ -481,13 +493,13 @@ describe('Socket contract: outbound producers', () => {
 			const received = waitForEvent(client, 'METADATA_UPDATED')
 			;(zwave as any).sendToSocket('METADATA_UPDATED', {
 				nodeId: 2,
-				commandClass: 37,
+				commandClass: CommandClasses['Binary Switch'],
 				metadata: { readable: true },
 			})
 
 			expect(await received).toEqual({
 				nodeId: 2,
-				commandClass: 37,
+				commandClass: CommandClasses['Binary Switch'],
 				metadata: { readable: true },
 			})
 		})
@@ -500,13 +512,13 @@ describe('Socket contract: outbound producers', () => {
 			const received = waitForEvent(client, 'VALUE_REMOVED')
 			;(zwave as any).sendToSocket('VALUE_REMOVED', {
 				nodeId: 2,
-				commandClass: 37,
+				commandClass: CommandClasses['Binary Switch'],
 				property: 'targetValue',
 			})
 
 			expect(await received).toEqual({
 				nodeId: 2,
-				commandClass: 37,
+				commandClass: CommandClasses['Binary Switch'],
 				property: 'targetValue',
 			})
 		})

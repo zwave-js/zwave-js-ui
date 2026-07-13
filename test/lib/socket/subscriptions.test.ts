@@ -2,6 +2,7 @@
 // server-side socket, and Socket.IO's documented per-connection ordered delivery guarantees anything
 // routed earlier already arrived by the time that resolves
 import { describe, it, expect } from 'vitest'
+import { CommandClasses } from '@zwave-js/core'
 import { useSocketHarness, type SocketHarness } from './harness.ts'
 import { createFakeGateway } from './fakes.ts'
 
@@ -89,7 +90,11 @@ describe('Socket contract: multi-client room routing', () => {
 
 		const boxes = [
 			['nodes', 'NODE_ADDED', { id: 3 }],
-			['values', 'VALUE_UPDATED', { commandClass: 37 }],
+			[
+				'values',
+				'VALUE_UPDATED',
+				{ commandClass: CommandClasses['Binary Switch'] },
+			],
 			['debug', 'DEBUG', { data: 'log line' }],
 			['diagnostics', 'LINK_RELIABILITY', { nodeId: 3 }],
 		] as const
