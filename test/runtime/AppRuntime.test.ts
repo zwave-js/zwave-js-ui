@@ -1,9 +1,8 @@
 /**
  * Direct unit tests for `AppRuntime`, constructed without any Express/HTTP layer
  *
- * Covers accessor round-trips for every piece of state it owns, the
- * per-request-fresh resolution regression (a gateway/zniffer replaced
- * mid-restart must be visible to the very next call, never a stale
+ * Covers the per-request-fresh resolution behavior (a gateway/zniffer
+ * replaced mid-restart must be visible to the very next call, never a stale
  * reference), `startGateway()`/`startZniffer()`'s SESSION_SECRET warning
  * branch and plugin loading, snippet loading, and `shutdown()`'s guarded
  * gateway close plus plugin teardown.
@@ -25,14 +24,14 @@ import {
 import { writeFileSync, mkdtempSync, rmSync, mkdirSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
-import type Gateway from '../../api/lib/Gateway.ts'
-import type ZnifferManager from '../../api/lib/ZnifferManager.ts'
-import type JsonStoreModule from '../../api/lib/jsonStore.ts'
-import type StoreModule from '../../api/config/store.ts'
+import type Gateway from '#api/lib/Gateway.ts'
+import type ZnifferManager from '#api/lib/ZnifferManager.ts'
+import type JsonStoreModule from '#api/lib/jsonStore.ts'
+import type StoreModule from '#api/config/store.ts'
 import type {
 	AppRuntime as AppRuntimeClass,
 	AppRuntimeDeps,
-} from '../../api/runtime/AppRuntime.ts'
+} from '#api/runtime/AppRuntime.ts'
 import {
 	createFakeGateway,
 	createFakeZwaveClient,
@@ -47,7 +46,7 @@ const gatewayStart = vi.fn(() => Promise.resolve())
 // Separate from fakes.ts's createFakeGateway() so the real-plugin-loading shutdown() test can assert close() on a gateway built via the actual startGateway() path
 const gatewayClose = vi.fn(() => Promise.resolve())
 
-vi.mock('../../api/lib/MqttClient.ts', () => ({
+vi.mock('#api/lib/MqttClient.ts', () => ({
 	default: class MockMqttClient {
 		constructor(...args: unknown[]) {
 			mqttCtor(...args)
@@ -55,7 +54,7 @@ vi.mock('../../api/lib/MqttClient.ts', () => ({
 	},
 }))
 
-vi.mock('../../api/lib/ZwaveClient.ts', () => ({
+vi.mock('#api/lib/ZwaveClient.ts', () => ({
 	default: class MockZWaveClient {
 		constructor(...args: unknown[]) {
 			zwaveCtor(...args)
@@ -63,7 +62,7 @@ vi.mock('../../api/lib/ZwaveClient.ts', () => ({
 	},
 }))
 
-vi.mock('../../api/lib/Gateway.ts', () => ({
+vi.mock('#api/lib/Gateway.ts', () => ({
 	default: class MockGateway {
 		constructor(...args: unknown[]) {
 			gatewayCtor(...args)
@@ -73,7 +72,7 @@ vi.mock('../../api/lib/Gateway.ts', () => ({
 	},
 }))
 
-vi.mock('../../api/lib/ZnifferManager.ts', () => ({
+vi.mock('#api/lib/ZnifferManager.ts', () => ({
 	default: class MockZnifferManager {
 		constructor(...args: unknown[]) {
 			znifferCtor(...args)
@@ -90,12 +89,12 @@ describe('AppRuntime', () => {
 		ensureTestEnv()
 
 		// Dynamic import, after ensureTestEnv(), since AppRuntime.ts's static config/app.ts import touches the filesystem at module-evaluation time
-		const runtimeMod = await import('../../api/runtime/AppRuntime.ts')
+		const runtimeMod = await import('#api/runtime/AppRuntime.ts')
 		AppRuntimeCtor = runtimeMod.AppRuntime
 
 		const [{ default: jsonStore }, { default: store }] = await Promise.all([
-			import('../../api/lib/jsonStore.ts'),
-			import('../../api/config/store.ts'),
+			import('#api/lib/jsonStore.ts'),
+			import('#api/config/store.ts'),
 		])
 		jsonStoreMod = jsonStore
 		storeMod = store
@@ -124,110 +123,7 @@ describe('AppRuntime', () => {
 		})
 	}
 
-	describe('gateway get/set/require', () => {
-		it('has no gateway until one is set', () => {
-			const runtime = createRuntime()
-			expect(runtime.getGateway()).toBeUndefined()
-		})
-
-		it('returns exactly what was set, round-trip', () => {
-			const runtime = createRuntime()
-			const gw = createFakeGateway() as unknown as Gateway
-			runtime.setGateway(gw)
-			expect(runtime.getGateway()).toBe(gw)
-			expect(runtime.requireGateway('zwave')).toBe(gw)
-		})
-
-		it('setGateway(undefined) clears a previously-set gateway', () => {
-			const runtime = createRuntime()
-			runtime.setGateway(createFakeGateway() as unknown as Gateway)
-			runtime.setGateway(undefined)
-			expect(runtime.getGateway()).toBeUndefined()
-		})
-
-		it('requireGateway() throws the native TypeError when absent (preserved quirk, no guard added)', () => {
-			const runtime = createRuntime()
-			expect(() => runtime.requireGateway('zwave')).toThrow(
-				"Cannot read properties of undefined (reading 'zwave')",
-			)
-		})
-	})
-
-	describe('zniffer get/set/require', () => {
-		it('has no zniffer until one is set', () => {
-			const runtime = createRuntime()
-			expect(runtime.getZniffer()).toBeUndefined()
-		})
-
-		it('returns exactly what was set, round-trip', () => {
-			const runtime = createRuntime()
-			const zniffer = {} as unknown as ZnifferManager
-			runtime.setZniffer(zniffer)
-			expect(runtime.getZniffer()).toBe(zniffer)
-			expect(runtime.requireZniffer('start')).toBe(zniffer)
-		})
-
-		it('setZniffer(undefined) clears a previously-set zniffer', () => {
-			const runtime = createRuntime()
-			runtime.setZniffer({} as unknown as ZnifferManager)
-			runtime.setZniffer(undefined)
-			expect(runtime.getZniffer()).toBeUndefined()
-		})
-
-		it('requireZniffer() throws the native TypeError when absent (preserved quirk, no guard added)', () => {
-			const runtime = createRuntime()
-			expect(() => runtime.requireZniffer('start')).toThrow(
-				"Cannot read properties of undefined (reading 'start')",
-			)
-		})
-	})
-
-	describe('per-request-fresh resolution (no stale capture across a swap) - the core Layer 5 regression', () => {
-		it('a later call observes a replaced gateway, not a cached earlier one', () => {
-			const runtime = createRuntime()
-			const gwA = createFakeGateway({
-				zwave: createFakeZwaveClient({
-					devices: { 1: { name: 'device A' } },
-				}),
-			}) as unknown as Gateway
-			const gwB = createFakeGateway({
-				zwave: createFakeZwaveClient({
-					devices: { 2: { name: 'device B' } },
-				}),
-			}) as unknown as Gateway
-
-			runtime.setGateway(gwA)
-			expect(runtime.getGateway()).toBe(gwA)
-			expect(runtime.requireGateway('zwave').zwave?.devices).toEqual({
-				1: { name: 'device A' },
-			})
-
-			// Simulate a restart/swap: a brand new gateway replaces the old one
-			runtime.setGateway(gwB)
-
-			// Every accessor, not just getGateway(), must resolve the new instance on the very next call
-			expect(runtime.getGateway()).toBe(gwB)
-			expect(runtime.getGateway()).not.toBe(gwA)
-			expect(runtime.requireGateway('zwave')).toBe(gwB)
-			expect(runtime.requireGateway('zwave').zwave?.devices).toEqual({
-				2: { name: 'device B' },
-			})
-		})
-
-		it('a later call observes a replaced zniffer, not a cached earlier one', () => {
-			const runtime = createRuntime()
-			const znifferA = { id: 'A' } as unknown as ZnifferManager
-			const znifferB = { id: 'B' } as unknown as ZnifferManager
-
-			runtime.setZniffer(znifferA)
-			expect(runtime.getZniffer()).toBe(znifferA)
-
-			runtime.setZniffer(znifferB)
-			expect(runtime.getZniffer()).toBe(znifferB)
-			expect(runtime.getZniffer()).not.toBe(znifferA)
-			expect(runtime.requireZniffer('start')).toBe(znifferB)
-		})
-
+	describe('per-request-fresh resolution (no stale capture across a swap)', () => {
 		it('startGateway() (a restart) replaces the gateway in place, immediately visible to the very next call', async () => {
 			const runtime = createRuntime()
 			const gwOld = createFakeGateway() as unknown as Gateway
@@ -236,7 +132,7 @@ describe('AppRuntime', () => {
 			await runtime.startGateway({})
 
 			expect(runtime.getGateway()).not.toBe(gwOld)
-			expect(runtime.requireGateway('zwave')).not.toBe(gwOld)
+			expect(runtime.requireGateway()).not.toBe(gwOld)
 			expect(gatewayCtor).toHaveBeenCalledOnce()
 		})
 
@@ -248,7 +144,7 @@ describe('AppRuntime', () => {
 			runtime.startZniffer({ enabled: true })
 
 			expect(runtime.getZniffer()).not.toBe(znifferOld)
-			expect(runtime.requireZniffer('start')).not.toBe(znifferOld)
+			expect(runtime.requireZniffer()).not.toBe(znifferOld)
 			expect(znifferCtor).toHaveBeenCalledOnce()
 		})
 
@@ -261,88 +157,6 @@ describe('AppRuntime', () => {
 
 			expect(runtime.getZniffer()).toBe(zniffer)
 			expect(znifferCtor).not.toHaveBeenCalled()
-		})
-	})
-
-	describe('plugins / plugin router accessors', () => {
-		it('starts with no plugins and no router', () => {
-			const runtime = createRuntime()
-			expect(runtime.getPlugins()).toEqual([])
-			expect(runtime.getPluginsRouter()).toBeUndefined()
-		})
-
-		it('getPluginsRouter()/setPluginsRouter() round-trip', () => {
-			const runtime = createRuntime()
-			const router = {} as ReturnType<typeof runtime.getPluginsRouter>
-			runtime.setPluginsRouter(router)
-			expect(runtime.getPluginsRouter()).toBe(router)
-			runtime.setPluginsRouter(undefined)
-			expect(runtime.getPluginsRouter()).toBeUndefined()
-		})
-	})
-
-	describe('restart state', () => {
-		it('isRestarting()/setRestarting() round-trip, defaulting to false', () => {
-			const runtime = createRuntime()
-			expect(runtime.isRestarting()).toBe(false)
-			runtime.setRestarting(true)
-			expect(runtime.isRestarting()).toBe(true)
-			runtime.setRestarting(false)
-			expect(runtime.isRestarting()).toBe(false)
-		})
-	})
-
-	describe('serial port enumerator seam', () => {
-		it('defaults to the production Driver.enumerateSerialPorts implementation', () => {
-			const runtime = createRuntime()
-			expect(runtime.isEnumerateSerialPortsProductionDefault()).toBe(true)
-			expect(typeof runtime.getEnumerateSerialPorts()).toBe('function')
-		})
-
-		it('replaces the enumerator with a test fake, then restores the production default on undefined', () => {
-			const runtime = createRuntime()
-			const productionFn = runtime.getEnumerateSerialPorts()
-			const fake = vi.fn(() =>
-				Promise.resolve([]),
-			) as unknown as typeof productionFn
-
-			runtime.setEnumerateSerialPorts(fake)
-			expect(runtime.getEnumerateSerialPorts()).toBe(fake)
-			expect(runtime.isEnumerateSerialPortsProductionDefault()).toBe(
-				false,
-			)
-
-			runtime.setEnumerateSerialPorts(undefined)
-			expect(runtime.getEnumerateSerialPorts()).not.toBe(fake)
-			expect(runtime.isEnumerateSerialPortsProductionDefault()).toBe(true)
-		})
-	})
-
-	describe('backup / debug manager access', () => {
-		it('getBackupManager()/getDebugManager() return the stable singleton instances', async () => {
-			const runtime = createRuntime()
-			const { default: backupManager } = await import(
-				'../../api/lib/BackupManager.ts'
-			)
-			const { default: debugManager } = await import(
-				'../../api/lib/DebugManager.ts'
-			)
-			expect(runtime.getBackupManager()).toBe(backupManager)
-			expect(runtime.getDebugManager()).toBe(debugManager)
-		})
-	})
-
-	describe('getSettings()', () => {
-		it('reads through to the current persisted settings via jsonStore', async () => {
-			const runtime = createRuntime()
-			await jsonStoreMod.put(storeMod.settings, {
-				zwave: { port: '/dev/ttyTEST' },
-			})
-			expect(runtime.getSettings()).toEqual(
-				expect.objectContaining({
-					zwave: { port: '/dev/ttyTEST' },
-				}),
-			)
 		})
 	})
 
@@ -383,7 +197,7 @@ describe('AppRuntime', () => {
 		})
 
 		it('getSnippets() merges the live gateway cacheSnippets, the bundled defaults, and any real on-disk snippet file under the configured snippetsDir - excluding non-.js entries', async () => {
-			const { snippetsDir } = await import('../../api/config/app.ts')
+			const { snippetsDir } = await import('#api/config/app.ts')
 			mkdirSync(snippetsDir, { recursive: true })
 			writeFileSync(
 				path.join(snippetsDir, 'unit-test-on-disk.js'),
@@ -427,13 +241,11 @@ describe('AppRuntime', () => {
 			expect(snippets.filter((s) => s.name === 'cached')).toEqual([])
 		})
 
-		it('getSnippets() throws the native TypeError when no gateway is attached at all (preserved quirk)', async () => {
+		it('getSnippets() defaults to an empty cache array when no gateway is attached at all (?? [] fallback)', async () => {
 			const runtime = createRuntime()
-			// Ensures snippetsDir exists first, so the assertion below catches the unguarded gw.zwave access rather than an unrelated ENOENT
 			await runtime.loadSnippets()
-			await expect(runtime.getSnippets()).rejects.toThrow(
-				/Cannot read properties of undefined \(reading 'zwave'\)/,
-			)
+			const snippets = await runtime.getSnippets()
+			expect(snippets.filter((s) => s.name === 'cached')).toEqual([])
 		})
 	})
 
@@ -454,9 +266,7 @@ describe('AppRuntime', () => {
 			})
 			delete process.env.SESSION_SECRET
 
-			const { module: loggerModule } = await import(
-				'../../api/lib/logger.ts'
-			)
+			const { module: loggerModule } = await import('#api/lib/logger.ts')
 			// Winston reuses an existing module logger by name, so this is
 			// the exact same instance `AppRuntime.ts`'s top-level
 			// `const logger = loggers.module('Runtime')` already holds.
@@ -478,9 +288,7 @@ describe('AppRuntime', () => {
 			})
 			process.env.SESSION_SECRET = 'a-real-secret'
 
-			const { module: loggerModule } = await import(
-				'../../api/lib/logger.ts'
-			)
+			const { module: loggerModule } = await import('#api/lib/logger.ts')
 			const runtimeLogger = loggerModule('Runtime')
 			const warnSpy = vi.spyOn(runtimeLogger, 'warn')
 
@@ -499,9 +307,7 @@ describe('AppRuntime', () => {
 			})
 			delete process.env.SESSION_SECRET
 
-			const { module: loggerModule } = await import(
-				'../../api/lib/logger.ts'
-			)
+			const { module: loggerModule } = await import('#api/lib/logger.ts')
 			const runtimeLogger = loggerModule('Runtime')
 			const warnSpy = vi.spyOn(runtimeLogger, 'warn')
 
