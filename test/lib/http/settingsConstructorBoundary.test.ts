@@ -27,6 +27,8 @@ vi.mock('../../../api/lib/ZwaveClient.ts', () => ({
 }))
 
 vi.mock('../../../api/lib/Gateway.ts', () => ({
+	// Mirrors the real GatewayType values so sparseGateway below can reference a named member instead of a raw number
+	GatewayType: { VALUEID: 0, NAMED: 1, MANUAL: 2 } as const,
 	default: class MockGateway {
 		constructor(...args: unknown[]) {
 			gatewayCtor(...args)
@@ -47,6 +49,7 @@ vi.mock('../../../api/lib/ZnifferManager.ts', () => ({
 import { createHttpHarness, type HttpHarness } from './harness.ts'
 import { setSettings } from './authHelpers.ts'
 import { createFakeGateway } from './fakes.ts'
+import { GatewayType } from '../../../api/lib/Gateway.ts'
 
 describe('startGateway()/startZniffer() constructor boundary (sparse PersistedSettings)', () => {
 	let harness: HttpHarness
@@ -62,7 +65,7 @@ describe('startGateway()/startZniffer() constructor boundary (sparse PersistedSe
 	it('passes a sparse persisted mqtt/zwave/gateway settings object through to the constructors unchanged', async () => {
 		const sparseMqtt = { name: 'sparse-mqtt-only-one-field' }
 		const sparseZwave = { port: '/dev/ttySPARSE' }
-		const sparseGateway = { type: 1 }
+		const sparseGateway = { type: GatewayType.NAMED }
 
 		await setSettings(harness, {
 			mqtt: sparseMqtt,
