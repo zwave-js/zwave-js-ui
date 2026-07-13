@@ -46,6 +46,7 @@ export class InclusionCoordinator {
 
 	private _commandsTimeout: ReturnType<typeof setTimeout> | null = null
 
+	// Advance on reset so setup suspended by backup or QR parsing cannot use a replacement driver
 	private _generation = 0
 
 	private _nvmEventSetter: ((event: string) => void) | undefined
@@ -99,6 +100,7 @@ export class InclusionCoordinator {
 	}
 
 	takeTmpNode(): { name?: string; loc?: string } | undefined {
+		// Consume metadata once so later inclusions cannot inherit it
 		const tmp = this._tmpNode
 		this._tmpNode = undefined
 		return tmp
@@ -590,10 +592,12 @@ export class InclusionCoordinator {
 	}
 
 	onNodeAdded(nodeId: number): void {
+		// Retain replacement state because old-node cleanup also reaches this path
 		this._pendingInclusionNodeIds.delete(nodeId)
 	}
 
 	onReplacementComplete(): void {
+		// Clear replacement only after the real node-added event preserves old-node metadata
 		this._isReplacing = false
 	}
 
@@ -618,6 +622,7 @@ export class InclusionCoordinator {
 		this._isReplacing = false
 		this._inclusionState = undefined
 		this._pendingInclusionNodeIds.clear()
+		// Reject pending UI decisions because reset invalidates their inclusion flow
 		this._settlePendingPromises()
 	}
 

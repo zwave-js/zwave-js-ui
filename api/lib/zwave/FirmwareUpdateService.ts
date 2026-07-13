@@ -38,6 +38,7 @@ export class FirmwareUpdateService {
 
 	private _nvmEventSetter: ((event: string) => void) | undefined
 
+	// Advance on reset so suspended work cannot publish into a new lifecycle
 	private _generation = 0
 
 	private _disposed = false
@@ -173,8 +174,10 @@ export class FirmwareUpdateService {
 					}
 				}
 
+				// Persist a detached snapshot because filesystem writes cannot be cancelled after reset
 				await this._nodes.persistStagedNodeUpdates(staged)
 
+				// Fence publication because the completed write may belong to an obsolete generation
 				this._assertFence(gen, 'checkAllNodesFirmwareUpdates')
 
 				for (const projection of staged) {
@@ -281,6 +284,7 @@ export class FirmwareUpdateService {
 				}
 				await this._backup.backupNvm()
 
+				// Fence before resolving the driver because backup may overlap driver replacement
 				this._assertFence(gen, 'firmwareUpdateOTW')
 			}
 
@@ -306,6 +310,7 @@ export class FirmwareUpdateService {
 					format,
 				)
 
+				// Fence extraction before using the driver captured for this lifecycle
 				this._assertFence(gen, 'firmwareUpdateOTW')
 
 				firmwareData = firmware.data
@@ -395,6 +400,7 @@ export class FirmwareUpdateService {
 						format,
 					)
 
+					// Fence extracted files before using a node that restart may replace
 					this._assertFence(gen, 'updateFirmware')
 
 					if (f.target !== undefined) {
@@ -443,6 +449,7 @@ export class FirmwareUpdateService {
 
 		await zwaveNode.abortFirmwareUpdate()
 
+		// Fence completion before publishing state into a restarted client
 		this._assertFence(gen, 'abortFirmwareUpdate')
 
 		const node = this._nodes.getNode(nodeId)
@@ -560,7 +567,7 @@ export class FirmwareUpdateService {
 
 		this._firmwareUpdateCheckTimeout = setTimeout(() => {
 			this.scheduledFirmwareUpdateCheck().catch(() => {
-				// Scheduled checks log failures before rejecting
+				// Prevent unexpected timer callback failures from surfacing as unhandled rejections
 			})
 		}, waitMillis)
 	}
@@ -599,8 +606,10 @@ export class FirmwareUpdateService {
 				timestamp,
 			)
 
+			// Persist a detached snapshot because filesystem writes cannot be cancelled after reset
 			await this._nodes.persistStagedNodeUpdates([projection])
 
+			// Fence publication because the completed write may belong to an obsolete generation
 			this._assertFence(gen, 'checkNodeFirmwareUpdates')
 
 			this._applyNodeFirmwareProjection(projection)
