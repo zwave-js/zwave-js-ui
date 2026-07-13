@@ -37,7 +37,7 @@ function findSessionForUsername(
 	return match
 }
 
-describe('session store serialization (see #4739 for tracked passwordHash-in-session behavior)', () => {
+describe('session store serialization', () => {
 	const getHarness = useHttpHarness()
 
 	it('does NOT persist passwordHash in the session after POST /api/authenticate', async () => {
@@ -57,7 +57,7 @@ describe('session store serialization (see #4739 for tracked passwordHash-in-ses
 		expect(match.user).not.toHaveProperty('passwordHash')
 	})
 
-	it('persists passwordHash in the session after PUT /api/password (see #4739)', async () => {
+	it('persists passwordHash in the session after PUT /api/password', async () => {
 		const harness = await getHarness()
 		await seedUser(harness, 'session-pw-user', 'old-password')
 		const agent = harness.agent
