@@ -60,7 +60,8 @@ import type { ServiceLogger } from './ports.ts'
 
 type NodeUpdate = utils.DeepPartial<ZUINode> | { firmwareUpdate: false }
 type ValueUpdateArgs = (
-	ZWaveNodeValueUpdatedArgs | ZWaveNodeValueNotificationArgs
+	| ZWaveNodeValueUpdatedArgs
+	| ZWaveNodeValueNotificationArgs
 ) & {
 	prevValue?: unknown
 	newValue?: unknown
