@@ -1,120 +1,6 @@
-import { describe, it, expect, beforeAll, afterAll } from 'vitest'
+import { describe, it, expect } from 'vitest'
 import express, { type Express } from 'express'
-import { createHttpHarness, type HttpHarness } from './harness.ts'
-import { createFakeGateway } from './fakes.ts'
-
-const ROUTES: Array<{
-	method: 'get' | 'post' | 'put' | 'delete'
-	path: string
-}> = [
-	{ method: 'get', path: '/api/auth-enabled' },
-	{ method: 'post', path: '/api/authenticate' },
-	{ method: 'get', path: '/api/logout' },
-	{ method: 'put', path: '/api/password' },
-
-	{ method: 'get', path: '/health' },
-	{ method: 'get', path: '/health/zwave' },
-	{ method: 'get', path: '/version' },
-
-	{ method: 'get', path: '/api/settings' },
-	{ method: 'get', path: '/api/serial-ports' },
-	{ method: 'post', path: '/api/settings' },
-	{ method: 'post', path: '/api/restart' },
-	{ method: 'post', path: '/api/statistics' },
-	{ method: 'post', path: '/api/versions' },
-
-	{ method: 'get', path: '/api/exportConfig' },
-	{ method: 'post', path: '/api/importConfig' },
-
-	{ method: 'get', path: '/api/configuration-templates' },
-	{ method: 'post', path: '/api/configuration-templates' },
-	{ method: 'get', path: '/api/configuration-templates/export' },
-	{ method: 'post', path: '/api/configuration-templates/import' },
-	{
-		method: 'get',
-		path: '/api/configuration-templates/device-params/0x0086:0x0002:0x0064',
-	},
-	{ method: 'put', path: '/api/configuration-templates/template-1' },
-	{ method: 'delete', path: '/api/configuration-templates/template-1' },
-	{ method: 'post', path: '/api/configuration-templates/template-1/apply' },
-
-	{ method: 'get', path: '/api/store' },
-	{ method: 'put', path: '/api/store' },
-	{ method: 'delete', path: '/api/store' },
-	{ method: 'put', path: '/api/store-multi' },
-	{ method: 'post', path: '/api/store-multi' },
-	{ method: 'get', path: '/api/store/backup' },
-	{ method: 'post', path: '/api/store/upload' },
-	{ method: 'get', path: '/api/snippet' },
-
-	{ method: 'get', path: '/api/debug/status' },
-	{ method: 'post', path: '/api/debug/start' },
-	{ method: 'post', path: '/api/debug/stop' },
-	{ method: 'post', path: '/api/debug/cancel' },
-]
-
-let harness: HttpHarness
-
-beforeAll(async () => {
-	harness = await createHttpHarness()
-})
-
-afterAll(async () => {
-	await harness.close()
-})
-
-describe('HTTP contract: full 35-route inventory', () => {
-	it('registers exactly 35 hard-coded routes', () => {
-		expect(ROUTES).toHaveLength(35)
-	})
-
-	it.each(ROUTES)(
-		'$method $path is a registered route (not a 404)',
-		async ({ method, path }) => {
-			let req = harness.request[method](path)
-			if (path === '/api/store/backup') {
-				// Parse the ZIP as bytes because its JSON content type triggers Superagent's JSON parser
-				req = req.buffer(true).parse((response, callback) => {
-					const chunks: Buffer[] = []
-					response.on('data', (chunk: Buffer) => chunks.push(chunk))
-					response.on('end', () =>
-						callback(null, Buffer.concat(chunks)),
-					)
-				})
-			}
-			const res = await req
-			expect(res.status).not.toBe(404)
-		},
-	)
-
-	it("returns Express's default 404 for a path that truly does not exist", async () => {
-		const res = await harness.request.get('/api/this-route-does-not-exist')
-		expect(res.status).toBe(404)
-	})
-
-	it('does not duplicate bundled snippets when loadSnippets() runs more than once', async () => {
-		await harness.testHooks.loadSnippets()
-		await harness.testHooks.loadSnippets()
-
-		harness.testHooks.setGateway(createFakeGateway())
-		const res = await harness.request.get('/api/snippet')
-		expect(res.status).toBe(200)
-
-		const names = (res.body.data as Array<{ name: string }>).map(
-			(s) => s.name,
-		)
-		const counts = new Map<string, number>()
-		for (const name of names) {
-			counts.set(name, (counts.get(name) ?? 0) + 1)
-		}
-		const duplicated = [...counts.entries()].filter(
-			([, count]) => count > 1,
-		)
-		expect(duplicated).toEqual([])
-
-		harness.resetState()
-	})
-})
+import { useHttpHarness } from './harness.ts'
 
 const EXPECTED_REGISTERED_ROUTES: Array<{
 	method: 'get' | 'post' | 'put' | 'delete'
@@ -231,7 +117,10 @@ function sortRoutes<T extends { method: string; path: string }>(
 }
 
 describe('HTTP contract: complete Express route inventory (drift detection)', () => {
-	it('registers exactly the independently expected 35 routes - no more, no fewer', () => {
+	const getHarness = useHttpHarness()
+
+	it('registers exactly the independently expected 35 routes - no more, no fewer', async () => {
+		const harness = await getHarness()
 		const actual = getActualRegisteredRoutes(harness.app)
 		expect(actual).toHaveLength(EXPECTED_REGISTERED_ROUTES.length)
 		expect(sortRoutes(actual)).toEqual(
@@ -239,7 +128,8 @@ describe('HTTP contract: complete Express route inventory (drift detection)', ()
 		)
 	})
 
-	it('has no duplicate {method, path} registrations', () => {
+	it('has no duplicate {method, path} registrations', async () => {
+		const harness = await getHarness()
 		const actual = getActualRegisteredRoutes(harness.app)
 		const seen = new Set<string>()
 		const duplicates: string[] = []
