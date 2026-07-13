@@ -279,11 +279,7 @@ describe('Socket contract: outbound producers', () => {
 		it("_deleteGroup() sends NODE_REMOVED with just {id}, one of NODE_REMOVED's real shapes", async () => {
 			const harness = await getHarness({ gateway: benignGateway() })
 			const zwave = realZwave(harness)
-			// Seed GroupService's internal group list directly (mirrors the
-			// old `zwave.groups = [...]` poke - `_groupService` is a plain,
-			// TS-private (not JS `#`-private) field, so this still reaches
-			// into real internal state without a full driver/multicast
-			// setup, exactly like the old field assignment did).
+			// Seed GroupService's internal group list directly; _groupService is TS-private (not JS #-private), reaching real internal state without a full driver/multicast setup
 			;(zwave as any)._groupService._groups = [
 				{ id: 42, name: 'Test group', nodeIds: [] },
 			]

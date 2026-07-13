@@ -181,6 +181,10 @@ describe('HTTP contract: auth & password', () => {
 	describe('PUT /api/password', () => {
 		it('reports a missing user when there is no logged-in session', async () => {
 			const harness = await getHarness()
+			// Array.prototype.find never invokes its predicate on an empty users array, so this test's missing-session-user throw only reproduces if a user already exists; seed one directly so it holds regardless of shuffled run order
+			await seedUser(harness, 'unrelated-seed-user', 'irrelevant')
+
+
 			const res = await harness.request.put('/api/password').send({
 				current: 'x',
 				new: 'y',

@@ -18,10 +18,6 @@ import type {
 	ZUISceneRecord,
 } from '../../../api/lib/zwave/ports.ts'
 
-// ---------------------------------------------------------------------------
-// Helpers: minimal fakes for ports
-// ---------------------------------------------------------------------------
-
 interface TestValueRef extends ZUISceneValueRef {
 	id: string
 }
@@ -45,12 +41,7 @@ function createPersistencePort() {
 	let stored: ZUISceneRecord<TestValueRef>[] = []
 	return {
 		get: () => stored,
-		// Mirrors the real `scenePersistencePort.put` in ZwaveClient.ts,
-		// which is `(data) => jsonStore.put(store.scenes, data)` -
-		// `jsonStore.put<T>()` resolves with the data it was given, not a
-		// boolean, so the fake must match that exact shape for
-		// `ScenePersistencePort.put`'s restored `Promise<ZUISceneRecord<V>[]>`
-		// return type to mean anything.
+		// Resolves with the given data, like the real jsonStore-backed port, not a boolean
 		put: vi.fn((data: ZUISceneRecord<TestValueRef>[]) => {
 			stored = data
 			puts.push(data.map((s) => ({ ...s, values: [...s.values] })))
@@ -132,10 +123,6 @@ function createService(
 
 	return { service, persistence, nodeStore, utils, writer, logger }
 }
-
-// ---------------------------------------------------------------------------
-// Tests
-// ---------------------------------------------------------------------------
 
 describe('SceneService', () => {
 	describe('createScene', () => {
@@ -302,11 +289,7 @@ describe('SceneService', () => {
 			expect(service.sceneGetValues(1)[0].timeout).toBe(0)
 		})
 
-		// Finding #3 (runtime): `addSceneValue` used to be typed
-		// `Promise<unknown>`, silently widened from the persistence port.
-		// Confirm the actual resolved value is the live scenes array (what
-		// the pre-extraction `ZwaveClient._addSceneValue` always returned
-		// via `jsonStore.put`), not some opaque/boolean value.
+		// addSceneValue resolves with the live scenes array, not a boolean like createScene/removeScene
 		it('resolves with the current scenes array, not a boolean/unknown value', async () => {
 			const { service } = createService([
 				{ sceneid: 1, label: 'A', values: [] },
@@ -358,9 +341,7 @@ describe('SceneService', () => {
 			expect(persistence.put).toHaveBeenCalledTimes(1)
 		})
 
-		// Finding #3 (runtime): mirrors the `addSceneValue` assertion above -
-		// `removeSceneValue` must resolve with the live scenes array, not a
-		// boolean/unknown value.
+		// removeSceneValue resolves with the live scenes array too, not a boolean
 		it('resolves with the current scenes array, not a boolean/unknown value', async () => {
 			const value = makeValueId()
 			const { service } = createService([
@@ -445,7 +426,7 @@ describe('SceneService', () => {
 
 			service.activateScene(1)
 			await vi.advanceTimersByTimeAsync(0)
-			// flush the rejected-promise microtask queue
+			// Flush the rejected-promise microtask queue
 			await Promise.resolve()
 			await Promise.resolve()
 
@@ -453,29 +434,13 @@ describe('SceneService', () => {
 		})
 	})
 
-	// -------------------------------------------------------------------------
-	// Finding #3 (compile-time): the persistence port and the scene facade
-	// methods that delegate to it used to be declared `Promise<unknown>`,
-	// silently widening the return type all the way up through
-	// `ZwaveClient._addSceneValue`/`_removeSceneValue`. These `expectTypeOf`
-	// assertions are pure compile-time checks - they run with zero runtime
-	// effect under `vitest run` (types are erased, not checked, by the
-	// esbuild/vite transform), so they are only meaningful when compiled
-	// with a real type checker. This repo's only mechanism for that today is
-	// `npx tsc --noEmit -p tsconfig.eslint.json` (the config `eslint.config.js`
-	// wires up for type-aware linting; `npm run lint`/`npm test` do not
-	// surface a plain type mismatch like this on their own - verified
-	// empirically while implementing this fix). If a future change widens
-	// these types again, that command (not `npm test` or `npm run lint`)
-	// is what will catch it.
-	// -------------------------------------------------------------------------
+	// expectTypeOf assertions have no effect under `vitest run` - esbuild erases types without checking them - so only `npx tsc --noEmit -p tsconfig.eslint.json` catches a type regression here
 	describe('facade return type precision (Finding #3)', () => {
 		it('ScenePersistencePort.put resolves with the persisted scenes array, not unknown', () => {
 			expectTypeOf<
 				ReturnType<ScenePersistencePort<TestValueRef>['put']>
 			>().toEqualTypeOf<Promise<ZUISceneRecord<TestValueRef>[]>>()
 
-			// Documents exactly what regressed and is now restored.
 			expectTypeOf<
 				ReturnType<ScenePersistencePort<TestValueRef>['put']>
 			>().not.toEqualTypeOf<Promise<unknown>>()

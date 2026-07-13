@@ -44,12 +44,7 @@ describe('MqttClient scoped exact-topic subscription', () => {
 
 	beforeAll(async () => {
 		ensureTestEnv()
-		// Dynamic import, deliberately AFTER `ensureTestEnv()`: a static
-		// top-of-file `import` is hoisted and would evaluate - triggering
-		// `api/config/app.ts`'s module-eval-time `storeDir`/session-secret
-		// side effects against the REAL repo `store/` directory - before
-		// `ensureTestEnv()` could redirect `STORE_DIR` to a throwaway temp
-		// dir. See `http/env.ts` for the full rationale.
+		// Dynamic import after ensureTestEnv(): a static top-of-file import would be hoisted and cache the real store dir before isolation runs (see http/env.ts)
 		;({ default: MqttClientClass } = await import(
 			'../../../api/lib/MqttClient.ts'
 		))

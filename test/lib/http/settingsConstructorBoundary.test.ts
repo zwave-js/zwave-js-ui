@@ -43,11 +43,7 @@ vi.mock('#api/lib/ZnifferManager.ts', () => ({
 		constructor(...args: unknown[]) {
 			znifferCtor(...args)
 		}
-		// The real `ZnifferManager` exposes an async `close()` that `POST
-		// /api/restart` awaits on the zniffer already attached to this
-		// harness's runtime before starting a new one. Without this the
-		// mock is missing part of the real class's interface, so any test
-		// exercising a restart throws `oldZniffer.close is not a function`.
+		// POST /api/restart awaits the already-attached zniffer's close(); omitting it throws `oldZniffer.close is not a function`
 		close = vi.fn(() => Promise.resolve())
 	},
 }))

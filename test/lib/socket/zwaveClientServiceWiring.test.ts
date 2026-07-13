@@ -1,84 +1,28 @@
 /**
- * Characterizes the production `ZwaveClient.ts` wiring changed/introduced by
- * findings #1-#3 of PR #4732's review (AssociationService/GroupService
- * stale-driver + generation-fencing fixes, scene facade return types) plus
- * the areas the review explicitly called out as needing production
- * integration-test coverage: association delegates, the group CRUD facade,
- * `_buildVirtualValueId`, startup group restoration, node-removal ->
- * group-index delegation, and group virtual-node socket projection using
- * valid, real `VirtualValueID` shapes.
+ * Characterizes ZwaveClient's OWN facade/wiring layer around the
+ * association/group refactor - not AssociationService/GroupService's own
+ * logic, which `AssociationService.test.ts`/`GroupService.test.ts` cover
+ * exhaustively (including the stale-driver-across-await and
+ * generation-fencing regressions themselves).
  *
- * This intentionally does NOT re-test `AssociationService`'s or
- * `GroupService`'s own internal logic - that's exhaustively covered by
- * `AssociationService.test.ts` / `GroupService.test.ts` (including the
- * stale-driver-across-await and generation-fencing regressions themselves).
- * This file only characterizes `ZwaveClient`'s OWN facade/wiring layer:
+ * Startup restoration is exercised as `GroupService` loading groups from
+ * disk at construction, plus the exact 2-statement loop
+ * (`ZwaveClient.ts:5051-5053`) directly - not the full `_onDriverReady()`,
+ * which needs ~10 controller event listeners and a full node/fake-node
+ * graph too heavy to fake honestly for what this needs proven.
  *
- *   - Association delegates (`ZwaveClient.ts:1695-1805`) are thin one-line
- *     pass-throughs with no closures/generation-fencing involved, so a
- *     `vi.spyOn` on the real `_associationService` instance is enough to
- *     prove the wiring (right method, right args, right return value)
- *     without needing any driver fakery.
- *   - The group CRUD facade (`ZwaveClient.ts:2594-2621`) is where finding
- *     #2's actual bug lived (the closure-backed virtual-node registry
- *     `init()` builds) - these are exercised through REAL end-to-end
- *     `GroupService` + jsonStore persistence instead of spies, including a
- *     disk read-back, which is the only way to actually prove that wiring.
- *   - `_buildVirtualValueId` is exercised both directly (unit-level field
- *     mapping) and indirectly (through the "socket projection" describe
- *     block), using real `ValueMetadata` presets from `@zwave-js/core`
- *     rather than hand-rolled fixtures, per the review's "valid real
- *     VirtualValueID shapes" requirement.
- *   - Startup group restoration is NOT exercised by invoking the full
- *     `_onDriverReady()` (it needs ~10 controller event listeners,
- *     `getStoreNodes()`, `_createBroadcastNodes()`, full node iteration,
- *     `sendInitToSockets()`, `loadFakeNodes()` - too heavy/fragile to fake
- *     honestly for what this finding actually needs proven). Instead this
- *     file directly exercises the two things that loop actually does: (a)
- *     `GroupService` loading persisted groups from disk at construction
- *     time, and (b) the exact 2-statement restoration loop
- *     (`ZwaveClient.ts:5051-5053`) that recreates each group's live virtual
- *     node + ZUINode shell + values - mirroring the precedent already set by
- *     `outboundProducers.test.ts`'s own doc comment for avoiding excessive
- *     driver fakery.
+ * Store isolation: `ZwaveClient` is imported here as `import type` only,
+ * with the runtime value loaded via a dynamic `import()` inside `beforeAll`
+ * after `createSocketHarness()` has isolated `STORE_DIR` - a static import
+ * would cache the real repository `store/` directory instead (see
+ * `outboundProducers.test.ts`'s doc comment for the full mechanics).
  *
- * Store isolation (HIGH regression, shared with `callApi.test.ts` /
- * `outboundProducers.test.ts`): `ZwaveClient.ts` imports `storeDir`
- * (transitively, via `jsonStore.ts`) from `api/config/app.ts` at module
- * top level, which reads `process.env.STORE_DIR` once, at module-evaluation
- * time. A static `import ZWaveClient from '../../../api/lib/ZwaveClient.ts'`
- * at this file's top would be hoisted and evaluated BEFORE
- * `createSocketHarness()` (which calls `ensureTestEnv()` to set an isolated
- * `STORE_DIR`) ever runs inside `beforeAll` - so production code would end
- * up caching the *real* repository `store/` directory, and any write this
- * file triggers (`_createGroup()`, `_updateGroup()`, `_deleteGroup()`, node
- * removal) would land there instead of the harness's temp directory. The
- * fix: `ZwaveClient` is imported here as `import type` only (fully erased at
- * compile time, so it can never race isolation setup), and the real runtime
- * value is loaded via a dynamic `await import(...)` inside `beforeAll`,
- * strictly AFTER `harness = await createSocketHarness()` has already
- * isolated `STORE_DIR`. See `outboundProducers.test.ts`'s doc comment for
- * the full mechanics.
- *
- * Shared-harness group-state isolation: `harness.jsonStore`'s in-memory
- * cache (and the underlying `groups.json` file) persist across every test in
- * this file - only cleared once, in `afterAll`'s `close()` - because
- * `resetState()` (run in `afterEach`) deliberately does not touch it (see
- * `harness.ts`). Tests that don't care about construction-time disk loading
- * seed `(zwave as any)._groupService._groups = [...]` directly right after
- * constructing, bypassing whatever the constructor happened to load - the
- * same technique `outboundProducers.test.ts`'s own `_deleteGroup()` test
- * already uses. The two tests that specifically characterize the
- * construction-time disk load instead seed groups.json itself via
- * `harness.jsonStore.put(harness.store.groups, [...])` immediately before
- * constructing, which is just as deterministic (nothing runs in between)
- * and is the more faithful/real proof for exactly those two tests. Note:
- * `removeNodeFromGroups()` is the one GroupService method that reads the
- * nodeId -> groupIds index (`_nodeToGroups`, rebuilt from `_groups` at
- * construction and after every mutating call) as its entry point, so
- * directly overwriting `_groups` post-construction (bypassing the index
- * rebuild) would leave it silently stale for that one method - the node
- * removal test below seeds via the disk-load path for that reason.
+ * `harness.jsonStore`'s `groups.json` state persists across every test in
+ * this file (`afterEach`'s `resetState()` doesn't clear it, see
+ * `harness.ts`). Most tests seed `_groupService._groups` directly after
+ * constructing; the tests characterizing construction-time disk loading
+ * (and node removal, which reads an index only rebuilt from `_groups` at
+ * construction) seed `groups.json` itself beforehand instead.
  */
 import {
 	describe,
@@ -134,9 +78,9 @@ describe('ZwaveClient service wiring: association/group facades, buildVirtualVal
 	let ZWaveClient: typeof ZWaveClientType
 
 	beforeAll(async () => {
-		// Isolate STORE_DIR FIRST (via the harness), THEN dynamically import
-		// the real, store-dependent `ZwaveClient.ts` - see the file doc
-		// comment's "Store isolation" section for why order matters here.
+		// STORE_DIR must be isolated (via the harness) before ZwaveClient.ts is
+		// imported, since it reads it at module-evaluation time - see the file
+		// doc comment's "Store isolation" section
 		harness = await createSocketHarness()
 		;({ default: ZWaveClient } = await import(
 			'../../../api/lib/ZwaveClient.ts'
@@ -148,19 +92,10 @@ describe('ZwaveClient service wiring: association/group facades, buildVirtualVal
 	})
 
 	beforeEach(() => {
-		// Defensive: every spy in this file targets a fresh per-test
-		// instance (a new `_associationService`/`_groupService`/`zwave`
-		// object each `realZwave()` call), so nothing currently leaks
-		// between tests - but restoring first, matching the convention
-		// already used in `ScheduleService.test.ts` /
-		// `ConfigurationTemplateService.test.ts`, keeps that true even if a
-		// future test in this file spies on shared/prototype state.
+		// Every spy here targets a fresh per-test instance, but restore first anyway in case a future test spies on shared/prototype state
 		vi.restoreAllMocks()
 
-		// The real `'clients'` connect/disconnect callback does
-		// `gw.zwave?.setUserCallbacks()` on every first-client connection -
-		// `gw` itself must be truthy or this throws. See
-		// `outboundProducers.test.ts`'s identical `beforeEach` comment.
+		// The real 'clients' connect callback calls gw.zwave?.setUserCallbacks(), so gw itself must be truthy or it throws
 		harness.testHooks.setGateway(
 			createFakeGateway({ zwave: undefined }) as any,
 		)
@@ -198,9 +133,7 @@ describe('ZwaveClient service wiring: association/group facades, buildVirtualVal
 	 * Resolves the first time `NODE_UPDATED` arrives on `client` carrying a
 	 * non-empty `values` map - filters out the earlier, bare-shell
 	 * `NODE_UPDATED` that `createVirtualNode()` (`GroupService.ts:343`)
-	 * sends with the full-but-not-yet-populated virtual ZUINode (whose
-	 * `values` field is `{}`, which is truthy) before
-	 * `_updateVirtualNodeValues()` populates and re-emits it.
+	 * sends before `_updateVirtualNodeValues()` populates and re-emits it.
 	 */
 	function waitForNodeUpdatedWithValues(client: any): Promise<any> {
 		return new Promise((resolve) => {
@@ -215,16 +148,7 @@ describe('ZwaveClient service wiring: association/group facades, buildVirtualVal
 	}
 
 	describe('association delegates (ZwaveClient.ts:1695-1805) - thin pass-through wiring to the real, independently-tested AssociationService', () => {
-		// AssociationService's own logic (association-group discovery,
-		// add/remove/refresh flows, the stale-driver-across-await fix) is
-		// exhaustively unit-tested in `AssociationService.test.ts` (finding
-		// #1). These tests only characterize ZwaveClient's OWN facade
-		// wiring: does calling the public method really delegate to
-		// `_associationService`, with the right arguments, returning its
-		// result unmodified? Stubbing the real `_associationService`
-		// instance's methods proves exactly that without needing any driver
-		// fakery (AssociationService's own methods need a live driver;
-		// faking one here would just duplicate its own test suite).
+		// Stubbing the real _associationService instance's methods proves delegation without needing driver fakery, which AssociationService's own tests already require
 
 		it('getAssociations() delegates to AssociationService.getAssociations(nodeId, refresh) and returns its result', async () => {
 			const zwave = realZwave()
@@ -349,10 +273,7 @@ describe('ZwaveClient service wiring: association/group facades, buildVirtualVal
 			const zwave = realZwave()
 			zwave.driverReady = true
 			;(zwave as any)._driver = fakeGroupDriver([10, 11])
-			// Isolate this test from any group state a previous test in this
-			// file may have left in the shared harness's jsonStore - see the
-			// file doc comment's "shared-harness group-state isolation"
-			// section.
+			// Isolate from any group state a previous test in this file left in the shared harness's jsonStore (see file doc comment)
 			;(zwave as any)._groupService._groups = []
 
 			const group = await zwave._createGroup('Kitchen', [10, 11])
@@ -504,11 +425,7 @@ describe('ZwaveClient service wiring: association/group facades, buildVirtualVal
 
 		it('returns null when the VirtualValueID carries no metadata (ZwaveClient.ts:2755-2756 guard)', () => {
 			const zwave = realZwave()
-			// Deliberately malformed input (simulates an older zwave-js build
-			// omitting metadata) - `Partial<...>` legitimately allows
-			// dropping the field without an `any` cast; the single `as
-			// VirtualValueID` below only re-satisfies the private method's
-			// compile-time parameter type, which is a no-op at runtime.
+			// Simulates an older zwave-js build omitting metadata; the `as VirtualValueID` cast only satisfies the private method's compile-time param type, a no-op at runtime
 			const malformed: Partial<VirtualValueID> = {
 				...booleanVirtualValueId,
 			}
@@ -687,11 +604,7 @@ describe('ZwaveClient service wiring: association/group facades, buildVirtualVal
 			expect((node as any).id).toBe(group.id)
 			expect(changed).toBe(true)
 
-			// Deterministic negative proof (no timing/flush needed): every
-			// `sendToSocket` call this whole test triggers is captured by
-			// the spy, so asserting on its full call history after the
-			// awaits above proves no VALUE_UPDATED was ever sent - not just
-			// that none arrived within some fixed wait window.
+			// Asserting the spy's full call history (not a timed wait) proves no VALUE_UPDATED was ever sent, deterministically
 			const socketEventNames = sendToSocketSpy.mock.calls.map(
 				(call) => call[0],
 			)

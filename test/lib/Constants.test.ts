@@ -1,16 +1,10 @@
 /**
- * `api/lib/Constants.ts` statically imports `storeDir` from
- * `../config/app.ts`, whose module-evaluation-time `resolveSessionSecret()`
- * call falls back to the REAL repository `store/` directory and writes a
- * `.session-secret` file there whenever `STORE_DIR` isn't already set. A
- * top-level `import * as mod from '../../api/lib/Constants.ts'` is hoisted
- * and evaluated before any of this file's own code (including a
- * `beforeAll`) could isolate that env var, so it must be a dynamic
- * `import()` performed AFTER `ensureTestEnv()` - see `http/env.ts` for the
- * full rationale. None of the tests below actually exercise `storeDir`
- * (they're pure classification-table lookups), but merely importing the
- * module is enough to trigger the real repo write, so isolation is required
- * regardless.
+ * Constants.ts transitively imports storeDir from config/app.ts, which
+ * writes a session-secret file to the real repo store/ dir if STORE_DIR
+ * isn't set yet - importing the module (even though these tests are pure
+ * classification-table lookups that never touch storeDir) is enough to
+ * trigger that, so it must be a dynamic import() after ensureTestEnv() (see
+ * http/env.ts)
  */
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import type * as ConstantsModule from '../../api/lib/Constants.ts'
