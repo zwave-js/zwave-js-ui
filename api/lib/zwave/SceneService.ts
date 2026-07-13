@@ -1,21 +1,3 @@
-/**
- * SceneService – owns all custom-scene collection/persistence state and the
- * scene CRUD + activation behavior.
- *
- * Extracted from ZwaveClient to keep the monolith slim. The service is
- * strict-clean (no `any` casts, no non-null assertions, no ts-ignore) and
- * generic over the exact scene-value shape so ZwaveClient can keep using its
- * richer `ZUIValueIdScene` type without this service importing it (avoids a
- * circular import).
- *
- * Ports:
- *   persistence – read/write scenes.json via jsonStore
- *   nodes       – read-only ZUINode lookup (existence + value-id check)
- *   utils       – ValueID stringification (matches ZwaveClient's `_getValueID`)
- *   writer      – write a value on activation
- *   logger      – structured logging for activation failures
- */
-
 import { getErrorMessage } from '../errors.ts'
 import type {
 	ScenePersistencePort,
@@ -27,6 +9,7 @@ import type {
 	ZUISceneValueRef,
 } from './ports.ts'
 
+// Generic over the scene-value shape so ZwaveClient can keep using its richer ZUIValueIdScene without a circular import
 export class SceneService<V extends ZUISceneValueRef = ZUISceneValueRef> {
 	private _scenes: ZUISceneRecord<V>[]
 
@@ -52,13 +35,6 @@ export class SceneService<V extends ZUISceneValueRef = ZUISceneValueRef> {
 		this._scenes = initialScenes
 	}
 
-	// ---------------------------------------------------------------
-	// Public API – exact signatures preserved from ZwaveClient
-	// ---------------------------------------------------------------
-
-	/**
-	 * Creates a new scene with a specific `label` and stores it in `scenes.json`
-	 */
 	async createScene(label: string): Promise<boolean> {
 		const id =
 			this._scenes.length > 0
@@ -76,9 +52,6 @@ export class SceneService<V extends ZUISceneValueRef = ZUISceneValueRef> {
 		return true
 	}
 
-	/**
-	 * Delete a scene with a specific `sceneid` and updates `scenes.json`
-	 */
 	async removeScene(sceneid: number): Promise<boolean> {
 		const index = this._scenes.findIndex((s) => s.sceneid === sceneid)
 
@@ -93,9 +66,6 @@ export class SceneService<V extends ZUISceneValueRef = ZUISceneValueRef> {
 		return true
 	}
 
-	/**
-	 * Imports scenes Array in `scenes.json`
-	 */
 	async setScenes(scenes: ZUISceneRecord<V>[]): Promise<ZUISceneRecord<V>[]> {
 		// TODO: add scenes validation
 		this._scenes = scenes
@@ -104,16 +74,10 @@ export class SceneService<V extends ZUISceneValueRef = ZUISceneValueRef> {
 		return scenes
 	}
 
-	/**
-	 * Get all scenes
-	 */
 	getScenes(): ZUISceneRecord<V>[] {
 		return this._scenes
 	}
 
-	/**
-	 * Return all values of the scene with given `sceneid`
-	 */
 	sceneGetValues(sceneid: number): V[] {
 		const scene = this._scenes.find((s) => s.sceneid === sceneid)
 		if (!scene) {
@@ -122,9 +86,6 @@ export class SceneService<V extends ZUISceneValueRef = ZUISceneValueRef> {
 		return scene.values
 	}
 
-	/**
-	 * Add a value to a scene
-	 */
 	async addSceneValue(
 		sceneid: number,
 		valueId: V,
@@ -141,11 +102,10 @@ export class SceneService<V extends ZUISceneValueRef = ZUISceneValueRef> {
 		if (!node) {
 			throw Error(`Node ${valueId.nodeId} not found`)
 		} else {
-			// check if it is an existing valueid
 			if (!node.values?.[this._utils.getValueId(valueId)]) {
 				throw Error('No value found with given valueId')
 			} else {
-				// if this valueid is already in owr scene edit it else create new one
+				// Edit the existing scene value if this valueId is already recorded, otherwise append a new one
 				const index = scene.values.findIndex((s) => s.id === valueId.id)
 
 				const target = index < 0 ? valueId : scene.values[index]
@@ -161,9 +121,6 @@ export class SceneService<V extends ZUISceneValueRef = ZUISceneValueRef> {
 		return this._persistence.put(this._scenes)
 	}
 
-	/**
-	 * Remove a value from scene
-	 */
 	async removeSceneValue(
 		sceneid: number,
 		valueId: V,
@@ -174,7 +131,7 @@ export class SceneService<V extends ZUISceneValueRef = ZUISceneValueRef> {
 			throw Error('No scene found with given sceneid')
 		}
 
-		// get the index with also the node identifier as prefix
+		// id already embeds the node id as a prefix, so comparing it alone identifies the value within the scene
 		const index = scene.values.findIndex((s) => s.id === valueId.id)
 
 		if (index < 0) {
@@ -186,9 +143,6 @@ export class SceneService<V extends ZUISceneValueRef = ZUISceneValueRef> {
 		return this._persistence.put(this._scenes)
 	}
 
-	/**
-	 * Activate a scene with given scene id
-	 */
 	activateScene(sceneId: number): boolean {
 		const values = this.sceneGetValues(sceneId) || []
 
