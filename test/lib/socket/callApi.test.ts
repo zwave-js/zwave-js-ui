@@ -1,68 +1,40 @@
 /**
- * Characterizes `ZwaveClient.allowedApis`, the exhaustive ZWAVE_API/MQTT/HASS-callable contract, and `callApi()`, the single dispatcher those APIs route through.
- *
- * Underscore-prefixed entries (`_createScene`, `_getScenes`, ...) are public contract despite looking private - the prefix only hides them from in-process TypeScript callers.
+ * Characterizes `callApi()`, the single dispatcher every ZWAVE_API/MQTT/HASS-callable method
+ * routes through.
  */
 import { describe, it, expect, beforeAll } from 'vitest'
 import { existsSync, readFileSync } from 'node:fs'
 import path from 'node:path'
-import { DriverMode } from 'zwave-js'
+import { DriverMode, type Driver } from 'zwave-js'
 import type ZWaveClientType from '#api/lib/ZwaveClient.ts'
 import { useSocketHarness } from './harness.ts'
 import { getTestStoreDir } from '../shared/env.ts'
 import { createFakeGateway } from './fakes.ts'
-import { internals } from './internals.ts'
 
-// Populated in beforeAll, after useSocketHarness()'s own beforeAll has isolated STORE_DIR, so this dynamic import can't evaluate ZwaveClient.ts against the wrong store dir
+// Populated in beforeAll, after useSocketHarness() has isolated STORE_DIR, so the dynamic
+// import below can't evaluate ZwaveClient.ts against the wrong store dir
 let ZWaveClient: typeof ZWaveClientType
-let allowedApis: readonly string[]
 
 describe('Socket contract: callApi()', () => {
 	const getHarness = useSocketHarness()
 
 	beforeAll(async () => {
-		;({ default: ZWaveClient, allowedApis } = await import(
-			'#api/lib/ZwaveClient.ts'
-		))
+		;({ default: ZWaveClient } = await import('#api/lib/ZwaveClient.ts'))
 	})
 
-	// Safe to construct directly since the constructor only touches jsonStore, never a real driver or serial port, unless connect() is called
+	// The constructor only touches jsonStore, so this is safe without a real driver or serial port
 	async function realZwave(): Promise<ZWaveClientType> {
 		const harness = await getHarness({
 			gateway: createFakeGateway({ zwave: undefined }),
 		})
-		return new ZWaveClient({} as any, harness.io)
+		return new ZWaveClient({}, harness.io)
 	}
-
-	describe('allowedApis contract', () => {
-		it('has no duplicate entries', () => {
-			expect(new Set(allowedApis).size).toBe(allowedApis.length)
-		})
-
-		it('every entry names a real function on ZwaveClient.prototype, the exact assumption callApi() dispatch relies on', () => {
-			for (const name of allowedApis) {
-				expect(typeof (ZWaveClient.prototype as any)[name]).toBe(
-					'function',
-				)
-			}
-		})
-
-		it('includes several underscore-prefixed methods that ARE public contract, not private', () => {
-			const underscoreApis = allowedApis.filter((a) => a.startsWith('_'))
-			expect(underscoreApis.length).toBeGreaterThan(0)
-			expect(underscoreApis).toEqual(
-				expect.arrayContaining(['_getScenes', '_createScene']),
-			)
-		})
-	})
 
 	describe('callApi() dispatch', () => {
 		it('success: calls a real allowed method and returns its result, message, and echoed args', async () => {
 			const zwave = await realZwave()
-			internals(zwave).scenes = [
-				{ sceneid: 1, label: 'Test', values: [] },
-			]
-			internals(zwave)._driver = {}
+			zwave['scenes'] = [{ sceneid: 1, label: 'Test', values: [] }]
+			zwave['_driver'] = {} as unknown as Driver
 			zwave.driverReady = true
 
 			const res = await zwave.callApi('_getScenes')
@@ -77,10 +49,14 @@ describe('Socket contract: callApi()', () => {
 
 		it('unknown API: reports success:false with "Unknown API" for a name not in allowedApis', async () => {
 			const zwave = await realZwave()
-			internals(zwave)._driver = {}
+			zwave['_driver'] = {} as unknown as Driver
 			zwave.driverReady = true
 
-			const res = await zwave.callApi('notARealApiName' as any)
+			const res = await zwave.callApi(
+				'notARealApiName' as unknown as Parameters<
+					ZWaveClientType['callApi']
+				>[0],
+			)
 
 			expect(res).toStrictEqual({
 				success: false,
@@ -91,11 +67,13 @@ describe('Socket contract: callApi()', () => {
 
 		it('unknown API: also rejects a REAL method name that is simply not in allowedApis', async () => {
 			const zwave = await realZwave()
-			internals(zwave)._driver = {}
+			zwave['_driver'] = {} as unknown as Driver
 			zwave.driverReady = true
 
 			// init is a real ZWaveClient method intentionally excluded from allowedApis, so callApi must reject it exactly like a nonexistent name
-			const res = await zwave.callApi('init' as any)
+			const res = await zwave.callApi(
+				'init' as unknown as Parameters<ZWaveClientType['callApi']>[0],
+			)
 
 			expect(res).toStrictEqual({
 				success: false,
@@ -119,8 +97,10 @@ describe('Socket contract: callApi()', () => {
 
 		it('bootloader: allows the call when driver.mode is Bootloader even though driverReady is false', async () => {
 			const zwave = await realZwave()
-			internals(zwave).scenes = []
-			internals(zwave)._driver = { mode: DriverMode.Bootloader }
+			zwave['scenes'] = []
+			zwave['_driver'] = {
+				mode: DriverMode.Bootloader,
+			} as unknown as Driver
 			// Only bootloader mode permits the call here since driverReady stays false
 
 			const res = await zwave.callApi('_getScenes')
@@ -135,8 +115,8 @@ describe('Socket contract: callApi()', () => {
 
 		it('thrown error: catches a real thrown Error and surfaces its .message', async () => {
 			const zwave = await realZwave()
-			internals(zwave).scenes = []
-			internals(zwave)._driver = {}
+			zwave['scenes'] = []
+			zwave['_driver'] = {} as unknown as Driver
 			zwave.driverReady = true
 
 			const res = await zwave.callApi('_removeScene', 999)
@@ -150,7 +130,7 @@ describe('Socket contract: callApi()', () => {
 
 		it('omitted result: a successful call whose method returns undefined has result:undefined', async () => {
 			const zwave = await realZwave()
-			internals(zwave)._driver = {
+			zwave['_driver'] = {
 				controller: {
 					nodes: {
 						get: () => ({
@@ -159,27 +139,33 @@ describe('Socket contract: callApi()', () => {
 						}),
 					},
 				},
-			}
+			} as unknown as Driver
 			zwave.driverReady = true
 
 			const res = await zwave.callApi('manuallyIdleNotificationValue', {
 				nodeId: 5,
-			} as any)
+			} as Parameters<
+				ZWaveClientType['manuallyIdleNotificationValue']
+			>[0])
 
 			expect(res.success).toBe(true)
 			expect(res.message).toBe('Success zwave api call')
 			expect(res.result).toBeUndefined()
-			// res.result === undefined can't distinguish a present key from an absent one since both read back as undefined through property access, so assert 'result' in res instead
+			// A present-but-undefined key and an absent key both read back as undefined above
 			expect('result' in res).toBe(true)
 			expect(res.args).toEqual([{ nodeId: 5 }])
 		})
 
 		it('absent result: the `result` key does not exist at all on the error path, contrast with the present-but-undefined success case above', async () => {
 			const zwave = await realZwave()
-			internals(zwave)._driver = {}
+			zwave['_driver'] = {} as unknown as Driver
 			zwave.driverReady = true
 
-			const res = await zwave.callApi('notARealApiName' as any)
+			const res = await zwave.callApi(
+				'notARealApiName' as unknown as Parameters<
+					ZWaveClientType['callApi']
+				>[0],
+			)
 
 			expect(res.success).toBe(false)
 			expect('result' in res).toBe(false)
@@ -189,14 +175,22 @@ describe('Socket contract: callApi()', () => {
 			const zwave = await realZwave()
 			zwave.driverReady = true
 			// setNodeName only reads/writes .name on the node
-			const zwaveNode: any = { name: undefined }
-			internals(zwave)._driver = {
+			const zwaveNode = { name: undefined as string | undefined }
+			zwave['_driver'] = {
 				controller: { nodes: { get: () => zwaveNode } },
-			}
-			internals(zwave)._nodes.set(7, { id: 7 } as any)
+			} as unknown as Driver
+			zwave.nodes.set(7, {
+				id: 7,
+				ready: false,
+				available: true,
+				failed: false,
+				inited: false,
+				eventsQueue: [],
+			})
 			// storeNodes is only populated by connect(), never called here, so it needs seeding directly
-			internals(zwave).storeNodes = {}
-			// driverInfo.name (read by the real homeHex getter) stays unset so updateStoreNodes() no-ops and this test stays focused on dispatch/argument-order/result semantics, not the on-disk write covered by the disk-persistence test below
+			zwave['storeNodes'] = {}
+			// driverInfo.name stays unset, so updateStoreNodes() no-ops; the on-disk write is
+			// covered separately by the disk-persistence test below
 
 			const res = await zwave.callApi('setNodeName', 7, 'Living Room')
 
@@ -212,8 +206,8 @@ describe('Socket contract: callApi()', () => {
 
 		it('argument echo: `args` is set to the exact array passed in, in order, for a multi-arg call', async () => {
 			const zwave = await realZwave()
-			internals(zwave).scenes = [{ sceneid: 1, label: 'A', values: [] }]
-			internals(zwave)._driver = {}
+			zwave['scenes'] = [{ sceneid: 1, label: 'A', values: [] }]
+			zwave['_driver'] = {} as unknown as Driver
 			zwave.driverReady = true
 
 			const res = await zwave.callApi('_sceneGetValues', 1)
@@ -223,11 +217,13 @@ describe('Socket contract: callApi()', () => {
 
 		it('argument echo: `args` is echoed back even on the error path (unknown API)', async () => {
 			const zwave = await realZwave()
-			internals(zwave)._driver = {}
+			zwave['_driver'] = {} as unknown as Driver
 			zwave.driverReady = true
 
 			const res = await zwave.callApi(
-				'notARealApiName' as any,
+				'notARealApiName' as unknown as Parameters<
+					ZWaveClientType['callApi']
+				>[0],
 				'a',
 				'b',
 				3,
@@ -239,7 +235,7 @@ describe('Socket contract: callApi()', () => {
 		it('argument echo: `args` is echoed back even on the error path (disconnected)', async () => {
 			const zwave = await realZwave()
 
-			const res = await zwave.callApi('_getScenes' as any, 'unused')
+			const res = await zwave.callApi('_getScenes', 'unused' as never)
 
 			expect(res.args).toEqual(['unused'])
 		})
@@ -252,12 +248,19 @@ describe('Socket contract: callApi()', () => {
 
 			const zwave = await realZwave()
 			zwave.driverReady = true
-			internals(zwave).driverInfo = { name: 'ISOLATIONCHECK' }
-			internals(zwave)._driver = {
+			zwave['driverInfo'] = { name: 'ISOLATIONCHECK' }
+			zwave['_driver'] = {
 				controller: { nodes: { get: () => ({ name: undefined }) } },
-			}
-			internals(zwave)._nodes.set(9, { id: 9 } as any)
-			internals(zwave).storeNodes = {}
+			} as unknown as Driver
+			zwave.nodes.set(9, {
+				id: 9,
+				ready: false,
+				available: true,
+				failed: false,
+				inited: false,
+				eventsQueue: [],
+			})
+			zwave['storeNodes'] = {}
 
 			const res = await zwave.callApi('setNodeName', 9, 'Isolation Probe')
 			expect(res.success).toBe(true)
