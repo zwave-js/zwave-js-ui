@@ -1179,7 +1179,9 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 				const users = jsonStore.get(store.users) as User[]
 
 				const user = req.session.user
-				const oldUser = users.find((u) => u.username === user.username)
+				const oldUser = user
+					? users.find((u) => u.username === user.username)
+					: undefined
 
 				if (!oldUser) {
 					return res.json({

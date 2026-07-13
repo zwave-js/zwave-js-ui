@@ -1,11 +1,11 @@
-import { describe, it, expect, afterEach } from 'vitest'
+import { describe, it, expect, beforeEach } from 'vitest'
 import { useHttpHarness } from './harness.ts'
 import { seedUser, signUserToken, setSettings } from '../shared/authHelpers.ts'
 
 describe('HTTP contract: auth & password', () => {
 	const getHarness = useHttpHarness()
 
-	afterEach(async () => {
+	beforeEach(async () => {
 		const harness = await getHarness()
 		await setSettings(harness, { gateway: {} })
 	})
@@ -160,7 +160,7 @@ describe('HTTP contract: auth & password', () => {
 	})
 
 	describe('PUT /api/password', () => {
-		it('fails with a generic error when there is no logged-in session user', async () => {
+		it('reports that no user exists when there is no logged-in session user', async () => {
 			const harness = await getHarness()
 			await seedUser(harness, 'existing-user', 'password')
 			const res = await harness.request.put('/api/password').send({
@@ -171,7 +171,7 @@ describe('HTTP contract: auth & password', () => {
 
 			expect(res.status).toBe(200)
 			expect(res.body.success).toBe(false)
-			expect(res.body.message).toBe('Error while updating passwords')
+			expect(res.body.message).toBe('User not found')
 		})
 
 		it('changes the password end-to-end for a logged-in session and never leaks passwordHash', async () => {
