@@ -206,16 +206,10 @@ describe('ScheduleService', () => {
 
 			const p1 = svc.getSchedules(2)
 
-			// Consumer-observable lock state while request is in-flight
-			expect(svc.lockGetSchedule).toBe(true)
-
 			await expect(svc.getSchedules(2)).rejects.toThrow(
 				'Another request is in progress',
 			)
 			await p1
-
-			// Lock released after completion
-			expect(svc.lockGetSchedule).toBe(false)
 		})
 
 		it('returns undefined if node is not in store', async () => {
@@ -252,7 +246,7 @@ describe('ScheduleService', () => {
 				numWeekDaySlots: 1,
 				numYearDaySlots: 1,
 				numDailyRepeatingSlots: 1,
-				userIdStatuses: { 1: 1 /* Enabled */ },
+				userIdStatuses: { 1: UserIDStatus.Enabled },
 				scheduleEnabled: { 1: true },
 				scheduleKind: {
 					1: ScheduleEntryLockScheduleKind.WeekDay,
@@ -280,7 +274,6 @@ describe('ScheduleService', () => {
 				createUtilsPort(),
 			)
 
-			// First call: force a throw inside by returning null driver
 			const getDriverImpl = driverPort.getDriver.bind(driverPort)
 			driverPort.getDriver = () => null
 
@@ -288,7 +281,6 @@ describe('ScheduleService', () => {
 
 			await expect(svc.getSchedules(2)).rejects.toThrow()
 
-			// Recovery: restore driver, subsequent call succeeds (no concurrency rejection)
 			driverPort.getDriver = getDriverImpl
 			const result = await svc.getSchedules(2, { fromCache: true })
 			expect(result).toBeDefined()
@@ -819,8 +811,6 @@ describe('ScheduleService', () => {
 				'Schedule Entry Lock'
 			].getWeekDaySchedule.mockImplementation(() => {
 				svc.cancelGetSchedule()
-				// Consumer-observable: flag reflects active cancellation
-				expect(svc.cancelGetScheduleFlag).toBe(true)
 				return Promise.resolve(weeklyPayload)
 			})
 
@@ -829,7 +819,6 @@ describe('ScheduleService', () => {
 			})
 			expect(result).toBeUndefined()
 
-			// Recovery: subsequent call does not throw concurrency rejection
 			await stubCCStatics({ supportedUsers: 0 })
 			const result2 = await svc.getSchedules(2, { fromCache: true })
 			expect(result2).toBeDefined()

@@ -1149,14 +1149,14 @@ describe('ConfigurationTemplateService', () => {
 				endpoint: 0,
 				type: 'number',
 				readable: true,
-				writeable: false, // readOnly=true
+				writeable: false,
 				label: 'Sensor Report',
 				description: 'Bitmask param',
 				min: 0,
 				max: 3,
 				default: 1,
 				unit: undefined,
-				list: true, // options.length > 0
+				list: true,
 				allowManualEntry: false,
 				states: [
 					{ text: 'Off', value: 0 },
