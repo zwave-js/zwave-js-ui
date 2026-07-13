@@ -187,7 +187,7 @@ describe('Socket protocol runtime freshness', () => {
 		)
 	})
 
-	it('resolves a replacement gateway on the next ZWAVE_API call', async () => {
+	it('resolves a replacement gateway on the next request', async () => {
 		const gatewayA = createFakeGateway({
 			zwave: createFakeZwaveClient({
 				callApi: vi.fn(() =>
@@ -278,7 +278,7 @@ describe('Socket protocol runtime freshness', () => {
 		expect(gatewayB.zwave.callApi).toHaveBeenCalledWith('fast')
 	})
 
-	it('resolves a replacement Zniffer on the next ZNIFFER_API call', async () => {
+	it('resolves a replacement Zniffer on the next request', async () => {
 		const gateway = createFakeGateway()
 		const znifferA = createFakeZniffer({
 			getFrames: vi.fn(() => ['frame-a']),
@@ -336,7 +336,7 @@ describe('Socket protocol runtime freshness', () => {
 		expect(zniffer.clear).toHaveBeenCalledOnce()
 	})
 
-	it('uses the current gateway for each first-client and last-client event', async () => {
+	it('uses the current gateway as clients connect and disconnect', async () => {
 		const gatewayA = createFakeGateway()
 		harness.runtime.setGateway(asGateway(gatewayA))
 		const clientA = createClient(harness)
@@ -359,7 +359,7 @@ describe('Socket protocol runtime freshness', () => {
 		expect(gatewayA.zwave.removeUserCallbacks).toHaveBeenCalledOnce()
 	})
 
-	it('processes an event without an acknowledgement callback', async () => {
+	it('processes a request without an acknowledgement callback', async () => {
 		const gateway = createFakeGateway()
 		harness.runtime.setGateway(asGateway(gateway))
 		const client = createClient(harness)
@@ -367,7 +367,7 @@ describe('Socket protocol runtime freshness', () => {
 
 		client.emit('ZWAVE_API', { api: 'fireAndForget' })
 
-		// The acknowledged call is a FIFO barrier for the unacknowledged event
+		// Socket.IO guarantees ordering, so the acknowledged call flushes the earlier request
 		await emit(client, 'ZWAVE_API', { api: 'barrier' })
 		expect(gateway.zwave.callApi).toHaveBeenCalledWith('fireAndForget')
 	})
