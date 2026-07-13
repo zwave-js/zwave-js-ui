@@ -499,6 +499,7 @@ describe('ConfigurationTemplateService', () => {
 			expect(result.failed).toBe(0)
 			expect(nodeStore.writeValue).toHaveBeenCalledTimes(2)
 
+			// Assert exact write arguments in order: nodeId, CC, endpoint, property, propertyKey, value
 			expect(nodeStore.writeValue).toHaveBeenCalledWith(
 				{
 					nodeId: 2,
