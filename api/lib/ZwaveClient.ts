@@ -4845,6 +4845,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		let node: ZUINode
 		// node made it past `node found` — no longer a ghost candidate
 		this._inclusionCoordinator.onNodeAdded(zwaveNode.id)
+		// Complete replacement here because node removal must preserve metadata first
 		this._inclusionCoordinator.onReplacementComplete()
 		// the driver is ready so this node has been added on fly
 		if (this.driverReady) {

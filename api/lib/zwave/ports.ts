@@ -411,6 +411,7 @@ export interface FirmwareUpdateNodeState {
 	lastFirmwareUpdateCheck?: number
 }
 
+/** Detached firmware state published only after persistence and generation fencing */
 export interface StagedFirmwareNodeUpdate {
 	nodeId: number
 	availableFirmwareUpdates: FirmwareUpdateInfo[]
@@ -452,6 +453,7 @@ export interface FirmwareNodeStorePort {
 	getStoreNode(nodeId: number): Partial<FirmwareUpdateNodeState> | undefined
 	ensureStoreNode(nodeId: number): Partial<FirmwareUpdateNodeState>
 	updateStoreNodes(): Promise<void>
+	/** Filesystem writes may complete after reset, so callers must fence before publishing staged state */
 	persistStagedNodeUpdates(
 		staged: ReadonlyArray<StagedFirmwareNodeUpdate>,
 	): Promise<void>
