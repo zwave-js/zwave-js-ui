@@ -357,7 +357,7 @@ describe('ZwaveClient service wiring: association/group facades, buildVirtualVal
 		})
 	})
 
-	describe('group CRUD facade (ZwaveClient.ts:2594-2621) - real GroupService + jsonStore wiring (the closure-backed registry finding #2 fixed)', () => {
+	describe('group CRUD facade (ZwaveClient.ts:2594-2621) - real GroupService + jsonStore wiring, with _getGroups() reading the live registry after each mutation', () => {
 		function fakeGroupDriver(nodeIds: number[]) {
 			return {
 				controller: {
