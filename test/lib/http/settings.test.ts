@@ -1,22 +1,18 @@
 import { describe, it, expect, vi } from 'vitest'
-
-const enumerateSerialPortsMock = vi.fn(
-	(_options?: { local?: boolean; remote?: boolean }) =>
-		Promise.resolve<string[]>([]),
-)
-
-// settings.ts imports enumerateSerialPorts as a static module boundary (api/lib/serialPorts.ts)
-// rather than accepting it as a constructor-injected collaborator, so it's mocked at the module
-// level here instead of threaded through createApp()/harness options.
-vi.mock('../../../api/lib/serialPorts.ts', () => ({
-	enumerateSerialPorts: enumerateSerialPortsMock,
-}))
-
-import { useHttpHarness } from './harness.ts'
-import { createFakeGateway } from '../shared/fakes.ts'
-import { createFakeZniffer } from '../socket/fakes.ts'
+import { useHttpHarness, enumerateSerialPorts } from './harness.ts'
+import { createFakeGateway, createFakeZniffer } from '../shared/fakes.ts'
 import { setSettings } from '../shared/authHelpers.ts'
 
+/**
+ * Characterizes: GET/POST /api/settings, GET /api/serial-ports,
+ * POST /api/restart, POST /api/statistics, POST /api/versions.
+ *
+ * `settings.zwave` is deliberately kept falsy in every settings payload used
+ * here so that the real (unmocked) `startGateway()` invoked by
+ * `POST /api/restart` never constructs a real `ZWaveClient`/`MqttClient` -
+ * that keeps the whole file hardware/network-free while still exercising the
+ * real restart code path end-to-end.
+ */
 describe('HTTP contract: settings, restart, statistics, versions', () => {
 	const getHarness = useHttpHarness()
 
@@ -71,7 +67,7 @@ describe('HTTP contract: settings, restart, statistics, versions', () => {
 	describe('GET /api/serial-ports', () => {
 		it('returns exactly the ports the (mocked) enumerator resolves, with no real serial/mDNS I/O', async () => {
 			const harness = await getHarness()
-			enumerateSerialPortsMock.mockImplementation((options) => {
+			enumerateSerialPorts.mockImplementationOnce((options) => {
 				expect(options).toEqual({ local: true, remote: true })
 				return Promise.resolve(['/dev/ttyFAKE0', '/dev/ttyFAKE1'])
 			})
@@ -87,7 +83,9 @@ describe('HTTP contract: settings, restart, statistics, versions', () => {
 
 		it('returns an empty list without throwing when the enumerator resolves none', async () => {
 			const harness = await getHarness()
-			enumerateSerialPortsMock.mockResolvedValue([])
+			enumerateSerialPorts.mockImplementationOnce(() =>
+				Promise.resolve([]),
+			)
 
 			const res = await harness.request.get('/api/serial-ports')
 
@@ -95,9 +93,11 @@ describe('HTTP contract: settings, restart, statistics, versions', () => {
 			expect(res.body).toEqual({ success: true, serial_ports: [] })
 		})
 
-		it('an enumerator rejection is caught and reported as a failed-but-200 envelope with an empty list', async () => {
+		it('reports an enumeration failure with an empty list', async () => {
 			const harness = await getHarness()
-			enumerateSerialPortsMock.mockRejectedValue(new Error('boom'))
+			enumerateSerialPorts.mockImplementationOnce(() =>
+				Promise.reject(new Error('boom')),
+			)
 
 			const res = await harness.request.get('/api/serial-ports')
 
@@ -105,14 +105,14 @@ describe('HTTP contract: settings, restart, statistics, versions', () => {
 			expect(res.body).toEqual({ success: false, serial_ports: [] })
 		})
 
-		it('skips enumeration entirely (no enumerator call) when ZWAVE_PORT is set via env var (if-condition false branch)', async () => {
+		it('skips enumeration entirely (no enumerator call) when ZWAVE_PORT is set via env var', async () => {
 			const harness = await getHarness()
-			enumerateSerialPortsMock.mockImplementation(() => {
+			const previous = process.env.ZWAVE_PORT
+			process.env.ZWAVE_PORT = '/dev/ttyFAKE-env'
+			enumerateSerialPorts.mockImplementationOnce(() => {
 				throw new Error('must not be called when ZWAVE_PORT is set')
 			})
 
-			const previous = process.env.ZWAVE_PORT
-			process.env.ZWAVE_PORT = '/dev/ttyFAKE-env'
 			try {
 				const res = await harness.request.get('/api/serial-ports')
 
@@ -388,7 +388,6 @@ describe('HTTP contract: settings, restart, statistics, versions', () => {
 
 		it('fails cleanly with the generic error envelope when there is no gateway to close', async () => {
 			const harness = await getHarness()
-
 			const res = await harness.request.post('/api/restart')
 
 			expect(res.status).toBe(200)
@@ -398,7 +397,7 @@ describe('HTTP contract: settings, restart, statistics, versions', () => {
 			})
 		})
 
-		it('restarts successfully end-to-end (real startGateway(), zwave/mqtt kept disabled), and clears the restarting flag so a follow-up restart is accepted', async () => {
+		it('restarts successfully end-to-end (real startGateway(), zwave/mqtt kept disabled)', async () => {
 			const gw = createFakeGateway()
 			const harness = await getHarness({ gateway: gw })
 			await setSettings(harness, {
@@ -416,42 +415,40 @@ describe('HTTP contract: settings, restart, statistics, versions', () => {
 			})
 			expect(gw.close).toHaveBeenCalledOnce()
 
-			// A follow-up restart being accepted proves `restarting` was cleared after the first one
-			const followUp = await harness.request.post('/api/restart')
-			expect(followUp.body.message).not.toMatch(/already restarting/)
+			const followUp = await harness.request
+				.post('/api/settings')
+				.send({})
+			expect(followUp.body.message).not.toBe(
+				'Gateway is restarting, wait a moment before doing another request',
+			)
 		})
 
-		it(
-			'a request after restart reflects the freshly-started gateway, never a stale pre-restart reference ' +
-				'(per-request-fresh-resolution regression - see AppRuntime.ts and test/runtime/AppRuntime.test.ts)',
-			async () => {
-				const oldGw = createFakeGateway()
-				oldGw.zwave.devices = { 1: { name: 'Old device' } }
-				const harness = await getHarness({ gateway: oldGw })
-				await setSettings(harness, {
-					zwave: undefined,
-					mqtt: undefined,
-					zniffer: undefined,
-				})
+		it('a request after restart reflects the freshly-started gateway, never a stale pre-restart reference', async () => {
+			const oldGw = createFakeGateway()
+			oldGw.zwave.devices = { 1: { name: 'Old device' } }
+			const harness = await getHarness({ gateway: oldGw })
+			await setSettings(harness, {
+				zwave: undefined,
+				mqtt: undefined,
+				zniffer: undefined,
+			})
 
-				const before = await harness.request.get('/api/settings')
-				expect(before.body.devices).toEqual({
-					1: { name: 'Old device' },
-				})
+			const before = await harness.request.get('/api/settings')
+			expect(before.body.devices).toEqual({
+				1: { name: 'Old device' },
+			})
 
-				const restartRes = await harness.request.post('/api/restart')
-				expect(restartRes.body).toEqual({
-					success: true,
-					message: 'Gateway restarted successfully',
-				})
+			const restartRes = await harness.request.post('/api/restart')
+			expect(restartRes.body).toEqual({
+				success: true,
+				message: 'Gateway restarted successfully',
+			})
 
-				// startGateway() replaced the gateway with a brand-new real Gateway with no zwave client, so the follow-up request must resolve it fresh rather than see the old gateway's devices
-				const after = await harness.request.get('/api/settings')
-				expect(after.body.devices).toEqual({})
-			},
-		)
+			const after = await harness.request.get('/api/settings')
+			expect(after.body.devices).toEqual({})
+		})
 
-		it('cancels an active debug session before restarting (isSessionActive() true branch)', async () => {
+		it('cancels an active debug session before restarting', async () => {
 			const gw = createFakeGateway()
 			gw.zwave.driverReady = false
 			const harness = await getHarness({ gateway: gw })
@@ -483,11 +480,9 @@ describe('HTTP contract: settings, restart, statistics, versions', () => {
 			})
 		})
 
-		it('closes an existing zniffer before restarting (oldZniffer truthy branch)', async () => {
+		it('closes an existing zniffer before restarting', async () => {
 			const gw = createFakeGateway()
-			const fakeZniffer = createFakeZniffer({
-				close: vi.fn(() => Promise.resolve()),
-			})
+			const fakeZniffer = createFakeZniffer()
 			const harness = await getHarness({
 				gateway: gw,
 				zniffer: fakeZniffer,
@@ -508,7 +503,7 @@ describe('HTTP contract: settings, restart, statistics, versions', () => {
 			expect(fakeZniffer.close).toHaveBeenCalledOnce()
 		})
 
-		it('restarts successfully without a "gateway" key in settings (settings.gateway falsy branch)', async () => {
+		it('restarts successfully without a "gateway" key in settings', async () => {
 			const gw = createFakeGateway()
 			const harness = await getHarness({ gateway: gw })
 			await setSettings(harness, {

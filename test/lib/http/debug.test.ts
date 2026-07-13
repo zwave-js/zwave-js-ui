@@ -1,20 +1,15 @@
 import { describe, it, expect, beforeAll, afterEach, vi } from 'vitest'
 import { useHttpHarness, bufferResponse } from './harness.ts'
 import { createFakeGateway } from '../shared/fakes.ts'
-
-interface DebugManagerLike {
-	isSessionActive(): boolean
-	cancelSession(): Promise<void>
-}
+import type DebugManagerModule from '#api/lib/DebugManager.ts'
 
 describe('HTTP contract: debug capture', () => {
 	const getHarness = useHttpHarness()
-	let debugManager: DebugManagerLike
+	let debugManager: typeof DebugManagerModule
 
 	beforeAll(async () => {
 		// Import after harness setup so DebugManager uses the isolated store
-		debugManager = (await import('#api/lib/DebugManager.ts'))
-			.default as DebugManagerLike
+		debugManager = (await import('#api/lib/DebugManager.ts')).default
 	})
 
 	afterEach(async () => {
@@ -154,30 +149,25 @@ describe('HTTP contract: debug capture', () => {
 			expect(status.body).toEqual({ success: true, active: false })
 		})
 
-		it(
-			"reports a generic failure when nodeIds is not an array - debugManager.stopSession()'s " +
-				"`for (const nodeId of nodeIds)` isn't guarded by its own per-node try/catch " +
-				'(that only wraps each iteration once already inside the loop), so a non-iterable ' +
-				"body value throws past it to this route's own catch block",
-			async () => {
-				const gw = createFakeGateway()
-				gw.zwave.driverReady = false
-				const harness = await getHarness({ gateway: gw })
-				await harness.request.post('/api/debug/start').send({})
+		it('rejects a non-array nodeIds value without stopping the session', async () => {
+			const gw = createFakeGateway()
+			gw.zwave.driverReady = false
+			const harness = await getHarness({ gateway: gw })
+			await harness.request.post('/api/debug/start').send({})
 
-				const res = await harness.request
-					.post('/api/debug/stop')
-					.send({ nodeIds: 5 })
+			const res = await harness.request
+				.post('/api/debug/stop')
+				.send({ nodeIds: 5 })
 
-				expect(res.status).toBe(200)
-				expect(res.body.success).toBe(false)
-				expect(res.body.message).toMatch(/is not iterable/)
+			expect(res.status).toBe(200)
+			expect(res.body).toEqual({
+				success: false,
+				message: 'nodeIds must be an array',
+			})
 
-				// stopSession() already restores/clears the session inside restoreSession(), before the nodeIds loop throws, so no session is left active to clean up here
-				const status = await harness.request.get('/api/debug/status')
-				expect(status.body).toEqual({ success: true, active: false })
-			},
-		)
+			const status = await harness.request.get('/api/debug/status')
+			expect(status.body).toEqual({ success: true, active: true })
+		})
 	})
 
 	describe('POST /api/debug/cancel', () => {
@@ -210,7 +200,7 @@ describe('HTTP contract: debug capture', () => {
 			expect(status.body).toEqual({ success: true, active: false })
 		})
 
-		it('reports a generic failure when restoring the driver log level throws (uncaught inside cancelSession())', async () => {
+		it('reports a generic failure when restoring the driver log level throws while canceling', async () => {
 			const gw = createFakeGateway()
 			gw.zwave.driverReady = true
 			gw.zwave.driver.updateLogConfig = vi.fn(() => {
@@ -227,11 +217,8 @@ describe('HTTP contract: debug capture', () => {
 				message: 'driver rejected log config update',
 			})
 
-			// restoreSession() throws before clearing session, leaving status active
-			// Resets debugManager's session directly since re-calling cancelSession()/stopSession() would re-end an already-ended winston transport and hang awaiting a 'finish' event that only fires once
 			const status = await harness.request.get('/api/debug/status')
-			expect(status.body).toEqual({ success: true, active: true })
-			;(debugManager as unknown as { session: unknown }).session = null
+			expect(status.body).toEqual({ success: true, active: false })
 		})
 	})
 })

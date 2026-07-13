@@ -16,6 +16,7 @@ import {
 	type MockInstance,
 } from 'vitest'
 import { CommandClasses, ZWaveDataRate, type Route } from '@zwave-js/core'
+import { NODE_ID_BROADCAST_LR } from '@zwave-js/core'
 import {
 	Zniffer,
 	type Driver,
@@ -213,6 +214,46 @@ describe('Socket contract: outbound producers', () => {
 			expect(await received).toEqual([{ status: 'Alive', id: 7 }, true])
 		})
 
+		it('_updateControllerStatus() sends CONTROLLER_CMD with status (error/inclusionState default to undefined, stripped over the wire)', async () => {
+			const harness = await getHarness({ gateway: benignGateway() })
+			const zwave = realZwave(harness)
+			const client = await connectedSubscriber(harness, 'controller')
+			const received = waitForEvent(client, 'CONTROLLER_CMD')
+			;(zwave as any)._updateControllerStatus('Removing failed node')
+
+			// `error`/`inclusionState` are real fields on the payload
+			// object (`this._error`, `this._inclusionState`), but both
+			// default to `undefined` on a fresh client - `undefined`-valued
+			// object keys are stripped by JSON serialization, so only
+			// `status` survives the wire.
+			expect(await received).toEqual({ status: 'Removing failed node' })
+		})
+
+		it('_updateControllerStatus() is a no-op (no emit) when the status has not actually changed', async () => {
+			const harness = await getHarness({ gateway: benignGateway() })
+			const zwave = realZwave(harness)
+			const client = await connectedSubscriber(harness, 'controller')
+			const box: unknown[] = []
+			client.on('CONTROLLER_CMD', (data: unknown) => box.push(data))
+
+			const first = waitForEvent(client, 'CONTROLLER_CMD')
+			;(zwave as any)._updateControllerStatus('Idle')
+			await first
+
+			// Barrier/marker: repeat the SAME status (expected no-op),
+			// then fire a genuinely DIFFERENT status and await THAT
+			// instead of a fixed sleep - FIFO per-connection delivery
+			// means the repeat's (absent) emit would have arrived first.
+			const marker = waitForEvent(client, 'CONTROLLER_CMD')
+			;(zwave as any)._updateControllerStatus('Idle')
+			;(zwave as any)._updateControllerStatus('Removing failed node')
+			await marker
+
+			expect(box).toHaveLength(2)
+			expect((box[0] as any).status).toBe('Idle')
+			expect((box[1] as any).status).toBe('Removing failed node')
+		})
+
 		it("checkForConfigUpdates() sends INFO with getInfo()'s real payload", async () => {
 			const harness = await getHarness({ gateway: benignGateway() })
 			const zwave = realZwave(harness)
@@ -248,7 +289,7 @@ describe('Socket contract: outbound producers', () => {
 		})
 	})
 
-	describe('additional real literals/shapes: driven through their real public method', () => {
+	describe('additional real literals/shapes: driven through their real producing method/handler', () => {
 		it('REBUILD_ROUTES_PROGRESS: array-of-tuples shape, via the real public rebuildNodeRoutes()', async () => {
 			const harness = await getHarness({ gateway: benignGateway() })
 			const zwave = realZwave(harness)
@@ -377,6 +418,130 @@ describe('Socket contract: outbound producers', () => {
 			expect(await grantReceived).toEqual({ securityClasses: [0] })
 			expect(await dskReceived).toBe('abc')
 			expect(await abortReceived).toBe(true)
+		})
+
+		it('NODE_REMOVED: {id: NODE_ID_BROADCAST_LR} via the real _refreshBroadcastLRNode()', async () => {
+			const harness = await getHarness({ gateway: benignGateway() })
+			const zwave = realZwave(harness)
+			zwave.driverReady = true
+			;(zwave as any)._driver = {
+				controller: { supportsLongRange: false, nodes: new Map() },
+			}
+			// Pre-populate as if the LR broadcast virtual node already
+			// existed - `hasLRNodes` is false (no controller/LR nodes
+			// above), so the real method's deletion branch fires.
+			;(zwave as any)._virtualNodes.set(NODE_ID_BROADCAST_LR, {} as any)
+			;(zwave as any)._nodes.set(NODE_ID_BROADCAST_LR, {} as any)
+			const client = await connectedSubscriber(harness, 'nodes')
+			const received = waitForEvent(client, 'NODE_REMOVED')
+			;(zwave as any)._refreshBroadcastLRNode()
+
+			expect(NODE_ID_BROADCAST_LR).toBe(4095)
+			expect(await received).toEqual({ id: 4095 })
+			expect((zwave as any)._virtualNodes.has(NODE_ID_BROADCAST_LR)).toBe(
+				false,
+			)
+		})
+
+		it('NODE_REMOVED: full node object shape via the real _removeNode()', async () => {
+			const harness = await getHarness({ gateway: benignGateway() })
+			const zwave = realZwave(harness)
+			;(zwave as any).storeNodes = {}
+			const node = { id: 12, name: 'Removed node', ready: false }
+			;(zwave as any)._nodes.set(12, node)
+			const client = await connectedSubscriber(harness, 'nodes')
+			const received = waitForEvent(client, 'NODE_REMOVED')
+			;(zwave as any)._removeNode(12)
+
+			expect(await received).toEqual(node)
+			expect((zwave as any)._nodes.has(12)).toBe(false)
+		})
+
+		it('OTW_FIRMWARE_UPDATE: {progress} via the real, throttled _onOTWFirmwareUpdateProgress()', async () => {
+			const harness = await getHarness({ gateway: benignGateway() })
+			const zwave = realZwave(harness)
+			const client = await connectedSubscriber(harness, 'firmware')
+			const received = waitForEvent(client, 'OTW_FIRMWARE_UPDATE')
+
+			// `throttle()` invokes synchronously on its leading edge (the
+			// first call for a given key) - no fake timers needed.
+			;(zwave as any)._onOTWFirmwareUpdateProgress({
+				sentFragments: 3,
+				totalFragments: 10,
+			})
+
+			expect(await received).toEqual({
+				progress: { sentFragments: 3, totalFragments: 10 },
+			})
+		})
+
+		it('OTW_FIRMWARE_UPDATE: {result:{success,status}} via the real _onOTWFirmwareUpdateFinished()', async () => {
+			const harness = await getHarness({ gateway: benignGateway() })
+			const zwave = realZwave(harness)
+			const client = await connectedSubscriber(harness, 'firmware')
+			const received = waitForEvent(client, 'OTW_FIRMWARE_UPDATE')
+
+			;(zwave as any)._onOTWFirmwareUpdateFinished({
+				success: true,
+				// `255` is the real zwave-js `OTWFirmwareUpdateStatus.OK`
+				// member - the real method runs it through
+				// `getEnumMemberName()`, which is why the wire payload
+				// below asserts the STRING name, not the raw number.
+				status: 255,
+			})
+
+			expect(await received).toEqual({
+				result: { success: true, status: 'OK' },
+			})
+		})
+
+		it('NODE_FOUND: {node} via the real _onNodeFound()', async () => {
+			const harness = await getHarness({ gateway: benignGateway() })
+			const zwave = realZwave(harness)
+			zwave.driverReady = true
+			;(zwave as any).storeNodes = {}
+			;(zwave as any)._driver = {
+				controller: {
+					getPrioritySUCReturnRouteCached: () => ({}),
+					getCustomSUCReturnRoutesCached: () => [],
+				},
+			}
+			const client = await connectedSubscriber(harness, 'nodes')
+			const received = waitForEvent<any>(client, 'NODE_FOUND')
+			;(zwave as any)._onNodeFound({ id: 3 })
+
+			const data = await received
+			expect(data.node.id).toBe(3)
+			expect(data.node.ready).toBe(false)
+		})
+
+		it('NODE_EVENT: {nodeId, ...} via the real _onNodeEvent() handler', async () => {
+			const harness = await getHarness({ gateway: benignGateway() })
+			const zwave = realZwave(harness)
+			const node: any = { id: 2, eventsQueue: [] }
+			;(zwave as any)._nodes.set(2, node)
+			const client = await connectedSubscriber(harness, 'nodes')
+			const received = waitForEvent<any>(client, 'NODE_EVENT')
+			;(zwave as any)._onNodeEvent('wake up', { id: 2 } as any)
+
+			const data = await received
+			expect(data.nodeId).toBe(2)
+			expect(data.event.event).toBe('wake up')
+			// The real `time: new Date()` field survives Socket.IO's
+			// JSON-based wire serialization as an ISO string, not a `Date`
+			// instance - assert it round-trips to a valid date instead.
+			expect(new Date(data.event.time).toString()).not.toBe(
+				'Invalid Date',
+			)
+			// The real handler also appended the SAME event object onto
+			// the node's own `eventsQueue` - proving this ran the REAL
+			// handler logic, not a hand-copied literal (the `time` field
+			// is compared separately above since it round-trips through
+			// wire serialization as a string, unlike the original
+			// server-side `Date` object still sitting in `eventsQueue`).
+			expect(node.eventsQueue).toEqual([
+				{ time: expect.any(Date), event: 'wake up', args: [] },
+			])
 		})
 	})
 

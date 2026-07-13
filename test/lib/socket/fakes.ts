@@ -3,13 +3,20 @@ import { vi } from 'vitest'
 import {
 	createFakeGateway as createSharedFakeGateway,
 	createFakeMqttClient,
+	createFakeZniffer,
 	createFakeZwaveClient as createSharedFakeZwaveClient,
 	type FakeGateway as SharedFakeGateway,
 	type FakeMqttClient,
+	type FakeZniffer,
 	type FakeZwaveClient as SharedFakeZwaveClient,
 } from '../shared/fakes.ts'
 
-export { createFakeMqttClient, type FakeMqttClient }
+export {
+	createFakeMqttClient,
+	type FakeMqttClient,
+	createFakeZniffer,
+	type FakeZniffer,
+}
 
 // setUserCallbacks/removeUserCallbacks fire on first-connect/last-disconnect in the 'clients' handler
 export interface FakeZwaveClient extends SharedFakeZwaveClient {
@@ -24,42 +31,6 @@ export function createFakeZwaveClient(
 		...createSharedFakeZwaveClient(overrides),
 		setUserCallbacks: vi.fn(),
 		removeUserCallbacks: vi.fn(),
-		...overrides,
-	}
-}
-
-// Avoids constructing a real Zniffer, which would open a real serial port
-export interface FakeZniffer {
-	status: ReturnType<typeof vi.fn>
-	start: ReturnType<typeof vi.fn>
-	stop: ReturnType<typeof vi.fn>
-	clear: ReturnType<typeof vi.fn>
-	getFrames: ReturnType<typeof vi.fn>
-	setFrequency: ReturnType<typeof vi.fn>
-	setLRChannelConfig: ReturnType<typeof vi.fn>
-	saveCaptureToFile: ReturnType<typeof vi.fn>
-	loadCaptureFromBuffer: ReturnType<typeof vi.fn>
-	// AppInstance.close() calls this unconditionally when a zniffer is set, mirroring FakeGateway.close
-	close: ReturnType<typeof vi.fn>
-}
-
-export function createFakeZniffer(
-	overrides: Partial<FakeZniffer> = {},
-): FakeZniffer {
-	return {
-		status: vi.fn(() => ({ active: false, frequency: undefined })),
-		start: vi.fn(() => Promise.resolve(undefined)),
-		stop: vi.fn(() => Promise.resolve(undefined)),
-		clear: vi.fn(() => undefined),
-		getFrames: vi.fn(() => []),
-		setFrequency: vi.fn(() => Promise.resolve(undefined)),
-		setLRChannelConfig: vi.fn(() => Promise.resolve(undefined)),
-		saveCaptureToFile: vi.fn(() => Promise.resolve('/tmp/capture.zlf')),
-		// Resolves undefined like a successful real load; production awaits it,
-		// so a test can override this to a resolved value and assert it reaches
-		// the wire ack (an un-awaited promise would serialize to {} instead)
-		loadCaptureFromBuffer: vi.fn(() => Promise.resolve(undefined)),
-		close: vi.fn(() => Promise.resolve(undefined)),
 		...overrides,
 	}
 }

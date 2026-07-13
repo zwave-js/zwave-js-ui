@@ -76,6 +76,8 @@ async function assertRestoreArtifactsCleanedUp(
 	})
 }
 
+/** The repo-root `snippets/` directory the production `loadSnippets()`
+ * bundles at startup - independent of `storeDir`/`snippetsDir`. */
 const BUNDLED_SNIPPETS_DIR = path.join(
 	path.dirname(fileURLToPath(import.meta.url)),
 	'..',
@@ -84,13 +86,16 @@ const BUNDLED_SNIPPETS_DIR = path.join(
 	'snippets',
 )
 
-const EXPECTED_BUNDLED_SNIPPET_NAMES = [
-	'access-store-dir',
-	'clone-config',
-	'pingNodes',
-	'reinterview-nodes',
-]
+/** Every `.js` file the repo actually ships under `snippets/`, read live so
+ * this never drifts from what `loadSnippets()` bundles at startup. */
+const BUNDLED_SNIPPET_NAMES = readdirSync(BUNDLED_SNIPPETS_DIR)
+	.filter((name) => name.endsWith('.js'))
+	.map((name) => name.slice(0, -'.js'.length))
 
+/**
+ * Characterizes: GET/PUT/DELETE /api/store, PUT/POST /api/store-multi,
+ * GET /api/store/backup, POST /api/store/upload, GET /api/snippet.
+ */
 describe('HTTP contract: store, upload, snippets', () => {
 	const getHarness = useHttpHarness()
 
@@ -138,7 +143,7 @@ describe('HTTP contract: store, upload, snippets', () => {
 			})
 		})
 
-		it('follows a symlink to a file and returns the dereferenced target contents (isSymbolicLink() branch)', async () => {
+		it('follows a symlink to a file and returns the dereferenced target contents', async () => {
 			const harness = await getHarness()
 			writeFileSync(
 				path.join(getTestStoreDir(), 'link-target.txt'),
@@ -258,7 +263,7 @@ describe('HTTP contract: store, upload, snippets', () => {
 			})
 		})
 
-		it("overwrites an existing regular file's content when isNew is omitted (isFile() true side)", async () => {
+		it("overwrites an existing regular file's content when isNew is omitted", async () => {
 			const harness = await getHarness()
 			writeFileSync(
 				path.join(getTestStoreDir(), 'overwrite-me.txt'),
@@ -340,9 +345,9 @@ describe('HTTP contract: store, upload, snippets', () => {
 		})
 
 		it(
-			'aborts the whole operation (no per-file try/catch) when an earlier path escapes the ' +
-				'store, leaving later-listed files untouched - unlike POST /api/store-multi, which ' +
-				'skips unsafe entries individually',
+			'aborts the whole operation when an earlier path escapes the store, ' +
+				'leaving later-listed files untouched - unlike POST /api/store-multi, ' +
+				'which skips unsafe entries individually',
 			async () => {
 				const harness = await getHarness()
 				writeFileSync(
@@ -403,7 +408,7 @@ describe('HTTP contract: store, upload, snippets', () => {
 			expect(res.headers['content-type']).toBe('application/zip')
 		})
 
-		it("includes a symlinked file's dereferenced target content in the archive (isSymbolicLink() branch)", async () => {
+		it("includes a symlinked file's dereferenced target content in the archive", async () => {
 			const harness = await getHarness()
 			writeFileSync(
 				path.join(getTestStoreDir(), 'zip-link-target.txt'),
@@ -440,32 +445,28 @@ describe('HTTP contract: store, upload, snippets', () => {
 	})
 
 	describe('GET /api/store/backup', () => {
-		it(
-			'streams a ZIP archive body while advertising Content-Type: application/json ' +
-				'(preserved quirk: jsonStore.backup() never overrides the default JSON content type)',
-			async () => {
-				const harness = await getHarness()
-				// Persist one file because backups only include files already on disk
-				await harness.jsonStore.put(harness.store.settings, {
-					zwave: {},
-				})
+		it('streams a ZIP archive body with a ZIP content type/attachment header', async () => {
+			const harness = await getHarness()
+			// An unpersisted store produces a valid empty archive.
+			await harness.jsonStore.put(harness.store.settings, {
+				zwave: {},
+			})
 
-				const res = await bufferResponse(
-					harness.request.get('/api/store/backup'),
-				)
+			const res = await bufferResponse(
+				harness.request.get('/api/store/backup'),
+			)
 
-				expect(res.status).toBe(200)
-				expect(res.headers['content-type']).toMatch(/application\/json/)
-				// PK\x03\x04 is the ZIP local-file-header signature, proving the body is a real archive
-				expect(
-					(res.body as Buffer).subarray(0, 4).toString('hex'),
-				).toBe('504b0304')
-			},
-		)
+			expect(res.status).toBe(200)
+			expect(res.headers['content-type']).toBe('application/zip')
+			// PK\x03\x04 is the ZIP local-file-header signature, proving the body is a real archive
+			expect((res.body as Buffer).subarray(0, 4).toString('hex')).toBe(
+				'504b0304',
+			)
+		})
 	})
 
 	describe('POST /api/store/upload', () => {
-		it('rejects with "No file uploaded" for a request with no multipart body at all (req.files is undefined, not an empty array)', async () => {
+		it('rejects with "No file uploaded" for a request with no multipart body at all', async () => {
 			const harness = await getHarness()
 			const res = await harness.request.post('/api/store/upload')
 
@@ -527,7 +528,7 @@ describe('HTTP contract: store, upload, snippets', () => {
 			})
 		})
 
-		it('surfaces a MulterError message when more files are sent than the configured max count (multerPromise rejection path)', async () => {
+		it('surfaces a MulterError message when more files are sent than the configured max count', async () => {
 			const harness = await getHarness()
 			const res = await harness.request
 				.post('/api/store/upload')
@@ -542,7 +543,7 @@ describe('HTTP contract: store, upload, snippets', () => {
 			})
 		})
 
-		it('restores a real uploaded ZIP archive into the store (isRestore branch), merging its contents and cleaning up the staged upload', async () => {
+		it('restores a real uploaded ZIP archive into the store, merging its contents and cleaning up the staged upload', async () => {
 			const harness = await getHarness()
 			const stageParent = mkdtempSync(
 				path.join(tmpdir(), 'store-restore-src-'),
@@ -587,47 +588,43 @@ describe('HTTP contract: store, upload, snippets', () => {
 			}
 		})
 
-		it(
-			'rejects a restore ZIP containing a symlink that escapes the store (assertNoEscapingSymlinks ' +
-				'failure path), surfacing the exact error AND still cleaning up the staged upload and the ' +
-				'uploaded temp file - proving cleanup is not conditional on restore success',
-			async () => {
-				const stageParent = mkdtempSync(
-					path.join(tmpdir(), 'store-restore-evil-src-'),
+		it('rejects a restore ZIP containing a symlink that escapes the store with the exact error, still cleaning up the staged upload and uploaded temp file', async () => {
+			const harness = await getHarness()
+			const stageParent = mkdtempSync(
+				path.join(tmpdir(), 'store-restore-evil-src-'),
+			)
+			try {
+				const zipPath = path.join(stageParent, 'evil.zip')
+				await buildEscapingSymlinkZip(
+					zipPath,
+					'evil-link',
+					'../../etc/passwd',
 				)
-				try {
-					const zipPath = path.join(stageParent, 'evil.zip')
-					await buildEscapingSymlinkZip(
-						zipPath,
-						'evil-link',
-						'../../etc/passwd',
-					)
 
-					const res = await harness.request
-						.post('/api/store/upload')
-						.field('restore', 'true')
-						.attach('upload', readFileSync(zipPath), {
-							filename: 'evil.zip',
-							contentType: 'application/zip',
-						})
-
-					expect(res.status).toBe(200)
-					expect(res.body).toEqual({
-						success: false,
-						message:
-							'Archive contains a symlink escaping the store: evil-link',
+				const res = await harness.request
+					.post('/api/store/upload')
+					.field('restore', 'true')
+					.attach('upload', readFileSync(zipPath), {
+						filename: 'evil.zip',
+						contentType: 'application/zip',
 					})
 
-					await assertRestoreArtifactsCleanedUp('evil.zip')
-				} finally {
-					rmSync(stageParent, { recursive: true, force: true })
-				}
-			},
-		)
+				expect(res.status).toBe(200)
+				expect(res.body).toEqual({
+					success: false,
+					message:
+						'Archive contains a symlink escaping the store: evil-link',
+				})
+
+				await assertRestoreArtifactsCleanedUp('evil.zip')
+			} finally {
+				rmSync(stageParent, { recursive: true, force: true })
+			}
+		})
 	})
 
 	describe('GET /api/snippet', () => {
-		it('includes every real bundled snippet (loaded via the production loadSnippets() seam), verbatim', async () => {
+		it('includes every real bundled snippet, verbatim', async () => {
 			const gw = createFakeGateway()
 			const harness = await getHarness({ gateway: gw })
 
@@ -638,10 +635,8 @@ describe('HTTP contract: store, upload, snippets', () => {
 			const names = (res.body.data as Array<{ name: string }>).map(
 				(s) => s.name,
 			)
-			expect(names).toEqual(
-				expect.arrayContaining(EXPECTED_BUNDLED_SNIPPET_NAMES),
-			)
-			for (const name of EXPECTED_BUNDLED_SNIPPET_NAMES) {
+			expect(names).toEqual(expect.arrayContaining(BUNDLED_SNIPPET_NAMES))
+			for (const name of BUNDLED_SNIPPET_NAMES) {
 				const content = readFileSync(
 					path.join(BUNDLED_SNIPPETS_DIR, `${name}.js`),
 					'utf8',
@@ -697,9 +692,7 @@ describe('HTTP contract: store, upload, snippets', () => {
 			const names = (res.body.data as Array<{ name: string }>).map(
 				(s) => s.name,
 			)
-			expect(names).toEqual(
-				expect.arrayContaining(EXPECTED_BUNDLED_SNIPPET_NAMES),
-			)
+			expect(names).toEqual(expect.arrayContaining(BUNDLED_SNIPPET_NAMES))
 		})
 
 		it('does not duplicate bundled snippets when loadSnippets() runs more than once', async () => {

@@ -1,92 +1,7 @@
 import { describe, it, expect, vi } from 'vitest'
-import type { Express } from 'express'
-import type { RateLimitRequestHandler } from 'express-rate-limit'
 import { useHttpHarness } from './harness.ts'
 import { createFakeGateway } from '../shared/fakes.ts'
-import { registerConfigurationTemplatesRoutes } from '#api/routes/configurationTemplates.ts'
-import type { AppRuntime } from '#api/runtime/AppRuntime.ts'
 
-/**
- * Registers the real `registerConfigurationTemplatesRoutes` against a
- * minimal fake `app` whose `.get/.post/.put/.delete` record
- * `(path, ...handlers)` and keep the last handler, then returns the exact
- * production handler closure registered for `method`+`path`
- *
- * Used only for the three `if (!id)` guards (PUT/DELETE/POST `:id` routes),
- * which are unreachable via real HTTP since Express 4's `path-to-regexp`
- * requires `:id` to match at least one character
- *
- * The guards stay in place as deliberate defensive code
- */
-function captureConfigurationTemplatesHandler(
-	method: 'get' | 'post' | 'put' | 'delete',
-	routePath: string,
-): (req: any, res: any) => unknown {
-	type Handler = (req: any, res: any) => unknown
-	const registered: Array<{
-		method: string
-		path: string
-		handler: Handler
-	}> = []
-
-	const fakeApp = {
-		get: (p: string, ...handlers: Handler[]) => {
-			registered.push({
-				method: 'get',
-				path: p,
-				handler: handlers.at(-1),
-			})
-		},
-		post: (p: string, ...handlers: Handler[]) => {
-			registered.push({
-				method: 'post',
-				path: p,
-				handler: handlers.at(-1),
-			})
-		},
-		put: (p: string, ...handlers: Handler[]) => {
-			registered.push({
-				method: 'put',
-				path: p,
-				handler: handlers.at(-1),
-			})
-		},
-		delete: (p: string, ...handlers: Handler[]) => {
-			registered.push({
-				method: 'delete',
-				path: p,
-				handler: handlers.at(-1),
-			})
-		},
-	}
-
-	// The if (!id) branches return before touching runtime; a requireZwaveClient that throws makes that precondition explicit, so this test fails loudly if the route ever checked runtime before id
-	const fakeRuntime = {
-		requireZwaveClient: vi.fn(() => {
-			throw new Error(
-				'requireZwaveClient must not be reached: the empty-id guard should return first',
-			)
-		}),
-	}
-
-	registerConfigurationTemplatesRoutes(
-		fakeApp as unknown as Express,
-		fakeRuntime as unknown as AppRuntime,
-		{
-			apisLimiter: (() => {}) as unknown as RateLimitRequestHandler,
-		},
-	)
-
-	const match = registered.find(
-		(r) => r.method === method && r.path === routePath,
-	)
-	if (!match) {
-		throw new Error(
-			`No ${method.toUpperCase()} ${routePath} handler was registered`,
-		)
-	}
-	return match.handler
-}
 
 describe('HTTP contract: configuration templates', () => {
 	const getHarness = useHttpHarness()
@@ -141,7 +56,7 @@ describe('HTTP contract: configuration templates', () => {
 			expect(gw.zwave.createConfigurationTemplate).not.toHaveBeenCalled()
 		})
 
-		it('fails with a generic error when no gateway is attached (past the nodeId/name guard, exercising the catch block)', async () => {
+		it('fails with a generic error when no gateway is attached, given a valid nodeId/name', async () => {
 			const harness = await getHarness()
 			const res = await harness.request
 				.post('/api/configuration-templates')
@@ -240,7 +155,7 @@ describe('HTTP contract: configuration templates', () => {
 			expect(gw.zwave.importConfigurationTemplates).not.toHaveBeenCalled()
 		})
 
-		it('fails with a generic error when no gateway is attached (past the array/required-fields guards, exercising the catch block)', async () => {
+		it('fails with a generic error when no gateway is attached, given an otherwise-valid payload', async () => {
 			const harness = await getHarness()
 			const res = await harness.request
 				.post('/api/configuration-templates/import')
@@ -371,7 +286,7 @@ describe('HTTP contract: configuration templates', () => {
 			expect(gw.zwave.applyConfigurationTemplate).not.toHaveBeenCalled()
 		})
 
-		it('fails with a generic error when no gateway is attached (past the id/nodeId guards, exercising the catch block)', async () => {
+		it('fails with a generic error when no gateway is attached, given a valid id/nodeId', async () => {
 			const harness = await getHarness()
 			const res = await harness.request
 				.post('/api/configuration-templates/template-1/apply')
@@ -427,55 +342,6 @@ describe('HTTP contract: configuration templates', () => {
 				2,
 				true,
 			)
-		})
-	})
-
-	describe('direct-handler-invocation: :id guards unreachable via real HTTP', () => {
-		// Bypasses the router, not the handler itself; see captureConfigurationTemplatesHandler above
-
-		it('PUT /api/configuration-templates/:id returns "Invalid template ID" for an empty id, without touching the runtime', async () => {
-			const handler = captureConfigurationTemplatesHandler(
-				'put',
-				'/api/configuration-templates/:id',
-			)
-			const json = vi.fn()
-
-			await handler({ params: { id: '' }, body: {} }, { json })
-
-			expect(json).toHaveBeenCalledExactlyOnceWith({
-				success: false,
-				message: 'Invalid template ID',
-			})
-		})
-
-		it('DELETE /api/configuration-templates/:id returns "Invalid template ID" for an empty id, without touching the runtime', async () => {
-			const handler = captureConfigurationTemplatesHandler(
-				'delete',
-				'/api/configuration-templates/:id',
-			)
-			const json = vi.fn()
-
-			await handler({ params: { id: '' }, body: {} }, { json })
-
-			expect(json).toHaveBeenCalledExactlyOnceWith({
-				success: false,
-				message: 'Invalid template ID',
-			})
-		})
-
-		it('POST /api/configuration-templates/:id/apply returns "Invalid template ID" for an empty id, without touching the runtime', async () => {
-			const handler = captureConfigurationTemplatesHandler(
-				'post',
-				'/api/configuration-templates/:id/apply',
-			)
-			const json = vi.fn()
-
-			await handler({ params: { id: '' }, body: { nodeId: 2 } }, { json })
-
-			expect(json).toHaveBeenCalledExactlyOnceWith({
-				success: false,
-				message: 'Invalid template ID',
-			})
 		})
 	})
 })

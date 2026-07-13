@@ -1,9 +1,11 @@
 import { createServer, type Server as HttpServer } from 'node:http'
 import type { Express } from 'express'
 import supertest, { type Test as SupertestTest } from 'supertest'
+import { vi, afterEach } from 'vitest'
 import type { FakeGateway } from '../shared/fakes.ts'
 import type { FakeZniffer } from '../socket/fakes.ts'
 import type * as ZnifferModuleNamespace from '#api/lib/ZnifferManager.ts'
+import type * as SerialPortsModuleNamespace from '#api/lib/serialPorts.ts'
 import {
 	useHarnessLifecycle,
 	listenOnEphemeralPort,
@@ -16,6 +18,20 @@ import {
 type RealGateway = InstanceType<GatewayModule['default']>
 type ZnifferModule = typeof ZnifferModuleNamespace
 type RealZniffer = InstanceType<ZnifferModule['default']>
+type SerialPortsModule = typeof SerialPortsModuleNamespace
+
+// settings.ts imports enumerateSerialPorts as a static module boundary (api/lib/serialPorts.ts) rather
+// than accepting it as a constructor-injected collaborator, so it's mocked once here and reset per-test,
+// rather than every consuming test file declaring its own vi.mock() of the same module.
+const { enumerateSerialPorts } = vi.hoisted(() => ({
+	enumerateSerialPorts: vi.fn<SerialPortsModule['enumerateSerialPorts']>(() =>
+		Promise.resolve<string[]>([]),
+	),
+}))
+
+vi.mock('#api/lib/serialPorts.ts', () => ({ enumerateSerialPorts }))
+
+export { enumerateSerialPorts }
 
 export interface HttpHarness {
 	app: Express
@@ -80,5 +96,12 @@ async function createHarnessInstance(
 export function useHttpHarness(): (
 	options?: HttpHarnessOptions,
 ) => Promise<HttpHarness> {
-	return useHarnessLifecycle(createHarnessInstance)
+	const getHarness = useHarnessLifecycle(createHarnessInstance)
+
+	afterEach(() => {
+		enumerateSerialPorts.mockReset()
+		enumerateSerialPorts.mockResolvedValue([])
+	})
+
+	return getHarness
 }

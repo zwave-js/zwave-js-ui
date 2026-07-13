@@ -2,6 +2,14 @@ import { describe, it, expect } from 'vitest'
 import { useHttpHarness } from './harness.ts'
 import { createFakeGateway } from '../shared/fakes.ts'
 
+/**
+ * Characterizes: GET /api/exportConfig, POST /api/importConfig.
+ *
+ * `normalizeImportedNodesConfig`/`getImportedNodeLocation` (api/lib/importConfig.ts)
+ * already have their own unit tests, so this file focuses on the HTTP-level
+ * contract: status/envelope shape, gw.zwave collaborator calls, and the
+ * "no side effects on rejected input" requirement.
+ */
 describe('HTTP contract: import/export config', () => {
 	const getHarness = useHttpHarness()
 
@@ -203,73 +211,63 @@ describe('HTTP contract: import/export config', () => {
 			expect(gw.zwave.storeDevices).not.toHaveBeenCalled()
 		})
 
-		it(
-			'resolves the gateway fresh before every distinct operation - a gateway swapped mid-import ' +
-				'(between two `await`s, simulating a concurrent POST /api/restart) is honored by every ' +
-				'later operation, both later in the same node and for every node processed afterwards, ' +
-				'never masked by the pre-swap reference',
-			async () => {
-				const gwA = createFakeGateway()
-				const gwB = createFakeGateway()
-				harness.testHooks.setGateway(gwA)
+		it('uses a replacement Z-Wave client for remaining import operations', async () => {
+			const gwA = createFakeGateway()
+			const gwB = createFakeGateway()
+			const harness = await getHarness({ gateway: gwA })
 
-				// Swaps the gateway inside the first awaited Z-Wave call, simulating a concurrent restart landing mid-import
-				// Guards against a route caching the gateway once instead of re-resolving it per operation
-				gwA.zwave.callApi.mockImplementationOnce(() => {
-					harness.testHooks.setGateway(gwB)
-					return { success: true, message: 'OK' }
-				})
+			const originalZwaveA = gwA.zwave
 
-				const res = await harness.request
-					.post('/api/importConfig')
-					.send({
-						data: {
-							// Node 2 exercises setNodeName (triggering the swap), then setNodeLocation and storeDevices, both awaited after the swap
-							2: {
-								name: 'Kitchen light',
-								loc: 'Kitchen',
-								hassDevices: {
-									light_2: { type: 'light' },
-								},
-							},
-							// Node 3 is processed entirely after node 2 (numeric for...in keys iterate in ascending order), so its setNodeName call must also hit gwB
-							3: { name: 'Bedroom light' },
+			// The first awaited operation replaces the live client.
+			originalZwaveA.callApi.mockImplementationOnce(() => {
+				gwA.zwave = gwB.zwave
+				return { success: true, message: 'OK' }
+			})
+
+			const res = await harness.request.post('/api/importConfig').send({
+				data: {
+					2: {
+						name: 'Kitchen light',
+						loc: 'Kitchen',
+						hassDevices: {
+							light_2: { type: 'light' },
 						},
-					})
+					},
+					// Integer node keys are processed in ascending order.
+					3: { name: 'Bedroom light' },
+				},
+			})
 
-				expect(res.status).toBe(200)
-				expect(res.body).toEqual({
-					success: true,
-					message: 'Configuration imported successfully',
-				})
+			expect(res.status).toBe(200)
+			expect(res.body).toEqual({
+				success: true,
+				message: 'Configuration imported successfully',
+			})
 
-				// Only the operation that triggered the swap reaches gwA
-				expect(gwA.zwave.callApi).toHaveBeenCalledExactlyOnceWith(
-					'setNodeName',
-					2,
-					'Kitchen light',
-				)
-				expect(gwA.zwave.storeDevices).not.toHaveBeenCalled()
+			expect(originalZwaveA.callApi).toHaveBeenCalledExactlyOnceWith(
+				'setNodeName',
+				2,
+				'Kitchen light',
+			)
+			expect(originalZwaveA.storeDevices).not.toHaveBeenCalled()
 
-				// Every operation after the swap - node 2's setNodeLocation and storeDevices, plus all of node 3 - is applied against the replacement gateway
-				expect(gwB.zwave.callApi).toHaveBeenNthCalledWith(
-					1,
-					'setNodeLocation',
-					2,
-					'Kitchen',
-				)
-				expect(gwB.zwave.callApi).toHaveBeenNthCalledWith(
-					2,
-					'setNodeName',
-					3,
-					'Bedroom light',
-				)
-				expect(gwB.zwave.storeDevices).toHaveBeenCalledExactlyOnceWith(
-					{ light_2: { type: 'light' } },
-					2,
-					false,
-				)
-			},
-		)
+			expect(gwB.zwave.callApi).toHaveBeenNthCalledWith(
+				1,
+				'setNodeLocation',
+				2,
+				'Kitchen',
+			)
+			expect(gwB.zwave.callApi).toHaveBeenNthCalledWith(
+				2,
+				'setNodeName',
+				3,
+				'Bedroom light',
+			)
+			expect(gwB.zwave.storeDevices).toHaveBeenCalledExactlyOnceWith(
+				{ light_2: { type: 'light' } },
+				2,
+				false,
+			)
+		})
 	})
 })

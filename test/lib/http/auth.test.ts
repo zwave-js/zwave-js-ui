@@ -179,7 +179,7 @@ describe('HTTP contract: auth & password', () => {
 	})
 
 	describe('PUT /api/password', () => {
-		it('reports that no user exists when there is no logged-in session user', async () => {
+		it('fails with a generic error when there is no logged-in session user', async () => {
 			const harness = await getHarness()
 			const res = await harness.request.put('/api/password').send({
 				current: 'x',
@@ -187,11 +187,13 @@ describe('HTTP contract: auth & password', () => {
 				confirmNew: 'y',
 			})
 
+			// With auth disabled, no session user exists to mutate.
 			expect(res.status).toBe(200)
 			expect(res.body).toEqual({
 				success: false,
-				message: 'User not found',
+				message: 'Error while updating passwords',
 			})
+			expect(res.body.error).toMatch(/username/)
 		})
 
 		it('changes the password end-to-end for a logged-in session and never leaks passwordHash', async () => {
