@@ -1257,30 +1257,4 @@ export default class Gateway<
 	private _getIdWithoutNode(valueId: HassValue): string {
 		return this.discoveryGenerator.getIdWithoutNode(valueId)
 	}
-
-	private _deviceInfo(
-		node: Pick<
-			ZUINode,
-			| 'id'
-			| 'manufacturer'
-			| 'productDescription'
-			| 'productLabel'
-			| 'name'
-			| 'firmwareVersion'
-			| 'loc'
-		>,
-		nodeName: string,
-	) {
-		return this.discoveryGenerator.deviceInfo(node, nodeName)
-	}
-
-	private _setDiscoveryValue(
-		payload: Record<string, unknown>,
-		property: string,
-		node: { values: Record<string, { value?: unknown }> },
-	): void {
-		this.discoveryGenerator.setDiscoveryValue(payload, property, {
-			values: node.values,
-		})
-	}
 }
