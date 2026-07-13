@@ -1045,6 +1045,31 @@ describe('ScheduleService', () => {
 			)
 
 			await svc.setEnabledSchedule(2, true, 1)
+			expect(nodeStore.emitCalls).toEqual([
+				[expect.objectContaining({ id: 2 }), { userCodes: undefined }],
+			])
+		})
+
+		it('rejects an all-users update when node has no userCodes', async () => {
+			const zwaveNode = createFakeZwaveNode(true)
+			zwaveNode.commandClasses[
+				'Schedule Entry Lock'
+			].setEnabled.mockResolvedValue(undefined)
+
+			const nodeStore = createNodeStorePort({
+				id: 2,
+				userCodes: undefined,
+			})
+			const svc = new ScheduleService(
+				createDriverPort(zwaveNode),
+				nodeStore,
+				createUtilsPort(),
+			)
+
+			await expect(svc.setEnabledSchedule(2, true, 0)).rejects.toThrow(
+				"Cannot read properties of undefined (reading 'available')",
+			)
+			expect(nodeStore.emitCalls).toEqual([])
 		})
 	})
 })

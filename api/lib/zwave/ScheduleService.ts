@@ -303,7 +303,6 @@ export class ScheduleService {
 			}
 
 			this._nodes.emitNodeUpdate(node, {
-				id: node.id,
 				schedule: node.schedule,
 				userCodes: node.userCodes,
 			})
@@ -464,7 +463,6 @@ export class ScheduleService {
 				}
 
 				this._nodes.emitNodeUpdate(node, {
-					id: node.id,
 					schedule: node.schedule,
 					userCodes: node.userCodes,
 				})
@@ -492,24 +490,28 @@ export class ScheduleService {
 		if (isUnsupervisedOrSucceeded(result)) {
 			const node = this._nodes.getNode(nodeId)
 
-			if (node?.userCodes) {
+			if (node) {
 				if (userId) {
 					if (enabled) {
-						node.userCodes.enabled.push(userId)
+						node.userCodes?.enabled.push(userId)
 					} else {
-						const index = node.userCodes.enabled.indexOf(userId)
-						if (index >= 0) {
-							node.userCodes.enabled.splice(index, 1)
+						const index = node.userCodes?.enabled.indexOf(userId)
+						if (index !== undefined && index >= 0) {
+							node.userCodes?.enabled.splice(index, 1)
 						}
 					}
 				} else {
+					if (!node.userCodes) {
+						throw new TypeError(
+							"Cannot read properties of undefined (reading 'available')",
+						)
+					}
 					node.userCodes.enabled = enabled
 						? node.userCodes.available.slice()
 						: []
 				}
 
 				this._nodes.emitNodeUpdate(node, {
-					id: node.id,
 					userCodes: node.userCodes,
 				})
 			}
