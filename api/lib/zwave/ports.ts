@@ -403,10 +403,6 @@ export interface AssociationLogPort {
 	): void
 }
 
-// ---------------------------------------------------------------------------
-// Firmware update types
-// ---------------------------------------------------------------------------
-
 export interface FirmwareUpdateNodeState {
 	id: number
 	firmwareUpdate?: unknown
@@ -415,11 +411,6 @@ export interface FirmwareUpdateNodeState {
 	lastFirmwareUpdateCheck?: number
 }
 
-/**
- * A staged firmware-node projection computed without mutating shared state.
- * Persisted atomically via `persistStagedNodeUpdates`, then applied to
- * shared in-memory state only after persistence succeeds and fence holds.
- */
 export interface StagedFirmwareNodeUpdate {
 	nodeId: number
 	availableFirmwareUpdates: FirmwareUpdateInfo[]
@@ -432,10 +423,6 @@ export interface FwFileRef {
 	data: Uint8Array<ArrayBuffer>
 	target?: number
 }
-
-// ---------------------------------------------------------------------------
-// Port: driver access for FirmwareUpdateService
-// ---------------------------------------------------------------------------
 
 export interface FirmwareDriverPort {
 	getDriver(): {
@@ -460,26 +447,11 @@ export interface FirmwareDriverPort {
 	isDriverReady(): boolean
 }
 
-// ---------------------------------------------------------------------------
-// Port: node store for FirmwareUpdateService
-// ---------------------------------------------------------------------------
-
 export interface FirmwareNodeStorePort {
 	getNode(nodeId: number): FirmwareUpdateNodeState | undefined
 	getStoreNode(nodeId: number): Partial<FirmwareUpdateNodeState> | undefined
 	ensureStoreNode(nodeId: number): Partial<FirmwareUpdateNodeState>
 	updateStoreNodes(): Promise<void>
-	/**
-	 * Persist staged firmware-node projections without mutating shared
-	 * in-memory state. Writes the staged data to the store nodes and
-	 * persists to disk. The caller must fence AFTER this resolves, then
-	 * atomically apply to live node/emit.
-	 *
-	 * NOTE: Once the underlying filesystem write begins it cannot be
-	 * cancelled. If a reset races with the write, the on-disk state may
-	 * reflect the staged data but the shared in-memory state will NOT be
-	 * mutated (no post-reset publication).
-	 */
 	persistStagedNodeUpdates(
 		staged: ReadonlyArray<StagedFirmwareNodeUpdate>,
 	): Promise<void>
@@ -489,36 +461,20 @@ export interface FirmwareNodeStorePort {
 	): void
 }
 
-// ---------------------------------------------------------------------------
-// Port: socket emission for FirmwareUpdateService
-// ---------------------------------------------------------------------------
-
 export interface FirmwareSocketPort {
 	sendToSocket(event: string, data: unknown): void
 	throttle(key: string, fn: () => void, wait: number): void
 	clearThrottle(key: string): void
 }
 
-// ---------------------------------------------------------------------------
-// Port: configuration for FirmwareUpdateService
-// ---------------------------------------------------------------------------
-
 export interface FirmwareConfigPort {
 	disableAutomaticFirmwareUpdateChecks: boolean
 }
-
-// ---------------------------------------------------------------------------
-// Port: backup manager for FirmwareUpdateService
-// ---------------------------------------------------------------------------
 
 export interface FirmwareBackupPort {
 	backupOnEvent: boolean
 	backupNvm(): Promise<unknown>
 }
-
-// ---------------------------------------------------------------------------
-// Port: firmware file extraction utilities
-// ---------------------------------------------------------------------------
 
 export interface FirmwareExtractionPort {
 	guessFirmwareFileFormat(
@@ -538,10 +494,6 @@ export interface FirmwareExtractionPort {
 		| undefined
 	isUint8Array(value: unknown): value is Uint8Array
 }
-
-// ---------------------------------------------------------------------------
-// Port: driver access for InclusionCoordinator
-// ---------------------------------------------------------------------------
 
 export interface InclusionDriverPort {
 	getDriver(): {
@@ -563,55 +515,28 @@ export interface InclusionDriverPort {
 	isDriverReady(): boolean
 }
 
-// ---------------------------------------------------------------------------
-// Port: socket emission for InclusionCoordinator
-// ---------------------------------------------------------------------------
-
 export interface InclusionSocketPort {
 	sendToSocket(event: string, data: unknown): void
 }
-
-// ---------------------------------------------------------------------------
-// Port: backup manager for InclusionCoordinator
-// ---------------------------------------------------------------------------
 
 export interface InclusionBackupPort {
 	backupOnEvent: boolean
 	backupNvm(): Promise<unknown>
 }
 
-// ---------------------------------------------------------------------------
-// Port: configuration for InclusionCoordinator
-// ---------------------------------------------------------------------------
-
 export interface InclusionConfigPort {
 	commandsTimeout: number
 	serverEnabled: boolean
 }
 
-// ---------------------------------------------------------------------------
-// Port: QR code parsing for InclusionCoordinator
-// ---------------------------------------------------------------------------
-
 export interface InclusionQRPort {
 	parseQRCodeString(qrString: string): Promise<QRProvisioningInformation>
 }
 
-// ---------------------------------------------------------------------------
-// Port: controller event emission for InclusionCoordinator
-// ---------------------------------------------------------------------------
-
-/**
- * Narrow typed port for emitting controller-level events.
- * These events are consumed by Gateway for MQTT publishing.
- */
+/** Events consumed by Gateway for MQTT publishing */
 export interface InclusionControllerEventPort {
 	emitControllerEvent(eventName: string, ...args: unknown[]): void
 }
-
-// ---------------------------------------------------------------------------
-// Port: server manager interaction for InclusionCoordinator
-// ---------------------------------------------------------------------------
 
 export interface InclusionServerManagerPort {
 	handInclusionControlBack(): void

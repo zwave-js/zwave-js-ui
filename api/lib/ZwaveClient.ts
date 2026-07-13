@@ -1217,7 +1217,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				isUint8Array(value),
 		}
 		if (this._firmwareUpdateService) {
-			// Reuse existing service — ports are lazy and resolve current state
+			// Preserve the service because generation fencing cancels its in-flight work
 			this._firmwareUpdateService.resetGeneration()
 		} else {
 			this._firmwareUpdateService = new FirmwareUpdateService(
@@ -1266,8 +1266,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			},
 		}
 		if (this._inclusionCoordinator) {
-			// Reuse existing coordinator — ports are lazy and resolve current state.
-			// Reset clears pending promises, timers, tmp metadata, and bumps generation.
+			// Preserve the coordinator because installed driver callbacks capture it
 			this._inclusionCoordinator.reset()
 		} else {
 			this._inclusionCoordinator = new InclusionCoordinator(
@@ -1507,7 +1506,6 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		this._inclusionCoordinator.removeUserCallbacks()
 	}
 
-	/** Whether user inclusion callbacks are currently registered on the driver */
 	get hasUserCallbacks(): boolean {
 		return this._inclusionCoordinator.hasUserCallbacks
 	}
@@ -2456,14 +2454,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			return
 		}
 
-		// Assumes the on-disk shape is already the current home-ID-keyed
-		// `NodesStoreRecordByHome` - true once `getStoreNodes` has run at
-		// least once (it migrates/persists legacy shapes into this one).
-		// Preserves the pre-existing (previously `any`-typed) assumption
-		// unchanged; no new validation is added.
+		// Requires that getStoreNodes ran first to migrate legacy shapes
 		const nodes = jsonStore.get(store.nodes) as NodesStoreRecordByHome
 
-		// remove empty objects keys
 		nodes[this.homeHex] = Object.keys(snapshot).reduce((acc, k) => {
 			if (Object.keys(snapshot[k]).length > 0) {
 				acc[k] = snapshot[k]
@@ -3308,9 +3301,6 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		)
 	}
 
-	/**
-	 * Check for firmware updates on a specific node — delegate to service
-	 */
 	private async _checkNodeFirmwareUpdates(nodeId: number) {
 		return this._firmwareUpdateService.checkNodeFirmwareUpdates(nodeId)
 	}
@@ -4118,12 +4108,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 	async hardReset() {
 		if (this.driverReady) {
-			// Await driver.hardReset FIRST — if it rejects, no lifecycle
-			// state is touched so timers, callbacks, and pending promises
-			// remain live and public APIs still settle normally.
+			// Reject leaves lifecycle untouched so public APIs settle normally
 			await this._driver.hardReset()
-			// Only on success: init() resets coordinator/firmware service
-			// (bumps generation, clears timers, settles promises) once.
 			this.init()
 		} else {
 			throw new DriverNotReadyError()
@@ -4523,8 +4509,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 					this._onControllerStatusChanged.bind(this),
 				)
 
-			// After a hard reset or restart the driver instance is replaced,
-			// but the coordinator survives. Re-register callbacks on the new driver.
+			// Re-register callbacks because the coordinator survives driver replacement
 			this._inclusionCoordinator.reinstallUserCallbacks()
 		} catch (error) {
 			// Fixes freak error in "driver ready" handler #1309
@@ -4807,7 +4792,6 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	private _onInclusionFailed() {
 		const message = 'Inclusion failed'
 
-		// Delegate state cleanup and ghost node removal to coordinator
 		this._inclusionCoordinator.onInclusionFailed((nodeId) => {
 			const node = this._nodes.get(nodeId)
 			if (node && !node.ready) {
@@ -4861,7 +4845,6 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		let node: ZUINode
 		// node made it past `node found` — no longer a ghost candidate
 		this._inclusionCoordinator.onNodeAdded(zwaveNode.id)
-		// If this was a replacement, the lifecycle is now complete
 		this._inclusionCoordinator.onReplacementComplete()
 		// the driver is ready so this node has been added on fly
 		if (this.driverReady) {
@@ -6139,7 +6122,6 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	}
 
 	private _createNode(nodeId: number) {
-		// Atomically consume tmpNode metadata set during inclusion
 		const tmpNode = this._inclusionCoordinator.takeTmpNode()
 		if (tmpNode) {
 			if (this.storeNodes[nodeId]) {

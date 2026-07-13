@@ -1,11 +1,3 @@
-/**
- * FirmwareUpdateService – owns all firmware update operations, state, caches,
- * timers, and socket emissions for both OTW (over-the-wire, controller) and
- * OTA (over-the-air, node) firmware updates.
- *
- * Extracted from ZwaveClient to keep the monolith slim.
- */
-
 import { getErrorMessage } from '../errors.ts'
 import type {
 	FirmwareBackupPort,
@@ -23,12 +15,6 @@ import type {
 	StagedFirmwareNodeUpdate,
 } from './ports.ts'
 
-/**
- * Thrown when an in-flight firmware operation detects that the service
- * generation has advanced (reset/dispose happened while awaiting). This is
- * the explicit lifecycle cancellation error for firmware operations —
- * consistent with the repo's `DriverNotReadyError` pattern.
- */
 export class FirmwareLifecycleCancelledError extends Error {
 	constructor(operation: string) {
 		super(
@@ -50,17 +36,10 @@ export class FirmwareUpdateService {
 	private _firmwareUpdateCheckTimeout: ReturnType<typeof setTimeout> | null =
 		null
 
-	/** Stores nvmEvent label set before OTW backups */
 	private _nvmEventSetter: ((event: string) => void) | undefined
 
-	/**
-	 * Generation counter — incremented on every dispose() so that an
-	 * in-flight async operation can detect that a close/restart happened
-	 * and bail out rather than persisting stale results or rescheduling.
-	 */
 	private _generation = 0
 
-	/** Whether this service instance has been disposed */
 	private _disposed = false
 
 	constructor(
@@ -83,42 +62,25 @@ export class FirmwareUpdateService {
 		this._nvmEventSetter = nvmEventSetter
 	}
 
-	/** Current generation (incremented on dispose/reset) — exposed for testing */
 	get generation(): number {
 		return this._generation
 	}
 
-	/** Whether this instance has been disposed */
 	get disposed(): boolean {
 		return this._disposed
 	}
 
-	/**
-	 * Dispose this service instance: cancel pending timers, increment
-	 * generation so in-flight operations bail out. Once disposed, no new
-	 * scheduled checks will fire from this instance.
-	 */
 	dispose(): void {
 		this._disposed = true
 		this._generation++
 		this.clearScheduledCheck()
 	}
 
-	/**
-	 * Reset the service generation without full disposal — used when the
-	 * same instance is reused across a soft restart. Cancels timers and
-	 * increments generation fence.
-	 */
 	resetGeneration(): void {
 		this._generation++
 		this.clearScheduledCheck()
 	}
 
-	/**
-	 * Assert that the current generation matches the captured generation and
-	 * the service is not disposed. Throws `FirmwareLifecycleCancelledError`
-	 * if the fence is broken — never allows silent success on stale operations.
-	 */
 	private _assertFence(gen: number, operation: string): void {
 		if (this._generation !== gen || this._disposed) {
 			throw new FirmwareLifecycleCancelledError(operation)
@@ -141,7 +103,6 @@ export class FirmwareUpdateService {
 			options,
 		)
 
-		// Fence: stale results must not be returned after reset/dispose
 		this._assertFence(gen, 'getAvailableFirmwareUpdates')
 
 		return result
@@ -160,22 +121,11 @@ export class FirmwareUpdateService {
 		const result =
 			await drv.controller.getAllAvailableFirmwareUpdates(options)
 
-		// Fence: stale results must not be returned after reset/dispose
 		this._assertFence(gen, 'getAllAvailableFirmwareUpdates')
 
 		return result
 	}
 
-	/**
-	 * Check firmware updates for all nodes and store results in nodes.json.
-	 * Generation-fenced: throws FirmwareLifecycleCancelledError if disposed/reset.
-	 *
-	 * Stages firmware-node projections without mutating shared storeNodes/ZUINode
-	 * or emitting. Persists the staged snapshot, asserts fence, then atomically
-	 * applies to shared in-memory state and emits. If fence breaks while
-	 * persistence is pending, no shared store mutation, node mutation, or emit
-	 * occurs.
-	 */
 	async checkAllNodesFirmwareUpdates(
 		options?: unknown,
 	): Promise<Map<number, FirmwareUpdateInfo[]> | undefined> {
@@ -199,14 +149,11 @@ export class FirmwareUpdateService {
 			const result =
 				await drv.controller.getAllAvailableFirmwareUpdates(options)
 
-			// Generation fence after await: do not mutate store/cache
-			// if a close/reset happened while the request was in flight.
 			this._assertFence(gen, 'checkAllNodesFirmwareUpdates')
 
 			if (result) {
 				const now = Date.now()
 
-				// Stage projections without mutating shared state
 				const staged: StagedFirmwareNodeUpdate[] = []
 				for (const [nodeId, nodeUpdates] of result) {
 					const filteredUpdates =
@@ -226,14 +173,10 @@ export class FirmwareUpdateService {
 					}
 				}
 
-				// Persist staged snapshot (writes to store + disk)
 				await this._nodes.persistStagedNodeUpdates(staged)
 
-				// Fence after persistence: if reset raced, do not apply
-				// to shared in-memory state or emit.
 				this._assertFence(gen, 'checkAllNodesFirmwareUpdates')
 
-				// Atomically apply to shared in-memory state and emit
 				for (const projection of staged) {
 					this._applyNodeFirmwareProjection(projection)
 				}
@@ -241,7 +184,6 @@ export class FirmwareUpdateService {
 
 			return result
 		} catch (error) {
-			// Propagate lifecycle cancellation without logging as unexpected error
 			if (error instanceof FirmwareLifecycleCancelledError) {
 				throw error
 			}
@@ -253,9 +195,6 @@ export class FirmwareUpdateService {
 		}
 	}
 
-	/**
-	 * Dismiss firmware update for a specific node and version
-	 */
 	async dismissFirmwareUpdate(
 		nodeId: number,
 		version: string,
@@ -290,9 +229,6 @@ export class FirmwareUpdateService {
 		return true
 	}
 
-	/**
-	 * Get available non-dismissed firmware updates for a node
-	 */
 	getNodeFirmwareUpdates(nodeId: number): FirmwareUpdateInfo[] {
 		const node = this._nodes.getNode(nodeId)
 		if (!node?.availableFirmwareUpdates) {
@@ -306,9 +242,6 @@ export class FirmwareUpdateService {
 		})
 	}
 
-	/**
-	 * Start OTA firmware update for a node using update info
-	 */
 	async firmwareUpdateOTA(
 		nodeId: number,
 		updateInfo: FirmwareUpdateInfo,
@@ -331,16 +264,11 @@ export class FirmwareUpdateService {
 			updateInfo,
 		)
 
-		// Fence: do not return result to caller if reset happened —
-		// the result belongs to a previous lifecycle.
 		this._assertFence(gen, 'firmwareUpdateOTA')
 
 		return result
 	}
 
-	/**
-	 * OTW (over-the-wire) firmware update for the controller
-	 */
 	async firmwareUpdateOTW(
 		file: FwFileRef | FirmwareUpdateInfo,
 	): Promise<OTWFirmwareUpdateResult> {
@@ -353,8 +281,6 @@ export class FirmwareUpdateService {
 				}
 				await this._backup.backupNvm()
 
-				// Fence after backup: never let an OTW operation paused in
-				// backup call a replacement driver.
 				this._assertFence(gen, 'firmwareUpdateOTW')
 			}
 
@@ -380,13 +306,10 @@ export class FirmwareUpdateService {
 					format,
 				)
 
-				// Fence after extraction: never let extraction paused across
-				// reset call stale node update.
 				this._assertFence(gen, 'firmwareUpdateOTW')
 
 				firmwareData = firmware.data
 			} catch (e) {
-				// Re-throw lifecycle cancellation as-is
 				if (e instanceof FirmwareLifecycleCancelledError) {
 					throw e
 				}
@@ -396,11 +319,9 @@ export class FirmwareUpdateService {
 			}
 
 			const result = await drv.firmwareUpdateOTW(firmwareData)
-			// Fence after driver call before returning result
 			this._assertFence(gen, 'firmwareUpdateOTW')
 			return result
 		} catch (e) {
-			// Propagate lifecycle cancellation without wrapping
 			if (e instanceof FirmwareLifecycleCancelledError) {
 				throw e
 			}
@@ -408,9 +329,6 @@ export class FirmwareUpdateService {
 		}
 	}
 
-	/**
-	 * Update firmware on a specific node using file(s)
-	 */
 	async updateFirmware(
 		nodeId: number,
 		files: FwFileRef[],
@@ -477,8 +395,6 @@ export class FirmwareUpdateService {
 						format,
 					)
 
-					// Fence after extraction: never let extraction paused
-					// across reset call stale node update.
 					this._assertFence(gen, 'updateFirmware')
 
 					if (f.target !== undefined) {
@@ -486,7 +402,6 @@ export class FirmwareUpdateService {
 					}
 					firmwares.push(firmware)
 				} catch (e) {
-					// Propagate lifecycle cancellation without wrapping
 					if (e instanceof FirmwareLifecycleCancelledError) {
 						throw e
 					}
@@ -499,20 +414,15 @@ export class FirmwareUpdateService {
 			}
 		}
 
-		// Final fence before calling into the (possibly replaced) node
 		this._assertFence(gen, 'updateFirmware')
 
 		const result = await zwaveNode.updateFirmware(firmwares)
 
-		// Fence after long-running update completes
 		this._assertFence(gen, 'updateFirmware')
 
 		return result
 	}
 
-	/**
-	 * Abort firmware update on a specific node
-	 */
 	async abortFirmwareUpdate(
 		nodeId: number,
 		getZwaveNode: (
@@ -533,7 +443,6 @@ export class FirmwareUpdateService {
 
 		await zwaveNode.abortFirmwareUpdate()
 
-		// Fence: never let abort completion mutate node/socket after reset
 		this._assertFence(gen, 'abortFirmwareUpdate')
 
 		const node = this._nodes.getNode(nodeId)
@@ -578,9 +487,6 @@ export class FirmwareUpdateService {
 		}
 	}
 
-	/**
-	 * Handle OTW firmware update progress event
-	 */
 	onOTWFirmwareUpdateProgress(
 		progress: unknown,
 		otwSocketEvent: string,
@@ -596,9 +502,6 @@ export class FirmwareUpdateService {
 		)
 	}
 
-	/**
-	 * Handle OTW firmware update finished event
-	 */
 	onOTWFirmwareUpdateFinished(
 		result: { success: boolean; status: number },
 		statusName: string,
@@ -620,11 +523,6 @@ export class FirmwareUpdateService {
 		)
 	}
 
-	/**
-	 * Schedule periodic firmware update checks.
-	 * Uses generation fencing: if close/reset happens during the await,
-	 * the method bails out without persisting stale results or rescheduling.
-	 */
 	async scheduledFirmwareUpdateCheck(): Promise<void> {
 		if (this._disposed) {
 			return
@@ -645,13 +543,11 @@ export class FirmwareUpdateService {
 			)
 		}
 
-		// Generation fence: if disposed or reset happened during the check,
-		// do NOT reschedule — the old generation must not produce new timers.
+		// Skip rescheduling after reset to prevent duplicate loops
 		if (this._generation !== gen || this._disposed) {
 			return
 		}
 
-		// Schedule next check for a random delay between 23 and 25 hours
 		const minHours = 23
 		const maxHours = 25
 		const randomHours = minHours + Math.random() * (maxHours - minHours)
@@ -664,18 +560,11 @@ export class FirmwareUpdateService {
 
 		this._firmwareUpdateCheckTimeout = setTimeout(() => {
 			this.scheduledFirmwareUpdateCheck().catch(() => {
-				/* ignore */
+				// Scheduled checks log failures before rejecting
 			})
 		}, waitMillis)
 	}
 
-	/**
-	 * Check firmware updates for a specific node after an event.
-	 * Generation-fenced: throws FirmwareLifecycleCancelledError if disposed/reset.
-	 *
-	 * Stages firmware-node projection without mutating shared state. Persists,
-	 * fences, then atomically applies and emits.
-	 */
 	async checkNodeFirmwareUpdates(nodeId: number): Promise<void> {
 		if (!this._driver.isDriverReady() || this._disposed) {
 			return
@@ -699,33 +588,27 @@ export class FirmwareUpdateService {
 			const updates =
 				await drv.controller.getAvailableFirmwareUpdates(nodeId)
 
-			// Generation fence after await
 			this._assertFence(gen, 'checkNodeFirmwareUpdates')
 
 			const filteredUpdates = this._filterFirmwareUpdates(updates)
 			const timestamp = Date.now()
 
-			// Stage projection without mutating shared state
 			const projection = this._computeNodeFirmwareProjection(
 				nodeId,
 				filteredUpdates,
 				timestamp,
 			)
 
-			// Persist staged snapshot
 			await this._nodes.persistStagedNodeUpdates([projection])
 
-			// Fence after persistence
 			this._assertFence(gen, 'checkNodeFirmwareUpdates')
 
-			// Atomically apply to shared in-memory state and emit
 			this._applyNodeFirmwareProjection(projection)
 
 			this._logger.info(
 				`Checked firmware updates for node ${nodeId} after update completion. Found ${filteredUpdates.length} update(s)`,
 			)
 		} catch (error) {
-			// Lifecycle cancellation is expected — don't log as failure
 			if (error instanceof FirmwareLifecycleCancelledError) {
 				return
 			}
@@ -735,9 +618,6 @@ export class FirmwareUpdateService {
 		}
 	}
 
-	/**
-	 * Clear the scheduled firmware update check timeout
-	 */
 	clearScheduledCheck(): void {
 		if (this._firmwareUpdateCheckTimeout) {
 			clearTimeout(this._firmwareUpdateCheckTimeout)
@@ -745,18 +625,12 @@ export class FirmwareUpdateService {
 		}
 	}
 
-	/**
-	 * Filter firmware updates to remove downgrades
-	 */
 	private _filterFirmwareUpdates(
 		updates: FirmwareUpdateInfo[] | null,
 	): FirmwareUpdateInfo[] {
 		return (updates || []).filter((update) => !update.downgrade)
 	}
 
-	/**
-	 * Clean up dismissed updates map to only contain versions that exist
-	 */
 	private _cleanDismissedUpdates(
 		filteredUpdates: FirmwareUpdateInfo[],
 		existingDismissed: { [version: string]: boolean },
@@ -772,10 +646,6 @@ export class FirmwareUpdateService {
 		return cleanedDismissed
 	}
 
-	/**
-	 * Compute a staged firmware-node projection without mutating shared state.
-	 * Uses existing storeNode dismissed data to compute clean dismissed set.
-	 */
 	private _computeNodeFirmwareProjection(
 		nodeId: number,
 		filteredUpdates: FirmwareUpdateInfo[],
@@ -796,11 +666,6 @@ export class FirmwareUpdateService {
 		}
 	}
 
-	/**
-	 * Atomically apply a staged firmware projection to the shared in-memory
-	 * node state (both ZUINode and storeNode) and emit the update. Called only
-	 * after persistence succeeds and fence holds.
-	 */
 	private _applyNodeFirmwareProjection(
 		projection: StagedFirmwareNodeUpdate,
 	): void {
@@ -823,12 +688,6 @@ export class FirmwareUpdateService {
 		}
 	}
 
-	/**
-	 * Update node firmware information in store and memory.
-	 * Used by paths that do not need deferred persistence (e.g. dismissFirmwareUpdate)
-	 * where mutation + emit is fine before persistence since those are user-initiated
-	 * synchronous flows with their own fence.
-	 */
 	private _updateNodeFirmwareInfo(
 		nodeId: number,
 		filteredUpdates: FirmwareUpdateInfo[],
