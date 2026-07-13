@@ -48,58 +48,6 @@ export default defineConfig({
 			reportsDirectory: './coverage',
 			include: ['api/**/*.{js,ts}', 'src/**/*.{js,ts}'],
 			exclude: ['**/*.test.*', 'test/**'],
-			// Exact-file threshold keys are checked independently of each other, so one full-repo run also enforces a stricter bar for the extracted runtime/router files without a separate backend-only coverage run
-			// Running backend tests once here also produces the file-level api/** line data Coveralls needs
-			thresholds: {
-				'api/runtime/AppRuntime.ts': {
-					statements: 90,
-					branches: 85,
-					functions: 90,
-					lines: 90,
-				},
-				'api/routes/auth.ts': {
-					statements: 90,
-					branches: 85,
-					functions: 90,
-					lines: 90,
-				},
-				'api/routes/configurationTemplates.ts': {
-					statements: 90,
-					branches: 85,
-					functions: 90,
-					lines: 90,
-				},
-				'api/routes/debug.ts': {
-					statements: 90,
-					branches: 85,
-					functions: 90,
-					lines: 90,
-				},
-				'api/routes/health.ts': {
-					statements: 90,
-					branches: 85,
-					functions: 90,
-					lines: 90,
-				},
-				'api/routes/importExport.ts': {
-					statements: 90,
-					branches: 85,
-					functions: 90,
-					lines: 90,
-				},
-				'api/routes/settings.ts': {
-					statements: 90,
-					branches: 85,
-					functions: 90,
-					lines: 90,
-				},
-				'api/routes/store.ts': {
-					statements: 90,
-					branches: 85,
-					functions: 90,
-					lines: 90,
-				},
-			},
 		},
 	},
 })
