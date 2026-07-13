@@ -4,11 +4,7 @@ import { defineConfig } from 'vitest/config'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
-// Dedicated Vitest config. The app build pipeline (Vue/Vuetify/PWA plugins)
-// lives in vite.config.mjs; the current test suites exercise plain JS/TS
-// modules and don't need those plugins, so this config stays minimal and fast.
-// Add a `projects` entry with the Vue plugin + jsdom here if/when component
-// tests are introduced.
+// Keep tests separate from Vue/Vuetify/PWA build plugins because current suites exercise plain JS/TS modules
 export default defineConfig({
 	resolve: {
 		alias: [

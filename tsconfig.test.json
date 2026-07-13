@@ -8,7 +8,6 @@
     "rewriteRelativeImportExtensions": false
   },
   "include": [
-    "api/**/*.ts",
     "test/**/*.ts",
     "vitest.config.ts"
   ]
