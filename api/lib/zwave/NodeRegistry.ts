@@ -156,10 +156,6 @@ export interface NodeRegistryHost {
 	isDriverReady(): boolean
 }
 
-/**
- * Owns the physical ZUI node registry, persisted node restoration/publication,
- * physical-node listeners, and adaptation of zwave-js node events.
- */
 export class NodeRegistry {
 	readonly nodes = new Map<number, ZUINode>()
 	storeNodes: NodesStoreRecord = {}

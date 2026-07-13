@@ -9,14 +9,6 @@ export interface SocketEventAdapterPort {
 	isCurrent(generation: number, socket: SocketServer): boolean
 }
 
-/**
- * Stateless room-aware Socket.IO emission.
- *
- * Each deferred emission captures both the registry generation and socket
- * identity, then revalidates them on the next-tick turn. A restart can
- * therefore never let queued work from an obsolete registry/driver leak into
- * the replacement generation.
- */
 export class SocketEventAdapter {
 	private readonly port: SocketEventAdapterPort
 	private readonly logger: ServiceLogger

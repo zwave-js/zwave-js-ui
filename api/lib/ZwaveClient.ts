@@ -5024,10 +5024,6 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		this._nodeRegistry.onReady(zwaveNode)
 	}
 
-	/**
-	 * Update a node's interview progress and notify the UI.
-	 * When `throttle` is set the emit is rate-limited, otherwise it is emitted immediately.
-	 */
 	private _setInterviewProgress(
 		zwaveNode: ZWaveNode,
 		progress: number,
@@ -5042,18 +5038,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		)
 	}
 
-	/**
-	 * Triggered when a node interview starts for the first time or when the node is manually re-interviewed
-	 *
-	 */
 	private _onNodeInterviewStarted(zwaveNode: ZWaveNode) {
 		this._nodeRegistry.onInterviewStarted(zwaveNode)
 	}
 
-	/**
-	 * Triggered when an interview stage complete
-	 *
-	 */
 	private _onNodeInterviewStageCompleted(
 		zwaveNode: ZWaveNode,
 		stageName: string,
@@ -5061,11 +5049,6 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		this._nodeRegistry.onInterviewStageCompleted(zwaveNode, stageName)
 	}
 
-	/**
-	 * Triggered when a node finish its interview. When this event is triggered all node values and metadata are updated
-	 * Starting from zwave-js v7 this event is only triggered when the node is added the first time or manually re-interviewed
-	 *
-	 */
 	private _onNodeInterviewCompleted(zwaveNode: ZWaveNode) {
 		this._nodeRegistry.onInterviewCompleted(zwaveNode)
 	}
