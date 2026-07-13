@@ -1,15 +1,3 @@
-/**
- * InclusionCoordinator – owns all inclusion/exclusion/replace/learn/abort
- * lifecycle, security grant/DSK callbacks, inclusion state, pending nodes,
- * orphan cleanup, tmp metadata, replacement tracking, resolver promises,
- * callback first/last UI client lifecycle, controller/socket events and
- * timing.
- *
- * Extracted from ZwaveClient to keep the monolith slim.
- *
- * Preserves #4639 cleanup (ghost node removal on inclusion failure).
- */
-
 import type {
 	InclusionBackupPort,
 	InclusionConfigPort,
@@ -36,51 +24,32 @@ export class InclusionCoordinator {
 	private readonly _qr: InclusionQRPort
 	private readonly _logger: ServiceLogger
 
-	/** Lazy server manager accessor — may be undefined when server is disabled */
+	/** May be undefined when server is disabled */
 	private readonly _getServerManager: () =>
 		| InclusionServerManagerPort
 		| undefined
 
-	/** Store node info before inclusion (name and location) */
 	private _tmpNode: { name?: string; loc?: string } | undefined = undefined
 
-	/** Whether a node replacement is in progress */
 	private _isReplacing = false
 
-	/**
-	 * Node IDs surfaced via `node found` that have not yet hit `node added`.
-	 * Cleaned up on inclusion failure (see #4639).
-	 */
 	private _pendingInclusionNodeIds: Set<number> = new Set()
 
-	/** Whether UI user callbacks are currently registered */
 	private _hasUserCallbacks = false
 
-	/** Resolve function for security grant promise */
 	private _grantResolve: ((grant: InclusionGrant | false) => void) | null =
 		null
 
-	/** Resolve function for DSK validation promise */
 	private _dskResolve: ((dsk: string | false) => void) | null = null
 
-	/** Current inclusion state mirror */
 	private _inclusionState: InclusionState | undefined = undefined
 
-	/** Commands timeout handle */
 	private _commandsTimeout: ReturnType<typeof setTimeout> | null = null
 
-	/**
-	 * Generation counter — incremented on every reset() so that an
-	 * in-flight operation suspended across an await boundary can detect
-	 * that a close/restart happened and bail out rather than touching a
-	 * stale or freshly-restarted driver.
-	 */
 	private _generation = 0
 
-	/** NVM event setter callback */
 	private _nvmEventSetter: ((event: string) => void) | undefined
 
-	/** Socket event names for the inclusion lifecycle */
 	private readonly _socketEvents: {
 		grantSecurityClasses: string
 		validateDSK: string
@@ -129,11 +98,6 @@ export class InclusionCoordinator {
 		return this._tmpNode
 	}
 
-	/**
-	 * Atomically consume tmpNode metadata: returns the current value and
-	 * immediately clears it so that no subsequent caller can inherit stale
-	 * metadata from a previous inclusion.
-	 */
 	takeTmpNode(): { name?: string; loc?: string } | undefined {
 		const tmp = this._tmpNode
 		this._tmpNode = undefined
@@ -148,15 +112,10 @@ export class InclusionCoordinator {
 		return this._hasUserCallbacks
 	}
 
-	/** Current generation (incremented on reset) — exposed for testing */
 	get generation(): number {
 		return this._generation
 	}
 
-	/**
-	 * Returns the user callbacks object to pass to the driver.
-	 * Binds to this coordinator instance.
-	 */
 	getUserCallbacks(): {
 		grantSecurityClasses: (
 			requested: InclusionGrant,
@@ -171,9 +130,6 @@ export class InclusionCoordinator {
 		}
 	}
 
-	/**
-	 * Start inclusion
-	 */
 	async startInclusion(
 		strategy: InclusionStrategy,
 		options?: {
@@ -202,7 +158,7 @@ export class InclusionCoordinator {
 			await this._backup.backupNvm()
 		}
 
-		// Re-resolve after await — close/restart may have invalidated drv
+		// Re-resolve because close or restart may replace the driver during await
 		if (this._generation !== gen) {
 			throw new Error('Driver was closed during inclusion setup')
 		}
@@ -265,7 +221,7 @@ export class InclusionCoordinator {
 						options.qrString,
 					)
 
-					// Re-resolve after QR parse — close/restart may have invalidated drv
+					// Re-resolve because QR parsing may overlap driver replacement
 					if (this._generation !== gen) {
 						throw new Error(
 							'Driver was closed during inclusion setup',
@@ -309,9 +265,6 @@ export class InclusionCoordinator {
 		}
 	}
 
-	/**
-	 * Start exclusion
-	 */
 	async startExclusion(options: unknown): Promise<boolean> {
 		const drv = this._driver.getDriver()
 		if (!drv || !this._driver.isDriverReady()) {
@@ -327,7 +280,7 @@ export class InclusionCoordinator {
 			await this._backup.backupNvm()
 		}
 
-		// Re-resolve after await — close/restart may have invalidated drv
+		// Re-resolve because close or restart may replace the driver during await
 		if (this._generation !== gen) {
 			throw new Error('Driver was closed during exclusion setup')
 		}
@@ -355,9 +308,6 @@ export class InclusionCoordinator {
 		return currentDrv.controller.beginExclusion(options)
 	}
 
-	/**
-	 * Stop exclusion
-	 */
 	async stopExclusion(): Promise<boolean> {
 		const drv = this._driver.getDriver()
 		if (!drv || !this._driver.isDriverReady()) {
@@ -371,9 +321,6 @@ export class InclusionCoordinator {
 		return drv.controller.stopExclusion()
 	}
 
-	/**
-	 * Stop inclusion
-	 */
 	async stopInclusion(): Promise<boolean> {
 		const drv = this._driver.getDriver()
 		if (!drv || !this._driver.isDriverReady()) {
@@ -387,9 +334,6 @@ export class InclusionCoordinator {
 		return drv.controller.stopInclusion()
 	}
 
-	/**
-	 * Replace failed node
-	 */
 	async replaceFailedNode(
 		nodeId: number,
 		strategy: InclusionStrategy,
@@ -413,7 +357,7 @@ export class InclusionCoordinator {
 				await this._backup.backupNvm()
 			}
 
-			// Re-resolve after await — close/restart may have invalidated drv
+			// Re-resolve because close or restart may replace the driver during await
 			if (this._generation !== gen) {
 				throw new Error('Driver was closed during replace setup')
 			}
@@ -446,7 +390,7 @@ export class InclusionCoordinator {
 						options.qrString,
 					)
 
-					// Re-resolve after QR parse — close/restart may have invalidated drv
+					// Re-resolve because QR parsing may overlap driver replacement
 					if (this._generation !== gen) {
 						throw new Error(
 							'Driver was closed during replace setup',
@@ -491,9 +435,6 @@ export class InclusionCoordinator {
 		}
 	}
 
-	/**
-	 * Start learn mode (join another network)
-	 */
 	async startLearnMode(
 		joinNetworkStrategy: number,
 	): Promise<JoinNetworkResult> {
@@ -525,9 +466,6 @@ export class InclusionCoordinator {
 		return drv.controller.beginJoiningNetwork(joinNetworkOptions)
 	}
 
-	/**
-	 * Stop learn mode
-	 */
 	async stopLearnMode(): Promise<boolean> {
 		const drv = this._driver.getDriver()
 		if (!drv || !this._driver.isDriverReady()) {
@@ -541,9 +479,6 @@ export class InclusionCoordinator {
 		return drv.controller.stopJoiningNetwork()
 	}
 
-	/**
-	 * Grant security classes (called by UI after user approves)
-	 */
 	grantSecurityClasses(requested: InclusionGrant): void {
 		if (this._grantResolve) {
 			this._grantResolve(requested)
@@ -553,9 +488,6 @@ export class InclusionCoordinator {
 		}
 	}
 
-	/**
-	 * Validate DSK (called by UI after user enters PIN)
-	 */
 	validateDSK(dsk: string): void {
 		if (this._dskResolve) {
 			this._dskResolve(dsk)
@@ -565,16 +497,10 @@ export class InclusionCoordinator {
 		}
 	}
 
-	/**
-	 * Abort inclusion (called by UI or timeout)
-	 */
 	abortInclusion(): void {
 		this._settlePendingPromises()
 	}
 
-	/**
-	 * Register user callbacks with the driver (first UI client connected)
-	 */
 	setUserCallbacks(): void {
 		this._hasUserCallbacks = true
 		const drv = this._driver.getDriver()
@@ -591,9 +517,6 @@ export class InclusionCoordinator {
 		})
 	}
 
-	/**
-	 * Remove user callbacks from the driver (last UI client disconnected)
-	 */
 	removeUserCallbacks(): void {
 		this._hasUserCallbacks = false
 		const drv = this._driver.getDriver()
@@ -607,18 +530,13 @@ export class InclusionCoordinator {
 			inclusionUserCallbacks: undefined,
 		})
 
-		// when no user is connected, give back the control to HA server
+		// Hand control back to HA server when no UI is connected
 		const mgr = this._getServerManager()
 		if (mgr) {
 			mgr.handInclusionControlBack()
 		}
 	}
 
-	/**
-	 * Re-register user callbacks on the current driver after a driver
-	 * replacement (hard reset or restart). The coordinator survives but
-	 * the new driver needs the callbacks passed via updateOptions again.
-	 */
 	reinstallUserCallbacks(): void {
 		if (!this._hasUserCallbacks) {
 			return
@@ -635,9 +553,6 @@ export class InclusionCoordinator {
 		})
 	}
 
-	/**
-	 * Handle inclusion state changed event from controller
-	 */
 	onInclusionStateChanged(
 		state: InclusionState,
 		cntStatus: string,
@@ -654,21 +569,11 @@ export class InclusionCoordinator {
 		}
 	}
 
-	/**
-	 * Handle inclusion stopped event.
-	 * Clears `_isReplacing` for replacement flows that end without a
-	 * node-added event (e.g. user cancels replacement before the new
-	 * node arrives). Does NOT clear too early: by the time 'inclusion
-	 * stopped' fires, any 'node removed' for the old replaced node has
-	 * already been processed (zwave-js event ordering guarantee).
-	 */
+	/** Safe to clear here because zwave-js guarantees 'node removed' fires before 'inclusion stopped' */
 	onInclusionStopped(): void {
 		this._isReplacing = false
 	}
 
-	/**
-	 * Handle inclusion failed event
-	 */
 	onInclusionFailed(removeNode: (nodeId: number) => void): void {
 		this._isReplacing = false
 		this._tmpNode = undefined
@@ -680,38 +585,18 @@ export class InclusionCoordinator {
 		this._pendingInclusionNodeIds.clear()
 	}
 
-	/**
-	 * Track a node found during inclusion
-	 */
 	onNodeFound(nodeId: number): void {
 		this._pendingInclusionNodeIds.add(nodeId)
 	}
 
-	/**
-	 * Clear a node from pending after it was successfully added.
-	 * Does NOT clear `_isReplacing` — that is handled by the dedicated
-	 * `onReplacementNodeAdded()` method, called only from the real
-	 * controller `node added` event (not from `_removeNode` pending
-	 * cleanup which also calls this method).
-	 */
 	onNodeAdded(nodeId: number): void {
 		this._pendingInclusionNodeIds.delete(nodeId)
 	}
 
-	/**
-	 * Signal that a replacement node was successfully added.
-	 * Clears `_isReplacing` — the replacement lifecycle is complete.
-	 * Called from the real `_onNodeAdded` controller event handler only
-	 * (after `node removed` for the old node has already been processed,
-	 * so `_removeNode` sees `isReplacing=true` and preserves store).
-	 */
 	onReplacementComplete(): void {
 		this._isReplacing = false
 	}
 
-	/**
-	 * Sync inclusion state from driver (called after driver ready)
-	 */
 	syncFromDriver(): void {
 		const drv = this._driver.getDriver()
 		if (drv) {
@@ -719,9 +604,6 @@ export class InclusionCoordinator {
 		}
 	}
 
-	/**
-	 * Clear commands timeout (called during close)
-	 */
 	clearCommandsTimeout(): void {
 		if (this._commandsTimeout) {
 			clearTimeout(this._commandsTimeout)
@@ -729,11 +611,6 @@ export class InclusionCoordinator {
 		}
 	}
 
-	/**
-	 * Reset all state (called during close/restart).
-	 * Settles every pending grant/DSK promise with `false` exactly once
-	 * before clearing references so callers are never left dangling.
-	 */
 	reset(): void {
 		this._generation++
 		this.clearCommandsTimeout()
@@ -744,11 +621,6 @@ export class InclusionCoordinator {
 		this._settlePendingPromises()
 	}
 
-	/**
-	 * Settle pending grant and DSK promises with `false`, exactly once.
-	 * Idempotent: subsequent calls are no-ops because references are
-	 * nulled after invocation.
-	 */
 	private _settlePendingPromises(): void {
 		if (this._dskResolve) {
 			this._dskResolve(false)
@@ -794,7 +666,6 @@ export class InclusionCoordinator {
 	}
 
 	private _onAbortInclusion(): void {
-		// Settle any pending promises exactly once (idempotent)
 		this._settlePendingPromises()
 		this._socket.sendToSocket(this._socketEvents.inclusionAborted, true)
 
