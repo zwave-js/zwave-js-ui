@@ -111,6 +111,12 @@ export default defineConfig([
 				'always',
 				{
 					ignorePackages: true,
+					pathGroupOverrides: [
+						{
+							pattern: '#api/**',
+							action: 'ignore',
+						},
+					],
 				},
 			],
 
