@@ -43,7 +43,7 @@ export function registerHassApiHandler(
 			const apiName: string = data.apiName
 			logger.info(`Hass api call: ${safeOperationName(apiName)}`)
 
-			let res: StoreHassDevicesResult | void
+			let res: StoreHassDevicesResult | void = undefined
 			let err: string | undefined
 			try {
 				switch (data.apiName) {
@@ -83,15 +83,26 @@ export function registerHassApiHandler(
 							.ensureZWaveClient()
 							.addDevice(data.device, data.nodeId)
 						break
-					case 'store':
-						res = await runtime
+					case 'store': {
+						const storeResult = await runtime
 							.ensureZWaveClient()
 							.storeDevices(
 								data.devices,
 								data.nodeId,
 								data.remove,
 							)
+						res = storeResult
+						if (storeResult.status === 'node-not-found') {
+							err =
+								'Unable to store Home Assistant devices: node not found'
+						} else if (
+							storeResult.status === 'invalid-stored-node'
+						) {
+							err =
+								'Unable to store Home Assistant devices: stored node is invalid'
+						}
 						break
+					}
 					default:
 						err = `Unknown HASS api ${apiName}`
 						logger.error(
