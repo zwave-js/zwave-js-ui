@@ -13,7 +13,7 @@
  *  - Discovery publishes carry { qos: 0, retain: config.retainedDiscovery }.
  *  - HA online status is case-insensitive, keyed off the fixed literal
  *    homeassistant/status (never prefixed).
- *  - Broker reconnect and HA online both trigger a full rediscoverAll.
+ *  - Broker reconnect and HA coming online both re-announce every device.
  *  - The retained-discovery delete payload shape is tracked in #4737.
  */
 import {
@@ -44,9 +44,9 @@ let harness: GatewayHarness
 const tick = () => new Promise<void>((r) => setImmediate(r))
 
 /**
- * The exact discovery-config topic the seeded 'Dev' switch republishes on
- * rediscoverAll. Hard-coded (not derived) so assertions pin the real wire
- * topic - version/status publishes that also land on connect can't satisfy it.
+ * The discovery-config topic the seeded 'Dev' switch republishes on reconnect.
+ * Hard-coded so assertions match the real wire topic; the version and status
+ * publishes that also land on connect don't.
  */
 const SWITCH_DISCOVERY_TOPIC = 'homeassistant/switch/Dev/switch/config'
 
@@ -85,7 +85,7 @@ function discoverSwitch(
 			type: 'boolean',
 			value: false,
 			isCurrentValue: true,
-		} as any),
+		}),
 	)
 	const device = discoverValueOnNode(harness.gw, node, key)
 	if (!device) throw new Error('switch discovery produced no device')
@@ -351,8 +351,7 @@ describe('Home Assistant status and broker reconnect re-announce all devices', (
 		seedDiscoveredNode(2, 'dev-reconnect')
 		harness.resetPublishes()
 
-		// A full connect cycle emits brokerStatus(true) after subscribing,
-		// driving rediscoverAll
+		// A full connect cycle, after subscribing, re-announces every device
 		harness.broker.triggerConnect()
 		await tick()
 		expect(
@@ -394,8 +393,8 @@ describe('inbound MQTT requests drive Z-Wave actions', () => {
 		harness.zwave.emit('valueChanged', targetValue, node, true)
 		await tick()
 
-		// Hard-coded delivery topic so the test pins the exact wire topic; the
-		// two pins below assert the producer still builds it
+		// Hard-coded delivery topic; the two assertions below check the producer
+		// builds this same wire topic
 		const setTopic =
 			'zwave/Dev/switch_multilevel/endpoint_0/targetValue/set'
 		expect(harness.gw.valueTopic(node, targetValue)).toBe(

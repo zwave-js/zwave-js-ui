@@ -1,20 +1,18 @@
 /**
- * Characterizes the climate / composite discovery pipeline: Gateway.discoverClimates
- * (builds the thermostat config into the module-global allDevices) and the two
- * branches of Gateway.discoverDevice (climate topic/template resolver and the
- * generic composite topic-rewrite). Driven through the real producer
- * (zwave.emit('nodeInited') -> _onNodeInited -> discoverClimates/discoverDevice/
- * discoverValue), so captured topics/templates/payloads are what production emits.
+ * Characterizes climate and composite entity discovery. A thermostat node is
+ * driven through the real producer (a nodeInited event runs the full discovery
+ * pipeline), so the captured topics, templates, and payloads are what
+ * production emits.
  *
- * Faithfulness notes locked here:
- *  - a thermostat node yields exactly ONE packet: the composite climate device
- *    claims its member values via the discovered[valueId.id] guard, so
- *    discoverValue skips the Air-temperature Multilevel Sensor.
- *  - mode_state_template/action_template are literal inverted/forward maps.
- *  - temperature_state_topic follows the current mode value
- *    (setpoint_topic[mode.value]), i.e. it changes with the active mode.
- *  - a composite unique_id uses the capital _Node<id>_ infix (distinct from
- *    discoverValue's node-level identifiers).
+ * Domain facts covered here:
+ *  - a thermostat yields a single packet: the composite climate entity claims
+ *    its member values, so the Air-temperature Multilevel Sensor is not
+ *    published as its own sensor.
+ *  - the mode-state and action templates are inverted/forward maps of the mode.
+ *  - the temperature-state topic follows the active mode's setpoint topic, so
+ *    it changes with the current mode.
+ *  - a composite unique_id uses the capital _Node<id>_ infix, distinct from a
+ *    per-value entity's identifiers.
  */
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest'
 import { CommandClasses } from '@zwave-js/core'
@@ -25,7 +23,7 @@ import {
 	type GatewayHarness,
 } from './gatewayHarness.ts'
 import { buildNode, buildValueId, addValue, state } from './fixtures.ts'
-import type { ZUINode, ZUIValueIdState } from '#api/lib/ZwaveClient.ts'
+import type { ZUINode, ZUIValueIdState, HassDevice } from '#api/lib/ZwaveClient.ts'
 
 vi.mock('mqtt', () => mqttMockFactory())
 
@@ -187,8 +185,8 @@ describe('climate thermostat discovery', () => {
 		const node = buildThermostatNode({ deviceId: 'test-climate-claim' })
 		initNode(node)
 
-		// The Air-temperature Multilevel Sensor is a climate member, so
-		// discovered[...] makes discoverValue skip it: the node maps to a single
+		// The Air-temperature Multilevel Sensor is claimed as a climate member,
+		// so it is not published separately and the node maps to a single
 		// climate entity
 		const all = harness.publishedDiscoveries()
 		expect(all).toHaveLength(1)
@@ -355,7 +353,7 @@ describe('generic composite device discovery', () => {
 			}),
 		)
 
-		const composite = {
+		const composite: HassDevice = {
 			type: 'sensor',
 			object_id: 'composite',
 			values: [tempKey],
@@ -365,13 +363,13 @@ describe('generic composite device discovery', () => {
 				json_attributes_topic: tempKey,
 				unit_of_measurement: '°C',
 			},
-		} as any
+		}
 
-		harness.gw.discoverDevice(node as any, composite)
+		harness.gw.discoverDevice(node, composite)
 
 		const stored = node.hassDevices['sensor_composite']
 		expect(stored).toBeDefined()
-		const p = stored.discovery_payload as any
+		const p = stored.discovery_payload
 		const base =
 			'zwave/Composite/sensor_multilevel/endpoint_0/Air_temperature'
 		// state/json_attributes topics resolved, no /set suffix
@@ -405,19 +403,19 @@ describe('generic composite device discovery', () => {
 				ccSpecific: { sensorType: 1, scale: 0 },
 			}),
 		)
-		const composite = {
+		const composite: HassDevice = {
 			type: 'sensor',
 			object_id: 'dup',
 			values: [tempKey],
 			discovery_payload: { state_topic: tempKey },
-		} as any
+		}
 
-		harness.gw.discoverDevice(node as any, composite)
+		harness.gw.discoverDevice(node, composite)
 		expect(harness.publishedDiscoveries()).toHaveLength(1)
 
 		// second call: sensor_dup already set -> no-op
 		harness.resetPublishes()
-		harness.gw.discoverDevice(node as any, composite)
+		harness.gw.discoverDevice(node, composite)
 		expect(harness.publishedDiscoveries()).toHaveLength(0)
 	})
 })

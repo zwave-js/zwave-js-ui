@@ -1,12 +1,11 @@
 /**
- * Characterization of `Gateway.discoverValue` for Central Scene / Scene
- * Activation and the Configuration CC, plus the shared "common tail" behavior
- * every family runs through: endpoint object-id suffixing, duplicate object-id
- * indexing, entity-name templating, location handling, the discovered de-dup
- * guard, and the early-return guards (not ready / virtual / hass disabled /
- * unknown CC).
+ * Characterizes Central Scene / Scene Activation and Configuration CC entity
+ * discovery, plus the shared behavior every family runs through: endpoint
+ * object-id suffixing, duplicate object-id indexing, entity-name templating,
+ * location handling, the de-dup guard, and the early-return guards (not ready /
+ * virtual / hass disabled / unknown CC).
  *
- * Real `Gateway` + real `MqttClient`; only `mqtt` is mocked.
+ * Real Gateway + real MqttClient; only mqtt is mocked.
  */
 import {
 	describe,
@@ -26,7 +25,7 @@ import {
 	type GatewayHarness,
 } from './gatewayHarness.ts'
 import { buildNode, buildValueId, addValue } from './fixtures.ts'
-import type { ZUINode, ZUIValueId } from '#api/lib/ZwaveClient.ts'
+import type { ZUINode, ZUIValueId, HassDevice } from '#api/lib/ZwaveClient.ts'
 
 vi.mock('mqtt', () => mqttMockFactory())
 
@@ -97,7 +96,7 @@ describe('Central Scene and Scene Activation discovery', () => {
 				property: 'sceneId',
 				propertyName: 'sceneId',
 				value: 3,
-			} as any),
+			}),
 		)
 		expect(device.type).toBe('sensor')
 		expect(device.object_id).toBe('scene_state_sceneid')
@@ -115,7 +114,7 @@ describe('Central Scene and Scene Activation discovery', () => {
 				commandClass: CommandClasses['Scene Activation'],
 				property: 'dimmingDuration',
 				propertyName: 'dimmingDuration',
-				value: { value: 10, unit: 'seconds' } as any,
+				value: { value: 10, unit: 'seconds' },
 			}),
 		)
 		expect(device.type).toBe('sensor')
@@ -138,7 +137,7 @@ describe('Configuration parameter discovery', () => {
 				type: 'number',
 				min: 0,
 				max: 1,
-			} as any),
+			}),
 		)
 		expect(device.type).toBe('switch')
 		expect(device.object_id).toBe('config_switch_3')
@@ -160,7 +159,7 @@ describe('Configuration parameter discovery', () => {
 				type: 'number',
 				min: 5,
 				max: 50,
-			} as any),
+			}),
 		)
 		expect(device.type).toBe('number')
 		expect(device.object_id).toBe('config_number_5')
@@ -177,7 +176,7 @@ describe('Configuration parameter discovery', () => {
 				type: 'number',
 				min: 1,
 				max: 100,
-			} as any),
+			}),
 		)
 		expect('min' in payload.payload).toBe(false)
 		expect('max' in payload.payload).toBe(false)
@@ -193,7 +192,7 @@ describe('Configuration parameter discovery', () => {
 				min: 0,
 				max: 1,
 				writeable: false,
-			} as any),
+			}),
 		)
 		expect(device).toBeUndefined()
 	})
@@ -210,7 +209,7 @@ describe('Configuration parameter discovery', () => {
 					type: 'number',
 					min: 0,
 					max: 1,
-				} as any),
+				}),
 			)
 			expect(device).toBeUndefined()
 		} finally {
@@ -227,7 +226,7 @@ describe('Configuration parameter discovery', () => {
 		harness.config.values = [
 			{
 				device: '111-2-3',
-				value: { id: '112-0-9' } as any,
+				value: { id: '112-0-9' } as unknown as ZUIValueId,
 				ccConfigEnableDiscovery: true,
 			},
 		]
@@ -238,7 +237,7 @@ describe('Configuration parameter discovery', () => {
 			type: 'number',
 			min: 0,
 			max: 1,
-		} as any)
+		})
 		const key = addValue(node, value)
 		const device = discoverValueOnNode(harness.gw, node, key)
 		expect(device.discovery_payload.enabled_by_default).toBe(true)
@@ -277,7 +276,9 @@ describe('shared entity naming and location behavior', () => {
 	it('indexes a duplicate type+object_id with the endpoint', () => {
 		// Pre-seed a colliding hass device so the dedup branch triggers
 		const node = readyNode()
-		node.hassDevices['binary_sensor_tamper'] = { placeholder: true } as any
+		node.hassDevices['binary_sensor_tamper'] = {
+			placeholder: true,
+		} as unknown as HassDevice
 		const { device } = discover(
 			buildValueId({
 				commandClass: CommandClasses['Binary Sensor'],
