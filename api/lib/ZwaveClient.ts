@@ -2455,7 +2455,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		}
 
 		// Requires that getStoreNodes ran first to migrate legacy shapes
-		const nodes = jsonStore.get(store.nodes) as NodesStoreRecordByHome
+		const storedNodes = jsonStore.get(store.nodes) as NodesStoreRecordByHome
+		const nodes = { ...storedNodes }
 
 		nodes[this.homeHex] = Object.keys(snapshot).reduce((acc, k) => {
 			if (Object.keys(snapshot[k]).length > 0) {
