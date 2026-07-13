@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 
 const mqttCtor = vi.fn()
 const zwaveCtor = vi.fn()
@@ -42,34 +42,25 @@ vi.mock('../../../api/lib/ZnifferManager.ts', () => ({
 	},
 }))
 
-import { createHttpHarness, type HttpHarness } from './harness.ts'
-import { setSettings } from './authHelpers.ts'
-import { createFakeGateway } from './fakes.ts'
+import { useHttpHarness } from './harness.ts'
+import { setSettings } from '../shared/authHelpers.ts'
+import { createFakeGateway } from '../shared/fakes.ts'
 
 describe('sparse persisted settings', () => {
-	let harness: HttpHarness
-
-	beforeAll(async () => {
-		harness = await createHttpHarness()
-	})
-
-	afterAll(async () => {
-		await harness.close()
-	})
+	const getHarness = useHttpHarness()
 
 	it('accepts sparse persisted MQTT, Z-Wave, and gateway settings unchanged', async () => {
 		const sparseMqtt = { name: 'sparse-mqtt-only-one-field' }
 		const sparseZwave = { port: '/dev/ttySPARSE' }
 		const sparseGateway = { sendEvents: true }
 
+		// The restart route closes the active gateway before constructing its replacement
+		const harness = await getHarness({ gateway: createFakeGateway() })
 		await setSettings(harness, {
 			mqtt: sparseMqtt,
 			zwave: sparseZwave,
 			gateway: sparseGateway,
 		})
-
-		// The restart route closes the active gateway before constructing its replacement
-		harness.testHooks.setGateway(createFakeGateway())
 
 		mqttCtor.mockClear()
 		zwaveCtor.mockClear()
@@ -95,8 +86,8 @@ describe('sparse persisted settings', () => {
 	})
 
 	it('skips absent MQTT and Z-Wave settings while still starting the gateway', async () => {
+		const harness = await getHarness({ gateway: createFakeGateway() })
 		await setSettings(harness, { mqtt: undefined, zwave: undefined })
-		harness.testHooks.setGateway(createFakeGateway())
 
 		mqttCtor.mockClear()
 		zwaveCtor.mockClear()
@@ -114,12 +105,12 @@ describe('sparse persisted settings', () => {
 	it('accepts sparse persisted Zniffer settings unchanged', async () => {
 		const sparseZniffer = { securityKeys: {} }
 
+		const harness = await getHarness({ gateway: createFakeGateway() })
 		await setSettings(harness, {
 			mqtt: undefined,
 			zwave: undefined,
 			zniffer: sparseZniffer,
 		})
-		harness.testHooks.setGateway(createFakeGateway())
 
 		znifferCtor.mockClear()
 

@@ -1,9 +1,9 @@
-import { describe, it, expect, beforeAll, afterAll } from 'vitest'
+import { describe, it, expect } from 'vitest'
 import { readdir, readFile } from 'node:fs/promises'
 import path from 'node:path'
-import { createHttpHarness, type HttpHarness } from './harness.ts'
-import { seedUser } from './authHelpers.ts'
-import { getTestStoreDir } from './env.ts'
+import { useHttpHarness } from './harness.ts'
+import { seedUser } from '../shared/authHelpers.ts'
+import { getTestStoreDir } from '../shared/env.ts'
 import type { User } from '../../../api/config/store.ts'
 
 interface SessionFile {
@@ -38,17 +38,10 @@ function findSessionForUsername(
 }
 
 describe('session store serialization (see #4739 for tracked passwordHash-in-session behavior)', () => {
-	let harness: HttpHarness
-
-	beforeAll(async () => {
-		harness = await createHttpHarness()
-	})
-
-	afterAll(async () => {
-		await harness.close()
-	})
+	const getHarness = useHttpHarness()
 
 	it('does NOT persist passwordHash in the session after POST /api/authenticate', async () => {
+		const harness = await getHarness()
 		await seedUser(harness, 'session-auth-user', 'a-password')
 		const agent = harness.agent
 
@@ -66,6 +59,7 @@ describe('session store serialization (see #4739 for tracked passwordHash-in-ses
 	})
 
 	it('persists passwordHash in the session after PUT /api/password (see #4739)', async () => {
+		const harness = await getHarness()
 		await seedUser(harness, 'session-pw-user', 'old-password')
 		const agent = harness.agent
 
