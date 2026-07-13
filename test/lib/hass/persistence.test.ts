@@ -209,7 +209,11 @@ describe('updating a HASS device on a node', () => {
 		}
 		const { zwave, socket } = makeMutatorClient(7, node)
 
-		zwave.updateDevice({ id: 'switch_sw' } as unknown as HassDevice, 7, true)
+		zwave.updateDevice(
+			{ id: 'switch_sw' } as unknown as HassDevice,
+			7,
+			true,
+		)
 
 		expect('switch_sw' in node.hassDevices).toBe(false)
 		await flush()
@@ -416,7 +420,11 @@ describe('node update projection ordering', () => {
 		const { zwave, socket } = makeMutatorClient(5, node)
 
 		zwave.addDevice(
-			{ id: 'x', type: 'sensor', object_id: 'temp' } as unknown as HassDevice,
+			{
+				id: 'x',
+				type: 'sensor',
+				object_id: 'temp',
+			} as unknown as HassDevice,
 			5,
 		)
 
