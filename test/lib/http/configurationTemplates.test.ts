@@ -13,9 +13,9 @@ import type { AppRuntime } from '../../../api/runtime/AppRuntime.ts'
 
 /**
  * Registers the real `registerConfigurationTemplatesRoutes` against a
- * minimal fake `app` whose `.get/.post/.put/.delete` just record
- * `(path, handler)`, then returns the exact production handler closure
- * registered for `method`+`path`
+ * minimal fake `app` whose `.get/.post/.put/.delete` record
+ * `(path, ...handlers)` and keep the last handler, then returns the exact
+ * production handler closure registered for `method`+`path`
  *
  * Used only for the three `if (!id)` guards (PUT/DELETE/POST `:id` routes),
  * which are unreachable via real HTTP since Express 4's `path-to-regexp`
