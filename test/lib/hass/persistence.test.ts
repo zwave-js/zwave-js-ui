@@ -63,6 +63,9 @@ function newInitClient(home: string | undefined = HOME): {
 	const socket = createRecordingSocket()
 	const zwave = new ZWaveClient({} as any, socket as any)
 	if (home !== undefined) {
+		// homeHex derives from the driver-supplied home id and has no public
+		// setter; seed it at the injection boundary since these tests run
+		// without a real Driver by design
 		internals(zwave).driverInfo = { name: home }
 	}
 	return { zwave, socket }
