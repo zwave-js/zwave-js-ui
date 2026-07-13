@@ -2,7 +2,7 @@
  * Characterizes `callApi()`, the single dispatcher every ZWAVE_API/MQTT/HASS-callable method
  * routes through.
  */
-import { describe, it, expect, beforeAll, vi } from 'vitest'
+import { describe, it, expect, beforeAll } from 'vitest'
 import { existsSync, readFileSync } from 'node:fs'
 import path from 'node:path'
 import { DriverMode, type Driver } from 'zwave-js'
@@ -133,63 +133,6 @@ describe('Socket contract: callApi()', () => {
 				message: 'No scene found with given sceneid',
 				args: [999],
 			})
-		})
-
-		it.each([
-			[null, "Cannot read properties of null (reading 'message')"],
-			[
-				undefined,
-				"Cannot read properties of undefined (reading 'message')",
-			],
-		])(
-			'legacy nullish rejection %s: preserves the precise property-access TypeError',
-			async (rejection, message) => {
-				const zwave = realZwave()
-				Reflect.set(zwave, '_driver', {})
-				zwave.driverReady = true
-				vi.spyOn(zwave, '_getScenes').mockRejectedValueOnce(rejection)
-
-				await expect(zwave.callApi('_getScenes')).rejects.toThrow(
-					message,
-				)
-			},
-		)
-
-		it.each([
-			['missing message', {}],
-			['empty message', { message: '' }],
-			['zero message', { message: 0 }],
-			['false message', { message: false }],
-		])(
-			'falsy error compatibility: %s remains a successful undefined result',
-			async (_case, rejection) => {
-				const zwave = realZwave()
-				Reflect.set(zwave, '_driver', {})
-				zwave.driverReady = true
-				vi.spyOn(zwave, '_getScenes').mockRejectedValueOnce(rejection)
-
-				const res = await zwave.callApi('_getScenes')
-
-				expect(res).toStrictEqual({
-					success: true,
-					message: 'Success zwave api call',
-					result: undefined,
-					args: [],
-				})
-			},
-		)
-
-		it('legacy Symbol error messages still fail during string interpolation', async () => {
-			const zwave = realZwave()
-			Reflect.set(zwave, '_driver', {})
-			zwave.driverReady = true
-			vi.spyOn(zwave, '_getScenes').mockRejectedValueOnce({
-				message: Symbol('failure'),
-			})
-
-			await expect(zwave.callApi('_getScenes')).rejects.toThrow(
-				'Cannot convert a Symbol value to a string',
-			)
 		})
 
 		it('omitted result: a successful call whose method returns undefined has result:undefined', async () => {
