@@ -36,6 +36,7 @@ describe('Socket contract: outbound producers', () => {
 	let ZnifferManager: typeof ZnifferManagerType
 
 	beforeAll(async () => {
+		// Must isolate STORE_DIR before these dynamic imports, or the real jsonStore.put() writes they trigger land in the actual repo's store/ directory
 		harness = await createSocketHarness()
 		;({ default: ZWaveClient } = await import(
 			'../../../api/lib/ZwaveClient.ts'
@@ -62,6 +63,7 @@ describe('Socket contract: outbound producers', () => {
 	})
 
 	// Wires the real ZWaveClient to the harness's real Socket.IO server
+	// Safe to construct directly since the constructor only touches jsonStore, never a real driver or serial port, unless connect() is called
 	function realZwave(): ZWaveClientType {
 		return new ZWaveClient({} as any, harness.io)
 	}

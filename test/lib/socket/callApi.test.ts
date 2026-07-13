@@ -133,6 +133,7 @@ describe('Socket contract: callApi()', () => {
 	let harness: SocketHarness
 
 	beforeAll(async () => {
+		// Must isolate STORE_DIR before this dynamic import, or ZwaveClient.ts's real jsonStore.put() writes land in the actual repo's store/ directory
 		harness = await createSocketHarness()
 		;({ default: ZWaveClient, allowedApis } = await import(
 			'../../../api/lib/ZwaveClient.ts'
@@ -143,6 +144,7 @@ describe('Socket contract: callApi()', () => {
 		await harness.close()
 	})
 
+	// Safe to construct directly since the constructor only touches jsonStore, never a real driver or serial port, unless connect() is called
 	function realZwave(): ZWaveClientType {
 		return new ZWaveClient({} as any, harness.io)
 	}

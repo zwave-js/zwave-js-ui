@@ -49,6 +49,7 @@ describe('Socket contract: multi-client room routing', () => {
 		return client
 	}
 
+	// Every socket auto-joins a room named after its own id as a Socket.IO built-in, unrelated to SUBSCRIBE/channelMap
 	// Round-trips a marker event through client's own private auto-joined room to deterministically flush anything already in flight
 	function barrier(client: any): Promise<void> {
 		const arrived = waitForEvent(client, '__TEST_BARRIER__')

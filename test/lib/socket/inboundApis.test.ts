@@ -1,4 +1,5 @@
 // Event names are hard-coded literals, not imported from SocketEvents.ts, since a real client's wire format doesn't know the server's internal constant names
+// Every test installs at least a bare gateway fake since connecting a client triggers the real 'clients' callback, which calls gw.zwave?.setUserCallbacks() and throws if gw is undefined
 import {
 	describe,
 	it,
