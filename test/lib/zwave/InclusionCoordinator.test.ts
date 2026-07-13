@@ -20,6 +20,7 @@ import type {
 	InclusionDriverPort,
 	InclusionGrant,
 	InclusionQRPort,
+	QRProvisioningInformation,
 	InclusionServerManagerPort,
 	InclusionSocketPort,
 } from '../../../api/lib/zwave/ports.ts'
@@ -74,11 +75,38 @@ function createConfigPort(timeout = 30): InclusionConfigPort {
 	}
 }
 
+function makeQRCode(
+	overrides: Partial<QRProvisioningInformation> = {},
+): QRProvisioningInformation {
+	return {
+		version: QRCodeVersion.S2,
+		requestedSecurityClasses: [SecurityClass.S2_Authenticated],
+		securityClasses: [SecurityClass.S2_Authenticated],
+		dsk: '12345-67890-12345-67890-12345-67890-12345-67890',
+		genericDeviceClass: 1,
+		specificDeviceClass: 1,
+		installerIconType: 1,
+		manufacturerId: 1,
+		productType: 1,
+		productId: 1,
+		applicationVersion: '1.0',
+		...overrides,
+	}
+}
+
 function createQRPort(
-	parsedResult?: Awaited<ReturnType<InclusionQRPort['parseQRCodeString']>>,
+	overrides: Partial<QRProvisioningInformation> = {},
 ): InclusionQRPort {
 	return {
-		parseQRCodeString: vi.fn().mockResolvedValue(parsedResult),
+		parseQRCodeString: vi.fn().mockResolvedValue(makeQRCode(overrides)),
+	}
+}
+
+function createRejectingQRPort(): InclusionQRPort {
+	return {
+		parseQRCodeString: vi
+			.fn()
+			.mockRejectedValue(new Error('Invalid QR code string')),
 	}
 }
 
@@ -278,13 +306,6 @@ describe('InclusionCoordinator', () => {
 				InclusionStrategy.Security_S2,
 				{ qrString: 'some-qr' },
 				undefined,
-				InclusionStrategy.SmartStart,
-				InclusionStrategy.Security_S2,
-				InclusionStrategy.Default,
-				InclusionStrategy.Insecure,
-				InclusionStrategy.Security_S0,
-				QRCodeVersion.SmartStart,
-				QRCodeVersion.S2,
 			)
 
 			expect(qr.parseQRCodeString).toHaveBeenCalledWith('some-qr')
@@ -300,21 +321,14 @@ describe('InclusionCoordinator', () => {
 				InclusionStrategy.Security_S2,
 				{ qrString: 'smart-qr' },
 				provisionFn,
-				InclusionStrategy.SmartStart,
-				InclusionStrategy.Security_S2,
-				InclusionStrategy.Default,
-				InclusionStrategy.Insecure,
-				InclusionStrategy.Security_S0,
-				QRCodeVersion.SmartStart,
-				QRCodeVersion.S2,
 			)
 
 			expect(result).toBe(true)
 			expect(provisionFn).toHaveBeenCalled()
 		})
 
-		it('throws for invalid QR code string', async () => {
-			const qr = createQRPort(undefined)
+		it('propagates QR parsing errors', async () => {
+			const qr = createRejectingQRPort()
 			const { coordinator } = createCoordinator({ qr })
 
 			await expect(
@@ -497,8 +511,8 @@ describe('InclusionCoordinator', () => {
 			)
 		})
 
-		it('throws for invalid QR code in replace', async () => {
-			const qr = createQRPort(undefined)
+		it('propagates QR parsing errors during replacement', async () => {
+			const qr = createRejectingQRPort()
 			const { coordinator } = createCoordinator({ qr })
 
 			await expect(
@@ -1167,11 +1181,6 @@ describe('InclusionCoordinator', () => {
 				InclusionStrategy.Insecure,
 				undefined,
 				undefined,
-				InclusionStrategy.SmartStart,
-				InclusionStrategy.Security_S2,
-				InclusionStrategy.Default,
-				InclusionStrategy.Insecure,
-				InclusionStrategy.Security_S0,
 			)
 
 			coordinator.reset()
@@ -1211,11 +1220,6 @@ describe('InclusionCoordinator', () => {
 				InclusionStrategy.Insecure,
 				undefined,
 				undefined,
-				InclusionStrategy.SmartStart,
-				InclusionStrategy.Security_S2,
-				InclusionStrategy.Default,
-				InclusionStrategy.Insecure,
-				InclusionStrategy.Security_S0,
 			)
 
 			coordinator.reset()
@@ -1289,11 +1293,12 @@ describe('InclusionCoordinator', () => {
 			)
 
 			coordinator.reset()
-			qrBarrier.resolve({
-				version: QRCodeVersion.S2,
-				securityClasses: [],
-				dsk: '00000',
-			})
+			qrBarrier.resolve(
+				makeQRCode({
+					version: QRCodeVersion.S2,
+					dsk: '00000',
+				}),
+			)
 
 			await expect(promise).rejects.toBeInstanceOf(
 				InclusionLifecycleCancelledError,

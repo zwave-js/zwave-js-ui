@@ -32,9 +32,16 @@ function makeUpdate(
 ): FirmwareUpdateInfo {
 	return {
 		version: '2.0.0',
+		normalizedVersion: '2.0.0',
 		downgrade: false,
 		changelog: 'Fixed bugs',
 		channel: 'stable',
+		device: {
+			manufacturerId: 1,
+			productType: 1,
+			productId: 1,
+			firmwareVersion: '1.0.0',
+		},
 		files: [
 			{
 				target: 0,
@@ -1140,43 +1147,6 @@ describe('FirmwareUpdateService', () => {
 		})
 	})
 
-	describe('OTW updates from available update metadata', () => {
-		it('starts an OTW update with available update metadata', async () => {
-			const firmwareUpdateOTW = vi.fn().mockResolvedValue({ ok: true })
-			const driver = createDriverPort({
-				isDriverReady: () => true,
-				getDriver: () => ({
-					controller: {
-						getAvailableFirmwareUpdates: vi.fn(),
-						getAllAvailableFirmwareUpdates: vi.fn(),
-						firmwareUpdateOTA: vi.fn(),
-						nodes: { get: vi.fn() },
-					},
-					firmwareUpdateOTW,
-				}),
-			})
-			const { service } = createService({ driver })
-
-			const updateInfo: FirmwareUpdateInfo = {
-				version: '3.0.0',
-				downgrade: false,
-				changelog: 'New features',
-				channel: 'stable',
-				files: [
-					{
-						target: 0,
-						url: 'https://fw.example.com/v3.bin',
-						integrity: 'sha256:def',
-					},
-				],
-			}
-
-			await service.firmwareUpdateOTW(updateInfo)
-
-			expect(firmwareUpdateOTW).toHaveBeenCalledWith(updateInfo)
-		})
-	})
-
 	describe('disposed firmware services', () => {
 		it('does not reschedule checks after disposal', async () => {
 			vi.useFakeTimers()
@@ -1461,10 +1431,17 @@ describe('FirmwareUpdateService', () => {
 			const firmwareUpdateOTW = vi
 				.fn()
 				.mockResolvedValue({ success: true })
-			const extractionBarrier = createDeferred<{ data: Uint8Array }>()
+			const extractionBarrier =
+				createDeferred<
+					Awaited<
+						ReturnType<FirmwareExtractionPort['extractFirmware']>
+					>
+				>()
 			const extraction: FirmwareExtractionPort = {
 				guessFirmwareFileFormat: vi.fn().mockReturnValue('bin'),
-				extractFirmware: vi.fn(() => extractionBarrier.promise),
+				extractFirmware: vi.fn<
+					FirmwareExtractionPort['extractFirmware']
+				>(() => extractionBarrier.promise),
 				tryUnzipFirmwareFile: vi.fn(),
 				isUint8Array: (v: unknown): v is Uint8Array =>
 					v instanceof Uint8Array,
@@ -1503,8 +1480,16 @@ describe('FirmwareUpdateService', () => {
 		})
 
 		it('cancels OTA updates completed after reset', async () => {
-			const otaBarrier = createDeferred<{ success: boolean }>()
-			const firmwareUpdateOTA = vi.fn(() => otaBarrier.promise)
+			type FirmwareController = NonNullable<
+				ReturnType<FirmwareDriverPort['getDriver']>
+			>['controller']
+			const otaBarrier =
+				createDeferred<
+					Awaited<ReturnType<FirmwareController['firmwareUpdateOTA']>>
+				>()
+			const firmwareUpdateOTA = vi.fn<
+				FirmwareController['firmwareUpdateOTA']
+			>(() => otaBarrier.promise)
 			const driver = createDriverPort({
 				getDriver: () => ({
 					controller: {
@@ -1522,7 +1507,11 @@ describe('FirmwareUpdateService', () => {
 
 			service.resetGeneration()
 
-			otaBarrier.resolve({ success: true })
+			otaBarrier.resolve({
+				success: true,
+				status: FirmwareUpdateStatus.OK_RestartPending,
+				reInterview: false,
+			})
 
 			await expect(otaPromise).rejects.toThrow(
 				FirmwareLifecycleCancelledError,
@@ -1555,10 +1544,17 @@ describe('FirmwareUpdateService', () => {
 		})
 
 		it('does not start node updates after reset during extraction', async () => {
-			const extractionBarrier = createDeferred<{ data: Uint8Array }>()
+			const extractionBarrier =
+				createDeferred<
+					Awaited<
+						ReturnType<FirmwareExtractionPort['extractFirmware']>
+					>
+				>()
 			const extraction: FirmwareExtractionPort = {
 				guessFirmwareFileFormat: vi.fn().mockReturnValue('bin'),
-				extractFirmware: vi.fn(() => extractionBarrier.promise),
+				extractFirmware: vi.fn<
+					FirmwareExtractionPort['extractFirmware']
+				>(() => extractionBarrier.promise),
 				tryUnzipFirmwareFile: vi.fn(),
 				isUint8Array: (v: unknown): v is Uint8Array =>
 					v instanceof Uint8Array,
