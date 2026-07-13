@@ -1,4 +1,6 @@
-// Proves an event is absent using barrier(): a client's own private id-room gets a distinguishable event, and FIFO per-connection delivery guarantees anything routed earlier already arrived by the time that resolves
+// Proves an event is absent using barrier(): a marker event is emitted directly to the client's own
+// server-side socket, and Socket.IO's documented per-connection ordered delivery guarantees anything
+// routed earlier already arrived by the time that resolves
 import { describe, it, expect } from 'vitest'
 import { useSocketHarness, type SocketHarness } from './harness.ts'
 import { createFakeGateway } from './fakes.ts'
@@ -33,11 +35,11 @@ async function connectedClient(harness: SocketHarness) {
 	return client
 }
 
-// Every socket auto-joins a room named after its own id as a Socket.IO built-in, unrelated to SUBSCRIBE/channelMap
-// Round-trips a marker event through client's own private auto-joined room to deterministically flush anything already in flight
+// Round-trips a marker event directly to client's own server-side socket (io.sockets.sockets is a
+// public Map<SocketId, Socket>) to deterministically flush anything already in flight
 function barrier(harness: SocketHarness, client: any): Promise<void> {
 	const arrived = waitForEvent(client, '__TEST_BARRIER__')
-	harness.io.to(client.id).emit('__TEST_BARRIER__')
+	harness.io.sockets.sockets.get(client.id).emit('__TEST_BARRIER__')
 	return arrived.then(() => undefined)
 }
 
