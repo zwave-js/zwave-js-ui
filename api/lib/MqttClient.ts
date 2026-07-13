@@ -61,17 +61,13 @@ export interface MqttClientEventCallbacks {
 export type MqttClientEvents = Extract<keyof MqttClientEventCallbacks, string>
 
 class MqttClient extends TypedEventEmitter<MqttClientEventCallbacks> {
-	// `config`/`toSubscribe` are assigned synchronously at the very top of
-	// `_init`, which the constructor always invokes (fire-and-forget) before
-	// any other method can observe `this`.
+	// Assigned synchronously at the top of _init(), which the constructor always invokes before any other method can observe `this`
 	private config!: MqttConfig
 	private toSubscribe!: Map<
 		string,
 		IClientSubscribeOptions & { addPrefix: boolean }
 	>
-	// `_clientID`/`client` stay unset for the lifetime of the instance when
-	// MQTT is disabled (`_init` returns early in that case), so they're
-	// genuinely optional.
+	// Stay unset for the instance's lifetime when MQTT is disabled, since _init() returns early in that case
 	private _clientID?: string
 	private client?: Client
 	private error?: string

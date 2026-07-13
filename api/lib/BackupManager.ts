@@ -22,8 +22,7 @@ export interface BackupSettings {
 const logger = module('Backup')
 
 class BackupManager {
-	// Assigned in `init()`, which app.ts always calls once at startup before
-	// any Cron job (the only caller of `backupNvm`/`backupStore`) can fire.
+	// Assigned in init(), always called at startup before any Cron job can fire
 	private config!: BackupSettings
 	private storeJob?: Cron
 	private nvmJob?: Cron

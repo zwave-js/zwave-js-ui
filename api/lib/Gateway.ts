@@ -244,7 +244,6 @@ export type GatewayConfig = {
 	}
 	disableChangelog?: boolean
 	notifyNewVersions?: boolean
-	/** Enable HTTPS for the web server (see `startServer` in `app.ts`). */
 	https?: boolean
 }
 

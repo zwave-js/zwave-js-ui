@@ -2786,12 +2786,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			nodes = storeNodes
 		}
 
-		// `nodes` is now either the legacy flat `NodesStoreRecord` or the
-		// current home-ID-keyed `NodesStoreRecordByHome` - that union can't
-		// be narrowed by a `startsWith` check on a runtime key, so each
-		// branch below casts to whichever shape the (unchanged) runtime
-		// check actually implies, exactly as the previous `any`-typed code
-		// always did at runtime.
+		// Runtime key check can't narrow this union type, so each branch below casts to whichever shape the check actually implies
 		const keys = Object.keys(nodes)
 
 		// ensure store nodes are stored using homeHex
@@ -2814,11 +2809,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				return
 			}
 
-			// Assumes the on-disk shape is already the current home-ID-keyed
-			// `NodesStoreRecordByHome` - true once `getStoreNodes` has run at
-			// least once (it migrates/persists legacy shapes into this one).
-			// Preserves the pre-existing (previously `any`-typed) assumption
-			// unchanged; no new validation is added.
+			// Assumes the current home-ID-keyed shape, true once getStoreNodes has migrated any legacy on-disk shape
 			const nodes = jsonStore.get(store.nodes) as NodesStoreRecordByHome
 
 			// remove empty objects keys

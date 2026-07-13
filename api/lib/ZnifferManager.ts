@@ -183,12 +183,7 @@ export default class ZnifferManager extends TypedEventEmitter<ZnifferManagerEven
 			.emit(socketEvents.znifferState, this.status())
 	}
 
-	/**
-	 * Verify the Zniffer instance is ready to use and return it (throws
-	 * otherwise). Callers capture the return value in a local variable
-	 * instead of re-reading `this.zniffer`, so TypeScript can track that
-	 * it's defined without an assertion.
-	 */
+	// Returns `this.zniffer` so callers can narrow it via a local variable instead of re-reading the nullable field
 	private checkReady(): Zniffer {
 		if (!this.config.enabled || !this.zniffer) {
 			throw new Error('Zniffer is not initialized')

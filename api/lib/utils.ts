@@ -27,16 +27,7 @@ export interface Snippet {
 	content: string
 }
 
-/**
- * Recursively makes every (nested, own) property of `T` optional.
- *
- * Bottoms out at non-plain-object types (primitives, `unknown`/`any`,
- * functions, and built-in class instances such as `Error`/streams) by
- * returning them unchanged rather than recursing into their prototype
- * members. Without this guard, `keyof` on a primitive (e.g. `keyof string`)
- * or on `unknown` produces a nonsensical mapped type instead of the
- * intended "same primitive, optionally absent" semantics.
- */
+// Bottoms out at non-object types (primitives, functions, class instances) instead of recursing into their prototype members, since `keyof` on those produces a nonsensical mapped type
 export type DeepPartial<T> = T extends (...args: never[]) => unknown
 	? T
 	: T extends Array<infer U>
@@ -404,17 +395,7 @@ export function parseSecurityKeys(
 	options: PartialZWaveOptions | ZnifferOptions,
 ): void {
 	config.securityKeys = config.securityKeys || {}
-	// `config.securityKeysLongRange` is deliberately NOT defaulted here -
-	// this preserves a pre-existing (undocumented until now) startup-failure
-	// quirk: setting a `KEY_LR_*` env var without the persisted settings
-	// already having ANY `zwave.securityKeysLongRange` object throws below,
-	// instead of silently creating one. That is a latent footgun (a
-	// misconfigured env var should arguably not crash startup at all, or
-	// should crash with a clearer message earlier), but reverting it is out
-	// of scope here - this only turns what used to be an incidental
-	// `TypeError` from indexing into `undefined` into an explicit,
-	// characterized one (see the `KEY_LR_*` loop below), preserving the
-	// exact prior pass/fail behavior without inventing new validation.
+	// Preserves a pre-existing quirk: setting a KEY_LR_* env var without any persisted securityKeysLongRange map throws below instead of silently creating one
 
 	if (process.env.NETWORK_KEY) {
 		config.securityKeys.S0_Legacy = process.env.NETWORK_KEY
@@ -449,10 +430,7 @@ export function parseSecurityKeys(
 	for (const k of longRangeEnvKeys) {
 		if (isKeyOf(k, availableLongRangeKeys)) {
 			if (!config.securityKeysLongRange) {
-				// Preserved quirk (see the comment at the top of this
-				// function): a `KEY_LR_*` env var was set, but no
-				// `zwave.securityKeysLongRange` object was ever persisted.
-				// Characterized, not fixed here.
+				// Preserved quirk: characterizes the missing-map failure instead of fixing it, see the comment above config.securityKeys
 				throw new TypeError(
 					`Cannot set Long Range security key '${k}' from env var 'KEY_LR_${k}': ` +
 						"no 'zwave.securityKeysLongRange' object exists in the persisted settings. " +
@@ -469,12 +447,7 @@ export function parseSecurityKeys(
 	for (const key in config.securityKeys) {
 		if (isKeyOf(key, availableKeys)) {
 			const value = config.securityKeys[key]
-			// Preserved quirk: a persisted `null` key value used to crash
-			// via an incidental `.length` `TypeError` on `null` (before
-			// `value?.length` silently treated it as "no key configured"
-			// instead). This makes that same crash explicit/characterized
-			// rather than reverting to the unguarded `.length` access -
-			// still not fixed, just no longer accidental.
+			// Preserved quirk: a persisted null value throws explicitly here instead of the incidental TypeError value?.length used to silently avoid
 			if (value === null) {
 				throw new TypeError(
 					`config.securityKeys.${key} is null; remove the key entirely instead of persisting it as null`,
@@ -488,11 +461,7 @@ export function parseSecurityKeys(
 
 	options.securityKeys = securityKeys
 
-	// Only defaulted here (immediately before its own conversion loop),
-	// matching the exact pre-existing ordering this function is
-	// characterizing: by the time THIS loop runs, `securityKeysLongRange`
-	// is guaranteed to exist, so only the earlier `KEY_LR_*` env-loading
-	// loop above can ever hit the preserved missing-map failure.
+	// Defaulted only immediately before this loop, matching the pre-existing ordering where the earlier KEY_LR_* loop is the only path that can hit the missing-map failure
 	config.securityKeysLongRange = config.securityKeysLongRange || {}
 
 	const securityKeysLongRange: Partial<
@@ -503,7 +472,7 @@ export function parseSecurityKeys(
 	for (const key in config.securityKeysLongRange) {
 		if (isKeyOf(key, availableLongRangeKeys)) {
 			const value = config.securityKeysLongRange[key]
-			// Same preserved null-value quirk as `securityKeys` above.
+			// Same preserved null-value quirk as securityKeys above
 			if (value === null) {
 				throw new TypeError(
 					`config.securityKeysLongRange.${key} is null; remove the key entirely instead of persisting it as null`,

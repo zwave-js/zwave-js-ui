@@ -21,12 +21,7 @@ export type StoreKeys =
 	| 'groups'
 	| 'configurationTemplates'
 
-/**
- * A single store file's schema: where it lives on disk (relative to
- * `storeDir`) and the default value used when the file doesn't exist yet
- * (or is merged into the persisted value for object defaults, see
- * `jsonStore`'s `_getFile`).
- */
+// Schema for a single store file: where it lives on disk and its default value when the file doesn't exist yet
 export interface StoreFile<T> {
 	file: string
 	default: T
@@ -38,12 +33,7 @@ export interface User {
 	token?: string
 }
 
-/**
- * The subset of `User` that is safe to expose to the client / persist in
- * the session or a JWT payload: never includes `passwordHash`. Built by
- * omitting `passwordHash` from a real `User` record (see `api/app.ts`'s
- * `/api/authenticate` and `/api/password` handlers).
- */
+// Never includes passwordHash, unlike User, for exposing to the client or persisting in the session/JWT
 export type PublicUser = Omit<User, 'passwordHash'>
 
 export interface Group {
@@ -61,17 +51,7 @@ export interface UiConfig {
 	browserTitle?: string
 }
 
-/**
- * The "normalized" settings shape: every top-level section optional (a
- * fresh install may not have configured `mqtt`, `zniffer`, etc.), but each
- * section, once present, assumed fully populated. This is what a
- * `Gateway`/`MqttClient`/`ZWaveClient` instance's `config` constructor
- * parameter is typed against - i.e. it's the shape the app is CONSTRUCTED
- * FROM once a section has been decided to exist, not the shape read
- * directly off disk (see `PersistedSettings` below for that, and why
- * blanket-casting one to the other is exactly what this type split exists
- * to avoid).
- */
+// The shape a Gateway/MqttClient/ZWaveClient constructor is typed against once its section is known to exist, distinct from PersistedSettings which may be sparse
 export interface Settings {
 	mqtt?: MqttConfig
 	zwave?: ZwaveConfig
@@ -81,53 +61,10 @@ export interface Settings {
 	backup?: BackupSettings
 }
 
-/**
- * The shape actually produced by `jsonStore` for `settings.json` (and thus
- * `jsonStore.get(store.settings)`'s real return type): a deep merge of
- * `store.settings.default` and whatever subset of fields the user has ever
- * saved. Nested properties may legitimately be missing (a partial `mqtt`
- * object with only `host` set, for instance), so this is modeled as a deep
- * partial of `Settings` rather than `Settings` itself.
- *
- * Consumers in `app.ts` read/pass this type around AS-IS (optional
- * chaining, `??=` defaulting, etc.) rather than blanket-casting it to
- * `Settings` - a single unchecked `as Settings` would silently assert every
- * nested field of every configured section is present, which is false in
- * general (e.g. a `settings.json` with `{ "mqtt": { "host": "..." } }` has
- * no `mqtt.port`/`mqtt.name`/etc., despite `MqttConfig` declaring them
- * required). The one place this repo actually treats a `PersistedSettings`
- * section as a fully-populated `Settings` section is the narrow boundary
- * where it's handed to a config-owning collaborator's constructor
- * (`new MqttClient(...)`/`new Gateway(...)`/`new ZWaveClient(...)` in
- * `app.ts`'s `startGateway`) - documented individually at each of those
- * call sites, since in practice the frontend always saves a complete
- * section object, never a sparse one (no new runtime validation is added
- * here to actually guarantee that).
- */
+// `jsonStore.get(store.settings)`'s real return type: a deep merge of defaults and whatever subset of fields the user has ever saved, so nested properties may be missing even where `Settings` declares them required
 export type PersistedSettings = DeepPartial<Settings>
 
-/**
- * `nodes.json`'s on-disk shape is legacy and dynamic; the actual runtime
- * variants `ZwaveClient.getStoreNodes`/`updateStoreNodes` read, migrate
- * between, and write are:
- *  - current/normalized: an object keyed by homeHex string (e.g.
- *    `"0xdeadbeef"`), each value itself an object keyed by node ID string
- *    whose values are `Partial<ZUINode>` - `NodesStoreRecordByHome` below.
- *  - legacy flat (pre-multi-home-ID): the node-ID-keyed object directly,
- *    with no home-ID layer - `NodesStoreRecord` below. `getStoreNodes`
- *    disambiguates this from the current shape purely by checking whether
- *    the first top-level key starts with `'0x'`.
- *  - legacy array (oldest): a sparse array indexed by node ID, converted
- *    to the legacy flat object shape before being treated as such.
- *
- * This is a precise union of exactly those three on-disk shapes (replacing
- * a previous `any`), not a validated/normalized type - `getStoreNodes`/
- * `updateStoreNodes` still perform their own narrow `Array.isArray`/
- * key-prefix runtime checks to disambiguate which member of the union
- * they actually received, exactly as before; this only makes the
- * compile-time contract honest, without changing that dynamic-key
- * handling or attempting new validation (out of scope for this pass).
- */
+// nodes.json's on-disk shape is legacy and dynamic: home-ID-keyed (current), flat node-ID-keyed (pre-multi-home-ID), or a sparse array (oldest), all still disambiguated/migrated by getStoreNodes/updateStoreNodes at runtime
 export type NodesStoreRecord = Record<string, Partial<ZUINode>>
 export type NodesStoreRecordByHome = Record<string, NodesStoreRecord>
 export type NodesStoreFile =

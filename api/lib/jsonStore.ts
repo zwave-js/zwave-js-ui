@@ -24,17 +24,14 @@ export interface StorageHelperDeps {
 	writeFile?: typeof jsonFile.writeFile
 }
 
-/** The subset of `store` entries this helper has been `init`ialized with. */
+// The subset of store entries this helper has been initialized with
 export type StoreConfig = Record<StoreKeys, StoreFile<unknown>>
 
 /**
 Constructor
 **/
 export class StorageHelper {
-	// Keyed by `StoreFile.file` (the on-disk filename), not by `StoreKeys`.
-	// Reads/writes are schema-checked at the `get`/`put` boundary via each
-	// call's own `StoreFile<T>`, so the bucket itself only needs to hold
-	// "whatever JSON was loaded/put for that file".
+	// Keyed by the on-disk filename, not StoreKeys, since get/put schema-check via each call's own StoreFile<T>
 	private _store: Record<string, unknown>
 	private config?: StoreConfig
 	private readFile: typeof jsonFile.readFile

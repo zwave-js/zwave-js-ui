@@ -47,13 +47,7 @@ interface LoggerConfig {
 	filePath: string
 }
 
-/**
- * `DailyRotateFileTransportOptions` declares `filename` as optional, but
- * `setupCleanJob`'s only caller (`customTransports`, below) always builds it
- * from `LoggerConfig.filePath`, a required `string`. This narrower alias
- * documents that real invariant instead of guarding against a case that
- * never occurs.
- */
+// Narrows filename to required, since setupCleanJob's only caller always builds it from LoggerConfig.filePath
 type CleanJobSettings = DailyRotateFileTransportOptions & { filename: string }
 
 /**

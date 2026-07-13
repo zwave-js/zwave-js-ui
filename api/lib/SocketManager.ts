@@ -30,8 +30,7 @@ export type SocketManagerEvents = Extract<
  * The constructor
  */
 class SocketManager extends TypedEventEmitter<SocketManagerEventCallbacks> {
-	// Assigned in `bindServer()`, which app.ts always calls once at startup
-	// (via `setupSocket`) before any other consumer reads `io`.
+	// Assigned in bindServer(), which app.ts always calls at startup before any consumer reads `io`
 	public io!: SocketServer
 
 	private activeSockets: Map<string, Socket> = new Map()
