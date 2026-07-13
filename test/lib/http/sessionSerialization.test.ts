@@ -54,7 +54,6 @@ describe('session store serialization (see #4739 for tracked passwordHash-in-ses
 		const sessions = await readAllSessionFiles()
 		const match = findSessionForUsername(sessions, 'session-auth-user')
 
-		// /api/authenticate assigns a PublicUser with passwordHash already stripped to req.session.user
 		expect(match.user).not.toHaveProperty('passwordHash')
 	})
 
@@ -77,7 +76,7 @@ describe('session store serialization (see #4739 for tracked passwordHash-in-ses
 		expect(res.body.success).toBe(true)
 		expect(res.body.user).not.toHaveProperty('passwordHash')
 
-		// PUT /api/password assigns the full User record to req.session.user
+		// PUT /api/password assigns the full User record, including the freshly-hashed password, to req.session.user
 		const sessions = await readAllSessionFiles()
 		const match = findSessionForUsername(sessions, 'session-pw-user')
 
