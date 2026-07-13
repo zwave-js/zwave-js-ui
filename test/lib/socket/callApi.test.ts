@@ -38,7 +38,7 @@ describe('Socket contract: callApi()', () => {
 			expect(new Set(allowedApis).size).toBe(allowedApis.length)
 		})
 
-		it('every entry names a real function on ZwaveClient.prototype - the exact assumption callApi() dispatch relies on (ZwaveClient.ts:6042-6047)', () => {
+		it('every entry names a real function on ZwaveClient.prototype, the exact assumption callApi() dispatch relies on', () => {
 			for (const name of allowedApis) {
 				expect(typeof (ZWaveClient.prototype as any)[name]).toBe(
 					'function',
@@ -145,7 +145,7 @@ describe('Socket contract: callApi()', () => {
 			})
 		})
 
-		it('omitted result: a successful call whose method returns undefined has result:undefined (ZwaveClient.ts:2143-2154)', async () => {
+		it('omitted result: a successful call whose method returns undefined has result:undefined', async () => {
 			const zwave = await realZwave()
 			;(zwave as any)._driver = {
 				controller: {
@@ -171,7 +171,7 @@ describe('Socket contract: callApi()', () => {
 			expect(res.args).toEqual([{ nodeId: 5 }])
 		})
 
-		it('absent result: the `result` key does not exist at all on the error path - contrast with the present-but-undefined success case above (ZwaveClient.ts:6058-6067)', async () => {
+		it('absent result: the `result` key does not exist at all on the error path, contrast with the present-but-undefined success case above', async () => {
 			const zwave = await realZwave()
 			;(zwave as any)._driver = {}
 			zwave.driverReady = true
@@ -182,7 +182,7 @@ describe('Socket contract: callApi()', () => {
 			expect('result' in res).toBe(false)
 		})
 
-		it('multi-arg dispatch: calls the real, allowed setNodeName(nodeid, name) method with 2 real args, in order, and returns its real boolean result (ZwaveClient.ts:2833-2857)', async () => {
+		it('multi-arg dispatch: calls the real, allowed setNodeName(nodeid, name) method with 2 real args, in order, and returns its real boolean result', async () => {
 			const zwave = await realZwave()
 			zwave.driverReady = true
 			// setNodeName only reads/writes .name on the node

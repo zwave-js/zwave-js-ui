@@ -124,7 +124,7 @@ describe('Socket contract: inbound ACK APIs', () => {
 			)
 		})
 
-		it('routes through the REAL ZwaveClient.callApi() dispatcher (not a mocked gw.zwave.callApi) for a real allowed method, echoing its real success/result/args (ZwaveClient.ts:6032-6070, app.ts:708-726)', async () => {
+		it('routes through the REAL ZwaveClient.callApi() dispatcher (not a mocked gw.zwave.callApi) for a real allowed method, echoing its real success/result/args', async () => {
 			// Every other test in this block uses createFakeGateway()'s mocked zwave.callApi; this one wires a real ZWaveClient so the real callApi() dispatcher actually runs
 			const gateway = createFakeGateway({ zwave: undefined })
 			const harness = await getHarness({ gateway })
@@ -208,7 +208,7 @@ describe('Socket contract: inbound ACK APIs', () => {
 	})
 
 	describe('HASS_API', () => {
-		it('calls gw.rediscoverNode(nodeId) for the known "rediscoverNode" action - real signature is void, so `result` is stripped from the wire ack (Gateway.ts:673, app.ts:802-809)', async () => {
+		it('calls gw.rediscoverNode(nodeId) for the known "rediscoverNode" action - real signature is void, so `result` is stripped from the wire ack', async () => {
 			// Matches the real void signature so Socket.IO's ack serialization strips the undefined result key entirely, instead of masking a regression behind a fake string return
 			const gateway = createFakeGateway({
 				rediscoverNode: vi.fn(),
@@ -266,7 +266,7 @@ describe('Socket contract: inbound ACK APIs', () => {
 	})
 
 	describe('ZNIFFER_API', () => {
-		it('awaits zniffer.start() for the known "start" action - real signature is Promise<void>, so `result` is stripped from the wire ack (ZnifferManager.ts:276-290, app.ts:858-901)', async () => {
+		it('awaits zniffer.start() for the known "start" action - real signature is Promise<void>, so `result` is stripped from the wire ack', async () => {
 			// Matches the real Promise<void> signature so the ack strips the undefined result key, the same regression-masking risk as rediscoverNode above
 			const zniffer = createFakeZniffer({
 				start: vi.fn(() => Promise.resolve(undefined)),

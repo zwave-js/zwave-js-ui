@@ -1,7 +1,7 @@
 /**
- * Characterizes every one of the 24 outbound producer call sites in `ZwaveClient.ts`/`ZnifferManager.ts`/`app.ts`: literal event name, payload shape, argument order, channel routing, and `process.nextTick` deferral where the real code defers.
+ * Characterizes each outbound producer call site in `ZwaveClient.ts`/`ZnifferManager.ts`/`app.ts`: literal event name, payload shape, argument order, channel routing, and `process.nextTick` deferral where the real code defers.
  *
- * `ZwaveClient.sendToSocket` is the shared routing point for ~21 of the 24 events, looking up `eventToChannel[evtName]` to room-route or falling back to an unrouted broadcast - a real `ZWaveClient` drives this against the harness's real `io`, not a mock.
+ * `ZwaveClient.sendToSocket` is the shared routing point for most of these events, looking up `eventToChannel[evtName]` to room-route or falling back to an unrouted broadcast - a real `ZWaveClient` drives this against the harness's real `io`, not a mock.
  */
 import {
 	describe,
@@ -74,7 +74,7 @@ describe('Socket contract: outbound producers', () => {
 		)
 	}
 
-	describe('sendToSocket mechanics (shared by ~21 of the 24 events)', () => {
+	describe('sendToSocket mechanics (shared by most producers)', () => {
 		it('routes to eventToChannel[event] and defers the actual emit via process.nextTick', async () => {
 			const harness = await getHarness({ gateway: benignGateway() })
 			const zwave = realZwave(harness)
@@ -127,7 +127,7 @@ describe('Socket contract: outbound producers', () => {
 	})
 
 	describe('real producer methods', () => {
-		it('emitValueChanged() sends VALUE_UPDATED with the mutated valueId when changed=true (ZwaveClient.ts:2699)', async () => {
+		it('emitValueChanged() sends VALUE_UPDATED with the mutated valueId when changed=true', async () => {
 			const harness = await getHarness({ gateway: benignGateway() })
 			const zwave = realZwave(harness)
 			;(zwave as any)._driver = {
@@ -173,7 +173,7 @@ describe('Socket contract: outbound producers', () => {
 			expect((box[0] as any).nodeId).toBe(99)
 		})
 
-		it('emitStatistics() converts every null prop to false, leaves others untouched (ZwaveClient.ts:2708-2731)', async () => {
+		it('emitStatistics() converts every null prop to false, leaves others untouched', async () => {
 			const harness = await getHarness({ gateway: benignGateway() })
 			const zwave = realZwave(harness)
 			const client = await connectedSubscriber(harness, 'statistics')
@@ -196,7 +196,7 @@ describe('Socket contract: outbound producers', () => {
 			})
 		})
 
-		it('emitNodeUpdate() sends the FULL node with isPartial=false when no changedProps are given (ZwaveClient.ts:2733-2756)', async () => {
+		it('emitNodeUpdate() sends the FULL node with isPartial=false when no changedProps are given', async () => {
 			const harness = await getHarness({ gateway: benignGateway() })
 			const zwave = realZwave(harness)
 			const client = await connectedSubscriber(harness, 'nodes')
@@ -220,7 +220,7 @@ describe('Socket contract: outbound producers', () => {
 			expect(await received).toEqual([{ status: 'alive', id: 7 }, true])
 		})
 
-		it('_updateControllerStatus() sends CONTROLLER_CMD with status (error/inclusionState default to undefined, stripped over the wire) (ZwaveClient.ts:6589-6598)', async () => {
+		it('_updateControllerStatus() sends CONTROLLER_CMD with status (error/inclusionState default to undefined, stripped over the wire)', async () => {
 			const harness = await getHarness({ gateway: benignGateway() })
 			const zwave = realZwave(harness)
 			const client = await connectedSubscriber(harness, 'controller')
@@ -253,7 +253,7 @@ describe('Socket contract: outbound producers', () => {
 			expect((box[1] as any).status).toBe('Removing failed node')
 		})
 
-		it("checkForConfigUpdates() sends INFO with getInfo()'s real payload (ZwaveClient.ts:4442-4448)", async () => {
+		it("checkForConfigUpdates() sends INFO with getInfo()'s real payload", async () => {
 			const harness = await getHarness({ gateway: benignGateway() })
 			const zwave = realZwave(harness)
 			;(zwave as any)._driver = {
@@ -271,7 +271,7 @@ describe('Socket contract: outbound producers', () => {
 			expect(data.zwaveVersion).toEqual(expect.any(String))
 		})
 
-		it("_deleteGroup() sends NODE_REMOVED with just {id} (ZwaveClient.ts:3225) - one of NODE_REMOVED's 3 real shapes", async () => {
+		it("_deleteGroup() sends NODE_REMOVED with just {id}, one of NODE_REMOVED's 3 real shapes", async () => {
 			const harness = await getHarness({ gateway: benignGateway() })
 			const zwave = realZwave(harness)
 			zwave.groups = [{ id: 42, name: 'Test group' } as any]
@@ -286,7 +286,7 @@ describe('Socket contract: outbound producers', () => {
 	})
 
 	describe('additional real literals/shapes: driven through their real producing method/handler', () => {
-		it('NODE_REMOVED: {id: NODE_ID_BROADCAST_LR} via the real _refreshBroadcastLRNode() deletion branch (ZwaveClient.ts:4088-4096)', async () => {
+		it('NODE_REMOVED: {id: NODE_ID_BROADCAST_LR} via the real _refreshBroadcastLRNode() deletion branch', async () => {
 			const harness = await getHarness({ gateway: benignGateway() })
 			const zwave = realZwave(harness)
 			zwave.driverReady = true
@@ -307,7 +307,7 @@ describe('Socket contract: outbound producers', () => {
 			)
 		})
 
-		it('NODE_REMOVED: full node object shape via the real _removeNode() (ZwaveClient.ts:8009-8021)', async () => {
+		it('NODE_REMOVED: full node object shape via the real _removeNode()', async () => {
 			const harness = await getHarness({ gateway: benignGateway() })
 			const zwave = realZwave(harness)
 			;(zwave as any).storeNodes = {}
@@ -321,7 +321,7 @@ describe('Socket contract: outbound producers', () => {
 			expect((zwave as any)._nodes.has(12)).toBe(false)
 		})
 
-		it('OTW_FIRMWARE_UPDATE: {progress} via the real, throttled _onOTWFirmwareUpdateProgress() (ZwaveClient.ts:6429-6436)', async () => {
+		it('OTW_FIRMWARE_UPDATE: {progress} via the real, throttled _onOTWFirmwareUpdateProgress()', async () => {
 			const harness = await getHarness({ gateway: benignGateway() })
 			const zwave = realZwave(harness)
 			const client = await connectedSubscriber(harness, 'firmware')
@@ -338,7 +338,7 @@ describe('Socket contract: outbound producers', () => {
 			})
 		})
 
-		it('OTW_FIRMWARE_UPDATE: {result:{success,status}} via the real _onOTWFirmwareUpdateFinished() (ZwaveClient.ts:6446-6459)', async () => {
+		it('OTW_FIRMWARE_UPDATE: {result:{success,status}} via the real _onOTWFirmwareUpdateFinished()', async () => {
 			const harness = await getHarness({ gateway: benignGateway() })
 			const zwave = realZwave(harness)
 			const client = await connectedSubscriber(harness, 'firmware')
@@ -355,7 +355,7 @@ describe('Socket contract: outbound producers', () => {
 			})
 		})
 
-		it('NODE_FOUND: {node} via the real _onNodeFound() (ZwaveClient.ts:6674-6690)', async () => {
+		it('NODE_FOUND: {node} via the real _onNodeFound()', async () => {
 			const harness = await getHarness({ gateway: benignGateway() })
 			const zwave = realZwave(harness)
 			zwave.driverReady = true
@@ -375,7 +375,7 @@ describe('Socket contract: outbound producers', () => {
 			expect(data.node.ready).toBe(false)
 		})
 
-		it('NODE_ADDED: {node, result} shape (ZwaveClient.ts:6728) - DOCUMENTED BOUNDARY, not reached through its real caller', async () => {
+		it('NODE_ADDED: {node, result} shape - DOCUMENTED BOUNDARY, not reached through its real caller', async () => {
 			// _onNodeAdded() dumps a full ZWaveNode via _dumpNode(), which needs a driver/node graph too broad to fake honestly, so this drives sendToSocket directly with the real call site's payload shape
 			const harness = await getHarness({ gateway: benignGateway() })
 			const zwave = realZwave(harness)
@@ -392,7 +392,7 @@ describe('Socket contract: outbound producers', () => {
 			})
 		})
 
-		it('REBUILD_ROUTES_PROGRESS: array-of-tuples shape (ZwaveClient.ts:5201/5209/6795/5936) - DOCUMENTED BOUNDARY, needs a real zwave-js rebuild-routes controller call', async () => {
+		it('REBUILD_ROUTES_PROGRESS: array-of-tuples shape - DOCUMENTED BOUNDARY, needs a real zwave-js rebuild-routes controller call', async () => {
 			// Every real producer sits inside a rebuildNodeRoutes()/beginRebuildingRoutes() controller callback that needs a full zwave-js Driver/Controller to reach, so sendToSocket is driven directly with the real payload shape instead
 			const harness = await getHarness({ gateway: benignGateway() })
 			const zwave = realZwave(harness)
@@ -405,7 +405,7 @@ describe('Socket contract: outbound producers', () => {
 			expect(await received).toEqual([[2, 'pending']])
 		})
 
-		it('HEALTH_CHECK_PROGRESS: {nodeId, ...} shape (ZwaveClient.ts:6827) - DOCUMENTED BOUNDARY, needs a real zwave-js health-check controller call', async () => {
+		it('HEALTH_CHECK_PROGRESS: {nodeId, ...} shape - DOCUMENTED BOUNDARY, needs a real zwave-js health-check controller call', async () => {
 			// Same full-driver constraint as REBUILD_ROUTES_PROGRESS above: the real producer sits inside a checkLifelineHealth()/checkRouteHealth() controller callback
 			const harness = await getHarness({ gateway: benignGateway() })
 			const zwave = realZwave(harness)
@@ -419,7 +419,7 @@ describe('Socket contract: outbound producers', () => {
 			expect(await received).toEqual({ nodeId: 2, rounds: 1 })
 		})
 
-		it('LINK_RELIABILITY: {nodeId, ...} shape (ZwaveClient.ts:6842) - DOCUMENTED BOUNDARY, needs a real zwave-js link-reliability controller call', async () => {
+		it('LINK_RELIABILITY: {nodeId, ...} shape - DOCUMENTED BOUNDARY, needs a real zwave-js link-reliability controller call', async () => {
 			// Same full-driver constraint as the two tests above
 			const harness = await getHarness({ gateway: benignGateway() })
 			const zwave = realZwave(harness)
@@ -433,7 +433,7 @@ describe('Socket contract: outbound producers', () => {
 			expect(await received).toEqual({ nodeId: 2, rssi: -70 })
 		})
 
-		it('GRANT_SECURITY_CLASSES/VALIDATE_DSK/INCLUSION_ABORTED: via the real _onGrantSecurityClasses()/_onValidateDSK()/_onAbortInclusion() handlers (ZwaveClient.ts:6852-6913)', async () => {
+		it('GRANT_SECURITY_CLASSES/VALIDATE_DSK/INCLUSION_ABORTED: via the real _onGrantSecurityClasses()/_onValidateDSK()/_onAbortInclusion() handlers', async () => {
 			const harness = await getHarness({ gateway: benignGateway() })
 			const zwave = realZwave(harness)
 			const client = await connectedSubscriber(harness, 'nodes')
@@ -451,7 +451,7 @@ describe('Socket contract: outbound producers', () => {
 			expect(await abortReceived).toBe(true)
 		})
 
-		it('NODE_EVENT: {nodeId, ...} via the real _onNodeEvent() handler (ZwaveClient.ts:7159-7176)', async () => {
+		it('NODE_EVENT: {nodeId, ...} via the real _onNodeEvent() handler', async () => {
 			const harness = await getHarness({ gateway: benignGateway() })
 			const zwave = realZwave(harness)
 			const node: any = { id: 2, eventsQueue: [] }
@@ -473,7 +473,7 @@ describe('Socket contract: outbound producers', () => {
 			])
 		})
 
-		it('METADATA_UPDATED: value-metadata shape routed to "values" (ZwaveClient.ts:7693) - DOCUMENTED BOUNDARY, needs a real zwave-js value-metadata-updated node event', async () => {
+		it('METADATA_UPDATED: value-metadata shape routed to "values" - DOCUMENTED BOUNDARY, needs a real zwave-js value-metadata-updated node event', async () => {
 			// Real producer sits inside _parseValue(), which reads zwaveNode.getValue()/getDefinedValueIDs() off a real ZWaveNode, the same full-driver constraint as the other DOCUMENTED BOUNDARY cases above
 			const harness = await getHarness({ gateway: benignGateway() })
 			const zwave = realZwave(harness)
@@ -492,7 +492,7 @@ describe('Socket contract: outbound producers', () => {
 			})
 		})
 
-		it('VALUE_REMOVED: value-id shape routed to "values" (ZwaveClient.ts:8664) - DOCUMENTED BOUNDARY, needs a real zwave-js "value removed" node event', async () => {
+		it('VALUE_REMOVED: value-id shape routed to "values" - DOCUMENTED BOUNDARY, needs a real zwave-js "value removed" node event', async () => {
 			// Same full-driver constraint as METADATA_UPDATED above: the real producer is a zwaveNode.on('value removed', ...) callback fed a real zwave-js ValueID
 			const harness = await getHarness({ gateway: benignGateway() })
 			const zwave = realZwave(harness)
@@ -529,7 +529,7 @@ describe('Socket contract: outbound producers', () => {
 			expect(await received).toBe('a debug log line\n')
 		})
 
-		describe('API_RETURN: documented boundary - its only real producer is unreachable in an automated test (ZwaveClient.ts:8879-8931)', () => {
+		describe('API_RETURN: documented boundary - its only real producer is unreachable in an automated test', () => {
 			// The only real producer sits inside emulateFwUpdate(), a private "testing purposes" helper that uses Math.random()/setInterval; verified structurally below instead of via a fabricated socket.emit() call
 			it('is not in allowedApis, so it is unreachable through callApi() too', async () => {
 				const { allowedApis } = await import('#api/lib/ZwaveClient.ts')
@@ -541,7 +541,7 @@ describe('Socket contract: outbound producers', () => {
 			})
 		})
 
-		it('INIT: sendInitToSockets() force-emits the current state to every connected socket (ZwaveClient.ts:2676-2683), bypassing channel routing', async () => {
+		it('INIT: sendInitToSockets() force-emits the current state to every connected socket, bypassing channel routing', async () => {
 			const harness = await getHarness({ gateway: benignGateway() })
 			const zwave = realZwave(harness)
 			const client = harness.createClient()
@@ -563,7 +563,7 @@ describe('Socket contract: outbound producers', () => {
 			})
 		})
 
-		it('ZNIFFER_STATE: ZnifferManager emits synchronously (no process.nextTick), directly to the "znifferState" room (ZnifferManager.ts:179-182)', async () => {
+		it('ZNIFFER_STATE: ZnifferManager emits synchronously (no process.nextTick), directly to the "znifferState" room', async () => {
 			const harness = await getHarness({ gateway: benignGateway() })
 			const zniffer = new ZnifferManager(
 				{ enabled: false } as any,
@@ -582,7 +582,7 @@ describe('Socket contract: outbound producers', () => {
 			expect(await received).toEqual(zniffer.status())
 		})
 
-		describe('ZNIFFER_FRAME: real producer, driven through the real internal Zniffer instance (ZnifferManager.ts:106-125)', () => {
+		describe('ZNIFFER_FRAME: real producer, driven through the real internal Zniffer instance', () => {
 			// Zniffer's constructor only validates port's type and does no real serial I/O until .init() is called, so only Zniffer.prototype.init is stubbed while ZnifferManager's real 'frame'/'corrupted frame' listeners stay live for this test to drive with a real .emit() call
 			let initSpy: ReturnType<typeof vi.spyOn>
 			let destroySpy: ReturnType<typeof vi.spyOn>
