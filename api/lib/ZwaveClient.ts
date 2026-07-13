@@ -2152,7 +2152,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 	private onNodeNameLocationChanged(
 		node: ZUINode,
-		valueId: ZUIValueId,
+		valueId: Pick<TranslatedValueID, 'commandClass' | 'property'>,
 		value: unknown,
 	) {
 		const prop = valueId.property

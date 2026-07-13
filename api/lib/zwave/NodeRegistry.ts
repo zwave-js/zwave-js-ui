@@ -131,7 +131,7 @@ export interface NodeRegistryHost {
 	notifyObserver(node: ZUINode, valueId: ZUIValueId): void
 	onNameLocationChanged(
 		node: ZUINode,
-		valueId: ZUIValueId,
+		valueId: Pick<TranslatedValueID, 'commandClass' | 'property'>,
 		value: unknown,
 	): void
 	updateVirtualNodesForNode(nodeId: number): void
@@ -844,7 +844,7 @@ export class NodeRegistry {
 		) {
 			this.host.onNameLocationChanged(
 				node,
-				zwaveValue as ZUIValueId,
+				zwaveValue,
 				zwaveNode.getValue(zwaveValue),
 			)
 			return null
