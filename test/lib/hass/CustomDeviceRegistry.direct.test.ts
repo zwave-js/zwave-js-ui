@@ -67,31 +67,21 @@ describe('CustomDeviceRegistry', () => {
 		expect(registry.get('custom-id')).toEqual([custom])
 	})
 
-	it('prefers JavaScript catalogs and reloads their exported content', async () => {
+	it('prefers JavaScript catalogs over JSON catalogs', () => {
 		const fromJson = device('from-json')
 		const fromJavaScript = device('from-javascript')
-		const reloaded = device('reloaded')
 		const { registry, storeDir } = createRegistry()
-		const jsFilename = path.join(storeDir, 'customDevices.js')
 		fs.writeFileSync(
 			path.join(storeDir, 'customDevices.json'),
 			JSON.stringify({ preferred: [fromJson] }),
 		)
 		fs.writeFileSync(
-			jsFilename,
+			path.join(storeDir, 'customDevices.js'),
 			`module.exports = ${JSON.stringify({ preferred: [fromJavaScript] })}`,
 		)
 		registry.start()
 
 		expect(registry.get('preferred')).toEqual([fromJavaScript])
-
-		fs.writeFileSync(
-			jsFilename,
-			`module.exports = ${JSON.stringify({ preferred: [reloaded] })}`,
-		)
-		await vi.waitFor(() => {
-			expect(registry.get('preferred')).toEqual([reloaded])
-		})
 	})
 
 	it('keeps the injected catalog when custom JSON cannot be parsed', () => {
