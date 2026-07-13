@@ -1,12 +1,17 @@
-import type { Server as SocketServer } from 'socket.io'
-
 import { eventToChannel } from '../SocketEvents.ts'
 import type { ServiceLogger } from './ports.ts'
 
+export interface SocketServerPort {
+	to(channel: string): {
+		emit(eventName: string, data: unknown, ...args: unknown[]): unknown
+	}
+	emit(eventName: string, data: unknown, ...args: unknown[]): unknown
+}
+
 export interface SocketEventAdapterPort {
-	getSocket(): SocketServer | null
+	getSocket(): SocketServerPort | null
 	getGeneration(): number
-	isCurrent(generation: number, socket: SocketServer): boolean
+	isCurrent(generation: number, socket: SocketServerPort): boolean
 }
 
 export class SocketEventAdapter {

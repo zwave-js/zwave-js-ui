@@ -55,13 +55,12 @@ import type {
 	ZUIValueId,
 	ZwaveNodeEvents,
 } from '../ZwaveClient.ts'
-import { NodeProjector } from './NodeProjector.ts'
+import { NodeProjector, type NodeProjectionDriver } from './NodeProjector.ts'
 import type { ServiceLogger } from './ports.ts'
 
 type NodeUpdate = utils.DeepPartial<ZUINode> | { firmwareUpdate: false }
 type ValueUpdateArgs = (
-	| ZWaveNodeValueUpdatedArgs
-	| ZWaveNodeValueNotificationArgs
+	ZWaveNodeValueUpdatedArgs | ZWaveNodeValueNotificationArgs
 ) & {
 	prevValue?: unknown
 	newValue?: unknown
@@ -77,7 +76,22 @@ type StatisticsUpdate = Pick<
 	| 'prioritySUCReturnRoute'
 	| 'priorityReturnRoute'
 > & { bgRssi?: ControllerStatistics['backgroundRSSI'] }
-type Controller = Driver['controller']
+export type NodeRegistryController = Pick<
+	Driver['controller'],
+	| 'nodes'
+	| 'ownNodeId'
+	| 'supportsLongRange'
+	| 'getPrioritySUCReturnRouteCached'
+	| 'getCustomSUCReturnRoutesCached'
+	| 'getProvisioningEntry'
+	| 'getSupportedRFRegions'
+	| 'on'
+	| 'off'
+>
+
+export interface NodeRegistryDriver extends NodeProjectionDriver {
+	controller: NodeRegistryController
+}
 
 function formatLogValue(value: unknown): string {
 	// eslint-disable-next-line @typescript-eslint/no-base-to-string
@@ -91,7 +105,7 @@ async function readFakeNodesFile(): Promise<string | undefined> {
 }
 
 export interface NodeRegistryHost {
-	getDriver(): Driver
+	getDriver(): NodeRegistryDriver
 	getZWaveNode(nodeId: number): ZWaveNode | undefined
 	getGeneration(): number
 	isCurrent(registry: NodeRegistry, generation: number): boolean
@@ -1207,13 +1221,16 @@ export class NodeRegistry {
 			const backgroundRSSI = stats.backgroundRSSI
 			if (backgroundRSSI) {
 				node.bgRSSIPoints ||= []
-				node.bgRSSIPoints.push(backgroundRSSI)
-				if (node.bgRSSIPoints.length > 360) {
-					const first = node.bgRSSIPoints[0]
-					const last = node.bgRSSIPoints[node.bgRSSIPoints.length - 1]
-					if (last.timestamp - first.timestamp > 3 * 60 * 60 * 1000) {
-						node.bgRSSIPoints.shift()
-					}
+				const points = node.bgRSSIPoints
+				points.push(backgroundRSSI)
+				const minimumTimestamp =
+					backgroundRSSI.timestamp - 3 * 60 * 60 * 1000
+				while (
+					points.length > 360 ||
+					(points[0]?.timestamp ?? minimumTimestamp) <
+						minimumTimestamp
+				) {
+					points.shift()
 				}
 			}
 			this.host.emitStatistics(node, {
@@ -1225,7 +1242,7 @@ export class NodeRegistry {
 		this.host.emitEvent('controller', 'statistics updated', stats)
 	}
 
-	bindControllerEvents(controller: Controller): void {
+	bindControllerEvents(controller: NodeRegistryController): void {
 		if (!this.current) return
 		this.cleanupControllerListeners()
 		const guard = (callback: () => void): void => {
