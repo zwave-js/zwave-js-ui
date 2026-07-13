@@ -556,7 +556,7 @@ describe('InclusionCoordinator', () => {
 			await coordinator.startLearnMode(JoinNetworkStrategy.Default)
 			expect(drv.controller.beginJoiningNetwork).toHaveBeenCalledWith(
 				expect.objectContaining({
-					strategy: ExclusionStrategy.ExcludeOnly,
+					strategy: JoinNetworkStrategy.Default,
 				}),
 			)
 		})

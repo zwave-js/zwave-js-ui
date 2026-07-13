@@ -8,6 +8,7 @@ import {
 	afterEach,
 	type MockInstance,
 } from 'vitest'
+import { FirmwareUpdateStatus } from '@zwave-js/cc'
 import { OTWFirmwareUpdateStatus } from 'zwave-js'
 import {
 	FirmwareUpdateService,
@@ -622,7 +623,7 @@ describe('FirmwareUpdateService', () => {
 			service.onOTWFirmwareUpdateFinished(
 				{
 					success: true,
-					status: OTWFirmwareUpdateStatus.Error_Timeout,
+					status: OTWFirmwareUpdateStatus.OK,
 				},
 				'OK',
 				'OTW_FIRMWARE_UPDATE',
@@ -1648,7 +1649,7 @@ describe('FirmwareUpdateService', () => {
 						getAllAvailableFirmwareUpdates: vi.fn(),
 						firmwareUpdateOTA: vi.fn().mockResolvedValue({
 							success: true,
-							status: OTWFirmwareUpdateStatus.Error_Timeout,
+							status: FirmwareUpdateStatus.OK_RestartPending,
 						}),
 						nodes: { get: vi.fn() },
 					},
@@ -1660,7 +1661,7 @@ describe('FirmwareUpdateService', () => {
 			const result = await service.firmwareUpdateOTA(1, makeUpdate())
 			expect(result).toEqual({
 				success: true,
-				status: OTWFirmwareUpdateStatus.Error_Timeout,
+				status: FirmwareUpdateStatus.OK_RestartPending,
 			})
 		})
 
