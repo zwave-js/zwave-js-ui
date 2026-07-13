@@ -1,12 +1,12 @@
 /**
- * Characterizes Gateway.discoverValue for the sensor / metering command
- * classes: Binary Sensor, Alarm Sensor, Basic/Notification (2-state binary and
- * >2-state mapped sensor), Multilevel Sensor, Meter, Pulse Meter, Time, Energy
- * Production (unsupported) and Battery (level sensor + isLow binary).
+ * Characterizes sensor and metering entity discovery: Binary Sensor, Alarm
+ * Sensor, Basic/Notification (2-state binary and >2-state mapped sensor),
+ * Multilevel Sensor, Meter, Pulse Meter, Time, Energy Production (unsupported),
+ * and Battery (level sensor + isLow binary).
  *
- * Real Gateway + real MqttClient; only mqtt is mocked. Locks exact object ids,
- * device/state classes, units (incl. abbreviation quirks), templates, payload
- * on/off inversions and the "no ccSpecific -> skip" guards.
+ * Real Gateway + real MqttClient; only mqtt is mocked. Covers the object ids,
+ * device/state classes, units (including abbreviation), templates, payload
+ * on/off inversions, and the "no ccSpecific -> skip" guards.
  */
 import {
 	describe,

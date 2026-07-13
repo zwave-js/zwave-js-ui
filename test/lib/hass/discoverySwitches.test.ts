@@ -1,13 +1,12 @@
 /**
- * Characterizes Gateway.discoverValue for the actuator command classes it
+ * Characterizes actuator entity discovery for the command classes the Gateway
  * handles: Binary/All/Binary-Toggle Switch, Barrier Operator, Multilevel Switch
  * (cover-position vs light-dimmer), Door Lock, Sound Switch (volume), Color
  * Switch (RGB).
  *
  * Runs the real Gateway + real MqttClient (only mqtt is mocked), so every
- * asserted topic/template/payload/device/availability block is the exact
- * production output captured at the broker publish boundary - locking the
- * current wire contract, not endorsing it.
+ * asserted topic, template, payload, device, and availability block is the
+ * production output captured at the broker publish boundary.
  */
 import {
 	describe,
@@ -132,8 +131,8 @@ describe('Binary Switch discovery', () => {
 						"{{'true' if value_json.value else 'false'}}",
 				},
 				{
-					// Literal status topic (not via mqtt.getStatusTopic()); the
-					// pin below asserts the producer still emits exactly this
+					// This status topic is emitted verbatim by the producer; the
+					// assertion below checks it stays this fixed value
 					topic: 'zwave/_CLIENTS/ZWAVE_GATEWAY-test/status',
 					value_template:
 						"{{'online' if value_json.value else 'offline'}}",
@@ -156,8 +155,8 @@ describe('Binary Switch discovery', () => {
 			unique_id: 'zwavejs2mqtt_0xabcdef01_2-37-0-currentValue',
 		})
 
-		// Independently pin the producer helper to the same literal, so neither
-		// derives from the other
+		// Check the producer helper resolves the same status topic independently,
+		// so neither value derives from the other
 		expect(harness.mqtt.getStatusTopic()).toBe(
 			'zwave/_CLIENTS/ZWAVE_GATEWAY-test/status',
 		)
