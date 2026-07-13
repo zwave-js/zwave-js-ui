@@ -13,7 +13,7 @@ import {
 	vi,
 } from 'vitest'
 import { CommandClasses, NODE_ID_BROADCAST_LR } from '@zwave-js/core'
-import { Zniffer } from 'zwave-js'
+import { OTWFirmwareUpdateStatus, Zniffer } from 'zwave-js'
 import type ZWaveClientType from '#api/lib/ZwaveClient.ts'
 import type ZnifferManagerType from '#api/lib/ZnifferManager.ts'
 import { eventToChannel } from '#api/lib/SocketEvents.ts'
@@ -358,8 +358,8 @@ describe('Socket contract: outbound producers', () => {
 
 			;(zwave as any)._onOTWFirmwareUpdateFinished({
 				success: true,
-				// 255 is zwave-js's real OTWFirmwareUpdateStatus.OK member, run through getEnumMemberName() so the wire payload asserts the string name
-				status: 255,
+				// Real code runs status through getEnumMemberName(), so the wire payload asserts the string name below
+				status: OTWFirmwareUpdateStatus.OK,
 			})
 
 			expect(await received).toEqual({
