@@ -1,4 +1,12 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import {
+	describe,
+	it,
+	expect,
+	vi,
+	beforeEach,
+	afterEach,
+	type Mock,
+} from 'vitest'
 import { EventEmitter } from 'node:events'
 import { ZWaveError, ZWaveErrorCodes } from '@zwave-js/core'
 import { RFRegion } from 'zwave-js'
@@ -23,7 +31,7 @@ import { ZwaveClientStatus } from '../../../api/lib/zwave/ports.ts'
 // The lifecycle constructs its Driver, JSON log transport and server manager
 // through injected factories, so every test drives the real production wiring
 // with typed fakes and never module-mocks or reaches into private seams. Casts
-// to the production port types live ONLY at the injection boundary below; the
+// to the production port types live only at the injection boundary below; the
 // `world` recorder keeps the concrete fake types so assertions stay type-safe.
 
 type StartBehavior = 'resolve' | 'reject' | 'hang' | 'deferred'
@@ -62,8 +70,8 @@ class FakeDriver extends EventEmitter {
 	enableStatistics = vi.fn()
 	disableStatistics = vi.fn()
 	updateLogConfig = vi.fn()
-	start!: ReturnType<typeof vi.fn>
-	destroy!: ReturnType<typeof vi.fn>
+	start!: Mock<() => Promise<void>>
+	destroy!: Mock<() => Promise<void>>
 	private _destroyed = false
 
 	constructor(world: World, port: string, options: PartialZWaveOptions) {
@@ -145,7 +153,7 @@ class FakeLogTransport {
 class FakeServerManager {
 	create = vi.fn()
 	startIfNeeded = vi.fn()
-	destroy!: ReturnType<typeof vi.fn>
+	destroy!: Mock<() => Promise<void>>
 	server: ZwavejsServer | null = null
 
 	constructor(world: World) {
@@ -1332,7 +1340,7 @@ describe('DriverLifecycle — driver-event dispatch', () => {
 	})
 })
 
-describe('DriverLifecycle — connect option/edge coverage', () => {
+describe('DriverLifecycle — connect option wiring', () => {
 	it('builds scale preferences from cfg.scales', async () => {
 		const { lifecycle, world } = createHarness({
 			serverEnabled: false,
@@ -1393,7 +1401,7 @@ describe('DriverLifecycle — connect option/edge coverage', () => {
 	})
 })
 
-describe('DriverLifecycle — connect catch-path edges', () => {
+describe('DriverLifecycle — failed connect error reporting', () => {
 	it('swallows a driver.destroy() rejection while handling a start failure', async () => {
 		vi.useFakeTimers()
 		try {
@@ -1416,7 +1424,7 @@ describe('DriverLifecycle — connect catch-path edges', () => {
 		}
 	})
 
-	it('aborts the catch path without reporting when the generation changed', async () => {
+	it('does not report the error when a close bumps the generation during a failed start', async () => {
 		const { lifecycle, host, world } = createHarness({
 			serverEnabled: false,
 		})
@@ -1429,7 +1437,7 @@ describe('DriverLifecycle — connect catch-path edges', () => {
 		expect(host.onDriverError).not.toHaveBeenCalled()
 	})
 
-	it('aborts the catch path (closing) when the client became destroyed', async () => {
+	it('closes without reporting the error when the client is destroyed during a failed start', async () => {
 		const { lifecycle, host, world, state } = createHarness({
 			serverEnabled: false,
 		})
