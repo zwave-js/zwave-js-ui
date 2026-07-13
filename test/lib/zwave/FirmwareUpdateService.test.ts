@@ -13,7 +13,7 @@ import { OTWFirmwareUpdateStatus } from 'zwave-js'
 import {
 	FirmwareUpdateService,
 	FirmwareLifecycleCancelledError,
-} from '#api/lib/zwave/FirmwareUpdateService.ts'
+} from '#api/lib/zwave/FirmwareUpdateService'
 import type {
 	FirmwareBackupPort,
 	FirmwareConfigPort,
@@ -26,7 +26,7 @@ import type {
 	FirmwareUpdateNodeState,
 	OTWFirmwareUpdateResult,
 	StagedFirmwareNodeUpdate,
-} from '#api/lib/zwave/ports.ts'
+} from '#api/lib/zwave/ports'
 import { createServiceLogger } from './serviceTestSupport.ts'
 import { createDeferred, requireDefined } from '../testUtils.ts'
 

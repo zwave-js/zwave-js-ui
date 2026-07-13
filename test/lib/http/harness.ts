@@ -3,7 +3,7 @@ import type { Express } from 'express'
 import supertest, { type Test as SupertestTest } from 'supertest'
 import { vi, afterEach } from 'vitest'
 import type { FakeGateway, FakeZniffer } from '../shared/fakes.ts'
-import type * as SerialPortsModuleNamespace from '#api/lib/serialPorts.ts'
+import type * as SerialPortsModuleNamespace from '#api/lib/serialPorts'
 import {
 	useHarnessLifecycle,
 	listenOnEphemeralPort,
@@ -23,7 +23,7 @@ const { enumerateSerialPorts } = vi.hoisted(() => ({
 	),
 }))
 
-vi.mock('#api/lib/serialPorts.ts', () => ({ enumerateSerialPorts }))
+vi.mock('#api/lib/serialPorts', () => ({ enumerateSerialPorts }))
 
 export { enumerateSerialPorts }
 

@@ -1,13 +1,13 @@
 import type express from 'express'
 import type { RateLimitRequestHandler } from 'express-rate-limit'
-import type { PersistedSettings } from '../config/store.ts'
-import store from '../config/store.ts'
-import jsonStore from '../lib/jsonStore.ts'
-import * as loggers from '../lib/logger.ts'
-import { getErrorMessage } from '../lib/errors.ts'
-import debugManager from '../lib/DebugManager.ts'
-import type { AppRuntime } from '../runtime/AppRuntime.ts'
-import { isAuthenticated } from './auth.ts'
+import type { PersistedSettings } from '#api/config/store'
+import store from '#api/config/store'
+import jsonStore from '#api/lib/jsonStore'
+import * as loggers from '#api/lib/logger'
+import { getErrorMessage } from '#api/lib/errors'
+import debugManager from '#api/lib/DebugManager'
+import type { AppRuntime } from '#api/runtime/AppRuntime'
+import { isAuthenticated } from '#api/routes/auth'
 
 const logger = loggers.module('App')
 

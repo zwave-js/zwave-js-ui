@@ -9,7 +9,7 @@ import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
 import type {
 	DiscoveryGenerator as DiscoveryGeneratorType,
 	DiscoveryGeneratorOptions,
-} from '#api/hass/DiscoveryGenerator.ts'
+} from '#api/hass/DiscoveryGenerator'
 import type {
 	HassDeviceRegistryPort,
 	HassLogger,
@@ -17,13 +17,13 @@ import type {
 	HassNode,
 	HassValue,
 	HassZwavePort,
-} from '#api/hass/ports.ts'
+} from '#api/hass/ports'
 import type {
 	HassDevice,
 	HassDeviceCatalog,
 	HassDeviceMap,
-} from '#api/hass/types.ts'
-import { PayloadType } from '#api/lib/shared.ts'
+} from '#api/hass/types'
+import { PayloadType } from '#api/lib/shared'
 import { cleanupTestEnv, ensureTestEnv, TEST_SESSION_SECRET } from './env.ts'
 import { assertDefined } from '../testUtils.ts'
 
@@ -65,8 +65,8 @@ let DiscoveryGenerator: typeof DiscoveryGeneratorType
 beforeAll(async () => {
 	const isolatedStoreDir = ensureTestEnv()
 	const [discoveryModule, configModule] = await Promise.all([
-		import('#api/hass/DiscoveryGenerator.ts'),
-		import('#api/config/app.ts'),
+		import('#api/hass/DiscoveryGenerator'),
+		import('#api/config/app'),
 	])
 	DiscoveryGenerator = discoveryModule.DiscoveryGenerator
 	expect(configModule.storeDir).toBe(isolatedStoreDir)

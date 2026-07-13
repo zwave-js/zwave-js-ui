@@ -9,8 +9,8 @@ import {
 } from 'vitest'
 import { BasicDeviceClass, CommandClasses } from '@zwave-js/core'
 import { BarrierState, ThermostatSetpointType } from 'zwave-js'
-import type { GatewayFactory as GatewayFactoryType } from '#api/hass/GatewayFactory.ts'
-import type { HassDevice } from '#api/hass/types.ts'
+import type { GatewayFactory as GatewayFactoryType } from '#api/hass/GatewayFactory'
+import type { HassDevice } from '#api/hass/types'
 import type { GatewayHarness } from './gatewayHarness.ts'
 import {
 	cleanupGatewayHarnessEnv,
@@ -57,7 +57,7 @@ describe('Gateway Home Assistant behavior', () => {
 			discovery_payload: {},
 			values: [],
 		}
-		const { GatewayFactory } = await import('#api/hass/GatewayFactory.ts')
+		const { GatewayFactory } = await import('#api/hass/GatewayFactory')
 		const factory = new GatewayFactory({
 			storeDir,
 			logger: {

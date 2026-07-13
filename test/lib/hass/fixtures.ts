@@ -9,15 +9,15 @@
  */
 import { vi, type Mock } from 'vitest'
 import { EventEmitter } from 'node:events'
-import type { StoreHassDevicesResult } from '#api/hass/types.ts'
-import type { MqttConfig } from '#api/lib/MqttClient.ts'
-import type { GatewayZwave } from '#api/lib/Gateway.ts'
+import type { StoreHassDevicesResult } from '#api/hass/types'
+import type { MqttConfig } from '#api/lib/MqttClient'
+import type { GatewayZwave } from '#api/lib/Gateway'
 import type {
 	HassDevice,
 	ZUINode,
 	ZUIValueId,
 	ZUIValueIdState,
-} from '#api/lib/ZwaveClient.ts'
+} from '#api/lib/ZwaveClient'
 import { assertDefined, requireDefined } from '../testUtils.ts'
 
 export { assertDefined, requireDefined }

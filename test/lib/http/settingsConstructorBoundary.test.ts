@@ -5,7 +5,7 @@ const zwaveCtor = vi.fn()
 const gatewayCtor = vi.fn()
 const znifferCtor = vi.fn()
 
-vi.mock('#api/lib/MqttClient.ts', () => ({
+vi.mock('#api/lib/MqttClient', () => ({
 	default: class MockMqttClient {
 		constructor(...args: unknown[]) {
 			mqttCtor(...args)
@@ -14,7 +14,7 @@ vi.mock('#api/lib/MqttClient.ts', () => ({
 	},
 }))
 
-vi.mock('#api/lib/ZwaveClient.ts', () => ({
+vi.mock('#api/lib/ZwaveClient', () => ({
 	default: class MockZWaveClient {
 		constructor(...args: unknown[]) {
 			zwaveCtor(...args)
@@ -26,7 +26,7 @@ vi.mock('#api/lib/ZwaveClient.ts', () => ({
 	},
 }))
 
-vi.mock('#api/lib/Gateway.ts', () => ({
+vi.mock('#api/lib/Gateway', () => ({
 	default: class MockGateway {
 		constructor(...args: unknown[]) {
 			gatewayCtor(...args)
@@ -38,7 +38,7 @@ vi.mock('#api/lib/Gateway.ts', () => ({
 	},
 }))
 
-vi.mock('#api/lib/ZnifferManager.ts', () => ({
+vi.mock('#api/lib/ZnifferManager', () => ({
 	default: class MockZnifferManager {
 		constructor(...args: unknown[]) {
 			znifferCtor(...args)
@@ -52,13 +52,13 @@ vi.mock('#api/lib/ZnifferManager.ts', () => ({
 // factories `startGateway()` injects, mocked as no-ops so this file's concern
 // — constructor-arg passthrough into Mqtt/Zwave/Gateway/Zniffer — never spins
 // up a real MQTT-discovery engine or `@zwave-js/server`.
-vi.mock('#api/hass/MqttDiscoveryManager.ts', () => ({
+vi.mock('#api/hass/MqttDiscoveryManager', () => ({
 	default: class MockMqttDiscoveryManager {
 		stop = vi.fn()
 	},
 }))
 
-vi.mock('#api/hass/ZwaveServerManager.ts', () => ({
+vi.mock('#api/hass/ZwaveServerManager', () => ({
 	default: class MockZwaveServerManager {
 		get version(): string {
 			return '0.0.0-test'

@@ -1,10 +1,10 @@
 import { beforeEach, describe, expect, it } from 'vitest'
-import { HassDeviceStore } from '#api/hass/DeviceStore.ts'
+import { HassDeviceStore } from '#api/hass/DeviceStore'
 import type {
 	HassDeviceStorePort,
 	HassPersistenceNode,
-} from '#api/hass/ports.ts'
-import type { HassDevice, HassDeviceMap } from '#api/hass/types.ts'
+} from '#api/hass/ports'
+import type { HassDevice, HassDeviceMap } from '#api/hass/types'
 
 function device(objectId: string, id?: string): HassDevice {
 	return {

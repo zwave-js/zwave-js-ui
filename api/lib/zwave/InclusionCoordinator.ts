@@ -11,9 +11,9 @@ import type {
 	PlannedProvisioningEntry,
 	QRProvisioningInformation,
 	ServiceLogger,
-} from './ports.ts'
-import { InclusionStrategy, QRCodeVersion } from './ports.ts'
-import type { JoinNetworkResult } from './ports.ts'
+} from '#api/lib/zwave/ports'
+import { InclusionStrategy, QRCodeVersion } from '#api/lib/zwave/ports'
+import type { JoinNetworkResult } from '#api/lib/zwave/ports'
 
 export class InclusionLifecycleCancelledError extends Error {
 	constructor(operation: string) {

@@ -1,9 +1,9 @@
 import type { Socket } from 'socket.io'
-import { getErrorMessage } from '../lib/errors.ts'
-import * as loggers from '../lib/logger.ts'
-import { inboundEvents } from '../lib/SocketEvents.ts'
-import type { AppRuntime } from '../runtime/AppRuntime.ts'
-import { noop, type SocketAck } from './types.ts'
+import { getErrorMessage } from '#api/lib/errors'
+import * as loggers from '#api/lib/logger'
+import { inboundEvents } from '#api/lib/SocketEvents'
+import type { AppRuntime } from '#api/runtime/AppRuntime'
+import { noop, type SocketAck } from '#api/socket/types'
 
 const logger = loggers.module('App')
 

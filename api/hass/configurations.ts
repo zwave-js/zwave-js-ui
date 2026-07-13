@@ -1,7 +1,7 @@
 // List of Home-Assistant configuration for MQTT Discovery
 // https://www.home-assistant.io/docs/mqtt/discovery/
 
-import type { HassDevice } from './types.ts'
+import type { HassDevice } from '#api/hass/types'
 
 type HassDeviceKey =
 	| 'binary_sensor'

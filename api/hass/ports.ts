@@ -5,9 +5,9 @@ import type {
 	ZUINode,
 	ZUIValueId,
 	ZUIValueIdState,
-} from '../lib/ZwaveClient.ts'
-import type { PayloadType } from '../lib/shared.ts'
-import type { HassDevice, HassDeviceMap } from './types.ts'
+} from '#api/lib/ZwaveClient'
+import type { PayloadType } from '#api/lib/shared'
+import type { HassDevice, HassDeviceMap } from '#api/hass/types'
 
 export interface HassLogger {
 	debug(message: string, ...meta: unknown[]): unknown

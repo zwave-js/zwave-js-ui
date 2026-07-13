@@ -1,9 +1,9 @@
 import type { Socket } from 'socket.io'
-import debugManager from '../lib/DebugManager.ts'
-import { inboundEvents } from '../lib/SocketEvents.ts'
-import type { AppRuntime } from '../runtime/AppRuntime.ts'
-import type { ZnifferPort, ZwaveClientPort } from '../runtime/ports.ts'
-import { noop, type SocketAck } from './types.ts'
+import debugManager from '#api/lib/DebugManager'
+import { inboundEvents } from '#api/lib/SocketEvents'
+import type { AppRuntime } from '#api/runtime/AppRuntime'
+import type { ZnifferPort, ZwaveClientPort } from '#api/runtime/ports'
+import { noop, type SocketAck } from '#api/socket/types'
 
 type ZwaveState = ReturnType<ZwaveClientPort['getState']>
 type ZnifferStatus = ReturnType<ZnifferPort['status']>

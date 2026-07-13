@@ -24,11 +24,11 @@ import {
 	type InclusionUserCallbacks,
 	OTWFirmwareUpdateStatus,
 } from 'zwave-js'
-import type ZWaveClientType from '#api/lib/ZwaveClient.ts'
-import type { ZwaveConfig, ZUINode, ZUIValueId } from '#api/lib/ZwaveClient.ts'
-import type ZnifferManagerType from '#api/lib/ZnifferManager.ts'
-import { eventToChannel } from '#api/lib/SocketEvents.ts'
-import { buffer2hex } from '#api/lib/utils.ts'
+import type ZWaveClientType from '#api/lib/ZwaveClient'
+import type { ZwaveConfig, ZUINode, ZUIValueId } from '#api/lib/ZwaveClient'
+import type ZnifferManagerType from '#api/lib/ZnifferManager'
+import { eventToChannel } from '#api/lib/SocketEvents'
+import { buffer2hex } from '#api/lib/utils'
 import { useSocketHarness, type SocketHarness } from './harness.ts'
 import { createFakeGateway } from './fakes.ts'
 import { connectedSubscriber, waitForEvent, waitForArgs } from './helpers.ts'
@@ -40,9 +40,9 @@ describe('Socket contract: outbound producers', () => {
 
 	beforeAll(async () => {
 		// Registered after useSocketHarness()'s beforeAll, so STORE_DIR is isolated first
-		;({ default: ZWaveClient } = await import('#api/lib/ZwaveClient.ts'))
+		;({ default: ZWaveClient } = await import('#api/lib/ZwaveClient'))
 		;({ default: ZnifferManager } = await import(
-			'#api/lib/ZnifferManager.ts'
+			'#api/lib/ZnifferManager'
 		))
 	})
 
@@ -549,7 +549,7 @@ describe('Socket contract: outbound producers', () => {
 			const harness = await getHarness({
 				gateway: benignGateway(),
 			})
-			const { logStream } = await import('#api/lib/logger.ts')
+			const { logStream } = await import('#api/lib/logger')
 			const client = await connectedSubscriber(harness, 'debug')
 
 			const received = waitForEvent(client, 'DEBUG')
@@ -562,7 +562,7 @@ describe('Socket contract: outbound producers', () => {
 			// The only real producer sits inside emulateFwUpdate(), a private helper gated behind
 			// Math.random()/setInterval timing. Verified structurally, not via a fabricated emit.
 			it('is not in allowedApis, so it is unreachable through callApi() too', async () => {
-				const { allowedApis } = await import('#api/lib/ZwaveClient.ts')
+				const { allowedApis } = await import('#api/lib/ZwaveClient')
 				expect(allowedApis).not.toContain('emulateFwUpdate')
 			})
 

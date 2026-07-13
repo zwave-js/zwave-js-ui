@@ -1,12 +1,12 @@
-import { CustomDeviceRegistry } from './CustomDeviceRegistry.ts'
-import type { HassLogger } from './ports.ts'
-import type { HassDeviceCatalog } from './types.ts'
-import Gateway from '../lib/Gateway.ts'
+import { CustomDeviceRegistry } from '#api/hass/CustomDeviceRegistry'
+import type { HassLogger } from '#api/hass/ports'
+import type { HassDeviceCatalog } from '#api/hass/types'
+import Gateway from '#api/lib/Gateway'
 import type {
 	GatewayConfig,
 	GatewayMqtt,
 	GatewayZwave,
-} from '../lib/Gateway.ts'
+} from '#api/lib/Gateway'
 
 export interface GatewayFactoryOptions {
 	storeDir: string

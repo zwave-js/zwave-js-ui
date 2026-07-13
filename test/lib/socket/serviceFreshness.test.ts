@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import type { Socket as ClientSocket } from 'socket.io-client'
-import type { ZnifferApiRequest } from '#api/socket/znifferApi.ts'
+import type { ZnifferApiRequest } from '#api/socket/znifferApi'
 import {
 	createFakeGateway,
 	createFakeZniffer,

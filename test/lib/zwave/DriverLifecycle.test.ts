@@ -23,14 +23,14 @@ import {
 	DriverLifecycle,
 	type DriverLifecycleHost,
 	type DriverLifecycleDeps,
-} from '#api/lib/zwave/DriverLifecycle.ts'
-import type ZwaveServerManager from '#api/hass/ZwaveServerManager.ts'
-import type { ZwaveServerHost } from '#api/hass/ZwaveServerManager.ts'
+} from '#api/lib/zwave/DriverLifecycle'
+import type ZwaveServerManager from '#api/hass/ZwaveServerManager'
+import type { ZwaveServerHost } from '#api/hass/ZwaveServerManager'
 import type {
 	ZwaveConfig,
 	InclusionUserCallbacks,
-} from '#api/lib/zwave/ports.ts'
-import { ZwaveClientStatus } from '#api/lib/zwave/ports.ts'
+} from '#api/lib/zwave/ports'
+import { ZwaveClientStatus } from '#api/lib/zwave/ports'
 import {
 	createDeferred,
 	requireDefined,

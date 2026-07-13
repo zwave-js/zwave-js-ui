@@ -45,18 +45,18 @@ import type {
 	NodesStoreFile,
 	NodesStoreRecord,
 	NodesStoreRecordByHome,
-} from '../../config/store.ts'
-import { getErrorMessage } from '../errors.ts'
-import { socketEvents } from '../SocketEvents.ts'
-import * as utils from '../utils.ts'
+} from '#api/config/store'
+import { getErrorMessage } from '#api/lib/errors'
+import { socketEvents } from '#api/lib/SocketEvents'
+import * as utils from '#api/lib/utils'
 import type {
 	NodeEvent,
 	ZUINode,
 	ZUIValueId,
 	ZwaveNodeEvents,
-} from '../ZwaveClient.ts'
-import { NodeProjector, type NodeProjectionDriver } from './NodeProjector.ts'
-import type { ServiceLogger } from './ports.ts'
+} from '#api/lib/ZwaveClient'
+import { NodeProjector, type NodeProjectionDriver } from '#api/lib/zwave/NodeProjector'
+import type { ServiceLogger } from '#api/lib/zwave/ports'
 
 type NodeUpdate = utils.DeepPartial<ZUINode> | { firmwareUpdate: false }
 type ValueUpdateArgs = (
