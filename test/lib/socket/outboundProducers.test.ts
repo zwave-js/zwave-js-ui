@@ -428,8 +428,9 @@ describe('Socket contract: outbound producers', () => {
 				controller: { supportsLongRange: false, nodes: new Map() },
 			}
 			// Pre-populate as if the LR broadcast virtual node already
-			// existed - `hasLRNodes` is false (no controller/LR nodes
-			// above), so the real method's deletion branch fires.
+			// existed, with the controller reporting no long-range
+			// support - the precondition under which the real method
+			// removes it and emits NODE_REMOVED.
 			;(zwave as any)._virtualNodes.set(NODE_ID_BROADCAST_LR, {} as any)
 			;(zwave as any)._nodes.set(NODE_ID_BROADCAST_LR, {} as any)
 			const client = await connectedSubscriber(harness, 'nodes')
