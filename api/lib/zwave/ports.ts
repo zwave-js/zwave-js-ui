@@ -9,6 +9,7 @@ import type {
 	Driver,
 } from 'zwave-js'
 import type { SupervisionResult } from '@zwave-js/core'
+import type { ConfigManager } from '@zwave-js/config'
 import type { DeepPartial } from '../utils.ts'
 
 export const ZUIScheduleEntryLockMode = {
@@ -155,39 +156,10 @@ export interface ServiceLogger {
 	error(message: string, ...meta: unknown[]): void
 }
 
-export interface TemplateConfigManagerPort {
-	loadDeviceIndex(): Promise<void>
-	lookupDevice(
-		manufacturerId: number,
-		productType: number,
-		productId: number,
-	): Promise<
-		| {
-				paramInformation?: {
-					entries(): Iterable<
-						[
-							{ parameter: number; valueBitMask?: number },
-							{
-								label?: string
-								description?: string
-								readOnly?: boolean
-								minValue?: number
-								maxValue?: number
-								defaultValue?: number
-								unit?: string
-								allowManualEntry?: boolean
-								options?: readonly {
-									label: string
-									value: number
-								}[]
-							},
-						]
-					>
-				}
-		  }
-		| undefined
-	>
-}
+export type TemplateConfigManagerPort = Pick<
+	ConfigManager,
+	'loadDeviceIndex' | 'lookupDevice'
+>
 
 export interface TemplateUtilsPort {
 	generateId(): string

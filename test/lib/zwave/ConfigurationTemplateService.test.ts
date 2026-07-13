@@ -10,6 +10,8 @@ import type {
 import type { ZWaveNode } from 'zwave-js'
 import { CommandClasses } from '@zwave-js/core'
 import { SetValueStatus } from 'zwave-js'
+import { DeviceConfig, type ParamInformation } from '@zwave-js/config'
+import { ObjectKeyMap } from '@zwave-js/shared'
 
 let idCounter = 0
 
@@ -830,20 +832,19 @@ describe('ConfigurationTemplateService', () => {
 				createConfigManagerPort(),
 			)
 
-			const legacyTemplate = {
+			const legacyTemplate: ZUIConfigurationTemplate & {
+				minFirmwareVersion?: string
+			} = {
 				...makeTemplate(),
 				minFirmwareVersion: '1.0',
 				firmwareRange: undefined,
-			} as ZUIConfigurationTemplate & { minFirmwareVersion?: string }
+			}
 			const result = await svc.importConfigurationTemplates([
 				legacyTemplate,
 			])
 
 			expect(result[0].firmwareRange).toEqual({ min: '1.0' })
-			expect(
-				(result[0] as unknown as { minFirmwareVersion?: string })
-					.minFirmwareVersion,
-			).toBeUndefined()
+			expect(legacyTemplate.minFirmwareVersion).toBeUndefined()
 		})
 
 		it('preserves existing contentHash if present', async () => {
@@ -1103,42 +1104,75 @@ describe('ConfigurationTemplateService', () => {
 		})
 
 		it('returns mapped params from ConfigManager with correct lookup ordering', async () => {
-			const mockParamInfo = new Map()
+			const mockParamInfo = new ObjectKeyMap<
+				{ parameter: number; valueBitMask?: number },
+				ParamInformation
+			>()
 			mockParamInfo.set(
 				{ parameter: 2, valueBitMask: undefined },
 				{
+					parameterNumber: 2,
+					valueBitMask: undefined,
 					label: 'Wake After Power On',
 					description: 'Wake duration',
+					valueSize: 1,
+					allowed: [],
 					readOnly: false,
+					writeOnly: undefined,
 					minValue: 0,
 					maxValue: 255,
 					defaultValue: 0,
+					recommendedValue: undefined,
 					unit: 'seconds',
 					allowManualEntry: true,
+					destructive: undefined,
 					options: [],
+					hidden: undefined,
+					purpose: undefined,
 				},
 			)
 			mockParamInfo.set(
 				{ parameter: 5, valueBitMask: 1 },
 				{
+					parameterNumber: 5,
+					valueBitMask: 1,
 					label: 'Sensor Report',
 					description: 'Bitmask param',
+					valueSize: 1,
+					allowed: [],
 					readOnly: true,
+					writeOnly: undefined,
 					minValue: 0,
 					maxValue: 3,
 					defaultValue: 1,
+					recommendedValue: undefined,
 					unit: undefined,
 					allowManualEntry: false,
+					destructive: undefined,
 					options: [
 						{ label: 'Off', value: 0 },
 						{ label: 'On', value: 1 },
 					],
+					hidden: undefined,
+					purpose: undefined,
 				},
 			)
 
-			const mockDevice = {
-				paramInformation: mockParamInfo,
-			}
+			const mockDevice = new DeviceConfig(
+				'test.json',
+				false,
+				'ACME',
+				134,
+				'Widget',
+				'Test device',
+				[{ productType: 100, productId: 2 }],
+				{ min: '0.0', max: '255.255' },
+				false,
+				undefined,
+				undefined,
+				undefined,
+				mockParamInfo,
+			)
 
 			const loadDeviceIndex = vi.fn(() => Promise.resolve())
 			const lookupDevice = vi.fn(() => Promise.resolve(mockDevice))
