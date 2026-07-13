@@ -11,7 +11,8 @@ import type GatewayType from '#api/lib/Gateway.ts'
 import type { GatewayConfig } from '#api/lib/Gateway.ts'
 import type MqttClientType from '#api/lib/MqttClient.ts'
 import type { MqttConfig } from '#api/lib/MqttClient.ts'
-import type { HassDevice } from '#api/lib/ZwaveClient.ts'
+import type ZwaveClientType from '#api/lib/ZwaveClient.ts'
+import type { HassDevice, ZUINode } from '#api/lib/ZwaveClient.ts'
 import type { IClientPublishOptions } from 'mqtt'
 import { ensureTestEnv, cleanupTestEnv } from './env.ts'
 import { latestBroker, type FakeBroker } from './mqttMock.ts'
@@ -95,12 +96,23 @@ export async function createGatewayHarness(
 		...options.config,
 	}
 
-	const gw = new Gateway(config, zwave as any, mqtt)
+	// The fake zwave stands in for the real client at the constructor's
+	// dependency-injection boundary; it implements only what the HASS pipeline
+	// touches, so narrow it to the client type here rather than app-wide
+	const gw = new Gateway(config, zwave as unknown as ZwaveClientType, mqtt)
 	// Real start() initializes internal maps and wires the genuine MQTT/zwave
 	// handlers; zwave.connect() is a fake spy, so no real driver starts
 	await gw.start()
 
 	const broker = latestBroker()
+
+	// The de-dup guards live in private maps with no public reset; expose just
+	// those two fields as a typed view so per-test isolation can clear them
+	// without an app-wide `any`
+	const dedupState = gw as unknown as {
+		discovered: Record<string, unknown>
+		topicValues: Record<string, unknown>
+	}
 
 	function publishedDiscoveries(): PublishedDiscovery[] {
 		return broker.published.map((p) => {
@@ -135,8 +147,8 @@ export async function createGatewayHarness(
 		},
 		resetState() {
 			broker.published.length = 0
-			;(gw as any).discovered = {}
-			;(gw as any).topicValues = {}
+			dedupState.discovered = {}
+			dedupState.topicValues = {}
 		},
 		async close() {
 			// Drive the real Gateway.close teardown (zwave.close, cancelJobs,
@@ -168,7 +180,7 @@ export function discoverValueOnNode(
 	valueKey: string,
 ): HassDevice | undefined {
 	const before = new Set(Object.keys(node.hassDevices ?? {}))
-	gw.discoverValue(node as any, valueKey)
+	gw.discoverValue(node as unknown as ZUINode, valueKey)
 	const after = Object.entries(node.hassDevices ?? {})
 	const added = after.find(([k]) => !before.has(k))
 	return added?.[1]
