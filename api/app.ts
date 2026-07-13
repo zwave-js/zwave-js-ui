@@ -34,7 +34,7 @@ import jwt from 'jsonwebtoken'
 import path from 'node:path'
 import sessionStore from 'session-file-store'
 import type { Socket } from 'socket.io'
-import { promisify } from 'node:util'
+import { inspect, promisify } from 'node:util'
 import { libVersion } from 'zwave-js'
 import {
 	defaultPsw,
@@ -127,15 +127,17 @@ const FileStore = sessionStore(session)
 export interface AppInstance {
 	app: Express
 	startServer: (port: number | string, host?: string) => Promise<HttpServer>
-	setGateway(value: Gateway | undefined): void
-	setZnifferManager(value: ZnifferManager | undefined): void
-	setPluginsRouter(value: Router | undefined): void
-	setRestarting(value: boolean): void
-	isRestarting(): boolean
 	loadSnippets(): Promise<void>
 }
 
-export function createApp(): AppInstance {
+export interface CreateAppOptions {
+	/** Lets callers seed an already-connected gateway and skip a real Z-Wave/MQTT bring-up */
+	gateway?: Gateway
+	/** Lets callers reach the "already restarting" guards without driving a real restart */
+	restarting?: boolean
+}
+
+export function createApp(options: CreateAppOptions = {}): AppInstance {
 	const app = express()
 	const logger = loggers.module('App')
 
@@ -232,13 +234,13 @@ export function createApp(): AppInstance {
 		}
 	}
 
-	let gw: Gateway // the gateway instance
+	let gw: Gateway | undefined = options.gateway // the gateway instance
 	let zniffer: ZnifferManager // the zniffer instance
 	const plugins: CustomPlugin[] = []
 	let pluginsRouter: Router
 
 	// flag used to prevent multiple restarts while one is already in progress
-	let restarting = false
+	let restarting = options.restarting ?? false
 
 	// ### UTILS
 
@@ -247,6 +249,15 @@ export function createApp(): AppInstance {
 	 */
 	async function startServer(port: number | string, host?: string) {
 		let server: HttpServer
+
+		// Register before any awaits so the whole startup window is covered
+		process.removeListener('uncaughtException', handleUncaughtException)
+		process.on('uncaughtException', handleUncaughtException)
+		for (const signal of ['SIGINT', 'SIGTERM'] as NodeJS.Signals[]) {
+			// Drop our own listener before re-adding so repeated startServer calls can't stack duplicates
+			process.removeListener(signal, gracefuShutdown)
+			process.once(signal, gracefuShutdown)
+		}
 
 		const settings = jsonStore.get(store.settings)
 
@@ -344,17 +355,6 @@ export function createApp(): AppInstance {
 		startZniffer(settings.zniffer)
 		await debugManager.init() // Clean up any old debug temp files
 		await startGateway(settings)
-
-		// Register process handlers only when the app starts
-		process.on('uncaughtException', (reason) => {
-			const stack = (reason as any).stack || ''
-			logger.error(
-				`Unhandled Rejection, reason: ${reason}${stack ? `\n${stack}` : ''}`,
-			)
-		})
-		for (const signal of ['SIGINT', 'SIGTERM']) {
-			process.once(signal as NodeJS.Signals, gracefuShutdown)
-		}
 
 		return server
 	}
@@ -2410,29 +2410,18 @@ export function createApp(): AppInstance {
 		return process.exit()
 	}
 
+	function handleUncaughtException(reason: unknown) {
+		const stack = reason instanceof Error ? reason.stack : undefined
+		const message =
+			reason instanceof Error ? reason.message : inspect(reason)
+		logger.error(
+			`Unhandled Rejection, reason: ${message}${stack ? `\n${stack}` : ''}`,
+		)
+	}
+
 	return {
 		app,
 		startServer,
-		setGateway(value: Gateway | undefined) {
-			gw = value
-		},
-		setZnifferManager(value: ZnifferManager | undefined) {
-			zniffer = value
-		},
-		setPluginsRouter(value: Router | undefined) {
-			pluginsRouter = value
-		},
-		setRestarting(value: boolean) {
-			restarting = value
-		},
-		isRestarting() {
-			return restarting
-		},
 		loadSnippets,
 	}
 }
-
-const defaultInstance = createApp()
-
-export const startServer = defaultInstance.startServer
-export default defaultInstance.app
