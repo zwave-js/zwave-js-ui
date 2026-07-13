@@ -1033,7 +1033,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			getStoreNode: (nodeId: number) => this.storeNodes[nodeId],
 			setStoreNode: (nodeId: number, data: Partial<ZUINode>) => {
 				if (!this.storeNodes[nodeId]) {
-					this.storeNodes[nodeId] = {} as any
+					this.storeNodes[nodeId] = {}
 				}
 				Object.assign(this.storeNodes[nodeId], data)
 			},
