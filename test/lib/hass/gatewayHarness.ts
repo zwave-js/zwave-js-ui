@@ -1,17 +1,9 @@
-/**
- * Real-`Gateway` + real-`MqttClient` HASS discovery harness: only the upstream
- * `mqtt` package is faked (see `mqttMock.ts`), so every captured
- * topic/payload/QoS/retain is production output taken at the `broker.publish`
- * boundary. The dynamic `import()` runs after `ensureTestEnv()` so the modules'
- * `storeDir`/watcher capture targets the throwaway dir, never the real
- * `store/`. `start()` is awaited and the fake `zwave` is a real `EventEmitter`,
- * so a test can `zwave.emit(...)` to drive the real discovery pipeline.
- */
+import type { GatewayFactory as GatewayFactoryType } from '#api/hass/GatewayFactory.ts'
+import type { HassDeviceCatalog } from '#api/hass/types.ts'
 import type GatewayType from '#api/lib/Gateway.ts'
 import type { GatewayConfig } from '#api/lib/Gateway.ts'
 import type MqttClientType from '#api/lib/MqttClient.ts'
 import type { MqttConfig } from '#api/lib/MqttClient.ts'
-import type ZwaveClientType from '#api/lib/ZwaveClient.ts'
 import type { HassDevice, ZUINode } from '#api/lib/ZwaveClient.ts'
 import type { IClientPublishOptions } from 'mqtt'
 import { ensureTestEnv, cleanupTestEnv } from './env.ts'
@@ -23,28 +15,22 @@ import {
 } from './fixtures.ts'
 import { useManagedCurrent, type ManagedCurrent } from '../shared/harness.ts'
 
-let closeGatewayWatchers: (() => void) | undefined
-
 export interface PublishedDiscovery {
 	topic: string
-	/** Parsed JSON payload, or the raw string for a delete (empty payload). */
 	payload: any
 	options: IClientPublishOptions | undefined
 }
 
 export interface GatewayHarness {
-	gw: GatewayType
+	gw: GatewayType<FakeGatewayZwave, MqttClientType>
 	mqtt: MqttClientType
 	zwave: FakeGatewayZwave
 	broker: FakeBroker
+	config: GatewayConfig
 	publishedDiscoveries(): PublishedDiscovery[]
 	lastDiscovery(): PublishedDiscovery
 	resetPublishes(): void
 	resetState(): void
-	/**
-	 * Releases this harness's Gateway-owned resources. The shared custom-device
-	 * watcher source and per-file `STORE_DIR` are released by the file cleanup.
-	 */
 	close(): Promise<void>
 }
 
@@ -52,26 +38,21 @@ export interface GatewayHarnessOptions {
 	config?: Partial<GatewayConfig>
 	mqttConfig?: Partial<MqttConfig>
 	zwave?: Partial<FakeGatewayZwave>
+	catalogs?: HassDeviceCatalog
+	gatewayFactory?: GatewayFactoryType
 }
 
-/**
- * Builds a real `Gateway` + real `MqttClient` (backed by the mocked `mqtt`
- * broker) with defaults modeling a production HASS deployment: `NAMED` type,
- * `hassDiscovery: true`, prefix `homeassistant`.
- */
 export async function createGatewayHarness(
 	options: GatewayHarnessOptions = {},
 ): Promise<GatewayHarness> {
-	ensureTestEnv()
+	const storeDir = ensureTestEnv()
 
-	const [
-		{ default: Gateway, closeWatchers, GatewayType },
-		{ default: MqttClient },
-	] = await Promise.all([
-		import('#api/lib/Gateway.ts'),
-		import('#api/lib/MqttClient.ts'),
-	])
-	closeGatewayWatchers = closeWatchers
+	const [{ GatewayFactory }, { GatewayType }, { default: MqttClient }] =
+		await Promise.all([
+			import('#api/hass/GatewayFactory.ts'),
+			import('#api/lib/Gateway.ts'),
+			import('#api/lib/MqttClient.ts'),
+		])
 
 	const mqtt = new MqttClient(defaultMqttConfig(options.mqttConfig))
 	const zwave = createFakeGatewayZwave(options.zwave)
@@ -83,12 +64,18 @@ export async function createGatewayHarness(
 		...options.config,
 	}
 
-	// The fake zwave stands in for the real client at the constructor's
-	// dependency-injection boundary; it implements only what the HASS pipeline
-	// touches, so narrow it to the client type here rather than app-wide
-	const gw = new Gateway(config, zwave as unknown as ZwaveClientType, mqtt)
-	// Real start() initializes internal maps and wires the genuine MQTT/zwave
-	// handlers; zwave.connect() is a fake spy, so no real driver starts
+	const ownsFactory = options.gatewayFactory === undefined
+	const gatewayFactory =
+		options.gatewayFactory ??
+		new GatewayFactory({
+			storeDir,
+			logger: {
+				error: () => undefined,
+				info: () => undefined,
+			},
+			devices: options.catalogs ?? {},
+		})
+	const gw = gatewayFactory.create(config, zwave, mqtt)
 	await gw.start()
 
 	const broker = latestBroker()
@@ -112,6 +99,7 @@ export async function createGatewayHarness(
 		mqtt,
 		zwave,
 		broker,
+		config,
 		publishedDiscoveries,
 		lastDiscovery() {
 			const all = publishedDiscoveries()
@@ -125,21 +113,15 @@ export async function createGatewayHarness(
 		},
 		resetState() {
 			broker.published.length = 0
+			void gw.start()
 		},
 		async close() {
 			await gw.close()
+			if (ownsFactory) gatewayFactory.dispose()
 		},
 	}
 }
 
-/**
- * Managed `GatewayHarness` lifecycle for a HASS test file: one fresh harness
- * per test (call `get(options)` in a `beforeEach`, or `replace(options)` to
- * swap config mid-test), always closed in `afterEach`. Because the `mqtt` mock
- * registry and the source registry watchers are module-global, `afterEach`
- * also clears the broker registry and the final `afterAll` closes the shared
- * source before dropping the isolated `STORE_DIR`.
- */
 export function useGatewayHarness(): ManagedCurrent<
 	GatewayHarness,
 	GatewayHarnessOptions
@@ -149,31 +131,22 @@ export function useGatewayHarness(): ManagedCurrent<
 		(harness) => harness.close(),
 		{
 			afterEachCleanup: resetMqttBrokers,
-			afterAllCleanup() {
-				cleanupGatewayHarnessEnv()
-			},
+			afterAllCleanup: cleanupGatewayHarnessEnv,
 		},
 	)
 }
 
 export function cleanupGatewayHarnessEnv(): void {
-	closeGatewayWatchers?.()
-	closeGatewayWatchers = undefined
 	cleanupTestEnv()
 }
 
-/**
- * Invokes the real `discoverValue` for `valueKey` and returns the `HassDevice`
- * the gateway attached to the node (or `undefined` if the command class
- * produced no entity).
- */
 export function discoverValueOnNode(
-	gw: GatewayType,
-	node: { hassDevices?: Record<string, HassDevice> },
+	gw: Pick<GatewayType, 'discoverValue'>,
+	node: ZUINode,
 	valueKey: string,
 ): HassDevice | undefined {
 	const before = new Set(Object.keys(node.hassDevices ?? {}))
-	gw.discoverValue(node as unknown as ZUINode, valueKey)
+	gw.discoverValue(node, valueKey)
 	const after = Object.entries(node.hassDevices ?? {})
 	const added = after.find(([k]) => !before.has(k))
 	return added?.[1]

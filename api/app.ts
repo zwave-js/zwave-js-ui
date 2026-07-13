@@ -5,6 +5,8 @@ import cors from 'cors'
 import compression from 'compression'
 import morgan from 'morgan'
 import store from './config/store.ts'
+import { GatewayFactory } from './hass/GatewayFactory.ts'
+import hassDevices from './hass/devices.ts'
 import jsonStore from './lib/jsonStore.ts'
 import * as loggers from './lib/logger.ts'
 import SocketManager from './lib/SocketManager.ts'
@@ -149,6 +151,11 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 
 	const runtime = new AppRuntime({
 		getSocketServer: () => socketManager.io,
+		gatewayFactory: new GatewayFactory({
+			storeDir,
+			logger: loggers.module('Gateway'),
+			devices: hassDevices,
+		}),
 		gateway: testOptions?.gateway,
 		zniffer: testOptions?.zniffer,
 		restarting: testOptions?.restarting,

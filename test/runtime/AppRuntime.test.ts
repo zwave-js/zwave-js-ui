@@ -77,6 +77,10 @@ describe('App runtime behavior', () => {
 			getSocketServer: () => {
 				throw new Error('Socket server is not used by this test')
 			},
+			gatewayFactory: {
+				create: () => createFakeGateway(),
+				dispose: () => undefined,
+			},
 			...deps,
 		})
 	}
@@ -204,12 +208,21 @@ export default class ObservablePlugin {
 			close: vi.fn().mockResolvedValue(undefined),
 		})
 		const closeBackup = vi.spyOn(backupManager, 'close')
-		const runtime = createRuntime({ gateway, zniffer })
+		const disposeGatewayFactory = vi.fn()
+		const runtime = createRuntime({
+			gateway,
+			zniffer,
+			gatewayFactory: {
+				create: () => createFakeGateway(),
+				dispose: disposeGatewayFactory,
+			},
+		})
 
 		try {
 			await expect(runtime.shutdown()).resolves.toBeUndefined()
 
 			expect(gateway.close).toHaveBeenCalledOnce()
+			expect(disposeGatewayFactory).toHaveBeenCalledOnce()
 			expect(zniffer.close).toHaveBeenCalledOnce()
 			expect(closeBackup).toHaveBeenCalledOnce()
 		} finally {

@@ -5,7 +5,6 @@ import { CommandClasses } from '@zwave-js/core'
 import * as Constants from './Constants.ts'
 import type { LogLevel } from './logger.ts'
 import { module } from './logger.ts'
-import { storeDir } from '../config/app.ts'
 import type { IClientPublishOptions } from 'mqtt'
 import MqttClient from './MqttClient.ts'
 import type {
@@ -19,10 +18,10 @@ import type {
 import type ZwaveClient from './ZwaveClient.ts'
 import Cron from 'croner'
 
-import { CustomDeviceRegistry } from '../hass/CustomDeviceRegistry.ts'
 import type { HassDevice } from '../hass/types.ts'
 import { DiscoveryGenerator } from '../hass/DiscoveryGenerator.ts'
 import type {
+	HassDeviceRegistryLifecyclePort,
 	HassNode,
 	HassTopicNode,
 	HassValue,
@@ -45,112 +44,6 @@ const PAYLOAD_TYPE = {
 	VALUEID: 1,
 	RAW: 2,
 } as const
-
-// Share one import-time loader and its two file watchers across all runtime Gateways
-const defaultCustomDeviceRegistry = new CustomDeviceRegistry({
-	storeDir,
-	logger,
-})
-defaultCustomDeviceRegistry.start()
-
-export function closeWatchers() {
-	defaultCustomDeviceRegistry.dispose()
-}
-
-// ### TEST-ONLY SEAM
-//
-// Exposes the size of the internal file-watcher registry so HTTP
-// characterization tests can prove `closeWatchers()` actually released
-// every `fs.FSWatcher` this module opened (`customDevices.js`/`.json`,
-// falling back to watching their parent directory), instead of leaking
-// open watcher handles - bound to an already-deleted throwaway
-// `STORE_DIR` - across test files that share this module's cache. Nothing
-// in the production entrypoint (`api/bin/www.ts`) reads this.
-export function __getWatcherCountForTests(): number {
-	return defaultCustomDeviceRegistry.watcherCount
-}
-
-export function __getActiveWatcherCountForTests(): number {
-	return defaultCustomDeviceRegistry.activeWatcherCount
-}
-
-export function __getWatcherPathsForTests(): string[] {
-	return defaultCustomDeviceRegistry.watcherPaths
-}
-
-export function __getRegistrySubscriberCountForTests(): number {
-	return defaultCustomDeviceRegistry.subscriberCount
-}
-
-// ### TEST-ONLY SEAM
-//
-// Re-installs the module-global custom-device file watchers that
-// `closeWatchers()` tears down. The watches are created exactly once at
-// module import; a lifecycle test that wants to prove teardown releases them
-// must first guarantee they are present (an earlier harness `close()` in the
-// same worker may already have closed them, since they are shared module
-// state). This closes any existing watchers and rebinds both the `.js` and
-// `.json` watches to their real `loadCustomDevices` handler, exactly as the
-// import-time bootstrap does. Production (`api/bin/www.ts`) never calls this;
-// it only affects the test-owned watcher registry, never runtime reload
-// behavior.
-export function __rebindWatchersForTests(): void {
-	defaultCustomDeviceRegistry.rebind()
-}
-
-// ### TEST-ONLY SEAMS (custom devices)
-//
-// The custom-devices loader (`loadCustomDevices`) and its `allDevices`
-// projection are module-private process-global state, mutated at import time
-// and again whenever the `customDevices.js`/`.json` file watcher fires. These
-// read-only / re-invocation seams let the HASS characterization suite drive
-// and observe that loader DETERMINISTICALLY (write a file, re-run the loader,
-// inspect the projection) instead of racing the OS-level `fs.watch` event.
-// `loadCustomDevices` is the exact function the watcher invokes, so this
-// exercises the real precedence/sha-dedup/parse-failure code path. Nothing in
-// the production entrypoint (`api/bin/www.ts`) reads or calls these.
-export function __loadCustomDevicesForTests(): void {
-	defaultCustomDeviceRegistry.load()
-}
-
-// Returns a DEEP SNAPSHOT of the live `allDevices` catalog, never the live
-// reference. Production discovery reads `allDevices` directly, so handing a
-// test the live object would let an assertion (or an accidental mutation)
-// corrupt the discovery catalog for every subsequent lookup in the process.
-// The snapshot is a structural copy, so mutating the returned value has no
-// effect on the module's state (proven by the mutation regression in
-// `customDevices.test.ts`). Tests that need to observe reassignment vs
-// sha-dedup use `__getCustomDevicesShaForTests()` instead of reference
-// identity on this snapshot.
-export function __getAllDevicesForTests(): Record<string, HassDevice[]> {
-	return defaultCustomDeviceRegistry.snapshot()
-}
-
-// Exposes the dedup sha (`lastCustomDevicesLoad`) so tests can assert whether
-// a given `loadCustomDevices()` invocation REASSIGNED the projection (sha
-// changes) or was sha-deduped/short-circuited (sha unchanged) without relying
-// on reference identity of the snapshot above. `null` before any load / after
-// a reset.
-export function __getCustomDevicesShaForTests(): string | null {
-	return defaultCustomDeviceRegistry.sha
-}
-
-// Evicts any `require.cache` entry the preferred `.js` custom-devices loader
-// created. `loadCustomDevices()` loads the `.js` form via `require()`, whose
-// module cache serves a REWRITTEN `.js` file staler (production loads
-// customDevices once per process, so a runtime `.js` change already requires a
-// restart - this seam does NOT alter that). Tests that write a `.js` fixture
-// call this in teardown so a later test's `require()` re-reads from disk
-// instead of being served this test's cached module, keeping the suite
-// isolated. See the stale-cache quirk characterization in
-// `customDevices.test.ts`.
-export function __evictCustomDevicesRequireCacheForTests(): void {
-	defaultCustomDeviceRegistry.evictRequireCache()
-}
-
-export function __resetCustomDevicesStateForTests(): void {
-	defaultCustomDeviceRegistry.reset()
-}
 
 export const GatewayType = GATEWAY_TYPE
 export type GatewayType = (typeof GATEWAY_TYPE)[keyof typeof GATEWAY_TYPE]
@@ -223,16 +116,50 @@ interface ValueIdTopic {
 	targetTopic?: string
 }
 
-export default class Gateway {
+export type GatewayZwave = Pick<
+	ZwaveClient,
+	| 'callApi'
+	| 'close'
+	| 'connect'
+	| 'driverFunction'
+	| 'emitNodeUpdate'
+	| 'homeHex'
+	| 'nodes'
+	| 'off'
+	| 'on'
+	| 'setPollInterval'
+	| 'updateDevice'
+	| 'writeBroadcast'
+	| 'writeMulticast'
+	| 'writeValue'
+>
+
+export type GatewayMqtt = Pick<
+	MqttClient,
+	| 'clientID'
+	| 'close'
+	| 'disabled'
+	| 'getStatusTopic'
+	| 'getTopic'
+	| 'off'
+	| 'on'
+	| 'publish'
+	| 'subscribe'
+>
+
+export default class Gateway<
+	TZwave extends GatewayZwave = ZwaveClient,
+	TMqtt extends GatewayMqtt = MqttClient,
+> {
 	private config: GatewayConfig
-	private _mqtt: MqttClient
-	private _zwave: ZwaveClient
+	private _mqtt: TMqtt
+	private _zwave: TZwave
 	private topicValues: { [key: string]: ZUIValueId }
 	private discovered: { [key: string]: HassDevice }
 	private topicLevels: number[]
 	private _closed: boolean
 	private jobs: Map<string, Cron> = new Map()
-	private customDeviceRegistry: CustomDeviceRegistry
+	private customDeviceRegistry: HassDeviceRegistryLifecyclePort
 	private discoveryGenerator: DiscoveryGenerator
 	private listenersAttached = false
 	private readonly onWriteRequest = this._onWriteRequest.bind(this)
@@ -266,12 +193,17 @@ export default class Gateway {
 		return this.mqtt && !this.mqtt.disabled
 	}
 
-	constructor(config: GatewayConfig, zwave: ZwaveClient, mqtt: MqttClient) {
+	constructor(
+		config: GatewayConfig,
+		zwave: TZwave,
+		mqtt: TMqtt,
+		customDeviceRegistry: HassDeviceRegistryLifecyclePort,
+	) {
 		this.config = config || { type: 1 }
 		// clients
 		this._mqtt = mqtt
 		this._zwave = zwave
-		this.customDeviceRegistry = defaultCustomDeviceRegistry.fork()
+		this.customDeviceRegistry = customDeviceRegistry
 		const getDiscovered = () => this.discovered
 		const getMqtt = () => this._mqtt
 		const getZwave = () => this._zwave
@@ -1321,16 +1253,27 @@ export default class Gateway {
 		return this.discoveryGenerator.getIdWithoutNode(valueId)
 	}
 
-	private _deviceInfo(node: ZUINode, nodeName: string) {
+	private _deviceInfo(
+		node: Pick<
+			ZUINode,
+			| 'id'
+			| 'manufacturer'
+			| 'productDescription'
+			| 'productLabel'
+			| 'name'
+			| 'firmwareVersion'
+			| 'loc'
+		>,
+		nodeName: string,
+	) {
 		return this.discoveryGenerator.deviceInfo(node, nodeName)
 	}
 
 	private _setDiscoveryValue(
 		payload: Record<string, unknown>,
 		property: string,
-		node: ZUINode,
+		node: { values: Record<string, { value?: unknown }> },
 	): void {
-		if (!node.values) return
 		this.discoveryGenerator.setDiscoveryValue(payload, property, {
 			values: node.values,
 		})

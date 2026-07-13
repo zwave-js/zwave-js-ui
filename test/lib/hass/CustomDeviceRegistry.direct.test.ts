@@ -2,201 +2,189 @@ import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { CustomDeviceRegistry } from '../../../api/hass/CustomDeviceRegistry.ts'
-import type { HassDeviceCatalog } from '../../../api/hass/types.ts'
+import {
+	CustomDeviceRegistry,
+	type CustomDeviceRegistryOptions,
+} from '../../../api/hass/CustomDeviceRegistry.ts'
+import type { HassDevice, HassDeviceCatalog } from '../../../api/hass/types.ts'
 
-const directories: string[] = []
-const registries: CustomDeviceRegistry[] = []
-
-function temporaryDirectory(): string {
-	const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'hass-registry-'))
-	directories.push(directory)
-	return directory
-}
-
-function registry(storeDir: string) {
-	const instance = new CustomDeviceRegistry({
-		storeDir,
-		logger: { error: vi.fn(), info: vi.fn() },
-		devices: {
-			builtIn: [
-				{
-					type: 'sensor',
-					object_id: 'built_in',
-					discovery_payload: {},
-					values: ['value'],
-				},
-			],
-		},
-	})
-	registries.push(instance)
-	return instance
-}
-
-function watcherHandles(instance: CustomDeviceRegistry): fs.FSWatcher[] {
-	return [
-		...(
-			Reflect.get(instance, 'watchers') as Map<string, fs.FSWatcher>
-		).values(),
-	]
-}
-
-function activeHandles(): unknown[] {
-	return (
-		process as typeof process & {
-			_getActiveHandles(): unknown[]
-		}
-	)._getActiveHandles()
-}
-
-afterEach(() => {
-	for (const instance of registries.splice(0)) instance.dispose()
-	for (const directory of directories.splice(0)) {
-		fs.rmSync(directory, { force: true, recursive: true })
+function device(name: string): HassDevice {
+	return {
+		type: 'sensor',
+		object_id: name,
+		discovery_payload: { name },
+		values: [],
 	}
-})
+}
 
-describe('CustomDeviceRegistry direct lifecycle', () => {
-	it('replaces old watchers and reloads renamed, recreated, and changed files after rebinding', async () => {
-		const storeDir = temporaryDirectory()
-		const instance = registry(storeDir)
-		const load = vi.spyOn(instance, 'load')
-		instance.start()
-		instance.start()
-		expect(instance.watcherCount).toBe(2)
+describe('CustomDeviceRegistry', () => {
+	const directories: string[] = []
+	const registries: CustomDeviceRegistry[] = []
 
-		const custom: HassDeviceCatalog = {
-			custom: [
-				{
-					type: 'switch',
-					object_id: 'custom',
-					discovery_payload: {},
-					values: ['value'],
-				},
-			],
-		}
-		const filename = path.join(storeDir, 'customDevices.json')
-		fs.writeFileSync(filename, JSON.stringify(custom))
-		await vi.waitFor(() => expect(instance.get('custom')).toHaveLength(1))
-		const firstHash = instance.sha
-		expect(firstHash).not.toBeNull()
-		load.mockClear()
-
-		const oldWatchers = watcherHandles(instance)
-		instance.rebind()
-		expect(instance.watcherCount).toBe(2)
-		const reboundWatchers = watcherHandles(instance)
-		expect(reboundWatchers).toHaveLength(2)
-		expect(reboundWatchers).not.toEqual(oldWatchers)
-		await vi.waitFor(() =>
-			expect(
-				oldWatchers.every(
-					(watcher) => !activeHandles().includes(watcher),
-				),
-			).toBe(true),
+	function createRegistry(catalogs: HassDeviceCatalog = {}): {
+		registry: CustomDeviceRegistry
+		storeDir: string
+		logger: CustomDeviceRegistryOptions['logger']
+	} {
+		const storeDir = fs.mkdtempSync(
+			path.join(os.tmpdir(), 'zui-custom-devices-'),
 		)
-
-		fs.renameSync(filename, filename + '.moved')
-		await vi.waitFor(() => expect(load).toHaveBeenCalled())
-
-		const recreated = {
-			custom: [{ ...custom.custom[0], object_id: 'recreated' }],
+		const logger = {
+			error: vi.fn(),
+			info: vi.fn(),
 		}
-		fs.writeFileSync(filename, JSON.stringify(recreated))
-		await vi.waitFor(() => {
-			expect(instance.get('custom')[0].object_id).toBe('recreated')
-			expect(instance.sha).not.toBe(firstHash)
+		const registry = new CustomDeviceRegistry({
+			storeDir,
+			logger,
+			devices: catalogs,
 		})
-		const recreatedHash = instance.sha
-		const callsAfterRecreate = load.mock.calls.length
+		directories.push(storeDir)
+		registries.push(registry)
+		return { registry, storeDir, logger }
+	}
 
-		const changed = {
-			custom: [{ ...custom.custom[0], object_id: 'changed' }],
+	afterEach(() => {
+		for (const registry of registries.splice(0)) registry.dispose()
+		for (const directory of directories.splice(0)) {
+			fs.rmSync(directory, { recursive: true, force: true })
 		}
-		fs.writeFileSync(filename, JSON.stringify(changed))
-		await vi.waitFor(() => {
-			expect(instance.get('custom')[0].object_id).toBe('changed')
-			expect(instance.sha).not.toBe(recreatedHash)
-			expect(load.mock.calls.length).toBeGreaterThan(callsAfterRecreate)
-		})
-
-		instance.dispose()
-		instance.dispose()
-		expect(instance.watcherCount).toBe(0)
-		await vi.waitFor(() =>
-			expect(
-				reboundWatchers.every(
-					(watcher) => !activeHandles().includes(watcher),
-				),
-			).toBe(true),
-		)
 	})
 
-	it('shallow-merges null and malformed catalog entries as no devices', () => {
-		const storeDir = temporaryDirectory()
-		fs.writeFileSync(path.join(storeDir, 'customDevices.json'), 'null')
-		const instance = registry(storeDir)
-		expect(() => instance.start()).not.toThrow()
-		expect(instance.sha).not.toBeNull()
-		expect(instance.get('builtIn')).toHaveLength(1)
-
+	it('loads custom JSON before serving an injected catalog', () => {
+		const builtIn = device('built-in')
+		const custom = device('custom')
+		const { registry, storeDir } = createRegistry({
+			'built-in-id': [builtIn],
+		})
 		fs.writeFileSync(
 			path.join(storeDir, 'customDevices.json'),
-			JSON.stringify({
-				nullEntry: null,
-				objectEntry: { malformed: true },
-				numberEntry: 7,
-				validEntry: [
-					{
-						type: 'sensor',
-						object_id: 'valid',
-						discovery_payload: {},
-						values: ['value'],
-					},
-				],
-			}),
+			JSON.stringify({ 'custom-id': [custom] }),
 		)
-		instance.load()
-		expect(instance.get('nullEntry')).toEqual([])
-		expect(instance.get('objectEntry')).toEqual([])
-		expect(instance.get('numberEntry')).toEqual([])
-		expect(instance.get('validEntry')).toHaveLength(1)
-		expect(instance.get('builtIn')).toHaveLength(1)
 
-		const snapshot = instance.snapshot()
-		snapshot.builtIn[0].object_id = 'changed'
-		expect(instance.get('builtIn')[0].object_id).toBe('built_in')
-		expect(instance.get(undefined)).toEqual([])
-		instance.set(undefined, [])
-		instance.evictRequireCache()
-		instance.dispose()
+		registry.start()
+
+		expect(registry.get('built-in-id')).toEqual([builtIn])
+		expect(registry.get('custom-id')).toEqual([custom])
 	})
 
-	it('retries the same file when replacement catalog construction fails', () => {
-		const storeDir = temporaryDirectory()
-		const filename = path.join(storeDir, 'customDevices.js')
+	it('prefers JavaScript catalogs and reloads their exported content', async () => {
+		const fromJson = device('from-json')
+		const fromJavaScript = device('from-javascript')
+		const reloaded = device('reloaded')
+		const { registry, storeDir } = createRegistry()
+		const jsFilename = path.join(storeDir, 'customDevices.js')
+		fs.writeFileSync(
+			path.join(storeDir, 'customDevices.json'),
+			JSON.stringify({ preferred: [fromJson] }),
+		)
+		fs.writeFileSync(
+			jsFilename,
+			`module.exports = ${JSON.stringify({ preferred: [fromJavaScript] })}`,
+		)
+		registry.start()
+
+		expect(registry.get('preferred')).toEqual([fromJavaScript])
+
+		fs.writeFileSync(
+			jsFilename,
+			`module.exports = ${JSON.stringify({ preferred: [reloaded] })}`,
+		)
+		await vi.waitFor(() => {
+			expect(registry.get('preferred')).toEqual([reloaded])
+		})
+	})
+
+	it('keeps the injected catalog when custom JSON cannot be parsed', () => {
+		const configured = device('configured')
+		const { registry, storeDir, logger } = createRegistry({
+			stable: [configured],
+		})
+		fs.writeFileSync(
+			path.join(storeDir, 'customDevices.json'),
+			'{ invalid JSON',
+		)
+
+		expect(() => registry.start()).not.toThrow()
+		expect(registry.get('stable')).toEqual([configured])
+		expect(logger.error).toHaveBeenCalled()
+	})
+
+	it('ignores malformed JavaScript entries without rejecting valid ones', () => {
+		const configured = device('configured')
+		const { registry, storeDir } = createRegistry()
+		fs.writeFileSync(
+			path.join(storeDir, 'customDevices.js'),
+			`module.exports = ${JSON.stringify({
+				valid: [configured],
+				malformed: 'not-a-device-list',
+			})}`,
+		)
+
+		registry.start()
+
+		expect(registry.get('valid')).toEqual([configured])
+		expect(registry.get('malformed')).toEqual([])
+	})
+
+	it('reloads changed JSON into active gateway projections', async () => {
+		const first = device('first')
+		const second = device('second')
+		const { registry, storeDir } = createRegistry()
+		const filename = path.join(storeDir, 'customDevices.json')
+		fs.writeFileSync(filename, JSON.stringify({ thermostat: [first] }))
+		registry.start()
+		const gatewayRegistry = registry.fork()
+		registries.push(gatewayRegistry)
+		gatewayRegistry.start()
+
+		expect(gatewayRegistry.get('thermostat')).toEqual([first])
+
+		fs.writeFileSync(filename, JSON.stringify({ thermostat: [second] }))
+
+		await vi.waitFor(() => {
+			expect(gatewayRegistry.get('thermostat')).toEqual([second])
+		})
+	})
+
+	it('stops propagating file changes after disposal', async () => {
+		const beforeDispose = device('before-dispose')
+		const afterDispose = device('after-dispose')
+		const { registry, storeDir } = createRegistry()
+		const filename = path.join(storeDir, 'customDevices.json')
 		fs.writeFileSync(
 			filename,
-			[
-				'let reads = 0',
-				'const catalog = { retry: [{ type: "sensor", object_id: "retry", discovery_payload: {}, values: ["value"] }] }',
-				'module.exports = new Proxy(catalog, {',
-				'  get(target, key, receiver) {',
-				'    if (key === "retry" && ++reads === 2) throw new Error("replacement failed")',
-				'    return Reflect.get(target, key, receiver)',
-				'  }',
-				'})',
-			].join('\n'),
+			JSON.stringify({ multilevel: [beforeDispose] }),
 		)
-		const instance = registry(storeDir)
+		registry.start()
+		const gatewayRegistry = registry.fork()
+		registries.push(gatewayRegistry)
+		gatewayRegistry.start()
+		registry.dispose()
 
-		expect(() => instance.load()).not.toThrow()
-		expect(instance.sha).toBeNull()
-		expect(instance.get('retry')).toEqual([])
+		fs.writeFileSync(
+			filename,
+			JSON.stringify({ multilevel: [afterDispose] }),
+		)
+		await new Promise((resolve) => setTimeout(resolve, 50))
 
-		instance.load()
-		expect(instance.sha).not.toBeNull()
-		expect(instance.get('retry')[0].object_id).toBe('retry')
-		instance.evictRequireCache()
+		expect(gatewayRegistry.get('multilevel')).toEqual([beforeDispose])
+	})
+
+	it('isolates dynamic gateway discoveries from sibling projections', () => {
+		const configured = device('configured')
+		const discovered = device('discovered')
+		const { registry } = createRegistry({ dimmer: [configured] })
+		registry.start()
+		const firstGateway = registry.fork()
+		const secondGateway = registry.fork()
+		registries.push(firstGateway, secondGateway)
+		firstGateway.start()
+		secondGateway.start()
+
+		firstGateway.set('dimmer', [configured, discovered])
+
+		expect(firstGateway.get('dimmer')).toEqual([configured, discovered])
+		expect(secondGateway.get('dimmer')).toEqual([configured])
+		expect(registry.get('dimmer')).toEqual([configured])
 	})
 })

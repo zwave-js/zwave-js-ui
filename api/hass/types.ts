@@ -1,4 +1,4 @@
-// Keep permissive because these DTOs persist in nodes.json, pass unchanged over Socket.IO, and may contain non-JSON customDevices.js values
+// Keep permissive because these DTOs persist in nodes.json, cross Socket.IO unchanged, and may contain non-JSON customDevices.js values
 export type HassComponentType =
 	| 'sensor'
 	| 'light'
@@ -30,11 +30,17 @@ export type HassDevice = {
 
 export type HassDeviceMap = Record<string, HassDevice>
 export type HassDeviceCatalog = Record<string, HassDevice[]>
+export type HassDeviceCatalogSource = Record<string, unknown>
 
 export interface PublishDiscoveryOptions {
 	deleteDevice?: boolean
 	forceUpdate?: boolean
 }
+
+export type StoreHassDevicesResult =
+	| { status: 'stored' }
+	| { status: 'node-not-found' }
+	| { status: 'invalid-stored-node' }
 
 export const HASS_NODE_PREFIX = 'nodeID_'
 export const RAW_PAYLOAD_TYPE = 2

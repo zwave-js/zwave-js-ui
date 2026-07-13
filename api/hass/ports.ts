@@ -1,6 +1,12 @@
-import type { ValueType } from '@zwave-js/core'
 import type { IClientPublishOptions } from 'mqtt'
-import type { HassDevice, HassDeviceCatalog, HassDeviceMap } from './types.ts'
+import type {
+	ZUIDeviceClass,
+	ZUIEndpoint,
+	ZUINode,
+	ZUIValueId,
+	ZUIValueIdState,
+} from '../lib/ZwaveClient.ts'
+import type { HassDevice, HassDeviceMap } from './types.ts'
 
 export interface HassLogger {
 	debug(message: string, ...meta: unknown[]): unknown
@@ -10,73 +16,30 @@ export interface HassLogger {
 	log(level: string, message: string, ...meta: unknown[]): unknown
 }
 
-export interface HassValueState {
-	text: string
-	value: number | string | boolean
-}
-
-export interface HassValue {
-	id: string
-	nodeId: number
-	commandClass: number
-	endpoint?: number
-	property: string | number
-	propertyName?: string
-	propertyKey?: string | number
-	propertyKeyName?: string
-	type: ValueType
-	readable: boolean
-	writeable: boolean
-	default: unknown
-	stateless: boolean
-	ccSpecific: Record<string, unknown>
-	min?: number
-	max?: number
-	step?: number
-	unit?: string
-	states?: HassValueState[]
-	value?: unknown
-	targetValue?: string
-	isCurrentValue?: boolean
-	label?: string
-	list?: boolean
-}
-
-export interface HassDeviceClass {
-	basic: number
-	generic: number
-	specific: number
-}
-
-export interface HassEndpoint {
-	index: number
-	deviceClass: HassDeviceClass
-}
-
-export interface HassNode {
-	id: number
-	values: Record<string, HassValue>
-	hassDevices: HassDeviceMap
-	ready: boolean
-	virtual?: boolean
-	deviceId?: string
-	deviceClass?: HassDeviceClass
-	endpoints?: HassEndpoint[]
-	name?: string
-	loc?: string
-	manufacturer?: string
-	productDescription?: string
-	productLabel?: string
-	firmwareVersion?: string
-}
-
-export interface HassTopicNode {
-	id: number
-	values?: Record<string, HassValue>
-	deviceId?: string
-	name?: string
-	loc?: string
-}
+export type HassValueState = ZUIValueIdState
+export type HassValue = ZUIValueId
+export type HassDeviceClass = ZUIDeviceClass
+export type HassEndpoint = Pick<ZUIEndpoint, 'deviceClass' | 'index'>
+export type HassNode = Pick<
+	ZUINode,
+	| 'deviceClass'
+	| 'deviceId'
+	| 'endpoints'
+	| 'firmwareVersion'
+	| 'id'
+	| 'loc'
+	| 'manufacturer'
+	| 'name'
+	| 'productDescription'
+	| 'productLabel'
+	| 'ready'
+	| 'virtual'
+> &
+	Required<Pick<ZUINode, 'hassDevices' | 'values'>>
+export type HassTopicNode = Pick<
+	ZUINode,
+	'deviceId' | 'id' | 'loc' | 'name' | 'values'
+>
 
 export interface HassValueConfiguration {
 	device_class?: string
@@ -142,12 +105,15 @@ export interface HassDiscoveryState {
 export interface HassDeviceRegistryPort {
 	get(deviceId: string | undefined): HassDevice[]
 	set(deviceId: string | undefined, devices: HassDevice[]): void
-	snapshot(): HassDeviceCatalog
 }
 
-export interface HassPersistenceNode {
-	hassDevices?: HassDeviceMap
+export interface HassDeviceRegistryLifecyclePort
+	extends HassDeviceRegistryPort {
+	start(): void
+	dispose(): void
 }
+
+export type HassPersistenceNode = Pick<ZUINode, 'hassDevices'>
 
 export interface HassDeviceStorePort {
 	hasNode(nodeId: number): boolean
