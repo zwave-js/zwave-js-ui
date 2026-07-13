@@ -1,18 +1,21 @@
 import { serverVersion, ZwavejsServer } from '@zwave-js/server'
 import type { Driver } from 'zwave-js'
+import type { ZwaveConfig } from '../lib/ZwaveClient.ts'
 import type { HassLogger } from './ports.ts'
 
 /**
  * The slice of gateway configuration the `@zwave-js/server` integration reads,
  * resolved lazily on every lifecycle call so a restart with changed settings is
- * honoured with no captured snapshot.
+ * honoured with no captured snapshot. Reuses {@link ZwaveConfig} so the server
+ * fields stay in sync with the client's own configuration type.
  */
-export interface ZwaveServerConfig {
-	serverEnabled?: boolean
-	serverPort?: number
-	serverHost?: string
-	serverServiceDiscoveryDisabled?: boolean
-}
+export type ZwaveServerConfig = Pick<
+	ZwaveConfig,
+	| 'serverEnabled'
+	| 'serverPort'
+	| 'serverHost'
+	| 'serverServiceDiscoveryDisabled'
+>
 
 /**
  * Structural shape of the logger `@zwave-js/server` accepts; kept local so the
