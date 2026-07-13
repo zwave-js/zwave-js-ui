@@ -408,7 +408,7 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 			}
 		})
 
-		const users = jsonStore.get(store.users) as User[]
+		const users = jsonStore.get(store.users)
 
 		if (users.length === 0) {
 			users.push({
