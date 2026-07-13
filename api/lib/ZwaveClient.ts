@@ -5884,9 +5884,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 					)[1],
 					'No secondary Z-Wave node is available',
 				)
-				pingNode.ping().catch(() => {
-					//noop
-				})
+				pingNode.ping().catch(() => {})
 				this._onOTWFirmwareUpdateProgress({
 					sentFragments: progress.sentFragments,
 					totalFragments: progress.totalFragments,
@@ -5901,9 +5899,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 					).controller.nodes.get(nodeId),
 					`Z-Wave node ${nodeId} is not initialized`,
 				)
-				zwaveNode.ping().catch(() => {
-					//noop
-				})
+				zwaveNode.ping().catch(() => {})
 				this._onNodeFirmwareUpdateProgress(zwaveNode, progress)
 			}
 		}, 1000)
