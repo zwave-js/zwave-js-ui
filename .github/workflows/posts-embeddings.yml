@@ -1,0 +1,92 @@
+name: Build posts embeddings index
+
+# Builds and caches a semantic search index over issues and discussions,
+# used by the bot to suggest related/duplicate posts.
+# Between the nightly rebuilds, new posts are appended incrementally by
+# the update-posts-index job in the issue/discussion bot workflow.
+
+on:
+  schedule:
+    # Nightly, reconciles closed/edited posts and any appends that were
+    # lost to concurrent cache saves
+    - cron: '30 4 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  models: read
+  issues: read
+  discussions: read
+
+jobs:
+  build-index:
+    runs-on: [ubuntu-latest]
+
+    steps:
+    - name: Checkout master branch
+      uses: actions/checkout@v7
+
+    # Cache keys are immutable, so the rolling index is always saved under
+    # a fresh run-scoped key and restored via the newest prefix match.
+    # The explicit restore/save split ensures a failed build does not
+    # re-save a stale index under a new key.
+    - name: Restore previous index
+      uses: actions/cache/restore@v6
+      with:
+        path: .posts-index
+        # There is no exact key to match, the newest index is picked
+        # via the prefix
+        key: posts-embeddings-v1-
+        restore-keys: |
+          posts-embeddings-v1-
+
+    - name: Build index
+      env:
+        GITHUB_TOKEN: ${{ github.token }}
+      run: node .github/bot-scripts/buildPostsIndex.cjs ${{ github.repository }} .posts-index/index.json
+
+    - name: Save index
+      uses: actions/cache/save@v6
+      with:
+        path: .posts-index
+        key: posts-embeddings-v1-${{ github.run_id }}
+
+  evaluate:
+    needs: build-index
+    runs-on: [ubuntu-latest]
+    permissions:
+      contents: read
+      models: read
+      issues: write
+
+    steps:
+    - name: Checkout master branch
+      uses: actions/checkout@v7
+
+    - name: Restore posts index
+      id: restore-index
+      uses: actions/cache/restore@v6
+      with:
+        path: .posts-index
+        key: posts-embeddings-v1-${{ github.run_id }}
+
+    - name: Evaluate retrieval quality
+      id: eval
+      if: steps.restore-index.outputs.cache-hit == 'true'
+      continue-on-error: true
+      env:
+        GITHUB_TOKEN: ${{ github.token }}
+      run: node .github/bot-scripts/evalRelatedPosts.cjs .posts-index/index.json
+
+    - name: Update tracking issue
+      if: steps.restore-index.outputs.cache-hit == 'true'
+      uses: actions/github-script@v9
+      env:
+        TRACKING_ISSUE_TITLE: "🚨 Related posts bot retrieval quality regression"
+        EVAL_NAME: related posts bot
+        EVAL_OUTCOME: ${{ steps.eval.outcome }}
+        EVAL_SUMMARY: ${{ steps.eval.outputs.summary }}
+      with:
+        script: |
+          const bot = require(`${process.env.GITHUB_WORKSPACE}/.github/bot-scripts/index.cjs`);
+          await bot.updateEvalTrackingIssue({github, context});
