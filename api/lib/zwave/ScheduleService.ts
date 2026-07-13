@@ -503,14 +503,11 @@ export class ScheduleService {
 						}
 					}
 				} else {
-					if (!node.userCodes) {
-						throw new TypeError(
-							"Cannot read properties of undefined (reading 'available')",
-						)
+					if (node.userCodes) {
+						node.userCodes.enabled = enabled
+							? node.userCodes.available.slice()
+							: []
 					}
-					node.userCodes.enabled = enabled
-						? node.userCodes.available.slice()
-						: []
 				}
 
 				this._nodes.emitNodeUpdate(node, {
