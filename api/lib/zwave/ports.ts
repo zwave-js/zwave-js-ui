@@ -1,13 +1,3 @@
-/**
- * Narrow access ports for extracted Z-Wave services.
- *
- * Each port interface defines the minimum surface a service needs to
- * interact with the driver, node store, or ZwaveClient – so the services
- * never import the monolithic ZwaveClient directly and stay independently
- * testable. Every accessor resolves the CURRENT value, so a driver swap
- * on restart is honoured without capturing state at construction time.
- */
-
 import type {
 	ScheduleEntryLockDailyRepeatingSchedule,
 	ScheduleEntryLockSlotId,
@@ -19,10 +9,6 @@ import type {
 } from 'zwave-js'
 import type { SupervisionResult } from '@zwave-js/core'
 import type { DeepPartial } from '../utils.ts'
-
-// ---------------------------------------------------------------------------
-// Schedule types re-exported so services don't import ZwaveClient
-// ---------------------------------------------------------------------------
 
 export const ZUIScheduleEntryLockMode = {
 	DAILY: 'daily',
@@ -45,10 +31,6 @@ export interface ZUISchedule {
 	[ZUIScheduleEntryLockMode.WEEKLY]: ZUIScheduleConfig<ScheduleEntryLockWeekDaySchedule>
 	[ZUIScheduleEntryLockMode.YEARLY]: ZUIScheduleConfig<ScheduleEntryLockYearDaySchedule>
 }
-
-// ---------------------------------------------------------------------------
-// Configuration template types
-// ---------------------------------------------------------------------------
 
 export interface ZUIConfigurationTemplateValue {
 	property: number
@@ -75,10 +57,6 @@ export interface ZUIConfigurationTemplate {
 	createdAt: string
 	updatedAt: string
 }
-
-// ---------------------------------------------------------------------------
-// Minimal node shape the services need
-// ---------------------------------------------------------------------------
 
 export interface ScheduleNodeState {
 	id: number
@@ -117,17 +95,9 @@ export interface TemplateNodeState {
 	status?: string
 }
 
-// ---------------------------------------------------------------------------
-// Port: driver + node access for ScheduleService
-// ---------------------------------------------------------------------------
-
 export interface ScheduleDriverPort {
 	getDriver(): Driver | null
 }
-
-// ---------------------------------------------------------------------------
-// Port: node store access for ScheduleService
-// ---------------------------------------------------------------------------
 
 export interface ScheduleNodeStorePort {
 	getNode(nodeId: number): ScheduleNodeState | undefined
@@ -137,17 +107,9 @@ export interface ScheduleNodeStorePort {
 	): void
 }
 
-// ---------------------------------------------------------------------------
-// Port: deep-equal utility for ScheduleService
-// ---------------------------------------------------------------------------
-
 export interface ScheduleUtilsPort {
 	deepEqual(a: unknown, b: unknown): boolean
 }
-
-// ---------------------------------------------------------------------------
-// Port: driver + node access for ConfigurationTemplateService
-// ---------------------------------------------------------------------------
 
 export interface TemplateDriverPort {
 	getDriver(): {
@@ -156,10 +118,6 @@ export interface TemplateDriverPort {
 		}
 	} | null
 }
-
-// ---------------------------------------------------------------------------
-// Port: node store for templates
-// ---------------------------------------------------------------------------
 
 export interface TemplateNodeStorePort {
 	getNode(nodeId: number): TemplateNodeState | undefined
@@ -185,28 +143,16 @@ export interface TemplateNodeStorePort {
 	throttle(key: string, fn: () => void, wait: number): void
 }
 
-// ---------------------------------------------------------------------------
-// Port: persistence (jsonStore) for templates
-// ---------------------------------------------------------------------------
-
 export interface TemplatePersistencePort {
 	get(): ZUIConfigurationTemplate[]
 	put(data: ZUIConfigurationTemplate[]): Promise<unknown>
 }
-
-// ---------------------------------------------------------------------------
-// Port: logger
-// ---------------------------------------------------------------------------
 
 export interface ServiceLogger {
 	info(message: string, ...meta: unknown[]): void
 	warn(message: string, ...meta: unknown[]): void
 	error(message: string, ...meta: unknown[]): void
 }
-
-// ---------------------------------------------------------------------------
-// Port: ID generation + hashing
-// ---------------------------------------------------------------------------
 
 export interface TemplateUtilsPort {
 	generateId(): string

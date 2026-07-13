@@ -1007,7 +1007,6 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		this._nodeToGroups = new Map()
 		this._rebuildNodeToGroupsIndex()
 
-		// Construct service ports that resolve current state across restarts
 		const scheduleDriverPort = {
 			getDriver: () => this._driver,
 		}
@@ -3518,10 +3517,6 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		}
 	}
 
-	/**
-	 * Check and auto-apply matching configuration templates for a node.
-	 * Delegates to ConfigurationTemplateService.
-	 */
 	private _checkConfigurationTemplates(node: ZUINode, zwaveNode: ZWaveNode) {
 		this._configTemplateService.checkConfigurationTemplates(node, zwaveNode)
 	}

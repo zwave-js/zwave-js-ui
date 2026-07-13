@@ -1,15 +1,3 @@
-/**
- * ScheduleService – owns all Schedule Entry Lock CC interaction state.
- *
- * Extracted from ZwaveClient to keep the monolith slim. The service is
- * strict-clean (no `any` casts, no non-null assertions, no ts-ignore).
- *
- * Ports:
- *   driver  – resolves current driver/controller/nodes across restarts
- *   nodes   – read/update in-memory ZUINode state + emit socket events
- *   utils   – deep-equal comparison for verification reads
- */
-
 import type {
 	ScheduleEntryLockDailyRepeatingSchedule,
 	ScheduleEntryLockSlotId,
@@ -38,7 +26,7 @@ import {
 	type ScheduleNodeState,
 } from './ports.ts'
 
-// Re-export the mode constant so ZwaveClient doesn't need two imports
+// Re-export so ZwaveClient doesn't need two imports
 export { ZUIScheduleEntryLockMode }
 
 type AnySchedule =
@@ -64,10 +52,6 @@ export class ScheduleService {
 		this._utils = utils
 	}
 
-	// ---------------------------------------------------------------
-	// Internal helpers
-	// ---------------------------------------------------------------
-
 	private _getZwaveNode(nodeId: number): ZWaveNode | undefined {
 		return this._driver.getDriver()?.controller.nodes.get(nodeId)
 	}
@@ -82,9 +66,6 @@ export class ScheduleService {
 		return zwaveNode
 	}
 
-	/**
-	 * Push or replace a slot entry in the local cache array.
-	 */
 	private static _pushSchedule(
 		arr: ZUISlot<AnySchedule>[],
 		slot: ScheduleEntryLockSlotId,
@@ -110,14 +91,6 @@ export class ScheduleService {
 		}
 	}
 
-	// ---------------------------------------------------------------
-	// Public API – exact signatures preserved from ZwaveClient
-	// ---------------------------------------------------------------
-
-	/**
-	 * If the node supports Schedule Lock CC, parse all available schedules
-	 * and cache them.
-	 */
 	async getSchedules(
 		nodeId: number,
 		opts: { mode?: ZUIScheduleEntryLockModeType; fromCache: boolean } = {
@@ -365,8 +338,7 @@ export class ScheduleService {
 			slotId: schedule.slotId,
 		}
 
-		// Mutate the incoming schedule to remove slot/enabled keys – matches
-		// original ZwaveClient semantics exactly (callers rely on this).
+		// Strip slot/enabled keys so an empty remainder signals a delete
 		delete (
 			schedule as Partial<ScheduleEntryLockSlotId & { enabled: unknown }>
 		).userId
@@ -413,7 +385,6 @@ export class ScheduleService {
 			throw new Error('Invalid schedule type')
 		}
 
-		// When not using supervision, read slot and check if it matches
 		if (!result) {
 			const methods = {
 				daily: 'getDailyRepeatingSchedule',
@@ -444,7 +415,6 @@ export class ScheduleService {
 			const node = this._nodes.getNode(nodeId)
 			if (!node?.schedule) return result
 
-			// Update enabled state across all modes
 			for (const mode in node.schedule) {
 				const scheduleMode = node.schedule[mode as keyof ZUISchedule]
 				if (scheduleMode) {
@@ -547,10 +517,6 @@ export class ScheduleService {
 
 		return result
 	}
-
-	// ---------------------------------------------------------------
-	// State accessors for testing / debugging
-	// ---------------------------------------------------------------
 
 	get lockGetSchedule(): boolean {
 		return this._lockGetSchedule
