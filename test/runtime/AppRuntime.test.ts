@@ -1,26 +1,17 @@
 /**
- * Direct unit tests for `AppRuntime` (`api/runtime/AppRuntime.ts`) - the
- * typed owner of every backend collaborator whose identity/presence
- * changes across the process's lifetime (Layer 5 of issue #4722).
+ * Direct unit tests for `AppRuntime`, constructed without any Express/HTTP layer
  *
- * These construct `AppRuntime` directly (no Express app/HTTP layer
- * involved) and cover:
- *  - plain accessor/mutator round-trips for every piece of state it owns,
- *  - the core "per-request-fresh resolution" regression: a gateway/zniffer
- *    replaced mid-restart (or via a test swapping it directly) must be
- *    visible to the very next call, never a stale captured reference,
- *  - `startGateway()`/`startZniffer()`'s SESSION_SECRET warning branch and
- *    plugin loading (success, failure, and `destroyPlugins()`），
- *  - snippet loading (`loadSnippets()`/`getSnippets()`), and
- *  - `shutdown()`'s guarded gateway close + plugin teardown.
+ * Covers accessor round-trips for every piece of state it owns, the
+ * per-request-fresh resolution regression (a gateway/zniffer replaced
+ * mid-restart must be visible to the very next call, never a stale
+ * reference), `startGateway()`/`startZniffer()`'s SESSION_SECRET warning
+ * branch and plugin loading, snippet loading, and `shutdown()`'s guarded
+ * gateway close plus plugin teardown.
  *
- * `Gateway`/`ZWaveClient`/`MqttClient`/`ZnifferManager` are mocked (this
- * file's own isolated module graph - the same, pre-established pattern as
- * `test/lib/http/settingsConstructorBoundary.test.ts`) purely to capture
- * constructor arguments and avoid touching real hardware/MQTT brokers;
- * every other test constructs `AppRuntime` directly and swaps in plain fake
- * collaborators (`createFakeGateway`/`createFakeZwaveClient`) - no HTTP
- * layer/Express app involved anywhere in this file.
+ * `Gateway`/`ZWaveClient`/`MqttClient`/`ZnifferManager` are mocked purely to
+ * capture constructor arguments and avoid touching real hardware/MQTT
+ * brokers; every other test constructs `AppRuntime` directly and swaps in
+ * plain fake collaborators (`createFakeGateway`/`createFakeZwaveClient`).
  */
 import {
 	describe,
@@ -53,12 +44,7 @@ const zwaveCtor = vi.fn()
 const gatewayCtor = vi.fn()
 const znifferCtor = vi.fn()
 const gatewayStart = vi.fn(() => Promise.resolve())
-// Tracked separately from `test/lib/http/fakes.ts`'s `createFakeGateway()`
-// (used by the OTHER `shutdown()` test, which sets a fake gateway directly)
-// so the "real plugin loading path" `shutdown()` regression below can drive
-// a gateway constructed through the actual `startGateway()` production path
-// - the same mocked `Gateway` class every other test in this file already
-// goes through - while still asserting its `close()` was invoked.
+// Separate from fakes.ts's createFakeGateway() so the real-plugin-loading shutdown() test can assert close() on a gateway built via the actual startGateway() path
 const gatewayClose = vi.fn(() => Promise.resolve())
 
 vi.mock('../../api/lib/MqttClient.ts', () => ({
@@ -103,13 +89,7 @@ describe('AppRuntime', () => {
 	beforeAll(async () => {
 		ensureTestEnv()
 
-		// Dynamic imports, deliberately AFTER `ensureTestEnv()`:
-		// `AppRuntime.ts` statically imports `../config/app.ts`, which
-		// touches the real filesystem at module-evaluation time (session
-		// secret file, store/log dirs). A static top-level import here
-		// would evaluate before `ensureTestEnv()` could run, due to ES
-		// module import hoisting - see `test/lib/http/harness.ts` for the
-		// same pattern applied to `api/app.ts`.
+		// Dynamic import, after ensureTestEnv(), since AppRuntime.ts's static config/app.ts import touches the filesystem at module-evaluation time
 		const runtimeMod = await import('../../api/runtime/AppRuntime.ts')
 		AppRuntimeCtor = runtimeMod.AppRuntime
 
@@ -222,11 +202,10 @@ describe('AppRuntime', () => {
 				1: { name: 'device A' },
 			})
 
-			// Simulate a restart/swap: a brand new gateway replaces the old one.
+			// Simulate a restart/swap: a brand new gateway replaces the old one
 			runtime.setGateway(gwB)
 
-			// Every accessor - not just getGateway() - must resolve the NEW
-			// instance on the very next call; nothing captured gwA.
+			// Every accessor, not just getGateway(), must resolve the new instance on the very next call
 			expect(runtime.getGateway()).toBe(gwB)
 			expect(runtime.getGateway()).not.toBe(gwA)
 			expect(runtime.requireGateway('zwave')).toBe(gwB)
@@ -410,7 +389,7 @@ describe('AppRuntime', () => {
 				path.join(snippetsDir, 'unit-test-on-disk.js'),
 				'// on disk\n',
 			)
-			// A non-.js file must be excluded - not just any dir entry.
+			// A non-.js file must be excluded, not just any dir entry
 			writeFileSync(
 				path.join(snippetsDir, 'ignore-me.txt'),
 				'not a snippet',
@@ -450,9 +429,7 @@ describe('AppRuntime', () => {
 
 		it('getSnippets() throws the native TypeError when no gateway is attached at all (preserved quirk)', async () => {
 			const runtime = createRuntime()
-			// Ensures `snippetsDir` exists as a side effect, so the throw we
-			// assert on is genuinely the unguarded `gw.zwave` access - not an
-			// unrelated ENOENT from a missing directory.
+			// Ensures snippetsDir exists first, so the assertion below catches the unguarded gw.zwave access rather than an unrelated ENOENT
 			await runtime.loadSnippets()
 			await expect(runtime.getSnippets()).rejects.toThrow(
 				/Cannot read properties of undefined \(reading 'zwave'\)/,
@@ -619,8 +596,7 @@ describe('AppRuntime', () => {
 			const runtime = createRuntime()
 			await runtime.startGateway({
 				gateway: {
-					// Deliberately malformed - not an array - to exercise the
-					// `Array.isArray(pluginsConfig)` guard's false side.
+					// Deliberately malformed, not an array, to exercise the Array.isArray(pluginsConfig) guard's false side
 					plugins: 'not-an-array' as unknown as string[],
 				},
 			})
@@ -642,10 +618,7 @@ describe('AppRuntime', () => {
 
 			const [goodInstance, badInstance] = runtime.getPlugins()
 			const destroySpy = vi.spyOn(goodInstance, 'destroy')
-			// bad-plugin.mjs's instance genuinely has no destroy method -
-			// confirm that shape before relying on destroyPlugins() to
-			// tolerate it via its `typeof instance.destroy === 'function'`
-			// guard.
+			// Confirms bad-plugin.mjs genuinely has no destroy method before relying on destroyPlugins()'s typeof guard to tolerate it
 			expect(
 				(badInstance as { destroy?: unknown }).destroy,
 			).toBeUndefined()
@@ -702,17 +675,7 @@ describe('AppRuntime', () => {
 					)
 
 					const runtime = createRuntime()
-					// Real production path - identical to the "plugin
-					// loading (startGateway())" describe block above:
-					// startGateway() constructs the gateway (the same
-					// module-mocked `Gateway`/`gatewayClose` every other
-					// test in this file already goes through) AND
-					// dynamically imports/registers each plugin exactly as
-					// a real deployment would. This regression can only
-					// pass if destroyPlugins()/shutdown() actually walks
-					// the plugins startGateway() itself loaded - there is
-					// no way to "fake" a plugin into AppRuntime's private
-					// list any other way.
+					// Real production path: startGateway() constructs the gateway and dynamically imports/registers each plugin exactly as a real deployment would, since there is no other seam to push a plugin into AppRuntime's private list
 					await runtime.startGateway({
 						gateway: {
 							plugins: [
@@ -735,16 +698,14 @@ describe('AppRuntime', () => {
 					expect(destroyB).toHaveBeenCalledOnce()
 					expect(runtime.getPlugins()).toEqual([])
 
-					// shutdown() closes the gateway, THEN destroys plugins
-					// (`closeIfPresent` runs before `destroyPlugins()`).
+					// shutdown() closes the gateway before destroying plugins (closeIfPresent runs before destroyPlugins())
 					expect(
 						gatewayClose.mock.invocationCallOrder[0],
 					).toBeLessThan(destroyA.mock.invocationCallOrder[0])
 					expect(
 						gatewayClose.mock.invocationCallOrder[0],
 					).toBeLessThan(destroyB.mock.invocationCallOrder[0])
-					// destroyPlugins() pops from the end of the list, so
-					// the LAST-loaded plugin is destroyed FIRST (LIFO).
+					// destroyPlugins() pops from the end of the list, so the last-loaded plugin is destroyed first (LIFO)
 					expect(destroyB.mock.invocationCallOrder[0]).toBeLessThan(
 						destroyA.mock.invocationCallOrder[0],
 					)

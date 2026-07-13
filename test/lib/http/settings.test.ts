@@ -444,13 +444,7 @@ describe('HTTP contract: settings, restart, statistics, versions', () => {
 					message: 'Gateway restarted successfully',
 				})
 
-				// `startGateway()` replaced the runtime's gateway with a
-				// brand-new real `Gateway` (zwave/mqtt disabled per this
-				// test's settings, so it has no `zwave` client at all). If
-				// any consumer had cached the pre-restart fake instead of
-				// resolving the gateway fresh per request, this follow-up
-				// request would still see the old gateway's devices - it
-				// must not.
+				// startGateway() replaced the gateway with a brand-new real Gateway with no zwave client, so the follow-up request must resolve it fresh rather than see the old gateway's devices
 				const after = await harness.request.get('/api/settings')
 				expect(after.body.devices).toEqual({})
 			},

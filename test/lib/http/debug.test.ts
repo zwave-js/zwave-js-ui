@@ -173,10 +173,7 @@ describe('HTTP contract: debug capture', () => {
 				expect(res.body.success).toBe(false)
 				expect(res.body.message).toMatch(/is not iterable/)
 
-				// stopSession() already restores/clears the session (inside
-				// restoreSession()) before it ever reaches the nodeIds loop
-				// that throws, so - unlike a failure earlier in the method -
-				// no session is left active to clean up here.
+				// stopSession() already restores/clears the session inside restoreSession(), before the nodeIds loop throws, so no session is left active to clean up here
 				const status = await harness.request.get('/api/debug/status')
 				expect(status.body).toEqual({ success: true, active: false })
 			},
@@ -230,15 +227,7 @@ describe('HTTP contract: debug capture', () => {
 				message: 'driver rejected log config update',
 			})
 
-			// restoreSession() throws before ever reaching its own
-			// `this.session = null` line, so the session is still
-			// (internally) marked active - assert that, then reset the
-			// manager's private state directly rather than calling
-			// cancelSession()/stopSession() again (which would re-run the
-			// same already-.end()-ed winston transport teardown and hang
-			// forever waiting on a 'finish' event that can't fire twice),
-			// so the shared afterEach hook's own cleanup has nothing left
-			// to do.
+			// restoreSession() throws before clearing session, leaving status active; resets debugManager's session directly since re-calling cancelSession()/stopSession() would hang re-ending an already-ended winston transport
 			const status = await harness.request.get('/api/debug/status')
 			expect(status.body).toEqual({ success: true, active: true })
 			;(debugManager as unknown as { session: unknown }).session = null

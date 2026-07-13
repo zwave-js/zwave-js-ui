@@ -25,9 +25,7 @@ import { getTestStoreDir } from '../shared/env.ts'
 import { createFakeGateway } from '../shared/fakes.ts'
 
 /**
- * Builds a real ZIP file on disk (via the same `archiver` package the
- * production route uses) containing the given `{ name: content }` entries,
- * so restore/extract tests exercise real ZIP bytes rather than a fake.
+ * Builds a real ZIP file on disk via the same archiver package the production route uses, so restore/extract tests exercise real ZIP bytes rather than a fake
  */
 async function buildTestZip(
 	destPath: string,
@@ -47,11 +45,7 @@ async function buildTestZip(
 }
 
 /**
- * Builds a real ZIP file containing a single symlink entry (`entryName`)
- * pointing at `target` - via `archiver`'s own `.symlink()` API, the same
- * library the production route's test fixtures already rely on - so the
- * escaping-symlink failure path is exercised with genuine ZIP/symlink bytes
- * round-tripped through `extract-zip`, not a hand-rolled approximation.
+ * Builds a real ZIP file containing a single symlink entry via archiver's own .symlink() API, so the escaping-symlink failure path is exercised with genuine ZIP/symlink bytes round-tripped through extract-zip
  */
 async function buildEscapingSymlinkZip(
 	destPath: string,
@@ -70,21 +64,7 @@ async function buildEscapingSymlinkZip(
 }
 
 /**
- * Asserts every restore-flow cleanup guarantee the production route makes -
- * regardless of whether the restore ultimately succeeded or failed:
- *  - the Multer-uploaded temp file (`store/.tmp/<name>`) is gone (the
- *    trailing, unconditional `if (file && isRestore) await rm(file.path)`),
- *  - no `store/.restore-*` staging directory remains (the `try {...} finally
- *    { await rm(stageDir, ...) }` around extract/symlink-check/merge).
- *
- * That trailing cleanup line runs AFTER `res.json(...)` has already been
- * called, so it is a genuine race against the HTTP response reaching this
- * test's client - confirmed empirically: the response can (and does)
- * resolve before the server-side `rm()` finishes. `vi.waitFor` polls (its
- * default 1s timeout, 50ms interval) rather than asserting immediately, so
- * this passes reliably once cleanup completes shortly after the response,
- * while still FAILING (once the timeout is exhausted) if either cleanup
- * step is ever removed from `api/routes/store.ts`.
+ * Polls via vi.waitFor since the production route's cleanup rm() calls run after res.json() has already resolved, so an immediate assertion would race the response
  */
 async function assertRestoreArtifactsCleanedUp(
 	uploadedFilename: string,
@@ -606,10 +586,6 @@ describe('HTTP contract: store, upload, snippets', () => {
 					),
 				).toBe('nested restored content')
 
-				// Both the Multer-uploaded `.tmp/backup.zip` and the
-				// `.restore-*` extraction staging dir must be gone
-				// afterwards - this must fail if either cleanup step is
-				// ever removed from the production route.
 				await assertRestoreArtifactsCleanedUp('backup.zip')
 			} finally {
 				rmSync(stageParent, { recursive: true, force: true })
@@ -647,11 +623,6 @@ describe('HTTP contract: store, upload, snippets', () => {
 							'Archive contains a symlink escaping the store: evil-link',
 					})
 
-					// The rejected restore must still have cleaned up both
-					// the extraction staging dir (via the `finally` around
-					// extract/assertNoEscapingSymlinks/cp) and the
-					// Multer-uploaded temp file (the trailing, unconditional
-					// `if (file && isRestore) await rm(file.path)`).
 					await assertRestoreArtifactsCleanedUp('evil.zip')
 				} finally {
 					rmSync(stageParent, { recursive: true, force: true })

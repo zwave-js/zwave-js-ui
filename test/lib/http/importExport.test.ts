@@ -134,8 +134,7 @@ describe('HTTP contract: import/export config', () => {
 					'0x11111111': { 2: { location: 'Garage' } },
 					'0x22222222': { 3: { name: 'B' } },
 				},
-				// Explicit selection wins even though neither home id matches
-				// the connected controller's own homeHex.
+				// Explicit selection wins even though neither home id matches the connected controller's own homeHex
 				homeId: '0x11111111',
 			})
 
@@ -145,8 +144,7 @@ describe('HTTP contract: import/export config', () => {
 				message: 'Configuration imported successfully',
 			})
 
-			// Only the selected network's node 2 is applied - node 3 (under
-			// the skipped '0x22222222' home id) never surfaces at all.
+			// Only the selected network's node 2 is applied; node 3 under the skipped '0x22222222' home id never surfaces
 			expect(gw.zwave.callApi).toHaveBeenCalledExactlyOnceWith(
 				'setNodeLocation',
 				2,
@@ -164,8 +162,7 @@ describe('HTTP contract: import/export config', () => {
 				data: {
 					'0x11111111': { 2: { name: 'Matched by homeHex' } },
 				},
-				// Not a string - the route's `typeof ... === 'string'` guard
-				// must discard it rather than pass it through.
+				// Not a string, so the route's typeof === 'string' guard must discard it rather than pass it through
 				homeId: 12345,
 			})
 
@@ -184,10 +181,7 @@ describe('HTTP contract: import/export config', () => {
 
 			const res = await harness.request.post('/api/importConfig').send({
 				data: {
-					// Node-id-looking keys make this a flat config, not a
-					// home-id-wrapped one - so nothing pre-filters these
-					// non-object values before the route's own per-node
-					// `!node || typeof node !== 'object'` guard sees them.
+					// Node-id-looking keys make this a flat config, not a home-id-wrapped one, so nothing pre-filters these non-object values before the route's own per-node guard sees them
 					2: null,
 					3: 'not an object either',
 					4: { name: 42 },
@@ -200,8 +194,7 @@ describe('HTTP contract: import/export config', () => {
 				message: 'Configuration imported successfully',
 			})
 
-			// Nodes 2 and 3 are silently skipped; node 4's non-string name
-			// falls back to an empty string rather than being coerced/thrown.
+			// Nodes 2 and 3 are silently skipped; node 4's non-string name falls back to an empty string rather than being coerced or thrown
 			expect(gw.zwave.callApi).toHaveBeenCalledExactlyOnceWith(
 				'setNodeName',
 				4,
@@ -220,13 +213,7 @@ describe('HTTP contract: import/export config', () => {
 				const gwB = createFakeGateway()
 				harness.testHooks.setGateway(gwA)
 
-				// Swap the runtime's gateway as a side effect of the very
-				// FIRST awaited Z-Wave operation resolving (node 2's
-				// `setNodeName`) - exactly what a concurrent restart landing
-				// mid-import would do. If the route had captured `gwA` once
-				// into a local variable and reused it across awaits (the bug
-				// this regression guards against), every operation below
-				// would still hit `gwA`'s collaborators instead.
+				// Swaps the gateway inside the first awaited Z-Wave call, simulating a concurrent restart landing mid-import
 				gwA.zwave.callApi.mockImplementationOnce(() => {
 					harness.testHooks.setGateway(gwB)
 					return { success: true, message: 'OK' }
@@ -236,9 +223,7 @@ describe('HTTP contract: import/export config', () => {
 					.post('/api/importConfig')
 					.send({
 						data: {
-							// Node 2: exercises setNodeName (triggers the
-							// swap), then setNodeLocation and storeDevices -
-							// both awaited AFTER the swap, in the SAME node.
+							// Node 2 exercises setNodeName (triggering the swap), then setNodeLocation and storeDevices, both awaited after the swap
 							2: {
 								name: 'Kitchen light',
 								loc: 'Kitchen',
@@ -246,9 +231,7 @@ describe('HTTP contract: import/export config', () => {
 									light_2: { type: 'light' },
 								},
 							},
-							// Node 3: processed entirely after node 2 (numeric
-							// `for...in` keys iterate in ascending order) -
-							// its setNodeName call must also hit gwB.
+							// Node 3 is processed entirely after node 2 (numeric for...in keys iterate in ascending order), so its setNodeName call must also hit gwB
 							3: { name: 'Bedroom light' },
 						},
 					})
@@ -259,7 +242,7 @@ describe('HTTP contract: import/export config', () => {
 					message: 'Configuration imported successfully',
 				})
 
-				// Only the operation that triggered the swap reaches gwA.
+				// Only the operation that triggered the swap reaches gwA
 				expect(gwA.zwave.callApi).toHaveBeenCalledExactlyOnceWith(
 					'setNodeName',
 					2,
@@ -267,9 +250,7 @@ describe('HTTP contract: import/export config', () => {
 				)
 				expect(gwA.zwave.storeDevices).not.toHaveBeenCalled()
 
-				// Every operation after the swap - node 2's setNodeLocation
-				// and storeDevices, plus all of node 3 - is applied against
-				// the replacement gateway.
+				// Every operation after the swap - node 2's setNodeLocation and storeDevices, plus all of node 3 - is applied against the replacement gateway
 				expect(gwB.zwave.callApi).toHaveBeenNthCalledWith(
 					1,
 					'setNodeLocation',

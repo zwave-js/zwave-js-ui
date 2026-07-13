@@ -14,22 +14,12 @@ import type { AppRuntime } from '../../../api/runtime/AppRuntime.ts'
 /**
  * Registers the real `registerConfigurationTemplatesRoutes` against a
  * minimal fake `app` whose `.get/.post/.put/.delete` just record
- * `(path, ...handlers)` instead of an actual Express router, then returns
- * the REAL, production handler closure registered for `method`+`path` -
- * i.e. the exact function express would have invoked, retrieved without
- * an HTTP layer in between.
+ * `(path, handler)`, then returns the exact production handler closure
+ * registered for `method`+`path`
  *
- * Used only for the three `if (!id) return res.json(...)` branches below
- * (PUT/DELETE/POST `:id` routes) that are empirically unreachable via
- * genuine HTTP: Express 4's `path-to-regexp`-based router requires `:id`
- * to match at least one character, so `req.params.id` can never actually
- * be `''`/falsy for a real request - the guard is real, deliberate
- * defensive code, just not exercisable through the router. This invokes
- * the same production closure directly with a synthetic empty `id`,
- * rather than reimplementing or approximating its logic - distinct from
- * (and not barred by) the AppRuntime shutdown/plugin-teardown finding's
- * "don't bypass the production path" constraint, which concerns bypassing
- * real plugin *loading*, not invoking an already-registered real handler.
+ * Used only for the three `if (!id)` guards (PUT/DELETE/POST `:id` routes),
+ * which are unreachable via real HTTP since Express 4's `path-to-regexp`
+ * requires `:id` to match at least one character
  */
 function captureConfigurationTemplatesHandler(
 	method: 'get' | 'post' | 'put' | 'delete',
@@ -73,11 +63,7 @@ function captureConfigurationTemplatesHandler(
 		},
 	}
 
-	// The `if (!id)` branches return before ever touching `runtime` - a
-	// `requireGateway` that throws makes that guaranteed-unused precondition
-	// explicit, so this test would fail loudly (rather than silently
-	// pass for the wrong reason) if the route ever changed to check
-	// `runtime` before `id`.
+	// The if (!id) branches return before touching runtime; a requireGateway that throws makes that precondition explicit, so this test fails loudly if the route ever checked runtime before id
 	const fakeRuntime = {
 		requireGateway: vi.fn(() => {
 			throw new Error(
@@ -451,12 +437,7 @@ describe('HTTP contract: configuration templates', () => {
 	})
 
 	describe('direct-handler-invocation: :id guards unreachable via real HTTP', () => {
-		// Express 4 (`path-to-regexp@0.1.x`) requires a named param segment
-		// like `:id` to match at least one character, so a real request can
-		// never produce `req.params.id === ''` - these three `if (!id)`
-		// guards can only be exercised by invoking the real, registered
-		// handler function directly with a synthetic empty id, bypassing
-		// the router (not the handler itself).
+		// Bypasses the router, not the handler itself; see captureConfigurationTemplatesHandler above
 
 		it('PUT /api/configuration-templates/:id returns "Invalid template ID" for an empty id, without touching the runtime', async () => {
 			const handler = captureConfigurationTemplatesHandler(
