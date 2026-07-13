@@ -27,13 +27,11 @@ import { ZwaveClientStatus } from '#api/lib/ZwaveClient.ts'
 
 /**
  * Narrow view of the lifecycle internals with no public accessor: the status
- * enum, the held server instance, and the orthogonal config-check scheduler
- * that is stubbed so no ~24h timer leaks. Driving stays on public connect/close.
+ * enum and the held server instance. Driving stays on public connect/close.
  */
 type ClientInternals = {
 	status: ZwaveClientStatus
 	server: unknown
-	_scheduledConfigCheck: () => Promise<void>
 }
 const internals = (zwave: ZWaveClientType) =>
 	zwave as unknown as ClientInternals
@@ -156,10 +154,10 @@ function tick(): Promise<void> {
 
 /**
  * Drive the real connect -> driver-ready flow and return the client, driver,
- * and server. Only `_scheduledConfigCheck` is stubbed (orthogonal, otherwise
- * arms a ~24h timer); option building, `driver.start()`, the server
- * construction, the async `'driver ready'` event, and the server start run for
- * real. Pass `connectedSockets` to model already-connected user sockets.
+ * and server. Option building, `driver.start()`, the server construction, the
+ * async `'driver ready'` event, and the server start all run for real; the
+ * orthogonal config-check runs too but its ~24h timer is neutralized by fake
+ * timers. Pass `connectedSockets` to model already-connected user sockets.
  */
 async function driveConnectToReady(
 	cfg: Record<string, any> = {},
