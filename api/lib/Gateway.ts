@@ -154,10 +154,10 @@ export default class Gateway<
 	private config: GatewayConfig
 	private _mqtt: TMqtt
 	private _zwave: TZwave
-	private topicValues: { [key: string]: ZUIValueId }
-	private discovered: { [key: string]: HassDevice }
-	private topicLevels: number[]
-	private _closed: boolean
+	private topicValues: { [key: string]: ZUIValueId } = {}
+	private discovered: { [key: string]: HassDevice } = {}
+	private topicLevels: number[] = []
+	private _closed = false
 	private jobs: Map<string, Cron> = new Map()
 	private customDeviceRegistry: HassDeviceRegistryLifecyclePort
 	private discoveryGenerator: DiscoveryGenerator
@@ -227,16 +227,16 @@ export default class Gateway<
 				getNodes: () => getZwave().nodes,
 				updateDevice: (device, nodeId, deleteDevice) =>
 					getZwave().updateDevice(device, nodeId, deleteDevice),
-				emitNodeUpdate: (nodeId, hassDevices) =>
-					getZwave().emitNodeUpdate(getZwave().nodes.get(nodeId), {
-						hassDevices,
-					}),
+				emitNodeUpdate: (nodeId, hassDevices) => {
+					const node = getZwave().nodes.get(nodeId)
+					if (node) getZwave().emitNodeUpdate(node, { hassDevices })
+				},
 				writeCoverStop: async (value) => {
 					await getZwave().writeValue(
 						{
 							...value,
 							property: 'Up',
-						} as ZUIValueId,
+						},
 						false,
 					)
 				},
@@ -352,7 +352,11 @@ export default class Gateway<
 	 * Parse the value of the payload received from mqtt
 	 * based on the type of the payload and the gateway config
 	 */
-	parsePayload(payload: any, valueId: ZUIValueId, valueConf: GatewayValue) {
+	parsePayload(
+		payload: any,
+		valueId: ZUIValueId,
+		valueConf: GatewayValue | undefined,
+	) {
 		try {
 			payload =
 				typeof payload === 'object' &&
@@ -936,9 +940,10 @@ export default class Gateway<
 		if (node.virtual) return
 
 		// enable poll if required
-		const values = this.config.values?.filter(
-			(v: GatewayValue) => v.enablePoll && v.device === node.deviceId,
-		)
+		const values =
+			this.config.values?.filter(
+				(v: GatewayValue) => v.enablePoll && v.device === node.deviceId,
+			) ?? []
 		for (let i = 0; i < values.length; i++) {
 			// don't edit the original object, copy it
 			const valueId = utils.copy(values[i].value)
