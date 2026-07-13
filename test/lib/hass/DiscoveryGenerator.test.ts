@@ -297,6 +297,25 @@ describe('DiscoveryGenerator', () => {
 		expect(discovered['9-keep']).toBeUndefined()
 	})
 
+	it('publishes the configured suggested area through discovery', () => {
+		const currentValue = value({ isCurrentValue: true })
+		const hassNode = node({
+			name: 'Switch',
+			loc: '  Kitchen  ',
+			values: { '37-0-currentValue': currentValue },
+		})
+		const { generator, published } = setup({
+			config: { useLocationAsSuggestedArea: true },
+		})
+
+		generator.discoverDevice(hassNode, device())
+
+		expect(published).toHaveLength(1)
+		expect(published[0].payload).toMatchObject({
+			device: { suggested_area: 'Kitchen' },
+		})
+	})
+
 	it('publishes raw discovery, preserves deletion options, and updates storage', () => {
 		const { generator, published, updates, discovered } = setup({
 			config: {
