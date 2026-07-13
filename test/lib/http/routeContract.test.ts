@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import express, { type Express } from 'express'
-import { useHttpHarness } from './harness.ts'
+import { loadAppModule, useHttpHarness } from './harness.ts'
 
 const EXPECTED_REGISTERED_ROUTES: Array<{
 	method: 'get' | 'post' | 'put' | 'delete'
@@ -139,6 +139,29 @@ describe('HTTP contract: complete Express route inventory (drift detection)', ()
 			seen.add(key)
 		}
 		expect(duplicates).toEqual([])
+	})
+})
+
+describe('createApp test options', () => {
+	it('does not evaluate test options outside the test environment', async () => {
+		const { createApp } = await loadAppModule()
+		const originalNodeEnv = process.env.NODE_ENV
+		const options = Object.defineProperty({}, 'test', {
+			get() {
+				throw new Error('test options evaluated')
+			},
+		})
+		process.env.NODE_ENV = 'production'
+
+		try {
+			expect(() => createApp(options)).not.toThrow()
+		} finally {
+			if (originalNodeEnv === undefined) {
+				delete process.env.NODE_ENV
+			} else {
+				process.env.NODE_ENV = originalNodeEnv
+			}
+		}
 	})
 })
 

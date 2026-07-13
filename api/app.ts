@@ -131,15 +131,17 @@ export interface AppInstance {
 }
 
 export interface CreateAppOptions {
-	/** Lets callers seed an already-connected gateway and skip a real Z-Wave/MQTT bring-up */
-	gateway?: Gateway
-	/** Lets callers reach the "already restarting" guards without driving a real restart */
-	restarting?: boolean
+	test?: {
+		gateway?: Gateway
+		restarting?: boolean
+	}
 }
 
 export function createApp(options: CreateAppOptions = {}): AppInstance {
 	const app = express()
 	const logger = loggers.module('App')
+	const testOptions =
+		process.env.NODE_ENV === 'test' ? options.test : undefined
 
 	const verifyJWT = promisify(jwt.verify.bind(jwt))
 
@@ -234,13 +236,13 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 		}
 	}
 
-	let gw: Gateway | undefined = options.gateway // the gateway instance
+	let gw: Gateway | undefined = testOptions?.gateway // the gateway instance
 	let zniffer: ZnifferManager // the zniffer instance
 	const plugins: CustomPlugin[] = []
 	let pluginsRouter: Router
 
 	// flag used to prevent multiple restarts while one is already in progress
-	let restarting = options.restarting ?? false
+	let restarting = testOptions?.restarting ?? false
 
 	// ### UTILS
 

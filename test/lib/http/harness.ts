@@ -96,9 +96,11 @@ async function createHarnessInstance(
 	options: HttpHarnessOptions,
 ): Promise<HttpHarness & { closeInstance(): Promise<void> }> {
 	const instance = shared.createApp({
-		// Gateway has private fields, so a structural mock like FakeGateway needs this cast to satisfy it
-		gateway: options.gateway as unknown as RealGateway | undefined,
-		restarting: options.restarting,
+		test: {
+			// Gateway has private fields, so a structural mock like FakeGateway needs this cast to satisfy it
+			gateway: options.gateway as unknown as RealGateway | undefined,
+			restarting: options.restarting,
+		},
 	})
 	await instance.loadSnippets()
 
