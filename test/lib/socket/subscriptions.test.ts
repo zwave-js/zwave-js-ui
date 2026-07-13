@@ -1,24 +1,4 @@
-/**
- * Characterizes: real Socket.IO room-based routing driven by `SUBSCRIBE`/
- * `UNSUBSCRIBE` (requirement 7) - the same room mechanism every outbound
- * producer relies on via `ZwaveClient.sendToSocket`'s
- * `this.socket.to(channel).emit(...)` (see `outboundProducers.test.ts` for
- * the producer side; this file proves the room-membership side with
- * multiple real, independently connected `socket.io-client`s).
- *
- * One harness is shared for the whole file (`beforeAll`/`afterAll`).
- *
- * Determinism: every "client X does NOT receive event Y" assertion below
- * is proven with a `barrier()` round-trip rather than a fixed sleep. Every
- * connected socket auto-joins a private room named after its own `id`
- * (Socket.IO's built-in behavior, independent of `SUBSCRIBE`/`channelMap`),
- * so `barrier()` sends that one client a distinguishable event directly to
- * its own room and awaits it client-side. Per-connection delivery over a
- * single transport is FIFO, so by the time the barrier event is observed,
- * any real room-routed event emitted (server-side) *before* the barrier
- * has already been delivered (or definitively was never routed at all) -
- * no arbitrary wait window, no flakiness under load.
- */
+// Proves an event is absent using barrier(): a client's own private id-room gets a distinguishable event, and FIFO per-connection delivery guarantees anything routed earlier already arrived by the time that resolves
 import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest'
 import { createSocketHarness, type SocketHarness } from './harness.ts'
 import { createFakeGateway } from './fakes.ts'
@@ -35,7 +15,7 @@ function unsubscribe(client: any, channels: string[]): Promise<any> {
 	})
 }
 
-/** Collects every payload received for `event` on `client` until closed. */
+// Collects every payload received for event on client
 function collector(client: any, event: string): { received: unknown[] } {
 	const box = { received: [] as unknown[] }
 	client.on(event, (data: unknown) => box.received.push(data))
@@ -69,11 +49,7 @@ describe('Socket contract: multi-client room routing', () => {
 		return client
 	}
 
-	/**
-	 * Deterministically waits for everything already in flight to `client`
-	 * to have arrived, by round-tripping a marker event through that
-	 * client's own private auto-joined room (see file doc comment).
-	 */
+	// Round-trips a marker event through client's own private auto-joined room to deterministically flush anything already in flight
 	function barrier(client: any): Promise<void> {
 		const arrived = waitForEvent(client, '__TEST_BARRIER__')
 		harness.io.to(client.id).emit('__TEST_BARRIER__')
@@ -168,12 +144,7 @@ describe('Socket contract: multi-client room routing', () => {
 		const ack = await unsubscribe(client, ['firmware'])
 		expect(ack).toStrictEqual({ channels: ['controller'] })
 
-		// The client is still subscribed to 'controller', so re-emitting to
-		// the now-unsubscribed 'firmware' room and then barrier-ing on
-		// 'controller' proves - deterministically, not by timing - that
-		// nothing new arrived for the room this client left: FIFO delivery
-		// means an (incorrectly) routed firmware event would already be in
-		// `box.received` by the time the barrier resolves.
+		// FIFO delivery means a firmware event routed to this client would already be in box.received once the barrier resolves
 		harness.io.to('firmware').emit('OTW_FIRMWARE_UPDATE', { progress: 20 })
 		await barrier(client)
 

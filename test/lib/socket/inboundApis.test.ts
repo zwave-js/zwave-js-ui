@@ -1,34 +1,4 @@
-/**
- * Characterizes: the 7 inbound (client -> server) Socket.IO event handlers
- * wired in `api/app.ts`'s `setupSocket()` - `INITED`, `ZWAVE_API`,
- * `MQTT_API`, `HASS_API`, `ZNIFFER_API`, `SUBSCRIBE`, `UNSUBSCRIBE`. Every
- * assertion is against the REAL ack envelope a real `socket.io-client`
- * receives over the wire, driving the REAL handler code in `api/app.ts`
- * (only its `gw`/`zniffer` collaborators are faked).
- *
- * Event names are hard-coded string literals here (not imported from
- * `api/lib/SocketEvents.ts`) - this file wire-tests what a real client
- * sends/receives, which by definition doesn't know about the server's
- * internal constant names.
- *
- * One harness is shared for the whole file (`beforeAll`/`afterAll` - see
- * `harness.ts`'s `close()` doc comment). Every test connects its own
- * client and installs its own `gw`/`zniffer` fakes; `afterEach` disconnects
- * clients and resets state so tests never see another test's wiring.
- *
- * Production always constructs `gw` (`new Gateway(...)`) before
- * `setupSocket()` is ever called, so a connected client can always reach
- * `gw` itself (never `undefined`) - every test below installs at least a
- * bare `createFakeGateway()`, varying only `.zwave`, to match that
- * invariant instead of exercising an impossible-in-production state.
- *
- * Store isolation: this file imports the real, store-dependent
- * `ZwaveClient.ts` for its one real-`callApi()`-backed `ZWAVE_API` test
- * below (see `callApi.test.ts`'s doc comment for the full mechanics) -
- * `import type` only here (erased at compile time), with the real runtime
- * value dynamically imported inside `beforeAll`, strictly AFTER
- * `createSocketHarness()` has already isolated `STORE_DIR`.
- */
+// Event names are hard-coded literals, not imported from SocketEvents.ts, since a real client's wire format doesn't know the server's internal constant names
 import {
 	describe,
 	it,
@@ -170,13 +140,7 @@ describe('Socket contract: inbound ACK APIs', () => {
 		})
 
 		it('routes through the REAL ZwaveClient.callApi() dispatcher (not a mocked gw.zwave.callApi) for a real allowed method, echoing its real success/result/args (ZwaveClient.ts:6032-6070, app.ts:708-726)', async () => {
-			// Every other test in this describe block uses
-			// `createFakeGateway()`'s mocked `zwave.callApi` - proving the
-			// EVENT HANDLER's plumbing (arg defaulting, `api` echo, ack
-			// shape), but never the real dispatcher itself. This test
-			// wires a REAL `ZWaveClient` instance as `gw.zwave` instead, so
-			// the real `callApi()` (see `callApi.test.ts` for its full
-			// characterization) is what actually runs.
+			// Every other test in this block uses createFakeGateway()'s mocked zwave.callApi; this one wires a real ZWaveClient so the real callApi() dispatcher actually runs
 			const zwave = new ZWaveClient({} as any, harness.io)
 			zwave.scenes = [{ sceneid: 1, label: 'Party', values: [] }]
 			;(zwave as any)._driver = {}
@@ -257,14 +221,7 @@ describe('Socket contract: inbound ACK APIs', () => {
 
 	describe('HASS_API', () => {
 		it('calls gw.rediscoverNode(nodeId) for the known "rediscoverNode" action - real signature is void, so `result` is stripped from the wire ack (Gateway.ts:673, app.ts:802-809)', async () => {
-			// `Gateway.rediscoverNode(nodeID): void` - a production-impossible
-			// fake that returned a string here would silently paper over a
-			// real regression if the real method ever DID start returning
-			// something. `vi.fn()` (no return value) matches the real
-			// signature; `res` stays `undefined`, and `undefined`-valued
-			// object keys are stripped by Socket.IO's JSON-based ack
-			// serialization - so the real wire ack has NO `result` key at
-			// all, not merely `result: undefined`.
+			// Matches the real void signature so Socket.IO's ack serialization strips the undefined result key entirely, instead of masking a regression behind a fake string return
 			const gateway = createFakeGateway({
 				rediscoverNode: vi.fn(),
 			} as any)
@@ -321,13 +278,7 @@ describe('Socket contract: inbound ACK APIs', () => {
 
 	describe('ZNIFFER_API', () => {
 		it('awaits zniffer.start() for the known "start" action - real signature is Promise<void>, so `result` is stripped from the wire ack (ZnifferManager.ts:276-290, app.ts:858-901)', async () => {
-			// `ZnifferManager.start(): Promise<void>` - a
-			// production-impossible fake that resolved to a string here
-			// would hide a real regression the same way the HASS_API
-			// `rediscoverNode` fake above did. `createFakeZniffer()`'s
-			// OWN default (`fakes.ts`) already resolves to `undefined`,
-			// matching production; this override previously replaced that
-			// correct default with an impossible sentinel.
+			// Matches the real Promise<void> signature so the ack strips the undefined result key, the same regression-masking risk as rediscoverNode above
 			harness.testHooks.setGateway(createFakeGateway() as any)
 			const zniffer = createFakeZniffer({
 				start: vi.fn(() => Promise.resolve(undefined)),
@@ -379,10 +330,7 @@ describe('Socket contract: inbound ACK APIs', () => {
 			expect(zniffer.loadCaptureFromBuffer).toHaveBeenCalledWith(
 				Buffer.from([1, 2, 3]),
 			)
-			// The ack still reports success (no throw happened synchronously)
-			// but `result` serializes to an empty object over the wire - it
-			// is a Promise, not `'parsed-capture'` - proving the missing
-			// `await` in production.
+			// Proves the missing await in production: result serializes to an empty object over the wire rather than the resolved value
 			expect(result.success).toBe(true)
 			expect(result.result).toStrictEqual({})
 			expect(result.result).not.toBe('parsed-capture')

@@ -1,11 +1,4 @@
-/**
- * Shared helpers for seeding users / toggling settings / minting JWTs
- * against the exact secret `api/app.ts` verifies with, used by the
- * Socket.IO auth suite. Structurally compatible with any harness exposing
- * `{ jsonStore, store }` (both `SocketHarness` and the HTTP suite's
- * `HttpHarness` satisfy this), so it doesn't need to import - or couple
- * itself to - either harness's full type.
- */
+// Structurally typed against { jsonStore, store } so it works with either harness without importing its full type
 import jwt from 'jsonwebtoken'
 import { TEST_SESSION_SECRET } from './env.ts'
 import { hashPsw } from '../../../api/lib/utils.ts'
@@ -23,7 +16,6 @@ export interface TestUser {
 	passwordHash: string
 }
 
-/** Overwrite the users store with a single known user (hashed password). */
 export async function seedUser(
 	harness: JsonStoreLike,
 	username: string,
@@ -37,14 +29,13 @@ export async function seedUser(
 	return user
 }
 
-/** Sign a JWT the same way `/api/authenticate` (and the socket auth middleware) verify. */
+// Signs the JWT the same way /api/authenticate and the socket auth middleware verify it
 export function signUserToken(user: { username: string }): string {
 	return jwt.sign({ username: user.username }, TEST_SESSION_SECRET, {
 		expiresIn: '1d',
 	})
 }
 
-/** Merge a partial settings object over the current settings and persist it. */
 export async function setSettings(
 	harness: JsonStoreLike,
 	partial: Record<string, unknown>,

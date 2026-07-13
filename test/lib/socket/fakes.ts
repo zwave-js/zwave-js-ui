@@ -1,12 +1,4 @@
-/**
- * Socket-specific fakes, extending the HTTP contract suite's collaborator
- * fakes (`test/lib/http/fakes.ts`) instead of duplicating them. The Socket.IO
- * wiring in `api/app.ts` reads/calls a handful of members those fakes don't
- * need (`gw.zwave.setUserCallbacks`/`removeUserCallbacks`, a `zniffer`
- * collaborator), so this module re-exports the HTTP fakes' constructors and
- * layers the extra members on top - one shape-compatible `FakeZwaveClient`/
- * `FakeGateway` contract shared by both suites, not two drifting ones.
- */
+// Extends the HTTP suite's fakes with the members only the Socket.IO wiring reads, so both suites share one FakeGateway/FakeZwaveClient shape
 import { vi } from 'vitest'
 import {
 	createFakeGateway as createHttpFakeGateway,
@@ -19,13 +11,7 @@ import {
 
 export { createFakeMqttClient, type FakeMqttClient }
 
-/**
- * `FakeZwaveClient` plus the two collaborators only the Socket.IO
- * `'clients'` (connect/disconnect) handler in `api/app.ts` calls:
- * `setUserCallbacks()`/`removeUserCallbacks()` are invoked when the first
- * client connects / the last one disconnects (see
- * `clientLifecycle.test.ts`).
- */
+// setUserCallbacks/removeUserCallbacks fire on first-connect/last-disconnect in the 'clients' handler
 export interface FakeZwaveClient extends HttpFakeZwaveClient {
 	setUserCallbacks: ReturnType<typeof vi.fn>
 	removeUserCallbacks: ReturnType<typeof vi.fn>
@@ -42,13 +28,7 @@ export function createFakeZwaveClient(
 	}
 }
 
-/**
- * Minimal, typed fake for `ZnifferManager` - the collaborator the
- * `ZNIFFER_API` inbound handler and the `INITED` handshake read through the
- * module-level `zniffer` variable. Every method is a `vi.fn()` so tests can
- * assert exact arguments/return values per test, without ever constructing a
- * real `Zniffer` (which would open a real serial port).
- */
+// Avoids constructing a real Zniffer, which would open a real serial port
 export interface FakeZniffer {
 	status: ReturnType<typeof vi.fn>
 	start: ReturnType<typeof vi.fn>
@@ -73,12 +53,7 @@ export function createFakeZniffer(
 		setFrequency: vi.fn(() => Promise.resolve(undefined)),
 		setLRChannelConfig: vi.fn(() => Promise.resolve(undefined)),
 		saveCaptureToFile: vi.fn(() => Promise.resolve('/tmp/capture.zlf')),
-		// NB: production's inbound `ZNIFFER_API` handler calls this one
-		// synchronously (`res = zniffer.loadCaptureFromBuffer(buffer)`,
-		// no `await`) - see `inboundApis.test.ts` for the resulting
-		// characterized quirk. The fake still returns a resolved promise
-		// (matching the real, real `async` method's return type) so that
-		// quirk is observable rather than accidentally masked.
+		// Resolves to a promise, matching the real handler calling it without await so the wire result serializes as an unresolved promise
 		loadCaptureFromBuffer: vi.fn(() => Promise.resolve(undefined)),
 		...overrides,
 	}

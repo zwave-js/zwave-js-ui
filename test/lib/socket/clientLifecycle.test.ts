@@ -1,15 +1,4 @@
-/**
- * Characterizes: the `'clients'` connect/disconnect callback lifecycle
- * wired at the bottom of `api/app.ts`'s `setupSocket()` -
- * `gw.zwave?.setUserCallbacks()` fires exactly when the FIRST client
- * connects (`activeSockets.size === 1` right after the new socket was
- * added), and `gw.zwave?.removeUserCallbacks()` fires exactly when the
- * LAST client disconnects (`activeSockets.size === 0` right after it was
- * removed) - both driven by `SocketManager`'s real `activeSockets` Map
- * (`api/lib/SocketManager.ts`), not a fake.
- *
- * One harness is shared for the whole file (`beforeAll`/`afterAll`).
- */
+// Characterizes the real activeSockets-driven lifecycle: setUserCallbacks() fires once for the first connection, removeUserCallbacks() fires once when the last client disconnects
 import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest'
 import { createSocketHarness, type SocketHarness } from './harness.ts'
 import { createFakeGateway } from './fakes.ts'
@@ -114,7 +103,6 @@ describe('Socket contract: first/last client callback lifecycle', () => {
 		await expect(harness.connectClient(client)).resolves.toBe(client)
 		client.disconnect()
 		await harness.waitForServerSocketCount(0)
-		// No assertion beyond "didn't throw/hang" - there's no zwave
-		// collaborator whose callbacks could have been (not) called.
+		// There's no zwave collaborator here for a callback to fire on
 	})
 })

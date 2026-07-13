@@ -1,17 +1,4 @@
-/**
- * Characterizes: the Socket.IO wire-contract catalogs `api/app.ts`'s
- * real-time transport is built on - `inboundEvents` (client -> server),
- * `socketEvents` (server -> client), and the channel/room routing tables
- * (`channelMap`/`eventToChannel`/`ALL_CHANNELS`) - against independent,
- * hard-coded fixtures.
- *
- * Every fixture below was typed out by hand from reading
- * `api/lib/SocketEvents.ts` directly, NOT derived from (or copy-pasted out
- * of) the production constants under test - so a regression that silently
- * renames/adds/removes a literal, or moves an event to a different
- * channel, fails one of these `.toEqual()`/`.toStrictEqual()` comparisons
- * instead of the two copies just drifting together unnoticed.
- */
+// Every fixture below is typed by hand from api/lib/SocketEvents.ts, not copied from it, so a renamed/moved/removed literal fails a comparison here instead of drifting unnoticed
 import { describe, it, expect } from 'vitest'
 import { readFileSync } from 'node:fs'
 import path from 'node:path'
@@ -27,7 +14,6 @@ import {
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const repoRoot = path.resolve(__dirname, '../../..')
 
-/** Independent, hard-coded catalog of the 7 client -> server events. */
 const EXPECTED_INBOUND_EVENTS = {
 	init: 'INITED',
 	zwave: 'ZWAVE_API',
@@ -38,7 +24,6 @@ const EXPECTED_INBOUND_EVENTS = {
 	unsubscribe: 'UNSUBSCRIBE',
 } as const
 
-/** Independent, hard-coded catalog of the 24 server -> client events. */
 const EXPECTED_OUTBOUND_EVENTS = {
 	init: 'INIT',
 	controller: 'CONTROLLER_CMD',
@@ -66,7 +51,6 @@ const EXPECTED_OUTBOUND_EVENTS = {
 	otwFirmwareUpdate: 'OTW_FIRMWARE_UPDATE',
 } as const
 
-/** Independent, hard-coded channel -> event-literal room-routing table. */
 const EXPECTED_CHANNEL_MAP: Record<string, string[]> = {
 	controller: ['CONTROLLER_CMD', 'CONNECTED', 'INFO'],
 	nodes: [
@@ -142,17 +126,7 @@ describe('Socket contract: inbound/outbound event + channel catalogs', () => {
 	})
 
 	describe('declared-but-unemitted outbound events', () => {
-		/**
-		 * Scans the real backend source (not test fixtures) for every place
-		 * an outbound `socketEvents.<key>` literal is actually *used* as a
-		 * producer (`sendToSocket(socketEvents.X, ...)`,
-		 * `.emit(socketEvents.X, ...)`, `socket.emit(socketEvents.X, ...)`),
-		 * OUTSIDE of `SocketEvents.ts` itself (which only *declares* them).
-		 * This is a real regression check, not a hard-coded belief: if a
-		 * future PR adds a producer for `CONNECTED` (or removes the last
-		 * producer of some other event), this test's assertion changes
-		 * with it instead of silently going stale.
-		 */
+		// Scans real backend source for producer call sites so a future producer added/removed for a key changes this assertion instead of going stale
 		function countProducerUsages(key: string): number {
 			const literal = EXPECTED_OUTBOUND_EVENTS[key]
 			const files = [
