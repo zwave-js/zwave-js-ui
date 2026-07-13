@@ -32,6 +32,7 @@ async function connectedClient(harness: SocketHarness) {
 
 let harness: SocketHarness
 
+// Share one harness because the cached SocketManager retains each clients listener for the file lifetime
 beforeAll(async () => {
 	harness = await createSocketHarness()
 })
@@ -204,6 +205,7 @@ describe('Socket contract: per-call service freshness under concurrent in-flight
 		expect(gwB.zwave.callApi).toHaveBeenCalledWith('fastOp')
 		expect(gwA.zwave.callApi).not.toHaveBeenCalledWith('fastOp')
 
+		// Resolve the first call after the swap to prove its gateway remains stable across await
 		resolveSlow({ success: true, message: 'slow-done' })
 		const firstResult = await firstAck
 		expect(firstResult).toStrictEqual({

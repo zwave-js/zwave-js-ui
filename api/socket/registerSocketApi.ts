@@ -6,7 +6,8 @@ import { registerHassApiHandler } from './hassApi.ts'
 import { registerZnifferApiHandler } from './znifferApi.ts'
 import { registerSubscriptionHandlers } from './subscriptions.ts'
 
-// Requires socketManager.bindServer(server) to have already run so socketManager.io exists
+// SocketManager owns transport and connection lifecycle while handlers resolve services through runtime
+// Requires bindServer to initialize socketManager.io before registration
 export function registerSocketApi(
 	socketManager: SocketManager,
 	runtime: AppRuntime,
