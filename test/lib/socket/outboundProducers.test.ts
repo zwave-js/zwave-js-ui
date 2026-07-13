@@ -11,6 +11,7 @@ import {
 	beforeEach,
 	afterEach,
 	vi,
+	type MockInstance,
 } from 'vitest'
 import { CommandClasses, NODE_ID_BROADCAST_LR } from '@zwave-js/core'
 import { OTWFirmwareUpdateStatus, Zniffer } from 'zwave-js'
@@ -596,8 +597,8 @@ describe('Socket contract: outbound producers', () => {
 
 		describe('ZNIFFER_FRAME: real producer, driven through the real internal Zniffer instance', () => {
 			// Zniffer's constructor only validates port's type and does no real serial I/O until .init() is called, so only Zniffer.prototype.init is stubbed while ZnifferManager's real 'frame'/'corrupted frame' listeners stay live for this test to drive with a real .emit() call
-			let initSpy: ReturnType<typeof vi.spyOn>
-			let destroySpy: ReturnType<typeof vi.spyOn>
+			let initSpy: MockInstance<() => Promise<void>>
+			let destroySpy: MockInstance<() => Promise<void>>
 
 			beforeEach(() => {
 				initSpy = vi
