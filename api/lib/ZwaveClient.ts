@@ -109,13 +109,10 @@ import {
 	QRCodeVersion,
 	RemoveNodeReason,
 	RFRegion,
-	ScheduleEntryLockCC,
-	ScheduleEntryLockScheduleKind,
 	SerialAPISetupCommand,
 	setValueFailed,
 	SetValueStatus,
 	setValueWasUnsupervisedOrSucceeded,
-	UserCodeCC,
 	UserIDStatus,
 	ProvisioningEntryStatus,
 	AssociationCheckResult,
@@ -168,8 +165,24 @@ import type {
 } from '../hass/types.ts'
 import { ScheduleService } from './zwave/ScheduleService.ts'
 import { ConfigurationTemplateService } from './zwave/ConfigurationTemplateService.ts'
+import {
+	ZUIScheduleEntryLockMode,
+	type ZUIConfigurationTemplate,
+	type ZUIConfigurationTemplateValue,
+	type ZUISchedule,
+	type ZUIScheduleConfig,
+	type ZUISlot,
+} from './zwave/ports.ts'
 
 export type { HassDevice } from '../hass/types.ts'
+export { ZUIScheduleEntryLockMode }
+export type {
+	ZUIConfigurationTemplate,
+	ZUIConfigurationTemplateValue,
+	ZUISchedule,
+	ZUIScheduleConfig,
+	ZUISlot,
+}
 
 export const configManager = new ConfigManager({
 	deviceConfigPriorityDir,
@@ -455,32 +468,6 @@ export type ZUIScene = {
 	values: ZUIValueIdScene[]
 }
 
-export type ZUIConfigurationTemplateValue = {
-	property: number
-	propertyKey?: number | null
-	endpoint: number
-	value: unknown
-	label?: string
-	description?: string
-}
-
-export type ZUIConfigurationTemplate = {
-	id: string
-	name: string
-	deviceId: string
-	manufacturerId?: number
-	productId?: number
-	productType?: number
-	manufacturer?: string
-	productLabel?: string
-	firmwareRange?: { min?: string; max?: string }
-	values: ZUIConfigurationTemplateValue[]
-	autoApply: boolean
-	contentHash: string
-	createdAt: string
-	updatedAt: string
-}
-
 export type ZUIDeviceClass = {
 	basic: number
 	generic: number
@@ -546,27 +533,6 @@ export interface ZUIEndpoint {
 		generic: number
 		specific: number
 	}
-}
-
-export const ZUIScheduleEntryLockMode = {
-	DAILY: 'daily',
-	WEEKLY: 'weekly',
-	YEARLY: 'yearly',
-} as const
-export type ZUIScheduleEntryLockMode =
-	(typeof ZUIScheduleEntryLockMode)[keyof typeof ZUIScheduleEntryLockMode]
-
-export interface ZUISchedule {
-	[ZUIScheduleEntryLockMode.DAILY]: ZUIScheduleConfig<ScheduleEntryLockDailyRepeatingSchedule>
-	[ZUIScheduleEntryLockMode.WEEKLY]: ZUIScheduleConfig<ScheduleEntryLockWeekDaySchedule>
-	[ZUIScheduleEntryLockMode.YEARLY]: ZUIScheduleConfig<ScheduleEntryLockYearDaySchedule>
-}
-
-export type ZUISlot<T> = T & { enabled: boolean } & ScheduleEntryLockSlotId
-
-export interface ZUIScheduleConfig<T> {
-	numSlots: number
-	slots: ZUISlot<T>[]
 }
 
 export type ZUINode = {
