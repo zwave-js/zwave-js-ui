@@ -116,11 +116,13 @@ export function createZWaveNode(overrides: Partial<ZWaveNode> = {}): ZWaveNode {
 		})),
 		hasDeviceConfigChanged: vi.fn(() => true),
 		getDefinedValueIDs: vi.fn(() => []),
-		getValueMetadata: vi.fn((): ValueMetadata => ({
-			type: 'number',
-			readable: true,
-			writeable: true,
-		})),
+		getValueMetadata: vi.fn(
+			(): ValueMetadata => ({
+				type: 'number',
+				readable: true,
+				writeable: true,
+			}),
+		),
 		getValue: vi.fn(() => 1),
 		getEndpoint: vi.fn(() => ({ getCCVersion: vi.fn(() => 4) })),
 		getCCVersion: vi.fn(() => 3),
