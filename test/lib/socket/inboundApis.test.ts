@@ -305,7 +305,7 @@ describe('Socket contract: inbound ACK APIs', () => {
 			})
 		})
 
-		it('returns the typed result from the awaited "store" operation', async () => {
+		it('acknowledges stored devices and reports invalid stored nodes', async () => {
 			const devices = { switch_sw: { type: 'switch' } }
 			const gateway = createFakeGateway()
 			const harness = await getHarness({ gateway })

@@ -50,7 +50,7 @@ describe('CustomDeviceRegistry', () => {
 		}
 	})
 
-	it('loads custom JSON before serving an injected catalog', () => {
+	it('prefers custom JSON over configured devices', () => {
 		const builtIn = device('built-in')
 		const custom = device('custom')
 		const { registry, storeDir } = createRegistry({
@@ -84,7 +84,7 @@ describe('CustomDeviceRegistry', () => {
 		expect(registry.get('preferred')).toEqual([fromJavaScript])
 	})
 
-	it('keeps the injected catalog when custom JSON cannot be parsed', () => {
+	it('keeps configured devices when custom JSON is invalid', () => {
 		const configured = device('configured')
 		const { registry, storeDir, logger } = createRegistry({
 			stable: [configured],
@@ -116,7 +116,7 @@ describe('CustomDeviceRegistry', () => {
 		expect(registry.get('malformed')).toEqual([])
 	})
 
-	it('reloads changed JSON into active gateway projections', async () => {
+	it('serves changed JSON after file updates', async () => {
 		const first = device('first')
 		const second = device('second')
 		const { registry, storeDir } = createRegistry()
@@ -136,7 +136,7 @@ describe('CustomDeviceRegistry', () => {
 		})
 	})
 
-	it('stops propagating file changes after disposal', async () => {
+	it('ignores file changes after closing', async () => {
 		const beforeDispose = device('before-dispose')
 		const afterDispose = device('after-dispose')
 		const { registry, storeDir } = createRegistry()
@@ -160,7 +160,7 @@ describe('CustomDeviceRegistry', () => {
 		expect(gatewayRegistry.get('multilevel')).toEqual([beforeDispose])
 	})
 
-	it('isolates dynamic gateway discoveries from sibling projections', () => {
+	it('keeps discoveries isolated between registries', () => {
 		const configured = device('configured')
 		const discovered = device('discovered')
 		const { registry } = createRegistry({ dimmer: [configured] })
