@@ -757,6 +757,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	/** Changes at both boundaries of an install so checks overlapping it cannot publish a sampled pre-install version */
 	private _configInstallEpoch = 0
 	private _activeConfigInstall: number | null = null
+	private _configInstallPromise: Promise<boolean> | null = null
 	private pollIntervals: Record<string, NodeJS.Timeout>
 
 	private _lockNeighborsRefresh: boolean
@@ -878,6 +879,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 */
 	init() {
 		this._driverLifecycle?.invalidateReady()
+		this._clearRuntimeTimers()
 
 		this.statelessTimeouts = {}
 		this.pollIntervals = {}
@@ -1319,10 +1321,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 	/** Runs mid-close (after DriverLifecycle clears its restart timer, before it destroys server and driver) so teardown ordering is preserved */
 	private _clearRuntimeOnClose(): void {
-		if (this.healTimeout) {
-			clearTimeout(this.healTimeout)
-			this.healTimeout = null
-		}
+		this._clearRuntimeTimers()
 
 		// Retire the config-check chain on close so an in-flight check settling afterward can't re-arm
 		this._invalidateScheduledConfigCheck()
@@ -1330,6 +1329,13 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		this._inclusionCoordinator.reset()
 
 		this._firmwareUpdateService.resetGeneration()
+	}
+
+	private _clearRuntimeTimers(): void {
+		if (this.healTimeout) {
+			clearTimeout(this.healTimeout)
+			this.healTimeout = null
+		}
 
 		if (this.statelessTimeouts) {
 			for (const k in this.statelessTimeouts) {
@@ -1357,6 +1363,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		this._configPublicationEpoch++
 		this._configInstallEpoch++
 		this._activeConfigInstall = null
+		this._configInstallPromise = null
 		this._clearConfigCheckTimer()
 	}
 
@@ -2881,36 +2888,52 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 *
 	 */
 	async installConfigUpdate(): Promise<boolean> {
-		if (this.driverReady) {
-			const generation = this._driverLifecycle.generation
-			const epoch = this._configCheckEpoch
-			const install = ++this._configInstallEpoch
-			this._activeConfigInstall = install
-			this._configPublicationEpoch++
-			let updated = false
-			try {
-				updated = await this._driver.installConfigUpdate()
-				return updated
-			} finally {
-				if (this._activeConfigInstall === install) {
-					this._activeConfigInstall = null
-					const installEpoch = ++this._configInstallEpoch
-					const publicationEpoch = ++this._configPublicationEpoch
-					if (
-						updated &&
-						this._isCurrentConfigPublication(
-							generation,
-							epoch,
-							publicationEpoch,
-							installEpoch,
-						)
-					) {
-						this._publishConfigUpdateVersion(undefined)
-					}
+		if (!this.driverReady) {
+			throw new DriverNotReadyError()
+		}
+
+		if (this._configInstallPromise) {
+			return this._configInstallPromise
+		}
+
+		const operation = this._installConfigUpdate()
+		this._configInstallPromise = operation
+		try {
+			return await operation
+		} finally {
+			if (this._configInstallPromise === operation) {
+				this._configInstallPromise = null
+			}
+		}
+	}
+
+	private async _installConfigUpdate(): Promise<boolean> {
+		const generation = this._driverLifecycle.generation
+		const epoch = this._configCheckEpoch
+		const install = ++this._configInstallEpoch
+		this._activeConfigInstall = install
+		this._configPublicationEpoch++
+		let updated = false
+		try {
+			updated = await this._driver.installConfigUpdate()
+			return updated
+		} finally {
+			if (this._activeConfigInstall === install) {
+				this._activeConfigInstall = null
+				const installEpoch = ++this._configInstallEpoch
+				const publicationEpoch = ++this._configPublicationEpoch
+				if (
+					updated &&
+					this._isCurrentConfigPublication(
+						generation,
+						epoch,
+						publicationEpoch,
+						installEpoch,
+					)
+				) {
+					this._publishConfigUpdateVersion(undefined)
 				}
 			}
-		} else {
-			throw new DriverNotReadyError()
 		}
 	}
 
@@ -4324,8 +4347,13 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	}
 
 	private _onDriverError(error: unknown, skipRestart = false): void {
-		if (skipRestart) {
+		const driverFailed =
+			isZWaveError(error) && error.code === ZWaveErrorCodes.Driver_Failed
+		if (skipRestart || driverFailed) {
 			this._invalidateScheduledConfigCheck()
+		}
+		if (driverFailed) {
+			this._firmwareUpdateService.resetGeneration()
 		}
 
 		this._error = 'Driver: ' + getErrorMessage(error)
@@ -4333,11 +4361,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		this._updateControllerStatus(this._error)
 		this.emit('event', EventSource.DRIVER, 'driver error', error)
 
-		if (
-			!skipRestart &&
-			isZWaveError(error) &&
-			error.code === ZWaveErrorCodes.Driver_Failed
-		) {
+		if (!skipRestart && driverFailed) {
 			// this cannot be recovered by zwave-js, requires a manual restart
 			this.driverReady = false
 			this.backoffRestart()

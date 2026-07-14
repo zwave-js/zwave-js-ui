@@ -325,12 +325,15 @@ describe('connecting and reaching driver ready', () => {
 				overlappingCheck.promise,
 			)
 			const installRun = zwave.installConfigUpdate()
+			const duplicateInstallRun = zwave.installConfigUpdate()
 			const checkRun = zwave.checkForConfigUpdates()
+			expect(driver.installConfigUpdate).toHaveBeenCalledTimes(1)
 
 			overlappingCheck.resolve('available')
 			await checkRun
 			install.resolve(true)
 			await expect(installRun).resolves.toBe(true)
+			await expect(duplicateInstallRun).resolves.toBe(true)
 
 			expect(zwave.getInfo().newConfigVersion).toBeUndefined()
 		} finally {

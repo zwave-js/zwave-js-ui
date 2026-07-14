@@ -113,6 +113,9 @@ function createNodeStorePort(): FirmwareNodeStorePort & {
 		},
 		getStoreHomeId: () => 'test-home',
 		updateStoreNodes: vi.fn().mockResolvedValue(undefined),
+		runStoreTransaction: vi.fn((operation: () => Promise<void>) =>
+			operation(),
+		),
 		createStoreRestorePoint: vi.fn(),
 		persistStagedNodeUpdates: vi
 			.fn()
@@ -1636,6 +1639,71 @@ describe('FirmwareUpdateService', () => {
 	})
 
 	describe('overlapping firmware state writers', () => {
+		it('publishes each node before the next persistence snapshot', async () => {
+			const firstPersistenceStarted = createDeferred<void>()
+			const firstPersistence = createDeferred<void>()
+			const nodeIds = [12, 13] as const
+			const updates = new Map([
+				[
+					nodeIds[0],
+					makeUpdate({
+						version: '7.1.0',
+						normalizedVersion: '7.1.0',
+					}),
+				],
+				[
+					nodeIds[1],
+					makeUpdate({
+						version: '7.2.0',
+						normalizedVersion: '7.2.0',
+					}),
+				],
+			])
+			const driver = createDriverPort({
+				getDriver: () => ({
+					controller: {
+						getAvailableFirmwareUpdates: vi.fn((nodeId: number) => {
+							const update = updates.get(nodeId)
+							return Promise.resolve(update ? [update] : [])
+						}),
+						getAllAvailableFirmwareUpdates: vi.fn(),
+						firmwareUpdateOTA: vi.fn(),
+						nodes: { get: vi.fn() },
+					},
+					firmwareUpdateOTW: vi.fn(),
+				}),
+			})
+			const nodes = createNodeStorePort()
+			for (const nodeId of nodeIds) {
+				nodes._nodes.set(nodeId, { id: nodeId })
+			}
+			let persistenceCall = 0
+			let persistedNodeIds: number[] = []
+			nodes.persistStagedNodeUpdates.mockImplementation(
+				async (staged) => {
+					const snapshot = new Set(nodes._store.keys())
+					for (const entry of staged) {
+						snapshot.add(entry.nodeId)
+					}
+					if (persistenceCall++ === 0) {
+						firstPersistenceStarted.resolve()
+						await firstPersistence.promise
+					}
+					persistedNodeIds = [...snapshot]
+				},
+			)
+			const { service } = createService({ driver, nodes })
+
+			const firstRun = service.checkNodeFirmwareUpdates(nodeIds[0])
+			await firstPersistenceStarted.promise
+			const secondRun = service.checkNodeFirmwareUpdates(nodeIds[1])
+			firstPersistence.resolve()
+			await Promise.all([firstRun, secondRun])
+
+			expect(persistedNodeIds).toEqual([...nodeIds])
+			expect(nodes._store).toHaveLength(2)
+		})
+
 		it('keeps a newer bulk result when an earlier node check finishes later', async () => {
 			const nodeCheck = createDeferred<FirmwareUpdateInfo[]>()
 			const oldUpdate = makeUpdate({

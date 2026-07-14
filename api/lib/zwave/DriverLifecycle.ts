@@ -767,6 +767,13 @@ export class DriverLifecycle {
 		if (this._generation !== generation) {
 			return
 		}
+		if (
+			isZWaveError(error) &&
+			error.code === ZWaveErrorCodes.Driver_Failed
+		) {
+			this._generation++
+			this._readyEpoch++
+		}
 		this.host.onDriverError(error, false)
 	}
 
