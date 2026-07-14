@@ -3,8 +3,10 @@ import {
 	it,
 	expect,
 	vi,
+	beforeAll,
 	beforeEach,
 	afterEach,
+	afterAll,
 	type Mock,
 } from 'vitest'
 import { EventEmitter } from 'node:events'
@@ -19,10 +21,10 @@ import type { JSONTransport } from '@zwave-js/log-transport-json'
 import type { ZwavejsServer } from '@zwave-js/server'
 import Transport from 'winston-transport'
 
-import {
-	DriverLifecycle,
-	type DriverLifecycleHost,
-	type DriverLifecycleDeps,
+import type {
+	DriverLifecycle as DriverLifecycleClass,
+	DriverLifecycleHost,
+	DriverLifecycleDeps,
 } from '#api/lib/zwave/DriverLifecycle'
 import type ZwaveServerManager from '#api/hass/ZwaveServerManager'
 import type { ZwaveServerHost } from '#api/hass/ZwaveServerManager'
@@ -36,6 +38,17 @@ import {
 	requireDefined,
 	type Deferred,
 } from './serviceTestSupport.ts'
+import { cleanupTestEnv, ensureTestEnv } from '../shared/env.ts'
+
+let DriverLifecycle: typeof DriverLifecycleClass
+
+beforeAll(async () => {
+	ensureTestEnv()
+	const lifecycleModule = await import('#api/lib/zwave/DriverLifecycle')
+	DriverLifecycle = lifecycleModule.DriverLifecycle
+})
+
+afterAll(cleanupTestEnv)
 
 type StartBehavior = 'resolve' | 'reject' | 'hang' | 'deferred'
 type DestroyBehavior = 'resolve' | 'reject' | 'deferred'
