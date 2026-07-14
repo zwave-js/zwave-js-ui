@@ -681,6 +681,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 * standard/LR broadcast). Keyed by virtual nodeId.
 	 */
 	private _virtualNodes: Map<number, VirtualNode>
+	private _nodesPersistenceTail: Promise<void> = Promise.resolve()
 	private _devices: Record<string, Partial<ZUINode>>
 	private driverInfo: ZUIDriverInfo
 	private status: ZwaveClientStatus
@@ -1394,6 +1395,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			getMaxNodeEventsQueueSize: () => this.maxNodeEventsQueueSize,
 			getPersistedNodes: () => jsonStore.get(store.nodes),
 			persistNodes: (nodes) => jsonStore.put(store.nodes, nodes),
+			runPersistenceTransaction: (operation) =>
+				this._serializeNodesPersistence(operation),
 			debug: (message) => logger.debug(message),
 			sendToSocket: (event, data, ...args) =>
 				this.sendToSocket(event, data, ...args),
@@ -2273,8 +2276,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		snapshot: NodesStoreRecord,
 		homeHex: string | undefined,
 	): Promise<void> {
-		void homeHex
-		await this._nodeRegistry.persistDetachedSnapshot(snapshot)
+		await this._nodeRegistry.persistDetachedSnapshot(snapshot, homeHex)
 	}
 
 	private async _restoreFirmwareNodeFields(
@@ -4446,7 +4448,11 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		this.driverInfo.controllerId = this._driver.controller.ownNodeId
 
 		// needs home hex to be set
-		await this.getStoreNodes()
+		await nodeRegistry.restorePersistedNodes(
+			() =>
+				this._isCurrentReady(generation, readyEpoch) &&
+				this._isCurrentNodeRegistry(nodeRegistry, nodeGeneration),
+		)
 
 		// Abort if a newer generation replaced this one while the store loaded, so a late `driver ready` from an obsolete driver can't mutate the replacement's state
 		if (!this._isCurrentReady(generation, readyEpoch)) {

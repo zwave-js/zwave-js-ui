@@ -114,6 +114,7 @@ export interface NodeRegistryHost {
 	getMaxNodeEventsQueueSize(): number
 	getPersistedNodes(): NodesStoreFile
 	persistNodes(nodes: NodesStoreRecordByHome): Promise<unknown>
+	runPersistenceTransaction(operation: () => Promise<void>): Promise<void>
 	debug(message: string): void
 	sendToSocket(event: string, data: unknown, ...args: unknown[]): void
 	logNode(
@@ -227,8 +228,18 @@ export class NodeRegistry {
 		return currentNode === zwaveNode
 	}
 
-	async restorePersistedNodes(): Promise<void> {
-		if (!this.current) return
+	async restorePersistedNodes(
+		isReady: () => boolean = () => true,
+	): Promise<void> {
+		await this.host.runPersistenceTransaction(() =>
+			this.restorePersistedNodesNow(isReady),
+		)
+	}
+
+	private async restorePersistedNodesNow(
+		isReady: () => boolean,
+	): Promise<void> {
+		if (!this.current || !isReady()) return
 		const homeHex = this.host.getHomeHex()
 		if (!homeHex) throw new Error('HomeHex not set')
 
@@ -247,23 +258,27 @@ export class NodeRegistry {
 			// Persist legacy node stores under the home ID before exposing restored state
 			const legacy = nodes
 			await this.host.persistNodes({ [homeHex]: legacy })
-			if (!this.current) return
+			if (!this.current || !isReady()) return
 			this.storeNodes = legacy
 		} else {
-			if (!this.current) return
+			if (!this.current || !isReady()) return
 			this.storeNodes = (nodes as NodesStoreRecordByHome)[homeHex] || {}
 		}
 	}
 
-	private async persistSnapshot(snapshot: NodesStoreRecord): Promise<void> {
+	private async persistSnapshot(
+		snapshot: NodesStoreRecord,
+		homeHex = this.host.getHomeHex(),
+	): Promise<void> {
 		if (!this.current) return
-		const homeHex = this.host.getHomeHex()
 		if (!homeHex) {
 			this.logger.warn('HomeHex not set, skipping storeDevices')
 			return
 		}
 		// Restoration migrates legacy stores before snapshots update the home-ID-keyed shape
-		const nodes = this.host.getPersistedNodes() as NodesStoreRecordByHome
+		const storedNodes =
+			this.host.getPersistedNodes() as NodesStoreRecordByHome
+		const nodes = { ...storedNodes }
 		nodes[homeHex] = Object.keys(snapshot).reduce((result, key) => {
 			if (Object.keys(snapshot[key]).length > 0) {
 				result[key] = snapshot[key]
@@ -277,7 +292,9 @@ export class NodeRegistry {
 
 	async updateStoreNodes(throwError = true): Promise<void> {
 		try {
-			await this.persistSnapshot(this.storeNodes)
+			await this.host.runPersistenceTransaction(() =>
+				this.persistSnapshot(this.storeNodes),
+			)
 		} catch (error) {
 			this.logger.error(
 				`Error while updating store nodes: ${getErrorMessage(error)}`,
@@ -287,8 +304,11 @@ export class NodeRegistry {
 		}
 	}
 
-	async persistDetachedSnapshot(snapshot: NodesStoreRecord): Promise<void> {
-		await this.persistSnapshot(snapshot)
+	async persistDetachedSnapshot(
+		snapshot: NodesStoreRecord,
+		homeHex?: string,
+	): Promise<void> {
+		await this.persistSnapshot(snapshot, homeHex)
 	}
 
 	async setNodeName(nodeId: number, name: string): Promise<boolean> {
