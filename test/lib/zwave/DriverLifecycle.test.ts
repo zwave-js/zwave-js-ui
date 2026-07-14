@@ -117,7 +117,6 @@ class FakeDriver extends EventEmitter {
 				return Promise.resolve()
 			}
 
-			// Keep the failed instance as owner so a later close/retry destroys it again
 			const rejectThis =
 				world.destroyRejects ||
 				world.destroyBehavior === 'reject' ||
@@ -684,7 +683,7 @@ describe('DriverLifecycle — connect early returns', () => {
 
 describe('DriverLifecycle — connect happy path', () => {
 	it('creates a driver, starts it and sets CONNECTED', async () => {
-		const { lifecycle, world, state } = createHarness({
+		const { lifecycle, host, world, state } = createHarness({
 			serverEnabled: false,
 		})
 		await lifecycle.connect()
@@ -1130,7 +1129,7 @@ describe('DriverLifecycle — cleanup after a failed connect', () => {
 		}
 	})
 
-	it('a rejected destroy is retried by a later close without leaking or destroying the wrong driver', async () => {
+	it('a rejected destroy releases terminal ownership so a later connect can retry', async () => {
 		vi.useFakeTimers()
 		try {
 			const { lifecycle, world, state, host } = createHarness({
@@ -1144,17 +1143,16 @@ describe('DriverLifecycle — cleanup after a failed connect', () => {
 			const driver0 = world.drivers[0]
 
 			expect(world.drivers).toHaveLength(1)
-			expect(state.driver).toBe(driver0)
+			expect(state.driver).toBeNull()
 			expect(world.destroyInvocations).toBe(1)
 			expect(world.destroyOrder).toEqual([])
 			expect(host.onDriverError).toHaveBeenCalledTimes(1)
 
-			await lifecycle.close(true)
-			expect(world.destroyInvocations).toBe(2)
-			expect(world.destroyOrder).toEqual(['driver'])
-			expect(state.driver).toBeNull()
-			expect(world.drivers).toHaveLength(1)
-			expect(driver0.destroy).toHaveBeenCalledTimes(2)
+			world.startBehavior = 'resolve'
+			await lifecycle.connect()
+			expect(world.drivers).toHaveLength(2)
+			expect(state.driver).toBe(world.drivers[1])
+			expect(driver0.destroy).toHaveBeenCalledTimes(1)
 		} finally {
 			vi.useRealTimers()
 		}
@@ -1175,12 +1173,29 @@ describe('DriverLifecycle — cleanup after a failed connect', () => {
 		await expect(connect).resolves.toBeUndefined()
 
 		expect(host.onDriverError).toHaveBeenCalledWith(startupError, true)
-		expect(state.driver).toBe(driver)
+		expect(state.driver).toBeNull()
 		expect(driver.destroy).toHaveBeenCalledTimes(1)
 
 		await expect(lifecycle.close(true)).resolves.toBeUndefined()
-		expect(driver.destroy).toHaveBeenCalledTimes(2)
+		expect(driver.destroy).toHaveBeenCalledTimes(1)
 		expect(state.driver).toBeNull()
+	})
+
+	it('a close destroy rejection releases the terminal driver without retrying its pending teardown', async () => {
+		const { lifecycle, host, world, state } = createHarness({
+			serverEnabled: false,
+		})
+		await lifecycle.connect()
+		const driver = world.drivers[0]
+		const destroyError = new Error('destroy failed')
+		driver.destroy.mockRejectedValueOnce(destroyError)
+
+		await expect(lifecycle.close()).rejects.toBe(destroyError)
+		expect(state.driver).toBeNull()
+		expect(host.clearRuntimeOnClose).toHaveBeenCalledTimes(1)
+		expect(host.finalizeClose).toHaveBeenCalledTimes(1)
+		await expect(lifecycle.close(true)).resolves.toBeUndefined()
+		expect(driver.destroy).toHaveBeenCalledTimes(1)
 	})
 
 	it('a stale post-start exit tears down its own driver and never the live replacement', async () => {
@@ -1271,7 +1286,7 @@ describe('DriverLifecycle — logConfig override', () => {
 })
 
 describe('DriverLifecycle — persisted logConfig immutability', () => {
-	it('leaves the persisted logConfig unmutated and passes the driver a distinct clone', async () => {
+	it('leaves persisted log settings unchanged while enriching driver options', async () => {
 		const { lifecycle, world, state } = createHarness({
 			serverEnabled: false,
 			options: zwaveOpts({ logConfig: { level: 'warn', maxFiles: 5 } }),
@@ -1284,12 +1299,10 @@ describe('DriverLifecycle — persisted logConfig immutability', () => {
 		await lifecycle.connect()
 
 		const driverLogConfig = world.drivers[0].options.logConfig
-		expect(driverLogConfig).not.toBe(source)
 		expect(driverLogConfig?.transports).toContain(world.logTransports[0])
 		expect(driverLogConfig?.transports).toContain(extra)
 		expect(driverLogConfig?.level).toBe('debug')
 
-		expect(state.cfg.options?.logConfig).toBe(source)
 		expect(source).toEqual(sourceSnapshot)
 		expect(source?.transports).toBeUndefined()
 		expect(source?.level).toBe('warn')
@@ -1308,7 +1321,6 @@ describe('DriverLifecycle — persisted logConfig immutability', () => {
 		await lifecycle.connect()
 		expect(world.drivers[0].options.logConfig?.level).toBe('debug')
 		expect(source).toEqual(sourceSnapshot)
-		expect(state.cfg.options?.logConfig).toBe(source)
 
 		lifecycle.removeExtraLogTransport(extra)
 		await lifecycle.close()
@@ -1319,7 +1331,6 @@ describe('DriverLifecycle — persisted logConfig immutability', () => {
 		expect(restarted?.level).toBe('info')
 		expect(restarted?.transports).toEqual([world.logTransports[1]])
 
-		expect(state.cfg.options?.logConfig).toBe(source)
 		expect(source).toEqual(sourceSnapshot)
 		expect(source?.level).toBe('info')
 	})
@@ -1420,13 +1431,63 @@ describe('DriverLifecycle — driver-ready failures', () => {
 		await lifecycle.connect()
 
 		world.drivers[0].emit('driver ready')
-		await Promise.resolve()
+		world.drivers[0].emit('all nodes ready')
+		await vi.waitFor(() => {
+			expect(state.driverReady).toBe(false)
+		})
 
-		expect(state.driverReady).toBe(false)
+		expect(host.onScanComplete).not.toHaveBeenCalled()
 		expect(host.onDriverError).toHaveBeenCalledWith(readyError, true)
 		expect(host.restart).not.toHaveBeenCalled()
 		await vi.advanceTimersByTimeAsync(1000)
 		expect(host.restart).toHaveBeenCalledTimes(1)
+	})
+
+	it('defers scan completion until matching ready initialization succeeds', async () => {
+		const { lifecycle, host, world } = createHarness({
+			serverEnabled: false,
+		})
+		const ready = createDeferred<void>()
+		host.onDriverReady.mockReturnValueOnce(ready.promise)
+		await lifecycle.connect()
+
+		world.drivers[0].emit('driver ready')
+		world.drivers[0].emit('all nodes ready')
+		expect(host.onScanComplete).not.toHaveBeenCalled()
+
+		ready.resolve()
+		await Promise.resolve()
+		await Promise.resolve()
+
+		expect(host.onScanComplete).toHaveBeenCalledTimes(1)
+	})
+
+	it('does not carry pending scan completion into a newer ready event', async () => {
+		const { lifecycle, host, world } = createHarness({
+			serverEnabled: false,
+		})
+		const firstReady = createDeferred<void>()
+		const secondReady = createDeferred<void>()
+		host.onDriverReady
+			.mockReturnValueOnce(firstReady.promise)
+			.mockReturnValueOnce(secondReady.promise)
+		await lifecycle.connect()
+
+		world.drivers[0].emit('driver ready')
+		world.drivers[0].emit('all nodes ready')
+		world.drivers[0].emit('driver ready')
+		firstReady.resolve()
+		await Promise.resolve()
+		await Promise.resolve()
+		expect(host.onScanComplete).not.toHaveBeenCalled()
+
+		secondReady.resolve()
+		await Promise.resolve()
+		await Promise.resolve()
+		expect(host.onScanComplete).not.toHaveBeenCalled()
+
+		world.drivers[0].emit('all nodes ready')
+		expect(host.onScanComplete).toHaveBeenCalledTimes(1)
 	})
 
 	it('keeps newer ready state when an older same-generation initialization rejects', async () => {
@@ -1496,6 +1557,29 @@ describe('DriverLifecycle — driver-ready failures', () => {
 })
 
 describe('DriverLifecycle — driver options', () => {
+	it('isolates persisted storage settings from driver-only changes', async () => {
+		const { lifecycle, state, world } = createHarness({
+			serverEnabled: false,
+			options: zwaveOpts({
+				storage: {
+					cacheDir: '/persisted/cache',
+					throttle: 'normal',
+				},
+			}),
+		})
+		await lifecycle.connect()
+
+		const driverStorage = world.drivers[0].options.storage
+		expect(driverStorage).toBeDefined()
+		driverStorage.cacheDir = '/external/cache'
+		driverStorage.throttle = 'fast'
+
+		expect(state.cfg.options?.storage).toEqual({
+			cacheDir: '/persisted/cache',
+			throttle: 'normal',
+		})
+	})
+
 	it('builds scale preferences from cfg.scales', async () => {
 		const { lifecycle, world } = createHarness({
 			serverEnabled: false,

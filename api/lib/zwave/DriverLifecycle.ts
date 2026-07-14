@@ -90,6 +90,8 @@ export class DriverLifecycle {
 
 	/** Separately fences repeated ready events and init() calls that keep the same driver generation */
 	private _readyEpoch = 0
+	private _completedReadyEpoch = -1
+	private _pendingScan: { generation: number; readyEpoch: number } | undefined
 
 	private _backoffRetry = 0
 	private _restartTimeout: NodeJS.Timeout | null = null
@@ -135,6 +137,8 @@ export class DriverLifecycle {
 
 	invalidateReady(): void {
 		this._readyEpoch++
+		this._completedReadyEpoch = -1
+		this._pendingScan = undefined
 	}
 
 	/** Lazily builds a standalone fallback manager on first access so a directly-constructed client's server lifecycle works with no coordinator to adopt one */
@@ -522,9 +526,12 @@ export class DriverLifecycle {
 
 		Object.assign(zwaveOptions, cfg.options)
 
-		// Clone logConfig before the enrichment below: `Object.assign(cfg.options)` above can alias it onto the persisted `cfg.options.logConfig`, so in-place mutation would leak driver-only transports/level into the user's saved config
+		// Clone mutable option bags after Object.assign so driver-only log and external storage settings cannot leak into persisted config
 		if (zwaveOptions.logConfig) {
 			zwaveOptions.logConfig = { ...zwaveOptions.logConfig }
+		}
+		if (zwaveOptions.storage) {
+			zwaveOptions.storage = { ...zwaveOptions.storage }
 		}
 
 		let s0Key: string | undefined
@@ -668,7 +675,7 @@ export class DriverLifecycle {
 		}
 	}
 
-	/** Awaits destroy() before clearing the host's driver field so the failed driver releases the serial port before a retry or coalesced connect builds a replacement */
+	/** Awaits destroy() before clearing the host's driver field whenever teardown completes normally */
 	private async teardownConnectDriver(
 		driver: Driver,
 		cause?: unknown,
@@ -680,7 +687,10 @@ export class DriverLifecycle {
 				`Error while destroying driver ${getErrorMessage(err)}`,
 				cause,
 			)
-			// Keep this instance as owner so a later close/retry can destroy it again instead of stranding the port it may still hold
+			// zwave-js leaves its memoized destroy promise pending after rejection, so release this terminal instance instead of hanging a later close
+			if (this.host.getDriver() === driver) {
+				this.host.setDriver(null)
+			}
 			return
 		}
 		if (this.host.getDriver() === driver) {
@@ -692,7 +702,7 @@ export class DriverLifecycle {
 	async close(keepListeners = false): Promise<void> {
 		// Bump the generation so a driver that becomes ready or errors after this cannot mutate replacement state
 		this._generation++
-		this._readyEpoch++
+		this.invalidateReady()
 
 		// Stop a post-close duplicate connect from coalescing onto the superseded startup
 		this._activeConnect = null
@@ -713,9 +723,22 @@ export class DriverLifecycle {
 		}
 
 		const driver = this.host.getDriver()
+		let destroyFailed = false
+		let destroyError: unknown
 		if (driver) {
-			await driver.destroy()
-			this.host.setDriver(null)
+			try {
+				await driver.destroy()
+			} catch (error) {
+				// zwave-js memoizes an unsettled destroy promise after failure, so this instance cannot be retried safely
+				if (this.host.getDriver() === driver) {
+					this.host.setDriver(null)
+				}
+				destroyFailed = true
+				destroyError = error
+			}
+			if (this.host.getDriver() === driver) {
+				this.host.setDriver(null)
+			}
 		}
 
 		if (!keepListeners) {
@@ -723,6 +746,9 @@ export class DriverLifecycle {
 		}
 
 		logger.info('Client closed')
+		if (destroyFailed) {
+			throw destroyError
+		}
 	}
 
 	// Generation-guarded dispatch drops events from an obsolete driver generation
@@ -732,6 +758,8 @@ export class DriverLifecycle {
 		}
 
 		const readyEpoch = ++this._readyEpoch
+		this._completedReadyEpoch = -1
+		this._pendingScan = undefined
 		let ready: Promise<void>
 		try {
 			ready = this.host.onDriverReady(generation, readyEpoch)
@@ -741,9 +769,30 @@ export class DriverLifecycle {
 			return
 		}
 
-		void ready.catch((error: unknown) => {
-			this.handleDriverReadyFailure(generation, readyEpoch, error)
-		})
+		void ready
+			.then(() => {
+				this.completeDriverReady(generation, readyEpoch)
+			})
+			.catch((error: unknown) => {
+				this.handleDriverReadyFailure(generation, readyEpoch, error)
+			})
+	}
+
+	private completeDriverReady(generation: number, readyEpoch: number): void {
+		if (
+			this._generation !== generation ||
+			this._readyEpoch !== readyEpoch
+		) {
+			return
+		}
+		this._completedReadyEpoch = readyEpoch
+		if (
+			this._pendingScan?.generation === generation &&
+			this._pendingScan.readyEpoch === readyEpoch
+		) {
+			this._pendingScan = undefined
+			this.publishScanComplete()
+		}
 	}
 
 	private handleDriverReadyFailure(
@@ -758,6 +807,8 @@ export class DriverLifecycle {
 			return
 		}
 		this._readyEpoch++
+		this._completedReadyEpoch = -1
+		this._pendingScan = undefined
 		this.host.setDriverReady(false)
 		this.host.onDriverError(toError(error), true)
 		this.backoffRestart()
@@ -772,7 +823,7 @@ export class DriverLifecycle {
 			error.code === ZWaveErrorCodes.Driver_Failed
 		) {
 			this._generation++
-			this._readyEpoch++
+			this.invalidateReady()
 		}
 		this.host.onDriverError(error, false)
 	}
@@ -781,7 +832,22 @@ export class DriverLifecycle {
 		if (this._generation !== generation) {
 			return
 		}
-		this.host.onScanComplete()
+		const readyEpoch = this._readyEpoch
+		if (this._completedReadyEpoch === readyEpoch) {
+			this.publishScanComplete()
+		} else {
+			this._pendingScan = { generation, readyEpoch }
+		}
+	}
+
+	private publishScanComplete(): void {
+		try {
+			this.host.onScanComplete()
+		} catch (error) {
+			logger.error(
+				`Error while handling scan completion: ${getErrorMessage(error)}`,
+			)
+		}
 	}
 
 	private dispatchBootLoaderReady(generation: number): void {
