@@ -17,6 +17,7 @@ import type Transport from 'winston-transport'
 
 import * as LogManager from '../logger.ts'
 import * as utils from '../utils.ts'
+import { getErrorMessage, toError } from '../errors.ts'
 import { applyExternalDriverSettings } from '../externalSettings.ts'
 import { configDbDir, logsDir, storeDir } from '../../config/app.ts'
 import { PkgFsBindings } from '../PkgFsBindings.ts'
@@ -273,8 +274,10 @@ export class DriverLifecycle {
 			if (this._generation !== generation) {
 				return
 			}
-			this.host.restart().catch((error: Error) => {
-				logger.error(`Error while restarting driver: ${error.message}`)
+			this.host.restart().catch((error: unknown) => {
+				logger.error(
+					`Error while restarting driver: ${getErrorMessage(error)}`,
+				)
 			})
 		}, timeout)
 	}
@@ -284,8 +287,10 @@ export class DriverLifecycle {
 			logger.debug(
 				`Client listening on '${this.host.getConfig().port}' is destroyed, closing`,
 			)
-			this.close(true).catch((error: Error) => {
-				logger.error(`Error while closing driver: ${error.message}`)
+			this.close(true).catch((error: unknown) => {
+				logger.error(
+					`Error while closing driver: ${getErrorMessage(error)}`,
+				)
 			})
 			return true
 		}
@@ -647,7 +652,7 @@ export class DriverLifecycle {
 			await driver.destroy()
 		} catch (err) {
 			logger.error(
-				`Error while destroying driver ${(err as Error).message}`,
+				`Error while destroying driver ${getErrorMessage(err)}`,
 				cause,
 			)
 			// Keep this instance as owner so a later close/retry can destroy it again instead of stranding the port it may still hold
@@ -699,7 +704,13 @@ export class DriverLifecycle {
 		if (this._generation !== generation) {
 			return
 		}
-		void this.host.onDriverReady(generation)
+		void this.host.onDriverReady(generation).catch((error: unknown) => {
+			if (this._generation !== generation) {
+				return
+			}
+			this.host.onDriverError(toError(error), true)
+			this.backoffRestart()
+		})
 	}
 
 	private dispatchDriverError(generation: number, error: Error): void {

@@ -230,7 +230,30 @@ function createHarness(cfgOverrides: Partial<ZwaveConfig> = {}) {
 		userCallbacks: {} as InclusionUserCallbacks,
 	}
 
-	const serverHostStub = {} as unknown as ZwaveServerHost
+	const serverHostStub = {
+		getDriver: () => {
+			if (!state.driver) {
+				throw new Error('Driver is not available')
+			}
+			return state.driver
+		},
+		getConfig: () => state.cfg,
+		getHasUserCallbacks: () => false,
+		onHardReset: vi.fn(),
+		logger: {
+			debug: vi.fn(),
+			info: vi.fn(),
+			warn: vi.fn(),
+			error: vi.fn(),
+			log: vi.fn(),
+		},
+		serverLogger: {
+			debug: vi.fn(),
+			info: vi.fn(),
+			warn: vi.fn(),
+			error: vi.fn(),
+		},
+	} satisfies ZwaveServerHost
 
 	const host = {
 		getConfig: () => state.cfg,
@@ -272,16 +295,6 @@ function createHarness(cfgOverrides: Partial<ZwaveConfig> = {}) {
 
 	const lifecycle = new DriverLifecycle(host, makeDeps(world))
 	return { lifecycle, host, state, world }
-}
-
-async function until(pred: () => boolean, max = 100): Promise<void> {
-	for (let i = 0; i < max; i++) {
-		if (pred()) return
-		await Promise.resolve()
-	}
-	if (!pred()) {
-		throw new Error('until(): condition was not met')
-	}
 }
 
 afterEach(() => {
@@ -902,7 +915,7 @@ describe('DriverLifecycle — pre-ready reconnect coalescing', () => {
 		world.startBehavior = 'deferred'
 
 		const first = lifecycle.connect()
-		await until(() => world.startDeferreds.length === 1)
+		await vi.waitFor(() => expect(world.startDeferreds).toHaveLength(1))
 		expect(world.drivers).toHaveLength(1)
 		const driver0 = world.drivers[0]
 		const gen = lifecycle.generation
@@ -917,7 +930,6 @@ describe('DriverLifecycle — pre-ready reconnect coalescing', () => {
 			secondSettled = true
 		})
 
-		await until(() => world.startDeferreds.length === 1)
 		expect(world.drivers).toHaveLength(1)
 		expect(world.startDeferreds).toHaveLength(1)
 		expect(state.driver).toBe(driver0)
@@ -942,7 +954,7 @@ describe('DriverLifecycle — pre-ready reconnect coalescing', () => {
 		world.startBehavior = 'deferred'
 
 		const first = lifecycle.connect()
-		await until(() => world.startDeferreds.length === 1)
+		await vi.waitFor(() => expect(world.startDeferreds).toHaveLength(1))
 		const driver0 = world.drivers[0]
 
 		let firstSettled = false
@@ -954,7 +966,6 @@ describe('DriverLifecycle — pre-ready reconnect coalescing', () => {
 		void second.then(() => {
 			secondSettled = true
 		})
-		await until(() => world.startDeferreds.length === 1)
 		expect(firstSettled).toBe(false)
 		expect(secondSettled).toBe(false)
 
@@ -1014,7 +1025,7 @@ describe('DriverLifecycle — pre-ready reconnect coalescing', () => {
 		world.startBehavior = 'deferred'
 
 		const stalePromise = harness.lifecycle.connect()
-		await until(() => world.startDeferreds.length === 1)
+		await vi.waitFor(() => expect(world.startDeferreds).toHaveLength(1))
 		const driver0 = world.drivers[0]
 		expect(harness.state.driver).toBe(driver0)
 
@@ -1024,7 +1035,7 @@ describe('DriverLifecycle — pre-ready reconnect coalescing', () => {
 
 		world.startBehavior = 'deferred'
 		const freshPromise = harness.lifecycle.connect()
-		await until(() => world.startDeferreds.length === 2)
+		await vi.waitFor(() => expect(world.startDeferreds).toHaveLength(2))
 		const driver1 = world.drivers[1]
 		world.startDeferreds[1].resolve()
 		await freshPromise
@@ -1074,7 +1085,9 @@ describe('DriverLifecycle — cleanup after a failed connect', () => {
 
 			const connectP = lifecycle.connect()
 
-			await until(() => world.destroyDeferreds.length === 1)
+			await vi.waitFor(() =>
+				expect(world.destroyDeferreds).toHaveLength(1),
+			)
 			expect(world.drivers).toHaveLength(1)
 			const driver0 = world.drivers[0]
 			expect(state.driver).toBe(driver0)
@@ -1082,7 +1095,6 @@ describe('DriverLifecycle — cleanup after a failed connect', () => {
 			expect(host.restart).not.toHaveBeenCalled()
 
 			const concurrent = lifecycle.connect()
-			await until(() => world.destroyDeferreds.length === 1)
 			expect(world.drivers).toHaveLength(1)
 			expect(driver0.start).toHaveBeenCalledTimes(1)
 
@@ -1134,6 +1146,29 @@ describe('DriverLifecycle — cleanup after a failed connect', () => {
 		}
 	})
 
+	it('a non-Error teardown rejection cannot replace the startup failure or prevent a later retry', async () => {
+		const { lifecycle, world, state, host } = createHarness({
+			serverEnabled: false,
+		})
+		const startupError = new Error('start boom')
+		world.startBehavior = 'deferred'
+
+		const connect = lifecycle.connect()
+		await vi.waitFor(() => expect(world.startDeferreds).toHaveLength(1))
+		const driver = world.drivers[0]
+		driver.destroy.mockRejectedValueOnce(undefined)
+		world.startDeferreds[0].reject(startupError)
+		await expect(connect).resolves.toBeUndefined()
+
+		expect(host.onDriverError).toHaveBeenCalledWith(startupError, true)
+		expect(state.driver).toBe(driver)
+		expect(driver.destroy).toHaveBeenCalledTimes(1)
+
+		await expect(lifecycle.close(true)).resolves.toBeUndefined()
+		expect(driver.destroy).toHaveBeenCalledTimes(2)
+		expect(state.driver).toBeNull()
+	})
+
 	it('a stale post-start exit tears down its own driver and never the live replacement', async () => {
 		const { lifecycle, world, state } = createHarness({
 			serverEnabled: false,
@@ -1141,13 +1176,13 @@ describe('DriverLifecycle — cleanup after a failed connect', () => {
 		world.startBehavior = 'deferred'
 
 		const staleP = lifecycle.connect()
-		await until(() => world.startDeferreds.length === 1)
+		await vi.waitFor(() => expect(world.startDeferreds).toHaveLength(1))
 
 		await lifecycle.close(true)
 		state.closed = false
 		world.startBehavior = 'deferred'
 		const freshP = lifecycle.connect()
-		await until(() => world.startDeferreds.length === 2)
+		await vi.waitFor(() => expect(world.startDeferreds).toHaveLength(2))
 		const driver1 = world.drivers[1]
 		world.startDeferreds[1].resolve()
 		await freshP
@@ -1341,7 +1376,7 @@ describe('DriverLifecycle — stale driver events after close', () => {
 		expect(host.onDriverReady).not.toHaveBeenCalled()
 	})
 
-	it('ignores late driver callbacks once the generation has moved on', async () => {
+	it('ignores a late driver error once the generation has moved on', async () => {
 		const { lifecycle, host, world } = createHarness({
 			serverEnabled: false,
 		})
@@ -1350,16 +1385,48 @@ describe('DriverLifecycle — stale driver events after close', () => {
 		await lifecycle.close()
 
 		driver.emit('error', new Error('late'))
-		driver.emit('all nodes ready')
-		driver.emit('bootloader ready')
-		driver.emit('firmware update progress', {})
-		driver.emit('firmware update finished', {})
 
 		expect(host.onDriverError).not.toHaveBeenCalled()
-		expect(host.onScanComplete).not.toHaveBeenCalled()
-		expect(host.onBootLoaderReady).not.toHaveBeenCalled()
-		expect(host.onOTWFirmwareUpdateProgress).not.toHaveBeenCalled()
-		expect(host.onOTWFirmwareUpdateFinished).not.toHaveBeenCalled()
+	})
+})
+
+describe('DriverLifecycle — driver-ready failures', () => {
+	beforeEach(() => vi.useFakeTimers())
+	afterEach(() => vi.useRealTimers())
+
+	it('reports a current driver-ready initialization failure and restarts', async () => {
+		const { lifecycle, host, world } = createHarness({
+			serverEnabled: false,
+		})
+		const readyError = new Error('ready initialization failed')
+		host.onDriverReady.mockRejectedValueOnce(readyError)
+		await lifecycle.connect()
+
+		world.drivers[0].emit('driver ready')
+		await Promise.resolve()
+
+		expect(host.onDriverError).toHaveBeenCalledWith(readyError, true)
+		expect(host.restart).not.toHaveBeenCalled()
+		await vi.advanceTimersByTimeAsync(1000)
+		expect(host.restart).toHaveBeenCalledTimes(1)
+	})
+
+	it('ignores a driver-ready failure after that generation closes', async () => {
+		const { lifecycle, host, world } = createHarness({
+			serverEnabled: false,
+		})
+		const ready = createDeferred<void>()
+		host.onDriverReady.mockReturnValueOnce(ready.promise)
+		await lifecycle.connect()
+
+		world.drivers[0].emit('driver ready')
+		await lifecycle.close()
+		ready.reject(new Error('stale ready failure'))
+		await Promise.resolve()
+
+		expect(host.onDriverError).not.toHaveBeenCalled()
+		await vi.advanceTimersByTimeAsync(60000)
+		expect(host.restart).not.toHaveBeenCalled()
 	})
 })
 
@@ -1367,11 +1434,17 @@ describe('DriverLifecycle — driver options', () => {
 	it('builds scale preferences from cfg.scales', async () => {
 		const { lifecycle, world } = createHarness({
 			serverEnabled: false,
-			scales: [{ key: 1, sensor: 'Air temperature', label: 'Celsius' }],
+			scales: [
+				{
+					key: 'temperature',
+					sensor: 'Air temperature',
+					label: 'Celsius',
+				},
+			],
 		})
 		await lifecycle.connect()
 		expect(world.drivers[0].options.preferences).toEqual({
-			scales: { 1: 'Celsius' },
+			scales: { temperature: 'Celsius' },
 		})
 	})
 

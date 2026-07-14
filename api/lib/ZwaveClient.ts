@@ -20,6 +20,7 @@ import {
 	SecurityClass,
 	SupervisionStatus,
 	ZWaveErrorCodes,
+	isZWaveError,
 	Protocols,
 	tryUnzipFirmwareFile,
 	extractFirmware,
@@ -68,7 +69,6 @@ import type {
 	ValueID,
 	ValueMetadata,
 	ValueType,
-	ZWaveError,
 	ZWaveNode,
 	ZWaveNodeEvents,
 	ZWaveNodeFirmwareUpdateFinishedCallback,
@@ -130,6 +130,7 @@ import store from '../config/store.ts'
 import jsonStore from './jsonStore.ts'
 import * as LogManager from './logger.ts'
 import * as utils from './utils.ts'
+import { getErrorMessage } from './errors.ts'
 
 import { serverVersion, type ZwavejsServer } from '@zwave-js/server'
 import type ZwaveServerManager from '../hass/ZwaveServerManager.ts'
@@ -1298,7 +1299,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			},
 			onDriverReady: (generation) => this._onDriverReady(generation),
 			onDriverError: (error, skipRestart) =>
-				this._onDriverError(error as ZWaveError, skipRestart),
+				this._onDriverError(error, skipRestart),
 			onScanComplete: () => this._onScanComplete(),
 			onBootLoaderReady: () => this._onBootLoaderReady(),
 			onOTWFirmwareUpdateProgress: (progress) =>
@@ -4240,13 +4241,17 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		})
 	}
 
-	private _onDriverError(error: ZWaveError, skipRestart = false): void {
-		this._error = 'Driver: ' + error.message
+	private _onDriverError(error: unknown, skipRestart = false): void {
+		this._error = 'Driver: ' + getErrorMessage(error)
 		this.status = ZwaveClientStatus.DRIVER_FAILED
 		this._updateControllerStatus(this._error)
 		this.emit('event', EventSource.DRIVER, 'driver error', error)
 
-		if (!skipRestart && error.code === ZWaveErrorCodes.Driver_Failed) {
+		if (
+			!skipRestart &&
+			isZWaveError(error) &&
+			error.code === ZWaveErrorCodes.Driver_Failed
+		) {
 			// this cannot be recovered by zwave-js, requires a manual restart
 			this.driverReady = false
 			this.backoffRestart()
