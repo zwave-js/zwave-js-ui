@@ -8,7 +8,11 @@ import {
 	type Mock,
 } from 'vitest'
 import { EventEmitter } from 'node:events'
-import { ZWaveError, ZWaveErrorCodes } from '@zwave-js/core'
+import {
+	ZWaveError,
+	ZWaveErrorCodes,
+	CONTROLLER_LOGLEVEL,
+} from '@zwave-js/core'
 import { RFRegion } from 'zwave-js'
 import type { Driver, ZWaveOptions, PartialZWaveOptions } from 'zwave-js'
 import type { JSONTransport } from '@zwave-js/log-transport-json'
@@ -443,6 +447,66 @@ describe('DriverLifecycle — extra log transports', () => {
 		expect(driver.updateLogConfig).toHaveBeenCalledWith({
 			transports: [world.logTransports[0], extra],
 			level: 'debug',
+		})
+	})
+
+	// A configured level is persisted as an npm numeric rank, so the baseline
+	// has to survive the number→name round trip and be re-sent when the last
+	// verbose extra is dropped — updateLogConfig merges partial updates, so a
+	// missing level would leave the driver stuck at the elevated level.
+	it('a numeric configured baseline is restored when the last verbose extra is removed', async () => {
+		const { lifecycle, json, driver } = await connectedReadyHarness({
+			logLevel: 'verbose',
+		})
+		const extra = new Transport({})
+		lifecycle.addExtraLogTransport(extra, 'debug')
+		expect(driver.updateLogConfig).toHaveBeenLastCalledWith({
+			transports: [json, extra],
+			level: 'debug',
+		})
+		lifecycle.removeExtraLogTransport(extra)
+		expect(driver.updateLogConfig).toHaveBeenLastCalledWith({
+			transports: [json],
+			level: 'verbose',
+		})
+	})
+
+	// With no configured level the baseline defaults to zwave-js's documented
+	// level, which must be re-sent on removal so the driver returns to it
+	// instead of staying at the elevated level.
+	it('an omitted baseline returns to the documented default level when the last verbose extra is removed', async () => {
+		const { lifecycle, json, driver } = await connectedReadyHarness({
+			options: zwaveOpts({ logConfig: { maxFiles: 5 } }),
+		})
+		const extra = new Transport({})
+		lifecycle.addExtraLogTransport(extra, 'debug')
+		expect(driver.updateLogConfig).toHaveBeenLastCalledWith({
+			transports: [json, extra],
+			level: 'debug',
+		})
+		lifecycle.removeExtraLogTransport(extra)
+		expect(driver.updateLogConfig).toHaveBeenLastCalledWith({
+			transports: [json],
+			level: CONTROLLER_LOGLEVEL,
+		})
+	})
+
+	// A configured string level is the baseline and must be re-sent verbatim
+	// once the verbose extra is removed.
+	it('a configured string baseline is preserved across an extra add and removal', async () => {
+		const { lifecycle, json, driver } = await connectedReadyHarness({
+			options: zwaveOpts({ logConfig: { level: 'warn' } }),
+		})
+		const extra = new Transport({})
+		lifecycle.addExtraLogTransport(extra, 'debug')
+		expect(driver.updateLogConfig).toHaveBeenLastCalledWith({
+			transports: [json, extra],
+			level: 'debug',
+		})
+		lifecycle.removeExtraLogTransport(extra)
+		expect(driver.updateLogConfig).toHaveBeenLastCalledWith({
+			transports: [json],
+			level: 'warn',
 		})
 	})
 
@@ -1131,7 +1195,10 @@ describe('DriverLifecycle — logConfig override', () => {
 		expect(passedLogConfig?.level).toBe('warn')
 	})
 
-	it('a driver with no logConfig connects and leaves the level unset, then accepts a later transport', async () => {
+	// With no configured logConfig the driver options start with the level unset
+	// (connect() lets zwave-js pick its default), and a later, less-verbose extra
+	// is clamped to the documented default baseline rather than lowering the level.
+	it('a driver with no logConfig connects with the level unset, then clamps a less-verbose extra to the documented default', async () => {
 		const { lifecycle, world, state } = createHarness({
 			serverEnabled: false,
 			options: zwaveOpts({ logConfig: undefined }),
@@ -1149,7 +1216,7 @@ describe('DriverLifecycle — logConfig override', () => {
 		lifecycle.addExtraLogTransport(extra, 'warn')
 		expect(world.drivers[0].updateLogConfig).toHaveBeenCalledWith({
 			transports: [world.logTransports[0], extra],
-			level: 'warn',
+			level: CONTROLLER_LOGLEVEL,
 		})
 	})
 })
