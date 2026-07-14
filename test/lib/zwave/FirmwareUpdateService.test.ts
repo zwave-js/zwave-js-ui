@@ -100,7 +100,7 @@ function createNodeStorePort(): FirmwareNodeStorePort & {
 } {
 	const nodes = new Map<number, FirmwareUpdateNodeState>()
 	const store = new Map<number, Partial<FirmwareUpdateNodeState>>()
-	return {
+	const port = {
 		_nodes: nodes,
 		_store: store,
 		getNode: (nodeId: number) => nodes.get(nodeId),
@@ -111,7 +111,9 @@ function createNodeStorePort(): FirmwareNodeStorePort & {
 			}
 			return store.get(nodeId)
 		},
+		getStoreHomeId: () => 'test-home',
 		updateStoreNodes: vi.fn().mockResolvedValue(undefined),
+		createStoreRestorePoint: vi.fn(),
 		persistStagedNodeUpdates: vi
 			.fn()
 			.mockImplementation(
@@ -121,6 +123,11 @@ function createNodeStorePort(): FirmwareNodeStorePort & {
 			),
 		emitNodeUpdate: vi.fn(),
 	}
+	port.createStoreRestorePoint.mockImplementation(() => {
+		const homeId = port.getStoreHomeId()
+		return () => port.updateStoreNodes(homeId)
+	})
+	return port
 }
 
 function createSocketPort(): FirmwareSocketPort & {
@@ -1628,6 +1635,127 @@ describe('FirmwareUpdateService', () => {
 		})
 	})
 
+	describe('overlapping firmware state writers', () => {
+		it('keeps a newer bulk result when an earlier node check finishes later', async () => {
+			const nodeCheck = createDeferred<FirmwareUpdateInfo[]>()
+			const oldUpdate = makeUpdate({
+				version: '5.1.0',
+				normalizedVersion: '5.1.0',
+			})
+			const newUpdate = makeUpdate({
+				version: '5.2.0',
+				normalizedVersion: '5.2.0',
+			})
+			const nodeId = 10
+			const driver = createDriverPort({
+				getDriver: () => ({
+					controller: {
+						getAvailableFirmwareUpdates: vi
+							.fn()
+							.mockReturnValue(nodeCheck.promise),
+						getAllAvailableFirmwareUpdates: vi
+							.fn()
+							.mockResolvedValue(
+								new Map([[nodeId, [newUpdate]]]),
+							),
+						firmwareUpdateOTA: vi.fn(),
+						nodes: { get: vi.fn() },
+					},
+					firmwareUpdateOTW: vi.fn(),
+				}),
+			})
+			const nodes = createNodeStorePort()
+			nodes._nodes.set(nodeId, { id: nodeId })
+			const { service } = createService({ driver, nodes })
+
+			const nodeRun = service.checkNodeFirmwareUpdates(nodeId)
+			await service.checkAllNodesFirmwareUpdates()
+
+			nodeCheck.resolve([oldUpdate])
+			await nodeRun
+
+			expect(nodes._store.get(nodeId)?.availableFirmwareUpdates).toEqual([
+				newUpdate,
+			])
+			expect(nodes._nodes.get(nodeId)?.availableFirmwareUpdates).toEqual([
+				newUpdate,
+			])
+			expect(nodes.persistStagedNodeUpdates).toHaveBeenCalledTimes(1)
+			expect(nodes.emitNodeUpdate).toHaveBeenCalledTimes(1)
+		})
+
+		it('preserves a dismissal made during bulk persistence', async () => {
+			const persistenceStarted = createDeferred<void>()
+			const persistenceBarrier = createDeferred<void>()
+			const update = makeUpdate({
+				version: '6.1.0',
+				normalizedVersion: '6.1.0',
+			})
+			const nodeId = 11
+			const driver = createDriverPort({
+				getDriver: () => ({
+					controller: {
+						getAvailableFirmwareUpdates: vi.fn(),
+						getAllAvailableFirmwareUpdates: vi
+							.fn()
+							.mockResolvedValue(new Map([[nodeId, [update]]])),
+						firmwareUpdateOTA: vi.fn(),
+						nodes: { get: vi.fn() },
+					},
+					firmwareUpdateOTW: vi.fn(),
+				}),
+			})
+			const nodes = createNodeStorePort()
+			nodes._nodes.set(nodeId, {
+				id: nodeId,
+				availableFirmwareUpdates: [update],
+				firmwareUpdatesDismissed: {},
+			})
+			nodes._store.set(nodeId, {
+				availableFirmwareUpdates: [update],
+				firmwareUpdatesDismissed: {},
+			})
+			let persistedDismissals: { [version: string]: boolean } = {}
+			nodes.persistStagedNodeUpdates.mockImplementation(
+				async (staged) => {
+					persistedDismissals = {
+						...staged[0].firmwareUpdatesDismissed,
+					}
+					persistenceStarted.resolve()
+					await persistenceBarrier.promise
+				},
+			)
+			vi.mocked(nodes.updateStoreNodes).mockImplementation(() => {
+				persistedDismissals = {
+					...nodes._store.get(nodeId)?.firmwareUpdatesDismissed,
+				}
+				return Promise.resolve()
+			})
+			const { service } = createService({ driver, nodes })
+
+			const bulkRun = service.checkAllNodesFirmwareUpdates()
+			await persistenceStarted.promise
+			const dismissRun = service.dismissFirmwareUpdate(
+				nodeId,
+				update.version,
+			)
+			persistenceBarrier.resolve()
+
+			await expect(bulkRun).rejects.toBeInstanceOf(
+				FirmwareLifecycleCancelledError,
+			)
+			await expect(dismissRun).resolves.toBe(true)
+
+			expect(nodes._store.get(nodeId)?.firmwareUpdatesDismissed).toEqual({
+				[update.version]: true,
+			})
+			expect(nodes._nodes.get(nodeId)?.firmwareUpdatesDismissed).toEqual({
+				[update.version]: true,
+			})
+			expect(persistedDismissals).toEqual({ [update.version]: true })
+		})
+	})
+
 	describe('firmware operations interrupted by reset', () => {
 		it('does not start OTW updates after reset during backup', async () => {
 			const backupBarrier = createDeferred<void>()
@@ -1946,6 +2074,8 @@ describe('FirmwareUpdateService', () => {
 				}),
 			})
 			const nodes = createNodeStorePort()
+			let storeHomeId: string | undefined = 'test-home'
+			nodes.getStoreHomeId = () => storeHomeId
 			nodes._nodes.set(7, {
 				id: 7,
 				availableFirmwareUpdates: [],
@@ -1977,6 +2107,7 @@ describe('FirmwareUpdateService', () => {
 			const checkPromise = service.checkAllNodesFirmwareUpdates()
 
 			await persistenceStarted.promise
+			storeHomeId = undefined
 			service.resetGeneration()
 			persistenceBarrier.resolve()
 
@@ -1989,6 +2120,7 @@ describe('FirmwareUpdateService', () => {
 			expect(liveNode.lastFirmwareUpdateCheck).toBe(0)
 			expect(persisted?.availableFirmwareUpdates).toEqual([])
 			expect(persisted?.lastFirmwareUpdateCheck).toBe(0)
+			expect(nodes.updateStoreNodes).toHaveBeenCalledWith('test-home')
 
 			expect(restorePersistence).toHaveBeenCalledOnce()
 			expect(nodes.emitNodeUpdate).not.toHaveBeenCalled()
@@ -2223,6 +2355,7 @@ describe('FirmwareUpdateService', () => {
 						availableFirmwareUpdates: updates,
 					}),
 				]),
+				'test-home',
 			)
 
 			const liveNode = nodes._nodes.get(3)

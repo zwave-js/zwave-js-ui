@@ -754,6 +754,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	private _configCheckChain = 0
 	/** Latest-started config check allowed to publish, shared by manual and scheduled checks */
 	private _configPublicationEpoch = 0
+	/** Changes at both boundaries of an install so checks overlapping it cannot publish a sampled pre-install version */
+	private _configInstallEpoch = 0
+	private _activeConfigInstall: number | null = null
 	private pollIntervals: Record<string, NodeJS.Timeout>
 
 	private _lockNeighborsRefresh: boolean
@@ -1352,6 +1355,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	private _invalidateScheduledConfigCheck(): void {
 		this._configCheckEpoch++
 		this._configPublicationEpoch++
+		this._configInstallEpoch++
+		this._activeConfigInstall = null
 		this._clearConfigCheckTimer()
 	}
 
@@ -2154,7 +2159,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			await this._persistNodesSnapshot(snapshot, homeHex)
 		} catch (error) {
 			logger.error(
-				`Error while updating store nodes: ${error.message}`,
+				`Error while updating store nodes: ${getErrorMessage(error)}`,
 				error,
 			)
 			if (throwError) {
@@ -2164,7 +2169,11 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	}
 
 	async updateStoreNodes(throwError = true) {
-		await this._updateStoreNodesSnapshot(this.storeNodes, throwError)
+		await this._updateStoreNodesSnapshot(
+			this.storeNodes,
+			throwError,
+			this.homeHex,
+		)
 	}
 
 	/**
@@ -2822,13 +2831,15 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		const generation = this._driverLifecycle.generation
 		const epoch = this._configCheckEpoch
 		const publicationEpoch = ++this._configPublicationEpoch
+		const installEpoch = this._configInstallEpoch
 		const version = await this._fetchConfigUpdateVersion()
 		if (
-			this._driverLifecycle.generation === generation &&
-			this._configCheckEpoch === epoch &&
-			this._configPublicationEpoch === publicationEpoch &&
-			!this.closed &&
-			!this.destroyed
+			this._isCurrentConfigPublication(
+				generation,
+				epoch,
+				publicationEpoch,
+				installEpoch,
+			)
 		) {
 			this._publishConfigUpdateVersion(version)
 		}
@@ -2848,6 +2859,23 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		this.sendToSocket(socketEvents.info, this.getInfo())
 	}
 
+	private _isCurrentConfigPublication(
+		generation: number,
+		epoch: number,
+		publicationEpoch: number,
+		installEpoch: number,
+	): boolean {
+		return (
+			this._driverLifecycle.generation === generation &&
+			this._configCheckEpoch === epoch &&
+			this._configPublicationEpoch === publicationEpoch &&
+			this._configInstallEpoch === installEpoch &&
+			this._activeConfigInstall === null &&
+			!this.closed &&
+			!this.destroyed
+		)
+	}
+
 	/**
 	 * Checks for configs updates and installs them
 	 *
@@ -2856,19 +2884,31 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		if (this.driverReady) {
 			const generation = this._driverLifecycle.generation
 			const epoch = this._configCheckEpoch
-			const publicationEpoch = ++this._configPublicationEpoch
-			const updated = await this._driver.installConfigUpdate()
-			if (
-				updated &&
-				this._driverLifecycle.generation === generation &&
-				this._configCheckEpoch === epoch &&
-				this._configPublicationEpoch === publicationEpoch &&
-				!this.closed &&
-				!this.destroyed
-			) {
-				this._publishConfigUpdateVersion(undefined)
+			const install = ++this._configInstallEpoch
+			this._activeConfigInstall = install
+			this._configPublicationEpoch++
+			let updated = false
+			try {
+				updated = await this._driver.installConfigUpdate()
+				return updated
+			} finally {
+				if (this._activeConfigInstall === install) {
+					this._activeConfigInstall = null
+					const installEpoch = ++this._configInstallEpoch
+					const publicationEpoch = ++this._configPublicationEpoch
+					if (
+						updated &&
+						this._isCurrentConfigPublication(
+							generation,
+							epoch,
+							publicationEpoch,
+							installEpoch,
+						)
+					) {
+						this._publishConfigUpdateVersion(undefined)
+					}
+				}
 			}
-			return updated
 		} else {
 			throw new DriverNotReadyError()
 		}
@@ -6613,6 +6653,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		chain: number,
 	) {
 		const publicationEpoch = ++this._configPublicationEpoch
+		const installEpoch = this._configInstallEpoch
 		let checked = false
 		let checkError: unknown
 		let version: string | undefined
@@ -6634,7 +6675,14 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			return
 		}
 
-		if (this._configPublicationEpoch === publicationEpoch) {
+		if (
+			this._isCurrentConfigPublication(
+				generation,
+				epoch,
+				publicationEpoch,
+				installEpoch,
+			)
+		) {
 			if (checked) {
 				this._publishConfigUpdateVersion(version)
 			} else {
