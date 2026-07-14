@@ -2404,7 +2404,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	): Promise<Partial<ZUIValueId>[]> {
 		return this._configTemplateService.getDeviceConfigurationParams(
 			deviceId,
-		) as Promise<Partial<ZUIValueId>[]>
+		)
 	}
 
 	/**
