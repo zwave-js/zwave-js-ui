@@ -22,6 +22,7 @@ import {
 } from 'vitest'
 import { ensureTestEnv, cleanupTestEnv } from './env.ts'
 import { createRecordingSocket } from './fixtures.ts'
+import { createDeferred } from '../zwave/serviceTestSupport.ts'
 import type ZWaveClientType from '#api/lib/ZwaveClient.ts'
 import { ZwaveClientStatus } from '#api/lib/ZwaveClient.ts'
 import { NODE_ID_BROADCAST, NODE_ID_BROADCAST_LR } from '@zwave-js/core'
@@ -176,6 +177,7 @@ function waitForDriverReadyEvent(zwave: ZWaveClientType): Promise<void> {
 async function driveConnectToReady(
 	cfg: Record<string, any> = {},
 	connectedSockets: unknown[] = [],
+	prepareDriver?: (driver: ReturnType<typeof lastDriver>) => void,
 ) {
 	const socket = createRecordingSocket(connectedSockets)
 	const zwave = new ZWaveClient(
@@ -193,6 +195,7 @@ async function driveConnectToReady(
 	const ready = waitForDriverReadyEvent(zwave)
 
 	await zwave.connect()
+	prepareDriver?.(lastDriver())
 
 	// The server exists (created after await driver.start()), but the
 	// driver-ready event is still queued, so nothing has started yet
@@ -275,6 +278,35 @@ describe('connecting and reaching driver ready', () => {
 		expect(hoisted.servers).toHaveLength(1)
 
 		await zwave.close(true)
+	})
+
+	it('keeps a newer manual config result when the scheduled check finishes later', async () => {
+		const scheduledCheck = createDeferred<string | undefined>()
+		const manualCheck = createDeferred<string | undefined>()
+		const { zwave, driver } = await driveConnectToReady(
+			{},
+			[],
+			(driver) => {
+				driver.checkForConfigUpdates
+					.mockReturnValueOnce(scheduledCheck.promise)
+					.mockReturnValueOnce(manualCheck.promise)
+			},
+		)
+
+		try {
+			expect(driver.checkForConfigUpdates).toHaveBeenCalledTimes(1)
+
+			const manualRun = zwave.checkForConfigUpdates()
+			manualCheck.resolve('newer')
+			await expect(manualRun).resolves.toBe('newer')
+
+			scheduledCheck.resolve('older')
+			await tick()
+
+			expect(zwave.getInfo().newConfigVersion).toBe('newer')
+		} finally {
+			await zwave.close(true)
+		}
 	})
 
 	it('closing shuts down the server before the driver even when server shutdown is deferred', async () => {

@@ -1568,6 +1568,64 @@ describe('FirmwareUpdateService', () => {
 				vi.useRealTimers()
 			}
 		})
+
+		it('keeps a newer manual result when a scheduled check finishes later', async () => {
+			vi.useFakeTimers()
+			const scheduledCheck =
+				createDeferred<Map<number, FirmwareUpdateInfo[]>>()
+			const manualCheck =
+				createDeferred<Map<number, FirmwareUpdateInfo[]>>()
+			const getAllAvailableFirmwareUpdates = vi
+				.fn()
+				.mockReturnValueOnce(scheduledCheck.promise)
+				.mockReturnValueOnce(manualCheck.promise)
+			const driver = createDriverPort({
+				getDriver: () => ({
+					controller: {
+						getAvailableFirmwareUpdates: vi.fn(),
+						getAllAvailableFirmwareUpdates,
+						firmwareUpdateOTA: vi.fn(),
+						nodes: { get: vi.fn() },
+					},
+					firmwareUpdateOTW: vi.fn(),
+				}),
+			})
+			const nodes = createNodeStorePort()
+			const nodeId = 9
+			nodes._nodes.set(nodeId, { id: nodeId })
+			const { service } = createService({ driver, nodes })
+			const scheduledUpdate = makeUpdate({
+				version: '4.1.0',
+				normalizedVersion: '4.1.0',
+			})
+			const manualUpdate = makeUpdate({
+				version: '4.2.0',
+				normalizedVersion: '4.2.0',
+			})
+
+			try {
+				const scheduledRun = service.scheduledFirmwareUpdateCheck()
+				const manualRun = service.checkAllNodesFirmwareUpdates()
+
+				manualCheck.resolve(new Map([[nodeId, [manualUpdate]]]))
+				await manualRun
+
+				scheduledCheck.resolve(new Map([[nodeId, [scheduledUpdate]]]))
+				await scheduledRun
+
+				expect(
+					nodes._store.get(nodeId)?.availableFirmwareUpdates,
+				).toEqual([manualUpdate])
+				expect(
+					nodes._nodes.get(nodeId)?.availableFirmwareUpdates,
+				).toEqual([manualUpdate])
+				expect(nodes.persistStagedNodeUpdates).toHaveBeenCalledTimes(1)
+				expect(nodes.emitNodeUpdate).toHaveBeenCalledTimes(1)
+			} finally {
+				service.resetGeneration()
+				vi.useRealTimers()
+			}
+		})
 	})
 
 	describe('firmware operations interrupted by reset', () => {
