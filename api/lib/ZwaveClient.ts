@@ -696,7 +696,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	private _driver: Driver
 
 	/** Reused across init() rather than reconstructed so its generation counter, log transports and adopted server manager survive restarts */
-	private _driverLifecycle: DriverLifecycle
+	private _driverLifecycle!: DriverLifecycle
 
 	/**
 	 * The narrow {@link ZwaveServerHost} port the server manager uses to reach
@@ -1119,8 +1119,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				const homeHex = this.homeHex
 				const restore = createFirmwarePersistenceRestore(homeHex)
 				const snapshot: NodesStoreRecord = {}
-				for (const key of Object.keys(this.storeNodes)) {
-					snapshot[key] = this.storeNodes[key]
+				for (const [key, node] of Object.entries(this.storeNodes)) {
+					snapshot[Number(key)] = node
 				}
 				for (const entry of staged) {
 					const existing = snapshot[entry.nodeId]
