@@ -4400,6 +4400,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		this.driverReady = true
 
+		// A repeated ready event can follow an NVM restore with a different home ID
+		this._firmwareUpdateService.resetGeneration()
+
 		this._inclusionCoordinator.syncFromDriver()
 
 		logger.info('Z-Wave driver is ready')
