@@ -1442,6 +1442,134 @@ describe('FirmwareUpdateService', () => {
 		})
 	})
 
+	describe('overlapping scheduled firmware checks', () => {
+		it('publishes only the newest completed check', async () => {
+			vi.useFakeTimers()
+			const firstCheck =
+				createDeferred<Map<number, FirmwareUpdateInfo[]>>()
+			const secondCheck =
+				createDeferred<Map<number, FirmwareUpdateInfo[]>>()
+			const getAllAvailableFirmwareUpdates = vi
+				.fn()
+				.mockReturnValueOnce(firstCheck.promise)
+				.mockReturnValueOnce(secondCheck.promise)
+			const driver = createDriverPort({
+				getDriver: () => ({
+					controller: {
+						getAvailableFirmwareUpdates: vi.fn(),
+						getAllAvailableFirmwareUpdates,
+						firmwareUpdateOTA: vi.fn(),
+						nodes: { get: vi.fn() },
+					},
+					firmwareUpdateOTW: vi.fn(),
+				}),
+			})
+			const nodes = createNodeStorePort()
+			const nodeId = 7
+			nodes._nodes.set(nodeId, { id: nodeId })
+			const { service } = createService({ driver, nodes })
+			const olderUpdate = makeUpdate({
+				version: '2.1.0',
+				normalizedVersion: '2.1.0',
+			})
+			const newerUpdate = makeUpdate({
+				version: '2.2.0',
+				normalizedVersion: '2.2.0',
+			})
+
+			try {
+				const firstRun = service.scheduledFirmwareUpdateCheck()
+				const secondRun = service.scheduledFirmwareUpdateCheck()
+
+				secondCheck.resolve(new Map([[nodeId, [newerUpdate]]]))
+				await secondRun
+
+				firstCheck.resolve(new Map([[nodeId, [olderUpdate]]]))
+				await firstRun
+
+				expect(
+					nodes._store.get(nodeId)?.availableFirmwareUpdates,
+				).toEqual([newerUpdate])
+				expect(
+					nodes._nodes.get(nodeId)?.availableFirmwareUpdates,
+				).toEqual([newerUpdate])
+				expect(nodes.persistStagedNodeUpdates).toHaveBeenCalledTimes(1)
+				expect(nodes.emitNodeUpdate).toHaveBeenCalledTimes(1)
+			} finally {
+				service.resetGeneration()
+				vi.useRealTimers()
+			}
+		})
+
+		it('restores current state when superseded during persistence', async () => {
+			vi.useFakeTimers()
+			const firstCheck =
+				createDeferred<Map<number, FirmwareUpdateInfo[]>>()
+			const secondCheck =
+				createDeferred<Map<number, FirmwareUpdateInfo[]>>()
+			const firstPersistence = createDeferred<void>()
+			const getAllAvailableFirmwareUpdates = vi
+				.fn()
+				.mockReturnValueOnce(firstCheck.promise)
+				.mockReturnValueOnce(secondCheck.promise)
+			const driver = createDriverPort({
+				getDriver: () => ({
+					controller: {
+						getAvailableFirmwareUpdates: vi.fn(),
+						getAllAvailableFirmwareUpdates,
+						firmwareUpdateOTA: vi.fn(),
+						nodes: { get: vi.fn() },
+					},
+					firmwareUpdateOTW: vi.fn(),
+				}),
+			})
+			const nodes = createNodeStorePort()
+			nodes.persistStagedNodeUpdates
+				.mockImplementationOnce(() => firstPersistence.promise)
+				.mockResolvedValueOnce(undefined)
+			const nodeId = 8
+			nodes._nodes.set(nodeId, { id: nodeId })
+			const { service } = createService({ driver, nodes })
+			const olderUpdate = makeUpdate({
+				version: '3.1.0',
+				normalizedVersion: '3.1.0',
+			})
+			const newerUpdate = makeUpdate({
+				version: '3.2.0',
+				normalizedVersion: '3.2.0',
+			})
+
+			try {
+				const firstRun = service.scheduledFirmwareUpdateCheck()
+				firstCheck.resolve(new Map([[nodeId, [olderUpdate]]]))
+				await vi.waitFor(() => {
+					expect(
+						nodes.persistStagedNodeUpdates,
+					).toHaveBeenCalledTimes(1)
+				})
+
+				const secondRun = service.scheduledFirmwareUpdateCheck()
+				secondCheck.resolve(new Map([[nodeId, [newerUpdate]]]))
+				firstPersistence.resolve()
+
+				await Promise.all([firstRun, secondRun])
+
+				expect(nodes.updateStoreNodes).toHaveBeenCalledTimes(1)
+				expect(nodes.persistStagedNodeUpdates).toHaveBeenCalledTimes(2)
+				expect(
+					nodes._store.get(nodeId)?.availableFirmwareUpdates,
+				).toEqual([newerUpdate])
+				expect(
+					nodes._nodes.get(nodeId)?.availableFirmwareUpdates,
+				).toEqual([newerUpdate])
+				expect(nodes.emitNodeUpdate).toHaveBeenCalledTimes(1)
+			} finally {
+				service.resetGeneration()
+				vi.useRealTimers()
+			}
+		})
+	})
+
 	describe('firmware operations interrupted by reset', () => {
 		it('does not start OTW updates after reset during backup', async () => {
 			const backupBarrier = createDeferred<void>()

@@ -2813,14 +2813,22 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 *
 	 */
 	async checkForConfigUpdates(): Promise<string | undefined> {
+		const version = await this._fetchConfigUpdateVersion()
+		this._publishConfigUpdateVersion(version)
+		return version
+	}
+
+	private async _fetchConfigUpdateVersion(): Promise<string | undefined> {
 		if (this.driverReady) {
-			this.driverInfo.newConfigVersion =
-				await this._driver.checkForConfigUpdates()
-			this.sendToSocket(socketEvents.info, this.getInfo())
-			return this.driverInfo.newConfigVersion
+			return this._driver.checkForConfigUpdates()
 		} else {
 			throw new DriverNotReadyError()
 		}
+	}
+
+	private _publishConfigUpdateVersion(version: string | undefined): void {
+		this.driverInfo.newConfigVersion = version
+		this.sendToSocket(socketEvents.info, this.getInfo())
 	}
 
 	/**
@@ -6566,13 +6574,17 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		epoch: number,
 		chain: number,
 	) {
+		let checked = false
+		let checkError: unknown
+		let version: string | undefined
 		try {
-			await this.checkForConfigUpdates()
+			version = await this._fetchConfigUpdateVersion()
+			checked = true
 		} catch (error) {
-			logger.warn(`Scheduled update check has failed: ${error.message}`)
+			checkError = error
 		}
 
-		// Re-check every token after the in-flight check: a lifecycle boundary or newer chain during the await means bail instead of rearming a stale timer
+		// Fence publication and rescheduling after the in-flight fetch so an older ready event cannot overwrite its replacement
 		if (
 			this._driverLifecycle.generation !== generation ||
 			this._configCheckEpoch !== epoch ||
@@ -6581,6 +6593,14 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			this.destroyed
 		) {
 			return
+		}
+
+		if (checked) {
+			this._publishConfigUpdateVersion(version)
+		} else {
+			logger.warn(
+				`Scheduled update check has failed: ${getErrorMessage(checkError)}`,
+			)
 		}
 
 		const nextUpdate = new Date()
