@@ -73,8 +73,8 @@ export interface DriverLifecycleHost {
 	/** Runs mid-close, after the lifecycle's own timers are cleared and before the server/driver are destroyed */
 	clearRuntimeOnClose(): void
 	finalizeClose(): void
-	/** Lifecycle drives only the generation, leaving node-registry restoration to ZwaveClient */
-	onDriverReady(generation: number): Promise<void>
+	/** Lifecycle drives generation and ready epochs, leaving node-registry restoration to ZwaveClient */
+	onDriverReady(generation: number, readyEpoch: number): Promise<void>
 	onDriverError(error: unknown, skipRestart: boolean): void
 	onScanComplete(): void
 	onBootLoaderReady(): void
@@ -87,6 +87,9 @@ export class DriverLifecycle {
 
 	/** Bumped when a new driver starts connecting and when the client closes, so in-flight work from an obsolete driver detects the mismatch and aborts */
 	private _generation = 0
+
+	/** Separately fences repeated ready events and init() calls that keep the same driver generation */
+	private _readyEpoch = 0
 
 	private _backoffRetry = 0
 	private _restartTimeout: NodeJS.Timeout | null = null
@@ -108,6 +111,8 @@ export class DriverLifecycle {
 	/** Baseline level name captured before any extra-transport elevation, so removing the last verbose extra recomputes back to it instead of leaving the driver stuck high. Defaults to the exported `CONTROLLER_LOGLEVEL`, which matches this app's configured default level, when the driver config carries no explicit level. */
 	private _baseLogLevel: string = CONTROLLER_LOGLEVEL
 
+	private _runtimeLogConfigDirty = false
+
 	private _serverManager?: ZwaveServerManager
 
 	private readonly deps: DriverLifecycleDeps
@@ -122,6 +127,14 @@ export class DriverLifecycle {
 
 	get generation(): number {
 		return this._generation
+	}
+
+	get readyEpoch(): number {
+		return this._readyEpoch
+	}
+
+	invalidateReady(): void {
+		this._readyEpoch++
 	}
 
 	/** Lazily builds a standalone fallback manager on first access so a directly-constructed client's server lifecycle works with no coordinator to adopt one */
@@ -190,6 +203,7 @@ export class DriverLifecycle {
 	addExtraLogTransport(transport: Transport, level?: string): void {
 		// Store on the lifecycle so the transport survives driver restarts
 		this._extraLogTransports.push({ transport, level })
+		this._runtimeLogConfigDirty = true
 		this.applyRuntimeLogConfig()
 	}
 
@@ -199,6 +213,7 @@ export class DriverLifecycle {
 		)
 		if (idx !== -1) {
 			this._extraLogTransports.splice(idx, 1)
+			this._runtimeLogConfigDirty = true
 		}
 		this.applyRuntimeLogConfig()
 	}
@@ -229,7 +244,11 @@ export class DriverLifecycle {
 	}
 
 	private applyRuntimeLogConfig(): void {
-		// No-op until the driver is ready, since connect() builds the identical config into the driver options up front
+		if (!this._runtimeLogConfigDirty) {
+			return
+		}
+
+		// Defer changes made after startup options were built until the driver is ready
 		const driver = this.host.getDriver()
 		if (!driver || !this.host.isDriverReadyRaw()) {
 			return
@@ -240,10 +259,15 @@ export class DriverLifecycle {
 			level: this.computeRuntimeLogLevel(),
 		}
 		driver.updateLogConfig(config)
+		this._runtimeLogConfigDirty = false
 	}
 
 	resetBackoff(): void {
 		this._backoffRetry = 0
+		if (this._restartTimeout) {
+			clearTimeout(this._restartTimeout)
+			this._restartTimeout = null
+		}
 	}
 
 	backoffRestart(): void {
@@ -541,6 +565,7 @@ export class DriverLifecycle {
 		} else {
 			this._baseLogLevel = CONTROLLER_LOGLEVEL
 		}
+		this._runtimeLogConfigDirty = false
 
 		logTransport.stream.on('data', (data: any) => {
 			this.host.emitDebug(data.message.toString())
@@ -667,6 +692,7 @@ export class DriverLifecycle {
 	async close(keepListeners = false): Promise<void> {
 		// Bump the generation so a driver that becomes ready or errors after this cannot mutate replacement state
 		this._generation++
+		this._readyEpoch++
 
 		// Stop a post-close duplicate connect from coalescing onto the superseded startup
 		this._activeConnect = null
@@ -704,14 +730,37 @@ export class DriverLifecycle {
 		if (this._generation !== generation) {
 			return
 		}
-		void this.host.onDriverReady(generation).catch((error: unknown) => {
-			if (this._generation !== generation) {
-				return
-			}
-			this.host.setDriverReady(false)
-			this.host.onDriverError(toError(error), true)
-			this.backoffRestart()
+
+		const readyEpoch = ++this._readyEpoch
+		let ready: Promise<void>
+		try {
+			ready = this.host.onDriverReady(generation, readyEpoch)
+			this.applyRuntimeLogConfig()
+		} catch (error) {
+			this.handleDriverReadyFailure(generation, readyEpoch, error)
+			return
+		}
+
+		void ready.catch((error: unknown) => {
+			this.handleDriverReadyFailure(generation, readyEpoch, error)
 		})
+	}
+
+	private handleDriverReadyFailure(
+		generation: number,
+		readyEpoch: number,
+		error: unknown,
+	): void {
+		if (
+			this._generation !== generation ||
+			this._readyEpoch !== readyEpoch
+		) {
+			return
+		}
+		this._readyEpoch++
+		this.host.setDriverReady(false)
+		this.host.onDriverError(toError(error), true)
+		this.backoffRestart()
 	}
 
 	private dispatchDriverError(generation: number, error: Error): void {

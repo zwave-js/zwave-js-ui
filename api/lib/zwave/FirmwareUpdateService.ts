@@ -19,11 +19,14 @@ import type {
 
 export class FirmwareLifecycleCancelledError extends Error {
 	constructor(operation: string) {
-		super(
-			`Firmware operation "${operation}" cancelled: service generation advanced`,
-		)
+		super(`Firmware operation "${operation}" cancelled: lifecycle advanced`)
 		this.name = 'FirmwareLifecycleCancelledError'
 	}
+}
+
+interface FirmwareOperationFence {
+	scheduleChain?: number
+	bulkCheckEpoch?: number
 }
 
 export class FirmwareUpdateService {
@@ -40,6 +43,9 @@ export class FirmwareUpdateService {
 
 	/** Dedupes same-generation scheduled-check chains that `_generation` can't, because `all nodes ready` re-fires without a dispose or reset on NVM restore and controller firmware update */
 	private _scheduleChain = 0
+
+	/** Latest-started bulk firmware check allowed to persist and publish */
+	private _bulkCheckEpoch = 0
 
 	private _nvmEventSetter: ((event: string) => void) | undefined
 
@@ -83,16 +89,25 @@ export class FirmwareUpdateService {
 	private _assertFence(
 		gen: number,
 		operation: string,
-		scheduleChain?: number,
+		fence?: FirmwareOperationFence,
 	): void {
-		if (
-			this._generation !== gen ||
-			this._disposed ||
-			(scheduleChain !== undefined &&
-				this._scheduleChain !== scheduleChain)
-		) {
+		if (!this._isFenceCurrent(gen, fence)) {
 			throw new FirmwareLifecycleCancelledError(operation)
 		}
+	}
+
+	private _isFenceCurrent(
+		gen: number,
+		fence?: FirmwareOperationFence,
+	): boolean {
+		return (
+			this._generation === gen &&
+			!this._disposed &&
+			(fence?.scheduleChain === undefined ||
+				this._scheduleChain === fence.scheduleChain) &&
+			(fence?.bulkCheckEpoch === undefined ||
+				this._bulkCheckEpoch === fence.bulkCheckEpoch)
+		)
 	}
 
 	async getAvailableFirmwareUpdates(
@@ -157,6 +172,10 @@ export class FirmwareUpdateService {
 		}
 
 		const gen = this._generation
+		const fence: FirmwareOperationFence = {
+			scheduleChain,
+			bulkCheckEpoch: ++this._bulkCheckEpoch,
+		}
 
 		this._logger.info('Starting bulk firmware update check for all nodes')
 
@@ -164,11 +183,7 @@ export class FirmwareUpdateService {
 			const result =
 				await drv.controller.getAllAvailableFirmwareUpdates(options)
 
-			this._assertFence(
-				gen,
-				'checkAllNodesFirmwareUpdates',
-				scheduleChain,
-			)
+			this._assertFence(gen, 'checkAllNodesFirmwareUpdates', fence)
 
 			if (result) {
 				const now = Date.now()
@@ -197,7 +212,7 @@ export class FirmwareUpdateService {
 					staged,
 					gen,
 					'checkAllNodesFirmwareUpdates',
-					scheduleChain,
+					fence,
 				)
 			}
 
@@ -614,6 +629,7 @@ export class FirmwareUpdateService {
 			await this._checkAllNodesFirmwareUpdates(undefined, chain)
 		} catch (error) {
 			if (
+				!(error instanceof FirmwareLifecycleCancelledError) &&
 				this._generation === gen &&
 				this._scheduleChain === chain &&
 				!this._disposed
@@ -663,7 +679,6 @@ export class FirmwareUpdateService {
 		}
 
 		const gen = this._generation
-
 		try {
 			const drv = this._driver.getDriver()
 			if (!drv) {
@@ -721,7 +736,7 @@ export class FirmwareUpdateService {
 		staged: ReadonlyArray<StagedFirmwareNodeUpdate>,
 		gen: number,
 		operation: string,
-		scheduleChain?: number,
+		fence?: FirmwareOperationFence,
 	): Promise<void> {
 		const persistenceTargets = staged.flatMap((projection) => {
 			const node = this._nodes.getNode(projection.nodeId)
@@ -795,7 +810,7 @@ export class FirmwareUpdateService {
 					})
 				}
 			},
-			scheduleChain,
+			fence,
 		)
 	}
 
@@ -806,10 +821,10 @@ export class FirmwareUpdateService {
 		publish?: (
 			restore?: FirmwarePersistenceRestore,
 		) => Promise<void> | void,
-		scheduleChain?: number,
+		fence?: FirmwareOperationFence,
 	): Promise<void> {
 		const persistence = this._persistenceTail.then(async () => {
-			this._assertFence(gen, operation, scheduleChain)
+			this._assertFence(gen, operation, fence)
 			let persistenceFailed = false
 			let persistenceError: unknown
 			let restore: FirmwarePersistenceRestore | void = undefined
@@ -820,26 +835,21 @@ export class FirmwareUpdateService {
 				persistenceError = error
 			}
 
-			if (
-			this._generation !== gen ||
-			this._disposed ||
-			(scheduleChain !== undefined &&
-				this._scheduleChain !== scheduleChain)
-		) {
-			// Restore current state because an in-flight filesystem write cannot be cancelled
-			if (restore) {
-				await restore()
-			} else {
-				await this._nodes.updateStoreNodes()
-				this._assertFence(gen, operation, scheduleChain)
+			if (!this._isFenceCurrent(gen, fence)) {
+				// Restore current state because an in-flight filesystem write cannot be cancelled
+				if (restore) {
+					await restore()
+				} else {
+					await this._nodes.updateStoreNodes()
+					this._assertFence(gen, operation, fence)
+				}
 			}
-		}
 
 			if (persistenceFailed) {
 				throw persistenceError
 			}
 
-			this._assertFence(gen, operation, scheduleChain)
+			this._assertFence(gen, operation, fence)
 			await publish?.(restore || undefined)
 		})
 

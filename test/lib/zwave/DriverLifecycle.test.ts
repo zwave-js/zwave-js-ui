@@ -444,7 +444,7 @@ describe('DriverLifecycle — extra log transports', () => {
 	})
 
 	it('addExtraLogTransport leaves the driver untouched until it is ready, then applies the registered transport', async () => {
-		const { lifecycle, world, state } = createHarness({
+		const { lifecycle, host, world, state } = createHarness({
 			serverEnabled: false,
 		})
 		await lifecycle.connect()
@@ -455,8 +455,12 @@ describe('DriverLifecycle — extra log transports', () => {
 		lifecycle.addExtraLogTransport(extra, 'debug')
 		expect(driver.updateLogConfig).not.toHaveBeenCalled()
 
-		state.driverReadyRaw = true
-		lifecycle.removeExtraLogTransport(new Transport({}))
+		host.onDriverReady.mockImplementationOnce(() => {
+			state.driverReadyRaw = true
+			return Promise.resolve()
+		})
+		driver.emit('driver ready')
+
 		expect(driver.updateLogConfig).toHaveBeenCalledWith({
 			transports: [world.logTransports[0], extra],
 			level: 'debug',
@@ -561,6 +565,16 @@ describe('DriverLifecycle — backoff restart & checkIfDestroyed', () => {
 		lifecycle.backoffRestart()
 		await vi.advanceTimersByTimeAsync(1000)
 		expect(host.restart).toHaveBeenCalledTimes(3)
+	})
+
+	it('resetBackoff cancels a restart after the driver recovers', async () => {
+		const { lifecycle, host } = createHarness()
+		lifecycle.backoffRestart()
+		lifecycle.resetBackoff()
+
+		await vi.advanceTimersByTimeAsync(1000)
+
+		expect(host.restart).not.toHaveBeenCalled()
 	})
 
 	it('backoffRestart aborts and closes when the client is already destroyed', async () => {
@@ -1413,6 +1427,32 @@ describe('DriverLifecycle — driver-ready failures', () => {
 		expect(host.restart).not.toHaveBeenCalled()
 		await vi.advanceTimersByTimeAsync(1000)
 		expect(host.restart).toHaveBeenCalledTimes(1)
+	})
+
+	it('keeps newer ready state when an older same-generation initialization rejects', async () => {
+		const { lifecycle, host, world, state } = createHarness({
+			serverEnabled: false,
+		})
+		const firstReady = createDeferred<void>()
+		host.onDriverReady
+			.mockImplementationOnce(() => {
+				state.driverReady = true
+				return firstReady.promise
+			})
+			.mockImplementationOnce(() => {
+				state.driverReady = true
+				return Promise.resolve()
+			})
+		await lifecycle.connect()
+
+		world.drivers[0].emit('driver ready')
+		world.drivers[0].emit('driver ready')
+		firstReady.reject(new Error('superseded ready failure'))
+		await vi.advanceTimersByTimeAsync(60000)
+
+		expect(state.driverReady).toBe(true)
+		expect(host.onDriverError).not.toHaveBeenCalled()
+		expect(host.restart).not.toHaveBeenCalled()
 	})
 
 	it('ignores a driver-ready failure after that generation closes', async () => {

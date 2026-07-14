@@ -752,6 +752,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	private _configCheckEpoch = 0
 	/** Dedupes same-generation config-check chains that `_configCheckEpoch` can't: `driver ready` re-fires without a boundary on NVM restore or controller firmware update */
 	private _configCheckChain = 0
+	/** Latest-started config check allowed to publish, shared by manual and scheduled checks */
+	private _configPublicationEpoch = 0
 	private pollIntervals: Record<string, NodeJS.Timeout>
 
 	private _lockNeighborsRefresh: boolean
@@ -876,6 +878,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 * Init internal vars
 	 */
 	init() {
+		this._driverLifecycle?.invalidateReady()
+
 		this.statelessTimeouts = {}
 		this.pollIntervals = {}
 
@@ -1333,7 +1337,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				this.destroyed = true
 				this.removeAllListeners()
 			},
-			onDriverReady: (generation) => this._onDriverReady(generation),
+			onDriverReady: (generation, readyEpoch) =>
+				this._onDriverReady(generation, readyEpoch),
 			onDriverError: (error, skipRestart) =>
 				this._onDriverError(error, skipRestart),
 			onScanComplete: () => this._onScanComplete(),
@@ -1382,6 +1387,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	/** Bump the epoch and clear the armed timer so any in-flight config check bails after its await instead of re-arming */
 	private _invalidateScheduledConfigCheck(): void {
 		this._configCheckEpoch++
+		this._configPublicationEpoch++
 		this._clearConfigCheckTimer()
 	}
 
@@ -2964,8 +2970,19 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 *
 	 */
 	async checkForConfigUpdates(): Promise<string | undefined> {
+		const generation = this._driverLifecycle.generation
+		const epoch = this._configCheckEpoch
+		const publicationEpoch = ++this._configPublicationEpoch
 		const version = await this._fetchConfigUpdateVersion()
-		this._publishConfigUpdateVersion(version)
+		if (
+			this._driverLifecycle.generation === generation &&
+			this._configCheckEpoch === epoch &&
+			this._configPublicationEpoch === publicationEpoch &&
+			!this.closed &&
+			!this.destroyed
+		) {
+			this._publishConfigUpdateVersion(version)
+		}
 		return version
 	}
 
@@ -2988,10 +3005,19 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 */
 	async installConfigUpdate(): Promise<boolean> {
 		if (this.driverReady) {
+			const generation = this._driverLifecycle.generation
+			const epoch = this._configCheckEpoch
+			const publicationEpoch = ++this._configPublicationEpoch
 			const updated = await this._driver.installConfigUpdate()
-			if (updated) {
-				this.driverInfo.newConfigVersion = undefined
-				this.sendToSocket(socketEvents.info, this.getInfo())
+			if (
+				updated &&
+				this._driverLifecycle.generation === generation &&
+				this._configCheckEpoch === epoch &&
+				this._configPublicationEpoch === publicationEpoch &&
+				!this.closed &&
+				!this.destroyed
+			) {
+				this._publishConfigUpdateVersion(undefined)
 			}
 			return updated
 		} else {
@@ -4280,7 +4306,14 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 	// ---------- DRIVER EVENTS -------------------------------------
 
-	private async _onDriverReady(generation: number) {
+	private _isCurrentReady(generation: number, readyEpoch: number): boolean {
+		return (
+			this._driverLifecycle.generation === generation &&
+			this._driverLifecycle.readyEpoch === readyEpoch
+		)
+	}
+
+	private async _onDriverReady(generation: number, readyEpoch: number) {
 		/*
 			Now the controller interview is complete. This means we know which nodes
 			are included in the network, but they might not be ready yet.
@@ -4336,9 +4369,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			this._inclusionCoordinator.reinstallUserCallbacks()
 		} catch (error) {
 			// Fixes freak error in "driver ready" handler #1309
-			logger.error(error.message)
-			this.backoffRestart()
-			return
+			logger.error(getErrorMessage(error))
+			throw error
 		}
 
 		// reset retries
@@ -4353,7 +4385,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		await this.getStoreNodes()
 
 		// Abort if a newer generation replaced this one while the store loaded, so a late `driver ready` from an obsolete driver can't mutate the replacement's state
-		if (this._driverLifecycle.generation !== generation) {
+		if (!this._isCurrentReady(generation, readyEpoch)) {
 			return
 		}
 
@@ -4391,16 +4423,22 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		await this.sendInitToSockets()
 
-		if (this._driverLifecycle.generation !== generation) {
+		if (!this._isCurrentReady(generation, readyEpoch)) {
 			return
 		}
 
-		this.loadFakeNodes().catch((e) => {
-			logger.error(`Error while loading fake nodes: ${e.message}`)
+		this.loadFakeNodes(generation, readyEpoch).catch((error: unknown) => {
+			logger.error(
+				`Error while loading fake nodes: ${getErrorMessage(error)}`,
+			)
 		})
 	}
 
 	private _onDriverError(error: unknown, skipRestart = false): void {
+		if (skipRestart) {
+			this._invalidateScheduledConfigCheck()
+		}
+
 		this._error = 'Driver: ' + getErrorMessage(error)
 		this.status = ZwaveClientStatus.DRIVER_FAILED
 		this._updateControllerStatus(this._error)
@@ -6721,6 +6759,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		epoch: number,
 		chain: number,
 	) {
+		const publicationEpoch = ++this._configPublicationEpoch
 		let checked = false
 		let checkError: unknown
 		let version: string | undefined
@@ -6742,12 +6781,14 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			return
 		}
 
-		if (checked) {
-			this._publishConfigUpdateVersion(version)
-		} else {
-			logger.warn(
-				`Scheduled update check has failed: ${getErrorMessage(checkError)}`,
-			)
+		if (this._configPublicationEpoch === publicationEpoch) {
+			if (checked) {
+				this._publishConfigUpdateVersion(version)
+			} else {
+				logger.warn(
+					`Scheduled update check has failed: ${getErrorMessage(checkError)}`,
+				)
+			}
 		}
 
 		const nextUpdate = new Date()
@@ -6789,11 +6830,20 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	}
 
 	/** Loads fake nodes exported from UI */
-	private async loadFakeNodes() {
+	private async loadFakeNodes(generation: number, readyEpoch: number) {
 		const filePath = utils.joinPath(true, 'fakeNodes.json')
 		// load fake nodes from `fakeNodes.json` for testing
 		if (await utils.pathExists(filePath)) {
-			const fakeNodes = JSON.parse(await readFile(filePath, 'utf-8'))
+			if (!this._isCurrentReady(generation, readyEpoch)) {
+				return
+			}
+
+			const contents = await readFile(filePath, 'utf-8')
+			if (!this._isCurrentReady(generation, readyEpoch)) {
+				return
+			}
+
+			const fakeNodes = JSON.parse(contents)
 			for (const node of fakeNodes) {
 				// convert valueIds array to map
 				const values = {}
