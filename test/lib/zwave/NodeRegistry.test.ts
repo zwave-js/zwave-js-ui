@@ -196,9 +196,35 @@ describe('NodeRegistry persistence and lifecycle', () => {
 		await restore
 		expect(harness.registry.storeNodes).toEqual({})
 
+		let ready = true
+		let resolveReadyPersist!: () => void
+		const superseded = createHarness({
+			persisted: { 2: { name: 'Superseded' } },
+		})
+		vi.mocked(superseded.host.persistNodes).mockImplementationOnce(
+			() =>
+				new Promise((resolve) => {
+					resolveReadyPersist = () => resolve(undefined)
+				}),
+		)
+		const supersededRestore = superseded.registry.restorePersistedNodes(
+			() => ready,
+		)
+		ready = false
+		resolveReadyPersist()
+		await supersededRestore
+		expect(superseded.registry.storeNodes).toEqual({})
+
 		const detached = createHarness()
 		await detached.registry.persistDetachedSnapshot({
 			2: { name: 'Detached' },
+		})
+		await detached.registry.persistDetachedSnapshot(
+			{ 3: { name: 'Captured home' } },
+			'0xabcd',
+		)
+		expect(detached.host.persistNodes).toHaveBeenLastCalledWith({
+			'0xabcd': { 3: { name: 'Captured home' } },
 		})
 		vi.mocked(detached.host.persistNodes).mockRejectedValueOnce(
 			new Error('detached failed'),
@@ -424,6 +450,20 @@ describe('NodeRegistry persistence and lifecycle', () => {
 		finish(JSON.stringify([{ id: 9, values: [] }]))
 		await pending
 		expect(stale.registry.nodes.has(9)).toBe(false)
+
+		let ready = true
+		let finishSuperseded!: (contents: string | undefined) => void
+		const superseded = createHarness({
+			fakeNodesReader: () =>
+				new Promise((resolve) => {
+					finishSuperseded = resolve
+				}),
+		})
+		const supersededLoad = superseded.registry.loadFakeNodes(() => ready)
+		ready = false
+		finishSuperseded(JSON.stringify([{ id: 10, values: [] }]))
+		await supersededLoad
+		expect(superseded.registry.nodes.has(10)).toBe(false)
 
 		const absent = createHarness({
 			fakeNodesReader: () => Promise.resolve(undefined),
