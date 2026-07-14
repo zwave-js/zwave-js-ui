@@ -528,6 +528,7 @@ export interface FirmwareNodeStorePort {
 		nodeIds?: readonly number[],
 		requiredNodes?: readonly FirmwarePersistenceNodeTarget[],
 	): Promise<FirmwarePersistenceRestore | void>
+	runStoreTransaction(operation: () => Promise<void>): Promise<void>
 	/** Captures the current store identity and authoritative state before a filesystem write starts */
 	createStoreRestorePoint(): () => Promise<void>
 	/** Filesystem writes may complete after reset, so callers must fence before publishing staged state */

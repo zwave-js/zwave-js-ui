@@ -1455,6 +1455,27 @@ describe('DriverLifecycle — driver-ready failures', () => {
 		expect(host.restart).not.toHaveBeenCalled()
 	})
 
+	it('ignores pending ready failure after a fatal driver error', async () => {
+		const { lifecycle, host, world } = createHarness({
+			serverEnabled: false,
+		})
+		const ready = createDeferred<void>()
+		host.onDriverReady.mockReturnValueOnce(ready.promise)
+		await lifecycle.connect()
+		const fatalError = new ZWaveError(
+			'driver failed',
+			ZWaveErrorCodes.Driver_Failed,
+		)
+
+		world.drivers[0].emit('driver ready')
+		world.drivers[0].emit('error', fatalError)
+		ready.reject(new Error('superseded ready failure'))
+		await vi.advanceTimersByTimeAsync(60000)
+
+		expect(host.onDriverError).toHaveBeenCalledTimes(1)
+		expect(host.onDriverError).toHaveBeenCalledWith(fatalError, false)
+	})
+
 	it('ignores a driver-ready failure after that generation closes', async () => {
 		const { lifecycle, host, world } = createHarness({
 			serverEnabled: false,
