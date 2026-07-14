@@ -80,8 +80,17 @@ export class FirmwareUpdateService {
 		this.clearScheduledCheck()
 	}
 
-	private _assertFence(gen: number, operation: string): void {
-		if (this._generation !== gen || this._disposed) {
+	private _assertFence(
+		gen: number,
+		operation: string,
+		scheduleChain?: number,
+	): void {
+		if (
+			this._generation !== gen ||
+			this._disposed ||
+			(scheduleChain !== undefined &&
+				this._scheduleChain !== scheduleChain)
+		) {
 			throw new FirmwareLifecycleCancelledError(operation)
 		}
 	}
@@ -128,6 +137,13 @@ export class FirmwareUpdateService {
 	async checkAllNodesFirmwareUpdates(
 		options?: unknown,
 	): Promise<Map<number, FirmwareUpdateInfo[]> | undefined> {
+		return this._checkAllNodesFirmwareUpdates(options)
+	}
+
+	private async _checkAllNodesFirmwareUpdates(
+		options?: unknown,
+		scheduleChain?: number,
+	): Promise<Map<number, FirmwareUpdateInfo[]> | undefined> {
 		const drv = this._driver.getDriver()
 		if (!drv || !this._driver.isDriverReady()) {
 			throw new Error('Driver is not ready')
@@ -148,7 +164,11 @@ export class FirmwareUpdateService {
 			const result =
 				await drv.controller.getAllAvailableFirmwareUpdates(options)
 
-			this._assertFence(gen, 'checkAllNodesFirmwareUpdates')
+			this._assertFence(
+				gen,
+				'checkAllNodesFirmwareUpdates',
+				scheduleChain,
+			)
 
 			if (result) {
 				const now = Date.now()
@@ -177,6 +197,7 @@ export class FirmwareUpdateService {
 					staged,
 					gen,
 					'checkAllNodesFirmwareUpdates',
+					scheduleChain,
 				)
 			}
 
@@ -590,11 +611,17 @@ export class FirmwareUpdateService {
 		const gen = this._generation
 
 		try {
-			await this.checkAllNodesFirmwareUpdates()
+			await this._checkAllNodesFirmwareUpdates(undefined, chain)
 		} catch (error) {
-			this._logger.warn(
-				`Scheduled firmware update check has failed: ${getErrorMessage(error)}`,
-			)
+			if (
+				this._generation === gen &&
+				this._scheduleChain === chain &&
+				!this._disposed
+			) {
+				this._logger.warn(
+					`Scheduled firmware update check has failed: ${getErrorMessage(error)}`,
+				)
+			}
 		}
 
 		// Skip the reschedule if this chain was superseded or torn down mid-check, so it can't leak a stale timer
@@ -694,6 +721,7 @@ export class FirmwareUpdateService {
 		staged: ReadonlyArray<StagedFirmwareNodeUpdate>,
 		gen: number,
 		operation: string,
+		scheduleChain?: number,
 	): Promise<void> {
 		const persistenceTargets = staged.flatMap((projection) => {
 			const node = this._nodes.getNode(projection.nodeId)
@@ -767,6 +795,7 @@ export class FirmwareUpdateService {
 					})
 				}
 			},
+			scheduleChain,
 		)
 	}
 
@@ -777,21 +806,40 @@ export class FirmwareUpdateService {
 		publish?: (
 			restore?: FirmwarePersistenceRestore,
 		) => Promise<void> | void,
+		scheduleChain?: number,
 	): Promise<void> {
 		const persistence = this._persistenceTail.then(async () => {
-			this._assertFence(gen, operation)
-			const restore = await persist()
-
-			if (this._generation !== gen || this._disposed) {
-				// Restore current state because an in-flight filesystem write cannot be cancelled
-				if (restore) {
-					await restore()
-				} else {
-					await this._nodes.updateStoreNodes()
-				}
+			this._assertFence(gen, operation, scheduleChain)
+			let persistenceFailed = false
+			let persistenceError: unknown
+			let restore: FirmwarePersistenceRestore | void = undefined
+			try {
+				restore = await persist()
+			} catch (error) {
+				persistenceFailed = true
+				persistenceError = error
 			}
 
-			this._assertFence(gen, operation)
+			if (
+			this._generation !== gen ||
+			this._disposed ||
+			(scheduleChain !== undefined &&
+				this._scheduleChain !== scheduleChain)
+		) {
+			// Restore current state because an in-flight filesystem write cannot be cancelled
+			if (restore) {
+				await restore()
+			} else {
+				await this._nodes.updateStoreNodes()
+				this._assertFence(gen, operation, scheduleChain)
+			}
+		}
+
+			if (persistenceFailed) {
+				throw persistenceError
+			}
+
+			this._assertFence(gen, operation, scheduleChain)
 			await publish?.(restore || undefined)
 		})
 
