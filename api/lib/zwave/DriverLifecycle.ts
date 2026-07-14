@@ -708,6 +708,7 @@ export class DriverLifecycle {
 			if (this._generation !== generation) {
 				return
 			}
+			this.host.setDriverReady(false)
 			this.host.onDriverError(toError(error), true)
 			this.backoffRestart()
 		})

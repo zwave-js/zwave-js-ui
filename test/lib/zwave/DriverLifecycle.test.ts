@@ -1395,16 +1395,20 @@ describe('DriverLifecycle — driver-ready failures', () => {
 	afterEach(() => vi.useRealTimers())
 
 	it('reports a current driver-ready initialization failure and restarts', async () => {
-		const { lifecycle, host, world } = createHarness({
+		const { lifecycle, host, world, state } = createHarness({
 			serverEnabled: false,
 		})
 		const readyError = new Error('ready initialization failed')
-		host.onDriverReady.mockRejectedValueOnce(readyError)
+		host.onDriverReady.mockImplementationOnce(() => {
+			state.driverReady = true
+			return Promise.reject(readyError)
+		})
 		await lifecycle.connect()
 
 		world.drivers[0].emit('driver ready')
 		await Promise.resolve()
 
+		expect(state.driverReady).toBe(false)
 		expect(host.onDriverError).toHaveBeenCalledWith(readyError, true)
 		expect(host.restart).not.toHaveBeenCalled()
 		await vi.advanceTimersByTimeAsync(1000)
