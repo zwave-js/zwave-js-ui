@@ -124,6 +124,7 @@ vi.mock('zwave-js', async () => {
 			return Promise.resolve()
 		})
 		checkForConfigUpdates = vi.fn(() => Promise.resolve(undefined))
+		installConfigUpdate = vi.fn(() => Promise.resolve(false))
 		// The real Driver exposes updateOptions; connect() calls it through
 		// setUserCallbacks() when a user socket is already connected
 		updateOptions = vi.fn()
@@ -304,6 +305,34 @@ describe('connecting and reaching driver ready', () => {
 			await tick()
 
 			expect(zwave.getInfo().newConfigVersion).toBe('newer')
+		} finally {
+			await zwave.close(true)
+		}
+	})
+
+	it('clears an installed config update when a check overlaps installation', async () => {
+		const { zwave, driver } = await driveConnectToReady()
+		const install = createDeferred<boolean>()
+		const overlappingCheck = createDeferred<string | undefined>()
+
+		try {
+			driver.checkForConfigUpdates.mockResolvedValueOnce('available')
+			await zwave.checkForConfigUpdates()
+			expect(zwave.getInfo().newConfigVersion).toBe('available')
+
+			driver.installConfigUpdate.mockReturnValueOnce(install.promise)
+			driver.checkForConfigUpdates.mockReturnValueOnce(
+				overlappingCheck.promise,
+			)
+			const installRun = zwave.installConfigUpdate()
+			const checkRun = zwave.checkForConfigUpdates()
+
+			overlappingCheck.resolve('available')
+			await checkRun
+			install.resolve(true)
+			await expect(installRun).resolves.toBe(true)
+
+			expect(zwave.getInfo().newConfigVersion).toBeUndefined()
 		} finally {
 			await zwave.close(true)
 		}

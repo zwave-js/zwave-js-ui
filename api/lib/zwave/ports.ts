@@ -523,10 +523,13 @@ export interface FirmwareNodeStorePort {
 	getNode(nodeId: number): FirmwareUpdateNodeState | undefined
 	getStoreNode(nodeId: number): Partial<FirmwareUpdateNodeState> | undefined
 	ensureStoreNode(nodeId: number): Partial<FirmwareUpdateNodeState>
+	getStoreHomeId(): string | undefined
 	updateStoreNodes(
 		nodeIds?: readonly number[],
 		requiredNodes?: readonly FirmwarePersistenceNodeTarget[],
 	): Promise<FirmwarePersistenceRestore | void>
+	/** Captures the current store identity and authoritative state before a filesystem write starts */
+	createStoreRestorePoint(): () => Promise<void>
 	/** Filesystem writes may complete after reset, so callers must fence before publishing staged state */
 	persistStagedNodeUpdates(
 		staged: ReadonlyArray<StagedFirmwareNodeUpdate>,
