@@ -9,6 +9,7 @@ import { mkdir, access, readdir, readlink, realpath } from 'node:fs/promises'
 import { fileURLToPath } from 'node:url'
 import tripleBeam from 'triple-beam'
 import { MAX_NODES_LR } from '@zwave-js/core'
+import type { LogConfig } from '@zwave-js/core'
 import type { BytesView } from '@zwave-js/shared'
 import { hasErrorCode } from './errors.ts'
 
@@ -701,6 +702,34 @@ export function buildLogConfig(
 		filename: joinPath(logsDir, 'zwavejs_%DATE%.log'),
 		forceConsole: isDocker() ? !config.logToFile : false,
 	}
+}
+
+/**
+ * Resolves a zwave-js `LogConfig` level to its level name.
+ *
+ * `buildLogConfig` stores the level as an npm numeric rank, while the driver's
+ * runtime log transports track levels by name, so the numeric form has to be
+ * resolved back to a name. Returns `undefined` for an omitted or unrecognised
+ * level so callers can fall back to a documented default.
+ */
+export function logLevelName(
+	level: LogConfig['level'] | undefined,
+): string | undefined {
+	if (typeof level === 'string') return level
+	if (typeof level === 'number') {
+		for (const [name, rank] of Object.entries(loglevels)) {
+			if (rank === level) return name
+		}
+	}
+	return undefined
+}
+
+/**
+ * Verbosity rank of a log level name on the same npm scale `buildLogConfig`
+ * encodes, or -1 when the name is unknown, so the most verbose level wins.
+ */
+export function logLevelRank(level: string): number {
+	return level in loglevels ? loglevels[level] : -1
 }
 
 /**

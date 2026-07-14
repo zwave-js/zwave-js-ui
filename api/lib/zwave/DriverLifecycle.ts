@@ -4,7 +4,11 @@ import type {
 	OTWFirmwareUpdateResult,
 	PartialZWaveOptions,
 } from 'zwave-js'
-import { ZWaveErrorCodes, isZWaveError } from '@zwave-js/core'
+import {
+	ZWaveErrorCodes,
+	isZWaveError,
+	CONTROLLER_LOGLEVEL,
+} from '@zwave-js/core'
 import type { LogConfig } from '@zwave-js/core'
 import { createDefaultTransportFormat } from '@zwave-js/core/bindings/log/node'
 import { JSONTransport } from '@zwave-js/log-transport-json'
@@ -27,9 +31,6 @@ import {
 } from './ports.ts'
 
 const logger = LogManager.module('Z-Wave')
-
-// Least-to-most verbose ordering so the most verbose extra-transport level wins
-const LOG_LEVEL_ORDER = ['error', 'warn', 'info', 'verbose', 'debug', 'silly']
 
 /** Constructor-injected builders for the external objects the lifecycle constructs, so callers (production or tests) supply them without module-level mocking */
 export interface DriverLifecycleDeps {
@@ -103,8 +104,8 @@ export class DriverLifecycle {
 	/** JSON-socket transport for the current generation, re-sent first on every live add/remove because `updateLogConfig` replaces the driver's whole custom transport list */
 	private _driverLogTransport: JSONTransport | null = null
 
-	/** Configured log level captured before any extra-transport elevation, so removing a verbose extra recomputes back to this baseline instead of leaving the driver stuck high */
-	private _baseLogLevel: string | undefined = undefined
+	/** Baseline level name captured before any extra-transport elevation, so removing the last verbose extra recomputes back to it instead of leaving the driver stuck high. Defaults to the exported `CONTROLLER_LOGLEVEL`, which matches this app's configured default level, when the driver config carries no explicit level. */
+	private _baseLogLevel: string = CONTROLLER_LOGLEVEL
 
 	private _serverManager?: ZwaveServerManager
 
@@ -212,15 +213,14 @@ export class DriverLifecycle {
 		return transports
 	}
 
-	private computeRuntimeLogLevel(): string | undefined {
+	private computeRuntimeLogLevel(): string {
 		let level = this._baseLogLevel
-		let bestIdx =
-			typeof level === 'string' ? LOG_LEVEL_ORDER.indexOf(level) : -1
+		let bestRank = utils.logLevelRank(level)
 		for (const extra of this._extraLogTransports) {
 			if (!extra.level) continue
-			const idx = LOG_LEVEL_ORDER.indexOf(extra.level)
-			if (idx > bestIdx) {
-				bestIdx = idx
+			const rank = utils.logLevelRank(extra.level)
+			if (rank > bestRank) {
+				bestRank = rank
 				level = extra.level
 			}
 		}
@@ -233,12 +233,10 @@ export class DriverLifecycle {
 		if (!driver || !this.host.isDriverReadyRaw()) {
 			return
 		}
+		// Always resend the level: updateLogConfig merges partial updates, so omitting it would leave a previously elevated level in place once the last verbose extra is removed
 		const config: Partial<LogConfig> = {
 			transports: this.computeRuntimeLogTransports(),
-		}
-		const level = this.computeRuntimeLogLevel()
-		if (level) {
-			config.level = level
+			level: this.computeRuntimeLogLevel(),
 		}
 		driver.updateLogConfig(config)
 	}
@@ -530,17 +528,13 @@ export class DriverLifecycle {
 		// Enrich the driver-only clone via the same helpers as the runtime path so startup and live configs can't diverge
 		const finalLogConfig = zwaveOptions.logConfig
 		if (finalLogConfig) {
+			// buildLogConfig stores the configured level as a numeric rank, so resolve it back to a name; fall back to the CONTROLLER_LOGLEVEL default when the config carries no level
 			this._baseLogLevel =
-				typeof finalLogConfig.level === 'string'
-					? finalLogConfig.level
-					: undefined
+				utils.logLevelName(finalLogConfig.level) ?? CONTROLLER_LOGLEVEL
 			finalLogConfig.transports = this.computeRuntimeLogTransports()
-			const level = this.computeRuntimeLogLevel()
-			if (level) {
-				finalLogConfig.level = level
-			}
+			finalLogConfig.level = this.computeRuntimeLogLevel()
 		} else {
-			this._baseLogLevel = undefined
+			this._baseLogLevel = CONTROLLER_LOGLEVEL
 		}
 
 		logTransport.stream.on('data', (data: any) => {
