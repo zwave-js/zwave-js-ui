@@ -216,9 +216,10 @@ describe('NodeRegistry persistence and lifecycle', () => {
 		expect(superseded.registry.storeNodes).toEqual({})
 
 		const detached = createHarness()
-		await detached.registry.persistDetachedSnapshot({
-			2: { name: 'Detached' },
-		})
+		await detached.registry.persistDetachedSnapshot(
+			{ 2: { name: 'Detached' } },
+			'0x1234',
+		)
 		await detached.registry.persistDetachedSnapshot(
 			{ 3: { name: 'Captured home' } },
 			'0xabcd',
@@ -230,7 +231,7 @@ describe('NodeRegistry persistence and lifecycle', () => {
 			new Error('detached failed'),
 		)
 		await expect(
-			detached.registry.persistDetachedSnapshot({}),
+			detached.registry.persistDetachedSnapshot({}, '0x1234'),
 		).rejects.toThrow()
 
 		const otherHome = createHarness({
@@ -246,6 +247,36 @@ describe('NodeRegistry persistence and lifecycle', () => {
 		await staleScoped.registry.restorePersistedNodes()
 		await staleScoped.registry.updateStoreNodes()
 		expect(staleScoped.registry.storeNodes).toEqual({})
+	})
+
+	it('persists queued node changes after restart', async () => {
+		const harness = createHarness()
+		harness.registry.replaceStoreNodes({ 2: { name: 'Captured' } })
+		let release!: () => void
+		harness.host.runPersistenceTransaction = async (operation) => {
+			await new Promise<void>((resolve) => {
+				release = resolve
+			})
+			await operation()
+		}
+
+		const update = harness.registry.updateStoreNodes()
+		harness.registry.replaceStoreNodes({ 3: { name: 'Replacement' } })
+		harness.stale()
+		release()
+		await update
+
+		expect(harness.host.persistNodes).toHaveBeenCalledWith({
+			'0x1234': { 2: { name: 'Captured' } },
+		})
+
+		await harness.registry.persistDetachedSnapshot(
+			{ 4: { name: 'Detached' } },
+			'0xabcd',
+		)
+		expect(harness.host.persistNodes).toHaveBeenLastCalledWith({
+			'0xabcd': { 4: { name: 'Detached' } },
+		})
 	})
 
 	it('publishes node discovery, inclusion, and removal', async () => {

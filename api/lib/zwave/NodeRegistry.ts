@@ -268,9 +268,8 @@ export class NodeRegistry {
 
 	private async persistSnapshot(
 		snapshot: NodesStoreRecord,
-		homeHex = this.host.getHomeHex(),
+		homeHex: string | undefined,
 	): Promise<void> {
-		if (!this.current) return
 		if (!homeHex) {
 			this.logger.warn('HomeHex not set, skipping storeDevices')
 			return
@@ -287,13 +286,14 @@ export class NodeRegistry {
 		}, {} as NodesStoreRecord)
 		this.host.debug('Updating store nodes.json')
 		await this.host.persistNodes(nodes)
-		if (!this.current) return
 	}
 
 	async updateStoreNodes(throwError = true): Promise<void> {
 		try {
+			const snapshot = utils.copy(this.storeNodes)
+			const homeHex = this.host.getHomeHex()
 			await this.host.runPersistenceTransaction(() =>
-				this.persistSnapshot(this.storeNodes),
+				this.persistSnapshot(snapshot, homeHex),
 			)
 		} catch (error) {
 			this.logger.error(
@@ -306,7 +306,7 @@ export class NodeRegistry {
 
 	async persistDetachedSnapshot(
 		snapshot: NodesStoreRecord,
-		homeHex?: string,
+		homeHex: string | undefined,
 	): Promise<void> {
 		await this.persistSnapshot(snapshot, homeHex)
 	}
