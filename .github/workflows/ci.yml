@@ -14,9 +14,13 @@ jobs:
   test:
     runs-on: ubuntu-latest
 
+    # The version that also runs lint and coverage
+    env:
+      PRIMARY_NODE_VERSION: 22.x
+
     strategy:
       matrix:
-        node-version: [20.x, 22.x]
+        node-version: [22.x, 24.x]
 
     steps:
       - name: Checkout Z-Wave JS UI
@@ -32,12 +36,12 @@ jobs:
         run: npm ci
 
       - name: Lint
-        if: matrix['node-version'] == '20.x'
+        if: matrix['node-version'] == env.PRIMARY_NODE_VERSION
         run: npm run lint
 
       - name: Prepare lint auto-fix patch
         if: |
-          matrix['node-version'] == '20.x' &&
+          matrix['node-version'] == env.PRIMARY_NODE_VERSION &&
           failure() &&
           github.event_name == 'pull_request'
         id: lint
@@ -55,7 +59,7 @@ jobs:
           fi
       - name: Upload Patch
         if: |
-          matrix['node-version'] == '20.x' &&
+          matrix['node-version'] == env.PRIMARY_NODE_VERSION &&
           failure() &&
           github.event_name == 'pull_request' &&
           steps.lint.outputs.changed == 'true'
@@ -64,18 +68,19 @@ jobs:
           name: lint-fix
           path: fix.patch
 
-      # On 20.x the coverage step below runs the full suite, so only run the
-      # plain test step on the other matrix versions to avoid testing twice.
+      # On the primary version the coverage step below runs the full suite, so
+      # only run the plain test step on the other matrix versions to avoid
+      # testing twice.
       - name: Test
-        if: matrix['node-version'] != '20.x'
+        if: matrix['node-version'] != env.PRIMARY_NODE_VERSION
         run: npm run test
 
       - name: Generate coverage report
-        if: matrix['node-version'] == '20.x'
+        if: matrix['node-version'] == env.PRIMARY_NODE_VERSION
         run: npm run coverage
 
       - name: Coveralls
         uses: coverallsapp/github-action@master
-        if: matrix['node-version'] == '20.x'
+        if: matrix['node-version'] == env.PRIMARY_NODE_VERSION
         with:
           github-token: ${{ secrets.github_token }}

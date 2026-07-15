@@ -140,6 +140,7 @@ export function closeWatchers() {
 	for (const [, watcher] of watchers) {
 		watcher.close()
 	}
+	watchers.clear()
 }
 
 export const GatewayType = GATEWAY_TYPE
