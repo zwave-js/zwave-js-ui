@@ -8,7 +8,6 @@ import { io as ioClient, type Socket as ClientSocket } from 'socket.io-client'
 import type { FakeGateway, FakeZniffer } from './fakes.ts'
 import SocketManager from '#api/lib/SocketManager.ts'
 import type * as ZnifferModuleNamespace from '#api/lib/ZnifferManager.ts'
-import type * as LoggerModuleNamespace from '#api/lib/logger.ts'
 import {
 	useHarnessLifecycle,
 	type GatewayModule,
@@ -18,14 +17,6 @@ import {
 type ZnifferModule = typeof ZnifferModuleNamespace
 type RealGateway = InstanceType<GatewayModule['default']>
 type RealZniffer = InstanceType<ZnifferModule['default']>
-
-let loggerModulePromise: Promise<typeof LoggerModuleNamespace> | undefined
-
-// Loaded lazily (api/app.ts already pulled it in by the time this can run) so files that never use the `interceptor` option don't force it
-async function loadLoggerModule(): Promise<typeof LoggerModuleNamespace> {
-	loggerModulePromise ??= import('#api/lib/logger.ts')
-	return loggerModulePromise
-}
 
 export interface SocketHarnessOptions {
 	gateway?: FakeGateway
@@ -153,12 +144,9 @@ async function createHarnessInstance(
 		async closeInstance() {
 			await disconnectAllClients()
 
-			// io.close() also closes the underlying http.Server, so calling server.close() afterwards would throw ERR_SERVER_NOT_RUNNING
-			await io.close()
-
-			// Removes this instance's interceptor listener (if any) from the shared logStream singleton before the next instance is created; a no-op when `interceptor` was never requested
-			const { logStream } = await loadLoggerModule()
-			logStream.removeAllListeners('data')
+			// Same lifecycle entry point production uses, so it closes socketManager/io/interceptor plus
+			// gateway/zniffer/plugins when the test provided them, exercising FakeGateway.close/FakeZniffer.close
+			await instance.close()
 		},
 	}
 }
