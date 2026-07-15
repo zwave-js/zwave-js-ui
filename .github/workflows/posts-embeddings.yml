@@ -10,6 +10,18 @@ on:
     # Nightly, reconciles closed/edited posts and any appends that were
     # lost to concurrent cache saves
     - cron: '30 4 * * *'
+  push:
+    branches: [master]
+    paths:
+      - '.github/bot-scripts/buildPostsIndex.cjs'
+      - '.github/bot-scripts/postsIndex.cjs'
+      - '.github/bot-scripts/modelsApi.cjs'
+      - '.github/bot-scripts/githubApi.cjs'
+      - '.github/bot-scripts/evalRelatedPosts.cjs'
+      - '.github/bot-scripts/evalUtils.cjs'
+      - '.github/bot-scripts/relatedPostsEvalCases.json'
+      - '.github/bot-scripts/updateEvalTrackingIssue.cjs'
+      - '.github/workflows/posts-embeddings.yml'
   workflow_dispatch:
 
 permissions:
@@ -21,6 +33,7 @@ permissions:
 jobs:
   build-index:
     runs-on: [ubuntu-latest]
+    timeout-minutes: 20
 
     steps:
     - name: Checkout master branch
@@ -54,6 +67,7 @@ jobs:
   evaluate:
     needs: build-index
     runs-on: [ubuntu-latest]
+    timeout-minutes: 15
     permissions:
       contents: read
       models: read
@@ -70,16 +84,23 @@ jobs:
         path: .posts-index
         key: posts-embeddings-v1-${{ github.run_id }}
 
+    - name: Fail if posts index is missing
+      # build-index should always have just saved this exact run-scoped
+      # cache entry; surface the problem loudly instead of silently
+      # skipping the evaluation and reporting green
+      if: steps.restore-index.outputs.cache-hit != 'true'
+      run: |
+        echo "::error::Posts index cache miss after build-index - cannot evaluate retrieval quality"
+        exit 1
+
     - name: Evaluate retrieval quality
       id: eval
-      if: steps.restore-index.outputs.cache-hit == 'true'
       continue-on-error: true
       env:
         GITHUB_TOKEN: ${{ github.token }}
       run: node .github/bot-scripts/evalRelatedPosts.cjs .posts-index/index.json
 
     - name: Update tracking issue
-      if: steps.restore-index.outputs.cache-hit == 'true'
       uses: actions/github-script@v9
       env:
         TRACKING_ISSUE_TITLE: "🚨 Related posts bot retrieval quality regression"

@@ -11,6 +11,17 @@ on:
     branches: [master]
     paths:
       - 'docs/**/*.md'
+      - '.github/bot-scripts/buildDocsIndex.cjs'
+      - '.github/bot-scripts/docsIndex.cjs'
+      - '.github/bot-scripts/modelsApi.cjs'
+      - '.github/bot-scripts/githubApi.cjs'
+      - '.github/bot-scripts/evalDocsAnswers.cjs'
+      - '.github/bot-scripts/evalUtils.cjs'
+      - '.github/bot-scripts/docsAnswersEvalCases.json'
+      - '.github/bot-scripts/updateEvalTrackingIssue.cjs'
+      - '.github/bot-scripts/collectDocsFeedback.cjs'
+      - '.github/bot-scripts/updateDocsFeedbackIssue.cjs'
+      - '.github/workflows/docs-embeddings.yml'
   workflow_dispatch:
 
 permissions:
@@ -20,6 +31,7 @@ permissions:
 jobs:
   build-index:
     runs-on: [ubuntu-latest]
+    timeout-minutes: 15
 
     steps:
     - name: Checkout master branch
@@ -30,10 +42,10 @@ jobs:
       uses: actions/cache@v6
       with:
         path: .docs-index
-        key: docs-embeddings-v1-${{ hashFiles('docs/**/*.md') }}
+        key: docs-embeddings-v2-${{ hashFiles('docs/**/*.md', '.github/bot-scripts/buildDocsIndex.cjs', '.github/bot-scripts/docsIndex.cjs', '.github/bot-scripts/modelsApi.cjs') }}
         # Restore an older index so only changed chunks need to be re-embedded
         restore-keys: |
-          docs-embeddings-v1-
+          docs-embeddings-v2-
 
     - name: Build index
       # An exact cache hit means the index is already up to date
@@ -45,6 +57,7 @@ jobs:
   evaluate:
     needs: build-index
     runs-on: [ubuntu-latest]
+    timeout-minutes: 15
     permissions:
       contents: read
       models: read
@@ -59,18 +72,25 @@ jobs:
       uses: actions/cache/restore@v6
       with:
         path: .docs-index
-        key: docs-embeddings-v1-${{ hashFiles('docs/**/*.md') }}
+        key: docs-embeddings-v2-${{ hashFiles('docs/**/*.md', '.github/bot-scripts/buildDocsIndex.cjs', '.github/bot-scripts/docsIndex.cjs', '.github/bot-scripts/modelsApi.cjs') }}
+
+    - name: Fail if docs index is missing
+      # build-index should always have produced this exact cache entry;
+      # surface the problem loudly instead of silently skipping the
+      # evaluation and reporting green
+      if: steps.restore-index.outputs.cache-hit != 'true'
+      run: |
+        echo "::error::Docs index cache miss after build-index - cannot evaluate retrieval quality"
+        exit 1
 
     - name: Evaluate retrieval quality
       id: eval
-      if: steps.restore-index.outputs.cache-hit == 'true'
       continue-on-error: true
       env:
         GITHUB_TOKEN: ${{ github.token }}
       run: node .github/bot-scripts/evalDocsAnswers.cjs .docs-index/index.json
 
     - name: Update tracking issue
-      if: steps.restore-index.outputs.cache-hit == 'true'
       uses: actions/github-script@v9
       env:
         TRACKING_ISSUE_TITLE: "🚨 Docs answer bot retrieval quality regression"
@@ -87,6 +107,7 @@ jobs:
   feedback:
     needs: build-index
     runs-on: [ubuntu-latest]
+    timeout-minutes: 15
     permissions:
       contents: read
       models: read

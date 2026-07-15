@@ -6,6 +6,15 @@ on:
   discussion:
     types: [created, edited]
 
+# Serialize runs for the same issue/discussion so an "edited" event
+# firing while an "opened" run is still in flight can't race it (e.g.
+# duplicate answers, or an edit's answer landing before the original
+# post's). Never cancel a run in progress - a cancelled bot reply job
+# could leave a half-posted comment or a missed suppression update.
+concurrency:
+  group: zwave-js-bot-post-${{ github.event_name }}-${{ github.event.issue.number || github.event.discussion.number }}
+  cancel-in-progress: false
+
 jobs:
   # Notify issue author when they post in the wrong repository
   check-issue-repo:
@@ -60,15 +69,16 @@ jobs:
 
   # Answer questions that are covered by the documentation and/or
   # suggest similar existing posts. Discussions are restricted to the
-  # Q&A category by answerFromDocs.cjs itself.
+  # Q&A category by answerFromDocs.cjs itself. Excluding maintainers
+  # and the bot's own posts is handled entirely inside answerFromDocs.cjs
+  # (EXCLUDED_USERS, derived from authorizedUsers.cjs) so that list has
+  # a single source of truth instead of being duplicated here.
   answer-from-docs:
     runs-on: [ubuntu-latest]
+    timeout-minutes: 10
     permissions:
       contents: read
       models: read
-    if: |
-      (github.event.issue.user.login || github.event.discussion.user.login) != 'AlCalzone' &&
-      (github.event.issue.user.login || github.event.discussion.user.login) != 'zwave-js-bot'
 
     steps:
     - name: Checkout master branch
@@ -79,9 +89,9 @@ jobs:
       uses: actions/cache/restore@v6
       with:
         path: .docs-index
-        key: docs-embeddings-v1-${{ hashFiles('docs/**/*.md') }}
+        key: docs-embeddings-v2-${{ hashFiles('docs/**/*.md', '.github/bot-scripts/buildDocsIndex.cjs', '.github/bot-scripts/docsIndex.cjs', '.github/bot-scripts/modelsApi.cjs') }}
         restore-keys: |
-          docs-embeddings-v1-
+          docs-embeddings-v2-
 
     - name: Restore posts index
       id: restore-posts-index
@@ -104,6 +114,13 @@ jobs:
         restore-keys: |
           docs-feedback-v1-
 
+    - name: Warn if neither index is available
+      if: steps.restore-index.outputs.cache-matched-key == '' && steps.restore-posts-index.outputs.cache-matched-key == ''
+      uses: actions/github-script@v9
+      with:
+        script: |
+          core.warning('Neither the docs index nor the posts index cache is available yet - skipping the docs answer bot for this post. This is expected until the first docs-embeddings/posts-embeddings workflow run has completed.');
+
     - name: Answer from documentation
       if: steps.restore-index.outputs.cache-matched-key != '' || steps.restore-posts-index.outputs.cache-matched-key != ''
       uses: actions/github-script@v9
@@ -125,6 +142,7 @@ jobs:
   # edits cannot burn Models API requests and cache storage.
   update-posts-index:
     runs-on: [ubuntu-latest]
+    timeout-minutes: 10
     permissions:
       contents: read
       models: read
@@ -144,6 +162,13 @@ jobs:
         key: posts-embeddings-v1-
         restore-keys: |
           posts-embeddings-v1-
+
+    - name: Warn if no posts index is available
+      if: steps.restore-posts-index.outputs.cache-matched-key == ''
+      uses: actions/github-script@v9
+      with:
+        script: |
+          core.warning('No posts index cache is available yet - skipping the incremental posts index update for this post. This is expected until the first posts-embeddings workflow run has completed.');
 
     - name: Add post to index
       id: update
