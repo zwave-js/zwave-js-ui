@@ -65,8 +65,7 @@ export async function createSharedTestContext(): Promise<SharedTestContext> {
 
 // Wires the beforeAll/afterEach/afterAll lifecycle shared by both transports: one real createApp()
 // instance per test (torn down via afterEach's closeInstance()), one shared module/jsonStore context
-// per test file (beforeAll/afterAll). onAfterEach lets a transport reset its own extra test doubles
-// (e.g. HTTP's enumerateSerialPorts mock) alongside the shared teardown.
+// per test file (beforeAll/afterAll).
 export function useHarnessLifecycle<
 	Harness extends { closeInstance(): Promise<void> },
 	Options,
@@ -75,7 +74,6 @@ export function useHarnessLifecycle<
 		shared: SharedTestContext,
 		options: Options,
 	) => Promise<Harness>,
-	onAfterEach?: () => void,
 ): (options?: Options) => Promise<Harness> {
 	let shared: SharedTestContext | undefined
 	let current: Harness | undefined
@@ -85,7 +83,6 @@ export function useHarnessLifecycle<
 	})
 
 	afterEach(async () => {
-		onAfterEach?.()
 		if (current) {
 			await current.closeInstance()
 			current = undefined
