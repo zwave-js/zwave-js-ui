@@ -29,13 +29,22 @@ function neutralizeMentions(text) {
  * @param {string} text
  */
 function stripHtml(text) {
-	text = text.replace(/<!--[\s\S]*?-->/g, "");
-	let prev;
-	do {
-		prev = text;
-		text = text.replace(/<[^>]*>/g, "");
-	} while (text !== prev);
-	return text;
+	let result = "";
+	let offset = 0;
+	while (offset < text.length) {
+		if (text.startsWith("<!--", offset)) {
+			const end = text.indexOf("-->", offset + 4);
+			if (end === -1) break;
+			offset = end + 3;
+		} else if (text[offset] === "<") {
+			const end = text.indexOf(">", offset + 1);
+			offset = end === -1 ? offset + 1 : end + 1;
+		} else {
+			result += text[offset];
+			offset++;
+		}
+	}
+	return result;
 }
 
 /**

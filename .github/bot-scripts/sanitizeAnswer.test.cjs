@@ -28,6 +28,11 @@ describe("sanitizeAnswer", () => {
 	describe("stripHtml", () => {
 		it("removes HTML comments", () => {
 			expect(stripHtml("before<!-- secret -->after")).toBe("beforeafter");
+			expect(stripHtml("before<!-- unfinished")).toBe("before");
+		});
+
+		it("removes overlapping comment delimiters", () => {
+			expect(stripHtml("before<!--<!-->after")).toBe("beforeafter");
 		});
 
 		it("removes HTML tags", () => {
