@@ -22,12 +22,12 @@ export interface BackupSettings {
 const logger = module('Backup')
 
 class BackupManager {
-	// Assigned in init(), always called at startup before any Cron job can fire
+	// Startup initializes the dependencies before any Cron job can run
 	private config!: BackupSettings
 	private storeJob?: Cron
 	private nvmJob?: Cron
 	private zwaveClient!: ZwaveClient
-	private owner: symbol
+	private owner?: symbol
 
 	get default(): BackupSettings {
 		return {

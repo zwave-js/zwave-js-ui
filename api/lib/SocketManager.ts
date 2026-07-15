@@ -30,17 +30,20 @@ export type SocketManagerEvents = Extract<
  * The constructor
  */
 class SocketManager extends TypedEventEmitter<SocketManagerEventCallbacks> {
-	// Assigned in bindServer(), which app.ts always calls at startup before any consumer reads `io`
-	public io!: SocketServer
+	private _io?: SocketServer
+
+	public get io(): SocketServer | undefined {
+		return this._io
+	}
 
 	private activeSockets: Map<string, Socket> = new Map()
 
 	authMiddleware?: (socket: Socket, next: () => void) => void
 
 	async close(): Promise<void> {
-		if (!this.io) return
-		await this.io.close()
-		this.io = undefined
+		if (!this._io) return
+		await this._io.close()
+		this._io = undefined
 	}
 
 	/**
@@ -48,15 +51,15 @@ class SocketManager extends TypedEventEmitter<SocketManagerEventCallbacks> {
 	 *
 	 */
 	bindServer(server: HttpServer) {
-		this.io = new SocketServer(server, {
+		this._io = new SocketServer(server, {
 			path: '/socket.io',
 		})
 
-		this.io.on('error', (err) => {
+		this._io.on('error', (err) => {
 			logger.error(`Socket error: ${err.message}`)
 		})
 
-		this.io
+		this._io
 			.use(this._authMiddleware())
 			.on('connection', this._onConnection.bind(this))
 	}
