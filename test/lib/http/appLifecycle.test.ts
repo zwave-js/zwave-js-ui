@@ -19,7 +19,7 @@ describe('AppInstance: fatal-error labeling', () => {
 
 		expect(uncaught).toBeDefined()
 		expect(rejection).toBeDefined()
-		uncaught?.(new Error('uncaught'))
+		uncaught?.(new Error('uncaught'), 'uncaughtException')
 		rejection?.('rejected', Promise.resolve())
 
 		expect(logFatalError.mock.calls[0][0]).toMatch(

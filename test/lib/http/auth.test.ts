@@ -162,6 +162,7 @@ describe('HTTP contract: auth & password', () => {
 	describe('PUT /api/password', () => {
 		it('fails with a generic error when there is no logged-in session user', async () => {
 			const harness = await getHarness()
+			await seedUser(harness, 'existing-user', 'password')
 			const res = await harness.request.put('/api/password').send({
 				current: 'x',
 				new: 'y',
