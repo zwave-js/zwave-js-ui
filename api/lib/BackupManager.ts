@@ -26,6 +26,7 @@ class BackupManager {
 	private storeJob: Cron
 	private nvmJob: Cron
 	private zwaveClient: ZwaveClient
+	private owner: symbol
 
 	get default(): BackupSettings {
 		return {
@@ -51,13 +52,14 @@ class BackupManager {
 		return 'UNKNOWN'
 	}
 
-	init(zwaveClient: ZwaveClient) {
+	init(zwaveClient: ZwaveClient, owner: symbol) {
 		this.config = {
 			...this.default,
 			...(jsonStore.get(store.settings).backup as BackupSettings),
 		}
 
 		this.zwaveClient = zwaveClient
+		this.owner = owner
 
 		if (this.storeJob) {
 			this.storeJob.stop()
@@ -96,6 +98,15 @@ class BackupManager {
 				}. Next run: ${this.nextRun(this.nvmJob)}`,
 			)
 		}
+	}
+
+	close(owner: symbol) {
+		if (this.owner !== owner) return
+		this.storeJob?.stop()
+		this.nvmJob?.stop()
+		this.storeJob = undefined
+		this.nvmJob = undefined
+		this.owner = undefined
 	}
 
 	async backupNvm() {

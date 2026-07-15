@@ -36,6 +36,12 @@ class SocketManager extends TypedEventEmitter<SocketManagerEventCallbacks> {
 
 	authMiddleware: (socket: Socket, next: () => void) => void | undefined
 
+	async close(): Promise<void> {
+		if (!this.io) return
+		await this.io.close()
+		this.io = undefined
+	}
+
 	/**
 	 * Binds socket.io to `server`
 	 *

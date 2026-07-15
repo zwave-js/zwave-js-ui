@@ -35,7 +35,7 @@ import path from 'node:path'
 import sessionStore from 'session-file-store'
 import type { Socket } from 'socket.io'
 import { inspect, promisify } from 'node:util'
-import { libVersion } from 'zwave-js'
+import { Driver, libVersion } from 'zwave-js'
 import {
 	defaultPsw,
 	defaultUser,
@@ -82,7 +82,6 @@ import {
 	getImportedNodeLocation,
 	normalizeImportedNodesConfig,
 } from './lib/importConfig.ts'
-import { enumerateSerialPorts } from './lib/serialPorts.ts'
 
 const createCertificate = promisify(generate)
 
@@ -128,13 +127,30 @@ export interface AppInstance {
 	app: Express
 	startServer: (port: number | string, host?: string) => Promise<HttpServer>
 	loadSnippets(): Promise<void>
+	installProcessHandlers: () => void
+	close: () => Promise<void>
 }
 
 export interface CreateAppOptions {
 	test?: {
 		gateway?: Gateway
 		restarting?: boolean
+		enumerateSerialPorts?: typeof Driver.enumerateSerialPorts
+		logFatalError?: (message: string) => void
 	}
+}
+
+function formatFatalErrorLog(
+	eventName: 'uncaughtException' | 'unhandledRejection',
+	reason: unknown,
+): string {
+	const label =
+		eventName === 'uncaughtException'
+			? 'Uncaught Exception'
+			: 'Unhandled Rejection'
+	const stack = reason instanceof Error ? reason.stack : undefined
+	const message = reason instanceof Error ? reason.message : inspect(reason)
+	return `${label}, reason: ${message}${stack ? `\n${stack}` : ''}`
 }
 
 export function createApp(options: CreateAppOptions = {}): AppInstance {
@@ -142,6 +158,13 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 	const logger = loggers.module('App')
 	const testOptions =
 		process.env.NODE_ENV === 'test' ? options.test : undefined
+
+	const enumerateSerialPorts: typeof Driver.enumerateSerialPorts =
+		testOptions?.enumerateSerialPorts ??
+		Driver.enumerateSerialPorts.bind(Driver)
+	const logFatalError =
+		testOptions?.logFatalError ??
+		((message: string) => logger.error(message))
 
 	const verifyJWT = promisify(jwt.verify.bind(jwt))
 
@@ -213,6 +236,7 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 	type RESPONSE_CODES = (typeof RESPONSE_CODES)[keyof typeof RESPONSE_CODES]
 
 	const socketManager = new SocketManager()
+	const backupManagerOwner = Symbol()
 
 	socketManager.authMiddleware = function (
 		socket: Socket & { user?: User },
@@ -244,22 +268,36 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 	// flag used to prevent multiple restarts while one is already in progress
 	let restarting = testOptions?.restarting ?? false
 
+	let closed = false
+	let ownsDebugSession = false
+	let logStreamInterceptor: ((chunk: Buffer | string) => void) | undefined
+
 	// ### UTILS
+
+	function installProcessHandlers() {
+		process.removeListener('uncaughtException', handleUncaughtException)
+		process.on('uncaughtException', handleUncaughtException)
+		process.removeListener('unhandledRejection', handleUnhandledRejection)
+		process.on('unhandledRejection', handleUnhandledRejection)
+		for (const signal of ['SIGINT', 'SIGTERM'] as NodeJS.Signals[]) {
+			// Drop our own listener before re-adding so repeated calls can't stack duplicates
+			process.removeListener(signal, gracefuShutdown)
+			process.once(signal, gracefuShutdown)
+		}
+	}
+
+	function uninstallProcessHandlers() {
+		process.removeListener('uncaughtException', handleUncaughtException)
+		process.removeListener('unhandledRejection', handleUnhandledRejection)
+		process.removeListener('SIGINT', gracefuShutdown)
+		process.removeListener('SIGTERM', gracefuShutdown)
+	}
 
 	/**
 	 * Start http/https server and all the manager
 	 */
 	async function startServer(port: number | string, host?: string) {
 		let server: HttpServer
-
-		// Register before any awaits so the whole startup window is covered
-		process.removeListener('uncaughtException', handleUncaughtException)
-		process.on('uncaughtException', handleUncaughtException)
-		for (const signal of ['SIGINT', 'SIGTERM'] as NodeJS.Signals[]) {
-			// Drop our own listener before re-adding so repeated startServer calls can't stack duplicates
-			process.removeListener(signal, gracefuShutdown)
-			process.once(signal, gracefuShutdown)
-		}
 
 		const settings = jsonStore.get(store.settings)
 
@@ -485,7 +523,7 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 			zwave = new ZWaveClient(settings.zwave, socketManager.io)
 		}
 
-		backupManager.init(zwave)
+		backupManager.init(zwave, backupManagerOwner)
 
 		gw = new Gateway(settings.gateway, zwave, mqtt)
 
@@ -541,12 +579,18 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 	}
 
 	function setupInterceptor() {
+		// Replace this instance's interceptor because the log stream is shared
+		if (logStreamInterceptor) {
+			loggers.logStream.off('data', logStreamInterceptor)
+		}
+
 		// intercept logs and redirect them to socket
-		loggers.logStream.on('data', (chunk) => {
+		logStreamInterceptor = (chunk) => {
 			socketManager.io
 				.to('debug')
 				.emit(socketEvents.debug, chunk.toString())
-		})
+		}
+		loggers.logStream.on('data', logStreamInterceptor)
 	}
 
 	async function parseDir(dir: string): Promise<StoreFileEntry[]> {
@@ -1533,12 +1577,15 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 					)
 				}
 
+				if (!gw?.zwave) throw Error('Z-Wave client not inited')
+
 				const settings = jsonStore.get(store.settings) as Settings
 
 				restarting = true
 
 				if (debugManager.isSessionActive()) {
 					await debugManager.cancelSession()
+					ownsDebugSession = false
 				}
 
 				// Close gateway and restart
@@ -1548,7 +1595,6 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 					setupLogging({ gateway: settings.gateway })
 				}
 				await startGateway(settings)
-				backupManager.init(gw.zwave)
 
 				// Restart Zniffer if enabled
 				if (zniffer) {
@@ -2290,6 +2336,8 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 					})
 				}
 
+				if (!gw?.zwave) throw Error('Z-Wave client not inited')
+
 				const settings: Settings =
 					jsonStore.get(store.settings) || ({} as Settings)
 				const originalLogLevel = settings.gateway?.logLevel || 'info'
@@ -2300,6 +2348,7 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 					originalLogLevel,
 					restartDriver,
 				)
+				ownsDebugSession = true
 
 				res.json({
 					success: true,
@@ -2332,6 +2381,7 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 
 				const { archive, cleanup } =
 					await debugManager.stopSession(nodeIds)
+				ownsDebugSession = false
 
 				const timestamp = new Date().toISOString().replace(/[:.]/g, '-')
 				res.attachment(`zwave-debug-${timestamp}.zip`)
@@ -2367,6 +2417,7 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 				}
 
 				await debugManager.cancelSession()
+				ownsDebugSession = false
 
 				res.json({
 					success: true,
@@ -2406,11 +2457,61 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 		res.redirect('/')
 	})
 
+	async function close(): Promise<void> {
+		if (closed) return
+		closed = true
+
+		uninstallProcessHandlers()
+
+		if (logStreamInterceptor) {
+			loggers.logStream.off('data', logStreamInterceptor)
+			logStreamInterceptor = undefined
+		}
+
+		try {
+			if (ownsDebugSession && debugManager.isSessionActive()) {
+				await debugManager.cancelSession()
+				ownsDebugSession = false
+			}
+		} catch (error) {
+			logger.error('Error while cancelling debug session', error)
+		}
+
+		try {
+			if (gw) await gw.close()
+		} catch (error) {
+			logger.error('Error while closing gateway', error)
+		}
+
+		try {
+			if (zniffer) await zniffer.close()
+		} catch (error) {
+			logger.error('Error while closing zniffer', error)
+		}
+
+		try {
+			await destroyPlugins()
+		} catch (error) {
+			logger.error('Error while closing plugins', error)
+		}
+
+		try {
+			await socketManager.close()
+		} catch (error) {
+			logger.error('Error while closing socket.io server', error)
+		}
+
+		try {
+			backupManager.close(backupManagerOwner)
+		} catch (error) {
+			logger.error('Error while closing backup manager', error)
+		}
+	}
+
 	async function gracefuShutdown() {
 		logger.warn('Shutdown detected: closing clients...')
 		try {
-			if (gw) await gw.close()
-			await destroyPlugins()
+			await close()
 		} catch (error) {
 			logger.error('Error while closing clients', error)
 		}
@@ -2419,17 +2520,18 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 	}
 
 	function handleUncaughtException(reason: unknown) {
-		const stack = reason instanceof Error ? reason.stack : undefined
-		const message =
-			reason instanceof Error ? reason.message : inspect(reason)
-		logger.error(
-			`Unhandled Rejection, reason: ${message}${stack ? `\n${stack}` : ''}`,
-		)
+		logFatalError(formatFatalErrorLog('uncaughtException', reason))
+	}
+
+	function handleUnhandledRejection(reason: unknown) {
+		logFatalError(formatFatalErrorLog('unhandledRejection', reason))
 	}
 
 	return {
 		app,
 		startServer,
 		loadSnippets,
+		installProcessHandlers,
+		close,
 	}
 }
