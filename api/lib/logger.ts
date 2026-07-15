@@ -19,10 +19,9 @@ export const defaultLogFile = 'z-ui_%DATE%.log'
 export const disableColors = process.env.NO_LOG_COLORS === 'true'
 
 let transportsList: winston.transport[] | null = null
-// Tracks which config shape transportsList was built for, so a config that actually
-// changes the transport set or silencing (unlike setupAll()'s explicit reset) still
-// invalidates the cache instead of silently keeping stale transports
 let transportsListKey: string | null = null
+const transportGenerations = new Set<winston.transport[]>()
+let activeConfig: DeepPartial<GatewayConfig> | undefined
 
 // ensure store and logs directories exist
 ensureDirSync(storeDir)
@@ -114,27 +113,20 @@ export const logStream = new PassThrough()
  */
 export function customTransports(config: LoggerConfig): winston.transport[] {
 	const wantsFileTransport = Boolean(config.enabled && config.logToFile)
-	// `.silent` (set below) also depends on `config.enabled` directly, not just wantsFileTransport
 	const key = `${config.enabled}:${wantsFileTransport}`
 
-	// Reuse the shared list across modules within one config generation (see issue #2937),
-	// but rebuild it if the requested transport shape actually changed, so a direct
-	// logger.setup() call (unlike setupAll()'s explicit reset) doesn't silently keep stale transports
+	// Share matching transports within a configuration generation because duplicate rotation handles conflict (#2937)
 	if (transportsList && transportsListKey === key) {
 		return transportsList
 	}
 
-	transportsList?.forEach((t) => {
-		if (typeof t.close === 'function') {
-			t.close()
-		}
-	})
-
-	transportsList = []
+	const nextTransports: winston.transport[] = []
+	transportsList = nextTransports
 	transportsListKey = key
+	transportGenerations.add(nextTransports)
 
 	if (process.env.ZUI_NO_CONSOLE !== 'true') {
-		transportsList.push(
+		nextTransports.push(
 			new transports.Console({
 				format: customFormat(),
 				level: config.level,
@@ -149,7 +141,7 @@ export function customTransports(config: LoggerConfig): winston.transport[] {
 		stream: logStream,
 	})
 
-	transportsList.push(streamTransport)
+	nextTransports.push(streamTransport)
 
 	if (wantsFileTransport) {
 		let fileTransport: winston.transport
@@ -180,19 +172,19 @@ export function customTransports(config: LoggerConfig): winston.transport[] {
 			setupCleanJob(options)
 		}
 
-		transportsList.push(fileTransport)
+		nextTransports.push(fileTransport)
 	}
 
 	// giving that we re-use transports, each module will subscribe to events
 	// increeasing the default limit of 100 prevents warnings
-	transportsList.forEach((t) => {
+	nextTransports.forEach((t) => {
 		t.setMaxListeners(100)
 		if (t !== streamTransport) {
 			t.silent = config.enabled === false
 		}
 	})
 
-	return transportsList
+	return nextTransports
 }
 
 /**
@@ -230,20 +222,24 @@ const logContainer = new winston.Container()
  * Create a new logger for a specific module
  */
 export function module(module: string): ModuleLogger {
-	return setupLogger(logContainer, module)
+	return setupLogger(logContainer, module, activeConfig)
 }
 
 /**
  * Setup all loggers starting from config
  */
 export function setupAll(config: DeepPartial<GatewayConfig>) {
+	activeConfig = config
 	stopCleanJob()
 
-	transportsList?.forEach((t) => {
-		if (typeof t.close === 'function') {
-			t.close()
-		}
+	transportGenerations.forEach((generation) => {
+		generation.forEach((transport) => {
+			if (typeof transport.close === 'function') {
+				transport.close()
+			}
+		})
 	})
+	transportGenerations.clear()
 
 	transportsList = null
 	transportsListKey = null

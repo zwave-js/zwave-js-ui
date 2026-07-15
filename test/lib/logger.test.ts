@@ -55,6 +55,7 @@ describe('logger.js', () => {
 
 	describe('customTransports()', () => {
 		it('should have one transport by default', () => {
+			setupAll({})
 			const transports = customTransports(sanitizedConfig('-', {}))
 			return expect(transports.length).to.equal(2)
 		})
@@ -62,6 +63,7 @@ describe('logger.js', () => {
 
 	describe('module()', () => {
 		beforeAll(() => {
+			setupAll({})
 			logger1 = module('foo')
 		})
 		it('should set the module name', () =>
@@ -78,6 +80,7 @@ describe('logger.js', () => {
 
 	describe('setup() (init)', () => {
 		beforeAll(() => {
+			setupAll({})
 			logger1 = module('bar')
 			logger2 = logger1.setup({
 				logEnabled: false,
@@ -105,6 +108,7 @@ describe('logger.js', () => {
 
 	describe('setup() (reconfigure)', () => {
 		beforeAll(() => {
+			setupAll({})
 			logger1 = module('mod').setup({
 				logEnabled: true,
 				logLevel: 'warn',
@@ -203,6 +207,21 @@ describe('logger.js', () => {
 			// Test post-conditions:
 			expect(logger1.level).to.equal('error')
 			expect(logger2.level).to.equal('warn')
+		})
+		it('should configure modules created after setupAll', () => {
+			setupAll({
+				logEnabled: true,
+				logLevel: 'error',
+				logToFile: true,
+			})
+
+			const logger = module('late-module')
+
+			expect(logger.level).to.equal('error')
+			expect(logger.transports.length).to.equal(3)
+			expect(
+				logger.transports.every((transport) => !transport.silent),
+			).toBe(true)
 		})
 	})
 })
