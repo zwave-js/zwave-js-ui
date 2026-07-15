@@ -8,9 +8,8 @@
 const crypto = require("node:crypto");
 const fs = require("node:fs/promises");
 const path = require("node:path");
+const { DOCS_INDEX_VERSION } = require("./docsIndex.cjs");
 const { embedBatched, EMBEDDING_MODEL } = require("./modelsApi.cjs");
-
-const INDEX_VERSION = 1;
 
 // Chunks shorter than this are unlikely to contain useful information
 const MIN_CHUNK_LENGTH = 50;
@@ -109,12 +108,18 @@ function chunkMarkdown(file, content) {
 	const pushChunk = () => {
 		const text = currentLines.join("\n").trim();
 		if (text.length >= MIN_CHUNK_LENGTH) {
+			// Content before the first heading has an empty heading stack.
+			// Fall back to the chunk title so breadcrumbs (used as the link
+			// label when this chunk is cited) are never empty.
+			const breadcrumbs = headingStack.length > 0
+				? headingStack.map((h) => h.title)
+				: [currentTitle];
 			for (const part of splitLongText(text)) {
 				chunks.push({
 					file,
 					anchor: currentAnchor,
 					title: currentTitle,
-					breadcrumbs: headingStack.map((h) => h.title),
+					breadcrumbs,
 					text: part,
 				});
 			}
@@ -191,7 +196,7 @@ async function main() {
 	try {
 		const previous = JSON.parse(await fs.readFile(outputFile, "utf8"));
 		if (
-			previous.version === INDEX_VERSION
+			previous.version === DOCS_INDEX_VERSION
 			&& previous.model === EMBEDDING_MODEL
 		) {
 			for (const chunk of previous.chunks) {
@@ -241,7 +246,7 @@ async function main() {
 	pending.forEach((chunk, i) => chunk.embedding = embeddings[i]);
 
 	const index = {
-		version: INDEX_VERSION,
+		version: DOCS_INDEX_VERSION,
 		model: EMBEDDING_MODEL,
 		createdAt: new Date().toISOString(),
 		chunks: allChunks.map(({ embeddedText, ...chunk }) => chunk),
@@ -257,3 +262,9 @@ if (require.main === module) {
 		process.exit(1);
 	});
 }
+
+// Exported for unit tests, not used at runtime outside this module
+module.exports.chunkMarkdown = chunkMarkdown;
+module.exports.slugify = slugify;
+module.exports.cleanHeading = cleanHeading;
+module.exports.splitLongText = splitLongText;

@@ -56,6 +56,15 @@ async function main() {
 		return false;
 	});
 
+	// A hit rate over zero cases is meaningless, and embed([]) would be
+	// a wasted/malformed request - fail loudly instead of silently
+	// "passing" an empty eval (see also reportResults()'s own guard)
+	if (cases.length === 0) {
+		throw new Error(
+			"No eval cases remain after filtering - cannot evaluate retrieval quality",
+		);
+	}
+
 	// A single batched request embeds all eval questions at once
 	const embeddings = await embed(
 		cases.map((c) => c.question),

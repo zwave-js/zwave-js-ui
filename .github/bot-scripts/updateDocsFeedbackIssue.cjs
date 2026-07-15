@@ -17,15 +17,18 @@ const { ghPaginated, ghRequest } = require("./githubApi.cjs");
 
 const ISSUE_TITLE = "📊 Docs answer bot feedback";
 const ISSUE_MARKER = "<!-- DOCS_FEEDBACK_ISSUE -->";
-// zwave-js-ui has no dedicated "docs-feedback" label, so the existing
-// "documentation" label is reused to narrow the digest issue lookup to a
-// handful of candidates (searching by creator alone could exceed a single
-// page of results). The hidden marker above still uniquely identifies
-// the digest issue among any other issues carrying this label.
-const ISSUE_LABEL = "documentation";
+// Narrows the digest issue lookup to a handful of candidates (searching
+// by creator alone could exceed a single page of results). The hidden
+// marker above still uniquely identifies the digest issue among any
+// other issues carrying this label.
+const ISSUE_LABEL = "docs-feedback";
 
 // Keep suggested eval cases (and the issue body) readable
 const MAX_EVAL_QUESTION_LENGTH = 300;
+
+// GitHub caps issue bodies at 65536 characters. Stay safely under that
+// so a burst of feedback can never make the update itself fail.
+const MAX_BODY_LENGTH = 60_000;
 
 /**
  * Keeps user-controlled text from pinging people via @mentions
@@ -96,6 +99,22 @@ function renderRecord(record) {
 }
 
 /**
+ * Picks a code fence made of more backticks than the longest backtick
+ * run appearing in the content, so embedded content (e.g. a question
+ * that itself contains a ``` code block) can never prematurely close
+ * the fence. JSON.stringify() escapes quotes/newlines/control characters
+ * but backticks are valid, unescaped JSON string content.
+ * @param {string} content
+ */
+function codeFence(content) {
+	const longestRun = Math.max(
+		0,
+		...[...content.matchAll(/`+/g)].map((m) => m[0].length),
+	);
+	return "`".repeat(Math.max(3, longestRun + 1));
+}
+
+/**
  * Renders a ready-to-paste eval case for docsAnswersEvalCases.json
  * @param {import("./collectDocsFeedback.cjs").FeedbackRecord} record
  */
@@ -106,13 +125,46 @@ function renderEvalCase(record) {
 			...new Set(record.sections.map((s) => s.split("#")[0])),
 		],
 	};
+	const json = JSON.stringify(evalCase, undefined, "\t");
+	const fence = codeFence(json);
 	return `<details><summary>Suggested eval case</summary>
 
-\`\`\`json
-${JSON.stringify(evalCase, undefined, "\t")}
-\`\`\`
+${fence}json
+${json}
+${fence}
 
 </details>`;
+}
+
+/**
+ * Joins rendered entries up to a character budget, in the given order
+ * (most important first), appending a note about how many were left out
+ * instead of truncating mid-entry or silently exceeding the budget
+ * @param {string[]} rendered
+ * @param {number} budget
+ */
+function joinWithinBudget(rendered, budget) {
+	/** @type {string[]} */
+	const included = [];
+	let length = 0;
+	let omitted = 0;
+	for (let i = 0; i < rendered.length; i++) {
+		const entry = rendered[i];
+		// +2 accounts for the "\n\n" joiner between entries
+		const joinerLength = included.length > 0 ? 2 : 0;
+		if (length + entry.length + joinerLength > budget) {
+			omitted = rendered.length - i;
+			break;
+		}
+		included.push(entry);
+		length += entry.length + joinerLength;
+	}
+	let text = included.join("\n\n");
+	if (omitted > 0) {
+		text +=
+			`\n\n_...and ${omitted} more, omitted to keep this issue within GitHub's body size limit._`;
+	}
+	return text;
 }
 
 /**
@@ -120,6 +172,8 @@ ${JSON.stringify(evalCase, undefined, "\t")}
  */
 function renderDigest(records) {
 	const withFeedback = records.filter((r) => r.votes.length > 0);
+	// Sorted worst-first / best-first so truncation (see below) keeps
+	// the most actionable/most exemplary entries when there are too many
 	const good = withFeedback
 		.filter((r) => r.score > 0)
 		.sort((a, b) => b.score - a.score);
@@ -127,7 +181,7 @@ function renderDigest(records) {
 		.filter((r) => r.score < 0)
 		.sort((a, b) => a.score - b.score);
 
-	const sections = [
+	const header = [
 		ISSUE_MARKER,
 		`_Automatically generated from reactions to the bot's answers in issues and discussions over the last ${SCAN_WINDOW_DAYS} days. Maintainer votes count ×5, the question author's ×2. Last updated: ${
 			new Date().toISOString().slice(0, 10)
@@ -136,7 +190,17 @@ function renderDigest(records) {
 
 - ${records.length} answers posted, ${withFeedback.length} with feedback
 - ${good.length} rated helpful, ${bad.length} rated unhelpful`,
-	];
+	].join("\n\n");
+
+	// Split the remaining size budget evenly between the two
+	// variable-length sections, so a long list of one kind can't starve
+	// the other out of the digest entirely.
+	const remainingBudget = Math.max(0, MAX_BODY_LENGTH - header.length);
+	const sectionBudget = bad.length > 0 && good.length > 0
+		? remainingBudget / 2
+		: remainingBudget;
+
+	const sections = [header];
 
 	if (bad.length > 0) {
 		sections.push(
@@ -144,7 +208,7 @@ function renderDigest(records) {
 
 Negative feedback usually means the linked documentation did not answer the question — these are candidates for docs improvements.
 
-${bad.map(renderRecord).join("\n\n")}`,
+${joinWithinBudget(bad.map(renderRecord), sectionBudget)}`,
 		);
 	}
 
@@ -154,7 +218,12 @@ ${bad.map(renderRecord).join("\n\n")}`,
 
 These answers were rated helpful. Consider curating them into \`docsAnswersEvalCases.json\` to lock in the retrieval quality.
 
-${good.map((r) => `${renderRecord(r)}\n${renderEvalCase(r)}`).join("\n\n")}`,
+${
+				joinWithinBudget(
+					good.map((r) => `${renderRecord(r)}\n${renderEvalCase(r)}`),
+					sectionBudget,
+				)
+			}`,
 		);
 	}
 
@@ -223,3 +292,16 @@ if (require.main === module) {
 		process.exit(1);
 	});
 }
+
+module.exports = {
+	main,
+	codeFence,
+	renderEvalCase,
+	renderRecord,
+	renderDigest,
+	joinWithinBudget,
+	ISSUE_LABEL,
+	ISSUE_TITLE,
+	ISSUE_MARKER,
+	MAX_BODY_LENGTH,
+};

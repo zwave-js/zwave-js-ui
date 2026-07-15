@@ -21,7 +21,7 @@ const {
 	DOCS_BASE_URL,
 } = require("./answerFromDocs.cjs");
 const { ghGraphql, ghPaginated, ghRequest } = require("./githubApi.cjs");
-const { embed, EMBEDDING_MODEL } = require("./modelsApi.cjs");
+const { embedBatched, EMBEDDING_MODEL } = require("./modelsApi.cjs");
 const { cleanQuestion } = require("./postsIndex.cjs");
 const { authorizedUsers } = require("./authorizedUsers.cjs");
 
@@ -55,28 +55,73 @@ const REACTION_SIGNS = {
 	CONFUSED: -1,
 };
 
+// Recognized values of the metadata's "style" field
+const VALID_METADATA_STYLES = ["answer", "links", "posts"];
+
+/**
+ * Validates the shape of the bot's own metadata payload. The comment
+ * body can also contain model-generated text and quoted post content,
+ * so a malformed or unexpected payload must degrade safely rather than
+ * being trusted at face value.
+ * @param {any} metadata
+ * @returns {{style: string, confidence: number | null, sections: string[]} | undefined}
+ */
+function validateAnswerMetadata(metadata) {
+	if (!metadata || typeof metadata !== "object") return undefined;
+	// Fields of unknown metadata versions may not mean the same
+	if (metadata.v !== DOCS_ANSWER_METADATA_VERSION) return undefined;
+
+	const style = VALID_METADATA_STYLES.includes(metadata.style)
+		? metadata.style
+		: "answer";
+
+	let confidence = metadata.confidence;
+	if (
+		confidence !== null
+		&& (typeof confidence !== "number"
+			|| !Number.isFinite(confidence)
+			|| confidence < 0
+			|| confidence > 100)
+	) {
+		confidence = null;
+	}
+
+	const sections = Array.isArray(metadata.sections)
+			&& metadata.sections.every(
+				(/** @type {any} */ s) => typeof s === "string",
+			)
+		? metadata.sections
+		: [];
+
+	return { style, confidence, sections };
+}
+
 /**
  * Extracts the metadata the bot embeds in its answer comments.
- * Comments from before the metadata tag existed fall back to
- * parsing the doc links from the comment body.
+ * Only the LAST (trailer) occurrence of the tag is considered: the bot
+ * always appends it as the final line of its own comment, so any earlier
+ * occurrence (e.g. an HTML comment reflected from the quoted post, or
+ * something the model was tricked into emitting despite sanitization)
+ * cannot be mistaken for the real one.
+ * Comments from before the metadata tag existed, or whose payload fails
+ * validation, fall back to parsing the doc links from the comment body.
  * @param {string} body
  * @returns {{style: string, confidence: number | null, sections: string[]}}
  */
 function parseAnswerMetadata(body) {
-	const match = body.match(
-		new RegExp(`<!-- ${DOCS_ANSWER_METADATA_TAG} (\\{.*?\\}) -->`),
-	);
-	if (match) {
+	const matches = [
+		...body.matchAll(
+			new RegExp(
+				`<!-- ${DOCS_ANSWER_METADATA_TAG} (\\{.*?\\}) -->`,
+				"g",
+			),
+		),
+	];
+	const last = matches[matches.length - 1];
+	if (last) {
 		try {
-			const metadata = JSON.parse(match[1]);
-			// Fields of unknown metadata versions may not mean the same
-			if (metadata.v === DOCS_ANSWER_METADATA_VERSION) {
-				return {
-					style: metadata.style ?? "answer",
-					confidence: metadata.confidence ?? null,
-					sections: metadata.sections ?? [],
-				};
-			}
+			const validated = validateAnswerMetadata(JSON.parse(last[1]));
+			if (validated) return validated;
 		} catch {
 			// Fall through to link parsing
 		}
@@ -123,19 +168,35 @@ function reactionWeight(login, postAuthor) {
 }
 
 /**
- * Turns raw reactions into weighted votes and a net score
+ * Turns raw reactions into weighted votes and a net score. A single
+ * user can leave multiple reactions on the same comment (e.g. both a
+ * 👍 and a ❤️, or contradicting 👍 and 👎), so reactions are first
+ * collapsed per user into one net sign (capped to -1/0/+1) before the
+ * user's weight is applied - this caps each user's influence to a
+ * single vote and cancels out contradicting reactions instead of
+ * letting them inflate the score in either direction.
  * @param {{user: string, content: string}[]} reactions
  * @param {string} postAuthor
  */
 function scoreReactions(reactions, postAuthor) {
-	const votes = [];
-	let score = 0;
+	/** @type {Map<string, number>} */
+	const netSignByUser = new Map();
 	for (const { user, content } of reactions) {
 		const sign = REACTION_SIGNS[content];
 		if (!sign || !user || user.endsWith("[bot]")) continue;
+		netSignByUser.set(user, (netSignByUser.get(user) ?? 0) + sign);
+	}
+
+	const votes = [];
+	let score = 0;
+	for (const [user, netSign] of netSignByUser) {
+		// Mixed reactions (e.g. 👍 and 👎) that cancel out cast no vote
+		const sign = Math.sign(netSign);
+		if (sign === 0) continue;
 		const weight = reactionWeight(user, postAuthor);
-		votes.push({ user, content, weight: sign * weight });
-		score += sign * weight;
+		const weighted = sign * weight;
+		votes.push({ user, content: sign > 0 ? "+1" : "-1", weight: weighted });
+		score += weighted;
 	}
 	return { votes, score };
 }
@@ -402,7 +463,7 @@ async function main() {
 		(r) => r.score <= SUPPRESS_SCORE && r.style !== "posts",
 	);
 	const embeddings = downvoted.length > 0
-		? await embed(downvoted.map((r) => r.question), token)
+		? await embedBatched(downvoted.map((r) => r.question), token)
 		: [];
 	const suppressed = downvoted
 		.map((r, i) => ({
@@ -443,4 +504,8 @@ if (require.main === module) {
 module.exports = {
 	SUPPRESS_SCORE,
 	SCAN_WINDOW_DAYS,
+	parseAnswerMetadata,
+	validateAnswerMetadata,
+	scoreReactions,
+	reactionWeight,
 };
