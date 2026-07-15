@@ -1,8 +1,7 @@
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect } from 'vitest'
 import { useHttpHarness } from './harness.ts'
 import { createFakeGateway } from './fakes.ts'
 import { setSettings } from './authHelpers.ts'
-import { enumerateSerialPorts } from '#api/lib/serialPorts.ts'
 
 describe('HTTP contract: settings, restart, statistics, versions', () => {
 	const getHarness = useHttpHarness()
@@ -37,12 +36,12 @@ describe('HTTP contract: settings, restart, statistics, versions', () => {
 
 	describe('GET /api/serial-ports', () => {
 		it('returns exactly the ports the (mocked) enumerator resolves, with no real serial/mDNS I/O', async () => {
-			vi.mocked(enumerateSerialPorts).mockImplementation((options) => {
+			const harness = await getHarness()
+			harness.enumerateSerialPorts.mockImplementation((options) => {
 				expect(options).toEqual({ local: true, remote: true })
 				return Promise.resolve(['/dev/ttyFAKE0', '/dev/ttyFAKE1'])
 			})
 
-			const harness = await getHarness()
 			const res = await harness.request.get('/api/serial-ports')
 
 			expect(res.status).toBe(200)
@@ -53,9 +52,9 @@ describe('HTTP contract: settings, restart, statistics, versions', () => {
 		})
 
 		it('returns an empty list without throwing when the enumerator resolves none', async () => {
-			vi.mocked(enumerateSerialPorts).mockResolvedValue([])
-
 			const harness = await getHarness()
+			harness.enumerateSerialPorts.mockResolvedValue([])
+
 			const res = await harness.request.get('/api/serial-ports')
 
 			expect(res.status).toBe(200)
@@ -63,9 +62,9 @@ describe('HTTP contract: settings, restart, statistics, versions', () => {
 		})
 
 		it('an enumerator rejection is caught and reported as a failed-but-200 envelope with an empty list', async () => {
-			vi.mocked(enumerateSerialPorts).mockRejectedValue(new Error('boom'))
-
 			const harness = await getHarness()
+			harness.enumerateSerialPorts.mockRejectedValue(new Error('boom'))
+
 			const res = await harness.request.get('/api/serial-ports')
 
 			expect(res.status).toBe(200)
@@ -171,14 +170,29 @@ describe('HTTP contract: settings, restart, statistics, versions', () => {
 			})
 		})
 
-		it('fails cleanly with the generic error envelope when there is no gateway to close', async () => {
-			const harness = await getHarness()
-			const res = await harness.request.post('/api/restart')
+		it.each([
+			['no gateway attached at all', undefined],
+			[
+				'a gateway attached but with no zwave client',
+				createFakeGateway({ zwave: undefined }),
+			],
+		])(
+			'fails with the clean "Z-Wave client not inited" error with %s, without closing anything',
+			async (_label, gateway) => {
+				const harness = await getHarness({ gateway })
 
-			expect(res.status).toBe(200)
-			expect(res.body.success).toBe(false)
-			expect(res.body.message).toMatch(/close/)
-		})
+				const res = await harness.request.post('/api/restart')
+
+				expect(res.status).toBe(200)
+				expect(res.body).toEqual({
+					success: false,
+					message: 'Z-Wave client not inited',
+				})
+				if (gateway) {
+					expect(gateway.close).not.toHaveBeenCalled()
+				}
+			},
+		)
 
 		it('restarts successfully end-to-end (real startGateway(), zwave/mqtt kept disabled), and clears the restarting flag so a follow-up restart is accepted', async () => {
 			const gw = createFakeGateway()

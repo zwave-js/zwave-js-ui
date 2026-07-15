@@ -8,6 +8,7 @@ import type * as AppModuleNamespace from '#api/app.ts'
 import type * as JsonStoreModuleNamespace from '#api/lib/jsonStore.ts'
 import type * as StoreConfigModuleNamespace from '#api/config/store.ts'
 import type * as GatewayModuleNamespace from '#api/lib/Gateway.ts'
+import type { Driver } from 'zwave-js'
 
 type AppModule = typeof AppModuleNamespace
 type JsonStoreModule = typeof JsonStoreModuleNamespace
@@ -15,12 +16,12 @@ type StoreConfigModule = typeof StoreConfigModuleNamespace
 type GatewayModule = typeof GatewayModuleNamespace
 type RealGateway = InstanceType<GatewayModule['default']>
 
-// vi.mock hoists above this file's other statements, so the shared fn needs vi.hoisted too for a stable reference
-const { enumerateSerialPorts } = vi.hoisted(() => ({
-	enumerateSerialPorts: vi.fn(() => Promise.resolve<string[]>([])),
-}))
+type SerialPortsEnumerator = typeof Driver.enumerateSerialPorts
+type SerialPortsEnumeratorMock = ReturnType<typeof vi.fn<SerialPortsEnumerator>>
 
-vi.mock('#api/lib/serialPorts.ts', () => ({ enumerateSerialPorts }))
+function createSerialPortsEnumeratorMock(): SerialPortsEnumeratorMock {
+	return vi.fn(() => Promise.resolve<string[]>([]))
+}
 
 let appModulePromise: Promise<AppModule> | undefined
 let jsonStoreModulePromise: Promise<JsonStoreModule> | undefined
@@ -57,6 +58,7 @@ export interface HttpHarness {
 	store: StoreConfigModule['default']
 	server: HttpServer
 	loadSnippets(): Promise<void>
+	enumerateSerialPorts: SerialPortsEnumeratorMock
 }
 
 // Buffers the raw bytes because Superagent's default parser corrupts binary bodies served with a JSON-like content type
@@ -71,6 +73,7 @@ export function bufferResponse(req: SupertestTest): SupertestTest {
 export interface HttpHarnessOptions {
 	gateway?: FakeGateway
 	restarting?: boolean
+	enumerateSerialPorts?: SerialPortsEnumeratorMock
 }
 
 interface SharedTestContext {
@@ -95,11 +98,15 @@ async function createHarnessInstance(
 	shared: SharedTestContext,
 	options: HttpHarnessOptions,
 ): Promise<HttpHarness & { closeInstance(): Promise<void> }> {
+	const enumerateSerialPorts =
+		options.enumerateSerialPorts ?? createSerialPortsEnumeratorMock()
+
 	const instance = shared.createApp({
 		test: {
 			// Gateway has private fields, so a structural mock like FakeGateway needs this cast to satisfy it
 			gateway: options.gateway as unknown as RealGateway | undefined,
 			restarting: options.restarting,
+			enumerateSerialPorts,
 		},
 	})
 	await instance.loadSnippets()
@@ -117,7 +124,9 @@ async function createHarnessInstance(
 		store: shared.store,
 		server,
 		loadSnippets: () => instance.loadSnippets(),
+		enumerateSerialPorts,
 		async closeInstance() {
+			await instance.close()
 			await new Promise<void>((resolve, reject) => {
 				server.close((err) => (err ? reject(err) : resolve()))
 			})
@@ -137,8 +146,6 @@ export function useHttpHarness(): (
 	})
 
 	afterEach(async () => {
-		enumerateSerialPorts.mockReset()
-		enumerateSerialPorts.mockResolvedValue([])
 		if (current) {
 			await current.closeInstance()
 			current = undefined

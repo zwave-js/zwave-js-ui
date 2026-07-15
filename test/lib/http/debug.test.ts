@@ -90,6 +90,29 @@ describe('HTTP contract: debug capture', () => {
 				message: 'A debug session is already active',
 			})
 		})
+
+		it.each([
+			['no gateway attached at all', undefined],
+			[
+				'a gateway attached but with no zwave client',
+				createFakeGateway({ zwave: undefined }),
+			],
+		])(
+			'fails with the clean "Z-Wave client not inited" error with %s',
+			async (_label, gateway) => {
+				const harness = await getHarness({ gateway })
+
+				const res = await harness.request
+					.post('/api/debug/start')
+					.send({})
+
+				expect(res.status).toBe(200)
+				expect(res.body).toEqual({
+					success: false,
+					message: 'Z-Wave client not inited',
+				})
+			},
+		)
 	})
 
 	describe('POST /api/debug/stop', () => {
