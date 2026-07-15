@@ -550,6 +550,7 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 		if (settings.zwave) {
 			zwave = new ZWaveClient(
 				settings.zwave as ZwaveConfig,
+				// setupSocket() always runs before startGateway() in both the initial startup and restart flows
 				socketManager.io,
 			)
 		}
@@ -599,6 +600,7 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 		if (settings) {
 			zniffer = new ZnifferManager(
 				settings as ZnifferConfig,
+				// setupSocket() always runs before startZniffer() in both the initial startup and restart flows
 				socketManager.io,
 			)
 		}
