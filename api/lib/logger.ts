@@ -19,6 +19,10 @@ export const defaultLogFile = 'z-ui_%DATE%.log'
 export const disableColors = process.env.NO_LOG_COLORS === 'true'
 
 let transportsList: winston.transport[] | null = null
+// Tracks which config shape transportsList was built for, so a config that actually
+// changes the transport set or silencing (unlike setupAll()'s explicit reset) still
+// invalidates the cache instead of silently keeping stale transports
+let transportsListKey: string | null = null
 
 // ensure store and logs directories exist
 ensureDirSync(storeDir)
@@ -109,12 +113,25 @@ export const logStream = new PassThrough()
  * Create the base transports based on settings provided
  */
 export function customTransports(config: LoggerConfig): winston.transport[] {
-	// setup transports only once (see issue #2937)
-	if (transportsList) {
+	const wantsFileTransport = Boolean(config.enabled && config.logToFile)
+	// `.silent` (set below) also depends on `config.enabled` directly, not just wantsFileTransport
+	const key = `${config.enabled}:${wantsFileTransport}`
+
+	// Reuse the shared list across modules within one config generation (see issue #2937),
+	// but rebuild it if the requested transport shape actually changed, so a direct
+	// logger.setup() call (unlike setupAll()'s explicit reset) doesn't silently keep stale transports
+	if (transportsList && transportsListKey === key) {
 		return transportsList
 	}
 
+	transportsList?.forEach((t) => {
+		if (typeof t.close === 'function') {
+			t.close()
+		}
+	})
+
 	transportsList = []
+	transportsListKey = key
 
 	if (process.env.ZUI_NO_CONSOLE !== 'true') {
 		transportsList.push(
@@ -134,7 +151,7 @@ export function customTransports(config: LoggerConfig): winston.transport[] {
 
 	transportsList.push(streamTransport)
 
-	if (config.enabled && config.logToFile) {
+	if (wantsFileTransport) {
 		let fileTransport: winston.transport
 
 		if (process.env.DISABLE_LOG_ROTATION === 'true') {
@@ -229,6 +246,7 @@ export function setupAll(config: DeepPartial<GatewayConfig>) {
 	})
 
 	transportsList = null
+	transportsListKey = null
 
 	logContainer.loggers.forEach((logger: winston.Logger) => {
 		;(logger as ModuleLogger).setup(config)
