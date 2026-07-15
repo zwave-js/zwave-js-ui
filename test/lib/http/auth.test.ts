@@ -162,7 +162,6 @@ describe('HTTP contract: auth & password', () => {
 	describe('PUT /api/password', () => {
 		it('reports that no user exists when there is no logged-in session user', async () => {
 			const harness = await getHarness()
-			await seedUser(harness, 'existing-user', 'password')
 			const res = await harness.request.put('/api/password').send({
 				current: 'x',
 				new: 'y',

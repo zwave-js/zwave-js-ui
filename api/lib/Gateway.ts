@@ -168,15 +168,6 @@ export function closeWatchers() {
 	watchers.clear()
 }
 
-// Test-only: reinstall the shared custom-device watchers so a teardown test
-// can guarantee they are present before asserting release; production never
-// calls this
-export function __rebindWatchersForTests(): void {
-	closeWatchers()
-	watch(customDevicesJsPath, loadCustomDevices)
-	watch(customDevicesJsonPath, loadCustomDevices)
-}
-
 export const GatewayType = GATEWAY_TYPE
 export type GatewayType = (typeof GATEWAY_TYPE)[keyof typeof GATEWAY_TYPE]
 
