@@ -39,6 +39,8 @@ export interface FakeZniffer {
 	setLRChannelConfig: ReturnType<typeof vi.fn>
 	saveCaptureToFile: ReturnType<typeof vi.fn>
 	loadCaptureFromBuffer: ReturnType<typeof vi.fn>
+	// AppInstance.close() calls this unconditionally when a zniffer is set, mirroring FakeGateway.close
+	close: ReturnType<typeof vi.fn>
 }
 
 export function createFakeZniffer(
@@ -55,6 +57,7 @@ export function createFakeZniffer(
 		saveCaptureToFile: vi.fn(() => Promise.resolve('/tmp/capture.zlf')),
 		// Returns a promise like the real method, so the missing await in production leaves an unresolved promise that serializes to {} over the wire
 		loadCaptureFromBuffer: vi.fn(() => Promise.resolve(undefined)),
+		close: vi.fn(() => Promise.resolve(undefined)),
 		...overrides,
 	}
 }
