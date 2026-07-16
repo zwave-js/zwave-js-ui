@@ -128,10 +128,25 @@ export class InclusionCoordinator {
 		validateDSKAndEnterPIN: (dsk: string) => Promise<string | false>
 		abort: () => void
 	} {
+		const gen = this._generation
 		return {
-			grantSecurityClasses: this._onGrantSecurityClasses.bind(this),
-			validateDSKAndEnterPIN: this._onValidateDSK.bind(this),
-			abort: this._onAbortInclusion.bind(this),
+			grantSecurityClasses: (requested) => {
+				if (this._generation !== gen) {
+					return Promise.resolve(false)
+				}
+				return this._onGrantSecurityClasses(requested)
+			},
+			validateDSKAndEnterPIN: (dsk) => {
+				if (this._generation !== gen) {
+					return Promise.resolve(false)
+				}
+				return this._onValidateDSK(dsk)
+			},
+			abort: () => {
+				if (this._generation === gen) {
+					this._onAbortInclusion()
+				}
+			},
 		}
 	}
 
@@ -203,7 +218,11 @@ export class InclusionCoordinator {
 				strategy === InclusionStrategy.Security_S0
 			) {
 				this._isReplacing = false
-				return currentDrv.controller.beginInclusion({ strategy })
+				return await this._beginInclusion(
+					currentDrv.controller,
+					{ strategy },
+					gen,
+				)
 			}
 
 			if (strategy === InclusionStrategy.SmartStart) {
@@ -214,10 +233,14 @@ export class InclusionCoordinator {
 
 			if (strategy === InclusionStrategy.Default) {
 				this._isReplacing = false
-				return currentDrv.controller.beginInclusion({
-					strategy,
-					forceSecurity: options?.forceSecurity,
-				})
+				return await this._beginInclusion(
+					currentDrv.controller,
+					{
+						strategy,
+						forceSecurity: options?.forceSecurity,
+					},
+					gen,
+				)
 			}
 
 			if (strategy === InclusionStrategy.Security_S2) {
@@ -253,23 +276,36 @@ export class InclusionCoordinator {
 				}
 				if (options?.provisioning) {
 					this._isReplacing = false
-					return currentDrv.controller.beginInclusion({
-						strategy,
-						provisioning: options.provisioning,
-					})
+					return await this._beginInclusion(
+						currentDrv.controller,
+						{
+							strategy,
+							provisioning: options.provisioning,
+						},
+						gen,
+					)
 				}
 				this._isReplacing = false
-				return currentDrv.controller.beginInclusion({
-					strategy,
-					dsk: options?.dsk,
-				})
+				return await this._beginInclusion(
+					currentDrv.controller,
+					{
+						strategy,
+						dsk: options?.dsk,
+					},
+					gen,
+				)
 			}
 
 			this._isReplacing = false
-			return currentDrv.controller.beginInclusion()
+			return await this._beginInclusion(
+				currentDrv.controller,
+				undefined,
+				gen,
+			)
 		} catch (error) {
 			if (this._generation === gen) {
 				this._tmpNode = undefined
+				this.clearCommandsTimeout()
 			}
 			throw error
 		}
@@ -315,7 +351,18 @@ export class InclusionCoordinator {
 			(this._config.commandsTimeout || 0) * 1000 || 30000,
 		)
 
-		return currentDrv.controller.beginExclusion(options)
+		try {
+			const result = await currentDrv.controller.beginExclusion(options)
+			if (this._generation !== gen) {
+				throw new InclusionLifecycleCancelledError('exclusion')
+			}
+			return result
+		} catch (error) {
+			if (this._generation === gen) {
+				this.clearCommandsTimeout()
+			}
+			throw error
+		}
 	}
 
 	async stopExclusion(): Promise<boolean> {
@@ -650,6 +697,24 @@ export class InclusionCoordinator {
 			this._grantResolve(false)
 			this._grantResolve = null
 		}
+	}
+
+	private async _beginInclusion(
+		controller: NonNullable<
+			ReturnType<InclusionDriverPort['getDriver']>
+		>['controller'],
+		options: Parameters<
+			NonNullable<
+				ReturnType<InclusionDriverPort['getDriver']>
+			>['controller']['beginInclusion']
+		>[0],
+		gen: number,
+	): Promise<boolean> {
+		const result = await controller.beginInclusion(options)
+		if (this._generation !== gen) {
+			throw new InclusionLifecycleCancelledError('inclusion')
+		}
+		return result
 	}
 
 	private _onGrantSecurityClasses(

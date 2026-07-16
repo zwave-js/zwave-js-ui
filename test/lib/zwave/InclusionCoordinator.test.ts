@@ -1171,34 +1171,40 @@ describe('InclusionCoordinator', () => {
 	})
 
 	describe('timeout cleanup on reset', () => {
-		it('reset() cancels the inclusion timeout so it cannot fire against a new driver', () => {
+		it('reset() cancels the inclusion timeout so it cannot fire against a new driver', async () => {
 			vi.useFakeTimers()
 			const { coordinator, driver } = createCoordinator({
 				backup: { ...createBackupPort(), backupOnEvent: false },
 			})
 
-			void coordinator.startInclusion(
+			const inclusion = coordinator.startInclusion(
 				InclusionStrategy.Insecure,
 				undefined,
 				undefined,
 			)
 
 			coordinator.reset()
+			await expect(inclusion).rejects.toBeInstanceOf(
+				InclusionLifecycleCancelledError,
+			)
 
 			const drv = driver.getDriver()
 			vi.advanceTimersByTime(60_000)
 			expect(drv.controller.stopInclusion).not.toHaveBeenCalled()
 		})
 
-		it('reset() cancels the exclusion timeout', () => {
+		it('reset() cancels the exclusion timeout', async () => {
 			vi.useFakeTimers()
 			const { coordinator, driver } = createCoordinator({
 				backup: { ...createBackupPort(), backupOnEvent: false },
 			})
 
-			void coordinator.startExclusion({})
+			const exclusion = coordinator.startExclusion({})
 
 			coordinator.reset()
+			await expect(exclusion).rejects.toBeInstanceOf(
+				InclusionLifecycleCancelledError,
+			)
 
 			const drv = driver.getDriver()
 			vi.advanceTimersByTime(60_000)
@@ -1367,6 +1373,62 @@ describe('InclusionCoordinator', () => {
 				InclusionLifecycleCancelledError,
 			)
 			await expect(currentInclusion).resolves.toBe(true)
+		})
+
+		it('inclusion rejects when reset during the controller command', async () => {
+			const inclusionStarted = createDeferred<void>()
+			const inclusionBarrier = createDeferred<boolean>()
+			const beginInclusion = vi
+				.fn()
+				.mockImplementationOnce(() => {
+					inclusionStarted.resolve()
+					return inclusionBarrier.promise
+				})
+				.mockResolvedValueOnce(true)
+			const driver = createDriverPort({ beginInclusion })
+			const { coordinator } = createCoordinator({ driver })
+
+			const interruptedInclusion = coordinator.startInclusion(
+				InclusionStrategy.Insecure,
+			)
+
+			await inclusionStarted.promise
+			coordinator.reset()
+			const currentInclusion = coordinator.startInclusion(
+				InclusionStrategy.Insecure,
+			)
+			inclusionBarrier.resolve(true)
+
+			await expect(interruptedInclusion).rejects.toBeInstanceOf(
+				InclusionLifecycleCancelledError,
+			)
+			await expect(currentInclusion).resolves.toBe(true)
+		})
+
+		it('exclusion rejects when reset during the controller command', async () => {
+			const exclusionStarted = createDeferred<void>()
+			const exclusionBarrier = createDeferred<boolean>()
+			const beginExclusion = vi
+				.fn()
+				.mockImplementationOnce(() => {
+					exclusionStarted.resolve()
+					return exclusionBarrier.promise
+				})
+				.mockResolvedValueOnce(true)
+			const driver = createDriverPort({ beginExclusion })
+			const { coordinator } = createCoordinator({ driver })
+
+			const interruptedExclusion = coordinator.startExclusion({})
+
+			await exclusionStarted.promise
+			coordinator.reset()
+			const currentExclusion = coordinator.startExclusion({})
+			exclusionBarrier.resolve(true)
+
+			await expect(interruptedExclusion).rejects.toBeInstanceOf(
+				InclusionLifecycleCancelledError,
+			)
+			await expect(currentExclusion).resolves.toBe(true)
 		})
 	})
 
@@ -1574,6 +1636,40 @@ describe('InclusionCoordinator', () => {
 
 			const result = await dskPromise
 			expect(result).toBe(false)
+		})
+
+		it('ignores security decisions from the previous generation', async () => {
+			const { coordinator, socket, controllerEvent } = createCoordinator()
+			const staleCallbacks = coordinator.getUserCallbacks()
+			coordinator.reset()
+			const currentCallbacks = coordinator.getUserCallbacks()
+			const requested: InclusionGrant = {
+				securityClasses: [SecurityClass.S2_Authenticated],
+				clientSideAuth: false,
+			}
+
+			const currentGrant =
+				currentCallbacks.grantSecurityClasses(requested)
+			const currentDsk =
+				currentCallbacks.validateDSKAndEnterPIN('current-dsk')
+			socket.sendToSocket.mockClear()
+			controllerEvent.emitControllerEvent.mockClear()
+
+			await expect(
+				staleCallbacks.grantSecurityClasses(requested),
+			).resolves.toBe(false)
+			await expect(
+				staleCallbacks.validateDSKAndEnterPIN('stale-dsk'),
+			).resolves.toBe(false)
+			staleCallbacks.abort()
+
+			expect(socket.sendToSocket).not.toHaveBeenCalled()
+			expect(controllerEvent.emitControllerEvent).not.toHaveBeenCalled()
+
+			coordinator.grantSecurityClasses(requested)
+			coordinator.validateDSK('current-dsk')
+			await expect(currentGrant).resolves.toEqual(requested)
+			await expect(currentDsk).resolves.toBe('current-dsk')
 		})
 	})
 

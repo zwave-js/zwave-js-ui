@@ -3254,6 +3254,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			provisioning?: PlannedProvisioningEntry
 		},
 	): Promise<boolean> {
+		if (!this.driverReady) {
+			throw new DriverNotReadyError()
+		}
 		return this._inclusionCoordinator.replaceFailedNode(
 			nodeId,
 			strategy,
@@ -3289,6 +3292,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 * Check firmware updates for all nodes and store results in nodes.json
 	 */
 	async checkAllNodesFirmwareUpdates(options?: GetFirmwareUpdatesOptions) {
+		if (!this.driverReady) {
+			throw new DriverNotReadyError()
+		}
 		return this._firmwareUpdateService.checkAllNodesFirmwareUpdates(options)
 	}
 
@@ -4052,6 +4058,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		nodeId: number,
 		files: FwFile[],
 	): Promise<FirmwareUpdateResult> {
+		if (!this.driverReady) {
+			throw new DriverNotReadyError()
+		}
 		return this._firmwareUpdateService.updateFirmware(
 			nodeId,
 			files,
@@ -4060,6 +4069,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	}
 
 	async abortFirmwareUpdate(nodeId: number) {
+		if (!this.driverReady) {
+			throw new DriverNotReadyError()
+		}
 		return this._firmwareUpdateService.abortFirmwareUpdate(
 			nodeId,
 			(id: number) => this.getNode(id),
