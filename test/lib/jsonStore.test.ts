@@ -4,7 +4,7 @@
  * store/ dir if STORE_DIR isn't set yet - importing the module (even
  * though every test here injects its own readFile/writeFile fakes, with no
  * real disk I/O through StorageHelper itself) is enough to trigger that, so
- * it must be a dynamic import() after ensureTestEnv() (see http/env.ts)
+ * it must be a dynamic import() after ensureTestEnv() (see shared/env.ts)
  */
 import {
 	describe,
@@ -15,15 +15,15 @@ import {
 	afterAll,
 	vi,
 } from 'vitest'
-import type { StorageHelper as StorageHelperClass } from '../../api/lib/jsonStore.ts'
-import type { StoreFile, StoreKeys } from '../../api/config/store.ts'
-import { ensureTestEnv, cleanupTestEnv } from './http/env.ts'
+import type { StorageHelper as StorageHelperClass } from '#api/lib/jsonStore.ts'
+import type { StoreFile, StoreKeys } from '#api/config/store.ts'
+import { ensureTestEnv, cleanupTestEnv } from './shared/env.ts'
 
 let StorageHelper: typeof StorageHelperClass
 
 beforeAll(async () => {
 	ensureTestEnv()
-	;({ StorageHelper } = await import('../../api/lib/jsonStore.ts'))
+	;({ StorageHelper } = await import('#api/lib/jsonStore.ts'))
 })
 
 afterAll(() => {
