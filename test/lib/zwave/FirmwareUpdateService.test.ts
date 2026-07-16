@@ -1942,14 +1942,14 @@ describe('FirmwareUpdateService', () => {
 		it('preserves a dismissal completed during a firmware check', async () => {
 			const persistenceStarted = createDeferred<void>()
 			const persistenceBarrier = createDeferred<void>()
-			const updates = [makeUpdate({ version: '4.0.0' })]
+			const existingUpdate = makeUpdate({ version: '4.0.0' })
 			const driver = createDriverPort({
 				getDriver: () => ({
 					controller: {
 						getAvailableFirmwareUpdates: vi.fn(),
 						getAllAvailableFirmwareUpdates: vi
 							.fn()
-							.mockResolvedValue(new Map([[7, updates]])),
+							.mockResolvedValue(new Map([[7, []]])),
 						firmwareUpdateOTA: vi.fn(),
 						nodes: { get: vi.fn() },
 					},
@@ -1959,12 +1959,12 @@ describe('FirmwareUpdateService', () => {
 			const nodes = createNodeStorePort()
 			nodes._nodes.set(7, {
 				id: 7,
-				availableFirmwareUpdates: [],
+				availableFirmwareUpdates: [existingUpdate],
 				lastFirmwareUpdateCheck: 0,
 				firmwareUpdatesDismissed: {},
 			})
 			nodes._store.set(7, {
-				availableFirmwareUpdates: [],
+				availableFirmwareUpdates: [existingUpdate],
 				lastFirmwareUpdateCheck: 0,
 				firmwareUpdatesDismissed: {},
 			})

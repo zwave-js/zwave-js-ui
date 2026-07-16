@@ -193,28 +193,32 @@ export class FirmwareUpdateService {
 		version: string,
 	): Promise<boolean> {
 		const gen = this._generation
-		const storeNode = this._nodes.ensureStoreNode(nodeId)
+		await this._serializePersistence(
+			gen,
+			'dismissFirmwareUpdate',
+			async () => {
+				const storeNode = this._nodes.ensureStoreNode(nodeId)
 
-		if (!storeNode.firmwareUpdatesDismissed) {
-			storeNode.firmwareUpdatesDismissed = {}
-		}
+				if (!storeNode.firmwareUpdatesDismissed) {
+					storeNode.firmwareUpdatesDismissed = {}
+				}
 
-		storeNode.firmwareUpdatesDismissed[version] = true
+				storeNode.firmwareUpdatesDismissed[version] = true
 
-		const node = this._nodes.getNode(nodeId)
-		if (node) {
-			if (!node.firmwareUpdatesDismissed) {
-				node.firmwareUpdatesDismissed = {}
-			}
-			node.firmwareUpdatesDismissed[version] = true
+				const node = this._nodes.getNode(nodeId)
+				if (node) {
+					if (!node.firmwareUpdatesDismissed) {
+						node.firmwareUpdatesDismissed = {}
+					}
+					node.firmwareUpdatesDismissed[version] = true
 
-			this._nodes.emitNodeUpdate(node, {
-				firmwareUpdatesDismissed: node.firmwareUpdatesDismissed,
-			})
-		}
+					this._nodes.emitNodeUpdate(node, {
+						firmwareUpdatesDismissed: node.firmwareUpdatesDismissed,
+					})
+				}
 
-		await this._serializePersistence(gen, 'dismissFirmwareUpdate', () =>
-			this._nodes.updateStoreNodes(),
+				await this._nodes.updateStoreNodes()
+			},
 		)
 		this._logger.info(
 			`Dismissed firmware update ${version} for node ${nodeId}`,
