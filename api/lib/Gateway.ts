@@ -7,7 +7,7 @@ import type { LogLevel } from './logger.ts'
 import { module } from './logger.ts'
 import { PayloadType } from './shared.ts'
 import type { IClientPublishOptions } from 'mqtt'
-import MqttClient from './MqttClient.ts'
+import MqttClient, { type MqttClientEventCallbacks } from './MqttClient.ts'
 import type {
 	AllowedApis,
 	CallAPIResult,
@@ -159,7 +159,11 @@ export default class Gateway<
 	private readonly onWriteRequest = this._onWriteRequest.bind(this)
 	private readonly onBroadRequest = this._onBroadRequest.bind(this)
 	private readonly onMulticastRequest = this._onMulticastRequest.bind(this)
-	private readonly onApiRequest = this._onApiRequest.bind(this)
+	private readonly onApiRequest: MqttClientEventCallbacks['apiCall'] = (
+		topic,
+		apiName,
+		payload,
+	) => void this._onApiRequest(topic, apiName as AllowedApis, payload)
 	private readonly onHassStatus = this._onHassStatus.bind(this)
 	private readonly onBrokerStatus = this._onBrokerStatus.bind(this)
 	private readonly onNodeInited = this._onNodeInited.bind(this)
