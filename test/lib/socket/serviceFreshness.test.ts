@@ -30,10 +30,10 @@ async function createRuntimeHarness(
 ): Promise<RuntimeHarness> {
 	const [{ AppRuntime }, { default: SocketManager }, { registerSocketApi }] =
 		await Promise.all([
-		import('#api/runtime/AppRuntime.ts'),
-		import('#api/lib/SocketManager.ts'),
-		import('#api/socket/registerSocketApi.ts'),
-	])
+			import('#api/runtime/AppRuntime.ts'),
+			import('#api/lib/SocketManager.ts'),
+			import('#api/socket/registerSocketApi.ts'),
+		])
 	const transport = await createSocketTransport((server) => {
 		const socketManager = new SocketManager()
 		socketManager.bindServer(server)
