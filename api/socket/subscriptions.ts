@@ -55,10 +55,10 @@ export function registerSubscriptionHandlers(socket: Socket): void {
 		) => {
 			const channels = requestedChannels(data)
 
-			// "all" isn't a real channel here so unsubscribing from it removes nothing, unlike subscribe
-			const validChannels = channels.filter((c) =>
-				Object.hasOwn(channelMap, c),
-			)
+			const isAll = channels.includes('all')
+			const validChannels = isAll
+				? ALL_CHANNELS
+				: channels.filter((c) => Object.hasOwn(channelMap, c))
 
 			for (const channel of validChannels) {
 				await socket.leave(channel)

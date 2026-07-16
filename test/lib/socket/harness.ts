@@ -1,5 +1,4 @@
-// Shares the module loaders and beforeAll/afterEach/afterAll lifecycle from shared/harness.ts, then
-// layers Socket.IO-specific setup (server, io, client helpers) on top.
+import { once } from 'node:events'
 import { createServer, type Server as HttpServer } from 'node:http'
 import type { AddressInfo } from 'node:net'
 import type { Express } from 'express'
@@ -43,27 +42,33 @@ export interface SocketHarness {
 	disconnectAllClients(): Promise<void>
 }
 
-async function createHarnessInstance(
-	shared: SharedTestContext,
-	options: SocketHarnessOptions,
-): Promise<SocketHarness & { closeInstance(): Promise<void> }> {
-	const instance = shared.createApp({
-		test: {
-			// Gateway/ZnifferManager have private fields, so structural mocks like FakeGateway/FakeZniffer need this cast to satisfy them
-			gateway: options.gateway as unknown as RealGateway | undefined,
-			zniffer: options.zniffer as unknown as RealZniffer | undefined,
-			restarting: options.restarting,
-		},
-	})
-	await instance.loadSnippets()
+export interface SocketTransport<T> {
+	context: T
+	io: SocketIOServer
+	server: HttpServer
+	url: string
+	createClient(opts?: Record<string, unknown>): ClientSocket
+	connectClient(client: ClientSocket): Promise<ClientSocket>
+	flushClientEvents(client: ClientSocket): Promise<void>
+	waitForServerSocketCount(count: number, timeoutMs?: number): Promise<void>
+	disconnectAllClients(): Promise<void>
+	close(): Promise<void>
+}
 
-	const server = createServer(instance.app)
-	instance.attachSocket(server)
+interface SocketTransportSetup<T> {
+	context: T
+	io: SocketIOServer
+	close(): Promise<void>
+}
+
+export async function createSocketTransport<T>(
+	setup: (server: HttpServer) => SocketTransportSetup<T>,
+): Promise<SocketTransport<T>> {
+	const server = createServer()
+	const { context, io, close } = setup(server)
 	await listenOnEphemeralPort(server)
 	const port = (server.address() as AddressInfo).port
 	const url = `http://127.0.0.1:${port}`
-
-	const { io } = instance
 	const clients = new Set<ClientSocket>()
 	let flushSequence = 0
 
@@ -82,7 +87,7 @@ async function createHarnessInstance(
 	function connectClient(client: ClientSocket): Promise<ClientSocket> {
 		return new Promise((resolve, reject) => {
 			client.once('connect', () => resolve(client))
-			client.once('connect_error', (err: Error) => reject(err))
+			client.once('connect_error', reject)
 			client.connect()
 		})
 	}
@@ -127,19 +132,16 @@ async function createHarnessInstance(
 		}
 		clients.clear()
 
-		// Best-effort: lets the server finish settling activeSockets/room membership before returning, but a test that already awaited its own disconnect may have nothing left to wait for
 		try {
 			await waitForServerSocketCount(0, 1000)
 		} catch {
-			// ignore - see above
+			// A client may already have completed its disconnect
 		}
 	}
 
 	return {
-		app: instance.app,
+		context,
 		io,
-		jsonStore: shared.jsonStore,
-		store: shared.store,
 		server,
 		url,
 		createClient,
@@ -147,13 +149,51 @@ async function createHarnessInstance(
 		flushClientEvents,
 		waitForServerSocketCount,
 		disconnectAllClients,
-		async closeInstance() {
+		async close() {
 			await disconnectAllClients()
-
-			// Same lifecycle entry point production uses, so it closes socketManager/io/interceptor plus
-			// gateway/zniffer/plugins when the test provided them, exercising FakeGateway.close/FakeZniffer.close
-			await instance.close()
+			const serverClosed = once(server, 'close')
+			await close()
+			// Socket.IO initiates HTTP shutdown without awaiting its close event
+			await serverClosed
 		},
+	}
+}
+
+async function createHarnessInstance(
+	shared: SharedTestContext,
+	options: SocketHarnessOptions,
+): Promise<SocketHarness & { closeInstance(): Promise<void> }> {
+	const transport = await createSocketTransport((server) => {
+		const instance = shared.createApp({
+			test: {
+				gateway: options.gateway as unknown as RealGateway | undefined,
+				zniffer: options.zniffer as unknown as RealZniffer | undefined,
+				restarting: options.restarting,
+			},
+		})
+		instance.attachSocket(server)
+		return {
+			context: instance,
+			io: instance.io,
+			close: () => instance.close(),
+		}
+	})
+	await transport.context.loadSnippets()
+
+	return {
+		app: transport.context.app,
+		io: transport.io,
+		jsonStore: shared.jsonStore,
+		store: shared.store,
+		server: transport.server,
+		url: transport.url,
+		createClient: (opts) => transport.createClient(opts),
+		connectClient: (client) => transport.connectClient(client),
+		flushClientEvents: (client) => transport.flushClientEvents(client),
+		waitForServerSocketCount: (count, timeoutMs) =>
+			transport.waitForServerSocketCount(count, timeoutMs),
+		disconnectAllClients: () => transport.disconnectAllClients(),
+		closeInstance: () => transport.close(),
 	}
 }
 

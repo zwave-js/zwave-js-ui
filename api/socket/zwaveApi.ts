@@ -1,27 +1,25 @@
 import type { Socket } from 'socket.io'
-import type ZwaveClient from '../lib/ZwaveClient.ts'
-import type ZnifferManager from '../lib/ZnifferManager.ts'
+import debugManager from '../lib/DebugManager.ts'
 import { inboundEvents } from '../lib/SocketEvents.ts'
 import type { AppRuntime } from '../runtime/AppRuntime.ts'
+import type { ZnifferPort, ZwaveClientPort } from '../runtime/ports.ts'
 import { noop, type SocketAck } from './types.ts'
 
-type ZwaveState = ReturnType<ZwaveClient['getState']>
-type ZnifferStatus = ReturnType<ZnifferManager['status']>
+type ZwaveState = ReturnType<ZwaveClientPort['getState']>
+type ZnifferStatus = ReturnType<ZnifferPort['status']>
 
 export interface InitAckState extends Partial<ZwaveState> {
 	zniffer?: ZnifferStatus
 	debugCaptureActive: boolean
 }
 
-// Resolves the gateway via runtime on every call so a gateway replaced mid-restart is seen by the next event
 export function registerInitHandler(socket: Socket, runtime: AppRuntime): void {
 	socket.on(
 		inboundEvents.init,
 		(_data: unknown, cb: SocketAck<InitAckState> = noop) => {
 			let state: Partial<ZwaveState> & { zniffer?: ZnifferStatus } = {}
 
-			// Preserve the historical TypeError when no gateway is attached
-			const currentGw = runtime.requireGateway('zwave')
+			const currentGw = runtime.requireGateway()
 			if (currentGw.zwave) {
 				state = currentGw.zwave.getState()
 			}
@@ -33,7 +31,7 @@ export function registerInitHandler(socket: Socket, runtime: AppRuntime): void {
 
 			cb({
 				...state,
-				debugCaptureActive: runtime.getDebugManager().isSessionActive(),
+				debugCaptureActive: debugManager.isSessionActive(),
 			})
 		},
 	)
@@ -68,7 +66,7 @@ export function registerZwaveApiHandler(
 	socket.on(
 		inboundEvents.zwave,
 		async (data: ZwaveApiRequest, cb: SocketAck<ZwaveApiAck> = noop) => {
-			const currentGw = runtime.requireGateway('zwave')
+			const currentGw = runtime.requireGateway()
 			if (currentGw.zwave) {
 				if (!data.args) data.args = []
 				const callApi = currentGw.zwave.callApi.bind(
