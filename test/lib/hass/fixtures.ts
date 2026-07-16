@@ -9,7 +9,7 @@
  */
 import { vi } from 'vitest'
 import { EventEmitter } from 'node:events'
-import type { StoreHassDevicesResult } from '../../../api/hass/types.ts'
+import type { StoreHassDevicesResult } from '#api/hass/types.ts'
 import type { MqttConfig } from '#api/lib/MqttClient.ts'
 import type {
 	HassDevice,
