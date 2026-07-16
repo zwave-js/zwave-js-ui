@@ -1,4 +1,3 @@
-import { once } from 'node:events'
 import { createServer, type Server as HttpServer } from 'node:http'
 import type { AddressInfo } from 'node:net'
 import type { Express } from 'express'
@@ -42,34 +41,25 @@ export interface SocketHarness {
 	disconnectAllClients(): Promise<void>
 }
 
-export interface SocketTransport<T> {
-	context: T
-	io: SocketIOServer
-	server: HttpServer
-	url: string
-	createClient(opts?: Record<string, unknown>): ClientSocket
-	connectClient(client: ClientSocket): Promise<ClientSocket>
-	flushClientEvents(client: ClientSocket): Promise<void>
-	waitForServerSocketCount(count: number, timeoutMs?: number): Promise<void>
-	disconnectAllClients(): Promise<void>
-	close(): Promise<void>
-}
+async function createHarnessInstance(
+	shared: SharedTestContext,
+	options: SocketHarnessOptions,
+): Promise<SocketHarness & { closeInstance(): Promise<void> }> {
+	const instance = shared.createApp({
+		test: {
+			gateway: options.gateway as unknown as RealGateway | undefined,
+			zniffer: options.zniffer as unknown as RealZniffer | undefined,
+			restarting: options.restarting,
+		},
+	})
+	await instance.loadSnippets()
 
-interface SocketTransportSetup<T> {
-	context: T
-	io: SocketIOServer
-	close(): Promise<void>
-}
-
-export async function createSocketTransport<T>(
-	setup: (server: HttpServer) => SocketTransportSetup<T>,
-): Promise<SocketTransport<T>> {
-	const server = createServer()
-	const setupResult = setup(server)
-	const { context, io } = setupResult
+	const server = createServer(instance.app)
+	instance.attachSocket(server)
 	await listenOnEphemeralPort(server)
 	const port = (server.address() as AddressInfo).port
 	const url = `http://127.0.0.1:${port}`
+	const { io } = instance
 	const clients = new Set<ClientSocket>()
 	let flushSequence = 0
 
@@ -88,7 +78,7 @@ export async function createSocketTransport<T>(
 	function connectClient(client: ClientSocket): Promise<ClientSocket> {
 		return new Promise((resolve, reject) => {
 			client.once('connect', () => resolve(client))
-			client.once('connect_error', reject)
+			client.once('connect_error', (err: Error) => reject(err))
 			client.connect()
 		})
 	}
@@ -141,8 +131,10 @@ export async function createSocketTransport<T>(
 	}
 
 	return {
-		context,
+		app: instance.app,
 		io,
+		jsonStore: shared.jsonStore,
+		store: shared.store,
 		server,
 		url,
 		createClient,
@@ -150,61 +142,9 @@ export async function createSocketTransport<T>(
 		flushClientEvents,
 		waitForServerSocketCount,
 		disconnectAllClients,
-		async close() {
-			await disconnectAllClients()
-			const serverClosed = once(server, 'close')
-			await setupResult.close()
-			// Socket.IO initiates HTTP shutdown without awaiting its close event
-			await serverClosed
-		},
-	}
-}
-
-async function createHarnessInstance(
-	shared: SharedTestContext,
-	options: SocketHarnessOptions,
-): Promise<SocketHarness & { closeInstance(): Promise<void> }> {
-	const transport = await createSocketTransport((server) => {
-		const instance = shared.createApp({
-			test: {
-				gateway: options.gateway as unknown as RealGateway | undefined,
-				zniffer: options.zniffer as unknown as RealZniffer | undefined,
-				restarting: options.restarting,
-			},
-		})
-		instance.attachSocket(server)
-		return {
-			context: instance,
-			io: instance.io,
-			close: () => instance.close(),
-		}
-	})
-	await transport.context.loadSnippets()
-
-	return {
-		app: transport.context.app,
-		io: transport.io,
-		jsonStore: shared.jsonStore,
-		store: shared.store,
-		server: transport.server,
-		url: transport.url,
-		createClient: (opts) => transport.createClient(opts),
-		connectClient: (client) => transport.connectClient(client),
-		flushClientEvents: (client) => transport.flushClientEvents(client),
-		waitForServerSocketCount: (count, timeoutMs) =>
-			transport.waitForServerSocketCount(count, timeoutMs),
-		disconnectAllClients: () => transport.disconnectAllClients(),
 		async closeInstance() {
-			await transport.disconnectAllClients()
-			const serverClosed = once(transport.server, 'close')
-			try {
-				await transport.context.close()
-			} finally {
-				if (transport.server.listening) {
-					await transport.io.close()
-				}
-				await serverClosed
-			}
+			await disconnectAllClients()
+			await instance.close()
 		},
 	}
 }
