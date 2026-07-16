@@ -219,6 +219,8 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 	async function startServer(port: number | string, host?: string) {
 		let server: HttpServer
 
+		installProcessHandlers()
+
 		const settings = jsonStore.get(store.settings)
 
 		// Merge external settings into zwave config (if external settings exist)
