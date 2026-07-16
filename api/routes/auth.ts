@@ -216,10 +216,11 @@ export function registerAuthRoutes(
 			try {
 				const users = jsonStore.get(store.users)
 
-				// Left unguarded so a disabled-auth session throws below instead of silently early-returning
-				const user = req.session.user as PublicUser
-
-				const oldUser = users.find((u) => u.username === user.username)
+				// req.session.user can be undefined here (e.g. auth disabled with no prior login); guard it so a stale/unknown session falls through to "User not found" below instead of throwing
+				const user = req.session.user
+				const oldUser = user
+					? users.find((u) => u.username === user.username)
+					: undefined
 
 				if (!oldUser) {
 					return res.json({
