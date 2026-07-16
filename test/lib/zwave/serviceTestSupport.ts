@@ -1,6 +1,6 @@
 import { vi, type MockInstance } from 'vitest'
 
-import type { ServiceLogger } from '../../../api/lib/zwave/ports.ts'
+import type { ServiceLogger } from '#api/lib/zwave/ports.ts'
 
 export type MockServiceLogger = ServiceLogger & {
 	info: MockInstance<ServiceLogger['info']>
