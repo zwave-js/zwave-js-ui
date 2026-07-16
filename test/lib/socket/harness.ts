@@ -65,7 +65,8 @@ export async function createSocketTransport<T>(
 	setup: (server: HttpServer) => SocketTransportSetup<T>,
 ): Promise<SocketTransport<T>> {
 	const server = createServer()
-	const { context, io, close } = setup(server)
+	const setupResult = setup(server)
+	const { context, io } = setupResult
 	await listenOnEphemeralPort(server)
 	const port = (server.address() as AddressInfo).port
 	const url = `http://127.0.0.1:${port}`
@@ -152,7 +153,7 @@ export async function createSocketTransport<T>(
 		async close() {
 			await disconnectAllClients()
 			const serverClosed = once(server, 'close')
-			await close()
+			await setupResult.close()
 			// Socket.IO initiates HTTP shutdown without awaiting its close event
 			await serverClosed
 		},
