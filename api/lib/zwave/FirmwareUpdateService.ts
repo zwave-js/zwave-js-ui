@@ -168,18 +168,11 @@ export class FirmwareUpdateService {
 				}
 
 				// Persist a detached snapshot because filesystem writes cannot be cancelled after reset
-				await this._persistStagedNodeUpdates(
+				await this._persistAndApplyStagedNodeUpdates(
 					staged,
 					gen,
 					'checkAllNodesFirmwareUpdates',
 				)
-
-				// Fence publication because the completed write may belong to an obsolete generation
-				this._assertFence(gen, 'checkAllNodesFirmwareUpdates')
-
-				for (const projection of staged) {
-					this._applyNodeFirmwareProjection(projection)
-				}
 			}
 
 			return result
@@ -605,16 +598,11 @@ export class FirmwareUpdateService {
 			)
 
 			// Persist a detached snapshot because filesystem writes cannot be cancelled after reset
-			await this._persistStagedNodeUpdates(
+			await this._persistAndApplyStagedNodeUpdates(
 				[projection],
 				gen,
 				'checkNodeFirmwareUpdates',
 			)
-
-			// Fence publication because the completed write may belong to an obsolete generation
-			this._assertFence(gen, 'checkNodeFirmwareUpdates')
-
-			this._applyNodeFirmwareProjection(projection)
 
 			this._logger.info(
 				`Checked firmware updates for node ${nodeId} after update completion. Found ${filteredUpdates.length} update(s)`,
@@ -642,13 +630,29 @@ export class FirmwareUpdateService {
 		return (updates || []).filter((update) => !update.downgrade)
 	}
 
-	private async _persistStagedNodeUpdates(
+	private async _persistAndApplyStagedNodeUpdates(
 		staged: ReadonlyArray<StagedFirmwareNodeUpdate>,
 		gen: number,
 		operation: string,
 	): Promise<void> {
-		await this._serializePersistence(gen, operation, () =>
-			this._nodes.persistStagedNodeUpdates(staged),
+		await this._serializePersistence(
+			gen,
+			operation,
+			() => this._nodes.persistStagedNodeUpdates(staged),
+			() => {
+				for (const projection of staged) {
+					const storeNode = this._nodes.getStoreNode(
+						projection.nodeId,
+					)
+					this._applyNodeFirmwareProjection({
+						...projection,
+						firmwareUpdatesDismissed: this._cleanDismissedUpdates(
+							projection.availableFirmwareUpdates,
+							storeNode?.firmwareUpdatesDismissed || {},
+						),
+					})
+				}
+			},
 		)
 	}
 
@@ -656,6 +660,7 @@ export class FirmwareUpdateService {
 		gen: number,
 		operation: string,
 		persist: () => Promise<void>,
+		publish?: () => void,
 	): Promise<void> {
 		const persistence = this._persistenceTail.then(async () => {
 			this._assertFence(gen, operation)
@@ -667,6 +672,7 @@ export class FirmwareUpdateService {
 			}
 
 			this._assertFence(gen, operation)
+			publish?.()
 		})
 
 		this._persistenceTail = persistence.catch(() => undefined)
