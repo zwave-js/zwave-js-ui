@@ -1346,6 +1346,38 @@ describe('InclusionCoordinator', () => {
 			await expect(currentInclusion).resolves.toBe(true)
 		})
 
+		it('an interrupted setup cannot clear the current command timeout', async () => {
+			vi.useFakeTimers()
+			const qrBarrier =
+				createDeferred<
+					Awaited<ReturnType<InclusionQRPort['parseQRCodeString']>>
+				>()
+			const qr: InclusionQRPort = {
+				parseQRCodeString: vi.fn(() => qrBarrier.promise),
+			}
+			const config = createConfigPort(2)
+			const { coordinator, driver } = createCoordinator({ config, qr })
+
+			const interruptedInclusion = coordinator.startInclusion(
+				InclusionStrategy.Security_S2,
+				{ qrString: 'old-qr', name: 'old node' },
+			)
+			const interruptedResult =
+				expect(interruptedInclusion).rejects.toThrow(
+					'QR parsing failed',
+				)
+
+			await coordinator.startInclusion(InclusionStrategy.Insecure, {
+				name: 'current node',
+			})
+			qrBarrier.reject(new Error('QR parsing failed'))
+			await interruptedResult
+
+			await vi.advanceTimersByTimeAsync(2_100)
+			const drv = driver.getDriver()
+			expect(drv.controller.stopInclusion).toHaveBeenCalledTimes(1)
+		})
+
 		it('replacement rejects when reset during the controller command', async () => {
 			const replacementStarted = createDeferred<void>()
 			const replacementBarrier = createDeferred<boolean>()

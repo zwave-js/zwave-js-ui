@@ -56,6 +56,8 @@ export class InclusionCoordinator {
 	// Advance on reset so setup suspended by backup or QR parsing cannot use a replacement driver
 	private _generation = 0
 
+	private _commandToken = 0
+
 	private _nvmEventSetter: ((event: string) => void) | undefined
 
 	private readonly _socketEvents: {
@@ -170,6 +172,7 @@ export class InclusionCoordinator {
 		}
 
 		const gen = this._generation
+		const commandToken = ++this._commandToken
 
 		if (this._backup.backupOnEvent) {
 			if (this._nvmEventSetter) {
@@ -179,9 +182,7 @@ export class InclusionCoordinator {
 		}
 
 		// Re-resolve because close or restart may replace the driver during await
-		if (this._generation !== gen) {
-			throw new InclusionLifecycleCancelledError('inclusion')
-		}
+		this._assertCommand(gen, commandToken, 'inclusion')
 		const currentDrv = this._driver.getDriver()
 		if (!currentDrv || !this._driver.isDriverReady()) {
 			throw new Error('Driver is not ready')
@@ -204,6 +205,9 @@ export class InclusionCoordinator {
 
 			this._commandsTimeout = setTimeout(
 				() => {
+					if (this._commandToken !== commandToken) {
+						return
+					}
 					this.stopInclusion().catch((e) => {
 						this._logger.error(
 							`Failed to stop inclusion on timeout: ${String(e)}`,
@@ -222,6 +226,7 @@ export class InclusionCoordinator {
 					currentDrv.controller,
 					{ strategy },
 					gen,
+					commandToken,
 				)
 			}
 
@@ -240,6 +245,7 @@ export class InclusionCoordinator {
 						forceSecurity: options?.forceSecurity,
 					},
 					gen,
+					commandToken,
 				)
 			}
 
@@ -250,9 +256,7 @@ export class InclusionCoordinator {
 					)
 
 					// Re-resolve because QR parsing may overlap driver replacement
-					if (this._generation !== gen) {
-						throw new InclusionLifecycleCancelledError('inclusion')
-					}
+					this._assertCommand(gen, commandToken, 'inclusion')
 
 					if (!parsedQr) {
 						throw Error(`Invalid QR code string`)
@@ -264,11 +268,7 @@ export class InclusionCoordinator {
 						if (provisionSmartStartNode) {
 							await provisionSmartStartNode(parsedQr)
 						}
-						if (this._generation !== gen) {
-							throw new InclusionLifecycleCancelledError(
-								'inclusion',
-							)
-						}
+						this._assertCommand(gen, commandToken, 'inclusion')
 						return true
 					} else {
 						throw Error(`Invalid QR code version`)
@@ -283,6 +283,7 @@ export class InclusionCoordinator {
 							provisioning: options.provisioning,
 						},
 						gen,
+						commandToken,
 					)
 				}
 				this._isReplacing = false
@@ -293,6 +294,7 @@ export class InclusionCoordinator {
 						dsk: options?.dsk,
 					},
 					gen,
+					commandToken,
 				)
 			}
 
@@ -301,9 +303,10 @@ export class InclusionCoordinator {
 				currentDrv.controller,
 				undefined,
 				gen,
+				commandToken,
 			)
 		} catch (error) {
-			if (this._generation === gen) {
+			if (this._ownsCommand(gen, commandToken)) {
 				this._tmpNode = undefined
 				this.clearCommandsTimeout()
 			}
@@ -318,6 +321,7 @@ export class InclusionCoordinator {
 		}
 
 		const gen = this._generation
+		const commandToken = ++this._commandToken
 
 		if (this._backup.backupOnEvent) {
 			if (this._nvmEventSetter) {
@@ -327,9 +331,7 @@ export class InclusionCoordinator {
 		}
 
 		// Re-resolve because close or restart may replace the driver during await
-		if (this._generation !== gen) {
-			throw new InclusionLifecycleCancelledError('exclusion')
-		}
+		this._assertCommand(gen, commandToken, 'exclusion')
 		const currentDrv = this._driver.getDriver()
 		if (!currentDrv || !this._driver.isDriverReady()) {
 			throw new Error('Driver is not ready')
@@ -342,6 +344,9 @@ export class InclusionCoordinator {
 
 		this._commandsTimeout = setTimeout(
 			() => {
+				if (this._commandToken !== commandToken) {
+					return
+				}
 				this.stopExclusion().catch((e) => {
 					this._logger.error(
 						`Failed to stop exclusion on timeout: ${String(e)}`,
@@ -353,12 +358,10 @@ export class InclusionCoordinator {
 
 		try {
 			const result = await currentDrv.controller.beginExclusion(options)
-			if (this._generation !== gen) {
-				throw new InclusionLifecycleCancelledError('exclusion')
-			}
+			this._assertCommand(gen, commandToken, 'exclusion')
 			return result
 		} catch (error) {
-			if (this._generation === gen) {
+			if (this._ownsCommand(gen, commandToken)) {
 				this.clearCommandsTimeout()
 			}
 			throw error
@@ -371,6 +374,7 @@ export class InclusionCoordinator {
 			throw new Error('Driver is not ready')
 		}
 
+		this._commandToken++
 		if (this._commandsTimeout) {
 			clearTimeout(this._commandsTimeout)
 			this._commandsTimeout = null
@@ -384,6 +388,7 @@ export class InclusionCoordinator {
 			throw new Error('Driver is not ready')
 		}
 
+		this._commandToken++
 		if (this._commandsTimeout) {
 			clearTimeout(this._commandsTimeout)
 			this._commandsTimeout = null
@@ -400,6 +405,7 @@ export class InclusionCoordinator {
 		},
 	): Promise<boolean> {
 		const gen = this._generation
+		const commandToken = ++this._commandToken
 		try {
 			const drv = this._driver.getDriver()
 			if (!drv || !this._driver.isDriverReady()) {
@@ -414,9 +420,7 @@ export class InclusionCoordinator {
 			}
 
 			// Re-resolve because close or restart may replace the driver during await
-			if (this._generation !== gen) {
-				throw new InclusionLifecycleCancelledError('replace')
-			}
+			this._assertCommand(gen, commandToken, 'replace')
 			const currentDrv = this._driver.getDriver()
 			if (!currentDrv || !this._driver.isDriverReady()) {
 				throw new Error('Driver is not ready')
@@ -429,6 +433,9 @@ export class InclusionCoordinator {
 
 			this._commandsTimeout = setTimeout(
 				() => {
+					if (this._commandToken !== commandToken) {
+						return
+					}
 					this.stopInclusion().catch((e) => {
 						this._logger.error(
 							`Failed to stop inclusion on timeout: ${String(e)}`,
@@ -448,9 +455,7 @@ export class InclusionCoordinator {
 					)
 
 					// Re-resolve because QR parsing may overlap driver replacement
-					if (this._generation !== gen) {
-						throw new InclusionLifecycleCancelledError('replace')
-					}
+					this._assertCommand(gen, commandToken, 'replace')
 
 					if (parsedQr) {
 						options.provisioning = parsedQr
@@ -487,13 +492,12 @@ export class InclusionCoordinator {
 				)
 			}
 
-			if (this._generation !== gen) {
-				throw new InclusionLifecycleCancelledError('replace')
-			}
+			this._assertCommand(gen, commandToken, 'replace')
 			return result
 		} catch (error) {
-			if (this._generation === gen) {
+			if (this._ownsCommand(gen, commandToken)) {
 				this._isReplacing = false
+				this.clearCommandsTimeout()
 			}
 			throw error
 		}
@@ -507,6 +511,9 @@ export class InclusionCoordinator {
 			throw new Error('Driver is not ready')
 		}
 
+		const gen = this._generation
+		const commandToken = ++this._commandToken
+
 		if (this._commandsTimeout) {
 			clearTimeout(this._commandsTimeout)
 			this._commandsTimeout = null
@@ -514,6 +521,9 @@ export class InclusionCoordinator {
 
 		this._commandsTimeout = setTimeout(
 			() => {
+				if (this._commandToken !== commandToken) {
+					return
+				}
 				this.stopLearnMode().catch((e) => {
 					this._logger.error(
 						`Failed to stop learn mode on timeout: ${String(e)}`,
@@ -527,7 +537,17 @@ export class InclusionCoordinator {
 			strategy: joinNetworkStrategy,
 		}
 
-		return drv.controller.beginJoiningNetwork(joinNetworkOptions)
+		try {
+			const result =
+				await drv.controller.beginJoiningNetwork(joinNetworkOptions)
+			this._assertCommand(gen, commandToken, 'learn mode')
+			return result
+		} catch (error) {
+			if (this._ownsCommand(gen, commandToken)) {
+				this.clearCommandsTimeout()
+			}
+			throw error
+		}
 	}
 
 	async stopLearnMode(): Promise<boolean> {
@@ -536,6 +556,7 @@ export class InclusionCoordinator {
 			throw new Error('Driver is not ready')
 		}
 
+		this._commandToken++
 		if (this._commandsTimeout) {
 			clearTimeout(this._commandsTimeout)
 			this._commandsTimeout = null
@@ -679,6 +700,7 @@ export class InclusionCoordinator {
 
 	reset(): void {
 		this._generation++
+		this._commandToken++
 		this.clearCommandsTimeout()
 		this._tmpNode = undefined
 		this._isReplacing = false
@@ -709,12 +731,25 @@ export class InclusionCoordinator {
 			>['controller']['beginInclusion']
 		>[0],
 		gen: number,
+		commandToken: number,
 	): Promise<boolean> {
 		const result = await controller.beginInclusion(options)
-		if (this._generation !== gen) {
-			throw new InclusionLifecycleCancelledError('inclusion')
-		}
+		this._assertCommand(gen, commandToken, 'inclusion')
 		return result
+	}
+
+	private _ownsCommand(gen: number, commandToken: number): boolean {
+		return this._generation === gen && this._commandToken === commandToken
+	}
+
+	private _assertCommand(
+		gen: number,
+		commandToken: number,
+		operation: string,
+	): void {
+		if (!this._ownsCommand(gen, commandToken)) {
+			throw new InclusionLifecycleCancelledError(operation)
+		}
 	}
 
 	private _onGrantSecurityClasses(
