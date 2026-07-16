@@ -14,12 +14,12 @@
  * The end-to-end delivery of a real `homeassistant/status` retained message is
  * covered by `mqttLifecycle.test.ts` through the Gateway harness.
  */
-import { describe, it, expect, beforeEach, beforeAll, vi } from 'vitest'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
 import type { Mock } from 'vitest'
-import type { default as MqttDiscoveryManagerClass } from '#api/hass/MqttDiscoveryManager.ts'
-import type {
-	HassStatusSource,
-	MqttDiscoveryManagerOptions,
+import MqttDiscoveryManager, {
+	HASS_STATUS_TOPIC,
+	type HassStatusSource,
+	type MqttDiscoveryManagerOptions,
 } from '#api/hass/MqttDiscoveryManager.ts'
 import { CustomDeviceRegistry } from '#api/hass/CustomDeviceRegistry.ts'
 import type {
@@ -28,18 +28,6 @@ import type {
 	HassZwavePort,
 } from '#api/hass/ports.ts'
 import type { HassDevice } from '#api/hass/types.ts'
-import { ensureTestEnv } from './env.ts'
-
-// This module transitively imports sessionSecret from config/app.ts, which falls back to the real repo store/ dir if STORE_DIR isn't set yet; must be a dynamic import() after ensureTestEnv() (see http/env.ts). CustomDeviceRegistry takes storeDir as a constructor option instead, so it's unaffected and stays a static import
-let MqttDiscoveryManager: typeof MqttDiscoveryManagerClass
-let HASS_STATUS_TOPIC: string
-
-beforeAll(async () => {
-	ensureTestEnv()
-	;({ default: MqttDiscoveryManager, HASS_STATUS_TOPIC } = await import(
-		'#api/hass/MqttDiscoveryManager.ts'
-	))
-})
 
 // Methods declared as function-valued properties let tests reference
 // `logger.info` for assertions without the unbound-method rule firing
@@ -165,7 +153,7 @@ function device(overrides: Partial<HassDevice> = {}): HassDevice {
 }
 
 interface Harness {
-	manager: MqttDiscoveryManagerClass
+	manager: MqttDiscoveryManager
 	source: CustomDeviceRegistry
 	logger: MockLogger
 	options: MqttDiscoveryManagerOptions
