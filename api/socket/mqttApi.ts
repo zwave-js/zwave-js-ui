@@ -1,20 +1,20 @@
 import type { Socket } from 'socket.io'
 import * as loggers from '../lib/logger.ts'
+import { getErrorMessage } from '../lib/errors.ts'
 import { inboundEvents } from '../lib/SocketEvents.ts'
 import type { AppRuntime } from '../runtime/AppRuntime.ts'
-import { getLegacyErrorMessage, noop, type SocketAck } from './types.ts'
+import { noop, type SocketAck } from './types.ts'
 
 const logger = loggers.module('App')
 
 export interface MqttApiRequest {
 	api?: string
 	args: unknown[]
-	apiName?: string
 }
 
 export interface MqttApiAck {
 	success: boolean
-	message: unknown
+	message: string
 	result: void
 	api?: string
 }
@@ -29,14 +29,13 @@ export function registerMqttApiHandler(
 			logger.info(`Mqtt api call: ${data.api}`)
 
 			let res: void
-			let err: unknown = undefined
+			let err: string | undefined
 
 			try {
 				switch (data.api) {
 					case 'updateNodeTopics':
 						{
-							const gateway =
-								runtime.requireGateway('updateNodeTopics')
+							const gateway = runtime.requireGateway()
 							res = Reflect.apply(
 								gateway.updateNodeTopics.bind(gateway),
 								undefined,
@@ -46,8 +45,7 @@ export function registerMqttApiHandler(
 						break
 					case 'removeNodeRetained':
 						{
-							const gateway =
-								runtime.requireGateway('removeNodeRetained')
+							const gateway = runtime.requireGateway()
 							res = Reflect.apply(
 								gateway.removeNodeRetained.bind(gateway),
 								undefined,
@@ -56,12 +54,11 @@ export function registerMqttApiHandler(
 						}
 						break
 					default:
-						// Client sends "api" not "apiName" so this always reports undefined
-						err = `Unknown MQTT api ${data.apiName}`
+						err = `Unknown MQTT api ${data.api}`
 				}
 			} catch (error) {
 				logger.error('Error while calling MQTT api', error)
-				err = getLegacyErrorMessage(error)
+				err = getErrorMessage(error)
 			}
 
 			cb({

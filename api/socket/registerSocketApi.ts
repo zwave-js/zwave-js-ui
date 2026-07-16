@@ -12,7 +12,12 @@ export function registerSocketApi(
 	socketManager: SocketManager,
 	runtime: AppRuntime,
 ): void {
-	socketManager.io.on('connection', (socket) => {
+	const io = socketManager.io
+	if (!io) {
+		throw new Error('Socket manager is not bound')
+	}
+
+	io.on('connection', (socket) => {
 		registerInitHandler(socket, runtime)
 		registerZwaveApiHandler(socket, runtime)
 		registerMqttApiHandler(socket, runtime)
@@ -22,7 +27,7 @@ export function registerSocketApi(
 	})
 
 	socketManager.on('clients', (event, activeSockets) => {
-		const currentGw = runtime.requireGateway('zwave')
+		const currentGw = runtime.requireGateway()
 		if (event === 'connection' && activeSockets.size === 1) {
 			currentGw.zwave?.setUserCallbacks()
 		} else if (event === 'disconnect' && activeSockets.size === 0) {

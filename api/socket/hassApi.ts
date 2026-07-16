@@ -1,9 +1,10 @@
 import type { Socket } from 'socket.io'
 import type { HassDevice } from '../lib/ZwaveClient.ts'
+import { getErrorMessage } from '../lib/errors.ts'
 import * as loggers from '../lib/logger.ts'
 import { inboundEvents } from '../lib/SocketEvents.ts'
 import type { AppRuntime } from '../runtime/AppRuntime.ts'
-import { getLegacyErrorMessage, noop, type SocketAck } from './types.ts'
+import { noop, type SocketAck } from './types.ts'
 
 const logger = loggers.module('App')
 
@@ -18,7 +19,7 @@ export interface HassApiRequest {
 
 export interface HassApiAck {
 	success: boolean
-	message: unknown
+	message: string
 	result: void
 	api?: string
 }
@@ -33,14 +34,12 @@ export function registerHassApiHandler(
 			logger.info(`Hass api call: ${data.apiName}`)
 
 			let res: void
-			let err: unknown = undefined
+			let err: string | undefined
 			try {
-				// No default case so an unknown apiName silently succeeds with res/err undefined
 				switch (data.apiName) {
 					case 'delete':
 						{
-							const gateway =
-								runtime.requireGateway('publishDiscovery')
+							const gateway = runtime.requireGateway()
 							res = Reflect.apply(
 								gateway.publishDiscovery.bind(gateway),
 								undefined,
@@ -57,8 +56,7 @@ export function registerHassApiHandler(
 						break
 					case 'discover':
 						{
-							const gateway =
-								runtime.requireGateway('publishDiscovery')
+							const gateway = runtime.requireGateway()
 							res = Reflect.apply(
 								gateway.publishDiscovery.bind(gateway),
 								undefined,
@@ -75,8 +73,7 @@ export function registerHassApiHandler(
 						break
 					case 'rediscoverNode':
 						{
-							const gateway =
-								runtime.requireGateway('rediscoverNode')
+							const gateway = runtime.requireGateway()
 							res = Reflect.apply(
 								gateway.rediscoverNode.bind(gateway),
 								undefined,
@@ -86,8 +83,7 @@ export function registerHassApiHandler(
 						break
 					case 'disableDiscovery':
 						{
-							const gateway =
-								runtime.requireGateway('disableDiscovery')
+							const gateway = runtime.requireGateway()
 							res = Reflect.apply(
 								gateway.disableDiscovery.bind(gateway),
 								undefined,
@@ -97,7 +93,7 @@ export function registerHassApiHandler(
 						break
 					case 'update':
 						{
-							const zwave = runtime.requireGateway('zwave').zwave
+							const zwave = runtime.requireZwaveClient()
 							res = Reflect.apply(
 								zwave.updateDevice.bind(zwave),
 								undefined,
@@ -107,7 +103,7 @@ export function registerHassApiHandler(
 						break
 					case 'add':
 						{
-							const zwave = runtime.requireGateway('zwave').zwave
+							const zwave = runtime.requireZwaveClient()
 							res = Reflect.apply(
 								zwave.addDevice.bind(zwave),
 								undefined,
@@ -117,7 +113,7 @@ export function registerHassApiHandler(
 						break
 					case 'store':
 						{
-							const zwave = runtime.requireGateway('zwave').zwave
+							const zwave = runtime.requireZwaveClient()
 							res = await Reflect.apply(
 								zwave.storeDevices.bind(zwave),
 								undefined,
@@ -125,10 +121,12 @@ export function registerHassApiHandler(
 							)
 						}
 						break
+					default:
+						err = `Unknown HASS api ${data.apiName}`
 				}
 			} catch (error) {
 				logger.error('Error while calling HASS api', error)
-				err = getLegacyErrorMessage(error)
+				err = getErrorMessage(error)
 			}
 
 			cb({

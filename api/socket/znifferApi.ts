@@ -1,34 +1,28 @@
 import type { Socket } from 'socket.io'
+import { getErrorMessage } from '../lib/errors.ts'
 import * as loggers from '../lib/logger.ts'
 import { inboundEvents } from '../lib/SocketEvents.ts'
 import type { AppRuntime } from '../runtime/AppRuntime.ts'
-import { getLegacyErrorMessage, noop, type SocketAck } from './types.ts'
+import { noop, type SocketAck } from './types.ts'
 
 const logger = loggers.module('App')
 
-// Action-specific fields remain compile-time-only because wire payloads are not validated
-interface ZnifferApiRequestBase {
-	api?: string
-}
-
-export type ZnifferApiRequest = ZnifferApiRequestBase &
-	(
-		| {
-				apiName:
-					| 'start'
-					| 'stop'
-					| 'clear'
-					| 'getFrames'
-					| 'saveCaptureToFile'
-		  }
-		| { apiName: 'setFrequency'; frequency: number }
-		| { apiName: 'setLRChannelConfig'; channelConfig: number }
-		| { apiName: 'loadCaptureFromBuffer'; buffer: number[] }
-	)
+export type ZnifferApiRequest =
+	| {
+			apiName:
+				| 'start'
+				| 'stop'
+				| 'clear'
+				| 'getFrames'
+				| 'saveCaptureToFile'
+	  }
+	| { apiName: 'setFrequency'; frequency: number }
+	| { apiName: 'setLRChannelConfig'; channelConfig: number }
+	| { apiName: 'loadCaptureFromBuffer'; buffer: number[] }
 
 export interface ZnifferApiAck {
 	success: boolean
-	message: unknown
+	message: string
 	result: unknown
 	api?: string
 }
@@ -43,30 +37,27 @@ export function registerZnifferApiHandler(
 			data: ZnifferApiRequest,
 			cb: SocketAck<ZnifferApiAck> = noop,
 		) => {
-			// Client sends "apiName" not "api" so this always logs undefined
-			logger.info(`Zniffer api call: ${data.api}`)
-
 			const apiName: string = data.apiName
+			logger.info(`Zniffer api call: ${apiName}`)
 			let res: unknown
-			let err: unknown = undefined
+			let err: string | undefined
 			try {
 				switch (data.apiName) {
 					case 'start':
-						res = await runtime.requireZniffer('start').start()
+						res = await runtime.requireZniffer().start()
 						break
 					case 'stop':
-						res = await runtime.requireZniffer('stop').stop()
+						res = await runtime.requireZniffer().stop()
 						break
 					case 'clear':
-						res = runtime.requireZniffer('clear').clear()
+						res = runtime.requireZniffer().clear()
 						break
 					case 'getFrames':
-						res = runtime.requireZniffer('getFrames').getFrames()
+						res = runtime.requireZniffer().getFrames()
 						break
 					case 'setFrequency':
 						{
-							const zniffer =
-								runtime.requireZniffer('setFrequency')
+							const zniffer = runtime.requireZniffer()
 							res = await Reflect.apply(
 								zniffer.setFrequency.bind(zniffer),
 								undefined,
@@ -76,8 +67,7 @@ export function registerZnifferApiHandler(
 						break
 					case 'setLRChannelConfig':
 						{
-							const zniffer =
-								runtime.requireZniffer('setLRChannelConfig')
+							const zniffer = runtime.requireZniffer()
 							res = await Reflect.apply(
 								zniffer.setLRChannelConfig.bind(zniffer),
 								undefined,
@@ -86,25 +76,21 @@ export function registerZnifferApiHandler(
 						}
 						break
 					case 'saveCaptureToFile':
-						res = await runtime
-							.requireZniffer('saveCaptureToFile')
-							.saveCaptureToFile()
+						res = await runtime.requireZniffer().saveCaptureToFile()
 						break
 					case 'loadCaptureFromBuffer': {
 						const buffer = Buffer.from(data.buffer)
-						// Deliberately not awaited so res is the pending promise, not the resolved value
-						res = runtime
-							.requireZniffer('loadCaptureFromBuffer')
+						res = await runtime
+							.requireZniffer()
 							.loadCaptureFromBuffer(buffer)
 						break
 					}
 					default:
-						// Unknown actions fail here while HASS_API silently succeeds
 						throw new Error(`Unknown ZNIFFER api ${apiName}`)
 				}
 			} catch (error) {
 				logger.error('Error while calling ZNIFFER api', error)
-				err = getLegacyErrorMessage(error)
+				err = getErrorMessage(error)
 			}
 
 			cb({
