@@ -21,11 +21,11 @@ import Cron from 'croner'
 
 import type { HassDevice } from '../hass/types.ts'
 import type { DiscoveryGenerator } from '../hass/DiscoveryGenerator.ts'
+import type { CustomDeviceRegistry } from '../hass/CustomDeviceRegistry.ts'
 import MqttDiscoveryManager, {
 	type MqttDiscoveryManagerOptions,
 } from '../hass/MqttDiscoveryManager.ts'
 import type {
-	HassDeviceRegistryLifecyclePort,
 	HassNode,
 	HassTopicNode,
 	HassValue,
@@ -104,6 +104,7 @@ export type GatewayConfig = {
 	}
 	disableChangelog?: boolean
 	notifyNewVersions?: boolean
+	/** Enable HTTPS for the web server (see `startServer` in `app.ts`). */
 	https?: boolean
 }
 
@@ -136,12 +137,14 @@ export type GatewayMqtt = Pick<
 	| 'clientID'
 	| 'close'
 	| 'disabled'
+	| 'emitHassStatus'
 	| 'getStatusTopic'
 	| 'getTopic'
 	| 'off'
 	| 'on'
 	| 'publish'
 	| 'subscribe'
+	| 'subscribeExact'
 >
 
 export default class Gateway<
@@ -156,6 +159,7 @@ export default class Gateway<
 	private _closed = false
 	private jobs: Map<string, Cron> = new Map()
 	private _mqttDiscovery?: MqttDiscoveryManager
+	private readonly registrySource: CustomDeviceRegistry
 	private listenersAttached = false
 	private readonly onWriteRequest = this._onWriteRequest.bind(this)
 	private readonly onBroadRequest = this._onBroadRequest.bind(this)
@@ -221,12 +225,13 @@ export default class Gateway<
 		config: GatewayConfig,
 		zwave: TZwave,
 		mqtt: TMqtt,
-		customDeviceRegistry: HassDeviceRegistryLifecyclePort,
+		customDeviceRegistry: CustomDeviceRegistry,
 	) {
 		this.config = config || { type: 1 }
 		// clients
 		this._mqtt = mqtt
 		this._zwave = zwave
+		this.registrySource = customDeviceRegistry
 	}
 
 	/**
@@ -278,7 +283,7 @@ export default class Gateway<
 				valueTopic: (node, value, returnObject) =>
 					this.valueTopic(node, value, returnObject),
 			},
-			registrySource: defaultCustomDeviceRegistry,
+			registrySource: this.registrySource,
 			logger,
 		}
 	}

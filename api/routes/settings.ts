@@ -349,7 +349,7 @@ export function registerSettingsRoutes(
 
 				// `/api/restart` requires a running gateway to close before it
 				// restarts, so a missing one is surfaced as a caller error
-				await runtime.teardownGateway({ requireProperty: 'close' })
+				await runtime.teardownGateway({ requireGateway: true })
 				if (settings.gateway) {
 					runtime.setupLogging({ gateway: settings.gateway })
 				}
