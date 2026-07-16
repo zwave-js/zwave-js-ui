@@ -944,6 +944,26 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			updateStoreNodes: () => this.updateStoreNodes(),
 		})
 
+		// Keep request locks across restarts while live ports resolve replacement state
+		const scheduleDriverPort = {
+			getDriver: () => this._driver,
+		}
+		const scheduleNodeStorePort = {
+			getNode: (nodeId: number) => this._nodes.get(nodeId),
+			emitNodeUpdate: (
+				node: ZUINode,
+				changedProps: utils.DeepPartial<ZUINode>,
+			) => this.emitNodeUpdate(node, changedProps),
+		}
+		const scheduleUtilsPort = {
+			deepEqual: (a: unknown, b: unknown) => utils.deepEqual(a, b),
+		}
+		this._scheduleService = new ScheduleService(
+			scheduleDriverPort,
+			scheduleNodeStorePort,
+			scheduleUtilsPort,
+		)
+
 		this.init()
 	}
 
@@ -969,26 +989,6 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		this._virtualNodes = new Map()
 		this._nodeToGroups = new Map()
 		this._rebuildNodeToGroupsIndex()
-
-		// Resolve current driver via closure so services survive a restart-driven swap
-		const scheduleDriverPort = {
-			getDriver: () => this._driver,
-		}
-		const scheduleNodeStorePort = {
-			getNode: (nodeId: number) => this._nodes.get(nodeId),
-			emitNodeUpdate: (
-				node: ZUINode,
-				changedProps: utils.DeepPartial<ZUINode>,
-			) => this.emitNodeUpdate(node, changedProps),
-		}
-		const scheduleUtilsPort = {
-			deepEqual: (a: unknown, b: unknown) => utils.deepEqual(a, b),
-		}
-		this._scheduleService = new ScheduleService(
-			scheduleDriverPort,
-			scheduleNodeStorePort,
-			scheduleUtilsPort,
-		)
 
 		const templateDriverPort = {
 			getDriver: () => this._driver,
