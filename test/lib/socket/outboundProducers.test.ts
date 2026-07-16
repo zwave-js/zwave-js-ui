@@ -357,7 +357,14 @@ describe('Socket contract: outbound producers', () => {
 			// setUserCallbacks() is the public hookup point a real driver uses to reach these handlers.
 			// Invoking the same bound functions it hands off drives the identical code path.
 			zwave.setUserCallbacks()
-			expect(inclusionUserCallbacks).toBeDefined()
+			if (!inclusionUserCallbacks) {
+				throw new Error('Expected inclusion user callbacks')
+			}
+			expect(inclusionUserCallbacks).toStrictEqual({
+				grantSecurityClasses: expect.any(Function),
+				validateDSKAndEnterPIN: expect.any(Function),
+				abort: expect.any(Function),
+			})
 
 			// Both promises only settle via a separate confirmation call this test never makes, so both are intentionally unawaited
 			// InclusionGrant also requires `clientSideAuth`, left out since the assertion below doesn't check it

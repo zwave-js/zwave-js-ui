@@ -30,6 +30,10 @@ export default defineConfig({
 	test: {
 		environment: 'node',
 		include: ['src/**/*.test.{js,ts}', 'test/**/*.test.ts'],
+		sequence: {
+			// Run suite cleanup before shared harness teardown because cleanup may still access the active instance
+			hooks: 'stack',
+		},
 		coverage: {
 			provider: 'v8',
 			// Report every file matched by `include`, not just those imported by

@@ -226,7 +226,7 @@ describe('Socket contract: inbound ACK APIs', () => {
 		})
 
 		// See #4740 for the tracked follow-up on this asymmetry
-		it('quirk: an unknown apiName silently "succeeds" (switch has no default case, res/err stay undefined)', async () => {
+		it('BUG (#4740): an unknown apiName silently succeeds', async () => {
 			const harness = await getHarness({ gateway: createFakeGateway() })
 			const client = await connectedClient(harness)
 
@@ -303,7 +303,7 @@ describe('Socket contract: inbound ACK APIs', () => {
 		})
 
 		// See #4740 for the tracked follow-up on this bug
-		it('quirk: loadCaptureFromBuffer is called WITHOUT await, so result is an unresolved Promise, not the resolved value', async () => {
+		it('BUG (#4740): loadCaptureFromBuffer returns an unresolved Promise over the wire', async () => {
 			const zniffer = createFakeZniffer({
 				loadCaptureFromBuffer: vi.fn(() =>
 					Promise.resolve('parsed-capture'),
