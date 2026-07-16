@@ -70,6 +70,76 @@ export function listenOnEphemeralPort(server: HttpServer): Promise<void> {
 	})
 }
 
+/**
+ * A single "current" instance managed across a test file: lazily created and
+ * memoized per test, replaceable mid-test, and always closed in `afterEach`
+ * (plus a final `afterAll` sweep). The reference is dropped *before* the close
+ * is awaited, so a throw during close can't leave a half-closed instance for
+ * the next teardown to reclose. `afterEachCleanup`/`afterAllCleanup` run in a
+ * `finally`, so file-global teardown (registry/env resets) happens even if a
+ * close throws.
+ */
+export interface ManagedCurrent<Instance, Options> {
+	/** Create (once per test) and return the current instance. */
+	get(options?: Options): Promise<Instance>
+	/** Close the existing instance, then create and track a fresh one. */
+	replace(options?: Options): Promise<Instance>
+	/** The tracked instance, without creating one. */
+	peek(): Instance | undefined
+}
+
+export function useManagedCurrent<Instance, Options>(
+	create: (options: Options) => Promise<Instance>,
+	close: (instance: Instance) => Promise<void> | void,
+	hooks: {
+		afterEachCleanup?: () => Promise<void> | void
+		afterAllCleanup?: () => Promise<void> | void
+	} = {},
+): ManagedCurrent<Instance, Options> {
+	let current: Instance | undefined
+
+	async function closeCurrent(): Promise<void> {
+		const instance = current
+		// Drop the reference first so a throw below can't strand a closed
+		// instance that a later teardown would try to close again
+		current = undefined
+		if (instance !== undefined) {
+			await close(instance)
+		}
+	}
+
+	afterEach(async () => {
+		try {
+			await closeCurrent()
+		} finally {
+			await hooks.afterEachCleanup?.()
+		}
+	})
+
+	afterAll(async () => {
+		try {
+			await closeCurrent()
+		} finally {
+			await hooks.afterAllCleanup?.()
+		}
+	})
+
+	return {
+		async get(options: Options = {} as Options): Promise<Instance> {
+			current ??= await create(options)
+			return current
+		},
+		async replace(options: Options = {} as Options): Promise<Instance> {
+			await closeCurrent()
+			current = await create(options)
+			return current
+		},
+		peek(): Instance | undefined {
+			return current
+		},
+	}
+}
+
 // Wires the beforeAll/afterEach/afterAll lifecycle shared by both transports: one real createApp()
 // instance per test (torn down via afterEach's closeInstance()), one shared module/jsonStore context
 // per test file (beforeAll/afterAll).
@@ -83,37 +153,32 @@ export function useHarnessLifecycle<
 	) => Promise<Harness>,
 ): (options?: Options) => Promise<Harness> {
 	let shared: SharedTestContext | undefined
-	let current: Harness | undefined
 
 	beforeAll(async () => {
 		shared = await createSharedTestContext()
 	})
 
-	afterEach(async () => {
-		if (current) {
-			await current.closeInstance()
-			current = undefined
-		}
-	})
+	const managed = useManagedCurrent<Harness, Options>(
+		(options) => {
+			if (!shared) {
+				throw new Error(
+					'useHarnessLifecycle(): beforeAll has not run yet, call the accessor from within a test',
+				)
+			}
+			return createHarnessInstance(shared, options)
+		},
+		(harness) => harness.closeInstance(),
+		{
+			afterAllCleanup() {
+				if (!shared) return
+				shared.closeWatchers()
+				for (const key of Object.keys(shared.jsonStore.store)) {
+					delete shared.jsonStore.store[key]
+				}
+				cleanupTestEnv()
+			},
+		},
+	)
 
-	afterAll(() => {
-		if (!shared) return
-		shared.closeWatchers()
-		for (const key of Object.keys(shared.jsonStore.store)) {
-			delete shared.jsonStore.store[key]
-		}
-		cleanupTestEnv()
-	})
-
-	return async function getHarness(
-		options: Options = {} as Options,
-	): Promise<Harness> {
-		if (!shared) {
-			throw new Error(
-				'useHarnessLifecycle(): beforeAll has not run yet, call the accessor from within a test',
-			)
-		}
-		current ??= await createHarnessInstance(shared, options)
-		return current
-	}
+	return (options?: Options) => managed.get(options)
 }

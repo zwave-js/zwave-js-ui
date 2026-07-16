@@ -55,7 +55,9 @@ export function createFakeZniffer(
 		setFrequency: vi.fn(() => Promise.resolve(undefined)),
 		setLRChannelConfig: vi.fn(() => Promise.resolve(undefined)),
 		saveCaptureToFile: vi.fn(() => Promise.resolve('/tmp/capture.zlf')),
-		// Returns a promise like the real method, so the missing await in production leaves an unresolved promise that serializes to {} over the wire
+		// Resolves undefined like a successful real load; production awaits it,
+		// so a test can override this to a resolved value and assert it reaches
+		// the wire ack (an un-awaited promise would serialize to {} instead)
 		loadCaptureFromBuffer: vi.fn(() => Promise.resolve(undefined)),
 		close: vi.fn(() => Promise.resolve(undefined)),
 		...overrides,

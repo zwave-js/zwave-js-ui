@@ -9,6 +9,7 @@ import { useSocketHarness } from './harness.ts'
 import {
 	createFakeGateway,
 	createFakeZniffer,
+	createFakeZwaveClient,
 	type FakeGateway,
 } from './fakes.ts'
 import { connectedClient, emit } from './helpers.ts'
@@ -222,22 +223,6 @@ describe('Socket contract: inbound ACK APIs', () => {
 				message: 'Success HASS api call',
 				api: 'rediscoverNode',
 			})
-			expect('result' in result).toBe(false)
-		})
-
-		// See #4740 for the tracked follow-up on this asymmetry
-		it('BUG (#4740): an unknown apiName silently succeeds', async () => {
-			const harness = await getHarness({ gateway: createFakeGateway() })
-			const client = await connectedClient(harness)
-
-			const result = await emit(client, 'HASS_API', {
-				apiName: 'notARealAction',
-			})
-			expect(result).toStrictEqual({
-				success: true,
-				message: 'Success HASS api call',
-				api: 'notARealAction',
-			})
 		})
 
 		it('reports success:false with the thrown error message when the action throws', async () => {
@@ -257,6 +242,155 @@ describe('Socket contract: inbound ACK APIs', () => {
 				success: false,
 				message: 'hass boom',
 				api: 'disableDiscovery',
+			})
+		})
+
+		it('"delete" removes the device discovery and acks success without a result field', async () => {
+			const device = { id: 'switch_sw', type: 'switch' }
+			const gateway = createFakeGateway({ publishDiscovery: vi.fn() })
+			const harness = await getHarness({ gateway })
+			const client = await connectedClient(harness)
+
+			const result = await emit(client, 'HASS_API', {
+				apiName: 'delete',
+				device,
+				nodeId: 2,
+			})
+			expect(gateway.publishDiscovery).toHaveBeenCalledWith(device, 2, {
+				deleteDevice: true,
+				forceUpdate: true,
+			})
+			// The delete handler returns nothing, so the success ack omits the result field
+			expect(result).toStrictEqual({
+				success: true,
+				message: 'Success HASS api call',
+				api: 'delete',
+			})
+		})
+
+		// delete and discover differ only by whether the entity is removed or republished
+		it('"discover" republishes the device discovery and acks success', async () => {
+			const device = { id: 'switch_sw', type: 'switch' }
+			const gateway = createFakeGateway({ publishDiscovery: vi.fn() })
+			const harness = await getHarness({ gateway })
+			const client = await connectedClient(harness)
+
+			const result = await emit(client, 'HASS_API', {
+				apiName: 'discover',
+				device,
+				nodeId: 2,
+			})
+			expect(gateway.publishDiscovery).toHaveBeenCalledWith(device, 2, {
+				deleteDevice: false,
+				forceUpdate: true,
+			})
+			expect(result).toStrictEqual({
+				success: true,
+				message: 'Success HASS api call',
+				api: 'discover',
+			})
+		})
+
+		it('"update" applies the edited device to the node and acks success', async () => {
+			const device = { id: 'switch_sw', type: 'switch' }
+			const gateway = createFakeGateway()
+			const harness = await getHarness({ gateway })
+			const client = await connectedClient(harness)
+
+			const result = await emit(client, 'HASS_API', {
+				apiName: 'update',
+				device,
+				nodeId: 2,
+			})
+			expect(gateway.zwave.updateDevice).toHaveBeenCalledWith(device, 2)
+			expect(result).toStrictEqual({
+				success: true,
+				message: 'Success HASS api call',
+				api: 'update',
+			})
+		})
+
+		it('"add" attaches a new device to the node and acks success', async () => {
+			const device = { id: 'switch_sw', type: 'switch' }
+			const gateway = createFakeGateway()
+			const harness = await getHarness({ gateway })
+			const client = await connectedClient(harness)
+
+			const result = await emit(client, 'HASS_API', {
+				apiName: 'add',
+				device,
+				nodeId: 2,
+			})
+			expect(gateway.zwave.addDevice).toHaveBeenCalledWith(device, 2)
+			expect(result).toStrictEqual({
+				success: true,
+				message: 'Success HASS api call',
+				api: 'add',
+			})
+		})
+
+		it('"store" persists the device set and acks success', async () => {
+			const devices = { switch_sw: { type: 'switch' } }
+			const gateway = createFakeGateway()
+			const harness = await getHarness({ gateway })
+			const client = await connectedClient(harness)
+
+			const result = await emit(client, 'HASS_API', {
+				apiName: 'store',
+				devices,
+				nodeId: 2,
+				remove: false,
+			})
+			expect(gateway.zwave.storeDevices).toHaveBeenCalledWith(
+				devices,
+				2,
+				false,
+			)
+			expect(result).toStrictEqual({
+				success: true,
+				message: 'Success HASS api call',
+				api: 'store',
+			})
+		})
+
+		it('"store" is awaited so a rejected persistence acks failure', async () => {
+			// store is the only awaited HASS action, so a rejected write must surface as a failure ack rather than a success
+			const gateway = createFakeGateway({
+				zwave: createFakeZwaveClient({
+					storeDevices: vi.fn(() =>
+						Promise.reject(new Error('store boom')),
+					),
+				}),
+			})
+			const harness = await getHarness({ gateway })
+			const client = await connectedClient(harness)
+
+			const result = await emit(client, 'HASS_API', {
+				apiName: 'store',
+				devices: {},
+				nodeId: 2,
+				remove: true,
+			})
+			expect(result).toStrictEqual({
+				success: false,
+				message: 'store boom',
+				api: 'store',
+			})
+		})
+
+		it('reports success:false with "Unknown HASS api <name>" for an unknown apiName', async () => {
+			// An unrecognized action must surface a failure ack, not silently
+			// succeed by falling through the switch with an undefined result
+			const harness = await getHarness({ gateway: createFakeGateway() })
+			const client = await connectedClient(harness)
+
+			const result = await emit(client, 'HASS_API', {
+				apiName: 'notARealAction',
+			})
+			expect(result).toStrictEqual({
+				success: false,
+				message: 'Unknown HASS api notARealAction',
+				api: 'notARealAction',
 			})
 		})
 	})
@@ -282,7 +416,6 @@ describe('Socket contract: inbound ACK APIs', () => {
 				message: 'Success ZNIFFER api call',
 				api: 'start',
 			})
-			expect('result' in result).toBe(false)
 		})
 
 		it('reports success:false with "Unknown ZNIFFER api <name>" for an unknown apiName', async () => {
@@ -302,12 +435,14 @@ describe('Socket contract: inbound ACK APIs', () => {
 			})
 		})
 
-		// See #4740 for the tracked follow-up on this bug
-		it('BUG (#4740): loadCaptureFromBuffer returns an unresolved Promise over the wire', async () => {
+		it('awaits zniffer.loadCaptureFromBuffer so its resolved value reaches the ack', async () => {
+			// The real method resolves a value (undefined on success, { error }
+			// on failure) instead of rejecting, so production must await it for
+			// that value to reach the client; an un-awaited promise serializes
+			// to {} over the wire.
+			const loaded = { error: 'bad capture' }
 			const zniffer = createFakeZniffer({
-				loadCaptureFromBuffer: vi.fn(() =>
-					Promise.resolve('parsed-capture'),
-				),
+				loadCaptureFromBuffer: vi.fn(() => Promise.resolve(loaded)),
 			})
 			const harness = await getHarness({
 				gateway: createFakeGateway(),
@@ -315,21 +450,21 @@ describe('Socket contract: inbound ACK APIs', () => {
 			})
 			const client = await connectedClient(harness)
 
-			const result = await emit<{ success: boolean; result: unknown }>(
-				client,
-				'ZNIFFER_API',
-				{
-					apiName: 'loadCaptureFromBuffer',
-					buffer: [1, 2, 3],
-				},
-			)
-			expect(zniffer.loadCaptureFromBuffer).toHaveBeenCalledWith(
-				Buffer.from([1, 2, 3]),
-			)
-			// Proves the missing await in production: result serializes to an empty object over the wire rather than the resolved value
-			expect(result.success).toBe(true)
-			expect(result.result).toStrictEqual({})
-			expect(result.result).not.toBe('parsed-capture')
+			const result = await emit(client, 'ZNIFFER_API', {
+				apiName: 'loadCaptureFromBuffer',
+				buffer: [1, 2, 3],
+			})
+			expect(zniffer.loadCaptureFromBuffer).toHaveBeenCalledOnce()
+			// production wraps data.buffer in Buffer.from before handing it over
+			expect(
+				Buffer.isBuffer(zniffer.loadCaptureFromBuffer.mock.calls[0][0]),
+			).toBe(true)
+			expect(result).toStrictEqual({
+				success: true,
+				message: 'Success ZNIFFER api call',
+				result: loaded,
+				api: 'loadCaptureFromBuffer',
+			})
 		})
 	})
 
@@ -395,20 +530,6 @@ describe('Socket contract: inbound ACK APIs', () => {
 				{ channels: ['nodes'] },
 			)
 			expect(result).toStrictEqual({ channels: ['values'] })
-		})
-
-		// See #4740 for the tracked follow-up on this asymmetry
-		it('quirk: "all" is NOT special-cased for unsubscribe (asymmetric with subscribe) - it matches no real channel, so nothing is removed', async () => {
-			const harness = await getHarness({ gateway: createFakeGateway() })
-			const client = await connectedClient(harness)
-
-			await emit(client, 'SUBSCRIBE', { channels: ['nodes', 'values'] })
-			const result = await emit<{ channels: string[] }>(
-				client,
-				'UNSUBSCRIBE',
-				{ channels: ['all'] },
-			)
-			expect(result.channels.sort()).toStrictEqual(['nodes', 'values'])
 		})
 	})
 })

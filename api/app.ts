@@ -874,6 +874,8 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 								data.remove,
 							)
 							break
+						default:
+							throw new Error(`Unknown HASS api ${data.apiName}`)
 					}
 				} catch (error) {
 					logger.error('Error while calling HASS api', error)
@@ -965,7 +967,7 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 							break
 						case 'loadCaptureFromBuffer': {
 							const buffer = Buffer.from(data.buffer)
-							res = zniffer.loadCaptureFromBuffer(buffer)
+							res = await zniffer.loadCaptureFromBuffer(buffer)
 							break
 						}
 						default:
@@ -1179,7 +1181,9 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 				const users = jsonStore.get(store.users) as User[]
 
 				const user = req.session.user
-				const oldUser = users.find((u) => u.username === user.username)
+				const oldUser = user
+					? users.find((u) => u.username === user.username)
+					: undefined
 
 				if (!oldUser) {
 					return res.json({
