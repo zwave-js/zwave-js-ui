@@ -266,7 +266,11 @@ export class AppRuntime {
 	}
 
 	async shutdown(): Promise<void> {
-		await this.closeIfPresent(this.gateway)
+		try {
+			await this.closeIfPresent(this.gateway)
+		} catch (error) {
+			logger.error('Error while closing gateway', error)
+		}
 
 		try {
 			await this.closeIfPresent(this.zniffer)
@@ -274,7 +278,20 @@ export class AppRuntime {
 			logger.error('Error while closing zniffer', error)
 		}
 
-		await this.destroyPlugins()
+		while (this.plugins.length > 0) {
+			const instance = this.plugins.pop()
+			if (instance && typeof instance.destroy === 'function') {
+				try {
+					logger.info('Closing plugin ' + instance.name)
+					await instance.destroy()
+				} catch (error) {
+					logger.error(
+						`Error while closing plugin ${instance.name}`,
+						error,
+					)
+				}
+			}
+		}
 
 		try {
 			backupManager.close(this.backupManagerOwner)

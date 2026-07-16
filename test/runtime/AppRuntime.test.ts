@@ -22,8 +22,10 @@ import type {
 } from '#api/runtime/AppRuntime.ts'
 import type JsonStoreModule from '#api/lib/jsonStore.ts'
 import type StoreModule from '#api/config/store.ts'
+import backupManager from '#api/lib/BackupManager.ts'
 import {
 	createFakeGateway,
+	createFakeZniffer,
 	createFakeZwaveClient,
 } from '../lib/shared/fakes.ts'
 import { cleanupTestEnv, ensureTestEnv } from '../lib/shared/env.ts'
@@ -191,6 +193,27 @@ export default class ObservablePlugin {
 			expect(readFileSync(marker, 'utf8')).toBe('loaded\ndestroyed\n')
 		} finally {
 			rmSync(pluginDir, { recursive: true, force: true })
+		}
+	})
+
+	it('continues shutdown after the gateway fails to close', async () => {
+		const gateway = createFakeGateway({
+			close: vi.fn().mockRejectedValue(new Error('gateway close failed')),
+		})
+		const zniffer = createFakeZniffer({
+			close: vi.fn().mockResolvedValue(undefined),
+		})
+		const closeBackup = vi.spyOn(backupManager, 'close')
+		const runtime = createRuntime({ gateway, zniffer })
+
+		try {
+			await expect(runtime.shutdown()).resolves.toBeUndefined()
+
+			expect(gateway.close).toHaveBeenCalledOnce()
+			expect(zniffer.close).toHaveBeenCalledOnce()
+			expect(closeBackup).toHaveBeenCalledOnce()
+		} finally {
+			closeBackup.mockRestore()
 		}
 	})
 
