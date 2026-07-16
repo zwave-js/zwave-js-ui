@@ -1939,6 +1939,65 @@ describe('FirmwareUpdateService', () => {
 			expect(nodes.emitNodeUpdate).toHaveBeenCalledTimes(1)
 		})
 
+		it('preserves a dismissal completed during a firmware check', async () => {
+			const persistenceStarted = createDeferred<void>()
+			const persistenceBarrier = createDeferred<void>()
+			const updates = [makeUpdate({ version: '4.0.0' })]
+			const driver = createDriverPort({
+				getDriver: () => ({
+					controller: {
+						getAvailableFirmwareUpdates: vi.fn(),
+						getAllAvailableFirmwareUpdates: vi
+							.fn()
+							.mockResolvedValue(new Map([[7, updates]])),
+						firmwareUpdateOTA: vi.fn(),
+						nodes: { get: vi.fn() },
+					},
+					firmwareUpdateOTW: vi.fn(),
+				}),
+			})
+			const nodes = createNodeStorePort()
+			nodes._nodes.set(7, {
+				id: 7,
+				availableFirmwareUpdates: [],
+				lastFirmwareUpdateCheck: 0,
+				firmwareUpdatesDismissed: {},
+			})
+			nodes._store.set(7, {
+				availableFirmwareUpdates: [],
+				lastFirmwareUpdateCheck: 0,
+				firmwareUpdatesDismissed: {},
+			})
+			nodes.persistStagedNodeUpdates.mockImplementation(async () => {
+				persistenceStarted.resolve()
+				await persistenceBarrier.promise
+			})
+			let persistedDismissals: Record<string, boolean> | undefined
+			vi.mocked(nodes.updateStoreNodes).mockImplementation(() => {
+				persistedDismissals = {
+					...nodes._store.get(7)?.firmwareUpdatesDismissed,
+				}
+				return Promise.resolve()
+			})
+			const { service } = createService({ driver, nodes })
+
+			const check = service.checkAllNodesFirmwareUpdates()
+			await persistenceStarted.promise
+			const dismissal = service.dismissFirmwareUpdate(7, '4.0.0')
+			persistenceBarrier.resolve()
+
+			await check
+			await dismissal
+
+			expect(nodes._nodes.get(7)?.firmwareUpdatesDismissed).toStrictEqual(
+				{ '4.0.0': true },
+			)
+			expect(nodes._store.get(7)?.firmwareUpdatesDismissed).toStrictEqual(
+				{ '4.0.0': true },
+			)
+			expect(persistedDismissals).toStrictEqual({ '4.0.0': true })
+		})
+
 		it('persists network updates before publishing them', async () => {
 			const checkTime = 1_700_000_000_000
 			vi.spyOn(Date, 'now').mockReturnValue(checkTime)
