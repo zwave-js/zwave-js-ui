@@ -29,7 +29,11 @@ export default defineConfig({
 	},
 	test: {
 		environment: 'node',
-		include: ['src/**/*.test.{js,ts}', 'test/**/*.test.ts'],
+		include: [
+			'src/**/*.test.{js,ts}',
+			'test/**/*.test.ts',
+			'.github/bot-scripts/**/*.test.cjs',
+		],
 		sequence: {
 			// Run suite cleanup before shared harness teardown because cleanup may still access the active instance
 			hooks: 'stack',
