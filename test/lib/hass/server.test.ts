@@ -148,9 +148,22 @@ function lastDriver() {
 	return hoisted.drivers[hoisted.drivers.length - 1]
 }
 
-/** Flush one macrotask so pending `setImmediate` callbacks run. */
-function tick(): Promise<void> {
-	return new Promise((resolve) => setImmediate(resolve))
+/**
+ * Resolves on the client's real `driver ready` lifecycle event — the
+ * deterministic signal that `_onDriverReady` has run (production emits it right
+ * before starting the server) — instead of flushing a fixed count of
+ * macrotasks. Arm it before `connect()` so the async event can't be missed.
+ */
+function waitForDriverReadyEvent(zwave: ZWaveClientType): Promise<void> {
+	return new Promise<void>((resolve) => {
+		const onEvent = (_source: unknown, name: string) => {
+			if (name === 'driver ready') {
+				zwave.off('event', onEvent)
+				resolve()
+			}
+		}
+		zwave.on('event', onEvent)
+	})
 }
 
 /**
@@ -175,6 +188,10 @@ async function driveConnectToReady(
 		socket as any,
 	)
 
+	// Arm the deterministic wait before connect so the async 'driver ready'
+	// event the driver fires (via setImmediate) after start() can't be missed
+	const ready = waitForDriverReadyEvent(zwave)
+
 	await zwave.connect()
 
 	// The server exists (created after await driver.start()), but the
@@ -185,10 +202,8 @@ async function driveConnectToReady(
 		startCalls: lastServer()?.start.mock.calls.length ?? 0,
 	}
 
-	// Let the async 'driver ready' event fire and the ready handler finish
-	await tick()
-	await tick()
-	await tick()
+	// Wait for the real driver-ready lifecycle event and its ready handler
+	await ready
 
 	return {
 		zwave,
@@ -250,11 +265,11 @@ describe('connecting and reaching driver ready', () => {
 		expect(server.start).toHaveBeenCalledOnce()
 
 		// A re-emitted 'driver ready' (the #602 hard-reset scenario) must not
-		// start a second server
+		// start a second server. Wait on the client's re-emitted lifecycle
+		// event rather than a fixed macrotask count.
+		const readyAgain = waitForDriverReadyEvent(zwave)
 		driver.emit('driver ready')
-		await tick()
-		await tick()
-		await tick()
+		await readyAgain
 
 		expect(server.start).toHaveBeenCalledOnce()
 		expect(hoisted.servers).toHaveLength(1)
@@ -367,7 +382,12 @@ describe('starting the server for connected user sockets', () => {
 })
 
 describe('reported server version', () => {
-	it('exposes the upstream @zwave-js/server version', () => {
+	it('surfaces the serverVersion exported by @zwave-js/server through getInfo', () => {
+		// Wiring assertion, not a self-referential oracle: hoisted.SERVER_VERSION
+		// is the value the @zwave-js/server mock exports as `serverVersion`,
+		// standing in for the real package at that import seam. Asserting
+		// getInfo().serverVersion equals it proves getInfo() surfaces the
+		// upstream export rather than deriving or hardcoding a version.
 		const zwave = new ZWaveClient(
 			{ serverEnabled: true } as any,
 			createRecordingSocket() as any,

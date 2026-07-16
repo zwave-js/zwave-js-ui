@@ -1,14 +1,33 @@
-import { describe, it, expect, beforeEach } from 'vitest'
-import { useHttpHarness } from './harness.ts'
+import { describe, it, expect } from 'vitest'
+import {
+	useHttpHarness,
+	type HttpHarness,
+	type HttpHarnessOptions,
+} from './harness.ts'
 import { seedUser, signUserToken, setSettings } from '../shared/authHelpers.ts'
 
 describe('HTTP contract: auth & password', () => {
-	const getHarness = useHttpHarness()
+	const getHttpHarness = useHttpHarness()
+	let seededHarness: HttpHarness | undefined
 
-	beforeEach(async () => {
-		const harness = await getHarness()
-		await setSettings(harness, { gateway: {} })
-	})
+	/**
+	 * Lazily builds the per-test harness on first use — optionally with
+	 * caller-supplied options — and seeds the default empty-gateway settings
+	 * exactly once per harness instance. Nothing is instantiated up front, so a
+	 * test can pass its own options on the first call instead of inheriting an
+	 * eagerly built default harness from a beforeEach. Each test gets a fresh
+	 * instance, so the identity guard re-seeds without any reset hook.
+	 */
+	async function getHarness(
+		options?: HttpHarnessOptions,
+	): Promise<HttpHarness> {
+		const harness = await getHttpHarness(options)
+		if (seededHarness !== harness) {
+			await setSettings(harness, { gateway: {} })
+			seededHarness = harness
+		}
+		return harness
+	}
 
 	describe('GET /api/auth-enabled', () => {
 		it('returns success:true, data:false when auth is disabled (default)', async () => {
@@ -169,8 +188,10 @@ describe('HTTP contract: auth & password', () => {
 			})
 
 			expect(res.status).toBe(200)
-			expect(res.body.success).toBe(false)
-			expect(res.body.message).toBe('User not found')
+			expect(res.body).toEqual({
+				success: false,
+				message: 'User not found',
+			})
 		})
 
 		it('changes the password end-to-end for a logged-in session and never leaks passwordHash', async () => {
