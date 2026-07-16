@@ -423,7 +423,6 @@ describe('Socket contract: inbound ACK APIs', () => {
 				api: 'store',
 			})
 		})
-
 		it('reports success:false with "Unknown HASS api <name>" for an unknown apiName', async () => {
 			const error = vi.spyOn(createLogger('App'), 'error')
 			try {
