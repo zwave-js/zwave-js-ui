@@ -3,7 +3,7 @@
  * writes a session-secret file and creates a real logs/ dir under the repo
  * store/ if STORE_DIR isn't set yet; logger.ts/config/app.ts/utils.ts must
  * all be dynamic import()s performed after ensureTestEnv() (see
- * http/env.ts).
+ * shared/env.ts).
  *
  * logger.ts also memoizes its transports list and keeps every named logger
  * in a module-level winston.Container singleton for the lifetime of the
@@ -42,7 +42,7 @@ import type * as UtilsModule from '../../api/lib/utils.ts'
 import type { ModuleLogger } from '../../api/lib/logger.ts'
 import type * as LoggerModule from '../../api/lib/logger.ts'
 import type * as WinstonModule from 'winston'
-import { ensureTestEnv, cleanupTestEnv } from './http/env.ts'
+import { ensureTestEnv, cleanupTestEnv } from './shared/env.ts'
 
 let utils: typeof UtilsModule
 let logsDir: string

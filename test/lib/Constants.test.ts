@@ -4,17 +4,17 @@
  * isn't set yet - importing the module (even though these tests are pure
  * classification-table lookups that never touch storeDir) is enough to
  * trigger that, so it must be a dynamic import() after ensureTestEnv() (see
- * http/env.ts)
+ * shared/env.ts)
  */
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
-import type * as ConstantsModule from '../../api/lib/Constants.ts'
-import { ensureTestEnv, cleanupTestEnv } from './http/env.ts'
+import type * as ConstantsModule from '#api/lib/Constants.ts'
+import { ensureTestEnv, cleanupTestEnv } from './shared/env.ts'
 
 let mod: typeof ConstantsModule
 
 beforeAll(async () => {
 	ensureTestEnv()
-	mod = await import('../../api/lib/Constants.ts')
+	mod = await import('#api/lib/Constants.ts')
 })
 
 afterAll(() => {
