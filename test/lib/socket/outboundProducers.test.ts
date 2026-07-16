@@ -22,7 +22,7 @@ import {
 	type Driver,
 	type InclusionGrant,
 	type InclusionUserCallbacks,
-OTWFirmwareUpdateStatus,
+	OTWFirmwareUpdateStatus,
 } from 'zwave-js'
 import type ZWaveClientType from '#api/lib/ZwaveClient.ts'
 import type { ZwaveConfig, ZUINode, ZUIValueId } from '#api/lib/ZwaveClient.ts'
