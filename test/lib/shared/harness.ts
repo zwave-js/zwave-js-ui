@@ -3,6 +3,7 @@
 // per-test instance torn down in afterEach. Each transport supplies its own createHarnessInstance()
 // (Express+supertest vs. Express+Socket.IO) and layers any transport-only setup on top of this.
 import { beforeAll, afterEach, afterAll } from 'vitest'
+import type { Server as HttpServer } from 'node:http'
 import { ensureTestEnv, cleanupTestEnv } from './env.ts'
 import type * as AppModuleNamespace from '#api/app.ts'
 import type * as JsonStoreModuleNamespace from '#api/lib/jsonStore.ts'
@@ -61,6 +62,12 @@ export async function createSharedTestContext(): Promise<SharedTestContext> {
 		])
 	await jsonStore.init(store)
 	return { createApp, jsonStore, store, closeWatchers }
+}
+
+export function listenOnEphemeralPort(server: HttpServer): Promise<void> {
+	return new Promise((resolve) => {
+		server.listen(0, '127.0.0.1', resolve)
+	})
 }
 
 // Wires the beforeAll/afterEach/afterAll lifecycle shared by both transports: one real createApp()

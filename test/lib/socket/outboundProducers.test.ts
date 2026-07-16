@@ -377,7 +377,6 @@ describe('Socket contract: outbound producers', () => {
 		it('DEBUG: the real log interceptor (app.ts setupInterceptor) forwards logStream data to the "debug" room synchronously', async () => {
 			const harness = await getHarness({
 				gateway: benignGateway(),
-				interceptor: true,
 			})
 			const { logStream } = await import('#api/lib/logger.ts')
 			const client = await connectedSubscriber(harness, 'debug')

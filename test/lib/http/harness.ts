@@ -6,6 +6,7 @@ import type { FakeGateway } from '../shared/fakes.ts'
 import type { Driver } from 'zwave-js'
 import {
 	useHarnessLifecycle,
+	listenOnEphemeralPort,
 	type GatewayModule,
 	type JsonStoreModule,
 	type SharedTestContext,
@@ -65,9 +66,7 @@ async function createHarnessInstance(
 	await instance.loadSnippets()
 
 	const server = createServer(instance.app)
-	await new Promise<void>((resolve) => {
-		server.listen(0, '127.0.0.1', () => resolve())
-	})
+	await listenOnEphemeralPort(server)
 
 	return {
 		app: instance.app,

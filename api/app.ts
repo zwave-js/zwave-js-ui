@@ -33,7 +33,7 @@ import { createServer as createHttpsServer } from 'node:https'
 import jwt from 'jsonwebtoken'
 import path from 'node:path'
 import sessionStore from 'session-file-store'
-import type { Socket } from 'socket.io'
+import type { Server as SocketIOServer, Socket } from 'socket.io'
 import { inspect, promisify } from 'node:util'
 import { Driver, libVersion } from 'zwave-js'
 import {
@@ -125,6 +125,8 @@ const FileStore = sessionStore(session)
 
 export interface AppInstance {
 	app: Express
+	attachSocket(server: HttpServer): void
+	readonly io: SocketIOServer
 	startServer: (port: number | string, host?: string) => Promise<HttpServer>
 	loadSnippets(): Promise<void>
 	installProcessHandlers: () => void
@@ -137,12 +139,6 @@ export interface CreateAppOptions {
 		zniffer?: ZnifferManager
 		pluginsRouter?: Router
 		restarting?: boolean
-		// Constructed by the caller so it can keep reading `.io`/room membership itself - no getter is exposed after construction
-		socketManager?: SocketManager
-		// Binds the real SocketManager + auth middleware + all inbound event handlers to `server`, mirroring startServer()'s setupSocket() call without starting a real Gateway/MQTT/ZWaveClient
-		server?: HttpServer
-		// Additionally mirrors startServer()'s log interceptor wiring; opt-in since logStream is a shared singleton and most tests don't need it
-		interceptor?: boolean
 		enumerateSerialPorts?: typeof Driver.enumerateSerialPorts
 		logFatalError?: (message: string) => void
 	}
@@ -243,7 +239,7 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 	} as const
 	type RESPONSE_CODES = (typeof RESPONSE_CODES)[keyof typeof RESPONSE_CODES]
 
-	const socketManager = testOptions?.socketManager ?? new SocketManager()
+	const socketManager = new SocketManager()
 	const backupManagerOwner = Symbol()
 
 	socketManager.authMiddleware = function (
@@ -277,6 +273,7 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 	let restarting = testOptions?.restarting ?? false
 
 	let closed = false
+	let socketAttached = false
 	let ownsDebugSession = false
 	let logStreamInterceptor: ((chunk: Buffer | string) => void) | undefined
 
@@ -352,6 +349,7 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 			server = createHttpServer(app)
 		}
 
+		attachSocket(server)
 		server.listen(port as number, host, function () {
 			const addr = server.address()
 			const bind =
@@ -397,8 +395,6 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 			await jsonStore.put(store.users, users)
 		}
 
-		setupSocket(server)
-		setupInterceptor()
 		await loadSnippets()
 		startZniffer(settings.zniffer)
 		await debugManager.init() // Clean up any old debug temp files
@@ -1001,6 +997,18 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 				gw.zwave?.removeUserCallbacks()
 			}
 		})
+	}
+
+	function attachSocket(server: HttpServer) {
+		if (closed) {
+			throw new Error('Cannot attach Socket.IO after the app is closed')
+		}
+		if (socketAttached) {
+			throw new Error('Socket.IO is already attached')
+		}
+		socketAttached = true
+		setupSocket(server)
+		setupInterceptor()
 	}
 
 	// ### APIs
@@ -2535,16 +2543,15 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 		logFatalError(formatFatalErrorLog('unhandledRejection', reason))
 	}
 
-	// Test-only: wires the real SocketManager (+ auth middleware + every inbound handler), and optionally the log interceptor, over a caller-supplied ephemeral server - the construction-time equivalent of what startServer() does in production
-	if (testOptions?.server) {
-		setupSocket(testOptions.server)
-		if (testOptions.interceptor) {
-			setupInterceptor()
-		}
-	}
-
 	return {
 		app,
+		attachSocket,
+		get io() {
+			if (!socketManager.io) {
+				throw new Error('Socket.IO is not attached')
+			}
+			return socketManager.io
+		},
 		startServer,
 		loadSnippets,
 		installProcessHandlers,

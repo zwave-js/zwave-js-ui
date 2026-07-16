@@ -6,9 +6,9 @@ import type { Express, Router } from 'express'
 import type { Server as SocketIOServer } from 'socket.io'
 import { io as ioClient, type Socket as ClientSocket } from 'socket.io-client'
 import type { FakeGateway, FakeZniffer } from './fakes.ts'
-import SocketManager from '#api/lib/SocketManager.ts'
 import type * as ZnifferModuleNamespace from '#api/lib/ZnifferManager.ts'
 import {
+	listenOnEphemeralPort,
 	useHarnessLifecycle,
 	type GatewayModule,
 	type SharedTestContext,
@@ -23,8 +23,6 @@ export interface SocketHarnessOptions {
 	zniffer?: FakeZniffer
 	pluginsRouter?: Router
 	restarting?: boolean
-	// Mirrors startServer()'s log interceptor wiring so debug-room tests see real socketEvents.debug emissions; opt-in since logStream is a shared per-process singleton most tests don't touch
-	interceptor?: boolean
 }
 
 export interface SocketHarness {
@@ -48,10 +46,6 @@ async function createHarnessInstance(
 	shared: SharedTestContext,
 	options: SocketHarnessOptions,
 ): Promise<SocketHarness & { closeInstance(): Promise<void> }> {
-	// No request listener yet - createApp() attaches socket.io, then we attach the Express app right below
-	const server = createServer()
-	const socketManager = new SocketManager()
-
 	const instance = shared.createApp({
 		test: {
 			// Gateway/ZnifferManager have private fields, so structural mocks like FakeGateway/FakeZniffer need this cast to satisfy them
@@ -59,22 +53,17 @@ async function createHarnessInstance(
 			zniffer: options.zniffer as unknown as RealZniffer | undefined,
 			pluginsRouter: options.pluginsRouter,
 			restarting: options.restarting,
-			socketManager,
-			server,
-			interceptor: options.interceptor,
 		},
 	})
 	await instance.loadSnippets()
 
-	server.on('request', instance.app)
-	await new Promise<void>((resolve) => {
-		server.listen(0, '127.0.0.1', () => resolve())
-	})
+	const server = createServer(instance.app)
+	instance.attachSocket(server)
+	await listenOnEphemeralPort(server)
 	const port = (server.address() as AddressInfo).port
 	const url = `http://127.0.0.1:${port}`
 
-	// createApp() already bound this via bindServer() before returning, since test.server was set above
-	const { io } = socketManager
+	const { io } = instance
 	const clients = new Set<ClientSocket>()
 
 	function createClient(opts: Record<string, unknown> = {}): ClientSocket {
