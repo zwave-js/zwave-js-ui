@@ -6,6 +6,7 @@ import type {
 	FirmwareExtractionPort,
 	FirmwareFileFormat,
 	FirmwareNodeStorePort,
+	FirmwarePersistenceRestore,
 	FirmwareSocketPort,
 	FirmwareUpdateInfo,
 	FirmwareUpdateResult,
@@ -217,7 +218,7 @@ export class FirmwareUpdateService {
 					})
 				}
 
-				await this._nodes.updateStoreNodes()
+				return this._nodes.updateStoreNodes()
 			},
 		)
 		this._logger.info(
@@ -663,16 +664,20 @@ export class FirmwareUpdateService {
 	private async _serializePersistence(
 		gen: number,
 		operation: string,
-		persist: () => Promise<void>,
+		persist: () => Promise<FirmwarePersistenceRestore | void>,
 		publish?: () => void,
 	): Promise<void> {
 		const persistence = this._persistenceTail.then(async () => {
 			this._assertFence(gen, operation)
-			await persist()
+			const restore = await persist()
 
 			if (this._generation !== gen || this._disposed) {
 				// Restore current state because an in-flight filesystem write cannot be cancelled
-				await this._nodes.updateStoreNodes()
+				if (restore) {
+					await restore()
+				} else {
+					await this._nodes.updateStoreNodes()
+				}
 			}
 
 			this._assertFence(gen, operation)
