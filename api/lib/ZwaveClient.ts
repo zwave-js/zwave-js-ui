@@ -1140,6 +1140,21 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			getDriver: () => this._driver,
 			isDriverReady: () => this.driverReady,
 		}
+		const createFirmwarePersistenceRestore = (
+			homeHex: string | undefined,
+		) => {
+			if (!homeHex) {
+				return undefined
+			}
+			const storedNodes = (jsonStore.get(store.nodes) ||
+				{}) as NodesStoreRecordByHome
+			const previousNodes = Object.fromEntries(
+				Object.entries(storedNodes[homeHex] || {}).map(
+					([nodeId, node]) => [nodeId, { ...node }],
+				),
+			)
+			return () => this._persistNodesSnapshot(previousNodes, homeHex)
+		}
 		const firmwareNodeStorePort = {
 			getNode: (nodeId: number) => this._nodes.get(nodeId),
 			getStoreNode: (nodeId: number) => this.storeNodes[nodeId],
@@ -1149,7 +1164,12 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				}
 				return this.storeNodes[nodeId]
 			},
-			updateStoreNodes: () => this.updateStoreNodes(),
+			updateStoreNodes: async () => {
+				const homeHex = this.homeHex
+				const restore = createFirmwarePersistenceRestore(homeHex)
+				await this.updateStoreNodes()
+				return restore
+			},
 			persistStagedNodeUpdates: async (
 				staged: ReadonlyArray<{
 					nodeId: number
@@ -1159,6 +1179,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				}>,
 			) => {
 				// Persist a detached snapshot so lifecycle fencing controls publication
+				const homeHex = this.homeHex
+				const restore = createFirmwarePersistenceRestore(homeHex)
 				const snapshot: NodesStoreRecord = {}
 				for (const key of Object.keys(this.storeNodes)) {
 					snapshot[key] = this.storeNodes[key]
@@ -1176,7 +1198,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 						entry.firmwareUpdatesDismissed
 					snapshot[entry.nodeId] = cloned
 				}
-				await this._updateStoreNodesSnapshot(snapshot)
+				await this._updateStoreNodesSnapshot(snapshot, true, homeHex)
+				return restore
 			},
 			emitNodeUpdate: (
 				node: ZUINode,
@@ -2448,8 +2471,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 	private async _persistNodesSnapshot(
 		snapshot: NodesStoreRecord,
+		homeHex = this.homeHex,
 	): Promise<void> {
-		if (!this.homeHex) {
+		if (!homeHex) {
 			logger.warn('HomeHex not set, skipping storeDevices')
 			return
 		}
@@ -2458,7 +2482,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		const storedNodes = jsonStore.get(store.nodes) as NodesStoreRecordByHome
 		const nodes = { ...storedNodes }
 
-		nodes[this.homeHex] = Object.keys(snapshot).reduce((acc, k) => {
+		nodes[homeHex] = Object.keys(snapshot).reduce((acc, k) => {
 			if (Object.keys(snapshot[k]).length > 0) {
 				acc[k] = snapshot[k]
 			}
@@ -2472,9 +2496,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	private async _updateStoreNodesSnapshot(
 		snapshot: NodesStoreRecord,
 		throwError = true,
+		homeHex = this.homeHex,
 	): Promise<void> {
 		try {
-			await this._persistNodesSnapshot(snapshot)
+			await this._persistNodesSnapshot(snapshot, homeHex)
 		} catch (error) {
 			logger.error(
 				`Error while updating store nodes: ${error.message}`,
@@ -4124,6 +4149,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			// Reject leaves lifecycle untouched so public APIs settle normally
 			await this._driver.hardReset()
 			this.init()
+			this._inclusionCoordinator.reinstallUserCallbacks()
 		} else {
 			throw new DriverNotReadyError()
 		}

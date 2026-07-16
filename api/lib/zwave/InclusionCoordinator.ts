@@ -623,11 +623,8 @@ export class InclusionCoordinator {
 	}
 
 	reinstallUserCallbacks(): void {
-		if (!this._hasUserCallbacks) {
-			return
-		}
 		const drv = this._driver.getDriver()
-		if (!drv || !this._config.serverEnabled) {
+		if (!drv || (this._config.serverEnabled && !this._hasUserCallbacks)) {
 			return
 		}
 		this._logger.info('Re-registering user callbacks on new driver')

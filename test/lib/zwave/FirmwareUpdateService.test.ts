@@ -1773,17 +1773,18 @@ describe('FirmwareUpdateService', () => {
 			})
 
 			let persisted = nodes._store.get(7)
+			const restorePersistence = vi.fn(() => {
+				persisted = nodes._store.get(7)
+				return Promise.resolve()
+			})
 			nodes.persistStagedNodeUpdates.mockImplementation(
 				async (staged) => {
 					persisted = staged[0]
 					persistenceStarted.resolve()
 					await persistenceBarrier.promise
+					return restorePersistence
 				},
 			)
-			vi.mocked(nodes.updateStoreNodes).mockImplementation(() => {
-				persisted = nodes._store.get(7)
-				return Promise.resolve()
-			})
 
 			const { service } = createService({ driver, nodes })
 
@@ -1803,6 +1804,7 @@ describe('FirmwareUpdateService', () => {
 			expect(persisted?.availableFirmwareUpdates).toEqual([])
 			expect(persisted?.lastFirmwareUpdateCheck).toBe(0)
 
+			expect(restorePersistence).toHaveBeenCalledOnce()
 			expect(nodes.emitNodeUpdate).not.toHaveBeenCalled()
 		})
 

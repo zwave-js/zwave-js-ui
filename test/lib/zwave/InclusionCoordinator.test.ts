@@ -20,6 +20,7 @@ import type {
 	InclusionDriverPort,
 	InclusionGrant,
 	InclusionQRPort,
+	InclusionUserCallbacks,
 	QRProvisioningInformation,
 	InclusionServerManagerPort,
 	InclusionSocketPort,
@@ -118,6 +119,21 @@ function createControllerEventPort(): InclusionControllerEventPort & {
 	return {
 		emitControllerEvent: vi.fn(),
 	}
+}
+
+function isInclusionUserCallbacks(
+	value: unknown,
+): value is InclusionUserCallbacks {
+	return (
+		typeof value === 'object' &&
+		value !== null &&
+		'grantSecurityClasses' in value &&
+		typeof value.grantSecurityClasses === 'function' &&
+		'validateDSKAndEnterPIN' in value &&
+		typeof value.validateDSKAndEnterPIN === 'function' &&
+		'abort' in value &&
+		typeof value.abort === 'function'
+	)
 }
 
 function createCoordinator(
@@ -1017,6 +1033,54 @@ describe('InclusionCoordinator', () => {
 
 			coordinator.setUserCallbacks()
 			expect(drv.updateOptions).not.toHaveBeenCalled()
+		})
+
+		it('refreshes MQTT callbacks after reset', async () => {
+			let installedCallbacks: InclusionUserCallbacks | undefined
+			const updateOptions = vi.fn((options: unknown) => {
+				if (
+					typeof options === 'object' &&
+					options !== null &&
+					'inclusionUserCallbacks' in options &&
+					isInclusionUserCallbacks(options.inclusionUserCallbacks)
+				) {
+					installedCallbacks = options.inclusionUserCallbacks
+				}
+			})
+			const baseDriver = createDriverPort().getDriver()
+			const driver: InclusionDriverPort = {
+				isDriverReady: () => true,
+				getDriver: () =>
+					baseDriver && {
+						...baseDriver,
+						updateOptions,
+					},
+			}
+			const config: InclusionConfigPort = {
+				commandsTimeout: 30,
+				serverEnabled: false,
+			}
+			const { coordinator } = createCoordinator({ config, driver })
+			const staleCallbacks = coordinator.getUserCallbacks()
+
+			coordinator.reset()
+			coordinator.reinstallUserCallbacks()
+
+			expect(installedCallbacks).toBeDefined()
+			await expect(
+				staleCallbacks.grantSecurityClasses({
+					securityClasses: [SecurityClass.S2_Authenticated],
+					clientSideAuth: false,
+				}),
+			).resolves.toBe(false)
+
+			const requested: InclusionGrant = {
+				securityClasses: [SecurityClass.S2_Authenticated],
+				clientSideAuth: false,
+			}
+			const grant = installedCallbacks?.grantSecurityClasses(requested)
+			coordinator.grantSecurityClasses(requested)
+			await expect(grant).resolves.toEqual(requested)
 		})
 	})
 

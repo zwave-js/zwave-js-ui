@@ -448,16 +448,18 @@ export interface FirmwareNodeStorePort {
 	getNode(nodeId: number): FirmwareUpdateNodeState | undefined
 	getStoreNode(nodeId: number): Partial<FirmwareUpdateNodeState> | undefined
 	ensureStoreNode(nodeId: number): Partial<FirmwareUpdateNodeState>
-	updateStoreNodes(): Promise<void>
+	updateStoreNodes(): Promise<FirmwarePersistenceRestore | void>
 	/** Filesystem writes may complete after reset, so callers must fence before publishing staged state */
 	persistStagedNodeUpdates(
 		staged: ReadonlyArray<StagedFirmwareNodeUpdate>,
-	): Promise<void>
+	): Promise<FirmwarePersistenceRestore | void>
 	emitNodeUpdate(
 		node: FirmwareUpdateNodeState,
 		changedProps: DeepPartial<FirmwareUpdateNodeState>,
 	): void
 }
+
+export type FirmwarePersistenceRestore = () => Promise<void>
 
 export interface FirmwareSocketPort {
 	sendToSocket(event: string, data: unknown): void
