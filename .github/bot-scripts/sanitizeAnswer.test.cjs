@@ -23,6 +23,18 @@ describe("sanitizeAnswer", () => {
 				"no mentions here",
 			);
 		});
+
+		it("neutralizes encoded mentions outside code", () => {
+			expect(
+				neutralizeMentions(
+					"&#64;octocat &#x40;team &commat;here "
+						+ "`&#64;literal`",
+				),
+			).toBe(
+				"@\u200boctocat @\u200bteam @\u200bhere "
+					+ "`&#64;literal`",
+			);
+		});
 	});
 
 	describe("stripHtml", () => {
@@ -52,6 +64,71 @@ describe("sanitizeAnswer", () => {
 
 		it("removes angle-bracket autolinks", () => {
 			expect(stripHtml("see <https://example.com/evil>")).toBe("see ");
+		});
+
+		it("preserves angle brackets in inline and fenced code", () => {
+			const input = [
+				"Use `Array<string>` and `x < 5 && y > 3`.",
+				"",
+				"```ts",
+				"const values: Map<string, number> = new Map();",
+				"```",
+			].join("\n");
+			expect(stripHtml(input)).toBe(input);
+		});
+
+		it("still removes HTML around code spans", () => {
+			expect(stripHtml("<b>Use `Array<string>` here</b>")).toBe(
+				"Use `Array<string>` here",
+			);
+		});
+
+		it("sanitizes content behind escaped or mismatched backticks", () => {
+			expect(
+				stripHtml(
+					"\\`<img src=x> @octocat [click](https://evil.example)`",
+				),
+			).toBe("\\` @octocat [click](https://evil.example)`");
+			expect(
+				stripHtml(
+					"`<img src=x> @octocat [click](https://evil.example)``",
+				),
+			).toBe("` @octocat [click](https://evil.example)``");
+		});
+
+		it("sanitizes invalid fences and recognizes CRLF closers", () => {
+			expect(
+				stripHtml("```bad`info\n<img src=x> @octocat"),
+			).toBe("```bad`info\n @octocat");
+			expect(
+				stripHtml(
+					"```ts\r\nconst x: Array<string> = [];\r\n```\r\n"
+						+ "<img src=x>",
+				),
+			).toBe(
+				"```ts\nconst x: Array<string> = [];\n```\n",
+			);
+		});
+
+		it("does not treat code spans as crossing block boundaries", () => {
+			expect(
+				stripHtml(
+					"`open\n\n<img src=x> @octocat [click](https://evil.example)\n`",
+				),
+			).toBe(
+				"`open\n\n @octocat [click](https://evil.example)\n`",
+			);
+		});
+
+		it("recognizes CR-only fenced-code boundaries", () => {
+			expect(
+				stripHtml(
+					"~~~js\rconst x: Array<string> = [];\r~~~\r"
+						+ "<img src=x>",
+				),
+			).toBe(
+				"~~~js\nconst x: Array<string> = [];\n~~~\n",
+			);
 		});
 	});
 
@@ -134,6 +211,14 @@ describe("sanitizeAnswer", () => {
 			expect(result).not.toContain("![see[details]]");
 			expect(result).toContain(String.raw`\[here\[for help\]\]`);
 			expect(result).toContain(String.raw`!\[see\[details\]\]`);
+		});
+
+		it("preserves code while sanitizing surrounding content", () => {
+			const input =
+				"<b>Use</b> `Map<string, number>` instead of @someone.";
+			expect(sanitizeModelAnswer(input)).toBe(
+				"Use `Map<string, number>` instead of @\u200bsomeone.",
+			);
 		});
 	});
 });

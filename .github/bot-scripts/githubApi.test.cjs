@@ -48,6 +48,12 @@ describe("githubApi", () => {
 			).toBe(3000);
 		});
 
+		it("caps Retry-After at 60 seconds", async () => {
+			expect(
+				await getRetryDelayMs(mockResponse(429, { "Retry-After": "3600" }), 0),
+			).toBe(60_000);
+		});
+
 		it("retries a secondary rate limit 403 identified by Retry-After", async () => {
 			expect(
 				await getRetryDelayMs(mockResponse(403, { "Retry-After": "2" }), 0),

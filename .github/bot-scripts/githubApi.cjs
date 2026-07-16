@@ -19,7 +19,7 @@ function getRateLimitDelayMs(response, attempt) {
 
 	const retryAfter = Number(response.headers.get("retry-after"));
 	if (Number.isFinite(retryAfter) && retryAfter > 0) {
-		return retryAfter * 1000;
+		return Math.min(retryAfter * 1000, 60_000);
 	}
 
 	const reset = Number(response.headers.get("x-ratelimit-reset"));

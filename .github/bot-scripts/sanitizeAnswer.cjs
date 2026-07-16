@@ -15,12 +15,122 @@
 // plain text rather than rendered as a clickable link.
 
 /**
- * Inserts a zero-width space after each @ so GitHub does not resolve
- * the text into a user/team mention notification
+ * Applies a transform outside inline and fenced code, where GitHub renders
+ * Markdown-like content as literal text
+ * @param {string} text
+ * @param {(text: string) => string} transform
+ */
+function transformOutsideCode(text, transform) {
+	text = text.replace(/\r\n?/g, "\n");
+	let result = "";
+	let plainTextStart = 0;
+	let offset = 0;
+
+	while (offset < text.length) {
+		const lineStart = offset === 0 || text[offset - 1] === "\n";
+		if (lineStart) {
+			const fenceMatch = text.slice(offset).match(/^( {0,3})(`{3,}|~{3,})/);
+			if (fenceMatch) {
+				const fenceStart = offset;
+				const fence = fenceMatch[2];
+				const openingLineEnd = text.indexOf("\n", fenceStart);
+				const openingLine = text.slice(
+					fenceStart,
+					openingLineEnd === -1 ? text.length : openingLineEnd,
+				);
+				const infoString = openingLine
+					.slice(fenceMatch[1].length + fence.length)
+					.replace(/\r$/, "");
+				if (fence[0] === "`" && infoString.includes("`")) {
+					offset += fence.length;
+					continue;
+				}
+				let fenceEnd = text.length;
+				let searchOffset = openingLineEnd === -1
+					? text.length
+					: openingLineEnd + 1;
+				const closingPattern = new RegExp(
+					`^ {0,3}${fence[0]}{${fence.length},}[ \\t]*(?:\\r?\\n|\\r?$)`,
+					"m",
+				);
+				const closingMatch = closingPattern.exec(text.slice(searchOffset));
+				if (closingMatch) {
+					fenceEnd = searchOffset + closingMatch.index
+						+ closingMatch[0].length;
+				}
+
+				result += transform(text.slice(plainTextStart, fenceStart));
+				result += text.slice(fenceStart, fenceEnd);
+				offset = fenceEnd;
+				plainTextStart = offset;
+				continue;
+			}
+		}
+
+		if (text[offset] === "`") {
+			let runLength = 1;
+			while (text[offset + runLength] === "`") runLength++;
+			let precedingBackslashes = 0;
+			for (
+				let index = offset - 1;
+				index >= 0 && text[index] === "\\";
+				index--
+			) {
+				precedingBackslashes++;
+			}
+			if (precedingBackslashes % 2 === 1) {
+				offset += runLength;
+				continue;
+			}
+
+			let closingOffset = -1;
+			let searchOffset = offset + runLength;
+			const lineEnd = text.indexOf("\n", searchOffset);
+			const searchEnd = lineEnd === -1 ? text.length : lineEnd;
+			while (searchOffset < searchEnd) {
+				const nextRun = text.indexOf("`", searchOffset);
+				if (nextRun === -1 || nextRun >= searchEnd) break;
+				let nextRunLength = 1;
+				while (text[nextRun + nextRunLength] === "`") nextRunLength++;
+				if (nextRunLength === runLength) {
+					closingOffset = nextRun;
+					break;
+				}
+				searchOffset = nextRun + nextRunLength;
+			}
+			if (closingOffset !== -1) {
+				const codeEnd = closingOffset + runLength;
+				result += transform(text.slice(plainTextStart, offset));
+				result += text.slice(offset, codeEnd);
+				offset = codeEnd;
+				plainTextStart = offset;
+				continue;
+			}
+			offset += runLength;
+			continue;
+		}
+
+		offset++;
+	}
+
+	result += transform(text.slice(plainTextStart));
+	return result;
+}
+
+/**
+ * Inserts a zero-width space after each literal or encoded @ so GitHub does
+ * not resolve the text into a user/team mention notification
  * @param {string} text
  */
 function neutralizeMentions(text) {
-	return text.replace(/@/g, "@\u200b");
+	return transformOutsideCode(
+		text,
+		(segment) =>
+			segment.replace(
+				/@|&#0*64;|&#x0*40;|&commat;/gi,
+				"@\u200b",
+			),
+	);
 }
 
 /**
@@ -29,22 +139,24 @@ function neutralizeMentions(text) {
  * @param {string} text
  */
 function stripHtml(text) {
-	let result = "";
-	let offset = 0;
-	while (offset < text.length) {
-		if (text.startsWith("<!--", offset)) {
-			const end = text.indexOf("-->", offset + 4);
-			if (end === -1) break;
-			offset = end + 3;
-		} else if (text[offset] === "<") {
-			const end = text.indexOf(">", offset + 1);
-			offset = end === -1 ? offset + 1 : end + 1;
-		} else {
-			result += text[offset];
-			offset++;
+	return transformOutsideCode(text, (segment) => {
+		let result = "";
+		let offset = 0;
+		while (offset < segment.length) {
+			if (segment.startsWith("<!--", offset)) {
+				const end = segment.indexOf("-->", offset + 4);
+				if (end === -1) break;
+				offset = end + 3;
+			} else if (segment[offset] === "<") {
+				const end = segment.indexOf(">", offset + 1);
+				offset = end === -1 ? offset + 1 : end + 1;
+			} else {
+				result += segment[offset];
+				offset++;
+			}
 		}
-	}
-	return result;
+		return result;
+	});
 }
 
 /**
@@ -54,7 +166,10 @@ function stripHtml(text) {
  * @param {string} text
  */
 function stripImages(text) {
-	return text.replace(/!\[[^\]]*\]\([^)]*\)/g, "");
+	return transformOutsideCode(
+		text,
+		(segment) => segment.replace(/!\[[^\]]*\]\([^)]*\)/g, ""),
+	);
 }
 
 /**
@@ -64,11 +179,15 @@ function stripImages(text) {
  * @param {string} text
  */
 function stripLinks(text) {
-	return text
-		.replace(/\[([^\]]*)\]\([^)]*\)/g, "$1")
-		.replace(/^[ \t]*\[[^\]]+\]:\s*\S+.*$/gm, "")
-		.replaceAll("[", String.raw`\[`)
-		.replaceAll("]", String.raw`\]`);
+	return transformOutsideCode(
+		text,
+		(segment) =>
+			segment
+				.replace(/\[([^\]]*)\]\([^)]*\)/g, "$1")
+				.replace(/^[ \t]*\[[^\]]+\]:\s*\S+.*$/gm, "")
+				.replaceAll("[", String.raw`\[`)
+				.replaceAll("]", String.raw`\]`),
+	);
 }
 
 /**
@@ -78,7 +197,10 @@ function stripLinks(text) {
  * @param {string} text
  */
 function neutralizeRawUrls(text) {
-	return text.replace(/\b(https?:\/\/|www\.)/gi, "$1\u200b");
+	return transformOutsideCode(
+		text,
+		(segment) => segment.replace(/\b(https?:\/\/|www\.)/gi, "$1\u200b"),
+	);
 }
 
 /**
@@ -105,4 +227,5 @@ module.exports = {
 	stripImages,
 	stripLinks,
 	neutralizeRawUrls,
+	transformOutsideCode,
 };
