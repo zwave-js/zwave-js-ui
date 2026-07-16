@@ -45,8 +45,8 @@ vi.mock('#api/lib/ZnifferManager.ts', () => ({
 }))
 
 import { useHttpHarness } from './harness.ts'
-import { setSettings } from './authHelpers.ts'
-import { createFakeGateway } from './fakes.ts'
+import { setSettings } from '../shared/authHelpers.ts'
+import { createFakeGateway } from '../shared/fakes.ts'
 
 describe('sparse persisted settings', () => {
 	const getHarness = useHttpHarness()

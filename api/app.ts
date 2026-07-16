@@ -312,7 +312,6 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 			await jsonStore.put(store.users, users)
 		}
 
-		attachSocket(server)
 		await runtime.loadSnippets()
 		runtime.startZniffer(settings.zniffer)
 		await debugManager.init() // Clean up any old debug temp files
