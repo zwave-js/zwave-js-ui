@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { useHttpHarness } from './harness.ts'
-import { setSettings } from './authHelpers.ts'
+import { setSettings } from '../shared/authHelpers.ts'
 
 // Keep this inventory independent so production auth-guard drift fails the suite
 const GUARDED_ROUTES: Array<{

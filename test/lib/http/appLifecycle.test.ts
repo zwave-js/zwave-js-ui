@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
-import { loadAppModule } from './harness.ts'
+import { loadAppModule } from '../shared/harness.ts'
 
 describe('AppInstance: fatal-error labeling', () => {
 	it('labels each installed fatal-event handler from the event that fired', async () => {
@@ -19,7 +19,7 @@ describe('AppInstance: fatal-error labeling', () => {
 
 		expect(uncaught).toBeDefined()
 		expect(rejection).toBeDefined()
-		uncaught?.(new Error('uncaught'))
+		uncaught?.(new Error('uncaught'), 'uncaughtException')
 		rejection?.('rejected', Promise.resolve())
 
 		expect(logFatalError.mock.calls[0][0]).toMatch(

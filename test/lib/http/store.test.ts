@@ -3,8 +3,8 @@ import { mkdirSync, writeFileSync, existsSync, readFileSync } from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { useHttpHarness, bufferResponse } from './harness.ts'
-import { getTestStoreDir } from './env.ts'
-import { createFakeGateway } from './fakes.ts'
+import { getTestStoreDir } from '../shared/env.ts'
+import { createFakeGateway } from '../shared/fakes.ts'
 
 const BUNDLED_SNIPPETS_DIR = path.join(
 	path.dirname(fileURLToPath(import.meta.url)),

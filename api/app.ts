@@ -33,7 +33,7 @@ import { createServer as createHttpsServer } from 'node:https'
 import jwt from 'jsonwebtoken'
 import path from 'node:path'
 import sessionStore from 'session-file-store'
-import type { Socket } from 'socket.io'
+import type { Server as SocketIOServer, Socket } from 'socket.io'
 import { inspect, promisify } from 'node:util'
 import { Driver, libVersion } from 'zwave-js'
 import {
@@ -125,6 +125,8 @@ const FileStore = sessionStore(session)
 
 export interface AppInstance {
 	app: Express
+	attachSocket(server: HttpServer): void
+	readonly io: SocketIOServer
 	startServer: (port: number | string, host?: string) => Promise<HttpServer>
 	loadSnippets(): Promise<void>
 	installProcessHandlers: () => void
@@ -134,6 +136,8 @@ export interface AppInstance {
 export interface CreateAppOptions {
 	test?: {
 		gateway?: Gateway
+		zniffer?: ZnifferManager
+		pluginsRouter?: Router
 		restarting?: boolean
 		enumerateSerialPorts?: typeof Driver.enumerateSerialPorts
 		logFatalError?: (message: string) => void
@@ -261,14 +265,15 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 	}
 
 	let gw: Gateway | undefined = testOptions?.gateway // the gateway instance
-	let zniffer: ZnifferManager // the zniffer instance
+	let zniffer: ZnifferManager | undefined = testOptions?.zniffer // the zniffer instance
 	const plugins: CustomPlugin[] = []
-	let pluginsRouter: Router
+	let pluginsRouter: Router | undefined = testOptions?.pluginsRouter
 
 	// flag used to prevent multiple restarts while one is already in progress
 	let restarting = testOptions?.restarting ?? false
 
 	let closed = false
+	let socketAttached = false
 	let ownsDebugSession = false
 	let logStreamInterceptor: ((chunk: Buffer | string) => void) | undefined
 
@@ -344,6 +349,7 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 			server = createHttpServer(app)
 		}
 
+		attachSocket(server)
 		server.listen(port as number, host, function () {
 			const addr = server.address()
 			const bind =
@@ -389,8 +395,6 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 			await jsonStore.put(store.users, users)
 		}
 
-		setupSocket(server)
-		setupInterceptor()
 		await loadSnippets()
 		startZniffer(settings.zniffer)
 		await debugManager.init() // Clean up any old debug temp files
@@ -805,7 +809,7 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 							res = gw.removeNodeRetained(data.args[0])
 							break
 						default:
-							err = `Unknown MQTT api ${data.apiName}`
+							err = `Unknown MQTT api ${data.api}`
 					}
 				} catch (error) {
 					logger.error('Error while calling MQTT api', error)
@@ -993,6 +997,18 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 				gw.zwave?.removeUserCallbacks()
 			}
 		})
+	}
+
+	function attachSocket(server: HttpServer) {
+		if (closed) {
+			throw new Error('Cannot attach Socket.IO after the app is closed')
+		}
+		if (socketAttached) {
+			throw new Error('Socket.IO is already attached')
+		}
+		socketAttached = true
+		setupSocket(server)
+		setupInterceptor()
 	}
 
 	// ### APIs
@@ -2529,6 +2545,13 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 
 	return {
 		app,
+		attachSocket,
+		get io() {
+			if (!socketManager.io) {
+				throw new Error('Socket.IO is not attached')
+			}
+			return socketManager.io
+		},
 		startServer,
 		loadSnippets,
 		installProcessHandlers,

@@ -1,6 +1,6 @@
 import { describe, it, expect, afterEach } from 'vitest'
 import { useHttpHarness } from './harness.ts'
-import { seedUser, signUserToken, setSettings } from './authHelpers.ts'
+import { seedUser, signUserToken, setSettings } from '../shared/authHelpers.ts'
 
 describe('HTTP contract: auth & password', () => {
 	const getHarness = useHttpHarness()
@@ -162,6 +162,7 @@ describe('HTTP contract: auth & password', () => {
 	describe('PUT /api/password', () => {
 		it('fails with a generic error when there is no logged-in session user', async () => {
 			const harness = await getHarness()
+			await seedUser(harness, 'existing-user', 'password')
 			const res = await harness.request.put('/api/password').send({
 				current: 'x',
 				new: 'y',
