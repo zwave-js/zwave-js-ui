@@ -145,6 +145,26 @@ describe('Binary Switch discovery', () => {
 		)
 	})
 
+	it('pins discovery to qos 0 even when the mqtt connection uses a higher qos', async () => {
+		// A non-default broker qos must not leak into discovery: the Gateway
+		// forces qos 0 on discovery regardless of the connection's configured
+		// qos, and retain is driven separately by retainedDiscovery
+		harness = await gatewayHarness.replace({
+			zwave: { homeHex: HOME_HEX },
+			mqttConfig: { qos: 2 },
+		})
+
+		const node = readyNode()
+		const key = addCurrentTargetPair(node, {
+			cc: CommandClasses['Binary Switch'],
+		})
+		discoverValueOnNode(harness.gw, node, key)
+
+		const published = harness.lastDiscovery()
+		expect(published.options.qos).toBe(0)
+		expect(published.options.retain).toBe(false)
+	})
+
 	it('skips non-current values (targetValue alone) on switch CC', () => {
 		const node = readyNode()
 		const target = buildValueId({

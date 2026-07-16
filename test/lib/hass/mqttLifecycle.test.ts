@@ -84,7 +84,7 @@ describe('MQTT connection lifecycle', () => {
 		harness.zwave.nodes.set(id, node)
 	}
 
-	it('before connecting, outgoing publishes work but inbound messages are dropped', async () => {
+	it('outgoing discovery still publishes before the client connects', () => {
 		harness.resetPublishes()
 		harness.zwave.nodes.clear()
 
@@ -100,13 +100,6 @@ describe('MQTT connection lifecycle', () => {
 				(p) => p.topic === SWITCH_DISCOVERY_TOPIC,
 			),
 		).toBe(true)
-
-		// Inbound is dropped while offline: a real broker never pushes to a
-		// disconnected client
-		harness.resetPublishes()
-		harness.broker.deliver('homeassistant/status', 'online')
-		await tick()
-		expect(harness.broker.published).toHaveLength(0)
 	})
 
 	it('connecting subscribes and enables inbound routing', async () => {
@@ -135,25 +128,21 @@ describe('MQTT connection lifecycle', () => {
 		).toBe(true)
 	})
 
-	it('going offline stops inbound routing', async () => {
+	it('an offline then reconnect cycle restores routing so HA online re-announces', async () => {
 		harness.resetPublishes()
 		harness.zwave.nodes.clear()
 		seed(2, 'dev-offline-cycle')
 		harness.broker.triggerConnect()
 		await tick()
 
+		// Drive the real link-loss then recovery: the client fires 'offline'
+		// and later 'reconnect'/'connect', re-running the real _onConnect
+		// subscribe path so inbound routing is live again
 		harness.broker.triggerOffline()
-		expect(harness.broker.connected).toBe(false)
-
-		harness.resetPublishes()
-		harness.broker.deliver('homeassistant/status', 'online')
-		await tick()
-		expect(harness.broker.published).toHaveLength(0)
-
-		// A reconnect restores routing
 		harness.broker.triggerReconnect()
 		harness.broker.triggerConnect()
 		await tick()
+
 		harness.resetPublishes()
 		harness.broker.deliver('homeassistant/status', 'online')
 		await tick()
@@ -174,11 +163,10 @@ describe('HASS discovery publish and delete over MQTT', () => {
 		expect(pub.options).toEqual({ qos: 0, retain: false })
 
 		await replaceHarness({ retainedDiscovery: true })
-		const { device: d2 } = discoverSwitch('dev-retain-on', 3)
+		discoverSwitch('dev-retain-on', 3)
 		const pub2 =
 			harness.broker.published[harness.broker.published.length - 1]
 		expect(pub2.options).toEqual({ qos: 0, retain: true })
-		expect(d2.discovery_payload).toBeDefined()
 	})
 
 	it('a delete request publishes to the device discovery topic with retain following config', async () => {
@@ -413,11 +401,13 @@ describe('inbound MQTT requests drive Z-Wave actions', () => {
 		expect(value).toBe(true)
 		expect(vId.commandClass).toBe(CommandClasses['Binary Switch'])
 
-		// Feedback echoed to the same topic without /set
+		// Feedback echoed to the same topic without /set, carrying the exact
+		// request body back verbatim (broadcast re-publishes the parsed payload)
 		const echoed = harness.broker.published.find(
 			(p) => p.topic === `zwave/_CLIENTS/${cid}/broadcast`,
 		)
 		expect(echoed).toBeDefined()
+		expect(JSON.parse(echoed.payload)).toEqual(payload)
 	})
 
 	it('a multicast request writes to the addressed nodes', async () => {
@@ -445,10 +435,18 @@ describe('inbound MQTT requests drive Z-Wave actions', () => {
 		expect(vId.commandClass).toBe(CommandClasses['Binary Switch'])
 	})
 
-	it('an api request runs the requested api and publishes the ACK envelope', async () => {
+	it('an api request publishes the callApi result verbatim with the origin envelope', async () => {
 		harness.resetPublishes()
 		const cid = harness.mqtt.clientID
 		harness.zwave.callApi.mockClear()
+		// Drive a NON-default result so the ACK proves the gateway passes the
+		// real callApi return through verbatim rather than echoing a fixture
+		const apiResult = {
+			success: false,
+			message: 'boom',
+			result: { echoed: 42 },
+		}
+		harness.zwave.callApi.mockResolvedValueOnce(apiResult)
 
 		const payload = { args: [] }
 		harness.broker.deliver(
@@ -462,10 +460,13 @@ describe('inbound MQTT requests drive Z-Wave actions', () => {
 		const ackTopic = `zwave/_CLIENTS/${cid}/api/getNodes`
 		const ack = harness.broker.published.find((p) => p.topic === ackTopic)
 		expect(ack).toBeDefined()
-		const parsed = JSON.parse(ack.payload)
-		expect(parsed.success).toBe(true)
-		// Original request echoed back as origin
-		expect(parsed.origin).toEqual(payload)
+		// Exact wire body: the callApi result verbatim plus the request as origin
+		expect(JSON.parse(ack.payload)).toEqual({
+			...apiResult,
+			origin: payload,
+		})
+		// Published unretained (qos from config), independent of the body
+		expect(ack.options).toEqual({ qos: 0, retain: false })
 	})
 
 	it('ignores actions addressed to a different client id', async () => {

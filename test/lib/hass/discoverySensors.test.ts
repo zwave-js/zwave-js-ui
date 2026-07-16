@@ -119,10 +119,12 @@ describe('Alarm Sensor discovery', () => {
 			}),
 		)
 		expect(device.type).toBe('binary_sensor')
-		// 'event_' + AlarmSensorType[key], lowercased in the common tail
+		// 'event_' + AlarmSensorType[key], lowercased in the common tail.
+		// The oracle uses locale-independent toLowerCase so it can't drift
+		// across CI locales (the value is ASCII, so it matches production).
 		const expectedObjectId = (
 			'event_' + AlarmSensorType[propertyKey]
-		).toLocaleLowerCase()
+		).toLowerCase()
 		expect(device.object_id).toBe(expectedObjectId)
 		expect(payload.payload.device_class).toBe('problem')
 	})
