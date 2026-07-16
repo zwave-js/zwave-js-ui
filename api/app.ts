@@ -646,6 +646,5 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 		loadSnippets: () => runtime.loadSnippets(),
 		installProcessHandlers,
 		close,
-		shutdown,
 	}
 }
