@@ -420,7 +420,7 @@ export type ZUIValueId = {
 	label?: string
 	default: any
 	stateless: boolean
-	ccSpecific: Record<string, any>
+	ccSpecific?: Record<string, unknown>
 	min?: number
 	max?: number
 	step?: number
