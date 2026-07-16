@@ -107,6 +107,7 @@ export type GatewayConfig = {
 	}
 	disableChangelog?: boolean
 	notifyNewVersions?: boolean
+	/** Enable HTTPS for the web server (see `startServer` in `app.ts`). */
 	https?: boolean
 }
 
@@ -143,6 +144,7 @@ export type GatewayMqtt = Pick<
 	| 'clientID'
 	| 'close'
 	| 'disabled'
+	| 'emitHassStatus'
 	| 'getStatusTopic'
 	| 'getTopic'
 	| 'off'
@@ -247,8 +249,6 @@ export default class Gateway<
 	 * adapt the live clients so the manager never binds to a concrete client.
 	 */
 	public buildDiscoveryOptions(): MqttDiscoveryManagerOptions {
-		const getMqtt = () => this._mqtt
-		const getZwave = () => this._zwave
 		return {
 			config: this.config,
 			mqtt: this._mqtt,

@@ -464,7 +464,7 @@ export class AppRuntime {
 	 * may replace the caller's original startup error: they are collected and
 	 * logged here, never rethrown.
 	 */
-	private async quiesceFailedStart(gw: Gateway): Promise<void> {
+	private async quiesceFailedStart(gw: GatewayPort): Promise<void> {
 		const cleanupErrors: unknown[] = []
 
 		try {
@@ -549,12 +549,12 @@ export class AppRuntime {
 	 *  3. Close the gateway (which closes the Z-Wave client, destroying the
 	 *     driver, then the MQTT client), then destroy the plugins.
 	 *
-	 * `requireProperty` selects the close path: `/api/restart` passes `'close'`
+	 * `requireGateway` selects the close path: `/api/restart` passes `true`
 	 * so a restart with no gateway attached surfaces as a caller error, while
 	 * graceful shutdown omits it to close the gateway only when one is present.
 	 */
 	async teardownGateway(options?: {
-		requireProperty?: string
+		requireGateway?: boolean
 	}): Promise<void> {
 		// (1) Cancel the in-flight start's generation and capture its run without
 		// awaiting it: a hung `gw.start()`/plugin import would never settle, so
@@ -580,7 +580,7 @@ export class AppRuntime {
 		await this.homeAssistant.stop()
 
 		// (3) Close the current gateway, then destroy plugins.
-		if (options?.requireProperty !== undefined) {
+		if (options?.requireGateway) {
 			await this.ensureGateway().close()
 		} else {
 			await this.closeIfPresent(this.gateway)
