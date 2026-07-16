@@ -193,7 +193,18 @@ async function createHarnessInstance(
 		waitForServerSocketCount: (count, timeoutMs) =>
 			transport.waitForServerSocketCount(count, timeoutMs),
 		disconnectAllClients: () => transport.disconnectAllClients(),
-		closeInstance: () => transport.close(),
+		async closeInstance() {
+			await transport.disconnectAllClients()
+			const serverClosed = once(transport.server, 'close')
+			try {
+				await transport.context.close()
+			} finally {
+				if (transport.server.listening) {
+					await transport.io.close()
+				}
+				await serverClosed
+			}
+		},
 	}
 }
 
