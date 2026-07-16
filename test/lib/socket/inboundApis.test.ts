@@ -223,7 +223,6 @@ describe('Socket contract: inbound ACK APIs', () => {
 				message: 'Success HASS api call',
 				api: 'rediscoverNode',
 			})
-			expect('result' in result).toBe(false)
 		})
 
 		it('reports success:false with the thrown error message when the action throws', async () => {
@@ -267,7 +266,6 @@ describe('Socket contract: inbound ACK APIs', () => {
 				message: 'Success HASS api call',
 				api: 'delete',
 			})
-			expect('result' in result).toBe(false)
 		})
 
 		// delete and discover differ only by whether the entity is removed or republished
@@ -379,6 +377,22 @@ describe('Socket contract: inbound ACK APIs', () => {
 				api: 'store',
 			})
 		})
+
+		it('reports success:false with "Unknown HASS api <name>" for an unknown apiName', async () => {
+			// An unrecognized action must surface a failure ack, not silently
+			// succeed by falling through the switch with an undefined result
+			const harness = await getHarness({ gateway: createFakeGateway() })
+			const client = await connectedClient(harness)
+
+			const result = await emit(client, 'HASS_API', {
+				apiName: 'notARealAction',
+			})
+			expect(result).toStrictEqual({
+				success: false,
+				message: 'Unknown HASS api notARealAction',
+				api: 'notARealAction',
+			})
+		})
 	})
 
 	describe('ZNIFFER_API', () => {
@@ -402,7 +416,6 @@ describe('Socket contract: inbound ACK APIs', () => {
 				message: 'Success ZNIFFER api call',
 				api: 'start',
 			})
-			expect('result' in result).toBe(false)
 		})
 
 		it('reports success:false with "Unknown ZNIFFER api <name>" for an unknown apiName', async () => {
@@ -419,6 +432,38 @@ describe('Socket contract: inbound ACK APIs', () => {
 				success: false,
 				message: 'Unknown ZNIFFER api notARealAction',
 				api: 'notARealAction',
+			})
+		})
+
+		it('awaits zniffer.loadCaptureFromBuffer so its resolved value reaches the ack', async () => {
+			// The real method resolves a value (undefined on success, { error }
+			// on failure) instead of rejecting, so production must await it for
+			// that value to reach the client; an un-awaited promise serializes
+			// to {} over the wire.
+			const loaded = { error: 'bad capture' }
+			const zniffer = createFakeZniffer({
+				loadCaptureFromBuffer: vi.fn(() => Promise.resolve(loaded)),
+			})
+			const harness = await getHarness({
+				gateway: createFakeGateway(),
+				zniffer,
+			})
+			const client = await connectedClient(harness)
+
+			const result = await emit(client, 'ZNIFFER_API', {
+				apiName: 'loadCaptureFromBuffer',
+				buffer: [1, 2, 3],
+			})
+			expect(zniffer.loadCaptureFromBuffer).toHaveBeenCalledOnce()
+			// production wraps data.buffer in Buffer.from before handing it over
+			expect(
+				Buffer.isBuffer(zniffer.loadCaptureFromBuffer.mock.calls[0][0]),
+			).toBe(true)
+			expect(result).toStrictEqual({
+				success: true,
+				message: 'Success ZNIFFER api call',
+				result: loaded,
+				api: 'loadCaptureFromBuffer',
 			})
 		})
 	})
