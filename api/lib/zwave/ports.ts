@@ -47,10 +47,6 @@ export type {
 }
 export { InclusionStrategy, QRCodeVersion }
 
-// ---------------------------------------------------------------------------
-// Schedule types re-exported so services don't import ZwaveClient
-// ---------------------------------------------------------------------------
-
 export const ZUIScheduleEntryLockMode = {
 	DAILY: 'daily',
 	WEEKLY: 'weekly',
