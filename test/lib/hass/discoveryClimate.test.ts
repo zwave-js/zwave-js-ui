@@ -14,22 +14,10 @@
  *  - a composite unique_id uses the capital _Node<id>_ infix, distinct from a
  *    per-value entity's identifiers.
  */
-import {
-	describe,
-	it,
-	expect,
-	beforeEach,
-	afterEach,
-	afterAll,
-	vi,
-} from 'vitest'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { CommandClasses } from '@zwave-js/core'
 import { mqttMockFactory } from './mqttMock.ts'
-import {
-	createGatewayHarness,
-	cleanupGatewayHarnessEnv,
-	type GatewayHarness,
-} from './gatewayHarness.ts'
+import { useGatewayHarness, type GatewayHarness } from './gatewayHarness.ts'
 import { buildNode, buildValueId, addValue, state } from './fixtures.ts'
 import type {
 	ZUINode,
@@ -39,18 +27,11 @@ import type {
 
 vi.mock('mqtt', () => mqttMockFactory())
 
+const gatewayHarness = useGatewayHarness()
 let harness: GatewayHarness
 
 beforeEach(async () => {
-	harness = await createGatewayHarness()
-})
-
-afterEach(async () => {
-	await harness.close()
-})
-
-afterAll(() => {
-	cleanupGatewayHarnessEnv()
+	harness = await gatewayHarness.get()
 })
 
 interface ThermostatOptions {
@@ -174,7 +155,7 @@ function climatePacket(nodeName = 'Thermostat') {
 
 describe('climate thermostat discovery', () => {
 	it('discovers a thermostat with mode, setpoint, and action mappings', () => {
-		harness.resetState()
+		harness.resetPublishes()
 		const node = buildThermostatNode({ deviceId: 'test-climate-full' })
 		initNode(node)
 
@@ -196,7 +177,7 @@ describe('climate thermostat discovery', () => {
 	})
 
 	it('consolidates the thermostat member values into a single published entity', () => {
-		harness.resetState()
+		harness.resetPublishes()
 		const node = buildThermostatNode({ deviceId: 'test-climate-claim' })
 		initNode(node)
 
@@ -211,7 +192,7 @@ describe('climate thermostat discovery', () => {
 	})
 
 	it('resolves climate topics, templates, and QoS/retain from the value config', () => {
-		harness.resetState()
+		harness.resetPublishes()
 		const node = buildThermostatNode({ deviceId: 'test-climate-topics' })
 		initNode(node)
 
@@ -267,7 +248,7 @@ describe('climate thermostat discovery', () => {
 	})
 
 	it('follows the current mode when choosing the temperature setpoint topic', () => {
-		harness.resetState()
+		harness.resetPublishes()
 		const node = buildThermostatNode({
 			deviceId: 'test-climate-cool',
 			modeValue: 2, // Cool active
@@ -282,7 +263,7 @@ describe('climate thermostat discovery', () => {
 	})
 
 	it('exposes a default setpoint for a single-setpoint thermostat with no mode command class', () => {
-		harness.resetState()
+		harness.resetPublishes()
 		const node = buildThermostatNode({
 			deviceId: 'test-climate-nomode',
 			includeMode: false,
@@ -306,7 +287,7 @@ describe('climate thermostat discovery', () => {
 	})
 
 	it('omits current-temperature fields when the thermostat has no air-temperature value', () => {
-		harness.resetState()
+		harness.resetPublishes()
 		const node = buildThermostatNode({
 			deviceId: 'test-climate-notemp',
 			withTemp: false,
@@ -321,7 +302,7 @@ describe('climate thermostat discovery', () => {
 	})
 
 	it('Fahrenheit air temperature maps temperature_unit to F', () => {
-		harness.resetState()
+		harness.resetPublishes()
 		const node = buildThermostatNode({
 			deviceId: 'test-climate-f',
 			tempUnit: '°F',
@@ -332,7 +313,7 @@ describe('climate thermostat discovery', () => {
 	})
 
 	it('does not republish when the node pipeline runs again', () => {
-		harness.resetState()
+		harness.resetPublishes()
 		const node = buildThermostatNode({ deviceId: 'test-climate-idem' })
 		initNode(node)
 		expect(harness.publishedDiscoveries()).toHaveLength(1)
@@ -347,7 +328,7 @@ describe('climate thermostat discovery', () => {
 
 describe('generic composite device discovery', () => {
 	it('resolves value ids to topics and appends /set for command topics', () => {
-		harness.resetState()
+		harness.resetPublishes()
 		const node = buildNode({
 			id: 7,
 			name: 'Composite',
@@ -399,7 +380,7 @@ describe('generic composite device discovery', () => {
 	})
 
 	it('is skipped when the device already exists on the node', () => {
-		harness.resetState()
+		harness.resetPublishes()
 		const node = buildNode({
 			id: 8,
 			name: 'Composite2',

@@ -8,20 +8,11 @@
  * asserted topic, template, payload, device, and availability block is the
  * production output captured at the broker publish boundary.
  */
-import {
-	describe,
-	it,
-	expect,
-	afterAll,
-	beforeEach,
-	afterEach,
-	vi,
-} from 'vitest'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { CommandClasses } from '@zwave-js/core'
 import { mqttMockFactory } from './mqttMock.ts'
 import {
-	createGatewayHarness,
-	cleanupGatewayHarnessEnv,
+	useGatewayHarness,
 	discoverValueOnNode,
 	type GatewayHarness,
 } from './gatewayHarness.ts'
@@ -32,18 +23,11 @@ vi.mock('mqtt', () => mqttMockFactory())
 
 const HOME_HEX = '0xabcdef01'
 
+const gatewayHarness = useGatewayHarness()
 let harness: GatewayHarness
 
 beforeEach(async () => {
-	harness = await createGatewayHarness({ zwave: { homeHex: HOME_HEX } })
-})
-
-afterEach(async () => {
-	await harness.close()
-})
-
-afterAll(() => {
-	cleanupGatewayHarnessEnv()
+	harness = await gatewayHarness.get({ zwave: { homeHex: HOME_HEX } })
 })
 
 /** A ready, physical node with deterministic identity fields. */
@@ -181,7 +165,7 @@ describe('Binary Switch discovery', () => {
 			CommandClasses['All Switch'],
 			CommandClasses['Binary Toggle Switch'],
 		]) {
-			harness.resetState()
+			harness.resetPublishes()
 			const node = readyNode()
 			const key = addCurrentTargetPair(node, { cc })
 			const device = discoverValueOnNode(harness.gw, node, key)

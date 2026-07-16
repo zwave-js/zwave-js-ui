@@ -7,20 +7,11 @@
  *
  * Real Gateway + real MqttClient; only mqtt is mocked.
  */
-import {
-	describe,
-	it,
-	expect,
-	afterAll,
-	beforeEach,
-	afterEach,
-	vi,
-} from 'vitest'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { CommandClasses } from '@zwave-js/core'
 import { mqttMockFactory } from './mqttMock.ts'
 import {
-	createGatewayHarness,
-	cleanupGatewayHarnessEnv,
+	useGatewayHarness,
 	discoverValueOnNode,
 	type GatewayHarness,
 } from './gatewayHarness.ts'
@@ -30,23 +21,15 @@ import type { GatewayConfig } from '#api/lib/Gateway.ts'
 
 vi.mock('mqtt', () => mqttMockFactory())
 
+const gatewayHarness = useGatewayHarness()
 let harness: GatewayHarness
 
 beforeEach(async () => {
-	harness = await createGatewayHarness({ zwave: { homeHex: '0xabcdef01' } })
-})
-
-afterEach(async () => {
-	await harness.close()
-})
-
-afterAll(() => {
-	cleanupGatewayHarnessEnv()
+	harness = await gatewayHarness.get({ zwave: { homeHex: '0xabcdef01' } })
 })
 
 async function replaceHarness(config: Partial<GatewayConfig>) {
-	await harness.close()
-	harness = await createGatewayHarness({
+	harness = await gatewayHarness.replace({
 		config,
 		zwave: { homeHex: '0xabcdef01' },
 	})

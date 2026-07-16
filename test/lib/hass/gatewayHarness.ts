@@ -15,12 +15,13 @@ import type ZwaveClientType from '#api/lib/ZwaveClient.ts'
 import type { HassDevice, ZUINode } from '#api/lib/ZwaveClient.ts'
 import type { IClientPublishOptions } from 'mqtt'
 import { ensureTestEnv, cleanupTestEnv } from './env.ts'
-import { latestBroker, type FakeBroker } from './mqttMock.ts'
+import { latestBroker, resetMqttBrokers, type FakeBroker } from './mqttMock.ts'
 import {
 	defaultMqttConfig,
 	createFakeGatewayZwave,
 	type FakeGatewayZwave,
 } from './fixtures.ts'
+import { useManagedCurrent, type ManagedCurrent } from '../shared/harness.ts'
 
 export interface PublishedDiscovery {
 	topic: string
@@ -38,14 +39,9 @@ export interface GatewayHarness {
 	lastDiscovery(): PublishedDiscovery
 	resetPublishes(): void
 	/**
-	 * Clears the recorded publishes between phases of a single test. Each test
-	 * builds its own harness, so the gateway's de-dup maps already start empty.
-	 */
-	resetState(): void
-	/**
 	 * Releases this harness's MQTT client and the Gateway module's
-	 * `customDevices` watchers (idempotent). Does not remove the shared
-	 * `STORE_DIR`; call `cleanupGatewayHarnessEnv()` once per file for that.
+	 * `customDevices` watchers (idempotent). Per-file `STORE_DIR` removal is
+	 * handled by `useGatewayHarness()`'s `afterAll`.
 	 */
 	close(): Promise<void>
 }
@@ -124,26 +120,48 @@ export async function createGatewayHarness(
 		resetPublishes() {
 			broker.published.length = 0
 		},
-		resetState() {
-			broker.published.length = 0
-		},
 		async close() {
 			// Drive the real Gateway.close teardown (zwave.close, cancelJobs,
 			// mqtt.close) instead of closing mqtt directly; Gateway.close leaves
-			// the module-global watchers, so release them separately
-			await gw.close()
-			closeWatchers()
+			// the module-global watchers, so release them separately — in a
+			// finally so a throwing gw.close still can't leak an armed watcher
+			try {
+				await gw.close()
+			} finally {
+				closeWatchers()
+			}
 		},
 	}
 }
 
 /**
- * Removes the shared `STORE_DIR` and restores the app env vars. Call once per
- * file (final `afterAll`) after every harness has closed, so a multi-harness
- * file doesn't delete the directory `api/config/app.ts` captured.
+ * Managed `GatewayHarness` lifecycle for a HASS test file: one fresh harness
+ * per test (call `get(options)` in a `beforeEach`, or `replace(options)` to
+ * swap config mid-test), always closed in `afterEach`. Because the `mqtt` mock
+ * registry and the Gateway watchers are module-global, `afterEach` also clears
+ * the broker registry (so `latestBroker()` tracks the current harness and the
+ * list can't grow unbounded) and the final `afterAll` closes any surviving
+ * watcher and drops the isolated `STORE_DIR`.
  */
-export function cleanupGatewayHarnessEnv(): void {
-	cleanupTestEnv()
+export function useGatewayHarness(): ManagedCurrent<
+	GatewayHarness,
+	GatewayHarnessOptions
+> {
+	return useManagedCurrent<GatewayHarness, GatewayHarnessOptions>(
+		(options) => createGatewayHarness(options),
+		(harness) => harness.close(),
+		{
+			afterEachCleanup: resetMqttBrokers,
+			async afterAllCleanup() {
+				// harness.close() already releases the current harness's
+				// watchers; sweep once more in case a test threw before its
+				// close, then remove the STORE_DIR api/config/app.ts captured
+				const { closeWatchers } = await import('#api/lib/Gateway.ts')
+				closeWatchers()
+				cleanupTestEnv()
+			},
+		},
+	)
 }
 
 /**

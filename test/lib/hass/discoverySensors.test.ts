@@ -8,21 +8,12 @@
  * device/state classes, units (including abbreviation), templates, payload
  * on/off inversions, and the "no ccSpecific -> skip" guards.
  */
-import {
-	describe,
-	it,
-	expect,
-	afterAll,
-	beforeEach,
-	afterEach,
-	vi,
-} from 'vitest'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { CommandClasses } from '@zwave-js/core'
 import { AlarmSensorType } from 'zwave-js'
 import { mqttMockFactory } from './mqttMock.ts'
 import {
-	createGatewayHarness,
-	cleanupGatewayHarnessEnv,
+	useGatewayHarness,
 	discoverValueOnNode,
 	type GatewayHarness,
 } from './gatewayHarness.ts'
@@ -31,20 +22,13 @@ import type { ZUINode, ZUIValueId } from '#api/lib/ZwaveClient.ts'
 
 vi.mock('mqtt', () => mqttMockFactory())
 
+const gatewayHarness = useGatewayHarness()
 let harness: GatewayHarness
 
 beforeEach(async () => {
-	harness = await createGatewayHarness({
+	harness = await gatewayHarness.get({
 		zwave: { homeHex: '0xabcdef01' },
 	})
-})
-
-afterEach(async () => {
-	await harness.close()
-})
-
-afterAll(() => {
-	cleanupGatewayHarnessEnv()
 })
 
 function readyNode(over: Partial<ZUINode> = {}): ZUINode {

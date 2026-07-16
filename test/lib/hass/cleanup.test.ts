@@ -4,48 +4,20 @@
  * connection strictly before the MQTT client. mqtt is the only mocked upstream
  * boundary; the Gateway and MqttClient are real.
  */
-import {
-	describe,
-	it,
-	expect,
-	beforeAll,
-	afterAll,
-	afterEach,
-	vi,
-} from 'vitest'
-import { ensureTestEnv } from './env.ts'
-import { mqttMockFactory, resetMqttBrokers } from './mqttMock.ts'
-import {
-	createGatewayHarness,
-	cleanupGatewayHarnessEnv,
-} from './gatewayHarness.ts'
-import type * as GatewayModuleNS from '#api/lib/Gateway.ts'
+import { describe, it, expect, vi } from 'vitest'
+import { mqttMockFactory } from './mqttMock.ts'
+import { useGatewayHarness } from './gatewayHarness.ts'
 
 vi.mock('mqtt', () => mqttMockFactory())
 
-type GatewayModule = typeof GatewayModuleNS
-
-let gwMod: GatewayModule
-
-beforeAll(async () => {
-	ensureTestEnv()
-	gwMod = await import('#api/lib/Gateway.ts')
-})
-
-afterAll(() => {
-	// Ensure no watcher survives the file, then drop the isolated STORE_DIR
-	gwMod.closeWatchers()
-	cleanupGatewayHarnessEnv()
-})
-
-afterEach(() => {
-	// Never let a broker leak into the next test's latestBroker()
-	resetMqttBrokers()
-})
+// The managed accessor closes the current harness in afterEach even if a test
+// throws before its own explicit close, and resets the broker registry and
+// watchers for the file — so these tests can focus on asserting close() itself.
+const gatewayHarness = useGatewayHarness()
 
 describe('Gateway teardown releases the broker', () => {
 	it('closing releases the broker and is safe to call twice', async () => {
-		const harness = await createGatewayHarness()
+		const harness = await gatewayHarness.get()
 		expect(harness.broker.ended).toBe(false)
 
 		await harness.close()
@@ -60,7 +32,7 @@ describe('Gateway teardown releases the broker', () => {
 
 describe('Gateway close ordering', () => {
 	it('closing stops the Z-Wave connection before the broker and removes listeners', async () => {
-		const harness = await createGatewayHarness()
+		const harness = await gatewayHarness.get()
 
 		// A real Gateway.start() registered MQTT event listeners
 		expect(harness.mqtt.listenerCount('writeRequest')).toBeGreaterThan(0)

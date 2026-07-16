@@ -16,20 +16,11 @@
  *  - Broker reconnect and HA coming online both re-announce every device.
  *  - The retained-discovery delete payload shape is tracked in #4737.
  */
-import {
-	describe,
-	it,
-	expect,
-	beforeEach,
-	afterAll,
-	afterEach,
-	vi,
-} from 'vitest'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { CommandClasses } from '@zwave-js/core'
 import { mqttMockFactory } from './mqttMock.ts'
 import {
-	createGatewayHarness,
-	cleanupGatewayHarnessEnv,
+	useGatewayHarness,
 	discoverValueOnNode,
 	type GatewayHarness,
 } from './gatewayHarness.ts'
@@ -39,6 +30,7 @@ import type { GatewayConfig } from '#api/lib/Gateway.ts'
 
 vi.mock('mqtt', () => mqttMockFactory())
 
+const gatewayHarness = useGatewayHarness()
 let harness: GatewayHarness
 
 const tick = () => new Promise<void>((r) => setImmediate(r))
@@ -51,20 +43,11 @@ const tick = () => new Promise<void>((r) => setImmediate(r))
 const SWITCH_DISCOVERY_TOPIC = 'homeassistant/switch/Dev/switch/config'
 
 beforeEach(async () => {
-	harness = await createGatewayHarness()
-})
-
-afterEach(async () => {
-	await harness.close()
-})
-
-afterAll(() => {
-	cleanupGatewayHarnessEnv()
+	harness = await gatewayHarness.get()
 })
 
 async function replaceHarness(config: Partial<GatewayConfig>) {
-	await harness.close()
-	harness = await createGatewayHarness({ config })
+	harness = await gatewayHarness.replace({ config })
 }
 
 /** Runs the real switch discovery and returns the produced HassDevice. */
@@ -95,13 +78,6 @@ function discoverSwitch(
 }
 
 describe('MQTT connection lifecycle', () => {
-	// Force the DISCONNECTED precondition before each test so the "starts
-	// disconnected" characterization holds regardless of the fresh broker's
-	// initial flag, and stays order-independent under shuffle.
-	beforeEach(() => {
-		harness.broker.forceDisconnected()
-	})
-
 	/** Seeds one node with a persistent discovered switch device. */
 	function seed(id: number, deviceId: string): void {
 		const { node } = discoverSwitch(deviceId, id)
@@ -109,7 +85,7 @@ describe('MQTT connection lifecycle', () => {
 	}
 
 	it('before connecting, outgoing publishes work but inbound messages are dropped', async () => {
-		harness.resetState()
+		harness.resetPublishes()
 		harness.zwave.nodes.clear()
 
 		// A fresh client is not yet connected, like the real mqtt client
@@ -134,7 +110,7 @@ describe('MQTT connection lifecycle', () => {
 	})
 
 	it('connecting subscribes and enables inbound routing', async () => {
-		harness.resetState()
+		harness.resetPublishes()
 		harness.zwave.nodes.clear()
 		seed(2, 'dev-connect')
 		harness.broker.subscribed.length = 0
@@ -160,7 +136,7 @@ describe('MQTT connection lifecycle', () => {
 	})
 
 	it('going offline stops inbound routing', async () => {
-		harness.resetState()
+		harness.resetPublishes()
 		harness.zwave.nodes.clear()
 		seed(2, 'dev-offline-cycle')
 		harness.broker.triggerConnect()
@@ -191,7 +167,7 @@ describe('MQTT connection lifecycle', () => {
 
 describe('HASS discovery publish and delete over MQTT', () => {
 	it('publishes with qos 0 and retain from config.retainedDiscovery', async () => {
-		harness.resetState()
+		harness.resetPublishes()
 		discoverSwitch('dev-retain-off')
 		const pub =
 			harness.broker.published[harness.broker.published.length - 1]
@@ -206,7 +182,7 @@ describe('HASS discovery publish and delete over MQTT', () => {
 	})
 
 	it('a delete request publishes to the device discovery topic with retain following config', async () => {
-		harness.resetState()
+		harness.resetPublishes()
 		const { device } = discoverSwitch('dev-delete')
 		harness.resetPublishes()
 
@@ -231,7 +207,7 @@ describe('HASS discovery publish and delete over MQTT', () => {
 	})
 
 	it('forceUpdate re-applies the device and republishes discovery', () => {
-		harness.resetState()
+		harness.resetPublishes()
 		const { device } = discoverSwitch('dev-force')
 		harness.zwave.updateDevice.mockClear()
 		harness.resetPublishes()
@@ -259,7 +235,7 @@ describe('HASS discovery publish and delete over MQTT', () => {
 	})
 
 	it('ignoreDiscovery on the device suppresses the publish', () => {
-		harness.resetState()
+		harness.resetPublishes()
 		const { device } = discoverSwitch('dev-ignore')
 		harness.resetPublishes()
 
@@ -278,7 +254,7 @@ describe('Home Assistant status and broker reconnect re-announce all devices', (
 	}
 
 	it('on connect, subscribes to the fixed homeassistant/status topic and client actions', () => {
-		harness.resetState()
+		harness.resetPublishes()
 		harness.broker.subscribed.length = 0
 
 		// triggerConnect() sets connected before firing 'connect' so the real
@@ -295,7 +271,7 @@ describe('Home Assistant status and broker reconnect re-announce all devices', (
 	})
 
 	it('HA "online" (any case) republishes the device discovery topic', async () => {
-		harness.resetState()
+		harness.resetPublishes()
 		harness.zwave.nodes.clear()
 		seedDiscoveredNode(2, 'dev-online')
 
@@ -326,7 +302,7 @@ describe('Home Assistant status and broker reconnect re-announce all devices', (
 	})
 
 	it('HA "offline" does not rediscover', async () => {
-		harness.resetState()
+		harness.resetPublishes()
 		harness.zwave.nodes.clear()
 		seedDiscoveredNode(2, 'dev-offline')
 
@@ -344,7 +320,7 @@ describe('Home Assistant status and broker reconnect re-announce all devices', (
 	})
 
 	it('broker reconnect republishes the discovery topic', async () => {
-		harness.resetState()
+		harness.resetPublishes()
 		harness.zwave.nodes.clear()
 		seedDiscoveredNode(2, 'dev-reconnect')
 		harness.resetPublishes()
@@ -370,7 +346,7 @@ describe('inbound MQTT requests drive Z-Wave actions', () => {
 	})
 
 	it('a write request writes the parsed value to the addressed node', async () => {
-		harness.resetState()
+		harness.resetPublishes()
 		const id = 5
 		const node = buildNode({ id, name: 'Dev', deviceId: 'dev-write' })
 		const targetValue = buildValueId({
@@ -416,7 +392,7 @@ describe('inbound MQTT requests drive Z-Wave actions', () => {
 	})
 
 	it('a broadcast request writes to every node and echoes feedback', async () => {
-		harness.resetState()
+		harness.resetPublishes()
 		const cid = harness.mqtt.clientID
 		harness.zwave.writeBroadcast.mockClear()
 
@@ -445,7 +421,7 @@ describe('inbound MQTT requests drive Z-Wave actions', () => {
 	})
 
 	it('a multicast request writes to the addressed nodes', async () => {
-		harness.resetState()
+		harness.resetPublishes()
 		const cid = harness.mqtt.clientID
 		harness.zwave.writeMulticast.mockClear()
 
@@ -470,7 +446,7 @@ describe('inbound MQTT requests drive Z-Wave actions', () => {
 	})
 
 	it('an api request runs the requested api and publishes the ACK envelope', async () => {
-		harness.resetState()
+		harness.resetPublishes()
 		const cid = harness.mqtt.clientID
 		harness.zwave.callApi.mockClear()
 
@@ -493,7 +469,7 @@ describe('inbound MQTT requests drive Z-Wave actions', () => {
 	})
 
 	it('ignores actions addressed to a different client id', async () => {
-		harness.resetState()
+		harness.resetPublishes()
 		harness.zwave.callApi.mockClear()
 
 		// deliverRaw bypasses the broker's subscription filter, handing the
