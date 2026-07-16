@@ -835,6 +835,31 @@ describe('DiscoveryGenerator', () => {
 		expect(published).toHaveLength(3)
 	})
 
+	it.each([
+		['multilevel sensor', CommandClasses['Multilevel Sensor']],
+		['meter', CommandClasses.Meter],
+	])('skips %s auxiliary values without metadata', (_label, commandClass) => {
+		const key = ccValueKey(commandClass, 'reset')
+		const hassNode = node({
+			values: {
+				[key]: value({
+					id: ccValueId(commandClass, 'reset'),
+					commandClass,
+					property: 'reset',
+					type: 'number',
+					ccSpecific: undefined,
+				}),
+			},
+		})
+		const { generator, published, logError } = setup({})
+
+		generator.discoverValue(hassNode, key)
+
+		expect(published).toHaveLength(0)
+		expect(hassNode.hassDevices).toEqual({})
+		expect(logError).not.toHaveBeenCalled()
+	})
+
 	it('discovers thermostat climates and skips unsupported nodes', () => {
 		const thermostat = node({
 			deviceClass: {
