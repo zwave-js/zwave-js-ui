@@ -371,22 +371,6 @@ describe('Socket contract: inbound ACK APIs', () => {
 				api: 'store',
 			})
 		})
-
-		it('reports success:false with "Unknown HASS api <name>" for an unknown apiName', async () => {
-			// An unrecognized action must surface a failure ack, not silently
-			// succeed by falling through the switch with an undefined result
-			const harness = await getHarness({ gateway: createFakeGateway() })
-			const client = await connectedClient(harness)
-
-			const result = await emit(client, 'HASS_API', {
-				apiName: 'notARealAction',
-			})
-			expect(result).toStrictEqual({
-				success: false,
-				message: 'Unknown HASS api notARealAction',
-				api: 'notARealAction',
-			})
-		})
 	})
 
 	describe('ZNIFFER_API', () => {

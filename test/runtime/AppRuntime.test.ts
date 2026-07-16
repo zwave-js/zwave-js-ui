@@ -34,22 +34,20 @@ describe('App runtime behavior', () => {
 	let AppRuntimeCtor: typeof AppRuntimeClass
 	let jsonStore: typeof JsonStoreModule
 	let store: typeof StoreModule
-	let closeWatchers: () => void
 	const originalSecret = process.env.SESSION_SECRET
 
 	beforeAll(async () => {
 		ensureTestEnv()
-		const [runtimeModule, jsonStoreModule, storeModule, gatewayModule] =
-			await Promise.all([
+		const [runtimeModule, jsonStoreModule, storeModule] = await Promise.all(
+			[
 				import('#api/runtime/AppRuntime.ts'),
 				import('#api/lib/jsonStore.ts'),
 				import('#api/config/store.ts'),
-				import('#api/lib/Gateway.ts'),
-			])
+			],
+		)
 		AppRuntimeCtor = runtimeModule.AppRuntime
 		jsonStore = jsonStoreModule.default
 		store = storeModule.default
-		closeWatchers = gatewayModule.closeWatchers
 		await jsonStore.init(store)
 	})
 
@@ -63,7 +61,6 @@ describe('App runtime behavior', () => {
 	})
 
 	afterAll(() => {
-		closeWatchers()
 		for (const key of Object.keys(jsonStore.store)) {
 			delete jsonStore.store[key]
 		}
