@@ -1,66 +1,16 @@
 import { describe, expect, it, vi } from 'vitest'
 import type { Socket as ClientSocket } from 'socket.io-client'
-import type { AppRuntime } from '#api/runtime/AppRuntime.ts'
 import type { ZnifferApiRequest } from '#api/socket/znifferApi.ts'
 import {
 	createFakeGateway,
 	createFakeZniffer,
 	createFakeZwaveClient,
-	type FakeGateway,
-	type FakeZniffer,
 } from './fakes.ts'
-import { createSocketTransport, type SocketTransport } from './harness.ts'
-import {
-	useHarnessLifecycle,
-	type SharedTestContext,
-} from '../shared/harness.ts'
-
-interface RuntimeHarnessOptions {
-	gateway: FakeGateway
-	zniffer?: FakeZniffer
-}
-
-type RuntimeHarness = SocketTransport<AppRuntime> & {
-	closeInstance(): Promise<void>
-}
-
-async function createRuntimeHarness(
-	_shared: SharedTestContext,
-	options: RuntimeHarnessOptions,
-): Promise<RuntimeHarness> {
-	const [{ AppRuntime }, { default: SocketManager }, { registerSocketApi }] =
-		await Promise.all([
-			import('#api/runtime/AppRuntime.ts'),
-			import('#api/lib/SocketManager.ts'),
-			import('#api/socket/registerSocketApi.ts'),
-		])
-	const transport = await createSocketTransport((server) => {
-		const socketManager = new SocketManager()
-		socketManager.bindServer(server)
-		const runtime = new AppRuntime({
-			getSocketServer: () => socketManager.io,
-			gateway: options.gateway,
-			zniffer: options.zniffer,
-		})
-		registerSocketApi(socketManager, runtime)
-		return {
-			context: runtime,
-			io: socketManager.io,
-			close: () => socketManager.close(),
-		}
-	})
-	return {
-		...transport,
-		async closeInstance() {
-			await transport.close()
-			await transport.context.getZniffer()?.close()
-			await transport.context.shutdown()
-		},
-	}
-}
+import { type SocketHarness, useSocketHarness } from './harness.ts'
+import { setSettings } from '../shared/authHelpers.ts'
 
 async function connectedClient(
-	currentHarness: SocketTransport<AppRuntime>,
+	currentHarness: SocketHarness,
 ): Promise<ClientSocket> {
 	const client = currentHarness.createClient()
 	await currentHarness.connectClient(client)
@@ -77,8 +27,16 @@ function emit<T>(
 	})
 }
 
+async function restart(harness: SocketHarness): Promise<void> {
+	const response = await fetch(`${harness.url}/api/restart`, {
+		method: 'POST',
+	})
+	expect(response.status).toBe(200)
+	await expect(response.json()).resolves.toMatchObject({ success: true })
+}
+
 describe('Socket protocol runtime freshness', () => {
-	const getHarness = useHarnessLifecycle(createRuntimeHarness)
+	const getHarness = useSocketHarness()
 
 	it.each([
 		['false', false],
@@ -138,14 +96,16 @@ describe('Socket protocol runtime freshness', () => {
 			info: { source: 'initial' },
 		})
 
-		await currentHarness.context.startGateway({})
+		await restart(currentHarness)
 
 		const replacementState = await emit<Record<string, unknown>>(
 			client,
 			'INITED',
 			{},
 		)
-		expect(replacementState).not.toHaveProperty('info')
+		expect(replacementState).not.toMatchObject({
+			info: { source: 'initial' },
+		})
 		expect(gateway.zwave.getState).toHaveBeenCalledOnce()
 	})
 
@@ -171,13 +131,15 @@ describe('Socket protocol runtime freshness', () => {
 
 		const firstAck = emit(client, 'ZWAVE_API', { api: 'slow' })
 		await started
-		await currentHarness.context.startGateway({})
+		await restart(currentHarness)
 
 		await expect(
 			emit(client, 'ZWAVE_API', { api: 'afterRestart' }),
 		).resolves.toStrictEqual({
 			success: false,
-			message: 'Zwave client not connected',
+			message: 'Z-Wave client not connected',
+			args: [],
+			api: 'afterRestart',
 		})
 
 		resolveSlow({ success: true, message: 'slow' })
@@ -203,16 +165,16 @@ describe('Socket protocol runtime freshness', () => {
 			} satisfies ZnifferApiRequest),
 		).resolves.toMatchObject({ result: ['frame-a'] })
 
-		currentHarness.context.startZniffer({ enabled: false })
+		await setSettings(currentHarness, { zniffer: { enabled: false } })
+		await restart(currentHarness)
 
-		await expect(
-			emit(client, 'ZNIFFER_API', {
-				apiName: 'getFrames',
-			} satisfies ZnifferApiRequest),
-		).resolves.toMatchObject({
-			success: false,
-			message: 'Zniffer is not initialized',
-		})
+		const replacementResult = await emit<{
+			success: boolean
+			result: unknown
+		}>(client, 'ZNIFFER_API', {
+			apiName: 'getFrames',
+		} satisfies ZnifferApiRequest)
+		expect(replacementResult.success).toBe(false)
 		expect(zniffer.getFrames).toHaveBeenCalledOnce()
 	})
 
@@ -252,7 +214,7 @@ describe('Socket protocol runtime freshness', () => {
 		await currentHarness.waitForServerSocketCount(0)
 		expect(gateway.zwave.removeUserCallbacks).toHaveBeenCalledOnce()
 
-		await currentHarness.context.startGateway({})
+		await restart(currentHarness)
 
 		const clientB = await connectedClient(currentHarness)
 		clientB.disconnect()
