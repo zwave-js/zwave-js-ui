@@ -18,7 +18,6 @@ const { app, startServer, installProcessHandlers } = createApp()
 // Install handlers before store I/O because Node runs as PID 1 in containers
 installProcessHandlers()
 
-
 // jsonstore is a singleton instance that handles the json configuration files
 // used in the application. Init it before anything else than start app.
 // if jsonstore fails exit the application

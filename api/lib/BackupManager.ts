@@ -50,7 +50,10 @@ class BackupManager {
 		return next ? next.toLocaleString() : 'UNKNOWN'
 	}
 
-	init(zwaveClient: Pick<ZwaveClientPort, 'backupNVMRaw'> | undefined, owner: symbol) {
+	init(
+		zwaveClient: Pick<ZwaveClientPort, 'backupNVMRaw'> | undefined,
+		owner: symbol,
+	) {
 		this.config = {
 			...this.default,
 			...(jsonStore.get(store.settings).backup as BackupSettings),
