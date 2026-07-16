@@ -1,5 +1,6 @@
 import * as fs from 'node:fs'
 import * as path from 'node:path'
+import { createRequire } from 'node:module'
 import * as utils from './utils.ts'
 import type { SetValueAPIOptions } from 'zwave-js'
 import { AlarmSensorType } from 'zwave-js'
@@ -49,6 +50,13 @@ const PAYLOAD_TYPE = {
 
 const CUSTOM_DEVICES = storeDir + '/customDevices'
 let allDevices = hassDevices // will contain customDevices + hassDevices
+
+// A custom-devices `.js` file is authored as a CommonJS module (module.exports),
+// so it must be loaded with require() even though this package ships as ESM and
+// is bundled to CJS for release. createRequire gives a working require in every
+// runtime (the ambient `require` is undefined under Node's native ESM loader
+// used by `npm run server`/dev) and exposes the module cache we evict on reload.
+const requireCustomDevices = createRequire(import.meta.url)
 
 // watcher initiates a watch on a file. if this fails (e.g., because the file
 // doesn't exist), instead watch the directory. If the directory watch
@@ -113,7 +121,13 @@ export function loadCustomDevicesCatalog(
 	try {
 		if (fs.existsSync(jsPath)) {
 			loaded = jsPath
-			devices = require(basePath)
+			// Node caches require() by resolved path, so evict any prior entry
+			// first; otherwise a watcher-triggered reload returns the stale
+			// exports and the sha de-dup never sees the on-disk edit.
+			delete requireCustomDevices.cache[
+				requireCustomDevices.resolve(basePath)
+			]
+			devices = requireCustomDevices(basePath)
 		} else if (fs.existsSync(jsonPath)) {
 			loaded = jsonPath
 			devices = JSON.parse(fs.readFileSync(jsonPath).toString())

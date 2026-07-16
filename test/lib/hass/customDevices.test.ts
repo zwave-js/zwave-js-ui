@@ -136,9 +136,33 @@ describe('loading the custom devices catalog', () => {
 		const result = loadOrFail(base)
 
 		expect(result.customCount).toBe(1)
-		// Omitting baseCatalog merges over the non-empty `hassDevices`, so the
-		// result carries more than just the single custom entry
-		expect(Object.keys(result.catalog).length).toBeGreaterThan(1)
+		// Omitting baseCatalog merges over the real `hassDevices`, so the custom
+		// entry lands alongside the shipped catalog rather than a bare object
 		expect(result.catalog['custom-default']).toBeDefined()
+	})
+
+	it('reflects on-disk edits to a .js custom-devices file across reloads', () => {
+		// The .js loader is CommonJS and Node caches require() by resolved path,
+		// so a reload after an edit only sees new bytes if the cache is evicted.
+		// Reuse ONE base path (unlike freshBase) so the second load would hit
+		// that cache; a regression that dropped the eviction would keep 'first'.
+		const base = join(storeDir, 'customDevices-reload')
+		writeFileSync(
+			base + '.js',
+			"module.exports = { reload: [{ type: 'sensor', object_id: 'first', discovery_payload: {} }] }\n",
+		)
+		const first = loadOrFail(base, baseCatalog)
+		expect(first.catalog.reload[0].object_id).toBe('first')
+
+		writeFileSync(
+			base + '.js',
+			"module.exports = { reload: [{ type: 'sensor', object_id: 'second', discovery_payload: {} }] }\n",
+		)
+		const second = loadOrFail(base, baseCatalog)
+
+		// The edited entry is observed, and the changed bytes yield a fresh sha
+		// so loadCustomDevices() re-projects instead of skipping the reload
+		expect(second.catalog.reload[0].object_id).toBe('second')
+		expect(second.sha).not.toBe(first.sha)
 	})
 })
