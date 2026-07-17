@@ -63,6 +63,8 @@ export type GatewayPort = Omit<
 		| 'publishDiscovery'
 		| 'rediscoverNode'
 		| 'disableDiscovery'
+		| 'buildDiscoveryOptions'
+		| 'adoptDiscoveryManager'
 	>,
 	'zwave' | 'mqtt'
 > & {

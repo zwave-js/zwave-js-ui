@@ -27,7 +27,14 @@ export class GatewayFactory {
 		mqtt: TMqtt,
 	): Gateway<TZwave, TMqtt> {
 		this.registry.start()
-		return new Gateway(config, zwave, mqtt, this.registry.fork())
+		// Hand the started root registry to the Gateway as the discovery source,
+		// not a fork: the Gateway forwards it to MqttDiscoveryManager, which forks
+		// it exactly once. A fork only refreshes from its source's notifications
+		// and never re-emits them, so forking here as well would leave the
+		// manager's fork subscribed to a fork that never notifies, breaking live
+		// custom-device reloads. Forking once (in the manager) keeps updates
+		// flowing from the watched root.
+		return new Gateway(config, zwave, mqtt, this.registry)
 	}
 
 	public dispose(): void {

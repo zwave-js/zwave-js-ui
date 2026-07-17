@@ -21,6 +21,8 @@ vi.mock('#api/lib/ZwaveClient.ts', () => ({
 		}
 		on = vi.fn()
 		connect = vi.fn(() => Promise.resolve())
+		buildServerHost = vi.fn(() => ({}))
+		adoptServerManager = vi.fn()
 	},
 }))
 
@@ -30,6 +32,8 @@ vi.mock('#api/lib/Gateway.ts', () => ({
 			gatewayCtor(...args)
 		}
 		start = vi.fn(() => Promise.resolve())
+		buildDiscoveryOptions = vi.fn(() => ({}))
+		adoptDiscoveryManager = vi.fn()
 		close = vi.fn(() => Promise.resolve())
 	},
 }))
@@ -40,6 +44,25 @@ vi.mock('#api/lib/ZnifferManager.ts', () => ({
 			znifferCtor(...args)
 		}
 		close = vi.fn(() => Promise.resolve())
+	},
+}))
+
+// The Home Assistant sub-managers the coordinator constructs through the
+// factories `startGateway()` injects, mocked as no-ops so this file's concern
+// — constructor-arg passthrough into Mqtt/Zwave/Gateway/Zniffer — never spins
+// up a real MQTT-discovery engine or `@zwave-js/server`.
+vi.mock('#api/hass/MqttDiscoveryManager.ts', () => ({
+	default: class MockMqttDiscoveryManager {
+		stop = vi.fn()
+	},
+}))
+
+vi.mock('#api/hass/ZwaveServerManager.ts', () => ({
+	default: class MockZwaveServerManager {
+		get version(): string {
+			return '0.0.0-test'
+		}
+		destroy = vi.fn(() => Promise.resolve())
 	},
 }))
 

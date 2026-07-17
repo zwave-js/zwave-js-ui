@@ -257,4 +257,50 @@ export default class WorkingPlugin {
 			rmSync(pluginDir, { recursive: true, force: true })
 		}
 	})
+
+	it('closes the gateway when a boot-time start fails', async () => {
+		const failure = new Error('gateway start failed')
+		const close = vi.fn(() => Promise.resolve(undefined))
+		const gateway = createFakeGateway({
+			start: vi.fn(() => Promise.reject(failure)),
+			close,
+		})
+		const runtime = createRuntime({
+			gatewayFactory: { create: () => gateway, dispose: vi.fn() },
+		})
+
+		// the original startup error propagates to the caller...
+		await expect(runtime.startGateway({})).rejects.toBe(failure)
+
+		// ...and the failed generation is cleaned up so nothing leaks past it:
+		// the gateway is closed
+		expect(close).toHaveBeenCalled()
+	})
+
+	it('completes shutdown while a gateway start is still hanging', async () => {
+		let releaseStart = (): void => {}
+		const startHang = new Promise<void>((resolve) => {
+			releaseStart = resolve
+		})
+		const close = vi.fn(() => Promise.resolve(undefined))
+		const gateway = createFakeGateway({
+			start: vi.fn(() => startHang),
+			close,
+		})
+		const runtime = createRuntime({
+			gatewayFactory: { create: () => gateway, dispose: vi.fn() },
+		})
+
+		// the start never settles on its own, so the teardown must not block on
+		// it; closing the gateway is what unblocks a real hung start
+		const starting = runtime.startGateway({})
+		await runtime.shutdown()
+
+		expect(close).toHaveBeenCalled()
+
+		// releasing the hung start lets its continuation observe the cancelled
+		// generation and finish without throwing or resurrecting the gateway
+		releaseStart()
+		await expect(starting).resolves.toBeUndefined()
+	})
 })

@@ -322,6 +322,44 @@ describe('Home Assistant status and broker reconnect re-announce all devices', (
 			),
 		).toBe(true)
 	})
+
+	it('a plugin-style mqtt.on(hassStatus) sees each status once, with no duplicate across reconnect', async () => {
+		harness.resetState()
+		harness.zwave.nodes.clear()
+
+		// A plugin subscribes the public compatibility event through the concrete
+		// MqttClient
+		const emits: boolean[] = []
+		const listener = (online: boolean): void => {
+			emits.push(online)
+		}
+		harness.mqtt.on('hassStatus', listener)
+		try {
+			harness.broker.triggerConnect()
+			await tick()
+
+			harness.broker.deliver('homeassistant/status', 'online')
+			harness.broker.deliver('homeassistant/status', 'offline')
+			harness.broker.deliver('homeassistant/status', 'ONLINE')
+			await tick()
+			expect(emits).toEqual([true, false, true])
+
+			// A broker reconnect re-subscribes the topic but must not surface a
+			// spurious hassStatus, since that path emits only brokerStatus
+			harness.broker.triggerReconnect()
+			harness.broker.triggerConnect()
+			await tick()
+			expect(emits).toEqual([true, false, true])
+
+			// The single manager-owned subscription still delivers the next real
+			// message once, proving no duplicate listener leaked
+			harness.broker.deliver('homeassistant/status', 'offline')
+			await tick()
+			expect(emits).toEqual([true, false, true, false])
+		} finally {
+			harness.mqtt.off('hassStatus', listener)
+		}
+	})
 })
 
 describe('inbound MQTT requests drive Z-Wave actions', () => {

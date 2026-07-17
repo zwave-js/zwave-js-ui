@@ -136,7 +136,10 @@ import jsonStore from './jsonStore.ts'
 import * as LogManager from './logger.ts'
 import * as utils from './utils.ts'
 
-import { serverVersion, ZwavejsServer } from '@zwave-js/server'
+import { serverVersion, type ZwavejsServer } from '@zwave-js/server'
+import ZwaveServerManager, {
+	type ZwaveServerHost,
+} from '../hass/ZwaveServerManager.ts'
 import type { Server as SocketServer } from 'socket.io'
 import { TypedEventEmitter } from './EventEmitter.ts'
 import type { GatewayValue } from './Gateway.ts'
@@ -809,7 +812,69 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 	private _driver: Driver
 
-	private server: ZwavejsServer
+	/**
+	 * Owns the `@zwave-js/server` lifecycle; the `server` accessor below
+	 * delegates to it.
+	 *
+	 * Optional because in production the `AppRuntime`-owned
+	 * `HomeAssistantManager` constructs the manager (via {@link buildServerHost})
+	 * and adopts it through {@link adoptServerManager} before the driver
+	 * connects, while a directly-constructed client (standalone/tests) lazily
+	 * builds its own fallback on first access to {@link zwaveServer}.
+	 */
+	private _serverManager?: ZwaveServerManager
+
+	/**
+	 * The narrow {@link ZwaveServerHost} port the server manager uses to reach
+	 * back into this client. Every accessor resolves the current value so a
+	 * driver/config swap on restart is honoured with nothing captured at
+	 * construction time. Public so the `HomeAssistantManager` factory can build a
+	 * manager this client then adopts.
+	 */
+	public buildServerHost(): ZwaveServerHost {
+		return {
+			getDriver: () => this._driver,
+			getConfig: () => this.cfg,
+			getHasUserCallbacks: () => this.hasUserCallbacks,
+			onHardReset: () => this.init(),
+			logger,
+			serverLogger: LogManager.module('Z-Wave-Server'),
+		}
+	}
+
+	/**
+	 * Adopt the HA-owned server manager. Called by `HomeAssistantManager` once,
+	 * before the driver connects, so `create()/startIfNeeded()/destroy()` below
+	 * all drive the manager the coordinator owns. Idempotent per generation.
+	 */
+	public adoptServerManager(manager: ZwaveServerManager): void {
+		this._serverManager = manager
+	}
+
+	/**
+	 * The `@zwave-js/server` (`ZwavejsServer`) subsystem this client owns. In
+	 * production it is the HA-owned manager adopted via
+	 * {@link adoptServerManager}; a directly-constructed client lazily builds a
+	 * standalone fallback here on first access. Exposed so the
+	 * `HomeAssistantManager` can resolve the current manager across restarts.
+	 */
+	public get zwaveServer(): ZwaveServerManager {
+		if (!this._serverManager) {
+			this._serverManager = new ZwaveServerManager(this.buildServerHost())
+		}
+		return this._serverManager
+	}
+
+	private get server(): ZwavejsServer | null {
+		return this._serverManager?.server ?? null
+	}
+
+	private set server(value: ZwavejsServer | null) {
+		// Route through the lazy accessor so a directly-constructed client that
+		// assigns `server` before any create() still has a manager to hold it
+		this.zwaveServer.server = value
+	}
+
 	private statelessTimeouts: Record<string, NodeJS.Timeout>
 	private commandsTimeout: NodeJS.Timeout
 	private healTimeout: NodeJS.Timeout
@@ -1175,9 +1240,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		})
 
 		// when no user is connected, give back the control to HA server
-		if (this.server?.['sockets'] !== undefined) {
-			this.server.setInclusionUserCallbacks()
-		}
+		this._serverManager?.handInclusionControlBack()
 	}
 
 	/**
@@ -1264,6 +1327,28 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	}
 
 	/**
+	 * Construct the official `@zwave-js/server` instance and wire its
+	 * `error`/`hard reset` listeners. Called from `connect()` right after the
+	 * driver is created (and only when `serverEnabled`), so the server always
+	 * exists BEFORE the driver becomes ready. Extracted verbatim from
+	 * `connect()` so its behavior is unchanged.
+	 */
+	private _createServer() {
+		this.zwaveServer.create()
+	}
+
+	/**
+	 * Start the official `@zwave-js/server` once the driver is ready and nodes
+	 * are restored (called from `_onDriverReady`). The `!this.server['server']`
+	 * guard prevents a second `start()` when the driver re-emits `driver ready`
+	 * (see #602). Extracted verbatim from `_onDriverReady` so its behavior is
+	 * unchanged.
+	 */
+	private _startServerIfNeeded() {
+		this.zwaveServer.startIfNeeded()
+	}
+
+	/**
 	 * Method used to close client connection, use this before destroy
 	 */
 	async close(keepListeners = false) {
@@ -1315,9 +1400,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			this.throttledFunctions.delete(key)
 		}
 
-		if (this.server) {
-			await this.server.destroy()
-			this.server = null
+		if (this._serverManager) {
+			await this._serverManager.destroy()
 		}
 
 		if (this._driver) {
@@ -2526,23 +2610,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			}
 
 			if (this.cfg.serverEnabled) {
-				this.server = new ZwavejsServer(this._driver, {
-					port: this.cfg.serverPort || 3000,
-					host: this.cfg.serverHost,
-					logger: LogManager.module('Z-Wave-Server'),
-					enableDNSServiceDiscovery:
-						!this.cfg.serverServiceDiscoveryDisabled,
-				})
-
-				this.server.on('error', () => {
-					// this is already logged by the server but we need this to prevent
-					// unhandled exceptions
-				})
-
-				this.server.on('hard reset', () => {
-					logger.info('Hard reset requested by ZwaveJS Server')
-					this.init()
-				})
+				this._createServer()
 			}
 
 			if (this.cfg.enableStatistics) {
@@ -6348,21 +6416,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		this._error = undefined
 
 		// start server only when driver is ready. Fixes #602
-		if (this.cfg.serverEnabled && this.server) {
-			// fix prevent to start server when already inited
-			if (!this.server['server']) {
-				this.server
-					.start(!this.hasUserCallbacks)
-					.then(() => {
-						logger.info('Z-Wave server started')
-					})
-					.catch((error) => {
-						logger.error(
-							`Failed to start zwave-js server: ${error.message}`,
-						)
-					})
-			}
-		}
+		this._startServerIfNeeded()
 
 		logger.info(`Scanning network with homeid: ${homeHex}`)
 

@@ -347,8 +347,9 @@ export function registerSettingsRoutes(
 					runtime.setOwnsDebugSession(false)
 				}
 
-				await runtime.requireGateway().close()
-				await runtime.destroyPlugins()
+				// `/api/restart` requires a running gateway to close before it
+				// restarts, so a missing one is surfaced as a caller error
+				await runtime.teardownGateway({ requireGateway: true })
 				if (settings.gateway) {
 					runtime.setupLogging({ gateway: settings.gateway })
 				}
