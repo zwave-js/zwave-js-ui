@@ -18,7 +18,7 @@ import {
 } from 'zwave-js'
 import { vi, type Mocked } from 'vitest'
 
-import type { ServiceLogger } from '../../../api/lib/zwave/ports.ts'
+import type { ServiceLogger } from '#api/lib/zwave/ports.ts'
 
 export type TestValue = TranslatedValueID & {
 	nodeId?: number

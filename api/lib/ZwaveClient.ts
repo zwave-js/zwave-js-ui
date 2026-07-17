@@ -155,14 +155,6 @@ import type {
 } from '../hass/types.ts'
 import { ScheduleService } from './zwave/ScheduleService.ts'
 import { ConfigurationTemplateService } from './zwave/ConfigurationTemplateService.ts'
-import {
-	ZUIScheduleEntryLockMode,
-	type ZUIConfigurationTemplate,
-	type ZUIConfigurationTemplateValue,
-	type ZUISchedule,
-	type ZUIScheduleConfig,
-	type ZUISlot,
-} from './zwave/ports.ts'
 import { SceneService } from './zwave/SceneService.ts'
 import { GroupService, GroupServiceGeneration } from './zwave/GroupService.ts'
 import { AssociationService } from './zwave/AssociationService.ts'
@@ -176,6 +168,12 @@ import type { NodeRegistryHost } from './zwave/NodeRegistry.ts'
 import { SocketEventAdapter } from './zwave/SocketEventAdapter.ts'
 import {
 	ZwaveClientStatus,
+	ZUIScheduleEntryLockMode,
+	type ZUIConfigurationTemplate,
+	type ZUIConfigurationTemplateValue,
+	type ZUISchedule,
+	type ZUIScheduleConfig,
+	type ZUISlot,
 	type ZwaveConfig,
 	type SensorTypeScale,
 } from './zwave/ports.ts'
@@ -1486,7 +1484,6 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			clearTimeout(this.healTimeout)
 			this.healTimeout = null
 		}
-
 
 		if (this.pollIntervals) {
 			for (const k in this.pollIntervals) {
@@ -5426,8 +5423,13 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 	/** Loads fake nodes exported from UI */
 	private async loadFakeNodes(generation: number, readyEpoch: number) {
-		if (!this._isCurrentReady(generation, readyEpoch)) return
-		await this._nodeRegistry.loadFakeNodes()
+		const registry = this._nodeRegistry
+		const nodeGeneration = this._nodeGeneration
+		await registry.loadFakeNodes(
+			() =>
+				this._isCurrentReady(generation, readyEpoch) &&
+				this._isCurrentNodeRegistry(registry, nodeGeneration),
+		)
 	}
 
 	/** Used for testing purposes */
