@@ -17,7 +17,7 @@ import type Transport from 'winston-transport'
 
 import * as LogManager from '../logger.ts'
 import * as utils from '../utils.ts'
-import { getErrorMessage, toError } from '../errors.ts'
+import { getErrorMessage } from '../errors.ts'
 import { applyExternalDriverSettings } from '../externalSettings.ts'
 import { configDbDir, logsDir, storeDir } from '../../config/app.ts'
 import { PkgFsBindings } from '../PkgFsBindings.ts'
@@ -824,7 +824,9 @@ export class DriverLifecycle {
 		this._completedReadyEpoch = -1
 		this._pendingScan = undefined
 		this.host.setDriverReady(false)
-		this.host.onDriverError(toError(error), true)
+		const readyError =
+			error instanceof Error ? error : new Error(getErrorMessage(error))
+		this.host.onDriverError(readyError, true)
 		this.backoffRestart()
 	}
 
