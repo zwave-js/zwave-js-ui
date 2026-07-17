@@ -12,59 +12,49 @@ export type ZwaveDriverPort = Pick<
 
 export type ZwaveNodesPort = Pick<ZWaveClient['nodes'], 'get'>
 
-export type ZwaveClientPort = Omit<
-	Pick<
-		ZWaveClient,
-		| 'devices'
-		| 'homeHex'
-		| 'driverReady'
-		| 'driver'
-		| 'getStatus'
-		| 'getState'
-		| 'callApi'
-		| 'storeDevices'
-		| 'updateDevice'
-		| 'addDevice'
-		| 'getConfigurationTemplates'
-		| 'createConfigurationTemplate'
-		| 'importConfigurationTemplates'
-		| 'getDeviceConfigurationParams'
-		| 'updateConfigurationTemplate'
-		| 'deleteConfigurationTemplate'
-		| 'applyConfigurationTemplate'
-		| 'enableStatistics'
-		| 'disableStatistics'
-		| 'cacheSnippets'
-		| 'addExtraLogTransport'
-		| 'removeExtraLogTransport'
-		| 'dumpNode'
-		| 'getNode'
-		| 'nodes'
-		| 'restart'
-		| 'setUserCallbacks'
-		| 'removeUserCallbacks'
-		| 'backupNVMRaw'
-	>,
-	'driver' | 'nodes'
+export type ZwaveClientPort = Pick<
+	ZWaveClient,
+	| 'devices'
+	| 'homeHex'
+	| 'driverReady'
+	| 'getStatus'
+	| 'getState'
+	| 'callApi'
+	| 'storeDevices'
+	| 'updateDevice'
+	| 'addDevice'
+	| 'getConfigurationTemplates'
+	| 'createConfigurationTemplate'
+	| 'importConfigurationTemplates'
+	| 'getDeviceConfigurationParams'
+	| 'updateConfigurationTemplate'
+	| 'deleteConfigurationTemplate'
+	| 'applyConfigurationTemplate'
+	| 'enableStatistics'
+	| 'disableStatistics'
+	| 'cacheSnippets'
+	| 'addExtraLogTransport'
+	| 'removeExtraLogTransport'
+	| 'dumpNode'
+	| 'getNode'
+	| 'restart'
+	| 'setUserCallbacks'
+	| 'removeUserCallbacks'
+	| 'backupNVMRaw'
 > & {
 	driver: ZwaveDriverPort
 	nodes: ZwaveNodesPort
 }
 
-export type GatewayPort = Omit<
-	Pick<
-		Gateway,
-		| 'zwave'
-		| 'mqtt'
-		| 'close'
-		| 'start'
-		| 'updateNodeTopics'
-		| 'removeNodeRetained'
-		| 'publishDiscovery'
-		| 'rediscoverNode'
-		| 'disableDiscovery'
-	>,
-	'zwave' | 'mqtt'
+export type GatewayPort = Pick<
+	Gateway,
+	| 'close'
+	| 'start'
+	| 'updateNodeTopics'
+	| 'removeNodeRetained'
+	| 'publishDiscovery'
+	| 'rediscoverNode'
+	| 'disableDiscovery'
 > & {
 	readonly zwave?: ZwaveClientPort
 	readonly mqtt?: MqttClientPort

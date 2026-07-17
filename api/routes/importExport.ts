@@ -42,13 +42,11 @@ export function registerImportExportRoutes(
 		isAuthenticated,
 		async function (req, res) {
 			try {
-				// Re-resolved before each call rather than captured once, so a
-				// gateway swapped mid-import (e.g. a concurrent restart) is
-				// honored by every subsequent operation
+				// Resolve every operation against the current gateway
 				const { nodes, selectedHomeId, skippedHomeIds } =
 					normalizeImportedNodesConfig(
 						req.body.data,
-						runtime.requireZwaveClient().homeHex,
+						runtime.ensureZWaveClient().homeHex,
 						{
 							homeId:
 								typeof req.body.homeId === 'string'
@@ -75,7 +73,7 @@ export function registerImportExportRoutes(
 						message: `Import skipped: the backup contains nodes for home ids ${skippedHomeIds.join(
 							', ',
 						)}, none of which match the connected controller (${
-							runtime.requireZwaveClient().homeHex
+							runtime.ensureZWaveClient().homeHex
 						}).`,
 					})
 				}
@@ -92,7 +90,7 @@ export function registerImportExportRoutes(
 
 					if (utils.hasProperty(node, 'name')) {
 						await runtime
-							.requireZwaveClient()
+							.ensureZWaveClient()
 							.callApi(
 								'setNodeName',
 								nodeIdNumber,
@@ -105,7 +103,7 @@ export function registerImportExportRoutes(
 						utils.hasProperty(node, 'location')
 					) {
 						await runtime
-							.requireZwaveClient()
+							.ensureZWaveClient()
 							.callApi(
 								'setNodeLocation',
 								nodeIdNumber,
@@ -115,7 +113,7 @@ export function registerImportExportRoutes(
 
 					if (utils.isRecord(node.hassDevices)) {
 						await runtime
-							.requireZwaveClient()
+							.ensureZWaveClient()
 							.storeDevices(node.hassDevices, nodeIdNumber, false)
 					}
 				}

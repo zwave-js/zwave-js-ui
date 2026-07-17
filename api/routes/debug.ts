@@ -51,7 +51,7 @@ export function registerDebugRoutes(
 				const restartDriver = req.body.restartDriver || false
 
 				await debugManager.startSession(
-					runtime.requireZwaveClient(),
+					runtime.ensureZWaveClient(),
 					originalLogLevel,
 					restartDriver,
 				)
@@ -97,7 +97,7 @@ export function registerDebugRoutes(
 				res.attachment(`zwave-debug-${timestamp}.zip`)
 				res.setHeader('Content-Type', 'application/zip')
 
-				// Clean up temp files after the archive has been sent
+				// Clean up after the response consumes the archive
 				archive.on('end', async () => {
 					await cleanup()
 				})

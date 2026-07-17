@@ -8,11 +8,6 @@ export interface ConfigurationTemplatesRoutesDeps {
 	apisLimiter: RateLimitRequestHandler
 }
 
-/**
- * Every route below resolves the Z-Wave client via `runtime.requireZwaveClient()`,
- * which throws a clean typed error when none is attached, caught by each
- * route's own try/catch
- */
 export function registerConfigurationTemplatesRoutes(
 	app: express.Express,
 	runtime: AppRuntime,
@@ -25,7 +20,7 @@ export function registerConfigurationTemplatesRoutes(
 		function (req, res) {
 			try {
 				const templates = runtime
-					.requireZwaveClient()
+					.ensureZWaveClient()
 					.getConfigurationTemplates()
 				res.json({ success: true, data: templates })
 			} catch (error) {
@@ -49,7 +44,7 @@ export function registerConfigurationTemplatesRoutes(
 					})
 				}
 				const template = await runtime
-					.requireZwaveClient()
+					.ensureZWaveClient()
 					.createConfigurationTemplate(
 						nodeId,
 						name,
@@ -76,7 +71,7 @@ export function registerConfigurationTemplatesRoutes(
 		function (req, res) {
 			try {
 				const templates = runtime
-					.requireZwaveClient()
+					.ensureZWaveClient()
 					.getConfigurationTemplates()
 				res.json({
 					success: true,
@@ -113,7 +108,7 @@ export function registerConfigurationTemplatesRoutes(
 					}
 				}
 				const result = await runtime
-					.requireZwaveClient()
+					.ensureZWaveClient()
 					.importConfigurationTemplates(templates)
 				res.json({
 					success: true,
@@ -133,7 +128,7 @@ export function registerConfigurationTemplatesRoutes(
 		async function (req, res) {
 			try {
 				const params = await runtime
-					.requireZwaveClient()
+					.ensureZWaveClient()
 					.getDeviceConfigurationParams(req.params.deviceId)
 				res.json({ success: true, data: params })
 			} catch (error) {
@@ -158,7 +153,7 @@ export function registerConfigurationTemplatesRoutes(
 				}
 				const { name, autoApply, firmwareRange, values } = req.body
 				const template = await runtime
-					.requireZwaveClient()
+					.ensureZWaveClient()
 					.updateConfigurationTemplate(id, {
 						name,
 						autoApply,
@@ -190,7 +185,7 @@ export function registerConfigurationTemplatesRoutes(
 					})
 				}
 				await runtime
-					.requireZwaveClient()
+					.ensureZWaveClient()
 					.deleteConfigurationTemplate(id)
 				res.json({
 					success: true,
@@ -223,7 +218,7 @@ export function registerConfigurationTemplatesRoutes(
 					})
 				}
 				const result = await runtime
-					.requireZwaveClient()
+					.ensureZWaveClient()
 					.applyConfigurationTemplate(id, nodeId, !!force)
 				res.json({
 					success: true,

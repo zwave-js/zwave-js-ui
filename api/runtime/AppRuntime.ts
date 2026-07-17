@@ -47,14 +47,7 @@ export class AppRuntime {
 	private _restarting = false
 	private _ownsDebugSession = false
 
-	// `BackupManager.init()`/`.close()`'s `owner` parameter doesn't exist in
-	// this layer's own `BackupManager.ts` - it's this (base) layer's own,
-	// independently-added ownership token. Scoping it per `AppRuntime`
-	// instance (mirroring `api/app.ts`'s pre-extraction per-`createApp()`
-	// local) keeps one instance's shutdown from tearing down a different,
-	// concurrently-live instance's backup manager state (e.g. two
-	// `AppRuntime`s constructed by separate test suites within the same
-	// process).
+	// Isolate BackupManager ownership between AppRuntime instances
 	private readonly backupManagerOwner = Symbol('AppRuntime.backupManager')
 
 	private defaultSnippets: utils.Snippet[] = []
@@ -83,7 +76,7 @@ export class AppRuntime {
 		return this._gateway
 	}
 
-	requireZwaveClient(): ZwaveClientPort {
+	ensureZWaveClient(): ZwaveClientPort {
 		if (this._gateway?.zwave === undefined) {
 			throw new Error('Z-Wave client not inited')
 		}
@@ -121,9 +114,7 @@ export class AppRuntime {
 		this._restarting = value
 	}
 
-	// Tracks whether this instance's own routes started the currently-active
-	// debug session, so shutdown only auto-cancels a session it owns instead
-	// of a different, concurrently-live instance's active capture.
+	// Cancel only the debug session started by this runtime
 	get ownsDebugSession(): boolean {
 		return this._ownsDebugSession
 	}
@@ -195,7 +186,6 @@ export class AppRuntime {
 			)
 		}
 
-		// Backup initialization is valid when Z-Wave is disabled.
 		backupManager.init(zwave, this.backupManagerOwner)
 
 		const gw = new Gateway(settings.gateway as GatewayConfig, zwave, mqtt)

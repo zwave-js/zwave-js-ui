@@ -627,17 +627,17 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 							break
 						case 'update':
 							res = runtime
-								.requireZwaveClient()
+								.ensureZWaveClient()
 								.updateDevice(data.device, data.nodeId)
 							break
 						case 'add':
 							res = runtime
-								.requireZwaveClient()
+								.ensureZWaveClient()
 								.addDevice(data.device, data.nodeId)
 							break
 						case 'store':
 							res = await runtime
-								.requireZwaveClient()
+								.ensureZWaveClient()
 								.storeDevices(
 									data.devices,
 									data.nodeId,
