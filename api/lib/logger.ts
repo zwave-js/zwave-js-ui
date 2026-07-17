@@ -222,13 +222,8 @@ export function module(module: string): ModuleLogger {
 	return setupLogger(logContainer, module, activeConfig)
 }
 
-/**
- * Setup all loggers starting from config
- */
-export function setupAll(config: DeepPartial<GatewayConfig>) {
-	activeConfig = config
-	stopCleanJob()
-
+// Drops the issue #2937 transport memoization so the next customTransports() call rebuilds instead of reusing stale transports
+function closeCachedTransports(): void {
 	transportGenerations.forEach((generation) => {
 		generation.forEach((transport) => {
 			if (typeof transport.close === 'function') {
@@ -237,6 +232,15 @@ export function setupAll(config: DeepPartial<GatewayConfig>) {
 		})
 	})
 	transportGenerations.clear()
+}
+
+/**
+ * Setup all loggers starting from config
+ */
+export function setupAll(config: DeepPartial<GatewayConfig>) {
+	activeConfig = config
+	stopCleanJob()
+	closeCachedTransports()
 
 	logContainer.loggers.forEach((logger: winston.Logger) => {
 		;(logger as ModuleLogger).setup(config)

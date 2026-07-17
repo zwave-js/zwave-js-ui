@@ -43,6 +43,7 @@ vi.mock('#api/lib/ZnifferManager.ts', () => ({
 		constructor(...args: unknown[]) {
 			znifferCtor(...args)
 		}
+		// POST /api/restart awaits the already-attached zniffer's close(); omitting it throws `oldZniffer.close is not a function`
 		close = vi.fn(() => Promise.resolve())
 	},
 }))

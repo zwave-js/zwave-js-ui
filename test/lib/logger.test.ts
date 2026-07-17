@@ -1,18 +1,94 @@
-import { describe, it, expect, beforeAll, afterEach } from 'vitest'
-import * as utils from '#api/lib/utils.ts'
-import { logsDir } from '#api/config/app.ts'
-import type { ModuleLogger } from '#api/lib/logger.ts'
+/**
+ * logger.ts statically imports logsDir/storeDir from config/app.ts, which
+ * writes a session-secret file and creates a real logs/ dir under the repo
+ * store/ if STORE_DIR isn't set yet; logger.ts/config/app.ts/utils.ts must
+ * all be dynamic import()s performed after ensureTestEnv() (see
+ * shared/env.ts).
+ *
+ * logger.ts also memoizes its transports list and keeps every named logger
+ * in a module-level winston.Container singleton for the lifetime of the
+ * process (see issue #2937's "setup transports only once" comment) - both
+ * deliberate, process-lifetime production singletons, not test artifacts.
+ * Rather than add a production-only reset seam, each describe block below
+ * calls `freshLogger()`, which `vi.resetModules()`s the whole module graph
+ * and re-imports logger.ts fresh - giving that block its own isolated
+ * module instance instead of resetting shared state. `vi.resetModules()`
+ * gives `winston` itself a new module identity too, not just first-party
+ * files, so `freshLogger()` re-imports it in the same cycle as logger.ts
+ * and returns it alongside, keeping any `instanceof winston.transports.X`
+ * check comparing classes from the same generation. This is what makes
+ * assertions on transport count/silent/level hold regardless of
+ * `--sequence.seed`/run order.
+ *
+ * DISABLE_LOG_ROTATION=true makes the logToFile: true scenarios use a plain
+ * winston.transports.File instead of DailyRotateFile, whose
+ * setupCleanJob() fires an un-awaited clean() promise - sharing this
+ * file's transports cache via its own logger.info(...) calls - that can
+ * still be in flight when afterAll deletes the throwaway STORE_DIR, a
+ * pre-existing characteristic otherwise surfacing as noisy ENOENT
+ * rejections.
+ */
 import {
-	customTransports,
-	defaultLogFile,
-	sanitizedConfig,
-	module,
-	setupAll,
-	stopCleanJob,
-} from '#api/lib/logger.ts'
-import winston from 'winston'
+	describe,
+	it,
+	expect,
+	vi,
+	beforeAll,
+	beforeEach,
+	afterEach,
+	afterAll,
+} from 'vitest'
+import type * as UtilsModule from '../../api/lib/utils.ts'
+import type { ModuleLogger } from '../../api/lib/logger.ts'
+import type * as LoggerModule from '../../api/lib/logger.ts'
+import type * as WinstonModule from 'winston'
+import { ensureTestEnv, cleanupTestEnv } from './shared/env.ts'
 
-function checkConfigDefaults(mod, cfg) {
+let utils: typeof UtilsModule
+let logsDir: string
+
+const ORIGINAL_DISABLE_LOG_ROTATION = process.env.DISABLE_LOG_ROTATION
+
+beforeAll(async () => {
+	ensureTestEnv()
+	process.env.DISABLE_LOG_ROTATION = 'true'
+	const [utilsModule, configModule] = await Promise.all([
+		import('../../api/lib/utils.ts'),
+		import('../../api/config/app.ts'),
+	])
+	utils = utilsModule
+	logsDir = configModule.logsDir
+})
+
+afterAll(() => {
+	if (ORIGINAL_DISABLE_LOG_ROTATION === undefined) {
+		delete process.env.DISABLE_LOG_ROTATION
+	} else {
+		process.env.DISABLE_LOG_ROTATION = ORIGINAL_DISABLE_LOG_ROTATION
+	}
+	cleanupTestEnv()
+})
+
+/**
+ * Resets the module graph and re-imports logger.ts fresh, together with
+ * `winston` in the same cycle (see file doc comment for why both).
+ */
+async function freshLogger(): Promise<
+	typeof LoggerModule & { winston: typeof WinstonModule }
+> {
+	vi.resetModules()
+	const [loggerModule, winstonModule] = await Promise.all([
+		import('../../api/lib/logger.ts'),
+		import('winston'),
+	])
+	return { ...loggerModule, winston: winstonModule }
+}
+
+function checkConfigDefaults(
+	mod: string,
+	cfg: ReturnType<typeof LoggerModule.sanitizedConfig>,
+	defaultLogFile: typeof LoggerModule.defaultLogFile,
+) {
 	expect(cfg.module).to.equal(mod)
 	expect(cfg.enabled).to.equal(true)
 	expect(cfg.level).to.equal('info')
@@ -21,51 +97,46 @@ function checkConfigDefaults(mod, cfg) {
 }
 
 describe('logger.js', () => {
-	let logger1: ModuleLogger
-	let logger2: ModuleLogger
-
-	afterEach(() => {
-		stopCleanJob()
-	})
-
 	describe('sanitizedConfig()', () => {
+		let sanitizedConfig: typeof LoggerModule.sanitizedConfig
+		let defaultLogFile: typeof LoggerModule.defaultLogFile
+
+		beforeAll(async () => {
+			;({ sanitizedConfig, defaultLogFile } = await freshLogger())
+		})
+
 		it('should set undefined config object to defaults', () => {
 			const cfg = sanitizedConfig('-', undefined)
-			checkConfigDefaults('-', cfg)
+			checkConfigDefaults('-', cfg, defaultLogFile)
 		})
 		it('should set empty config object to defaults', () => {
 			const cfg = sanitizedConfig('-', {})
-			checkConfigDefaults('-', cfg)
+			checkConfigDefaults('-', cfg, defaultLogFile)
 		})
 	})
 
-	// describe('customFormat()', () => {
-	// 	it('should uppercase the label', () => {
-	// 		const fmt = customFormat(sanitizedConfig('foo', {}))
-	// 		expect(
-	// 			(
-	// 				fmt.transform({
-	// 					level: 'info',
-	// 					message: 'msg',
-	// 				}) as Logform.TransformableInfo
-	// 			).label
-	// 		).to.be.equal('FOO')
-	// 	})
-	// })
-
 	describe('customTransports()', () => {
+		let customTransports: typeof LoggerModule.customTransports
+		let sanitizedConfig: typeof LoggerModule.sanitizedConfig
+
+		beforeEach(async () => {
+			;({ customTransports, sanitizedConfig } = await freshLogger())
+		})
+
 		it('should have one transport by default', () => {
-			setupAll({})
 			const transports = customTransports(sanitizedConfig('-', {}))
 			return expect(transports.length).to.equal(2)
 		})
 	})
 
 	describe('module()', () => {
-		beforeAll(() => {
-			setupAll({})
+		let logger1: ModuleLogger
+
+		beforeAll(async () => {
+			const { module } = await freshLogger()
 			logger1 = module('foo')
 		})
+
 		it('should set the module name', () =>
 			expect(logger1.module).to.equal('foo'))
 		it('should have a cfg function', () =>
@@ -79,15 +150,21 @@ describe('logger.js', () => {
 	})
 
 	describe('setup() (init)', () => {
-		beforeAll(() => {
-			setupAll({})
-			logger1 = module('bar')
+		let logger1: ModuleLogger
+		let logger2: ModuleLogger
+		let winston: typeof WinstonModule
+
+		beforeAll(async () => {
+			const fresh = await freshLogger()
+			winston = fresh.winston
+			logger1 = fresh.module('bar')
 			logger2 = logger1.setup({
 				logEnabled: false,
 				logLevel: 'warn',
 				logToFile: true,
 			})
 		})
+
 		it('should return the same logger instance', () =>
 			expect(logger1).to.be.equal(logger2))
 		it('should set the module name', () =>
@@ -107,14 +184,17 @@ describe('logger.js', () => {
 	})
 
 	describe('setup() (reconfigure)', () => {
-		beforeAll(() => {
-			setupAll({})
+		let logger1: ModuleLogger
+
+		beforeAll(async () => {
+			const { module } = await freshLogger()
 			logger1 = module('mod').setup({
 				logEnabled: true,
 				logLevel: 'warn',
 				logToFile: false,
 			})
 		})
+
 		it('should change the logger configuration', () => {
 			// Test pre-conditions:
 			expect(logger1.module).to.equal('mod')
@@ -134,6 +214,21 @@ describe('logger.js', () => {
 	})
 
 	describe('setupAll()', () => {
+		let module: typeof LoggerModule.module
+		let setupAll: typeof LoggerModule.setupAll
+		let stopCleanJob: typeof LoggerModule.stopCleanJob
+		let winston: typeof WinstonModule
+		let logger1: ModuleLogger
+		let logger2: ModuleLogger
+
+		beforeEach(async () => {
+			;({ module, setupAll, stopCleanJob, winston } = await freshLogger())
+		})
+
+		afterEach(() => {
+			stopCleanJob()
+		})
+
 		it('should change the logger config of all zwave-js-ui modules', () => {
 			logger1 = module('mod1').setup({
 				logEnabled: true,
@@ -167,7 +262,9 @@ describe('logger.js', () => {
 			expect(logger2.transports.length).to.be.equal(3)
 		})
 		it('should not create file transport when logEnabled is false', () => {
-			logger1 = module('mod3').setup({
+			// Explicit setupAll() establishes this test's starting state instead of relying on a sibling test's leftover transports cache
+			logger1 = module('mod3')
+			setupAll({
 				logEnabled: true,
 				logLevel: 'warn',
 				logToFile: true,
@@ -193,7 +290,7 @@ describe('logger.js', () => {
 				logLevel: 'warn',
 				logToFile: false,
 			})
-			// Create a different winston logger:
+			// Create a different winston logger, from the same generation as `module`/`setupAll` above, so this proves setupAll() only touches logContainer.loggers and not winston's own default container
 			logger2 = winston.loggers.add('somelogger') as ModuleLogger
 			logger2.level = 'warn'
 			// Test pre-conditions:
