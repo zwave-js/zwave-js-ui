@@ -157,6 +157,14 @@ import { PkgFsBindings } from './PkgFsBindings.ts'
 import { regionSupportsAutoPowerlevel } from './shared.ts'
 import { deviceConfigPriorityDir } from './Constants.ts'
 import { createRequire } from 'node:module'
+import { HassDeviceStore } from '../hass/DeviceStore.ts'
+import type {
+	HassDevice,
+	HassDeviceMap,
+	StoreHassDevicesResult,
+} from '../hass/types.ts'
+
+export type { HassDevice } from '../hass/types.ts'
 
 export const configManager = new ConfigManager({
 	deviceConfigPriorityDir,
@@ -412,7 +420,7 @@ export type ZUIValueId = {
 	label?: string
 	default: any
 	stateless: boolean
-	ccSpecific: Record<string, any>
+	ccSpecific?: Record<string, unknown>
 	min?: number
 	max?: number
 	step?: number
@@ -495,31 +503,6 @@ export type CallAPIResult<T extends AllowedApis> =
 			message: string
 			args?: Parameters<ZwaveClient[T]>
 	  }
-
-export type HassDevice = {
-	type:
-		| 'sensor'
-		| 'light'
-		| 'binary_sensor'
-		| 'cover'
-		| 'climate'
-		| 'lock'
-		| 'switch'
-		| 'fan'
-		| 'number'
-	object_id: string
-	discovery_payload: { [key: string]: any }
-	discoveryTopic?: string
-	values?: string[]
-	action_map?: { [key: number]: string }
-	setpoint_topic?: { [key: number]: string }
-	default_setpoint?: string
-	persistent?: boolean
-	ignoreDiscovery?: boolean
-	fan_mode_map?: { [key: string]: number }
-	mode_map?: { [key: string]: number }
-	id?: string
-}
 
 export class DriverNotReadyError extends Error {
 	public constructor() {
@@ -849,6 +832,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 	// Foreach valueId, we store a callback function to be called when the value changes
 	private valuesObservers: Record<string, ValueIdObserver> = {}
+	private hassDeviceStore: HassDeviceStore
 
 	private _grantResolve: (grant: InclusionGrant | false) => void | null
 	private _dskResolve: (dsk: string | false) => void | null
@@ -913,6 +897,20 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		this.cfg = config
 		this.socket = socket
+		this.hassDeviceStore = new HassDeviceStore({
+			hasNode: (nodeId) => this._nodes.has(nodeId),
+			getNodeDevices: (nodeId) => this._nodes.get(nodeId)?.hassDevices,
+			setNodeDevices: (nodeId, devices) => {
+				const node = this._nodes.get(nodeId)
+				if (node) node.hassDevices = devices
+			},
+			getStoredNode: (nodeId) => this.storeNodes[nodeId],
+			emitNodeUpdate: (nodeId, devices) => {
+				const node = this._nodes.get(nodeId)
+				if (node) this.emitNodeUpdate(node, { hassDevices: devices })
+			},
+			updateStoreNodes: () => this.updateStoreNodes(),
+		})
 
 		this.init()
 	}
@@ -1243,41 +1241,14 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 *
 	 */
 	updateDevice(hassDevice: HassDevice, nodeId: number, deleteDevice = false) {
-		const node = this._nodes.get(nodeId)
-
-		// check for existing node and node hassdevice with given id
-		if (node && hassDevice.id && node.hassDevices?.[hassDevice.id]) {
-			if (deleteDevice) {
-				delete node.hassDevices[hassDevice.id]
-			} else {
-				const id = hassDevice.id
-				delete hassDevice.id
-				node.hassDevices[id] = hassDevice
-			}
-
-			this.emitNodeUpdate(node, {
-				hassDevices: node.hassDevices,
-			})
-		}
+		this.hassDeviceStore.updateDevice(hassDevice, nodeId, deleteDevice)
 	}
 
 	/**
 	 * Used to Add a new hass device to a specific node
 	 */
 	addDevice(hassDevice: HassDevice, nodeId: number) {
-		const node = this._nodes.get(nodeId)
-
-		// check for existing node and node hassdevice with given id
-		if (node && hassDevice.id) {
-			delete hassDevice.id
-			const id = hassDevice.type + '_' + hassDevice.object_id
-			hassDevice.persistent = false
-			node.hassDevices[id] = hassDevice
-
-			this.emitNodeUpdate(node, {
-				hassDevices: node.hassDevices,
-			})
-		}
+		this.hassDeviceStore.addDevice(hassDevice, nodeId)
 	}
 
 	/**
@@ -1285,30 +1256,11 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 *
 	 */
 	async storeDevices(
-		devices: { [key: string]: HassDevice },
+		devices: HassDeviceMap,
 		nodeId: number,
-		remove: any,
-	) {
-		const node = this._nodes.get(nodeId)
-
-		if (node) {
-			for (const id in devices) {
-				devices[id].persistent = !remove
-			}
-
-			if (remove) {
-				delete this.storeNodes[nodeId].hassDevices
-			} else {
-				this.storeNodes[nodeId].hassDevices = devices
-			}
-
-			node.hassDevices = utils.copy(devices)
-			await this.updateStoreNodes()
-
-			this.emitNodeUpdate(node, {
-				hassDevices: node.hassDevices,
-			})
-		}
+		remove: unknown,
+	): Promise<StoreHassDevicesResult> {
+		return this.hassDeviceStore.storeDevices(devices, nodeId, remove)
 	}
 
 	/**

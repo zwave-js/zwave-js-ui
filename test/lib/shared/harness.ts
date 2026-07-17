@@ -1,25 +1,18 @@
-// Module loaders and the beforeAll/afterEach/afterAll lifecycle shared by both the HTTP and socket
-// harnesses: one isolated createApp/jsonStore/store/closeWatchers context per test file, one fresh
-// per-test instance torn down in afterEach. Each transport supplies its own createHarnessInstance()
-// (Express+supertest vs. Express+Socket.IO) and layers any transport-only setup on top of this.
 import { beforeAll, afterEach, afterAll } from 'vitest'
 import type { Server as HttpServer } from 'node:http'
 import { ensureTestEnv, cleanupTestEnv } from './env.ts'
 import type * as AppModuleNamespace from '#api/app.ts'
 import type * as JsonStoreModuleNamespace from '#api/lib/jsonStore.ts'
 import type * as StoreConfigModuleNamespace from '#api/config/store.ts'
-import type * as GatewayModuleNamespace from '#api/lib/Gateway.ts'
 import type { StoreFile } from '#api/config/store.ts'
 
 export type AppModule = typeof AppModuleNamespace
 export type JsonStoreModule = typeof JsonStoreModuleNamespace
 export type StoreConfigModule = typeof StoreConfigModuleNamespace
-export type GatewayModule = typeof GatewayModuleNamespace
 
 let appModulePromise: Promise<AppModule> | undefined
 let jsonStoreModulePromise: Promise<JsonStoreModule> | undefined
 let storeConfigModulePromise: Promise<StoreConfigModule> | undefined
-let gatewayModulePromise: Promise<GatewayModule> | undefined
 
 export async function loadAppModule(): Promise<AppModule> {
 	ensureTestEnv()
@@ -41,28 +34,19 @@ export async function loadJsonStore(): Promise<{
 	return { jsonStore: jsonStoreMod.default, store: storeMod.default }
 }
 
-// Releases the Gateway.ts fs.watch() watchers since api/app.ts always pulls this module in transitively
-export async function loadGatewayModule(): Promise<GatewayModule> {
-	gatewayModulePromise ??= import('#api/lib/Gateway.ts')
-	return gatewayModulePromise
-}
-
 export interface SharedTestContext {
 	createApp: AppModule['createApp']
 	jsonStore: JsonStoreModule['default']
 	store: StoreConfigModule['default']
-	closeWatchers: GatewayModule['closeWatchers']
 }
 
 export async function createSharedTestContext(): Promise<SharedTestContext> {
-	const [{ createApp }, { jsonStore, store }, { closeWatchers }] =
-		await Promise.all([
-			loadAppModule(),
-			loadJsonStore(),
-			loadGatewayModule(),
-		])
+	const [{ createApp }, { jsonStore, store }] = await Promise.all([
+		loadAppModule(),
+		loadJsonStore(),
+	])
 	await jsonStore.init(structuredClone(store))
-	return { createApp, jsonStore, store, closeWatchers }
+	return { createApp, jsonStore, store }
 }
 
 export function listenOnEphemeralPort(server: HttpServer): Promise<void> {
@@ -183,7 +167,6 @@ export function useHarnessLifecycle<
 			},
 			afterAllCleanup() {
 				if (!shared) return
-				shared.closeWatchers()
 				for (const key of Object.keys(shared.jsonStore.store)) {
 					delete shared.jsonStore.store[key]
 				}

@@ -4,17 +4,11 @@ import type { Express } from 'express'
 import type { Server as SocketIOServer } from 'socket.io'
 import { io as ioClient, type Socket as ClientSocket } from 'socket.io-client'
 import type { FakeGateway, FakeZniffer } from './fakes.ts'
-import type * as ZnifferModuleNamespace from '#api/lib/ZnifferManager.ts'
 import {
 	listenOnEphemeralPort,
 	useHarnessLifecycle,
-	type GatewayModule,
 	type SharedTestContext,
 } from '../shared/harness.ts'
-
-type ZnifferModule = typeof ZnifferModuleNamespace
-type RealGateway = InstanceType<GatewayModule['default']>
-type RealZniffer = InstanceType<ZnifferModule['default']>
 
 export interface SocketHarnessOptions {
 	gateway?: FakeGateway
@@ -47,8 +41,8 @@ async function createHarnessInstance(
 ): Promise<SocketHarness & { closeInstance(): Promise<void> }> {
 	const instance = shared.createApp({
 		test: {
-			gateway: options.gateway as unknown as RealGateway | undefined,
-			zniffer: options.zniffer as unknown as RealZniffer | undefined,
+			gateway: options.gateway,
+			zniffer: options.zniffer,
 			restarting: options.restarting,
 		},
 	})

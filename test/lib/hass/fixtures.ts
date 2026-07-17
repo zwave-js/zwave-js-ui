@@ -9,6 +9,7 @@
  */
 import { vi } from 'vitest'
 import { EventEmitter } from 'node:events'
+import type { StoreHassDevicesResult } from '#api/hass/types.ts'
 import type { MqttConfig } from '#api/lib/MqttClient.ts'
 import type {
 	HassDevice,
@@ -237,7 +238,11 @@ export function createFakeGatewayZwave(
 		nodes: new Map<number, ZUINode>(),
 		updateDevice: vi.fn(),
 		addDevice: vi.fn(),
-		storeDevices: vi.fn(() => Promise.resolve(undefined)),
+		storeDevices: vi.fn(() =>
+			Promise.resolve({
+				status: 'stored',
+			} satisfies StoreHassDevicesResult),
+		),
 		emitNodeUpdate: vi.fn(),
 		getNode: vi.fn(() => undefined),
 		connect: vi.fn(() => Promise.resolve(undefined)),

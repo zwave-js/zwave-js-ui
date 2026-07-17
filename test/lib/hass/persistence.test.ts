@@ -1,464 +1,222 @@
-/**
- * Characterizes HASS-device persistence and projection: adding, updating, and
- * storing a node's hassDevices, home-id scoping of the persisted nodes file,
- * and the synchronous node projection that precedes the nextTick-deferred node
- * update emission.
- *
- * Tests drive the real store-backed client against an isolated STORE_DIR with a
- * recording socket, so every write lands in a throwaway dir, never the repo
- * store/. No real Driver is constructed; the home id and live nodes are seeded
- * at the injection boundary the Driver would otherwise supply.
- */
-import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest'
-import { existsSync, readFileSync } from 'node:fs'
-import { join } from 'node:path'
-import type { Server as SocketServer } from 'socket.io'
-import { ensureTestEnv, cleanupTestEnv, getTestStoreDir } from './env.ts'
-import {
-	buildNode,
-	createRecordingSocket,
-	type RecordingSocket,
-} from './fixtures.ts'
-import { socketEvents } from '#api/lib/SocketEvents.ts'
-import type ZWaveClientType from '#api/lib/ZwaveClient.ts'
+import { beforeEach, describe, expect, it } from 'vitest'
+import { HassDeviceStore } from '#api/hass/DeviceStore.ts'
 import type {
-	HassDevice,
-	ZUINode,
-	ZUIDriverInfo,
-} from '#api/lib/ZwaveClient.ts'
-import type * as JsonStoreModuleNamespace from '#api/lib/jsonStore.ts'
-import type * as StoreConfigModuleNamespace from '#api/config/store.ts'
+	HassDeviceStorePort,
+	HassPersistenceNode,
+} from '#api/hass/ports.ts'
+import type { HassDevice, HassDeviceMap } from '#api/hass/types.ts'
 
-type JsonStoreModule = typeof JsonStoreModuleNamespace
-type StoreConfigModule = typeof StoreConfigModuleNamespace
-
-/**
- * Narrow view of the home id the Driver would normally own. It has no public
- * setter and is seeded only at the driver-less construction boundary.
- */
-type ClientInternals = {
-	driverInfo: ZUIDriverInfo
-}
-const internals = (zwave: ZWaveClientType) =>
-	zwave as unknown as ClientInternals
-
-let ZWaveClient: typeof ZWaveClientType
-let jsonStore: JsonStoreModule['default']
-let store: StoreConfigModule['default']
-let storeDir: string
-
-// A live-in-store home id: the 0x prefix makes getStoreNodes() treat it as
-// already-scoped rather than migrating it
-const HOME = '0xtesthome'
-
-/** Flush microtasks and the process.nextTick queue sendToSocket defers through. */
-const flush = () => new Promise<void>((r) => setImmediate(r))
-
-/**
- * Real init-only client (no Driver) with a recording socket and the home id
- * seeded so homeHex resolves; callers choose the load path or direct node seed.
- */
-function newInitClient(home: string | null = HOME): {
-	zwave: ZWaveClientType
-	socket: RecordingSocket
-} {
-	const socket = createRecordingSocket()
-	const zwave = new ZWaveClient({}, socket as unknown as SocketServer)
-	if (home !== null) {
-		// homeHex derives from the driver-supplied home id and has no public
-		// setter; seed it at the injection boundary since these tests run
-		// without a real Driver by design
-		internals(zwave).driverInfo = { name: home }
+function device(objectId: string, id?: string): HassDevice {
+	return {
+		id,
+		type: 'sensor',
+		object_id: objectId,
+		discovery_payload: { name: objectId },
+		values: [],
 	}
-	return { zwave, socket }
 }
 
-/**
- * In-memory fixture for the add/update/projection paths, which read and mutate
- * only the live node. The node is registered through the public nodes map.
- */
-function makeMutatorClient(
-	nodeId: number,
-	node: ZUINode,
-): { zwave: ZWaveClientType; socket: RecordingSocket } {
-	const { zwave, socket } = newInitClient()
-	zwave.nodes.set(nodeId, node)
-	return { zwave, socket }
+class RecordingStorePort implements HassDeviceStorePort {
+	public readonly liveNodes = new Map<number, HassDeviceMap>()
+	public readonly storedNodes = new Map<number, unknown>()
+	public readonly emissions: Array<{
+		nodeId: number
+		devices: HassDeviceMap
+	}> = []
+	public updateStoreNodes = (): Promise<void> => Promise.resolve()
+
+	public hasNode(nodeId: number): boolean {
+		return this.liveNodes.has(nodeId)
+	}
+
+	public getNodeDevices(nodeId: number): HassDeviceMap | undefined {
+		return this.liveNodes.get(nodeId)
+	}
+
+	public setNodeDevices(nodeId: number, devices: HassDeviceMap): void {
+		this.liveNodes.set(nodeId, devices)
+	}
+
+	public getStoredNode(nodeId: number): unknown {
+		return this.storedNodes.get(nodeId)
+	}
+
+	public emitNodeUpdate(nodeId: number, devices: HassDeviceMap): void {
+		const projection = structuredClone(devices)
+		this.liveNodes.set(nodeId, projection)
+		this.emissions.push({ nodeId, devices: projection })
+	}
 }
 
-/**
- * Real-load fixture: seeds a home-scoped nodes.json, then fills the store
- * projection through the production getStoreNodes() loader. The live node is
- * registered through the public nodes map, since building it for real needs a
- * Driver.controller this init-only client omits.
- */
-async function makeLoadedClient(
-	nodeId: number,
-	node: ZUINode,
-	seedBucket: Record<string, Record<string, unknown>> = { [nodeId]: {} },
-): Promise<{ zwave: ZWaveClientType; socket: RecordingSocket }> {
-	await jsonStore.put(store.nodes, { [HOME]: seedBucket })
-	const { zwave, socket } = newInitClient()
-	await zwave.getStoreNodes()
-	zwave.nodes.set(nodeId, node)
-	return { zwave, socket }
-}
+describe('HassDeviceStore', () => {
+	let port: RecordingStorePort
+	let store: HassDeviceStore
 
-function nodeUpdatedEmits(socket: RecordingSocket) {
-	return socket.emissions.filter((e) => e.event === socketEvents.nodeUpdated)
-}
-
-beforeAll(async () => {
-	storeDir = ensureTestEnv()
-	;({ default: jsonStore } = await import('#api/lib/jsonStore.ts'))
-	;({ default: store } = await import('#api/config/store.ts'))
-	;({ default: ZWaveClient } = await import('#api/lib/ZwaveClient.ts'))
-	await jsonStore.init(store)
-})
-
-afterAll(() => {
-	cleanupTestEnv()
-})
-
-beforeEach(async () => {
-	// Reset nodes.json (memory + disk) so tests never see each other's writes
-	await jsonStore.put(store.nodes, {})
-})
-
-describe('adding a HASS device to a node', () => {
-	it('keys an added device by type_object_id, drops the incoming id, and marks it non-persistent', async () => {
-		const node = buildNode({ id: 5 })
-		const { zwave, socket } = makeMutatorClient(5, node)
-
-		const device: HassDevice = {
-			id: 'ignored-incoming-id',
-			type: 'sensor',
-			object_id: 'temperature',
-			discovery_payload: { name: 'Temp' },
-		}
-		zwave.addDevice(device, 5)
-
-		expect(Object.keys(node.hassDevices)).toEqual(['sensor_temperature'])
-		const stored = node.hassDevices.sensor_temperature
-		expect(stored).toBe(device)
-		expect('id' in stored).toBe(false)
-		expect(stored.persistent).toBe(false)
-
-		await flush()
-		const emits = nodeUpdatedEmits(socket)
-		expect(emits).toHaveLength(1)
-		expect(emits[0].room).toBe('nodes')
-		// Emission carries the changed props and a partial-update flag
-		expect(emits[0].args[1]).toBe(true)
-		expect(emits[0].args[0].hassDevices).toBe(node.hassDevices)
-		expect(emits[0].args[0].id).toBe(5)
+	beforeEach(() => {
+		port = new RecordingStorePort()
+		store = new HassDeviceStore(port)
 	})
 
-	it('does nothing when the node is unknown', async () => {
-		const { zwave, socket } = makeMutatorClient(5, buildNode({ id: 5 }))
-		zwave.addDevice(
-			{ id: 'x', type: 'sensor', object_id: 'y', discovery_payload: {} },
-			999, // no such node
-		)
-		await flush()
-		expect(nodeUpdatedEmits(socket)).toHaveLength(0)
-	})
+	function addNode(nodeId: number, storedNode: unknown = {}): void {
+		port.liveNodes.set(nodeId, {})
+		port.storedNodes.set(nodeId, storedNode)
+	}
 
-	it('does nothing when the incoming device has no id', async () => {
-		const node = buildNode({ id: 5 })
-		const { zwave, socket } = makeMutatorClient(5, node)
-		zwave.addDevice(
-			{ type: 'sensor', object_id: 'y', discovery_payload: {} },
-			5,
-		)
-		await flush()
-		expect(node.hassDevices).toEqual({})
-		expect(nodeUpdatedEmits(socket)).toHaveLength(0)
-	})
-})
+	it('adds devices under generated identifiers', () => {
+		addNode(5)
 
-describe('updating a HASS device on a node', () => {
-	it('re-keys an existing device under its id and drops the id field', async () => {
-		const existing: HassDevice = {
-			type: 'switch',
-			object_id: 'sw',
-			discovery_payload: {},
-			persistent: true,
-		}
-		const node = buildNode({
-			id: 7,
-			hassDevices: { switch_sw: { ...existing } },
-		})
-		const { zwave, socket } = makeMutatorClient(7, node)
+		store.addDevice(device('temperature', 'wire-id'), 5)
 
-		const incoming: HassDevice = {
-			id: 'switch_sw', // must match an existing key
-			type: 'switch',
-			object_id: 'sw',
-			discovery_payload: { name: 'renamed' },
-		}
-		zwave.updateDevice(incoming, 7)
-
-		expect('id' in node.hassDevices.switch_sw).toBe(false)
-		expect(node.hassDevices.switch_sw).toBe(incoming)
-		expect(node.hassDevices.switch_sw.discovery_payload.name).toBe(
-			'renamed',
-		)
-
-		await flush()
-		expect(nodeUpdatedEmits(socket)).toHaveLength(1)
-	})
-
-	it('deletes the device when deleteDevice is set', async () => {
-		const node = buildNode({
-			id: 7,
-			hassDevices: {
-				switch_sw: {
-					type: 'switch',
-					object_id: 'sw',
-					discovery_payload: {},
-				},
-			},
-		})
-		const { zwave, socket } = makeMutatorClient(7, node)
-
-		zwave.updateDevice(
-			{ id: 'switch_sw' } as unknown as HassDevice,
-			7,
-			true,
-		)
-
-		expect('switch_sw' in node.hassDevices).toBe(false)
-		await flush()
-		expect(nodeUpdatedEmits(socket)).toHaveLength(1)
-	})
-
-	it('does nothing when the id matches no existing device', async () => {
-		const node = buildNode({ id: 7 })
-		const { zwave, socket } = makeMutatorClient(7, node)
-		zwave.updateDevice({ id: 'nope' } as unknown as HassDevice, 7)
-		await flush()
-		expect(node.hassDevices).toEqual({})
-		expect(nodeUpdatedEmits(socket)).toHaveLength(0)
-	})
-})
-
-describe('persisting HASS devices for a node', () => {
-	it('marks devices persistent, projects a copy onto the node, and persists them under the home id', async () => {
-		const node = buildNode({ id: 9 })
-		const { zwave, socket } = await makeLoadedClient(9, node)
-
-		const devices = {
-			sensor_a: { type: 'sensor', object_id: 'a' },
-			sensor_b: { type: 'sensor', object_id: 'b' },
-		}
-		await zwave.storeDevices(
-			devices as unknown as Record<string, HassDevice>,
-			9,
-			false,
-		)
-
-		expect(devices.sensor_a).toHaveProperty('persistent', true)
-		expect(devices.sensor_b).toHaveProperty('persistent', true)
-
-		// The node receives a copy, not the caller's object
-		expect(node.hassDevices).not.toBe(devices)
-		expect(node.hassDevices).toEqual(devices)
-
-		const nodesFile = join(getTestStoreDir(), 'nodes.json')
-		expect(existsSync(nodesFile)).toBe(true)
-		const persisted = JSON.parse(readFileSync(nodesFile, 'utf8'))
-		expect(persisted[HOME]['9'].hassDevices.sensor_a.persistent).toBe(true)
-
-		await flush()
-		expect(nodeUpdatedEmits(socket)).toHaveLength(1)
-	})
-
-	it('removes the stored devices under the home id and marks them non-persistent', async () => {
-		const node = buildNode({ id: 9 })
-		// Seed and load a real persisted device so the remove path clears a
-		// genuinely loaded entry
-		const { zwave } = await makeLoadedClient(9, node, {
-			9: { hassDevices: { old: { type: 'sensor', object_id: 'old' } } },
-		})
-
-		const devices = { sensor_a: { type: 'sensor', object_id: 'a' } }
-		await zwave.storeDevices(
-			devices as unknown as Record<string, HassDevice>,
-			9,
-			true,
-		)
-
-		expect(devices.sensor_a).toHaveProperty('persistent', false)
-		expect(node.hassDevices).toEqual(devices)
-		// Removal leaves nothing to persist, so the node drops out of the file
-		const persisted = jsonStore.get(store.nodes)
-		expect(persisted[HOME]['9']).toBeUndefined()
-	})
-
-	it('keeps null but drops undefined-valued fields in the persisted copy', async () => {
-		const node = buildNode({ id: 9 })
-		const { zwave } = await makeLoadedClient(9, node)
-
-		const devices: Record<
-			string,
-			HassDevice & { keepNull: null; dropUndef?: undefined }
-		> = {
-			sensor_a: {
+		expect(port.liveNodes.get(5)).toEqual({
+			sensor_temperature: {
 				type: 'sensor',
-				object_id: 'a',
-				discovery_payload: {},
-				keepNull: null,
-				dropUndef: undefined,
-			},
-		}
-		await zwave.storeDevices(devices, 9, false)
-
-		expect('keepNull' in node.hassDevices.sensor_a).toBe(true)
-		expect(node.hassDevices.sensor_a.keepNull).toBeNull()
-		expect('dropUndef' in node.hassDevices.sensor_a).toBe(false)
-	})
-
-	it('does nothing when the node is unknown', async () => {
-		const { zwave, socket } = await makeLoadedClient(
-			9,
-			buildNode({ id: 9 }),
-		)
-		await zwave.storeDevices(
-			{ x: { type: 't', object_id: 'o' } } as unknown as Record<
-				string,
-				HassDevice
-			>,
-			42,
-			false,
-		)
-		await flush()
-		expect(nodeUpdatedEmits(socket)).toHaveLength(0)
-	})
-
-	it('replaces persisted devices under the home id and preserves the node name', async () => {
-		const node = buildNode({ id: 11 })
-		const { zwave } = await makeLoadedClient(11, node, {
-			11: {
-				name: 'Kitchen',
-				hassDevices: {
-					sensor_old: {
-						type: 'sensor',
-						object_id: 'old',
-						persistent: true,
-					},
-				},
+				object_id: 'temperature',
+				discovery_payload: { name: 'temperature' },
+				values: [],
+				persistent: false,
 			},
 		})
-
-		const devices = { climate_x: { type: 'climate', object_id: 'x' } }
-		await zwave.storeDevices(
-			devices as unknown as Record<string, HassDevice>,
-			11,
-			false,
-		)
-
-		expect(node.hassDevices.climate_x.persistent).toBe(true)
-
-		// storeDevices replaces rather than merges: the new set lands under the
-		// home id, the node name survives, the old device is gone
-		const persisted = jsonStore.get(store.nodes)
-		expect(persisted[HOME]['11'].name).toBe('Kitchen')
-		expect(persisted[HOME]['11'].hassDevices.climate_x.persistent).toBe(
-			true,
-		)
-		expect(persisted[HOME]['11'].hassDevices.sensor_old).toBeUndefined()
+		expect(port.emissions.at(-1)?.devices).toEqual(port.liveNodes.get(5))
 	})
-})
 
-describe('home-id scoping of persisted nodes', () => {
-	it('loads only the current home from a multi-home file', async () => {
-		await jsonStore.put(store.nodes, {
-			[HOME]: { '3': { name: 'Mine' } },
-			'0xother': { '3': { name: 'Theirs' } },
+	it('updates and deletes existing devices by their public id', () => {
+		addNode(6)
+		port.liveNodes.set(6, {
+			old_key: device('old'),
 		})
-		const { zwave } = newInitClient()
 
-		await zwave.getStoreNodes()
-		await zwave.updateStoreNodes()
-
-		expect(jsonStore.get(store.nodes)).toEqual({
-			[HOME]: { '3': { name: 'Mine' } },
-			'0xother': { '3': { name: 'Theirs' } },
-		})
-	})
-
-	it('loads nothing when the current home is absent', async () => {
-		await jsonStore.put(store.nodes, { '0xother': { '3': {} } })
-		const { zwave } = newInitClient()
-
-		await zwave.getStoreNodes()
-		await zwave.updateStoreNodes()
-
-		expect(jsonStore.get(store.nodes)).toEqual({
-			'0xother': { '3': {} },
-			[HOME]: {},
-		})
-	})
-
-	it('migrates a legacy flat nodes.json to a home-scoped file', async () => {
-		await jsonStore.put(store.nodes, { '3': { name: 'Legacy' } })
-		const { zwave } = newInitClient()
-
-		await zwave.getStoreNodes()
-
-		// The on-disk file is rewritten scoped under the home id
-		const persisted = jsonStore.get(store.nodes)
-		expect(persisted).toEqual({ [HOME]: { '3': { name: 'Legacy' } } })
-	})
-
-	it('converts a legacy array nodes.json to an index-keyed object under the home id', async () => {
-		await jsonStore.put(store.nodes, [
-			null,
-			{ name: 'One' },
-			{ name: 'Two' },
-		])
-		const { zwave } = newInitClient()
-
-		await zwave.getStoreNodes()
-
-		const persisted = jsonStore.get(store.nodes)
-		expect(persisted[HOME]).toEqual({
-			'1': { name: 'One' },
-			'2': { name: 'Two' },
-		})
-	})
-
-	it('rejects when the home id is not set', async () => {
-		const { zwave } = newInitClient(null)
-		// With no home id, the load refuses to run against an undefined home.
-		// Assert the rejection contract without pinning the message text.
-		await expect(zwave.getStoreNodes()).rejects.toThrow()
-	})
-})
-
-describe('node update projection ordering', () => {
-	it('applies the device to the node synchronously before the deferred node update', async () => {
-		// The projection is applied directly to the live node object
-		const node = buildNode({ id: 5 })
-		const { zwave, socket } = makeMutatorClient(5, node)
-
-		zwave.addDevice(
+		store.updateDevice(
 			{
-				id: 'x',
-				type: 'sensor',
-				object_id: 'temp',
-			} as unknown as HassDevice,
-			5,
+				...device('updated', 'old_key'),
+				discovery_payload: { name: 'updated' },
+			},
+			6,
 		)
 
-		expect(node.hassDevices.sensor_temp).toBeDefined()
-		// Emission is deferred to nextTick, so none yet despite the sync projection
-		expect(nodeUpdatedEmits(socket)).toHaveLength(0)
+		expect(port.liveNodes.get(6)).toEqual({
+			old_key: {
+				type: 'sensor',
+				object_id: 'updated',
+				discovery_payload: { name: 'updated' },
+				values: [],
+			},
+		})
 
-		await flush()
-		const emits = nodeUpdatedEmits(socket)
-		expect(emits).toHaveLength(1)
-		expect(emits[0].args[0].hassDevices.sensor_temp).toBeDefined()
+		store.updateDevice(device('updated', 'old_key'), 6, true)
+
+		expect(port.liveNodes.get(6)).toEqual({})
+	})
+
+	it('persists a detached copy of caller devices', async () => {
+		const storedNode: HassPersistenceNode = {}
+		addNode(9, storedNode)
+		const devices: HassDeviceMap = {
+			sensor_a: device('a'),
+		}
+
+		const result = await store.storeDevices(devices, 9, false)
+		devices.sensor_a.discovery_payload.name = 'changed-after-write'
+
+		expect(result).toEqual({ status: 'stored' })
+		expect(storedNode.hassDevices?.sensor_a).toMatchObject({
+			object_id: 'a',
+			persistent: true,
+		})
+		expect(port.liveNodes.get(9)?.sensor_a.discovery_payload.name).toBe('a')
+		expect(port.emissions.at(-1)).toEqual({
+			nodeId: 9,
+			devices: {
+				sensor_a: {
+					type: 'sensor',
+					object_id: 'a',
+					discovery_payload: { name: 'a' },
+					values: [],
+					persistent: true,
+				},
+			},
+		})
+	})
+
+	it('removes persisted devices and keeps current devices available', async () => {
+		const storedNode: HassPersistenceNode = {
+			hassDevices: { old: device('old') },
+		}
+		addNode(10, storedNode)
+		const devices: HassDeviceMap = {
+			sensor_current: device('current'),
+		}
+
+		const result = await store.storeDevices(devices, 10, true)
+
+		expect(result).toEqual({ status: 'stored' })
+		expect(storedNode).not.toHaveProperty('hassDevices')
+		expect(port.liveNodes.get(10)?.sensor_current.persistent).toBe(false)
+	})
+
+	it('does not write devices for unknown nodes', async () => {
+		const result = await store.storeDevices(
+			{ sensor_missing: device('missing') },
+			404,
+			false,
+		)
+
+		expect(result).toEqual({ status: 'node-not-found' })
+		expect(port.emissions).toEqual([])
+	})
+
+	it.each([null, []])(
+		'rejects malformed stored nodes without writing',
+		async (storedNode) => {
+			addNode(11, storedNode)
+
+			const result = await store.storeDevices(
+				{ sensor_safe: device('safe') },
+				11,
+				true,
+			)
+
+			expect(result).toEqual({ status: 'invalid-stored-node' })
+			expect(port.liveNodes.get(11)).toEqual({})
+			expect(port.emissions).toEqual([])
+		},
+	)
+
+	it('emits the most recently requested devices after concurrent writes', async () => {
+		addNode(12)
+		const persistenceResolvers: Array<() => void> = []
+		port.updateStoreNodes = () =>
+			new Promise<void>((resolve) => {
+				persistenceResolvers.push(resolve)
+			})
+		const devicesA: HassDeviceMap = {
+			sensor_a: device('a'),
+		}
+		const devicesB: HassDeviceMap = {
+			sensor_b: device('b'),
+		}
+
+		const writeA = store.storeDevices(devicesA, 12, false)
+		const writeB = store.storeDevices(devicesB, 12, false)
+		expect(persistenceResolvers).toHaveLength(2)
+
+		persistenceResolvers[1]()
+		await writeB
+		persistenceResolvers[0]()
+		await writeA
+
+		const latestProjection: HassDeviceMap = {
+			sensor_b: {
+				type: 'sensor',
+				object_id: 'b',
+				discovery_payload: { name: 'b' },
+				values: [],
+				persistent: true,
+			},
+		}
+		expect(port.liveNodes.get(12)).toEqual(latestProjection)
+		expect(port.emissions.map(({ devices }) => devices)).toEqual([
+			latestProjection,
+			latestProjection,
+		])
 	})
 })

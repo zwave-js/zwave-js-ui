@@ -2,22 +2,16 @@ import { createServer, type Server as HttpServer } from 'node:http'
 import type { Express } from 'express'
 import supertest, { type Test as SupertestTest } from 'supertest'
 import { vi, afterEach } from 'vitest'
-import type { FakeGateway } from '../shared/fakes.ts'
-import type { FakeZniffer } from '../socket/fakes.ts'
-import type * as ZnifferModuleNamespace from '#api/lib/ZnifferManager.ts'
+import type { FakeGateway, FakeZniffer } from '../shared/fakes.ts'
 import type * as SerialPortsModuleNamespace from '#api/lib/serialPorts.ts'
 import {
 	useHarnessLifecycle,
 	listenOnEphemeralPort,
-	type GatewayModule,
 	type JsonStoreModule,
 	type SharedTestContext,
 	type StoreConfigModule,
 } from '../shared/harness.ts'
 
-type RealGateway = InstanceType<GatewayModule['default']>
-type ZnifferModule = typeof ZnifferModuleNamespace
-type RealZniffer = InstanceType<ZnifferModule['default']>
 type SerialPortsModule = typeof SerialPortsModuleNamespace
 
 // settings.ts imports enumerateSerialPorts as a static module boundary (api/lib/serialPorts.ts) rather
@@ -64,9 +58,8 @@ async function createHarnessInstance(
 ): Promise<HttpHarness & { closeInstance(): Promise<void> }> {
 	const instance = shared.createApp({
 		test: {
-			// Gateway has private fields, so a structural mock like FakeGateway needs this cast to satisfy it
-			gateway: options.gateway as unknown as RealGateway | undefined,
-			zniffer: options.zniffer as unknown as RealZniffer | undefined,
+			gateway: options.gateway,
+			zniffer: options.zniffer,
 			restarting: options.restarting,
 		},
 	})

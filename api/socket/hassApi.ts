@@ -1,4 +1,5 @@
 import type { Socket } from 'socket.io'
+import type { StoreHassDevicesResult } from '../hass/types.ts'
 import type { HassDevice } from '../lib/ZwaveClient.ts'
 import { getErrorMessage } from '../lib/errors.ts'
 import * as loggers from '../lib/logger.ts'
@@ -20,7 +21,7 @@ export interface HassApiRequest {
 export interface HassApiAck {
 	success: boolean
 	message: string
-	result: void
+	result: StoreHassDevicesResult | void
 	api?: string
 }
 
@@ -33,7 +34,7 @@ export function registerHassApiHandler(
 		async (data: HassApiRequest, cb: SocketAck<HassApiAck> = noop) => {
 			logger.info(`Hass api call: ${data.apiName}`)
 
-			let res: void
+			let res: StoreHassDevicesResult | undefined
 			let err: string | undefined
 			try {
 				switch (data.apiName) {
@@ -119,6 +120,13 @@ export function registerHassApiHandler(
 								undefined,
 								[data.devices, data.nodeId, data.remove],
 							)
+							if (res?.status === 'node-not-found') {
+								err =
+									'Unable to store Home Assistant devices: node not found'
+							} else if (res?.status === 'invalid-stored-node') {
+								err =
+									'Unable to store Home Assistant devices: stored node is invalid'
+							}
 						}
 						break
 					default:

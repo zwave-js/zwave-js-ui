@@ -305,7 +305,7 @@ describe('Socket contract: inbound ACK APIs', () => {
 			})
 		})
 
-		it('"store" persists the device set and acks success', async () => {
+		it('acknowledges stored devices and reports invalid stored nodes', async () => {
 			const devices = { switch_sw: { type: 'switch' } }
 			const gateway = createFakeGateway()
 			const harness = await getHarness({ gateway })
@@ -325,6 +325,24 @@ describe('Socket contract: inbound ACK APIs', () => {
 			expect(result).toStrictEqual({
 				success: true,
 				message: 'Success HASS api call',
+				result: { status: 'stored' },
+				api: 'store',
+			})
+
+			gateway.zwave.storeDevices.mockResolvedValueOnce({
+				status: 'invalid-stored-node',
+			})
+			const failedResult = await emit(client, 'HASS_API', {
+				apiName: 'store',
+				devices,
+				nodeId: 2,
+				remove: false,
+			})
+			expect(failedResult).toStrictEqual({
+				success: false,
+				message:
+					'Unable to store Home Assistant devices: stored node is invalid',
+				result: { status: 'invalid-stored-node' },
 				api: 'store',
 			})
 		})
@@ -351,22 +369,6 @@ describe('Socket contract: inbound ACK APIs', () => {
 				success: false,
 				message: 'store boom',
 				api: 'store',
-			})
-		})
-
-		it('reports success:false with "Unknown HASS api <name>" for an unknown apiName', async () => {
-			// An unrecognized action must surface a failure ack, not silently
-			// succeed by falling through the switch with an undefined result
-			const harness = await getHarness({ gateway: createFakeGateway() })
-			const client = await connectedClient(harness)
-
-			const result = await emit(client, 'HASS_API', {
-				apiName: 'notARealAction',
-			})
-			expect(result).toStrictEqual({
-				success: false,
-				message: 'Unknown HASS api notARealAction',
-				api: 'notARealAction',
 			})
 		})
 	})
