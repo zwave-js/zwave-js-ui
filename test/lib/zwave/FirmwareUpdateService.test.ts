@@ -27,9 +27,7 @@ import type {
 	OTWFirmwareUpdateResult,
 	StagedFirmwareNodeUpdate,
 } from '#api/lib/zwave/ports.ts'
-import {
-	createServiceLogger,
-} from './serviceTestSupport.ts'
+import { createServiceLogger } from './serviceTestSupport.ts'
 import { createDeferred, requireDefined } from '../testUtils.ts'
 
 const successfulFirmwareUpdate: FirmwareUpdateResult = {
