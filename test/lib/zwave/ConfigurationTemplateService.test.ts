@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, type Mock } from 'vitest'
-import { ConfigurationTemplateService } from '#api/lib/zwave/ConfigurationTemplateService.ts'
+import { ConfigurationTemplateService } from '#api/lib/zwave/ConfigurationTemplateService'
 import type {
 	ZUIConfigurationTemplate,
 	ZUIConfigurationTemplateValue,
@@ -7,7 +7,7 @@ import type {
 	TemplateNodeStorePort,
 	TemplateDriverPort,
 	TemplateConfigManagerPort,
-} from '#api/lib/zwave/ports.ts'
+} from '#api/lib/zwave/ports'
 import type { ZWaveNode } from 'zwave-js'
 import { CommandClasses } from '@zwave-js/core'
 import { SetValueStatus } from 'zwave-js'

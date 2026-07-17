@@ -19,10 +19,10 @@ import path from 'node:path'
 import type {
 	AppRuntime as AppRuntimeClass,
 	AppRuntimeDeps,
-} from '#api/runtime/AppRuntime.ts'
-import type JsonStoreModule from '#api/lib/jsonStore.ts'
-import type StoreModule from '#api/config/store.ts'
-import backupManager from '#api/lib/BackupManager.ts'
+} from '#api/runtime/AppRuntime'
+import type JsonStoreModule from '#api/lib/jsonStore'
+import type StoreModule from '#api/config/store'
+import type BackupManagerInstance from '#api/lib/BackupManager'
 import {
 	createFakeGateway,
 	createFakeZniffer,
@@ -34,20 +34,26 @@ describe('App runtime behavior', () => {
 	let AppRuntimeCtor: typeof AppRuntimeClass
 	let jsonStore: typeof JsonStoreModule
 	let store: typeof StoreModule
+	let backupManager: typeof BackupManagerInstance
 	const originalSecret = process.env.SESSION_SECRET
 
 	beforeAll(async () => {
 		ensureTestEnv()
-		const [runtimeModule, jsonStoreModule, storeModule] = await Promise.all(
-			[
-				import('#api/runtime/AppRuntime.ts'),
-				import('#api/lib/jsonStore.ts'),
-				import('#api/config/store.ts'),
-			],
-		)
+		const [
+			runtimeModule,
+			jsonStoreModule,
+			storeModule,
+			backupManagerModule,
+		] = await Promise.all([
+			import('#api/runtime/AppRuntime'),
+			import('#api/lib/jsonStore'),
+			import('#api/config/store'),
+			import('#api/lib/BackupManager'),
+		])
 		AppRuntimeCtor = runtimeModule.AppRuntime
 		jsonStore = jsonStoreModule.default
 		store = storeModule.default
+		backupManager = backupManagerModule.default
 		await jsonStore.init(store)
 	})
 
@@ -83,7 +89,7 @@ describe('App runtime behavior', () => {
 	}
 
 	it('returns cached and user-provided JavaScript snippets', async () => {
-		const { snippetsDir } = await import('#api/config/app.ts')
+		const { snippetsDir } = await import('#api/config/app')
 		mkdirSync(snippetsDir, { recursive: true })
 		const snippetPath = path.join(snippetsDir, 'runtime-user-snippet.js')
 		const ignoredPath = path.join(snippetsDir, 'runtime-user-snippet.txt')
@@ -137,7 +143,7 @@ describe('App runtime behavior', () => {
 			gateway: { authEnabled: true },
 		})
 		delete process.env.SESSION_SECRET
-		const { module: createLogger } = await import('#api/lib/logger.ts')
+		const { module: createLogger } = await import('#api/lib/logger')
 		const warn = vi.spyOn(createLogger('Runtime'), 'warn')
 
 		try {
@@ -156,7 +162,7 @@ describe('App runtime behavior', () => {
 			gateway: { authEnabled: true },
 		})
 		process.env.SESSION_SECRET = 'test-session-secret'
-		const { module: createLogger } = await import('#api/lib/logger.ts')
+		const { module: createLogger } = await import('#api/lib/logger')
 		const warn = vi.spyOn(createLogger('Runtime'), 'warn')
 
 		try {

@@ -1,13 +1,13 @@
-import type { CustomDeviceRegistry } from './CustomDeviceRegistry.ts'
-import { DiscoveryGenerator } from './DiscoveryGenerator.ts'
+import type { CustomDeviceRegistry } from '#api/hass/CustomDeviceRegistry'
+import { DiscoveryGenerator } from '#api/hass/DiscoveryGenerator'
 import type {
 	HassDiscoveryConfig,
 	HassLogger,
 	HassMqttPort,
 	HassTopicPort,
 	HassZwavePort,
-} from './ports.ts'
-import type { HassDevice } from './types.ts'
+} from '#api/hass/ports'
+import type { HassDevice } from '#api/hass/types'
 
 /**
  * A disposable scoped subscription handle; kept local so the manager never

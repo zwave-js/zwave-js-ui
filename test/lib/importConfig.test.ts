@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 import {
 	getImportedNodeLocation,
 	normalizeImportedNodesConfig,
-} from '../../api/lib/importConfig.ts'
+} from '#api/lib/importConfig'
 
 describe('importConfig', () => {
 	describe('#normalizeImportedNodesConfig()', () => {

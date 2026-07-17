@@ -2,7 +2,10 @@
   "name": "zwave-js-ui",
   "type": "module",
   "imports": {
-    "#api/*": "./api/*"
+    "#api/*": {
+      "development": "./api/*.ts",
+      "default": "./server/*.js"
+    }
   },
   "version": "11.21.1",
   "description": "Z-Wave Control Panel and MQTT Gateway",
@@ -42,7 +45,7 @@
     "dev": "vite",
     "dev-https": "SERVER_SSL='true' npm run dev",
     "dev:server": "nodemon",
-    "server": "node --experimental-strip-types api/bin/www.ts",
+    "server": "node --conditions=development --experimental-strip-types api/bin/www.ts",
     "fake-stick": "npx mock-server -- -c server_config.js",
     "start": "node --preserve-symlinks server/bin/www.js",
     "bundle": "node esbuild.js",
@@ -57,7 +60,7 @@
     "test:server": "vitest run test/lib test/runtime",
     "test:ui": "vitest run src/",
     "docs": "docsify serve ./docs",
-    "docs:generate": "node --experimental-strip-types generateDocs.ts",
+    "docs:generate": "node --conditions=development --experimental-strip-types generateDocs.ts",
     "coverage": "vitest run --coverage",
     "coverage:server": "vitest run test/lib test/runtime --coverage --coverage.reportsDirectory=./coverage-server --coverage.include=api/**",
     "typecheck": "npm-run-all 'typecheck:*'",

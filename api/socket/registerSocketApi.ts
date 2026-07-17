@@ -1,10 +1,13 @@
-import type SocketManager from '../lib/SocketManager.ts'
-import type { AppRuntime } from '../runtime/AppRuntime.ts'
-import { registerInitHandler, registerZwaveApiHandler } from './zwaveApi.ts'
-import { registerMqttApiHandler } from './mqttApi.ts'
-import { registerHassApiHandler } from './hassApi.ts'
-import { registerZnifferApiHandler } from './znifferApi.ts'
-import { registerSubscriptionHandlers } from './subscriptions.ts'
+import type SocketManager from '#api/lib/SocketManager'
+import type { AppRuntime } from '#api/runtime/AppRuntime'
+import {
+	registerInitHandler,
+	registerZwaveApiHandler,
+} from '#api/socket/zwaveApi'
+import { registerMqttApiHandler } from '#api/socket/mqttApi'
+import { registerHassApiHandler } from '#api/socket/hassApi'
+import { registerZnifferApiHandler } from '#api/socket/znifferApi'
+import { registerSubscriptionHandlers } from '#api/socket/subscriptions'
 
 // SocketManager owns transport and connection lifecycle while handlers resolve services through runtime
 // Requires bindServer to initialize socketManager.io before registration

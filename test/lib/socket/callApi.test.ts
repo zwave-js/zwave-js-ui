@@ -6,7 +6,7 @@ import { describe, it, expect, beforeAll } from 'vitest'
 import { existsSync, readFileSync } from 'node:fs'
 import path from 'node:path'
 import { DriverMode, type Driver } from 'zwave-js'
-import type ZWaveClientType from '#api/lib/ZwaveClient.ts'
+import type ZWaveClientType from '#api/lib/ZwaveClient'
 import { useSocketHarness } from './harness.ts'
 import { getTestStoreDir } from '../shared/env.ts'
 import { createFakeGateway } from './fakes.ts'
@@ -19,7 +19,7 @@ describe('Socket contract: callApi()', () => {
 	const getHarness = useSocketHarness()
 
 	beforeAll(async () => {
-		;({ default: ZWaveClient } = await import('#api/lib/ZwaveClient.ts'))
+		;({ default: ZWaveClient } = await import('#api/lib/ZwaveClient'))
 	})
 
 	// The constructor only touches jsonStore, so this is safe without a real driver or serial port

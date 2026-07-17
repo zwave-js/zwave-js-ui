@@ -3,8 +3,8 @@
 // if gw is undefined, so every test installs at least a bare gateway fake
 import { describe, it, expect, beforeAll, vi } from 'vitest'
 import type { Driver } from 'zwave-js'
-import { ALL_CHANNELS } from '#api/lib/SocketEvents.ts'
-import type ZWaveClientType from '#api/lib/ZwaveClient.ts'
+import { ALL_CHANNELS } from '#api/lib/SocketEvents'
+import type ZWaveClientType from '#api/lib/ZwaveClient'
 import { useSocketHarness } from './harness.ts'
 import {
 	createFakeGateway,
@@ -20,7 +20,7 @@ describe('Socket contract: inbound ACK APIs', () => {
 
 	beforeAll(async () => {
 		// Registered after useSocketHarness()'s beforeAll, so STORE_DIR is isolated first
-		;({ default: ZWaveClient } = await import('#api/lib/ZwaveClient.ts'))
+		;({ default: ZWaveClient } = await import('#api/lib/ZwaveClient'))
 	})
 
 	describe('INITED', () => {

@@ -38,9 +38,9 @@ import {
 	afterEach,
 	afterAll,
 } from 'vitest'
-import type * as UtilsModule from '../../api/lib/utils.ts'
-import type { ModuleLogger } from '../../api/lib/logger.ts'
-import type * as LoggerModule from '../../api/lib/logger.ts'
+import type * as UtilsModule from '#api/lib/utils'
+import type { ModuleLogger } from '#api/lib/logger'
+import type * as LoggerModule from '#api/lib/logger'
 import type * as WinstonModule from 'winston'
 import { ensureTestEnv, cleanupTestEnv } from './shared/env.ts'
 
@@ -53,8 +53,8 @@ beforeAll(async () => {
 	ensureTestEnv()
 	process.env.DISABLE_LOG_ROTATION = 'true'
 	const [utilsModule, configModule] = await Promise.all([
-		import('../../api/lib/utils.ts'),
-		import('../../api/config/app.ts'),
+		import('#api/lib/utils'),
+		import('#api/config/app'),
 	])
 	utils = utilsModule
 	logsDir = configModule.logsDir
@@ -78,7 +78,7 @@ async function freshLogger(): Promise<
 > {
 	vi.resetModules()
 	const [loggerModule, winstonModule] = await Promise.all([
-		import('../../api/lib/logger.ts'),
+		import('#api/lib/logger'),
 		import('winston'),
 	])
 	return { ...loggerModule, winston: winstonModule }

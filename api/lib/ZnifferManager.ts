@@ -5,18 +5,18 @@ import {
 	isMultiEncapsulatingCommandClass,
 	Zniffer,
 } from 'zwave-js'
-import { TypedEventEmitter } from './EventEmitter.ts'
-import { module } from './logger.ts'
+import { TypedEventEmitter } from '#api/lib/EventEmitter'
+import { module } from '#api/lib/logger'
 import type { Server as SocketServer } from 'socket.io'
-import { socketEvents } from './SocketEvents.ts'
-import type { ZwaveConfig } from './ZwaveClient.ts'
-import { logsDir, storeDir } from '../config/app.ts'
-import { buffer2hex, joinPath, parseSecurityKeys } from './utils.ts'
-import { isDocker } from './utils.ts'
+import { socketEvents } from '#api/lib/SocketEvents'
+import type { ZwaveConfig } from '#api/lib/ZwaveClient'
+import { logsDir, storeDir } from '#api/config/app'
+import { buffer2hex, joinPath, parseSecurityKeys } from '#api/lib/utils'
+import { isDocker } from '#api/lib/utils'
 import { basename } from 'node:path'
 import { readFile } from 'node:fs/promises'
 import tripleBeam from 'triple-beam'
-import { getErrorMessage } from './errors.ts'
+import { getErrorMessage } from '#api/lib/errors'
 
 const loglevels = tripleBeam.configs.npm.levels
 

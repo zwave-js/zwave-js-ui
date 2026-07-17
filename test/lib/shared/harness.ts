@@ -1,10 +1,10 @@
 import { beforeAll, afterEach, afterAll } from 'vitest'
 import type { Server as HttpServer } from 'node:http'
 import { ensureTestEnv, cleanupTestEnv } from './env.ts'
-import type * as AppModuleNamespace from '#api/app.ts'
-import type * as JsonStoreModuleNamespace from '#api/lib/jsonStore.ts'
-import type * as StoreConfigModuleNamespace from '#api/config/store.ts'
-import type { StoreFile } from '#api/config/store.ts'
+import type * as AppModuleNamespace from '#api/app'
+import type * as JsonStoreModuleNamespace from '#api/lib/jsonStore'
+import type * as StoreConfigModuleNamespace from '#api/config/store'
+import type { StoreFile } from '#api/config/store'
 
 export type AppModule = typeof AppModuleNamespace
 export type JsonStoreModule = typeof JsonStoreModuleNamespace
@@ -16,7 +16,7 @@ let storeConfigModulePromise: Promise<StoreConfigModule> | undefined
 
 export async function loadAppModule(): Promise<AppModule> {
 	ensureTestEnv()
-	appModulePromise ??= import('#api/app.ts')
+	appModulePromise ??= import('#api/app')
 	return appModulePromise
 }
 
@@ -25,8 +25,8 @@ export async function loadJsonStore(): Promise<{
 	store: StoreConfigModule['default']
 }> {
 	ensureTestEnv()
-	jsonStoreModulePromise ??= import('#api/lib/jsonStore.ts')
-	storeConfigModulePromise ??= import('#api/config/store.ts')
+	jsonStoreModulePromise ??= import('#api/lib/jsonStore')
+	storeConfigModulePromise ??= import('#api/config/store')
 	const [jsonStoreMod, storeMod] = await Promise.all([
 		jsonStoreModulePromise,
 		storeConfigModulePromise,

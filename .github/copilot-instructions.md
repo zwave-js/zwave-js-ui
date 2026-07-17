@@ -42,6 +42,8 @@ Z-Wave JS UI is a full-featured Z-Wave Control Panel and MQTT Gateway built with
 **Backend (api/ directory):**
 - **NEVER use `await import()` or dynamic imports in backend code**
 - **ALWAYS place all imports at the top of the file**
+- **ALWAYS use `#api/*` for imports whose target is under `api/`**, including backend tests and helpers
+- Do not use deep-relative or test-only aliases for backend modules
 - Backend doesn't benefit from tree-shaking or code-splitting
 - All modules are loaded at startup anyway in Node.js
 - Dynamic imports add unnecessary complexity and runtime overhead
@@ -57,6 +59,7 @@ Z-Wave JS UI is a full-featured Z-Wave Control Panel and MQTT Gateway built with
 // ✅ CORRECT - All imports at top
 import { transports } from 'winston'
 import { JSONTransport } from '@zwave-js/log-transport-json'
+import { getErrorMessage } from '#api/lib/errors'
 
 // ❌ WRONG - Never do this in backend
 const { transports } = await import('winston')

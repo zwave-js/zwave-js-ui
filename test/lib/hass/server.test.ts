@@ -23,8 +23,8 @@ import {
 import { ensureTestEnv, cleanupTestEnv } from './env.ts'
 import { createRecordingSocket } from './fixtures.ts'
 import { createDeferred } from '../zwave/serviceTestSupport.ts'
-import type ZWaveClientType from '#api/lib/ZwaveClient.ts'
-import { ZwaveClientStatus } from '#api/lib/ZwaveClient.ts'
+import type ZWaveClientType from '#api/lib/ZwaveClient'
+import { ZwaveClientStatus } from '#api/lib/ZwaveClient'
 import { NODE_ID_BROADCAST, NODE_ID_BROADCAST_LR } from '@zwave-js/core'
 
 /**
@@ -219,9 +219,9 @@ async function driveConnectToReady(
 
 beforeAll(async () => {
 	ensureTestEnv()
-	const { default: jsonStore } = await import('#api/lib/jsonStore.ts')
-	const { default: store } = await import('#api/config/store.ts')
-	;({ default: ZWaveClient } = await import('#api/lib/ZwaveClient.ts'))
+	const { default: jsonStore } = await import('#api/lib/jsonStore')
+	const { default: store } = await import('#api/config/store')
+	;({ default: ZWaveClient } = await import('#api/lib/ZwaveClient'))
 	await jsonStore.init(store)
 })
 

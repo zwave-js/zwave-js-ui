@@ -5,8 +5,8 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
 	CustomDeviceRegistry,
 	type CustomDeviceRegistryOptions,
-} from '#api/hass/CustomDeviceRegistry.ts'
-import type { HassDevice, HassDeviceCatalog } from '#api/hass/types.ts'
+} from '#api/hass/CustomDeviceRegistry'
+import type { HassDevice, HassDeviceCatalog } from '#api/hass/types'
 
 function device(name: string): HassDevice {
 	return {

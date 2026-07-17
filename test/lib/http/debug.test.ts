@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll, afterEach, vi } from 'vitest'
 import { useHttpHarness, bufferResponse } from './harness.ts'
 import { createFakeGateway } from '../shared/fakes.ts'
-import type DebugManagerModule from '#api/lib/DebugManager.ts'
+import type DebugManagerModule from '#api/lib/DebugManager'
 
 describe('HTTP contract: debug capture', () => {
 	const getHarness = useHttpHarness()
@@ -9,7 +9,7 @@ describe('HTTP contract: debug capture', () => {
 
 	beforeAll(async () => {
 		// Import after harness setup so DebugManager uses the isolated store
-		debugManager = (await import('#api/lib/DebugManager.ts')).default
+		debugManager = (await import('#api/lib/DebugManager')).default
 	})
 
 	afterEach(async () => {

@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
-import { parseSecurityKeys } from '#api/lib/utils.ts'
-import type { ZwaveConfig } from '#api/lib/ZwaveClient.ts'
+import { parseSecurityKeys } from '#api/lib/utils'
+import type { ZwaveConfig } from '#api/lib/ZwaveClient'
 import type { PartialZWaveOptions } from 'zwave-js'
 
 let envSnapshot: NodeJS.ProcessEnv

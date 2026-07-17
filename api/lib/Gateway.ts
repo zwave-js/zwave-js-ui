@@ -1,14 +1,14 @@
-import * as utils from './utils.ts'
+import * as utils from '#api/lib/utils'
 import type { SetValueAPIOptions } from 'zwave-js'
 import type { ValueID } from '@zwave-js/core'
 import { CommandClasses } from '@zwave-js/core'
-import * as Constants from './Constants.ts'
-import type { LogLevel } from './logger.ts'
-import { module } from './logger.ts'
-import { getErrorMessage } from './errors.ts'
-import { PayloadType } from './shared.ts'
+import * as Constants from '#api/lib/Constants'
+import type { LogLevel } from '#api/lib/logger'
+import { module } from '#api/lib/logger'
+import { getErrorMessage } from '#api/lib/errors'
+import { PayloadType } from '#api/lib/shared'
 import type { IClientPublishOptions } from 'mqtt'
-import MqttClient, { type MqttClientEventCallbacks } from './MqttClient.ts'
+import MqttClient, { type MqttClientEventCallbacks } from '#api/lib/MqttClient'
 import type {
 	AllowedApis,
 	CallAPIResult,
@@ -17,18 +17,18 @@ import type {
 	ZUIValueId,
 	ZUIValueIdState,
 	ZwaveClientEventCallbacks,
-} from './ZwaveClient.ts'
-import type ZwaveClient from './ZwaveClient.ts'
+} from '#api/lib/ZwaveClient'
+import type ZwaveClient from '#api/lib/ZwaveClient'
 import Cron from 'croner'
 
-import type { HassDevice } from '../hass/types.ts'
-import type { DiscoveryGenerator } from '../hass/DiscoveryGenerator.ts'
-import type { CustomDeviceRegistry } from '../hass/CustomDeviceRegistry.ts'
+import type { HassDevice } from '#api/hass/types'
+import type { DiscoveryGenerator } from '#api/hass/DiscoveryGenerator'
+import type { CustomDeviceRegistry } from '#api/hass/CustomDeviceRegistry'
 import MqttDiscoveryManager, {
 	type MqttDiscoveryManagerOptions,
-} from '../hass/MqttDiscoveryManager.ts'
-import type { HassTopicNode, HassValueTopic } from '../hass/ports.ts'
-import { isHassNode } from '../hass/ports.ts'
+} from '#api/hass/MqttDiscoveryManager'
+import type { HassTopicNode, HassValueTopic } from '#api/hass/ports'
+import { isHassNode } from '#api/hass/ports'
 
 const logger = module('Gateway')
 
