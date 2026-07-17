@@ -1198,6 +1198,27 @@ describe('DriverLifecycle — cleanup after a failed connect', () => {
 		expect(driver.destroy).toHaveBeenCalledTimes(1)
 	})
 
+	it('an in-flight connect settles after close already attempted terminal teardown', async () => {
+		const { lifecycle, world } = createHarness({
+			serverEnabled: false,
+		})
+		world.startBehavior = 'deferred'
+
+		const connect = lifecycle.connect()
+		await vi.waitFor(() => expect(world.startDeferreds).toHaveLength(1))
+		const driver = world.drivers[0]
+		const destroyError = new Error('destroy failed')
+		driver.destroy
+			.mockRejectedValueOnce(destroyError)
+			.mockImplementationOnce(() => new Promise<void>(() => {}))
+
+		await expect(lifecycle.close(true)).rejects.toBe(destroyError)
+		world.startDeferreds[0].resolve()
+
+		await expect(connect).resolves.toBeUndefined()
+		expect(driver.destroy).toHaveBeenCalledTimes(1)
+	})
+
 	it('a stale post-start exit tears down its own driver and never the live replacement', async () => {
 		const { lifecycle, world, state } = createHarness({
 			serverEnabled: false,

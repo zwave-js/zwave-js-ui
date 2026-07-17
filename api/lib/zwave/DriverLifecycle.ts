@@ -102,6 +102,9 @@ export class DriverLifecycle {
 	/** Generation `_activeConnect` belongs to, so a duplicate connect coalesces only while this still equals `_generation` */
 	private _activeConnectGeneration = 0
 
+	/** Shares one terminal destroy attempt across overlapping close and stale-start cleanup */
+	private readonly _driverDestructions = new WeakMap<Driver, Promise<void>>()
+
 	private _extraLogTransports: Array<{
 		transport: Transport
 		level?: string
@@ -681,7 +684,7 @@ export class DriverLifecycle {
 		cause?: unknown,
 	): Promise<void> {
 		try {
-			await driver.destroy()
+			await this.destroyDriver(driver)
 		} catch (err) {
 			logger.error(
 				`Error while destroying driver ${getErrorMessage(err)}`,
@@ -696,6 +699,17 @@ export class DriverLifecycle {
 		if (this.host.getDriver() === driver) {
 			this.host.setDriver(null)
 		}
+	}
+
+	private destroyDriver(driver: Driver): Promise<void> {
+		const activeDestruction = this._driverDestructions.get(driver)
+		if (activeDestruction) {
+			return activeDestruction
+		}
+
+		const destruction = Promise.resolve().then(() => driver.destroy())
+		this._driverDestructions.set(driver, destruction)
+		return destruction
 	}
 
 	/** Idempotent and safe to retry */
@@ -727,7 +741,7 @@ export class DriverLifecycle {
 		let destroyError: unknown
 		if (driver) {
 			try {
-				await driver.destroy()
+				await this.destroyDriver(driver)
 			} catch (error) {
 				// zwave-js memoizes an unsettled destroy promise after failure, so this instance cannot be retried safely
 				if (this.host.getDriver() === driver) {
