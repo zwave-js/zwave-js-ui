@@ -5,7 +5,7 @@ const zwaveCtor = vi.fn()
 const gatewayCtor = vi.fn()
 const znifferCtor = vi.fn()
 
-vi.mock('../../../api/lib/MqttClient.ts', () => ({
+vi.mock('#api/lib/MqttClient.ts', () => ({
 	default: class MockMqttClient {
 		constructor(...args: unknown[]) {
 			mqttCtor(...args)
@@ -14,7 +14,7 @@ vi.mock('../../../api/lib/MqttClient.ts', () => ({
 	},
 }))
 
-vi.mock('../../../api/lib/ZwaveClient.ts', () => ({
+vi.mock('#api/lib/ZwaveClient.ts', () => ({
 	default: class MockZWaveClient {
 		constructor(...args: unknown[]) {
 			zwaveCtor(...args)
@@ -24,7 +24,7 @@ vi.mock('../../../api/lib/ZwaveClient.ts', () => ({
 	},
 }))
 
-vi.mock('../../../api/lib/Gateway.ts', () => ({
+vi.mock('#api/lib/Gateway.ts', () => ({
 	default: class MockGateway {
 		constructor(...args: unknown[]) {
 			gatewayCtor(...args)
@@ -34,7 +34,7 @@ vi.mock('../../../api/lib/Gateway.ts', () => ({
 	closeWatchers: vi.fn(),
 }))
 
-vi.mock('../../../api/lib/ZnifferManager.ts', () => ({
+vi.mock('#api/lib/ZnifferManager.ts', () => ({
 	default: class MockZnifferManager {
 		constructor(...args: unknown[]) {
 			znifferCtor(...args)

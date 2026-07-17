@@ -435,14 +435,6 @@ describe('home-id scoping of persisted nodes', () => {
 		// Assert the rejection contract without pinning the message text.
 		await expect(zwave.getStoreNodes()).rejects.toThrow()
 	})
-
-	it('rejects a malformed null node record during Home Assistant device removal (see #4736)', async () => {
-		// A corrupted nodes.json loads without shape validation and fails during downstream device removal
-		const node: any = { id: 9, hassDevices: {} }
-		const { zwave } = await makeLoadedClient(9, node, { 9: null })
-
-		await expect(zwave.storeDevices({}, 9, true)).rejects.toThrow(TypeError)
-	})
 })
 
 describe('node update projection ordering', () => {

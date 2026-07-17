@@ -4,7 +4,7 @@ import path from 'node:path'
 import { useHttpHarness } from './harness.ts'
 import { seedUser } from '../shared/authHelpers.ts'
 import { getTestStoreDir } from '../shared/env.ts'
-import type { User } from '../../../api/config/store.ts'
+import type { User } from '#api/config/store.ts'
 
 interface SessionFile {
 	user?: Partial<User>

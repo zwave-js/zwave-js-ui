@@ -1,18 +1,8 @@
-// Narrow helpers for values caught from a `catch` clause, avoiding `as any` scattered across the codebase
-
-/** A Node.js-style error carrying an errno/code, e.g. from fs/net */
-export interface ErrnoException extends Error {
-	errno?: number
-	code?: string
-	path?: string
-	syscall?: string
-}
-
-export function isError(value: unknown): value is Error {
+function isError(value: unknown): value is Error {
 	return value instanceof Error
 }
 
-export function hasMessage(value: unknown): value is { message: string } {
+function hasMessage(value: unknown): value is { message: string } {
 	return (
 		typeof value === 'object' &&
 		value !== null &&
@@ -78,13 +68,4 @@ export function getErrorMessage(value: unknown): string {
 
 	// Every inspection above threw, so return the one path that can never itself throw
 	return '[unable to determine error message]'
-}
-
-// Preserves the original Error and its stack when value already is one
-export function toError(value: unknown): Error {
-	if (isError(value)) {
-		return value
-	}
-
-	return new Error(getErrorMessage(value))
 }
