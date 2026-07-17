@@ -56,6 +56,8 @@ export class InclusionCoordinator {
 	// Advance on reset so setup suspended by backup or QR parsing cannot use a replacement driver
 	private _generation = 0
 
+	private _setupToken = 0
+
 	private _commandToken = 0
 
 	private _nvmEventSetter: ((event: string) => void) | undefined
@@ -172,7 +174,7 @@ export class InclusionCoordinator {
 		}
 
 		const gen = this._generation
-		const commandToken = ++this._commandToken
+		const setupToken = ++this._setupToken
 
 		if (this._backup.backupOnEvent) {
 			if (this._nvmEventSetter) {
@@ -182,7 +184,8 @@ export class InclusionCoordinator {
 		}
 
 		// Re-resolve because close or restart may replace the driver during await
-		this._assertCommand(gen, commandToken, 'inclusion')
+		this._assertSetup(gen, setupToken, 'inclusion')
+		const commandToken = ++this._commandToken
 		const currentDrv = this._driver.getDriver()
 		if (!currentDrv || !this._driver.isDriverReady()) {
 			throw new Error('Driver is not ready')
@@ -321,7 +324,7 @@ export class InclusionCoordinator {
 		}
 
 		const gen = this._generation
-		const commandToken = ++this._commandToken
+		const setupToken = ++this._setupToken
 
 		if (this._backup.backupOnEvent) {
 			if (this._nvmEventSetter) {
@@ -331,7 +334,8 @@ export class InclusionCoordinator {
 		}
 
 		// Re-resolve because close or restart may replace the driver during await
-		this._assertCommand(gen, commandToken, 'exclusion')
+		this._assertSetup(gen, setupToken, 'exclusion')
+		const commandToken = ++this._commandToken
 		const currentDrv = this._driver.getDriver()
 		if (!currentDrv || !this._driver.isDriverReady()) {
 			throw new Error('Driver is not ready')
@@ -374,6 +378,7 @@ export class InclusionCoordinator {
 			throw new Error('Driver is not ready')
 		}
 
+		this._setupToken++
 		this._commandToken++
 		if (this._commandsTimeout) {
 			clearTimeout(this._commandsTimeout)
@@ -388,6 +393,7 @@ export class InclusionCoordinator {
 			throw new Error('Driver is not ready')
 		}
 
+		this._setupToken++
 		this._commandToken++
 		if (this._commandsTimeout) {
 			clearTimeout(this._commandsTimeout)
@@ -405,22 +411,23 @@ export class InclusionCoordinator {
 		},
 	): Promise<boolean> {
 		const gen = this._generation
+		const setupToken = ++this._setupToken
+		const drv = this._driver.getDriver()
+		if (!drv || !this._driver.isDriverReady()) {
+			throw new Error('Driver is not ready')
+		}
+
+		if (this._backup.backupOnEvent) {
+			if (this._nvmEventSetter) {
+				this._nvmEventSetter('before_replace_failed_node')
+			}
+			await this._backup.backupNvm()
+		}
+
+		// Re-resolve because close or restart may replace the driver during await
+		this._assertSetup(gen, setupToken, 'replace')
 		const commandToken = ++this._commandToken
 		try {
-			const drv = this._driver.getDriver()
-			if (!drv || !this._driver.isDriverReady()) {
-				throw new Error('Driver is not ready')
-			}
-
-			if (this._backup.backupOnEvent) {
-				if (this._nvmEventSetter) {
-					this._nvmEventSetter('before_replace_failed_node')
-				}
-				await this._backup.backupNvm()
-			}
-
-			// Re-resolve because close or restart may replace the driver during await
-			this._assertCommand(gen, commandToken, 'replace')
 			const currentDrv = this._driver.getDriver()
 			if (!currentDrv || !this._driver.isDriverReady()) {
 				throw new Error('Driver is not ready')
@@ -512,6 +519,7 @@ export class InclusionCoordinator {
 		}
 
 		const gen = this._generation
+		this._setupToken++
 		const commandToken = ++this._commandToken
 
 		if (this._commandsTimeout) {
@@ -556,6 +564,7 @@ export class InclusionCoordinator {
 			throw new Error('Driver is not ready')
 		}
 
+		this._setupToken++
 		this._commandToken++
 		if (this._commandsTimeout) {
 			clearTimeout(this._commandsTimeout)
@@ -697,6 +706,7 @@ export class InclusionCoordinator {
 
 	reset(): void {
 		this._generation++
+		this._setupToken++
 		this._commandToken++
 		this.clearCommandsTimeout()
 		this._tmpNode = undefined
@@ -737,6 +747,16 @@ export class InclusionCoordinator {
 
 	private _ownsCommand(gen: number, commandToken: number): boolean {
 		return this._generation === gen && this._commandToken === commandToken
+	}
+
+	private _assertSetup(
+		gen: number,
+		setupToken: number,
+		operation: string,
+	): void {
+		if (this._generation !== gen || this._setupToken !== setupToken) {
+			throw new InclusionLifecycleCancelledError(operation)
+		}
 	}
 
 	private _assertCommand(
