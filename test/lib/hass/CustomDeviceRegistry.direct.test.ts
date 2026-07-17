@@ -136,6 +136,32 @@ describe('CustomDeviceRegistry', () => {
 		})
 	})
 
+	it('serves changed JavaScript after file updates', async () => {
+		const first = device('first')
+		const second = device('second')
+		const { registry, storeDir } = createRegistry()
+		const filename = path.join(storeDir, 'customDevices.js')
+		fs.writeFileSync(
+			filename,
+			`module.exports = ${JSON.stringify({ thermostat: [first] })}`,
+		)
+		registry.start()
+		const gatewayRegistry = registry.fork()
+		registries.push(gatewayRegistry)
+		gatewayRegistry.start()
+
+		expect(gatewayRegistry.get('thermostat')).toEqual([first])
+
+		fs.writeFileSync(
+			filename,
+			`module.exports = ${JSON.stringify({ thermostat: [second] })}`,
+		)
+
+		await vi.waitFor(() => {
+			expect(gatewayRegistry.get('thermostat')).toEqual([second])
+		})
+	})
+
 	it('ignores file changes after closing', async () => {
 		const beforeDispose = device('before-dispose')
 		const afterDispose = device('after-dispose')
