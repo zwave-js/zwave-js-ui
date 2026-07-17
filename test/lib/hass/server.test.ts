@@ -302,7 +302,7 @@ describe('connecting and reaching driver ready', () => {
 			await expect(manualRun).resolves.toBe('newer')
 
 			scheduledCheck.resolve('older')
-			await tick()
+			await scheduledCheck.promise
 
 			expect(zwave.getInfo().newConfigVersion).toBe('newer')
 		} finally {
