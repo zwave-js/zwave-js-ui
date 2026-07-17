@@ -18,6 +18,7 @@ import {
 	NODE_ID_BROADCAST_LR,
 	RouteKind,
 	SecurityClass,
+	supervisedCommandFailed,
 	SupervisionStatus,
 	ZWaveErrorCodes,
 	Protocols,
@@ -122,6 +123,21 @@ import {
 	JoinNetworkStrategy,
 	DriverMode,
 	BatteryReplacementStatus,
+	SetUserResult,
+	SetCredentialResult,
+	UserCredentialType,
+	UserCredentialAdminCodeOperationResult,
+} from 'zwave-js'
+import type {
+	UserCapabilities,
+	CredentialCapabilities,
+	UserData,
+	CredentialData,
+	SetUserOptions,
+	DeleteCredentialsOptions,
+	UserCredentialUserType,
+	UserCredentialRule,
+	AssignCredentialResult,
 } from 'zwave-js'
 import { getEnumMemberName, parseQRCodeString } from 'zwave-js/Utils'
 import { configDbDir, logsDir, nvmBackupsDir, storeDir } from '../config/app.ts'
@@ -290,6 +306,21 @@ export const allowedApis = validateMethods([
 	'applyConfigurationTemplate',
 	'importConfigurationTemplates',
 	'getDeviceConfigurationParams',
+	'accessControlGetState',
+	'accessControlRefreshUsers',
+	'accessControlRefreshCredentials',
+	'accessControlSetUser',
+	'accessControlAddUser',
+	'accessControlDeleteUser',
+	'accessControlDeleteAllUsers',
+	'accessControlSetCredential',
+	'accessControlDeleteCredential',
+	'accessControlDeleteCredentials',
+	'accessControlAssignCredential',
+	'accessControlStartCredentialLearn',
+	'accessControlCancelCredentialLearn',
+	'accessControlGetAdminCode',
+	'accessControlSetAdminCode',
 ] as const)
 
 export type ZwaveNodeEvents = ZWaveNodeEvents | 'statistics updated'
@@ -576,6 +607,58 @@ export interface ZUIScheduleConfig<T> {
 	slots: ZUISlot<T>[]
 }
 
+export type ZUIAccessControlUser = UserData
+
+export type ZUIAccessControlCredential = {
+	userId: number
+	type: UserCredentialType
+	slot: number
+	/** Hex-encoded bytes for binary credentials, raw string for PIN/password */
+	data?: string
+	/** True when data was a Uint8Array (binary credential) */
+	isBinary?: boolean
+}
+
+export type ZUIAccessControlCapabilityType = {
+	type: UserCredentialType
+	numberOfCredentialSlots: number
+	minCredentialLength: number
+	maxCredentialLength: number
+	maxCredentialHashLength: number
+	supportsCredentialLearn: boolean
+	credentialLearnRecommendedTimeout?: number
+	credentialLearnNumberOfSteps?: number
+}
+
+export type ZUIAccessControlCapabilities = {
+	maxUsers: number
+	supportedUserTypes: UserCredentialUserType[]
+	maxUserNameLength?: number
+	supportedCredentialRules: UserCredentialRule[]
+	supportedCredentialTypes: ZUIAccessControlCapabilityType[]
+	supportsAdminCode: boolean
+	supportsAdminCodeDeactivation: boolean
+	supportsCredentialAssignment: boolean
+	/** Legacy User Code CC — creating a user requires at least one credential */
+	requiresCredentialAtUserCreation: boolean
+}
+
+export type ZUIAccessControlEndpoint = {
+	endpointIndex: number
+	capabilities: ZUIAccessControlCapabilities
+	users: ZUIAccessControlUser[]
+	credentials: ZUIAccessControlCredential[]
+	/** Whether an admin code is configured, without exposing its value */
+	adminCodeSet?: boolean
+}
+
+export type ZUIAccessControl = {
+	supported: boolean
+	endpoints: ZUIAccessControlEndpoint[]
+	/** Index of the primary endpoint to render — root if it supports, else first that does */
+	primaryEndpoint?: number
+}
+
 export type ZUINode = {
 	id: number
 	deviceConfig?: DeviceConfig
@@ -650,6 +733,7 @@ export type ZUINode = {
 		available: number[]
 		enabled: number[]
 	}
+	accessControl?: ZUIAccessControl
 	defaultTransitionDuration?: string
 	defaultVolume?: number
 	protocol?: Protocols
@@ -1395,6 +1479,511 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			cntStatus: this.cntStatus,
 			inclusionState: this._inclusionState,
 		}
+	}
+
+	// ---------------- Access Control (User Credential CC / User Code CC) ----------------
+
+	private _supportedAccessControlEndpointIndices(
+		zwaveNode: ZWaveNode,
+	): number[] {
+		const out: number[] = []
+		for (const ep of zwaveNode.getAllEndpoints()) {
+			if (
+				ep.supportsCC(CommandClasses['User Credential']) ||
+				ep.supportsCC(CommandClasses['User Code'])
+			) {
+				out.push(ep.index)
+			}
+		}
+		return out
+	}
+
+	private _resolveAccessControlEndpoint(
+		zwaveNode: ZWaveNode,
+		endpointIndex?: number,
+	) {
+		const indices = this._supportedAccessControlEndpointIndices(zwaveNode)
+		const idx =
+			endpointIndex !== undefined
+				? endpointIndex
+				: indices.includes(0)
+					? 0
+					: indices[0]
+		if (idx === undefined) {
+			throw new Error(
+				`Node ${zwaveNode.id} does not support access control`,
+			)
+		}
+		const ep = zwaveNode.getEndpoint(idx)
+		if (!ep || !ep.accessControl) {
+			throw new Error(
+				`Node ${zwaveNode.id} endpoint ${idx} does not support access control`,
+			)
+		}
+		return { endpoint: ep, accessControl: ep.accessControl, index: idx }
+	}
+
+	private _assertDirectEntryCredentialType(
+		type: UserCredentialType,
+	): asserts type is
+		| UserCredentialType.PINCode
+		| UserCredentialType.Password {
+		if (
+			type !== UserCredentialType.PINCode &&
+			type !== UserCredentialType.Password
+		) {
+			throw new Error(
+				'Only PIN and password credentials can be entered manually',
+			)
+		}
+	}
+
+	private _findAccessControlEndpointEntry(
+		node: ZUINode,
+		endpointIndex?: number,
+	): ZUIAccessControlEndpoint | undefined {
+		const targetEndpoint =
+			endpointIndex ?? node.accessControl?.primaryEndpoint
+		return node.accessControl?.endpoints.find(
+			(endpoint) => endpoint.endpointIndex === targetEndpoint,
+		)
+	}
+
+	private _encodeCredentialData(data: string | Uint8Array | undefined): {
+		data?: string
+		isBinary?: boolean
+	} {
+		if (data === undefined) return {}
+		if (typeof data === 'string') return { data, isBinary: false }
+		const hex = Buffer.from(data).toString('hex')
+		return { data: hex, isBinary: true }
+	}
+
+	private _mapCredentialData(c: CredentialData): ZUIAccessControlCredential {
+		const encoded = this._encodeCredentialData(c.data)
+		return {
+			userId: c.userId,
+			type: c.type,
+			slot: c.slot,
+			...encoded,
+		}
+	}
+
+	private _buildAccessControlCapabilities(
+		zwaveNode: ZWaveNode,
+		endpointIndex: number,
+	): ZUIAccessControlCapabilities {
+		const { accessControl } = this._resolveAccessControlEndpoint(
+			zwaveNode,
+			endpointIndex,
+		)
+		const userCaps: UserCapabilities =
+			accessControl.getUserCapabilitiesCached()
+		const credCaps: CredentialCapabilities =
+			accessControl.getCredentialCapabilitiesCached()
+
+		const supportedCredentialTypes: ZUIAccessControlCapabilityType[] = []
+		for (const [type, c] of credCaps.supportedCredentialTypes.entries()) {
+			supportedCredentialTypes.push({
+				type,
+				numberOfCredentialSlots: c.numberOfCredentialSlots,
+				minCredentialLength: c.minCredentialLength,
+				maxCredentialLength: c.maxCredentialLength,
+				maxCredentialHashLength: c.maxCredentialHashLength,
+				supportsCredentialLearn: c.supportsCredentialLearn,
+				credentialLearnRecommendedTimeout:
+					c.credentialLearnRecommendedTimeout,
+				credentialLearnNumberOfSteps: c.credentialLearnNumberOfSteps,
+			})
+		}
+
+		const requiresCredentialAtUserCreation =
+			!userCaps.supportsUsersWithoutCredentials
+
+		return {
+			maxUsers: userCaps.maxUsers,
+			supportedUserTypes: [...userCaps.supportedUserTypes],
+			maxUserNameLength: userCaps.maxUserNameLength,
+			supportedCredentialRules: [...userCaps.supportedCredentialRules],
+			supportedCredentialTypes,
+			supportsAdminCode: credCaps.supportsAdminCode,
+			supportsAdminCodeDeactivation:
+				credCaps.supportsAdminCodeDeactivation,
+			supportsCredentialAssignment: credCaps.supportsCredentialAssignment,
+			requiresCredentialAtUserCreation,
+		}
+	}
+
+	/** Read access-control state for a node from cache (no network I/O). */
+	private _readAccessControlState(zwaveNode: ZWaveNode): ZUIAccessControl {
+		const indices = this._supportedAccessControlEndpointIndices(zwaveNode)
+		if (indices.length === 0) {
+			return { supported: false, endpoints: [] }
+		}
+		const primary = indices.includes(0) ? 0 : indices[0]
+		const prev = this._nodes.get(zwaveNode.id)?.accessControl
+		const endpoints: ZUIAccessControlEndpoint[] = []
+		for (const idx of indices) {
+			try {
+				const { accessControl } = this._resolveAccessControlEndpoint(
+					zwaveNode,
+					idx,
+				)
+				const capabilities = this._buildAccessControlCapabilities(
+					zwaveNode,
+					idx,
+				)
+				const users = accessControl.getUsersCached()
+				const credentials = accessControl
+					.getAllCredentialsCached()
+					.map((c) => this._mapCredentialData(c))
+				const endpoint: ZUIAccessControlEndpoint = {
+					endpointIndex: idx,
+					capabilities,
+					users,
+					credentials,
+				}
+				// Carry over the previously-known admin-code state — there is no
+				// cheap synchronous accessor for it, so a refresh would
+				// otherwise wipe the value the UI just learned via Get/Set.
+				const prevEp = prev?.endpoints.find(
+					(e) => e.endpointIndex === idx,
+				)
+				if (prevEp && 'adminCodeSet' in prevEp) {
+					endpoint.adminCodeSet = prevEp.adminCodeSet
+				}
+				endpoints.push(endpoint)
+			} catch (e) {
+				logger.warn(
+					`Failed to read access control state for node ${zwaveNode.id} endpoint ${idx}: ${(e as Error).message}`,
+				)
+			}
+		}
+		return { supported: true, endpoints, primaryEndpoint: primary }
+	}
+
+	/** Re-read access control state into node and broadcast a node update. */
+	private _refreshAccessControlState(zwaveNode: ZWaveNode) {
+		const node = this._nodes.get(zwaveNode.id)
+		if (!node) return
+		const ac = this._readAccessControlState(zwaveNode)
+		if (!ac.supported) {
+			if (node.accessControl) {
+				delete node.accessControl
+				this.emitNodeUpdate(node, { accessControl: undefined })
+			}
+			return
+		}
+		node.accessControl = ac
+		this.emitNodeUpdate(node, { accessControl: ac })
+	}
+
+	/** Returns the cached access-control state — call this from the UI as a primer. */
+	accessControlGetState(nodeId: number): ZUIAccessControl {
+		const zwaveNode = this._requireNode(nodeId)
+		const state = this._readAccessControlState(zwaveNode)
+		const node = this._nodes.get(nodeId)
+		if (node) {
+			node.accessControl = state
+		}
+		return state
+	}
+
+	async accessControlRefreshUsers(
+		nodeId: number,
+		endpointIndex?: number,
+	): Promise<ZUIAccessControlUser[]> {
+		const zwaveNode = this._requireNode(nodeId)
+		const { accessControl } = this._resolveAccessControlEndpoint(
+			zwaveNode,
+			endpointIndex,
+		)
+		const users = await accessControl.getUsers()
+		this._refreshAccessControlState(zwaveNode)
+		return users
+	}
+
+	async accessControlRefreshCredentials(
+		nodeId: number,
+		endpointIndex?: number,
+	): Promise<ZUIAccessControlCredential[]> {
+		const zwaveNode = this._requireNode(nodeId)
+		const { accessControl } = this._resolveAccessControlEndpoint(
+			zwaveNode,
+			endpointIndex,
+		)
+		const credentials = await accessControl.getAllCredentials()
+		this._refreshAccessControlState(zwaveNode)
+		return credentials.map((c) => this._mapCredentialData(c))
+	}
+
+	async accessControlSetUser(
+		nodeId: number,
+		endpointIndex: number | undefined,
+		userId: number,
+		options: SetUserOptions,
+	): Promise<SetUserResult> {
+		const zwaveNode = this._requireNode(nodeId)
+		const { accessControl } = this._resolveAccessControlEndpoint(
+			zwaveNode,
+			endpointIndex,
+		)
+		return accessControl.setUser(userId, options)
+	}
+
+	async accessControlAddUser(
+		nodeId: number,
+		endpointIndex: number | undefined,
+		userId: number,
+		options: SetUserOptions,
+		credential?: {
+			type: UserCredentialType
+			slot: number
+			data: string
+		},
+	): Promise<{
+		userResult: SetUserResult
+		credentialResult?: SetCredentialResult
+	}> {
+		const zwaveNode = this._requireNode(nodeId)
+		const { endpoint, accessControl } = this._resolveAccessControlEndpoint(
+			zwaveNode,
+			endpointIndex,
+		)
+		let initialCredential = credential
+		if (credential) {
+			this._assertDirectEntryCredentialType(credential.type)
+			if (!endpoint.supportsCC(CommandClasses['User Credential'])) {
+				initialCredential = { ...credential, slot: userId }
+			}
+		}
+		const result = await accessControl.addUser(
+			userId,
+			options,
+			initialCredential,
+		)
+		return {
+			userResult: result.user,
+			credentialResult: result.credential,
+		}
+	}
+
+	async accessControlDeleteUser(
+		nodeId: number,
+		endpointIndex: number | undefined,
+		userId: number,
+	): Promise<SetUserResult> {
+		const zwaveNode = this._requireNode(nodeId)
+		const { accessControl } = this._resolveAccessControlEndpoint(
+			zwaveNode,
+			endpointIndex,
+		)
+		return accessControl.deleteUser(userId)
+	}
+
+	async accessControlDeleteAllUsers(
+		nodeId: number,
+		endpointIndex?: number,
+	): Promise<SetUserResult> {
+		const zwaveNode = this._requireNode(nodeId)
+		const { accessControl } = this._resolveAccessControlEndpoint(
+			zwaveNode,
+			endpointIndex,
+		)
+		// zwave-js purges its cache silently here without emitting per-user
+		// `user deleted` / `credential deleted` events, so push a refresh so
+		// the UI catches up.
+		const result = await accessControl.deleteAllUsers()
+		if (result === SetUserResult.OK) {
+			this._refreshAccessControlState(zwaveNode)
+		}
+		return result
+	}
+
+	async accessControlSetCredential(
+		nodeId: number,
+		endpointIndex: number | undefined,
+		userId: number,
+		type: UserCredentialType,
+		slot: number,
+		data: string,
+	): Promise<SetCredentialResult> {
+		const zwaveNode = this._requireNode(nodeId)
+		const { accessControl } = this._resolveAccessControlEndpoint(
+			zwaveNode,
+			endpointIndex,
+		)
+		this._assertDirectEntryCredentialType(type)
+		return accessControl.setCredential(userId, type, slot, data)
+	}
+
+	async accessControlDeleteCredential(
+		nodeId: number,
+		endpointIndex: number | undefined,
+		userId: number,
+		type: UserCredentialType,
+		slot: number,
+	): Promise<SetCredentialResult> {
+		const zwaveNode = this._requireNode(nodeId)
+		const { accessControl } = this._resolveAccessControlEndpoint(
+			zwaveNode,
+			endpointIndex,
+		)
+		return accessControl.deleteCredential(userId, type, slot)
+	}
+
+	async accessControlDeleteCredentials(
+		nodeId: number,
+		endpointIndex: number | undefined,
+		options: DeleteCredentialsOptions = {},
+	): Promise<SetCredentialResult> {
+		const zwaveNode = this._requireNode(nodeId)
+		const { accessControl } = this._resolveAccessControlEndpoint(
+			zwaveNode,
+			endpointIndex,
+		)
+		// U3C path emits no per-credential `credential deleted` events for the
+		// wildcard delete, so push a refresh so the UI catches up.
+		const result = await accessControl.deleteCredentials(options)
+		if (result === SetCredentialResult.OK) {
+			this._refreshAccessControlState(zwaveNode)
+		}
+		return result
+	}
+
+	async accessControlAssignCredential(
+		nodeId: number,
+		endpointIndex: number | undefined,
+		type: UserCredentialType,
+		slot: number,
+		destinationUserId: number,
+	): Promise<AssignCredentialResult> {
+		const zwaveNode = this._requireNode(nodeId)
+		const { accessControl } = this._resolveAccessControlEndpoint(
+			zwaveNode,
+			endpointIndex,
+		)
+		return accessControl.assignCredential(type, slot, destinationUserId)
+	}
+
+	async accessControlStartCredentialLearn(
+		nodeId: number,
+		endpointIndex: number | undefined,
+		userId: number,
+		type: UserCredentialType,
+		slot: number,
+		timeout?: number,
+	): Promise<void> {
+		const zwaveNode = this._requireNode(nodeId)
+		const { accessControl } = this._resolveAccessControlEndpoint(
+			zwaveNode,
+			endpointIndex,
+		)
+		const result = await accessControl.startCredentialLearn(
+			userId,
+			type,
+			slot,
+			timeout,
+		)
+		// Handle supervision failure before waiting for further events that might not come
+		if (supervisedCommandFailed(result)) {
+			throw new Error(
+				`Node ${nodeId} refused to start credential learning (${getEnumMemberName(
+					SupervisionStatus,
+					result.status,
+				)})`,
+			)
+		}
+	}
+
+	async accessControlCancelCredentialLearn(
+		nodeId: number,
+		endpointIndex?: number,
+	): Promise<void> {
+		const zwaveNode = this._requireNode(nodeId)
+		const { accessControl } = this._resolveAccessControlEndpoint(
+			zwaveNode,
+			endpointIndex,
+		)
+		const result = await accessControl.cancelCredentialLearn()
+		if (supervisedCommandFailed(result)) {
+			throw new Error(
+				`Node ${nodeId} refused to cancel credential learning (${getEnumMemberName(
+					SupervisionStatus,
+					result.status,
+				)})`,
+			)
+		}
+	}
+
+	async accessControlGetAdminCode(
+		nodeId: number,
+		endpointIndex?: number,
+	): Promise<{ isSet: boolean }> {
+		const zwaveNode = this._requireNode(nodeId)
+		const { accessControl } = this._resolveAccessControlEndpoint(
+			zwaveNode,
+			endpointIndex,
+		)
+		const code = await accessControl.getAdminCode()
+		const isSet = code !== undefined && code !== ''
+		const node = this._nodes.get(nodeId)
+		if (node?.accessControl) {
+			const epEntry = this._findAccessControlEndpointEntry(
+				node,
+				endpointIndex,
+			)
+			if (epEntry) {
+				epEntry.adminCodeSet = isSet
+				this.emitNodeUpdate(node, { accessControl: node.accessControl })
+			}
+		}
+		return { isSet }
+	}
+
+	async accessControlSetAdminCode(
+		nodeId: number,
+		endpointIndex: number | undefined,
+		code: string,
+	): Promise<{ result: UserCredentialAdminCodeOperationResult }> {
+		const zwaveNode = this._requireNode(nodeId)
+		const { accessControl } = this._resolveAccessControlEndpoint(
+			zwaveNode,
+			endpointIndex,
+		)
+		const supervisionResult = await accessControl.setAdminCode(code)
+		const result: UserCredentialAdminCodeOperationResult =
+			isUnsupervisedOrSucceeded(supervisionResult)
+				? UserCredentialAdminCodeOperationResult.Modified
+				: supervisionResult.status === SupervisionStatus.NoSupport
+					? UserCredentialAdminCodeOperationResult.ErrorNotSupported
+					: UserCredentialAdminCodeOperationResult.UnspecifiedNodeError
+		if (isUnsupervisedOrSucceeded(supervisionResult)) {
+			// Reflect the new state immediately so the UI doesn't have to wait
+			// for a follow-up Get to round-trip the lock.
+			const node = this._nodes.get(nodeId)
+			if (node?.accessControl) {
+				const epEntry = this._findAccessControlEndpointEntry(
+					node,
+					endpointIndex,
+				)
+				if (epEntry) {
+					epEntry.adminCodeSet = code !== ''
+					this.emitNodeUpdate(node, {
+						accessControl: node.accessControl,
+					})
+				}
+			}
+		}
+		return { result }
+	}
+
+	private _requireNode(nodeId: number): ZWaveNode {
+		const zwaveNode = this.getNode(nodeId)
+		if (!zwaveNode) {
+			throw new Error(`Node ${nodeId} not found`)
+		}
+		return zwaveNode
 	}
 
 	/**
@@ -7162,9 +7751,27 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		zwaveNode: ZWaveNode,
 		...eventArgs: any[]
 	) {
-		const node = this._nodes.get(zwaveNode.id)
+		// Some CC events (User Credential CC, User Code CC) emit
+		// `(endpoint, payload)` — Endpoint has `nodeId` but not `id`.
+		// Regular node events emit `(node, ...args)` where `id === nodeId`.
+		const nodeId = zwaveNode?.nodeId ?? zwaveNode?.id
+		const node = this._nodes.get(nodeId)
 
 		if (node) {
+			if (
+				eventName === 'credential added' ||
+				eventName === 'credential modified'
+			) {
+				// Strip credential payloads before events enter the shared socket queue
+				eventArgs = eventArgs.map((arg) => {
+					if (!arg || typeof arg !== 'object' || !('data' in arg)) {
+						return arg
+					}
+					const redacted = { ...arg }
+					delete redacted.data
+					return redacted
+				})
+			}
 			const event: NodeEvent = {
 				time: new Date(),
 				event: eventName,
@@ -7316,6 +7923,23 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 					)
 				},
 			)
+		}
+
+		if (this._supportedAccessControlEndpointIndices(zwaveNode).length > 0) {
+			this.logNode(
+				zwaveNode,
+				'info',
+				`Access control (User Credential / User Code) supported`,
+			)
+			try {
+				this._refreshAccessControlState(zwaveNode)
+			} catch (e) {
+				this.logNode(
+					zwaveNode,
+					'warn',
+					`Failed to read access control state: ${(e as Error).message}`,
+				)
+			}
 		}
 
 		// Long range nodes use a star topology, so they don't have return/priority routes
@@ -7996,11 +8620,35 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			'notification',
 			'firmware update progress',
 			'firmware update finished',
+			'user added',
+			'user modified',
+			'user deleted',
+			'credential added',
+			'credential modified',
+			'credential deleted',
+			'credential learn progress',
+			'credential learn completed',
 		]
 
 		for (const event of events) {
 			zwaveNode.on(event, this._onNodeEvent.bind(this, event))
 		}
+
+		const refreshOnAccessControlChange = (event: ZwaveNodeEvents) => {
+			zwaveNode.on(event as any, () => {
+				this._refreshAccessControlState(zwaveNode)
+			})
+		}
+		;(
+			[
+				'user added',
+				'user modified',
+				'user deleted',
+				'credential added',
+				'credential modified',
+				'credential deleted',
+			] as const
+		).forEach((e) => refreshOnAccessControlChange(e))
 	}
 
 	/**
