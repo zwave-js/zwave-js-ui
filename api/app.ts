@@ -156,8 +156,16 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 
 	const socketManager = new SocketManager()
 
+	function requireSocketServer(): SocketIOServer {
+		const io = socketManager.io
+		if (!io) {
+			throw new Error('Socket.IO is not attached')
+		}
+		return io
+	}
+
 	const runtime = new AppRuntime({
-		getSocketServer: () => socketManager.io,
+		getSocketServer: requireSocketServer,
 		gatewayFactory: new GatewayFactory({
 			storeDir,
 			logger: loggers.module('Gateway'),
@@ -408,11 +416,11 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 			loggers.logStream.off('data', logStreamInterceptor)
 		}
 
+		const io = requireSocketServer()
+
 		// intercept logs and redirect them to socket
 		const interceptor: (chunk: Buffer | string) => void = (chunk) => {
-			socketManager.io
-				.to('debug')
-				.emit(socketEvents.debug, chunk.toString())
+			io.to('debug').emit(socketEvents.debug, chunk.toString())
 		}
 		logStreamInterceptor = interceptor
 		loggers.logStream.on('data', interceptor)
@@ -639,10 +647,7 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 		app,
 		attachSocket,
 		get io() {
-			if (!socketManager.io) {
-				throw new Error('Socket.IO is not attached')
-			}
-			return socketManager.io
+			return requireSocketServer()
 		},
 		startServer,
 		loadSnippets: () => runtime.loadSnippets(),
