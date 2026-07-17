@@ -30,26 +30,36 @@ export type SocketManagerEvents = Extract<
  * The constructor
  */
 class SocketManager extends TypedEventEmitter<SocketManagerEventCallbacks> {
-	public io: SocketServer
+	private _io?: SocketServer
+
+	public get io(): SocketServer | undefined {
+		return this._io
+	}
 
 	private activeSockets: Map<string, Socket> = new Map()
 
-	authMiddleware: (socket: Socket, next: () => void) => void | undefined
+	authMiddleware?: (socket: Socket, next: () => void) => void
+
+	async close(): Promise<void> {
+		if (!this._io) return
+		await this._io.close()
+		this._io = undefined
+	}
 
 	/**
 	 * Binds socket.io to `server`
 	 *
 	 */
 	bindServer(server: HttpServer) {
-		this.io = new SocketServer(server, {
+		this._io = new SocketServer(server, {
 			path: '/socket.io',
 		})
 
-		this.io.on('error', (err) => {
+		this._io.on('error', (err) => {
 			logger.error(`Socket error: ${err.message}`)
 		})
 
-		this.io
+		this._io
 			.use(this._authMiddleware())
 			.on('connection', this._onConnection.bind(this))
 	}
@@ -77,8 +87,7 @@ class SocketManager extends TypedEventEmitter<SocketManagerEventCallbacks> {
 
 		// register inbound events from this socket
 		// subscribe/unsubscribe are handled directly in app.ts, skip them here
-		for (const k in inboundEvents) {
-			const eventName = inboundEvents[k]
+		for (const eventName of Object.values(inboundEvents)) {
 			if (
 				eventName === inboundEvents.subscribe ||
 				eventName === inboundEvents.unsubscribe

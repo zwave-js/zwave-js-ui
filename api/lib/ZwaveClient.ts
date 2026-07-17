@@ -125,7 +125,12 @@ import {
 } from 'zwave-js'
 import { getEnumMemberName, parseQRCodeString } from 'zwave-js/Utils'
 import { configDbDir, logsDir, nvmBackupsDir, storeDir } from '../config/app.ts'
-import type { Group } from '../config/store.ts'
+import type {
+	Group,
+	NodesStoreFile,
+	NodesStoreRecord,
+	NodesStoreRecordByHome,
+} from '../config/store.ts'
 import store from '../config/store.ts'
 import jsonStore from './jsonStore.ts'
 import * as LogManager from './logger.ts'
@@ -2764,13 +2769,13 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			throw new Error('HomeHex not set')
 		}
 
-		let nodes = jsonStore.get(store.nodes)
+		let nodes: NodesStoreFile = jsonStore.get(store.nodes)
 
 		// back compatibility fixes
 
 		// convert store nodes from array to object
 		if (Array.isArray(nodes)) {
-			const storeNodes = {}
+			const storeNodes: NodesStoreRecord = {}
 
 			for (let i = 0; i < nodes.length; i++) {
 				if (nodes[i]) {
@@ -2785,12 +2790,14 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		// ensure store nodes are stored using homeHex
 		if (keys.length > 0 && !keys[0].startsWith('0x')) {
-			this.storeNodes = nodes
+			const legacyFlatNodes = nodes as NodesStoreRecord
+			this.storeNodes = legacyFlatNodes
 			await jsonStore.put(store.nodes, {
-				[this.homeHex]: nodes,
+				[this.homeHex]: legacyFlatNodes,
 			})
 		} else {
-			this.storeNodes = nodes[this.homeHex] || {}
+			this.storeNodes =
+				(nodes as NodesStoreRecordByHome)[this.homeHex] || {}
 		}
 	}
 
@@ -2801,7 +2808,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				return
 			}
 
-			const nodes = jsonStore.get(store.nodes)
+			// Assumes store.nodes is keyed by home ID, which is true once getStoreNodes has migrated any legacy on-disk shape
+			const nodes = jsonStore.get(store.nodes) as NodesStoreRecordByHome
 
 			// remove empty objects keys
 			nodes[this.homeHex] = Object.keys(this.storeNodes).reduce(
@@ -2811,7 +2819,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 					}
 					return acc
 				},
-				{},
+				{} as NodesStoreRecord,
 			)
 
 			logger.debug('Updating store nodes.json')

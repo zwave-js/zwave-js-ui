@@ -1,5 +1,10 @@
 {
     "extends": "./tsconfig.json",
+    "compilerOptions": {
+        "paths": {
+            "#api/*": ["./api/*"]
+        }
+    },
     "include": [
         "**/*.ts"
     ],

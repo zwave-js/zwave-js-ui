@@ -1,5 +1,6 @@
 import * as fs from 'node:fs'
 import * as path from 'node:path'
+import { createRequire } from 'node:module'
 import * as utils from './utils.ts'
 import type { SetValueAPIOptions } from 'zwave-js'
 import { AlarmSensorType } from 'zwave-js'
@@ -50,6 +51,13 @@ const PAYLOAD_TYPE = {
 const CUSTOM_DEVICES = storeDir + '/customDevices'
 let allDevices = hassDevices // will contain customDevices + hassDevices
 
+// A custom-devices `.js` file is authored as a CommonJS module (module.exports),
+// so it must be loaded with require() even though this package ships as ESM and
+// is bundled to CJS for release. createRequire gives a working require in every
+// runtime (the ambient `require` is undefined under Node's native ESM loader
+// used by `npm run server`/dev) and exposes the module cache we evict on reload.
+const requireCustomDevices = createRequire(import.meta.url)
+
 // watcher initiates a watch on a file. if this fails (e.g., because the file
 // doesn't exist), instead watch the directory. If the directory watch
 // triggers, cancel it and try to watch the file again. Meanwhile spam `fn()`
@@ -88,47 +96,78 @@ const watch = (filename: string, fn: () => void) => {
 const customDevicesJsPath = CUSTOM_DEVICES + '.js'
 const customDevicesJsonPath = CUSTOM_DEVICES + '.json'
 
-let lastCustomDevicesLoad = null
-// loadCustomDevices attempts to load a custom devices file, preferring `.js`
-// but falling back to `.json` only if a `.js` file does not exist. It stores
-// a sha of the loaded data, and will skip re-loading any time the data has
-// not changed.
-const loadCustomDevices = () => {
+/**
+ * Overlays the custom-devices file at `<basePath>.js` (preferred) or
+ * `<basePath>.json` onto `baseCatalog`, returning the merged catalog plus the
+ * dedup sha, the raw custom-device count, and the resolved path. Returns null
+ * when neither file exists or parsing fails, so the caller keeps the previous
+ * catalog. `.js` wins over `.json` because a `.js` can compute entries a static
+ * `.json` can't.
+ */
+export function loadCustomDevicesCatalog(
+	basePath: string,
+	baseCatalog: Record<string, HassDevice[]> = hassDevices,
+): {
+	catalog: Record<string, HassDevice[]>
+	customCount: number
+	sha: string
+	loaded: string
+} | null {
+	const jsPath = basePath + '.js'
+	const jsonPath = basePath + '.json'
 	let loaded = ''
-	let devices = null
+	let devices: Record<string, HassDevice[]> | null = null
 
 	try {
-		if (fs.existsSync(customDevicesJsPath)) {
-			loaded = customDevicesJsPath
-			devices = require(CUSTOM_DEVICES)
-		} else if (fs.existsSync(customDevicesJsonPath)) {
-			loaded = customDevicesJsonPath
-			devices = JSON.parse(fs.readFileSync(loaded).toString())
+		if (fs.existsSync(jsPath)) {
+			loaded = jsPath
+			// Node caches require() by resolved path, so evict any prior entry
+			// first; otherwise a watcher-triggered reload returns the stale
+			// exports and the sha de-dup never sees the on-disk edit.
+			delete requireCustomDevices.cache[
+				requireCustomDevices.resolve(basePath)
+			]
+			devices = requireCustomDevices(basePath)
+		} else if (fs.existsSync(jsonPath)) {
+			loaded = jsonPath
+			devices = JSON.parse(fs.readFileSync(jsonPath).toString())
 		} else {
-			return
+			return null
 		}
 	} catch (error) {
 		logger.error(`Failed to load ${loaded}:`, error)
-		return
+		return null
 	}
 
 	const sha = crypto
 		.createHash('sha256')
 		.update(JSON.stringify(devices))
 		.digest('hex')
-	if (lastCustomDevicesLoad === sha) {
+
+	return {
+		catalog: Object.assign({}, baseCatalog, devices),
+		customCount: Object.keys(devices).length,
+		sha,
+		loaded,
+	}
+}
+
+let lastCustomDevicesLoad: string | null = null
+// Projects the custom-devices file onto the module-global `allDevices`,
+// skipping the reassignment whenever the sha shows the data is unchanged.
+const loadCustomDevices = () => {
+	const result = loadCustomDevicesCatalog(CUSTOM_DEVICES)
+	if (!result || lastCustomDevicesLoad === result.sha) {
 		return
 	}
 
-	logger.info(`Loading custom devices from ${loaded}`)
+	logger.info(`Loading custom devices from ${result.loaded}`)
 
-	lastCustomDevicesLoad = sha
+	lastCustomDevicesLoad = result.sha
 
-	allDevices = Object.assign({}, hassDevices, devices)
+	allDevices = result.catalog
 	logger.info(
-		`Loaded ${
-			Object.keys(devices).length
-		} custom Hass devices configurations`,
+		`Loaded ${result.customCount} custom Hass devices configurations`,
 	)
 }
 
@@ -140,6 +179,7 @@ export function closeWatchers() {
 	for (const [, watcher] of watchers) {
 		watcher.close()
 	}
+	watchers.clear()
 }
 
 export const GatewayType = GATEWAY_TYPE
@@ -204,6 +244,7 @@ export type GatewayConfig = {
 	}
 	disableChangelog?: boolean
 	notifyNewVersions?: boolean
+	https?: boolean
 }
 
 interface ValueIdTopic {

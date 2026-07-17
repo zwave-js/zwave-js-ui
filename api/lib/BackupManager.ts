@@ -22,10 +22,12 @@ export interface BackupSettings {
 const logger = module('Backup')
 
 class BackupManager {
-	private config: BackupSettings
-	private storeJob: Cron
-	private nvmJob: Cron
-	private zwaveClient: ZwaveClient
+	// Startup initializes the dependencies before any Cron job can run
+	private config!: BackupSettings
+	private storeJob?: Cron
+	private nvmJob?: Cron
+	private zwaveClient!: ZwaveClient
+	private owner?: symbol
 
 	get default(): BackupSettings {
 		return {
@@ -44,20 +46,18 @@ class BackupManager {
 	}
 
 	nextRun(job: Cron) {
-		if (job?.nextRun()) {
-			return job.nextRun().toLocaleString()
-		}
-
-		return 'UNKNOWN'
+		const next = job?.nextRun()
+		return next ? next.toLocaleString() : 'UNKNOWN'
 	}
 
-	init(zwaveClient: ZwaveClient) {
+	init(zwaveClient: ZwaveClient, owner: symbol) {
 		this.config = {
 			...this.default,
 			...(jsonStore.get(store.settings).backup as BackupSettings),
 		}
 
 		this.zwaveClient = zwaveClient
+		this.owner = owner
 
 		if (this.storeJob) {
 			this.storeJob.stop()
@@ -96,6 +96,15 @@ class BackupManager {
 				}. Next run: ${this.nextRun(this.nvmJob)}`,
 			)
 		}
+	}
+
+	close(owner: symbol) {
+		if (this.owner !== owner) return
+		this.storeJob?.stop()
+		this.nvmJob?.stop()
+		this.storeJob = undefined
+		this.nvmJob = undefined
+		this.owner = undefined
 	}
 
 	async backupNvm() {
