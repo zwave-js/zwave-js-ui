@@ -10,6 +10,7 @@ import jsonStore from '../lib/jsonStore.ts'
 import * as loggers from '../lib/logger.ts'
 import * as utils from '../lib/utils.ts'
 import { getErrorMessage } from '../lib/errors.ts'
+import { RESPONSE_CODES } from '../lib/ResponseCodes.ts'
 import { isAuthEnabled } from '../runtime/AppRuntime.ts'
 
 const logger = loggers.module('App')
@@ -23,16 +24,6 @@ declare module 'express-session' {
 
 // Signed tokens may omit user claims
 export type JwtUserPayload = Partial<PublicUser> & JwtPayload
-
-export const RESPONSE_CODES = {
-	OK: 'OK',
-	GENERAL_ERROR: 'General Error',
-	INVALID: 'Invalid data',
-	AUTH_FAILED: 'Authentication failed',
-	PERMISSION_ERROR: 'Insufficient permissions',
-} as const
-export type RESPONSE_CODES =
-	(typeof RESPONSE_CODES)[keyof typeof RESPONSE_CODES]
 
 export function verifyJWT(
 	token: string,

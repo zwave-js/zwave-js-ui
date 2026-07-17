@@ -3,6 +3,7 @@ import type { RateLimitRequestHandler } from 'express-rate-limit'
 import { libVersion } from 'zwave-js'
 import { serverVersion } from '@zwave-js/server'
 import { getAllNamedScaleGroups, getAllSensors } from '@zwave-js/core'
+import type { Driver } from 'zwave-js'
 import type { PersistedSettings } from '../config/store.ts'
 import store from '../config/store.ts'
 import { logsDir, sslDisabled } from '../config/app.ts'
@@ -13,7 +14,6 @@ import * as loggers from '../lib/logger.ts'
 import * as utils from '../lib/utils.ts'
 import { getExternallyManagedPaths } from '../lib/externalSettings.ts'
 import { getErrorMessage } from '../lib/errors.ts'
-import { enumerateSerialPorts } from '../lib/serialPorts.ts'
 import debugManager from '../lib/DebugManager.ts'
 import type { AppRuntime } from '../runtime/AppRuntime.ts'
 import { isAuthenticated } from './auth.ts'
@@ -30,12 +30,13 @@ function getZwaveConfigValue(
 
 export interface SettingsRoutesDeps {
 	apisLimiter: RateLimitRequestHandler
+	enumerateSerialPorts: typeof Driver.enumerateSerialPorts
 }
 
 export function registerSettingsRoutes(
 	app: express.Express,
 	runtime: AppRuntime,
-	{ apisLimiter }: SettingsRoutesDeps,
+	{ apisLimiter, enumerateSerialPorts }: SettingsRoutesDeps,
 ): void {
 	app.get('/api/settings', apisLimiter, isAuthenticated, function (req, res) {
 		const allSensors = getAllSensors()

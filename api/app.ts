@@ -40,6 +40,7 @@ import {
 } from './lib/externalSettings.ts'
 import { readFile, writeFile } from 'node:fs/promises'
 import { generate } from 'selfsigned'
+import { Driver } from 'zwave-js'
 import debugManager from './lib/DebugManager.ts'
 import { AppRuntime, isAuthEnabled } from './runtime/AppRuntime.ts'
 import type { GatewayPort, ZnifferPort } from './runtime/ports.ts'
@@ -70,6 +71,7 @@ export interface CreateAppOptions {
 		gateway?: GatewayPort
 		zniffer?: ZnifferPort
 		restarting?: boolean
+		enumerateSerialPorts?: typeof Driver.enumerateSerialPorts
 		logFatalError?: (message: string) => void
 	}
 }
@@ -795,7 +797,12 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 
 	registerAuthRoutes(app, { apisLimiter, loginLimiter })
 	registerHealthRoutes(app, runtime, { apisLimiter })
-	registerSettingsRoutes(app, runtime, { apisLimiter })
+	registerSettingsRoutes(app, runtime, {
+		apisLimiter,
+		enumerateSerialPorts:
+			testOptions?.enumerateSerialPorts ??
+			Driver.enumerateSerialPorts.bind(Driver),
+	})
 	registerImportExportRoutes(app, runtime, { apisLimiter })
 	registerConfigurationTemplatesRoutes(app, runtime, { apisLimiter })
 	registerStoreRoutes(app, runtime, { apisLimiter, storeLimiter })
