@@ -1,5 +1,3 @@
-// Shares the module loaders and beforeAll/afterEach/afterAll lifecycle from shared/harness.ts, then
-// layers Socket.IO-specific setup (server, io, client helpers) on top.
 import { createServer, type Server as HttpServer } from 'node:http'
 import type { AddressInfo } from 'node:net'
 import type { Express } from 'express'
@@ -49,7 +47,6 @@ async function createHarnessInstance(
 ): Promise<SocketHarness & { closeInstance(): Promise<void> }> {
 	const instance = shared.createApp({
 		test: {
-			// Gateway/ZnifferManager have private fields, so structural mocks like FakeGateway/FakeZniffer need this cast to satisfy them
 			gateway: options.gateway as unknown as RealGateway | undefined,
 			zniffer: options.zniffer as unknown as RealZniffer | undefined,
 			restarting: options.restarting,
@@ -62,7 +59,6 @@ async function createHarnessInstance(
 	await listenOnEphemeralPort(server)
 	const port = (server.address() as AddressInfo).port
 	const url = `http://127.0.0.1:${port}`
-
 	const { io } = instance
 	const clients = new Set<ClientSocket>()
 	let flushSequence = 0
@@ -127,11 +123,10 @@ async function createHarnessInstance(
 		}
 		clients.clear()
 
-		// Best-effort: lets the server finish settling activeSockets/room membership before returning, but a test that already awaited its own disconnect may have nothing left to wait for
 		try {
 			await waitForServerSocketCount(0, 1000)
 		} catch {
-			// ignore - see above
+			// A client may already have completed its disconnect
 		}
 	}
 
@@ -149,9 +144,6 @@ async function createHarnessInstance(
 		disconnectAllClients,
 		async closeInstance() {
 			await disconnectAllClients()
-
-			// Same lifecycle entry point production uses, so it closes socketManager/io/interceptor plus
-			// gateway/zniffer/plugins when the test provided them, exercising FakeGateway.close/FakeZniffer.close
 			await instance.close()
 		},
 	}

@@ -8,7 +8,6 @@ import store from './config/store.ts'
 import jsonStore from './lib/jsonStore.ts'
 import * as loggers from './lib/logger.ts'
 import SocketManager from './lib/SocketManager.ts'
-import type { CallAPIResult } from './lib/ZwaveClient.ts'
 import rateLimit from 'express-rate-limit'
 import session from 'express-session'
 import type { Server as HttpServer } from 'node:http'
@@ -27,12 +26,7 @@ import {
 	sslDisabled,
 	storeDir,
 } from './config/app.ts'
-import {
-	ALL_CHANNELS,
-	channelMap,
-	inboundEvents,
-	socketEvents,
-} from './lib/SocketEvents.ts'
+import { socketEvents } from './lib/SocketEvents.ts'
 import * as utils from './lib/utils.ts'
 import {
 	loadExternalSettings,
@@ -51,6 +45,7 @@ import { registerImportExportRoutes } from './routes/importExport.ts'
 import { registerConfigurationTemplatesRoutes } from './routes/configurationTemplates.ts'
 import { registerStoreRoutes } from './routes/store.ts'
 import { registerDebugRoutes } from './routes/debug.ts'
+import { registerSocketApi } from './socket/registerSocketApi.ts'
 
 const createCertificate = promisify(generate)
 const FileStore = sessionStore(session)
@@ -511,272 +506,9 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 
 	// ### SOCKET SETUP
 
-	const noop = () => {}
-
-	/**
-	 * Binds socketManager to `server`
-	 */
 	function setupSocket(server: HttpServer) {
 		socketManager.bindServer(server)
-
-		socketManager.io.on('connection', (socket) => {
-			// Server: https://socket.io/docs/v4/server-application-structure/#all-event-handlers-are-registered-in-the-indexjs-file
-			// Client: https://socket.io/docs/v4/client-api/#socketemiteventname-args
-			socket.on(inboundEvents.init, (data, cb = noop) => {
-				const currentGw = runtime.requireGateway()
-				const currentZniffer = runtime.getZniffer()
-				cb({
-					...(currentGw.zwave?.getState() ?? {}),
-					...(currentZniffer
-						? { zniffer: currentZniffer.status() }
-						: {}),
-					debugCaptureActive: debugManager.isSessionActive(),
-				})
-			})
-
-			socket.on(
-				inboundEvents.zwave,
-
-				async (data, cb = noop) => {
-					const currentGw = runtime.requireGateway()
-					if (currentGw.zwave) {
-						if (!data.args) data.args = []
-						const result: CallAPIResult<any> & {
-							api?: string
-						} = await currentGw.zwave.callApi(
-							data.api,
-							...data.args,
-						)
-						result.api = data.api
-						cb(result)
-					} else {
-						cb({
-							success: false,
-							message: 'Zwave client not connected',
-						})
-					}
-				},
-			)
-
-			socket.on(inboundEvents.mqtt, (data, cb = noop) => {
-				logger.info(`Mqtt api call: ${data.api}`)
-
-				let res: void, err: string
-
-				try {
-					switch (data.api) {
-						case 'updateNodeTopics':
-							res = runtime
-								.requireGateway()
-								.updateNodeTopics(data.args[0])
-							break
-						case 'removeNodeRetained':
-							res = runtime
-								.requireGateway()
-								.removeNodeRetained(data.args[0])
-							break
-						default:
-							err = `Unknown MQTT api ${data.api}`
-					}
-				} catch (error) {
-					logger.error('Error while calling MQTT api', error)
-					err = error.message
-				}
-
-				const result = {
-					success: !err,
-					message: err || 'Success MQTT api call',
-					result: res,
-					api: data.api,
-				}
-
-				cb(result)
-			})
-
-			socket.on(inboundEvents.hass, async (data, cb = noop) => {
-				logger.info(`Hass api call: ${data.apiName}`)
-
-				let res: any, err: string
-				try {
-					switch (data.apiName) {
-						case 'delete':
-							res = runtime
-								.requireGateway()
-								.publishDiscovery(data.device, data.nodeId, {
-									deleteDevice: true,
-									forceUpdate: true,
-								})
-							break
-						case 'discover':
-							res = runtime
-								.requireGateway()
-								.publishDiscovery(data.device, data.nodeId, {
-									deleteDevice: false,
-									forceUpdate: true,
-								})
-							break
-						case 'rediscoverNode':
-							res = runtime
-								.requireGateway()
-								.rediscoverNode(data.nodeId)
-							break
-						case 'disableDiscovery':
-							res = runtime
-								.requireGateway()
-								.disableDiscovery(data.nodeId)
-							break
-						case 'update':
-							res = runtime
-								.requireZwaveClient()
-								.updateDevice(data.device, data.nodeId)
-							break
-						case 'add':
-							res = runtime
-								.requireZwaveClient()
-								.addDevice(data.device, data.nodeId)
-							break
-						case 'store':
-							res = await runtime
-								.requireZwaveClient()
-								.storeDevices(
-									data.devices,
-									data.nodeId,
-									data.remove,
-								)
-							break
-						default:
-							throw new Error(`Unknown HASS api ${data.apiName}`)
-					}
-				} catch (error) {
-					logger.error('Error while calling HASS api', error)
-					err = error.message
-				}
-
-				const result = {
-					success: !err,
-					message: err || 'Success HASS api call',
-					result: res,
-					api: data.apiName,
-				}
-
-				cb(result)
-			})
-
-			socket.on(inboundEvents.subscribe, async (data, cb = noop) => {
-				const channels: string[] = Array.isArray(data?.channels)
-					? data.channels.filter(
-							(c: unknown) => typeof c === 'string',
-						)
-					: []
-
-				const isAll = channels.includes('all')
-				const validChannels = isAll
-					? ALL_CHANNELS
-					: channels.filter((c) => Object.hasOwn(channelMap, c))
-
-				for (const channel of validChannels) {
-					await socket.join(channel)
-				}
-
-				// report current subscriptions (exclude socket's auto-joined room)
-				const subscribed = [...socket.rooms].filter(
-					(r) => r !== socket.id && Object.hasOwn(channelMap, r),
-				)
-				cb({ channels: subscribed })
-			})
-
-			socket.on(inboundEvents.unsubscribe, async (data, cb = noop) => {
-				const channels: string[] = Array.isArray(data?.channels)
-					? data.channels.filter(
-							(c: unknown) => typeof c === 'string',
-						)
-					: []
-
-				const isAll = channels.includes('all')
-				const validChannels = isAll
-					? ALL_CHANNELS
-					: channels.filter((c) => Object.hasOwn(channelMap, c))
-
-				for (const channel of validChannels) {
-					await socket.leave(channel)
-				}
-
-				const subscribed = [...socket.rooms].filter(
-					(r) => r !== socket.id && Object.hasOwn(channelMap, r),
-				)
-				cb({ channels: subscribed })
-			})
-
-			socket.on(inboundEvents.zniffer, async (data, cb = noop) => {
-				logger.info(`Zniffer api call: ${data.api}`)
-
-				let res: any, err: string
-				try {
-					switch (data.apiName) {
-						case 'start':
-							res = await runtime.requireZniffer().start()
-							break
-						case 'stop':
-							res = await runtime.requireZniffer().stop()
-							break
-						case 'clear':
-							res = runtime.requireZniffer().clear()
-							break
-						case 'getFrames':
-							res = runtime.requireZniffer().getFrames()
-							break
-						case 'setFrequency':
-							res = await runtime
-								.requireZniffer()
-								.setFrequency(data.frequency)
-							break
-						case 'setLRChannelConfig':
-							res = await runtime
-								.requireZniffer()
-								.setLRChannelConfig(data.channelConfig)
-							break
-						case 'saveCaptureToFile':
-							res = await runtime
-								.requireZniffer()
-								.saveCaptureToFile()
-							break
-						case 'loadCaptureFromBuffer': {
-							const buffer = Buffer.from(data.buffer)
-							res = await runtime
-								.requireZniffer()
-								.loadCaptureFromBuffer(buffer)
-							break
-						}
-						default:
-							throw new Error(
-								`Unknown ZNIFFER api ${data.apiName}`,
-							)
-					}
-				} catch (error) {
-					logger.error('Error while calling ZNIFFER api', error)
-					err = (error as Error).message
-				}
-
-				const result = {
-					success: !err,
-					message: err || 'Success ZNIFFER api call',
-					result: res,
-					api: data.apiName,
-				}
-
-				cb(result)
-			})
-		})
-
-		// emitted every time a new client connects/disconnects
-		socketManager.on('clients', (event, activeSockets) => {
-			const currentGw = runtime.requireGateway()
-			if (event === 'connection' && activeSockets.size === 1) {
-				currentGw.zwave?.setUserCallbacks()
-			} else if (event === 'disconnect' && activeSockets.size === 0) {
-				currentGw.zwave?.removeUserCallbacks()
-			}
-		})
+		registerSocketApi(socketManager, runtime)
 	}
 
 	function attachSocket(server: HttpServer) {
