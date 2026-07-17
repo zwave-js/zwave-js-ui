@@ -170,4 +170,22 @@ describe('AppInstance: installProcessHandlers()/close() own only this instance',
 
 		expect(snapshotListenerCounts()).toEqual(before)
 	})
+
+	it('cleans process handlers and the server when repeated startup fails', async () => {
+		const [{ createApp }, { jsonStore, store }] = await Promise.all([
+			loadAppModule(),
+			loadJsonStore(),
+		])
+		await jsonStore.init(structuredClone(store))
+		const instance = createApp()
+		const before = snapshotListenerCounts()
+		const server = await instance.startServer(0, '127.0.0.1')
+
+		await expect(instance.startServer(0, '127.0.0.1')).rejects.toThrow(
+			'Socket.IO is already attached',
+		)
+
+		expect(server.listening).toBe(false)
+		expect(snapshotListenerCounts()).toEqual(before)
+	})
 })

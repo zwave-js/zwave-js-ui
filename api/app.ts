@@ -226,103 +226,117 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 
 		installProcessHandlers()
 
-		const settings = jsonStore.get(store.settings)
+		try {
+			const settings = jsonStore.get(store.settings)
 
-		// Merge external settings into zwave config (if external settings exist)
-		if (loadExternalSettings()) {
-			settings.zwave ??= {}
-			mergeExternalSettings(settings.zwave as Record<string, unknown>)
-		}
+			// Merge external settings into zwave config (if external settings exist)
+			if (loadExternalSettings()) {
+				settings.zwave ??= {}
+				mergeExternalSettings(settings.zwave as Record<string, unknown>)
+			}
 
-		// as the really first thing setup loggers so all logs will go to file if specified in settings
-		runtime.setupLogging(settings)
+			// as the really first thing setup loggers so all logs will go to file if specified in settings
+			runtime.setupLogging(settings)
 
-		configureTrustProxy()
+			configureTrustProxy()
 
-		const httpsEnabled = process.env.HTTPS || settings?.gateway?.https
+			const httpsEnabled = process.env.HTTPS || settings?.gateway?.https
 
-		if (httpsEnabled) {
-			if (!sslDisabled()) {
-				logger.info('HTTPS is enabled. Loading cert and keys')
-				const { cert, key } = await loadCertKey()
+			if (httpsEnabled) {
+				if (!sslDisabled()) {
+					logger.info('HTTPS is enabled. Loading cert and keys')
+					const { cert, key } = await loadCertKey()
 
-				if (cert && key) {
-					server = createHttpsServer(
-						{
-							key,
-							cert,
-							rejectUnauthorized: false,
-						},
-						app,
-					)
+					if (cert && key) {
+						server = createHttpsServer(
+							{
+								key,
+								cert,
+								rejectUnauthorized: false,
+							},
+							app,
+						)
+					} else {
+						logger.warn(
+							'HTTPS is enabled but cert or key cannot be generated. Falling back to HTTP',
+						)
+					}
 				} else {
 					logger.warn(
-						'HTTPS is enabled but cert or key cannot be generated. Falling back to HTTP',
+						'HTTPS enabled but FORCE_DISABLE_SSL env var is set. Falling back to HTTP',
 					)
 				}
-			} else {
-				logger.warn(
-					'HTTPS enabled but FORCE_DISABLE_SSL env var is set. Falling back to HTTP',
+			}
+
+			if (!server) {
+				server = createHttpServer(app)
+			}
+
+			attachSocket(server)
+			server.listen(port as number, host, function () {
+				const addr = server.address()
+				const bind =
+					typeof addr === 'string'
+						? 'pipe ' + addr
+						: 'port ' + addr?.port
+				logger.info(
+					`Listening on ${bind}${host ? 'host ' + host : ''} protocol ${
+						httpsEnabled ? 'HTTPS' : 'HTTP'
+					}`,
 				)
-			}
-		}
-
-		if (!server) {
-			server = createHttpServer(app)
-		}
-
-		attachSocket(server)
-		server.listen(port as number, host, function () {
-			const addr = server.address()
-			const bind =
-				typeof addr === 'string' ? 'pipe ' + addr : 'port ' + addr?.port
-			logger.info(
-				`Listening on ${bind}${host ? 'host ' + host : ''} protocol ${
-					httpsEnabled ? 'HTTPS' : 'HTTP'
-				}`,
-			)
-		})
-
-		server.on('error', function (error: NodeJS.ErrnoException) {
-			if (error.syscall !== 'listen') {
-				throw error
-			}
-
-			const bind =
-				typeof port === 'string' ? 'Pipe ' + port : 'Port ' + port
-
-			// handle specific listen errors with friendly messages
-			switch (error.code) {
-				case 'EACCES':
-					logger.error(bind + ' requires elevated privileges')
-					process.exit(1)
-					break
-				case 'EADDRINUSE':
-					logger.error(bind + ' is already in use')
-					process.exit(1)
-					break
-				default:
-					throw error
-			}
-		})
-
-		const users = jsonStore.get(store.users)
-
-		if (users.length === 0) {
-			users.push({
-				username: defaultUser,
-				passwordHash: await utils.hashPsw(defaultPsw),
 			})
 
-			await jsonStore.put(store.users, users)
+			server.on('error', function (error: NodeJS.ErrnoException) {
+				if (error.syscall !== 'listen') {
+					throw error
+				}
+
+				const bind =
+					typeof port === 'string' ? 'Pipe ' + port : 'Port ' + port
+
+				// handle specific listen errors with friendly messages
+				switch (error.code) {
+					case 'EACCES':
+						logger.error(bind + ' requires elevated privileges')
+						process.exit(1)
+						break
+					case 'EADDRINUSE':
+						logger.error(bind + ' is already in use')
+						process.exit(1)
+						break
+					default:
+						throw error
+				}
+			})
+
+			const users = jsonStore.get(store.users)
+
+			if (users.length === 0) {
+				users.push({
+					username: defaultUser,
+					passwordHash: await utils.hashPsw(defaultPsw),
+				})
+
+				await jsonStore.put(store.users, users)
+			}
+
+			await runtime.loadSnippets()
+			runtime.startZniffer(settings.zniffer)
+			await debugManager.init() // Clean up any old debug temp files
+			await runtime.startGateway(settings)
+
+			return server
+		} catch (error) {
+			try {
+				await close()
+			} catch (cleanupError) {
+				logger.error(
+					'Error while cleaning up failed startup',
+					cleanupError,
+				)
+			}
+			throw error
 		}
-
-		await runtime.loadSnippets()
-		runtime.startZniffer(settings.zniffer)
-		await debugManager.init() // Clean up any old debug temp files
-		await runtime.startGateway(settings)
-
-		return server
 	}
 
 	async function loadCertKey(): Promise<{
