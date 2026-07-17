@@ -1,37 +1,24 @@
 import { createServer, type Server as HttpServer } from 'node:http'
 import type { Express } from 'express'
 import supertest, { type Test as SupertestTest } from 'supertest'
-import { vi, afterEach } from 'vitest'
+import { vi } from 'vitest'
+import type { Driver } from 'zwave-js'
 import type { FakeGateway } from '../shared/fakes.ts'
 import type { FakeZniffer } from '../socket/fakes.ts'
-import type * as ZnifferModuleNamespace from '#api/lib/ZnifferManager.ts'
-import type * as SerialPortsModuleNamespace from '#api/lib/serialPorts.ts'
 import {
 	useHarnessLifecycle,
 	listenOnEphemeralPort,
-	type GatewayModule,
 	type JsonStoreModule,
 	type SharedTestContext,
 	type StoreConfigModule,
 } from '../shared/harness.ts'
 
-type RealGateway = InstanceType<GatewayModule['default']>
-type ZnifferModule = typeof ZnifferModuleNamespace
-type RealZniffer = InstanceType<ZnifferModule['default']>
-type SerialPortsModule = typeof SerialPortsModuleNamespace
+type SerialPortsEnumerator = typeof Driver.enumerateSerialPorts
+type SerialPortsEnumeratorMock = ReturnType<typeof vi.fn<SerialPortsEnumerator>>
 
-// settings.ts imports enumerateSerialPorts as a static module boundary (api/lib/serialPorts.ts) rather
-// than accepting it as a constructor-injected collaborator, so it's mocked once here and reset per-test,
-// rather than every consuming test file declaring its own vi.mock() of the same module.
-const { enumerateSerialPorts } = vi.hoisted(() => ({
-	enumerateSerialPorts: vi.fn<SerialPortsModule['enumerateSerialPorts']>(() =>
-		Promise.resolve<string[]>([]),
-	),
-}))
-
-vi.mock('#api/lib/serialPorts.ts', () => ({ enumerateSerialPorts }))
-
-export { enumerateSerialPorts }
+function createSerialPortsEnumeratorMock(): SerialPortsEnumeratorMock {
+	return vi.fn(() => Promise.resolve<string[]>([]))
+}
 
 export interface HttpHarness {
 	app: Express
@@ -41,6 +28,7 @@ export interface HttpHarness {
 	store: StoreConfigModule['default']
 	server: HttpServer
 	loadSnippets(): Promise<void>
+	enumerateSerialPorts: SerialPortsEnumeratorMock
 }
 
 // Buffers the raw bytes because Superagent's default parser corrupts binary bodies served with a JSON-like content type
@@ -56,18 +44,22 @@ export interface HttpHarnessOptions {
 	gateway?: FakeGateway
 	zniffer?: FakeZniffer
 	restarting?: boolean
+	enumerateSerialPorts?: SerialPortsEnumeratorMock
 }
 
 async function createHarnessInstance(
 	shared: SharedTestContext,
 	options: HttpHarnessOptions,
 ): Promise<HttpHarness & { closeInstance(): Promise<void> }> {
+	const enumerateSerialPorts =
+		options.enumerateSerialPorts ?? createSerialPortsEnumeratorMock()
+
 	const instance = shared.createApp({
 		test: {
-			// Gateway has private fields, so a structural mock like FakeGateway needs this cast to satisfy it
-			gateway: options.gateway as unknown as RealGateway | undefined,
-			zniffer: options.zniffer as unknown as RealZniffer | undefined,
+			gateway: options.gateway,
+			zniffer: options.zniffer,
 			restarting: options.restarting,
+			enumerateSerialPorts,
 		},
 	})
 	await instance.loadSnippets()
@@ -83,6 +75,7 @@ async function createHarnessInstance(
 		store: shared.store,
 		server,
 		loadSnippets: () => instance.loadSnippets(),
+		enumerateSerialPorts,
 		async closeInstance() {
 			await instance.close()
 			await new Promise<void>((resolve, reject) => {
@@ -96,12 +89,5 @@ async function createHarnessInstance(
 export function useHttpHarness(): (
 	options?: HttpHarnessOptions,
 ) => Promise<HttpHarness> {
-	const getHarness = useHarnessLifecycle(createHarnessInstance)
-
-	afterEach(() => {
-		enumerateSerialPorts.mockReset()
-		enumerateSerialPorts.mockResolvedValue([])
-	})
-
-	return getHarness
+	return useHarnessLifecycle(createHarnessInstance)
 }

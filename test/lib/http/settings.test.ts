@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
-import { useHttpHarness, enumerateSerialPorts } from './harness.ts'
+import { useHttpHarness } from './harness.ts'
 import { createFakeGateway, createFakeZniffer } from '../shared/fakes.ts'
 import { setSettings } from '../shared/authHelpers.ts'
 
@@ -67,7 +67,7 @@ describe('HTTP contract: settings, restart, statistics, versions', () => {
 	describe('GET /api/serial-ports', () => {
 		it('returns exactly the ports the (mocked) enumerator resolves, with no real serial/mDNS I/O', async () => {
 			const harness = await getHarness()
-			enumerateSerialPorts.mockImplementationOnce((options) => {
+			harness.enumerateSerialPorts.mockImplementationOnce((options) => {
 				expect(options).toEqual({ local: true, remote: true })
 				return Promise.resolve(['/dev/ttyFAKE0', '/dev/ttyFAKE1'])
 			})
@@ -83,7 +83,7 @@ describe('HTTP contract: settings, restart, statistics, versions', () => {
 
 		it('returns an empty list without throwing when the enumerator resolves none', async () => {
 			const harness = await getHarness()
-			enumerateSerialPorts.mockImplementationOnce(() =>
+			harness.enumerateSerialPorts.mockImplementationOnce(() =>
 				Promise.resolve([]),
 			)
 
@@ -95,7 +95,7 @@ describe('HTTP contract: settings, restart, statistics, versions', () => {
 
 		it('reports an enumeration failure with an empty list', async () => {
 			const harness = await getHarness()
-			enumerateSerialPorts.mockImplementationOnce(() =>
+			harness.enumerateSerialPorts.mockImplementationOnce(() =>
 				Promise.reject(new Error('boom')),
 			)
 
@@ -109,7 +109,7 @@ describe('HTTP contract: settings, restart, statistics, versions', () => {
 			const harness = await getHarness()
 			const previous = process.env.ZWAVE_PORT
 			process.env.ZWAVE_PORT = '/dev/ttyFAKE-env'
-			enumerateSerialPorts.mockImplementationOnce(() => {
+			harness.enumerateSerialPorts.mockImplementationOnce(() => {
 				throw new Error('must not be called when ZWAVE_PORT is set')
 			})
 
