@@ -165,9 +165,42 @@
 										:hint="lengthHint"
 										persistent-hint
 										class="font-monospace"
+										:type="
+											revealCredential
+												? 'text'
+												: 'password'
+										"
+										:inputmode="
+											isPinType ? 'numeric' : undefined
+										"
+										:pattern="
+											isPinType ? '\\d*' : undefined
+										"
+										:maxlength="
+											credentialCap?.maxCredentialLength
+										"
 										:rules="credentialRules"
 										:disabled="saving"
-									/>
+										@beforeinput="onCredentialBeforeInput"
+									>
+										<template #append-inner>
+											<v-btn
+												size="x-small"
+												variant="text"
+												:disabled="saving"
+												@click="
+													revealCredential =
+														!revealCredential
+												"
+											>
+												{{
+													revealCredential
+														? 'Hide'
+														: 'Show'
+												}}
+											</v-btn>
+										</template>
+									</v-text-field>
 								</v-col>
 							</v-row>
 						</template>
@@ -231,6 +264,7 @@ export default {
 			credential: { type: UserCredentialType.PINCode, data: '' },
 			error: '',
 			valid: true,
+			revealCredential: false,
 		}
 	},
 	computed: {
@@ -273,7 +307,15 @@ export default {
 		directEntryOptions() {
 			if (!this.capabilities) return []
 			return this.capabilities.supportedCredentialTypes
-				.filter((t) => isDirectEntry(t.type))
+				.filter(
+					(t) =>
+						isDirectEntry(t.type) &&
+						nextFreeCredentialSlot(
+							this.credentials,
+							t.type,
+							t.numberOfCredentialSlots,
+						) !== undefined,
+				)
 				.map((t) => ({
 					title: credentialTypeLabel(t.type),
 					value: t.type,
@@ -286,6 +328,18 @@ export default {
 			return this.capabilities?.supportedCredentialTypes.find(
 				(t) => t.type === this.credential.type,
 			)
+		},
+		credentialSlot() {
+			const cap = this.credentialCap
+			if (!cap) return undefined
+			return nextFreeCredentialSlot(
+				this.credentials,
+				this.credential.type,
+				cap.numberOfCredentialSlots,
+			)
+		},
+		isPinType() {
+			return this.credential.type === UserCredentialType.PINCode
 		},
 		lengthHint() {
 			const cap = this.credentialCap
@@ -311,6 +365,12 @@ export default {
 							? 'Required for this lock'
 							: true
 					}
+					if (this.isPinType && !/^\d+$/.test(v)) {
+						return 'PIN must contain digits only'
+					}
+					if (this.credentialSlot === undefined) {
+						return 'No credential slots available'
+					}
 					if (
 						cap &&
 						(v.length < cap.minCredentialLength ||
@@ -327,7 +387,8 @@ export default {
 			const cap = this.credentialCap
 			const value = this.credential.data
 			if (!value) return !this.requiresCredential
-			if (!cap) return true
+			if (!cap || this.credentialSlot === undefined) return false
+			if (this.isPinType && !/^\d+$/.test(value)) return false
 			return (
 				value.length >= cap.minCredentialLength &&
 				value.length <= cap.maxCredentialLength
@@ -335,6 +396,7 @@ export default {
 		},
 		canSave() {
 			if (!this.capabilities) return false
+			if (!this.form.userId) return false
 			if (
 				this.form.userType === UserCredentialUserType.Expiring &&
 				!(this.form.expiringTimeoutMinutes > 0)
@@ -356,6 +418,7 @@ export default {
 					data: '',
 				}
 				this.error = ''
+				this.revealCredential = false
 				this.$nextTick(() => this.$refs.form?.resetValidation())
 			}
 		},
@@ -375,16 +438,20 @@ export default {
 				return { ...base, ...this.initial }
 			}
 			if (this.capabilities) {
-				base.userId = nextFreeUserSlot(
-					this.users,
-					this.capabilities.maxUsers,
-				)
+				base.userId =
+					nextFreeUserSlot(this.users, this.capabilities.maxUsers) ??
+					0
 			}
 			return base
 		},
 		close() {
 			if (this.saving) return
 			this.show = false
+		},
+		onCredentialBeforeInput(e) {
+			if (this.isPinType && e.data != null && !/^\d+$/.test(e.data)) {
+				e.preventDefault()
+			}
 		},
 		save() {
 			const options = {
@@ -402,14 +469,8 @@ export default {
 			const payload = { userId: this.form.userId, options }
 			let credential
 			if (!this.editMode && this.credential.data) {
-				const cap = this.credentialCap
-				const slot = cap
-					? nextFreeCredentialSlot(
-							this.credentials,
-							this.credential.type,
-							cap.numberOfCredentialSlots,
-						)
-					: 1
+				const slot = this.credentialSlot
+				if (slot === undefined) return
 				credential = {
 					type: this.credential.type,
 					slot,

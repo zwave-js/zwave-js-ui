@@ -30,6 +30,7 @@
 					color="primary"
 					prepend-icon="person_add"
 					class="mr-2"
+					:disabled="!canAddUser"
 					@click="openAddUser"
 				>
 					Add user
@@ -303,7 +304,9 @@
 												</v-list-item>
 												<v-list-item
 													v-if="
-														hasLearnableType &&
+														credentialTypeSupportsLearn(
+															cred.type,
+														) &&
 														!isDirectEntry(
 															cred.type,
 														)
@@ -665,9 +668,7 @@
 				<v-card-actions>
 					<v-spacer />
 					<v-btn
-						v-if="
-							['waiting', 'starting'].includes(learnDialog.state)
-						"
+						v-if="canCancelLearn"
 						color="error"
 						variant="text"
 						@click="cancelLearn"
@@ -675,9 +676,7 @@
 						Cancel
 					</v-btn>
 					<v-btn
-						v-if="
-							['timeout', 'aborted'].includes(learnDialog.state)
-						"
+						v-if="canRetryLearn"
 						color="primary"
 						@click="retryLearn"
 					>
@@ -690,18 +689,7 @@
 					>
 						Cancel that &amp; start mine
 					</v-btn>
-					<v-btn
-						v-if="
-							[
-								'success',
-								'refused',
-								'timeout',
-								'busy',
-								'aborted',
-							].includes(learnDialog.state)
-						"
-						@click="closeLearn"
-					>
+					<v-btn v-if="canCloseLearn" @click="closeLearn">
 						Close
 					</v-btn>
 				</v-card-actions>
@@ -843,7 +831,7 @@
 					</div>
 					<v-list density="compact" lines="one">
 						<v-list-item
-							v-for="cap in learnableTypeCaps"
+							v-for="cap in availableLearnableTypeCaps"
 							:key="cap.type"
 							:prepend-icon="credentialTypeIcon(cap.type)"
 							@click="chooseLearnType(cap)"
@@ -878,8 +866,10 @@ import {
 	credentialTypeLabel,
 	credentialTypeIcon,
 	isDirectEntry,
-	isBinary,
 	maskCredential,
+	nextFreeCredentialSlot,
+	nextFreeUserSlot,
+	escapeHtml,
 	setUserResultMessage,
 	setCredentialResultMessage,
 	assignCredentialResultMessage,
@@ -899,6 +889,27 @@ const ACCESS_CONTROL_EVENTS = new Set([
 	'credential learn progress',
 	'credential learn completed',
 ])
+
+const RETRY_FLASH_STEP_MS = 90
+const RETRY_FLASH_COUNT = 3
+
+function eventPayload(event) {
+	// Endpoint CC events emit (endpoint, payload)
+	return event.args?.[1] ?? event.args?.[0]
+}
+
+function eventKey(event) {
+	const payload = eventPayload(event)
+	return [
+		event.time,
+		event.event,
+		payload?.userId,
+		payload?.credentialType,
+		payload?.credentialSlot,
+		payload?.status,
+		payload?.stepsRemaining,
+	].join(':')
+}
 
 export default {
 	mixins: [InstancesMixin],
@@ -977,6 +988,8 @@ export default {
 				show: false,
 				user: null,
 			},
+			lastProcessedAccessControlEvent: null,
+			accessControlEventQueueInitialized: false,
 		}
 	},
 	computed: {
@@ -1001,13 +1014,23 @@ export default {
 			)
 		},
 		hasLearnableType() {
-			return this.learnableTypeCaps.length > 0
+			return this.availableLearnableTypeCaps.length > 0
 		},
 		learnableTypeCaps() {
 			return (
 				this.currentEndpoint?.capabilities.supportedCredentialTypes.filter(
 					(t) => t.supportsCredentialLearn,
 				) ?? []
+			)
+		},
+		availableLearnableTypeCaps() {
+			return this.learnableTypeCaps.filter(
+				(type) =>
+					nextFreeCredentialSlot(
+						this.currentEndpoint.credentials,
+						type.type,
+						type.numberOfCredentialSlots,
+					) !== undefined,
 			)
 		},
 		learnDialogResult() {
@@ -1026,10 +1049,40 @@ export default {
 					return { icon: '', color: '' }
 			}
 		},
+		canCancelLearn() {
+			return ['waiting', 'starting'].includes(this.learnDialog.state)
+		},
+		canRetryLearn() {
+			return ['timeout', 'aborted'].includes(this.learnDialog.state)
+		},
+		canCloseLearn() {
+			return [
+				'success',
+				'refused',
+				'timeout',
+				'busy',
+				'aborted',
+			].includes(this.learnDialog.state)
+		},
+		canAddUser() {
+			return (
+				this.currentEndpoint &&
+				nextFreeUserSlot(
+					this.currentEndpoint.users,
+					this.currentEndpoint.capabilities.maxUsers,
+				) !== undefined
+			)
+		},
 		directEntryTypeCaps() {
 			return (
 				this.currentEndpoint?.capabilities.supportedCredentialTypes.filter(
-					(t) => isDirectEntry(t.type),
+					(t) =>
+						isDirectEntry(t.type) &&
+						nextFreeCredentialSlot(
+							this.currentEndpoint.credentials,
+							t.type,
+							t.numberOfCredentialSlots,
+						) !== undefined,
 				) ?? []
 			)
 		},
@@ -1097,9 +1150,7 @@ export default {
 		},
 		adminCodeState() {
 			if (!this.supportsAdminCode) return 'unsupported'
-			const code = this.currentEndpoint?.adminCode
-			if (typeof code === 'string' && code.length > 0) return 'set'
-			return 'unset'
+			return this.currentEndpoint?.adminCodeSet ? 'set' : 'unset'
 		},
 		hasLockSettings() {
 			// Gate the tab on the union of every supported lock-level
@@ -1116,7 +1167,11 @@ export default {
 		credentialTypeLabel,
 		credentialTypeIcon,
 		isDirectEntry,
-		isBinary,
+		credentialTypeSupportsLearn(type) {
+			return this.learnableTypeCaps.some(
+				(capability) => capability.type === type,
+			)
+		},
 		userTypeColor(t) {
 			return userTypeTone[t] && userTypeTone[t] !== 'default'
 				? userTypeTone[t]
@@ -1190,6 +1245,10 @@ export default {
 			}
 		},
 		openAddUser() {
+			if (!this.canAddUser) {
+				this.showSnackbar('All user slots are occupied.', 'error')
+				return
+			}
 			this.userDialog = {
 				show: true,
 				editMode: false,
@@ -1223,7 +1282,7 @@ export default {
 			}
 		},
 		openEnroll(user) {
-			const learnable = this.learnableTypeCaps
+			const learnable = this.availableLearnableTypeCaps
 			if (learnable.length === 0) return
 			if (learnable.length === 1) {
 				this.startLearnForType(user, learnable[0])
@@ -1233,6 +1292,13 @@ export default {
 		},
 		startLearnForType(user, cap) {
 			const slot = this.nextSlotForType(cap.type)
+			if (slot === undefined) {
+				this.showSnackbar(
+					`No ${credentialTypeLabel(cap.type)} slots are available.`,
+					'error',
+				)
+				return
+			}
 			this.startLearn({
 				user,
 				type: cap.type,
@@ -1269,15 +1335,11 @@ export default {
 				this.currentEndpoint.capabilities.supportedCredentialTypes.find(
 					(t) => t.type === type,
 				)
-			const used = new Set(
-				this.currentEndpoint.credentials
-					.filter((c) => c.type === type)
-					.map((c) => c.slot),
+			return nextFreeCredentialSlot(
+				this.currentEndpoint.credentials,
+				type,
+				cap?.numberOfCredentialSlots ?? 0,
 			)
-			for (let i = 1; i <= (cap?.numberOfCredentialSlots ?? 1); i++) {
-				if (!used.has(i)) return i
-			}
-			return 1
 		},
 		async startLearn({ user, type, slot, timeout, totalSteps }) {
 			this.learnDialog = {
@@ -1316,16 +1378,18 @@ export default {
 			// state to 'waiting' once the lock acknowledges with steps.
 		},
 		async cancelLearn() {
-			await this.app.apiRequest(
+			const res = await this.app.apiRequest(
 				'accessControlCancelCredentialLearn',
 				[this.node.id, this.currentEndpoint.endpointIndex],
-				{ infoSnack: false, errorSnack: false },
+				{ infoSnack: false, errorSnack: true },
 			)
+			if (!res.success) return false
 			this._stopRetryFlash()
 			this.learnDialog.show = false
+			return true
 		},
 		async cancelBusyAndRetry() {
-			await this.cancelLearn()
+			if (!(await this.cancelLearn())) return
 			if (this.learnDialog.user) {
 				this.openEnroll(this.learnDialog.user)
 			}
@@ -1346,10 +1410,9 @@ export default {
 		},
 		_triggerRetryFlash() {
 			this._stopRetryFlash()
-			const step = 90
-			for (let i = 0; i < 3; i++) {
-				const onAt = i * 2 * step
-				const offAt = onAt + step
+			for (let i = 0; i < RETRY_FLASH_COUNT; i++) {
+				const onAt = i * 2 * RETRY_FLASH_STEP_MS
+				const offAt = onAt + RETRY_FLASH_STEP_MS
 				this._retryFlashTimers.push(
 					setTimeout(() => {
 						this.learnDialog.retryFlash = true
@@ -1572,9 +1635,10 @@ export default {
 			const cascadeMsg = cascade
 				? `<br><b>This is the user's last credential.</b> The user will also be deleted.`
 				: ''
+			const owner = escapeHtml(user?.userName || `User ${cred.userId}`)
 			const ok = await this.app.confirm(
 				`Delete ${credentialTypeLabel(cred.type)} (slot ${cred.slot})?`,
-				`Owner: ${user?.userName || `User ${cred.userId}`}${cascadeMsg}`,
+				`Owner: ${owner}${cascadeMsg}`,
 				'warning',
 				{ confirmText: 'Delete', cancelText: 'Cancel' },
 			)
@@ -1752,7 +1816,7 @@ export default {
 			return 'info'
 		},
 		activitySummary(evt) {
-			const arg = evt.args?.[1] ?? evt.args?.[0]
+			const arg = eventPayload(evt)
 			if (!arg) return ''
 			const bits = []
 			if (arg.userId != null) bits.push(`user ${arg.userId}`)
@@ -1763,16 +1827,48 @@ export default {
 			if (arg.status != null) bits.push(learnStatusMessage(arg.status))
 			return bits.join(' · ')
 		},
+		processAccessControlEvents(events) {
+			if (!this.accessControlEventQueueInitialized) {
+				const latestEvent = events[events.length - 1]
+				this.lastProcessedAccessControlEvent = latestEvent
+					? eventKey(latestEvent)
+					: null
+				this.accessControlEventQueueInitialized = true
+				return
+			}
+			const previousIndex = this.lastProcessedAccessControlEvent
+				? events.findIndex(
+						(event) =>
+							eventKey(event) ===
+							this.lastProcessedAccessControlEvent,
+					)
+				: -1
+			const pendingEvents =
+				previousIndex >= 0
+					? events.slice(previousIndex + 1)
+					: this.lastProcessedAccessControlEvent
+						? events.slice(-1)
+						: events
+			for (const event of pendingEvents) {
+				const payload = eventPayload(event)
+				if (event.event === 'credential learn progress') {
+					this.handleLearnProgress(payload)
+				} else if (event.event === 'credential learn completed') {
+					this.handleLearnCompleted(payload)
+				}
+			}
+			const latestEvent = events[events.length - 1]
+			this.lastProcessedAccessControlEvent = latestEvent
+				? eventKey(latestEvent)
+				: null
+		},
 	},
 	watch: {
-		'node.eventsQueue.length'(_n, _o) {
-			const evt = this.node.eventsQueue[this.node.eventsQueue.length - 1]
-			if (!evt) return
-			if (evt.event === 'credential learn progress') {
-				this.handleLearnProgress(evt.args?.[1] ?? evt.args?.[0])
-			} else if (evt.event === 'credential learn completed') {
-				this.handleLearnCompleted(evt.args?.[1] ?? evt.args?.[0])
-			}
+		'node.eventsQueue': {
+			handler(events) {
+				this.processAccessControlEvents(events)
+			},
+			deep: 1,
 		},
 	},
 	beforeUnmount() {
@@ -1780,6 +1876,7 @@ export default {
 	},
 	mounted() {
 		this._retryFlashTimers = []
+		this.processAccessControlEvents(this.node.eventsQueue)
 		if (this.state?.primaryEndpoint != null) {
 			this.endpointIndex = this.state.primaryEndpoint
 		}
@@ -1792,7 +1889,7 @@ export default {
 			.then(() => {
 				if (
 					this.currentEndpoint?.capabilities.supportsAdminCode &&
-					this.currentEndpoint.adminCode === undefined
+					this.currentEndpoint.adminCodeSet === undefined
 				) {
 					this.app.apiRequest(
 						'accessControlGetAdminCode',

@@ -158,7 +158,16 @@ export default {
 		typeOptions() {
 			if (!this.capabilities) return []
 			return this.capabilities.supportedCredentialTypes
-				.filter((t) => isDirectEntry(t.type))
+				.filter(
+					(t) =>
+						isDirectEntry(t.type) &&
+						(this.editMode ||
+							nextFreeCredentialSlot(
+								this.credentials,
+								t.type,
+								t.numberOfCredentialSlots,
+							) !== undefined),
+				)
 				.map((t) => ({
 					title: credentialTypeLabel(t.type),
 					value: t.type,
@@ -178,7 +187,9 @@ export default {
 			return this.form.type === UserCredentialType.PINCode
 		},
 		canSave() {
-			if (!this.form.data || !this.form.userId) return false
+			if (!this.form.data || !this.form.userId || this.form.slot < 1) {
+				return false
+			}
 			const cap = this.selectedTypeCap
 			if (!cap) return false
 			if (
@@ -215,7 +226,8 @@ export default {
 							this.credentials,
 							defaultType,
 							cap?.numberOfCredentialSlots ?? 1,
-						),
+						) ??
+						0,
 					data: this.initial?.data ?? '',
 				}
 				this.reveal = false
@@ -226,11 +238,12 @@ export default {
 			const cap = this.capabilities?.supportedCredentialTypes.find(
 				(t) => t.type === newType,
 			)
-			this.form.slot = nextFreeCredentialSlot(
-				this.credentials,
-				newType,
-				cap?.numberOfCredentialSlots ?? 1,
-			)
+			this.form.slot =
+				nextFreeCredentialSlot(
+					this.credentials,
+					newType,
+					cap?.numberOfCredentialSlots ?? 1,
+				) ?? 0
 		},
 	},
 	methods: {
