@@ -145,6 +145,11 @@ describe('HTTP contract: settings, restart, statistics, versions', () => {
 				message:
 					'Gateway is restarting, wait a moment before doing another request',
 			})
+
+			const followUp = await harness.request
+				.post('/api/settings')
+				.send({ gateway: { type: 1 } })
+			expect(followUp.body).toEqual(res.body)
 		})
 
 		it('treats an empty body as a forced restart request, echoing the stored settings back', async () => {

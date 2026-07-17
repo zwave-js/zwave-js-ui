@@ -40,12 +40,12 @@ export interface AppRuntimeDeps {
 }
 
 export class AppRuntime {
-	private gateway?: GatewayPort
-	private zniffer?: ZnifferPort
-	private pluginsRouter?: Router
+	private _gateway?: GatewayPort
+	private _zniffer?: ZnifferPort
+	private _pluginsRouter?: Router
 	private plugins: CustomPlugin[] = []
-	private restarting = false
-	private ownsDebugSession = false
+	private _restarting = false
+	private _ownsDebugSession = false
 
 	// `BackupManager.init()`/`.close()`'s `owner` parameter doesn't exist in
 	// this layer's own `BackupManager.ts` - it's this (base) layer's own,
@@ -63,73 +63,73 @@ export class AppRuntime {
 
 	constructor(deps: AppRuntimeDeps) {
 		this.deps = deps
-		this.gateway = deps.gateway
-		this.zniffer = deps.zniffer
-		this.restarting = deps.restarting ?? false
+		this._gateway = deps.gateway
+		this._zniffer = deps.zniffer
+		this._restarting = deps.restarting ?? false
 	}
 
-	getGateway(): GatewayPort | undefined {
-		return this.gateway
+	get gateway(): GatewayPort | undefined {
+		return this._gateway
 	}
 
 	private setGateway(value: GatewayPort | undefined): void {
-		this.gateway = value
+		this._gateway = value
 	}
 
 	requireGateway(): GatewayPort {
-		if (this.gateway === undefined) {
+		if (this._gateway === undefined) {
 			throw new Error('Gateway is not initialized')
 		}
-		return this.gateway
+		return this._gateway
 	}
 
 	requireZwaveClient(): ZwaveClientPort {
-		if (this.gateway?.zwave === undefined) {
+		if (this._gateway?.zwave === undefined) {
 			throw new Error('Z-Wave client not inited')
 		}
-		return this.gateway.zwave
+		return this._gateway.zwave
 	}
 
-	getZniffer(): ZnifferPort | undefined {
-		return this.zniffer
+	get zniffer(): ZnifferPort | undefined {
+		return this._zniffer
 	}
 
 	private setZniffer(value: ZnifferPort | undefined): void {
-		this.zniffer = value
+		this._zniffer = value
 	}
 
 	requireZniffer(): ZnifferPort {
-		if (this.zniffer === undefined) {
+		if (this._zniffer === undefined) {
 			throw new Error('Zniffer is not initialized')
 		}
-		return this.zniffer
+		return this._zniffer
 	}
 
-	getPluginsRouter(): Router | undefined {
-		return this.pluginsRouter
+	get pluginsRouter(): Router | undefined {
+		return this._pluginsRouter
 	}
 
 	private setPluginsRouter(value: Router | undefined): void {
-		this.pluginsRouter = value
+		this._pluginsRouter = value
 	}
 
-	isRestarting(): boolean {
-		return this.restarting
+	get restarting(): boolean {
+		return this._restarting
 	}
 
 	setRestarting(value: boolean): void {
-		this.restarting = value
+		this._restarting = value
 	}
 
 	// Tracks whether this instance's own routes started the currently-active
 	// debug session, so shutdown only auto-cancels a session it owns instead
 	// of a different, concurrently-live instance's active capture.
-	isOwningDebugSession(): boolean {
-		return this.ownsDebugSession
+	get ownsDebugSession(): boolean {
+		return this._ownsDebugSession
 	}
 
 	setOwnsDebugSession(value: boolean): void {
-		this.ownsDebugSession = value
+		this._ownsDebugSession = value
 	}
 
 	async loadSnippets(): Promise<void> {
@@ -163,7 +163,7 @@ export class AppRuntime {
 			}
 		}
 
-		const snippetsCache = this.gateway?.zwave?.cacheSnippets ?? []
+		const snippetsCache = this._gateway?.zwave?.cacheSnippets ?? []
 		return [...snippetsCache, ...this.defaultSnippets, ...snippets]
 	}
 
@@ -174,8 +174,8 @@ export class AppRuntime {
 	}
 
 	async startGateway(settings: PersistedSettings): Promise<void> {
-		let mqtt!: MqttClient
-		let zwave!: ZWaveClient
+		let mqtt: MqttClient | undefined
+		let zwave: ZWaveClient | undefined
 
 		if (isAuthEnabled() && !process.env.SESSION_SECRET) {
 			logger.warn(
@@ -267,13 +267,13 @@ export class AppRuntime {
 
 	async shutdown(): Promise<void> {
 		try {
-			await this.closeIfPresent(this.gateway)
+			await this.closeIfPresent(this._gateway)
 		} catch (error) {
 			logger.error('Error while closing gateway', error)
 		}
 
 		try {
-			await this.closeIfPresent(this.zniffer)
+			await this.closeIfPresent(this._zniffer)
 		} catch (error) {
 			logger.error('Error while closing zniffer', error)
 		}

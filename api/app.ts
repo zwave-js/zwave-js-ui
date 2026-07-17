@@ -441,7 +441,7 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 
 	// must be placed before history middleware
 	app.use(function (req, res, next) {
-		const pluginsRouter = runtime.getPluginsRouter()
+		const pluginsRouter = runtime.pluginsRouter
 		if (pluginsRouter !== undefined) {
 			pluginsRouter(req, res, next)
 		} else {
@@ -524,7 +524,7 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 			// Client: https://socket.io/docs/v4/client-api/#socketemiteventname-args
 			socket.on(inboundEvents.init, (data, cb = noop) => {
 				const currentGw = runtime.requireGateway()
-				const currentZniffer = runtime.getZniffer()
+				const currentZniffer = runtime.zniffer
 				cb({
 					...(currentGw.zwave?.getState() ?? {}),
 					...(currentZniffer
@@ -837,10 +837,7 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 		}
 
 		try {
-			if (
-				runtime.isOwningDebugSession() &&
-				debugManager.isSessionActive()
-			) {
+			if (runtime.ownsDebugSession && debugManager.isSessionActive()) {
 				await debugManager.cancelSession()
 				runtime.setOwnsDebugSession(false)
 			}

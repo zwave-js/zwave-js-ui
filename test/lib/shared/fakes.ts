@@ -174,7 +174,7 @@ export function createFakeZniffer(
 		setFrequency: vi.fn(() => Promise.resolve(undefined)),
 		setLRChannelConfig: vi.fn(() => Promise.resolve(undefined)),
 		saveCaptureToFile: vi.fn(() => Promise.resolve('/tmp/capture.zlf')),
-		// Returns a promise like the real method, so the missing await in production leaves an unresolved promise that serializes to {} over the wire
+		// Return a promise to mirror the real async API
 		loadCaptureFromBuffer: vi.fn(() => Promise.resolve(undefined)),
 		close: vi.fn(() => Promise.resolve(undefined)),
 		...overrides,

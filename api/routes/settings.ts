@@ -79,7 +79,7 @@ export function registerSettingsRoutes(
 		const data = {
 			success: true,
 			settings,
-			devices: runtime.getGateway()?.zwave?.devices ?? {},
+			devices: runtime.gateway?.zwave?.devices ?? {},
 			scales: scales,
 			sslDisabled: sslDisabled(),
 			managedExternally,
@@ -120,7 +120,7 @@ export function registerSettingsRoutes(
 		isAuthenticated,
 		async function (req, res) {
 			try {
-				if (runtime.isRestarting()) {
+				if (runtime.restarting) {
 					throw Error(
 						'Gateway is restarting, wait a moment before doing another request',
 					)
@@ -134,7 +134,7 @@ export function registerSettingsRoutes(
 
 				const actualSettings = jsonStore.get(store.settings)
 
-				// TODO: validate settings using calss-validator
+				// TODO: validate settings using class-validator
 				if (settings && Object.keys(settings).length > 0) {
 					const gatewayChanged = !utils.deepEqual(
 						actualSettings.gateway,
@@ -181,7 +181,7 @@ export function registerSettingsRoutes(
 
 						logger.log('debug', 'Z-Wave settings changed: %o', {
 							changedKeys: changedZwaveKeys,
-							hasDriver: !!runtime.getGateway()?.zwave?.driver,
+							hasDriver: !!runtime.gateway?.zwave?.driver,
 						})
 
 						const onlyEditableChanged = changedZwaveKeys.every(
@@ -194,15 +194,14 @@ export function registerSettingsRoutes(
 							{
 								onlyEditableChanged,
 								changedKeysLength: changedZwaveKeys.length,
-								hasDriver:
-									!!runtime.getGateway()?.zwave?.driver,
+								hasDriver: !!runtime.gateway?.zwave?.driver,
 							},
 						)
 
 						if (
 							onlyEditableChanged &&
 							changedZwaveKeys.length > 0 &&
-							runtime.getGateway()?.zwave?.driver
+							runtime.gateway?.zwave?.driver
 						) {
 							canUpdateZwaveOptions = true
 							logger.info(
@@ -235,7 +234,7 @@ export function registerSettingsRoutes(
 					await jsonStore.put(store.settings, settings)
 
 					// Freshly resolved, not reused from above, so a concurrent restart can't leave this observing a stale gateway
-					const gwForDriverUpdate = runtime.getGateway()
+					const gwForDriverUpdate = runtime.gateway
 					if (
 						canUpdateZwaveOptions &&
 						gwForDriverUpdate?.zwave?.driver
@@ -319,7 +318,6 @@ export function registerSettingsRoutes(
 					shouldRestart,
 				})
 			} catch (error) {
-				runtime.setRestarting(false)
 				logger.error(error)
 				res.json({ success: false, message: getErrorMessage(error) })
 			}
@@ -332,7 +330,7 @@ export function registerSettingsRoutes(
 		isAuthenticated,
 		async function (req, res) {
 			try {
-				if (runtime.isRestarting()) {
+				if (runtime.restarting) {
 					throw Error(
 						'Gateway is already restarting, wait a moment before doing another request',
 					)
@@ -354,7 +352,7 @@ export function registerSettingsRoutes(
 				}
 				await runtime.startGateway(settings)
 
-				const oldZniffer = runtime.getZniffer()
+				const oldZniffer = runtime.zniffer
 				if (oldZniffer) {
 					await oldZniffer.close()
 				}
@@ -378,7 +376,7 @@ export function registerSettingsRoutes(
 		isAuthenticated,
 		async function (req, res) {
 			try {
-				if (runtime.isRestarting()) {
+				if (runtime.restarting) {
 					throw Error(
 						'Gateway is restarting, wait a moment before doing another request',
 					)
@@ -405,7 +403,7 @@ export function registerSettingsRoutes(
 
 				await jsonStore.put(store.settings, settings)
 
-				const gw = runtime.getGateway()
+				const gw = runtime.gateway
 				if (gw && gw.zwave) {
 					if (enableStatistics) {
 						gw.zwave.enableStatistics()

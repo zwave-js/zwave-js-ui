@@ -20,7 +20,7 @@ export function registerHealthRoutes(
 		let mqtt: Record<string, any> | boolean = false
 		let zwave: boolean = false
 
-		const gw = runtime.getGateway()
+		const gw = runtime.gateway
 		if (gw) {
 			mqtt = gw.mqtt?.getStatus() ?? false
 			zwave = gw.zwave?.getStatus().status ?? false
@@ -43,8 +43,7 @@ export function registerHealthRoutes(
 			return
 		}
 
-		const status =
-			runtime.getGateway()?.[client]?.getStatus().status ?? false
+		const status = runtime.gateway?.[client]?.getStatus().status ?? false
 		res.status(status ? 200 : 500).send(status ? 'Ok' : 'Error')
 	})
 
