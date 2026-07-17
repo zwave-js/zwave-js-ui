@@ -174,6 +174,8 @@ import {
 import { SceneService } from './zwave/SceneService.ts'
 import { GroupService, GroupServiceGeneration } from './zwave/GroupService.ts'
 import { AssociationService } from './zwave/AssociationService.ts'
+import { FirmwareUpdateService } from './zwave/FirmwareUpdateService.ts'
+import { InclusionCoordinator } from './zwave/InclusionCoordinator.ts'
 
 export type { HassDevice } from '../hass/types.ts'
 export { ZUIScheduleEntryLockMode }
@@ -745,17 +747,6 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	private _devices: Record<string, Partial<ZUINode>>
 	private driverInfo: ZUIDriverInfo
 	private status: ZwaveClientStatus
-	// used to store node info before inclusion like name and location
-	private tmpNode: utils.DeepPartial<ZUINode>
-	// tells if a node replacement is in progress
-	private isReplacing = false
-	// node ids surfaced to the UI via `node found` that have not yet hit
-	// `node added` — if inclusion fails before the interview completes
-	// they're orphans stuck at ProtocolInfo and must be cleared (see #4639)
-	private _pendingInclusionNodeIds: Set<number> = new Set()
-
-	private hasUserCallbacks = false
-
 	private _error: string | undefined
 	private _scanComplete: boolean
 	private _cntStatus: string
@@ -787,7 +778,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		return {
 			getDriver: () => this._driver,
 			getConfig: () => this.cfg,
-			getHasUserCallbacks: () => this.hasUserCallbacks,
+			getHasUserCallbacks: () =>
+				this._inclusionCoordinator.hasUserCallbacks,
 			onHardReset: () => this.init(),
 			logger,
 			serverLogger: LogManager.module('Z-Wave-Server'),
@@ -828,10 +820,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	}
 
 	private statelessTimeouts: Record<string, NodeJS.Timeout>
-	private commandsTimeout: NodeJS.Timeout
 	private healTimeout: NodeJS.Timeout
 	private updatesCheckTimeout: NodeJS.Timeout
-	private firmwareUpdateCheckTimeout: NodeJS.Timeout
 	private pollIntervals: Record<string, NodeJS.Timeout>
 
 	private _lockNeighborsRefresh: boolean
@@ -842,6 +832,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	// Generation token for the current GroupService instance; cancelled and replaced on every init(), see GroupServiceGeneration for the cancellation mechanism
 	private _groupServiceGeneration: GroupServiceGeneration | undefined
 	private _associationService: AssociationService
+	private _firmwareUpdateService: FirmwareUpdateService
+	private _inclusionCoordinator: InclusionCoordinator
 
 	private nvmEvent: string
 
@@ -856,20 +848,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	private valuesObservers: Record<string, ValueIdObserver> = {}
 	private hassDeviceStore: HassDeviceStore
 
-	private _grantResolve: (grant: InclusionGrant | false) => void | null
-	private _dskResolve: (dsk: string | false) => void | null
-
 	private throttledFunctions: Map<
 		string,
 		{ lastUpdate: number; fn: () => void; timeout: NodeJS.Timeout }
 	> = new Map()
-
-	private inclusionUserCallbacks: InclusionUserCallbacks = {
-		grantSecurityClasses: this._onGrantSecurityClasses.bind(this),
-		validateDSKAndEnterPIN: this._onValidateDSK.bind(this),
-		abort: this._onAbortInclusion.bind(this),
-	}
-	private _inclusionState: InclusionState = undefined
 
 	public get driverReady() {
 		return this.driver && this._driverReady && !this.closed
@@ -1154,6 +1136,183 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			associationLogPort,
 		)
 
+		const firmwareDriverPort = {
+			getDriver: () => this._driver,
+			isDriverReady: () => this.driverReady,
+		}
+		const createFirmwarePersistenceRestore = (
+			homeHex: string | undefined,
+		) => {
+			if (!homeHex) {
+				return undefined
+			}
+			const storedNodes = (jsonStore.get(store.nodes) ||
+				{}) as NodesStoreRecordByHome
+			const previousNodes = Object.fromEntries(
+				Object.entries(storedNodes[homeHex] || {}).map(
+					([nodeId, node]) => [nodeId, { ...node }],
+				),
+			)
+			return () => this._persistNodesSnapshot(previousNodes, homeHex)
+		}
+		const firmwareNodeStorePort = {
+			getNode: (nodeId: number) => this._nodes.get(nodeId),
+			getStoreNode: (nodeId: number) => this.storeNodes[nodeId],
+			ensureStoreNode: (nodeId: number) => {
+				if (!this.storeNodes[nodeId]) {
+					this.storeNodes[nodeId] = {}
+				}
+				return this.storeNodes[nodeId]
+			},
+			updateStoreNodes: async () => {
+				const homeHex = this.homeHex
+				const restore = createFirmwarePersistenceRestore(homeHex)
+				await this.updateStoreNodes()
+				return restore
+			},
+			persistStagedNodeUpdates: async (
+				staged: ReadonlyArray<{
+					nodeId: number
+					availableFirmwareUpdates: FirmwareUpdateInfo[]
+					lastFirmwareUpdateCheck: number
+					firmwareUpdatesDismissed: { [version: string]: boolean }
+				}>,
+			) => {
+				// Persist a detached snapshot so lifecycle fencing controls publication
+				const homeHex = this.homeHex
+				const restore = createFirmwarePersistenceRestore(homeHex)
+				const snapshot: NodesStoreRecord = {}
+				for (const key of Object.keys(this.storeNodes)) {
+					snapshot[key] = this.storeNodes[key]
+				}
+				for (const entry of staged) {
+					const existing = snapshot[entry.nodeId]
+					const cloned: Partial<ZUINode> = existing
+						? { ...existing }
+						: {}
+					cloned.availableFirmwareUpdates =
+						entry.availableFirmwareUpdates
+					cloned.lastFirmwareUpdateCheck =
+						entry.lastFirmwareUpdateCheck
+					cloned.firmwareUpdatesDismissed =
+						entry.firmwareUpdatesDismissed
+					snapshot[entry.nodeId] = cloned
+				}
+				await this._updateStoreNodesSnapshot(snapshot, true, homeHex)
+				return restore
+			},
+			emitNodeUpdate: (
+				node: ZUINode,
+				changedProps: utils.DeepPartial<ZUINode>,
+			) => this.emitNodeUpdate(node, changedProps),
+		}
+		const firmwareSocketPort = {
+			sendToSocket: (event: string, data: unknown) =>
+				this.sendToSocket(event, data),
+			throttle: (key: string, fn: () => void, wait: number) =>
+				this.throttle(key, fn, wait),
+			clearThrottle: (key: string) => this.clearThrottle(key),
+		}
+		const getClientCfg = () => this.cfg
+		const firmwareConfigPort = {
+			get disableAutomaticFirmwareUpdateChecks() {
+				return !!getClientCfg().disableAutomaticFirmwareUpdateChecks
+			},
+		}
+		const firmwareBackupPort = {
+			get backupOnEvent() {
+				return backupManager.backupOnEvent
+			},
+			backupNvm: () => backupManager.backupNvm(),
+		}
+		const firmwareExtractionPort = {
+			guessFirmwareFileFormat: (
+				name: string,
+				data: Uint8Array<ArrayBuffer>,
+			) => guessFirmwareFileFormat(name, data),
+			extractFirmware: (
+				data: Uint8Array<ArrayBuffer>,
+				format: FirmwareFileFormat,
+			) => extractFirmware(data, format),
+			tryUnzipFirmwareFile: (data: Uint8Array<ArrayBuffer>) =>
+				tryUnzipFirmwareFile(data),
+			isUint8Array: (value: unknown): value is Uint8Array =>
+				isUint8Array(value),
+		}
+		if (this._firmwareUpdateService) {
+			// Preserve the service because generation fencing cancels its in-flight work
+			this._firmwareUpdateService.resetGeneration()
+		} else {
+			this._firmwareUpdateService = new FirmwareUpdateService(
+				firmwareDriverPort,
+				firmwareNodeStorePort,
+				firmwareSocketPort,
+				firmwareConfigPort,
+				firmwareBackupPort,
+				firmwareExtractionPort,
+				logger,
+				(event: string) => {
+					this.nvmEvent = event
+				},
+			)
+		}
+
+		const inclusionDriverPort = {
+			getDriver: () => this._driver,
+			isDriverReady: () => this.driverReady,
+		}
+		const inclusionSocketPort = {
+			sendToSocket: (event: string, data: unknown) =>
+				this.sendToSocket(event, data),
+		}
+		const inclusionBackupPort = {
+			get backupOnEvent() {
+				return backupManager.backupOnEvent
+			},
+			backupNvm: () => backupManager.backupNvm(),
+		}
+		const inclusionConfigPort = {
+			get commandsTimeout() {
+				return getClientCfg().commandsTimeout || 0
+			},
+			get serverEnabled() {
+				return !!getClientCfg().serverEnabled
+			},
+		}
+		const inclusionQRPort = {
+			parseQRCodeString: (qrString: string) =>
+				parseQRCodeString(qrString),
+		}
+		const inclusionControllerEventPort = {
+			emitControllerEvent: (eventName: string, ...args: unknown[]) => {
+				this.emit('event', EventSource.CONTROLLER, eventName, ...args)
+			},
+		}
+		if (this._inclusionCoordinator) {
+			// Preserve the coordinator because installed driver callbacks capture it
+			this._inclusionCoordinator.reset()
+		} else {
+			this._inclusionCoordinator = new InclusionCoordinator(
+				inclusionDriverPort,
+				inclusionSocketPort,
+				inclusionControllerEventPort,
+				inclusionBackupPort,
+				inclusionConfigPort,
+				inclusionQRPort,
+				logger,
+				() => this._serverManager,
+				(event: string) => {
+					this.nvmEvent = event
+				},
+				{
+					grantSecurityClasses: socketEvents.grantSecurityClasses,
+					validateDSK: socketEvents.validateDSK,
+					inclusionAborted: socketEvents.inclusionAborted,
+					controller: socketEvents.controller,
+				},
+			)
+		}
+
 		this._devices = {}
 		this.driverInfo = {}
 		this.healTimeout = null
@@ -1363,34 +1522,15 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	}
 
 	setUserCallbacks() {
-		this.hasUserCallbacks = true
-		if (!this._driver || !this.cfg.serverEnabled) {
-			return
-		}
-
-		logger.info('Setting user callbacks')
-
-		this.driver.updateOptions({
-			inclusionUserCallbacks: {
-				...this.inclusionUserCallbacks,
-			},
-		})
+		this._inclusionCoordinator.setUserCallbacks()
 	}
 
 	removeUserCallbacks() {
-		this.hasUserCallbacks = false
-		if (!this._driver || !this.cfg.serverEnabled) {
-			return
-		}
+		this._inclusionCoordinator.removeUserCallbacks()
+	}
 
-		logger.info('Removing user callbacks')
-
-		this.driver.updateOptions({
-			inclusionUserCallbacks: undefined,
-		})
-
-		// when no user is connected, give back the control to HA server
-		this._serverManager?.handInclusionControlBack()
+	get hasUserCallbacks(): boolean {
+		return this._inclusionCoordinator.hasUserCallbacks
 	}
 
 	/**
@@ -1506,11 +1646,6 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		this.closed = true
 		this.driverReady = false
 
-		if (this.commandsTimeout) {
-			clearTimeout(this.commandsTimeout)
-			this.commandsTimeout = null
-		}
-
 		if (this.restartTimeout) {
 			clearTimeout(this.restartTimeout)
 			this.restartTimeout = null
@@ -1526,10 +1661,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			this.updatesCheckTimeout = null
 		}
 
-		if (this.firmwareUpdateCheckTimeout) {
-			clearTimeout(this.firmwareUpdateCheckTimeout)
-			this.firmwareUpdateCheckTimeout = null
-		}
+		this._inclusionCoordinator.reset()
+
+		this._firmwareUpdateService.resetGeneration()
 
 		if (this.statelessTimeouts) {
 			for (const k in this.statelessTimeouts) {
@@ -1584,7 +1718,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			info: this.getInfo(),
 			error: this.error,
 			cntStatus: this.cntStatus,
-			inclusionState: this._inclusionState,
+			inclusionState: this._inclusionCoordinator.inclusionState,
 		}
 	}
 
@@ -2009,9 +2143,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		// when server is not enabled, disable the user callbacks set/remove
 		// so it can be used through MQTT
 		if (!this.cfg.serverEnabled) {
-			zwaveOptions.inclusionUserCallbacks = {
-				...this.inclusionUserCallbacks,
-			}
+			zwaveOptions.inclusionUserCallbacks =
+				this._inclusionCoordinator.getUserCallbacks()
 		}
 
 		if (this.cfg.scales) {
@@ -2111,10 +2244,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			logger.info(`Connecting to ${this.cfg.port}`)
 
 			// setup user callbacks only if there are connected clients
-			this.hasUserCallbacks =
+			const hasConnectedClients =
 				(await this.socket.fetchSockets()).length > 0
 
-			if (this.hasUserCallbacks) {
+			if (hasConnectedClients) {
 				this.setUserCallbacks()
 			}
 
@@ -2336,29 +2469,37 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		}
 	}
 
-	async updateStoreNodes(throwError = true) {
-		try {
-			if (!this.homeHex) {
-				logger.warn('HomeHex not set, skipping storeDevices')
-				return
+	private async _persistNodesSnapshot(
+		snapshot: NodesStoreRecord,
+		homeHex = this.homeHex,
+	): Promise<void> {
+		if (!homeHex) {
+			logger.warn('HomeHex not set, skipping storeDevices')
+			return
+		}
+
+		// Requires that getStoreNodes ran first to migrate legacy shapes
+		const storedNodes = jsonStore.get(store.nodes) as NodesStoreRecordByHome
+		const nodes = { ...storedNodes }
+
+		nodes[homeHex] = Object.keys(snapshot).reduce((acc, k) => {
+			if (Object.keys(snapshot[k]).length > 0) {
+				acc[k] = snapshot[k]
 			}
+			return acc
+		}, {} as NodesStoreRecord)
 
-			// Assumes store.nodes is keyed by home ID, which is true once getStoreNodes has migrated any legacy on-disk shape
-			const nodes = jsonStore.get(store.nodes) as NodesStoreRecordByHome
+		logger.debug('Updating store nodes.json')
+		await jsonStore.put(store.nodes, nodes)
+	}
 
-			// remove empty objects keys
-			nodes[this.homeHex] = Object.keys(this.storeNodes).reduce(
-				(acc, k) => {
-					if (Object.keys(this.storeNodes[k]).length > 0) {
-						acc[k] = this.storeNodes[k]
-					}
-					return acc
-				},
-				{} as NodesStoreRecord,
-			)
-
-			logger.debug('Updating store nodes.json')
-			await jsonStore.put(store.nodes, nodes)
+	private async _updateStoreNodesSnapshot(
+		snapshot: NodesStoreRecord,
+		throwError = true,
+		homeHex = this.homeHex,
+	): Promise<void> {
+		try {
+			await this._persistNodesSnapshot(snapshot, homeHex)
 		} catch (error) {
 			logger.error(
 				`Error while updating store nodes: ${error.message}`,
@@ -2368,6 +2509,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				throw error
 			}
 		}
+	}
+
+	async updateStoreNodes(throwError = true) {
+		await this._updateStoreNodesSnapshot(this.storeNodes, throwError)
 	}
 
 	/**
@@ -2967,7 +3112,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		info.status = this.status
 		info.error = this.error
 		info.cntStatus = this._cntStatus
-		info.inclusionState = this._inclusionState
+		info.inclusionState = this._inclusionCoordinator.inclusionState
 		info.appVersion = utils.getVersion()
 		info.zwaveVersion = libVersion
 		info.serverVersion = serverVersion
@@ -3088,11 +3233,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 */
 	stopLearnMode(): Promise<boolean> {
 		if (this.driverReady) {
-			if (this.commandsTimeout) {
-				clearTimeout(this.commandsTimeout)
-				this.commandsTimeout = null
-			}
-			return this._driver.controller.stopJoiningNetwork()
+			return this._inclusionCoordinator.stopLearnMode()
 		}
 
 		throw new DriverNotReadyError()
@@ -3103,24 +3244,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 */
 	async startLearnMode(): Promise<JoinNetworkResult> {
 		if (this.driverReady) {
-			if (this.commandsTimeout) {
-				clearTimeout(this.commandsTimeout)
-				this.commandsTimeout = null
-			}
-
-			this.commandsTimeout = setTimeout(
-				() => {
-					this.stopLearnMode().catch(logger.error)
-				},
-				(this.cfg.commandsTimeout || 0) * 1000 || 30000,
-			)
-
-			const joinNetworkOptions: JoinNetworkOptions = {
-				strategy: JoinNetworkStrategy.Default,
-			}
-
-			return this._driver.controller.beginJoiningNetwork(
-				joinNetworkOptions,
+			return this._inclusionCoordinator.startLearnMode(
+				JoinNetworkStrategy.Default,
 			)
 		}
 
@@ -3154,72 +3279,14 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			provisioning?: PlannedProvisioningEntry
 		},
 	): Promise<boolean> {
-		try {
-			if (!this.driverReady) {
-				throw new DriverNotReadyError()
-			}
-
-			if (backupManager.backupOnEvent) {
-				this.nvmEvent = 'before_replace_failed_node'
-				await backupManager.backupNvm()
-			}
-
-			if (this.commandsTimeout) {
-				clearTimeout(this.commandsTimeout)
-				this.commandsTimeout = null
-			}
-
-			this.commandsTimeout = setTimeout(
-				() => {
-					this.stopInclusion().catch(logger.error)
-				},
-				(this.cfg.commandsTimeout || 0) * 1000 || 30000,
-			)
-
-			this.isReplacing = true
-			// by default replaceFailedNode is secured, pass true to make it not secured
-			if (strategy === InclusionStrategy.Security_S2) {
-				let inclusionOptions: ReplaceNodeOptions
-				if (options?.qrString) {
-					const parsedQr = await parseQRCodeString(options.qrString)
-
-					if (parsedQr) {
-						// when replacing a failed node you cannot use smart start so always use qrcode for provisioning
-						options.provisioning = parsedQr
-					} else {
-						throw Error(`Invalid QR code string`)
-					}
-				}
-				if (options?.provisioning) {
-					inclusionOptions = {
-						strategy,
-						provisioning: options.provisioning,
-					}
-				} else {
-					inclusionOptions = {
-						strategy,
-					}
-				}
-				return this._driver.controller.replaceFailedNode(
-					nodeId,
-					inclusionOptions,
-				)
-			} else if (
-				strategy === InclusionStrategy.Insecure ||
-				strategy === InclusionStrategy.Security_S0
-			) {
-				return this._driver.controller.replaceFailedNode(nodeId, {
-					strategy,
-				})
-			} else {
-				throw Error(
-					`Inclusion strategy not supported with replace failed node api`,
-				)
-			}
-		} catch (error) {
-			this.isReplacing = false
-			throw error
+		if (!this.driverReady) {
+			throw new DriverNotReadyError()
 		}
+		return this._inclusionCoordinator.replaceFailedNode(
+			nodeId,
+			strategy,
+			options,
+		)
 	}
 
 	async getAvailableFirmwareUpdates(
@@ -3227,72 +3294,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		options?: GetFirmwareUpdatesOptions,
 	) {
 		if (this.driverReady) {
-			const result =
-				await this._driver.controller.getAvailableFirmwareUpdates(
-					nodeId,
-					options,
-				)
-
-			// return [
-			// 	{
-			// 		version: '1.13',
-			// 		downgrade: true,
-			// 		channel: 'stable',
-			// 		normalizedVersion: '1.13',
-			// 		changelog: `* Fixed some bugs by [robertsLando](https://github.com/robertsLando)\n* Added other bugs\n* Very long changelog line that should not overflow the UI. Very long changelog line that should not overflow the UI Very long changelog line that should not overflow the UI`,
-			// 		files: [
-			// 			{
-			// 				target: 0,
-			// 				integrity:
-			// 					'sha256:123456789012345678901234567890123456789012345678901234567890125',
-			// 				url: 'https://example.com/firmware0.bin',
-			// 			},
-			// 			{
-			// 				target: 1,
-			// 				integrity:
-			// 					'sha256:123456789012345678901234567890123456789012345678901234567890123',
-			// 				url: 'https://example.com/firmware1.bin',
-			// 			},
-			// 		],
-			// 		device: {
-			// 			manufacturerId: 123,
-			// 			productType: 456,
-			// 			productId: 789,
-			// 			firmwareVersion: '1.13',
-			// 			rfRegion: 1,
-			// 		},
-			// 	},
-			// 	{
-			// 		version: '2.00',
-			// 		downgrade: false,
-			// 		channel: 'beta',
-			// 		normalizedVersion: '1.13',
-			// 		changelog: `* Fixed some bugs by [robertsLando](https://github.com/robertsLando)\n* Added other bugs\n* Very long changelog line that should not overflow the UI. Very long changelog line that should not overflow the UI Very long changelog line that should not overflow the UI`,
-			// 		files: [
-			// 			{
-			// 				target: 0,
-			// 				integrity:
-			// 					'sha256:123456789012345678901234567890123456789012345678901234567890125',
-			// 				url: 'https://example.com/firmware0.bin',
-			// 			},
-			// 			{
-			// 				target: 1,
-			// 				integrity:
-			// 					'sha256:123456789012345678901234567890123456789012345678901234567890123',
-			// 				url: 'https://example.com/firmware1.bin',
-			// 			},
-			// 		],
-			// 		device: {
-			// 			manufacturerId: 123,
-			// 			productType: 456,
-			// 			productId: 789,
-			// 			firmwareVersion: '1.13',
-			// 			rfRegion: 1,
-			// 		},
-			// 	},
-			// ] as FirmwareUpdateInfo[]
-
-			return result
+			return this._firmwareUpdateService.getAvailableFirmwareUpdates(
+				nodeId,
+				options,
+			)
 		}
 
 		throw new DriverNotReadyError()
@@ -3300,12 +3305,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 	async getAllAvailableFirmwareUpdates(options?: GetFirmwareUpdatesOptions) {
 		if (this.driverReady) {
-			const result =
-				await this._driver.controller.getAllAvailableFirmwareUpdates(
-					options,
-				)
-
-			return result
+			return this._firmwareUpdateService.getAllAvailableFirmwareUpdates(
+				options,
+			)
 		}
 
 		throw new DriverNotReadyError()
@@ -3318,232 +3320,36 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		if (!this.driverReady) {
 			throw new DriverNotReadyError()
 		}
-
-		if (this.cfg.disableAutomaticFirmwareUpdateChecks) {
-			logger.info(
-				'Firmware update checks are disabled. Skipping bulk firmware update check.',
-			)
-			return
-		}
-
-		logger.info('Starting bulk firmware update check for all nodes')
-
-		try {
-			const result =
-				await this._driver.controller.getAllAvailableFirmwareUpdates(
-					options,
-				)
-
-			if (result) {
-				const now = Date.now()
-
-				// Process results for each node
-				for (const [nodeId, nodeUpdates] of result) {
-					const filteredUpdates =
-						this._filterFirmwareUpdates(nodeUpdates)
-
-					this._updateNodeFirmwareInfo(nodeId, filteredUpdates, now)
-
-					if (filteredUpdates && filteredUpdates.length > 0) {
-						logger.info(
-							`Found ${filteredUpdates.length} firmware update(s) for node ${nodeId}`,
-						)
-					}
-				}
-
-				// Save to nodes.json
-				await this.updateStoreNodes()
-			}
-
-			return result
-		} catch (error) {
-			logger.error(
-				'Error during bulk firmware update check:',
-				error.message,
-			)
-			throw error
-		}
+		return this._firmwareUpdateService.checkAllNodesFirmwareUpdates(options)
 	}
 
 	/**
 	 * Dismiss firmware update for a specific node and version
 	 */
 	async dismissFirmwareUpdate(nodeId: number, version: string) {
-		// Ensure store entry exists
-		if (!this.storeNodes[nodeId]) {
-			this.storeNodes[nodeId] = {} as any
-		}
-
-		// Initialize dismissal tracking if not exists
-		if (!this.storeNodes[nodeId].firmwareUpdatesDismissed) {
-			this.storeNodes[nodeId].firmwareUpdatesDismissed = {}
-		}
-
-		// Mark version as dismissed
-		this.storeNodes[nodeId].firmwareUpdatesDismissed[version] = true
-
-		// Update in-memory node
-		const node = this._nodes.get(nodeId)
-		if (node) {
-			if (!node.firmwareUpdatesDismissed) {
-				node.firmwareUpdatesDismissed = {}
-			}
-			node.firmwareUpdatesDismissed[version] = true
-
-			// Emit update to frontend
-			this.emitNodeUpdate(node, {
-				firmwareUpdatesDismissed: node.firmwareUpdatesDismissed,
-			})
-		}
-
-		// Save to nodes.json
-		await this.updateStoreNodes()
-		logger.info(`Dismissed firmware update ${version} for node ${nodeId}`)
-
-		return true
-	}
-
-	/**
-	 * Filter firmware updates to remove downgrades
-	 */
-	private _filterFirmwareUpdates(
-		updates: FirmwareUpdateInfo[] | null,
-	): FirmwareUpdateInfo[] {
-		return (updates || []).filter((update) => !update.downgrade)
-	}
-
-	/**
-	 * Clean up dismissed updates map to only contain versions that exist in available updates
-	 */
-	private _cleanDismissedUpdates(
-		filteredUpdates: FirmwareUpdateInfo[],
-		existingDismissed: { [version: string]: boolean },
-	): { [version: string]: boolean } {
-		const cleanedDismissed: { [version: string]: boolean } = {}
-
-		for (const update of filteredUpdates) {
-			if (existingDismissed[update.version]) {
-				cleanedDismissed[update.version] = true
-			}
-		}
-
-		return cleanedDismissed
-	}
-
-	/**
-	 * Update node firmware information in store and memory
-	 */
-	private _updateNodeFirmwareInfo(
-		nodeId: number,
-		filteredUpdates: FirmwareUpdateInfo[],
-		timestamp: number,
-	) {
-		// Ensure store entry exists
-		if (!this.storeNodes[nodeId]) {
-			this.storeNodes[nodeId] = {} as any
-		}
-
-		// Update stored firmware update info
-		this.storeNodes[nodeId].availableFirmwareUpdates = filteredUpdates
-		this.storeNodes[nodeId].lastFirmwareUpdateCheck = timestamp
-
-		// Clean up dismissed updates map
-		const existingDismissed =
-			this.storeNodes[nodeId].firmwareUpdatesDismissed || {}
-		const cleanedDismissed = this._cleanDismissedUpdates(
-			filteredUpdates,
-			existingDismissed,
+		return this._firmwareUpdateService.dismissFirmwareUpdate(
+			nodeId,
+			version,
 		)
-		this.storeNodes[nodeId].firmwareUpdatesDismissed = cleanedDismissed
-
-		// Update in-memory node
-		const node = this._nodes.get(nodeId)
-		if (node) {
-			node.availableFirmwareUpdates = filteredUpdates
-			node.lastFirmwareUpdateCheck = timestamp
-			node.firmwareUpdatesDismissed = cleanedDismissed
-
-			// Emit update to frontend
-			this.emitNodeUpdate(node, {
-				availableFirmwareUpdates: node.availableFirmwareUpdates,
-				lastFirmwareUpdateCheck: node.lastFirmwareUpdateCheck,
-				firmwareUpdatesDismissed: node.firmwareUpdatesDismissed,
-			})
-		}
 	}
 
-	/**
-	 * Check for firmware updates on a specific node
-	 * Called after firmware updates, node interviews, and node additions to refresh availableFirmwareUpdates
-	 */
 	private async _checkNodeFirmwareUpdates(nodeId: number) {
-		if (!this.driverReady) {
-			return
-		}
-
-		if (this.cfg.disableAutomaticFirmwareUpdateChecks) {
-			logger.info(
-				`Firmware update checks are disabled. Skipping check for node ${nodeId}.`,
-			)
-			return
-		}
-
-		try {
-			// Get updated firmware information
-			const updates =
-				await this._driver.controller.getAvailableFirmwareUpdates(
-					nodeId,
-				)
-
-			const filteredUpdates = this._filterFirmwareUpdates(updates)
-			const timestamp = Date.now()
-
-			this._updateNodeFirmwareInfo(nodeId, filteredUpdates, timestamp)
-
-			// Save to nodes.json
-			await this.updateStoreNodes()
-
-			logger.info(
-				`Checked firmware updates for node ${nodeId} after update completion. Found ${filteredUpdates.length} update(s)`,
-			)
-		} catch (error) {
-			logger.error(
-				`Failed to check firmware updates for node ${nodeId} after update: ${error.message}`,
-			)
-		}
+		return this._firmwareUpdateService.checkNodeFirmwareUpdates(nodeId)
 	}
 
 	/**
 	 * Get available non-dismissed firmware updates for a node
 	 */
 	getNodeFirmwareUpdates(nodeId: number): FirmwareUpdateInfo[] {
-		const node = this._nodes.get(nodeId)
-		if (!node?.availableFirmwareUpdates) {
-			return []
-		}
-
-		// Filter out dismissed updates
-		return node.availableFirmwareUpdates.filter((update) => {
-			const dismissed =
-				node.firmwareUpdatesDismissed?.[update.version] || false
-			return !dismissed
-		})
+		return this._firmwareUpdateService.getNodeFirmwareUpdates(nodeId)
 	}
 
 	async firmwareUpdateOTA(nodeId: number, updateInfo: FirmwareUpdateInfo) {
 		if (this.driverReady) {
-			const node = this._nodes.get(nodeId)
-
-			if (node.firmwareUpdate) {
-				throw Error(`Firmware update already in progress`)
-			}
-
-			const result = await this._driver.controller.firmwareUpdateOTA(
+			return this._firmwareUpdateService.firmwareUpdateOTA(
 				nodeId,
 				updateInfo,
 			)
-
-			return result
 		}
 
 		throw new DriverNotReadyError()
@@ -3631,92 +3437,11 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		},
 	): Promise<boolean> {
 		if (this.driverReady) {
-			if (backupManager.backupOnEvent) {
-				this.nvmEvent = 'before_start_inclusion'
-				await backupManager.backupNvm()
-			}
-
-			try {
-				if (this.commandsTimeout) {
-					clearTimeout(this.commandsTimeout)
-					this.commandsTimeout = null
-				}
-
-				if (options.name || options.location) {
-					this.tmpNode = {
-						name: options.name || '',
-						loc: options.location || '',
-					}
-				} else {
-					this.tmpNode = undefined
-				}
-
-				this.commandsTimeout = setTimeout(
-					() => {
-						this.stopInclusion().catch(logger.error)
-					},
-					(this.cfg.commandsTimeout || 0) * 1000 || 30000,
-				)
-
-				let inclusionOptions: InclusionOptions
-
-				switch (strategy) {
-					case InclusionStrategy.Insecure:
-					case InclusionStrategy.Security_S0:
-						inclusionOptions = { strategy }
-						break
-					case InclusionStrategy.SmartStart:
-						throw Error(
-							'In order to use Smart Start add you node to provisioning list',
-						)
-					case InclusionStrategy.Default:
-						inclusionOptions = {
-							strategy,
-							forceSecurity: options?.forceSecurity,
-						}
-						break
-					case InclusionStrategy.Security_S2:
-						if (options?.qrString) {
-							const parsedQr = await parseQRCodeString(
-								options.qrString,
-							)
-							if (!parsedQr) {
-								throw Error(`Invalid QR code string`)
-							}
-
-							if (parsedQr.version === QRCodeVersion.S2) {
-								options.provisioning = parsedQr
-							} else if (
-								parsedQr.version === QRCodeVersion.SmartStart
-							) {
-								await this.provisionSmartStartNode(parsedQr)
-								return true
-							} else {
-								throw Error(`Invalid QR code version`)
-							}
-						}
-						if (options?.provisioning) {
-							inclusionOptions = {
-								strategy,
-								dsk: options.dsk,
-								provisioning: options.provisioning,
-							}
-						} else {
-							inclusionOptions = { strategy, dsk: options.dsk }
-						}
-
-						break
-					default:
-						inclusionOptions = { strategy }
-				}
-
-				this.isReplacing = false
-
-				return this._driver.controller.beginInclusion(inclusionOptions)
-			} catch (error) {
-				this.tmpNode = undefined
-				throw error
-			}
+			return this._inclusionCoordinator.startInclusion(
+				strategy,
+				options,
+				(parsed) => this.provisionSmartStartNode(parsed),
+			)
 		}
 
 		throw new DriverNotReadyError()
@@ -3731,24 +3456,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		},
 	): Promise<boolean> {
 		if (this.driverReady) {
-			if (backupManager.backupOnEvent) {
-				this.nvmEvent = 'before_start_exclusion'
-				await backupManager.backupNvm()
-			}
-
-			if (this.commandsTimeout) {
-				clearTimeout(this.commandsTimeout)
-				this.commandsTimeout = null
-			}
-
-			this.commandsTimeout = setTimeout(
-				() => {
-					this.stopExclusion().catch(logger.error)
-				},
-				(this.cfg.commandsTimeout || 0) * 1000 || 30000,
-			)
-
-			return this._driver.controller.beginExclusion(options)
+			return this._inclusionCoordinator.startExclusion(options)
 		}
 
 		throw new DriverNotReadyError()
@@ -3759,11 +3467,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 */
 	stopExclusion(): Promise<boolean> {
 		if (this.driverReady) {
-			if (this.commandsTimeout) {
-				clearTimeout(this.commandsTimeout)
-				this.commandsTimeout = null
-			}
-			return this._driver.controller.stopExclusion()
+			return this._inclusionCoordinator.stopExclusion()
 		}
 
 		throw new DriverNotReadyError()
@@ -3774,11 +3478,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 */
 	stopInclusion(): Promise<boolean> {
 		if (this.driverReady) {
-			if (this.commandsTimeout) {
-				clearTimeout(this.commandsTimeout)
-				this.commandsTimeout = null
-			}
-			return this._driver.controller.stopInclusion()
+			return this._inclusionCoordinator.stopInclusion()
 		}
 
 		throw new DriverNotReadyError()
@@ -4376,128 +4076,31 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	async firmwareUpdateOTW(
 		file: FwFile | FirmwareUpdateInfo,
 	): Promise<OTWFirmwareUpdateResult> {
-		try {
-			if (backupManager.backupOnEvent) {
-				this.nvmEvent = 'before_controller_fw_update_otw'
-				await backupManager.backupNvm()
-			}
-			let firmware: Firmware
-
-			if (file['files']) {
-				return await this.driver.firmwareUpdateOTW(
-					file as FirmwareUpdateInfo,
-				)
-			}
-
-			file = file as FwFile
-
-			try {
-				const format = guessFirmwareFileFormat(file.name, file.data)
-				firmware = await extractFirmware(file.data, format)
-			} catch (err) {
-				throw Error(
-					`Unable to extract firmware from file '${file.name}'`,
-				)
-			}
-			const result = await this.driver.firmwareUpdateOTW(firmware.data)
-			return result
-		} catch (e) {
-			throw Error(`Error while updating firmware: ${e.message}`)
-		}
+		return this._firmwareUpdateService.firmwareUpdateOTW(file)
 	}
 
 	async updateFirmware(
 		nodeId: number,
 		files: FwFile[],
 	): Promise<FirmwareUpdateResult> {
-		// const result: FirmwareUpdateResult = {
-		// 	status: FirmwareUpdateStatus.Error_Checksum,
-		// 	waitTime: 10,
-		// 	success: false,
-		// 	reInterview: true,
-		// }
-
-		// return Promise.resolve(result)
-
-		if (this.driverReady) {
-			const zwaveNode = this.getNode(nodeId)
-
-			if (!zwaveNode) {
-				throw Error(`Node ${nodeId} not found`)
-			}
-
-			const node = this._nodes.get(nodeId)
-
-			if (node.firmwareUpdate) {
-				throw Error(`Firmware update already in progress`)
-			}
-
-			const firmwares: Firmware[] = []
-
-			for (const f of files) {
-				let { data, name } = f
-				if (isUint8Array(data)) {
-					try {
-						let format: FirmwareFileFormat
-						if (name.endsWith('.zip')) {
-							const extracted = tryUnzipFirmwareFile(data)
-							if (!extracted) {
-								throw Error(
-									`Unable to extract firmware from zip file '${name}'`,
-								)
-							}
-
-							format = extracted.format
-							name = extracted.filename
-							data = extracted.rawData
-						} else {
-							format = guessFirmwareFileFormat(name, data)
-						}
-
-						const firmware = await extractFirmware(data, format)
-						if (f.target !== undefined) {
-							firmware.firmwareTarget = f.target
-						}
-						firmwares.push(firmware)
-					} catch (e) {
-						throw Error(
-							`Unable to extract firmware from file '${name}': ${e.message}`,
-						)
-					}
-				} else {
-					throw Error(`Invalid firmware file ${name} is not a Buffer`)
-				}
-			}
-
-			return zwaveNode.updateFirmware(firmwares)
+		if (!this.driverReady) {
+			throw new DriverNotReadyError()
 		}
-
-		throw new DriverNotReadyError()
+		return this._firmwareUpdateService.updateFirmware(
+			nodeId,
+			files,
+			(id: number) => this.getNode(id),
+		)
 	}
 
 	async abortFirmwareUpdate(nodeId: number) {
-		if (this.driverReady) {
-			const zwaveNode = this.getNode(nodeId)
-
-			if (!zwaveNode) {
-				throw Error(`Node ${nodeId} not found`)
-			}
-
-			await zwaveNode.abortFirmwareUpdate()
-
-			const node = this._nodes.get(nodeId)
-
-			// reset fw update progress
-			if (node) {
-				node.firmwareUpdate = undefined
-
-				this.emitNodeUpdate(node, {
-					firmwareUpdate: false,
-				} as any)
-			}
-		} else {
+		if (!this.driverReady) {
 			throw new DriverNotReadyError()
 		}
+		return this._firmwareUpdateService.abortFirmwareUpdate(
+			nodeId,
+			(id: number) => this.getNode(id),
+		)
 	}
 
 	dumpNode(nodeId: number) {
@@ -4543,8 +4146,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 	async hardReset() {
 		if (this.driverReady) {
+			// Reject leaves lifecycle untouched so public APIs settle normally
 			await this._driver.hardReset()
 			this.init()
+			this._inclusionCoordinator.reinstallUserCallbacks()
 		} else {
 			throw new DriverNotReadyError()
 		}
@@ -4903,7 +4508,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		this.driverReady = true
 
-		this._inclusionState = this.driver.controller.inclusionState
+		this._inclusionCoordinator.syncFromDriver()
 
 		logger.info('Z-Wave driver is ready')
 
@@ -4942,6 +4547,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 					'status changed',
 					this._onControllerStatusChanged.bind(this),
 				)
+
+			// Re-register callbacks because the coordinator survives driver replacement
+			this._inclusionCoordinator.reinstallUserCallbacks()
 		} catch (error) {
 			// Fixes freak error in "driver ready" handler #1309
 			logger.error(error.message)
@@ -5180,7 +4788,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			this.sendToSocket(socketEvents.controller, {
 				status,
 				error: this._error,
-				inclusionState: this._inclusionState,
+				inclusionState: this._inclusionCoordinator.inclusionState,
 			})
 		}
 	}
@@ -5201,6 +4809,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	private _onInclusionStopped() {
 		const message = 'Inclusion stopped'
 
+		this._inclusionCoordinator.onInclusionStopped()
 		this._updateControllerStatus(message)
 		this.emit('event', EventSource.CONTROLLER, 'inclusion stopped')
 	}
@@ -5212,26 +4821,17 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	}
 
 	private _onInclusionStateChanged(state: InclusionState) {
-		if (state !== this._inclusionState) {
-			this._inclusionState = state
-
-			this.sendToSocket(socketEvents.controller, {
-				status: this._cntStatus,
-				error: this._error,
-				inclusionState: this._inclusionState,
-			})
-		}
+		this._inclusionCoordinator.onInclusionStateChanged(
+			state,
+			this._cntStatus,
+			this._error,
+		)
 	}
 
 	private _onInclusionFailed() {
 		const message = 'Inclusion failed'
-		this.isReplacing = false
-		this.tmpNode = undefined
 
-		// Clear any ghost nodes the driver surfaced via `node found` but never
-		// promoted to `node added`. zwave-js doesn't always emit `node removed`
-		// for these, so they would stay stuck on ProtocolInfo in the UI forever.
-		for (const nodeId of this._pendingInclusionNodeIds) {
+		this._inclusionCoordinator.onInclusionFailed((nodeId) => {
 			const node = this._nodes.get(nodeId)
 			if (node && !node.ready) {
 				this.logNode(
@@ -5241,8 +4841,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				)
 				this._removeNode(nodeId)
 			}
-		}
-		this._pendingInclusionNodeIds.clear()
+		})
 
 		this._updateControllerStatus(message)
 		this.emit('event', EventSource.CONTROLLER, 'inclusion failed')
@@ -5266,7 +4865,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			node = this._createNode(nodeId)
 			this.sendToSocket(socketEvents.nodeFound, { node })
 			// track until `node added` clears it; cleaned up on inclusion failure
-			this._pendingInclusionNodeIds.add(nodeId)
+			this._inclusionCoordinator.onNodeFound(nodeId)
 		} else {
 			node = this._nodes.get(nodeId)
 		}
@@ -5284,7 +4883,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	private async _onNodeAdded(zwaveNode: ZWaveNode, result: InclusionResult) {
 		let node: ZUINode
 		// node made it past `node found` — no longer a ghost candidate
-		this._pendingInclusionNodeIds.delete(zwaveNode.id)
+		this._inclusionCoordinator.onNodeAdded(zwaveNode.id)
+		// Complete replacement here because node removal must preserve metadata first
+		this._inclusionCoordinator.onReplacementComplete()
 		// the driver is ready so this node has been added on fly
 		if (this.driverReady) {
 			node = this._addNode(zwaveNode)
@@ -5436,74 +5037,16 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		this._updateControllerStatus(message)
 	}
 
-	private _onGrantSecurityClasses(
-		requested: InclusionGrant,
-	): Promise<InclusionGrant | false> {
-		logger.log('info', `Grant security classes: %o`, requested)
-		this.sendToSocket(socketEvents.grantSecurityClasses, requested)
-
-		this.emit(
-			'event',
-			EventSource.CONTROLLER,
-			'grant security classes',
-			requested,
-		)
-
-		return new Promise((resolve) => {
-			this._grantResolve = resolve
-		})
-	}
-
 	grantSecurityClasses(requested: InclusionGrant) {
-		if (this._grantResolve) {
-			this._grantResolve(requested)
-			this._grantResolve = null
-		} else {
-			logger.error('No inclusion process started')
-		}
-	}
-
-	private _onValidateDSK(dsk: string): Promise<string | false> {
-		logger.info(`DSK received ${dsk}`)
-
-		this.sendToSocket(socketEvents.validateDSK, dsk)
-
-		this.emit('event', EventSource.CONTROLLER, 'validate dsk', dsk)
-
-		return new Promise((resolve) => {
-			this._dskResolve = resolve
-		})
+		this._inclusionCoordinator.grantSecurityClasses(requested)
 	}
 
 	validateDSK(dsk: string) {
-		if (this._dskResolve) {
-			this._dskResolve(dsk)
-			this._dskResolve = null
-		} else {
-			logger.error('No inclusion process started')
-		}
+		this._inclusionCoordinator.validateDSK(dsk)
 	}
 
 	abortInclusion() {
-		if (this._dskResolve) {
-			this._dskResolve(false)
-			this._dskResolve = null
-		}
-
-		if (this._grantResolve) {
-			this._grantResolve(false)
-			this._grantResolve = null
-		}
-	}
-
-	private _onAbortInclusion() {
-		this._dskResolve = null
-		this._grantResolve = null
-		this.sendToSocket(socketEvents.inclusionAborted, true)
-
-		this.emit('event', EventSource.CONTROLLER, 'inclusion aborted')
-
-		logger.warn('Inclusion aborted')
+		this._inclusionCoordinator.abortInclusion()
 	}
 
 	async backupNVMRaw(): Promise<{ data: Buffer; fileName: string }> {
@@ -6596,7 +6139,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	private _removeNode(nodeid: number) {
 		// don't use splice here, nodeid equals to the index in the array
 		const node = this._nodes.get(nodeid)
-		this._pendingInclusionNodeIds.delete(nodeid)
+		this._inclusionCoordinator.onNodeAdded(nodeid)
 		if (node) {
 			this._nodes.delete(nodeid)
 
@@ -6608,7 +6151,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			this.sendToSocket(socketEvents.nodeRemoved, node)
 		}
 
-		if (!this.isReplacing && this.storeNodes[nodeid]) {
+		if (
+			!this._inclusionCoordinator.isReplacing &&
+			this.storeNodes[nodeid]
+		) {
 			delete this.storeNodes[nodeid]
 			// eslint-disable-next-line @typescript-eslint/no-floating-promises
 			this.updateStoreNodes(false)
@@ -6616,22 +6162,20 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	}
 
 	private _createNode(nodeId: number) {
-		// set node name and location sent with beginInclusion call
-		if (this.tmpNode) {
+		const tmpNode = this._inclusionCoordinator.takeTmpNode()
+		if (tmpNode) {
 			if (this.storeNodes[nodeId]) {
-				this.storeNodes[nodeId].name = this.tmpNode.name
-				this.storeNodes[nodeId].loc = this.tmpNode.loc
+				this.storeNodes[nodeId].name = tmpNode.name
+				this.storeNodes[nodeId].loc = tmpNode.loc
 			} else {
 				this.storeNodes[nodeId] = {
-					name: this.tmpNode.name,
-					loc: this.tmpNode.loc,
+					name: tmpNode.name,
+					loc: tmpNode.loc,
 				}
 			}
 
 			// eslint-disable-next-line @typescript-eslint/no-floating-promises
 			this.updateStoreNodes(false)
-
-			this.tmpNode = undefined
 		}
 
 		const node: ZUINode = {
@@ -7391,35 +6935,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	}
 
 	private async _scheduledFirmwareUpdateCheck() {
-		// Check if automatic firmware update checks are disabled
-		if (this.cfg.disableAutomaticFirmwareUpdateChecks) {
-			logger.info('Automatic firmware update checks are disabled')
-			return
-		}
-
-		try {
-			await this.checkAllNodesFirmwareUpdates()
-		} catch (error) {
-			logger.warn(
-				`Scheduled firmware update check has failed: ${error.message}`,
-			)
-		}
-
-		// Schedule next check for a random delay between 23 and 25 hours to avoid thundering herd problem
-		const minHours = 23
-		const maxHours = 25
-		const randomHours = minHours + Math.random() * (maxHours - minHours)
-		const waitMillis = randomHours * 60 * 60 * 1000
-
-		const nextCheckTime = new Date(Date.now() + waitMillis)
-		logger.info(
-			`Next firmware update check scheduled for: ${nextCheckTime}`,
-		)
-
-		this.firmwareUpdateCheckTimeout = setTimeout(
-			this._scheduledFirmwareUpdateCheck.bind(this),
-			waitMillis,
-		)
+		return this._firmwareUpdateService.scheduledFirmwareUpdateCheck()
 	}
 
 	/**

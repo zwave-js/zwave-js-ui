@@ -9,10 +9,43 @@ import type {
 	Driver,
 	VirtualValueID,
 	ZWaveController,
+	FirmwareUpdateInfo,
+	FirmwareUpdateResult,
+	OTWFirmwareUpdateResult,
+	InclusionGrant,
+	InclusionOptions,
+	ReplaceNodeOptions,
+	InclusionUserCallbacks,
+	InclusionState,
+	JoinNetworkResult,
+	PlannedProvisioningEntry,
+	QRProvisioningInformation,
 } from 'zwave-js'
-import type { SupervisionResult } from '@zwave-js/core'
+import { InclusionStrategy, QRCodeVersion } from 'zwave-js'
+import type {
+	FirmwareFileFormat,
+	SecurityClass,
+	SupervisionResult,
+} from '@zwave-js/core'
 import type { ConfigManager } from '@zwave-js/config'
 import type { DeepPartial } from '../utils.ts'
+
+export type {
+	FirmwareFileFormat,
+	SecurityClass,
+	FirmwareUpdateInfo,
+	FirmwareUpdateResult,
+	OTWFirmwareUpdateResult,
+	InclusionGrant,
+	InclusionOptions,
+	InclusionState,
+	ReplaceNodeOptions,
+	InclusionUserCallbacks,
+	JoinNetworkResult,
+	PlannedProvisioningEntry,
+	QRProvisioningInformation,
+}
+export { InclusionStrategy, QRCodeVersion }
 
 export const ZUIScheduleEntryLockMode = {
 	DAILY: 'daily',
@@ -364,4 +397,147 @@ export interface AssociationLogPort {
 		message: string,
 		...args: unknown[]
 	): void
+}
+
+export interface FirmwareUpdateNodeState {
+	id: number
+	firmwareUpdate?: unknown
+	availableFirmwareUpdates?: FirmwareUpdateInfo[]
+	firmwareUpdatesDismissed?: { [version: string]: boolean }
+	lastFirmwareUpdateCheck?: number
+}
+
+/** Detached firmware state published only after persistence and generation fencing */
+export interface StagedFirmwareNodeUpdate {
+	nodeId: number
+	availableFirmwareUpdates: FirmwareUpdateInfo[]
+	lastFirmwareUpdateCheck: number
+	firmwareUpdatesDismissed: { [version: string]: boolean }
+}
+
+export interface FwFileRef {
+	name: string
+	data: Uint8Array<ArrayBuffer>
+	target?: number
+}
+
+export interface FirmwareDriverPort {
+	getDriver(): {
+		controller: {
+			getAvailableFirmwareUpdates(
+				nodeId: number,
+				options?: unknown,
+			): Promise<FirmwareUpdateInfo[]>
+			getAllAvailableFirmwareUpdates(
+				options?: unknown,
+			): Promise<Map<number, FirmwareUpdateInfo[]>>
+			firmwareUpdateOTA(
+				nodeId: number,
+				updateInfo: FirmwareUpdateInfo,
+			): Promise<FirmwareUpdateResult>
+			nodes: { get(nodeId: number): unknown }
+		}
+		firmwareUpdateOTW(
+			dataOrInfo: Uint8Array<ArrayBuffer> | FirmwareUpdateInfo,
+		): Promise<OTWFirmwareUpdateResult>
+	} | null
+	isDriverReady(): boolean
+}
+
+export interface FirmwareNodeStorePort {
+	getNode(nodeId: number): FirmwareUpdateNodeState | undefined
+	getStoreNode(nodeId: number): Partial<FirmwareUpdateNodeState> | undefined
+	ensureStoreNode(nodeId: number): Partial<FirmwareUpdateNodeState>
+	updateStoreNodes(): Promise<FirmwarePersistenceRestore | void>
+	/** Filesystem writes may complete after reset, so callers must fence before publishing staged state */
+	persistStagedNodeUpdates(
+		staged: ReadonlyArray<StagedFirmwareNodeUpdate>,
+	): Promise<FirmwarePersistenceRestore | void>
+	emitNodeUpdate(
+		node: FirmwareUpdateNodeState,
+		changedProps: DeepPartial<FirmwareUpdateNodeState>,
+	): void
+}
+
+export type FirmwarePersistenceRestore = () => Promise<void>
+
+export interface FirmwareSocketPort {
+	sendToSocket(event: string, data: unknown): void
+	throttle(key: string, fn: () => void, wait: number): void
+	clearThrottle(key: string): void
+}
+
+export interface FirmwareConfigPort {
+	disableAutomaticFirmwareUpdateChecks: boolean
+}
+
+export interface FirmwareBackupPort {
+	backupOnEvent: boolean
+	backupNvm(): Promise<unknown>
+}
+
+export interface FirmwareExtractionPort {
+	guessFirmwareFileFormat(
+		name: string,
+		data: Uint8Array<ArrayBuffer>,
+	): FirmwareFileFormat
+	extractFirmware(
+		data: Uint8Array<ArrayBuffer>,
+		format: FirmwareFileFormat,
+	): Promise<{ data: Uint8Array<ArrayBuffer>; firmwareTarget?: number }>
+	tryUnzipFirmwareFile(data: Uint8Array<ArrayBuffer>):
+		| {
+				format: FirmwareFileFormat
+				filename: string
+				rawData: Uint8Array<ArrayBuffer>
+		  }
+		| undefined
+	isUint8Array(value: unknown): value is Uint8Array
+}
+
+export interface InclusionDriverPort {
+	getDriver(): {
+		controller: {
+			inclusionState: InclusionState | undefined
+			beginInclusion(options?: InclusionOptions): Promise<boolean>
+			stopInclusion(): Promise<boolean>
+			beginExclusion(options: unknown): Promise<boolean>
+			stopExclusion(): Promise<boolean>
+			replaceFailedNode(
+				nodeId: number,
+				options?: ReplaceNodeOptions,
+			): Promise<boolean>
+			beginJoiningNetwork(options: unknown): Promise<JoinNetworkResult>
+			stopJoiningNetwork(): Promise<boolean>
+		}
+		updateOptions(options: unknown): void
+	} | null
+	isDriverReady(): boolean
+}
+
+export interface InclusionSocketPort {
+	sendToSocket(event: string, data: unknown): void
+}
+
+export interface InclusionBackupPort {
+	backupOnEvent: boolean
+	backupNvm(): Promise<unknown>
+}
+
+export interface InclusionConfigPort {
+	commandsTimeout: number
+	serverEnabled: boolean
+}
+
+export interface InclusionQRPort {
+	parseQRCodeString(qrString: string): Promise<QRProvisioningInformation>
+}
+
+/** Events consumed by Gateway for MQTT publishing */
+export interface InclusionControllerEventPort {
+	emitControllerEvent(eventName: string, ...args: unknown[]): void
+}
+
+export interface InclusionServerManagerPort {
+	handInclusionControlBack(): void
 }
