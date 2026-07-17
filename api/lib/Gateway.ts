@@ -16,6 +16,7 @@ import type {
 	ZUINode,
 	ZUIValueId,
 	ZUIValueIdState,
+	ZwaveClientEventCallbacks,
 } from './ZwaveClient.ts'
 import type ZwaveClient from './ZwaveClient.ts'
 import Cron from 'croner'
@@ -32,7 +33,6 @@ import type {
 	HassDeviceRegistryLifecyclePort,
 	HassDeviceRegistrySourcePort,
 	HassTopicNode,
-	HassValue,
 	HassValueTopic,
 } from '../hass/ports.ts'
 import { ensureHassNode } from '../hass/ports.ts'
@@ -129,14 +129,14 @@ interface ValueIdTopic {
 	targetTopic?: string | null
 }
 
-type TopicValue = HassValue | ZUIValueId
+type TopicValue = ZUIValueId
 
 type TopicDetails<T extends TopicValue> = 'conf' extends keyof T
 	? ValueIdTopic
 	: HassValueTopic
 
 type GatewayTopicNode = Omit<HassTopicNode, 'values'> & {
-	values?: Record<string, HassValue | ZUIValueId>
+	values?: Record<string, ZUIValueId>
 }
 
 interface GatewayMqttPublishPort {
@@ -158,23 +158,47 @@ type ParsedPayloadResult =
 	| { handled: true; value: null }
 	| { handled: false; value: any }
 
-export type GatewayZwave = Pick<
+type GatewayZwaveEvent = Extract<
+	keyof ZwaveClientEventCallbacks,
+	| 'nodeInited'
+	| 'driverStatus'
+	| 'nodeStatus'
+	| 'nodeLastActive'
+	| 'valueChanged'
+	| 'nodeRemoved'
+	| 'notification'
+	| 'event'
+>
+
+interface GatewayZwaveEventPort {
+	on<E extends GatewayZwaveEvent>(
+		event: E,
+		listener: ZwaveClientEventCallbacks[E],
+	): void
+	off<E extends GatewayZwaveEvent>(
+		event: E,
+		listener: ZwaveClientEventCallbacks[E],
+	): void
+}
+
+type GatewayZwaveState = Pick<
 	ZwaveClient,
-	| 'callApi'
 	| 'close'
 	| 'connect'
 	| 'driverFunction'
 	| 'emitNodeUpdate'
 	| 'homeHex'
 	| 'nodes'
-	| 'off'
-	| 'on'
 	| 'setPollInterval'
 	| 'updateDevice'
 	| 'writeBroadcast'
 	| 'writeMulticast'
 	| 'writeValue'
 >
+
+export type GatewayZwave = GatewayZwaveState &
+	GatewayZwaveApiPort &
+	GatewayZwaveEventPort
 
 export type GatewayMqtt = Pick<
 	MqttClient,

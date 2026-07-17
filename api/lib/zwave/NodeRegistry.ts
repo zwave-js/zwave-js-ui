@@ -77,7 +77,7 @@ type StatisticsUpdate = Pick<
 	| 'prioritySUCReturnRoute'
 	| 'priorityReturnRoute'
 > & { bgRssi?: ControllerStatistics['backgroundRSSI'] }
-export type NodeRegistryController = Pick<
+type NodeRegistryControllerState = Pick<
 	Driver['controller'],
 	| 'nodes'
 	| 'ownNodeId'
@@ -86,16 +86,45 @@ export type NodeRegistryController = Pick<
 	| 'getCustomSUCReturnRoutesCached'
 	| 'getProvisioningEntry'
 	| 'getSupportedRFRegions'
-	| 'on'
-	| 'off'
 >
+
+interface NodeRegistryControllerEvents {
+	on(event: 'node found', listener: (node: FoundNode) => void): void
+	on(
+		event: 'node added',
+		listener: (node: ZWaveNode, result: InclusionResult) => void,
+	): void
+	on(
+		event: 'node removed',
+		listener: (node: ZWaveNode, reason: RemoveNodeReason) => void,
+	): void
+	on(
+		event: 'statistics updated',
+		listener: (stats: ControllerStatistics) => void,
+	): void
+	off(event: 'node found', listener: (node: FoundNode) => void): void
+	off(
+		event: 'node added',
+		listener: (node: ZWaveNode, result: InclusionResult) => void,
+	): void
+	off(
+		event: 'node removed',
+		listener: (node: ZWaveNode, reason: RemoveNodeReason) => void,
+	): void
+	off(
+		event: 'statistics updated',
+		listener: (stats: ControllerStatistics) => void,
+	): void
+}
+
+export type NodeRegistryController = NodeRegistryControllerState &
+	NodeRegistryControllerEvents
 
 export interface NodeRegistryDriver extends NodeProjectionDriver {
 	controller: NodeRegistryController
 }
 
 function formatLogValue(value: unknown): string {
-	// eslint-disable-next-line @typescript-eslint/no-base-to-string
 	return String(value)
 }
 

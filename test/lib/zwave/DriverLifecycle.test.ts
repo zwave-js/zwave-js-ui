@@ -14,7 +14,7 @@ import {
 	CONTROLLER_LOGLEVEL,
 } from '@zwave-js/core'
 import { RFRegion } from 'zwave-js'
-import type { Driver, ZWaveOptions, PartialZWaveOptions } from 'zwave-js'
+import type { Driver, PartialZWaveOptions } from 'zwave-js'
 import type { JSONTransport } from '@zwave-js/log-transport-json'
 import type { ZwavejsServer } from '@zwave-js/server'
 import Transport from 'winston-transport'
@@ -196,9 +196,7 @@ function makeDeps(world: World): DriverLifecycleDeps {
 	}
 }
 
-// The production config currently exposes a full ZWaveOptions while accepting
-// partial user overrides. Keep fixtures partial until that port is narrowed.
-function zwaveOpts(partial: PartialZWaveOptions): ZWaveOptions {
+function zwaveOpts(partial: PartialZWaveOptions): PartialZWaveOptions {
 	return partial
 }
 
