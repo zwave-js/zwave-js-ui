@@ -1645,6 +1645,55 @@ describe('InclusionCoordinator', () => {
 	})
 
 	describe('stopInclusion/stopExclusion timer cancellation', () => {
+		for (const [name, start] of [
+			[
+				'inclusion',
+				(coordinator: InclusionCoordinator) =>
+					coordinator.startInclusion(InclusionStrategy.Insecure),
+			],
+			[
+				'exclusion',
+				(coordinator: InclusionCoordinator) =>
+					coordinator.startExclusion({}),
+			],
+			[
+				'replacement',
+				(coordinator: InclusionCoordinator) =>
+					coordinator.replaceFailedNode(
+						5,
+						InclusionStrategy.Insecure,
+					),
+			],
+		] as const) {
+			it(`keeps the active timeout while ${name} waits for backup`, async () => {
+				vi.useFakeTimers()
+				const backup = createBackupPort()
+				const config = createConfigPort(1)
+				const { coordinator, driver } = createCoordinator({
+					backup,
+					config,
+				})
+				const drv = driver.getDriver()
+
+				await coordinator.startInclusion(InclusionStrategy.Insecure)
+
+				const backupBarrier = createDeferred<void>()
+				backup.backupOnEvent = true
+				backup.backupNvm.mockImplementationOnce(
+					() => backupBarrier.promise,
+				)
+				const pendingSetup = start(coordinator)
+
+				await vi.advanceTimersByTimeAsync(1_100)
+				expect(drv.controller.stopInclusion).toHaveBeenCalledTimes(1)
+
+				backupBarrier.resolve()
+				await expect(pendingSetup).rejects.toBeInstanceOf(
+					InclusionLifecycleCancelledError,
+				)
+			})
+		}
+
 		it('stopInclusion clears coordinator timeout without duplicate driver call', async () => {
 			vi.useFakeTimers()
 			const { coordinator, driver } = createCoordinator()
