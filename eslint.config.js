@@ -183,6 +183,12 @@ export default defineConfig([
 		},
 	},
 	{
+		files: ['.github/bot-scripts/**/*.test.cjs'],
+		languageOptions: {
+			sourceType: 'module',
+		},
+	},
+	{
 		files: ['**/*.{cjs,cts,js,jsx,mjs,mts,ts,tsx,vue}'],
 		ignores: ['.github/**/*.d.ts', 'api/**', 'src/**'],
 		rules: backendImportRules(

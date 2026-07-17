@@ -22,7 +22,11 @@ import type { PersistedSettings } from '#api/config/store'
 import * as loggers from '#api/lib/logger'
 import * as utils from '#api/lib/utils'
 import { snippetsDir } from '#api/config/app'
-import type { GatewayPort, ZnifferPort, ZwaveClientPort } from '#api/runtime/ports'
+import type {
+	GatewayPort,
+	ZnifferPort,
+	ZwaveClientPort,
+} from '#api/runtime/ports'
 
 const logger = loggers.module('Runtime')
 

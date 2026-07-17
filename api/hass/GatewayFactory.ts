@@ -2,11 +2,7 @@ import { CustomDeviceRegistry } from '#api/hass/CustomDeviceRegistry'
 import type { HassLogger } from '#api/hass/ports'
 import type { HassDeviceCatalog } from '#api/hass/types'
 import Gateway from '#api/lib/Gateway'
-import type {
-	GatewayConfig,
-	GatewayMqtt,
-	GatewayZwave,
-} from '#api/lib/Gateway'
+import type { GatewayConfig, GatewayMqtt, GatewayZwave } from '#api/lib/Gateway'
 
 export interface GatewayFactoryOptions {
 	storeDir: string

@@ -55,7 +55,10 @@ import type {
 	ZUIValueId,
 	ZwaveNodeEvents,
 } from '#api/lib/ZwaveClient'
-import { NodeProjector, type NodeProjectionDriver } from '#api/lib/zwave/NodeProjector'
+import {
+	NodeProjector,
+	type NodeProjectionDriver,
+} from '#api/lib/zwave/NodeProjector'
 import type { ServiceLogger } from '#api/lib/zwave/ports'
 
 type NodeUpdate = utils.DeepPartial<ZUINode> | { firmwareUpdate: false }

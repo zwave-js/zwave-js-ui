@@ -157,7 +157,10 @@ import type {
 import { ScheduleService } from '#api/lib/zwave/ScheduleService'
 import { ConfigurationTemplateService } from '#api/lib/zwave/ConfigurationTemplateService'
 import { SceneService } from '#api/lib/zwave/SceneService'
-import { GroupService, GroupServiceGeneration } from '#api/lib/zwave/GroupService'
+import {
+	GroupService,
+	GroupServiceGeneration,
+} from '#api/lib/zwave/GroupService'
 import { AssociationService } from '#api/lib/zwave/AssociationService'
 import { FirmwareUpdateService } from '#api/lib/zwave/FirmwareUpdateService'
 import { InclusionCoordinator } from '#api/lib/zwave/InclusionCoordinator'
