@@ -27,7 +27,7 @@ export interface Snippet {
 	content: string
 }
 
-// Bottoms out at non-object types (primitives, functions, class instances) instead of recursing into their prototype members, since `keyof` on those produces a nonsensical mapped type
+// Preserves callable types while recursively making array elements and object properties partial
 export type DeepPartial<T> = T extends (...args: never[]) => unknown
 	? T
 	: T extends Array<infer U>
@@ -37,14 +37,6 @@ export type DeepPartial<T> = T extends (...args: never[]) => unknown
 			: T extends object
 				? { [P in keyof T]?: DeepPartial<T[P]> }
 				: T
-
-export interface ErrnoException extends Error {
-	errno?: number
-	code?: string
-	path?: string
-	syscall?: string
-	stack?: string
-}
 
 export type Constructor<T = object> = new (...args: any[]) => T
 
@@ -453,7 +445,12 @@ export function parseSecurityKeys(
 					`config.securityKeys.${key} is null; remove the key entirely instead of persisting it as null`,
 				)
 			}
-			if (value?.length === 32) {
+			if (value === undefined) {
+				throw new TypeError(
+					`config.securityKeys.${key} is undefined; remove the key entirely instead of assigning undefined`,
+				)
+			}
+			if (value.length === 32) {
 				securityKeys[key] = Buffer.from(value, 'hex')
 			}
 		}

@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
-import { parseSecurityKeys } from '../../api/lib/utils.ts'
-import type { ZwaveConfig } from '../../api/lib/ZwaveClient.ts'
+import { parseSecurityKeys } from '#api/lib/utils.ts'
+import type { ZwaveConfig } from '#api/lib/ZwaveClient.ts'
 import type { PartialZWaveOptions } from 'zwave-js'
 
 let envSnapshot: NodeJS.ProcessEnv
@@ -164,12 +164,12 @@ describe('security key parsing', () => {
 			).toBeUndefined()
 		})
 
-		it('omits an undefined security key without throwing', () => {
-			const options = parse({
-				securityKeys: { S0_Legacy: undefined },
-			})
-
-			expect(options.securityKeys?.S0_Legacy).toBeUndefined()
+		it('rejects an undefined standard security key', () => {
+			expect(() =>
+				parse({
+					securityKeys: { S0_Legacy: undefined },
+				}),
+			).toThrow(TypeError)
 		})
 	})
 
