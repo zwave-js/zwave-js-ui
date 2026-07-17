@@ -452,7 +452,7 @@ export interface AssociationDriverHandle {
 }
 
 export interface AssociationDriverPort {
-	getDriver(): AssociationDriverHandle | null
+	getDriver(): AssociationDriverHandle | null | undefined
 }
 
 export type AssociationZWaveNodeHandle = Pick<ZWaveNode, 'refreshCCValues'>
