@@ -51,7 +51,7 @@ export interface HassValueConfiguration {
 export interface HassValueTopic {
 	topic: string
 	valueConf?: HassValueConfiguration
-	targetTopic?: string
+	targetTopic?: string | null
 }
 
 export interface HassTopicPort {

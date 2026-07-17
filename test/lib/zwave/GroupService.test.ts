@@ -21,6 +21,7 @@ import type {
 	ZUIGroup,
 	GroupZUINode,
 } from '../../../api/lib/zwave/ports.ts'
+import { createDeferred } from './serviceTestSupport.ts'
 
 function makeVirtualNode(_nodeIds: number[]): GroupVirtualNodeHandle {
 	return {
@@ -140,29 +141,8 @@ function createPersistencePort() {
 	return port
 }
 
-// A promise a test resolves manually, to suspend a service call mid-flight and drive an exact restart interleaving
-function createDeferred<T = void>(): {
-	promise: Promise<T>
-	resolve: (value: T | PromiseLike<T>) => void
-	reject: (reason?: unknown) => void
-} {
-	let resolve!: (value: T | PromiseLike<T>) => void
-	let reject!: (reason?: unknown) => void
-	const promise = new Promise<T>((res, rej) => {
-		resolve = res
-		reject = rej
-	})
-	return { promise, resolve, reject }
-}
-
 // deferNextPut() suspends the next put() call, so a test can simulate a restart while persistence is mid-flight and observe both sides of that boundary
-function createDeferredPersistencePort(): GroupPersistencePort & {
-	puts: ZUIGroup[][]
-	deferNextPut(): {
-		resolve: () => void
-		reject: (error: unknown) => void
-	}
-} {
+function createDeferredPersistencePort() {
 	let stored: ZUIGroup[] = []
 	const puts: ZUIGroup[][] = []
 	let nextDeferred: ReturnType<typeof createDeferred<void>> | null = null

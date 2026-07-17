@@ -2,13 +2,11 @@ import type Gateway from '../lib/Gateway.ts'
 import type MqttClient from '../lib/MqttClient.ts'
 import type ZWaveClient from '../lib/ZwaveClient.ts'
 import type ZnifferManager from '../lib/ZnifferManager.ts'
+import type { Driver } from 'zwave-js'
 
 export type MqttClientPort = Pick<MqttClient, 'getStatus'>
 
-export type ZwaveDriverPort = Pick<
-	ZWaveClient['driver'],
-	'updateOptions' | 'updateLogConfig'
->
+export type ZwaveDriverPort = Pick<Driver, 'updateOptions' | 'updateLogConfig'>
 
 export type ZwaveNodesPort = Pick<ZWaveClient['nodes'], 'get'>
 
@@ -47,7 +45,7 @@ export type ZwaveClientPort = Omit<
 	>,
 	'driver' | 'nodes'
 > & {
-	driver: ZwaveDriverPort
+	driver: ZwaveDriverPort | null | undefined
 	nodes: ZwaveNodesPort
 }
 

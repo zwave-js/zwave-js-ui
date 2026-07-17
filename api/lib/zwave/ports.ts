@@ -20,12 +20,14 @@ import type {
 	JoinNetworkResult,
 	PlannedProvisioningEntry,
 	QRProvisioningInformation,
-	ZWaveOptions,
+	PartialZWaveOptions,
 	RFRegion,
 } from 'zwave-js'
 import { InclusionStrategy, QRCodeVersion } from 'zwave-js'
 import type {
 	FirmwareFileFormat,
+	EndpointId,
+	GetValueDB,
 	SecurityClass,
 	SupervisionResult,
 } from '@zwave-js/core'
@@ -89,7 +91,7 @@ export type ZwaveConfig = {
 	enableStatistics?: boolean
 	disableOptimisticValueUpdate?: boolean
 	disclaimerVersion?: number
-	options?: ZWaveOptions
+	options?: PartialZWaveOptions
 	// healNetwork?: boolean
 	healHour?: number
 	logToFile?: boolean
@@ -207,8 +209,35 @@ export interface TemplateNodeState {
 	status?: string
 }
 
+type ScheduleEntryLockApi = Pick<
+	ZWaveNode['commandClasses']['Schedule Entry Lock'],
+	| 'isSupported'
+	| 'getWeekDaySchedule'
+	| 'getYearDaySchedule'
+	| 'getDailyRepeatingSchedule'
+	| 'setWeekDaySchedule'
+	| 'setYearDaySchedule'
+	| 'setDailyRepeatingSchedule'
+	| 'setEnabled'
+>
+
+export interface ScheduleZWaveNodeHandle {
+	getEndpoint(index: number): EndpointId
+	commandClasses: {
+		'Schedule Entry Lock': ScheduleEntryLockApi
+	}
+}
+
+export type ScheduleDriverHandle = GetValueDB & {
+	controller: {
+		nodes: {
+			get(nodeId: number): ScheduleZWaveNodeHandle | undefined
+		}
+	}
+}
+
 export interface ScheduleDriverPort {
-	getDriver(): Driver | null
+	getDriver(): ScheduleDriverHandle | null | undefined
 }
 
 export interface ScheduleNodeStorePort {
@@ -224,11 +253,14 @@ export interface ScheduleUtilsPort {
 }
 
 export interface TemplateDriverPort {
-	getDriver(): {
-		controller: {
-			nodes: { get(nodeId: number): ZWaveNode | undefined }
-		}
-	} | null
+	getDriver():
+		| {
+				controller: {
+					nodes: { get(nodeId: number): ZWaveNode | undefined }
+				}
+		  }
+		| null
+		| undefined
 }
 
 export interface TemplateNodeStorePort {
@@ -351,7 +383,7 @@ export interface GroupVirtualNodeHandle {
 }
 
 export interface GroupDriverPort {
-	isDriverReady(): boolean
+	isDriverReady(): boolean | null | undefined
 	getOwnNodeId(): number | undefined
 	/** True when the driver has no node list to check yet (permissive) or the id is a known physical node */
 	hasPhysicalNode(nodeId: number): boolean
@@ -449,7 +481,7 @@ export interface AssociationDriverHandle {
 }
 
 export interface AssociationDriverPort {
-	getDriver(): AssociationDriverHandle | null
+	getDriver(): AssociationDriverHandle | null | undefined
 }
 
 export type AssociationZWaveNodeHandle = Pick<ZWaveNode, 'refreshCCValues'>
@@ -497,26 +529,29 @@ export interface FwFileRef {
 }
 
 export interface FirmwareDriverPort {
-	getDriver(): {
-		controller: {
-			getAvailableFirmwareUpdates(
-				nodeId: number,
-				options?: unknown,
-			): Promise<FirmwareUpdateInfo[]>
-			getAllAvailableFirmwareUpdates(
-				options?: unknown,
-			): Promise<Map<number, FirmwareUpdateInfo[]>>
-			firmwareUpdateOTA(
-				nodeId: number,
-				updateInfo: FirmwareUpdateInfo,
-			): Promise<FirmwareUpdateResult>
-			nodes: { get(nodeId: number): unknown }
-		}
-		firmwareUpdateOTW(
-			dataOrInfo: Uint8Array<ArrayBuffer> | FirmwareUpdateInfo,
-		): Promise<OTWFirmwareUpdateResult>
-	} | null
-	isDriverReady(): boolean
+	getDriver():
+		| {
+				controller: {
+					getAvailableFirmwareUpdates(
+						nodeId: number,
+						options?: unknown,
+					): Promise<FirmwareUpdateInfo[]>
+					getAllAvailableFirmwareUpdates(
+						options?: unknown,
+					): Promise<Map<number, FirmwareUpdateInfo[]>>
+					firmwareUpdateOTA(
+						nodeId: number,
+						updateInfo: FirmwareUpdateInfo,
+					): Promise<FirmwareUpdateResult>
+					nodes: { get(nodeId: number): unknown }
+				}
+				firmwareUpdateOTW(
+					dataOrInfo: Uint8Array<ArrayBuffer> | FirmwareUpdateInfo,
+				): Promise<OTWFirmwareUpdateResult>
+		  }
+		| null
+		| undefined
+	isDriverReady(): boolean | null | undefined
 }
 
 export interface FirmwareNodeStorePort {
@@ -571,23 +606,28 @@ export interface FirmwareExtractionPort {
 }
 
 export interface InclusionDriverPort {
-	getDriver(): {
-		controller: {
-			inclusionState: InclusionState | undefined
-			beginInclusion(options?: InclusionOptions): Promise<boolean>
-			stopInclusion(): Promise<boolean>
-			beginExclusion(options: unknown): Promise<boolean>
-			stopExclusion(): Promise<boolean>
-			replaceFailedNode(
-				nodeId: number,
-				options?: ReplaceNodeOptions,
-			): Promise<boolean>
-			beginJoiningNetwork(options: unknown): Promise<JoinNetworkResult>
-			stopJoiningNetwork(): Promise<boolean>
-		}
-		updateOptions(options: unknown): void
-	} | null
-	isDriverReady(): boolean
+	getDriver():
+		| {
+				controller: {
+					inclusionState: InclusionState | undefined
+					beginInclusion(options?: InclusionOptions): Promise<boolean>
+					stopInclusion(): Promise<boolean>
+					beginExclusion(options: unknown): Promise<boolean>
+					stopExclusion(): Promise<boolean>
+					replaceFailedNode(
+						nodeId: number,
+						options?: ReplaceNodeOptions,
+					): Promise<boolean>
+					beginJoiningNetwork(
+						options: unknown,
+					): Promise<JoinNetworkResult>
+					stopJoiningNetwork(): Promise<boolean>
+				}
+				updateOptions(options: unknown): void
+		  }
+		| null
+		| undefined
+	isDriverReady(): boolean | null | undefined
 }
 
 export interface InclusionSocketPort {

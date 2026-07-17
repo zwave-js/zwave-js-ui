@@ -21,6 +21,7 @@ import {
 	extractFirmware,
 } from '@zwave-js/core'
 import { createDefaultTransportFormat } from '@zwave-js/core/bindings/log/node'
+import type { CCAPI } from '@zwave-js/cc'
 import { applyExternalDriverSettings } from './externalSettings.ts'
 import { JSONTransport } from '@zwave-js/log-transport-json'
 import type {
@@ -203,6 +204,76 @@ const NEIGHBORS_LOCK_REFRESH = 60 * 1000
 // Ordered from least verbose to most verbose (matching winston/npm log levels)
 const LOG_LEVEL_ORDER = ['error', 'warn', 'info', 'verbose', 'debug', 'silly']
 
+type ValueIdRef = Pick<
+	TranslatedValueID,
+	'commandClass' | 'endpoint' | 'property'
+> & {
+	nodeId?: number
+	propertyKey?: string | number | null
+}
+
+function requireDefined<T>(value: T | null | undefined, message: string): T {
+	if (value == null) {
+		throw new TypeError(message)
+	}
+	return value
+}
+
+function hasProperty<K extends PropertyKey>(
+	value: object,
+	key: K,
+): value is object & Record<K, unknown> {
+	return key in value
+}
+
+function getLegacyErrorMessage(error: unknown): unknown {
+	if (error === null) {
+		throw new TypeError(
+			"Cannot read properties of null (reading 'message')",
+		)
+	}
+	if (error === undefined) {
+		throw new TypeError(
+			"Cannot read properties of undefined (reading 'message')",
+		)
+	}
+	if (
+		(typeof error === 'object' || typeof error === 'function') &&
+		hasProperty(error, 'message')
+	) {
+		return error.message
+	}
+	return undefined
+}
+
+function formatLegacyMessage(message: unknown): string {
+	if (typeof message === 'symbol') {
+		throw new TypeError('Cannot convert a Symbol value to a string')
+	}
+
+	return String(message)
+}
+
+function formatLegacyErrorMessage(error: unknown): string {
+	return formatLegacyMessage(getLegacyErrorMessage(error))
+}
+
+function hasZWaveErrorCode(error: unknown): error is { code: ZWaveErrorCodes } {
+	if (error === null) {
+		throw new TypeError("Cannot read properties of null (reading 'code')")
+	}
+	if (error === undefined) {
+		throw new TypeError(
+			"Cannot read properties of undefined (reading 'code')",
+		)
+	}
+	return (
+		typeof error === 'object' &&
+		'code' in error &&
+		typeof error.code === 'number'
+	)
+}
+
 function validateMethods<T extends readonly (keyof ZwaveClient)[]>(
 	methods: T,
 ): T {
@@ -356,9 +427,9 @@ const observedCCProps: {
 } = {
 	[CommandClasses.Battery]: {
 		level(node, value) {
-			const levels: { [key: number]: number } = node.batteryLevels || {}
+			const levels: Record<string, number> = node.batteryLevels || {}
 
-			levels[value.endpoint] = value.value
+			levels[String(value.endpoint)] = value.value
 			node.batteryLevels = levels
 			node.minBatteryLevel = Math.min(...Object.values(levels))
 
@@ -420,8 +491,8 @@ export type ZUIValueIdState = {
 }
 
 export type ZUIClientStatus = {
-	driverReady: boolean
-	status: boolean
+	driverReady: boolean | null | undefined
+	status: boolean | null | undefined
 	config: ZwaveConfig
 }
 
@@ -492,12 +563,12 @@ export type CallAPIResult<T extends AllowedApis> =
 	| {
 			success: true
 			message: string
-			result: ReturnType<ZwaveClient[T]>
+			result: Awaited<ReturnType<ZwaveClient[T]>> | undefined
 			args?: Parameters<ZwaveClient[T]>
 	  }
 	| {
 			success: false
-			message: string
+			message: unknown
 			args?: Parameters<ZwaveClient[T]>
 	  }
 
@@ -549,9 +620,9 @@ export type ZUINode = {
 	productDescription?: string
 	statistics?: ControllerStatistics | NodeStatistics
 	applicationRoute?: Route | null
-	priorityReturnRoute?: Record<number, Route>
-	prioritySUCReturnRoute?: Route
-	customReturnRoute?: Record<number, Route[]>
+	priorityReturnRoute?: Record<number, Route> | null
+	prioritySUCReturnRoute?: Route | null
+	customReturnRoute?: Record<number, Route[]> | null
 	customSUCReturnRoutes?: Route[]
 	productType?: number
 	manufacturer?: string
@@ -603,7 +674,7 @@ export type ZUINode = {
 	inited: boolean
 	rebuildRoutesProgress?: RebuildRoutesStatus | undefined
 	minBatteryLevel?: number
-	batteryLevels?: { [key: number]: number }
+	batteryLevels?: Record<string, number>
 	firmwareUpdate?: FirmwareUpdateProgress
 	firmwareCapabilities?: FirmwareUpdateCapabilities
 	eventsQueue: NodeEvent[]
@@ -629,6 +700,17 @@ export type ZUINode = {
 	firmwareUpdatesDismissed?: { [version: string]: boolean }
 	lastFirmwareUpdateCheck?: number
 }
+
+export type ZUIStatisticsUpdate = {
+	[K in
+		| 'statistics'
+		| 'lastActive'
+		| 'applicationRoute'
+		| 'customSUCReturnRoutes'
+		| 'customReturnRoute'
+		| 'prioritySUCReturnRoute'
+		| 'priorityReturnRoute']?: ZUINode[K] | null
+} & { bgRssi?: ControllerStatistics['backgroundRSSI'] | null }
 
 export type NodeEvent = {
 	event: ZwaveNodeEvents | 'status changed'
@@ -665,47 +747,74 @@ export interface ZwaveClientEventCallbacks {
 	nodeInited: (node: ZUINode) => void
 	event: (source: EventSource, eventName: string, ...args: any) => void
 	scanComplete: () => void
-	driverStatus: (status: boolean) => void
-	notification: (node: ZUINode, valueId: ZUIValueId, data: any) => void
+	driverStatus: (status: boolean | null | undefined) => void
+	notification: (
+		node: ZUINode | undefined,
+		valueId: ZUIValueId,
+		data: any,
+	) => void
 	nodeRemoved: (node: Partial<ZUINode>) => void
 	valueChanged: (
 		valueId: ZUIValueId,
 		node: ZUINode,
 		changed?: boolean,
 	) => void
-	valueWritten: (valueId: ZUIValueId, node: ZUINode, value: unknown) => void
+	valueWritten: (
+		valueId: ZUIValueId,
+		node: ZUINode | undefined,
+		value: unknown,
+	) => void
 }
 
 export type ZwaveClientEvents = Extract<keyof ZwaveClientEventCallbacks, string>
 
 class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	private cfg: ZwaveConfig
-	private socket: SocketServer
-	private closed: boolean
+	private socket: SocketServer | undefined
+	declare private closed: boolean
 	private destroyed = false
-	private _driverReady: boolean
-	private _nodeRegistry!: NodeRegistry
+	declare private _driverReady: boolean | null | undefined
+	declare private _nodeRegistry: NodeRegistry
 	private _nodeGeneration = 0
-	private _socketEventAdapter!: SocketEventAdapter
+	declare private _socketEventAdapter: SocketEventAdapter
 	/**
 	 * Holds the live driver-side virtual-node instances (multicast groups +
 	 * standard/LR broadcast). Keyed by virtual nodeId.
 	 */
-	private _virtualNodes: Map<number, VirtualNode>
 	private _nodesPersistenceTail: Promise<void> = Promise.resolve()
-	private _devices: Record<string, Partial<ZUINode>>
-	private driverInfo: ZUIDriverInfo
-	private status: ZwaveClientStatus
+	declare private _virtualNodes: Map<number, VirtualNode>
+	declare private _devices: Record<string, Partial<ZUINode>>
+	declare private driverInfo: ZUIDriverInfo
+	declare private status: ZwaveClientStatus
 	private _error: string | undefined
-	private _scanComplete: boolean
-	private _cntStatus: string
+	declare private _scanComplete: boolean
+	declare private _cntStatus: string
 
-	private lastUpdate: number
+	declare private lastUpdate: number
 
-	private _driver: Driver
+	private _driverState: Driver | null | undefined
 
-	/** Reused across init() rather than reconstructed so its generation counter, log transports and adopted server manager survive restarts */
-	private _driverLifecycle!: DriverLifecycle
+	private get _driver(): Driver | null | undefined {
+		return this._driverState
+	}
+
+	private set _driver(driver: Driver | null | undefined) {
+		this._driverState = driver
+	}
+
+	/**
+	 * Owns the low-level driver lifecycle (creation/options/log transports,
+	 * connect/start, retry-backoff timers, statistics, extra log transports,
+	 * the official `@zwave-js/server` coordination and idempotent close) plus a
+	 * monotonic **generation** counter so a late `driver ready`/`error`/`all
+	 * nodes ready`/OTW callback from an obsolete driver can never mutate a
+	 * replacement generation's state. The public lifecycle methods below
+	 * (`connect`/`close`/`enableStatistics`/…) and the server accessors delegate
+	 * to it so the legacy internal/API surface is unchanged. Constructed once
+	 * (and reused across `init()`) so the generation/transports/server manager
+	 * persist across restarts.
+	 */
+	declare private _driverLifecycle: DriverLifecycle
 
 	/**
 	 * The narrow {@link ZwaveServerHost} port the server manager uses to reach
@@ -716,7 +825,11 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 */
 	public buildServerHost(): ZwaveServerHost {
 		return {
-			getDriver: () => this._driver,
+			getDriver: () =>
+				requireDefined(
+					this._driverState,
+					'Driver is unavailable while creating the Z-Wave server',
+				),
 			getConfig: () => this.cfg,
 			getHasUserCallbacks: () =>
 				this._inclusionCoordinator.hasUserCallbacks,
@@ -754,8 +867,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		this._driverLifecycle.server = value
 	}
 
-	private healTimeout: NodeJS.Timeout
-	private updatesCheckTimeout: NodeJS.Timeout
+	private healTimeout: NodeJS.Timeout | null | undefined
+	private updatesCheckTimeout: NodeJS.Timeout | null | undefined
 	/** Invalidated on every init/hardReset/close/restart boundary to fence the daily config-check chain that the DriverLifecycle generation can't, since init and hardReset keep the generation */
 	private _configCheckEpoch = 0
 	/** Dedupes same-generation config-check chains that `_configCheckEpoch` can't: `driver ready` re-fires without a boundary on NVM restore or controller firmware update */
@@ -766,20 +879,20 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	private _configInstallEpoch = 0
 	private _activeConfigInstall: number | null = null
 	private _configInstallPromise: Promise<boolean> | null = null
-	private pollIntervals: Record<string, NodeJS.Timeout>
+	declare private pollIntervals: Record<string, NodeJS.Timeout>
 
-	private _lockNeighborsRefresh: boolean
-	private _scheduleService: ScheduleService
-	private _configTemplateService: ConfigurationTemplateService
-	private _sceneService: SceneService<ZUIValueIdScene>
-	private _groupService: GroupService
+	declare private _lockNeighborsRefresh: boolean
+	declare private _scheduleService: ScheduleService
+	declare private _configTemplateService: ConfigurationTemplateService
+	declare private _sceneService: SceneService<ZUIValueIdScene>
+	declare private _groupService: GroupService
 	// Generation token for the current GroupService instance; cancelled and replaced on every init(), see GroupServiceGeneration for the cancellation mechanism
 	private _groupServiceGeneration: GroupServiceGeneration | undefined
-	private _associationService: AssociationService
-	private _firmwareUpdateService: FirmwareUpdateService
-	private _inclusionCoordinator: InclusionCoordinator
+	declare private _associationService: AssociationService
+	declare private _firmwareUpdateService: FirmwareUpdateService
+	declare private _inclusionCoordinator: InclusionCoordinator
 
-	private nvmEvent: string
+	declare private nvmEvent: string | null | undefined
 
 	private driverFunctionCache: utils.Snippet[] = []
 
@@ -789,14 +902,18 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 	private throttledFunctions: Map<
 		string,
-		{ lastUpdate: number; fn: () => void; timeout: NodeJS.Timeout }
+		{
+			lastUpdate: number
+			fn: () => void
+			timeout: NodeJS.Timeout | null
+		}
 	> = new Map()
 
 	public get driverReady() {
-		return this.driver && this._driverReady && !this.closed
+		return this._driverState && this._driverReady && !this.closed
 	}
 
-	public set driverReady(ready) {
+	public set driverReady(ready: boolean | null | undefined) {
 		if (this._driverReady !== ready) {
 			this._driverReady = ready
 			this.emit('driverStatus', ready)
@@ -815,8 +932,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		return this._error
 	}
 
-	public get driver() {
-		return this._driver
+	public get driver(): Driver | null | undefined {
+		return this._driverState
 	}
 
 	public get nodes() {
@@ -847,7 +964,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		return this.driverFunctionCache
 	}
 
-	constructor(config: ZwaveConfig, socket: SocketServer) {
+	constructor(config: ZwaveConfig, socket: SocketServer | undefined) {
 		super()
 
 		this.cfg = config
@@ -890,6 +1007,14 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		this.init()
 	}
 
+	private requireSocket(): SocketServer {
+		const socket = this.socket
+		if (!socket) {
+			throw new Error('Socket.IO is not attached')
+		}
+		return socket
+	}
+
 	get homeHex() {
 		return this.driverInfo.name
 	}
@@ -917,11 +1042,11 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		this._virtualNodes = new Map()
 		this._socketEventAdapter = new SocketEventAdapter(
 			{
-				getSocket: () => this.socket,
+				getSocket: () => this.requireSocket(),
 				getGeneration: () => this._nodeGeneration,
 				isCurrent: (generation, socket) =>
 					this._isCurrentNodeGeneration(generation) &&
-					socket === this.socket &&
+					socket === this.requireSocket() &&
 					!!this._nodeRegistry,
 			},
 			logger,
@@ -935,7 +1060,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		}
 
 		const templateDriverPort = {
-			getDriver: () => this._driver,
+			getDriver: () => this._driverState,
 		}
 		const templateNodeStorePort = {
 			getNode: (nodeId: number) => this._nodes.get(nodeId),
@@ -994,7 +1119,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			getNode: (nodeId: number) => this._nodes.get(nodeId),
 		}
 		const sceneUtilsPort = {
-			getValueId: (v: Partial<ZUIValueId>) => this._getValueID(v),
+			getValueId: (v: ValueIdRef) => this._getValueID(v),
 		}
 		const sceneWritePort = {
 			writeValue: (valueId: ZUIValueIdScene, value: unknown) =>
@@ -1011,13 +1136,16 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		const groupDriverPort = {
 			isDriverReady: () => this.driverReady,
-			getOwnNodeId: () => this._driver?.controller?.ownNodeId,
+			getOwnNodeId: () => this._driverState?.controller?.ownNodeId,
 			hasPhysicalNode: (id: number) => {
-				const knownPhysicalIds = this._driver?.controller?.nodes
+				const knownPhysicalIds = this._driverState?.controller?.nodes
 				return !knownPhysicalIds || knownPhysicalIds.has(id)
 			},
 			getMulticastGroup: (nodeIds: number[]) =>
-				this._driver.controller.getMulticastGroup(nodeIds),
+				requireDefined(
+					this._driverState,
+					'Driver is unavailable while creating a multicast group',
+				).controller.getMulticastGroup(nodeIds),
 		}
 		// this._virtualNodes is replaced with a new Map on every restart; resolving it fresh here (not capturing a reference) keeps an in-flight call from a superseded generation from writing into an abandoned map
 		const groupVirtualNodeRegistryPort = {
@@ -1048,7 +1176,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		}
 		const groupUtilsPort = {
 			deepEqual: (a: unknown, b: unknown) => utils.deepEqual(a, b),
-			getValueId: (v: Partial<ZUIValueId>) => this._getValueID(v),
+			getValueId: (v: ValueIdRef) => this._getValueID(v),
 			buildVirtualValueId: (
 				nodeId: number,
 				zwaveValue: VirtualValueID,
@@ -1082,7 +1210,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		)
 
 		const associationDriverPort = {
-			getDriver: () => this._driver,
+			getDriver: () => this._driverState,
 		}
 		const associationNodeStorePort = {
 			getZWaveNode: (nodeId: number) => this.getNode(nodeId),
@@ -1113,7 +1241,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		)
 
 		const firmwareDriverPort = {
-			getDriver: () => this._driver,
+			getDriver: () => this._driverState,
 			isDriverReady: () => this.driverReady,
 		}
 		const createFirmwarePersistenceRestore = (
@@ -1158,8 +1286,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				const homeHex = this.homeHex
 				const restore = createFirmwarePersistenceRestore(homeHex)
 				const snapshot: NodesStoreRecord = {}
-				for (const [key, node] of Object.entries(this.storeNodes)) {
-					snapshot[Number(key)] = node
+				for (const [key, storedNode] of Object.entries(
+					this.storeNodes,
+				)) {
+					snapshot[Number(key)] = storedNode
 				}
 				for (const entry of staged) {
 					const existing = snapshot[entry.nodeId]
@@ -1234,7 +1364,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		}
 
 		const inclusionDriverPort = {
-			getDriver: () => this._driver,
+			getDriver: () => this._driverState,
 			isDriverReady: () => this.driverReady,
 		}
 		const inclusionSocketPort = {
@@ -1308,9 +1438,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	private _buildDriverLifecycleHost(): DriverLifecycleHost {
 		return {
 			getConfig: () => this.cfg,
-			getDriver: () => this._driver,
+			getDriver: () => this._driverState ?? null,
 			setDriver: (driver) => {
-				this._driver = driver
+				this._driverState = driver
 			},
 			isDriverReady: () => this.driverReady,
 			isDriverReadyRaw: () => this._driverReady,
@@ -1326,9 +1456,11 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				this.driverReady = ready
 			},
 			hasConnectedClients: async () =>
-				(await this.socket.fetchSockets()).length > 0,
+				(await this.requireSocket().fetchSockets()).length > 0,
 			emitDebug: (message) => {
-				this.socket.to('debug').emit(socketEvents.debug, message)
+				this.requireSocket()
+					.to('debug')
+					.emit(socketEvents.debug, message)
 			},
 			getInclusionUserCallbacks: () =>
 				this._inclusionCoordinator.getUserCallbacks(),
@@ -1360,7 +1492,11 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 	private _buildNodeRegistryHost(): NodeRegistryHost {
 		return {
-			getDriver: () => this._driver,
+			getDriver: () =>
+				requireDefined(
+					this._driverState,
+					'Driver is unavailable while accessing the node registry',
+				),
 			getZWaveNode: (nodeId) => this.getNode(nodeId),
 			getGeneration: () => this._nodeGeneration,
 			isCurrent: (registry, generation) =>
@@ -1444,15 +1580,16 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			updateControllerNodeProps: (node) =>
 				this.updateControllerNodeProps(node),
 			registerDevice: (node) => {
-				if (!this._devices[node.deviceId]) {
-					this._devices[node.deviceId] = {
+				const deviceId = String(node.deviceId)
+				if (!this._devices[deviceId]) {
+					this._devices[deviceId] = {
 						name: `[${node.deviceId}] ${node.productDescription} (${node.manufacturer})`,
 						values: utils.copy(node.values),
 					}
-					const values = this._devices[node.deviceId].values
-					delete this._devices[node.deviceId].hassDevices
+					const values = this._devices[deviceId].values
+					delete this._devices[deviceId].hassDevices
 					for (const id in values) {
-						delete values[id].nodeId
+						Reflect.deleteProperty(values[id], 'nodeId')
 						values[id].id = id
 					}
 				}
@@ -1500,13 +1637,14 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		if (this.pollIntervals) {
 			for (const k in this.pollIntervals) {
-				clearTimeout(this.pollIntervals[k])
+				const timeout = this.pollIntervals[k]
+				if (timeout) clearTimeout(timeout)
 				delete this.pollIntervals[k]
 			}
 		}
 
 		for (const [key, entry] of this.throttledFunctions) {
-			clearTimeout(entry.timeout)
+			clearTimeout(entry.timeout ?? undefined)
 			this.throttledFunctions.delete(key)
 		}
 	}
@@ -1654,8 +1792,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	private clearThrottle(key: string) {
 		const entry = this.throttledFunctions.get(key)
 		if (entry) {
-			if (entry.timeout) {
-				clearTimeout(entry.timeout)
+			const timeout = entry.timeout
+			if (timeout) {
+				clearTimeout(timeout)
 			}
 			this.throttledFunctions.delete(key)
 		}
@@ -1671,8 +1810,11 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	/**
 	 * Returns the driver ZWaveNode object for physical nodes
 	 */
-	getNode(nodeId: number): ZWaveNode {
-		return this._driver.controller.nodes.get(nodeId)
+	getNode(nodeId: number): ZWaveNode | undefined {
+		return requireDefined(
+			this._driverState,
+			`Driver is unavailable while looking up Z-Wave node ${nodeId}`,
+		).controller.nodes.get(nodeId)
 	}
 
 	/**
@@ -1697,7 +1839,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	/**
 	 * Returns the driver ZWaveNode ValueId object or null
 	 */
-	getZwaveValue(idString: string): ValueID {
+	getZwaveValue(idString: string): ValueID | null {
 		if (!idString || typeof idString !== 'string') {
 			return null
 		}
@@ -1941,7 +2083,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 * - Time CC
 	 * - Schedule Entry Lock CC (for setting the timezone)
 	 */
-	syncNodeDateAndTime(nodeId: number, date = new Date()): Promise<boolean> {
+	syncNodeDateAndTime(
+		nodeId: number,
+		date = new Date(),
+	): Promise<boolean> | undefined {
 		const zwaveNode = this.getNode(nodeId)
 
 		if (zwaveNode) {
@@ -1954,7 +2099,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			return zwaveNode.setDateAndTime(date)
 		} else {
 			this.logNode(
-				zwaveNode,
+				requireDefined<ZWaveNode>(
+					zwaveNode,
+					`Z-Wave node ${nodeId} is unavailable while syncing date and time`,
+				),
 				'warn',
 				`Node not found when calling 'syncNodeDateAndTime'`,
 			)
@@ -1968,7 +2116,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			zwaveNode.manuallyIdleNotificationValue(valueId)
 		} else {
 			this.logNode(
-				zwaveNode,
+				requireDefined<ZWaveNode>(
+					zwaveNode,
+					`Z-Wave node ${valueId.nodeId} is unavailable while idling a notification value`,
+				),
 				'warn',
 				`Node not found when calling 'manuallyIdleNotificationValue'`,
 			)
@@ -1985,7 +2136,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	/**
 	 * Refresh all nodes neighbors
 	 */
-	async refreshNeighbors(): Promise<Record<number, number[]>> {
+	async refreshNeighbors(): Promise<Record<number, number[] | undefined>> {
 		if (this._lockNeighborsRefresh === true) {
 			throw Error('you can refresh neighbors only once every 60 seconds')
 		}
@@ -1998,15 +2149,19 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			NEIGHBORS_LOCK_REFRESH,
 		)
 
-		const toReturn = {}
+		const toReturn: Record<number, number[] | undefined> = {}
+		const driver = requireDefined(
+			this._driverState,
+			'Driver is unavailable while refreshing node neighbors',
+		)
 		// when accessing the controller memory, the Z-Wave radio must be turned off with to avoid resource conflicts and inconsistent data
-		await this._driver.controller.toggleRF(false)
+		await driver.controller.toggleRF(false)
 		for (const [nodeId, node] of this._nodes) {
 			await this.getNodeNeighbors(nodeId, true, false)
 			toReturn[nodeId] = node.neighbors
 		}
 		// turn rf back to on
-		await this._driver.controller.toggleRF(true)
+		await driver.controller.toggleRF(true)
 
 		return toReturn
 	}
@@ -2024,14 +2179,19 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				throw new DriverNotReadyError()
 			}
 
-			const zwaveNode = this.getNode(nodeId)
+			const zwaveNode = requireDefined(
+				this.getNode(nodeId),
+				`Z-Wave node ${nodeId} is unavailable while getting neighbors`,
+			)
 
 			if (zwaveNode.protocol === Protocols.ZWaveLongRange) {
 				return []
 			}
 
-			const neighbors =
-				await this._driver.controller.getNodeNeighbors(nodeId)
+			const neighbors = await requireDefined(
+				this._driverState,
+				`Driver is unavailable while getting neighbors for node ${nodeId}`,
+			).controller.getNodeNeighbors(nodeId)
 			this.logNode(nodeId, 'debug', `Neighbors: ${neighbors.join(', ')}`)
 			const node = this.nodes.get(nodeId)
 
@@ -2049,7 +2209,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			this.logNode(
 				nodeId,
 				'warn',
-				`Error while getting neighbors from ${nodeId}: ${error.message}`,
+				`Error while getting neighbors from ${nodeId}: ${formatLegacyErrorMessage(
+					error,
+				)}`,
 			)
 
 			if (!preventThrow) {
@@ -2068,8 +2230,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			throw new DriverNotReadyError()
 		}
 
-		const result =
-			await this._driver.controller.discoverNodeNeighbors(nodeId)
+		const result = await requireDefined(
+			this._driverState,
+			`Driver is unavailable while discovering neighbors for node ${nodeId}`,
+		).controller.discoverNodeNeighbors(nodeId)
 
 		if (result) {
 			// update neighbors
@@ -2102,7 +2266,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		const fn = new AsyncFunction('driver', code)
 		const require = createRequire(import.meta.url)
 
-		return fn.call({ zwaveClient: this, require, logger }, this._driver)
+		return fn.call(
+			{ zwaveClient: this, require, logger },
+			this._driverState,
+		)
 	}
 
 	/**
@@ -2151,7 +2318,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		registry: NodeRegistry = this._nodeRegistry,
 		generation: number = this._nodeGeneration,
 	) {
-		const sockets = await this.socket.fetchSockets()
+		const sockets = await this.requireSocket().fetchSockets()
 		if (!this._isCurrentNodeRegistry(registry, generation)) return
 
 		for (const socket of sockets) {
@@ -2183,28 +2350,17 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		this._groupService.updateVirtualNodesForNode(valueId.nodeId)
 	}
 
-	public emitStatistics(
-		node: ZUINode,
-		props: Pick<
-			ZUINode,
-			| 'statistics'
-			| 'lastActive'
-			| 'applicationRoute'
-			| 'customSUCReturnRoutes'
-			| 'customReturnRoute'
-			| 'prioritySUCReturnRoute'
-			| 'priorityReturnRoute'
-		> & { bgRssi?: ControllerStatistics['backgroundRSSI'] },
-	) {
+	public emitStatistics(node: ZUINode, props: ZUIStatisticsUpdate) {
 		// NB: be sure that when `statistics` is defined also `lastActive` must be.
 		// when removing props them should be set to null or false in order to be removed on ui
 		this.sendToSocket(socketEvents.statistics, {
 			nodeId: node.id,
-			...Object.keys(props).reduce((acc, k) => {
-				if (props[k] === null) acc[k] = false
-				else acc[k] = props[k]
-				return acc
-			}, {} as any),
+			...Object.fromEntries(
+				Object.entries(props).map(([key, value]) => [
+					key,
+					value === null ? false : value,
+				]),
+			),
 		})
 	}
 
@@ -2580,7 +2736,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	private _refreshBroadcastInstances(): void {
 		if (!this.driverReady) return
 
-		const controller = this._driver.controller
+		const controller = requireDefined(
+			this._driverState,
+			'Driver is unavailable while refreshing broadcast nodes',
+		).controller
 
 		if (this._virtualNodes.has(NODE_ID_BROADCAST)) {
 			this._virtualNodes.set(
@@ -2642,7 +2801,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				this.sendToSocket(socketEvents.nodeUpdated, virtualNode)
 			} catch (error) {
 				logger.error(
-					`Error updating broadcast node ${nodeId} values: ${error.message}`,
+					`Error updating broadcast node ${nodeId} values: ${formatLegacyErrorMessage(
+						error,
+					)}`,
 				)
 			}
 		}
@@ -2661,7 +2822,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		try {
 			// Standard broadcast — always available.
-			const broadcastNode = this._driver.controller.getBroadcastNode()
+			const broadcastNode = requireDefined(
+				this._driverState,
+				'Driver is unavailable while creating broadcast nodes',
+			).controller.getBroadcastNode()
 			this._virtualNodes.set(NODE_ID_BROADCAST, broadcastNode)
 
 			const broadcastVirtualNode = this._newVirtualZUINode(
@@ -2677,7 +2841,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 			this._updateBroadcastNodeValues()
 		} catch (error) {
-			logger.error(`Error creating broadcast nodes: ${error.message}`)
+			logger.error(
+				`Error creating broadcast nodes: ${formatLegacyErrorMessage(error)}`,
+			)
 		}
 	}
 
@@ -2689,7 +2855,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	private _refreshBroadcastLRNode(): void {
 		if (!this.driverReady) return
 
-		const controller = this._driver.controller
+		const controller = requireDefined(
+			this._driverState,
+			'Driver is unavailable while refreshing the LR broadcast node',
+		).controller
 		const hasLRNodes =
 			controller.supportsLongRange &&
 			[...controller.nodes.values()].some(
@@ -2711,7 +2880,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				this._nodes.set(NODE_ID_BROADCAST_LR, lrNode)
 				this.sendToSocket(socketEvents.nodeUpdated, lrNode)
 			} catch (error) {
-				logger.warn(`LR broadcast node not available: ${error.message}`)
+				logger.warn(
+					`LR broadcast node not available: ${formatLegacyErrorMessage(error)}`,
+				)
 			}
 		} else if (!hasLRNodes && exists) {
 			this._virtualNodes.delete(NODE_ID_BROADCAST_LR)
@@ -2775,7 +2946,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 */
 	refreshValues(nodeId: number): Promise<void> {
 		if (this.driverReady) {
-			const zwaveNode = this.getNode(nodeId)
+			const zwaveNode = requireDefined(
+				this.getNode(nodeId),
+				`Z-Wave node ${nodeId} is unavailable while refreshing values`,
+			)
 
 			return zwaveNode.refreshValues()
 		}
@@ -2788,7 +2962,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 */
 	pingNode(nodeId: number): Promise<boolean> {
 		if (this.driverReady) {
-			const zwaveNode = this.getNode(nodeId)
+			const zwaveNode = requireDefined(
+				this.getNode(nodeId),
+				`Z-Wave node ${nodeId} is unavailable while pinging`,
+			)
 
 			return zwaveNode.ping()
 		}
@@ -2801,7 +2978,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 */
 	refreshCCValues(nodeId: number, cc: CommandClasses): Promise<void> {
 		if (this.driverReady) {
-			const zwaveNode = this.getNode(nodeId)
+			const zwaveNode = requireDefined(
+				this.getNode(nodeId),
+				`Z-Wave node ${nodeId} is unavailable while refreshing command class ${cc}`,
+			)
 
 			return zwaveNode.refreshCCValues(cc)
 		}
@@ -2856,7 +3036,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 	private async _fetchConfigUpdateVersion(): Promise<string | undefined> {
 		if (this.driverReady) {
-			return this._driver.checkForConfigUpdates()
+			return requireDefined(
+				this._driverState,
+				'Driver is unavailable while checking for configuration updates',
+			).checkForConfigUpdates()
 		} else {
 			throw new DriverNotReadyError()
 		}
@@ -2916,7 +3099,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		this._configPublicationEpoch++
 		let updated = false
 		try {
-			updated = await this._driver.installConfigUpdate()
+			updated = await requireDefined(
+				this._driverState,
+				'Driver is unavailable while installing a configuration update',
+			).installConfigUpdate()
 			return updated
 		} finally {
 			if (this._activeConfigInstall === install) {
@@ -2946,7 +3132,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	async shutdownZwaveAPI(): Promise<boolean> {
 		if (this.driverReady) {
 			logger.info('Shutting down ZwaveJS driver...')
-			const success = await this._driver.shutdown()
+			const success = await requireDefined(
+				this._driverState,
+				'Driver is unavailable while shutting down the Z-Wave API',
+			).shutdown()
 			return success
 		} else {
 			throw new DriverNotReadyError()
@@ -2983,7 +3172,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 */
 	pollValue(valueId: ZUIValueId): Promise<unknown> {
 		if (this.driverReady) {
-			const zwaveNode = this.getNode(valueId.nodeId)
+			const zwaveNode = requireDefined(
+				this.getNode(valueId.nodeId),
+				`Z-Wave node ${valueId.nodeId} is unavailable while polling a value`,
+			)
 
 			logger.debug(`Polling value ${this._getValueID(valueId)}`)
 
@@ -3085,12 +3277,12 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		measured0dBm: number,
 	): Promise<boolean> {
 		if (this.driverReady) {
-			const result = await this._driver.controller.setPowerlevel(
-				powerlevel,
-				measured0dBm,
-			)
+			const result = await requireDefined(
+				this._driverState,
+				'Driver is unavailable while setting the controller power level',
+			).controller.setPowerlevel(powerlevel, measured0dBm)
 
-			await this.updateControllerNodeProps(null, ['powerlevel'])
+			await this.updateControllerNodeProps(undefined, ['powerlevel'])
 
 			return result
 		}
@@ -3100,7 +3292,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 	async setRFRegion(region: RFRegion): Promise<boolean> {
 		if (this.driverReady) {
-			const result = await this._driver.controller.setRFRegion(region)
+			const result = await requireDefined(
+				this._driverState,
+				'Driver is unavailable while setting the RF region',
+			).controller.setRFRegion(region)
 
 			// Determine which properties need updating
 			const propsToUpdate: Array<
@@ -3125,7 +3320,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				}
 			}
 
-			await this.updateControllerNodeProps(null, propsToUpdate)
+			await this.updateControllerNodeProps(undefined, propsToUpdate)
 			return result
 		}
 
@@ -3134,11 +3329,11 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 	async setMaxLRPowerLevel(powerlevel: number): Promise<boolean> {
 		if (this.driverReady) {
-			const result =
-				await this._driver.controller.setMaxLongRangePowerlevel(
-					powerlevel,
-				)
-			await this.updateControllerNodeProps(null, [
+			const result = await requireDefined(
+				this._driverState,
+				'Driver is unavailable while setting the maximum LR power level',
+			).controller.setMaxLongRangePowerlevel(powerlevel)
+			await this.updateControllerNodeProps(undefined, [
 				'maxLongRangePowerlevel',
 			])
 			return result
@@ -3226,8 +3421,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			this.sendToSocket(socketEvents.rebuildRoutesProgress, [
 				[nodeId, status],
 			])
-			const result =
-				await this._driver.controller.rebuildNodeRoutes(nodeId)
+			const result = await requireDefined(
+				this._driverState,
+				`Driver is unavailable while rebuilding routes for node ${nodeId}`,
+			).controller.rebuildNodeRoutes(nodeId)
 			status = result ? 'done' : 'failed'
 
 			node.rebuildRoutesProgress = status
@@ -3252,13 +3449,20 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	getPriorityReturnRoute(nodeId: number, destinationId: number) {
 		if (!this.driverReady) throw new DriverNotReadyError()
 
-		const controllerId = this._driver.controller.ownNodeId
+		const controller = requireDefined(
+			this._driverState,
+			`Driver is unavailable while reading priority return routes for node ${nodeId}`,
+		).controller
+		const controllerId = controller.ownNodeId
 
 		if (!destinationId) {
-			destinationId = controllerId
+			destinationId = requireDefined(
+				controllerId,
+				'Controller node ID is unavailable while the driver is ready',
+			)
 		}
 
-		const result = this._driver.controller.getPriorityReturnRouteCached(
+		const result = controller.getPriorityReturnRouteCached(
 			nodeId,
 			destinationId,
 		)
@@ -3266,13 +3470,17 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		const node = this.nodes.get(nodeId)
 
 		if (node) {
+			const priorityReturnRoute = requireDefined(
+				node.priorityReturnRoute,
+				`Priority return routes are not initialized for node ${nodeId}`,
+			)
 			if (result) {
-				node.priorityReturnRoute[destinationId] = result
+				priorityReturnRoute[destinationId] = result
 			} else {
-				delete node.priorityReturnRoute[destinationId]
+				delete priorityReturnRoute[destinationId]
 			}
 			this.emitStatistics(node, {
-				priorityReturnRoute: node.priorityReturnRoute,
+				priorityReturnRoute,
 			})
 		}
 
@@ -3290,7 +3498,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	) {
 		if (!this.driverReady) throw new DriverNotReadyError()
 
-		const result = await this._driver.controller.assignPriorityReturnRoute(
+		const result = await requireDefined(
+			this._driverState,
+			`Driver is unavailable while assigning a priority return route for node ${nodeId}`,
+		).controller.assignPriorityReturnRoute(
 			nodeId,
 			destinationNodeId,
 			repeaters,
@@ -3311,8 +3522,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		if (!this.driverReady) throw new DriverNotReadyError()
 
 		const result =
-			this._driver.controller.getPrioritySUCReturnRouteCached(nodeId) ??
-			null
+			requireDefined(
+				this._driverState,
+				`Driver is unavailable while reading the priority SUC return route for node ${nodeId}`,
+			).controller.getPrioritySUCReturnRouteCached(nodeId) ?? null
 
 		const node = this.nodes.get(nodeId)
 
@@ -3336,12 +3549,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	) {
 		if (!this.driverReady) throw new DriverNotReadyError()
 
-		const result =
-			await this._driver.controller.assignPrioritySUCReturnRoute(
-				nodeId,
-				repeaters,
-				routeSpeed,
-			)
+		const result = await requireDefined(
+			this._driverState,
+			`Driver is unavailable while assigning the priority SUC return route for node ${nodeId}`,
+		).controller.assignPrioritySUCReturnRoute(nodeId, repeaters, routeSpeed)
 
 		if (result) {
 			// when changing the SUC priority return routes custom SUC return routes are removed
@@ -3358,21 +3569,25 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	getCustomReturnRoute(nodeId: number, destinationId: number) {
 		if (!this.driverReady) throw new DriverNotReadyError()
 
-		const result = this._driver.controller.getCustomReturnRoutesCached(
-			nodeId,
-			destinationId,
-		)
+		const result = requireDefined(
+			this._driverState,
+			`Driver is unavailable while reading custom return routes for node ${nodeId}`,
+		).controller.getCustomReturnRoutesCached(nodeId, destinationId)
 
 		const node = this.nodes.get(nodeId)
 
 		if (node) {
+			const customReturnRoute = requireDefined(
+				node.customReturnRoute,
+				`Custom return routes are not initialized for node ${nodeId}`,
+			)
 			if (result) {
-				node.customReturnRoute[destinationId] = result
+				customReturnRoute[destinationId] = result
 			} else {
-				delete node.customReturnRoute[destinationId]
+				delete customReturnRoute[destinationId]
 			}
 			this.emitStatistics(node, {
-				customReturnRoute: node.customReturnRoute,
+				customReturnRoute,
 			})
 		}
 
@@ -3390,7 +3605,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	) {
 		if (!this.driverReady) throw new DriverNotReadyError()
 
-		const result = await this._driver.controller.assignCustomReturnRoutes(
+		const result = await requireDefined(
+			this._driverState,
+			`Driver is unavailable while assigning custom return routes for node ${nodeId}`,
+		).controller.assignCustomReturnRoutes(
 			nodeId,
 			destinationNodeId,
 			routes,
@@ -3411,7 +3629,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		if (!this.driverReady) throw new DriverNotReadyError()
 
 		const result =
-			this._driver.controller.getCustomSUCReturnRoutesCached(nodeId) ?? []
+			requireDefined(
+				this._driverState,
+				`Driver is unavailable while reading custom SUC return routes for node ${nodeId}`,
+			).controller.getCustomSUCReturnRoutesCached(nodeId) ?? []
 
 		const node = this.nodes.get(nodeId)
 
@@ -3435,12 +3656,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	) {
 		if (!this.driverReady) throw new DriverNotReadyError()
 
-		const result =
-			await this._driver.controller.assignCustomSUCReturnRoutes(
-				nodeId,
-				routes,
-				priorityRoute,
-			)
+		const result = await requireDefined(
+			this._driverState,
+			`Driver is unavailable while assigning custom SUC return routes for node ${nodeId}`,
+		).controller.assignCustomSUCReturnRoutes(nodeId, routes, priorityRoute)
 
 		if (result) {
 			// when changing the SUC return routes the priority SUC return route is removed
@@ -3456,8 +3675,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 */
 	async getPriorityRoute(nodeId: number) {
 		if (this.driverReady) {
-			const result =
-				await this._driver.controller.getPriorityRoute(nodeId)
+			const result = await requireDefined(
+				this._driverState,
+				`Driver is unavailable while getting the priority route for node ${nodeId}`,
+			).controller.getPriorityRoute(nodeId)
 
 			if (result) {
 				const node = this.nodes.get(nodeId)
@@ -3512,7 +3733,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	async deleteReturnRoutes(nodeId: number) {
 		if (!this.driverReady) throw new DriverNotReadyError()
 
-		const result = await this._driver.controller.deleteReturnRoutes(nodeId)
+		const result = await requireDefined(
+			this._driverState,
+			`Driver is unavailable while deleting return routes for node ${nodeId}`,
+		).controller.deleteReturnRoutes(nodeId)
 
 		if (result) {
 			const node = this.nodes.get(nodeId)
@@ -3536,8 +3760,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	async deleteSUCReturnRoutes(nodeId: number) {
 		if (!this.driverReady) throw new DriverNotReadyError()
 
-		const result =
-			await this._driver.controller.deleteSUCReturnRoutes(nodeId)
+		const result = await requireDefined(
+			this._driverState,
+			`Driver is unavailable while deleting SUC return routes for node ${nodeId}`,
+		).controller.deleteSUCReturnRoutes(nodeId)
 
 		if (result) {
 			const node = this.nodes.get(nodeId)
@@ -3561,10 +3787,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	async assignReturnRoutes(nodeId: number, destinationNodeId: number) {
 		if (!this.driverReady) throw new DriverNotReadyError()
 
-		const result = await this._driver.controller.assignReturnRoutes(
-			nodeId,
-			destinationNodeId,
-		)
+		const result = await requireDefined(
+			this._driverState,
+			`Driver is unavailable while assigning return routes for node ${nodeId}`,
+		).controller.assignReturnRoutes(nodeId, destinationNodeId)
 
 		if (result) {
 			this.getCustomReturnRoute(nodeId, destinationNodeId)
@@ -3580,8 +3806,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	async assignSUCReturnRoutes(nodeId: number) {
 		if (!this.driverReady) throw new DriverNotReadyError()
 
-		const result =
-			await this._driver.controller.assignSUCReturnRoutes(nodeId)
+		const result = await requireDefined(
+			this._driverState,
+			`Driver is unavailable while assigning SUC return routes for node ${nodeId}`,
+		).controller.assignSUCReturnRoutes(nodeId)
 
 		if (result) {
 			this.getCustomSUCReturnRoute(nodeId)
@@ -3600,11 +3828,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		routeSpeed: ZWaveDataRate,
 	): Promise<boolean> {
 		if (this.driverReady) {
-			const result = await this._driver.controller.setPriorityRoute(
-				nodeId,
-				repeaters,
-				routeSpeed,
-			)
+			const result = await requireDefined(
+				this._driverState,
+				`Driver is unavailable while setting the priority route for node ${nodeId}`,
+			).controller.setPriorityRoute(nodeId, repeaters, routeSpeed)
 
 			if (result) {
 				await this.getPriorityRoute(nodeId)
@@ -3621,8 +3848,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 */
 	async removePriorityRoute(nodeId: number) {
 		if (this.driverReady) {
-			const result =
-				await this._driver.controller.removePriorityRoute(nodeId)
+			const result = await requireDefined(
+				this._driverState,
+				`Driver is unavailable while removing the priority route for node ${nodeId}`,
+			).controller.removePriorityRoute(nodeId)
 
 			if (result) {
 				await this.getPriorityRoute(nodeId)
@@ -3645,14 +3874,24 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			if (this.isVirtualNode(nodeId)) {
 				throw new Error(`Node ${nodeId} is a virtual node`)
 			}
-			const result = await this.getNode(nodeId).checkLifelineHealth(
+			const targetNodeId = requireDefined(
+				requireDefined(
+					this._driverState,
+					`Driver is unavailable while checking lifeline health for node ${nodeId}`,
+				).controller.ownNodeId,
+				'Controller node ID is unavailable while the driver is ready',
+			)
+			const result = await requireDefined(
+				this.getNode(nodeId),
+				`Z-Wave node ${nodeId} is unavailable while checking lifeline health`,
+			).checkLifelineHealth(
 				rounds,
 				this._onHealthCheckProgress.bind(this, {
 					nodeId,
-					targetNodeId: this.driver.controller.ownNodeId,
+					targetNodeId,
 				}),
 			)
-			return { ...result, targetNodeId: this.driver.controller.ownNodeId }
+			return { ...result, targetNodeId }
 		}
 
 		throw new DriverNotReadyError()
@@ -3666,7 +3905,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			if (this.isVirtualNode(nodeId)) {
 				throw new Error(`Node ${nodeId} is a virtual node`)
 			}
-			const result = await this.getNode(nodeId).checkLinkReliability({
+			const result = await requireDefined(
+				this.getNode(nodeId),
+				`Z-Wave node ${nodeId} is unavailable while checking link reliability`,
+			).checkLinkReliability({
 				...options,
 				onProgress: (progress) =>
 					this._onLinkReliabilityCheckProgress({ nodeId }, progress),
@@ -3683,7 +3925,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			if (this.isVirtualNode(nodeId)) {
 				throw new Error(`Node ${nodeId} is a virtual node`)
 			}
-			this.getNode(nodeId).abortLinkReliabilityCheck()
+			requireDefined(
+				this.getNode(nodeId),
+				`Z-Wave node ${nodeId} is unavailable while aborting a link reliability check`,
+			).abortLinkReliabilityCheck()
 			return
 		}
 
@@ -3702,7 +3947,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			if (this.isVirtualNode(nodeId)) {
 				throw new Error(`Node ${nodeId} is a virtual node`)
 			}
-			const zwaveNode = this.getNode(nodeId)
+			const zwaveNode = requireDefined(
+				this.getNode(nodeId),
+				`Z-Wave node ${nodeId} is unavailable while checking route health`,
+			)
 			const result = await zwaveNode.checkRouteHealth(
 				targetNodeId,
 				rounds,
@@ -3748,7 +3996,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			const zwaveNode = this.getNode(nodeId)
 
 			// checks if a node was marked as failed in the controller
-			const result = await this._driver.controller.isFailedNode(nodeId)
+			const result = await requireDefined(
+				this._driverState,
+				`Driver is unavailable while checking whether node ${nodeId} has failed`,
+			).controller.isFailedNode(nodeId)
 			if (node) {
 				node.failed = result
 			}
@@ -3772,7 +4023,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				await backupManager.backupNvm()
 			}
 
-			return this._driver.controller.removeFailedNode(nodeId)
+			return requireDefined(
+				this._driverState,
+				`Driver is unavailable while removing failed node ${nodeId}`,
+			).controller.removeFailedNode(nodeId)
 		}
 
 		throw new DriverNotReadyError()
@@ -3844,7 +4098,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 	beginRebuildingRoutes(options?: RebuildRoutesOptions): boolean {
 		if (this.driverReady) {
-			return this._driver.controller.beginRebuildingRoutes(options)
+			return requireDefined(
+				this._driverState,
+				'Driver is unavailable while beginning a route rebuild',
+			).controller.beginRebuildingRoutes(options)
 		}
 
 		throw new DriverNotReadyError()
@@ -3852,9 +4109,12 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 	stopRebuildingRoutes(): boolean {
 		if (this.driverReady) {
-			const result = this._driver.controller.stopRebuildingRoutes()
+			const result = requireDefined(
+				this._driverState,
+				'Driver is unavailable while stopping a route rebuild',
+			).controller.stopRebuildingRoutes()
 			if (result) {
-				const toReturn: [number, RebuildRoutesStatus][] = []
+				const toReturn: [number, RebuildRoutesStatus | undefined][] = []
 				for (const [nodeId, node] of this.nodes) {
 					if (node.rebuildRoutesProgress === 'pending') {
 						node.rebuildRoutesProgress = 'skipped'
@@ -3872,7 +4132,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	async hardReset() {
 		if (this.driverReady) {
 			// Reject leaves lifecycle untouched so public APIs settle normally
-			await this._driver.hardReset()
+			await requireDefined(
+				this._driverState,
+				'Driver is unavailable while performing a hard reset',
+			).hardReset()
 			this.init()
 			this._inclusionCoordinator.reinstallUserCallbacks()
 		} else {
@@ -3882,7 +4145,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 	softReset() {
 		if (this.driverReady) {
-			return this._driver.softReset()
+			return requireDefined(
+				this._driverState,
+				'Driver is unavailable while performing a soft reset',
+			).softReset()
 		}
 
 		throw new DriverNotReadyError()
@@ -3929,7 +4195,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 					: CommandClasses[ctx.commandClass]
 
 			// get the command class instance to send the command
-			const api = endpoint.commandClasses[commandClass]
+			const commandClasses =
+				endpoint.commandClasses as typeof endpoint.commandClasses &
+					Partial<Record<CommandClasses, CCAPI>>
+			const api = commandClasses[commandClass]
 			if (!api || !api.isSupported()) {
 				throw Error(
 					`Node ${ctx.nodeId}${
@@ -3938,14 +4207,20 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 						ctx.commandClass
 					} or it has not been implemented yet`,
 				)
-			} else if (!(command in api)) {
+			} else if (!hasProperty(api, command)) {
 				throw Error(
 					`The command ${command} does not exist for CC ${ctx.commandClass}`,
 				)
 			}
 
 			// send the command with args
-			const method = api[command].bind(api)
+			const commandMethod = api[command]
+			if (typeof commandMethod !== 'function') {
+				throw new TypeError(
+					`The command ${command} for CC ${ctx.commandClass} is not callable`,
+				)
+			}
+			const method = commandMethod.bind(api)
 			const result = args ? await method(...args) : await method()
 
 			return result
@@ -3962,11 +4237,11 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	async callApi<T extends AllowedApis>(
 		apiName: T,
 		...args: Parameters<ZwaveClient[T]>
-	) {
-		let err: string, result: ReturnType<ZwaveClient[T]>
-
+	): Promise<CallAPIResult<T>> {
 		logger.log('info', 'Calling api %s with args: %o', apiName, args)
 
+		let err: unknown
+		let result: Awaited<ReturnType<ZwaveClient[T]>> | undefined
 		if (this.driverReady || this.driver?.mode === DriverMode.Bootloader) {
 			try {
 				const allowed =
@@ -3974,20 +4249,24 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 					allowedApis.indexOf(apiName) >= 0
 
 				if (allowed) {
-					result = await (this as any)[apiName](...args)
+					const calledResult = await Reflect.apply(
+						this[apiName],
+						this,
+						args,
+					)
+					result = calledResult
 					// custom scenes and node/location management
 				} else {
 					err = 'Unknown API'
 				}
-			} catch (e) {
-				err = e.message
+			} catch (error) {
+				err = getLegacyErrorMessage(error)
 			}
 		} else {
 			err = 'Z-Wave client not connected'
 		}
 
 		let toReturn: CallAPIResult<T>
-
 		if (err) {
 			toReturn = {
 				success: false,
@@ -4000,7 +4279,11 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				result,
 			}
 		}
-		logger.log('info', `${toReturn.message} ${apiName} %o`, result)
+		logger.log(
+			'info',
+			`${formatLegacyMessage(toReturn.message)} ${apiName} %o`,
+			result,
+		)
 
 		toReturn.args = args
 
@@ -4017,17 +4300,19 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	) {
 		if (this.driverReady) {
 			try {
-				const broadcastNode = this._driver.controller.getBroadcastNode()
+				const broadcastNode = requireDefined(
+					this._driverState,
+					'Driver is unavailable while writing to the broadcast node',
+				).controller.getBroadcastNode()
 
 				await broadcastNode.setValue(valueId, value, options)
 			} catch (error) {
 				logger.error(
-					// eslint-disable-next-line @typescript-eslint/no-base-to-string
 					`Error while sending broadcast ${value} to CC ${
 						valueId.commandClass
-					} ${valueId.property} ${valueId.propertyKey || ''}: ${
-						error.message
-					}`,
+					} ${valueId.property} ${valueId.propertyKey || ''}: ${formatLegacyErrorMessage(
+						error,
+					)}`,
 				)
 			}
 		}
@@ -4045,18 +4330,21 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		if (this.driverReady) {
 			let fallback = false
 			try {
-				const multicastGroup =
-					this._driver.controller.getMulticastGroup(nodes)
+				const multicastGroup = requireDefined(
+					this._driverState,
+					'Driver is unavailable while writing to a multicast group',
+				).controller.getMulticastGroup(nodes)
 				await multicastGroup.setValue(valueId, value, options)
 			} catch (error) {
-				fallback = error.code === ZWaveErrorCodes.CC_NotSupported
+				fallback =
+					hasZWaveErrorCode(error) &&
+					error.code === ZWaveErrorCodes.CC_NotSupported
 				logger.error(
-					// eslint-disable-next-line @typescript-eslint/no-base-to-string
 					`Error while sending multicast ${value} to CC ${
 						valueId.commandClass
-					} ${valueId.property} ${valueId.propertyKey || ''}: ${
-						error.message
-					}`,
+					} ${valueId.property} ${valueId.propertyKey || ''}: ${formatLegacyErrorMessage(
+						error,
+					)}`,
 				)
 			}
 			// try single writes requests
@@ -4108,7 +4396,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				} catch (error) {
 					logger.log(
 						'error',
-						`Error while writing %o on virtual node ${valueId.nodeId}-${vID}: ${error.message}`,
+						`Error while writing %o on virtual node ${
+							valueId.nodeId
+						}-${vID}: ${formatLegacyErrorMessage(error)}`,
 						value,
 					)
 				}
@@ -4183,7 +4473,12 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 					const node = this.nodes.get(valueId.nodeId)
 
-					const targetValueId = node?.values[vID]
+					const targetValueId = node
+						? requireDefined(
+								node.values,
+								`Values are not initialized for node ${valueId.nodeId}`,
+							)[vID]
+						: undefined
 
 					if (targetValueId) {
 						targetValueId.toUpdate = true
@@ -4198,7 +4493,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			} catch (error) {
 				logger.log(
 					'error',
-					`Error while writing %o on ${vID}: ${error.message}`,
+					`Error while writing %o on ${vID}: ${formatLegacyErrorMessage(error)}`,
 					value,
 				)
 			}
@@ -4258,11 +4553,15 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		this._updateControllerStatus('Driver ready')
 
 		try {
+			const controller = requireDefined(
+				this._driverState,
+				'Driver is unavailable while handling the driver ready event',
+			).controller
 			// Arm only after the driver is ready so a fresh chain supersedes any prior same-generation ready
 			this._startScheduledConfigCheck(generation)
-			nodeRegistry.bindControllerEvents(this.driver.controller)
+			nodeRegistry.bindControllerEvents(controller)
 
-			this.driver.controller
+			controller
 				.on('inclusion started', this._onInclusionStarted.bind(this))
 				.on('exclusion started', this._onExclusionStarted.bind(this))
 				.on('inclusion stopped', this._onInclusionStopped.bind(this))
@@ -4294,10 +4593,14 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		// reset retries
 		this._driverLifecycle.resetBackoff()
 
-		this.driverInfo.homeid = this._driver.controller.homeId
+		const controller = requireDefined(
+			this._driverState,
+			'Driver is unavailable while initializing the ready controller',
+		).controller
+		this.driverInfo.homeid = controller.homeId
 		const homeHex = '0x' + this.driverInfo?.homeid?.toString(16)
 		this.driverInfo.name = homeHex
-		this.driverInfo.controllerId = this._driver.controller.ownNodeId
+		this.driverInfo.controllerId = controller.ownNodeId
 
 		// needs home hex to be set
 		await nodeRegistry.restorePersistedNodes(
@@ -4320,7 +4623,11 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			this._groupService.createVirtualNode(group)
 		}
 
-		for (const [, node] of this._driver.controller.nodes) {
+		const currentController = requireDefined(
+			this._driverState,
+			'Driver is unavailable while populating nodes after driver ready',
+		).controller
+		for (const [, node] of currentController.nodes) {
 			// node added will not be triggered if the node is in cache
 			this._createNode(node.id)
 			this._addNode(node)
@@ -4452,7 +4759,14 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		}
 
 		this._updateControllerStatus(message)
-		const controllerNode = this.getNode(this.driver.controller.ownNodeId)
+		const controllerId = requireDefined(
+			requireDefined(
+				this._driverState,
+				'Driver is unavailable during a controller status update',
+			).controller.ownNodeId,
+			'Controller node ID is unavailable during a controller status update',
+		)
+		const controllerNode = this.getNode(controllerId)
 		if (controllerNode) {
 			this._onNodeEvent('status changed', controllerNode, status)
 		}
@@ -4654,7 +4968,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		})
 	}
 
-	private _onRebuildRoutesDone(result) {
+	private _onRebuildRoutesDone(
+		result: ReadonlyMap<number, RebuildRoutesStatus>,
+	) {
 		const message = `Rebuild Routes process COMPLETED. Healed ${result.size} nodes`
 		this._updateControllerStatus(message)
 	}
@@ -4680,9 +4996,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		const event = this.nvmEvent ? this.nvmEvent + '_' : ''
 		this.nvmEvent = null
 
-		const data = await this.driver.controller.backupNVMRaw(
-			this._onBackupNVMProgress.bind(this),
-		)
+		const data = await requireDefined(
+			this._driverState,
+			'Driver is unavailable while backing up NVM',
+		).controller.backupNVMRaw(this._onBackupNVMProgress.bind(this))
 
 		const fileName = `${NVM_BACKUP_PREFIX}${utils.fileDate()}${event}`
 
@@ -4706,12 +5023,18 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		}
 
 		if (useRaw) {
-			await this.driver.controller.restoreNVMRaw(
+			await requireDefined(
+				this._driverState,
+				'Driver is unavailable while restoring raw NVM',
+			).controller.restoreNVMRaw(
 				data,
 				this._onRestoreNVMProgress.bind(this),
 			)
 		} else {
-			await this.driver.controller.restoreNVM(
+			await requireDefined(
+				this._driverState,
+				'Driver is unavailable while restoring NVM',
+			).controller.restoreNVM(
 				data,
 				this._onConvertNVMProgress.bind(this),
 				this._onRestoreNVMProgress.bind(this),
@@ -4738,7 +5061,11 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			throw new DriverNotReadyError()
 		}
 
-		const result = this.driver.controller.getProvisioningEntries()
+		const driver = requireDefined(
+			this._driverState,
+			'Driver is unavailable while getting provisioning entries',
+		)
+		const result = driver.controller.getProvisioningEntries()
 
 		for (const entry of result) {
 			const node = this.nodes.get(entry.nodeId)
@@ -4755,7 +5082,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				typeof entry.productId === 'number' &&
 				typeof entry.applicationVersion === 'string'
 			) {
-				const device = await this.driver.configManager.lookupDevice(
+				const device = await driver.configManager.lookupDevice(
 					entry.manufacturerId,
 					entry.productType,
 					entry.productId,
@@ -4777,7 +5104,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			throw new DriverNotReadyError()
 		}
 
-		return this.driver.controller.getProvisioningEntry(dsk)
+		return requireDefined(
+			this._driverState,
+			'Driver is unavailable while getting a provisioning entry',
+		).controller.getProvisioningEntry(dsk)
 	}
 
 	unprovisionSmartStartNode(dskOrNodeId: string | number) {
@@ -4785,7 +5115,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			throw new DriverNotReadyError()
 		}
 
-		this.driver.controller.unprovisionSmartStartNode(dskOrNodeId)
+		requireDefined(
+			this._driverState,
+			'Driver is unavailable while removing a SmartStart provisioning entry',
+		).controller.unprovisionSmartStartNode(dskOrNodeId)
 	}
 
 	async parseQRCodeString(qrString: string): Promise<{
@@ -4798,7 +5131,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		let exists = false
 
 		if (parsed?.dsk) {
-			node = this.driver.controller.getNodeByDSK(parsed.dsk)
+			node = requireDefined(
+				this._driverState,
+				'Driver is unavailable while parsing a provisioning QR code',
+			).controller.getNodeByDSK(parsed.dsk)
 
 			if (!node) {
 				exists = !!this.getProvisioningEntry(parsed.dsk)
@@ -4826,7 +5162,11 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			throw Error('DSK is required')
 		}
 
-		const isNew = !this.driver.controller.getProvisioningEntry(entry.dsk)
+		const controller = requireDefined(
+			this._driverState,
+			'Driver is unavailable while provisioning a SmartStart node',
+		).controller
+		const isNew = !controller.getProvisioningEntry(entry.dsk)
 
 		// disable it so user can choose the protocol to use
 		if (
@@ -4836,7 +5176,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			entry.status = ProvisioningEntryStatus.Inactive
 		}
 
-		this.driver.controller.provisionSmartStartNode(entry)
+		controller.provisionSmartStartNode(entry)
 
 		return entry
 	}
@@ -5120,11 +5460,21 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	) {
 		const registry = this._nodeRegistry
 		const generation = this._nodeGeneration
-		const driver = this._driver
-		node = node || registry.nodes.get(driver.controller.ownNodeId)
+		const driver = requireDefined(
+			this._driverState,
+			'Driver is unavailable while updating controller node properties',
+		)
+		const controllerId = requireDefined(
+			driver.controller.ownNodeId,
+			'Controller node ID is unavailable while updating controller properties',
+		)
+		node = requireDefined(
+			node || registry.nodes.get(controllerId),
+			'Controller node is not initialized',
+		)
 		const isCurrent = () =>
 			this._isCurrentNodeRegistry(registry, generation) &&
-			this._driver === driver &&
+			this._driverState === driver &&
 			registry.nodes.get(node.id) === node
 		if (props.includes('powerlevel')) {
 			if (
@@ -5199,11 +5549,16 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	): ZUIValueId {
 		const node = this._nodes.get(zwaveNode.id)
 		const vID = this._getValueID(zwaveValue)
+		const value = requireDefined(
+			requireDefined(node, `Node ${zwaveNode.id} is not initialized`)
+				.values?.[vID],
+			`Value ${vID} is not initialized for node ${zwaveNode.id}`,
+		)
 		return NodeProjector.updateValueMetadata(
 			zwaveNode,
 			zwaveValue,
 			zwaveValueMeta,
-			node.values[vID],
+			value,
 		)
 	}
 
@@ -5282,7 +5637,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 	// ------- Utils ------------------------
 
-	private _parseNotification(parameters) {
+	private _parseNotification(parameters: unknown) {
 		return NodeProjector.parseNotification(parameters)
 	}
 
@@ -5330,8 +5685,15 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	/**
 	 * Get a valueId from a valueId object
 	 */
-	private _getValueID(v: Partial<ZUIValueId>, withNode = false) {
-		return NodeProjector.getValueId(v as TranslatedValueID, withNode)
+	private _getValueID(v: ValueIdRef, withNode = false) {
+		const propertyKey = v.propertyKey === null ? 'null' : v.propertyKey
+		return NodeProjector.getValueId(
+			{
+				...v,
+				propertyKey,
+			},
+			withNode,
+		)
 	}
 
 	/** Arms exactly one daily config-check chain per `driver ready`, clearing any prior armed timer and superseding an in-flight check via `_configCheckChain` */
@@ -5423,7 +5785,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				`Error while polling value ${this._getValueID(
 					valueId,
 					true,
-				)}: ${error.message}`,
+				)}: ${formatLegacyErrorMessage(error)}`,
 			)
 		}
 
@@ -5449,7 +5811,11 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	) {
 		const interval = setInterval(() => {
 			const totalFilesFragments = totalFiles * fragmentsPerFile
-			const progress = this.nodes.get(nodeId).firmwareUpdate ?? {
+			const progressNode = requireDefined(
+				this.nodes.get(nodeId),
+				`Node ${nodeId} is not initialized`,
+			)
+			const progress = progressNode.firmwareUpdate ?? {
 				totalFiles,
 				currentFile: 1,
 				sentFragments: 0,
@@ -5466,7 +5832,11 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 			if (progress.currentFile > totalFiles) {
 				let api: 'firmwareUpdateOTW' | 'firmwareUpdateOTA'
-				if (this.nodes.get(nodeId).isControllerNode) {
+				const node = requireDefined(
+					this.nodes.get(nodeId),
+					`Node ${nodeId} is not initialized`,
+				)
+				if (node.isControllerNode) {
 					api = 'firmwareUpdateOTW'
 					this._onOTWFirmwareUpdateFinished({
 						status: OTWFirmwareUpdateStatus.OK,
@@ -5475,7 +5845,13 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				} else {
 					api = 'firmwareUpdateOTA'
 					this._onNodeFirmwareUpdateFinished(
-						this.driver.controller.nodes.get(nodeId),
+						requireDefined(
+							requireDefined(
+								this._driverState,
+								'Driver is unavailable while emulating a firmware update',
+							).controller.nodes.get(nodeId),
+							`Z-Wave node ${nodeId} is not initialized`,
+						),
 						{
 							reInterview: false,
 							status: FirmwareUpdateStatus.OK_NoRestart,
@@ -5493,7 +5869,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 					args: [],
 				}
 
-				this.socket.emit(socketEvents.api, result)
+				this.requireSocket().emit(socketEvents.api, result)
 
 				clearInterval(interval)
 				return
@@ -5508,11 +5884,16 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 			if (this.nodes.get(nodeId)?.isControllerNode) {
 				// emulate a ping to another node
-				Array.from(this.driver.controller.nodes.entries())[1][1]
-					.ping()
-					.catch(() => {
-						//noop
-					})
+				const pingNode = requireDefined(
+					Array.from(
+						requireDefined(
+							this._driverState,
+							'Driver is unavailable while emulating a firmware update',
+						).controller.nodes.values(),
+					)[1],
+					'No secondary Z-Wave node is available',
+				)
+				pingNode.ping().catch(() => {})
 				this._onOTWFirmwareUpdateProgress({
 					sentFragments: progress.sentFragments,
 					totalFragments: progress.totalFragments,
@@ -5520,16 +5901,15 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				})
 			} else {
 				// emulate a ping to node
-				this.driver.controller.nodes
-					.get(nodeId)
-					.ping()
-					.catch(() => {
-						//noop
-					})
-				this._onNodeFirmwareUpdateProgress(
-					this.driver.controller.nodes.get(nodeId),
-					progress,
+				const zwaveNode = requireDefined(
+					requireDefined(
+						this._driverState,
+						'Driver is unavailable while emulating a firmware update',
+					).controller.nodes.get(nodeId),
+					`Z-Wave node ${nodeId} is not initialized`,
 				)
+				zwaveNode.ping().catch(() => {})
+				this._onNodeFirmwareUpdateProgress(zwaveNode, progress)
 			}
 		}, 1000)
 	}

@@ -30,6 +30,20 @@ describe('Socket contract: callApi()', () => {
 		return new ZWaveClient({}, harness.io)
 	}
 
+	function callApiAtRuntime(
+		zwave: ZWaveClientType,
+		api: unknown,
+		...args: unknown[]
+	): Promise<{
+		success: boolean
+		message: string
+		args: unknown[]
+		result?: unknown
+	}> {
+		const callApi = zwave.callApi.bind(zwave)
+		return Reflect.apply(callApi, undefined, [api, ...args])
+	}
+
 	describe('callApi() dispatch', () => {
 		it('success: calls a real allowed method and returns its result, message, and echoed args', async () => {
 			const zwave = await realZwave()
@@ -52,11 +66,7 @@ describe('Socket contract: callApi()', () => {
 			zwave['_driver'] = {} as unknown as Driver
 			zwave.driverReady = true
 
-			const res = await zwave.callApi(
-				'notARealApiName' as unknown as Parameters<
-					ZWaveClientType['callApi']
-				>[0],
-			)
+			const res = await callApiAtRuntime(zwave, 'notARealApiName')
 
 			expect(res).toStrictEqual({
 				success: false,
@@ -71,9 +81,7 @@ describe('Socket contract: callApi()', () => {
 			zwave.driverReady = true
 
 			// init is a real ZWaveClient method intentionally excluded from allowedApis, so callApi must reject it exactly like a nonexistent name
-			const res = await zwave.callApi(
-				'init' as unknown as Parameters<ZWaveClientType['callApi']>[0],
-			)
+			const res = await callApiAtRuntime(zwave, 'init')
 
 			expect(res).toStrictEqual({
 				success: false,
@@ -149,6 +157,8 @@ describe('Socket contract: callApi()', () => {
 
 			expect(res.success).toBe(true)
 			expect(res.message).toBe('Success zwave api call')
+			if (!('result' in res))
+				throw new Error('Expected successful API result')
 			expect(res.result).toBeUndefined()
 			// A present-but-undefined key and an absent key both read back as undefined above
 			expect('result' in res).toBe(true)
@@ -160,11 +170,7 @@ describe('Socket contract: callApi()', () => {
 			zwave['_driver'] = {} as unknown as Driver
 			zwave.driverReady = true
 
-			const res = await zwave.callApi(
-				'notARealApiName' as unknown as Parameters<
-					ZWaveClientType['callApi']
-				>[0],
-			)
+			const res = await callApiAtRuntime(zwave, 'notARealApiName')
 
 			expect(res.success).toBe(false)
 			expect('result' in res).toBe(false)
@@ -219,10 +225,9 @@ describe('Socket contract: callApi()', () => {
 			zwave['_driver'] = {} as unknown as Driver
 			zwave.driverReady = true
 
-			const res = await zwave.callApi(
-				'notARealApiName' as unknown as Parameters<
-					ZWaveClientType['callApi']
-				>[0],
+			const res = await callApiAtRuntime(
+				zwave,
+				'notARealApiName',
 				'a',
 				'b',
 				3,
@@ -234,7 +239,7 @@ describe('Socket contract: callApi()', () => {
 		it('argument echo: `args` is echoed back even on the error path (disconnected)', async () => {
 			const zwave = await realZwave()
 
-			const res = await zwave.callApi('_getScenes', 'unused' as never)
+			const res = await callApiAtRuntime(zwave, '_getScenes', 'unused')
 
 			expect(res.args).toEqual(['unused'])
 		})

@@ -7,16 +7,20 @@
  * shape-correct literal drives the real production switch without a real
  * `zwave-js` graph. Every builder returns a fresh object.
  */
-import { vi } from 'vitest'
+import { vi, type Mock } from 'vitest'
 import { EventEmitter } from 'node:events'
 import type { StoreHassDevicesResult } from '#api/hass/types.ts'
 import type { MqttConfig } from '#api/lib/MqttClient.ts'
+import type { GatewayZwave } from '#api/lib/Gateway.ts'
 import type {
 	HassDevice,
 	ZUINode,
 	ZUIValueId,
 	ZUIValueIdState,
 } from '#api/lib/ZwaveClient.ts'
+import { assertDefined, requireDefined } from '../testUtils.ts'
+
+export { assertDefined, requireDefined }
 
 /**
  * A complete `MqttConfig` that stays local with `store: false` (so
@@ -200,7 +204,11 @@ export function buildNode(partial: Partial<ZUINode> = {}): ZUINode {
  */
 export function addValue(node: ZUINode, valueId: ZUIValueId): string {
 	const key = valueMapKey(valueId)
-	node.values[key] = valueId
+	const values = requireDefined(
+		node.values,
+		`Expected node ${node.id} to have a values map`,
+	)
+	values[key] = valueId
 	return key
 }
 
@@ -214,19 +222,20 @@ export function addValue(node: ZUINode, valueId: ZUIValueId): string {
 export type FakeGatewayZwave = EventEmitter & {
 	homeHex: string
 	nodes: Map<number, ZUINode>
-	updateDevice: ReturnType<typeof vi.fn>
+	updateDevice: Mock<GatewayZwave['updateDevice']>
 	addDevice: ReturnType<typeof vi.fn>
 	storeDevices: ReturnType<typeof vi.fn>
-	emitNodeUpdate: ReturnType<typeof vi.fn>
+	emitNodeUpdate: Mock<GatewayZwave['emitNodeUpdate']>
 	getNode: ReturnType<typeof vi.fn>
-	connect: ReturnType<typeof vi.fn>
-	setPollInterval: ReturnType<typeof vi.fn>
-	writeValue: ReturnType<typeof vi.fn>
-	writeBroadcast: ReturnType<typeof vi.fn>
-	writeMulticast: ReturnType<typeof vi.fn>
-	callApi: ReturnType<typeof vi.fn>
+	connect: Mock<GatewayZwave['connect']>
+	setPollInterval: Mock<GatewayZwave['setPollInterval']>
+	writeValue: Mock<GatewayZwave['writeValue']>
+	writeBroadcast: Mock<GatewayZwave['writeBroadcast']>
+	writeMulticast: Mock<GatewayZwave['writeMulticast']>
+	callApi: Mock<GatewayZwave['callApi']>
+	driverFunction: Mock<GatewayZwave['driverFunction']>
 	/** Real `Gateway.close()` awaits `zwave.close()` before closing MQTT. */
-	close: ReturnType<typeof vi.fn>
+	close: Mock<GatewayZwave['close']>
 }
 
 export function createFakeGatewayZwave(
@@ -236,26 +245,27 @@ export function createFakeGatewayZwave(
 	return Object.assign(emitter, {
 		homeHex: '0xabcdef01',
 		nodes: new Map<number, ZUINode>(),
-		updateDevice: vi.fn(),
+		updateDevice: vi.fn<GatewayZwave['updateDevice']>(),
 		addDevice: vi.fn(),
 		storeDevices: vi.fn(() =>
 			Promise.resolve({
 				status: 'stored',
 			} satisfies StoreHassDevicesResult),
 		),
-		emitNodeUpdate: vi.fn(),
+		emitNodeUpdate: vi.fn<GatewayZwave['emitNodeUpdate']>(),
 		getNode: vi.fn(() => undefined),
-		connect: vi.fn(() => Promise.resolve(undefined)),
-		setPollInterval: vi.fn(),
-		writeValue: vi.fn(() => Promise.resolve(undefined)),
-		writeBroadcast: vi.fn(() => Promise.resolve(undefined)),
-		writeMulticast: vi.fn(() => Promise.resolve(undefined)),
-		callApi: vi.fn(() =>
+		connect: vi.fn<GatewayZwave['connect']>(() => Promise.resolve()),
+		setPollInterval: vi.fn<GatewayZwave['setPollInterval']>(),
+		writeValue: vi.fn<GatewayZwave['writeValue']>(),
+		writeBroadcast: vi.fn<GatewayZwave['writeBroadcast']>(),
+		writeMulticast: vi.fn<GatewayZwave['writeMulticast']>(),
+		callApi: vi.fn<GatewayZwave['callApi']>(() =>
 			Promise.resolve({ success: true, message: 'ok', result: [] }),
 		),
-		close: vi.fn(() => Promise.resolve(undefined)),
+		driverFunction: vi.fn<GatewayZwave['driverFunction']>(),
+		close: vi.fn<GatewayZwave['close']>(() => Promise.resolve(undefined)),
 		...overrides,
-	}) as FakeGatewayZwave
+	})
 }
 
 /** Deep-clones a captured discovery payload for stable snapshot assertions. */

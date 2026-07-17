@@ -25,6 +25,7 @@ import type {
 } from '#api/hass/types.ts'
 import { PayloadType } from '#api/lib/shared.ts'
 import { cleanupTestEnv, ensureTestEnv, TEST_SESSION_SECRET } from './env.ts'
+import { assertDefined } from '../testUtils.ts'
 
 const GENERIC_DEVICE_CLASS_THERMOSTAT = 0x08
 const GENERIC_DEVICE_CLASS_BINARY_SWITCH = 0x10
@@ -86,6 +87,7 @@ function value(overrides: Partial<HassValue> = {}): HassValue {
 		endpoint: 0,
 		property: 'currentValue',
 		propertyName: 'currentValue',
+		commandClassName: 'Binary Switch',
 		type: 'boolean',
 		readable: true,
 		writeable: false,
@@ -105,6 +107,7 @@ function node(overrides: Partial<HassNode> = {}): HassNode {
 		hassDevices: {},
 		deviceId: '1-2-3',
 		deviceClass: {
+			basic: 0,
 			generic: GENERIC_DEVICE_CLASS_BINARY_SWITCH,
 			specific: BINARY_POWER_SWITCH_SPECIFIC_DEVICE_CLASS,
 		},
@@ -157,6 +160,8 @@ function setup(options: {
 		getStatusTopic: () => 'prefix/_CLIENTS/ZWAVE_GATEWAY/status',
 		publish: (topic, payload, publishOptions, prefix) => {
 			if (options.publishError !== undefined) {
+				// Exercise production normalization of non-Error throw values
+				// eslint-disable-next-line @typescript-eslint/only-throw-error
 				throw options.publishError
 			}
 			published.push({
@@ -259,7 +264,7 @@ describe('DiscoveryGenerator', () => {
 			},
 		})
 		const { generator, discovered, emitted, published } = setup({
-			nodes: new Map([
+			nodes: new Map<number, unknown>([
 				[2, hassNode],
 				[3, { id: 3 }],
 				[4, node({ id: 4, virtual: true })],
@@ -805,7 +810,7 @@ describe('DiscoveryGenerator', () => {
 		const rgb = Object.values(hassNode.hassDevices).find(
 			(candidate) => candidate.type === 'light',
 		)
-		expect(rgb).toBeDefined()
+		assertDefined(rgb, 'expected an RGB light discovery')
 		expect(rgb.discovery_payload.supported_color_modes).toEqual([
 			'rgb',
 			'onoff',
@@ -901,6 +906,7 @@ describe('DiscoveryGenerator', () => {
 	it('discovers thermostat climates and skips unsupported nodes', () => {
 		const thermostat = node({
 			deviceClass: {
+				basic: 0,
 				generic: GENERIC_DEVICE_CLASS_THERMOSTAT,
 				specific: HEATING_THERMOSTAT_SPECIFIC_DEVICE_CLASS,
 			},
@@ -958,6 +964,7 @@ describe('DiscoveryGenerator', () => {
 		generator.discoverClimates(
 			node({
 				deviceClass: {
+					basic: 0,
 					generic: GENERIC_DEVICE_CLASS_THERMOSTAT,
 					specific: HEATING_THERMOSTAT_SPECIFIC_DEVICE_CLASS,
 				},
@@ -967,9 +974,11 @@ describe('DiscoveryGenerator', () => {
 		expect(logWarn).toHaveBeenCalled()
 
 		generator.discoverClimates(thermostat)
+		const deviceId = thermostat.deviceId
+		assertDefined(deviceId, 'thermostat fixture must have a device ID')
 		expect(
 			catalog
-				.get(thermostat.deviceId)
+				.get(deviceId)
 				?.find((candidate) => candidate.type === 'climate'),
 		).toMatchObject({
 			type: 'climate',
@@ -979,10 +988,8 @@ describe('DiscoveryGenerator', () => {
 				cool: ThermostatMode.Cool,
 			},
 		})
-		const firstProjection = structuredClone(
-			catalog.get(thermostat.deviceId),
-		)
+		const firstProjection = structuredClone(catalog.get(deviceId))
 		generator.discoverClimates(thermostat)
-		expect(catalog.get(thermostat.deviceId)).toEqual(firstProjection)
+		expect(catalog.get(deviceId)).toEqual(firstProjection)
 	})
 })

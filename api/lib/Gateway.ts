@@ -5,6 +5,7 @@ import { CommandClasses } from '@zwave-js/core'
 import * as Constants from './Constants.ts'
 import type { LogLevel } from './logger.ts'
 import { module } from './logger.ts'
+import { getErrorMessage } from './errors.ts'
 import { PayloadType } from './shared.ts'
 import type { IClientPublishOptions } from 'mqtt'
 import MqttClient, { type MqttClientEventCallbacks } from './MqttClient.ts'
@@ -15,6 +16,7 @@ import type {
 	ZUINode,
 	ZUIValueId,
 	ZUIValueIdState,
+	ZwaveClientEventCallbacks,
 } from './ZwaveClient.ts'
 import type ZwaveClient from './ZwaveClient.ts'
 import Cron from 'croner'
@@ -25,12 +27,7 @@ import type { CustomDeviceRegistry } from '../hass/CustomDeviceRegistry.ts'
 import MqttDiscoveryManager, {
 	type MqttDiscoveryManagerOptions,
 } from '../hass/MqttDiscoveryManager.ts'
-import type {
-	HassNode,
-	HassTopicNode,
-	HassValue,
-	HassValueTopic,
-} from '../hass/ports.ts'
+import type { HassTopicNode, HassValueTopic } from '../hass/ports.ts'
 import { isHassNode } from '../hass/ports.ts'
 
 const logger = module('Gateway')
@@ -48,15 +45,13 @@ export type GatewayType = (typeof GATEWAY_TYPE)[keyof typeof GATEWAY_TYPE]
 
 export { PayloadType }
 
-export type GatewayValue = {
+type GatewayValueBase = {
 	device: string
 	value: ZUIValueId
 	topic?: string
 	device_class?: string
 	icon?: string
 	postOperation?: string
-	enablePoll?: boolean
-	pollInterval?: number
 	parseSend?: boolean
 	sendFunction?: string
 	parseReceive?: boolean
@@ -65,6 +60,20 @@ export type GatewayValue = {
 	retain?: boolean
 	ccConfigEnableDiscovery?: boolean
 }
+
+type PollingGatewayValue = GatewayValueBase & {
+	enablePoll: true
+	pollInterval: number
+}
+
+export type GatewayValue = GatewayValueBase &
+	(
+		| PollingGatewayValue
+		| {
+				enablePoll?: false
+				pollInterval?: number
+		  }
+	)
 
 export type ScheduledJob = {
 	name: string
@@ -110,27 +119,76 @@ export type GatewayConfig = {
 
 interface ValueIdTopic {
 	topic: string
-	valueConf: GatewayValue
-	targetTopic?: string
+	valueConf?: GatewayValue
+	targetTopic?: string | null
 }
 
-export type GatewayZwave = Pick<
+type TopicValue = ZUIValueId
+
+type TopicDetails<T extends TopicValue> = 'conf' extends keyof T
+	? ValueIdTopic
+	: HassValueTopic
+
+type GatewayTopicNode = Omit<HassTopicNode, 'values'> & {
+	values?: Record<string, ZUIValueId>
+}
+
+interface GatewayMqttPublishPort {
+	publish(
+		topic: string | null,
+		data: unknown,
+		options: IClientPublishOptions | null,
+	): unknown
+}
+
+interface GatewayZwaveApiPort {
+	callApi(
+		apiName: string,
+		...args: Parameters<ZwaveClient[AllowedApis]>
+	): Promise<CallAPIResult<AllowedApis>>
+}
+
+type GatewayZwaveEvent = Extract<
+	keyof ZwaveClientEventCallbacks,
+	| 'nodeInited'
+	| 'driverStatus'
+	| 'nodeStatus'
+	| 'nodeLastActive'
+	| 'valueChanged'
+	| 'nodeRemoved'
+	| 'notification'
+	| 'event'
+>
+
+interface GatewayZwaveEventPort {
+	on<E extends GatewayZwaveEvent>(
+		event: E,
+		listener: ZwaveClientEventCallbacks[E],
+	): void
+	off<E extends GatewayZwaveEvent>(
+		event: E,
+		listener: ZwaveClientEventCallbacks[E],
+	): void
+}
+
+type GatewayZwaveState = Pick<
 	ZwaveClient,
-	| 'callApi'
 	| 'close'
 	| 'connect'
 	| 'driverFunction'
 	| 'emitNodeUpdate'
 	| 'homeHex'
 	| 'nodes'
-	| 'off'
-	| 'on'
 	| 'setPollInterval'
 	| 'updateDevice'
 	| 'writeBroadcast'
 	| 'writeMulticast'
 	| 'writeValue'
 >
+
+export type GatewayZwave = GatewayZwaveState &
+	GatewayZwaveApiPort &
+	GatewayZwaveEventPort
 
 export type GatewayMqtt = Pick<
 	MqttClient,
@@ -258,7 +316,11 @@ export default class Gateway<
 			},
 			zwave: {
 				get homeHex() {
-					return getZwave().homeHex
+					const homeHex = getZwave().homeHex
+					if (homeHex === undefined) {
+						throw new TypeError('Z-Wave home ID is not initialized')
+					}
+					return homeHex
 				},
 				getNode: (nodeId) => getZwave().nodes.get(nodeId),
 				getNodes: () => getZwave().nodes,
@@ -281,7 +343,7 @@ export default class Gateway<
 			topics: {
 				nodeTopic: (node) => this.nodeTopic(node),
 				valueTopic: (node, value, returnObject) =>
-					this.valueTopic(node, value, returnObject),
+					this.valueTopic(node, value, returnObject ?? false),
 			},
 			registrySource: this.registrySource,
 			logger,
@@ -291,6 +353,22 @@ export default class Gateway<
 	// Discovery facades kept on the Gateway that delegate to the owned manager
 	private get discoveryGenerator(): DiscoveryGenerator {
 		return this.mqttDiscovery.discoveryGenerator
+	}
+
+	private get gatewayMqtt(): GatewayMqttPublishPort {
+		const mqtt = this._mqtt
+		return {
+			publish: (topic, data, options) =>
+				Reflect.apply(mqtt.publish.bind(mqtt), mqtt, [
+					topic,
+					data,
+					options,
+				]),
+		}
+	}
+
+	private get gatewayZwaveApi(): GatewayZwaveApiPort {
+		return this._zwave
 	}
 
 	private get customDeviceRegistry(): CustomDeviceRegistry {
@@ -342,7 +420,7 @@ export default class Gateway<
 			if (jobConfig.runOnInit) {
 				this.runJob(jobConfig).catch((error) => {
 					logger.error(
-						`Error while executing scheduled job "${jobConfig.name}": ${error.message}`,
+						`Error while executing scheduled job "${jobConfig.name}": ${getErrorMessage(error)}`,
 					)
 				})
 			}
@@ -356,15 +434,19 @@ export default class Gateway<
 
 					if (job?.nextRun()) {
 						this.jobs.set(jobConfig.name, job)
+						const nextRun = job.nextRun()
+						if (nextRun === null) {
+							throw new TypeError(
+								"Cannot read properties of null (reading 'toISOString')",
+							)
+						}
 						logger.info(
-							`Scheduled job "${jobConfig.name}" will run at ${job
-								.nextRun()
-								.toISOString()}`,
+							`Scheduled job "${jobConfig.name}" will run at ${nextRun.toISOString()}`,
 						)
 					}
 				} catch (error) {
 					logger.error(
-						`Error while scheduling job "${jobConfig.name}": ${error.message}`,
+						`Error while scheduling job "${jobConfig.name}": ${getErrorMessage(error)}`,
 					)
 				}
 			}
@@ -380,17 +462,21 @@ export default class Gateway<
 			await this.zwave.driverFunction(jobConfig.code)
 		} catch (error) {
 			logger.error(
-				`Error executing scheduled job "${jobConfig.name}": ${error.message}`,
+				`Error executing scheduled job "${jobConfig.name}": ${getErrorMessage(error)}`,
 			)
 		}
 
 		const job = this.jobs.get(jobConfig.name)
 
 		if (job?.nextRun()) {
+			const nextRun = job.nextRun()
+			if (nextRun === null) {
+				throw new TypeError(
+					"Cannot read properties of null (reading 'toISOString')",
+				)
+			}
 			logger.info(
-				`Next scheduled job "${jobConfig.name}" will run at ${job
-					.nextRun()
-					.toISOString()}`,
+				`Next scheduled job "${jobConfig.name}" will run at ${nextRun.toISOString()}`,
 			)
 		}
 	}
@@ -444,8 +530,12 @@ export default class Gateway<
 			if (payload === null) return null
 
 			if (valueConf) {
-				if (utils.isValidOperation(valueConf.postOperation)) {
-					let op = valueConf.postOperation
+				const postOperation = valueConf.postOperation
+				if (
+					postOperation !== undefined &&
+					utils.isValidOperation(postOperation)
+				) {
+					let op = postOperation
 
 					// revert operation to write
 					if (op.includes('/')) op = op.replace(/\//, '*')
@@ -579,7 +669,7 @@ export default class Gateway<
 	/**
 	 * Calculates the node topic based on gateway settings
 	 */
-	nodeTopic(node: HassTopicNode): string {
+	nodeTopic(node: GatewayTopicNode): string {
 		const topic = []
 
 		if (node.loc && !this.config.ignoreLoc) topic.push(node.loc)
@@ -612,16 +702,37 @@ export default class Gateway<
 	 * Calculates the valueId topic based on gateway settings
 	 *
 	 */
+	valueTopic<T extends TopicValue>(
+		node: GatewayTopicNode,
+		valueId: T,
+		returnObject: true,
+	): TopicDetails<T> | null
+	valueTopic<T extends TopicValue>(
+		node: GatewayTopicNode,
+		valueId: T,
+		returnObject?: false,
+	): string | null
+	valueTopic<T extends TopicValue>(
+		node: GatewayTopicNode,
+		valueId: T,
+		returnObject: boolean,
+	): string | TopicDetails<T> | null
 	valueTopic(
-		node: HassTopicNode,
-		valueId: HassValue,
+		node: GatewayTopicNode,
+		valueId: TopicValue,
 		returnObject = false,
-	): string | HassValueTopic | null {
+	): string | HassValueTopic | ValueIdTopic | null {
 		const topic = []
-		let valueConf: GatewayValue
+		let valueConf: GatewayValue | undefined
 
 		// check if this value is in configuration values array
-		const values = this.config.values.filter(
+		const configuredValues = this.config.values
+		if (configuredValues === undefined) {
+			throw new TypeError(
+				"Cannot read properties of undefined (reading 'filter')",
+			)
+		}
+		const values = configuredValues.filter(
 			(v: GatewayValue) => v.device === node.deviceId,
 		)
 		if (values && values.length > 0) {
@@ -634,16 +745,16 @@ export default class Gateway<
 			topic.push(valueConf.topic)
 		}
 
-		let targetTopic: string
+		let targetTopic: string | null | undefined
 
 		if (returnObject && valueId.targetValue) {
 			const targetValue = node.values?.[valueId.targetValue]
 			if (targetValue) {
-				targetTopic = this.valueTopic(
-					node,
-					targetValue,
-					false,
-				) as string
+				const targetResult = this.valueTopic(node, targetValue, false)
+				if (targetResult !== null && typeof targetResult !== 'string') {
+					throw new TypeError('Expected a string target topic')
+				}
+				targetTopic = targetResult
 			}
 		}
 
@@ -659,6 +770,11 @@ export default class Gateway<
 
 					topic.push('endpoint_' + (valueId.endpoint || 0))
 
+					if (valueId.propertyName === undefined) {
+						throw new TypeError(
+							"Cannot read properties of undefined (reading 'replace')",
+						)
+					}
 					topic.push(utils.removeSlash(valueId.propertyName))
 					if (valueId.propertyKey !== undefined) {
 						topic.push(utils.removeSlash(valueId.propertyKey))
@@ -772,8 +888,16 @@ export default class Gateway<
 		)
 		for (const topic of topics) {
 			const valueId = this.topicValues[topic]
+			if (valueId === undefined) {
+				throw new TypeError(
+					"Cannot read properties of undefined (reading 'nodeId')",
+				)
+			}
 			delete this.topicValues[topic]
-			const updatedTopic = this.valueTopic(node, valueId) as string
+			const updatedTopic = this.valueTopic(node, valueId)
+			if (typeof updatedTopic !== 'string') {
+				throw new TypeError('Expected a string value topic')
+			}
 			this.topicValues[updatedTopic] = valueId
 		}
 	}
@@ -786,11 +910,12 @@ export default class Gateway<
 
 		const node = this._zwave.nodes.get(nodeId)
 		if (!node) return
-		const topics = Object.values(node.values).map(
-			(value) => this.valueTopic(node, value) as string,
+		const nodeValues = this._requireNodeValues(node)
+		const topics = Object.values(nodeValues).map((value) =>
+			this.valueTopic(node, value),
 		)
 		for (const topic of topics) {
-			this._mqtt.publish(topic, '', { retain: true })
+			this.gatewayMqtt.publish(topic, '', { retain: true })
 		}
 	}
 
@@ -834,15 +959,18 @@ export default class Gateway<
 			this.discoveryGenerator.discoverValueIfNeeded(node, valueId)
 		}
 
-		const result = this.valueTopic(node, valueId, true) as ValueIdTopic
+		const result = this.valueTopic(node, valueId, true)
 
-		if (!result) {
+		if (result === null) {
 			if (this.config.type !== GATEWAY_TYPE.MANUAL) {
 				// if config is manual it is normal that some values are not mapped
 				logger.debug(`No topic found for value ${valueId.id}`)
 			}
 
 			return
+		}
+		if (typeof result === 'string') {
+			throw new TypeError('Expected value topic details')
 		}
 
 		// if there is a valid topic for this value publish it
@@ -853,11 +981,12 @@ export default class Gateway<
 		let tmpVal = valueId.value
 
 		if (valueConf) {
-			if (utils.isValidOperation(valueConf.postOperation)) {
-				tmpVal = utils.applyOperation(
-					valueId.value,
-					valueConf.postOperation,
-				)
+			const postOperation = valueConf.postOperation
+			if (
+				postOperation !== undefined &&
+				utils.isValidOperation(postOperation)
+			) {
+				tmpVal = utils.applyOperation(valueId.value, postOperation)
 			}
 
 			if (valueConf.parseSend) {
@@ -926,18 +1055,22 @@ export default class Gateway<
 			}
 
 			// handle the case the conf is set on current value but not in target value
-			if (valueId.targetValue && node.values[valueId.targetValue]) {
-				const targetValueId = utils.copy(
-					node.values[valueId.targetValue],
-				)
-				targetValueId.conf = valueConf
-				this.topicValues[topic] = targetValueId
+			if (valueId.targetValue) {
+				const nodeValues = this._requireNodeValues(node)
+				const targetValueId = nodeValues[valueId.targetValue]
+				if (targetValueId) {
+					const targetValueIdCopy = utils.copy(targetValueId)
+					targetValueIdCopy.conf = valueConf
+					this.topicValues[topic] = targetValueIdCopy
+				} else {
+					this.topicValues[topic] = valueId
+				}
 			} else {
 				this.topicValues[topic] = valueId
 			}
 		}
 
-		let mqttOptions: IClientPublishOptions = valueId.stateless
+		let mqttOptions: IClientPublishOptions | null = valueId.stateless
 			? { retain: false }
 			: null
 
@@ -961,7 +1094,7 @@ export default class Gateway<
 				`Skipping send of stateless value ${valueId.id}: it's from cache`,
 			)
 		} else {
-			this._mqtt.publish(topic, data, mqttOptions)
+			this.gatewayMqtt.publish(topic, data, mqttOptions)
 		}
 	}
 
@@ -969,17 +1102,22 @@ export default class Gateway<
 	 * Triggered when a notification is received from a node in Z-Wave Client
 	 */
 	private _onNotification(
-		node: ZUINode,
+		node: ZUINode | undefined,
 		valueId: ZUIValueId,
 		data: Record<string, any>,
 	): void {
-		const topic = this.valueTopic(node, valueId) as string
+		if (node === undefined) {
+			throw new TypeError(
+				"Cannot read properties of undefined (reading 'deviceId')",
+			)
+		}
+		const topic = this.valueTopic(node, valueId)
 
 		if (this.config.payloadType !== PayloadType.RAW) {
 			data = { time: Date.now(), value: data }
 		}
 
-		this._mqtt.publish(topic, data, { retain: false })
+		this.gatewayMqtt.publish(topic, data, { retain: false })
 	}
 
 	private _onNodeInited(node: ZUINode): void {
@@ -989,19 +1127,26 @@ export default class Gateway<
 		// enable poll if required
 		const values =
 			this.config.values?.filter(
-				(v: GatewayValue) => v.enablePoll && v.device === node.deviceId,
+				(v): v is PollingGatewayValue =>
+					v.enablePoll === true && v.device === node.deviceId,
 			) ?? []
 		for (let i = 0; i < values.length; i++) {
 			// don't edit the original object, copy it
-			const valueId = utils.copy(values[i].value)
+			const valueConfig = values[i]
+			if (valueConfig === undefined) {
+				throw new TypeError(
+					"Cannot read properties of undefined (reading 'value')",
+				)
+			}
+			const valueId = utils.copy(valueConfig.value)
 			valueId.nodeId = node.id
 			valueId.id = node.id + '-' + valueId.id
 
 			try {
-				this._zwave.setPollInterval(valueId, values[i].pollInterval)
+				this._zwave.setPollInterval(valueId, valueConfig.pollInterval)
 			} catch (error) {
 				logger.error(
-					`Error while enabling poll interval: ${error.message}`,
+					`Error while enabling poll interval: ${getErrorMessage(error)}`,
 				)
 			}
 		}
@@ -1079,14 +1224,15 @@ export default class Gateway<
 	/**
 	 * Driver status updates
 	 */
-	private _onDriverStatus(ready: boolean): void {
+	private _onDriverStatus(ready: boolean | null | undefined): void {
 		logger.info(`Driver is ${ready ? 'READY' : 'CLOSED'}`)
 
 		this.cancelJobs()
 
 		if (ready) {
-			if (this.config.jobs?.length > 0) {
-				for (const jobConfig of this.config.jobs) {
+			const jobs = this.config.jobs
+			if (jobs && jobs.length > 0) {
+				for (const jobConfig of jobs) {
 					this.scheduleJob(jobConfig)
 				}
 			}
@@ -1103,7 +1249,7 @@ export default class Gateway<
 	 */
 	private async _onApiRequest(
 		topic: string,
-		apiName: AllowedApis,
+		apiName: string,
 		payload: { args: Parameters<ZwaveClient[AllowedApis]> },
 	): Promise<void> {
 		if (this._zwave) {
@@ -1112,7 +1258,7 @@ export default class Gateway<
 			let result: CallAPIResult<AllowedApis> & { origin?: any }
 
 			if (Array.isArray(args)) {
-				result = await this._zwave.callApi(apiName, ...args)
+				result = await this.gatewayZwaveApi.callApi(apiName, ...args)
 				result.origin = payload
 			} else {
 				result = {
@@ -1142,10 +1288,15 @@ export default class Gateway<
 			)
 			if (values.length > 0) {
 				// all values are the same type just different node,parse the Payload by using the first one
+				const firstTopic = values[0]
+				if (firstTopic === undefined) {
+					throw new TypeError('Expected a broadcast topic')
+				}
+				const firstValue = this._requireTopicValue(firstTopic)
 				payload = this.parsePayload(
 					payload,
-					this.topicValues[values[0]],
-					this.topicValues[values[0]].conf,
+					firstValue,
+					firstValue.conf,
 				)
 
 				if (payload === null) {
@@ -1153,8 +1304,12 @@ export default class Gateway<
 				}
 
 				for (let i = 0; i < values.length; i++) {
+					const valueTopic = values[i]
+					if (valueTopic === undefined) {
+						throw new TypeError('Expected a broadcast topic')
+					}
 					await this._zwave.writeValue(
-						this.topicValues[values[i]],
+						this._requireTopicValue(valueTopic),
 						payload,
 						payload?.options,
 					)
@@ -1251,10 +1406,10 @@ export default class Gateway<
 	 *
 	 */
 	private _evalFunction(
-		code: string,
+		code: string | undefined,
 		valueId: ZUIValueId,
 		value: unknown,
-		node: ZUINode,
+		node: ZUINode | undefined,
 	) {
 		let result = null
 
@@ -1264,12 +1419,12 @@ export default class Gateway<
 				'valueId',
 				'node',
 				'logger',
-				code,
+				code === undefined ? 'undefined' : code,
 			)
 			result = parseFunc(value, valueId, node, logger)
 		} catch (error) {
 			logger.error(
-				`Error eval function of value ${valueId.id} ${error.message}`,
+				`Error eval function of value ${valueId.id} ${getErrorMessage(error)}`,
 			)
 		}
 
@@ -1279,7 +1434,24 @@ export default class Gateway<
 	/**
 	 * Get node name from node object
 	 */
-	private _getIdWithoutNode(valueId: HassValue): string {
+	private _getIdWithoutNode(valueId: ZUIValueId): string {
 		return valueId.id.replace(valueId.nodeId + '-', '')
+	}
+
+	private _requireNodeValues(node: ZUINode): Record<string, ZUIValueId> {
+		if (node.values === undefined) {
+			throw new TypeError('Cannot convert undefined or null to object')
+		}
+		return node.values
+	}
+
+	private _requireTopicValue(topic: string): ZUIValueId {
+		const value = this.topicValues[topic]
+		if (value === undefined) {
+			throw new TypeError(
+				"Cannot read properties of undefined (reading 'conf')",
+			)
+		}
+		return value
 	}
 }

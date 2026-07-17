@@ -156,6 +156,14 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 
 	const socketManager = new SocketManager()
 
+	function requireSocketServer(): SocketIOServer {
+		const io = socketManager.io
+		if (!io) {
+			throw new Error('Socket.IO is not attached')
+		}
+		return io
+	}
+
 	const runtime = new AppRuntime({
 		getSocketServer: () => socketManager.io,
 		gatewayFactory: new GatewayFactory({
@@ -231,7 +239,7 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 	 * Start http/https server and all the manager
 	 */
 	async function startServer(port: number | string, host?: string) {
-		let server: HttpServer
+		let server: HttpServer | undefined
 
 		installProcessHandlers()
 
@@ -281,9 +289,10 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 				server = createHttpServer(app)
 			}
 
-			attachSocket(server)
-			server.listen(port as number, host, function () {
-				const addr = server.address()
+			const listeningServer = server
+			attachSocket(listeningServer)
+			listeningServer.listen(port as number, host, function () {
+				const addr = listeningServer.address()
 				const bind =
 					typeof addr === 'string'
 						? 'pipe ' + addr
@@ -295,28 +304,33 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 				)
 			})
 
-			server.on('error', function (error: NodeJS.ErrnoException) {
-				if (error.syscall !== 'listen') {
-					throw error
-				}
-
-				const bind =
-					typeof port === 'string' ? 'Pipe ' + port : 'Port ' + port
-
-				// handle specific listen errors with friendly messages
-				switch (error.code) {
-					case 'EACCES':
-						logger.error(bind + ' requires elevated privileges')
-						process.exit(1)
-						break
-					case 'EADDRINUSE':
-						logger.error(bind + ' is already in use')
-						process.exit(1)
-						break
-					default:
+			listeningServer.on(
+				'error',
+				function (error: NodeJS.ErrnoException) {
+					if (error.syscall !== 'listen') {
 						throw error
-				}
-			})
+					}
+
+					const bind =
+						typeof port === 'string'
+							? 'Pipe ' + port
+							: 'Port ' + port
+
+					// handle specific listen errors with friendly messages
+					switch (error.code) {
+						case 'EACCES':
+							logger.error(bind + ' requires elevated privileges')
+							process.exit(1)
+							break
+						case 'EADDRINUSE':
+							logger.error(bind + ' is already in use')
+							process.exit(1)
+							break
+						default:
+							throw error
+					}
+				},
+			)
 
 			const users = jsonStore.get(store.users)
 
@@ -334,7 +348,7 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 			await debugManager.init() // Clean up any old debug temp files
 			await runtime.startGateway(settings)
 
-			return server
+			return listeningServer
 		} catch (error) {
 			try {
 				await close()
@@ -349,16 +363,16 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 	}
 
 	async function loadCertKey(): Promise<{
-		cert: string
-		key: string
+		cert: string | undefined
+		key: string | undefined
 	}> {
 		const certFile =
 			process.env.SSL_CERTIFICATE || utils.joinPath(storeDir, 'cert.pem')
 		const keyFile =
 			process.env.SSL_KEY || utils.joinPath(storeDir, 'key.pem')
 
-		let key: string
-		let cert: string
+		let key: string | undefined
+		let cert: string | undefined
 
 		try {
 			cert = await readFile(certFile, 'utf8')
@@ -404,11 +418,11 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 			loggers.logStream.off('data', logStreamInterceptor)
 		}
 
+		const io = requireSocketServer()
+
 		// intercept logs and redirect them to socket
 		const interceptor: (chunk: Buffer | string) => void = (chunk) => {
-			socketManager.io
-				.to('debug')
-				.emit(socketEvents.debug, chunk.toString())
+			io.to('debug').emit(socketEvents.debug, chunk.toString())
 		}
 		logStreamInterceptor = interceptor
 		loggers.logStream.on('data', interceptor)
@@ -635,10 +649,7 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 		app,
 		attachSocket,
 		get io() {
-			if (!socketManager.io) {
-				throw new Error('Socket.IO is not attached')
-			}
-			return socketManager.io
+			return requireSocketServer()
 		},
 		startServer,
 		loadSnippets: () => runtime.loadSnippets(),
