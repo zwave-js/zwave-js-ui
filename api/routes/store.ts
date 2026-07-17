@@ -374,7 +374,14 @@ export function registerStoreRoutes(
 			}
 
 			if (file && isRestore) {
-				await rm(file.path)
+				try {
+					await rm(file.path, { force: true })
+				} catch (error) {
+					logger.error(
+						'Error removing uploaded restore archive',
+						error,
+					)
+				}
 			}
 		},
 	)
