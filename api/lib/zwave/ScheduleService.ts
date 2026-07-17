@@ -3,14 +3,12 @@ import type {
 	ScheduleEntryLockSlotId,
 	ScheduleEntryLockWeekDaySchedule,
 	ScheduleEntryLockYearDaySchedule,
-	ZWaveNode,
 } from 'zwave-js'
 import {
 	ScheduleEntryLockCC,
 	ScheduleEntryLockScheduleKind,
 	UserCodeCC,
 	UserIDStatus,
-	type Driver,
 } from 'zwave-js'
 import { isUnsupervisedOrSucceeded, SupervisionStatus } from '@zwave-js/core'
 import type { SupervisionResult } from '@zwave-js/core'
@@ -24,6 +22,7 @@ import {
 	type ScheduleNodeStorePort,
 	type ScheduleUtilsPort,
 	type ScheduleNodeState,
+	type ScheduleZWaveNodeHandle,
 } from './ports.ts'
 
 type AnySchedule =
@@ -49,11 +48,11 @@ export class ScheduleService {
 		this._utils = utils
 	}
 
-	private _getZwaveNode(nodeId: number): ZWaveNode | undefined {
+	private _getZwaveNode(nodeId: number): ScheduleZWaveNodeHandle | undefined {
 		return this._driver.getDriver()?.controller.nodes.get(nodeId)
 	}
 
-	private _requireScheduleCC(nodeId: number): ZWaveNode {
+	private _requireScheduleCC(nodeId: number): ScheduleZWaveNodeHandle {
 		const zwaveNode = this._getZwaveNode(nodeId)
 		if (!zwaveNode?.commandClasses['Schedule Entry Lock'].isSupported()) {
 			throw new Error(

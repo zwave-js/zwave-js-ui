@@ -20,12 +20,14 @@ import type {
 	JoinNetworkResult,
 	PlannedProvisioningEntry,
 	QRProvisioningInformation,
-	ZWaveOptions,
+	PartialZWaveOptions,
 	RFRegion,
 } from 'zwave-js'
 import { InclusionStrategy, QRCodeVersion } from 'zwave-js'
 import type {
 	FirmwareFileFormat,
+	EndpointId,
+	GetValueDB,
 	SecurityClass,
 	SupervisionResult,
 } from '@zwave-js/core'
@@ -89,7 +91,7 @@ export type ZwaveConfig = {
 	enableStatistics?: boolean
 	disableOptimisticValueUpdate?: boolean
 	disclaimerVersion?: number
-	options?: ZWaveOptions
+	options?: PartialZWaveOptions
 	// healNetwork?: boolean
 	healHour?: number
 	logToFile?: boolean
@@ -207,8 +209,35 @@ export interface TemplateNodeState {
 	status?: string
 }
 
+type ScheduleEntryLockApi = Pick<
+	ZWaveNode['commandClasses']['Schedule Entry Lock'],
+	| 'isSupported'
+	| 'getWeekDaySchedule'
+	| 'getYearDaySchedule'
+	| 'getDailyRepeatingSchedule'
+	| 'setWeekDaySchedule'
+	| 'setYearDaySchedule'
+	| 'setDailyRepeatingSchedule'
+	| 'setEnabled'
+>
+
+export interface ScheduleZWaveNodeHandle {
+	getEndpoint(index: number): EndpointId
+	commandClasses: {
+		'Schedule Entry Lock': ScheduleEntryLockApi
+	}
+}
+
+export type ScheduleDriverHandle = GetValueDB & {
+	controller: {
+		nodes: {
+			get(nodeId: number): ScheduleZWaveNodeHandle | undefined
+		}
+	}
+}
+
 export interface ScheduleDriverPort {
-	getDriver(): Driver | null | undefined
+	getDriver(): ScheduleDriverHandle | null | undefined
 }
 
 export interface ScheduleNodeStorePort {

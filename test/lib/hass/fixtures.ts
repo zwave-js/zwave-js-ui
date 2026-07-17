@@ -222,18 +222,18 @@ export function addValue(node: ZUINode, valueId: ZUIValueId): string {
 export type FakeGatewayZwave = EventEmitter & {
 	homeHex: string
 	nodes: Map<number, ZUINode>
-	updateDevice: ReturnType<typeof vi.fn>
+	updateDevice: Mock<GatewayZwave['updateDevice']>
 	addDevice: ReturnType<typeof vi.fn>
 	storeDevices: ReturnType<typeof vi.fn>
-	emitNodeUpdate: ReturnType<typeof vi.fn>
+	emitNodeUpdate: Mock<GatewayZwave['emitNodeUpdate']>
 	getNode: ReturnType<typeof vi.fn>
-	connect: ReturnType<typeof vi.fn>
-	setPollInterval: ReturnType<typeof vi.fn>
-	writeValue: ReturnType<typeof vi.fn>
-	writeBroadcast: ReturnType<typeof vi.fn>
-	writeMulticast: ReturnType<typeof vi.fn>
-	callApi: ReturnType<typeof vi.fn>
-	driverFunction: ReturnType<typeof vi.fn>
+	connect: Mock<GatewayZwave['connect']>
+	setPollInterval: Mock<GatewayZwave['setPollInterval']>
+	writeValue: Mock<GatewayZwave['writeValue']>
+	writeBroadcast: Mock<GatewayZwave['writeBroadcast']>
+	writeMulticast: Mock<GatewayZwave['writeMulticast']>
+	callApi: Mock<GatewayZwave['callApi']>
+	driverFunction: Mock<GatewayZwave['driverFunction']>
 	/** Real `Gateway.close()` awaits `zwave.close()` before closing MQTT. */
 	close: Mock<GatewayZwave['close']>
 }
@@ -245,24 +245,24 @@ export function createFakeGatewayZwave(
 	return Object.assign(emitter, {
 		homeHex: '0xabcdef01',
 		nodes: new Map<number, ZUINode>(),
-		updateDevice: vi.fn(),
+		updateDevice: vi.fn<GatewayZwave['updateDevice']>(),
 		addDevice: vi.fn(),
 		storeDevices: vi.fn(() =>
 			Promise.resolve({
 				status: 'stored',
 			} satisfies StoreHassDevicesResult),
 		),
-		emitNodeUpdate: vi.fn(),
+		emitNodeUpdate: vi.fn<GatewayZwave['emitNodeUpdate']>(),
 		getNode: vi.fn(() => undefined),
-		connect: vi.fn(() => Promise.resolve(undefined)),
-		setPollInterval: vi.fn(),
-		writeValue: vi.fn(() => Promise.resolve(undefined)),
-		writeBroadcast: vi.fn(() => Promise.resolve(undefined)),
-		writeMulticast: vi.fn(() => Promise.resolve(undefined)),
-		callApi: vi.fn(() =>
+		connect: vi.fn<GatewayZwave['connect']>(() => Promise.resolve()),
+		setPollInterval: vi.fn<GatewayZwave['setPollInterval']>(),
+		writeValue: vi.fn<GatewayZwave['writeValue']>(),
+		writeBroadcast: vi.fn<GatewayZwave['writeBroadcast']>(),
+		writeMulticast: vi.fn<GatewayZwave['writeMulticast']>(),
+		callApi: vi.fn<GatewayZwave['callApi']>(() =>
 			Promise.resolve({ success: true, message: 'ok', result: [] }),
 		),
-		driverFunction: vi.fn(() => Promise.resolve(undefined)),
+		driverFunction: vi.fn<GatewayZwave['driverFunction']>(),
 		close: vi.fn<GatewayZwave['close']>(() => Promise.resolve(undefined)),
 		...overrides,
 	})

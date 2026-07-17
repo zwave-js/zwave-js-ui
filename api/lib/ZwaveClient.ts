@@ -701,6 +701,17 @@ export type ZUINode = {
 	lastFirmwareUpdateCheck?: number
 }
 
+export type ZUIStatisticsUpdate = {
+	[K in
+		| 'statistics'
+		| 'lastActive'
+		| 'applicationRoute'
+		| 'customSUCReturnRoutes'
+		| 'customReturnRoute'
+		| 'prioritySUCReturnRoute'
+		| 'priorityReturnRoute']?: ZUINode[K] | null
+} & { bgRssi?: ControllerStatistics['backgroundRSSI'] | null }
+
 export type NodeEvent = {
 	event: ZwaveNodeEvents | 'status changed'
 	args: any[]
@@ -2329,19 +2340,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		this._groupService.updateVirtualNodesForNode(valueId.nodeId)
 	}
 
-	public emitStatistics(
-		node: ZUINode,
-		props: Pick<
-			ZUINode,
-			| 'statistics'
-			| 'lastActive'
-			| 'applicationRoute'
-			| 'customSUCReturnRoutes'
-			| 'customReturnRoute'
-			| 'prioritySUCReturnRoute'
-			| 'priorityReturnRoute'
-		> & { bgRssi?: ControllerStatistics['backgroundRSSI'] },
-	) {
+	public emitStatistics(node: ZUINode, props: ZUIStatisticsUpdate) {
 		// NB: be sure that when `statistics` is defined also `lastActive` must be.
 		// when removing props them should be set to null or false in order to be removed on ui
 		this.sendToSocket(socketEvents.statistics, {

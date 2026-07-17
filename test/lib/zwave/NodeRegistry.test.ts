@@ -97,7 +97,9 @@ function createHarness(
 		ownNodeId: 1,
 		supportsLongRange: true,
 		getPrioritySUCReturnRouteCached: vi.fn(() => undefined),
-		getCustomSUCReturnRoutesCached: vi.fn(() => undefined),
+		getCustomSUCReturnRoutesCached: vi.fn<
+			NodeRegistryController['getCustomSUCReturnRoutesCached']
+		>(() => []),
 		getProvisioningEntry:
 			vi.fn<NodeRegistryController['getProvisioningEntry']>(),
 		getSupportedRFRegions: vi.fn(() => []),

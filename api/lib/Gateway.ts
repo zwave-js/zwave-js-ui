@@ -16,6 +16,7 @@ import type {
 	ZUINode,
 	ZUIValueId,
 	ZUIValueIdState,
+	ZwaveClientEventCallbacks,
 } from './ZwaveClient.ts'
 import type ZwaveClient from './ZwaveClient.ts'
 import Cron from 'croner'
@@ -26,11 +27,7 @@ import type { CustomDeviceRegistry } from '../hass/CustomDeviceRegistry.ts'
 import MqttDiscoveryManager, {
 	type MqttDiscoveryManagerOptions,
 } from '../hass/MqttDiscoveryManager.ts'
-import type {
-	HassTopicNode,
-	HassValue,
-	HassValueTopic,
-} from '../hass/ports.ts'
+import type { HassTopicNode, HassValueTopic } from '../hass/ports.ts'
 import { isHassNode } from '../hass/ports.ts'
 
 const logger = module('Gateway')
@@ -126,14 +123,14 @@ interface ValueIdTopic {
 	targetTopic?: string | null
 }
 
-type TopicValue = HassValue | ZUIValueId
+type TopicValue = ZUIValueId
 
 type TopicDetails<T extends TopicValue> = 'conf' extends keyof T
 	? ValueIdTopic
 	: HassValueTopic
 
 type GatewayTopicNode = Omit<HassTopicNode, 'values'> & {
-	values?: Record<string, HassValue | ZUIValueId>
+	values?: Record<string, ZUIValueId>
 }
 
 interface GatewayMqttPublishPort {
@@ -151,23 +148,47 @@ interface GatewayZwaveApiPort {
 	): Promise<CallAPIResult<AllowedApis>>
 }
 
-export type GatewayZwave = Pick<
+type GatewayZwaveEvent = Extract<
+	keyof ZwaveClientEventCallbacks,
+	| 'nodeInited'
+	| 'driverStatus'
+	| 'nodeStatus'
+	| 'nodeLastActive'
+	| 'valueChanged'
+	| 'nodeRemoved'
+	| 'notification'
+	| 'event'
+>
+
+interface GatewayZwaveEventPort {
+	on<E extends GatewayZwaveEvent>(
+		event: E,
+		listener: ZwaveClientEventCallbacks[E],
+	): void
+	off<E extends GatewayZwaveEvent>(
+		event: E,
+		listener: ZwaveClientEventCallbacks[E],
+	): void
+}
+
+type GatewayZwaveState = Pick<
 	ZwaveClient,
-	| 'callApi'
 	| 'close'
 	| 'connect'
 	| 'driverFunction'
 	| 'emitNodeUpdate'
 	| 'homeHex'
 	| 'nodes'
-	| 'off'
-	| 'on'
 	| 'setPollInterval'
 	| 'updateDevice'
 	| 'writeBroadcast'
 	| 'writeMulticast'
 	| 'writeValue'
 >
+
+export type GatewayZwave = GatewayZwaveState &
+	GatewayZwaveApiPort &
+	GatewayZwaveEventPort
 
 export type GatewayMqtt = Pick<
 	MqttClient,
@@ -1413,7 +1434,7 @@ export default class Gateway<
 	/**
 	 * Get node name from node object
 	 */
-	private _getIdWithoutNode(valueId: HassValue | ZUIValueId): string {
+	private _getIdWithoutNode(valueId: ZUIValueId): string {
 		return valueId.id.replace(valueId.nodeId + '-', '')
 	}
 
