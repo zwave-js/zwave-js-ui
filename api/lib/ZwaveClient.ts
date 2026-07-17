@@ -2786,7 +2786,6 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			nodes = storeNodes
 		}
 
-		// Runtime key check can't narrow this union type, so each branch below casts to whichever shape the check actually implies
 		const keys = Object.keys(nodes)
 
 		// ensure store nodes are stored using homeHex
@@ -2809,7 +2808,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				return
 			}
 
-			// Assumes the current home-ID-keyed shape, true once getStoreNodes has migrated any legacy on-disk shape
+			// Assumes store.nodes is keyed by home ID, which is true once getStoreNodes has migrated any legacy on-disk shape
 			const nodes = jsonStore.get(store.nodes) as NodesStoreRecordByHome
 
 			// remove empty objects keys

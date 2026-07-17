@@ -458,7 +458,7 @@ export function parseSecurityKeys(
 
 	options.securityKeys = securityKeys
 
-	// Defaulted only immediately before this loop, matching the pre-existing ordering where the earlier KEY_LR_* loop is the only path that can hit the missing-map failure
+	// Default after env loading to preserve missing-map failures tracked by #4736
 	config.securityKeysLongRange = config.securityKeysLongRange || {}
 
 	const securityKeysLongRange: Partial<
