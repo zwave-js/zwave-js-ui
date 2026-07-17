@@ -15,23 +15,18 @@ export function registerHealthRoutes(
 	{ apisLimiter }: HealthRoutesDeps,
 ): void {
 	app.get('/health', apisLimiter, function (req, res) {
-		// Initialized to false only to satisfy strict definite-assignment analysis
-		// since every check below just tests truthiness
-		let mqtt: Record<string, any> | boolean = false
-		let zwave: boolean = false
+		let mqttHealthy = false
+		let zwaveHealthy = false
 
 		const gw = runtime.gateway
 		if (gw) {
-			mqtt = gw.mqtt?.getStatus() ?? false
-			zwave = gw.zwave?.getStatus().status ?? false
+			const mqttStatus = gw.mqtt?.getStatus()
+			mqttHealthy =
+				(mqttStatus?.status || mqttStatus?.config.disabled) ?? false
+			zwaveHealthy = gw.zwave?.getStatus().status ?? false
 		}
 
-		// Disabled mqtt reports a status object, not a boolean, but still counts as healthy (see #469)
-		if (mqtt && typeof mqtt !== 'boolean') {
-			mqtt = mqtt.status || mqtt.config.disabled
-		}
-
-		const status = mqtt && zwave
+		const status = mqttHealthy && zwaveHealthy
 
 		res.status(status ? 200 : 500).send(status ? 'Ok' : 'Error')
 	})
