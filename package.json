@@ -104,7 +104,7 @@
     "socket.io": "^4.7.5",
     "winston": "^3.13.0",
     "winston-daily-rotate-file": "^5.0.0",
-    "zwave-js": "15.25.3"
+    "zwave-js": "15.26.0"
   },
   "devDependencies": {
     "@actions/github": "^6.0.0",
