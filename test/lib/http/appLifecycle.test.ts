@@ -132,6 +132,18 @@ describe('AppInstance: installProcessHandlers()/close() own only this instance',
 		expect(snapshotListenerCounts()).toEqual(before)
 	})
 
+	it('does not install process handlers when startup is attempted after close', async () => {
+		const { createApp } = await loadAppModule()
+		const instance = createApp()
+		await instance.close()
+		const before = snapshotListenerCounts()
+
+		await expect(instance.startServer(0, '127.0.0.1')).rejects.toThrow(
+			'Cannot install process handlers after the app is closed',
+		)
+		expect(snapshotListenerCounts()).toEqual(before)
+	})
+
 	it('installs graceful process handling during programmatic startup', async () => {
 		const [{ createApp }, { jsonStore, store }] = await Promise.all([
 			loadAppModule(),

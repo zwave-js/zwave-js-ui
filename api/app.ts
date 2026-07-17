@@ -195,6 +195,11 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 	// ### UTILS
 
 	function installProcessHandlers() {
+		if (closed) {
+			throw new Error(
+				'Cannot install process handlers after the app is closed',
+			)
+		}
 		process.removeListener('uncaughtException', handleUncaughtException)
 		process.on('uncaughtException', handleUncaughtException)
 		process.removeListener('unhandledRejection', handleUnhandledRejection)
