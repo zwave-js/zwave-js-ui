@@ -1,0 +1,137 @@
+name: Build docs embeddings index
+
+# Builds and caches a semantic search index over the documentation,
+# used by the bot to answer questions in issues and discussions.
+
+on:
+  schedule:
+    # Nightly, keeps the cache alive and picks up any missed changes
+    - cron: '30 3 * * *'
+  push:
+    branches: [master]
+    paths:
+      - 'docs/**/*.md'
+      - '.github/bot-scripts/buildDocsIndex.cjs'
+      - '.github/bot-scripts/docsIndex.cjs'
+      - '.github/bot-scripts/modelsApi.cjs'
+      - '.github/bot-scripts/githubApi.cjs'
+      - '.github/bot-scripts/evalDocsAnswers.cjs'
+      - '.github/bot-scripts/evalUtils.cjs'
+      - '.github/bot-scripts/docsAnswersEvalCases.json'
+      - '.github/bot-scripts/updateEvalTrackingIssue.cjs'
+      - '.github/bot-scripts/collectDocsFeedback.cjs'
+      - '.github/bot-scripts/updateDocsFeedbackIssue.cjs'
+      - '.github/workflows/docs-embeddings.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  models: read
+
+jobs:
+  build-index:
+    runs-on: [ubuntu-latest]
+    timeout-minutes: 15
+
+    steps:
+    - name: Checkout master branch
+      uses: actions/checkout@v7
+
+    - name: Restore previous index
+      id: cache
+      uses: actions/cache@v6
+      with:
+        path: .docs-index
+        key: docs-embeddings-v2-${{ hashFiles('docs/**/*.md', '.github/bot-scripts/buildDocsIndex.cjs', '.github/bot-scripts/docsIndex.cjs', '.github/bot-scripts/modelsApi.cjs') }}
+        # Restore an older index so only changed chunks need to be re-embedded
+        restore-keys: |
+          docs-embeddings-v2-
+
+    - name: Build index
+      # An exact cache hit means the index is already up to date
+      if: steps.cache.outputs.cache-hit != 'true'
+      env:
+        GITHUB_TOKEN: ${{ github.token }}
+      run: node .github/bot-scripts/buildDocsIndex.cjs docs .docs-index/index.json
+
+  evaluate:
+    needs: build-index
+    runs-on: [ubuntu-latest]
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      models: read
+      issues: write
+
+    steps:
+    - name: Checkout master branch
+      uses: actions/checkout@v7
+
+    - name: Restore docs index
+      id: restore-index
+      uses: actions/cache/restore@v6
+      with:
+        path: .docs-index
+        key: docs-embeddings-v2-${{ hashFiles('docs/**/*.md', '.github/bot-scripts/buildDocsIndex.cjs', '.github/bot-scripts/docsIndex.cjs', '.github/bot-scripts/modelsApi.cjs') }}
+
+    - name: Fail if docs index is missing
+      # build-index should always have produced this exact cache entry;
+      # surface the problem loudly instead of silently skipping the
+      # evaluation and reporting green
+      if: steps.restore-index.outputs.cache-hit != 'true'
+      run: |
+        echo "::error::Docs index cache miss after build-index - cannot evaluate retrieval quality"
+        exit 1
+
+    - name: Evaluate retrieval quality
+      id: eval
+      continue-on-error: true
+      env:
+        GITHUB_TOKEN: ${{ github.token }}
+      run: node .github/bot-scripts/evalDocsAnswers.cjs .docs-index/index.json
+
+    - name: Update tracking issue
+      uses: actions/github-script@v9
+      env:
+        TRACKING_ISSUE_TITLE: "🚨 Docs answer bot retrieval quality regression"
+        EVAL_NAME: docs answer bot
+        EVAL_OUTCOME: ${{ steps.eval.outcome }}
+        EVAL_SUMMARY: ${{ steps.eval.outputs.summary }}
+      with:
+        script: |
+          const bot = require(`${process.env.GITHUB_WORKSPACE}/.github/bot-scripts/index.cjs`);
+          await bot.updateEvalTrackingIssue({github, context});
+
+  # Learn from reactions to the bot's answers: update the feedback
+  # digest issue and build the suppression list for the answer bot
+  feedback:
+    needs: build-index
+    runs-on: [ubuntu-latest]
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      models: read
+      issues: write
+      discussions: read
+
+    steps:
+    - name: Checkout master branch
+      uses: actions/checkout@v7
+
+    - name: Collect feedback on bot answers
+      env:
+        GITHUB_TOKEN: ${{ github.token }}
+      run: node .github/bot-scripts/collectDocsFeedback.cjs .docs-feedback/feedback.json .docs-feedback/records.json
+
+    - name: Update feedback digest issue
+      env:
+        GITHUB_TOKEN: ${{ github.token }}
+      run: node .github/bot-scripts/updateDocsFeedbackIssue.cjs .docs-feedback/records.json
+
+    # A per-run key means every nightly run saves a fresh entry,
+    # the answer bot restores the latest one by prefix
+    - name: Save suppression list for the answer bot
+      uses: actions/cache/save@v6
+      with:
+        path: .docs-feedback/feedback.json
+        key: docs-feedback-v1-${{ github.run_id }}
