@@ -18,9 +18,7 @@ export const defaultLogFile = 'z-ui_%DATE%.log'
 
 export const disableColors = process.env.NO_LOG_COLORS === 'true'
 
-let transportsList: winston.transport[] | null = null
-let transportsListKey: string | null = null
-const transportGenerations = new Set<winston.transport[]>()
+const transportGenerations = new Map<string, winston.transport[]>()
 let activeConfig: DeepPartial<GatewayConfig> | undefined
 
 // ensure store and logs directories exist
@@ -116,14 +114,13 @@ export function customTransports(config: LoggerConfig): winston.transport[] {
 	const key = `${config.enabled}:${wantsFileTransport}`
 
 	// Share matching transports within a configuration generation because duplicate rotation handles conflict (#2937)
-	if (transportsList && transportsListKey === key) {
-		return transportsList
+	const existingTransports = transportGenerations.get(key)
+	if (existingTransports) {
+		return existingTransports
 	}
 
 	const nextTransports: winston.transport[] = []
-	transportsList = nextTransports
-	transportsListKey = key
-	transportGenerations.add(nextTransports)
+	transportGenerations.set(key, nextTransports)
 
 	if (process.env.ZUI_NO_CONSOLE !== 'true') {
 		nextTransports.push(
@@ -240,9 +237,6 @@ export function setupAll(config: DeepPartial<GatewayConfig>) {
 		})
 	})
 	transportGenerations.clear()
-
-	transportsList = null
-	transportsListKey = null
 
 	logContainer.loggers.forEach((logger: winston.Logger) => {
 		;(logger as ModuleLogger).setup(config)

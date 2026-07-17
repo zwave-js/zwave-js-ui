@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll, afterEach } from 'vitest'
-import * as utils from '../../api/lib/utils.ts'
-import { logsDir } from '../../api/config/app.ts'
-import type { ModuleLogger } from '../../api/lib/logger.ts'
+import * as utils from '#api/lib/utils.ts'
+import { logsDir } from '#api/config/app.ts'
+import type { ModuleLogger } from '#api/lib/logger.ts'
 import {
 	customTransports,
 	defaultLogFile,
@@ -9,7 +9,7 @@ import {
 	module,
 	setupAll,
 	stopCleanJob,
-} from '../../api/lib/logger.ts'
+} from '#api/lib/logger.ts'
 import winston from 'winston'
 
 function checkConfigDefaults(mod, cfg) {

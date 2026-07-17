@@ -385,7 +385,7 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 			)
 		})
 
-		server.on('error', function (error: utils.ErrnoException) {
+		server.on('error', function (error: NodeJS.ErrnoException) {
 			if (error.syscall !== 'listen') {
 				throw error
 			}
@@ -529,7 +529,7 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 	function setupLogging(settings: {
 		gateway?: utils.DeepPartial<GatewayConfig>
 	}) {
-		loggers.setupAll(settings ? settings.gateway : null)
+		loggers.setupAll(settings.gateway ?? {})
 	}
 
 	async function startGateway(settings: PersistedSettings) {
@@ -2239,7 +2239,7 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 
 			const archive = archiver('zip')
 
-			archive.on('error', function (err: utils.ErrnoException) {
+			archive.on('error', function (err: NodeJS.ErrnoException) {
 				res.status(500).send({
 					error: err.message,
 				})
@@ -2489,7 +2489,7 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 
 	// ### ERROR HANDLERS
 
-	interface HttpError extends utils.ErrnoException {
+	interface HttpError extends NodeJS.ErrnoException {
 		status?: number
 	}
 
