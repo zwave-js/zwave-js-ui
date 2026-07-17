@@ -331,6 +331,25 @@ export type ValueIdObserver = (
 	valueId: ZUIValueId,
 ) => void
 
+type NameLocationObserver = (
+	this: ZwaveClient,
+	node: ZUINode,
+	value: ZUIValueId['value'],
+) => void
+
+const nameLocationObservers: Record<string, NameLocationObserver> = {
+	name(node, value) {
+		this.setNodeName(node.id, value).catch((error) => {
+			logger.error(`Error while setting node name: ${error.message}`)
+		})
+	},
+	location(node, value) {
+		this.setNodeLocation(node.id, value).catch((error) => {
+			logger.error(`Error while setting node location: ${error.message}`)
+		})
+	},
+}
+
 // Define CommandClasses and properties that should be observed
 const observedCCProps: {
 	[key in CommandClasses]?: Record<string, ValueIdObserver>
@@ -385,16 +404,10 @@ const observedCCProps: {
 	},
 	[CommandClasses['Node Naming and Location']]: {
 		name(node, value) {
-			this.setNodeName(node.id, value.value).catch((error) => {
-				logger.error(`Error while setting node name: ${error.message}`)
-			})
+			nameLocationObservers.name.call(this, node, value.value)
 		},
 		location(node, value) {
-			this.setNodeLocation(node.id, value.value).catch((error) => {
-				logger.error(
-					`Error while setting node location: ${error.message}`,
-				)
-			})
+			nameLocationObservers.location.call(this, node, value.value)
 		},
 	},
 }
@@ -671,9 +684,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	private closed: boolean
 	private destroyed = false
 	private _driverReady: boolean
-	private _nodeRegistry: NodeRegistry
+	private _nodeRegistry!: NodeRegistry
 	private _nodeGeneration = 0
-	private _socketEventAdapter: SocketEventAdapter
+	private _socketEventAdapter!: SocketEventAdapter
 	/**
 	 * Holds the live driver-side virtual-node instances (multicast groups +
 	 * standard/LR broadcast). Keyed by virtual nodeId.
@@ -2119,14 +2132,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		value: unknown,
 	) {
 		const prop = valueId.property
-		const observer =
-			observedCCProps[CommandClasses['Node Naming and Location']]?.[prop]
+		const observer = nameLocationObservers[prop]
 
 		if (observer) {
-			observer.call(this, node, {
-				...valueId,
-				value,
-			})
+			observer.call(this, node, value)
 		}
 	}
 

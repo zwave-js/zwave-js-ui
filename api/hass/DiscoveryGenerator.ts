@@ -678,7 +678,13 @@ export class DiscoveryGenerator {
 					break
 				case CommandClasses['Multilevel Switch']:
 				case CommandClasses['Multilevel Toggle Switch']: {
-					if (!valueId.isCurrentValue || !deviceClass) return
+					if (
+						!valueId.isCurrentValue ||
+						deviceClass?.generic === undefined ||
+						deviceClass.specific === undefined
+					) {
+						return
+					}
 					const specificDeviceClass = Constants.specificDeviceClass(
 						deviceClass.generic,
 						deviceClass.specific,
