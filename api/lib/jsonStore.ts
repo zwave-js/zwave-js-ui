@@ -95,14 +95,16 @@ export class StorageHelper {
 				cwd: storeDir,
 			})
 
-			for (const model in this.config) {
-				const config: StoreFile<unknown> =
-					this.config[model as StoreKeys]
-				const filePath = joinPath(storeDir, config.file)
-				if (existsSync(filePath)) {
-					archive.file(filePath, {
-						name: config.file,
-					})
+			if (this.config) {
+				for (const model in this.config) {
+					const config: StoreFile<unknown> =
+						this.config[model as StoreKeys]
+					const filePath = joinPath(storeDir, config.file)
+					if (existsSync(filePath)) {
+						archive.file(filePath, {
+							name: config.file,
+						})
+					}
 				}
 			}
 
