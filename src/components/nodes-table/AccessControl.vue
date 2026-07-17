@@ -57,7 +57,7 @@
 						<v-list-item
 							prepend-icon="person_remove"
 							class="text-error"
-							@click="confirmDeleteAllUsers"
+							@click="openBulkDeleteUsers"
 						>
 							<v-list-item-title>
 								Delete all users
@@ -186,7 +186,7 @@
 											@click="confirmDeleteUser(user)"
 										>
 											<v-list-item-title>
-												Delete user…
+												Delete user
 											</v-list-item-title>
 										</v-list-item>
 									</v-list>
@@ -528,6 +528,7 @@
 			:capabilities="currentEndpoint && currentEndpoint.capabilities"
 			:initial="userDialog.initial"
 			:edit-mode="userDialog.editMode"
+			:saving="savingUser"
 			:users="currentEndpoint ? currentEndpoint.users : []"
 			:credentials="currentEndpoint ? currentEndpoint.credentials : []"
 			@save="onSaveUser"
@@ -538,6 +539,7 @@
 			:capabilities="currentEndpoint && currentEndpoint.capabilities"
 			:initial="credentialDialog.initial"
 			:lock-owner="credentialDialog.lockOwner"
+			:saving="savingCredential"
 			:users="currentEndpoint ? currentEndpoint.users : []"
 			:edit-mode="credentialDialog.editMode"
 			:credentials="currentEndpoint ? currentEndpoint.credentials : []"
@@ -706,7 +708,11 @@
 			</v-card>
 		</v-dialog>
 
-		<v-dialog v-model="reassignDialog.show" max-width="420">
+		<v-dialog
+			v-model="reassignDialog.show"
+			max-width="420"
+			:persistent="reassigning"
+		>
 			<v-card>
 				<v-card-title>Reassign credential</v-card-title>
 				<v-card-text>
@@ -720,16 +726,22 @@
 						:items="reassignDestinations"
 						label="Move to user"
 						hide-details
+						:disabled="reassigning"
 					/>
 				</v-card-text>
 				<v-card-actions>
 					<v-spacer />
-					<v-btn variant="text" @click="reassignDialog.show = false">
+					<v-btn
+						variant="text"
+						:disabled="reassigning"
+						@click="reassignDialog.show = false"
+					>
 						Cancel
 					</v-btn>
 					<v-btn
 						color="primary"
 						:disabled="!reassignDialog.destUserId"
+						:loading="reassigning"
 						@click="performReassign"
 					>
 						Reassign
@@ -738,7 +750,42 @@
 			</v-card>
 		</v-dialog>
 
-		<v-dialog v-model="bulkDeleteDialog.show" max-width="480">
+		<v-dialog
+			v-model="bulkDeleteUsersDialog.show"
+			max-width="480"
+			:persistent="deletingAllUsers"
+		>
+			<v-card>
+				<v-card-title>Delete all users</v-card-title>
+				<v-card-text>
+					All users and their credentials will be deleted. This is
+					irreversible.
+				</v-card-text>
+				<v-card-actions>
+					<v-spacer />
+					<v-btn
+						variant="text"
+						:disabled="deletingAllUsers"
+						@click="bulkDeleteUsersDialog.show = false"
+					>
+						Cancel
+					</v-btn>
+					<v-btn
+						color="error"
+						:loading="deletingAllUsers"
+						@click="performBulkDeleteUsers"
+					>
+						Wipe lock
+					</v-btn>
+				</v-card-actions>
+			</v-card>
+		</v-dialog>
+
+		<v-dialog
+			v-model="bulkDeleteDialog.show"
+			max-width="480"
+			:persistent="deletingCredentials"
+		>
 			<v-card>
 				<v-card-title>Delete credentials matching</v-card-title>
 				<v-card-text>
@@ -748,12 +795,14 @@
 						label="Owner"
 						hide-details
 						class="mb-3"
+						:disabled="deletingCredentials"
 					/>
 					<v-select
 						v-model="bulkDeleteDialog.type"
 						:items="bulkTypeItems"
 						label="Type"
 						hide-details
+						:disabled="deletingCredentials"
 					/>
 					<v-alert type="info" class="mt-3" density="compact">
 						<b>{{ bulkDeletePreview }}</b> credentials will be
@@ -764,11 +813,16 @@
 					<v-spacer />
 					<v-btn
 						variant="text"
+						:disabled="deletingCredentials"
 						@click="bulkDeleteDialog.show = false"
 					>
 						Cancel
 					</v-btn>
-					<v-btn color="error" @click="performBulkDelete">
+					<v-btn
+						color="error"
+						:loading="deletingCredentials"
+						@click="performBulkDelete"
+					>
 						Delete {{ bulkDeletePreview }} credentials
 					</v-btn>
 				</v-card-actions>
@@ -867,6 +921,11 @@ export default {
 			tab: 'users',
 			endpointIndex: null,
 			refreshing: false,
+			savingUser: false,
+			savingCredential: false,
+			reassigning: false,
+			deletingAllUsers: false,
+			deletingCredentials: false,
 			revealedCredentials: new Set(),
 			userDialog: {
 				show: false,
@@ -904,6 +963,9 @@ export default {
 				show: false,
 				userId: 0,
 				type: 0,
+			},
+			bulkDeleteUsersDialog: {
+				show: false,
 			},
 			adminCodePinDraft: '',
 			adminCodeSaving: false,
@@ -1320,7 +1382,11 @@ export default {
 				this._triggerRetryFlash()
 			}
 			const total = this.learnDialog.totalSteps || 1
-			const remaining = Math.min(args.stepsRemaining ?? total, total)
+			// Treat Started as no progress even when the lock reports zero steps.
+			const remaining =
+				args.status === UserCredentialLearnStatus.Started
+					? total
+					: Math.min(args.stepsRemaining ?? total, total)
 			const completed = Math.max(0, total - remaining)
 			this.learnDialog.completedSteps = completed
 			this.learnDialog.progress =
@@ -1341,6 +1407,15 @@ export default {
 				return
 			}
 			const status = args.status
+			// Started/StepRetry are progress, not completion — zwave-js routes
+			// them here when the device reports 0 steps remaining
+			if (
+				status === UserCredentialLearnStatus.Started ||
+				status === UserCredentialLearnStatus.StepRetry
+			) {
+				this.handleLearnProgress(args)
+				return
+			}
 			if (args.success && status === UserCredentialLearnStatus.Success) {
 				this.learnDialog.state = 'success'
 			} else if (status === UserCredentialLearnStatus.Timeout) {
@@ -1375,32 +1450,36 @@ export default {
 						payload.options,
 						credential,
 					]
-			const res = await this.app.apiRequest(api, args, {
-				infoSnack: false,
-				errorSnack: true,
-			})
-			if (!res.success) return
-			const result = this.userDialog.editMode
-				? res.result
-				: res.result?.userResult
-			if (result === SetUserResult.OK) {
-				this.userDialog.show = false
-				this.showSnackbar('User saved.', 'success')
-				if (
-					!this.userDialog.editMode &&
-					res.result?.credentialResult !== undefined &&
-					res.result.credentialResult !== SetCredentialResult.OK
-				) {
-					this.showSnackbar(
-						`User created, but credential failed: ${setCredentialResultMessage(
-							res.result.credentialResult,
-						)}`,
-						'warning',
-					)
+			this.savingUser = true
+			try {
+				const res = await this.app.apiRequest(api, args, {
+					infoSnack: false,
+					errorSnack: true,
+				})
+				if (!res.success) return
+				const result = this.userDialog.editMode
+					? res.result
+					: res.result?.userResult
+				if (result === SetUserResult.OK) {
+					this.userDialog.show = false
+					this.showSnackbar('User saved.', 'success')
+					if (
+						!this.userDialog.editMode &&
+						res.result?.credentialResult !== undefined &&
+						res.result.credentialResult !== SetCredentialResult.OK
+					) {
+						this.showSnackbar(
+							`User created, but credential failed: ${setCredentialResultMessage(
+								res.result.credentialResult,
+							)}`,
+							'warning',
+						)
+					}
+				} else {
+					this.showSnackbar(setUserResultMessage(result), 'error')
 				}
-				this.refresh()
-			} else {
-				this.showSnackbar(setUserResultMessage(result), 'error')
+			} finally {
+				this.savingUser = false
 			}
 		},
 		async onSaveCredential({ payload }) {
@@ -1413,18 +1492,26 @@ export default {
 				payload.slot,
 				payload.data,
 			]
-			const res = await this.app.apiRequest(
-				'accessControlSetCredential',
-				args,
-				{ infoSnack: false, errorSnack: true },
-			)
-			if (!res.success) return
-			const result = res.result
-			if (result === SetCredentialResult.OK) {
-				this.credentialDialog.show = false
-				this.showSnackbar('Credential saved.', 'success')
-			} else {
-				this.showSnackbar(setCredentialResultMessage(result), 'error')
+			this.savingCredential = true
+			try {
+				const res = await this.app.apiRequest(
+					'accessControlSetCredential',
+					args,
+					{ infoSnack: false, errorSnack: true },
+				)
+				if (!res.success) return
+				const result = res.result
+				if (result === SetCredentialResult.OK) {
+					this.credentialDialog.show = false
+					this.showSnackbar('Credential saved.', 'success')
+				} else {
+					this.showSnackbar(
+						setCredentialResultMessage(result),
+						'error',
+					)
+				}
+			} finally {
+				this.savingCredential = false
 			}
 		},
 		async confirmDeleteUser(user) {
@@ -1451,25 +1538,26 @@ export default {
 				this.showSnackbar(setUserResultMessage(res.result), 'error')
 			}
 		},
-		async confirmDeleteAllUsers() {
+		openBulkDeleteUsers() {
+			this.bulkDeleteUsersDialog.show = true
+		},
+		async performBulkDeleteUsers() {
 			if (!this.currentEndpoint) return
-			const ok = await this.app.confirm(
-				`Delete every user on ${this.node.name || this.node.hexId}?`,
-				`All users and their credentials will be deleted. This is irreversible. The lock does not report progress; the list will catch up via live events.`,
-				'error',
-				{ confirmText: 'Wipe lock', cancelText: 'Cancel' },
-			)
-			if (!ok) return
-			const res = await this.app.apiRequest(
-				'accessControlDeleteAllUsers',
-				[this.node.id, this.currentEndpoint.endpointIndex],
-				{ infoSnack: false, errorSnack: true },
-			)
-			if (res.success) {
-				this.showSnackbar(
-					'Wipe acknowledged. The list will refresh as events arrive.',
-					'info',
+			this.deletingAllUsers = true
+			try {
+				const res = await this.app.apiRequest(
+					'accessControlDeleteAllUsers',
+					[this.node.id, this.currentEndpoint.endpointIndex],
+					{ infoSnack: false, errorSnack: true },
 				)
+				if (res.success && res.result === SetUserResult.OK) {
+					this.showSnackbar('All users deleted.', 'success')
+					this.bulkDeleteUsersDialog.show = false
+				} else if (res.success) {
+					this.showSnackbar(setUserResultMessage(res.result), 'error')
+				}
+			} finally {
+				this.deletingAllUsers = false
 			}
 		},
 		async confirmDeleteCredential(cred) {
@@ -1525,25 +1613,30 @@ export default {
 		async performReassign() {
 			const { credential, destUserId } = this.reassignDialog
 			if (!credential || !destUserId) return
-			const res = await this.app.apiRequest(
-				'accessControlAssignCredential',
-				[
-					this.node.id,
-					this.currentEndpoint.endpointIndex,
-					credential.type,
-					credential.slot,
-					destUserId,
-				],
-				{ infoSnack: false, errorSnack: true },
-			)
-			if (res.success && res.result === AssignCredentialResult.OK) {
-				this.showSnackbar('Credential reassigned.', 'success')
-				this.reassignDialog.show = false
-			} else if (res.success) {
-				this.showSnackbar(
-					assignCredentialResultMessage(res.result),
-					'error',
+			this.reassigning = true
+			try {
+				const res = await this.app.apiRequest(
+					'accessControlAssignCredential',
+					[
+						this.node.id,
+						this.currentEndpoint.endpointIndex,
+						credential.type,
+						credential.slot,
+						destUserId,
+					],
+					{ infoSnack: false, errorSnack: true },
 				)
+				if (res.success && res.result === AssignCredentialResult.OK) {
+					this.showSnackbar('Credential reassigned.', 'success')
+					this.reassignDialog.show = false
+				} else if (res.success) {
+					this.showSnackbar(
+						assignCredentialResultMessage(res.result),
+						'error',
+					)
+				}
+			} finally {
+				this.reassigning = false
 			}
 		},
 		openBulkDelete() {
@@ -1551,29 +1644,34 @@ export default {
 		},
 		async performBulkDelete() {
 			const { userId, type } = this.bulkDeleteDialog
-			const res = await this.app.apiRequest(
-				'accessControlDeleteCredentials',
-				[
-					this.node.id,
-					this.currentEndpoint.endpointIndex,
-					{
-						userId: userId || undefined,
-						credentialType: type || undefined,
-					},
-				],
-				{ infoSnack: false, errorSnack: true },
-			)
-			if (res.success && res.result === SetCredentialResult.OK) {
-				this.showSnackbar(
-					'Credentials deletion acknowledged.',
-					'success',
+			this.deletingCredentials = true
+			try {
+				const res = await this.app.apiRequest(
+					'accessControlDeleteCredentials',
+					[
+						this.node.id,
+						this.currentEndpoint.endpointIndex,
+						{
+							userId: userId || undefined,
+							credentialType: type || undefined,
+						},
+					],
+					{ infoSnack: false, errorSnack: true },
 				)
-				this.bulkDeleteDialog.show = false
-			} else if (res.success) {
-				this.showSnackbar(
-					setCredentialResultMessage(res.result),
-					'error',
-				)
+				if (res.success && res.result === SetCredentialResult.OK) {
+					this.showSnackbar(
+						'Credentials deletion acknowledged.',
+						'success',
+					)
+					this.bulkDeleteDialog.show = false
+				} else if (res.success) {
+					this.showSnackbar(
+						setCredentialResultMessage(res.result),
+						'error',
+					)
+				}
+			} finally {
+				this.deletingCredentials = false
 			}
 		},
 		startAdminPinEdit() {

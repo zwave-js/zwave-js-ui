@@ -1,12 +1,22 @@
 <template>
-	<v-dialog v-model="show" max-width="520" @keydown.esc="close">
+	<v-dialog
+		v-model="show"
+		max-width="520"
+		:persistent="saving"
+		@keydown.esc="close"
+	>
 		<v-card>
 			<v-card-title class="d-flex align-center">
 				<span class="text-h6">
 					{{ editMode ? 'Replace credential' : 'Add credential' }}
 				</span>
 				<v-spacer />
-				<v-btn icon="close" variant="text" @click="close" />
+				<v-btn
+					icon="close"
+					variant="text"
+					:disabled="saving"
+					@click="close"
+				/>
 			</v-card-title>
 			<v-card-text>
 				<v-row dense>
@@ -15,7 +25,7 @@
 							v-model="form.userId"
 							:items="userItems"
 							label="Owner"
-							:disabled="lockOwner || editMode"
+							:disabled="saving || lockOwner || editMode"
 							hide-details
 						/>
 					</v-col>
@@ -25,7 +35,9 @@
 							:items="typeOptions"
 							label="Type"
 							hide-details
-							:disabled="editMode || typeOptions.length < 2"
+							:disabled="
+								saving || editMode || typeOptions.length < 2
+							"
 						/>
 					</v-col>
 					<v-col cols="12" sm="6">
@@ -39,7 +51,7 @@
 									? selectedTypeCap.numberOfCredentialSlots
 									: 1
 							"
-							:disabled="editMode"
+							:disabled="saving || editMode"
 							hide-details
 						/>
 					</v-col>
@@ -62,12 +74,14 @@
 									? selectedTypeCap.maxCredentialLength
 									: undefined
 							"
+							:disabled="saving"
 							@beforeinput="onCredentialBeforeInput"
 						>
 							<template #append-inner>
 								<v-btn
 									size="x-small"
 									variant="text"
+									:disabled="saving"
 									@click="reveal = !reveal"
 								>
 									{{ reveal ? 'Hide' : 'Show' }}
@@ -79,8 +93,15 @@
 			</v-card-text>
 			<v-card-actions>
 				<v-spacer />
-				<v-btn variant="text" @click="close">Cancel</v-btn>
-				<v-btn color="primary" :disabled="!canSave" @click="save">
+				<v-btn variant="text" :disabled="saving" @click="close">
+					Cancel
+				</v-btn>
+				<v-btn
+					color="primary"
+					:disabled="!canSave"
+					:loading="saving"
+					@click="save"
+				>
 					{{ editMode ? 'Replace' : 'Add' }}
 				</v-btn>
 			</v-card-actions>
@@ -103,6 +124,7 @@ export default {
 		initial: Object,
 		editMode: Boolean,
 		lockOwner: Boolean,
+		saving: Boolean,
 		users: { type: Array, default: () => [] },
 		credentials: { type: Array, default: () => [] },
 	},
@@ -220,6 +242,7 @@ export default {
 			}
 		},
 		close() {
+			if (this.saving) return
 			this.show = false
 		},
 		save() {

@@ -1,5 +1,10 @@
 <template>
-	<v-dialog v-model="show" max-width="560px" @keydown.esc="close">
+	<v-dialog
+		v-model="show"
+		max-width="560px"
+		:persistent="saving"
+		@keydown.esc="close"
+	>
 		<v-card>
 			<v-card-title>
 				<span class="text-h5">
@@ -26,6 +31,7 @@
 									label="Name"
 									:counter="capabilities?.maxUserNameLength"
 									:rules="nameRules"
+									:disabled="saving"
 								/>
 							</v-col>
 
@@ -40,6 +46,7 @@
 									inline
 									hide-details
 									class="mt-0"
+									:disabled="saving"
 								>
 									<v-radio :value="true" label="Active" />
 									<v-radio :value="false" label="Inactive" />
@@ -57,6 +64,7 @@
 									label="User type"
 									:hint="userTypeHint"
 									persistent-hint
+									:disabled="saving"
 								>
 									<template #item="{ item, props }">
 										<v-list-item
@@ -82,6 +90,7 @@
 									type="number"
 									:min="1"
 									:rules="expiringRules"
+									:disabled="saving"
 								/>
 							</v-col>
 
@@ -97,6 +106,7 @@
 									:hint="ruleHint"
 									persistent-hint
 									class="mt-0"
+									:disabled="saving"
 								>
 									<v-radio
 										v-for="r in ruleOptions"
@@ -142,6 +152,7 @@
 										:items="directEntryOptions"
 										label="Type"
 										:disabled="
+											saving ||
 											directEntryOptions.length < 2
 										"
 										hide-details
@@ -155,6 +166,7 @@
 										persistent-hint
 										class="font-monospace"
 										:rules="credentialRules"
+										:disabled="saving"
 									/>
 								</v-col>
 							</v-row>
@@ -165,13 +177,19 @@
 
 			<v-card-actions>
 				<v-spacer />
-				<v-btn color="blue-darken-1" variant="text" @click="close">
+				<v-btn
+					color="blue-darken-1"
+					variant="text"
+					:disabled="saving"
+					@click="close"
+				>
 					Cancel
 				</v-btn>
 				<v-btn
 					color="blue-darken-1"
 					variant="text"
 					:disabled="!canSave"
+					:loading="saving"
 					@click="save"
 				>
 					{{ editMode ? 'Save' : 'Add' }}
@@ -201,6 +219,7 @@ export default {
 		capabilities: Object,
 		initial: Object,
 		editMode: Boolean,
+		saving: Boolean,
 		users: { type: Array, default: () => [] },
 		credentials: { type: Array, default: () => [] },
 	},
@@ -364,6 +383,7 @@ export default {
 			return base
 		},
 		close() {
+			if (this.saving) return
 			this.show = false
 		},
 		save() {

@@ -18,6 +18,7 @@ import {
 	NODE_ID_BROADCAST_LR,
 	RouteKind,
 	SecurityClass,
+	supervisedCommandFailed,
 	SupervisionStatus,
 	ZWaveErrorCodes,
 	Protocols,
@@ -1673,6 +1674,24 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		this.emitNodeUpdate(node, { accessControl: ac })
 	}
 
+	/** Clear the UI snapshot after a wildcard User Credential CC deletion */
+	private _clearAccessControlEndpointState(
+		zwaveNode: ZWaveNode,
+		endpointIndex: number,
+	) {
+		const node = this._nodes.get(zwaveNode.id)
+		if (!node) return
+		const ac = this._readAccessControlState(zwaveNode)
+		const endpoint = ac.endpoints.find(
+			(endpoint) => endpoint.endpointIndex === endpointIndex,
+		)
+		if (!endpoint) return
+		endpoint.users = []
+		endpoint.credentials = []
+		node.accessControl = ac
+		this.emitNodeUpdate(node, { accessControl: ac })
+	}
+
 	/** Returns the cached access-control state — call this from the UI as a primer. */
 	accessControlGetState(nodeId: number): ZUIAccessControl {
 		const zwaveNode = this._requireNode(nodeId)
@@ -1928,7 +1947,21 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			zwaveNode,
 			endpointIndex,
 		)
-		await accessControl.startCredentialLearn(userId, type, slot, timeout)
+		const result = await accessControl.startCredentialLearn(
+			userId,
+			type,
+			slot,
+			timeout,
+		)
+		// Handle supervision failure before waiting for further events that might not come
+		if (supervisedCommandFailed(result)) {
+			throw new Error(
+				`Node ${nodeId} refused to start credential learning (${getEnumMemberName(
+					SupervisionStatus,
+					result.status,
+				)})`,
+			)
+		}
 	}
 
 	async accessControlCancelCredentialLearn(
@@ -1940,7 +1973,15 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			zwaveNode,
 			endpointIndex,
 		)
-		await accessControl.cancelCredentialLearn()
+		const result = await accessControl.cancelCredentialLearn()
+		if (supervisedCommandFailed(result)) {
+			throw new Error(
+				`Node ${nodeId} refused to cancel credential learning (${getEnumMemberName(
+					SupervisionStatus,
+					result.status,
+				)})`,
+			)
+		}
 	}
 
 	async accessControlGetAdminCode(
