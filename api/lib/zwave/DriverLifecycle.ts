@@ -1,5 +1,3 @@
-
-
 import { Driver } from 'zwave-js'
 import type {
 	OTWFirmwareUpdateProgress,

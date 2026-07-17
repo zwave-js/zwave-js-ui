@@ -22,12 +22,7 @@ import {
 	type GatewayHarness,
 	type PublishedDiscovery,
 } from './gatewayHarness.ts'
-import {
-	buildNode,
-	buildValueId,
-	addValue,
-	state,
-} from './fixtures.ts'
+import { buildNode, buildValueId, addValue, state } from './fixtures.ts'
 import type {
 	HassDevice,
 	ZUINode,
