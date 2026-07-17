@@ -328,10 +328,15 @@ describe('InclusionCoordinator', () => {
 			expect(drv.controller.beginInclusion).toHaveBeenCalled()
 		})
 
-		it('handles Security_S2 with qrString (SmartStart QR code)', async () => {
+		it('provisions SmartStart QR without starting inclusion', async () => {
+			vi.useFakeTimers()
 			const qr = createQRPort({ version: QRCodeVersion.SmartStart })
 			const provisionFn = vi.fn().mockResolvedValue(undefined)
-			const { coordinator } = createCoordinator({ qr })
+			const { coordinator, driver } = createCoordinator({
+				qr,
+				config: createConfigPort(1),
+			})
+			const drv = driver.getDriver()
 
 			const result = await coordinator.startInclusion(
 				InclusionStrategy.Security_S2,
@@ -341,6 +346,10 @@ describe('InclusionCoordinator', () => {
 
 			expect(result).toBe(true)
 			expect(provisionFn).toHaveBeenCalled()
+			expect(drv.controller.beginInclusion).not.toHaveBeenCalled()
+
+			await vi.advanceTimersByTimeAsync(1_100)
+			expect(drv.controller.stopInclusion).not.toHaveBeenCalled()
 		})
 
 		it('propagates QR parsing errors', async () => {
