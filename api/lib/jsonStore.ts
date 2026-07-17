@@ -7,6 +7,7 @@ import archiver from 'archiver'
 import { createWriteStream, existsSync } from 'node:fs'
 import type { Response } from 'express'
 import { ensureDir, fileDate, joinPath } from './utils.ts'
+import { hasErrorCode } from './errors.ts'
 
 const logger = module('Store')
 
@@ -23,12 +24,16 @@ export interface StorageHelperDeps {
 	writeFile?: typeof jsonFile.writeFile
 }
 
+// The subset of store entries this helper has been initialized with
+export type StoreConfig = Record<StoreKeys, StoreFile<unknown>>
+
 /**
 Constructor
 **/
 export class StorageHelper {
-	private _store: Record<StoreKeys, any>
-	private config: Record<StoreKeys, StoreFile>
+	// Keyed by the on-disk filename, not StoreKeys, since get/put schema-check via each call's own StoreFile<T>
+	private _store: Record<string, unknown>
+	private config?: StoreConfig
 	private readFile: typeof jsonFile.readFile
 	private writeFile: typeof jsonFile.writeFile
 
@@ -37,16 +42,16 @@ export class StorageHelper {
 	}
 
 	constructor(deps?: StorageHelperDeps) {
-		this._store = {} as Record<StoreKeys, any>
+		this._store = {}
 		this.readFile = deps?.readFile || defaultDeps.readFile
 		this.writeFile = deps?.writeFile || defaultDeps.writeFile
 	}
 
-	async init(config: Record<StoreKeys, StoreFile>) {
+	async init(config: StoreConfig) {
 		this.config = config
 
 		for (const model in config) {
-			const res = await this._getFile(config[model])
+			const res = await this._getFile(config[model as StoreKeys])
 			this._store[res.file] = res.data
 		}
 
@@ -90,13 +95,16 @@ export class StorageHelper {
 				cwd: storeDir,
 			})
 
-			for (const model in this.config) {
-				const config: StoreFile = this.config[model]
-				const filePath = joinPath(storeDir, config.file)
-				if (existsSync(filePath)) {
-					archive.file(filePath, {
-						name: config.file,
-					})
+			if (this.config) {
+				for (const model in this.config) {
+					const config: StoreFile<unknown> =
+						this.config[model as StoreKeys]
+					const filePath = joinPath(storeDir, config.file)
+					if (existsSync(filePath)) {
+						archive.file(filePath, {
+							name: config.file,
+						})
+					}
 				}
 			}
 
@@ -104,9 +112,9 @@ export class StorageHelper {
 		})
 	}
 
-	private async _getFile(config: StoreFile) {
-		let err: { code: string } | undefined
-		let data: any
+	private async _getFile<T>(config: StoreFile<T>) {
+		let err: unknown
+		let data: unknown
 		try {
 			data = await this.readFile(joinPath(storeDir, config.file))
 		} catch (error) {
@@ -115,10 +123,10 @@ export class StorageHelper {
 
 		// ignore ENOENT error
 		if (err) {
-			if (err.code !== 'ENOENT') {
-				logger.error('Error reading file: ' + config.file, err)
-			} else {
+			if (hasErrorCode(err) && err.code === 'ENOENT') {
 				logger.warn(`${config.file} not found`)
+			} else {
+				logger.error('Error reading file: ' + config.file, err)
 			}
 		}
 
@@ -129,18 +137,18 @@ export class StorageHelper {
 			data = Array.isArray(data) ? data : merge(config.default, data)
 		}
 
-		return { file: config.file, data: data }
+		return { file: config.file, data: data as T }
 	}
 
-	get(model: StoreFile) {
+	get<T>(model: StoreFile<T>): T {
 		if (this._store[model.file]) {
-			return this._store[model.file]
+			return this._store[model.file] as T
 		} else {
 			throw Error('Requested file not present in store: ' + model.file)
 		}
 	}
 
-	async put(model: StoreFile, data: any) {
+	async put<T>(model: StoreFile<T>, data: T): Promise<T> {
 		await this.writeFile(joinPath(storeDir, model.file), data)
 		this._store[model.file] = data
 		return data

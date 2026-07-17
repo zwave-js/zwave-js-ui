@@ -451,7 +451,7 @@ export function sensorType(index: number): ISensorType {
 
 	return sensorType
 }
-const _commandClassMap = {
+const _commandClassMap: Record<number, string> = {
 	0x00: 'no_operation',
 	0x20: 'basic',
 	0x21: 'controller_replication',

@@ -244,6 +244,7 @@ export type GatewayConfig = {
 	}
 	disableChangelog?: boolean
 	notifyNewVersions?: boolean
+	https?: boolean
 }
 
 interface ValueIdTopic {

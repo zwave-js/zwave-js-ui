@@ -10,13 +10,14 @@ import history from 'connect-history-api-fallback'
 import cors from 'cors'
 import compression from 'compression'
 import morgan from 'morgan'
-import type { Settings, User } from './config/store.ts'
+import type { PersistedSettings, User, PublicUser } from './config/store.ts'
 import store from './config/store.ts'
 import type { GatewayConfig } from './lib/Gateway.ts'
 import Gateway, { GatewayType } from './lib/Gateway.ts'
 import jsonStore from './lib/jsonStore.ts'
 import * as loggers from './lib/logger.ts'
 import { logContainer } from './lib/logger.ts'
+import type { MqttConfig } from './lib/MqttClient.ts'
 import MqttClient from './lib/MqttClient.ts'
 import SocketManager from './lib/SocketManager.ts'
 import type { CallAPIResult, ZwaveConfig } from './lib/ZwaveClient.ts'
@@ -31,6 +32,7 @@ import type { Server as HttpServer } from 'node:http'
 import { createServer as createHttpServer } from 'node:http'
 import { createServer as createHttpsServer } from 'node:https'
 import jwt from 'jsonwebtoken'
+import type { JwtPayload, VerifyErrors } from 'jsonwebtoken'
 import path from 'node:path'
 import sessionStore from 'session-file-store'
 import type { Server as SocketIOServer, Socket } from 'socket.io'
@@ -82,13 +84,30 @@ import {
 	getImportedNodeLocation,
 	normalizeImportedNodesConfig,
 } from './lib/importConfig.ts'
+import { getErrorMessage } from './lib/errors.ts'
 
 const createCertificate = promisify(generate)
 
 declare module 'express-session' {
 	export interface SessionData {
-		user?: User
+		// Session files may contain the full user record, including passwordHash; see #4739
+		user?: User | PublicUser
 	}
+}
+
+// Signed JWT payloads are object-checked but their individual claims are not validated
+type JwtUserPayload = Partial<PublicUser> & JwtPayload
+
+function verifyJWT(token: string, secret: string): Promise<JwtUserPayload> {
+	return new Promise((resolve, reject) => {
+		jwt.verify(token, secret, (err: VerifyErrors | null, decoded) => {
+			if (err || !decoded || typeof decoded === 'string') {
+				reject(err ?? new Error('Invalid token payload'))
+				return
+			}
+			resolve(decoded as JwtUserPayload)
+		})
+	})
 }
 
 function multerPromise(
@@ -170,8 +189,6 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 		testOptions?.logFatalError ??
 		((message: string) => logger.error(message))
 
-	const verifyJWT = promisify(jwt.verify.bind(jwt))
-
 	const storeLimiter = rateLimit({
 		windowMs: 15 * 60 * 1000, // 15 minutes
 		max: 100,
@@ -243,8 +260,8 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 	const backupManagerOwner = Symbol()
 
 	socketManager.authMiddleware = function (
-		socket: Socket & { user?: User },
-		next: (err?) => void,
+		socket: Socket & { user?: JwtUserPayload },
+		next: (err?: Error) => void,
 	) {
 		if (!isAuthEnabled()) {
 			next()
@@ -254,11 +271,18 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 		) {
 			const token = (socket.handshake.auth?.token ||
 				socket.handshake.query.token) as string
-			jwt.verify(token, sessionSecret, function (err, decoded: User) {
-				if (err) return next(new Error('Authentication error'))
-				socket.user = decoded
-				next()
-			})
+			jwt.verify(
+				token,
+				sessionSecret,
+				(err: VerifyErrors | null, decoded) => {
+					if (err || !decoded || typeof decoded === 'string') {
+						next(new Error('Authentication error'))
+						return
+					}
+					socket.user = decoded as JwtUserPayload
+					next()
+				},
+			)
 		} else {
 			next(new Error('Authentication error'))
 		}
@@ -361,7 +385,7 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 			)
 		})
 
-		server.on('error', function (error: utils.ErrnoException) {
+		server.on('error', function (error: NodeJS.ErrnoException) {
 			if (error.syscall !== 'listen') {
 				throw error
 			}
@@ -384,7 +408,7 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 			}
 		})
 
-		const users = jsonStore.get(store.users) as User[]
+		const users = jsonStore.get(store.users)
 
 		if (users.length === 0) {
 			users.push({
@@ -503,12 +527,12 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 	}
 
 	function setupLogging(settings: {
-		gateway: utils.DeepPartial<GatewayConfig>
+		gateway?: utils.DeepPartial<GatewayConfig>
 	}) {
-		loggers.setupAll(settings ? settings.gateway : null)
+		loggers.setupAll(settings.gateway ?? {})
 	}
 
-	async function startGateway(settings: Settings) {
+	async function startGateway(settings: PersistedSettings) {
 		let mqtt: MqttClient
 		let zwave: ZWaveClient
 
@@ -520,16 +544,20 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 		}
 
 		if (settings.mqtt) {
-			mqtt = new MqttClient(settings.mqtt)
+			mqtt = new MqttClient(settings.mqtt as MqttConfig)
 		}
 
 		if (settings.zwave) {
-			zwave = new ZWaveClient(settings.zwave, socketManager.io)
+			zwave = new ZWaveClient(
+				settings.zwave as ZwaveConfig,
+				// setupSocket() always runs before startGateway() in both the initial startup and restart flows
+				socketManager.io,
+			)
 		}
 
 		backupManager.init(zwave, backupManagerOwner)
 
-		gw = new Gateway(settings.gateway, zwave, mqtt)
+		gw = new Gateway(settings.gateway as GatewayConfig, zwave, mqtt)
 
 		await gw.start()
 
@@ -566,9 +594,15 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 		restarting = false
 	}
 
-	function startZniffer(settings: ZnifferConfig) {
+	function startZniffer(
+		settings: utils.DeepPartial<ZnifferConfig> | undefined,
+	) {
 		if (settings) {
-			zniffer = new ZnifferManager(settings, socketManager.io)
+			zniffer = new ZnifferManager(
+				settings as ZnifferConfig,
+				// setupSocket() always runs before startZniffer() in both the initial startup and restart flows
+				socketManager.io,
+			)
 		}
 	}
 
@@ -1016,7 +1050,7 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 	// ### APIs
 
 	function isAuthEnabled() {
-		const settings = jsonStore.get(store.settings) as Settings
+		const settings = jsonStore.get(store.settings)
 		return settings.gateway?.authEnabled === true
 	}
 
@@ -1037,7 +1071,7 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 
 		// Successfully authenticated, token is valid and the user _id of its content
 		// is the same of the current session
-		const users = jsonStore.get(store.users) as User[]
+		const users = jsonStore.get(store.users)
 
 		const user = users.find((u) => u.username === decoded.username)
 
@@ -1083,7 +1117,7 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 	// api to authenticate user
 	app.post('/api/authenticate', loginLimiter, async function (req, res) {
 		const token = req.body.token
-		let user: User
+		let user: User | undefined
 
 		try {
 			// token auth, mostly used to restore sessions when user refresh the page
@@ -1092,12 +1126,12 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 
 				// Successfully authenticated, token is valid and the user _id of its content
 				// is the same of the current session
-				const users = jsonStore.get(store.users) as User[]
+				const users = jsonStore.get(store.users)
 
 				user = users.find((u) => u.username === decoded.username)
 			} else {
 				// credentials auth
-				const users = jsonStore.get(store.users) as User[]
+				const users = jsonStore.get(store.users)
 
 				const username = req.body.username
 				const password = req.body.password
@@ -1108,21 +1142,25 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 					user &&
 					!(await utils.verifyPsw(password, user.passwordHash))
 				) {
-					user = null
+					user = undefined
 				}
 			}
 
-			const result = {
+			const result: {
+				success: boolean
+				code?: number
+				message: string
+				user?: PublicUser
+			} = {
 				success: !!user,
 				code: undefined,
 				message: '',
 				user: undefined,
 			}
 
-			if (result.success) {
-				// don't edit the original user object, remove the password from jwt payload
-				const userData: User = Object.assign({}, user)
-				delete userData.passwordHash
+			const attemptedUsername = user?.username || req.body.username
+			if (user) {
+				const { passwordHash: _passwordHash, ...userData } = user
 
 				const token = jwt.sign(userData, sessionSecret, {
 					expiresIn: '1d',
@@ -1130,7 +1168,7 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 				userData.token = token
 				req.session.user = userData
 				result.user = userData
-				loginLimiter.resetKey(req.ip)
+				if (req.ip) loginLimiter.resetKey(req.ip)
 				logger.info(
 					`User ${user.username} logged in successfully from ${req.ip}`,
 				)
@@ -1138,9 +1176,7 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 				result.code = 3
 				result.message = RESPONSE_CODES.GENERAL_ERROR
 				logger.error(
-					`User ${
-						user?.username || req.body.username
-					} failed to login from ${req.ip}: wrong credentials`,
+					`User ${attemptedUsername} failed to login from ${req.ip}: wrong credentials`,
 				)
 			}
 
@@ -1155,7 +1191,7 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 			logger.error(
 				`User ${
 					user?.username || req.body.username
-				} failed to login from ${req.ip}: ${error.message}`,
+				} failed to login from ${req.ip}: ${getErrorMessage(error)}`,
 			)
 		}
 	})
@@ -1178,7 +1214,7 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 		isAuthenticated,
 		async function (req, res) {
 			try {
-				const users = jsonStore.get(store.users) as User[]
+				const users = jsonStore.get(store.users)
 
 				const user = req.session.user
 				const oldUser = user
@@ -1217,9 +1253,7 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 
 				await jsonStore.put(store.users, users)
 
-				// don't leak the password hash to the client (mirrors /api/authenticate)
-				const userData: User = Object.assign({}, oldUser)
-				delete userData.passwordHash
+				const { passwordHash: _passwordHash, ...userData } = oldUser
 
 				res.json({
 					success: true,
@@ -1230,7 +1264,7 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 				res.json({
 					success: false,
 					message: 'Error while updating passwords',
-					error: error.message,
+					error: getErrorMessage(error),
 				})
 				logger.error('Error while updating password', error)
 			}
@@ -1375,7 +1409,7 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 				let shouldRestartZniffer = false
 				let canUpdateZwaveOptions = false
 
-				const actualSettings = jsonStore.get(store.settings) as Settings
+				const actualSettings = jsonStore.get(store.settings)
 
 				// TODO: validate settings using calss-validator
 				// when settings is null consider a force restart
@@ -1599,7 +1633,7 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 
 				if (!gw?.zwave) throw Error('Z-Wave client not inited')
 
-				const settings = jsonStore.get(store.settings) as Settings
+				const settings = jsonStore.get(store.settings)
 
 				restarting = true
 
@@ -1656,8 +1690,8 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 				}
 				const { enableStatistics } = req.body
 
-				const settings: Settings =
-					jsonStore.get(store.settings) || ({} as Settings)
+				const settings: PersistedSettings =
+					jsonStore.get(store.settings) || {}
 
 				if (!settings.zwave) {
 					settings.zwave = {}
@@ -1696,8 +1730,8 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 		async function (req, res) {
 			try {
 				const { disableChangelog } = req.body
-				const settings: Settings =
-					jsonStore.get(store.settings) || ({} as Settings)
+				const settings: PersistedSettings =
+					jsonStore.get(store.settings) || {}
 
 				if (!settings.gateway) {
 					settings.gateway = {
@@ -2205,7 +2239,7 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 
 			const archive = archiver('zip')
 
-			archive.on('error', function (err: utils.ErrnoException) {
+			archive.on('error', function (err: NodeJS.ErrnoException) {
 				res.status(500).send({
 					error: err.message,
 				})
@@ -2358,8 +2392,8 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 
 				if (!gw?.zwave) throw Error('Z-Wave client not inited')
 
-				const settings: Settings =
-					jsonStore.get(store.settings) || ({} as Settings)
+				const settings: PersistedSettings =
+					jsonStore.get(store.settings) || {}
 				const originalLogLevel = settings.gateway?.logLevel || 'info'
 				const restartDriver = req.body.restartDriver || false
 
@@ -2455,7 +2489,7 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 
 	// ### ERROR HANDLERS
 
-	interface HttpError extends utils.ErrnoException {
+	interface HttpError extends NodeJS.ErrnoException {
 		status?: number
 	}
 
