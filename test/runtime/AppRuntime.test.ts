@@ -22,7 +22,7 @@ import type {
 } from '#api/runtime/AppRuntime'
 import type JsonStoreModule from '#api/lib/jsonStore'
 import type StoreModule from '#api/config/store'
-import backupManager from '#api/lib/BackupManager'
+import type BackupManagerInstance from '#api/lib/BackupManager'
 import {
 	createFakeGateway,
 	createFakeZniffer,
@@ -34,20 +34,26 @@ describe('App runtime behavior', () => {
 	let AppRuntimeCtor: typeof AppRuntimeClass
 	let jsonStore: typeof JsonStoreModule
 	let store: typeof StoreModule
+	let backupManager: typeof BackupManagerInstance
 	const originalSecret = process.env.SESSION_SECRET
 
 	beforeAll(async () => {
 		ensureTestEnv()
-		const [runtimeModule, jsonStoreModule, storeModule] = await Promise.all(
-			[
-				import('#api/runtime/AppRuntime'),
-				import('#api/lib/jsonStore'),
-				import('#api/config/store'),
-			],
-		)
+		const [
+			runtimeModule,
+			jsonStoreModule,
+			storeModule,
+			backupManagerModule,
+		] = await Promise.all([
+			import('#api/runtime/AppRuntime'),
+			import('#api/lib/jsonStore'),
+			import('#api/config/store'),
+			import('#api/lib/BackupManager'),
+		])
 		AppRuntimeCtor = runtimeModule.AppRuntime
 		jsonStore = jsonStoreModule.default
 		store = storeModule.default
+		backupManager = backupManagerModule.default
 		await jsonStore.init(store)
 	})
 
