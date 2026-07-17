@@ -16,14 +16,12 @@ const logger = loggers.module('App')
 
 declare module 'express-session' {
 	export interface SessionData {
-		// Includes User (with its passwordHash) because parseJWT and PUT /api/password
-		// persist the full record here, not just the sanitized PublicUser
+		// Preserve passwordHash for legacy auth flows
 		user?: User | PublicUser
 	}
 }
 
-// Partial because jwt.verify only proves the signature is valid and the payload is
-// object-shaped, not that any claim such as username is present
+// Signed tokens may omit user claims
 export type JwtUserPayload = Partial<PublicUser> & JwtPayload
 
 export const RESPONSE_CODES = {
@@ -46,7 +44,6 @@ export function verifyJWT(
 				reject(err ?? new Error('Invalid token payload'))
 				return
 			}
-			// JwtPayload doesn't know about our PublicUser claims
 			resolve(decoded as JwtUserPayload)
 		})
 	})
@@ -56,7 +53,6 @@ export async function parseJWT(req: Request): Promise<User> {
 	let token = req.headers['x-access-token'] || req.headers.authorization
 	token = Array.isArray(token) ? token[0] : token
 	if (token && token.startsWith('Bearer ')) {
-		// Strips the "Bearer " prefix (7 chars)
 		token = token.slice(7, token.length)
 	}
 
@@ -85,7 +81,7 @@ export async function isAuthenticated(
 		return next()
 	}
 
-	// Falls back to a JWT token here because session-cookie auth requires third-party cookies to be allowed
+	// Support clients without third-party cookies
 	try {
 		const user = await parseJWT(req)
 		req.session.user = user
@@ -119,7 +115,6 @@ export function registerAuthRoutes(
 		let user: User | undefined
 
 		try {
-			// Token auth restores a session after a page refresh
 			if (token) {
 				const decoded = await verifyJWT(token, sessionSecret)
 
@@ -154,12 +149,10 @@ export function registerAuthRoutes(
 				user: undefined,
 			}
 
-			// Captured early because some TS versions lose the undefined narrowing
-			// across the awaited reassignment above
 			const attemptedUsername = user?.username || req.body.username
 
 			if (user) {
-				// Destructure instead of mutating because user is a live reference into the in-memory users store
+				// Avoid mutating the live users-store record
 				const { passwordHash: _passwordHash, ...userWithoutHash } = user
 
 				const token = jwt.sign(userWithoutHash, sessionSecret, {
@@ -216,7 +209,7 @@ export function registerAuthRoutes(
 			try {
 				const users = jsonStore.get(store.users)
 
-				// Left unguarded so a disabled-auth session throws below instead of silently early-returning
+				// Preserve the disabled-auth failure
 				const user = req.session.user as PublicUser
 
 				const oldUser = users.find((u) => u.username === user.username)
@@ -253,7 +246,6 @@ export function registerAuthRoutes(
 
 				await jsonStore.put(store.users, users)
 
-				// Strips passwordHash before sending, mirroring /api/authenticate
 				const { passwordHash: _passwordHash, ...userData } = oldUser
 
 				res.json({

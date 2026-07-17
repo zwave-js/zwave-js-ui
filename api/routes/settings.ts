@@ -20,7 +20,7 @@ import { isAuthenticated } from './auth.ts'
 
 const logger = loggers.module('App')
 
-// Cast needed since ZwaveConfig has no index signature for arbitrary key lookups
+// ZwaveConfig has no index signature
 function getZwaveConfigValue(
 	config: utils.DeepPartial<ZwaveConfig> | undefined,
 	key: string,
@@ -155,12 +155,10 @@ export function registerSettingsRoutes(
 					if (
 						!utils.deepEqual(actualSettings.zwave, settings.zwave)
 					) {
-						// Keys here map to driver.updateOptions() parameters (preferences/logConfig) and can apply without a restart
+						// These driver options apply without a restart
 						const editableZWaveSettings = [
 							'disableOptimisticValueUpdate',
-							// preferences
 							'scales',
-							// logConfig
 							'logEnabled',
 							'logLevel',
 							'logToFile',
@@ -233,7 +231,7 @@ export function registerSettingsRoutes(
 
 					await jsonStore.put(store.settings, settings)
 
-					// Freshly resolved, not reused from above, so a concurrent restart can't leave this observing a stale gateway
+					// Resolve after persistence to avoid a stale gateway
 					const gwForDriverUpdate = runtime.gateway
 					if (
 						canUpdateZwaveOptions &&
@@ -304,7 +302,6 @@ export function registerSettingsRoutes(
 						}
 					}
 				} else {
-					// Force restart if no settings provided
 					shouldRestart = true
 					settings = actualSettings
 				}

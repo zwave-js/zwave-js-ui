@@ -283,26 +283,23 @@ export function registerStoreRoutes(
 			res.attachment('zwave-js-ui-store.zip')
 			res.setHeader('Content-Type', 'application/zip')
 
-			// Pipes directly to res to avoid staging a temp file
 			archive.pipe(res)
 
 			for (const f of files) {
 				try {
-					// confine the path to the store *before* touching the
-					// filesystem, so unsafe paths can't be probed via lstat/realpath
+					// Reject unsafe paths before filesystem access
 					const safe = await getSafePath(f)
 					const s = await lstat(safe)
 					const name = safe.replace(storeDir, '')
 					if (s.isFile()) {
 						archive.file(safe, { name })
 					} else if (s.isSymbolicLink()) {
-						// getSafePath already resolved the link target and checked
-						// it stays in the store; add the dereferenced target
+						// Archive the validated link target
 						const targetPath = await realpath(safe)
 						archive.file(targetPath, { name })
 					}
 				} catch (e) {
-					// ignore unsafe or unreadable entries
+					// Skip unsafe or unreadable entries
 				}
 			}
 
@@ -338,7 +335,7 @@ export function registerStoreRoutes(
 				isRestore = req.body.restore === 'true'
 				const folder = req.body.folder
 
-				// Optional chaining: a non-multipart request has no req.files array at all, which falls through to the same "No file uploaded" error below
+				// Non-multipart requests have no files array
 				file = (req.files as Express.Multer.File[] | undefined)?.[0]
 
 				if (!file || !file.path) {
@@ -355,7 +352,7 @@ export function registerStoreRoutes(
 						await utils.assertNoEscapingSymlinks(stageDir, stageDir)
 						await cp(stageDir, storeDir, {
 							recursive: true,
-							// Keep in-store links (e.g. *_current.log) as links rather than copying their targets
+							// Preserve validated in-store links
 							verbatimSymlinks: true,
 						})
 					} finally {
