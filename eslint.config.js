@@ -35,6 +35,8 @@ const backendImportRules = (pattern) => {
 		`CallExpression[callee.name='require'][arguments.0.expressions.length=0][arguments.0.quasis.0.value.raw=/${selectorPattern}/]`,
 		`CallExpression[callee.object.name=/^(?:jest|require|vi)$/][callee.property.name=${loaderMethod}][arguments.0.value=/${selectorPattern}/]`,
 		`CallExpression[callee.object.name=/^(?:jest|require|vi)$/][callee.property.name=${loaderMethod}][arguments.0.expressions.length=0][arguments.0.quasis.0.value.raw=/${selectorPattern}/]`,
+		`CallExpression[callee.object.type='MetaProperty'][callee.object.meta.name='import'][callee.object.property.name='meta'][callee.property.name='resolve'][arguments.0.value=/${selectorPattern}/]`,
+		`CallExpression[callee.object.type='MetaProperty'][callee.object.meta.name='import'][callee.object.property.name='meta'][callee.property.name='resolve'][arguments.0.expressions.length=0][arguments.0.quasis.0.value.raw=/${selectorPattern}/]`,
 	]
 
 	return {
