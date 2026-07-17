@@ -7,3 +7,5 @@ export const RESPONSE_CODES = {
 } as const
 
 export type ResponseCode = (typeof RESPONSE_CODES)[keyof typeof RESPONSE_CODES]
+
+export const AUTH_ERROR_CODE = 3

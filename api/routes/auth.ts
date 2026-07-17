@@ -10,7 +10,7 @@ import jsonStore from '../lib/jsonStore.ts'
 import * as loggers from '../lib/logger.ts'
 import * as utils from '../lib/utils.ts'
 import { getErrorMessage } from '../lib/errors.ts'
-import { RESPONSE_CODES } from '../lib/ResponseCodes.ts'
+import { AUTH_ERROR_CODE, RESPONSE_CODES } from '../lib/ResponseCodes.ts'
 import { isAuthEnabled } from '../runtime/AppRuntime.ts'
 
 const logger = loggers.module('App')
@@ -83,7 +83,7 @@ export async function isAuthenticated(
 		res.json({
 			success: false,
 			message: RESPONSE_CODES.GENERAL_ERROR,
-			code: 3,
+			code: AUTH_ERROR_CODE,
 		})
 	}
 }
@@ -159,7 +159,7 @@ export function registerAuthRoutes(
 					`User ${user.username} logged in successfully from ${req.ip}`,
 				)
 			} else {
-				result.code = 3
+				result.code = AUTH_ERROR_CODE
 				result.message = RESPONSE_CODES.GENERAL_ERROR
 				logger.error(
 					`User ${attemptedUsername} failed to login from ${req.ip}: wrong credentials`,
@@ -171,7 +171,7 @@ export function registerAuthRoutes(
 			res.json({
 				success: false,
 				message: 'Authentication failed',
-				code: 3,
+				code: AUTH_ERROR_CODE,
 			})
 
 			logger.error(
