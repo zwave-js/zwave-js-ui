@@ -18,11 +18,14 @@ import type {
 
 export class FirmwareLifecycleCancelledError extends Error {
 	constructor(operation: string) {
-		super(
-			`Firmware operation "${operation}" cancelled: service generation advanced`,
-		)
+		super(`Firmware operation "${operation}" cancelled: lifecycle advanced`)
 		this.name = 'FirmwareLifecycleCancelledError'
 	}
+}
+
+interface FirmwareOperationFence {
+	scheduleChain?: number
+	bulkCheckEpoch?: number
 }
 
 export class FirmwareUpdateService {
@@ -36,6 +39,12 @@ export class FirmwareUpdateService {
 
 	private _firmwareUpdateCheckTimeout: ReturnType<typeof setTimeout> | null =
 		null
+
+	/** Dedupes same-generation scheduled-check chains that `_generation` can't, because `all nodes ready` re-fires without a dispose or reset on NVM restore and controller firmware update */
+	private _scheduleChain = 0
+
+	/** Latest-started bulk firmware check allowed to persist and publish */
+	private _bulkCheckEpoch = 0
 
 	private _nvmEventSetter: ((event: string) => void) | undefined
 
@@ -76,10 +85,28 @@ export class FirmwareUpdateService {
 		this.clearScheduledCheck()
 	}
 
-	private _assertFence(gen: number, operation: string): void {
-		if (this._generation !== gen || this._disposed) {
+	private _assertFence(
+		gen: number,
+		operation: string,
+		fence?: FirmwareOperationFence,
+	): void {
+		if (!this._isFenceCurrent(gen, fence)) {
 			throw new FirmwareLifecycleCancelledError(operation)
 		}
+	}
+
+	private _isFenceCurrent(
+		gen: number,
+		fence?: FirmwareOperationFence,
+	): boolean {
+		return (
+			this._generation === gen &&
+			!this._disposed &&
+			(fence?.scheduleChain === undefined ||
+				this._scheduleChain === fence.scheduleChain) &&
+			(fence?.bulkCheckEpoch === undefined ||
+				this._bulkCheckEpoch === fence.bulkCheckEpoch)
+		)
 	}
 
 	async getAvailableFirmwareUpdates(
@@ -124,6 +151,13 @@ export class FirmwareUpdateService {
 	async checkAllNodesFirmwareUpdates(
 		options?: unknown,
 	): Promise<Map<number, FirmwareUpdateInfo[]> | undefined> {
+		return this._checkAllNodesFirmwareUpdates(options)
+	}
+
+	private async _checkAllNodesFirmwareUpdates(
+		options?: unknown,
+		scheduleChain?: number,
+	): Promise<Map<number, FirmwareUpdateInfo[]> | undefined> {
 		const drv = this._driver.getDriver()
 		if (!drv || !this._driver.isDriverReady()) {
 			throw new Error('Driver is not ready')
@@ -137,6 +171,10 @@ export class FirmwareUpdateService {
 		}
 
 		const gen = this._generation
+		const fence: FirmwareOperationFence = {
+			scheduleChain,
+			bulkCheckEpoch: ++this._bulkCheckEpoch,
+		}
 
 		this._logger.info('Starting bulk firmware update check for all nodes')
 
@@ -144,7 +182,7 @@ export class FirmwareUpdateService {
 			const result =
 				await drv.controller.getAllAvailableFirmwareUpdates(options)
 
-			this._assertFence(gen, 'checkAllNodesFirmwareUpdates')
+			this._assertFence(gen, 'checkAllNodesFirmwareUpdates', fence)
 
 			if (result) {
 				const now = Date.now()
@@ -173,6 +211,7 @@ export class FirmwareUpdateService {
 					staged,
 					gen,
 					'checkAllNodesFirmwareUpdates',
+					fence,
 				)
 			}
 
@@ -536,18 +575,32 @@ export class FirmwareUpdateService {
 			return
 		}
 
+		// Supersede any prior same-generation chain before starting so daily checks can't stack
+		this.clearScheduledCheck()
+		const chain = ++this._scheduleChain
 		const gen = this._generation
 
 		try {
-			await this.checkAllNodesFirmwareUpdates()
+			await this._checkAllNodesFirmwareUpdates(undefined, chain)
 		} catch (error) {
-			this._logger.warn(
-				`Scheduled firmware update check has failed: ${getErrorMessage(error)}`,
-			)
+			if (
+				!(error instanceof FirmwareLifecycleCancelledError) &&
+				this._generation === gen &&
+				this._scheduleChain === chain &&
+				!this._disposed
+			) {
+				this._logger.warn(
+					`Scheduled firmware update check has failed: ${getErrorMessage(error)}`,
+				)
+			}
 		}
 
-		// Skip rescheduling after reset to prevent duplicate loops
-		if (this._generation !== gen || this._disposed) {
+		// Skip the reschedule if this chain was superseded or torn down mid-check, so it can't leak a stale timer
+		if (
+			this._generation !== gen ||
+			this._scheduleChain !== chain ||
+			this._disposed
+		) {
 			return
 		}
 
@@ -581,7 +634,6 @@ export class FirmwareUpdateService {
 		}
 
 		const gen = this._generation
-
 		try {
 			const drv = this._driver.getDriver()
 			if (!drv) {
@@ -639,6 +691,7 @@ export class FirmwareUpdateService {
 		staged: ReadonlyArray<StagedFirmwareNodeUpdate>,
 		gen: number,
 		operation: string,
+		fence?: FirmwareOperationFence,
 	): Promise<void> {
 		await this._serializePersistence(
 			gen,
@@ -658,6 +711,7 @@ export class FirmwareUpdateService {
 					})
 				}
 			},
+			fence,
 		)
 	}
 
@@ -666,21 +720,35 @@ export class FirmwareUpdateService {
 		operation: string,
 		persist: () => Promise<FirmwarePersistenceRestore | void>,
 		publish?: () => void,
+		fence?: FirmwareOperationFence,
 	): Promise<void> {
 		const persistence = this._persistenceTail.then(async () => {
-			this._assertFence(gen, operation)
-			const restore = await persist()
+			this._assertFence(gen, operation, fence)
+			let persistenceFailed = false
+			let persistenceError: unknown
+			let restore: FirmwarePersistenceRestore | void = undefined
+			try {
+				restore = await persist()
+			} catch (error) {
+				persistenceFailed = true
+				persistenceError = error
+			}
 
-			if (this._generation !== gen || this._disposed) {
+			if (!this._isFenceCurrent(gen, fence)) {
 				// Restore current state because an in-flight filesystem write cannot be cancelled
 				if (restore) {
 					await restore()
 				} else {
 					await this._nodes.updateStoreNodes()
+					this._assertFence(gen, operation, fence)
 				}
 			}
 
-			this._assertFence(gen, operation)
+			if (persistenceFailed) {
+				throw persistenceError
+			}
+
+			this._assertFence(gen, operation, fence)
 			publish?.()
 		})
 
