@@ -272,6 +272,10 @@ export class InclusionCoordinator {
 							await provisionSmartStartNode(parsedQr)
 						}
 						this._assertCommand(gen, commandToken, 'inclusion')
+						this._commandToken++
+						this.clearCommandsTimeout()
+						this._tmpNode = undefined
+						this._isReplacing = false
 						return true
 					} else {
 						throw Error(`Invalid QR code version`)
