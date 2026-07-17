@@ -64,7 +64,7 @@ export default class ZnifferManager extends TypedEventEmitter<ZnifferManagerEven
 
 	private config: ZnifferConfig
 
-	private socket: SocketServer
+	private socket: SocketServer | undefined
 
 	private error?: string
 
@@ -74,7 +74,7 @@ export default class ZnifferManager extends TypedEventEmitter<ZnifferManagerEven
 		return !!this.zniffer?.active
 	}
 
-	constructor(config: ZnifferConfig, socket: SocketServer) {
+	constructor(config: ZnifferConfig, socket: SocketServer | undefined) {
 		super()
 
 		this.config = config
@@ -112,7 +112,7 @@ export default class ZnifferManager extends TypedEventEmitter<ZnifferManagerEven
 		this.zniffer.on('frame', (frame, rawData) => {
 			const socketFrame = this.parseFrame(frame, rawData)
 
-			this.socket
+			this.requireSocket()
 				.to('znifferFrames')
 				.emit(socketEvents.znifferFrame, socketFrame)
 		})
@@ -120,7 +120,7 @@ export default class ZnifferManager extends TypedEventEmitter<ZnifferManagerEven
 		this.zniffer.on('corrupted frame', (frame, rawData) => {
 			const socketFrame = this.parseFrame(frame, rawData)
 
-			this.socket
+			this.requireSocket()
 				.to('znifferFrames')
 				.emit(socketEvents.znifferFrame, socketFrame)
 		})
@@ -131,6 +131,14 @@ export default class ZnifferManager extends TypedEventEmitter<ZnifferManagerEven
 
 		logger.info('Initing Zniffer...')
 		this.init().catch(() => {})
+	}
+
+	private requireSocket(): SocketServer {
+		const socket = this.socket
+		if (!socket) {
+			throw new Error('Socket.IO is not attached')
+		}
+		return socket
 	}
 
 	private async init() {
@@ -178,7 +186,7 @@ export default class ZnifferManager extends TypedEventEmitter<ZnifferManagerEven
 	}
 
 	private onStateChange() {
-		this.socket
+		this.requireSocket()
 			.to('znifferState')
 			.emit(socketEvents.znifferState, this.status())
 	}

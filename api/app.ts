@@ -165,7 +165,7 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 	}
 
 	const runtime = new AppRuntime({
-		getSocketServer: requireSocketServer,
+		getSocketServer: () => socketManager.io,
 		gatewayFactory: new GatewayFactory({
 			storeDir,
 			logger: loggers.module('Gateway'),

@@ -770,7 +770,7 @@ export type ZwaveClientEvents = Extract<keyof ZwaveClientEventCallbacks, string>
 
 class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	private cfg: ZwaveConfig
-	private socket: SocketServer
+	private socket: SocketServer | undefined
 	declare private closed: boolean
 	private destroyed = false
 	declare private _driverReady: boolean | null | undefined
@@ -964,7 +964,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		return this.driverFunctionCache
 	}
 
-	constructor(config: ZwaveConfig, socket: SocketServer) {
+	constructor(config: ZwaveConfig, socket: SocketServer | undefined) {
 		super()
 
 		this.cfg = config
@@ -1007,6 +1007,14 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		this.init()
 	}
 
+	private requireSocket(): SocketServer {
+		const socket = this.socket
+		if (!socket) {
+			throw new Error('Socket.IO is not attached')
+		}
+		return socket
+	}
+
 	get homeHex() {
 		return this.driverInfo.name
 	}
@@ -1034,11 +1042,11 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		this._virtualNodes = new Map()
 		this._socketEventAdapter = new SocketEventAdapter(
 			{
-				getSocket: () => this.socket,
+				getSocket: () => this.requireSocket(),
 				getGeneration: () => this._nodeGeneration,
 				isCurrent: (generation, socket) =>
 					this._isCurrentNodeGeneration(generation) &&
-					socket === this.socket &&
+					socket === this.requireSocket() &&
 					!!this._nodeRegistry,
 			},
 			logger,
@@ -1448,9 +1456,11 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				this.driverReady = ready
 			},
 			hasConnectedClients: async () =>
-				(await this.socket.fetchSockets()).length > 0,
+				(await this.requireSocket().fetchSockets()).length > 0,
 			emitDebug: (message) => {
-				this.socket.to('debug').emit(socketEvents.debug, message)
+				this.requireSocket()
+					.to('debug')
+					.emit(socketEvents.debug, message)
 			},
 			getInclusionUserCallbacks: () =>
 				this._inclusionCoordinator.getUserCallbacks(),
@@ -2308,7 +2318,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		registry: NodeRegistry = this._nodeRegistry,
 		generation: number = this._nodeGeneration,
 	) {
-		const sockets = await this.socket.fetchSockets()
+		const sockets = await this.requireSocket().fetchSockets()
 		if (!this._isCurrentNodeRegistry(registry, generation)) return
 
 		for (const socket of sockets) {
@@ -5859,7 +5869,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 					args: [],
 				}
 
-				this.socket.emit(socketEvents.api, result)
+				this.requireSocket().emit(socketEvents.api, result)
 
 				clearInterval(interval)
 				return
