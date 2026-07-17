@@ -23,11 +23,7 @@ import {
 	type PublishedDiscovery,
 } from './gatewayHarness.ts'
 import { buildNode, buildValueId, addValue, state } from './fixtures.ts'
-import type {
-	HassDevice,
-	ZUINode,
-	ZUIValueIdState,
-} from '#api/lib/ZwaveClient'
+import type { HassDevice, ZUINode, ZUIValueIdState } from '#api/lib/ZwaveClient'
 import { requireDefined } from '../testUtils.ts'
 
 vi.mock('mqtt', () => mqttMockFactory())

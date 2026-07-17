@@ -1,6 +1,9 @@
 import type SocketManager from '#api/lib/SocketManager'
 import type { AppRuntime } from '#api/runtime/AppRuntime'
-import { registerInitHandler, registerZwaveApiHandler } from '#api/socket/zwaveApi'
+import {
+	registerInitHandler,
+	registerZwaveApiHandler,
+} from '#api/socket/zwaveApi'
 import { registerMqttApiHandler } from '#api/socket/mqttApi'
 import { registerHassApiHandler } from '#api/socket/hassApi'
 import { registerZnifferApiHandler } from '#api/socket/znifferApi'

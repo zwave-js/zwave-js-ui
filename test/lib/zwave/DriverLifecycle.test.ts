@@ -28,10 +28,7 @@ import type {
 } from '#api/lib/zwave/DriverLifecycle'
 import type ZwaveServerManager from '#api/hass/ZwaveServerManager'
 import type { ZwaveServerHost } from '#api/hass/ZwaveServerManager'
-import type {
-	ZwaveConfig,
-	InclusionUserCallbacks,
-} from '#api/lib/zwave/ports'
+import type { ZwaveConfig, InclusionUserCallbacks } from '#api/lib/zwave/ports'
 import { ZwaveClientStatus } from '#api/lib/zwave/ports'
 import {
 	createDeferred,

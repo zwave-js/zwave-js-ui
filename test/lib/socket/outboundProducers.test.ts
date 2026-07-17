@@ -41,9 +41,7 @@ describe('Socket contract: outbound producers', () => {
 	beforeAll(async () => {
 		// Registered after useSocketHarness()'s beforeAll, so STORE_DIR is isolated first
 		;({ default: ZWaveClient } = await import('#api/lib/ZwaveClient'))
-		;({ default: ZnifferManager } = await import(
-			'#api/lib/ZnifferManager'
-		))
+		;({ default: ZnifferManager } = await import('#api/lib/ZnifferManager'))
 	})
 
 	// Connecting a client always runs the real 'clients' callback, which calls
