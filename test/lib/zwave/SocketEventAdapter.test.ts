@@ -1,11 +1,11 @@
 import { describe, expect, it, vi } from 'vitest'
 
-import { socketEvents } from '../../../api/lib/SocketEvents.ts'
+import { socketEvents } from '#api/lib/SocketEvents.ts'
 import {
 	SocketEventAdapter,
 	type SocketEventAdapterPort,
 	type SocketServerPort,
-} from '../../../api/lib/zwave/SocketEventAdapter.ts'
+} from '#api/lib/zwave/SocketEventAdapter.ts'
 import { createServiceLogger } from './nodeFixtures.ts'
 
 function createSocket() {

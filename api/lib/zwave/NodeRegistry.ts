@@ -454,6 +454,7 @@ export class NodeRegistry {
 		if (!this.current) return
 		let node: ZUINode | undefined
 		this.host.onNodeAdded(zwaveNode.id)
+		// Complete replacement after node removal has preserved the prior metadata
 		this.host.onReplacementComplete()
 		if (this.host.isDriverReady()) {
 			node = this.addNode(zwaveNode)
@@ -1567,14 +1568,15 @@ export class NodeRegistry {
 		for (const remove of cleanup) remove()
 	}
 
-	async loadFakeNodes(): Promise<void> {
+	async loadFakeNodes(isReady: () => boolean = () => true): Promise<void> {
 		type FakeNode = Omit<ZUINode, 'values'> & { values: ZUIValueId[] }
+		if (!this.current || !isReady()) return
 		const contents = await this.readFakeNodesFile()
-		if (!this.current) return
+		if (!this.current || !isReady()) return
 		if (contents === undefined) return
 		const fakeNodes: FakeNode[] = JSON.parse(contents)
 		for (const fakeNode of fakeNodes) {
-			if (!this.current) return
+			if (!this.current || !isReady()) return
 			const values: Record<string, ZUIValueId> = {}
 			for (const value of fakeNode.values) {
 				values[NodeProjector.getValueId(value)] = value

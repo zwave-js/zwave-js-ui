@@ -25,14 +25,14 @@ import {
 } from 'zwave-js'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-import type { NodesStoreFile } from '../../../api/config/store.ts'
-import { socketEvents } from '../../../api/lib/SocketEvents.ts'
-import type { ZUINode, ZUIValueId } from '../../../api/lib/ZwaveClient.ts'
+import type { NodesStoreFile } from '#api/config/store.ts'
+import { socketEvents } from '#api/lib/SocketEvents.ts'
+import type { ZUINode, ZUIValueId } from '#api/lib/ZwaveClient.ts'
 import {
 	NodeRegistry,
 	type NodeRegistryDriver,
 	type NodeRegistryHost,
-} from '../../../api/lib/zwave/NodeRegistry.ts'
+} from '#api/lib/zwave/NodeRegistry.ts'
 import {
 	createServiceLogger,
 	createValue,
@@ -77,6 +77,7 @@ function createHarness(
 		getMaxNodeEventsQueueSize: () => 2,
 		getPersistedNodes: () => persisted,
 		persistNodes: vi.fn(() => Promise.resolve()),
+		runPersistenceTransaction: (operation) => operation(),
 		debug: vi.fn(),
 		sendToSocket: vi.fn(),
 		logNode: vi.fn(),
