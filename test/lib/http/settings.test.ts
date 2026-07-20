@@ -387,7 +387,7 @@ describe('HTTP contract: settings, restart, statistics, versions', () => {
 			expect(res.body).toEqual({
 				success: false,
 				message:
-					'Gateway is already restarting, wait a moment before doing another request',
+					'Gateway is restarting, wait a moment before doing another request',
 			})
 		})
 

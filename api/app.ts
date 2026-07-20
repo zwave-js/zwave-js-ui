@@ -662,7 +662,11 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 				cb(result)
 			})
 
-			socket.on(inboundEvents.subscribe, async (data, cb = noop) => {
+			const applyChannelSubscription = async (
+				data: { channels?: unknown },
+				action: 'join' | 'leave',
+				cb: (result: { channels: string[] }) => void,
+			) => {
 				const channels: string[] = Array.isArray(data?.channels)
 					? data.channels.filter(
 							(c: unknown) => typeof c === 'string',
@@ -675,7 +679,9 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 					: channels.filter((c) => Object.hasOwn(channelMap, c))
 
 				for (const channel of validChannels) {
-					await socket.join(channel)
+					await (action === 'join'
+						? socket.join(channel)
+						: socket.leave(channel))
 				}
 
 				// report current subscriptions (exclude socket's auto-joined room)
@@ -683,29 +689,15 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 					(r) => r !== socket.id && Object.hasOwn(channelMap, r),
 				)
 				cb({ channels: subscribed })
-			})
+			}
 
-			socket.on(inboundEvents.unsubscribe, async (data, cb = noop) => {
-				const channels: string[] = Array.isArray(data?.channels)
-					? data.channels.filter(
-							(c: unknown) => typeof c === 'string',
-						)
-					: []
+			socket.on(inboundEvents.subscribe, (data, cb = noop) =>
+				applyChannelSubscription(data, 'join', cb),
+			)
 
-				const isAll = channels.includes('all')
-				const validChannels = isAll
-					? ALL_CHANNELS
-					: channels.filter((c) => Object.hasOwn(channelMap, c))
-
-				for (const channel of validChannels) {
-					await socket.leave(channel)
-				}
-
-				const subscribed = [...socket.rooms].filter(
-					(r) => r !== socket.id && Object.hasOwn(channelMap, r),
-				)
-				cb({ channels: subscribed })
-			})
+			socket.on(inboundEvents.unsubscribe, (data, cb = noop) =>
+				applyChannelSubscription(data, 'leave', cb),
+			)
 
 			socket.on(inboundEvents.zniffer, async (data, cb = noop) => {
 				logger.info(`Zniffer api call: ${data.api}`)

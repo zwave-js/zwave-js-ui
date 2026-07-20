@@ -170,7 +170,7 @@ export function registerAuthRoutes(
 		} catch (error) {
 			res.json({
 				success: false,
-				message: 'Authentication failed',
+				message: RESPONSE_CODES.AUTH_FAILED,
 				code: AUTH_ERROR_CODE,
 			})
 

@@ -121,11 +121,7 @@ export function registerSettingsRoutes(
 		isAuthenticated,
 		async function (req, res) {
 			try {
-				if (runtime.restarting) {
-					throw Error(
-						'Gateway is restarting, wait a moment before doing another request',
-					)
-				}
+				runtime.assertNotRestarting()
 				let settings = req.body
 
 				let shouldRestart = false
@@ -328,11 +324,7 @@ export function registerSettingsRoutes(
 		isAuthenticated,
 		async function (req, res) {
 			try {
-				if (runtime.restarting) {
-					throw Error(
-						'Gateway is already restarting, wait a moment before doing another request',
-					)
-				}
+				runtime.assertNotRestarting()
 
 				const settings = jsonStore.get(store.settings)
 
@@ -374,11 +366,7 @@ export function registerSettingsRoutes(
 		isAuthenticated,
 		async function (req, res) {
 			try {
-				if (runtime.restarting) {
-					throw Error(
-						'Gateway is restarting, wait a moment before doing another request',
-					)
-				}
+				runtime.assertNotRestarting()
 				// Reject changes when the statistics opt-in belongs to the managing application
 				if (
 					getExternallyManagedPaths().includes(

@@ -115,6 +115,15 @@ export class AppRuntime {
 		this._restarting = value
 	}
 
+	// Throw if a restart is in progress, so handlers reject overlapping requests
+	assertNotRestarting(): void {
+		if (this._restarting) {
+			throw new Error(
+				'Gateway is restarting, wait a moment before doing another request',
+			)
+		}
+	}
+
 	// Cancel only the debug session started by this runtime
 	get ownsDebugSession(): boolean {
 		return this._ownsDebugSession
@@ -129,37 +138,30 @@ export class AppRuntime {
 		return this._closed
 	}
 
-	async loadSnippets(): Promise<void> {
-		this.defaultSnippets.length = 0
-		const localSnippetsDir = utils.joinPath(false, 'snippets')
-		await utils.ensureDir(snippetsDir)
-
-		const files = await readdir(localSnippetsDir)
-		for (const file of files) {
-			const filePath = path.join(localSnippetsDir, file)
-
-			if (await isSnippetFile(filePath)) {
-				const content = await readFile(filePath, 'utf8')
-				const name = path.basename(filePath, '.js')
-				this.defaultSnippets.push({ name, content })
-			}
-		}
-	}
-
-	async getSnippets(): Promise<utils.Snippet[]> {
-		const files = await readdir(snippetsDir)
+	private async readSnippetsFromDir(dir: string): Promise<utils.Snippet[]> {
 		const snippets: utils.Snippet[] = []
+		const files = await readdir(dir)
 		for (const file of files) {
-			const filePath = path.join(snippetsDir, file)
+			const filePath = path.join(dir, file)
 
 			if (await isSnippetFile(filePath)) {
 				snippets.push({
-					name: file.replace('.js', ''),
+					name: path.basename(filePath, '.js'),
 					content: await readFile(filePath, 'utf8'),
 				})
 			}
 		}
+		return snippets
+	}
 
+	async loadSnippets(): Promise<void> {
+		const localSnippetsDir = utils.joinPath(false, 'snippets')
+		await utils.ensureDir(snippetsDir)
+		this.defaultSnippets = await this.readSnippetsFromDir(localSnippetsDir)
+	}
+
+	async getSnippets(): Promise<utils.Snippet[]> {
+		const snippets = await this.readSnippetsFromDir(snippetsDir)
 		const snippetsCache = this._gateway?.zwave?.cacheSnippets ?? []
 		return [...snippetsCache, ...this.defaultSnippets, ...snippets]
 	}

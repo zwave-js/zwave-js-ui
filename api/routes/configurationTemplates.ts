@@ -8,6 +8,19 @@ export interface ConfigurationTemplatesRoutesDeps {
 	apisLimiter: RateLimitRequestHandler
 }
 
+// Returns the template id, or sends the error response and returns undefined
+function resolveTemplateId(
+	req: express.Request,
+	res: express.Response,
+): string | undefined {
+	const id = req.params.id
+	if (!id) {
+		res.json({ success: false, message: 'Invalid template ID' })
+		return undefined
+	}
+	return id
+}
+
 export function registerConfigurationTemplatesRoutes(
 	app: express.Express,
 	runtime: AppRuntime,
@@ -144,13 +157,8 @@ export function registerConfigurationTemplatesRoutes(
 		isAuthenticated,
 		async function (req, res) {
 			try {
-				const id = req.params.id
-				if (!id) {
-					return res.json({
-						success: false,
-						message: 'Invalid template ID',
-					})
-				}
+				const id = resolveTemplateId(req, res)
+				if (!id) return
 				const { name, autoApply, firmwareRange, values } = req.body
 				const template = await runtime
 					.ensureZWaveClient()
@@ -177,13 +185,8 @@ export function registerConfigurationTemplatesRoutes(
 		isAuthenticated,
 		async function (req, res) {
 			try {
-				const id = req.params.id
-				if (!id) {
-					return res.json({
-						success: false,
-						message: 'Invalid template ID',
-					})
-				}
+				const id = resolveTemplateId(req, res)
+				if (!id) return
 				await runtime
 					.ensureZWaveClient()
 					.deleteConfigurationTemplate(id)
@@ -203,13 +206,8 @@ export function registerConfigurationTemplatesRoutes(
 		isAuthenticated,
 		async function (req, res) {
 			try {
-				const id = req.params.id
-				if (!id) {
-					return res.json({
-						success: false,
-						message: 'Invalid template ID',
-					})
-				}
+				const id = resolveTemplateId(req, res)
+				if (!id) return
 				const { nodeId, force } = req.body
 				if (!nodeId) {
 					return res.json({
