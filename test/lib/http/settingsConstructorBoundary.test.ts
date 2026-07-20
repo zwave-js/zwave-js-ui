@@ -30,6 +30,7 @@ vi.mock('#api/lib/Gateway.ts', () => ({
 			gatewayCtor(...args)
 		}
 		start = vi.fn(() => Promise.resolve())
+		close = vi.fn(() => Promise.resolve())
 	},
 	closeWatchers: vi.fn(),
 }))
@@ -39,6 +40,7 @@ vi.mock('#api/lib/ZnifferManager.ts', () => ({
 		constructor(...args: unknown[]) {
 			znifferCtor(...args)
 		}
+		close = vi.fn(() => Promise.resolve())
 	},
 }))
 
@@ -50,12 +52,11 @@ describe('sparse persisted settings', () => {
 	const getHarness = useHttpHarness()
 
 	it('accepts sparse persisted MQTT, Z-Wave, and gateway settings unchanged', async () => {
+		const harness = await getHarness({ gateway: createFakeGateway() })
 		const sparseMqtt = { name: 'sparse-mqtt-only-one-field' }
 		const sparseZwave = { port: '/dev/ttySPARSE' }
 		const sparseGateway = { sendEvents: true }
 
-		// The restart route closes the active gateway before constructing its replacement
-		const harness = await getHarness({ gateway: createFakeGateway() })
 		await setSettings(harness, {
 			mqtt: sparseMqtt,
 			zwave: sparseZwave,
@@ -74,7 +75,6 @@ describe('sparse persisted settings', () => {
 			message: 'Gateway restarted successfully',
 		})
 
-		// The harness leaves the Socket.IO server unset
 		expect(mqttCtor).toHaveBeenCalledExactlyOnceWith(sparseMqtt)
 		expect(zwaveCtor).toHaveBeenCalledExactlyOnceWith(
 			sparseZwave,
@@ -103,9 +103,9 @@ describe('sparse persisted settings', () => {
 	})
 
 	it('accepts sparse persisted Zniffer settings unchanged', async () => {
+		const harness = await getHarness({ gateway: createFakeGateway() })
 		const sparseZniffer = { securityKeys: {} }
 
-		const harness = await getHarness({ gateway: createFakeGateway() })
 		await setSettings(harness, {
 			mqtt: undefined,
 			zwave: undefined,

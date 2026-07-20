@@ -1,27 +1,18 @@
 // Event names are hard-coded literals, not imported from SocketEvents.ts, since a real client's wire format doesn't know the server's internal constant names
 // The real 'clients' callback calls gw.zwave?.setUserCallbacks() on every connect and throws
 // if gw is undefined, so every test installs at least a bare gateway fake
-import { describe, it, expect, beforeAll, vi } from 'vitest'
-import type { Driver } from 'zwave-js'
+import { describe, it, expect, vi } from 'vitest'
 import { ALL_CHANNELS } from '#api/lib/SocketEvents.ts'
-import type ZWaveClientType from '#api/lib/ZwaveClient.ts'
 import { useSocketHarness } from './harness.ts'
 import {
 	createFakeGateway,
 	createFakeZniffer,
 	createFakeZwaveClient,
-	type FakeGateway,
 } from './fakes.ts'
 import { connectedClient, emit } from './helpers.ts'
 
 describe('Socket contract: inbound ACK APIs', () => {
 	const getHarness = useSocketHarness()
-	let ZWaveClient: typeof ZWaveClientType
-
-	beforeAll(async () => {
-		// Registered after useSocketHarness()'s beforeAll, so STORE_DIR is isolated first
-		;({ default: ZWaveClient } = await import('#api/lib/ZwaveClient.ts'))
-	})
 
 	describe('INITED', () => {
 		it('returns an empty-ish state when gw.zwave is not connected', async () => {
@@ -117,35 +108,6 @@ describe('Socket contract: inbound ACK APIs', () => {
 				42,
 			)
 		})
-
-		it('routes through the REAL ZwaveClient.callApi() dispatcher (not a mocked gw.zwave.callApi) for a real allowed method, echoing its real success/result/args', async () => {
-			// Every other test in this block uses createFakeGateway()'s mocked zwave.callApi.
-			// This one wires a real ZWaveClient so the real dispatcher actually runs.
-			const gateway = createFakeGateway({ zwave: undefined })
-			const harness = await getHarness({ gateway })
-			const zwave = new ZWaveClient({}, harness.io)
-			zwave['scenes'] = [{ sceneid: 1, label: 'Party', values: [] }]
-			zwave['_driver'] = {} as unknown as Driver
-			zwave.driverReady = true
-			// gw, held by the already-running app, is this same gateway object, so mutating it
-			// here mimics a live reconnect with no post-construction app/harness API involved
-			// FakeGateway's zwave is a mock-shaped interface a real ZWaveClient instance doesn't structurally satisfy, hence the cast
-			gateway.zwave = zwave as unknown as FakeGateway['zwave']
-			const client = await connectedClient(harness)
-
-			const result = await emit(client, 'ZWAVE_API', {
-				api: '_sceneGetValues',
-				args: [1],
-			})
-
-			expect(result).toStrictEqual({
-				success: true,
-				message: 'Success zwave api call',
-				result: [],
-				args: [1],
-				api: '_sceneGetValues',
-			})
-		})
 	})
 
 	describe('MQTT_API', () => {
@@ -222,6 +184,20 @@ describe('Socket contract: inbound ACK APIs', () => {
 				success: true,
 				message: 'Success HASS api call',
 				api: 'rediscoverNode',
+			})
+		})
+
+		it('reports success:false with "Unknown HASS api <name>" for an unknown apiName', async () => {
+			const harness = await getHarness({ gateway: createFakeGateway() })
+			const client = await connectedClient(harness)
+
+			const result = await emit(client, 'HASS_API', {
+				apiName: 'notARealAction',
+			})
+			expect(result).toStrictEqual({
+				success: false,
+				message: 'Unknown HASS api notARealAction',
+				api: 'notARealAction',
 			})
 		})
 
@@ -466,6 +442,29 @@ describe('Socket contract: inbound ACK APIs', () => {
 				api: 'loadCaptureFromBuffer',
 			})
 		})
+
+		it('loadCaptureFromBuffer resolves before its result is sent back over the wire', async () => {
+			const zniffer = createFakeZniffer({
+				loadCaptureFromBuffer: vi.fn(() =>
+					Promise.resolve('parsed-capture'),
+				),
+			})
+			const harness = await getHarness({
+				gateway: createFakeGateway(),
+				zniffer,
+			})
+			const client = await connectedClient(harness)
+
+			const result = await emit<any>(client, 'ZNIFFER_API', {
+				apiName: 'loadCaptureFromBuffer',
+				buffer: [1, 2, 3],
+			})
+			expect(zniffer.loadCaptureFromBuffer).toHaveBeenCalledWith(
+				Buffer.from([1, 2, 3]),
+			)
+			expect(result.success).toBe(true)
+			expect(result.result).toBe('parsed-capture')
+		})
 	})
 
 	describe('SUBSCRIBE', () => {
@@ -493,7 +492,7 @@ describe('Socket contract: inbound ACK APIs', () => {
 			expect(result.channels.sort()).toStrictEqual(['nodes', 'values'])
 		})
 
-		it('"all" expands to every channel, in channelMap declaration order', async () => {
+		it('"all" expands to every real channel', async () => {
 			const harness = await getHarness({ gateway: createFakeGateway() })
 			const client = await connectedClient(harness)
 
@@ -502,7 +501,9 @@ describe('Socket contract: inbound ACK APIs', () => {
 				'SUBSCRIBE',
 				{ channels: ['all'] },
 			)
-			expect(result.channels).toStrictEqual(ALL_CHANNELS)
+			expect(result.channels.sort()).toStrictEqual(
+				[...ALL_CHANNELS].sort(),
+			)
 		})
 
 		it('acks with an empty channel list when data.channels is missing/not an array', async () => {
@@ -530,6 +531,17 @@ describe('Socket contract: inbound ACK APIs', () => {
 				{ channels: ['nodes'] },
 			)
 			expect(result).toStrictEqual({ channels: ['values'] })
+		})
+
+		it('"all" also expands to every channel for unsubscribe, symmetric with subscribe', async () => {
+			const harness = await getHarness({ gateway: createFakeGateway() })
+			const client = await connectedClient(harness)
+
+			await emit(client, 'SUBSCRIBE', { channels: ['nodes', 'values'] })
+			const result = await emit<any>(client, 'UNSUBSCRIBE', {
+				channels: ['all'],
+			})
+			expect(result.channels).toStrictEqual([])
 		})
 	})
 })

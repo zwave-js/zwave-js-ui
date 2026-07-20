@@ -1,41 +1,51 @@
 // Base zwave/mqtt/gateway fakes shared by both the HTTP and socket suites. Neither is HTTP- or
 // socket-specific; each transport layers its own transport-only members on top (see socket/fakes.ts).
 import { vi } from 'vitest'
+import type { Mock } from 'vitest'
+import type {
+	GatewayPort,
+	MqttClientPort,
+	ZnifferPort,
+	ZwaveClientPort,
+} from '#api/runtime/ports.ts'
 
-export interface FakeZwaveClient {
-	devices: Record<string, unknown>
+export interface FakeZwaveClient extends ZwaveClientPort {
+	devices: ZwaveClientPort['devices']
 	homeHex: string
 	driverReady: boolean
 	driver: {
-		updateOptions: ReturnType<typeof vi.fn>
-		updateLogConfig: ReturnType<typeof vi.fn>
+		updateOptions: Mock
+		updateLogConfig: Mock
 	}
-	getStatus: ReturnType<typeof vi.fn>
-	getState: ReturnType<typeof vi.fn>
-	callApi: ReturnType<typeof vi.fn>
-	storeDevices: ReturnType<typeof vi.fn>
-	updateDevice: ReturnType<typeof vi.fn>
-	addDevice: ReturnType<typeof vi.fn>
-	getConfigurationTemplates: ReturnType<typeof vi.fn>
-	createConfigurationTemplate: ReturnType<typeof vi.fn>
-	importConfigurationTemplates: ReturnType<typeof vi.fn>
-	getDeviceConfigurationParams: ReturnType<typeof vi.fn>
-	updateConfigurationTemplate: ReturnType<typeof vi.fn>
-	deleteConfigurationTemplate: ReturnType<typeof vi.fn>
-	applyConfigurationTemplate: ReturnType<typeof vi.fn>
-	enableStatistics: ReturnType<typeof vi.fn>
-	disableStatistics: ReturnType<typeof vi.fn>
-	cacheSnippets: unknown[]
-	addExtraLogTransport: ReturnType<typeof vi.fn>
-	removeExtraLogTransport: ReturnType<typeof vi.fn>
-	dumpNode: ReturnType<typeof vi.fn>
-	getNode: ReturnType<typeof vi.fn>
-	nodes: { get: ReturnType<typeof vi.fn> }
-	restart: ReturnType<typeof vi.fn>
+	getStatus: Mock
+	getState: Mock
+	callApi: Mock
+	storeDevices: Mock
+	updateDevice: Mock
+	addDevice: Mock
+	getConfigurationTemplates: Mock
+	createConfigurationTemplate: Mock
+	importConfigurationTemplates: Mock
+	getDeviceConfigurationParams: Mock
+	updateConfigurationTemplate: Mock
+	deleteConfigurationTemplate: Mock
+	applyConfigurationTemplate: Mock
+	enableStatistics: Mock
+	disableStatistics: Mock
+	cacheSnippets: ZwaveClientPort['cacheSnippets']
+	addExtraLogTransport: Mock
+	removeExtraLogTransport: Mock
+	dumpNode: Mock
+	getNode: Mock
+	nodes: { get: Mock }
+	restart: Mock
+	setUserCallbacks: Mock
+	removeUserCallbacks: Mock
+	backupNVMRaw: Mock
 }
 
 export function createFakeZwaveClient(
-	overrides: Partial<FakeZwaveClient> = {},
+	overrides: Partial<ZwaveClientPort> = {},
 ): FakeZwaveClient {
 	return {
 		devices: { 2: { name: 'Fake device' } },
@@ -82,16 +92,21 @@ export function createFakeZwaveClient(
 		getNode: vi.fn(() => undefined),
 		nodes: { get: vi.fn(() => undefined) },
 		restart: vi.fn(() => Promise.resolve(undefined)),
+		setUserCallbacks: vi.fn(),
+		removeUserCallbacks: vi.fn(),
+		backupNVMRaw: vi.fn(() =>
+			Promise.resolve({ fileName: '/tmp/nvm-backup.bin' }),
+		),
 		...overrides,
 	}
 }
 
-export interface FakeMqttClient {
-	getStatus: ReturnType<typeof vi.fn>
+export interface FakeMqttClient extends MqttClientPort {
+	getStatus: Mock
 }
 
 export function createFakeMqttClient(
-	overrides: Partial<FakeMqttClient> = {},
+	overrides: Partial<MqttClientPort> = {},
 ): FakeMqttClient {
 	return {
 		getStatus: vi.fn(() => ({
@@ -103,20 +118,20 @@ export function createFakeMqttClient(
 	}
 }
 
-export interface FakeGateway {
+export interface FakeGateway extends GatewayPort {
 	zwave?: FakeZwaveClient
 	mqtt?: FakeMqttClient
-	close: ReturnType<typeof vi.fn>
-	start: ReturnType<typeof vi.fn>
-	updateNodeTopics: ReturnType<typeof vi.fn>
-	removeNodeRetained: ReturnType<typeof vi.fn>
-	publishDiscovery: ReturnType<typeof vi.fn>
-	rediscoverNode: ReturnType<typeof vi.fn>
-	disableDiscovery: ReturnType<typeof vi.fn>
+	close: Mock
+	start: Mock
+	updateNodeTopics: Mock
+	removeNodeRetained: Mock
+	publishDiscovery: Mock
+	rediscoverNode: Mock
+	disableDiscovery: Mock
 }
 
 export function createFakeGateway(
-	overrides: Partial<FakeGateway> = {},
+	overrides: Partial<GatewayPort> = {},
 ): FakeGateway {
 	return {
 		zwave: createFakeZwaveClient(),
@@ -128,6 +143,39 @@ export function createFakeGateway(
 		publishDiscovery: vi.fn(),
 		rediscoverNode: vi.fn(),
 		disableDiscovery: vi.fn(),
+		...overrides,
+	}
+}
+
+// Avoids constructing a real Zniffer, which would open a real serial port
+export interface FakeZniffer extends ZnifferPort {
+	status: Mock
+	start: Mock
+	stop: Mock
+	clear: Mock
+	getFrames: Mock
+	setFrequency: Mock
+	setLRChannelConfig: Mock
+	saveCaptureToFile: Mock
+	loadCaptureFromBuffer: Mock
+	// AppInstance.close() calls this unconditionally when a zniffer is set, mirroring FakeGateway.close
+	close: Mock
+}
+
+export function createFakeZniffer(
+	overrides: Partial<FakeZniffer> = {},
+): FakeZniffer {
+	return {
+		status: vi.fn(() => ({ active: false, frequency: undefined })),
+		start: vi.fn(() => Promise.resolve(undefined)),
+		stop: vi.fn(() => Promise.resolve(undefined)),
+		clear: vi.fn(() => undefined),
+		getFrames: vi.fn(() => []),
+		setFrequency: vi.fn(() => Promise.resolve(undefined)),
+		setLRChannelConfig: vi.fn(() => Promise.resolve(undefined)),
+		saveCaptureToFile: vi.fn(() => Promise.resolve('/tmp/capture.zlf')),
+		loadCaptureFromBuffer: vi.fn(() => Promise.resolve(undefined)),
+		close: vi.fn(() => Promise.resolve(undefined)),
 		...overrides,
 	}
 }

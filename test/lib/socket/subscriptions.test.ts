@@ -1,11 +1,10 @@
-// Proves an event is absent using barrier(): see helpers.ts for the automatic-id-room mechanism
+// Proves an event is absent using flushClientEvents(): see harness.ts for the round-trip mechanism
 // and ordered-delivery rationale
 import { describe, it, expect } from 'vitest'
 import { CommandClasses } from '@zwave-js/core'
 import { useSocketHarness } from './harness.ts'
 import { createFakeGateway } from './fakes.ts'
 import {
-	barrier,
 	collector,
 	connectedClient,
 	subscribe,
@@ -30,7 +29,7 @@ describe('Socket contract: multi-client room routing', () => {
 		harness.io.to('nodes').emit('NODE_UPDATED', { id: 2, ready: true })
 
 		expect(await receivedA).toEqual({ id: 2, ready: true })
-		await barrier(harness, clientB)
+		await harness.flushClientEvents(clientB)
 		expect(nodesBoxB.received).toEqual([])
 	})
 
@@ -108,9 +107,10 @@ describe('Socket contract: multi-client room routing', () => {
 		const ack = await unsubscribe(client, ['firmware'])
 		expect(ack).toStrictEqual({ channels: ['controller'] })
 
-		// FIFO delivery means a firmware event routed to this client would already be in box.received once the barrier resolves
+		// Socket.IO preserves per-connection ordering, so flushing proves
+		// that the preceding event was not delivered.
 		harness.io.to('firmware').emit('OTW_FIRMWARE_UPDATE', { progress: 20 })
-		await barrier(harness, client)
+		await harness.flushClientEvents(client)
 
 		expect(box.received).toEqual([{ progress: 10 }])
 	})
@@ -130,7 +130,7 @@ describe('Socket contract: multi-client room routing', () => {
 		harness.io.to('controller').emit('CONTROLLER_CMD', { status: 'idle' })
 
 		expect(await receivedA).toEqual({ status: 'idle' })
-		await barrier(harness, clientB)
+		await harness.flushClientEvents(clientB)
 		expect(boxB.received).toEqual([])
 	})
 })

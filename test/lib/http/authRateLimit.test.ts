@@ -6,6 +6,10 @@ describe('HTTP contract: rate limiting', () => {
 
 	it('replies with the HTTP-200 rate-limit envelope once the login budget is exhausted', async () => {
 		const harness = await getHarness()
+
+		// A successful login resets the counter (`loginLimiter.resetKey`), so
+		// exhausting the limit requires consecutive failures. `max: 5` allows
+		// the first 5 requests through; the 6th is rejected by the limiter.
 		let lastBody: unknown
 		let lastStatus: number | undefined
 		// Count six attempts because max: 5 lets the first five failures through
@@ -25,6 +29,7 @@ describe('HTTP contract: rate limiting', () => {
 			}
 		}
 
+		// Rate-limit failures use an HTTP-200 envelope without a code field.
 		expect(lastStatus).toBe(200)
 		expect(lastBody).toEqual({
 			success: false,

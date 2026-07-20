@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
-import { loadAppModule } from '../shared/harness.ts'
+import { loadAppModule, loadJsonStore } from '../shared/harness.ts'
 
 describe('AppInstance: fatal-error labeling', () => {
 	it('labels each installed fatal-event handler from the event that fired', async () => {
@@ -129,6 +129,63 @@ describe('AppInstance: installProcessHandlers()/close() own only this instance',
 		const before = snapshotListenerCounts()
 
 		await expect(instance.close()).resolves.toBeUndefined()
+		expect(snapshotListenerCounts()).toEqual(before)
+	})
+
+	it('does not install process handlers when startup is attempted after close', async () => {
+		const { createApp } = await loadAppModule()
+		const instance = createApp()
+		await instance.close()
+		const before = snapshotListenerCounts()
+
+		await expect(instance.startServer(0, '127.0.0.1')).rejects.toThrow(
+			'Cannot install process handlers after the app is closed',
+		)
+		expect(snapshotListenerCounts()).toEqual(before)
+	})
+
+	it('installs graceful process handling during programmatic startup', async () => {
+		const [{ createApp }, { jsonStore, store }] = await Promise.all([
+			loadAppModule(),
+			loadJsonStore(),
+		])
+		await jsonStore.init(structuredClone(store))
+		const instance = createApp()
+		const before = snapshotListenerCounts()
+		const server = await instance.startServer(0, '127.0.0.1')
+
+		try {
+			const afterStart = snapshotListenerCounts()
+			for (const event of EVENTS) {
+				expect(afterStart[event]).toBe(before[event] + 1)
+			}
+		} finally {
+			await instance.close()
+			if (server.listening) {
+				await new Promise<void>((resolve, reject) => {
+					server.close((error) => (error ? reject(error) : resolve()))
+				})
+			}
+		}
+
+		expect(snapshotListenerCounts()).toEqual(before)
+	})
+
+	it('cleans process handlers and the server when repeated startup fails', async () => {
+		const [{ createApp }, { jsonStore, store }] = await Promise.all([
+			loadAppModule(),
+			loadJsonStore(),
+		])
+		await jsonStore.init(structuredClone(store))
+		const instance = createApp()
+		const before = snapshotListenerCounts()
+		const server = await instance.startServer(0, '127.0.0.1')
+
+		await expect(instance.startServer(0, '127.0.0.1')).rejects.toThrow(
+			'Socket.IO is already attached',
+		)
+
+		expect(server.listening).toBe(false)
 		expect(snapshotListenerCounts()).toEqual(before)
 	})
 })

@@ -264,8 +264,8 @@ interface DeviceInfo {
 
 export default class Gateway {
 	private config: GatewayConfig
-	private _mqtt: MqttClient
-	private _zwave: ZwaveClient
+	private _mqtt?: MqttClient
+	private _zwave?: ZwaveClient
 	private topicValues: { [key: string]: ZUIValueId }
 	private discovered: { [key: string]: HassDevice }
 	private topicLevels: number[]
@@ -288,7 +288,11 @@ export default class Gateway {
 		return this.mqtt && !this.mqtt.disabled
 	}
 
-	constructor(config: GatewayConfig, zwave: ZwaveClient, mqtt: MqttClient) {
+	constructor(
+		config: GatewayConfig,
+		zwave: ZwaveClient | undefined,
+		mqtt: MqttClient | undefined,
+	) {
 		this.config = config || { type: 1 }
 		// clients
 		this._mqtt = mqtt

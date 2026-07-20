@@ -5,7 +5,7 @@ import Cron from 'croner'
 import { readdir, unlink } from 'node:fs/promises'
 import { nvmBackupsDir, storeBackupsDir } from '../config/app.ts'
 import { joinPath } from './utils.ts'
-import type ZwaveClient from './ZwaveClient.ts'
+import type { ZwaveClientPort } from '../runtime/ports.ts'
 
 export const NVM_BACKUP_PREFIX = 'NVM_'
 
@@ -21,12 +21,14 @@ export interface BackupSettings {
 
 const logger = module('Backup')
 
+type BackupZWaveClient = Pick<ZwaveClientPort, 'backupNVMRaw'>
+
 class BackupManager {
 	// Startup initializes the dependencies before any Cron job can run
 	private config!: BackupSettings
 	private storeJob?: Cron
 	private nvmJob?: Cron
-	private zwaveClient!: ZwaveClient
+	private zwaveClient?: BackupZWaveClient
 	private owner?: symbol
 
 	get default(): BackupSettings {
@@ -50,7 +52,7 @@ class BackupManager {
 		return next ? next.toLocaleString() : 'UNKNOWN'
 	}
 
-	init(zwaveClient: ZwaveClient, owner: symbol) {
+	init(zwaveClient: BackupZWaveClient | undefined, owner: symbol) {
 		this.config = {
 			...this.default,
 			...(jsonStore.get(store.settings).backup as BackupSettings),
@@ -107,11 +109,19 @@ class BackupManager {
 		this.owner = undefined
 	}
 
+	private ensureZWaveClient(): BackupZWaveClient {
+		if (!this.zwaveClient) {
+			throw new Error('Z-Wave client not initialized')
+		}
+		return this.zwaveClient
+	}
+
 	async backupNvm() {
 		logger.info('Backup NVM started')
 
 		try {
-			const { fileName } = await this.zwaveClient.backupNVMRaw()
+			const zwaveClient = this.ensureZWaveClient()
+			const { fileName } = await zwaveClient.backupNVMRaw()
 
 			logger.info(`Backup NVM created: ${fileName}`)
 

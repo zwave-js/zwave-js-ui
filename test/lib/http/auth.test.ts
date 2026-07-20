@@ -179,7 +179,7 @@ describe('HTTP contract: auth & password', () => {
 	})
 
 	describe('PUT /api/password', () => {
-		it('reports that no user exists when there is no logged-in session user', async () => {
+		it('reports a missing user when there is no logged-in session', async () => {
 			const harness = await getHarness()
 			const res = await harness.request.put('/api/password').send({
 				current: 'x',

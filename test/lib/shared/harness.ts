@@ -9,6 +9,7 @@ import type * as AppModuleNamespace from '#api/app.ts'
 import type * as JsonStoreModuleNamespace from '#api/lib/jsonStore.ts'
 import type * as StoreConfigModuleNamespace from '#api/config/store.ts'
 import type * as GatewayModuleNamespace from '#api/lib/Gateway.ts'
+import type { StoreFile } from '#api/config/store.ts'
 
 export type AppModule = typeof AppModuleNamespace
 export type JsonStoreModule = typeof JsonStoreModuleNamespace
@@ -60,7 +61,7 @@ export async function createSharedTestContext(): Promise<SharedTestContext> {
 			loadJsonStore(),
 			loadGatewayModule(),
 		])
-	await jsonStore.init(store)
+	await jsonStore.init(structuredClone(store))
 	return { createApp, jsonStore, store, closeWatchers }
 }
 
@@ -169,6 +170,17 @@ export function useHarnessLifecycle<
 		},
 		(harness) => harness.closeInstance(),
 		{
+			async afterEachCleanup() {
+				if (!shared) return
+				for (const model of Object.values(
+					shared.store,
+				) as StoreFile<unknown>[]) {
+					await shared.jsonStore.put(
+						model,
+						structuredClone(model.default),
+					)
+				}
+			},
 			afterAllCleanup() {
 				if (!shared) return
 				shared.closeWatchers()

@@ -2,7 +2,7 @@
 // layers Socket.IO-specific setup (server, io, client helpers) on top.
 import { createServer, type Server as HttpServer } from 'node:http'
 import type { AddressInfo } from 'node:net'
-import type { Express, Router } from 'express'
+import type { Express } from 'express'
 import type { Server as SocketIOServer } from 'socket.io'
 import { io as ioClient, type Socket as ClientSocket } from 'socket.io-client'
 import type { FakeGateway, FakeZniffer } from './fakes.ts'
@@ -21,7 +21,6 @@ type RealZniffer = InstanceType<ZnifferModule['default']>
 export interface SocketHarnessOptions {
 	gateway?: FakeGateway
 	zniffer?: FakeZniffer
-	pluginsRouter?: Router
 	restarting?: boolean
 }
 
@@ -37,6 +36,8 @@ export interface SocketHarness {
 	createClient(opts?: Record<string, unknown>): ClientSocket
 	// Connects client and resolves on connect, or rejects on connect_error
 	connectClient(client: ClientSocket): Promise<ClientSocket>
+	// Round-trips a private per-client event through the real server socket, so a test can await "every already-emitted event this client will receive has arrived" without an arbitrary timer
+	flushClientEvents(client: ClientSocket): Promise<void>
 	// Polls the real server-side connected-socket count until it matches count
 	waitForServerSocketCount(count: number, timeoutMs?: number): Promise<void>
 	disconnectAllClients(): Promise<void>
@@ -51,7 +52,6 @@ async function createHarnessInstance(
 			// Gateway/ZnifferManager have private fields, so structural mocks like FakeGateway/FakeZniffer need this cast to satisfy them
 			gateway: options.gateway as unknown as RealGateway | undefined,
 			zniffer: options.zniffer as unknown as RealZniffer | undefined,
-			pluginsRouter: options.pluginsRouter,
 			restarting: options.restarting,
 		},
 	})
@@ -65,6 +65,7 @@ async function createHarnessInstance(
 
 	const { io } = instance
 	const clients = new Set<ClientSocket>()
+	let flushSequence = 0
 
 	function createClient(opts: Record<string, unknown> = {}): ClientSocket {
 		const client = ioClient(url, {
@@ -83,6 +84,21 @@ async function createHarnessInstance(
 			client.once('connect', () => resolve(client))
 			client.once('connect_error', (err: Error) => reject(err))
 			client.connect()
+		})
+	}
+
+	function flushClientEvents(client: ClientSocket): Promise<void> {
+		if (!client.id) {
+			throw new Error('Cannot flush events for a disconnected client')
+		}
+		const socket = io.sockets.sockets.get(client.id)
+		if (!socket) {
+			throw new Error('Connected client has no server socket')
+		}
+		const event = `__TEST_FLUSH_${flushSequence++}__`
+		return new Promise((resolve) => {
+			client.once(event, resolve)
+			socket.emit(event)
 		})
 	}
 
@@ -128,6 +144,7 @@ async function createHarnessInstance(
 		url,
 		createClient,
 		connectClient,
+		flushClientEvents,
 		waitForServerSocketCount,
 		disconnectAllClients,
 		async closeInstance() {

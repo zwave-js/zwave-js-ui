@@ -2,18 +2,16 @@ import { createServer, type Server as HttpServer } from 'node:http'
 import type { Express } from 'express'
 import supertest, { type Test as SupertestTest } from 'supertest'
 import { vi } from 'vitest'
-import type { FakeGateway } from '../shared/fakes.ts'
 import type { Driver } from 'zwave-js'
+import type { FakeGateway } from '../shared/fakes.ts'
+import type { FakeZniffer } from '../socket/fakes.ts'
 import {
 	useHarnessLifecycle,
 	listenOnEphemeralPort,
-	type GatewayModule,
 	type JsonStoreModule,
 	type SharedTestContext,
 	type StoreConfigModule,
 } from '../shared/harness.ts'
-
-type RealGateway = InstanceType<GatewayModule['default']>
 
 type SerialPortsEnumerator = typeof Driver.enumerateSerialPorts
 type SerialPortsEnumeratorMock = ReturnType<typeof vi.fn<SerialPortsEnumerator>>
@@ -44,6 +42,7 @@ export function bufferResponse(req: SupertestTest): SupertestTest {
 
 export interface HttpHarnessOptions {
 	gateway?: FakeGateway
+	zniffer?: FakeZniffer
 	restarting?: boolean
 	enumerateSerialPorts?: SerialPortsEnumeratorMock
 }
@@ -57,8 +56,8 @@ async function createHarnessInstance(
 
 	const instance = shared.createApp({
 		test: {
-			// Gateway has private fields, so a structural mock like FakeGateway needs this cast to satisfy it
-			gateway: options.gateway as unknown as RealGateway | undefined,
+			gateway: options.gateway,
+			zniffer: options.zniffer,
 			restarting: options.restarting,
 			enumerateSerialPorts,
 		},

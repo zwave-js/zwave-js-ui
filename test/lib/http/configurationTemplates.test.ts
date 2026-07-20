@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { useHttpHarness } from './harness.ts'
 import { createFakeGateway } from '../shared/fakes.ts'
 
@@ -53,6 +53,19 @@ describe('HTTP contract: configuration templates', () => {
 				message: 'nodeId and name are required',
 			})
 			expect(gw.zwave.createConfigurationTemplate).not.toHaveBeenCalled()
+		})
+
+		it('fails with a generic error when no gateway is attached, given a valid nodeId/name', async () => {
+			const harness = await getHarness()
+			const res = await harness.request
+				.post('/api/configuration-templates')
+				.send({ nodeId: 2, name: 'My Template' })
+
+			expect(res.status).toBe(200)
+			expect(res.body).toEqual({
+				success: false,
+				message: 'Z-Wave client not inited',
+			})
 		})
 
 		it('creates a template with the exact args/order, in body order', async () => {
@@ -139,6 +152,21 @@ describe('HTTP contract: configuration templates', () => {
 					'Each template must have name, deviceId, and values array',
 			})
 			expect(gw.zwave.importConfigurationTemplates).not.toHaveBeenCalled()
+		})
+
+		it('fails with a generic error when no gateway is attached, given an otherwise-valid payload', async () => {
+			const harness = await getHarness()
+			const res = await harness.request
+				.post('/api/configuration-templates/import')
+				.send({
+					data: [{ name: 'T1', deviceId: '1:1:1:1', values: [] }],
+				})
+
+			expect(res.status).toBe(200)
+			expect(res.body).toEqual({
+				success: false,
+				message: 'Z-Wave client not inited',
+			})
 		})
 
 		it('imports valid templates via gw.zwave.importConfigurationTemplates', async () => {
@@ -255,6 +283,19 @@ describe('HTTP contract: configuration templates', () => {
 				message: 'nodeId is required',
 			})
 			expect(gw.zwave.applyConfigurationTemplate).not.toHaveBeenCalled()
+		})
+
+		it('fails with a generic error when no gateway is attached, given a valid id/nodeId', async () => {
+			const harness = await getHarness()
+			const res = await harness.request
+				.post('/api/configuration-templates/template-1/apply')
+				.send({ nodeId: 2 })
+
+			expect(res.status).toBe(200)
+			expect(res.body).toEqual({
+				success: false,
+				message: 'Z-Wave client not inited',
+			})
 		})
 
 		it('applies the template to the node, coercing an omitted force to false', async () => {
