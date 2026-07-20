@@ -190,14 +190,12 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 		}
 	}
 
-	let closed = false
-	let socketAttached = false
 	let logStreamInterceptor: ((chunk: Buffer | string) => void) | undefined
 
 	// ### UTILS
 
 	function installProcessHandlers() {
-		if (closed) {
+		if (runtime.isClosed) {
 			throw new Error(
 				'Cannot install process handlers after the app is closed',
 			)
@@ -525,7 +523,7 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 			// Server: https://socket.io/docs/v4/server-application-structure/#all-event-handlers-are-registered-in-the-indexjs-file
 			// Client: https://socket.io/docs/v4/client-api/#socketemiteventname-args
 			socket.on(inboundEvents.init, (data, cb = noop) => {
-				const currentGw = runtime.requireGateway()
+				const currentGw = runtime.ensureGateway()
 				const currentZniffer = runtime.zniffer
 				cb({
 					...(currentGw.zwave?.getState() ?? {}),
@@ -540,7 +538,7 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 				inboundEvents.zwave,
 
 				async (data, cb = noop) => {
-					const currentGw = runtime.requireGateway()
+					const currentGw = runtime.ensureGateway()
 					if (currentGw.zwave) {
 						if (!data.args) data.args = []
 						const result: CallAPIResult<any> & {
@@ -569,12 +567,12 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 					switch (data.api) {
 						case 'updateNodeTopics':
 							res = runtime
-								.requireGateway()
+								.ensureGateway()
 								.updateNodeTopics(data.args[0])
 							break
 						case 'removeNodeRetained':
 							res = runtime
-								.requireGateway()
+								.ensureGateway()
 								.removeNodeRetained(data.args[0])
 							break
 						default:
@@ -603,7 +601,7 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 					switch (data.apiName) {
 						case 'delete':
 							res = runtime
-								.requireGateway()
+								.ensureGateway()
 								.publishDiscovery(data.device, data.nodeId, {
 									deleteDevice: true,
 									forceUpdate: true,
@@ -611,7 +609,7 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 							break
 						case 'discover':
 							res = runtime
-								.requireGateway()
+								.ensureGateway()
 								.publishDiscovery(data.device, data.nodeId, {
 									deleteDevice: false,
 									forceUpdate: true,
@@ -619,12 +617,12 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 							break
 						case 'rediscoverNode':
 							res = runtime
-								.requireGateway()
+								.ensureGateway()
 								.rediscoverNode(data.nodeId)
 							break
 						case 'disableDiscovery':
 							res = runtime
-								.requireGateway()
+								.ensureGateway()
 								.disableDiscovery(data.nodeId)
 							break
 						case 'update':
@@ -716,36 +714,36 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 				try {
 					switch (data.apiName) {
 						case 'start':
-							res = await runtime.requireZniffer().start()
+							res = await runtime.ensureZniffer().start()
 							break
 						case 'stop':
-							res = await runtime.requireZniffer().stop()
+							res = await runtime.ensureZniffer().stop()
 							break
 						case 'clear':
-							res = runtime.requireZniffer().clear()
+							res = runtime.ensureZniffer().clear()
 							break
 						case 'getFrames':
-							res = runtime.requireZniffer().getFrames()
+							res = runtime.ensureZniffer().getFrames()
 							break
 						case 'setFrequency':
 							res = await runtime
-								.requireZniffer()
+								.ensureZniffer()
 								.setFrequency(data.frequency)
 							break
 						case 'setLRChannelConfig':
 							res = await runtime
-								.requireZniffer()
+								.ensureZniffer()
 								.setLRChannelConfig(data.channelConfig)
 							break
 						case 'saveCaptureToFile':
 							res = await runtime
-								.requireZniffer()
+								.ensureZniffer()
 								.saveCaptureToFile()
 							break
 						case 'loadCaptureFromBuffer': {
 							const buffer = Buffer.from(data.buffer)
 							res = await runtime
-								.requireZniffer()
+								.ensureZniffer()
 								.loadCaptureFromBuffer(buffer)
 							break
 						}
@@ -772,7 +770,7 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 
 		// emitted every time a new client connects/disconnects
 		socketManager.on('clients', (event, activeSockets) => {
-			const currentGw = runtime.requireGateway()
+			const currentGw = runtime.ensureGateway()
 			if (event === 'connection' && activeSockets.size === 1) {
 				currentGw.zwave?.setUserCallbacks()
 			} else if (event === 'disconnect' && activeSockets.size === 0) {
@@ -782,13 +780,12 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 	}
 
 	function attachSocket(server: HttpServer) {
-		if (closed) {
+		if (runtime.isClosed) {
 			throw new Error('Cannot attach Socket.IO after the app is closed')
 		}
-		if (socketAttached) {
+		if (socketManager.io) {
 			throw new Error('Socket.IO is already attached')
 		}
-		socketAttached = true
 		setupSocket(server)
 		setupInterceptor(server)
 	}
@@ -833,8 +830,7 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 	})
 
 	async function close(): Promise<void> {
-		if (closed) return
-		closed = true
+		if (runtime.isClosed) return
 
 		uninstallProcessHandlers()
 
@@ -845,8 +841,10 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 
 		try {
 			if (runtime.ownsDebugSession && debugManager.isSessionActive()) {
-				await debugManager.cancelSession()
+				// Release ownership before awaiting so a concurrent close()
+				// can't cancel the same session twice
 				runtime.setOwnsDebugSession(false)
+				await debugManager.cancelSession()
 			}
 		} catch (error) {
 			logger.error('Error while cancelling debug session', error)

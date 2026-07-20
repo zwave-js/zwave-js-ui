@@ -134,7 +134,7 @@ export default class ZnifferManager extends TypedEventEmitter<ZnifferManagerEven
 	}
 
 	private async init() {
-		const zniffer = this.ensureReady()
+		const zniffer = this.ensureZniffer()
 		try {
 			await zniffer.init()
 		} catch (error) {
@@ -183,7 +183,7 @@ export default class ZnifferManager extends TypedEventEmitter<ZnifferManagerEven
 			.emit(socketEvents.znifferState, this.status())
 	}
 
-	private ensureReady(): Zniffer {
+	private ensureZniffer(): Zniffer {
 		if (!this.config.enabled || !this.zniffer) {
 			throw new Error('Zniffer is not initialized')
 		}
@@ -207,7 +207,7 @@ export default class ZnifferManager extends TypedEventEmitter<ZnifferManagerEven
 	}
 
 	public getFrames() {
-		const zniffer = this.ensureReady()
+		const zniffer = this.ensureZniffer()
 
 		return zniffer.capturedFrames.map((frame) => {
 			return this.parseFrame(
@@ -219,7 +219,7 @@ export default class ZnifferManager extends TypedEventEmitter<ZnifferManagerEven
 	}
 
 	public async setFrequency(frequency: number) {
-		const zniffer = this.ensureReady()
+		const zniffer = this.ensureZniffer()
 
 		logger.info(`Setting Zniffer frequency to ${frequency}`)
 		await zniffer.setFrequency(frequency)
@@ -230,7 +230,7 @@ export default class ZnifferManager extends TypedEventEmitter<ZnifferManagerEven
 	}
 
 	public async setLRChannelConfig(channelConfig: number) {
-		const zniffer = this.ensureReady()
+		const zniffer = this.ensureZniffer()
 
 		logger.info(
 			`Setting Zniffer LR channel configuration to ${channelConfig}`,
@@ -277,7 +277,7 @@ export default class ZnifferManager extends TypedEventEmitter<ZnifferManagerEven
 	}
 
 	public async start() {
-		const zniffer = this.ensureReady()
+		const zniffer = this.ensureZniffer()
 
 		if (this.started) {
 			logger.info('Zniffer already started')
@@ -293,7 +293,7 @@ export default class ZnifferManager extends TypedEventEmitter<ZnifferManagerEven
 	}
 
 	public async stop() {
-		const zniffer = this.ensureReady()
+		const zniffer = this.ensureZniffer()
 
 		if (!this.started) {
 			logger.info('Zniffer is already stopped')
@@ -309,7 +309,7 @@ export default class ZnifferManager extends TypedEventEmitter<ZnifferManagerEven
 	}
 
 	public clear() {
-		const zniffer = this.ensureReady()
+		const zniffer = this.ensureZniffer()
 
 		logger.info('Clearing...')
 		zniffer.clearCapturedFrames()
@@ -318,7 +318,7 @@ export default class ZnifferManager extends TypedEventEmitter<ZnifferManagerEven
 	}
 
 	public async loadCaptureFromBuffer(buffer: Buffer) {
-		const zniffer = this.ensureReady()
+		const zniffer = this.ensureZniffer()
 
 		logger.info(`Loading capture from buffer (${buffer.length} bytes)`)
 
@@ -337,7 +337,7 @@ export default class ZnifferManager extends TypedEventEmitter<ZnifferManagerEven
 	}
 
 	public async saveCaptureToFile() {
-		const zniffer = this.ensureReady()
+		const zniffer = this.ensureZniffer()
 
 		const filePath = ZNIFFER_CAPTURE_FILE.replace(
 			'%DATE%',

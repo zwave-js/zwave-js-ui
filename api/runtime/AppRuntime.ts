@@ -46,6 +46,7 @@ export class AppRuntime {
 	private plugins: CustomPlugin[] = []
 	private _restarting = false
 	private _ownsDebugSession = false
+	private _closed = false
 
 	// Isolate BackupManager ownership between AppRuntime instances
 	private readonly backupManagerOwner = Symbol('AppRuntime.backupManager')
@@ -69,7 +70,7 @@ export class AppRuntime {
 		this._gateway = value
 	}
 
-	requireGateway(): GatewayPort {
+	ensureGateway(): GatewayPort {
 		if (this._gateway === undefined) {
 			throw new Error('Gateway is not initialized')
 		}
@@ -91,7 +92,7 @@ export class AppRuntime {
 		this._zniffer = value
 	}
 
-	requireZniffer(): ZnifferPort {
+	ensureZniffer(): ZnifferPort {
 		if (this._zniffer === undefined) {
 			throw new Error('Zniffer is not initialized')
 		}
@@ -121,6 +122,11 @@ export class AppRuntime {
 
 	setOwnsDebugSession(value: boolean): void {
 		this._ownsDebugSession = value
+	}
+
+	// True once shutdown() has started, so callers can avoid re-teardown
+	get isClosed(): boolean {
+		return this._closed
 	}
 
 	async loadSnippets(): Promise<void> {
@@ -241,8 +247,15 @@ export class AppRuntime {
 		while (this.plugins.length > 0) {
 			const instance = this.plugins.pop()
 			if (instance && typeof instance.destroy === 'function') {
-				logger.info('Closing plugin ' + instance.name)
-				await instance.destroy()
+				try {
+					logger.info('Closing plugin ' + instance.name)
+					await instance.destroy()
+				} catch (error) {
+					logger.error(
+						`Error while closing plugin ${instance.name}`,
+						error,
+					)
+				}
 			}
 		}
 	}
@@ -256,6 +269,11 @@ export class AppRuntime {
 	}
 
 	async shutdown(): Promise<void> {
+		if (this._closed) {
+			return
+		}
+		this._closed = true
+
 		try {
 			await this.closeIfPresent(this._gateway)
 		} catch (error) {
@@ -268,20 +286,7 @@ export class AppRuntime {
 			logger.error('Error while closing zniffer', error)
 		}
 
-		while (this.plugins.length > 0) {
-			const instance = this.plugins.pop()
-			if (instance && typeof instance.destroy === 'function') {
-				try {
-					logger.info('Closing plugin ' + instance.name)
-					await instance.destroy()
-				} catch (error) {
-					logger.error(
-						`Error while closing plugin ${instance.name}`,
-						error,
-					)
-				}
-			}
-		}
+		await this.destroyPlugins()
 
 		try {
 			backupManager.close(this.backupManagerOwner)

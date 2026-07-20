@@ -343,7 +343,7 @@ export function registerSettingsRoutes(
 					runtime.setOwnsDebugSession(false)
 				}
 
-				await runtime.requireGateway().close()
+				await runtime.ensureGateway().close()
 				await runtime.destroyPlugins()
 				if (settings.gateway) {
 					runtime.setupLogging({ gateway: settings.gateway })
