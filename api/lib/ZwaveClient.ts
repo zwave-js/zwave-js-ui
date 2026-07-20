@@ -4456,23 +4456,29 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	}
 
 	/**
-	 * Recover the true readability of a command-class value from a physical node.
+	 * Recover the true readability of a command-class value from the physical
+	 * nodes that expose it.
 	 *
 	 * See `_buildVirtualValueId`: virtual (broadcast/multicast) value IDs always
 	 * arrive with `readable: false` because a virtual node's state can't be read
 	 * back, which flattens two-state actuators and momentary write-only triggers
 	 * into the same shape (#4749). Readability is a property of the CC value, not
-	 * of a node, so any physical node exposing the same value id carries the
-	 * authoritative flag, used to set `booleanToggle`. Returns `undefined` when
-	 * no physical node currently exposes the value.
+	 * of a node, so every physical node exposing the same value id should agree —
+	 * but we scan all of them and prefer `true` if *any* node reports the value
+	 * as readable, so the result never depends on `Map` iteration order. Returns
+	 * `false` only when at least one node exposes the value and none is readable,
+	 * and `undefined` when no physical node currently exposes it.
 	 */
 	private _resolvePhysicalReadable(vId: string): boolean | undefined {
+		let readable: boolean | undefined
 		for (const node of this._nodes.values()) {
 			if (node.virtual) continue
 			const value = node.values?.[vId]
-			if (value) return value.readable
+			if (!value) continue
+			if (value.readable) return true
+			readable = false
 		}
-		return undefined
+		return readable
 	}
 
 	/**
