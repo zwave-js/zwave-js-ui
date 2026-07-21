@@ -122,27 +122,20 @@ jobs:
 
     # This workflow is triggered by whoever opened the issue or discussion, so
     # a failed run notifies them, not the maintainers. Route the outage to the
-    # same tracking issue the nightly evaluations use, and let a later healthy
-    # run close it again.
-    - name: Track index availability
-      # Reporting the outage must never be what breaks the run
-      continue-on-error: true
-      uses: actions/github-script@v9
-      env:
-        TRACKING_ISSUE_TITLE: "🚨 Answer bot cannot restore its search index"
-        EVAL_NAME: answer bot index restore
-        EVAL_OUTCOME: ${{ (steps.docs-index.outputs.found != 'true' && steps.posts-index.outputs.found != 'true') && 'failure' || 'success' }}
-        TRACKING_ISSUE_BODY: |
-          Neither the docs index nor the posts index could be restored - not from the Actions cache, and not from the latest artifact of the embeddings workflows. The answer bot cannot run until this is fixed.
-
-          Check that `docs-embeddings.yml` and `posts-embeddings.yml` are still succeeding and still uploading their `docs-index` / `posts-index` artifacts.
+    # tracking issue instead, and let a later healthy run close it again. The
+    # shared action owns the issue title and the degraded/healthy predicate, so
+    # this reporter and the scheduled self-check cannot disagree and flap it.
+    - name: Report index status
+      if: always()
+      uses: ./.github/actions/report-index-status
+      with:
+        docs: ${{ steps.docs-index.outputs.found }}
+        posts: ${{ steps.posts-index.outputs.found }}
+        docs-stale: ${{ steps.docs-index.outputs.stale }}
+        posts-stale: ${{ steps.posts-index.outputs.stale }}
         # Fires once per new issue or discussion, so an open outage must not
         # collect a comment every time
-        TRACKING_ISSUE_QUIET: 'true'
-      with:
-        script: |
-          const bot = require(`${process.env.GITHUB_WORKSPACE}/.github/bot-scripts/index.cjs`);
-          await bot.updateEvalTrackingIssue({github, context});
+        quiet: 'true'
 
     - name: Fail if neither index is available
       # Both the cache entry and the newest unexpired artifact would have to be

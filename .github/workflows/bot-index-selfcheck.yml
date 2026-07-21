@@ -1,0 +1,79 @@
+name: Bot index self-check
+
+# The answer bot only runs when someone opens an issue or discussion, and this
+# repository can go weeks between those - long enough for a broken index
+# pipeline to sit unnoticed, which is how the original outage went undetected.
+# This exercises the same restore path on a schedule instead.
+#
+# It is not a duplicate of the nightly embeddings workflows' own failure signal.
+# Those cover the *build*; this covers the *restore* - artifact expiry, the
+# provenance filter, token scope, and a schedule that stopped firing at all,
+# none of which a producer can detect about itself.
+#
+# A failed scheduled run notifies whoever last edited the cron (with Actions
+# notifications enabled), which is a weak channel - the tracking issue below is
+# the signal meant to be noticed.
+
+on:
+  schedule:
+    # After both nightly rebuilds (03:30 docs, 04:30 posts)
+    - cron: '0 8 * * *'
+  workflow_dispatch:
+
+# The tracking issue is found by title, so two overlapping runs could both miss
+# it and open duplicates
+concurrency:
+  group: bot-index-selfcheck
+  cancel-in-progress: false
+
+permissions:
+  actions: read
+  contents: read
+  issues: write
+
+jobs:
+  restore:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+    - name: Checkout master branch
+      uses: actions/checkout@v7
+
+    - name: Restore docs index
+      id: docs-index
+      uses: ./.github/actions/restore-bot-index
+      with:
+        index: docs
+        github-token: ${{ github.token }}
+
+    - name: Restore posts index
+      id: posts-index
+      uses: ./.github/actions/restore-bot-index
+      with:
+        index: posts
+        github-token: ${{ github.token }}
+
+    # always(), so a restore that hard-fails still gets reported rather than
+    # leaving the scheduled-run email as the only trace
+    - name: Report index status
+      id: status
+      if: always()
+      uses: ./.github/actions/report-index-status
+      with:
+        docs: ${{ steps.docs-index.outputs.found }}
+        posts: ${{ steps.posts-index.outputs.found }}
+        docs-stale: ${{ steps.docs-index.outputs.stale }}
+        posts-stale: ${{ steps.posts-index.outputs.stale }}
+        # Daily, so one comment per night on a standing outage is a useful
+        # heartbeat rather than noise
+        quiet: 'false'
+
+    # Stricter than the bot, which degrades to a single index and keeps
+    # answering: a health check exists to go red early, including on a stale
+    # pipeline that the cache is still papering over
+    - name: Fail if either index is missing or stale
+      if: always() && steps.status.outputs.healthy != 'true'
+      run: |
+        echo "::error::Index restore unhealthy (docs: found=${{ steps.docs-index.outputs.found }} stale=${{ steps.docs-index.outputs.stale }}, posts: found=${{ steps.posts-index.outputs.found }} stale=${{ steps.posts-index.outputs.stale }})"
+        exit 1
