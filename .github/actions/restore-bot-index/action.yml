@@ -1,92 +1,179 @@
 name: Restore bot index
 description: >-
-  Restore an embeddings index directory (containing index.json) from the Actions
-  cache, falling back to the artifact uploaded by the workflow that builds it.
+  Restore the docs or posts embeddings index from the Actions cache, falling
+  back to the artifact uploaded by the workflow that builds it.
 
 # The Actions cache is capped per repository and evicted least-recently-used, so
 # a 1-2 MB index regularly disappears within hours of being written. Artifacts
-# are not evicted, so they are what makes the restore actually dependable.
+# are not evicted, so they are what makes the restore dependable.
+#
+# Each index lives in a fixed directory (.docs-index / .posts-index) holding a
+# single index.json, and is published under a fixed artifact name, so the caller
+# only has to say which one it wants.
 
 inputs:
-  path:
-    description: Directory to restore the index into
-    required: true
-  cache-key:
-    description: Primary Actions cache key
-    required: true
-  cache-restore-keys:
-    description: Newline separated cache key prefixes to fall back to
-    required: false
-    default: ''
-  artifact-name:
-    description: Artifact uploaded by the building workflow
-    required: true
-  workflow:
-    description: Workflow file that builds and uploads the artifact
+  index:
+    description: Which index to restore - "docs" or "posts"
     required: true
   github-token:
-    description: Token with actions read scope, used to list runs and download the artifact
+    description: Token with actions read scope, used to find and download the artifact
     required: true
+  max-age-days:
+    description: Warn when the restored index is older than this many days
+    required: false
+    default: '3'
 
 outputs:
   found:
     description: '"true" when the index is available afterwards'
-    value: ${{ steps.check.outputs.found }}
+    value: ${{ steps.report.outputs.found }}
 
 runs:
   using: composite
 
   steps:
-    - name: Restore from cache
-      id: cache
+    - name: Resolve the index
+      id: cfg
+      shell: bash
+      env:
+        INDEX: ${{ inputs.index }}
+      run: |
+        set -euo pipefail
+        case "$INDEX" in
+          docs|posts) ;;
+          *) echo "::error::Unknown index '$INDEX' - expected 'docs' or 'posts'"; exit 1 ;;
+        esac
+        echo "path=.$INDEX-index" >> "$GITHUB_OUTPUT"
+        echo "artifact=$INDEX-index" >> "$GITHUB_OUTPUT"
+
+    - name: Restore the docs index from cache
+      if: inputs.index == 'docs'
       uses: actions/cache/restore@v6
       with:
-        path: ${{ inputs.path }}
-        key: ${{ inputs.cache-key }}
-        restore-keys: ${{ inputs.cache-restore-keys }}
+        path: .docs-index
+        key: docs-embeddings-v2-${{ hashFiles('docs/**/*.md', '.github/bot-scripts/buildDocsIndex.cjs', '.github/bot-scripts/docsIndex.cjs', '.github/bot-scripts/modelsApi.cjs') }}
+        restore-keys: docs-embeddings-v2-
 
-    - name: Find the latest run that uploaded the index
-      id: run
-      if: steps.cache.outputs.cache-matched-key == ''
+    - name: Restore the posts index from cache
+      if: inputs.index == 'posts'
+      uses: actions/cache/restore@v6
+      with:
+        path: .posts-index
+        # There is no exact key to match, the newest index is picked
+        # via the prefix
+        key: posts-embeddings-v1-
+        restore-keys: posts-embeddings-v1-
+
+    # Decide on the file, not on the cache key: a prefix match can restore an
+    # entry that was saved while its build was still writing it
+    - name: Check what the cache gave us
+      id: cached
+      shell: bash
+      env:
+        INDEX_FILE: ${{ steps.cfg.outputs.path }}/index.json
+      run: |
+        set -euo pipefail
+        if [ -s "$INDEX_FILE" ] && jq -e . "$INDEX_FILE" >/dev/null 2>&1; then
+          echo "ok=true" >> "$GITHUB_OUTPUT"
+          echo "Cache hit: $INDEX_FILE"
+        else
+          echo "ok=false" >> "$GITHUB_OUTPUT"
+          echo "Cache did not yield a usable $INDEX_FILE"
+        fi
+
+    # Selecting on the artifact rather than on a run's conclusion matters: the
+    # index is produced by build-index alone, so an unrelated evaluate/feedback
+    # failure would otherwise hide a perfectly good artifact.
+    - name: Find the newest usable index artifact
+      id: artifact
+      if: steps.cached.outputs.ok != 'true'
+      # A lookup failure degrades to "no index" for the caller to handle, it
+      # must not take down a job triggered by someone opening an issue
+      continue-on-error: true
       shell: bash
       env:
         GH_TOKEN: ${{ inputs.github-token }}
         GH_REPO: ${{ github.repository }}
-        WORKFLOW: ${{ inputs.workflow }}
+        ARTIFACT: ${{ steps.cfg.outputs.artifact }}
         BRANCH: ${{ github.event.repository.default_branch }}
       run: |
         set -euo pipefail
-        id=$(gh run list --workflow "$WORKFLOW" --branch "$BRANCH" --status success \
-          --limit 1 --json databaseId --jq '.[0].databaseId // empty')
+        if [ -z "$BRANCH" ]; then
+          echo "::error::default_branch is empty - cannot establish artifact provenance"
+          exit 1
+        fi
+        # Newest first. Pinned to a non-expired artifact built on the default
+        # branch of this repository itself, so neither a fork PR (whose
+        # head_branch can also be "master") nor an expired entry can be picked.
+        id=$(gh api "repos/$GH_REPO/actions/artifacts?name=$ARTIFACT&per_page=100" \
+          --jq '[ .artifacts[]
+                  | select(.expired == false)
+                  | select(.workflow_run.head_branch == env.BRANCH)
+                  | select(.workflow_run.head_repository_id == .workflow_run.repository_id) ]
+                | .[0].workflow_run.id // empty')
+        if [ -n "$id" ]; then
+          echo "Newest usable $ARTIFACT artifact comes from run $id"
+        else
+          echo "No unexpired $ARTIFACT artifact built on $BRANCH"
+        fi
         echo "id=$id" >> "$GITHUB_OUTPUT"
 
+    # A partial cache restore must not be mixed with the artifact contents
+    - name: Clear the target directory
+      if: steps.artifact.outputs.id != ''
+      shell: bash
+      env:
+        DIR: ${{ steps.cfg.outputs.path }}
+      run: rm -rf "$DIR"
+
     - name: Download the index artifact
-      # A run predating the artifact upload, or one whose artifact has expired,
-      # is not an error here - the caller decides what a missing index means
+      id: download
+      if: steps.artifact.outputs.id != ''
       continue-on-error: true
-      if: steps.run.outputs.id != ''
       uses: actions/download-artifact@v8
       with:
-        name: ${{ inputs.artifact-name }}
-        path: ${{ inputs.path }}
-        run-id: ${{ steps.run.outputs.id }}
+        name: ${{ steps.cfg.outputs.artifact }}
+        path: ${{ steps.cfg.outputs.path }}
+        run-id: ${{ steps.artifact.outputs.id }}
         github-token: ${{ inputs.github-token }}
 
     - name: Report what was restored
-      id: check
+      id: report
       shell: bash
       env:
-        INDEX: ${{ inputs.path }}/index.json
-        FROM_CACHE: ${{ steps.cache.outputs.cache-matched-key }}
+        INDEX_FILE: ${{ steps.cfg.outputs.path }}/index.json
+        ARTIFACT: ${{ steps.cfg.outputs.artifact }}
+        FROM_CACHE: ${{ steps.cached.outputs.ok }}
+        ARTIFACT_RUN: ${{ steps.artifact.outputs.id }}
+        LOOKUP: ${{ steps.artifact.outcome }}
+        DOWNLOAD: ${{ steps.download.outcome }}
+        MAX_AGE_DAYS: ${{ inputs.max-age-days }}
       run: |
         set -euo pipefail
-        if [ ! -f "$INDEX" ]; then
+
+        if [ ! -s "$INDEX_FILE" ]; then
           echo "found=false" >> "$GITHUB_OUTPUT"
-          echo "No index at $INDEX"
-        elif [ -n "$FROM_CACHE" ]; then
-          echo "found=true" >> "$GITHUB_OUTPUT"
-          echo "Restored $INDEX from cache $FROM_CACHE"
+          # Name the leg that failed - an expired artifact and a misconfigured
+          # lookup look identical from the outside otherwise
+          echo "::warning::No $INDEX_FILE (cache: miss, artifact lookup: ${LOOKUP:-skipped}, download: ${DOWNLOAD:-skipped}, run: ${ARTIFACT_RUN:-none})"
+          exit 0
+        fi
+
+        echo "found=true" >> "$GITHUB_OUTPUT"
+        if [ "$FROM_CACHE" = "true" ]; then
+          echo "Using $INDEX_FILE from the Actions cache"
         else
-          echo "found=true" >> "$GITHUB_OUTPUT"
-          echo "Cache miss, restored $INDEX from run ${{ steps.run.outputs.id }}"
+          echo "Using $INDEX_FILE from the $ARTIFACT artifact of run $ARTIFACT_RUN"
+        fi
+
+        # Without this the bot answers happily off a month-old index whenever
+        # the nightly rebuild has been failing, then hard-fails the day the
+        # artifact expires, with no warning in between
+        created=$(jq -r '.createdAt // empty' "$INDEX_FILE")
+        if [ -n "$created" ]; then
+          age=$(( ( $(date -u +%s) - $(date -u -d "$created" +%s) ) / 86400 ))
+          echo "Index built $created ($age day(s) ago)"
+          if [ "$age" -gt "$MAX_AGE_DAYS" ]; then
+            echo "::warning::$ARTIFACT is $age days old (limit $MAX_AGE_DAYS) - the nightly rebuild may be failing"
+          fi
         fi

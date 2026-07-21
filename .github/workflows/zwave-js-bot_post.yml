@@ -79,6 +79,7 @@ jobs:
     permissions:
       actions: read
       contents: read
+      issues: write
       models: read
 
     steps:
@@ -89,24 +90,14 @@ jobs:
       id: docs-index
       uses: ./.github/actions/restore-bot-index
       with:
-        path: .docs-index
-        cache-key: docs-embeddings-v2-${{ hashFiles('docs/**/*.md', '.github/bot-scripts/buildDocsIndex.cjs', '.github/bot-scripts/docsIndex.cjs', '.github/bot-scripts/modelsApi.cjs') }}
-        cache-restore-keys: docs-embeddings-v2-
-        artifact-name: docs-index
-        workflow: docs-embeddings.yml
+        index: docs
         github-token: ${{ github.token }}
 
     - name: Restore posts index
       id: posts-index
       uses: ./.github/actions/restore-bot-index
       with:
-        path: .posts-index
-        # There is no exact key to match, the newest index is picked
-        # via the prefix
-        cache-key: posts-embeddings-v1-
-        cache-restore-keys: posts-embeddings-v1-
-        artifact-name: posts-index
-        workflow: posts-embeddings.yml
+        index: posts
         github-token: ${{ github.token }}
 
     # Downvoted answers collected by the docs-embeddings workflow.
@@ -120,13 +111,46 @@ jobs:
         restore-keys: |
           docs-feedback-v1-
 
+    # One missing index still answers, just worse - say so instead of
+    # letting a half-working bot look healthy
+    - name: Warn about a partial outage
+      if: |
+        (steps.docs-index.outputs.found == 'true') !=
+        (steps.posts-index.outputs.found == 'true')
+      run: |
+        echo "::warning::Only one of the two indexes was restored (docs: ${{ steps.docs-index.outputs.found }}, posts: ${{ steps.posts-index.outputs.found }}) - answers will be degraded"
+
+    # This workflow is triggered by whoever opened the issue or discussion, so
+    # a failed run notifies them, not the maintainers. Route the outage to the
+    # same tracking issue the nightly evaluations use, and let a later healthy
+    # run close it again.
+    - name: Track index availability
+      # Reporting the outage must never be what breaks the run
+      continue-on-error: true
+      uses: actions/github-script@v9
+      env:
+        TRACKING_ISSUE_TITLE: "🚨 Answer bot cannot restore its search index"
+        EVAL_NAME: answer bot index restore
+        EVAL_OUTCOME: ${{ (steps.docs-index.outputs.found != 'true' && steps.posts-index.outputs.found != 'true') && 'failure' || 'success' }}
+        TRACKING_ISSUE_BODY: |
+          Neither the docs index nor the posts index could be restored - not from the Actions cache, and not from the latest artifact of the embeddings workflows. The answer bot cannot run until this is fixed.
+
+          Check that `docs-embeddings.yml` and `posts-embeddings.yml` are still succeeding and still uploading their `docs-index` / `posts-index` artifacts.
+        # Fires once per new issue or discussion, so an open outage must not
+        # collect a comment every time
+        TRACKING_ISSUE_QUIET: 'true'
+      with:
+        script: |
+          const bot = require(`${process.env.GITHUB_WORKSPACE}/.github/bot-scripts/index.cjs`);
+          await bot.updateEvalTrackingIssue({github, context});
+
     - name: Fail if neither index is available
-      # Both the cache entry and the artifact of the latest embeddings run
-      # would have to be missing for this to fire. Failing the job keeps a
-      # permanently broken bot from reporting green run after run.
+      # Both the cache entry and the newest unexpired artifact would have to be
+      # missing for this to fire. Failing the job keeps a permanently broken
+      # bot from reporting green run after run.
       if: steps.docs-index.outputs.found != 'true' && steps.posts-index.outputs.found != 'true'
       run: |
-        echo "::error::Neither the docs index nor the posts index could be restored, from cache or from the latest embeddings run - the answer bot cannot run"
+        echo "::error::Neither the docs index nor the posts index could be restored, from cache or from artifacts - the answer bot cannot run"
         exit 1
 
     - name: Answer from documentation
@@ -160,29 +184,27 @@ jobs:
     - name: Checkout master branch
       uses: actions/checkout@v7
 
+    # Restoring from the artifact and re-saving the cache below is also how an
+    # evicted cache entry heals itself between two nightly rebuilds
     - name: Restore posts index
       id: posts-index
       uses: ./.github/actions/restore-bot-index
       with:
-        path: .posts-index
-        # There is no exact key to match, the newest index is picked
-        # via the prefix
-        cache-key: posts-embeddings-v1-
-        cache-restore-keys: posts-embeddings-v1-
-        artifact-name: posts-index
-        workflow: posts-embeddings.yml
+        index: posts
         github-token: ${{ github.token }}
 
-    - name: Fail if no posts index is available
-      # Restoring from the artifact and re-saving the cache below is also how
-      # an evicted cache entry heals itself between two nightly rebuilds
+    - name: Warn if no posts index is available
+      # Only a warning: this append is best effort, the 04:30 rebuild picks the
+      # post up either way. answer-from-docs is where an outage is worth a red
+      # run - failing here too would just paint every community post red for
+      # something that self-corrects.
       if: steps.posts-index.outputs.found != 'true'
       run: |
-        echo "::error::The posts index could not be restored, from cache or from the latest posts-embeddings run - this post will only be indexed by the next nightly rebuild"
-        exit 1
+        echo "::warning::The posts index could not be restored, from cache or from artifacts - this post will only be indexed by the next nightly rebuild"
 
     - name: Add post to index
       id: update
+      if: steps.posts-index.outputs.found == 'true'
       uses: actions/github-script@v9
       env:
         MODELS_TOKEN: ${{ github.token }}
