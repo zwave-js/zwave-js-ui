@@ -64,6 +64,16 @@ jobs:
         path: .posts-index
         key: posts-embeddings-v1-${{ github.run_id }}
 
+    # The cache entry is regularly evicted before the answer bot gets to use it
+    # (the repository cache is capped and evicted least-recently-used), so keep
+    # a durable copy it can fall back to.
+    - name: Upload index artifact
+      uses: actions/upload-artifact@v7
+      with:
+        name: posts-index
+        path: .posts-index
+        retention-days: 30
+
   evaluate:
     needs: build-index
     runs-on: [ubuntu-latest]

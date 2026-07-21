@@ -1,0 +1,92 @@
+name: Restore bot index
+description: >-
+  Restore an embeddings index directory (containing index.json) from the Actions
+  cache, falling back to the artifact uploaded by the workflow that builds it.
+
+# The Actions cache is capped per repository and evicted least-recently-used, so
+# a 1-2 MB index regularly disappears within hours of being written. Artifacts
+# are not evicted, so they are what makes the restore actually dependable.
+
+inputs:
+  path:
+    description: Directory to restore the index into
+    required: true
+  cache-key:
+    description: Primary Actions cache key
+    required: true
+  cache-restore-keys:
+    description: Newline separated cache key prefixes to fall back to
+    required: false
+    default: ''
+  artifact-name:
+    description: Artifact uploaded by the building workflow
+    required: true
+  workflow:
+    description: Workflow file that builds and uploads the artifact
+    required: true
+  github-token:
+    description: Token with actions read scope, used to list runs and download the artifact
+    required: true
+
+outputs:
+  found:
+    description: '"true" when the index is available afterwards'
+    value: ${{ steps.check.outputs.found }}
+
+runs:
+  using: composite
+
+  steps:
+    - name: Restore from cache
+      id: cache
+      uses: actions/cache/restore@v6
+      with:
+        path: ${{ inputs.path }}
+        key: ${{ inputs.cache-key }}
+        restore-keys: ${{ inputs.cache-restore-keys }}
+
+    - name: Find the latest run that uploaded the index
+      id: run
+      if: steps.cache.outputs.cache-matched-key == ''
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.github-token }}
+        GH_REPO: ${{ github.repository }}
+        WORKFLOW: ${{ inputs.workflow }}
+        BRANCH: ${{ github.event.repository.default_branch }}
+      run: |
+        set -euo pipefail
+        id=$(gh run list --workflow "$WORKFLOW" --branch "$BRANCH" --status success \
+          --limit 1 --json databaseId --jq '.[0].databaseId // empty')
+        echo "id=$id" >> "$GITHUB_OUTPUT"
+
+    - name: Download the index artifact
+      # A run predating the artifact upload, or one whose artifact has expired,
+      # is not an error here - the caller decides what a missing index means
+      continue-on-error: true
+      if: steps.run.outputs.id != ''
+      uses: actions/download-artifact@v8
+      with:
+        name: ${{ inputs.artifact-name }}
+        path: ${{ inputs.path }}
+        run-id: ${{ steps.run.outputs.id }}
+        github-token: ${{ inputs.github-token }}
+
+    - name: Report what was restored
+      id: check
+      shell: bash
+      env:
+        INDEX: ${{ inputs.path }}/index.json
+        FROM_CACHE: ${{ steps.cache.outputs.cache-matched-key }}
+      run: |
+        set -euo pipefail
+        if [ ! -f "$INDEX" ]; then
+          echo "found=false" >> "$GITHUB_OUTPUT"
+          echo "No index at $INDEX"
+        elif [ -n "$FROM_CACHE" ]; then
+          echo "found=true" >> "$GITHUB_OUTPUT"
+          echo "Restored $INDEX from cache $FROM_CACHE"
+        else
+          echo "found=true" >> "$GITHUB_OUTPUT"
+          echo "Cache miss, restored $INDEX from run ${{ steps.run.outputs.id }}"
+        fi

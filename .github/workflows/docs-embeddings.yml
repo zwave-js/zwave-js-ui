@@ -54,6 +54,17 @@ jobs:
         GITHUB_TOKEN: ${{ github.token }}
       run: node .github/bot-scripts/buildDocsIndex.cjs docs .docs-index/index.json
 
+    # The cache entry is regularly evicted before the answer bot gets to use it
+    # (the repository cache is capped and evicted least-recently-used), so keep
+    # a durable copy it can fall back to. Runs on a cache hit too - the index
+    # ends up in .docs-index either way.
+    - name: Upload index artifact
+      uses: actions/upload-artifact@v7
+      with:
+        name: docs-index
+        path: .docs-index
+        retention-days: 30
+
   evaluate:
     needs: build-index
     runs-on: [ubuntu-latest]
