@@ -1,5 +1,28 @@
 # Changelog
 
+## [11.22.0](https://github.com/zwave-js/zwave-js-ui/compare/v11.21.1...v11.22.0) (2026-07-21)
+
+### ✨ Features
+
+* allow managing statistics opt-in via external settings ([#4716](https://github.com/zwave-js/zwave-js-ui/issues/4716)) ([987ba97](https://github.com/zwave-js/zwave-js-ui/commit/987ba97c0f6ad69794dd6091b0b08206a4c484ad))
+* **bot:** answer questions from docs and related posts ([#4743](https://github.com/zwave-js/zwave-js-ui/issues/4743)) ([103e12b](https://github.com/zwave-js/zwave-js-ui/commit/103e12bee36ea3bcd727ba5906d74f4325ff5cf2))
+* bump zwave-js@15.25.1 ([#4700](https://github.com/zwave-js/zwave-js-ui/issues/4700)) ([35e979e](https://github.com/zwave-js/zwave-js-ui/commit/35e979e9c4553d11075fc6390ce10078849d96b6))
+* bump zwave-js@15.25.2 ([#4718](https://github.com/zwave-js/zwave-js-ui/issues/4718)) ([1f65a6a](https://github.com/zwave-js/zwave-js-ui/commit/1f65a6af40b028289c2baa1e4ef85e1725a5ccd0))
+* bump zwave-js@15.25.3 ([#4744](https://github.com/zwave-js/zwave-js-ui/issues/4744)) ([e08c8c0](https://github.com/zwave-js/zwave-js-ui/commit/e08c8c092cdc2dc73d5c5890485d72a4b0d06c84))
+* bump zwave-js@15.26.0 ([#4750](https://github.com/zwave-js/zwave-js-ui/issues/4750)) ([d41bc58](https://github.com/zwave-js/zwave-js-ui/commit/d41bc58ea7382466b23ff180ab0e3f9ac59515fd))
+* implement credential management UI ([#4638](https://github.com/zwave-js/zwave-js-ui/issues/4638)) ([62198cd](https://github.com/zwave-js/zwave-js-ui/commit/62198cdda04b3c679c315c8e1b2c251e9d79d350))
+* support trusted API on separate network/IP/port ([#4717](https://github.com/zwave-js/zwave-js-ui/issues/4717)) ([25e522e](https://github.com/zwave-js/zwave-js-ui/commit/25e522e077933bac9c54485bfa74b4e8501dbce0))
+
+### 🐛 Bug Fixes
+
+* **ci:** queue docker-release runs instead of cancelling the latest tag ([#4689](https://github.com/zwave-js/zwave-js-ui/issues/4689)) ([e1aed66](https://github.com/zwave-js/zwave-js-ui/commit/e1aed66c4dc65e1fbd11c0c465cd428916b8a60d))
+* **ui:** show group id instead of redundant endpoint in association dropdown ([#4715](https://github.com/zwave-js/zwave-js-ui/issues/4715)) ([7948d43](https://github.com/zwave-js/zwave-js-ui/commit/7948d43e4000437b2b897a72f1239c3e79a9e2ae))
+
+### 🔧 Chores
+
+* switch testing framework to vitest ([#4693](https://github.com/zwave-js/zwave-js-ui/issues/4693)) ([9f018ba](https://github.com/zwave-js/zwave-js-ui/commit/9f018baedc536a8accced0f3db79920e4106acfe))
+* update Node.js version to 24.x for OIDC publishing support ([b9204f2](https://github.com/zwave-js/zwave-js-ui/commit/b9204f20760b4d504b25e9cc69a6b59dddb4938f))
+
 ## [11.21.1](https://github.com/zwave-js/zwave-js-ui/compare/v11.21.0...v11.21.1) (2026-06-23)
 
 ### 🐛 Bug Fixes
