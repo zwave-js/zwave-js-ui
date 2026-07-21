@@ -1,0 +1,38 @@
+name: Cleanup PR caches
+
+# Actions caches are capped at 10 GB per repository, and once the cap is hit
+# GitHub evicts the least recently used entries. A cache written on a PR ref can
+# only ever be read back by that same PR, so after it closes the entries are
+# dead weight that keeps evicting the shared ones. GitHub never removes them on
+# its own, so do it here.
+#
+# `pull_request_target` (not `pull_request`) so the run gets a writable token for
+# PRs from forks too. Nothing from the PR is checked out or executed.
+
+on:
+  pull_request_target:
+    types: [closed]
+
+permissions:
+  actions: write
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Delete caches for the closed PR
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          REF: refs/pull/${{ github.event.pull_request.number }}/merge
+        run: |
+          set -euo pipefail
+          # `gh cache list` caps out at 100 per page, a single PR can hold more
+          while :; do
+            ids=$(gh cache list --ref "$REF" --limit 100 --json id --jq '.[].id' || true)
+            [ -n "$ids" ] || break
+            for id in $ids; do
+              gh cache delete "$id"
+            done
+          done

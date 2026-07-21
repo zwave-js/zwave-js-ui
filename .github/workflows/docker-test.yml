@@ -50,7 +50,11 @@ jobs:
         with:
           platforms: ${{ matrix.platform }}
           file: docker/Dockerfile
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          # Read-only on purpose: a cache saved on a PR ref is readable only by
+          # that same PR, so `cache-to` wrote ~1 GB per PR that nothing else
+          # could ever reuse, while evicting the shared caches (the bot's
+          # docs/posts embeddings indexes among them). Reading the release scope
+          # instead also gives a new PR a warm cache from master.
+          cache-from: type=gha,scope=zwave-js-ui
           push: false
           tags: ${{ steps.docker_meta.outputs.tags }}
