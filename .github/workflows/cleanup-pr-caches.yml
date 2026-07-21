@@ -6,33 +6,69 @@ name: Cleanup PR caches
 # dead weight that keeps evicting the shared ones. GitHub never removes them on
 # its own, so do it here.
 #
-# `pull_request_target` (not `pull_request`) so the run gets a writable token for
-# PRs from forks too. Nothing from the PR is checked out or executed.
+# A scheduled sweep rather than a `pull_request_target: closed` hook: closing a
+# PR does not cancel its in-flight runs, and those keep saving caches on the
+# same ref for minutes afterwards, which a close-triggered job would miss and
+# never revisit. Sweeping also reclaims PRs that were already closed before this
+# workflow existed, PRs targeting long-lived branches, and anything an earlier
+# pass failed to delete.
 
 on:
-  pull_request_target:
-    types: [closed]
+  schedule:
+    - cron: '0 5 * * *'
+  workflow_dispatch:
 
 permissions:
   actions: write
+  pull-requests: read
 
 jobs:
   cleanup:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
 
     steps:
-      - name: Delete caches for the closed PR
+      - name: Delete caches left behind by closed PRs
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
-          REF: refs/pull/${{ github.event.pull_request.number }}/merge
         run: |
           set -euo pipefail
-          # `gh cache list` caps out at 100 per page, a single PR can hold more
-          while :; do
-            ids=$(gh cache list --ref "$REF" --limit 100 --json id --jq '.[].id' || true)
-            [ -n "$ids" ] || break
-            for id in $ids; do
-              gh cache delete "$id"
+
+          # Deliberately unguarded: a failure here means the API is unhappy, and
+          # that must not be mistaken for "nothing to clean up"
+          all_refs=$(gh api "repos/$GH_REPO/actions/caches?per_page=100" \
+            --paginate --jq '.actions_caches[].ref' | sort -u)
+          # grep exits 1 when no PR holds caches, which is not an error
+          refs=$(printf '%s\n' "$all_refs" | grep '^refs/pull/' || true)
+
+          deleted=0
+          for ref in $refs; do
+            number=${ref#refs/pull/}
+            number=${number%%/*}
+
+            # Only ever delete on an explicit closed/merged answer, so a
+            # transient lookup failure cannot wipe an open PR's caches
+            state=$(gh pr view "$number" --json state --jq .state || echo UNKNOWN)
+            case "$state" in
+              CLOSED|MERGED) ;;
+              *) continue ;;
+            esac
+
+            # `gh cache list` returns at most 100 entries, a busy PR holds more
+            while :; do
+              ids=$(gh cache list --ref "$ref" --limit 100 --json id --jq '.[].id')
+              [ -n "$ids" ] || break
+              before=$deleted
+              for id in $ids; do
+                # An entry evicted between the list and the delete is not worth
+                # aborting the sweep for
+                gh cache delete "$id" >/dev/null || continue
+                deleted=$((deleted + 1))
+              done
+              # A pass that deleted nothing would loop forever
+              [ "$deleted" -gt "$before" ] || break
             done
           done
+
+          echo "Deleted $deleted cache entries"

@@ -95,6 +95,8 @@ jobs:
           file: docker/Dockerfile
           context: . # without this it will clone master branch instead of using local
           cache-from: type=gha,scope=zwave-js-ui
+          # docker-test.yml reads this scope for every PR build - renaming it
+          # silently makes PR CI cold instead of failing
           cache-to: type=gha,mode=max,scope=zwave-js-ui
           push: true
           tags: ${{ steps.docker_meta.outputs.tags }}

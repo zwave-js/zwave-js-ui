@@ -62,6 +62,8 @@ jobs:
           file: docker/Dockerfile
           context: . # without this it will use master instead of the selected branch
           cache-from: type=gha,scope=zwave-js-ui
+          # Shared with docker-release.yml and read by docker-test.yml on every
+          # PR, so an on-demand run from any branch redefines what PR CI reads
           cache-to: type=gha,mode=max,scope=zwave-js-ui
           push: true
           tags: ${{ steps.docker_meta.outputs.tags }}

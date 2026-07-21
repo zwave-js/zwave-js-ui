@@ -55,6 +55,11 @@ jobs:
           # could ever reuse, while evicting the shared caches (the bot's
           # docs/posts embeddings indexes among them). Reading the release scope
           # instead also gives a new PR a warm cache from master.
+          #
+          # The trade: pushes within one PR no longer warm each other, so a PR
+          # that invalidates an early layer rebuilds it on every push. Do not
+          # "fix" that by re-adding `cache-to` - it is what filled the cache.
+          # docker-release.yml owns this scope; keep the names in sync.
           cache-from: type=gha,scope=zwave-js-ui
           push: false
           tags: ${{ steps.docker_meta.outputs.tags }}
