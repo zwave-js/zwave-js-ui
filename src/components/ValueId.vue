@@ -273,7 +273,8 @@
 				v-else-if="
 					modelValue.type === 'boolean' &&
 					((modelValue.writeable && modelValue.readable) ||
-						(modelValue.states && modelValue.states.length === 2))
+						(modelValue.states && modelValue.states.length === 2) ||
+						modelValue.booleanToggle)
 				"
 			>
 				<v-btn-group class="mt-4 my-2" rounded="xl">
