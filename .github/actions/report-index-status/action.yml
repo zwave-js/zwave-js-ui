@@ -1,0 +1,91 @@
+name: Report bot index status
+description: >-
+  Open, update or close the tracking issue that records whether the answer bot
+  can restore its search indexes.
+
+# This owns the tracking issue title, which updateEvalTrackingIssue.cjs uses as
+# the lookup key. Every reporter must spell it identically or one alarm silently
+# becomes two issues that can flap each other open and closed, so the string
+# lives here once instead of in each calling workflow.
+#
+# The health predicate lives here too, for the same reason: the bot workflow and
+# the scheduled self-check must agree on what "degraded" means even though they
+# differ on what is worth failing a run over.
+
+inputs:
+  docs:
+    description: '"true" when the docs index was restored'
+    required: true
+  posts:
+    description: '"true" when the posts index was restored'
+    required: true
+  docs-stale:
+    description: '"true" when the docs pipeline looks dead'
+    required: false
+    default: 'false'
+  posts-stale:
+    description: '"true" when the posts pipeline looks dead'
+    required: false
+    default: 'false'
+  quiet:
+    description: >-
+      When "true", an already-open issue is left alone rather than collecting
+      another comment. Set it on reporters that fire once per user post.
+    required: false
+    default: 'true'
+
+outputs:
+  healthy:
+    description: '"true" when both indexes are present and freshly published'
+    value: ${{ steps.assess.outputs.healthy }}
+
+runs:
+  using: composite
+
+  steps:
+    - name: Assess
+      id: assess
+      shell: bash
+      env:
+        DOCS: ${{ inputs.docs }}
+        POSTS: ${{ inputs.posts }}
+        DOCS_STALE: ${{ inputs.docs-stale }}
+        POSTS_STALE: ${{ inputs.posts-stale }}
+      run: |
+        set -euo pipefail
+
+        problems=""
+        [ "$DOCS" = "true" ]  || problems="${problems}- The docs index could not be restored, from cache or from artifacts.\n"
+        [ "$POSTS" = "true" ] || problems="${problems}- The posts index could not be restored, from cache or from artifacts.\n"
+        [ "$DOCS_STALE" = "true" ]  && [ "$DOCS" = "true" ]  && problems="${problems}- The docs index is being served from a pipeline that has not published recently.\n"
+        [ "$POSTS_STALE" = "true" ] && [ "$POSTS" = "true" ] && problems="${problems}- The posts index is being served from a pipeline that has not published recently.\n"
+
+        if [ -z "$problems" ]; then
+          echo "healthy=true" >> "$GITHUB_OUTPUT"
+          echo "outcome=success" >> "$GITHUB_OUTPUT"
+        else
+          echo "healthy=false" >> "$GITHUB_OUTPUT"
+          echo "outcome=failure" >> "$GITHUB_OUTPUT"
+        fi
+        {
+          echo 'body<<TRACKING_EOF'
+          printf 'The answer bot'"'"'s search index is degraded:\n\n'
+          printf '%b' "$problems"
+          printf '\nCheck that `docs-embeddings.yml` and `posts-embeddings.yml` are still succeeding and still uploading their `docs-index` / `posts-index` artifacts.\n'
+          echo 'TRACKING_EOF'
+        } >> "$GITHUB_OUTPUT"
+
+    # Reporting a problem must never be what breaks the run
+    - name: Update the tracking issue
+      continue-on-error: true
+      uses: actions/github-script@v9
+      env:
+        TRACKING_ISSUE_TITLE: "🚨 Answer bot search index is degraded"
+        EVAL_NAME: answer bot index restore
+        EVAL_OUTCOME: ${{ steps.assess.outputs.outcome }}
+        TRACKING_ISSUE_BODY: ${{ steps.assess.outputs.body }}
+        TRACKING_ISSUE_QUIET: ${{ inputs.quiet }}
+      with:
+        script: |
+          const bot = require(`${process.env.GITHUB_WORKSPACE}/.github/bot-scripts/index.cjs`);
+          await bot.updateEvalTrackingIssue({github, context});
