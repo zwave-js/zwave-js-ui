@@ -81,12 +81,14 @@ runs:
           echo "Cache did not yield a usable $INDEX_FILE"
         fi
 
+    # Runs even on a cache hit, because its upload time is also the only honest
+    # "is the nightly still running" signal - see the staleness check below.
+    #
     # Selecting on the artifact rather than on a run's conclusion matters: the
     # index is produced by build-index alone, so an unrelated evaluate/feedback
     # failure would otherwise hide a perfectly good artifact.
     - name: Find the newest usable index artifact
       id: artifact
-      if: steps.cached.outputs.ok != 'true'
       # A lookup failure degrades to "no index" for the caller to handle, it
       # must not take down a job triggered by someone opening an issue
       continue-on-error: true
@@ -95,7 +97,10 @@ runs:
         GH_TOKEN: ${{ inputs.github-token }}
         GH_REPO: ${{ github.repository }}
         ARTIFACT: ${{ steps.cfg.outputs.artifact }}
-        BRANCH: ${{ github.event.repository.default_branch }}
+        # `schedule` and `workflow_dispatch` payloads are thinner than the
+        # issues/discussion ones, so fall back to the ref the run is on - these
+        # workflows only ever run on the default branch anyway
+        BRANCH: ${{ github.event.repository.default_branch || github.ref_name }}
       run: |
         set -euo pipefail
         if [ -z "$BRANCH" ]; then
@@ -105,22 +110,25 @@ runs:
         # Newest first. Pinned to a non-expired artifact built on the default
         # branch of this repository itself, so neither a fork PR (whose
         # head_branch can also be "master") nor an expired entry can be picked.
-        id=$(gh api "repos/$GH_REPO/actions/artifacts?name=$ARTIFACT&per_page=100" \
+        newest=$(gh api "repos/$GH_REPO/actions/artifacts?name=$ARTIFACT&per_page=100" \
           --jq '[ .artifacts[]
                   | select(.expired == false)
                   | select(.workflow_run.head_branch == env.BRANCH)
                   | select(.workflow_run.head_repository_id == .workflow_run.repository_id) ]
-                | .[0].workflow_run.id // empty')
-        if [ -n "$id" ]; then
-          echo "Newest usable $ARTIFACT artifact comes from run $id"
+                | .[0] // empty')
+        if [ -n "$newest" ]; then
+          id=$(printf '%s' "$newest" | jq -r '.workflow_run.id')
+          created=$(printf '%s' "$newest" | jq -r '.created_at')
+          echo "Newest usable $ARTIFACT artifact comes from run $id, uploaded $created"
+          echo "id=$id" >> "$GITHUB_OUTPUT"
+          echo "created=$created" >> "$GITHUB_OUTPUT"
         else
           echo "No unexpired $ARTIFACT artifact built on $BRANCH"
         fi
-        echo "id=$id" >> "$GITHUB_OUTPUT"
 
     # A partial cache restore must not be mixed with the artifact contents
     - name: Clear the target directory
-      if: steps.artifact.outputs.id != ''
+      if: steps.cached.outputs.ok != 'true' && steps.artifact.outputs.id != ''
       shell: bash
       env:
         DIR: ${{ steps.cfg.outputs.path }}
@@ -128,7 +136,7 @@ runs:
 
     - name: Download the index artifact
       id: download
-      if: steps.artifact.outputs.id != ''
+      if: steps.cached.outputs.ok != 'true' && steps.artifact.outputs.id != ''
       continue-on-error: true
       uses: actions/download-artifact@v8
       with:
@@ -145,6 +153,7 @@ runs:
         ARTIFACT: ${{ steps.cfg.outputs.artifact }}
         FROM_CACHE: ${{ steps.cached.outputs.ok }}
         ARTIFACT_RUN: ${{ steps.artifact.outputs.id }}
+        ARTIFACT_CREATED: ${{ steps.artifact.outputs.created }}
         LOOKUP: ${{ steps.artifact.outcome }}
         DOWNLOAD: ${{ steps.download.outcome }}
         MAX_AGE_DAYS: ${{ inputs.max-age-days }}
@@ -166,14 +175,22 @@ runs:
           echo "Using $INDEX_FILE from the $ARTIFACT artifact of run $ARTIFACT_RUN"
         fi
 
-        # Without this the bot answers happily off a month-old index whenever
-        # the nightly rebuild has been failing, then hard-fails the day the
-        # artifact expires, with no warning in between
-        created=$(jq -r '.createdAt // empty' "$INDEX_FILE")
-        if [ -n "$created" ]; then
-          age=$(( ( $(date -u +%s) - $(date -u -d "$created" +%s) ) / 86400 ))
-          echo "Index built $created ($age day(s) ago)"
+        # Content age is informational only: docs-embeddings skips the rebuild
+        # on a cache hit, so an index whose docs have not changed in a month is
+        # perfectly healthy and its own createdAt says nothing about the
+        # pipeline. The upload time does - the nightly re-uploads either way.
+        built=$(jq -r '.createdAt // empty' "$INDEX_FILE")
+        [ -n "$built" ] && echo "Index content built $built"
+
+        # Without this the bot answers happily off a month-old artifact whenever
+        # the nightly has been failing, then hard-fails the day it expires, with
+        # no warning in between
+        if [ -n "$ARTIFACT_CREATED" ]; then
+          age=$(( ( $(date -u +%s) - $(date -u -d "$ARTIFACT_CREATED" +%s) ) / 86400 ))
+          echo "Newest $ARTIFACT artifact uploaded $ARTIFACT_CREATED ($age day(s) ago)"
           if [ "$age" -gt "$MAX_AGE_DAYS" ]; then
-            echo "::warning::$ARTIFACT is $age days old (limit $MAX_AGE_DAYS) - the nightly rebuild may be failing"
+            echo "::warning::The newest $ARTIFACT artifact is $age days old (limit $MAX_AGE_DAYS) - the nightly rebuild may be failing"
           fi
+        else
+          echo "::warning::Could not determine when $ARTIFACT was last published (lookup: ${LOOKUP:-skipped})"
         fi

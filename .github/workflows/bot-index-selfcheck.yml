@@ -1,0 +1,71 @@
+name: Bot index self-check
+
+# The answer bot only runs when someone opens an issue or discussion, and this
+# repository can go weeks between those - long enough for a broken index
+# pipeline to sit unnoticed, which is exactly how the original outage went
+# undetected. This exercises the same restore path on a schedule instead.
+#
+# A scheduled workflow that fails notifies the account the schedule runs under,
+# so unlike a failure on someone else's issue this one actually reaches a
+# maintainer.
+
+on:
+  schedule:
+    # After both nightly rebuilds (03:30 docs, 04:30 posts)
+    - cron: '0 8 * * *'
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: read
+  issues: write
+
+jobs:
+  restore:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+    - name: Checkout master branch
+      uses: actions/checkout@v7
+
+    - name: Restore docs index
+      id: docs-index
+      uses: ./.github/actions/restore-bot-index
+      with:
+        index: docs
+        github-token: ${{ github.token }}
+
+    - name: Restore posts index
+      id: posts-index
+      uses: ./.github/actions/restore-bot-index
+      with:
+        index: posts
+        github-token: ${{ github.token }}
+
+    # Deliberately the same condition and the same tracking issue the bot uses,
+    # so the two cannot disagree about whether there is an outage and flap the
+    # issue open and closed against each other
+    - name: Track index availability
+      continue-on-error: true
+      uses: actions/github-script@v9
+      env:
+        TRACKING_ISSUE_TITLE: "🚨 Answer bot cannot restore its search index"
+        EVAL_NAME: answer bot index restore
+        EVAL_OUTCOME: ${{ (steps.docs-index.outputs.found != 'true' && steps.posts-index.outputs.found != 'true') && 'failure' || 'success' }}
+        TRACKING_ISSUE_BODY: |
+          The scheduled self-check could restore neither the docs index nor the posts index - not from the Actions cache, and not from the latest artifact of the embeddings workflows. The answer bot cannot run until this is fixed.
+
+          Check that `docs-embeddings.yml` and `posts-embeddings.yml` are still succeeding and still uploading their `docs-index` / `posts-index` artifacts.
+      with:
+        script: |
+          const bot = require(`${process.env.GITHUB_WORKSPACE}/.github/bot-scripts/index.cjs`);
+          await bot.updateEvalTrackingIssue({github, context});
+
+    # Stricter than the bot, which degrades to one index: a health check should
+    # go red on a partial outage rather than wait for a total one
+    - name: Fail if either index is missing
+      if: steps.docs-index.outputs.found != 'true' || steps.posts-index.outputs.found != 'true'
+      run: |
+        echo "::error::Index restore failed (docs: ${{ steps.docs-index.outputs.found }}, posts: ${{ steps.posts-index.outputs.found }})"
+        exit 1
