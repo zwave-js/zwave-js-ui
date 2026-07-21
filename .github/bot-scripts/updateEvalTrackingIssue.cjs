@@ -15,6 +15,12 @@
 //   genuine Models API/network error, or e.g. zero eval cases), which
 //   is an infrastructure problem rather than a retrieval quality miss
 //   and is reported differently so it isn't mistaken for a docs gap.
+// - TRACKING_ISSUE_BODY: optional. Replaces the generated body, for
+//   callers that are not a daily eval (the answer bot reports an index
+//   outage through the same tracking-issue mechanism).
+// - TRACKING_ISSUE_QUIET: optional. When "true", an already-open issue
+//   is left alone instead of collecting another comment. Callers that
+//   run per user post need this - a daily eval does not.
 
 /**
  * @param {{github: Github, context: Context}} param
@@ -46,7 +52,7 @@ async function main(param) {
 
 	const runUrl =
 		`${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
-	const body = isInfraFailure
+	const generatedBody = isInfraFailure
 		? `The daily evaluation of the ${process.env.EVAL_NAME} failed to run to completion (an infrastructure error - e.g. a Models API/network failure - not a retrieval quality regression).
 
 See the [workflow run](${runUrl}) for details.`
@@ -55,6 +61,14 @@ See the [workflow run](${runUrl}) for details.`
 ${summary || "(no summary available)"}
 
 See the [workflow run](${runUrl}) for details.`;
+	const body = process.env.TRACKING_ISSUE_BODY
+		? `${process.env.TRACKING_ISSUE_BODY}
+
+See the [workflow run](${runUrl}) for details.`
+		: generatedBody;
+	// Callers firing once per user post would otherwise pile up one comment
+	// per event for the whole duration of an outage
+	const quiet = process.env.TRACKING_ISSUE_QUIET === "true";
 
 	if (failed) {
 		if (!tracking) {
@@ -74,7 +88,7 @@ See the [workflow run](${runUrl}) for details.`;
 				issue_number: tracking.number,
 				body,
 			});
-		} else {
+		} else if (!quiet) {
 			await github.rest.issues.createComment({
 				...context.repo,
 				issue_number: tracking.number,
@@ -85,8 +99,10 @@ See the [workflow run](${runUrl}) for details.`;
 		await github.rest.issues.createComment({
 			...context.repo,
 			issue_number: tracking.number,
+			// Phrased around EVAL_NAME rather than "the evaluation", since
+			// not every caller is one - the answer bot reports index outages
 			body:
-				`The evaluation passed again in the latest [workflow run](${runUrl}). Closing.`,
+				`The ${process.env.EVAL_NAME} is healthy again in the latest [workflow run](${runUrl}). Closing.`,
 		});
 		await github.rest.issues.update({
 			...context.repo,

@@ -64,6 +64,23 @@ jobs:
         path: .posts-index
         key: posts-embeddings-v1-${{ github.run_id }}
 
+    # The cache entry is regularly evicted before the answer bot gets to use it
+    # (the repository cache is capped and evicted least-recently-used), so keep
+    # a durable copy it can fall back to.
+    - name: Upload index artifact
+      uses: actions/upload-artifact@v7
+      with:
+        name: posts-index
+        path: .posts-index
+        retention-days: 30
+        # .posts-index is a dot-directory and the glob skips hidden entries by
+        # default, search root included - without this the upload matches zero
+        # files and silently produces no artifact at all
+        include-hidden-files: true
+        # The answer bot depends on this artifact existing, so an empty upload
+        # is a failure, not a warning
+        if-no-files-found: error
+
   evaluate:
     needs: build-index
     runs-on: [ubuntu-latest]
