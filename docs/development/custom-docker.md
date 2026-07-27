@@ -10,13 +10,16 @@ The docker images are the latest stable images of the [Z-Wave JS UI](https://git
 git clone https://github.com/zwave-js/zwave-js-ui.git
 cd zwave-js-ui
 git checkout -b [the branch that you want]
-docker build -f docker/Dockerfile -t zwavejs/zwave-js-ui:latest .
+docker build -f docker/Dockerfile --build-arg NODE_VERSION=$(cat .nvmrc) -t zwavejs/zwave-js-ui:latest .
 ```
+
+> [!NOTE] The Node.js version is defined once in `.nvmrc` and passed to the build via
+> `--build-arg NODE_VERSION`. `npm run docker:build` does this for you.
 
 Build just the `build` container
 
 ```bash
-docker build -f docker/Dockerfile --target=build -t zwavejs/zwave-js-ui_build .
+docker build -f docker/Dockerfile --target=build --build-arg NODE_VERSION=$(cat .nvmrc) -t zwavejs/zwave-js-ui_build .
 
 ```
 
@@ -32,6 +35,7 @@ docker buildx inspect --bootstrap
 # build the containers
 docker buildx build \
     --platform linux/arm64,linux/amd64,linux/arm/v7 \
+    --build-arg NODE_VERSION=$(cat .nvmrc) \
     -t zwavejs/zwave-js-ui:latest \
     -f docker/Dockerfile \
     .

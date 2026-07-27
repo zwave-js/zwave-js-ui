@@ -1,6 +1,8 @@
 # syntax=docker/dockerfile:1
 ARG image=zwave-js-ui
-ARG NODE_VERSION=22.20.0
+# NODE_VERSION has no default on purpose: it is injected from .nvmrc (the single
+# source of truth) by CI and the npm docker:build script. Building bare fails loudly.
+ARG NODE_VERSION
 ARG ALPINE_VERSION=3.22
 ARG BUILDPLATFORM
 

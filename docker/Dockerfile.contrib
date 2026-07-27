@@ -2,13 +2,16 @@
 # Please find instructions on how to run it at
 # https://zwave-js.github.io/zwave-js-ui/#/development/custom-docker?id=building-a-container-using-dockerfilecontrib
 ARG SRC=git-clone-src
+# Keep in sync with .nvmrc. This file is built via `curl | docker build -` (no build
+# context), so the version can't be injected from .nvmrc and must be baked in here.
+ARG NODE_VERSION=24.16.0
 
 #####################
 # Setup the source  #
 #####################
 
 # Option 1 (default): Clone from git
-FROM node:22.20.0-bullseye AS git-clone-src
+FROM node:${NODE_VERSION}-bullseye AS git-clone-src
 ARG ZWJ_BRANCH=master
 ARG ZWJ_REPOSITORY=https://github.com/zwave-js/node-zwave-js
 ARG ZUI_BRANCH=master
@@ -20,7 +23,7 @@ RUN git clone -b ${ZWJ_BRANCH} ${ZWJ_REPOSITORY}
 RUN git clone -b ${ZUI_BRANCH} --depth 1 ${ZUI_REPOSITORY}
 
 # Option 2: Copy from local sources
-FROM node:22.20.0-bullseye AS local-copy-src
+FROM node:${NODE_VERSION}-bullseye AS local-copy-src
 COPY --chown=node node-zwave-js /home/node/node-zwave-js
 COPY --chown=node zwave-js-ui /home/node/zwave-js-ui
 
@@ -92,7 +95,7 @@ RUN mkdir my_dist \
 #####################
 # Setup Final Image #
 #####################
-FROM node:22.20.0-bullseye
+FROM node:${NODE_VERSION}-bullseye
 LABEL maintainer="robertsLando"
 
 ENV NODE_ENV=production

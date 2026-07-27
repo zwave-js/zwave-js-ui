@@ -1,9 +1,12 @@
 # syntax=docker/dockerfile:1
 ARG image=zwave-js-ui
 ARG BUILDPLATFORM
+# NODE_VERSION has no default on purpose: it is injected from .nvmrc (the single
+# source of truth) by the npm docker:build:debian script. Building bare fails loudly.
+ARG NODE_VERSION
 
 # STEP: 1 - Build JS/TS artifacts once on native amd64 (dist/ and server/ are platform-agnostic)
-FROM --platform=$BUILDPLATFORM node:22.20.0-bookworm AS build-js
+FROM --platform=$BUILDPLATFORM node:${NODE_VERSION}-bookworm AS build-js
 
 WORKDIR /usr/src/app
 
@@ -23,7 +26,7 @@ COPY --link . .
 RUN npm run build
 
 # STEP: 2 - Install platform-specific production dependencies and native addons
-FROM node:22.20.0-bookworm AS build-native
+FROM node:${NODE_VERSION}-bookworm AS build-native
 
 WORKDIR /usr/src/app
 
@@ -62,7 +65,7 @@ RUN if [ ! -z "$updateDevices" ]; \
     fi
 
 # STEP: 3 (runtime)
-FROM node:22.20.0-bookworm-slim
+FROM node:${NODE_VERSION}-bookworm-slim
 
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt,sharing=locked \
