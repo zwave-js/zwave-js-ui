@@ -354,7 +354,7 @@ describe('FirmwareUpdateService', () => {
 			})
 		})
 
-		it('restores dismissal state after a same-ID replacement', async () => {
+		it('rolls back only its dismissal after a same-ID replacement', async () => {
 			const persistenceStarted = createDeferred<void>()
 			const persistenceBarrier = createDeferred<void>()
 			const nodes = createNodeStorePort()
@@ -371,11 +371,9 @@ describe('FirmwareUpdateService', () => {
 				lastFirmwareUpdateCheck: 10,
 				firmwareUpdatesDismissed: {},
 			})
-			const restore = vi.fn(() => Promise.resolve())
 			nodes.updateStoreNodes.mockImplementation(async () => {
 				persistenceStarted.resolve()
 				await persistenceBarrier.promise
-				return restore
 			})
 			const { service } = createService({ nodes })
 
@@ -383,26 +381,36 @@ describe('FirmwareUpdateService', () => {
 			await persistenceStarted.promise
 			const replacement = {
 				id: 5,
-				availableFirmwareUpdates: [update],
-				lastFirmwareUpdateCheck: 10,
-				firmwareUpdatesDismissed: { '2.0.0': true },
+				availableFirmwareUpdates: [makeUpdate({ version: '3.0.0' })],
+				lastFirmwareUpdateCheck: 20,
+				firmwareUpdatesDismissed: {
+					'2.0.0': true,
+					'3.0.0': true,
+				},
 			}
 			nodes._nodes.set(5, replacement)
+			nodes._store.set(5, replacement)
 			persistenceBarrier.resolve()
 			await dismissal
 
-			expect(restore).toHaveBeenCalledWith([5])
-			expect(nodes._store.get(5)?.firmwareUpdatesDismissed).toEqual({})
-			expect(replacement.firmwareUpdatesDismissed).toEqual({})
+			expect(replacement.availableFirmwareUpdates).toEqual([
+				makeUpdate({ version: '3.0.0' }),
+			])
+			expect(replacement.lastFirmwareUpdateCheck).toBe(20)
+			expect(replacement.firmwareUpdatesDismissed).toEqual({
+				'3.0.0': true,
+			})
 			expect(nodes.emitNodeUpdate).toHaveBeenCalledWith(
 				original,
 				expect.any(Object),
 			)
 			expect(nodes.emitNodeUpdate).toHaveBeenCalledWith(replacement, {
-				availableFirmwareUpdates: [update],
-				lastFirmwareUpdateCheck: 10,
-				firmwareUpdatesDismissed: {},
+				firmwareUpdatesDismissed: { '3.0.0': true },
 			})
+			expect(nodes.updateStoreNodes).toHaveBeenLastCalledWith(
+				[5],
+				[{ nodeId: 5, node: replacement }],
+			)
 		})
 
 		it('persists current dismissals when reset interrupts a write', async () => {
@@ -1832,17 +1840,28 @@ describe('FirmwareUpdateService', () => {
 			nodes._store.delete(7)
 			const replacement = {
 				id: 7,
-				availableFirmwareUpdates: [] as FirmwareUpdateInfo[],
-				lastFirmwareUpdateCheck: 0,
-				firmwareUpdatesDismissed: {},
+				availableFirmwareUpdates: [
+					makeUpdate({ version: '4.0.0' }),
+				] as FirmwareUpdateInfo[],
+				lastFirmwareUpdateCheck: 20,
+				firmwareUpdatesDismissed: { '4.0.0': true },
 			}
 			nodes._nodes.set(7, replacement)
 			nodes._store.set(7, replacement)
 			persistenceBarrier.resolve()
 			await checkPromise
 
-			expect(replacement.availableFirmwareUpdates).toEqual([])
-			expect(replacement.lastFirmwareUpdateCheck).toBe(0)
+			expect(replacement.availableFirmwareUpdates).toEqual([
+				makeUpdate({ version: '4.0.0' }),
+			])
+			expect(replacement.lastFirmwareUpdateCheck).toBe(20)
+			expect(replacement.firmwareUpdatesDismissed).toEqual({
+				'4.0.0': true,
+			})
+			expect(nodes.updateStoreNodes).toHaveBeenCalledWith(
+				[7],
+				[{ nodeId: 7, node: replacement }],
+			)
 			expect(nodes.emitNodeUpdate).not.toHaveBeenCalled()
 		})
 
@@ -2183,6 +2202,59 @@ describe('FirmwareUpdateService', () => {
 			expect(nodes._store.get(7)?.firmwareUpdatesDismissed).toStrictEqual(
 				{ '4.0.0': true },
 			)
+			expect(persistedDismissals).toStrictEqual({ '4.0.0': true })
+		})
+
+		it('rebases a queued firmware check onto an earlier dismissal', async () => {
+			const blockerStarted = createDeferred<void>()
+			const blockerBarrier = createDeferred<void>()
+			const firmwareResult =
+				createDeferred<Map<number, FirmwareUpdateInfo[]>>()
+			const update = makeUpdate({ version: '4.0.0' })
+			const driver = createDriverPort({
+				getDriver: () => ({
+					controller: {
+						getAvailableFirmwareUpdates: vi.fn(),
+						getAllAvailableFirmwareUpdates: vi.fn(
+							() => firmwareResult.promise,
+						),
+						firmwareUpdateOTA: vi.fn(),
+						nodes: { get: vi.fn() },
+					},
+					firmwareUpdateOTW: vi.fn(),
+				}),
+			})
+			const nodes = createNodeStorePort()
+			nodes._nodes.set(7, { id: 7 })
+			nodes._nodes.set(8, { id: 8 })
+			nodes._store.set(7, {
+				availableFirmwareUpdates: [update],
+				firmwareUpdatesDismissed: {},
+			})
+			nodes.updateStoreNodes.mockImplementation(async ([nodeId]) => {
+				if (nodeId === 8) {
+					blockerStarted.resolve()
+					await blockerBarrier.promise
+				}
+			})
+			let persistedDismissals: Record<string, boolean> | undefined
+			nodes.persistStagedNodeUpdates.mockImplementation(
+				([projection]) => {
+					persistedDismissals = projection.firmwareUpdatesDismissed
+					return Promise.resolve()
+				},
+			)
+			const { service } = createService({ driver, nodes })
+
+			const blocker = service.dismissFirmwareUpdate(8, '1.0.0')
+			await blockerStarted.promise
+			const check = service.checkAllNodesFirmwareUpdates()
+			const dismissal = service.dismissFirmwareUpdate(7, '4.0.0')
+			firmwareResult.resolve(new Map([[7, [update]]]))
+			blockerBarrier.resolve()
+
+			await Promise.all([blocker, dismissal, check])
+
 			expect(persistedDismissals).toStrictEqual({ '4.0.0': true })
 		})
 
