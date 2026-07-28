@@ -204,6 +204,10 @@ const NEIGHBORS_LOCK_REFRESH = 60 * 1000
 // Ordered from least verbose to most verbose (matching winston/npm log levels)
 const LOG_LEVEL_ORDER = ['error', 'warn', 'info', 'verbose', 'debug', 'silly']
 
+// Preserve the legacy error exposed by allowed APIs when logging a missing node
+const MISSING_NODE_LOG_ERROR =
+	"Cannot read properties of undefined (reading 'id')"
+
 type ValueIdRef = Pick<
 	TranslatedValueID,
 	'commandClass' | 'endpoint' | 'property'
@@ -2131,10 +2135,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			return zwaveNode.setDateAndTime(date)
 		} else {
 			this.logNode(
-				requireDefined<ZWaveNode>(
-					zwaveNode,
-					`Z-Wave node ${nodeId} is unavailable while syncing date and time`,
-				),
+				requireDefined<ZWaveNode>(zwaveNode, MISSING_NODE_LOG_ERROR),
 				'warn',
 				`Node not found when calling 'syncNodeDateAndTime'`,
 			)
@@ -2148,10 +2149,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			zwaveNode.manuallyIdleNotificationValue(valueId)
 		} else {
 			this.logNode(
-				requireDefined<ZWaveNode>(
-					zwaveNode,
-					`Z-Wave node ${valueId.nodeId} is unavailable while idling a notification value`,
-				),
+				requireDefined<ZWaveNode>(zwaveNode, MISSING_NODE_LOG_ERROR),
 				'warn',
 				`Node not found when calling 'manuallyIdleNotificationValue'`,
 			)

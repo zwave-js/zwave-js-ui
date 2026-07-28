@@ -135,6 +135,47 @@ describe('Socket contract: callApi()', () => {
 			})
 		})
 
+		it('preserves the missing-node error from syncNodeDateAndTime', async () => {
+			const zwave = await realZwave()
+			Reflect.set(zwave, '_driver', {
+				controller: { nodes: { get: () => undefined } },
+			})
+			zwave.driverReady = true
+
+			const res = await callApiAtRuntime(
+				zwave,
+				'syncNodeDateAndTime',
+				404,
+			)
+
+			expect(res).toStrictEqual({
+				success: false,
+				message: "Cannot read properties of undefined (reading 'id')",
+				args: [404],
+			})
+		})
+
+		it('preserves the missing-node error from manuallyIdleNotificationValue', async () => {
+			const zwave = await realZwave()
+			Reflect.set(zwave, '_driver', {
+				controller: { nodes: { get: () => undefined } },
+			})
+			zwave.driverReady = true
+			const valueId = { nodeId: 404 }
+
+			const res = await callApiAtRuntime(
+				zwave,
+				'manuallyIdleNotificationValue',
+				valueId,
+			)
+
+			expect(res).toStrictEqual({
+				success: false,
+				message: "Cannot read properties of undefined (reading 'id')",
+				args: [valueId],
+			})
+		})
+
 		it('omitted result: a successful call whose method returns undefined has result:undefined', async () => {
 			const zwave = await realZwave()
 			zwave['_driver'] = {
