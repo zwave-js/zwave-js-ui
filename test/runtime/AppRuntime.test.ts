@@ -238,6 +238,32 @@ export default class ObservablePlugin {
 		)
 	})
 
+	it('closes collaborators once during concurrent shutdowns', async () => {
+		let releaseGateway: (() => void) | undefined
+		const gatewayClosed = new Promise<void>((resolve) => {
+			releaseGateway = resolve
+		})
+		const gateway = createFakeGateway({
+			close: vi.fn(() => gatewayClosed),
+		})
+		const disposeGatewayFactory = vi.fn()
+		const runtime = createRuntime({
+			gateway,
+			gatewayFactory: {
+				create: () => createFakeGateway(),
+				dispose: disposeGatewayFactory,
+			},
+		})
+
+		const first = runtime.shutdown()
+		const second = runtime.shutdown()
+		releaseGateway?.()
+		await Promise.all([first, second])
+
+		expect(gateway.close).toHaveBeenCalledOnce()
+		expect(disposeGatewayFactory).toHaveBeenCalledOnce()
+	})
+
 	it('continues loading plugins after one fails', async () => {
 		const pluginDir = mkdtempSync(path.join(tmpdir(), 'runtime-plugin-'))
 		const marker = path.join(pluginDir, 'loaded.txt')

@@ -220,6 +220,7 @@ export type FakeGatewayZwave = EventEmitter & {
 	emitNodeUpdate: ReturnType<typeof vi.fn>
 	getNode: ReturnType<typeof vi.fn>
 	connect: ReturnType<typeof vi.fn>
+	driverFunction: ReturnType<typeof vi.fn>
 	setPollInterval: ReturnType<typeof vi.fn>
 	writeValue: ReturnType<typeof vi.fn>
 	writeBroadcast: ReturnType<typeof vi.fn>
@@ -246,6 +247,7 @@ export function createFakeGatewayZwave(
 		emitNodeUpdate: vi.fn(),
 		getNode: vi.fn(() => undefined),
 		connect: vi.fn(() => Promise.resolve(undefined)),
+		driverFunction: vi.fn(() => Promise.resolve(undefined)),
 		setPollInterval: vi.fn(),
 		writeValue: vi.fn(() => Promise.resolve(undefined)),
 		writeBroadcast: vi.fn(() => Promise.resolve(undefined)),

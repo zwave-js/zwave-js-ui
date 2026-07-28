@@ -30,7 +30,6 @@ export interface GatewayHarness {
 	publishedDiscoveries(): PublishedDiscovery[]
 	lastDiscovery(): PublishedDiscovery
 	resetPublishes(): void
-	resetState(): void
 	close(): Promise<void>
 }
 
@@ -110,10 +109,6 @@ export async function createGatewayHarness(
 		},
 		resetPublishes() {
 			broker.published.length = 0
-		},
-		resetState() {
-			broker.published.length = 0
-			void gw.start()
 		},
 		async close() {
 			await gw.close()

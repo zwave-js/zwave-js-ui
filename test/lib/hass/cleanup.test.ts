@@ -86,4 +86,33 @@ describe('Gateway cleanup', () => {
 			endSpy.mock.invocationCallOrder[0],
 		)
 	})
+
+	it('stops scheduled jobs on close', async () => {
+		vi.useFakeTimers()
+		try {
+			const driverFunction = vi.fn(() => Promise.resolve())
+			const harness = await createGatewayHarness({
+				zwave: { driverFunction },
+			})
+			manualHarnesses.push(harness)
+			harness.gw.scheduleJob({
+				name: 'maintenance',
+				cron: '* * * * * *',
+				enabled: true,
+				runOnInit: false,
+				code: 'return true',
+			})
+
+			await vi.advanceTimersByTimeAsync(1_100)
+			expect(driverFunction).toHaveBeenCalled()
+			driverFunction.mockClear()
+
+			await harness.gw.close()
+			await vi.advanceTimersByTimeAsync(2_000)
+
+			expect(driverFunction).not.toHaveBeenCalled()
+		} finally {
+			vi.useRealTimers()
+		}
+	})
 })

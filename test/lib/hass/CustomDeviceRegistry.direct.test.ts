@@ -162,6 +162,39 @@ describe('CustomDeviceRegistry', () => {
 		})
 	})
 
+	it('propagates repeated JavaScript create, edit, and delete cycles', async () => {
+		const { registry, storeDir } = createRegistry()
+		const filename = path.join(storeDir, 'customDevices.js')
+		registry.start()
+		const gatewayRegistry = registry.fork()
+		registries.push(gatewayRegistry)
+		gatewayRegistry.start()
+
+		for (let cycle = 0; cycle < 3; cycle++) {
+			const created = device(`created-${cycle}`)
+			fs.writeFileSync(
+				filename,
+				`module.exports = ${JSON.stringify({ thermostat: [created] })}`,
+			)
+			await vi.waitFor(() => {
+				expect(gatewayRegistry.get('thermostat')).toEqual([created])
+			})
+
+			const edited = device(`edited-${cycle}`)
+			fs.writeFileSync(
+				filename,
+				`module.exports = ${JSON.stringify({ thermostat: [edited] })}`,
+			)
+			await vi.waitFor(() => {
+				expect(gatewayRegistry.get('thermostat')).toEqual([edited])
+			})
+
+			fs.rmSync(filename)
+			await new Promise((resolve) => setTimeout(resolve, 20))
+			expect(gatewayRegistry.get('thermostat')).toEqual([edited])
+		}
+	})
+
 	it('ignores file changes after closing', async () => {
 		const beforeDispose = device('before-dispose')
 		const afterDispose = device('after-dispose')
