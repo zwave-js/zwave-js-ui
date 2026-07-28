@@ -254,14 +254,14 @@ export function createFakeGatewayZwave(
 		),
 		emitNodeUpdate: vi.fn<GatewayZwave['emitNodeUpdate']>(),
 		getNode: vi.fn(() => undefined),
-		callApi: vi.fn<GatewayZwave['callApi']>(() =>
-			Promise.resolve({ success: true, message: 'ok', result: [] }),
-		),
 		connect: vi.fn<GatewayZwave['connect']>(() => Promise.resolve()),
 		setPollInterval: vi.fn<GatewayZwave['setPollInterval']>(),
 		writeValue: vi.fn<GatewayZwave['writeValue']>(),
 		writeBroadcast: vi.fn<GatewayZwave['writeBroadcast']>(),
 		writeMulticast: vi.fn<GatewayZwave['writeMulticast']>(),
+		callApi: vi.fn<GatewayZwave['callApi']>(() =>
+			Promise.resolve({ success: true, message: 'ok', result: [] }),
+		),
 		driverFunction: vi.fn<GatewayZwave['driverFunction']>(),
 		close: vi.fn<GatewayZwave['close']>(() => Promise.resolve(undefined)),
 		...overrides,
