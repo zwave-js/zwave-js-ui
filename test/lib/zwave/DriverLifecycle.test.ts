@@ -1379,6 +1379,32 @@ describe('DriverLifecycle — close', () => {
 		expect(world.destroyOrder).toEqual(['server', 'driver'])
 	})
 
+	it('completes driver cleanup when server teardown fails', async () => {
+		const { lifecycle, host, world, state } = createHarness({
+			serverEnabled: true,
+		})
+		await lifecycle.connect()
+		const server = world.serverManagers[0]
+		const driver = world.drivers[0]
+		const serverError = new Error('server destroy failed')
+		server.destroy
+			.mockRejectedValueOnce(serverError)
+			.mockImplementationOnce(() => {
+				world.destroyOrder.push('server')
+				return Promise.resolve()
+			})
+
+		await expect(lifecycle.close()).rejects.toBe(serverError)
+		expect(driver.destroy).toHaveBeenCalledOnce()
+		expect(state.driver).toBeNull()
+		expect(host.finalizeClose).toHaveBeenCalledOnce()
+		expect(world.destroyOrder).toEqual(['driver'])
+
+		await expect(lifecycle.close(true)).resolves.toBeUndefined()
+		expect(server.destroy).toHaveBeenCalledTimes(2)
+		expect(world.destroyOrder).toEqual(['driver', 'server'])
+	})
+
 	it('does not finalize when keepListeners is true', async () => {
 		const { lifecycle, host } = createHarness()
 		await lifecycle.connect()
@@ -1462,6 +1488,27 @@ describe('DriverLifecycle — driver-ready failures', () => {
 		expect(host.restart).not.toHaveBeenCalled()
 		await vi.advanceTimersByTimeAsync(1000)
 		expect(host.restart).toHaveBeenCalledTimes(1)
+	})
+
+	it('preserves retry backoff until ready initialization succeeds', async () => {
+		const { lifecycle, host, world } = createHarness({
+			serverEnabled: false,
+		})
+		host.onDriverReady.mockRejectedValueOnce(
+			new Error('ready initialization failed'),
+		)
+		lifecycle.backoffRestart()
+		await lifecycle.connect()
+
+		world.drivers[0].emit('driver ready')
+		await Promise.resolve()
+		await Promise.resolve()
+		expect(host.onDriverError).toHaveBeenCalledOnce()
+
+		await vi.advanceTimersByTimeAsync(1999)
+		expect(host.restart).not.toHaveBeenCalled()
+		await vi.advanceTimersByTimeAsync(1)
+		expect(host.restart).toHaveBeenCalledOnce()
 	})
 
 	it('defers scan completion until matching ready initialization succeeds', async () => {

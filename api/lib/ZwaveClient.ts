@@ -697,6 +697,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 	/** Reused across init() rather than reconstructed so its generation counter, log transports and adopted server manager survive restarts */
 	private _driverLifecycle!: DriverLifecycle
+	private _controllerListenersInstalledOn: Driver['controller'] | undefined
 
 	/**
 	 * The narrow {@link ZwaveServerHost} port the server manager uses to reach
@@ -4403,33 +4404,51 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			// Arm only after the driver is ready so a fresh chain supersedes any prior same-generation ready
 			this._startScheduledConfigCheck(generation)
 
-			this.driver.controller
-				.on('inclusion started', this._onInclusionStarted.bind(this))
-				.on('exclusion started', this._onExclusionStarted.bind(this))
-				.on('inclusion stopped', this._onInclusionStopped.bind(this))
-				.on('exclusion stopped', this._onExclusionStopped.bind(this))
-				.on(
-					'inclusion state changed',
-					this._onInclusionStateChanged.bind(this),
-				)
-				.on('inclusion failed', this._onInclusionFailed.bind(this))
-				.on('exclusion failed', this._onExclusionFailed.bind(this))
-				.on('node found', this._onNodeFound.bind(this))
-				.on('node added', this._onNodeAdded.bind(this))
-				.on('node removed', this._onNodeRemoved.bind(this))
-				.on(
-					'rebuild routes progress',
-					this._onRebuildRoutesProgress.bind(this),
-				)
-				.on('rebuild routes done', this._onRebuildRoutesDone.bind(this))
-				.on(
-					'statistics updated',
-					this._onControllerStatisticsUpdated.bind(this),
-				)
-				.on(
-					'status changed',
-					this._onControllerStatusChanged.bind(this),
-				)
+			const controller = this.driver.controller
+			if (this._controllerListenersInstalledOn !== controller) {
+				this._controllerListenersInstalledOn = controller
+					.on(
+						'inclusion started',
+						this._onInclusionStarted.bind(this),
+					)
+					.on(
+						'exclusion started',
+						this._onExclusionStarted.bind(this),
+					)
+					.on(
+						'inclusion stopped',
+						this._onInclusionStopped.bind(this),
+					)
+					.on(
+						'exclusion stopped',
+						this._onExclusionStopped.bind(this),
+					)
+					.on(
+						'inclusion state changed',
+						this._onInclusionStateChanged.bind(this),
+					)
+					.on('inclusion failed', this._onInclusionFailed.bind(this))
+					.on('exclusion failed', this._onExclusionFailed.bind(this))
+					.on('node found', this._onNodeFound.bind(this))
+					.on('node added', this._onNodeAdded.bind(this))
+					.on('node removed', this._onNodeRemoved.bind(this))
+					.on(
+						'rebuild routes progress',
+						this._onRebuildRoutesProgress.bind(this),
+					)
+					.on(
+						'rebuild routes done',
+						this._onRebuildRoutesDone.bind(this),
+					)
+					.on(
+						'statistics updated',
+						this._onControllerStatisticsUpdated.bind(this),
+					)
+					.on(
+						'status changed',
+						this._onControllerStatusChanged.bind(this),
+					)
+			}
 
 			// Re-register callbacks because the coordinator survives driver replacement
 			this._inclusionCoordinator.reinstallUserCallbacks()
@@ -4438,9 +4457,6 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			logger.error(getErrorMessage(error))
 			throw error
 		}
-
-		// reset retries
-		this._driverLifecycle.resetBackoff()
 
 		this.driverInfo.homeid = this._driver.controller.homeId
 		const homeHex = '0x' + this.driverInfo?.homeid?.toString(16)

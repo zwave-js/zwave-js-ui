@@ -267,6 +267,7 @@ describe('connecting and reaching driver ready', () => {
 	it('does not start a second server when the driver re-emits ready', async () => {
 		const { zwave, driver, server } = await driveConnectToReady()
 		expect(server.start).toHaveBeenCalledOnce()
+		expect(driver.controller.listenerCount('inclusion started')).toBe(1)
 
 		// A re-emitted 'driver ready' (the #602 hard-reset scenario) must not
 		// start a second server. Wait on the client's re-emitted lifecycle
@@ -277,6 +278,7 @@ describe('connecting and reaching driver ready', () => {
 
 		expect(server.start).toHaveBeenCalledOnce()
 		expect(hoisted.servers).toHaveLength(1)
+		expect(driver.controller.listenerCount('inclusion started')).toBe(1)
 
 		await zwave.close(true)
 	})

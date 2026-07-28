@@ -732,13 +732,16 @@ export class DriverLifecycle {
 
 		this.host.clearRuntimeOnClose()
 
+		let teardownError: unknown
 		if (this._serverManager) {
-			await this._serverManager.destroy()
+			try {
+				await this._serverManager.destroy()
+			} catch (error) {
+				teardownError = error
+			}
 		}
 
 		const driver = this.host.getDriver()
-		let destroyFailed = false
-		let destroyError: unknown
 		if (driver) {
 			try {
 				await this.destroyDriver(driver)
@@ -747,8 +750,7 @@ export class DriverLifecycle {
 				if (this.host.getDriver() === driver) {
 					this.host.setDriver(null)
 				}
-				destroyFailed = true
-				destroyError = error
+				teardownError ??= error
 			}
 			if (this.host.getDriver() === driver) {
 				this.host.setDriver(null)
@@ -760,8 +762,8 @@ export class DriverLifecycle {
 		}
 
 		logger.info('Client closed')
-		if (destroyFailed) {
-			throw destroyError
+		if (teardownError !== undefined) {
+			throw teardownError
 		}
 	}
 
@@ -800,6 +802,7 @@ export class DriverLifecycle {
 			return
 		}
 		this._completedReadyEpoch = readyEpoch
+		this.resetBackoff()
 		if (
 			this._pendingScan?.generation === generation &&
 			this._pendingScan.readyEpoch === readyEpoch
