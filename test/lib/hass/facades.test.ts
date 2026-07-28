@@ -20,6 +20,7 @@ import {
 	addValue,
 	buildNode,
 	buildValueId,
+	createFakeGatewayZwave,
 	requireDefined,
 	valueMapKey,
 } from './fixtures.ts'
@@ -129,6 +130,37 @@ describe('Gateway Home Assistant behavior', () => {
 		).toMatchObject({
 			object_id: 'configured',
 		})
+	})
+
+	it('skips node discovery when MQTT is not configured', async () => {
+		const [{ GatewayFactory }, { GatewayType }] = await Promise.all([
+			import('#api/runtime/GatewayFactory.ts'),
+			import('#api/lib/Gateway.ts'),
+		])
+		const factory = new GatewayFactory({
+			storeDir,
+			logger: {
+				error: vi.fn(),
+				info: vi.fn(),
+			},
+			devices: {},
+		})
+		factories.push(factory)
+		const zwave = createFakeGatewayZwave()
+		const gateway = factory.create(
+			{ type: GatewayType.NAMED, hassDiscovery: true },
+			zwave,
+			undefined,
+		)
+		await gateway.start()
+
+		try {
+			expect(() =>
+				zwave.emit('nodeInited', buildNode({ id: 7 })),
+			).not.toThrow()
+		} finally {
+			await gateway.close()
+		}
 	})
 
 	it('stops a cover after its target value leaves the node', async () => {
