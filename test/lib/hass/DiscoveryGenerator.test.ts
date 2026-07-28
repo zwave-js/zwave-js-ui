@@ -342,7 +342,7 @@ describe('DiscoveryGenerator', () => {
 		expect(discovered['9-keep']).toBeUndefined()
 	})
 
-	it('publishes the configured suggested area through discovery', () => {
+	it('publishes only configured non-blank suggested areas', () => {
 		const currentValue = value({ isCurrentValue: true })
 		const hassNode = node({
 			name: 'Switch',
@@ -359,6 +359,34 @@ describe('DiscoveryGenerator', () => {
 		expect(published[0].payload).toMatchObject({
 			device: { suggested_area: 'Kitchen' },
 		})
+
+		const withoutOption = setup({})
+		withoutOption.generator.discoverDevice(
+			node({
+				name: 'Switch',
+				loc: 'Kitchen',
+				values: { [BINARY_SWITCH_CURRENT_VALUE]: currentValue },
+			}),
+			device(),
+		)
+		expect(withoutOption.published[0].payload).not.toHaveProperty(
+			'device.suggested_area',
+		)
+
+		const blank = setup({
+			config: { useLocationAsSuggestedArea: true },
+		})
+		blank.generator.discoverDevice(
+			node({
+				name: 'Switch',
+				loc: '   ',
+				values: { [BINARY_SWITCH_CURRENT_VALUE]: currentValue },
+			}),
+			device(),
+		)
+		expect(blank.published[0].payload).not.toHaveProperty(
+			'device.suggested_area',
+		)
 	})
 
 	it('publishes raw deletion payloads and removes deleted devices', () => {
@@ -730,6 +758,38 @@ describe('DiscoveryGenerator', () => {
 			}),
 		)
 		expect(published).toHaveLength(3)
+	})
+
+	it('preserves unresolved custom climate bounds', () => {
+		const setpoint = value({
+			id: '2-setpoint',
+			property: 'setpoint',
+			type: 'number',
+		})
+		const projectMaxTemp = (
+			maxTemp: unknown,
+			values: Record<string, HassValue> = {},
+		) => {
+			const { generator, published } = setup({})
+			generator.discoverDevice(
+				node({ values: { setpoint, ...values } }),
+				device({
+					type: 'climate',
+					object_id: 'bounds',
+					values: ['setpoint'],
+					default_setpoint: 'setpoint',
+					discovery_payload: { max_temp: maxTemp },
+				}),
+			)
+			expect(published).toHaveLength(1)
+			return published[0].payload
+		}
+
+		expect(projectMaxTemp(30)).toHaveProperty('max_temp', 30)
+		expect(projectMaxTemp('missing')).toHaveProperty('max_temp', 'missing')
+		expect(
+			projectMaxTemp('empty', { empty: value({ value: null }) }),
+		).toHaveProperty('max_temp', 'empty')
 	})
 
 	it('discovers RGB lights with binary and white controls', () => {
