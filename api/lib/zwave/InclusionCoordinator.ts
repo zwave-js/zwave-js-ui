@@ -399,6 +399,7 @@ export class InclusionCoordinator {
 
 		this._setupToken++
 		this._commandToken++
+		this._isReplacing = false
 		if (this._commandsTimeout) {
 			clearTimeout(this._commandsTimeout)
 			this._commandsTimeout = null
@@ -504,6 +505,10 @@ export class InclusionCoordinator {
 			}
 
 			this._assertCommand(gen, commandToken, 'replace')
+			if (!result) {
+				this._isReplacing = false
+				this.clearCommandsTimeout()
+			}
 			return result
 		} catch (error) {
 			if (this._ownsCommand(gen, commandToken)) {
@@ -664,9 +669,8 @@ export class InclusionCoordinator {
 		}
 	}
 
-	/** Safe to clear here because zwave-js guarantees 'node removed' fires before 'inclusion stopped' */
 	onInclusionStopped(): void {
-		this._isReplacing = false
+		// Keep replacement ownership because zwave-js emits this before removing the old node
 	}
 
 	onInclusionFailed(removeNode: (nodeId: number) => void): void {

@@ -513,6 +513,39 @@ describe('InclusionCoordinator', () => {
 			})
 		})
 
+		it('retains replacement ownership until node addition completes', async () => {
+			const { coordinator } = createCoordinator()
+
+			await coordinator.replaceFailedNode(
+				5,
+				InclusionStrategy.Insecure,
+				{},
+			)
+			coordinator.onInclusionStopped()
+
+			expect(coordinator.isReplacing).toBe(true)
+
+			coordinator.onReplacementComplete()
+			expect(coordinator.isReplacing).toBe(false)
+		})
+
+		it('releases replacement ownership when replacement does not start', async () => {
+			const driver = createDriverPort({
+				replaceFailedNode: vi.fn().mockResolvedValue(false),
+			})
+			const { coordinator } = createCoordinator({ driver })
+
+			await expect(
+				coordinator.replaceFailedNode(
+					5,
+					InclusionStrategy.Insecure,
+					{},
+				),
+			).resolves.toBe(false)
+
+			expect(coordinator.isReplacing).toBe(false)
+		})
+
 		it('handles S2 with QR code provisioning', async () => {
 			const qr = createQRPort({ version: QRCodeVersion.S2, dsk: '12345' })
 			const { coordinator, driver } = createCoordinator({ qr })
