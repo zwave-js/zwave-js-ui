@@ -136,6 +136,24 @@ describe('Socket contract: inbound ACK APIs', () => {
 			})
 		})
 
+		it('calls gw.removeNodeRetained(args[0]) for the known "removeNodeRetained" action', async () => {
+			const gateway = createFakeGateway()
+			const harness = await getHarness({ gateway })
+			const client = await connectedClient(harness)
+
+			await expect(
+				emit(client, 'MQTT_API', {
+					api: 'removeNodeRetained',
+					args: [2],
+				}),
+			).resolves.toStrictEqual({
+				success: true,
+				message: 'Success MQTT api call',
+				api: 'removeNodeRetained',
+			})
+			expect(gateway.removeNodeRetained).toHaveBeenCalledWith(2)
+		})
+
 		// Regression coverage for the #4740 dispatch bug: the default branch used to read the
 		// nonexistent data.apiName, always reporting "undefined" regardless of the actual action
 		it('reports "Unknown MQTT api <api>" for an unrecognized action', async () => {
@@ -500,6 +518,47 @@ describe('Socket contract: inbound ACK APIs', () => {
 				success: false,
 				message: 'zniffer string failure',
 				api: 'start',
+			})
+		})
+
+		it('passes frequency and LR channel settings to the current Zniffer', async () => {
+			const zniffer = createFakeZniffer()
+			const harness = await getHarness({
+				gateway: createFakeGateway(),
+				zniffer,
+			})
+			const client = await connectedClient(harness)
+
+			await emit(client, 'ZNIFFER_API', {
+				apiName: 'setFrequency',
+				frequency: 1,
+			})
+			await emit(client, 'ZNIFFER_API', {
+				apiName: 'setLRChannelConfig',
+				channelConfig: 2,
+			})
+
+			expect(zniffer.setFrequency).toHaveBeenCalledWith(1)
+			expect(zniffer.setLRChannelConfig).toHaveBeenCalledWith(2)
+		})
+
+		it('returns the saved capture path', async () => {
+			const zniffer = createFakeZniffer()
+			const harness = await getHarness({
+				gateway: createFakeGateway(),
+				zniffer,
+			})
+			const client = await connectedClient(harness)
+
+			await expect(
+				emit(client, 'ZNIFFER_API', {
+					apiName: 'saveCaptureToFile',
+				}),
+			).resolves.toStrictEqual({
+				success: true,
+				message: 'Success ZNIFFER api call',
+				result: '/tmp/capture.zlf',
+				api: 'saveCaptureToFile',
 			})
 		})
 
