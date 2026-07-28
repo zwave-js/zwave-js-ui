@@ -3,21 +3,20 @@ import * as loggers from '../lib/logger.ts'
 import { getErrorMessage } from '../lib/errors.ts'
 import { inboundEvents } from '../lib/SocketEvents.ts'
 import type { AppRuntime } from '../runtime/AppRuntime.ts'
-import { noop, type SocketAck } from './types.ts'
+import {
+	createApiAck,
+	safeOperationName,
+	type ApiAck,
+	type SocketAck,
+} from './api.ts'
 
 const logger = loggers.module('App')
 
-export interface MqttApiRequest {
-	api?: string
-	args: unknown[]
-}
+export type MqttApiRequest =
+	| { api: 'updateNodeTopics'; args: [nodeId: number] }
+	| { api: 'removeNodeRetained'; args: [nodeId: number] }
 
-export interface MqttApiAck {
-	success: boolean
-	message: string
-	result: void
-	api?: string
-}
+export type MqttApiAck = ApiAck<void>
 
 export function registerMqttApiHandler(
 	socket: Socket,
@@ -25,8 +24,9 @@ export function registerMqttApiHandler(
 ): void {
 	socket.on(
 		inboundEvents.mqtt,
-		(data: MqttApiRequest, cb: SocketAck<MqttApiAck> = noop) => {
-			logger.info(`Mqtt api call: ${data.api}`)
+		(data: MqttApiRequest, cb?: SocketAck<MqttApiAck>) => {
+			const api: string = data.api
+			logger.info(`Mqtt api call: ${safeOperationName(api)}`)
 
 			let res: void
 			let err: string | undefined
@@ -34,39 +34,24 @@ export function registerMqttApiHandler(
 			try {
 				switch (data.api) {
 					case 'updateNodeTopics':
-						{
-							const gateway = runtime.ensureGateway()
-							res = Reflect.apply(
-								gateway.updateNodeTopics.bind(gateway),
-								undefined,
-								[data.args[0]],
-							)
-						}
+						res = runtime
+							.ensureGateway()
+							.updateNodeTopics(data.args[0])
 						break
 					case 'removeNodeRetained':
-						{
-							const gateway = runtime.ensureGateway()
-							res = Reflect.apply(
-								gateway.removeNodeRetained.bind(gateway),
-								undefined,
-								[data.args[0]],
-							)
-						}
+						res = runtime
+							.ensureGateway()
+							.removeNodeRetained(data.args[0])
 						break
 					default:
-						err = `Unknown MQTT api ${data.api}`
+						err = `Unknown MQTT api ${api}`
 				}
 			} catch (error) {
 				logger.error('Error while calling MQTT api', error)
 				err = getErrorMessage(error)
 			}
 
-			cb({
-				success: !err,
-				message: err || 'Success MQTT api call',
-				result: res,
-				api: data.api,
-			})
+			cb?.(createApiAck(api, res, err, 'Success MQTT api call'))
 		},
 	)
 }

@@ -217,6 +217,17 @@ export default class ObservablePlugin {
 		}
 	})
 
+	it('clears the previous Zniffer when settings omit it', () => {
+		const runtime = createRuntime({ zniffer: createFakeZniffer() })
+
+		runtime.startZniffer(undefined)
+
+		expect(runtime.zniffer).toBeUndefined()
+		expect(() => runtime.ensureZniffer()).toThrow(
+			'Zniffer is not initialized',
+		)
+	})
+
 	it('continues loading plugins after one fails', async () => {
 		const pluginDir = mkdtempSync(path.join(tmpdir(), 'runtime-plugin-'))
 		const marker = path.join(pluginDir, 'loaded.txt')

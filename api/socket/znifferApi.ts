@@ -3,7 +3,12 @@ import { getErrorMessage } from '../lib/errors.ts'
 import * as loggers from '../lib/logger.ts'
 import { inboundEvents } from '../lib/SocketEvents.ts'
 import type { AppRuntime } from '../runtime/AppRuntime.ts'
-import { noop, type SocketAck } from './types.ts'
+import {
+	createApiAck,
+	safeOperationName,
+	type ApiAck,
+	type SocketAck,
+} from './api.ts'
 
 const logger = loggers.module('App')
 
@@ -20,12 +25,7 @@ export type ZnifferApiRequest =
 	| { apiName: 'setLRChannelConfig'; channelConfig: number }
 	| { apiName: 'loadCaptureFromBuffer'; buffer: number[] }
 
-export interface ZnifferApiAck {
-	success: boolean
-	message: string
-	result: unknown
-	api?: string
-}
+export type ZnifferApiAck = ApiAck<unknown>
 
 export function registerZnifferApiHandler(
 	socket: Socket,
@@ -33,12 +33,9 @@ export function registerZnifferApiHandler(
 ): void {
 	socket.on(
 		inboundEvents.zniffer,
-		async (
-			data: ZnifferApiRequest,
-			cb: SocketAck<ZnifferApiAck> = noop,
-		) => {
+		async (data: ZnifferApiRequest, cb?: SocketAck<ZnifferApiAck>) => {
 			const apiName: string = data.apiName
-			logger.info(`Zniffer api call: ${apiName}`)
+			logger.info(`Zniffer api call: ${safeOperationName(apiName)}`)
 			let res: unknown
 			let err: string | undefined
 			try {
@@ -56,24 +53,14 @@ export function registerZnifferApiHandler(
 						res = runtime.ensureZniffer().getFrames()
 						break
 					case 'setFrequency':
-						{
-							const zniffer = runtime.ensureZniffer()
-							res = await Reflect.apply(
-								zniffer.setFrequency.bind(zniffer),
-								undefined,
-								[data.frequency],
-							)
-						}
+						res = await runtime
+							.ensureZniffer()
+							.setFrequency(data.frequency)
 						break
 					case 'setLRChannelConfig':
-						{
-							const zniffer = runtime.ensureZniffer()
-							res = await Reflect.apply(
-								zniffer.setLRChannelConfig.bind(zniffer),
-								undefined,
-								[data.channelConfig],
-							)
-						}
+						res = await runtime
+							.ensureZniffer()
+							.setLRChannelConfig(data.channelConfig)
 						break
 					case 'saveCaptureToFile':
 						res = await runtime.ensureZniffer().saveCaptureToFile()
@@ -93,12 +80,7 @@ export function registerZnifferApiHandler(
 				err = getErrorMessage(error)
 			}
 
-			cb({
-				success: !err,
-				message: err || 'Success ZNIFFER api call',
-				result: res,
-				api: apiName,
-			})
+			cb?.(createApiAck(apiName, res, err, 'Success ZNIFFER api call'))
 		},
 	)
 }

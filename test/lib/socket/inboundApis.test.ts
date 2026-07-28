@@ -3,6 +3,7 @@
 // if gw is undefined, so every test installs at least a bare gateway fake
 import { describe, it, expect, vi } from 'vitest'
 import { ALL_CHANNELS } from '#api/lib/SocketEvents.ts'
+import { module as createLogger } from '#api/lib/logger.ts'
 import { useSocketHarness } from './harness.ts'
 import {
 	createFakeGateway,
@@ -41,11 +42,17 @@ describe('Socket contract: inbound ACK APIs', () => {
 		})
 
 		it('adds a zniffer key from zniffer.status() when a zniffer is set', async () => {
+			const zwaveState = { nodes: [], info: {}, error: null }
+			const gateway = createFakeGateway({
+				zwave: createFakeZwaveClient({
+					getState: vi.fn(() => zwaveState),
+				}),
+			})
 			const zniffer = createFakeZniffer({
 				status: vi.fn(() => ({ active: true, frequency: 'us_lr' })),
 			})
 			const harness = await getHarness({
-				gateway: createFakeGateway(),
+				gateway,
 				zniffer,
 			})
 			const client = await connectedClient(harness)
@@ -57,6 +64,7 @@ describe('Socket contract: inbound ACK APIs', () => {
 				active: true,
 				frequency: 'us_lr',
 			})
+			expect(zwaveState).not.toHaveProperty('zniffer')
 		})
 	})
 
@@ -73,7 +81,7 @@ describe('Socket contract: inbound ACK APIs', () => {
 			})
 			expect(result).toStrictEqual({
 				success: false,
-				message: 'Zwave client not connected',
+				message: 'Z-Wave client not connected',
 			})
 		})
 
@@ -221,6 +229,31 @@ describe('Socket contract: inbound ACK APIs', () => {
 			})
 		})
 
+		it('reports a thrown string as a failure message', async () => {
+			const gateway = createFakeGateway({
+				zwave: createFakeZwaveClient({
+					storeDevices: vi
+						.fn()
+						.mockRejectedValue('hass string failure'),
+				}),
+			})
+			const harness = await getHarness({ gateway })
+			const client = await connectedClient(harness)
+
+			await expect(
+				emit(client, 'HASS_API', {
+					apiName: 'store',
+					devices: {},
+					nodeId: 2,
+					remove: false,
+				}),
+			).resolves.toStrictEqual({
+				success: false,
+				message: 'hass string failure',
+				api: 'store',
+			})
+		})
+
 		it('"delete" removes the device discovery and acks success without a result field', async () => {
 			const device = { id: 'switch_sw', type: 'switch' }
 			const gateway = createFakeGateway({ publishDiscovery: vi.fn() })
@@ -355,19 +388,28 @@ describe('Socket contract: inbound ACK APIs', () => {
 		})
 
 		it('reports success:false with "Unknown HASS api <name>" for an unknown apiName', async () => {
-			// An unrecognized action must surface a failure ack, not silently
-			// succeed by falling through the switch with an undefined result
-			const harness = await getHarness({ gateway: createFakeGateway() })
-			const client = await connectedClient(harness)
+			const error = vi.spyOn(createLogger('App'), 'error')
+			try {
+				const harness = await getHarness({
+					gateway: createFakeGateway(),
+				})
+				const client = await connectedClient(harness)
 
-			const result = await emit(client, 'HASS_API', {
-				apiName: 'notARealAction',
-			})
-			expect(result).toStrictEqual({
-				success: false,
-				message: 'Unknown HASS api notARealAction',
-				api: 'notARealAction',
-			})
+				const result = await emit(client, 'HASS_API', {
+					apiName: 'notARealAction',
+				})
+				expect(result).toStrictEqual({
+					success: false,
+					message: 'Unknown HASS api notARealAction',
+					api: 'notARealAction',
+				})
+				expect(error).toHaveBeenCalledWith(
+					'Error while calling HASS api',
+					expect.any(Error),
+				)
+			} finally {
+				error.mockRestore()
+			}
 		})
 	})
 
@@ -408,6 +450,48 @@ describe('Socket contract: inbound ACK APIs', () => {
 				success: false,
 				message: 'Unknown ZNIFFER api notARealAction',
 				api: 'notARealAction',
+			})
+		})
+
+		it('strips control characters from logged operation names', async () => {
+			const info = vi.spyOn(createLogger('App'), 'info')
+			try {
+				const harness = await getHarness({
+					gateway: createFakeGateway(),
+					zniffer: createFakeZniffer(),
+				})
+				const client = await connectedClient(harness)
+
+				await emit(client, 'ZNIFFER_API', {
+					apiName: 'getFrames\r\nFORGED',
+				})
+
+				expect(info).toHaveBeenCalledWith(
+					'Zniffer api call: getFramesFORGED',
+				)
+			} finally {
+				info.mockRestore()
+			}
+		})
+
+		it('reports a thrown string as a failure message', async () => {
+			const zniffer = createFakeZniffer({
+				start: vi.fn().mockRejectedValue('zniffer string failure'),
+			})
+			const harness = await getHarness({
+				gateway: createFakeGateway(),
+				zniffer,
+			})
+			const client = await connectedClient(harness)
+
+			await expect(
+				emit(client, 'ZNIFFER_API', {
+					apiName: 'start',
+				}),
+			).resolves.toStrictEqual({
+				success: false,
+				message: 'zniffer string failure',
+				api: 'start',
 			})
 		})
 

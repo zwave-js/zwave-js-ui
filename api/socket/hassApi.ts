@@ -4,24 +4,33 @@ import { getErrorMessage } from '../lib/errors.ts'
 import * as loggers from '../lib/logger.ts'
 import { inboundEvents } from '../lib/SocketEvents.ts'
 import type { AppRuntime } from '../runtime/AppRuntime.ts'
-import { noop, type SocketAck } from './types.ts'
+import {
+	createApiAck,
+	safeOperationName,
+	type ApiAck,
+	type SocketAck,
+} from './api.ts'
 
 const logger = loggers.module('App')
 
-export interface HassApiRequest {
-	apiName?: string
-	device?: HassDevice
-	nodeId?: number
-	devices?: Record<string, HassDevice>
-	remove?: unknown
-}
+export type HassApiRequest =
+	| {
+			apiName: 'delete' | 'discover' | 'update' | 'add'
+			device: HassDevice
+			nodeId: number
+	  }
+	| {
+			apiName: 'rediscoverNode' | 'disableDiscovery'
+			nodeId: number
+	  }
+	| {
+			apiName: 'store'
+			devices: Record<string, HassDevice>
+			nodeId: number
+			remove: unknown
+	  }
 
-export interface HassApiAck {
-	success: boolean
-	message: string
-	result: void
-	api?: string
-}
+export type HassApiAck = ApiAck<void>
 
 export function registerHassApiHandler(
 	socket: Socket,
@@ -29,111 +38,68 @@ export function registerHassApiHandler(
 ): void {
 	socket.on(
 		inboundEvents.hass,
-		async (data: HassApiRequest, cb: SocketAck<HassApiAck> = noop) => {
-			logger.info(`Hass api call: ${data.apiName}`)
+		async (data: HassApiRequest, cb?: SocketAck<HassApiAck>) => {
+			const apiName: string = data.apiName
+			logger.info(`Hass api call: ${safeOperationName(apiName)}`)
 
 			let res: void
 			let err: string | undefined
 			try {
 				switch (data.apiName) {
 					case 'delete':
-						{
-							const gateway = runtime.ensureGateway()
-							res = Reflect.apply(
-								gateway.publishDiscovery.bind(gateway),
-								undefined,
-								[
-									data.device,
-									data.nodeId,
-									{
-										deleteDevice: true,
-										forceUpdate: true,
-									},
-								],
-							)
-						}
+						res = runtime
+							.ensureGateway()
+							.publishDiscovery(data.device, data.nodeId, {
+								deleteDevice: true,
+								forceUpdate: true,
+							})
 						break
 					case 'discover':
-						{
-							const gateway = runtime.ensureGateway()
-							res = Reflect.apply(
-								gateway.publishDiscovery.bind(gateway),
-								undefined,
-								[
-									data.device,
-									data.nodeId,
-									{
-										deleteDevice: false,
-										forceUpdate: true,
-									},
-								],
-							)
-						}
+						res = runtime
+							.ensureGateway()
+							.publishDiscovery(data.device, data.nodeId, {
+								deleteDevice: false,
+								forceUpdate: true,
+							})
 						break
 					case 'rediscoverNode':
-						{
-							const gateway = runtime.ensureGateway()
-							res = Reflect.apply(
-								gateway.rediscoverNode.bind(gateway),
-								undefined,
-								[data.nodeId],
-							)
-						}
+						res = runtime
+							.ensureGateway()
+							.rediscoverNode(data.nodeId)
 						break
 					case 'disableDiscovery':
-						{
-							const gateway = runtime.ensureGateway()
-							res = Reflect.apply(
-								gateway.disableDiscovery.bind(gateway),
-								undefined,
-								[data.nodeId],
-							)
-						}
+						res = runtime
+							.ensureGateway()
+							.disableDiscovery(data.nodeId)
 						break
 					case 'update':
-						{
-							const zwave = runtime.ensureZWaveClient()
-							res = Reflect.apply(
-								zwave.updateDevice.bind(zwave),
-								undefined,
-								[data.device, data.nodeId],
-							)
-						}
+						res = runtime
+							.ensureZWaveClient()
+							.updateDevice(data.device, data.nodeId)
 						break
 					case 'add':
-						{
-							const zwave = runtime.ensureZWaveClient()
-							res = Reflect.apply(
-								zwave.addDevice.bind(zwave),
-								undefined,
-								[data.device, data.nodeId],
-							)
-						}
+						res = runtime
+							.ensureZWaveClient()
+							.addDevice(data.device, data.nodeId)
 						break
 					case 'store':
-						{
-							const zwave = runtime.ensureZWaveClient()
-							res = await Reflect.apply(
-								zwave.storeDevices.bind(zwave),
-								undefined,
-								[data.devices, data.nodeId, data.remove],
+						res = await runtime
+							.ensureZWaveClient()
+							.storeDevices(
+								data.devices,
+								data.nodeId,
+								data.remove,
 							)
-						}
 						break
 					default:
-						err = `Unknown HASS api ${data.apiName}`
+						throw new Error(`Unknown HASS api ${apiName}`)
 				}
 			} catch (error) {
 				logger.error('Error while calling HASS api', error)
 				err = getErrorMessage(error)
 			}
 
-			cb({
-				success: !err,
-				message: err || 'Success HASS api call',
-				result: res,
-				api: data.apiName,
-			})
+			cb?.(createApiAck(apiName, res, err, 'Success HASS api call'))
 		},
 	)
 }

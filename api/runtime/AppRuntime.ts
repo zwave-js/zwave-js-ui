@@ -235,14 +235,14 @@ export class AppRuntime {
 	}
 
 	startZniffer(settings: utils.DeepPartial<ZnifferConfig> | undefined): void {
-		if (settings) {
-			this.setZniffer(
-				new ZnifferManager(
-					settings as ZnifferConfig,
-					this.deps.getSocketServer(),
-				),
-			)
-		}
+		this.setZniffer(
+			settings
+				? new ZnifferManager(
+						settings as ZnifferConfig,
+						this.deps.getSocketServer(),
+					)
+				: undefined,
+		)
 	}
 
 	async destroyPlugins(): Promise<void> {

@@ -1,9 +1,10 @@
 import type { Socket } from 'socket.io'
 import debugManager from '../lib/DebugManager.ts'
 import { inboundEvents } from '../lib/SocketEvents.ts'
+import type { AllowedApis, CallAPIResult } from '../lib/ZwaveClient.ts'
 import type { AppRuntime } from '../runtime/AppRuntime.ts'
 import type { ZnifferPort, ZwaveClientPort } from '../runtime/ports.ts'
-import { noop, type SocketAck } from './types.ts'
+import type { SocketAck } from './api.ts'
 
 type ZwaveState = ReturnType<ZwaveClientPort['getState']>
 type ZnifferStatus = ReturnType<ZnifferPort['status']>
@@ -16,12 +17,12 @@ export interface InitAckState extends Partial<ZwaveState> {
 export function registerInitHandler(socket: Socket, runtime: AppRuntime): void {
 	socket.on(
 		inboundEvents.init,
-		(_data: unknown, cb: SocketAck<InitAckState> = noop) => {
+		(_data: unknown, cb?: SocketAck<InitAckState>) => {
 			let state: Partial<ZwaveState> & { zniffer?: ZnifferStatus } = {}
 
 			const currentGw = runtime.ensureGateway()
 			if (currentGw.zwave) {
-				state = currentGw.zwave.getState()
+				state = { ...currentGw.zwave.getState() }
 			}
 
 			const currentZniffer = runtime.zniffer
@@ -29,7 +30,7 @@ export function registerInitHandler(socket: Socket, runtime: AppRuntime): void {
 				state.zniffer = currentZniffer.status()
 			}
 
-			cb({
+			cb?.({
 				...state,
 				debugCaptureActive: debugManager.isSessionActive(),
 			})
@@ -42,22 +43,14 @@ export interface ZwaveApiRequest {
 	args?: unknown
 }
 
-interface ZwaveApiAck {
-	success: boolean
-	message: string
-	result?: unknown
-	args?: unknown[]
+type ZwaveApiAck = CallAPIResult<AllowedApis> & {
 	api?: string
 }
 
 type DynamicCallApi = (
 	apiName: string,
 	...args: unknown[]
-) => Promise<ZwaveApiAck>
-
-function wireArguments(args: unknown): unknown[] {
-	return [...(args as Iterable<unknown>)]
-}
+) => Promise<CallAPIResult<AllowedApis>>
 
 export function registerZwaveApiHandler(
 	socket: Socket,
@@ -65,23 +58,31 @@ export function registerZwaveApiHandler(
 ): void {
 	socket.on(
 		inboundEvents.zwave,
-		async (data: ZwaveApiRequest, cb: SocketAck<ZwaveApiAck> = noop) => {
+		async (data: ZwaveApiRequest, cb?: SocketAck<ZwaveApiAck>) => {
 			const currentGw = runtime.ensureGateway()
 			if (currentGw.zwave) {
 				if (!data.args) data.args = []
+				if (!Array.isArray(data.args)) {
+					cb?.({
+						success: false,
+						message: 'Z-Wave API arguments must be an array',
+						api: data.api,
+					})
+					return
+				}
 				const callApi = currentGw.zwave.callApi.bind(
 					currentGw.zwave,
 				) as DynamicCallApi
-				const result = await callApi(
+				const result: ZwaveApiAck = await callApi(
 					data.api,
-					...wireArguments(data.args),
+					...data.args,
 				)
 				result.api = data.api
-				cb(result)
+				cb?.(result)
 			} else {
-				cb({
+				cb?.({
 					success: false,
-					message: 'Zwave client not connected',
+					message: 'Z-Wave client not connected',
 				})
 			}
 		},

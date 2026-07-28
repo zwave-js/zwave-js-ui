@@ -1,5 +1,4 @@
 import { describe, expect, it, vi } from 'vitest'
-import type { Socket as ClientSocket } from 'socket.io-client'
 import type { ZnifferApiRequest } from '#api/socket/znifferApi.ts'
 import {
 	createFakeGateway,
@@ -7,25 +6,7 @@ import {
 	createFakeZwaveClient,
 } from './fakes.ts'
 import { type SocketHarness, useSocketHarness } from './harness.ts'
-import { setSettings } from '../shared/authHelpers.ts'
-
-async function connectedClient(
-	currentHarness: SocketHarness,
-): Promise<ClientSocket> {
-	const client = currentHarness.createClient()
-	await currentHarness.connectClient(client)
-	return client
-}
-
-function emit<T>(
-	client: ClientSocket,
-	event: string,
-	data: unknown,
-): Promise<T> {
-	return new Promise((resolve) => {
-		client.emit(event, data, resolve)
-	})
-}
+import { connectedClient, emit } from './helpers.ts'
 
 async function restart(harness: SocketHarness): Promise<void> {
 	const response = await fetch(`${harness.url}/api/restart`, {
@@ -62,21 +43,25 @@ describe('Socket protocol runtime freshness', () => {
 		expect(gateway.zwave.callApi).toHaveBeenCalledWith('_getScenes')
 	})
 
-	it('passes malformed iterable Z-Wave args in wire order', async () => {
+	it.each([
+		['object', {}],
+		['string', 'ab'],
+	])('rejects truthy non-array Z-Wave args: %s', async (_label, args) => {
 		const gateway = createFakeGateway()
 		const currentHarness = await getHarness({ gateway })
 		const client = await connectedClient(currentHarness)
 
-		await emit(client, 'ZWAVE_API', {
+		await expect(
+			emit(client, 'ZWAVE_API', {
+				api: '_createScene',
+				args,
+			}),
+		).resolves.toStrictEqual({
+			success: false,
+			message: 'Z-Wave API arguments must be an array',
 			api: '_createScene',
-			args: 'ab',
 		})
-
-		expect(gateway.zwave.callApi).toHaveBeenCalledWith(
-			'_createScene',
-			'a',
-			'b',
-		)
+		expect(gateway.zwave.callApi).not.toHaveBeenCalled()
 	})
 
 	it('resolves a replacement gateway on the next request', async () => {
@@ -165,7 +150,16 @@ describe('Socket protocol runtime freshness', () => {
 			} satisfies ZnifferApiRequest),
 		).resolves.toMatchObject({ result: ['frame-a'] })
 
-		await setSettings(currentHarness, { zniffer: { enabled: false } })
+		const settings = {
+			...(currentHarness.jsonStore.get(
+				currentHarness.store.settings,
+			) as Record<string, unknown>),
+		}
+		delete settings.zniffer
+		await currentHarness.jsonStore.put(
+			currentHarness.store.settings,
+			settings,
+		)
 		await restart(currentHarness)
 
 		const replacementResult = await emit<{

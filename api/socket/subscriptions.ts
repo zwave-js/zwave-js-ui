@@ -1,6 +1,6 @@
 import type { Socket } from 'socket.io'
 import { ALL_CHANNELS, channelMap, inboundEvents } from '../lib/SocketEvents.ts'
-import { noop, type SocketAck } from './types.ts'
+import type { SocketAck } from './api.ts'
 
 export interface ChannelSubscriptionRequest {
 	channels?: unknown
@@ -24,25 +24,32 @@ function requestedChannels(
 		: []
 }
 
+async function applyChannelSubscription(
+	socket: Socket,
+	data: ChannelSubscriptionRequest | undefined,
+	action: 'join' | 'leave',
+	cb?: SocketAck<ChannelSubscriptionAck>,
+): Promise<void> {
+	const channels = requestedChannels(data)
+	const validChannels = channels.includes('all')
+		? ALL_CHANNELS
+		: channels.filter((channel) => Object.hasOwn(channelMap, channel))
+
+	for (const channel of validChannels) {
+		await socket[action](channel)
+	}
+
+	cb?.({ channels: currentSubscriptions(socket) })
+}
+
 export function registerSubscriptionHandlers(socket: Socket): void {
 	socket.on(
 		inboundEvents.subscribe,
 		async (
 			data: ChannelSubscriptionRequest | undefined,
-			cb: SocketAck<ChannelSubscriptionAck> = noop,
+			cb?: SocketAck<ChannelSubscriptionAck>,
 		) => {
-			const channels = requestedChannels(data)
-
-			const isAll = channels.includes('all')
-			const validChannels = isAll
-				? ALL_CHANNELS
-				: channels.filter((c) => Object.hasOwn(channelMap, c))
-
-			for (const channel of validChannels) {
-				await socket.join(channel)
-			}
-
-			cb({ channels: currentSubscriptions(socket) })
+			await applyChannelSubscription(socket, data, 'join', cb)
 		},
 	)
 
@@ -50,20 +57,9 @@ export function registerSubscriptionHandlers(socket: Socket): void {
 		inboundEvents.unsubscribe,
 		async (
 			data: ChannelSubscriptionRequest | undefined,
-			cb: SocketAck<ChannelSubscriptionAck> = noop,
+			cb?: SocketAck<ChannelSubscriptionAck>,
 		) => {
-			const channels = requestedChannels(data)
-
-			const isAll = channels.includes('all')
-			const validChannels = isAll
-				? ALL_CHANNELS
-				: channels.filter((c) => Object.hasOwn(channelMap, c))
-
-			for (const channel of validChannels) {
-				await socket.leave(channel)
-			}
-
-			cb({ channels: currentSubscriptions(socket) })
+			await applyChannelSubscription(socket, data, 'leave', cb)
 		},
 	)
 }
