@@ -443,6 +443,9 @@ export class NodeRegistry {
 		if (this.host.isDriverReady()) {
 			node = this.addNode(zwaveNode)
 			if (!node) return
+			const isCurrentInclusionNode = () =>
+				this.isCurrentNode(zwaveNode) &&
+				this.nodes.get(zwaveNode.id) === node
 			const security = zwaveNode.getHighestSecurityClass()
 			if (security) node.security = SecurityClass[security]
 			if (zwaveNode.dsk) {
@@ -451,11 +454,11 @@ export class NodeRegistry {
 					.controller.getProvisioningEntry(dskToString(zwaveNode.dsk))
 				if (entry?.name) {
 					await this.setNodeName(zwaveNode.id, entry.name)
-					if (!this.current) return
+					if (!isCurrentInclusionNode()) return
 				}
 				if (entry?.location) {
 					await this.setNodeLocation(zwaveNode.id, entry.location)
-					if (!this.current) return
+					if (!isCurrentInclusionNode()) return
 				}
 			}
 			this.host.sendToSocket(socketEvents.nodeAdded, { node, result })

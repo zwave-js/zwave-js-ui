@@ -356,6 +356,52 @@ describe('NodeRegistry persistence and lifecycle', () => {
 		)
 	})
 
+	it('does not continue inclusion for a same-ID replacement', async () => {
+		const addedZwave = createZWaveNode({
+			id: 4,
+			dsk: new Uint8Array(16),
+		})
+		const harness = createHarness({ node: addedZwave })
+		harness.registry.createNode(4)
+		vi.mocked(
+			harness.driver.controller.getProvisioningEntry,
+		).mockReturnValueOnce({
+			name: 'Provisioned',
+			location: 'Old location',
+		})
+		let persistenceStarted!: () => void
+		const started = new Promise<void>((resolve) => {
+			persistenceStarted = resolve
+		})
+		let finishPersist!: () => void
+		vi.mocked(harness.host.persistStoreNodes).mockImplementationOnce(
+			() =>
+				new Promise((resolve) => {
+					persistenceStarted()
+					finishPersist = resolve
+				}),
+		)
+
+		const added = harness.registry.onNodeAdded(addedZwave, {
+			lowSecurity: false,
+		} satisfies InclusionResult)
+		await started
+
+		harness.registry.removeNode(4)
+		const replacementZwave = createZWaveNode({ id: 4 })
+		harness.controllerNodes.set(4, replacementZwave)
+		const replacement = harness.registry.createNode(4)
+		finishPersist()
+		await added
+
+		expect(replacement.loc).toBe('')
+		expect(replacementZwave.location).toBe('')
+		expect(harness.host.sendToSocket).not.toHaveBeenCalledWith(
+			socketEvents.nodeAdded,
+			expect.anything(),
+		)
+	})
+
 	it('does not publish node settings completed after restart', async () => {
 		const harness = createHarness()
 		const node = harness.registry.createNode(2)
