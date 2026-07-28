@@ -787,10 +787,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	declare private driverInfo: ZUIDriverInfo
 	declare private status: ZwaveClientStatus
 	private _error: string | undefined
-	declare private _scanComplete: boolean
-	declare private _cntStatus: string
+	private _scanComplete: boolean | undefined
+	private _cntStatus: string | undefined
 
-	declare private lastUpdate: number
+	private lastUpdate: number | undefined
 
 	private _driverState: Driver | null | undefined
 

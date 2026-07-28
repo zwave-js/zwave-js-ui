@@ -115,6 +115,18 @@ describe('Socket contract: outbound producers', () => {
 	})
 
 	describe('real producer methods', () => {
+		it('keeps status fields undefined until runtime events initialize them', async () => {
+			const harness = await getHarness({ gateway: benignGateway() })
+			const zwave = realZwave(harness)
+
+			expect(zwave.scanComplete).toBeUndefined()
+			expect(zwave.cntStatus).toBeUndefined()
+			expect(zwave.getInfo()).toMatchObject({
+				lastUpdate: undefined,
+				cntStatus: undefined,
+			})
+		})
+
 		it('emitValueChanged() sends VALUE_UPDATED with the mutated valueId when changed=true', async () => {
 			const harness = await getHarness({ gateway: benignGateway() })
 			const zwave = realZwave(harness)
