@@ -373,7 +373,7 @@ describe('FirmwareUpdateService', () => {
 				lastFirmwareUpdateCheck: 10,
 				firmwareUpdatesDismissed: {},
 			})
-			nodes.updateStoreNodes.mockImplementation(async () => {
+			vi.mocked(nodes.updateStoreNodes).mockImplementation(async () => {
 				persistenceStarted.resolve()
 				await persistenceBarrier.promise
 			})

@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/unbound-method */
-import { CommandClasses, SecurityClass } from '@zwave-js/core'
+import { CommandClasses, dskToString, SecurityClass } from '@zwave-js/core'
 import { EventEmitter } from 'node:events'
 import type {
 	ControllerStatistics,
@@ -123,23 +123,27 @@ function createHarness(
 		getPersistedNodes: () => persisted,
 		persistNodes: vi.fn(() => Promise.resolve()),
 		serializeNodesPersistence: (operation) => operation(),
-		persistStoreNodes: vi.fn(async (nodes, throwError) => {
-			const homeHex = host.getHomeHex()
-			if (!homeHex) return
-			const storedNodes =
-				host.getPersistedNodes() as NodesStoreRecordByHome
-			const persistedNodes = { ...storedNodes }
-			persistedNodes[homeHex] = Object.fromEntries(
-				Object.entries(nodes).filter(
-					([, node]) => Object.keys(node).length > 0,
-				),
-			)
-			try {
-				await host.persistNodes(persistedNodes)
-			} catch (error) {
-				if (throwError) throw error
-			}
-		}),
+		persistStoreNodes: vi.fn<NodeRegistryHost['persistStoreNodes']>(
+			async (nodes, throwError) => {
+				const homeHex = host.getHomeHex()
+				if (!homeHex) return
+				const storedNodes =
+					host.getPersistedNodes() as NodesStoreRecordByHome
+				const persistedNodes = { ...storedNodes }
+				const nonEmptyNodes: NodesStoreRecord = {}
+				for (const [nodeId, node] of Object.entries(nodes)) {
+					if (Object.keys(node).length > 0) {
+						nonEmptyNodes[nodeId] = node
+					}
+				}
+				persistedNodes[homeHex] = nonEmptyNodes
+				try {
+					await host.persistNodes(persistedNodes)
+				} catch (error) {
+					if (throwError) throw error
+				}
+			},
+		),
 		sendToSocket: vi.fn(),
 		logNode: vi.fn(),
 		emitNodeUpdate: vi.fn(),
@@ -410,6 +414,8 @@ describe('NodeRegistry persistence and lifecycle', () => {
 		vi.mocked(
 			harness.driver.controller.getProvisioningEntry,
 		).mockReturnValueOnce({
+			dsk: dskToString(requireDefined(addedZwave.dsk)),
+			securityClasses: [SecurityClass.S2_Authenticated],
 			name: 'Provisioned',
 			location: 'Old location',
 		})
