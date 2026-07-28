@@ -15,7 +15,7 @@ on:
     paths:
       - '.github/bot-scripts/buildPostsIndex.cjs'
       - '.github/bot-scripts/postsIndex.cjs'
-      - '.github/bot-scripts/modelsApi.cjs'
+      - '.github/bot-scripts/localEmbeddings.cjs'
       - '.github/bot-scripts/githubApi.cjs'
       - '.github/bot-scripts/evalRelatedPosts.cjs'
       - '.github/bot-scripts/evalUtils.cjs'
@@ -26,7 +26,6 @@ on:
 
 permissions:
   contents: read
-  models: read
   issues: read
   discussions: read
 
@@ -49,9 +48,26 @@ jobs:
         path: .posts-index
         # There is no exact key to match, the newest index is picked
         # via the prefix
-        key: posts-embeddings-v1-
+        key: posts-embeddings-v2-
         restore-keys: |
-          posts-embeddings-v1-
+          posts-embeddings-v2-
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v5
+      with:
+        node-version: 22
+        cache: 'npm'
+        cache-dependency-path: .github/bot-scripts/package-lock.json
+
+    - name: Install embedding dependencies
+      working-directory: .github/bot-scripts
+      run: npm ci --ignore-scripts
+
+    - name: Restore embedding model
+      uses: actions/cache@v6
+      with:
+        path: ~/.cache/zwave-js-ui-bot/models
+        key: embedding-model-${{ hashFiles('.github/bot-scripts/localEmbeddings.cjs') }}
 
     - name: Build index
       env:
@@ -62,7 +78,7 @@ jobs:
       uses: actions/cache/save@v6
       with:
         path: .posts-index
-        key: posts-embeddings-v1-${{ github.run_id }}
+        key: posts-embeddings-v2-${{ github.run_id }}
 
     # The cache entry is regularly evicted before the answer bot gets to use it
     # (the repository cache is capped and evicted least-recently-used), so keep
@@ -87,7 +103,6 @@ jobs:
     timeout-minutes: 15
     permissions:
       contents: read
-      models: read
       issues: write
 
     steps:
@@ -99,7 +114,7 @@ jobs:
       uses: actions/cache/restore@v6
       with:
         path: .posts-index
-        key: posts-embeddings-v1-${{ github.run_id }}
+        key: posts-embeddings-v2-${{ github.run_id }}
 
     - name: Fail if posts index is missing
       # build-index should always have just saved this exact run-scoped
@@ -110,11 +125,26 @@ jobs:
         echo "::error::Posts index cache miss after build-index - cannot evaluate retrieval quality"
         exit 1
 
+    - name: Setup Node.js
+      uses: actions/setup-node@v5
+      with:
+        node-version: 22
+        cache: 'npm'
+        cache-dependency-path: .github/bot-scripts/package-lock.json
+
+    - name: Install embedding dependencies
+      working-directory: .github/bot-scripts
+      run: npm ci --ignore-scripts
+
+    - name: Restore embedding model
+      uses: actions/cache@v6
+      with:
+        path: ~/.cache/zwave-js-ui-bot/models
+        key: embedding-model-${{ hashFiles('.github/bot-scripts/localEmbeddings.cjs') }}
+
     - name: Evaluate retrieval quality
       id: eval
       continue-on-error: true
-      env:
-        GITHUB_TOKEN: ${{ github.token }}
       run: node .github/bot-scripts/evalRelatedPosts.cjs .posts-index/index.json
 
     - name: Update tracking issue

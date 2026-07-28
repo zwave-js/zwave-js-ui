@@ -65,8 +65,8 @@ runs:
       uses: actions/cache/restore@v6
       with:
         path: .docs-index
-        key: docs-embeddings-v2-${{ hashFiles('docs/**/*.md', '.github/bot-scripts/buildDocsIndex.cjs', '.github/bot-scripts/docsIndex.cjs', '.github/bot-scripts/modelsApi.cjs') }}
-        restore-keys: docs-embeddings-v2-
+        key: docs-embeddings-v3-${{ hashFiles('docs/**/*.md', '.github/bot-scripts/buildDocsIndex.cjs', '.github/bot-scripts/docsIndex.cjs', '.github/bot-scripts/localEmbeddings.cjs') }}
+        restore-keys: docs-embeddings-v3-
 
     - name: Restore the posts index from cache
       if: inputs.index == 'posts'
@@ -75,8 +75,8 @@ runs:
         path: .posts-index
         # There is no exact key to match, the newest index is picked
         # via the prefix
-        key: posts-embeddings-v1-
-        restore-keys: posts-embeddings-v1-
+        key: posts-embeddings-v2-
+        restore-keys: posts-embeddings-v2-
 
     # Decide on the file, not on the cache key: a prefix match can restore an
     # entry that was saved while its build was still writing it

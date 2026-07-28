@@ -13,7 +13,7 @@ on:
       - 'docs/**/*.md'
       - '.github/bot-scripts/buildDocsIndex.cjs'
       - '.github/bot-scripts/docsIndex.cjs'
-      - '.github/bot-scripts/modelsApi.cjs'
+      - '.github/bot-scripts/localEmbeddings.cjs'
       - '.github/bot-scripts/githubApi.cjs'
       - '.github/bot-scripts/evalDocsAnswers.cjs'
       - '.github/bot-scripts/evalUtils.cjs'
@@ -26,7 +26,6 @@ on:
 
 permissions:
   contents: read
-  models: read
 
 jobs:
   build-index:
@@ -42,16 +41,34 @@ jobs:
       uses: actions/cache@v6
       with:
         path: .docs-index
-        key: docs-embeddings-v2-${{ hashFiles('docs/**/*.md', '.github/bot-scripts/buildDocsIndex.cjs', '.github/bot-scripts/docsIndex.cjs', '.github/bot-scripts/modelsApi.cjs') }}
+        key: docs-embeddings-v3-${{ hashFiles('docs/**/*.md', '.github/bot-scripts/buildDocsIndex.cjs', '.github/bot-scripts/docsIndex.cjs', '.github/bot-scripts/localEmbeddings.cjs') }}
         # Restore an older index so only changed chunks need to be re-embedded
         restore-keys: |
-          docs-embeddings-v2-
+          docs-embeddings-v3-
+
+    - name: Setup Node.js
+      if: steps.cache.outputs.cache-hit != 'true'
+      uses: actions/setup-node@v5
+      with:
+        node-version: 22
+        cache: 'npm'
+        cache-dependency-path: .github/bot-scripts/package-lock.json
+
+    - name: Install embedding dependencies
+      if: steps.cache.outputs.cache-hit != 'true'
+      working-directory: .github/bot-scripts
+      run: npm ci --ignore-scripts
+
+    - name: Restore embedding model
+      if: steps.cache.outputs.cache-hit != 'true'
+      uses: actions/cache@v6
+      with:
+        path: ~/.cache/zwave-js-ui-bot/models
+        key: embedding-model-${{ hashFiles('.github/bot-scripts/localEmbeddings.cjs') }}
 
     - name: Build index
       # An exact cache hit means the index is already up to date
       if: steps.cache.outputs.cache-hit != 'true'
-      env:
-        GITHUB_TOKEN: ${{ github.token }}
       run: node .github/bot-scripts/buildDocsIndex.cjs docs .docs-index/index.json
 
     # The cache entry is regularly evicted before the answer bot gets to use it
@@ -78,7 +95,6 @@ jobs:
     timeout-minutes: 15
     permissions:
       contents: read
-      models: read
       issues: write
 
     steps:
@@ -90,7 +106,7 @@ jobs:
       uses: actions/cache/restore@v6
       with:
         path: .docs-index
-        key: docs-embeddings-v2-${{ hashFiles('docs/**/*.md', '.github/bot-scripts/buildDocsIndex.cjs', '.github/bot-scripts/docsIndex.cjs', '.github/bot-scripts/modelsApi.cjs') }}
+        key: docs-embeddings-v3-${{ hashFiles('docs/**/*.md', '.github/bot-scripts/buildDocsIndex.cjs', '.github/bot-scripts/docsIndex.cjs', '.github/bot-scripts/localEmbeddings.cjs') }}
 
     - name: Fail if docs index is missing
       # build-index should always have produced this exact cache entry;
@@ -101,11 +117,26 @@ jobs:
         echo "::error::Docs index cache miss after build-index - cannot evaluate retrieval quality"
         exit 1
 
+    - name: Setup Node.js
+      uses: actions/setup-node@v5
+      with:
+        node-version: 22
+        cache: 'npm'
+        cache-dependency-path: .github/bot-scripts/package-lock.json
+
+    - name: Install embedding dependencies
+      working-directory: .github/bot-scripts
+      run: npm ci --ignore-scripts
+
+    - name: Restore embedding model
+      uses: actions/cache@v6
+      with:
+        path: ~/.cache/zwave-js-ui-bot/models
+        key: embedding-model-${{ hashFiles('.github/bot-scripts/localEmbeddings.cjs') }}
+
     - name: Evaluate retrieval quality
       id: eval
       continue-on-error: true
-      env:
-        GITHUB_TOKEN: ${{ github.token }}
       run: node .github/bot-scripts/evalDocsAnswers.cjs .docs-index/index.json
 
     - name: Update tracking issue
@@ -128,13 +159,29 @@ jobs:
     timeout-minutes: 15
     permissions:
       contents: read
-      models: read
       issues: write
       discussions: read
 
     steps:
     - name: Checkout master branch
       uses: actions/checkout@v7
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v5
+      with:
+        node-version: 22
+        cache: 'npm'
+        cache-dependency-path: .github/bot-scripts/package-lock.json
+
+    - name: Install embedding dependencies
+      working-directory: .github/bot-scripts
+      run: npm ci --ignore-scripts
+
+    - name: Restore embedding model
+      uses: actions/cache@v6
+      with:
+        path: ~/.cache/zwave-js-ui-bot/models
+        key: embedding-model-${{ hashFiles('.github/bot-scripts/localEmbeddings.cjs') }}
 
     - name: Collect feedback on bot answers
       env:
@@ -152,4 +199,4 @@ jobs:
       uses: actions/cache/save@v6
       with:
         path: .docs-feedback/feedback.json
-        key: docs-feedback-v1-${{ github.run_id }}
+        key: docs-feedback-v2-${{ github.run_id }}

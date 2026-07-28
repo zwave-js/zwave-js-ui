@@ -7,7 +7,7 @@
 // for questions arriving before the next nightly rebuild.
 
 const fs = require("node:fs/promises");
-const { embedBatched } = require("./modelsApi.cjs");
+const { EMBEDDING_MODEL, embedBatched } = require("./localEmbeddings.cjs");
 const {
 	QUESTION_CATEGORY_SLUGS,
 	cleanQuestion,
@@ -17,7 +17,6 @@ const {
 
 /**
  * Expects the following environment variables:
- * - MODELS_TOKEN: token with models:read permission
  * - POSTS_INDEX_PATH: path to the index created by buildPostsIndex.cjs
  *
  * @param {{github: Github, context: Context}} param
@@ -25,12 +24,6 @@ const {
  */
 async function main(param) {
 	const { context } = param;
-
-	const modelsToken = process.env.MODELS_TOKEN;
-	if (!modelsToken) {
-		console.log("No MODELS_TOKEN provided, skipping");
-		return false;
-	}
 
 	const isDiscussion = !!context.payload.discussion;
 	const post = context.payload.discussion ?? context.payload.issue;
@@ -59,6 +52,14 @@ async function main(param) {
 		console.log(`No posts index found at ${indexPath}, skipping`);
 		return false;
 	}
+	// Embeddings from different models are not comparable. The nightly
+	// rebuild reconciles indexes created with an older model.
+	if (index.model !== EMBEDDING_MODEL) {
+		console.log(
+			`Posts index was created with ${index.model}, skipping`,
+		);
+		return false;
+	}
 
 	const embeddedText = cleanQuestion(post.title, post.body ?? "");
 	const hash = hashPost(embeddedText);
@@ -72,11 +73,7 @@ async function main(param) {
 		return false;
 	}
 
-	const [embedding] = await embedBatched(
-		[embeddedText],
-		modelsToken,
-		index.model,
-	);
+	const [embedding] = await embedBatched([embeddedText]);
 	/** @type {import("./postsIndex.cjs").IndexedPost} */
 	const entry = {
 		type,

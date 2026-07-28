@@ -1,22 +1,24 @@
 // @ts-check
 
 // Builds a semantic search index over the documentation by chunking all
-// markdown files and embedding the chunks using GitHub Models.
+// markdown files and embedding the chunks with a local model.
 // Usage: node buildDocsIndex.cjs <docs-dir> <output-file>
-// Requires GITHUB_TOKEN with models:read permission.
 
 const crypto = require("node:crypto");
 const fs = require("node:fs/promises");
 const path = require("node:path");
 const { DOCS_INDEX_VERSION } = require("./docsIndex.cjs");
-const { embedBatched, EMBEDDING_MODEL } = require("./modelsApi.cjs");
+const { EMBEDDING_MODEL, embedBatched } = require("./localEmbeddings.cjs");
 
 // Chunks shorter than this are unlikely to contain useful information
 const MIN_CHUNK_LENGTH = 50;
-// Sections longer than this are sub-split so nothing gets truncated away
-const MAX_CHUNK_LENGTH = 4000;
+// Sections longer than this are sub-split so nothing gets truncated away.
+// The embedding model truncates input at 256 tokens, and code blocks
+// tokenize at ~2-3 characters/token, so oversized chunks would lose
+// their tails to truncation
+const MAX_CHUNK_LENGTH = 700;
 // Overlap between sub-splits so answers spanning a split boundary aren't lost
-const CHUNK_OVERLAP = 400;
+const CHUNK_OVERLAP = 150;
 
 /**
  * Removes HTML tags, repeating to avoid leaving partial tags behind
@@ -184,12 +186,6 @@ async function main() {
 		);
 		process.exit(1);
 	}
-	const token = process.env.GITHUB_TOKEN;
-	if (!token) {
-		console.error("GITHUB_TOKEN environment variable is required");
-		process.exit(1);
-	}
-
 	// Reuse embeddings from a previous index for unchanged chunks
 	/** @type {Map<string, number[]>} */
 	const previousEmbeddings = new Map();
@@ -241,7 +237,6 @@ async function main() {
 
 	const embeddings = await embedBatched(
 		pending.map((c) => c.embeddedText),
-		token,
 	);
 	pending.forEach((chunk, i) => chunk.embedding = embeddings[i]);
 

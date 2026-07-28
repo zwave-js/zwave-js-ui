@@ -7,7 +7,8 @@ const { authorizedUsers } = require("./authorizedUsers.cjs");
 const { cosineSimilarity, loadDocsIndex, retrieve } = require(
 	"./docsIndex.cjs",
 );
-const { CHAT_MODEL, embed, modelsRequest } = require("./modelsApi.cjs");
+const { EMBEDDING_MODEL, embed } = require("./localEmbeddings.cjs");
+const { CHAT_MODEL, modelsRequest } = require("./modelsApi.cjs");
 const {
 	QUESTION_CATEGORY_SLUGS,
 	cleanQuestion,
@@ -32,14 +33,18 @@ const MAX_RETRIEVED_CHUNKS = 5;
 // If not even the best dense match reaches this cosine similarity,
 // the post is considered off-topic and no chat request is made.
 // The real relevance judgment is left to the chat model.
-const MIN_SIMILARITY = 0.2;
+// Calibrated for all-MiniLM-L6-v2: on-topic questions score >= 0.36
+// against the docs index, clearly off-topic ones <= 0.17
+const MIN_SIMILARITY = 0.35;
 // Confidence thresholds for the different response styles
 const ANSWER_CONFIDENCE = 75;
 const LINKS_CONFIDENCE = 40;
 
 // A related post is only suggested above this cosine similarity.
 // A wrong suggestion is worse than a missed one, so keep this high.
-const POSTS_MIN_SIMILARITY = 0.55;
+// Calibrated for all-MiniLM-L6-v2: confirmed-related posts score
+// 0.55-0.78 on the eval set, while unrelated ones reach up to 0.58
+const POSTS_MIN_SIMILARITY = 0.6;
 const MAX_RELATED_POSTS = 3;
 
 // Questions at least this similar to a previously downvoted answer
@@ -297,10 +302,15 @@ async function buildDocsAnswerSection(
 
 	// Ask the model whether the docs answer the question. judgeAnswer()
 	// already degrades malformed/invalid model content to a safe "no
-	// answer" result internally - a genuine Models API/network error
-	// (thrown by modelsRequest) is intentionally NOT caught here, so it
-	// fails the job instead of silently posting nothing.
-	const result = await judgeAnswer(question, ranked, token);
+	// answer" result internally. Skip the docs section on a genuine API
+	// error, the related-posts section is still useful.
+	let result;
+	try {
+		result = await judgeAnswer(question, ranked, token);
+	} catch (e) {
+		console.log(`Chat request failed: ${e.message}`);
+		return;
+	}
 	console.log("Model response:", JSON.stringify(result));
 
 	const related = (result.relatedExcerpts ?? [])
@@ -445,7 +455,8 @@ ${links}`;
  * documentation, and/or suggests similar existing posts, in a single comment.
  *
  * Expects the following environment variables:
- * - MODELS_TOKEN: token with models:read permission
+ * - MODELS_TOKEN: token with models:read permission, enables the docs
+ *   answer section. Without it, only related posts are suggested.
  * - DOCS_INDEX_PATH: path to the embeddings index created by buildDocsIndex.cjs
  * - POSTS_INDEX_PATH: path to the embeddings index created by buildPostsIndex.cjs
  *
@@ -455,10 +466,6 @@ async function main(param) {
 	const { github, context } = param;
 
 	const modelsToken = process.env.MODELS_TOKEN;
-	if (!modelsToken) {
-		console.log("No MODELS_TOKEN provided, skipping");
-		return;
-	}
 	// Figure out where the question comes from
 	const isDiscussion = !!context.payload.discussion;
 	const post = context.payload.discussion ?? context.payload.issue;
@@ -497,7 +504,7 @@ async function main(param) {
 	// Load the pre-built embeddings indices. Either may be missing,
 	// each one enables its part of the comment.
 	const docsIndexPath = process.env.DOCS_INDEX_PATH;
-	const docsIndex = await loadDocsIndex(docsIndexPath);
+	let docsIndex = await loadDocsIndex(docsIndexPath);
 	if (docsIndex) {
 		console.log(
 			`Loaded docs index with ${docsIndex.chunks.length} chunks (created ${docsIndex.createdAt})`,
@@ -517,26 +524,26 @@ async function main(param) {
 		);
 	}
 
-	if (!docsIndex && !postsIndex) return;
-
 	const question = cleanQuestion(post.title, post.body ?? "");
 
-	// A single embedding request serves both docs retrieval and
-	// related-post ranking. Similarities are only comparable within
-	// one model, so an index embedded with a different model is skipped.
-	const embeddingModel = docsIndex?.model ?? postsIndex?.model;
-	if (postsIndex && postsIndex.model !== embeddingModel) {
+	// The question is embedded locally. Similarities are only comparable
+	// within one model, so indexes built with a different model are skipped
+	// until the nightly rebuild replaces them.
+	if (docsIndex && docsIndex.model !== EMBEDDING_MODEL) {
 		console.log(
-			`Posts index model ${postsIndex.model} does not match ${embeddingModel}, ignoring it`,
+			`Docs index model ${docsIndex.model} does not match ${EMBEDDING_MODEL}, ignoring it`,
+		);
+		docsIndex = undefined;
+	}
+	if (postsIndex && postsIndex.model !== EMBEDDING_MODEL) {
+		console.log(
+			`Posts index model ${postsIndex.model} does not match ${EMBEDDING_MODEL}, ignoring it`,
 		);
 		postsIndex = undefined;
-		if (!docsIndex) return;
 	}
-	const [questionEmbedding] = await embed(
-		[question],
-		modelsToken,
-		embeddingModel,
-	);
+	if (!docsIndex && !postsIndex) return;
+
+	const [questionEmbedding] = await embed([question]);
 
 	// Feedback guardrail: check the question against previously
 	// downvoted answers collected by collectDocsFeedback.cjs
@@ -553,11 +560,12 @@ async function main(param) {
 		suppression = checkSuppression(
 			questionEmbedding,
 			feedback,
-			embeddingModel,
+			EMBEDDING_MODEL,
 		);
 	}
 
-	const docsSection = docsIndex && suppression !== "silent"
+	// The docs section needs the chat model as relevance judge
+	const docsSection = docsIndex && modelsToken && suppression !== "silent"
 		? await buildDocsAnswerSection(
 			question,
 			questionEmbedding,
