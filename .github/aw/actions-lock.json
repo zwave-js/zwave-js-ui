@@ -1,5 +1,20 @@
 {
   "entries": {
+    "actions/cache/restore@v6": {
+      "repo": "actions/cache/restore",
+      "version": "v6",
+      "sha": "55cc8345863c7cc4c66a329aec7e433d2d1c52a9"
+    },
+    "actions/cache@v6": {
+      "repo": "actions/cache",
+      "version": "v6",
+      "sha": "55cc8345863c7cc4c66a329aec7e433d2d1c52a9"
+    },
+    "actions/setup-node@v5": {
+      "repo": "actions/setup-node",
+      "version": "v5",
+      "sha": "a0853c24544627f65ddf259abe73b1d18a591444"
+    },
     "github/gh-aw-actions/setup-cli@v0.81.6": {
       "repo": "github/gh-aw-actions/setup-cli",
       "version": "v0.81.6",

@@ -12,7 +12,10 @@ module.exports = {
 	renameCommitCheck: (...args) => require("./renameCommitCheck.cjs")(...args),
 	renameCommitFeedback: (...args) =>
 		require("./renameCommitFeedback.cjs")(...args),
-	answerFromDocs: (...args) => require("./answerFromDocs.cjs")(...args),
+	prepareDocsAnswer: (...args) =>
+		require("./answerFromDocs.cjs").prepareDocsAnswer(...args),
+	postDocsAnswer: (...args) =>
+		require("./answerFromDocs.cjs").postDocsAnswer(...args),
 	updatePostsIndex: (...args) => require("./updatePostsIndex.cjs")(...args),
 	updateEvalTrackingIssue: (...args) =>
 		require("./updateEvalTrackingIssue.cjs")(...args),

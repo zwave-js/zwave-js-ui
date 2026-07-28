@@ -5,15 +5,10 @@
 // Run daily in CI to catch regressions from docs restructuring or
 // changes to the chunking/retrieval logic.
 //
-// Usage: node evalDocsAnswers.cjs <index-file> [--answers]
-//
-// With --answers, each question is also run through the chat model and
-// the generated answer is printed for manual inspection. This costs one
-// chat request per question and requires GITHUB_TOKEN, so use sparingly.
+// Usage: node evalDocsAnswers.cjs <index-file>
 
 const fs = require("node:fs/promises");
 const path = require("node:path");
-const { judgeAnswer } = require("./answerFromDocs.cjs");
 const { loadDocsIndex, retrieve } = require("./docsIndex.cjs");
 const { logCase, reportResults } = require("./evalUtils.cjs");
 const { embed, indexMatchesModel } = require("./localEmbeddings.cjs");
@@ -23,18 +18,9 @@ const NUM_RESULTS = 5;
 const MIN_HIT_RATE = Number(process.env.MIN_HIT_RATE || "0.9");
 
 async function main() {
-	const args = process.argv.slice(2);
-	const showAnswers = args.includes("--answers");
-	const indexFile = args.find((a) => !a.startsWith("--"));
+	const [indexFile] = process.argv.slice(2);
 	if (!indexFile) {
-		console.error(
-			"Usage: node evalDocsAnswers.cjs <index-file> [--answers]",
-		);
-		process.exit(1);
-	}
-	const token = process.env.GITHUB_TOKEN;
-	if (showAnswers && !token) {
-		console.error("GITHUB_TOKEN is required for --answers");
+		console.error("Usage: node evalDocsAnswers.cjs <index-file>");
 		process.exit(1);
 	}
 
@@ -84,16 +70,6 @@ async function main() {
 		};
 		logCase(hit, result);
 		if (!hit) failures.push(result);
-
-		if (showAnswers) {
-			const result = await judgeAnswer(question, results, token);
-			console.log(`   confidence: ${result.confidence}`);
-			console.log(
-				`   ${
-					(result.answer ?? "(no answer)").replaceAll("\n", "\n   ")
-				}\n`,
-			);
-		}
 	}
 
 	await reportResults(NUM_RESULTS, cases.length, failures, MIN_HIT_RATE);
