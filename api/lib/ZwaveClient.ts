@@ -2250,7 +2250,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				await write()
 			} catch (error) {
 				logger.error(
-					`Error while updating store nodes: ${error.message}`,
+					`Error while updating store nodes: ${getErrorMessage(error)}`,
 					error,
 				)
 				if (throwError) {
@@ -2322,17 +2322,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				}
 			}
 
-			try {
-				await this._persistNodesSnapshot(persistedSnapshot, homeHex)
-			} catch (error) {
-				logger.error(
-					`Error while updating store nodes: ${getErrorMessage(error)}`,
-					error,
-				)
-				if (throwError) {
-					throw error
-				}
-			}
+			await this._persistNodesSnapshot(persistedSnapshot, homeHex)
 		}, throwError)
 	}
 
