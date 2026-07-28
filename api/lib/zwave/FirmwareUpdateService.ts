@@ -9,6 +9,7 @@ import type {
 	FirmwarePersistenceRestore,
 	FirmwareSocketPort,
 	FirmwareUpdateInfo,
+	FirmwareUpdateNodeState,
 	FirmwareUpdateResult,
 	FwFileRef,
 	OTWFirmwareUpdateResult,
@@ -194,6 +195,17 @@ export class FirmwareUpdateService {
 		version: string,
 	): Promise<boolean> {
 		const gen = this._generation
+		const node = this._nodes.getNode(nodeId)
+		const previousStoreNode = this._nodes.getStoreNode(nodeId)
+		const previousFirmwareState = {
+			availableFirmwareUpdates:
+				previousStoreNode?.availableFirmwareUpdates,
+			lastFirmwareUpdateCheck: previousStoreNode?.lastFirmwareUpdateCheck,
+			firmwareUpdatesDismissed:
+				previousStoreNode?.firmwareUpdatesDismissed
+					? { ...previousStoreNode.firmwareUpdatesDismissed }
+					: undefined,
+		}
 		await this._serializePersistence(
 			gen,
 			'dismissFirmwareUpdate',
@@ -206,8 +218,7 @@ export class FirmwareUpdateService {
 
 				storeNode.firmwareUpdatesDismissed[version] = true
 
-				const node = this._nodes.getNode(nodeId)
-				if (node) {
+				if (node && this._nodes.getNode(nodeId) === node) {
 					if (!node.firmwareUpdatesDismissed) {
 						node.firmwareUpdatesDismissed = {}
 					}
@@ -218,7 +229,40 @@ export class FirmwareUpdateService {
 					})
 				}
 
-				return this._nodes.updateStoreNodes()
+				return this._nodes.updateStoreNodes(
+					[nodeId],
+					node ? [{ nodeId, node }] : [],
+				)
+			},
+			async (restore) => {
+				if (!node || this._nodes.getNode(nodeId) === node) {
+					return
+				}
+				await restore?.([nodeId])
+				this._assertFence(gen, 'dismissFirmwareUpdate')
+
+				const storeNode = this._nodes.getStoreNode(nodeId)
+				if (storeNode) {
+					this._restoreFirmwareState(storeNode, previousFirmwareState)
+				}
+
+				const replacement = this._nodes.getNode(nodeId)
+				if (replacement) {
+					replacement.availableFirmwareUpdates =
+						previousFirmwareState.availableFirmwareUpdates ?? []
+					replacement.lastFirmwareUpdateCheck =
+						previousFirmwareState.lastFirmwareUpdateCheck ?? 0
+					replacement.firmwareUpdatesDismissed =
+						previousFirmwareState.firmwareUpdatesDismissed ?? {}
+					this._nodes.emitNodeUpdate(replacement, {
+						availableFirmwareUpdates:
+							replacement.availableFirmwareUpdates,
+						lastFirmwareUpdateCheck:
+							replacement.lastFirmwareUpdateCheck,
+						firmwareUpdatesDismissed:
+							replacement.firmwareUpdatesDismissed,
+					})
+				}
 			},
 		)
 		this._logger.info(
@@ -640,12 +684,49 @@ export class FirmwareUpdateService {
 		gen: number,
 		operation: string,
 	): Promise<void> {
+		const persistenceTargets = staged.flatMap((projection) => {
+			const node = this._nodes.getNode(projection.nodeId)
+			return node ? [{ projection, node }] : []
+		})
+		const persistedStaged = persistenceTargets.map(
+			({ projection }) => projection,
+		)
+		const requiredNodes = persistenceTargets.map(
+			({ projection, node }) => ({
+				nodeId: projection.nodeId,
+				node,
+			}),
+		)
 		await this._serializePersistence(
 			gen,
 			operation,
-			() => this._nodes.persistStagedNodeUpdates(staged),
-			() => {
-				for (const projection of staged) {
+			() =>
+				this._nodes.persistStagedNodeUpdates(
+					persistedStaged,
+					requiredNodes,
+				),
+			async (restore) => {
+				const staleNodeIds = requiredNodes
+					.filter(
+						({ nodeId, node }) =>
+							this._nodes.getNode(nodeId) !== node,
+					)
+					.map(({ nodeId }) => nodeId)
+				if (restore && staleNodeIds.length > 0) {
+					await restore(staleNodeIds)
+				}
+				this._assertFence(gen, operation)
+
+				for (const projection of persistedStaged) {
+					const expectedNode = requiredNodes.find(
+						({ nodeId }) => nodeId === projection.nodeId,
+					)?.node
+					if (
+						!expectedNode ||
+						this._nodes.getNode(projection.nodeId) !== expectedNode
+					) {
+						continue
+					}
 					const storeNode = this._nodes.getStoreNode(
 						projection.nodeId,
 					)
@@ -665,7 +746,9 @@ export class FirmwareUpdateService {
 		gen: number,
 		operation: string,
 		persist: () => Promise<FirmwarePersistenceRestore | void>,
-		publish?: () => void,
+		publish?: (
+			restore?: FirmwarePersistenceRestore,
+		) => Promise<void> | void,
 	): Promise<void> {
 		const persistence = this._persistenceTail.then(async () => {
 			this._assertFence(gen, operation)
@@ -681,7 +764,7 @@ export class FirmwareUpdateService {
 			}
 
 			this._assertFence(gen, operation)
-			publish?.()
+			await publish?.(restore || undefined)
 		})
 
 		this._persistenceTail = persistence.catch(() => undefined)
@@ -701,6 +784,27 @@ export class FirmwareUpdateService {
 		}
 
 		return cleanedDismissed
+	}
+
+	private _restoreFirmwareState(
+		node: Partial<FirmwareUpdateNodeState>,
+		previous: Partial<FirmwareUpdateNodeState>,
+	): void {
+		if (previous.availableFirmwareUpdates !== undefined) {
+			node.availableFirmwareUpdates = previous.availableFirmwareUpdates
+		} else {
+			delete node.availableFirmwareUpdates
+		}
+		if (previous.lastFirmwareUpdateCheck !== undefined) {
+			node.lastFirmwareUpdateCheck = previous.lastFirmwareUpdateCheck
+		} else {
+			delete node.lastFirmwareUpdateCheck
+		}
+		if (previous.firmwareUpdatesDismissed !== undefined) {
+			node.firmwareUpdatesDismissed = previous.firmwareUpdatesDismissed
+		} else {
+			delete node.firmwareUpdatesDismissed
+		}
 	}
 
 	private _computeNodeFirmwareProjection(
@@ -726,22 +830,24 @@ export class FirmwareUpdateService {
 	private _applyNodeFirmwareProjection(
 		projection: StagedFirmwareNodeUpdate,
 	): void {
+		const node = this._nodes.getNode(projection.nodeId)
+		if (!node) {
+			return
+		}
+
 		const storeNode = this._nodes.ensureStoreNode(projection.nodeId)
 		storeNode.availableFirmwareUpdates = projection.availableFirmwareUpdates
 		storeNode.lastFirmwareUpdateCheck = projection.lastFirmwareUpdateCheck
 		storeNode.firmwareUpdatesDismissed = projection.firmwareUpdatesDismissed
 
-		const node = this._nodes.getNode(projection.nodeId)
-		if (node) {
-			node.availableFirmwareUpdates = projection.availableFirmwareUpdates
-			node.lastFirmwareUpdateCheck = projection.lastFirmwareUpdateCheck
-			node.firmwareUpdatesDismissed = projection.firmwareUpdatesDismissed
+		node.availableFirmwareUpdates = projection.availableFirmwareUpdates
+		node.lastFirmwareUpdateCheck = projection.lastFirmwareUpdateCheck
+		node.firmwareUpdatesDismissed = projection.firmwareUpdatesDismissed
 
-			this._nodes.emitNodeUpdate(node, {
-				availableFirmwareUpdates: node.availableFirmwareUpdates,
-				lastFirmwareUpdateCheck: node.lastFirmwareUpdateCheck,
-				firmwareUpdatesDismissed: node.firmwareUpdatesDismissed,
-			})
-		}
+		this._nodes.emitNodeUpdate(node, {
+			availableFirmwareUpdates: node.availableFirmwareUpdates,
+			lastFirmwareUpdateCheck: node.lastFirmwareUpdateCheck,
+			firmwareUpdatesDismissed: node.firmwareUpdatesDismissed,
+		})
 	}
 }

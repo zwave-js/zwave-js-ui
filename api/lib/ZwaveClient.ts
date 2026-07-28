@@ -834,6 +834,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	private _associationService: AssociationService
 	private _firmwareUpdateService: FirmwareUpdateService
 	private _inclusionCoordinator: InclusionCoordinator
+	private _nodesPersistenceTail: Promise<void> = Promise.resolve()
 
 	private nvmEvent: string
 
@@ -1145,18 +1146,22 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		}
 		const createFirmwarePersistenceRestore = (
 			homeHex: string | undefined,
+			nodeIds?: readonly number[],
 		) => {
 			if (!homeHex) {
 				return undefined
 			}
 			const storedNodes = (jsonStore.get(store.nodes) ||
 				{}) as NodesStoreRecordByHome
-			const previousNodes = Object.fromEntries(
-				Object.entries(storedNodes[homeHex] || {}).map(
-					([nodeId, node]) => [nodeId, { ...node }],
-				),
-			)
-			return () => this._persistNodesSnapshot(previousNodes, homeHex)
+			const previousNodes = structuredClone(storedNodes[homeHex] || {})
+			const restoredNodeIds =
+				nodeIds || Object.keys(previousNodes).map(Number)
+			return (selectedNodeIds = restoredNodeIds) =>
+				this._restoreFirmwareNodeFields(
+					previousNodes,
+					selectedNodeIds,
+					homeHex,
+				)
 		}
 		const firmwareNodeStorePort = {
 			getNode: (nodeId: number) => this._nodes.get(nodeId),
@@ -1167,10 +1172,25 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				}
 				return this.storeNodes[nodeId]
 			},
-			updateStoreNodes: async () => {
+			updateStoreNodes: async (
+				nodeIds?: readonly number[],
+				requiredNodes?: ReadonlyArray<{
+					nodeId: number
+					node: ZUINode
+				}>,
+			) => {
 				const homeHex = this.homeHex
-				const restore = createFirmwarePersistenceRestore(homeHex)
-				await this.updateStoreNodes()
+				const restore = createFirmwarePersistenceRestore(
+					homeHex,
+					nodeIds,
+				)
+				await this._updateStoreNodesSnapshot(
+					this.storeNodes,
+					true,
+					homeHex,
+					false,
+					requiredNodes,
+				)
 				return restore
 			},
 			persistStagedNodeUpdates: async (
@@ -1180,10 +1200,17 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 					lastFirmwareUpdateCheck: number
 					firmwareUpdatesDismissed: { [version: string]: boolean }
 				}>,
+				requiredNodes: ReadonlyArray<{
+					nodeId: number
+					node: ZUINode
+				}>,
 			) => {
 				// Persist a detached snapshot so lifecycle fencing controls publication
 				const homeHex = this.homeHex
-				const restore = createFirmwarePersistenceRestore(homeHex)
+				const restore = createFirmwarePersistenceRestore(
+					homeHex,
+					staged.map(({ nodeId }) => nodeId),
+				)
 				const snapshot: NodesStoreRecord = {}
 				for (const key of Object.keys(this.storeNodes)) {
 					snapshot[key] = this.storeNodes[key]
@@ -1201,7 +1228,13 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 						entry.firmwareUpdatesDismissed
 					snapshot[entry.nodeId] = cloned
 				}
-				await this._updateStoreNodesSnapshot(snapshot, true, homeHex)
+				await this._updateStoreNodesSnapshot(
+					snapshot,
+					true,
+					homeHex,
+					false,
+					requiredNodes,
+				)
 				return restore
 			},
 			emitNodeUpdate: (
@@ -2474,7 +2507,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 	private async _persistNodesSnapshot(
 		snapshot: NodesStoreRecord,
-		homeHex = this.homeHex,
+		homeHex: string | undefined,
 	): Promise<void> {
 		if (!homeHex) {
 			logger.warn('HomeHex not set, skipping storeDevices')
@@ -2496,22 +2529,137 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		await jsonStore.put(store.nodes, nodes)
 	}
 
+	private async _restoreFirmwareNodeFields(
+		previousNodes: NodesStoreRecord,
+		nodeIds: readonly number[],
+		homeHex: string,
+	): Promise<void> {
+		await this._serializeNodesPersistence(async () => {
+			const storedNodes = (jsonStore.get(store.nodes) ||
+				{}) as NodesStoreRecordByHome
+			const snapshot = structuredClone(storedNodes[homeHex] || {})
+
+			for (const nodeId of nodeIds) {
+				const previous = previousNodes[nodeId]
+				const persistedNode = snapshot[nodeId]
+				if (previous && !persistedNode) {
+					continue
+				}
+				const current: Partial<ZUINode> = { ...persistedNode }
+
+				if (previous?.availableFirmwareUpdates !== undefined) {
+					current.availableFirmwareUpdates =
+						previous.availableFirmwareUpdates
+				} else {
+					delete current.availableFirmwareUpdates
+				}
+				if (previous?.lastFirmwareUpdateCheck !== undefined) {
+					current.lastFirmwareUpdateCheck =
+						previous.lastFirmwareUpdateCheck
+				} else {
+					delete current.lastFirmwareUpdateCheck
+				}
+				if (previous?.firmwareUpdatesDismissed !== undefined) {
+					current.firmwareUpdatesDismissed =
+						previous.firmwareUpdatesDismissed
+				} else {
+					delete current.firmwareUpdatesDismissed
+				}
+
+				if (Object.keys(current).length > 0) {
+					snapshot[nodeId] = current
+				} else {
+					delete snapshot[nodeId]
+				}
+			}
+
+			await this._persistNodesSnapshot(snapshot, homeHex)
+		})
+	}
+
+	private async _serializeNodesPersistence(
+		write: () => Promise<void>,
+		throwError = true,
+	): Promise<void> {
+		const persistence = this._nodesPersistenceTail.then(async () => {
+			try {
+				await write()
+			} catch (error) {
+				logger.error(
+					`Error while updating store nodes: ${error.message}`,
+					error,
+				)
+				if (throwError) {
+					throw error
+				}
+			}
+		})
+
+		this._nodesPersistenceTail = persistence.catch(() => undefined)
+		await persistence
+	}
+
 	private async _updateStoreNodesSnapshot(
 		snapshot: NodesStoreRecord,
 		throwError = true,
 		homeHex = this.homeHex,
+		preservePersistedFirmwareFields = true,
+		requiredNodes?: ReadonlyArray<{
+			nodeId: number
+			node: ZUINode
+		}>,
 	): Promise<void> {
-		try {
-			await this._persistNodesSnapshot(snapshot, homeHex)
-		} catch (error) {
-			logger.error(
-				`Error while updating store nodes: ${error.message}`,
-				error,
-			)
-			if (throwError) {
-				throw error
+		const persistedSnapshot = structuredClone(snapshot)
+		const nodeRegistry = this._nodes
+		await this._serializeNodesPersistence(async () => {
+			if (nodeRegistry === this._nodes) {
+				for (const { nodeId, node } of requiredNodes || []) {
+					const currentNode = nodeRegistry.get(nodeId)
+					if (currentNode && currentNode !== node) {
+						persistedSnapshot[nodeId] = structuredClone(
+							this.storeNodes[nodeId] || {},
+						)
+					} else if (!currentNode) {
+						delete persistedSnapshot[nodeId]
+					}
+				}
 			}
-		}
+
+			if (preservePersistedFirmwareFields && homeHex) {
+				const storedNodes = (jsonStore.get(store.nodes) ||
+					{}) as NodesStoreRecordByHome
+				const currentHome = storedNodes[homeHex] || {}
+				for (const [nodeId, node] of Object.entries(
+					persistedSnapshot,
+				)) {
+					const persistedNode = currentHome[nodeId]
+					if (!persistedNode) {
+						continue
+					}
+
+					if (persistedNode.availableFirmwareUpdates !== undefined) {
+						node.availableFirmwareUpdates =
+							persistedNode.availableFirmwareUpdates
+					} else {
+						delete node.availableFirmwareUpdates
+					}
+					if (persistedNode.lastFirmwareUpdateCheck !== undefined) {
+						node.lastFirmwareUpdateCheck =
+							persistedNode.lastFirmwareUpdateCheck
+					} else {
+						delete node.lastFirmwareUpdateCheck
+					}
+					if (persistedNode.firmwareUpdatesDismissed !== undefined) {
+						node.firmwareUpdatesDismissed =
+							persistedNode.firmwareUpdatesDismissed
+					} else {
+						delete node.firmwareUpdatesDismissed
+					}
+				}
+			}
+
+			await this._persistNodesSnapshot(persistedSnapshot, homeHex)
+		}, throwError)
 	}
 
 	async updateStoreNodes(throwError = true) {
@@ -6154,13 +6302,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			this.sendToSocket(socketEvents.nodeRemoved, node)
 		}
 
-		if (
-			!this._inclusionCoordinator.isReplacing &&
-			this.storeNodes[nodeid]
-		) {
+		if (!this._inclusionCoordinator.isReplacing) {
 			delete this.storeNodes[nodeid]
-			// eslint-disable-next-line @typescript-eslint/no-floating-promises
-			this.updateStoreNodes(false)
+			void this.updateStoreNodes(false)
 		}
 	}
 
