@@ -2,6 +2,8 @@
 
 /// <reference path="types.d.ts" />
 
+const { listCommentsSinceTransfer } = require("./utils.cjs");
+
 const CLASSIFY_ISSUE_COMMENT_TAG = "<!-- CLASSIFY_ISSUE_COMMENT_TAG -->";
 
 /**
@@ -38,12 +40,14 @@ If this is the case, please close this issue and open a one in the [Z-Wave JS re
 		message += CLASSIFY_ISSUE_COMMENT_TAG;
 	}
 
-	// Existing comments are tagged with LOGFILE_COMMENT_TAG
+	// Existing comments are tagged with CLASSIFY_ISSUE_COMMENT_TAG
 	try {
-		const { data: comments } = await github.rest.issues.listComments({
-			...options,
-			issue_number: context.issue.number,
-		});
+		const comments = await listCommentsSinceTransfer(
+			github,
+			options.owner,
+			options.repo,
+			context.issue.number,
+		);
 		const existing = comments.find(
 			(c) =>
 				c.user?.login === "zwave-js-bot"

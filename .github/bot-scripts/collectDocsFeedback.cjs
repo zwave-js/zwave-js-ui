@@ -20,7 +20,7 @@ const {
 	DOCS_ANSWER_METADATA_VERSION,
 	DOCS_BASE_URL,
 } = require("./answerFromDocs.cjs");
-const { ghGraphql, ghPaginated, ghRequest } = require("./githubApi.cjs");
+const { ghGraphql } = require("./githubApi.cjs");
 const { embedBatched, EMBEDDING_MODEL } = require("./modelsApi.cjs");
 const { cleanQuestion } = require("./postsIndex.cjs");
 const { authorizedUsers } = require("./authorizedUsers.cjs");
@@ -38,15 +38,8 @@ const DEFAULT_WEIGHT = 1;
 // a maintainer downvote or the author plus one other person does
 const SUPPRESS_SCORE = -3;
 
-// Reaction contents in REST ("+1") and GraphQL ("THUMBS_UP") notation
 /** @type {Record<string, number>} */
 const REACTION_SIGNS = {
-	"+1": 1,
-	heart: 1,
-	hooray: 1,
-	rocket: 1,
-	"-1": -1,
-	confused: -1,
 	THUMBS_UP: 1,
 	HEART: 1,
 	HOORAY: 1,
@@ -216,6 +209,81 @@ function scoreReactions(reactions, postAuthor) {
  * @property {number} score
  */
 
+// Comment fields shared by the issue and discussion queries
+const commentFields = `
+	nodes {
+		body
+		url
+		createdAt
+		author { login }
+		reactions(first: 100) {
+			nodes {
+				content
+				user { login }
+			}
+		}
+	}`;
+
+/**
+ * Fetches the remaining comment pages of a busy issue or discussion
+ * @param {"Issue" | "Discussion"} type
+ * @param {string} id
+ * @param {any} connection
+ * @param {string} token
+ * @returns {Promise<any[]>}
+ */
+async function fetchAllComments(type, id, connection, token) {
+	const comments = [...(connection?.nodes ?? [])];
+	let pageInfo = connection?.pageInfo;
+	while (pageInfo?.hasNextPage) {
+		const more = await ghGraphql(
+			`
+			query moreComments($id: ID!, $cursor: String) {
+				node(id: $id) {
+					... on ${type} {
+						comments(first: 100, after: $cursor) {
+							pageInfo { hasNextPage endCursor }
+							${commentFields}
+						}
+					}
+				}
+			}
+			`,
+			{ id, cursor: pageInfo.endCursor },
+			token,
+		);
+		comments.push(...(more.node?.comments?.nodes ?? []));
+		pageInfo = more.node?.comments?.pageInfo;
+	}
+	return comments;
+}
+
+/**
+ * Picks the bot's answers out of a post's comments
+ * @param {any[]} comments
+ * @param {number} [transferredAt] Epoch ms, answers from before are skipped
+ * @returns {any[]}
+ */
+function findAnswers(comments, transferredAt = 0) {
+	return comments.filter(
+		(c) =>
+			c.author?.login === BOT_USER
+			&& c.body?.includes(DOCS_ANSWER_COMMENT_TAG)
+			&& new Date(c.createdAt).getTime() > transferredAt,
+	);
+}
+
+/**
+ * @param {any} comment
+ * @returns {{user: string, content: string}[]}
+ */
+function commentReactions(comment) {
+	return (comment.reactions?.nodes ?? []).map((/** @type {any} */ r) => ({
+		user: r.user?.login ?? "",
+		content: r.content,
+	}));
+}
+
 /**
  * @param {string} owner
  * @param {string} repo
@@ -227,63 +295,77 @@ async function collectFromIssues(owner, repo, since, token) {
 	/** @type {FeedbackRecord[]} */
 	const records = [];
 
-	const query = encodeURIComponent(
-		`repo:${owner}/${repo} is:issue commenter:${BOT_USER} updated:>=${since}`,
-	);
-	/** @type {any[]} */
-	const issues = [];
-	for (let page = 1;; page++) {
-		const result = await ghRequest(
-			"GET",
-			`/search/issues?q=${query}&per_page=100&page=${page}`,
-			undefined,
-			token,
-		);
-		issues.push(...result.items);
-		if (issues.length >= result.total_count || result.items.length === 0) {
-			break;
-		}
-	}
-
-	for (const issue of issues) {
-		const comments = await ghPaginated(
-			`/repos/${owner}/${repo}/issues/${issue.number}/comments?per_page=100`,
-			token,
-		);
-		const answers = comments.filter((c) =>
-			c.user?.login === BOT_USER
-			&& c.body?.includes(DOCS_ANSWER_COMMENT_TAG)
-		);
-		for (const answer of answers) {
-			/** @type {{user: string, content: string}[]} */
-			let reactions = [];
-			if (answer.reactions?.total_count > 0) {
-				/** @type {any[]} */
-				const raw = await ghRequest(
-					"GET",
-					`/repos/${owner}/${repo}/issues/comments/${answer.id}/reactions?per_page=100`,
-					undefined,
-					token,
-				);
-				reactions = raw.map((r) => ({
-					user: r.user?.login ?? "",
-					content: r.content,
-				}));
+	const searchQuery =
+		`repo:${owner}/${repo} is:issue commenter:${BOT_USER} updated:>=${since}`;
+	let cursor = null;
+	for (;;) {
+		const data = await ghGraphql(
+			`
+			query search($searchQuery: String!, $cursor: String) {
+				search(type: ISSUE, query: $searchQuery, first: 25, after: $cursor) {
+					pageInfo { hasNextPage endCursor }
+					nodes {
+						... on Issue {
+							id
+							title
+							body
+							url
+							author { login }
+							timelineItems(first: 100, itemTypes: [TRANSFERRED_EVENT]) {
+								nodes {
+									... on TransferredEvent { createdAt }
+								}
+							}
+							comments(first: 100) {
+								pageInfo { hasNextPage endCursor }
+								${commentFields}
+							}
+						}
+					}
+				}
 			}
-			const author = issue.user?.login ?? "";
-			const { votes, score } = scoreReactions(reactions, author);
-			records.push({
-				type: "issue",
-				postUrl: issue.html_url,
-				commentUrl: answer.html_url,
-				title: issue.title,
-				author,
-				question: cleanQuestion(issue.title, issue.body ?? ""),
-				...parseAnswerMetadata(answer.body),
-				votes,
-				score,
-			});
+			`,
+			{ searchQuery, cursor },
+			token,
+		);
+
+		for (const issue of data.search.nodes) {
+			const comments = await fetchAllComments(
+				"Issue",
+				issue.id,
+				issue.comments,
+				token,
+			);
+			// Answers older than the last transfer were written for the repo
+			// the issue came from
+			const transferredAt = Math.max(
+				0,
+				...issue.timelineItems.nodes.map(
+					(/** @type {any} */ n) => new Date(n.createdAt).getTime(),
+				),
+			);
+			const author = issue.author?.login ?? "";
+			for (const answer of findAnswers(comments, transferredAt)) {
+				const { votes, score } = scoreReactions(
+					commentReactions(answer),
+					author,
+				);
+				records.push({
+					type: "issue",
+					postUrl: issue.url,
+					commentUrl: answer.url,
+					title: issue.title,
+					author,
+					question: cleanQuestion(issue.title, issue.body ?? ""),
+					...parseAnswerMetadata(answer.body),
+					votes,
+					score,
+				});
+			}
 		}
+
+		if (!data.search.pageInfo.hasNextPage) break;
+		cursor = data.search.pageInfo.endCursor;
 	}
 
 	return records;
@@ -299,20 +381,6 @@ async function collectFromIssues(owner, repo, since, token) {
 async function collectFromDiscussions(owner, repo, since, token) {
 	/** @type {FeedbackRecord[]} */
 	const records = [];
-
-	// Shared between the search query and the more-comments query
-	const commentFields = `
-		nodes {
-			body
-			url
-			author { login }
-			reactions(first: 100) {
-				nodes {
-					content
-					user { login }
-				}
-			}
-		}`;
 
 	const searchQuery =
 		`repo:${owner}/${repo} commenter:${BOT_USER} updated:>=${since}`;
@@ -344,44 +412,18 @@ async function collectFromDiscussions(owner, repo, since, token) {
 		);
 
 		for (const discussion of data.search.nodes) {
-			const comments = [...(discussion.comments?.nodes ?? [])];
-			// Fetch remaining comment pages of busy discussions
-			let commentsPage = discussion.comments?.pageInfo;
-			while (commentsPage?.hasNextPage) {
-				const more = await ghGraphql(
-					`
-					query moreComments($id: ID!, $cursor: String) {
-						node(id: $id) {
-							... on Discussion {
-								comments(first: 100, after: $cursor) {
-									pageInfo { hasNextPage endCursor }
-									${commentFields}
-								}
-							}
-						}
-					}
-					`,
-					{ id: discussion.id, cursor: commentsPage.endCursor },
-					token,
-				);
-				comments.push(...(more.node?.comments?.nodes ?? []));
-				commentsPage = more.node?.comments?.pageInfo;
-			}
-
-			const answers = comments.filter(
-				(/** @type {any} */ c) =>
-					c.author?.login === BOT_USER
-					&& c.body?.includes(DOCS_ANSWER_COMMENT_TAG),
+			const comments = await fetchAllComments(
+				"Discussion",
+				discussion.id,
+				discussion.comments,
+				token,
 			);
-			for (const answer of answers) {
-				const reactions = (answer.reactions?.nodes ?? []).map(
-					(/** @type {any} */ r) => ({
-						user: r.user?.login ?? "",
-						content: r.content,
-					}),
+			const author = discussion.author?.login ?? "";
+			for (const answer of findAnswers(comments)) {
+				const { votes, score } = scoreReactions(
+					commentReactions(answer),
+					author,
 				);
-				const author = discussion.author?.login ?? "";
-				const { votes, score } = scoreReactions(reactions, author);
 				records.push({
 					type: "discussion",
 					postUrl: discussion.url,

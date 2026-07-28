@@ -67,6 +67,24 @@ jobs:
           const bot = require(`${process.env.GITHUB_WORKSPACE}/.github/bot-scripts/index.cjs`);
           return bot.classifyIssueFeedback({github, context}, aiResponse);
 
+  # Collapse the bot comments a transferred issue inherited from the repo
+  # it came from, they are about the wrong repository now
+  hide-transferred-comments:
+    runs-on: [ubuntu-latest]
+    if: github.event_name == 'issues' && github.event.action == 'opened'
+
+    steps:
+    - name: Checkout master branch
+      uses: actions/checkout@v7
+
+    - name: Hide inherited bot comments
+      uses: actions/github-script@v9
+      with:
+        github-token: ${{secrets.BOT_TOKEN}}
+        script: |
+          const bot = require(`${process.env.GITHUB_WORKSPACE}/.github/bot-scripts/index.cjs`);
+          await bot.hideTransferredComments({github, context});
+
   # Answer questions that are covered by the documentation and/or
   # suggest similar existing posts. Discussions are restricted to the
   # Q&A category by answerFromDocs.cjs itself. Excluding maintainers

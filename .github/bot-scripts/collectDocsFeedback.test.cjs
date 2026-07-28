@@ -191,8 +191,8 @@ describe("collectDocsFeedback", () => {
 		it("collapses multiple same-sign reactions from one user into a single vote", () => {
 			const { votes, score } = scoreReactions(
 				[
-					{ user: "alice", content: "+1" },
-					{ user: "alice", content: "heart" },
+					{ user: "alice", content: "THUMBS_UP" },
+					{ user: "alice", content: "HEART" },
 				],
 				"postAuthor",
 			);
@@ -204,8 +204,8 @@ describe("collectDocsFeedback", () => {
 		it("cancels out contradicting reactions from the same user into no vote", () => {
 			const { votes, score } = scoreReactions(
 				[
-					{ user: "alice", content: "+1" },
-					{ user: "alice", content: "-1" },
+					{ user: "alice", content: "THUMBS_UP" },
+					{ user: "alice", content: "THUMBS_DOWN" },
 				],
 				"postAuthor",
 			);
@@ -216,9 +216,9 @@ describe("collectDocsFeedback", () => {
 		it("caps three same-sign reactions from one user to a single weighted vote", () => {
 			const { votes, score } = scoreReactions(
 				[
-					{ user: "alice", content: "+1" },
-					{ user: "alice", content: "heart" },
-					{ user: "alice", content: "hooray" },
+					{ user: "alice", content: "THUMBS_UP" },
+					{ user: "alice", content: "HEART" },
+					{ user: "alice", content: "HOORAY" },
 				],
 				"postAuthor",
 			);
@@ -229,9 +229,9 @@ describe("collectDocsFeedback", () => {
 		it("applies maintainer/author weights once per user after collapsing", () => {
 			const { votes, score } = scoreReactions(
 				[
-					{ user: "AlCalzone", content: "+1" },
-					{ user: "AlCalzone", content: "+1" },
-					{ user: "postAuthor", content: "+1" },
+					{ user: "AlCalzone", content: "THUMBS_UP" },
+					{ user: "AlCalzone", content: "THUMBS_UP" },
+					{ user: "postAuthor", content: "THUMBS_UP" },
 				],
 				"postAuthor",
 			);
@@ -242,26 +242,13 @@ describe("collectDocsFeedback", () => {
 		it("ignores reactions with an unrecognized content or bot users", () => {
 			const { votes, score } = scoreReactions(
 				[
-					{ user: "alice", content: "eyes" },
-					{ user: "some-bot[bot]", content: "+1" },
+					{ user: "alice", content: "EYES" },
+					{ user: "some-bot[bot]", content: "THUMBS_UP" },
 				],
 				"postAuthor",
 			);
 			expect(votes).toHaveLength(0);
 			expect(score).toBe(0);
-		});
-
-		it("understands both REST and GraphQL reaction content notations", () => {
-			const { votes: restVotes } = scoreReactions(
-				[{ user: "alice", content: "+1" }],
-				"postAuthor",
-			);
-			const { votes: graphqlVotes } = scoreReactions(
-				[{ user: "alice", content: "THUMBS_UP" }],
-				"postAuthor",
-			);
-			expect(restVotes).toHaveLength(1);
-			expect(graphqlVotes).toHaveLength(1);
 		});
 	});
 });
