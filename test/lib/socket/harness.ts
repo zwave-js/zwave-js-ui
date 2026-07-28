@@ -129,8 +129,11 @@ async function createHarnessInstance(
 		waitForServerSocketCount,
 		disconnectAllClients,
 		async closeInstance() {
-			await disconnectAllClients()
-			await instance.close()
+			try {
+				await disconnectAllClients()
+			} finally {
+				await instance.close()
+			}
 		},
 	}
 }
