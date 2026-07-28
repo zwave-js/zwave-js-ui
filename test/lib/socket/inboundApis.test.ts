@@ -200,12 +200,12 @@ describe('Socket contract: inbound ACK APIs', () => {
 			const client = await connectedClient(harness)
 
 			const result = await emit(client, 'HASS_API', {
-				apiName: 'notARealAction',
+				apiName: 'notARealAction\r\nFORGED',
 			})
 			expect(result).toStrictEqual({
 				success: false,
-				message: 'Unknown HASS api notARealAction',
-				api: 'notARealAction',
+				message: 'Unknown HASS api notARealAction\r\nFORGED',
+				api: 'notARealAction\r\nFORGED',
 			})
 		})
 
@@ -396,17 +396,20 @@ describe('Socket contract: inbound ACK APIs', () => {
 				const client = await connectedClient(harness)
 
 				const result = await emit(client, 'HASS_API', {
-					apiName: 'notARealAction',
+					apiName: 'notARealAction\r\nFORGED',
 				})
 				expect(result).toStrictEqual({
 					success: false,
-					message: 'Unknown HASS api notARealAction',
-					api: 'notARealAction',
+					message: 'Unknown HASS api notARealAction\r\nFORGED',
+					api: 'notARealAction\r\nFORGED',
 				})
 				expect(error).toHaveBeenCalledWith(
 					'Error while calling HASS api',
 					expect.any(Error),
 				)
+				expect(error.mock.calls[0][1]).toMatchObject({
+					message: 'Unknown HASS api notARealActionFORGED',
+				})
 			} finally {
 				error.mockRestore()
 			}
@@ -455,6 +458,7 @@ describe('Socket contract: inbound ACK APIs', () => {
 
 		it('strips control characters from logged operation names', async () => {
 			const info = vi.spyOn(createLogger('App'), 'info')
+			const error = vi.spyOn(createLogger('App'), 'error')
 			try {
 				const harness = await getHarness({
 					gateway: createFakeGateway(),
@@ -469,8 +473,12 @@ describe('Socket contract: inbound ACK APIs', () => {
 				expect(info).toHaveBeenCalledWith(
 					'Zniffer api call: getFramesFORGED',
 				)
+				expect(error.mock.calls[0][1]).toMatchObject({
+					message: 'Unknown ZNIFFER api getFramesFORGED',
+				})
 			} finally {
 				info.mockRestore()
+				error.mockRestore()
 			}
 		})
 

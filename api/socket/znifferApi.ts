@@ -73,7 +73,13 @@ export function registerZnifferApiHandler(
 						break
 					}
 					default:
-						throw new Error(`Unknown ZNIFFER api ${apiName}`)
+						err = `Unknown ZNIFFER api ${apiName}`
+						logger.error(
+							'Error while calling ZNIFFER api',
+							new Error(
+								`Unknown ZNIFFER api ${safeOperationName(apiName)}`,
+							),
+						)
 				}
 			} catch (error) {
 				logger.error('Error while calling ZNIFFER api', error)

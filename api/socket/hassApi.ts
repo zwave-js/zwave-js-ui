@@ -92,7 +92,13 @@ export function registerHassApiHandler(
 							)
 						break
 					default:
-						throw new Error(`Unknown HASS api ${apiName}`)
+						err = `Unknown HASS api ${apiName}`
+						logger.error(
+							'Error while calling HASS api',
+							new Error(
+								`Unknown HASS api ${safeOperationName(apiName)}`,
+							),
+						)
 				}
 			} catch (error) {
 				logger.error('Error while calling HASS api', error)
