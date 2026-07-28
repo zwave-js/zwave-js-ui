@@ -302,6 +302,22 @@ export default class Gateway<
 		this.customDeviceRegistrySource = customDeviceRegistry
 	}
 
+	private requireMqtt(): TMqtt {
+		const mqtt = this._mqtt
+		if (!mqtt) {
+			throw new TypeError('MQTT client is not configured')
+		}
+		return mqtt
+	}
+
+	private requireZwave(): TZwave {
+		const zwave = this._zwave
+		if (!zwave) {
+			throw new TypeError('Z-Wave client is not configured')
+		}
+		return zwave
+	}
+
 	/**
 	 * Build the {@link MqttDiscoveryManagerOptions} that wire a discovery
 	 * manager to this gateway's live clients. Public so the HA-owned
@@ -316,8 +332,9 @@ export default class Gateway<
 			zwave: this._zwave,
 			nodeUpdates: {
 				emitNodeUpdate: (nodeId, hassDevices) => {
-					const node = this.zwave.nodes.get(nodeId)
-					if (node) this.zwave.emitNodeUpdate(node, { hassDevices })
+					const zwave = this.requireZwave()
+					const node = zwave.nodes.get(nodeId)
+					if (node) zwave.emitNodeUpdate(node, { hassDevices })
 				},
 			},
 			topics: {
@@ -336,7 +353,7 @@ export default class Gateway<
 	}
 
 	private get gatewayMqtt(): GatewayMqttPublishPort {
-		const mqtt = this._mqtt
+		const mqtt = this.requireMqtt()
 		return {
 			publish: (topic, data, options) =>
 				Reflect.apply(mqtt.publish.bind(mqtt), mqtt, [
@@ -348,7 +365,7 @@ export default class Gateway<
 	}
 
 	private get gatewayZwaveApi(): GatewayZwaveApiPort {
-		return this._zwave
+		return this.requireZwave()
 	}
 
 	private get customDeviceRegistry(): HassDeviceRegistryLifecyclePort {
@@ -431,7 +448,7 @@ export default class Gateway<
 	private async runJob(jobConfig: ScheduledJob) {
 		logger.info(`Executing scheduled job "${jobConfig.name}"...`)
 		try {
-			await this.zwave.driverFunction(jobConfig.code)
+			await this.requireZwave().driverFunction(jobConfig.code)
 		} catch (error) {
 			logger.error(
 				`Error executing scheduled job "${jobConfig.name}": ${getErrorMessage(error)}`,
@@ -530,7 +547,7 @@ export default class Gateway<
 				}
 
 				if (valueConf.parseReceive) {
-					const node = this._zwave.nodes.get(valueId.nodeId)
+					const node = this.requireZwave().nodes.get(valueId.nodeId)
 					const parsedVal = this._evalFunction(
 						valueConf.receiveFunction,
 						valueId,
@@ -589,7 +606,7 @@ export default class Gateway<
 				} finally {
 					// Preserve the Z-Wave-before-MQTT shutdown contract
 					if (this.mqttEnabled) {
-						await this._mqtt.close()
+						await this.requireMqtt().close()
 					}
 				}
 			}
@@ -599,25 +616,27 @@ export default class Gateway<
 	private attachListeners(): void {
 		if (this.listenersAttached) return
 
-		if (this.mqttEnabled) {
-			this._mqtt.on('writeRequest', this.onWriteRequest)
-			this._mqtt.on('broadcastRequest', this.onBroadRequest)
-			this._mqtt.on('multicastRequest', this.onMulticastRequest)
-			this._mqtt.on('apiCall', this.onApiRequest)
+		const mqtt = this._mqtt
+		if (mqtt && !mqtt.disabled) {
+			mqtt.on('writeRequest', this.onWriteRequest)
+			mqtt.on('broadcastRequest', this.onBroadRequest)
+			mqtt.on('multicastRequest', this.onMulticastRequest)
+			mqtt.on('apiCall', this.onApiRequest)
 		}
 
-		if (this._zwave) {
-			this._zwave.on('nodeInited', this.onNodeInited)
-			this._zwave.on('driverStatus', this.onDriverStatus)
+		const zwave = this._zwave
+		if (zwave) {
+			zwave.on('nodeInited', this.onNodeInited)
+			zwave.on('driverStatus', this.onDriverStatus)
 
 			if (this.mqttEnabled) {
-				this._zwave.on('nodeStatus', this.onNodeStatus)
-				this._zwave.on('nodeLastActive', this.onNodeLastActive)
-				this._zwave.on('valueChanged', this.onValueChanged)
-				this._zwave.on('nodeRemoved', this.onNodeRemoved)
-				this._zwave.on('notification', this.onNotification)
+				zwave.on('nodeStatus', this.onNodeStatus)
+				zwave.on('nodeLastActive', this.onNodeLastActive)
+				zwave.on('valueChanged', this.onValueChanged)
+				zwave.on('nodeRemoved', this.onNodeRemoved)
+				zwave.on('notification', this.onNotification)
 				if (this.config.sendEvents) {
-					this._zwave.on('event', this.onEvent)
+					zwave.on('event', this.onEvent)
 				}
 			}
 		}
@@ -815,7 +834,7 @@ export default class Gateway<
 	 * Rediscover all hass devices of this node
 	 */
 	rediscoverNode(nodeID: number): void {
-		const node = this._zwave.nodes.get(nodeID)
+		const node = this.requireZwave().nodes.get(nodeID)
 		if (node && !node.virtual) {
 			for (const topic of Object.keys(this.topicValues)) {
 				if (this.topicValues[topic].nodeId === nodeID) {
@@ -866,7 +885,7 @@ export default class Gateway<
 	}
 
 	updateNodeTopics(nodeId: number): void {
-		const node = this._zwave.nodes.get(nodeId)
+		const node = this.requireZwave().nodes.get(nodeId)
 		if (!node) return
 
 		const topics = Object.keys(this.topicValues).filter(
@@ -894,7 +913,7 @@ export default class Gateway<
 			return
 		}
 
-		const node = this._zwave.nodes.get(nodeId)
+		const node = this.requireZwave().nodes.get(nodeId)
 		if (!node) return
 		const nodeValues = this._requireNodeValues(node)
 		const topics = Object.values(nodeValues).map((value) =>
@@ -910,11 +929,12 @@ export default class Gateway<
 		eventName: string,
 		...args: any[]
 	): void {
+		const mqtt = this.requireMqtt()
 		const topic = `${MqttClient.EVENTS_PREFIX}/${
-			this._mqtt.clientID
+			mqtt.clientID
 		}/${emitter}/${eventName.replace(/\s/g, '_')}`
 
-		this._mqtt.publish(topic, { data: args }, { qos: 1, retain: false })
+		mqtt.publish(topic, { data: args }, { qos: 1, retain: false })
 	}
 
 	/**
@@ -1023,7 +1043,7 @@ export default class Gateway<
 
 			if (this.topicLevels.indexOf(levels) < 0) {
 				this.topicLevels.push(levels)
-				this._mqtt
+				this.requireMqtt()
 					.subscribe('+'.repeat(levels).split('').join('/'))
 					.catch(() => {
 						// ignore, handled by mqtt client
@@ -1126,7 +1146,10 @@ export default class Gateway<
 			valueId.id = node.id + '-' + valueId.id
 
 			try {
-				this._zwave.setPollInterval(valueId, valueConfig.pollInterval)
+				this.requireZwave().setPollInterval(
+					valueId,
+					valueConfig.pollInterval,
+				)
 			} catch (error) {
 				logger.error(
 					`Error while enabling poll interval: ${getErrorMessage(error)}`,
@@ -1146,6 +1169,7 @@ export default class Gateway<
 		if (!this.mqttEnabled) {
 			return
 		}
+		const mqtt = this.requireMqtt()
 
 		const nodeTopic = this.nodeTopic(node)
 
@@ -1163,7 +1187,7 @@ export default class Gateway<
 				}
 			}
 
-			this._mqtt.publish(nodeTopic + '/status', data)
+			mqtt.publish(nodeTopic + '/status', data)
 		}
 
 		// Publish Node Info on separate topic
@@ -1174,7 +1198,7 @@ export default class Gateway<
 			delete nodeData.hassDevices
 			delete nodeData.values
 
-			this._mqtt.publish(nodeTopic + '/nodeinfo', nodeData)
+			mqtt.publish(nodeTopic + '/nodeinfo', nodeData)
 		}
 	}
 
@@ -1186,6 +1210,7 @@ export default class Gateway<
 		if (!this.mqttEnabled) {
 			return
 		}
+		const mqtt = this.requireMqtt()
 
 		const nodeTopic = this.nodeTopic(node)
 
@@ -1201,7 +1226,7 @@ export default class Gateway<
 				}
 			}
 
-			this._mqtt.publish(nodeTopic + '/lastActive', data)
+			mqtt.publish(nodeTopic + '/lastActive', data)
 		}
 	}
 
@@ -1223,7 +1248,7 @@ export default class Gateway<
 		}
 
 		if (this.mqttEnabled) {
-			this._mqtt.publish('driver/status', ready)
+			this.requireMqtt().publish('driver/status', ready)
 		}
 	}
 
@@ -1236,7 +1261,8 @@ export default class Gateway<
 		apiName: string,
 		payload: { args: Parameters<ZwaveClient[AllowedApis]> },
 	): Promise<void> {
-		if (this._zwave) {
+		const zwave = this._zwave
+		if (zwave) {
 			const args = payload.args || []
 
 			let result: CallAPIResult<AllowedApis> & { origin?: any }
@@ -1251,7 +1277,7 @@ export default class Gateway<
 					origin: payload,
 				}
 			}
-			this._mqtt.publish(topic, result, { retain: false })
+			this.requireMqtt().publish(topic, result, { retain: false })
 		} else {
 			logger.error(`Requested Z-Wave api ${apiName} doesn't exist`)
 		}
@@ -1291,7 +1317,7 @@ export default class Gateway<
 					if (valueTopic === undefined) {
 						throw new TypeError('Expected a broadcast topic')
 					}
-					await this._zwave.writeValue(
+					await this.requireZwave().writeValue(
 						this._requireTopicValue(valueTopic),
 						payload,
 						payload?.options,
@@ -1311,7 +1337,7 @@ export default class Gateway<
 				logger.error('Invalid valueId: ' + error)
 				return
 			}
-			await this._zwave.writeBroadcast(
+			await this.requireZwave().writeBroadcast(
 				payload,
 				payload.value,
 				payload.options,
@@ -1339,7 +1365,7 @@ export default class Gateway<
 
 			if (result.handled) return
 
-			await this._zwave.writeValue(
+			await this.requireZwave().writeValue(
 				valueId,
 				result.value,
 				payload?.options,
@@ -1382,7 +1408,7 @@ export default class Gateway<
 			return
 		}
 
-		await this._zwave.writeMulticast(
+		await this.requireZwave().writeMulticast(
 			nodes,
 			valueId as ZUIValueId,
 			value,
