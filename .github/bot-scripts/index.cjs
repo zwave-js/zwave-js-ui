@@ -2,6 +2,8 @@ module.exports = {
 	checkAuthorized: (...args) => require("./checkAuthorized.cjs")(...args),
 	classifyIssueFeedback: (...args) =>
 		require("./classifyIssueFeedback.cjs")(...args),
+	hideTransferredComments: (...args) =>
+		require("./hideTransferredComments.cjs")(...args),
 	fixLintFeedback: (...args) => require("./fixLintFeedback.cjs")(...args),
 	getFixLintInfo: (...args) => require("./getFixLintInfo.cjs")(...args),
 	rebaseFeedback: (...args) => require("./rebaseFeedback.cjs")(...args),

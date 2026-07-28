@@ -15,6 +15,7 @@ const {
 	rankRelatedPosts,
 } = require("./postsIndex.cjs");
 const { sanitizeModelAnswer } = require("./sanitizeAnswer.cjs");
+const { listCommentsSinceTransfer } = require("./utils.cjs");
 
 const DOCS_BASE_URL = "https://zwave-js.github.io/zwave-js-ui/#";
 const DOCS_ANSWER_COMMENT_TAG = "<!-- DOCS_ANSWER_COMMENT_TAG -->";
@@ -64,6 +65,8 @@ function chunkUrl(chunk) {
  */
 async function alreadyAnswered({ github, context }, post, isDiscussion) {
 	if (isDiscussion) {
+		// Discussions have no timeline API, so an answer inherited from a
+		// transfer cannot be told apart from ours
 		/** @type {string | null} */
 		let cursor = null;
 		for (;;) {
@@ -95,13 +98,11 @@ async function alreadyAnswered({ github, context }, post, isDiscussion) {
 			cursor = comments.pageInfo.endCursor;
 		}
 	} else {
-		const comments = await github.paginate(
-			github.rest.issues.listComments,
-			{
-				...context.repo,
-				issue_number: post.number,
-				per_page: 100,
-			},
+		const comments = await listCommentsSinceTransfer(
+			github,
+			context.repo.owner,
+			context.repo.repo,
+			post.number,
 		);
 		return comments.some((c) => c.body?.includes(DOCS_ANSWER_COMMENT_TAG));
 	}
@@ -647,6 +648,7 @@ ${DOCS_ANSWER_COMMENT_TAG}
 }
 
 module.exports = main;
+module.exports.alreadyAnswered = alreadyAnswered;
 module.exports.judgeAnswer = judgeAnswer;
 module.exports.validateJudgeResponse = validateJudgeResponse;
 module.exports.checkSuppression = checkSuppression;
