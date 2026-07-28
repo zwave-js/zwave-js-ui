@@ -34,8 +34,8 @@ export interface ManagedService {
 export interface GatewayFactoryPort {
 	create(
 		config: GatewayConfig,
-		zwave: ZWaveClient,
-		mqtt: MqttClient,
+		zwave: ZWaveClient | undefined,
+		mqtt: MqttClient | undefined,
 	): GatewayPort
 	dispose(): void
 }

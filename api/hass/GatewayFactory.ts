@@ -23,8 +23,8 @@ export class GatewayFactory {
 
 	public create<TZwave extends GatewayZwave, TMqtt extends GatewayMqtt>(
 		config: GatewayConfig,
-		zwave: TZwave,
-		mqtt: TMqtt,
+		zwave: TZwave | undefined,
+		mqtt: TMqtt | undefined,
 	): Gateway<TZwave, TMqtt> {
 		this.registry.start()
 		return new Gateway(config, zwave, mqtt, this.registry.fork())
