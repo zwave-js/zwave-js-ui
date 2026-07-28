@@ -779,7 +779,6 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	private _associationService: AssociationService
 	private _firmwareUpdateService: FirmwareUpdateService
 	private _inclusionCoordinator: InclusionCoordinator
-	private _nodesPersistenceTail: Promise<void> = Promise.resolve()
 
 	private nvmEvent: string
 
@@ -1406,9 +1405,16 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			getMaxNodeEventsQueueSize: () => this.maxNodeEventsQueueSize,
 			getPersistedNodes: () => jsonStore.get(store.nodes),
 			persistNodes: (nodes) => jsonStore.put(store.nodes, nodes),
-			runPersistenceTransaction: (operation) =>
-				this._serializeNodesPersistence(operation),
-			debug: (message) => logger.debug(message),
+			serializeNodesPersistence: (operation, throwError) =>
+				this._serializeNodesPersistence(operation, throwError),
+			persistStoreNodes: (nodes, throwError, requiredNodes) =>
+				this._updateStoreNodesSnapshot(
+					nodes,
+					throwError,
+					this.homeHex,
+					true,
+					requiredNodes,
+				),
 			sendToSocket: (event, data, ...args) =>
 				this.sendToSocket(event, data, ...args),
 			logNode: (node, level, message, ...args) =>
@@ -2282,7 +2288,24 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		snapshot: NodesStoreRecord,
 		homeHex: string | undefined,
 	): Promise<void> {
-		await this._nodeRegistry.persistDetachedSnapshot(snapshot, homeHex)
+		if (!homeHex) {
+			logger.warn('HomeHex not set, skipping storeDevices')
+			return
+		}
+
+		// Requires that getStoreNodes ran first to migrate legacy shapes
+		const storedNodes = jsonStore.get(store.nodes) as NodesStoreRecordByHome
+		const nodes = { ...storedNodes }
+
+		nodes[homeHex] = Object.keys(snapshot).reduce((result, key) => {
+			if (Object.keys(snapshot[key]).length > 0) {
+				result[key] = snapshot[key]
+			}
+			return result
+		}, {} as NodesStoreRecord)
+
+		logger.debug('Updating store nodes.json')
+		await jsonStore.put(store.nodes, nodes)
 	}
 
 	private async _restoreFirmwareNodeFields(

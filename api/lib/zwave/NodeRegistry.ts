@@ -114,8 +114,18 @@ export interface NodeRegistryHost {
 	getMaxNodeEventsQueueSize(): number
 	getPersistedNodes(): NodesStoreFile
 	persistNodes(nodes: NodesStoreRecordByHome): Promise<unknown>
-	runPersistenceTransaction(operation: () => Promise<void>): Promise<void>
-	debug(message: string): void
+	serializeNodesPersistence(
+		operation: () => Promise<void>,
+		throwError?: boolean,
+	): Promise<void>
+	persistStoreNodes(
+		nodes: NodesStoreRecord,
+		throwError: boolean,
+		requiredNodes?: ReadonlyArray<{
+			nodeId: number
+			node: ZUINode
+		}>,
+	): Promise<void>
 	sendToSocket(event: string, data: unknown, ...args: unknown[]): void
 	logNode(
 		node: ZWaveNode | ZUINode | number,
@@ -231,7 +241,7 @@ export class NodeRegistry {
 	async restorePersistedNodes(
 		isReady: () => boolean = () => true,
 	): Promise<void> {
-		await this.host.runPersistenceTransaction(() =>
+		await this.host.serializeNodesPersistence(() =>
 			this.restorePersistedNodesNow(isReady),
 		)
 	}
@@ -266,49 +276,18 @@ export class NodeRegistry {
 		}
 	}
 
-	private async persistSnapshot(
-		snapshot: NodesStoreRecord,
-		homeHex: string | undefined,
+	async updateStoreNodes(
+		throwError = true,
+		requiredNodes?: ReadonlyArray<{
+			nodeId: number
+			node: ZUINode
+		}>,
 	): Promise<void> {
-		if (!homeHex) {
-			this.logger.warn('HomeHex not set, skipping storeDevices')
-			return
-		}
-		// Restoration migrates legacy stores before snapshots update the home-ID-keyed shape
-		const storedNodes =
-			this.host.getPersistedNodes() as NodesStoreRecordByHome
-		const nodes = { ...storedNodes }
-		nodes[homeHex] = Object.keys(snapshot).reduce((result, key) => {
-			if (Object.keys(snapshot[key]).length > 0) {
-				result[key] = snapshot[key]
-			}
-			return result
-		}, {} as NodesStoreRecord)
-		this.host.debug('Updating store nodes.json')
-		await this.host.persistNodes(nodes)
-	}
-
-	async updateStoreNodes(throwError = true): Promise<void> {
-		try {
-			const snapshot = utils.copy(this.storeNodes)
-			const homeHex = this.host.getHomeHex()
-			await this.host.runPersistenceTransaction(() =>
-				this.persistSnapshot(snapshot, homeHex),
-			)
-		} catch (error) {
-			this.logger.error(
-				`Error while updating store nodes: ${getErrorMessage(error)}`,
-				error,
-			)
-			if (throwError) throw error
-		}
-	}
-
-	async persistDetachedSnapshot(
-		snapshot: NodesStoreRecord,
-		homeHex: string | undefined,
-	): Promise<void> {
-		await this.persistSnapshot(snapshot, homeHex)
+		await this.host.persistStoreNodes(
+			this.storeNodes,
+			throwError,
+			requiredNodes,
+		)
 	}
 
 	async setNodeName(nodeId: number, name: string): Promise<boolean> {
@@ -321,7 +300,7 @@ export class NodeRegistry {
 		if (zwaveNode.name !== name) zwaveNode.name = name
 		this.storeNodes[nodeId].name = name
 
-		await this.updateStoreNodes()
+		await this.updateStoreNodes(true, [{ nodeId, node }])
 		if (this.current && this.nodes.get(nodeId) === node) {
 			this.host.emitNodeUpdate(node, { name })
 		}
@@ -338,7 +317,7 @@ export class NodeRegistry {
 		if (zwaveNode.location !== location) zwaveNode.location = location
 		this.storeNodes[nodeId].loc = location
 
-		await this.updateStoreNodes()
+		await this.updateStoreNodes(true, [{ nodeId, node }])
 		if (this.current && this.nodes.get(nodeId) === node) {
 			this.host.emitNodeUpdate(node, { loc: location })
 		}
@@ -367,7 +346,6 @@ export class NodeRegistry {
 			stored.name = temporary.name
 			stored.loc = temporary.loc
 			this.storeNodes[nodeId] = stored
-			void this.updateStoreNodes(false)
 		}
 
 		const controller = this.host.getDriver().controller
@@ -378,6 +356,9 @@ export class NodeRegistry {
 			controller.getCustomSUCReturnRoutesCached(nodeId),
 		)
 		this.nodes.set(nodeId, node)
+		if (temporary) {
+			void this.updateStoreNodes(false, [{ nodeId, node }])
+		}
 		return node
 	}
 
@@ -427,7 +408,10 @@ export class NodeRegistry {
 		}
 		if (!this.host.isReplacing()) {
 			delete this.storeNodes[nodeId]
-			void this.updateStoreNodes(false)
+			void this.updateStoreNodes(
+				false,
+				node ? [{ nodeId, node }] : undefined,
+			)
 		}
 	}
 

@@ -25,7 +25,11 @@ import {
 } from 'zwave-js'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-import type { NodesStoreFile } from '#api/config/store.ts'
+import type {
+	NodesStoreFile,
+	NodesStoreRecord,
+	NodesStoreRecordByHome,
+} from '#api/config/store.ts'
 import { socketEvents } from '#api/lib/SocketEvents.ts'
 import type { ZUINode, ZUIValueId } from '#api/lib/ZwaveClient.ts'
 import {
@@ -77,8 +81,24 @@ function createHarness(
 		getMaxNodeEventsQueueSize: () => 2,
 		getPersistedNodes: () => persisted,
 		persistNodes: vi.fn(() => Promise.resolve()),
-		runPersistenceTransaction: (operation) => operation(),
-		debug: vi.fn(),
+		serializeNodesPersistence: (operation) => operation(),
+		persistStoreNodes: vi.fn(async (nodes, throwError) => {
+			const homeHex = host.getHomeHex()
+			if (!homeHex) return
+			const storedNodes =
+				host.getPersistedNodes() as NodesStoreRecordByHome
+			const persistedNodes = { ...storedNodes }
+			persistedNodes[homeHex] = Object.fromEntries(
+				Object.entries(nodes).filter(
+					([, node]) => Object.keys(node).length > 0,
+				),
+			)
+			try {
+				await host.persistNodes(persistedNodes)
+			} catch (error) {
+				if (throwError) throw error
+			}
+		}),
 		sendToSocket: vi.fn(),
 		logNode: vi.fn(),
 		emitNodeUpdate: vi.fn(),
@@ -170,7 +190,7 @@ describe('NodeRegistry persistence and lifecycle', () => {
 			missingHome.registry.restorePersistedNodes(),
 		).rejects.toThrow()
 		await missingHome.registry.updateStoreNodes()
-		expect(missingHome.logger.warn).toHaveBeenCalled()
+		expect(missingHome.host.persistNodes).not.toHaveBeenCalled()
 	})
 
 	it('reports persistence failures and skips state restored after restart', async () => {
@@ -182,7 +202,6 @@ describe('NodeRegistry persistence and lifecycle', () => {
 		await expect(
 			harness.registry.updateStoreNodes(false),
 		).resolves.toBeUndefined()
-		expect(harness.logger.error).toHaveBeenCalled()
 
 		let resolvePersist!: () => void
 		vi.mocked(harness.host.persistNodes).mockImplementationOnce(
@@ -216,25 +235,6 @@ describe('NodeRegistry persistence and lifecycle', () => {
 		await supersededRestore
 		expect(superseded.registry.storeNodes).toEqual({})
 
-		const detached = createHarness()
-		await detached.registry.persistDetachedSnapshot(
-			{ 2: { name: 'Detached' } },
-			'0x1234',
-		)
-		await detached.registry.persistDetachedSnapshot(
-			{ 3: { name: 'Captured home' } },
-			'0xabcd',
-		)
-		expect(detached.host.persistNodes).toHaveBeenLastCalledWith({
-			'0xabcd': { 3: { name: 'Captured home' } },
-		})
-		vi.mocked(detached.host.persistNodes).mockRejectedValueOnce(
-			new Error('detached failed'),
-		)
-		await expect(
-			detached.registry.persistDetachedSnapshot({}, '0x1234'),
-		).rejects.toThrow()
-
 		const otherHome = createHarness({
 			persisted: { '0xabcd': { 9: { name: 'Other' } } },
 		})
@@ -250,16 +250,17 @@ describe('NodeRegistry persistence and lifecycle', () => {
 		expect(staleScoped.registry.storeNodes).toEqual({})
 	})
 
-	it('persists queued node changes after restart', async () => {
+	it('captures node changes before registry replacement', async () => {
 		const harness = createHarness()
 		harness.registry.replaceStoreNodes({ 2: { name: 'Captured' } })
 		let release!: () => void
-		harness.host.runPersistenceTransaction = async (operation) => {
+		let persistedNodes: NodesStoreRecord | undefined
+		harness.host.persistStoreNodes = vi.fn(async (nodes) => {
+			persistedNodes = structuredClone(nodes)
 			await new Promise<void>((resolve) => {
 				release = resolve
 			})
-			await operation()
-		}
+		})
 
 		const update = harness.registry.updateStoreNodes()
 		harness.registry.replaceStoreNodes({ 3: { name: 'Replacement' } })
@@ -267,17 +268,7 @@ describe('NodeRegistry persistence and lifecycle', () => {
 		release()
 		await update
 
-		expect(harness.host.persistNodes).toHaveBeenCalledWith({
-			'0x1234': { 2: { name: 'Captured' } },
-		})
-
-		await harness.registry.persistDetachedSnapshot(
-			{ 4: { name: 'Detached' } },
-			'0xabcd',
-		)
-		expect(harness.host.persistNodes).toHaveBeenLastCalledWith({
-			'0xabcd': { 4: { name: 'Detached' } },
-		})
+		expect(persistedNodes).toEqual({ 2: { name: 'Captured' } })
 	})
 
 	it('publishes node discovery, inclusion, and removal', async () => {
@@ -292,6 +283,11 @@ describe('NodeRegistry persistence and lifecycle', () => {
 			name: 'New',
 			loc: 'Room',
 		})
+		expect(harness.host.persistStoreNodes).toHaveBeenCalledWith(
+			harness.registry.storeNodes,
+			false,
+			[{ nodeId: 2, node }],
+		)
 		harness.registry.addNode(harness.zwaveNode)
 		node.ready = true
 		harness.registry.addNode(harness.zwaveNode)
@@ -353,6 +349,11 @@ describe('NodeRegistry persistence and lifecycle', () => {
 			name: added.name,
 			loc: added.loc,
 		})
+		expect(harness.host.persistStoreNodes).toHaveBeenLastCalledWith(
+			harness.registry.storeNodes,
+			false,
+			[{ nodeId: 4, node: added }],
+		)
 	})
 
 	it('does not publish node settings completed after restart', async () => {
@@ -370,6 +371,11 @@ describe('NodeRegistry persistence and lifecycle', () => {
 			name: 'Kitchen',
 			location: 'Downstairs',
 		})
+		expect(harness.host.persistStoreNodes).toHaveBeenLastCalledWith(
+			harness.registry.storeNodes,
+			true,
+			[{ nodeId: 2, node }],
+		)
 
 		harness.registry.setNodeDefaultSetValueOptions(2, {
 			defaultTransitionDuration: '2s',
