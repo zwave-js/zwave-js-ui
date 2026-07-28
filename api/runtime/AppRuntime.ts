@@ -576,16 +576,35 @@ export class AppRuntime {
 		// hold for every caller).
 		this.lifecycle = 'stopping'
 
+		const teardownErrors: unknown[] = []
+
 		// (2) Quiesce HA before closing the clients.
-		await this.homeAssistant.stop()
+		try {
+			await this.homeAssistant.stop()
+		} catch (error) {
+			teardownErrors.push(error)
+		}
 
 		// (3) Close the current gateway, then destroy plugins.
-		if (options?.requireGateway) {
-			await this.ensureGateway().close()
-		} else {
-			await this.closeIfPresent(this.gateway)
+		try {
+			if (options?.requireGateway) {
+				await this.ensureGateway().close()
+			} else {
+				await this.closeIfPresent(this.gateway)
+			}
+		} catch (error) {
+			teardownErrors.push(error)
 		}
-		await this.destroyPlugins()
+
+		try {
+			await this.destroyPlugins()
+		} catch (error) {
+			teardownErrors.push(error)
+		}
+
+		if (teardownErrors.length > 0) {
+			throw teardownErrors[0]
+		}
 	}
 
 	/**

@@ -170,10 +170,13 @@ describe('App runtime behavior', () => {
 		}
 	})
 
-	it('loads configured plugins and destroys them during shutdown', async () => {
+	it('destroys plugins after earlier shutdown steps fail', async () => {
 		const pluginDir = mkdtempSync(path.join(tmpdir(), 'runtime-plugin-'))
 		const marker = path.join(pluginDir, 'events.txt')
 		const plugin = path.join(pluginDir, 'observable-plugin.mjs')
+		const gateway = createFakeGateway({
+			close: vi.fn().mockRejectedValue(new Error('gateway close failed')),
+		})
 		writeFileSync(
 			plugin,
 			`import { appendFileSync } from 'node:fs'
@@ -185,13 +188,22 @@ export default class ObservablePlugin {
 		)
 
 		try {
-			const runtime = createRuntime()
+			const runtime = createRuntime({
+				gatewayFactory: {
+					create: () => gateway,
+					dispose: () => undefined,
+				},
+			})
 			await runtime.startGateway({
 				gateway: { plugins: [plugin] },
 			})
+			vi.spyOn(runtime.getHomeAssistant(), 'stop').mockRejectedValue(
+				new Error('Home Assistant stop failed'),
+			)
 			await runtime.shutdown()
 
 			expect(readFileSync(marker, 'utf8')).toBe('loaded\ndestroyed\n')
+			expect(gateway.close).toHaveBeenCalledOnce()
 		} finally {
 			rmSync(pluginDir, { recursive: true, force: true })
 		}
