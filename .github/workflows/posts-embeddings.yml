@@ -16,6 +16,8 @@ on:
       - '.github/bot-scripts/buildPostsIndex.cjs'
       - '.github/bot-scripts/postsIndex.cjs'
       - '.github/bot-scripts/localEmbeddings.cjs'
+      - '.github/bot-scripts/package.json'
+      - '.github/bot-scripts/package-lock.json'
       - '.github/bot-scripts/githubApi.cjs'
       - '.github/bot-scripts/evalRelatedPosts.cjs'
       - '.github/bot-scripts/evalUtils.cjs'
