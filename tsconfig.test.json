@@ -4,10 +4,6 @@
     "strict": true,
     "noEmit": true,
     "rootDir": ".",
-    "baseUrl": ".",
-    "paths": {
-      "#api/*": ["api/*"]
-    },
     "allowImportingTsExtensions": true,
     "rewriteRelativeImportExtensions": false
   },
