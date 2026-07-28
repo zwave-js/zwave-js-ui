@@ -8,7 +8,6 @@ import { noop, type SocketAck } from './types.ts'
 
 const logger = loggers.module('App')
 
-// Optional action fields mirror the unvalidated wire payload
 export interface HassApiRequest {
 	apiName?: string
 	device?: HassDevice
@@ -39,7 +38,7 @@ export function registerHassApiHandler(
 				switch (data.apiName) {
 					case 'delete':
 						{
-							const gateway = runtime.requireGateway()
+							const gateway = runtime.ensureGateway()
 							res = Reflect.apply(
 								gateway.publishDiscovery.bind(gateway),
 								undefined,
@@ -56,7 +55,7 @@ export function registerHassApiHandler(
 						break
 					case 'discover':
 						{
-							const gateway = runtime.requireGateway()
+							const gateway = runtime.ensureGateway()
 							res = Reflect.apply(
 								gateway.publishDiscovery.bind(gateway),
 								undefined,
@@ -73,7 +72,7 @@ export function registerHassApiHandler(
 						break
 					case 'rediscoverNode':
 						{
-							const gateway = runtime.requireGateway()
+							const gateway = runtime.ensureGateway()
 							res = Reflect.apply(
 								gateway.rediscoverNode.bind(gateway),
 								undefined,
@@ -83,7 +82,7 @@ export function registerHassApiHandler(
 						break
 					case 'disableDiscovery':
 						{
-							const gateway = runtime.requireGateway()
+							const gateway = runtime.ensureGateway()
 							res = Reflect.apply(
 								gateway.disableDiscovery.bind(gateway),
 								undefined,
@@ -93,7 +92,7 @@ export function registerHassApiHandler(
 						break
 					case 'update':
 						{
-							const zwave = runtime.requireZwaveClient()
+							const zwave = runtime.ensureZWaveClient()
 							res = Reflect.apply(
 								zwave.updateDevice.bind(zwave),
 								undefined,
@@ -103,7 +102,7 @@ export function registerHassApiHandler(
 						break
 					case 'add':
 						{
-							const zwave = runtime.requireZwaveClient()
+							const zwave = runtime.ensureZWaveClient()
 							res = Reflect.apply(
 								zwave.addDevice.bind(zwave),
 								undefined,
@@ -113,7 +112,7 @@ export function registerHassApiHandler(
 						break
 					case 'store':
 						{
-							const zwave = runtime.requireZwaveClient()
+							const zwave = runtime.ensureZWaveClient()
 							res = await Reflect.apply(
 								zwave.storeDevices.bind(zwave),
 								undefined,

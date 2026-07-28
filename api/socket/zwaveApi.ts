@@ -19,12 +19,12 @@ export function registerInitHandler(socket: Socket, runtime: AppRuntime): void {
 		(_data: unknown, cb: SocketAck<InitAckState> = noop) => {
 			let state: Partial<ZwaveState> & { zniffer?: ZnifferStatus } = {}
 
-			const currentGw = runtime.requireGateway()
+			const currentGw = runtime.ensureGateway()
 			if (currentGw.zwave) {
 				state = currentGw.zwave.getState()
 			}
 
-			const currentZniffer = runtime.getZniffer()
+			const currentZniffer = runtime.zniffer
 			if (currentZniffer) {
 				state.zniffer = currentZniffer.status()
 			}
@@ -66,7 +66,7 @@ export function registerZwaveApiHandler(
 	socket.on(
 		inboundEvents.zwave,
 		async (data: ZwaveApiRequest, cb: SocketAck<ZwaveApiAck> = noop) => {
-			const currentGw = runtime.requireGateway()
+			const currentGw = runtime.ensureGateway()
 			if (currentGw.zwave) {
 				if (!data.args) data.args = []
 				const callApi = currentGw.zwave.callApi.bind(

@@ -11,7 +11,6 @@ export interface ChannelSubscriptionAck {
 }
 
 function currentSubscriptions(socket: Socket): string[] {
-	// Exclude the socket's own auto-joined room from the reported subscriptions
 	return [...socket.rooms].filter(
 		(r) => r !== socket.id && Object.hasOwn(channelMap, r),
 	)

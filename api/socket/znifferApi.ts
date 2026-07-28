@@ -44,20 +44,20 @@ export function registerZnifferApiHandler(
 			try {
 				switch (data.apiName) {
 					case 'start':
-						res = await runtime.requireZniffer().start()
+						res = await runtime.ensureZniffer().start()
 						break
 					case 'stop':
-						res = await runtime.requireZniffer().stop()
+						res = await runtime.ensureZniffer().stop()
 						break
 					case 'clear':
-						res = runtime.requireZniffer().clear()
+						res = runtime.ensureZniffer().clear()
 						break
 					case 'getFrames':
-						res = runtime.requireZniffer().getFrames()
+						res = runtime.ensureZniffer().getFrames()
 						break
 					case 'setFrequency':
 						{
-							const zniffer = runtime.requireZniffer()
+							const zniffer = runtime.ensureZniffer()
 							res = await Reflect.apply(
 								zniffer.setFrequency.bind(zniffer),
 								undefined,
@@ -67,7 +67,7 @@ export function registerZnifferApiHandler(
 						break
 					case 'setLRChannelConfig':
 						{
-							const zniffer = runtime.requireZniffer()
+							const zniffer = runtime.ensureZniffer()
 							res = await Reflect.apply(
 								zniffer.setLRChannelConfig.bind(zniffer),
 								undefined,
@@ -76,12 +76,12 @@ export function registerZnifferApiHandler(
 						}
 						break
 					case 'saveCaptureToFile':
-						res = await runtime.requireZniffer().saveCaptureToFile()
+						res = await runtime.ensureZniffer().saveCaptureToFile()
 						break
 					case 'loadCaptureFromBuffer': {
 						const buffer = Buffer.from(data.buffer)
 						res = await runtime
-							.requireZniffer()
+							.ensureZniffer()
 							.loadCaptureFromBuffer(buffer)
 						break
 					}

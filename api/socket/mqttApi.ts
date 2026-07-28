@@ -35,7 +35,7 @@ export function registerMqttApiHandler(
 				switch (data.api) {
 					case 'updateNodeTopics':
 						{
-							const gateway = runtime.requireGateway()
+							const gateway = runtime.ensureGateway()
 							res = Reflect.apply(
 								gateway.updateNodeTopics.bind(gateway),
 								undefined,
@@ -45,7 +45,7 @@ export function registerMqttApiHandler(
 						break
 					case 'removeNodeRetained':
 						{
-							const gateway = runtime.requireGateway()
+							const gateway = runtime.ensureGateway()
 							res = Reflect.apply(
 								gateway.removeNodeRetained.bind(gateway),
 								undefined,
