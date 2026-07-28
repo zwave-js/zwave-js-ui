@@ -4,17 +4,11 @@ import type { Express } from 'express'
 import type { Server as SocketIOServer } from 'socket.io'
 import { io as ioClient, type Socket as ClientSocket } from 'socket.io-client'
 import type { FakeGateway, FakeZniffer } from './fakes.ts'
-import type * as ZnifferModuleNamespace from '#api/lib/ZnifferManager.ts'
 import {
 	listenOnEphemeralPort,
 	useHarnessLifecycle,
-	type GatewayModule,
 	type SharedTestContext,
 } from '../shared/harness.ts'
-
-type ZnifferModule = typeof ZnifferModuleNamespace
-type RealGateway = InstanceType<GatewayModule['default']>
-type RealZniffer = InstanceType<ZnifferModule['default']>
 
 export interface SocketHarnessOptions {
 	gateway?: FakeGateway
@@ -28,15 +22,11 @@ export interface SocketHarness {
 	jsonStore: SharedTestContext['jsonStore']
 	store: SharedTestContext['store']
 	server: HttpServer
-	// Base URL is http://127.0.0.1:<ephemeral port>
 	url: string
-	// autoConnect defaults false so tests can attach connect_error listeners before connecting; every client is tracked and force-disconnected on teardown
 	createClient(opts?: Record<string, unknown>): ClientSocket
-	// Connects client and resolves on connect, or rejects on connect_error
 	connectClient(client: ClientSocket): Promise<ClientSocket>
-	// Round-trips a private per-client event through the real server socket, so a test can await "every already-emitted event this client will receive has arrived" without an arbitrary timer
+	// Round-trip ordering flushes prior server events without an arbitrary timer
 	flushClientEvents(client: ClientSocket): Promise<void>
-	// Polls the real server-side connected-socket count until it matches count
 	waitForServerSocketCount(count: number, timeoutMs?: number): Promise<void>
 	disconnectAllClients(): Promise<void>
 }
@@ -47,8 +37,8 @@ async function createHarnessInstance(
 ): Promise<SocketHarness & { closeInstance(): Promise<void> }> {
 	const instance = shared.createApp({
 		test: {
-			gateway: options.gateway as unknown as RealGateway | undefined,
-			zniffer: options.zniffer as unknown as RealZniffer | undefined,
+			gateway: options.gateway,
+			zniffer: options.zniffer,
 			restarting: options.restarting,
 		},
 	})
@@ -123,11 +113,7 @@ async function createHarnessInstance(
 		}
 		clients.clear()
 
-		try {
-			await waitForServerSocketCount(0, 1000)
-		} catch {
-			// A client may already have completed its disconnect
-		}
+		await waitForServerSocketCount(0, 1000)
 	}
 
 	return {
@@ -149,7 +135,6 @@ async function createHarnessInstance(
 	}
 }
 
-// Gives each test a fresh createApp() instance + server, so tests never leak state and need no reset hooks
 export function useSocketHarness(): (
 	options?: SocketHarnessOptions,
 ) => Promise<SocketHarness> {
