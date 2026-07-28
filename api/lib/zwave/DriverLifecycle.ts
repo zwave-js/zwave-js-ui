@@ -1,5 +1,3 @@
-
-
 import { Driver } from 'zwave-js'
 import type {
 	OTWFirmwareUpdateProgress,
@@ -765,6 +763,7 @@ export class DriverLifecycle {
 
 		logger.info('Client closed')
 		if (teardownError !== undefined) {
+			// eslint-disable-next-line @typescript-eslint/only-throw-error -- Preserve the first teardown rejection after completing all cleanup
 			throw teardownError
 		}
 	}

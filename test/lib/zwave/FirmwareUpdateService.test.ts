@@ -2425,12 +2425,14 @@ describe('FirmwareUpdateService', () => {
 				availableFirmwareUpdates: [update],
 				firmwareUpdatesDismissed: {},
 			})
-			nodes.updateStoreNodes.mockImplementation(async ([nodeId]) => {
-				if (nodeId === 8) {
-					blockerStarted.resolve()
-					await blockerBarrier.promise
-				}
-			})
+			vi.mocked(nodes.updateStoreNodes).mockImplementation(
+				async (nodeIds) => {
+					if (nodeIds?.[0] === 8) {
+						blockerStarted.resolve()
+						await blockerBarrier.promise
+					}
+				},
+			)
 			let persistedDismissals: Record<string, boolean> | undefined
 			nodes.persistStagedNodeUpdates.mockImplementation(
 				([projection]) => {
