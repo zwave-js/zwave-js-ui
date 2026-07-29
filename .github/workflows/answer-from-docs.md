@@ -118,8 +118,13 @@ on:
       uses: actions/upload-artifact@v7
       with:
         name: docs-answer-handoff
-        path: /tmp/docs-answer/handoff.json
-        retention-days: 1
+        path: /tmp/docs-answer/
+        # Deliberate: lets "Re-run all jobs" replace the artifact. An
+        # attacker-substituted artifact would need actions: write, which
+        # no job in this workflow has.
+        overwrite: true
+        # Long enough to re-run the post job days later
+        retention-days: 7
 
     # The step outcome (success vs. skipped) is exposed as a pre-activation
     # output and gates the agent job below
@@ -130,7 +135,9 @@ on:
   permissions:
     actions: read
     contents: read
-    issues: read
+    # report-index-status maintains the outage tracking issue with the
+    # workflow token
+    issues: write
     discussions: read
 
 # Only run the (expensive) agentic judge when the retrieval pipeline
@@ -146,6 +153,9 @@ runs-on-slim: ubuntu-latest
 
 engine:
   id: copilot
+  # The task is: read one JSON file, call one tool. Single digits of
+  # turns suffice, and the cap bounds what a prompt injection can burn.
+  max-turns: 5
 
 steps:
   - name: Download handoff
@@ -155,6 +165,7 @@ steps:
       path: /tmp/gh-aw/agent/
 
 safe-outputs:
+  timeout-minutes: 10
   jobs:
     post-docs-answer:
       description: "Post the verdict on whether the documentation excerpts answer the user's question. Call exactly once."
@@ -195,7 +206,12 @@ safe-outputs:
               const bot = require(`${process.env.GITHUB_WORKSPACE}/.github/bot-scripts/index.cjs`);
               await bot.postDocsAnswer({github, context});
 
-network: defaults
+# The judge reads a local file and calls the safe output - it needs
+# neither the GitHub MCP toolset nor any tool egress
+tools:
+  github: false
+
+network: {}
 
 timeout-minutes: 15
 ---
@@ -204,10 +220,10 @@ timeout-minutes: 15
 
 You are a support assistant for the Z-Wave JS UI project, a Z-Wave control panel and MQTT gateway built on top of Z-Wave JS. A user posted a question in a GitHub issue or discussion. A retrieval pipeline has selected excerpts from the project documentation that might answer it. Your task is to judge whether the excerpts actually answer the question.
 
-The file `/tmp/gh-aw/agent/handoff.json` on this runner contains:
+The file `/tmp/gh-aw/agent/judge-input.json` on this runner contains:
 
 - `question`: the user's post (title and body)
-- `chunks`: an array of documentation excerpts. The array index is the excerpt id. Each excerpt has `breadcrumbs` (the section path) and `text` (the content).
+- `excerpts`: an array of documentation excerpts. The array index is the excerpt id. Each excerpt has `breadcrumbs` (the section path) and `text` (the content).
 
 Read the file, compare the excerpts against the question, and report your verdict by calling the `post-docs-answer` tool with:
 
