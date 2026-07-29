@@ -65,7 +65,7 @@ runs:
       uses: actions/cache/restore@v6
       with:
         path: .docs-index
-        key: docs-embeddings-v3-${{ hashFiles('docs/**/*.md', '.github/bot-scripts/buildDocsIndex.cjs', '.github/bot-scripts/docsIndex.cjs', '.github/bot-scripts/localEmbeddings.cjs') }}
+        key: docs-embeddings-v3-${{ hashFiles('docs/**/*.md', '.github/bot-scripts/buildDocsIndex.cjs', '.github/bot-scripts/docsIndex.cjs', '.github/bot-scripts/localEmbeddings.cjs', '.github/bot-scripts/package-lock.json') }}
         restore-keys: docs-embeddings-v3-
 
     - name: Restore the posts index from cache

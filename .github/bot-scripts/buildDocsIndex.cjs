@@ -13,9 +13,9 @@ const { EMBEDDING_MODEL, embedBatched } = require("./localEmbeddings.cjs");
 // Chunks shorter than this are unlikely to contain useful information
 const MIN_CHUNK_LENGTH = 50;
 // Sections longer than this are sub-split so nothing gets truncated away.
-// The embedding model truncates input at 256 tokens, and code blocks
-// tokenize at ~2-3 characters/token, so oversized chunks would lose
-// their tails to truncation
+// The model is trained on short passages and its reference implementation
+// caps input at 256 word pieces (the tokenizer itself accepts 512), so
+// chunks are sized for that budget - code tokenizes at ~2-3 chars/token
 const MAX_CHUNK_LENGTH = 700;
 // Overlap between sub-splits so answers spanning a split boundary aren't lost
 const CHUNK_OVERLAP = 150;

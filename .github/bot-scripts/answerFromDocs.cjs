@@ -7,7 +7,9 @@ const { authorizedUsers } = require("./authorizedUsers.cjs");
 const { cosineSimilarity, loadDocsIndex, retrieve } = require(
 	"./docsIndex.cjs",
 );
-const { EMBEDDING_MODEL, embed } = require("./localEmbeddings.cjs");
+const { EMBEDDING_MODEL, embed, indexMatchesModel } = require(
+	"./localEmbeddings.cjs",
+);
 const { CHAT_MODEL, modelsRequest } = require("./modelsApi.cjs");
 const {
 	QUESTION_CATEGORY_SLUGS,
@@ -303,12 +305,15 @@ async function buildDocsAnswerSection(
 	// Ask the model whether the docs answer the question. judgeAnswer()
 	// already degrades malformed/invalid model content to a safe "no
 	// answer" result internally. Skip the docs section on a genuine API
-	// error, the related-posts section is still useful.
+	// error, the related-posts section is still useful - but annotate
+	// the run so the degradation is visible without reading the log.
 	let result;
 	try {
 		result = await judgeAnswer(question, ranked, token);
 	} catch (e) {
-		console.log(`Chat request failed: ${e.message}`);
+		console.log(
+			`::warning::Chat request failed, answering without a docs section: ${e.message}`,
+		);
 		return;
 	}
 	console.log("Model response:", JSON.stringify(result));
@@ -529,16 +534,10 @@ async function main(param) {
 	// The question is embedded locally. Similarities are only comparable
 	// within one model, so indexes built with a different model are skipped
 	// until the nightly rebuild replaces them.
-	if (docsIndex && docsIndex.model !== EMBEDDING_MODEL) {
-		console.log(
-			`Docs index model ${docsIndex.model} does not match ${EMBEDDING_MODEL}, ignoring it`,
-		);
+	if (docsIndex && !indexMatchesModel(docsIndex, "docs index")) {
 		docsIndex = undefined;
 	}
-	if (postsIndex && postsIndex.model !== EMBEDDING_MODEL) {
-		console.log(
-			`Posts index model ${postsIndex.model} does not match ${EMBEDDING_MODEL}, ignoring it`,
-		);
+	if (postsIndex && !indexMatchesModel(postsIndex, "posts index")) {
 		postsIndex = undefined;
 	}
 	if (!docsIndex && !postsIndex) return;
@@ -660,7 +659,10 @@ module.exports.alreadyAnswered = alreadyAnswered;
 module.exports.judgeAnswer = judgeAnswer;
 module.exports.validateJudgeResponse = validateJudgeResponse;
 module.exports.checkSuppression = checkSuppression;
+module.exports.buildRelatedPostsSection = buildRelatedPostsSection;
 module.exports.chunkUrl = chunkUrl;
+module.exports.MIN_SIMILARITY = MIN_SIMILARITY;
+module.exports.POSTS_MIN_SIMILARITY = POSTS_MIN_SIMILARITY;
 module.exports.DOCS_ANSWER_COMMENT_TAG = DOCS_ANSWER_COMMENT_TAG;
 module.exports.DOCS_ANSWER_METADATA_TAG = DOCS_ANSWER_METADATA_TAG;
 module.exports.DOCS_ANSWER_METADATA_VERSION = DOCS_ANSWER_METADATA_VERSION;

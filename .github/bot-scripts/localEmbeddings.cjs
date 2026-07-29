@@ -11,6 +11,15 @@ const { join } = require("node:path");
 // quality stay comparable between the two bots
 const EMBEDDING_MODEL = "Xenova/all-MiniLM-L6-v2";
 const MODEL_REVISION = "751bff37182d3f1213fa05d7196b954e230abad9";
+// q8 quantization quarters the download and memory footprint; the
+// retrieval evals showed no quality loss against the full weights
+const MODEL_DTYPE = "q8";
+
+// CI cache key for the model weights: changes exactly when different
+// weights would be downloaded, so unrelated edits to this file don't
+// evict the cache. Consumed by .github/actions/setup-bot-embeddings.
+const MODEL_CACHE_KEY = `${EMBEDDING_MODEL}@${MODEL_REVISION}@${MODEL_DTYPE}`
+	.replaceAll("/", "_");
 
 // Process a bounded number of texts per pipeline call to limit peak memory
 const BATCH_SIZE = 32;
@@ -26,17 +35,38 @@ function defaultModelCacheDir() {
 /** @type {Promise<any> | undefined} */
 let extractorPromise;
 
+async function createExtractor() {
+	// The package is ESM-only, hence the dynamic import
+	const { pipeline } = await import("@huggingface/transformers");
+	// A cache miss downloads the weights from huggingface.co. Retry with
+	// backoff so a hiccup there does not fail a user-triggered run.
+	let lastError;
+	for (let attempt = 1; attempt <= 3; attempt++) {
+		try {
+			return await pipeline("feature-extraction", EMBEDDING_MODEL, {
+				cache_dir: process.env.BOT_MODEL_CACHE_DIR?.trim()
+					|| defaultModelCacheDir(),
+				revision: MODEL_REVISION,
+				dtype: MODEL_DTYPE,
+			});
+		} catch (e) {
+			lastError = e;
+			console.log(
+				`::warning::Loading the embedding model failed (attempt ${attempt}/3): ${e.message}`,
+			);
+			await new Promise((resolve) =>
+				setTimeout(resolve, attempt * 5000)
+			);
+		}
+	}
+	throw new Error(
+		`Could not load the embedding model ${EMBEDDING_MODEL}: ${lastError.message}`,
+		{ cause: lastError },
+	);
+}
+
 function getExtractor() {
-	extractorPromise ??= (async () => {
-		// The package is ESM-only, hence the dynamic import
-		const { pipeline } = await import("@huggingface/transformers");
-		return pipeline("feature-extraction", EMBEDDING_MODEL, {
-			cache_dir: process.env.BOT_MODEL_CACHE_DIR?.trim()
-				|| defaultModelCacheDir(),
-			revision: MODEL_REVISION,
-			dtype: "q8",
-		});
-	})();
+	extractorPromise ??= createExtractor();
 	return extractorPromise;
 }
 
@@ -57,8 +87,20 @@ async function embed(inputs) {
 			pooling: "mean",
 			normalize: true,
 		});
-		const data = output.tolist();
-		results.push(...(Array.isArray(data[0]) ? data : [data]));
+		// dims is [batch, hidden]; anything else means the pipeline
+		// changed shape, and flattening it blindly would push corrupted
+		// vectors into the index
+		if (output.dims?.length !== 2) {
+			throw new Error(
+				`Unexpected embedding tensor shape [${output.dims}]`,
+			);
+		}
+		results.push(...output.tolist());
+		// Index builds run for minutes; leave evidence of progress in
+		// case the job hits its timeout
+		if (inputs.length > BATCH_SIZE) {
+			console.log(`Embedded ${results.length}/${inputs.length} texts`);
+		}
 	}
 	return results;
 }
@@ -77,8 +119,27 @@ async function embedBatched(texts) {
 	);
 }
 
+/**
+ * Checks that an index was embedded with the pinned model, so its
+ * similarities are comparable to freshly embedded questions. Emits a
+ * workflow warning on mismatch, so a skipped index shows up in the run
+ * annotations instead of only in the log.
+ * @param {{model?: string} | undefined} index
+ * @param {string} description
+ */
+function indexMatchesModel(index, description) {
+	if (!index) return false;
+	if (index.model === EMBEDDING_MODEL) return true;
+	console.log(
+		`::warning::The ${description} was created with ${index.model}, not ${EMBEDDING_MODEL} - ignoring it until it is rebuilt`,
+	);
+	return false;
+}
+
 module.exports = {
 	embed,
 	embedBatched,
+	indexMatchesModel,
 	EMBEDDING_MODEL,
+	MODEL_CACHE_KEY,
 };

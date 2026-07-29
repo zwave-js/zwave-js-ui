@@ -16,7 +16,7 @@ const path = require("node:path");
 const { judgeAnswer } = require("./answerFromDocs.cjs");
 const { loadDocsIndex, retrieve } = require("./docsIndex.cjs");
 const { logCase, reportResults } = require("./evalUtils.cjs");
-const { EMBEDDING_MODEL, embed } = require("./localEmbeddings.cjs");
+const { embed, indexMatchesModel } = require("./localEmbeddings.cjs");
 
 const NUM_RESULTS = 5;
 // Allow a small number of misses before failing, retrieval is not exact
@@ -45,12 +45,7 @@ async function main() {
 		);
 		process.exit(1);
 	}
-	if (index.model !== EMBEDDING_MODEL) {
-		console.error(
-			`Index was created with ${index.model}, but questions would be embedded with ${EMBEDDING_MODEL}`,
-		);
-		process.exit(1);
-	}
+	if (!indexMatchesModel(index, "docs index")) process.exit(1);
 	/** @type {{question: string, expectedFiles: string[]}[]} */
 	const cases = JSON.parse(
 		await fs.readFile(

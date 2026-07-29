@@ -1,6 +1,9 @@
 {
   "name": "zwave-js-ui-bot-scripts",
   "private": true,
+  "engines": {
+    "node": ">=22"
+  },
   "description": "Runtime dependencies for the bot scripts, installed separately (npm ci --ignore-scripts in this directory) so the bot jobs don't pay for a full application install",
   "dependencies": {
     "@huggingface/transformers": "^4.2.0"

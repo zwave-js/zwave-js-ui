@@ -164,22 +164,8 @@ jobs:
         echo "::error::Neither the docs index nor the posts index could be restored, from cache or from artifacts - the answer bot cannot run"
         exit 1
 
-    - name: Setup Node.js
-      uses: actions/setup-node@v5
-      with:
-        node-version: 22
-        cache: 'npm'
-        cache-dependency-path: .github/bot-scripts/package-lock.json
-
-    - name: Install embedding dependencies
-      working-directory: .github/bot-scripts
-      run: npm ci --ignore-scripts
-
-    - name: Restore embedding model
-      uses: actions/cache@v6
-      with:
-        path: ~/.cache/zwave-js-ui-bot/models
-        key: embedding-model-${{ hashFiles('.github/bot-scripts/localEmbeddings.cjs') }}
+    - name: Setup embeddings
+      uses: ./.github/actions/setup-bot-embeddings
 
     - name: Answer from documentation
       uses: actions/github-script@v9
@@ -229,25 +215,9 @@ jobs:
       run: |
         echo "::warning::The posts index could not be restored, from cache or from artifacts - this post will only be indexed by the next nightly rebuild"
 
-    - name: Setup Node.js
+    - name: Setup embeddings
       if: steps.posts-index.outputs.found == 'true'
-      uses: actions/setup-node@v5
-      with:
-        node-version: 22
-        cache: 'npm'
-        cache-dependency-path: .github/bot-scripts/package-lock.json
-
-    - name: Install embedding dependencies
-      if: steps.posts-index.outputs.found == 'true'
-      working-directory: .github/bot-scripts
-      run: npm ci --ignore-scripts
-
-    - name: Restore embedding model
-      if: steps.posts-index.outputs.found == 'true'
-      uses: actions/cache@v6
-      with:
-        path: ~/.cache/zwave-js-ui-bot/models
-        key: embedding-model-${{ hashFiles('.github/bot-scripts/localEmbeddings.cjs') }}
+      uses: ./.github/actions/setup-bot-embeddings
 
     - name: Add post to index
       id: update

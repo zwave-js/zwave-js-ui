@@ -54,22 +54,10 @@ jobs:
         restore-keys: |
           posts-embeddings-v2-
 
-    - name: Setup Node.js
-      uses: actions/setup-node@v5
+    - name: Setup embeddings
+      uses: ./.github/actions/setup-bot-embeddings
       with:
-        node-version: 22
-        cache: 'npm'
-        cache-dependency-path: .github/bot-scripts/package-lock.json
-
-    - name: Install embedding dependencies
-      working-directory: .github/bot-scripts
-      run: npm ci --ignore-scripts
-
-    - name: Restore embedding model
-      uses: actions/cache@v6
-      with:
-        path: ~/.cache/zwave-js-ui-bot/models
-        key: embedding-model-${{ hashFiles('.github/bot-scripts/localEmbeddings.cjs') }}
+        save-model-cache: 'true'
 
     - name: Build index
       env:
@@ -127,22 +115,8 @@ jobs:
         echo "::error::Posts index cache miss after build-index - cannot evaluate retrieval quality"
         exit 1
 
-    - name: Setup Node.js
-      uses: actions/setup-node@v5
-      with:
-        node-version: 22
-        cache: 'npm'
-        cache-dependency-path: .github/bot-scripts/package-lock.json
-
-    - name: Install embedding dependencies
-      working-directory: .github/bot-scripts
-      run: npm ci --ignore-scripts
-
-    - name: Restore embedding model
-      uses: actions/cache@v6
-      with:
-        path: ~/.cache/zwave-js-ui-bot/models
-        key: embedding-model-${{ hashFiles('.github/bot-scripts/localEmbeddings.cjs') }}
+    - name: Setup embeddings
+      uses: ./.github/actions/setup-bot-embeddings
 
     - name: Evaluate retrieval quality
       id: eval

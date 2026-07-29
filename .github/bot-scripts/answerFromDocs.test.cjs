@@ -5,6 +5,8 @@ import {
 	validateJudgeResponse,
 	checkSuppression,
 	alreadyAnswered,
+	buildRelatedPostsSection,
+	POSTS_MIN_SIMILARITY,
 	DOCS_ANSWER_COMMENT_TAG,
 } from "./answerFromDocs.cjs";
 
@@ -239,6 +241,36 @@ describe("answerFromDocs", () => {
 					false,
 				),
 			).toBe(true);
+		});
+	});
+
+	describe("buildRelatedPostsSection", () => {
+		/** @param {number} similarity Desired cosine against [1, 0] */
+		const post = (similarity, number) => ({
+			type: "issue",
+			number,
+			title: `Post ${number}`,
+			url: `https://example.com/${number}`,
+			state: "open",
+			// Unit vector at the desired cosine to the unit question vector
+			embedding: [
+				similarity,
+				Math.sqrt(1 - similarity ** 2),
+			],
+		});
+		const self = { type: "discussion", number: 999 };
+
+		it("suggests posts at the similarity floor", () => {
+			const index = { posts: [post(POSTS_MIN_SIMILARITY, 1)] };
+			const section = buildRelatedPostsSection(index, [1, 0], self);
+			expect(section).toContain("Post 1");
+		});
+
+		it("stays silent below the similarity floor", () => {
+			const index = { posts: [post(POSTS_MIN_SIMILARITY - 0.01, 1)] };
+			expect(
+				buildRelatedPostsSection(index, [1, 0], self),
+			).toBeUndefined();
 		});
 	});
 });

@@ -7,7 +7,7 @@
 // for questions arriving before the next nightly rebuild.
 
 const fs = require("node:fs/promises");
-const { EMBEDDING_MODEL, embedBatched } = require("./localEmbeddings.cjs");
+const { embedBatched, indexMatchesModel } = require("./localEmbeddings.cjs");
 const {
 	QUESTION_CATEGORY_SLUGS,
 	cleanQuestion,
@@ -54,12 +54,7 @@ async function main(param) {
 	}
 	// Embeddings from different models are not comparable. The nightly
 	// rebuild reconciles indexes created with an older model.
-	if (index.model !== EMBEDDING_MODEL) {
-		console.log(
-			`Posts index was created with ${index.model}, skipping`,
-		);
-		return false;
-	}
+	if (!indexMatchesModel(index, "posts index")) return false;
 
 	const embeddedText = cleanQuestion(post.title, post.body ?? "");
 	const hash = hashPost(embeddedText);
