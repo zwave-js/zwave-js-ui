@@ -13,10 +13,10 @@ const { EMBEDDING_MODEL, embedBatched } = require("./localEmbeddings.cjs");
 // Chunks shorter than this are unlikely to contain useful information
 const MIN_CHUNK_LENGTH = 50;
 // Sections longer than this are sub-split so nothing gets truncated away.
-// Sized empirically against the pipeline's real 512-token window: at
-// 1200 chars, p99 of the chunks measures ~440 tokens and only 0.6%
-// exceed the window slightly. That is past the model's 256-word-piece
-// training length, but retrieval quality holds (eval hit@5 18/18).
+// Sized for the 512-token window the tokenizer enforces: at 1200 chars the
+// median chunk measures 132 tokens and 0.6% exceed the window. The 256 word
+// pieces on the model card are sentence-transformers' inference default,
+// which this ONNX port does not ship.
 const MAX_CHUNK_LENGTH = 1200;
 // Overlap between sub-splits so answers spanning a split boundary aren't lost
 const CHUNK_OVERLAP = 200;
