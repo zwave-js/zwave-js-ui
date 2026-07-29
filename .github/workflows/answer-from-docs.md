@@ -77,22 +77,8 @@ on:
         echo "::error::Neither the docs index nor the posts index could be restored, from cache or from artifacts - the answer bot cannot run"
         exit 1
 
-    - name: Setup Node.js
-      uses: actions/setup-node@v5
-      with:
-        node-version: 22
-        cache: 'npm'
-        cache-dependency-path: .github/bot-scripts/package-lock.json
-
-    - name: Install embedding dependencies
-      working-directory: .github/bot-scripts
-      run: npm ci --ignore-scripts
-
-    - name: Restore embedding model
-      uses: actions/cache@v6
-      with:
-        path: ~/.cache/zwave-js-ui-bot/models
-        key: embedding-model-${{ hashFiles('.github/bot-scripts/localEmbeddings.cjs') }}
+    - name: Setup bot embeddings
+      uses: ./.github/actions/setup-bot-embeddings
 
     # Applies all gates (excluded users, categories, existing answers),
     # retrieves documentation excerpts, and posts related-posts-only
