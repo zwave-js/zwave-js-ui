@@ -42,8 +42,9 @@ const LINKS_CONFIDENCE = 40;
 const POSTS_MIN_SIMILARITY = 0.6;
 const MAX_RELATED_POSTS = 3;
 // The judge's answer is capped so a runaway completion cannot 422 the
-// comment API; well-formed answers are a few sentences
-const MAX_ANSWER_LENGTH = 4000;
+// comment API, while leaving room for comprehensive answers to large
+// topics
+const MAX_ANSWER_LENGTH = 15000;
 
 // Questions at least this similar to a previously downvoted answer
 // get a demoted response: full answer -> links only, links only -> silence
