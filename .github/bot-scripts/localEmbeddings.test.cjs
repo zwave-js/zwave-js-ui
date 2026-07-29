@@ -1,12 +1,15 @@
 // @ts-check
 
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
+
+const { embed, embedBatched, setExtractor } = require("./localEmbeddings.cjs");
 
 /** @type {string[][]} */
 const extractorCalls = [];
 
-vi.mock("@huggingface/transformers", () => ({
-	pipeline: vi.fn(async () => async (/** @type {string[]} */ batch) => {
+beforeEach(() => {
+	extractorCalls.length = 0;
+	setExtractor(async (/** @type {string[]} */ batch) => {
 		extractorCalls.push([...batch]);
 		if (batch.includes("bad-shape")) {
 			return { dims: [1, batch.length, 3], tolist: () => [] };
@@ -18,10 +21,8 @@ vi.mock("@huggingface/transformers", () => ({
 			tolist: () =>
 				batch.map((text, i) => [text.length, i + 0.123456789, 0]),
 		};
-	}),
-}));
-
-import { embed, embedBatched } from "./localEmbeddings.cjs";
+	});
+});
 
 describe("localEmbeddings", () => {
 	it("returns an empty result for empty input without touching the pipeline", async () => {

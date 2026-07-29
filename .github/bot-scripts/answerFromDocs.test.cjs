@@ -1,22 +1,9 @@
 // @ts-check
 
-import { describe, it, expect } from "vitest";
+import { beforeEach, describe, it, expect } from "vitest";
 import { mkdtemp, readFile, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { vi } from "vitest";
-
-// The transformers pipeline is mocked (its dynamic import is the only
-// seam vitest can intercept from CJS), so the answer pipeline runs
-// against tiny test vectors without downloading the model
-vi.mock("@huggingface/transformers", () => ({
-	pipeline: vi.fn(async () => async (/** @type {string[]} */ batch) => ({
-		dims: [batch.length, 2],
-		tolist: () => batch.map(() => [1, 0]),
-	})),
-}));
-
-import { EMBEDDING_MODEL } from "./localEmbeddings.cjs";
 
 import {
 	validateJudgeResponse,
@@ -32,6 +19,19 @@ import {
 	DOCS_ANSWER_COMMENT_TAG,
 	DOCS_ANSWER_METADATA_TAG,
 } from "./answerFromDocs.cjs";
+
+// Reached through `require`, because that is the instance the bot scripts
+// share among themselves - an `import` of a .cjs file yields a second one
+const { EMBEDDING_MODEL, setExtractor } = require("./localEmbeddings.cjs");
+
+// Substitute the pipeline so the answer path runs against the tiny test
+// vectors in the fixture indexes instead of downloading the model
+beforeEach(() => {
+	setExtractor(async (/** @type {string[]} */ batch) => ({
+		dims: [batch.length, 2],
+		tolist: () => batch.map(() => [1, 0]),
+	}));
+});
 
 /**
  * @param {any[]} comments

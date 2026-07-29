@@ -71,6 +71,16 @@ function getExtractor() {
 }
 
 /**
+ * Substitutes the feature-extraction pipeline, so tests exercise the
+ * embedding code without downloading the model. The bot scripts pull each
+ * other in through native `require`, which module mocking cannot intercept.
+ * @param {((batch: string[], options: any) => Promise<any>) | undefined} extractor
+ */
+function setExtractor(extractor) {
+	extractorPromise = extractor && Promise.resolve(extractor);
+}
+
+/**
  * Embeds one or more texts, returning the embeddings in input order
  * @param {string[]} inputs
  * @returns {Promise<number[][]>}
@@ -152,6 +162,7 @@ module.exports = {
 	embed,
 	embedBatched,
 	indexMatchesModel,
+	setExtractor,
 	EMBEDDING_MODEL,
 	MODEL_CACHE_KEY,
 };
