@@ -27,7 +27,7 @@ export type HassApiRequest =
 			apiName: 'store'
 			devices: Record<string, HassDevice>
 			nodeId: number
-			remove: unknown
+			remove: boolean
 	  }
 
 export type HassApiAck = ApiAck<void>

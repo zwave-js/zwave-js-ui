@@ -172,7 +172,7 @@ describe('Socket protocol runtime freshness', () => {
 		expect(zniffer.getFrames).toHaveBeenCalledOnce()
 	})
 
-	it('accepts a stop request without a buffer', async () => {
+	it('stops the current Zniffer capture', async () => {
 		const gateway = createFakeGateway()
 		const zniffer = createFakeZniffer()
 		const currentHarness = await getHarness({ gateway, zniffer })
@@ -185,7 +185,7 @@ describe('Socket protocol runtime freshness', () => {
 		expect(zniffer.stop).toHaveBeenCalledOnce()
 	})
 
-	it('accepts a clear request without a buffer', async () => {
+	it('clears the captured Zniffer frames', async () => {
 		const gateway = createFakeGateway()
 		const zniffer = createFakeZniffer()
 		const currentHarness = await getHarness({ gateway, zniffer })
@@ -222,10 +222,11 @@ describe('Socket protocol runtime freshness', () => {
 		const currentHarness = await getHarness({ gateway })
 		const client = await connectedClient(currentHarness)
 
-		client.emit('ZWAVE_API', { api: 'fireAndForget' })
+		client.emit('ZWAVE_API', { api: '_getScenes' })
 		// Socket.IO guarantees ordering, so the acknowledged call flushes the earlier request
-		await emit(client, 'ZWAVE_API', { api: 'barrier' })
+		await emit(client, 'ZWAVE_API', { api: '_getScenes' })
 
-		expect(gateway.zwave.callApi).toHaveBeenCalledWith('fireAndForget')
+		expect(gateway.zwave.callApi).toHaveBeenCalledTimes(2)
+		expect(gateway.zwave.callApi).toHaveBeenCalledWith('_getScenes')
 	})
 })

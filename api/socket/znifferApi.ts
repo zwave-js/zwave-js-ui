@@ -1,4 +1,5 @@
 import type { Socket } from 'socket.io'
+import type { ZnifferLRChannelConfig } from '@zwave-js/core'
 import { getErrorMessage } from '../lib/errors.ts'
 import * as loggers from '../lib/logger.ts'
 import { inboundEvents } from '../lib/SocketEvents.ts'
@@ -22,7 +23,10 @@ export type ZnifferApiRequest =
 				| 'saveCaptureToFile'
 	  }
 	| { apiName: 'setFrequency'; frequency: number }
-	| { apiName: 'setLRChannelConfig'; channelConfig: number }
+	| {
+			apiName: 'setLRChannelConfig'
+			channelConfig: ZnifferLRChannelConfig
+	  }
 	| { apiName: 'loadCaptureFromBuffer'; buffer: number[] }
 
 export type ZnifferApiAck = ApiAck<unknown>

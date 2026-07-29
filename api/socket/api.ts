@@ -27,9 +27,11 @@ export function safeOperationName(value: unknown): string {
 	let sanitized = ''
 	for (const character of value) {
 		const code = character.charCodeAt(0)
+		// Keep printable ASCII and Unicode while removing C0, DEL, and C1 controls
 		if ((code >= 32 && code < 127) || code > 159) {
 			sanitized += character
 		}
 	}
+	// Bound client-controlled log fields to 100 characters
 	return sanitized.slice(0, 100)
 }

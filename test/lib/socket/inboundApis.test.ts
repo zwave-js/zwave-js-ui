@@ -2,6 +2,7 @@
 // The real 'clients' callback calls gw.zwave?.setUserCallbacks() on every connect and throws
 // if gw is undefined, so every test installs at least a bare gateway fake
 import { describe, it, expect, vi } from 'vitest'
+import { ZnifferLRChannelConfig } from '@zwave-js/core'
 import { ALL_CHANNELS } from '#api/lib/SocketEvents.ts'
 import { module as createLogger } from '#api/lib/logger.ts'
 import { useSocketHarness } from './harness.ts'
@@ -535,11 +536,13 @@ describe('Socket contract: inbound ACK APIs', () => {
 			})
 			await emit(client, 'ZNIFFER_API', {
 				apiName: 'setLRChannelConfig',
-				channelConfig: 2,
+				channelConfig: ZnifferLRChannelConfig['Classic & LR B'],
 			})
 
 			expect(zniffer.setFrequency).toHaveBeenCalledWith(1)
-			expect(zniffer.setLRChannelConfig).toHaveBeenCalledWith(2)
+			expect(zniffer.setLRChannelConfig).toHaveBeenCalledWith(
+				ZnifferLRChannelConfig['Classic & LR B'],
+			)
 		})
 
 		it('returns the saved capture path', async () => {

@@ -1,3 +1,4 @@
+import type { ZnifferLRChannelConfig } from '@zwave-js/core'
 import type { CorruptedFrame, Frame, ZnifferOptions } from 'zwave-js'
 import {
 	CommandClass,
@@ -229,7 +230,7 @@ export default class ZnifferManager extends TypedEventEmitter<ZnifferManagerEven
 		logger.info(`Zniffer frequency set to ${frequency}`)
 	}
 
-	public async setLRChannelConfig(channelConfig: number) {
+	public async setLRChannelConfig(channelConfig: ZnifferLRChannelConfig) {
 		const zniffer = this.ensureZniffer()
 
 		logger.info(

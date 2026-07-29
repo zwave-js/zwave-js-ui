@@ -27,6 +27,7 @@ export function registerSocketApi(
 
 	socketManager.on('clients', (event, activeSockets) => {
 		const currentGw = runtime.ensureGateway()
+		// Install callbacks for the first client and remove them after the last disconnects
 		if (event === 'connection' && activeSockets.size === 1) {
 			currentGw.zwave?.setUserCallbacks()
 		} else if (event === 'disconnect' && activeSockets.size === 0) {
