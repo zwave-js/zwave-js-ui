@@ -24,6 +24,8 @@ on:
           const { excludedUsers } = require(`${process.env.GITHUB_WORKSPACE}/.github/bot-scripts/authorizedUsers.cjs`);
           const user = context.payload.issue?.user;
           let skip;
+          // The type check catches GitHub Apps; zwave-js-bot is a classic
+          // machine user (type "User") and is caught by excludedUsers
           if (!user || user.type === "Bot" || excludedUsers.includes(user.login)) {
             skip = `author ${user?.login} is excluded`;
           } else if (context.payload.action === "edited" && !context.payload.changes?.body) {
