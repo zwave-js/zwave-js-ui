@@ -1,7 +1,5 @@
 module.exports = {
 	checkAuthorized: (...args) => require("./checkAuthorized.cjs")(...args),
-	classifyIssueFeedback: (...args) =>
-		require("./classifyIssueFeedback.cjs")(...args),
 	postClassifyIssueFeedback: (...args) =>
 		require("./postClassifyIssueFeedback.cjs")(...args),
 	hideTransferredComments: (...args) =>

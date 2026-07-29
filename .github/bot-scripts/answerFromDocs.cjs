@@ -3,7 +3,7 @@
 /// <reference path="types.d.ts" />
 
 const fs = require("node:fs/promises");
-const { authorizedUsers } = require("./authorizedUsers.cjs");
+const { excludedUsers } = require("./authorizedUsers.cjs");
 const { cosineSimilarity, loadDocsIndex, retrieve } = require(
 	"./docsIndex.cjs",
 );
@@ -24,12 +24,6 @@ const DOCS_BASE_URL = "https://zwave-js.github.io/zwave-js-ui/#";
 const DOCS_ANSWER_COMMENT_TAG = "<!-- DOCS_ANSWER_COMMENT_TAG -->";
 const DOCS_ANSWER_METADATA_TAG = "DOCS_ANSWER_METADATA";
 const DOCS_ANSWER_METADATA_VERSION = 1;
-
-// Users whose posts should never be answered automatically: maintainers
-// (who don't need an automated answer) and the bot's own account.
-// authorizedUsers.cjs is the source of truth, this is not duplicated
-// as a hardcoded workflow guard.
-const EXCLUDED_USERS = [...authorizedUsers, "zwave-js-bot"];
 
 const MAX_RETRIEVED_CHUNKS = 5;
 // If not even the best dense match reaches this cosine similarity,
@@ -482,7 +476,7 @@ async function main(param) {
 	const author = post.user?.login;
 	if (
 		!author
-		|| EXCLUDED_USERS.includes(author)
+		|| excludedUsers.includes(author)
 		|| post.user?.type === "Bot"
 	) {
 		console.log(`Skipping post by ${author}`);

@@ -1,0 +1,50 @@
+name: Check gh-aw workflows
+
+# The compiled .lock.yml files are what Actions actually executes, but
+# review UIs collapse them as generated files. This check keeps them in
+# sync with their .md sources, so a stale or hand-edited lock cannot
+# slip through unreviewed.
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/*.md'
+      - '.github/workflows/*.lock.yml'
+      - '.github/aw/**'
+  push:
+    branches: [master]
+    paths:
+      - '.github/workflows/*.md'
+      - '.github/workflows/*.lock.yml'
+      - '.github/aw/**'
+
+permissions:
+  contents: read
+
+jobs:
+  compile-check:
+    runs-on: [ubuntu-latest]
+    timeout-minutes: 10
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v7
+
+    - name: Install gh-aw
+      env:
+        GH_TOKEN: ${{ github.token }}
+      # Pin to the version the locks were generated with. Upgrading it
+      # regenerates all locks, which then land in the same PR.
+      run: gh extension install github/gh-aw --pin v0.81.6
+
+    - name: Recompile workflows
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: gh aw compile
+
+    - name: Fail on drift
+      run: |
+        if ! git diff --exit-code; then
+          echo "::error::Compiled gh-aw workflows are out of date - run 'gh aw compile' and commit the result"
+          exit 1
+        fi
