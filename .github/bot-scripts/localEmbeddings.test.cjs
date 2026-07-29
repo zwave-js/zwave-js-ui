@@ -52,6 +52,12 @@ describe("localEmbeddings", () => {
 		]);
 	});
 
+	it("restores input order after length-sorted batching", async () => {
+		const result = await embed(["xxx", "x", "xx"]);
+		expect(result.map((v) => v[0])).toEqual([3, 1, 2]);
+		expect(extractorCalls.pop()).toEqual(["x", "xx", "xxx"]);
+	});
+
 	it("rejects unexpected tensor shapes instead of guessing", async () => {
 		await expect(embed(["bad-shape"])).rejects.toThrow(
 			/Unexpected embedding tensor shape/,

@@ -79,14 +79,24 @@ async function embed(inputs) {
 	if (inputs.length === 0) return [];
 	const extractor = await getExtractor();
 
+	// Each batch is padded to its longest member, so batch texts of
+	// similar length together and restore the input order afterwards
+	const order = inputs
+		.map((_, i) => i)
+		.sort((a, b) => inputs[a].length - inputs[b].length);
+
 	/** @type {number[][]} */
-	const results = [];
-	for (let i = 0; i < inputs.length; i += BATCH_SIZE) {
-		const batch = inputs.slice(i, i + BATCH_SIZE);
-		const output = await extractor(batch, {
-			pooling: "mean",
-			normalize: true,
-		});
+	const results = new Array(inputs.length);
+	let done = 0;
+	for (let i = 0; i < order.length; i += BATCH_SIZE) {
+		const batchOrder = order.slice(i, i + BATCH_SIZE);
+		const output = await extractor(
+			batchOrder.map((j) => inputs[j]),
+			{
+				pooling: "mean",
+				normalize: true,
+			},
+		);
 		// dims is [batch, hidden]; anything else means the pipeline
 		// changed shape, and flattening it blindly would push corrupted
 		// vectors into the index
@@ -95,11 +105,13 @@ async function embed(inputs) {
 				`Unexpected embedding tensor shape [${output.dims}]`,
 			);
 		}
-		results.push(...output.tolist());
+		const vectors = output.tolist();
+		batchOrder.forEach((j, k) => results[j] = vectors[k]);
+		done += batchOrder.length;
 		// Index builds run for minutes; leave evidence of progress in
 		// case the job hits its timeout
 		if (inputs.length > BATCH_SIZE) {
-			console.log(`Embedded ${results.length}/${inputs.length} texts`);
+			console.log(`Embedded ${done}/${inputs.length} texts`);
 		}
 	}
 	return results;
