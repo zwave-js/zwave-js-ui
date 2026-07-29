@@ -86,7 +86,7 @@ class SocketManager extends TypedEventEmitter<SocketManagerEventCallbacks> {
 		this.emit('clients', 'connection', this.activeSockets)
 
 		// register inbound events from this socket
-		// subscribe/unsubscribe are handled directly in app.ts, skip them here
+		// Socket API registration owns subscriptions because they need acknowledgements
 		for (const eventName of Object.values(inboundEvents)) {
 			if (
 				eventName === inboundEvents.subscribe ||
