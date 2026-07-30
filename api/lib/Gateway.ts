@@ -31,6 +31,7 @@ import type {
 import { isHassNode } from '../hass/ports.ts'
 
 const logger = module('Gateway')
+const hassLogger = module('HASS')
 
 const NODE_PREFIX = 'nodeID_'
 
@@ -250,7 +251,7 @@ export default class Gateway<
 					return getDiscovered()
 				},
 			},
-			logger,
+			logger: hassLogger,
 		})
 	}
 
