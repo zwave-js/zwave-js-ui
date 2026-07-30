@@ -1,0 +1,24 @@
+{
+	"bot": {
+		"login": "zwave-js-bot",
+		"email": "bot@zwave-js.io",
+		"name": "Z-Wave JS Bot"
+	},
+	"docs": {
+		"baseUrl": "https://zwave-js.github.io/zwave-js-ui/#",
+		"questionCategorySlugs": ["q-a"]
+	},
+	"users": {
+		"authorized": ["AlCalzone", "robertsLando", "blhoward2"]
+	},
+	"issues": {
+		"docsFeedbackTitle": "📊 Docs answer bot feedback"
+	},
+	"evalCases": {
+		"docsAnswers": "docsAnswersEvalCases.json",
+		"relatedPosts": "relatedPostsEvalCases.json"
+	},
+	"redirects": {
+		"issueTracker": "zwave-js/zwave-js"
+	}
+}
