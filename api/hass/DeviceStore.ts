@@ -51,10 +51,15 @@ export class HassDeviceStore {
 		if (!this.port.hasNode(nodeId)) return { status: 'node-not-found' }
 
 		const storedNode = this.port.getStoredNode(nodeId)
-		if (!utils.isRecord(storedNode)) {
+		let persistenceNode: HassPersistenceNode
+		if (storedNode === undefined) {
+			persistenceNode = {}
+			this.port.setStoredNode(nodeId, persistenceNode)
+		} else if (utils.isRecord(storedNode)) {
+			persistenceNode = storedNode
+		} else {
 			return { status: 'invalid-stored-node' }
 		}
-		const persistenceNode: HassPersistenceNode = storedNode
 
 		for (const device of Object.values(devices)) {
 			device.persistent = !remove

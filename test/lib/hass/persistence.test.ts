@@ -41,6 +41,10 @@ class RecordingStorePort implements HassDeviceStorePort {
 		return this.storedNodes.get(nodeId)
 	}
 
+	public setStoredNode(nodeId: number, node: HassPersistenceNode): void {
+		this.storedNodes.set(nodeId, node)
+	}
+
 	public emitNodeUpdate(nodeId: number, devices: HassDeviceMap): void {
 		const projection = structuredClone(devices)
 		this.liveNodes.set(nodeId, projection)
@@ -130,6 +134,28 @@ describe('HassDeviceStore', () => {
 					type: 'sensor',
 					object_id: 'a',
 					discovery_payload: { name: 'a' },
+					values: [],
+					persistent: true,
+				},
+			},
+		})
+	})
+
+	it('initializes an absent persistence record for a live node', async () => {
+		port.liveNodes.set(13, {})
+		const devices: HassDeviceMap = {
+			sensor_new: device('new'),
+		}
+
+		const result = await store.storeDevices(devices, 13, false)
+
+		expect(result).toEqual({ status: 'stored' })
+		expect(port.storedNodes.get(13)).toEqual({
+			hassDevices: {
+				sensor_new: {
+					type: 'sensor',
+					object_id: 'new',
+					discovery_payload: { name: 'new' },
 					values: [],
 					persistent: true,
 				},

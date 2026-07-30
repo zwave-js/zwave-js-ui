@@ -121,6 +121,7 @@ export interface HassDeviceStorePort {
 	getNodeDevices(nodeId: number): HassDeviceMap | undefined
 	setNodeDevices(nodeId: number, devices: HassDeviceMap): void
 	getStoredNode(nodeId: number): unknown
+	setStoredNode(nodeId: number, node: HassPersistenceNode): void
 	emitNodeUpdate(nodeId: number, devices: HassDeviceMap): void
 	updateStoreNodes(): Promise<void>
 }

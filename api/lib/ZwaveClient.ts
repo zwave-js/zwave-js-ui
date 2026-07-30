@@ -905,6 +905,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				if (node) node.hassDevices = devices
 			},
 			getStoredNode: (nodeId) => this.storeNodes[nodeId],
+			setStoredNode: (nodeId, node) => {
+				this.storeNodes[nodeId] = node
+			},
 			emitNodeUpdate: (nodeId, devices) => {
 				const node = this._nodes.get(nodeId)
 				if (node) this.emitNodeUpdate(node, { hassDevices: devices })
