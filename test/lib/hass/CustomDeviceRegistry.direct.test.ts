@@ -162,6 +162,37 @@ describe('CustomDeviceRegistry', () => {
 		})
 	})
 
+	it('reloads JavaScript catalogs when only function values change', async () => {
+		const { registry, storeDir } = createRegistry()
+		const filename = path.join(storeDir, 'customDevices.js')
+		const source = (name: string) => `
+			module.exports = {
+				thermostat: [{
+					type: 'sensor',
+					object_id: 'dynamic',
+					discovery_payload: { name: () => '${name}' },
+					values: [],
+				}],
+			}
+		`
+		const getName = (): string => {
+			const name = registry.get('thermostat')[0]?.discovery_payload.name
+			if (typeof name !== 'function')
+				throw new Error('Expected dynamic name')
+			return name()
+		}
+		fs.writeFileSync(filename, source('first'))
+		registry.start()
+
+		expect(getName()).toBe('first')
+
+		fs.writeFileSync(filename, source('second'))
+
+		await vi.waitFor(() => {
+			expect(getName()).toBe('second')
+		})
+	})
+
 	it('propagates repeated JavaScript create, edit, and delete cycles', async () => {
 		const { registry, storeDir } = createRegistry()
 		const filename = path.join(storeDir, 'customDevices.js')

@@ -82,18 +82,21 @@ export class CustomDeviceRegistry implements HassDeviceRegistryPort {
 
 	private load(): void {
 		let loaded = ''
+		let source: Buffer
 		let devices: unknown
 
 		try {
 			if (fs.existsSync(this.customDevicesJsPath)) {
 				loaded = this.customDevicesJsPath
+				source = fs.readFileSync(loaded)
 				// Evict the resolved module so watcher reloads observe same-path JavaScript edits
 				const modulePath = require.resolve(this.customDevicesPath)
 				delete require.cache[modulePath]
 				devices = require(modulePath)
 			} else if (fs.existsSync(this.customDevicesJsonPath)) {
 				loaded = this.customDevicesJsonPath
-				devices = JSON.parse(fs.readFileSync(loaded).toString())
+				source = fs.readFileSync(loaded)
+				devices = JSON.parse(source.toString())
 			} else {
 				return
 			}
@@ -103,10 +106,7 @@ export class CustomDeviceRegistry implements HassDeviceRegistryPort {
 		}
 
 		try {
-			const sha = crypto
-				.createHash('sha256')
-				.update(JSON.stringify(devices))
-				.digest('hex')
+			const sha = crypto.createHash('sha256').update(source).digest('hex')
 			if (this.lastCustomDevicesLoad === sha) return
 
 			const replacement = Object.assign(
