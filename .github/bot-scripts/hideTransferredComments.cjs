@@ -2,6 +2,7 @@
 
 /// <reference path="types.d.ts" />
 
+const { config } = require("./config.cjs");
 const { lastTransferTime } = require("./utils.cjs");
 
 // Bot comments carry an HTML marker so they can be found again. The pattern
@@ -45,7 +46,7 @@ async function main(param) {
 	const inherited = comments.filter(
 		(c) =>
 			new Date(c.created_at).getTime() < transferredAt
-			&& c.user?.login === "zwave-js-bot"
+			&& c.user?.login === config.bot.login
 			&& COMMENT_TAG_REGEX.test(c.body ?? ""),
 	);
 	console.log(`Hiding ${inherited.length} inherited bot comment(s)`);

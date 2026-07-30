@@ -5,6 +5,7 @@
 const fs = require("node:fs/promises");
 const path = require("node:path");
 const { readAgentOutputItem } = require("./agentOutput.cjs");
+const { config } = require("./config.cjs");
 const { excludedUsers } = require("./authorizedUsers.cjs");
 const { cosineSimilarity, loadDocsIndex, retrieve } = require(
 	"./docsIndex.cjs",
@@ -19,7 +20,7 @@ const {
 const { sanitizeModelAnswer } = require("./sanitizeAnswer.cjs");
 const { listCommentsSinceTransfer } = require("./utils.cjs");
 
-const DOCS_BASE_URL = "https://zwave-js.github.io/zwave-js-ui/#";
+const DOCS_BASE_URL = config.docs.baseUrl;
 const DOCS_ANSWER_COMMENT_TAG = "<!-- DOCS_ANSWER_COMMENT_TAG -->";
 const DOCS_ANSWER_METADATA_TAG = "DOCS_ANSWER_METADATA";
 const DOCS_ANSWER_METADATA_VERSION = 1;

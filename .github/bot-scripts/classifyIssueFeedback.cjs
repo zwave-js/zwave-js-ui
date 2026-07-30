@@ -2,6 +2,7 @@
 
 /// <reference path="types.d.ts" />
 
+const { config } = require("./config.cjs");
 const { listCommentsSinceTransfer } = require("./utils.cjs");
 
 const CLASSIFY_ISSUE_COMMENT_TAG = "<!-- CLASSIFY_ISSUE_COMMENT_TAG -->";
@@ -21,7 +22,7 @@ async function main(param, feedback) {
 			message = `👋 Hey @${user}!
 
 It looks like you are trying to report an issue with the Z-Wave JS driver, not the UI.
-If this is the case, please close this issue and open a one in the [Z-Wave JS repository](https://github.com/zwave-js/zwave-js/issues) instead.
+If this is the case, please close this issue and open a one in the [Z-Wave JS repository](https://github.com/${config.redirects.issueTracker}/issues) instead.
 `;
 			break;
 		}
@@ -50,7 +51,7 @@ If this is the case, please close this issue and open a one in the [Z-Wave JS re
 		);
 		const existing = comments.find(
 			(c) =>
-				c.user?.login === "zwave-js-bot"
+				c.user?.login === config.bot.login
 				&& c.body?.includes(CLASSIFY_ISSUE_COMMENT_TAG),
 		);
 		if (existing) {

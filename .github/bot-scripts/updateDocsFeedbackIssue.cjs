@@ -9,13 +9,14 @@
 // Requires GITHUB_TOKEN and GITHUB_REPOSITORY in the environment.
 
 const fs = require("node:fs/promises");
+const { config } = require("./config.cjs");
 const {
 	SCAN_WINDOW_DAYS,
 	SUPPRESS_SCORE,
 } = require("./collectDocsFeedback.cjs");
 const { ghPaginated, ghRequest } = require("./githubApi.cjs");
 
-const ISSUE_TITLE = "📊 Docs answer bot feedback";
+const ISSUE_TITLE = config.issues.docsFeedbackTitle;
 const ISSUE_MARKER = "<!-- DOCS_FEEDBACK_ISSUE -->";
 // Narrows the digest issue lookup to a handful of candidates (searching
 // by creator alone could exceed a single page of results). The hidden
