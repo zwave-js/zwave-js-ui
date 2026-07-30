@@ -1,0 +1,4 @@
+# gh-aw compiles .md workflows into the .lock.yml files GitHub Actions
+# executes. They are committed but generated - on merge conflicts, re-run
+# `gh aw compile` instead of resolving by hand.
+.github/workflows/*.lock.yml linguist-generated=true merge=ours
