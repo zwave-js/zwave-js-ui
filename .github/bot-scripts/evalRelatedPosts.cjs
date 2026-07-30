@@ -6,12 +6,11 @@
 // ranking logic or embedding model.
 //
 // Usage: node evalRelatedPosts.cjs <index-file>
-// Requires GITHUB_TOKEN in the environment.
 
 const fs = require("node:fs/promises");
 const path = require("node:path");
 const { logCase, reportResults } = require("./evalUtils.cjs");
-const { embed } = require("./modelsApi.cjs");
+const { embed, indexMatchesModel } = require("./localEmbeddings.cjs");
 const { rankRelatedPosts } = require("./postsIndex.cjs");
 
 const NUM_RESULTS = 5;
@@ -24,13 +23,8 @@ async function main() {
 		console.error("Usage: node evalRelatedPosts.cjs <index-file>");
 		process.exit(1);
 	}
-	const token = process.env.GITHUB_TOKEN;
-	if (!token) {
-		console.error("GITHUB_TOKEN environment variable is required");
-		process.exit(1);
-	}
-
 	const index = JSON.parse(await fs.readFile(indexFile, "utf8"));
+	if (!indexMatchesModel(index, "posts index")) process.exit(1);
 	/** @type {{question: string, expectedPosts: {type: string, number: number}[]}[]} */
 	const allCases = JSON.parse(
 		await fs.readFile(
@@ -65,12 +59,7 @@ async function main() {
 		);
 	}
 
-	// A single batched request embeds all eval questions at once
-	const embeddings = await embed(
-		cases.map((c) => c.question),
-		token,
-		index.model,
-	);
+	const embeddings = await embed(cases.map((c) => c.question));
 
 	/** @type {import("./evalUtils.cjs").EvalResult[]} */
 	const failures = [];

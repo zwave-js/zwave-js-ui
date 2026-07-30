@@ -27,14 +27,21 @@ const MAX_QUESTION_LENGTH = 6000;
  * @param {string} body
  */
 function cleanQuestion(title, body) {
-	// Template instructions are hidden in HTML comments.
-	// Replacements can create new comment sequences, repeat until stable.
-	let text = body;
-	let previous;
-	do {
-		previous = text;
-		text = text.replace(/<!--[\s\S]*?-->/g, "");
-	} while (text !== previous);
+	// Template instructions are hidden in HTML comments. Strip them in a
+	// single left-to-right pass - this matches the semantics of a lazy
+	// /<!--[\s\S]*?-->/g regex (spliced-together text is not re-scanned)
+	// without its polynomial backtracking on crafted input
+	let text = "";
+	let cursor = 0;
+	for (;;) {
+		const start = body.indexOf("<!--", cursor);
+		if (start === -1) break;
+		const end = body.indexOf("-->", start + 4);
+		if (end === -1) break;
+		text += body.slice(cursor, start);
+		cursor = end + 3;
+	}
+	text += body.slice(cursor);
 
 	text = text
 		// Checked/unchecked checklist items carry no information

@@ -6,18 +6,17 @@
 // changes to the chunking/retrieval logic.
 //
 // Usage: node evalDocsAnswers.cjs <index-file> [--answers]
-// Requires GITHUB_TOKEN in the environment.
 //
 // With --answers, each question is also run through the chat model and
 // the generated answer is printed for manual inspection. This costs one
-// chat request per question, so use sparingly.
+// chat request per question and requires GITHUB_TOKEN, so use sparingly.
 
 const fs = require("node:fs/promises");
 const path = require("node:path");
 const { judgeAnswer } = require("./answerFromDocs.cjs");
 const { loadDocsIndex, retrieve } = require("./docsIndex.cjs");
 const { logCase, reportResults } = require("./evalUtils.cjs");
-const { embed } = require("./modelsApi.cjs");
+const { embed, indexMatchesModel } = require("./localEmbeddings.cjs");
 
 const NUM_RESULTS = 5;
 // Allow a small number of misses before failing, retrieval is not exact
@@ -34,8 +33,8 @@ async function main() {
 		process.exit(1);
 	}
 	const token = process.env.GITHUB_TOKEN;
-	if (!token) {
-		console.error("GITHUB_TOKEN environment variable is required");
+	if (showAnswers && !token) {
+		console.error("GITHUB_TOKEN is required for --answers");
 		process.exit(1);
 	}
 
@@ -46,6 +45,7 @@ async function main() {
 		);
 		process.exit(1);
 	}
+	if (!indexMatchesModel(index, "docs index")) process.exit(1);
 	/** @type {{question: string, expectedFiles: string[]}[]} */
 	const cases = JSON.parse(
 		await fs.readFile(
@@ -63,12 +63,7 @@ async function main() {
 		);
 	}
 
-	// A single batched request embeds all eval questions at once
-	const embeddings = await embed(
-		cases.map((c) => c.question),
-		token,
-		index.model,
-	);
+	const embeddings = await embed(cases.map((c) => c.question));
 
 	/** @type {import("./evalUtils.cjs").EvalResult[]} */
 	const failures = [];

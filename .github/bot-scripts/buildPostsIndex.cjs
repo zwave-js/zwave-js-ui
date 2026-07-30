@@ -1,17 +1,17 @@
 // @ts-check
 
 // Builds a semantic search index over GitHub issues and discussions
-// by embedding their title + cleaned body using GitHub Models.
+// by embedding their title + cleaned body with a local model.
 // Indexed are open issues, issues closed within the last year, and all
 // discussions in the question categories.
 // Usage: node buildPostsIndex.cjs <owner/repo> <output-file>
-// Requires GITHUB_TOKEN with models:read permission and read access
-// to the repository's issues and discussions.
+// Requires GITHUB_TOKEN with read access to the repository's issues
+// and discussions.
 
 const fs = require("node:fs/promises");
 const path = require("node:path");
 const { ghGraphql, ghPaginated } = require("./githubApi.cjs");
-const { embedBatched, EMBEDDING_MODEL } = require("./modelsApi.cjs");
+const { EMBEDDING_MODEL, embedBatched } = require("./localEmbeddings.cjs");
 const {
 	POSTS_INDEX_VERSION,
 	QUESTION_CATEGORY_SLUGS,
@@ -204,7 +204,6 @@ async function main() {
 
 	const embeddings = await embedBatched(
 		pending.map((p) => p.embeddedText),
-		token,
 	);
 	pending.forEach((post, i) => post.embedding = embeddings[i]);
 

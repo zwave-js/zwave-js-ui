@@ -125,9 +125,9 @@ jobs:
       uses: actions/cache/restore@v6
       with:
         path: .docs-feedback/feedback.json
-        key: docs-feedback-v1-
+        key: docs-feedback-v2-
         restore-keys: |
-          docs-feedback-v1-
+          docs-feedback-v2-
 
     # One missing index still answers, just worse - say so instead of
     # letting a half-working bot look healthy
@@ -164,6 +164,9 @@ jobs:
         echo "::error::Neither the docs index nor the posts index could be restored, from cache or from artifacts - the answer bot cannot run"
         exit 1
 
+    - name: Setup embeddings
+      uses: ./.github/actions/setup-bot-embeddings
+
     - name: Answer from documentation
       uses: actions/github-script@v9
       env:
@@ -181,14 +184,13 @@ jobs:
   # related post before the next nightly rebuild. Discussions outside
   # the Q&A category are ignored by updatePostsIndex.cjs itself.
   # Edits are reconciled by the nightly rebuild instead, so repeated
-  # edits cannot burn Models API requests and cache storage.
+  # edits cannot burn compute and cache storage.
   update-posts-index:
     runs-on: [ubuntu-latest]
     timeout-minutes: 10
     permissions:
       actions: read
       contents: read
-      models: read
     if: github.event.action == 'opened' || github.event.action == 'created'
 
     steps:
@@ -213,12 +215,15 @@ jobs:
       run: |
         echo "::warning::The posts index could not be restored, from cache or from artifacts - this post will only be indexed by the next nightly rebuild"
 
+    - name: Setup embeddings
+      if: steps.posts-index.outputs.found == 'true'
+      uses: ./.github/actions/setup-bot-embeddings
+
     - name: Add post to index
       id: update
       if: steps.posts-index.outputs.found == 'true'
       uses: actions/github-script@v9
       env:
-        MODELS_TOKEN: ${{ github.token }}
         POSTS_INDEX_PATH: .posts-index/index.json
       with:
         script: |
@@ -230,4 +235,4 @@ jobs:
       uses: actions/cache/save@v6
       with:
         path: .posts-index
-        key: posts-embeddings-v1-${{ github.run_id }}
+        key: posts-embeddings-v2-${{ github.run_id }}

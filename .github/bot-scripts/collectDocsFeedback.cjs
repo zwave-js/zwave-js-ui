@@ -21,7 +21,7 @@ const {
 	DOCS_BASE_URL,
 } = require("./answerFromDocs.cjs");
 const { ghGraphql } = require("./githubApi.cjs");
-const { embedBatched, EMBEDDING_MODEL } = require("./modelsApi.cjs");
+const { EMBEDDING_MODEL, embedBatched } = require("./localEmbeddings.cjs");
 const { cleanQuestion } = require("./postsIndex.cjs");
 const { authorizedUsers } = require("./authorizedUsers.cjs");
 
@@ -505,7 +505,7 @@ async function main() {
 		(r) => r.score <= SUPPRESS_SCORE && r.style !== "posts",
 	);
 	const embeddings = downvoted.length > 0
-		? await embedBatched(downvoted.map((r) => r.question), token)
+		? await embedBatched(downvoted.map((r) => r.question))
 		: [];
 	const suppressed = downvoted
 		.map((r, i) => ({
