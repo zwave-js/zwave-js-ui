@@ -82,10 +82,10 @@ export type ZnifferPort = Pick<
 >
 
 export interface GatewayFactoryPort {
-	create<TZwave extends GatewayZwave, TMqtt extends GatewayMqtt>(
+	create(
 		config: GatewayConfig,
-		zwave: TZwave | undefined,
-		mqtt: TMqtt | undefined,
+		zwave: (GatewayZwave & ZwaveClientPort) | undefined,
+		mqtt: (GatewayMqtt & MqttClientPort) | undefined,
 	): GatewayPort
 	dispose(): void
 }

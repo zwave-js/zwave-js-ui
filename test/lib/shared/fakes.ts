@@ -190,6 +190,9 @@ function createFakeDiscoveryOptions(): MqttDiscoveryManagerOptions {
 			updateDevice: vi.fn(),
 			writeValue: vi.fn(),
 		},
+		nodeUpdates: {
+			emitNodeUpdate: vi.fn(),
+		},
 		topics: {
 			nodeTopic: vi.fn(() => ''),
 			valueTopic: vi.fn(() => null),
