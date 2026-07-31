@@ -42,8 +42,8 @@ const SCHEMA = {
 		},
 		evalCases: {
 			fields: {
-				docsAnswers: { type: "string" },
-				relatedPosts: { type: "string" },
+				docsAnswersFile: { type: "string" },
+				relatedPostsFile: { type: "string" },
 			},
 		},
 		// Present in zwave-js-ui (redirects mis-filed issues to the driver

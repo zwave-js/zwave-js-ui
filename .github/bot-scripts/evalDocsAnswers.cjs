@@ -36,7 +36,7 @@ async function main() {
 	/** @type {{question: string, expectedFiles: string[]}[]} */
 	const cases = JSON.parse(
 		await fs.readFile(
-			path.join(__dirname, config.evalCases.docsAnswers),
+			path.join(__dirname, config.evalCases.docsAnswersFile),
 			"utf8",
 		),
 	);
@@ -46,7 +46,7 @@ async function main() {
 	// "passing" an empty eval (see also reportResults()'s own guard)
 	if (cases.length === 0) {
 		throw new Error(
-			`No eval cases found in ${config.evalCases.docsAnswers} - cannot evaluate retrieval quality`,
+			`No eval cases found in ${config.evalCases.docsAnswersFile} - cannot evaluate retrieval quality`,
 		);
 	}
 

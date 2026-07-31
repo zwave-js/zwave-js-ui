@@ -29,7 +29,7 @@ async function main() {
 	/** @type {{question: string, expectedPosts: {type: string, number: number}[]}[]} */
 	const allCases = JSON.parse(
 		await fs.readFile(
-			path.join(__dirname, config.evalCases.relatedPosts),
+			path.join(__dirname, config.evalCases.relatedPostsFile),
 			"utf8",
 		),
 	);

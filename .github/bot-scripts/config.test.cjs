@@ -26,8 +26,8 @@ describe("bot config", () => {
 		expect(config.docs.questionCategorySlugs.length).toBeGreaterThan(0);
 		expect(config.users.authorized.length).toBeGreaterThan(0);
 		expect(typeof config.issues.docsFeedbackTitle).toBe("string");
-		expect(typeof config.evalCases.docsAnswers).toBe("string");
-		expect(typeof config.evalCases.relatedPosts).toBe("string");
+		expect(typeof config.evalCases.docsAnswersFile).toBe("string");
+		expect(typeof config.evalCases.relatedPostsFile).toBe("string");
 	});
 
 	it("derives excludedUsers as the authorized users plus the bot", () => {

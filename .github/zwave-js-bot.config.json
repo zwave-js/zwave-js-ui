@@ -15,8 +15,8 @@
 		"docsFeedbackTitle": "📊 Docs answer bot feedback"
 	},
 	"evalCases": {
-		"docsAnswers": "docsAnswersEvalCases.json",
-		"relatedPosts": "relatedPostsEvalCases.json"
+		"docsAnswersFile": "docsAnswersEvalCases.json",
+		"relatedPostsFile": "relatedPostsEvalCases.json"
 	},
 	"redirects": {
 		"issueTracker": "zwave-js/zwave-js"
