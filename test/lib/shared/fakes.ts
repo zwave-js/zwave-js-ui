@@ -186,11 +186,9 @@ function createFakeDiscoveryOptions(): MqttDiscoveryManagerOptions {
 		},
 		zwave: {
 			homeHex: undefined,
-			getNode: vi.fn(() => undefined),
-			getNodes: vi.fn((): Iterable<readonly [number, unknown]> => []),
+			nodes: new Map(),
 			updateDevice: vi.fn(),
-			emitNodeUpdate: vi.fn(),
-			writeCoverStop: vi.fn(() => Promise.resolve(undefined)),
+			writeValue: vi.fn(),
 		},
 		topics: {
 			nodeTopic: vi.fn(() => ''),

@@ -86,6 +86,6 @@ export interface GatewayFactoryPort {
 		config: GatewayConfig,
 		zwave: TZwave | undefined,
 		mqtt: TMqtt | undefined,
-	): Gateway<TZwave, TMqtt>
+	): GatewayPort
 	dispose(): void
 }

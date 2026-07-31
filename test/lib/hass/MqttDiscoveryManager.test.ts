@@ -1,21 +1,21 @@
 /**
  * Direct unit/characterization tests for {@link MqttDiscoveryManager}, the owner
- * of the Home Assistant MQTT discovery subsystem: the mutable `discovered`
- * device index, the per-instance custom-device catalog fork, the
- * {@link DiscoveryGenerator} instance, and the scoped
- * `homeassistant/status`/broker-reconnect subscription that drives a full
- * rediscovery.
+ * of the Home Assistant MQTT discovery subsystem: the per-instance
+ * custom-device catalog fork, the {@link DiscoveryGenerator} instance, and the
+ * scoped `homeassistant/status`/broker-reconnect subscription that drives a
+ * full rediscovery.
  *
  * These exercise the manager in isolation (fake ports, a real but unstarted
  * `CustomDeviceRegistry` source so no `fs.watch` handles are created, and a
  * hand-rolled status source) so every lifecycle transition, idempotency guard,
- * scoped-subscription disposer, two-manager isolation path and the
- * generator<->manager `discovered` wiring is proven against the manager itself.
+ * scoped-subscription disposer and two-manager isolation path are proven
+ * against the manager itself.
  * The end-to-end delivery of a real `homeassistant/status` retained message is
  * covered by `mqttLifecycle.test.ts` through the Gateway harness.
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import type { Mock } from 'vitest'
+import { SetValueStatus } from 'zwave-js'
 import MqttDiscoveryManager, {
 	HASS_STATUS_TOPIC,
 	type HassStatusSource,
@@ -64,7 +64,9 @@ function makeZwavePort(): HassZwavePort {
 		homeHex: '0xdeadbeef',
 		nodes: new Map(),
 		updateDevice: vi.fn(),
-		writeValue: vi.fn(() => Promise.resolve(undefined)),
+		writeValue: vi.fn(() =>
+			Promise.resolve({ status: SetValueStatus.Success }),
+		),
 	}
 }
 
@@ -192,11 +194,11 @@ function makeManager(
 describe('MqttDiscoveryManager start/stop lifecycle', () => {
 	it('resets the discovered index when it starts', () => {
 		const { manager } = makeManager()
-		manager.discovered = { seeded: device() }
+		const reset = vi.spyOn(manager.discoveryGenerator, 'reset')
 
 		manager.start()
 
-		expect(manager.discovered).toEqual({})
+		expect(reset).toHaveBeenCalledOnce()
 	})
 
 	it('stop() is idempotent and reentrant', () => {
@@ -461,22 +463,6 @@ describe('MqttDiscoveryManager start() status wiring', () => {
 	})
 })
 
-describe('MqttDiscoveryManager discovered index wiring', () => {
-	it('exposes the live discovered index the generator reads and mutates', () => {
-		const { manager } = makeManager()
-		manager.discovered = {
-			'7-38-0-currentValue': device(),
-			'8-38-0-currentValue': device(),
-		}
-
-		// removeNode() reads and mutates state.discovered through the manager's
-		// live index, proving the generator<->manager wiring end to end.
-		manager.discoveryGenerator.removeNode({ id: 7 })
-
-		expect(Object.keys(manager.discovered)).toEqual(['8-38-0-currentValue'])
-	})
-})
-
 describe('MqttDiscoveryManager multi-instance isolation', () => {
 	let sharedSource: CustomDeviceRegistry
 
@@ -487,14 +473,13 @@ describe('MqttDiscoveryManager multi-instance isolation', () => {
 		})
 	})
 
-	it('keeps discovered indexes and custom-device catalogs isolated across managers', () => {
+	it('keeps generators and custom-device catalogs isolated across managers', () => {
 		const first = makeManager({ registrySource: sharedSource }).manager
 		const second = makeManager({ registrySource: sharedSource }).manager
 
-		first.discovered = { only: device() }
 		first.customDeviceRegistry.set('custom-device', [device()])
 
-		expect(second.discovered).toEqual({})
+		expect(first.discoveryGenerator).not.toBe(second.discoveryGenerator)
 		expect(first.customDeviceRegistry.get('custom-device')).toHaveLength(1)
 		expect(second.customDeviceRegistry.get('custom-device')).toEqual([])
 	})
