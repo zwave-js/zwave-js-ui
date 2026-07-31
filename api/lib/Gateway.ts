@@ -113,8 +113,8 @@ interface ValueIdTopic {
 }
 
 type ParsedPayloadResult =
-	| { handled: true }
-	| { handled: false; value: unknown }
+	| { handled: true; value: null }
+	| { handled: false; value: any }
 
 export type GatewayZwave = Pick<
 	ZwaveClient,
@@ -374,7 +374,9 @@ export default class Gateway<
 			}
 
 			payload = this.discoveryGenerator.transformPayload(payload, valueId)
-			if (payload === HASS_COMMAND_HANDLED) return { handled: true }
+			if (payload === HASS_COMMAND_HANDLED) {
+				return { handled: true, value: null }
+			}
 
 			if (valueConf) {
 				if (utils.isValidOperation(valueConf.postOperation)) {
