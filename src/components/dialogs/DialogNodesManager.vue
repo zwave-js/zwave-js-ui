@@ -463,7 +463,6 @@ export default {
 			waitTimeout: null,
 			alert: null,
 			nodeFound: null,
-			currentAction: null,
 			nodeProps: {},
 			stopped: false,
 			aborted: false,
@@ -522,7 +521,7 @@ export default {
 					acts.push(
 						confirmAction(
 							s.key === 'inclusionMode'
-								? `Stop running ${this.currentAction}`
+								? 'Stop running Inclusion'
 								: 'Stop',
 							this.stopAction,
 							{ tone: 'danger' },
@@ -572,7 +571,7 @@ export default {
 				if (this.state === 'start') {
 					this.alert = {
 						type: 'info',
-						text: `${this.currentAction} started: ${s}s remaining`,
+						text: `Inclusion started: ${s}s remaining`,
 					}
 				}
 
@@ -587,13 +586,9 @@ export default {
 		controllerStatus(status) {
 			if (!status) return
 			this.nvmProgress = 0
-			if (status.indexOf('clusion') > 0) {
-				// it could be inclusion is started by the driver, in that case get the current action
-				this.currentAction = /inclusion/i.test(status)
-					? 'Inclusion'
-					: 'Exclusion'
-
-				// inclusion/exclusion started, start the countdown timer
+			// Exclusion is driven by DialogExcludeDevice, so only track inclusion here
+			if (/inclusion/i.test(status)) {
+				// inclusion started, start the countdown timer
 				if (status.indexOf('started') > 0) {
 					this.commandEndDate = new Date(
 						new Date().getTime() + this.timeoutMs,
@@ -601,7 +596,7 @@ export default {
 					this.nodeFound = null
 					this.state = 'start'
 				} else if (status.indexOf('stopped') > 0) {
-					// inclusion/exclusion stopped, check what happened
+					// inclusion stopped, check what happened
 
 					// inclusion has been stopped manually
 					if (this.stopped || this.commandTimedOut) {
@@ -609,8 +604,6 @@ export default {
 						this.showResults()
 					} else {
 						// inclusion stopped by controller, see if a node was found
-						let timeout =
-							this.currentAction === 'Exclusion' ? 3000 : 5000
 						this.state = 'wait'
 
 						// when a node is added/removed showResults it's called from socket event listeners
@@ -618,7 +611,7 @@ export default {
 						// fixes issue #2746
 						this.waitTimeout = setTimeout(
 							() => this.showResults(),
-							timeout,
+							5000,
 						) // add additional discovery time
 					}
 				} else {
@@ -948,7 +941,6 @@ export default {
 				await this.app.apiRequest('validateDSK', [pin])
 			} else if (s.key === 'replaceFailed') {
 				// Validation should have been done in submitReplaceFailed
-				this.currentAction = 'Inclusion'
 				this.pushStep('replaceInclusionMode')
 			}
 		},
@@ -958,7 +950,6 @@ export default {
 					? 'replaceFailed'
 					: 'inclusionNaming']: {},
 			})
-			this.currentAction = 'Inclusion'
 		},
 		async show(stepOrStepsValues) {
 			this.isOpen = true
@@ -979,10 +970,9 @@ export default {
 		init(bind) {
 			this.steps = []
 
-			// stop any running inclusion/exclusion
+			// Keep the stop flag while an inclusion is still running
 			if (this.state !== 'start') {
 				this.stopped = false
-				this.currentAction = null
 			}
 
 			this.loading = false
@@ -1028,7 +1018,7 @@ export default {
 		},
 		stopAction() {
 			this.stopped = true
-			this.sendAction('stop' + this.currentAction)
+			this.sendAction('stopInclusion')
 		},
 		async sendAction(api, args) {
 			this.commandEndDate = null
@@ -1036,9 +1026,10 @@ export default {
 			let text = ''
 
 			if (this.backup.nvmBackupOnEvent && api.startsWith('start')) {
-				text = `Backuping NVM before ${this.currentAction}. Check progress status bar...`
+				text =
+					'Backuping NVM before Inclusion. Check progress status bar...'
 			} else {
-				text = `${this.currentAction} ${
+				text = `Inclusion ${
 					api.startsWith('stop') ? 'stopping…' : 'starting…'
 				}`
 			}
@@ -1093,16 +1084,9 @@ export default {
 				this.alert = {
 					type: 'warning',
 					text: this.commandTimedOut
-						? `Timed Out! No device has been found to complete ${this.currentAction}`
-						: `${this.currentAction} stopped, no changes detected`,
+						? 'Timed Out! No device has been found to complete Inclusion'
+						: 'Inclusion stopped, no changes detected',
 				}
-			} else if (this.currentAction === 'Exclusion') {
-				this.alert = null
-				this.aborted = false
-				const doneStep = copy(this.availableSteps.done)
-				doneStep.text = `Node ${this.nodeFound.id} removed`
-				doneStep.success = true
-				this.pushStep(doneStep)
 			} else {
 				this.alert = null
 				this.aborted = false
