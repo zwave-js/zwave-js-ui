@@ -11,11 +11,22 @@ import type { HassDeviceRegistryPort, HassLogger } from './ports.ts'
 
 const require = createRequire(import.meta.url)
 
+export interface CustomDeviceWatcher {
+	close(): void
+	on(event: 'error', listener: (error: Error) => void): this
+}
+
+export type CustomDeviceWatch = (
+	filename: string,
+	listener: fs.WatchListener<string>,
+) => CustomDeviceWatcher
+
 export interface CustomDeviceRegistryOptions {
 	storeDir: string
 	logger: Pick<HassLogger, 'error' | 'info'>
 	devices?: HassDeviceCatalog
 	source?: CustomDeviceRegistry
+	watch?: CustomDeviceWatch
 }
 
 function copyCatalog(catalog: unknown): HassDeviceCatalogSource {
@@ -42,7 +53,8 @@ export class CustomDeviceRegistry implements HassDeviceRegistryPort {
 	private readonly customDevicesPath: string
 	private readonly customDevicesJsPath: string
 	private readonly customDevicesJsonPath: string
-	private readonly watchers = new Map<string, fs.FSWatcher>()
+	private readonly watchFile: CustomDeviceWatch
+	private readonly watchers = new Map<string, CustomDeviceWatcher>()
 	private readonly listeners = new Set<() => void>()
 	private readonly source: CustomDeviceRegistry | undefined
 	private allDevices: HassDeviceCatalogSource
@@ -60,6 +72,9 @@ export class CustomDeviceRegistry implements HassDeviceRegistryPort {
 		this.customDevicesPath = path.join(options.storeDir, 'customDevices')
 		this.customDevicesJsPath = this.customDevicesPath + '.js'
 		this.customDevicesJsonPath = this.customDevicesPath + '.json'
+		this.watchFile =
+			options.watch ??
+			((filename, listener) => fs.watch(filename, listener))
 	}
 
 	public start(): void {
@@ -172,9 +187,9 @@ export class CustomDeviceRegistry implements HassDeviceRegistryPort {
 
 	private watch(filename: string): void {
 		try {
-			this.watchers.set(
+			this.trackWatcher(
 				filename,
-				fs.watch(filename, (event: string) => {
+				this.watchFile(filename, (event) => {
 					this.load()
 					if (event === 'rename') {
 						this.watchers.get(filename)?.close()
@@ -183,20 +198,35 @@ export class CustomDeviceRegistry implements HassDeviceRegistryPort {
 				}),
 			)
 		} catch {
-			this.watchers.set(
+			this.trackWatcher(
 				filename,
-				fs.watch(path.dirname(filename), (_event, changedFilename) => {
-					if (
-						!changedFilename ||
-						changedFilename === 'customDevices.js' ||
-						changedFilename === 'customDevices.json'
-					) {
-						this.watchers.get(filename)?.close()
-						this.watch(filename)
-						this.load()
-					}
-				}),
+				this.watchFile(
+					path.dirname(filename),
+					(_event, changedFilename) => {
+						if (
+							!changedFilename ||
+							changedFilename ===
+								path.basename(this.customDevicesJsPath) ||
+							changedFilename ===
+								path.basename(this.customDevicesJsonPath)
+						) {
+							this.watchers.get(filename)?.close()
+							this.watch(filename)
+							this.load()
+						}
+					},
+				),
 			)
 		}
+	}
+
+	private trackWatcher(filename: string, watcher: CustomDeviceWatcher): void {
+		this.watchers.set(filename, watcher)
+		watcher.on('error', (error) => {
+			if (this.watchers.get(filename) !== watcher) return
+			this.logger.error(`Failed to watch ${filename}:`, error)
+			watcher.close()
+			this.watchers.delete(filename)
+		})
 	}
 }

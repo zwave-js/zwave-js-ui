@@ -5,6 +5,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
 	CustomDeviceRegistry,
 	type CustomDeviceRegistryOptions,
+	type CustomDeviceWatcher,
 } from '#api/hass/CustomDeviceRegistry.ts'
 import type { HassDevice, HassDeviceCatalog } from '#api/hass/types.ts'
 
@@ -21,7 +22,10 @@ describe('CustomDeviceRegistry', () => {
 	const directories: string[] = []
 	const registries: CustomDeviceRegistry[] = []
 
-	function createRegistry(catalogs: HassDeviceCatalog = {}): {
+	function createRegistry(
+		catalogs: HassDeviceCatalog = {},
+		options: Partial<CustomDeviceRegistryOptions> = {},
+	): {
 		registry: CustomDeviceRegistry
 		storeDir: string
 		logger: CustomDeviceRegistryOptions['logger']
@@ -37,6 +41,7 @@ describe('CustomDeviceRegistry', () => {
 			storeDir,
 			logger,
 			devices: catalogs,
+			...options,
 		})
 		directories.push(storeDir)
 		registries.push(registry)
@@ -56,6 +61,7 @@ describe('CustomDeviceRegistry', () => {
 		const { registry, storeDir } = createRegistry({
 			'built-in-id': [builtIn],
 		})
+
 		fs.writeFileSync(
 			path.join(storeDir, 'customDevices.json'),
 			JSON.stringify({ 'custom-id': [custom] }),
@@ -65,6 +71,48 @@ describe('CustomDeviceRegistry', () => {
 
 		expect(registry.get('built-in-id')).toEqual([builtIn])
 		expect(registry.get('custom-id')).toEqual([custom])
+	})
+
+	it('logs and removes failed watchers before disposal', () => {
+		class RecordingWatcher implements CustomDeviceWatcher {
+			public readonly close = vi.fn()
+			private errorListener: ((error: Error) => void) | undefined
+
+			public on(_event: 'error', listener: (error: Error) => void): this {
+				this.errorListener = listener
+				return this
+			}
+
+			public fail(error: Error): void {
+				this.errorListener?.(error)
+			}
+		}
+
+		const watchers: RecordingWatcher[] = []
+		const { registry, logger } = createRegistry(
+			{},
+			{
+				watch: () => {
+					const watcher = new RecordingWatcher()
+					watchers.push(watcher)
+					return watcher
+				},
+			},
+		)
+		registry.start()
+
+		const error = new Error('watch failed')
+		watchers[0].fail(error)
+
+		expect(logger.error).toHaveBeenCalledWith(
+			expect.stringContaining('Failed to watch'),
+			error,
+		)
+		expect(watchers[0].close).toHaveBeenCalledOnce()
+
+		registry.dispose()
+		expect(watchers[0].close).toHaveBeenCalledOnce()
+		expect(watchers[1].close).toHaveBeenCalledOnce()
 	})
 
 	it('prefers JavaScript catalogs over JSON catalogs', () => {
