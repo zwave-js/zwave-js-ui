@@ -58,9 +58,7 @@ describe('Gateway Home Assistant behavior', () => {
 			discovery_payload: {},
 			values: [],
 		}
-		const { GatewayFactory } = await import(
-			'#api/runtime/GatewayFactory'
-		)
+		const { GatewayFactory } = await import('#api/runtime/GatewayFactory')
 		const factory = new GatewayFactory({
 			storeDir,
 			logger: {

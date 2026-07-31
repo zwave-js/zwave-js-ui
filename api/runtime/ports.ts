@@ -1,9 +1,5 @@
+import type { GatewayConfig, GatewayMqtt, GatewayZwave } from '#api/lib/Gateway'
 import type Gateway from '#api/lib/Gateway'
-import type {
-	GatewayConfig,
-	GatewayMqtt,
-	GatewayZwave,
-} from '../lib/Gateway.ts'
 import type MqttClient from '#api/lib/MqttClient'
 import type ZWaveClient from '#api/lib/ZwaveClient'
 import type ZnifferManager from '#api/lib/ZnifferManager'
