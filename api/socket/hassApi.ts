@@ -1,6 +1,5 @@
 import type { Socket } from 'socket.io'
-import type { StoreHassDevicesResult } from '../hass/types.ts'
-import type { HassDevice } from '../lib/ZwaveClient.ts'
+import type { HassDevice, HassDeviceMap } from '../hass/types.ts'
 import { getErrorMessage } from '../lib/errors.ts'
 import * as loggers from '../lib/logger.ts'
 import { inboundEvents } from '../lib/SocketEvents.ts'
@@ -26,12 +25,12 @@ export type HassApiRequest =
 	  }
 	| {
 			apiName: 'store'
-			devices: Record<string, HassDevice>
+			devices: HassDeviceMap
 			nodeId: number
 			remove: boolean
 	  }
 
-export type HassApiAck = ApiAck<StoreHassDevicesResult | void>
+export type HassApiAck = ApiAck<void>
 
 export function registerHassApiHandler(
 	socket: Socket,
@@ -43,7 +42,7 @@ export function registerHassApiHandler(
 			const apiName: string = data.apiName
 			logger.info(`Hass api call: ${safeOperationName(apiName)}`)
 
-			let res: StoreHassDevicesResult | void = undefined
+			let res: void
 			let err: string | undefined
 			try {
 				switch (data.apiName) {
@@ -84,23 +83,13 @@ export function registerHassApiHandler(
 							.addDevice(data.device, data.nodeId)
 						break
 					case 'store': {
-						const storeResult = await runtime
+						await runtime
 							.ensureZWaveClient()
 							.storeDevices(
 								data.devices,
 								data.nodeId,
 								data.remove,
 							)
-						res = storeResult
-						if (storeResult.status === 'node-not-found') {
-							err =
-								'Unable to store Home Assistant devices: node not found'
-						} else if (
-							storeResult.status === 'invalid-stored-node'
-						) {
-							err =
-								'Unable to store Home Assistant devices: stored node is invalid'
-						}
 						break
 					}
 					default:

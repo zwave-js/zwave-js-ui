@@ -357,7 +357,7 @@ describe('Socket contract: inbound ACK APIs', () => {
 			})
 		})
 
-		it('acknowledges stored devices and reports invalid stored nodes', async () => {
+		it('acknowledges stored devices without exposing persistence status', async () => {
 			const devices = { switch_sw: { type: 'switch' } }
 			const gateway = createFakeGateway()
 			const harness = await getHarness({ gateway })
@@ -377,24 +377,21 @@ describe('Socket contract: inbound ACK APIs', () => {
 			expect(result).toStrictEqual({
 				success: true,
 				message: 'Success HASS api call',
-				result: { status: 'stored' },
 				api: 'store',
 			})
 
 			gateway.zwave.storeDevices.mockResolvedValueOnce({
 				status: 'invalid-stored-node',
 			})
-			const failedResult = await emit(client, 'HASS_API', {
+			const invalidResult = await emit(client, 'HASS_API', {
 				apiName: 'store',
 				devices,
 				nodeId: 2,
 				remove: false,
 			})
-			expect(failedResult).toStrictEqual({
-				success: false,
-				message:
-					'Unable to store Home Assistant devices: stored node is invalid',
-				result: { status: 'invalid-stored-node' },
+			expect(invalidResult).toStrictEqual({
+				success: true,
+				message: 'Success HASS api call',
 				api: 'store',
 			})
 		})
