@@ -64,9 +64,11 @@ function makeZwavePort(): HassZwavePort {
 		homeHex: '0xdeadbeef',
 		nodes: new Map(),
 		updateDevice: vi.fn(),
-		writeValue: vi.fn<HassZwavePort['writeValue']>(async () => ({
-			status: SetValueStatus.Success,
-		})),
+		writeValue: vi.fn<HassZwavePort['writeValue']>(() =>
+			Promise.resolve({
+				status: SetValueStatus.Success,
+			}),
+		),
 	}
 }
 
