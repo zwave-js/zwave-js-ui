@@ -18,7 +18,7 @@ import type {
 	HassValue,
 	HassZwavePort,
 } from '#api/hass/ports'
-import { ensureHassNode } from '#api/hass/ports.ts'
+import { ensureHassNode } from '#api/hass/ports'
 import type {
 	HassDevice,
 	HassDeviceCatalog,
