@@ -128,6 +128,7 @@ function setup(options: {
 	nodes?: Map<number, HassNode>
 	catalog?: HassDeviceCatalog
 	publishError?: unknown
+	withoutZwave?: boolean
 }) {
 	const published: Array<{
 		topic: string
@@ -207,7 +208,7 @@ function setup(options: {
 			...options.config,
 		},
 		mqtt,
-		zwave,
+		zwave: options.withoutZwave ? undefined : zwave,
 		nodeUpdates: {
 			emitNodeUpdate: (nodeId, devices) =>
 				emitted.push({ nodeId, devices }),
@@ -556,13 +557,40 @@ describe('DiscoveryGenerator', () => {
 			'unchanged',
 		)
 		expect(generator.transformPayload('HALT', cover)).toBeNull()
+		discovered[cover.id] = device({
+			type: 'cover',
+			discovery_payload: {},
+		})
+		expect(generator.transformPayload('STOP', cover)).toBeNull()
 		await vi.waitFor(() =>
 			expect(writes).toEqual([
 				{
 					valueId: { ...cover, property: 'Up' },
 					value: false,
 				},
+				{
+					valueId: { ...cover, property: 'Up' },
+					value: false,
+				},
 			]),
+		)
+	})
+
+	it('requires Z-Wave only when a cover command writes', () => {
+		const cover = value({
+			id: ccValueId(CommandClasses['Multilevel Switch'], 'targetValue'),
+			commandClass: CommandClasses['Multilevel Switch'],
+			property: 'targetValue',
+			type: 'number',
+		})
+		const { generator, discovered } = setup({ withoutZwave: true })
+		discovered[cover.id] = device({
+			type: 'cover',
+			discovery_payload: {},
+		})
+
+		expect(() => generator.transformPayload('STOP', cover)).toThrow(
+			'Z-Wave client is not available',
 		)
 	})
 
@@ -618,10 +646,37 @@ describe('DiscoveryGenerator', () => {
 			setpoint.id,
 		)
 		expect(published).toHaveLength(1)
+		generator.updateClimateDiscovery(mode, hassNode, true)
+		expect(published).toHaveLength(1)
 
 		mode.value = ThermostatMode.Off
 		generator.updateClimateDiscovery(mode, hassNode, true)
 		expect(published).toHaveLength(1)
+
+		delete climate.mode_map
+		mode.value = 'heat'
+		generator.updateClimateDiscovery(mode, hassNode, true)
+		expect(published).toHaveLength(1)
+	})
+
+	it('skips inactive discovery lifecycle paths', () => {
+		const hassNode = node({
+			hassDevices: {
+				transient: device({ persistent: false }),
+			},
+		})
+		const hassValue = value()
+		const { generator, published } = setup({
+			config: { hassDiscovery: false },
+		})
+
+		generator.discoverValueIfNeeded(hassNode, hassValue)
+		generator.onNodeInited(hassNode)
+
+		expect(published).toHaveLength(0)
+		expect(hassNode.hassDevices).toEqual({
+			transient: device({ persistent: false }),
+		})
 	})
 
 	it('publishes valid custom climates and rejects incomplete devices', () => {

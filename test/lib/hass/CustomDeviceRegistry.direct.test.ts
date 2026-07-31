@@ -115,6 +115,67 @@ describe('CustomDeviceRegistry', () => {
 		expect(watchers[1].close).toHaveBeenCalledOnce()
 	})
 
+	it('keeps malformed fork entries isolated and ignores undefined writes', () => {
+		const { registry, storeDir } = createRegistry()
+		fs.writeFileSync(
+			path.join(storeDir, 'customDevices.js'),
+			'module.exports = { malformed: {} }',
+		)
+		registry.start()
+		const fork = registry.fork()
+		registries.push(fork)
+		fork.start()
+
+		fork.set(undefined, [device('ignored')])
+
+		expect(fork.get('malformed')).toEqual([])
+		expect(fork.get(undefined)).toEqual([])
+	})
+
+	it('ignores errors from a watcher replaced after rename', () => {
+		class RecordingWatcher implements CustomDeviceWatcher {
+			public readonly close = vi.fn()
+			private errorListener: ((error: Error) => void) | undefined
+
+			public constructor(
+				private readonly listener: fs.WatchListener<string>,
+			) {}
+
+			public on(_event: 'error', listener: (error: Error) => void): this {
+				this.errorListener = listener
+				return this
+			}
+
+			public rename(): void {
+				this.listener('rename', null)
+			}
+
+			public fail(error: Error): void {
+				this.errorListener?.(error)
+			}
+		}
+
+		const watchers: RecordingWatcher[] = []
+		const { registry, logger } = createRegistry(
+			{},
+			{
+				watch: (_filename, listener) => {
+					const watcher = new RecordingWatcher(listener)
+					watchers.push(watcher)
+					return watcher
+				},
+			},
+		)
+		registry.start()
+		const replacedWatcher = watchers[0]
+
+		replacedWatcher.rename()
+		replacedWatcher.fail(new Error('stale watcher'))
+
+		expect(replacedWatcher.close).toHaveBeenCalledOnce()
+		expect(logger.error).not.toHaveBeenCalled()
+	})
+
 	it('prefers JavaScript catalogs over JSON catalogs', () => {
 		const fromJson = device('from-json')
 		const fromJavaScript = device('from-javascript')
