@@ -8,7 +8,6 @@ import * as utils from '../lib/utils.ts'
 import type {
 	HassDeviceRegistryPort,
 	HassDiscoveryConfig,
-	HassDiscoveryState,
 	HassLogger,
 	HassMqttPort,
 	HassNode,
@@ -61,7 +60,6 @@ export interface DiscoveryGeneratorOptions {
 	nodeUpdates: HassNodeUpdatePort
 	topics: HassTopicPort
 	registry: HassDeviceRegistryPort
-	state: HassDiscoveryState
 	logger: HassLogger
 }
 
@@ -77,8 +75,8 @@ export class DiscoveryGenerator {
 	private readonly nodeUpdates: HassNodeUpdatePort
 	private readonly topics: HassTopicPort
 	private readonly registry: HassDeviceRegistryPort
-	private readonly state: HassDiscoveryState
 	private readonly logger: HassLogger
+	private discovered: Record<string, HassDevice> = {}
 
 	public constructor(options: DiscoveryGeneratorOptions) {
 		this.config = options.config
@@ -87,7 +85,6 @@ export class DiscoveryGenerator {
 		this.nodeUpdates = options.nodeUpdates
 		this.topics = options.topics
 		this.registry = options.registry
-		this.state = options.state
 		this.logger = options.logger
 	}
 
@@ -103,6 +100,10 @@ export class DiscoveryGenerator {
 	private get zwave(): HassZwavePort {
 		if (!this.zwavePort) throw new Error('Z-Wave client is not available')
 		return this.zwavePort
+	}
+
+	public reset(): void {
+		this.discovered = {}
 	}
 
 	public rediscoverNode(nodeId: number): void {
@@ -224,10 +225,10 @@ export class DiscoveryGenerator {
 
 		for (const value of hassDevice.values) {
 			const valueId = nodeId + '-' + value
-			if (deleteDevice && this.state.discovered[valueId]) {
-				delete this.state.discovered[valueId]
+			if (deleteDevice && this.discovered[valueId]) {
+				delete this.discovered[valueId]
 			} else {
-				this.state.discovered[valueId] = hassDevice
+				this.discovered[valueId] = hassDevice
 			}
 		}
 	}
@@ -625,7 +626,7 @@ export class DiscoveryGenerator {
 		if (node.virtual) return
 
 		const valueId = node.values[valueIdKey]
-		if (!valueId || this.state.discovered[valueId.id] || !node.ready) {
+		if (!valueId || this.discovered[valueId.id] || !node.ready) {
 			return
 		}
 
@@ -1118,7 +1119,7 @@ export class DiscoveryGenerator {
 	}
 
 	public transformPayload(payload: unknown, valueId: HassValue): unknown {
-		const hassDevice = this.state.discovered[valueId.id]
+		const hassDevice = this.discovered[valueId.id]
 		if (!hassDevice) return payload
 
 		if (
@@ -1158,7 +1159,7 @@ export class DiscoveryGenerator {
 		node: HassNode,
 		changed: boolean,
 	): void {
-		const hassDevice = this.state.discovered[valueId.id]
+		const hassDevice = this.discovered[valueId.id]
 		if (
 			!this.config.hassDiscovery ||
 			!changed ||
@@ -1192,7 +1193,7 @@ export class DiscoveryGenerator {
 	}
 
 	public discoverValueIfNeeded(node: HassNode, valueId: HassValue): void {
-		if (this.config.hassDiscovery && !this.state.discovered[valueId.id]) {
+		if (this.config.hassDiscovery && !this.discovered[valueId.id]) {
 			this.discoverValue(node, getIdWithoutNode(valueId))
 		}
 	}
@@ -1213,8 +1214,8 @@ export class DiscoveryGenerator {
 
 	public removeNode(node: Pick<HassNode, 'id'>): void {
 		const prefix = node.id + '-'
-		for (const id of Object.keys(this.state.discovered)) {
-			if (id.startsWith(prefix)) delete this.state.discovered[id]
+		for (const id of Object.keys(this.discovered)) {
+			if (id.startsWith(prefix)) delete this.discovered[id]
 		}
 	}
 

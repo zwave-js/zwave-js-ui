@@ -23,7 +23,7 @@ import type {
 	HassDeviceCatalog,
 	HassDeviceMap,
 } from '#api/hass/types.ts'
-import { PayloadType } from '#api/lib/shared.ts'
+import { getIdWithoutNode, PayloadType } from '#api/lib/shared.ts'
 import { cleanupTestEnv, ensureTestEnv, TEST_SESSION_SECRET } from './env.ts'
 
 const GENERIC_DEVICE_CLASS_THERMOSTAT = 0x08
@@ -122,6 +122,15 @@ function device(overrides: Partial<HassDevice> = {}): HassDevice {
 	}
 }
 
+function registerDiscovery(
+	generator: DiscoveryGeneratorType,
+	hassValue: HassValue,
+	hassDevice: HassDevice,
+): void {
+	hassDevice.values = [getIdWithoutNode(hassValue)]
+	generator.setDiscovery(hassValue.nodeId, hassDevice)
+}
+
 function setup(options: {
 	config?: DiscoveryGeneratorOptions['config']
 	disabled?: boolean
@@ -150,8 +159,6 @@ function setup(options: {
 			[...devices],
 		]),
 	)
-	const discovered: Record<string, HassDevice> = {}
-
 	const mqtt: HassMqttPort = {
 		disabled: options.disabled ?? false,
 		getTopic: (topic, set) => `prefix/${topic}${set ? '/set' : ''}`,
@@ -226,7 +233,6 @@ function setup(options: {
 					: `node/${hassValue.id}`,
 		},
 		registry,
-		state: { discovered },
 		logger,
 	})
 
@@ -236,7 +242,6 @@ function setup(options: {
 		updates,
 		emitted,
 		writes,
-		discovered,
 		logger,
 		logDebug,
 		logWarn,
@@ -261,19 +266,14 @@ describe('DiscoveryGenerator', () => {
 				}),
 			},
 		})
-		const { generator, discovered, emitted, published } = setup({
+		const { generator, emitted, published } = setup({
 			nodes: new Map([
 				[2, hassNode],
 				[4, node({ id: 4, virtual: true })],
 			]),
 		})
-		discovered['2-stale'] = device()
-		discovered['9-keep'] = device()
-
 		generator.rediscoverNode(4)
 		generator.rediscoverNode(2)
-		expect(discovered['2-stale']).toBeUndefined()
-		expect(discovered['9-keep']).toBeDefined()
 		expect(Object.keys(hassNode.hassDevices)).toEqual(['switch_switch'])
 		expect(hassNode.hassDevices.switch_switch).toEqual({
 			type: 'switch',
@@ -338,9 +338,28 @@ describe('DiscoveryGenerator', () => {
 			),
 		).toBe(true)
 		expect(emitted).toHaveLength(2)
+	})
 
-		generator.removeNode({ id: 9 })
-		expect(discovered['9-keep']).toBeUndefined()
+	it('owns, resets, and removes entries from its discovery index', () => {
+		const { generator } = setup({})
+		const tracked = value({ id: '2-tracked' })
+		const retained = value({ id: '9-retained', nodeId: 9 })
+		registerDiscovery(generator, tracked, device())
+		registerDiscovery(generator, retained, device())
+		const discoverValue = vi
+			.spyOn(generator, 'discoverValue')
+			.mockImplementation(() => undefined)
+
+		generator.discoverValueIfNeeded(node(), tracked)
+		generator.removeNode({ id: 2 })
+		generator.discoverValueIfNeeded(node(), tracked)
+		generator.discoverValueIfNeeded(node({ id: 9 }), retained)
+		expect(discoverValue).toHaveBeenCalledOnce()
+
+		registerDiscovery(generator, tracked, device())
+		generator.reset()
+		generator.discoverValueIfNeeded(node(), tracked)
+		expect(discoverValue).toHaveBeenCalledTimes(2)
 	})
 
 	it('publishes only configured non-blank suggested areas', () => {
@@ -391,7 +410,7 @@ describe('DiscoveryGenerator', () => {
 	})
 
 	it('publishes raw deletion payloads and removes deleted devices', () => {
-		const { generator, published, updates, discovered } = setup({
+		const { generator, published, updates } = setup({
 			config: {
 				payloadType: PayloadType.RAW,
 				retainedDiscovery: true,
@@ -406,13 +425,19 @@ describe('DiscoveryGenerator', () => {
 				payload_off: false,
 			},
 		})
+		const discoverValue = vi
+			.spyOn(generator, 'discoverValue')
+			.mockImplementation(() => undefined)
+		const hassNode = node()
+		const hassValue = value()
 
 		generator.publishDiscovery(hassDevice, 2)
 		expect(published).toHaveLength(0)
 		expect(hassDevice.discovery_payload.state_topic).toBe(
 			"{{ value == 'true' }}",
 		)
-		expect(discovered[BINARY_SWITCH_CURRENT_VALUE_ID]).toBe(hassDevice)
+		generator.discoverValueIfNeeded(hassNode, hassValue)
+		expect(discoverValue).not.toHaveBeenCalled()
 
 		generator.publishDiscovery(hassDevice, 2, {
 			deleteDevice: true,
@@ -427,7 +452,8 @@ describe('DiscoveryGenerator', () => {
 			},
 		])
 		expect(updates[0]).toMatchObject({ nodeId: 2, deleteDevice: true })
-		expect(discovered[BINARY_SWITCH_CURRENT_VALUE_ID]).toBeUndefined()
+		generator.discoverValueIfNeeded(hassNode, hassValue)
+		expect(discoverValue).toHaveBeenCalledOnce()
 
 		const rawWithoutBinaryPayloads = setup({
 			config: { payloadType: PayloadType.RAW },
@@ -532,17 +558,29 @@ describe('DiscoveryGenerator', () => {
 			property: 'targetValue',
 			type: 'number',
 		})
-		const { generator, discovered, writes } = setup({})
-		discovered[fan.id] = device({
-			fan_mode_map: { auto: ThermostatFanMode['Auto low'] },
-		})
-		discovered[mode.id] = device({
-			mode_map: { heat: ThermostatMode.Heat },
-		})
-		discovered[cover.id] = device({
-			type: 'cover',
-			discovery_payload: { payload_stop: 'HALT' },
-		})
+		const { generator, writes } = setup({})
+		registerDiscovery(
+			generator,
+			fan,
+			device({
+				fan_mode_map: { auto: ThermostatFanMode['Auto low'] },
+			}),
+		)
+		registerDiscovery(
+			generator,
+			mode,
+			device({
+				mode_map: { heat: ThermostatMode.Heat },
+			}),
+		)
+		registerDiscovery(
+			generator,
+			cover,
+			device({
+				type: 'cover',
+				discovery_payload: { payload_stop: 'HALT' },
+			}),
+		)
 
 		expect(generator.transformPayload('auto', fan)).toBe(
 			ThermostatFanMode['Auto low'],
@@ -557,10 +595,14 @@ describe('DiscoveryGenerator', () => {
 			'unchanged',
 		)
 		expect(generator.transformPayload('HALT', cover)).toBeNull()
-		discovered[cover.id] = device({
-			type: 'cover',
-			discovery_payload: {},
-		})
+		registerDiscovery(
+			generator,
+			cover,
+			device({
+				type: 'cover',
+				discovery_payload: {},
+			}),
+		)
 		expect(generator.transformPayload('STOP', cover)).toBeNull()
 		await vi.waitFor(() =>
 			expect(writes).toEqual([
@@ -583,11 +625,15 @@ describe('DiscoveryGenerator', () => {
 			property: 'targetValue',
 			type: 'number',
 		})
-		const { generator, discovered } = setup({ withoutZwave: true })
-		discovered[cover.id] = device({
-			type: 'cover',
-			discovery_payload: {},
-		})
+		const { generator } = setup({ withoutZwave: true })
+		registerDiscovery(
+			generator,
+			cover,
+			device({
+				type: 'cover',
+				discovery_payload: {},
+			}),
+		)
 
 		expect(() => generator.transformPayload('STOP', cover)).toThrow(
 			'Z-Wave client is not available',
@@ -636,8 +682,8 @@ describe('DiscoveryGenerator', () => {
 				)]: setpoint,
 			},
 		})
-		const { generator, discovered, published } = setup({})
-		discovered[mode.id] = climate
+		const { generator, published } = setup({})
+		registerDiscovery(generator, mode, climate)
 
 		generator.updateClimateDiscovery(mode, hassNode, false)
 		expect(published).toHaveLength(0)

@@ -73,10 +73,6 @@ export interface HassDiscoveryConfig {
 	useLocationAsSuggestedArea?: boolean
 }
 
-export interface HassDiscoveryState {
-	discovered: Record<string, HassDevice>
-}
-
 export interface HassDeviceRegistryPort {
 	get(deviceId: string | undefined): HassDevice[]
 	set(deviceId: string | undefined, devices: HassDevice[]): void

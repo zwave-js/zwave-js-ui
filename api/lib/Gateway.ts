@@ -148,7 +148,6 @@ export default class Gateway<
 	private _mqtt?: TMqtt
 	private _zwave?: TZwave
 	private topicValues: { [key: string]: ZUIValueId } = {}
-	private discovered: { [key: string]: HassDevice } = {}
 	private topicLevels: number[] = []
 	private _closed = false
 	private jobs: Map<string, Cron> = new Map()
@@ -201,7 +200,6 @@ export default class Gateway<
 		this._mqtt = mqtt
 		this._zwave = zwave
 		this.customDeviceRegistry = customDeviceRegistry
-		const getDiscovered = () => this.discovered
 		this.discoveryGenerator = new DiscoveryGenerator({
 			config: this.config,
 			mqtt,
@@ -218,11 +216,6 @@ export default class Gateway<
 					this.valueTopic(node, value, returnObject),
 			},
 			registry: this.customDeviceRegistry,
-			state: {
-				get discovered() {
-					return getDiscovered()
-				},
-			},
 			logger: hassLogger,
 		})
 	}
@@ -236,7 +229,7 @@ export default class Gateway<
 		// or a valueConf if the topic is a broadcast topic
 		this.topicValues = {}
 
-		this.discovered = {}
+		this.discoveryGenerator.reset()
 
 		this._closed = false
 
