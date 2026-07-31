@@ -20,7 +20,10 @@ import type ZwaveClient from './ZwaveClient.ts'
 import Cron from 'croner'
 
 import { HASS_NODE_PREFIX, type HassDevice } from '../hass/types.ts'
-import { DiscoveryGenerator } from '../hass/DiscoveryGenerator.ts'
+import {
+	DiscoveryGenerator,
+	HASS_COMMAND_HANDLED,
+} from '../hass/DiscoveryGenerator.ts'
 import type {
 	HassDeviceRegistryLifecyclePort,
 	HassNode,
@@ -108,6 +111,10 @@ interface ValueIdTopic {
 	valueConf: GatewayValue
 	targetTopic?: string
 }
+
+type ParsedPayloadResult =
+	| { handled: true }
+	| { handled: false; value: unknown }
 
 export type GatewayZwave = Pick<
 	ZwaveClient,
@@ -321,6 +328,15 @@ export default class Gateway<
 		valueId: ZUIValueId,
 		valueConf: GatewayValue | undefined,
 	) {
+		const result = this.parsePayloadResult(payload, valueId, valueConf)
+		return result.handled ? null : result.value
+	}
+
+	private parsePayloadResult(
+		payload: any,
+		valueId: ZUIValueId,
+		valueConf: GatewayValue | undefined,
+	): ParsedPayloadResult {
 		try {
 			payload =
 				typeof payload === 'object' &&
@@ -358,7 +374,7 @@ export default class Gateway<
 			}
 
 			payload = this.discoveryGenerator.transformPayload(payload, valueId)
-			if (payload === null) return null
+			if (payload === HASS_COMMAND_HANDLED) return { handled: true }
 
 			if (valueConf) {
 				if (utils.isValidOperation(valueConf.postOperation)) {
@@ -392,7 +408,7 @@ export default class Gateway<
 			)
 		}
 
-		return payload
+		return { handled: false, value: payload }
 	}
 
 	/**
@@ -1133,13 +1149,19 @@ export default class Gateway<
 		const valueId = this.topicValues[valueTopic]
 
 		if (valueId) {
-			const value = this.parsePayload(payload, valueId, valueId.conf)
+			const result = this.parsePayloadResult(
+				payload,
+				valueId,
+				valueId.conf,
+			)
 
-			if (value === null) {
-				return
-			}
+			if (result.handled) return
 
-			await this._zwave.writeValue(valueId, value, payload?.options)
+			await this._zwave.writeValue(
+				valueId,
+				result.value,
+				payload?.options,
+			)
 		} else {
 			logger.debug(`No writeable valueId found for ${valueTopic}`)
 		}

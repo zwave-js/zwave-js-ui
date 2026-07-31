@@ -60,6 +60,7 @@ const BINARY_SWITCH_CURRENT_VALUE_ID = ccValueId(
 )
 
 let DiscoveryGenerator: typeof DiscoveryGeneratorType
+let hassCommandHandled: symbol
 
 beforeAll(async () => {
 	const isolatedStoreDir = ensureTestEnv()
@@ -68,6 +69,7 @@ beforeAll(async () => {
 		import('#api/config/app.ts'),
 	])
 	DiscoveryGenerator = discoveryModule.DiscoveryGenerator
+	hassCommandHandled = discoveryModule.HASS_COMMAND_HANDLED
 	expect(configModule.storeDir).toBe(isolatedStoreDir)
 	expect(configModule.logsDir.startsWith(isolatedStoreDir)).toBe(true)
 	expect(configModule.sessionSecret).toBe(TEST_SESSION_SECRET)
@@ -594,7 +596,9 @@ describe('DiscoveryGenerator', () => {
 		expect(generator.transformPayload('unchanged', value())).toBe(
 			'unchanged',
 		)
-		expect(generator.transformPayload('HALT', cover)).toBeNull()
+		expect(generator.transformPayload('HALT', cover)).toBe(
+			hassCommandHandled,
+		)
 		registerDiscovery(
 			generator,
 			cover,
@@ -603,7 +607,9 @@ describe('DiscoveryGenerator', () => {
 				discovery_payload: {},
 			}),
 		)
-		expect(generator.transformPayload('STOP', cover)).toBeNull()
+		expect(generator.transformPayload('STOP', cover)).toBe(
+			hassCommandHandled,
+		)
 		await vi.waitFor(() =>
 			expect(writes).toEqual([
 				{
@@ -816,6 +822,14 @@ describe('DiscoveryGenerator', () => {
 			min_temp: 5,
 			max_temp: 30,
 		})
+
+		generator.discoverDevice(hassNode, {
+			...climate,
+			object_id: 'without_values',
+			values: undefined,
+		})
+		expect(hassNode.hassDevices.climate_without_values).toBeDefined()
+		expect(published).toHaveLength(1)
 
 		const disabled = setup({ disabled: true })
 		disabled.generator.discoverDevice(hassNode, climate)

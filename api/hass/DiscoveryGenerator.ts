@@ -32,6 +32,7 @@ const SIMON_IO_ROLLER_BLIND_DEVICE_ID = '615-0-258'
 // Keep cover payloads in Z-Wave's 0..99 level range because tilt positions are separate values
 const HASS_COVER_OPEN_POSITION = 99
 const HASS_COVER_CLOSED_POSITION = 0
+export const HASS_COMMAND_HANDLED = Symbol('HASS command handled')
 
 interface DeviceInfo {
 	identifiers: string[]
@@ -66,6 +67,19 @@ export interface DiscoveryGeneratorOptions {
 function valueUnit(value: unknown): string | undefined {
 	if (!utils.isRecord(value)) return undefined
 	return typeof value.unit === 'string' ? value.unit : undefined
+}
+
+function getAlarmSensorType(
+	propertyKey: string | number | undefined,
+): string | number | undefined {
+	if (typeof propertyKey === 'number') return AlarmSensorType[propertyKey]
+	if (typeof propertyKey !== 'string') return undefined
+	const entry = Object.entries(AlarmSensorType).find(
+		([name]) => name === propertyKey,
+	)?.[1]
+	return typeof entry === 'string' || typeof entry === 'number'
+		? entry
+		: undefined
 }
 
 export class DiscoveryGenerator {
@@ -261,8 +275,6 @@ export class DiscoveryGenerator {
 
 			const hassDevice = utils.copy(source)
 			const payload = hassDevice.discovery_payload
-			const values = hassDevice.values
-			if (!values) throw new TypeError('HASS device has no values')
 
 			if (hassDevice.type === 'climate') {
 				const modeId = payload.mode_state_topic
@@ -354,6 +366,8 @@ export class DiscoveryGenerator {
 					if (!payload.precision) payload.precision = 0.1
 				}
 			} else {
+				const values = hassDevice.values
+				if (!values) throw new TypeError('HASS device has no values')
 				const resolvedTopics: Record<string, string | null> = {}
 				for (const valueId of values) {
 					if (valueId === undefined) {
@@ -806,10 +820,7 @@ export class DiscoveryGenerator {
 					config = this.getBinarySensorConfig(
 						Constants.deviceClass.sensor_binary.PROBLEM,
 					)
-					const alarmType =
-						typeof valueId.propertyKey === 'number'
-							? AlarmSensorType[valueId.propertyKey]
-							: undefined
+					const alarmType = getAlarmSensorType(valueId.propertyKey)
 					if (alarmType) config.object_id += '_' + alarmType
 					break
 				}
@@ -995,7 +1006,7 @@ export class DiscoveryGenerator {
 						sensor.sensor,
 						sensor.objectId,
 					)
-					let unit = valueId.unit ?? valueUnit(valueId.value)
+					let unit = valueId.unit || valueUnit(valueId.value)
 					if (unit) {
 						if (unit === 'seconds') unit = 's'
 						else if (unit === 'minutes') unit = 'min'
@@ -1148,7 +1159,7 @@ export class DiscoveryGenerator {
 			this.zwave
 				.writeValue({ ...valueId, property: 'Up' }, false)
 				.catch(() => {})
-			return null
+			return HASS_COMMAND_HANDLED
 		}
 
 		return payload

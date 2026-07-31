@@ -129,6 +129,20 @@ describe('Alarm Sensor discovery', () => {
 		expect(payload.payload.device_class).toBe('problem')
 	})
 
+	it('preserves reverse enum lookup for string alarm types', () => {
+		const { device } = discover(
+			buildValueId({
+				commandClass: cc,
+				property: 'state',
+				propertyName: 'state',
+				propertyKey: 'Smoke',
+			}),
+		)
+		expect(device.object_id).toBe(
+			`event_${AlarmSensorType.Smoke}`.toLowerCase(),
+		)
+	})
+
 	it('skips non-state Alarm Sensor properties', () => {
 		const { device } = discover(
 			buildValueId({
@@ -232,6 +246,20 @@ describe('Multilevel Sensor discovery', () => {
 			}),
 		)
 		expect(payload.payload.unit_of_measurement).toBe('s')
+	})
+
+	it('falls through empty metadata units to the value unit', () => {
+		const { payload } = discover(
+			buildValueId({
+				commandClass: cc,
+				property: 'foo',
+				propertyName: 'foo',
+				ccSpecific: { sensorType: 1 },
+				unit: '',
+				value: { unit: 'minutes' },
+			}),
+		)
+		expect(payload.payload.unit_of_measurement).toBe('min')
 	})
 
 	it('skips a multilevel value with no ccSpecific', () => {
