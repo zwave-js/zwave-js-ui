@@ -79,6 +79,12 @@
 	--zw-radius-xxl: 12px;
 	--zw-radius-pill: 999px;
 
+	/* ── Dialog metrics ──────────────────────────────────────── */
+	/* Header, body, footer and the wizard rail all align on this gutter,
+	   so a mismatch visibly offsets the rail from the body. */
+	--zw-dlg-pad-x: 20px;
+	--zw-dlg-pad-top: 18px;
+
 	/* ── Elevation ───────────────────────────────────────────── */
 	/* Shadow colour reads from --v0-on-surface so light-mode keeps the
 	   Material black drop-shadow and dark mode tints with the white

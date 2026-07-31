@@ -212,6 +212,7 @@
 			:model-value="expandedNodeDialog"
 			:title="expandedNode ? `Node ${expandedNode.id}` : ''"
 			@update:model-value="(v) => !v && closeDialog()"
+			@after-leave="expandedNode = null"
 		>
 			<expanded-node :node="expandedNode" :socket="socket" />
 		</ZwDialog>
@@ -386,7 +387,6 @@ export default {
 			}
 		},
 		closeDialog() {
-			this.expandedNode = null
 			this.expandedNodeDialog = false
 		},
 		async refreshItems() {

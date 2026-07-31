@@ -8,7 +8,6 @@
 		:persistent="running"
 		:actions="dialogActions"
 		@update:model-value="onModel"
-		@close="close"
 		@after-leave="reset"
 	>
 		<div class="zw-exclude">
@@ -52,6 +51,7 @@ import useBaseStore from '../../stores/base.js'
 import InstancesMixin from '../../mixins/InstancesMixin.js'
 import ZwDialog from '@/components/dashboard/dialogs/ZwDialog.vue'
 import { AlertIcon, CheckIcon, ICON_SIZE, TrashIcon } from '@/lib/icons'
+import { confirmAction } from '@/lib/dashboard-types'
 
 // Wait for a trailing nodeRemoved because it can lag the "stopped" status
 const SETTLE_MS = 3000
@@ -88,32 +88,16 @@ export default {
 		dialogActions() {
 			if (this.phase === 'stopping') {
 				return [
-					{
-						label: 'Stopping…',
-						kind: 'filled',
+					confirmAction('Stopping…', undefined, {
 						tone: 'danger',
 						disabled: true,
-					},
+					}),
 				]
 			}
 			if (this.phase === 'running') {
-				return [
-					{
-						label: 'Stop',
-						kind: 'filled',
-						tone: 'danger',
-						onClick: this.stop,
-					},
-				]
+				return [confirmAction('Stop', this.stop, { tone: 'danger' })]
 			}
-			return [
-				{
-					label: 'Close',
-					kind: 'filled',
-					tone: 'accent',
-					onClick: this.close,
-				},
-			]
+			return [confirmAction('Close', this.close)]
 		},
 	},
 	watch: {
@@ -121,7 +105,12 @@ export default {
 			if (v) this.begin()
 		},
 		controllerStatus(status) {
-			if (!status || (this.phase !== 'running' && this.phase !== 'stopping') || this.removed) return
+			if (
+				!status ||
+				(this.phase !== 'running' && this.phase !== 'stopping') ||
+				this.removed
+			)
+				return
 			if (/exclusion/i.test(status) && /stopped/i.test(status)) {
 				this.settle()
 			}

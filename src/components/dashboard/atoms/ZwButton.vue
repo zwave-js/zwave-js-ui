@@ -14,20 +14,11 @@
 
 <script setup lang="ts">
 import { Button } from '@vuetify/v0'
-
-type Variant =
-	| 'primary'
-	| 'outline'
-	| 'destructive'
-	| 'ghost'
-	| 'mono-outline'
-	| 'danger'
-	| 'text'
-	| 'text-danger'
+import type { ZwButtonVariant } from '@/lib/dashboard-types'
 
 withDefaults(
 	defineProps<{
-		variant?: Variant
+		variant?: ZwButtonVariant
 		size?: 'sm' | 'md'
 		disabled?: boolean
 	}>(),
@@ -111,9 +102,6 @@ const emit = defineEmits<{ click: [MouseEvent] }>()
 	--btn-bg: transparent;
 	--btn-bg-hover: rgba(var(--v0-on-surface), 0.04);
 	--btn-color: var(--zw-fg-soft);
-	text-transform: none;
-	letter-spacing: 0;
-	font-weight: 500;
 }
 
 /* node-details Advanced tab grid — mono caps on an outlined chip. */

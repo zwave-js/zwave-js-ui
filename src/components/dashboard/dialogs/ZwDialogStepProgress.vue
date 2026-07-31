@@ -48,7 +48,7 @@
 			<div class="zw-prog__step">{{ steps[current] }}</div>
 			<div v-if="subtitle" class="zw-prog__sub">{{ subtitle }}</div>
 		</div>
-		<ZwDialogClose v-if="closable" @click="emit('close')" />
+		<ZwDialogClose @click="emit('close')" />
 	</div>
 </template>
 
@@ -61,9 +61,8 @@ const props = withDefaults(
 		steps: string[]
 		current: number
 		subtitle?: string
-		closable?: boolean
 	}>(),
-	{ subtitle: '', closable: true },
+	{ subtitle: '' },
 )
 
 const emit = defineEmits<{ close: [] }>()
@@ -105,7 +104,7 @@ const activeRing = computed(() => ringDash(props.current, 1))
 	display: flex;
 	align-items: center;
 	gap: 14px;
-	padding: 18px 20px 14px;
+	padding: var(--zw-dlg-pad-top) var(--zw-dlg-pad-x) 14px;
 	flex-shrink: 0;
 }
 

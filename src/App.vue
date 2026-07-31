@@ -832,25 +832,26 @@ export default {
 		onOTWFirmwareUpdate(data) {
 			const { progress, result } = data
 			if (progress) {
-				if (!this.dialogLoader) {
-					this.dialogLoader = true
-				}
-				this.loaderTitle = ''
-				this.loaderText = 'Updating controller firmware, please wait...'
-				this.loaderProgress = progress.progress
-				this.loaderIndeterminate = this.loaderProgress === 0
+				this.showBlockingLoader(
+					'',
+					'Updating controller firmware, please wait...',
+				)
+				this.setLoaderProgress(progress.progress)
 			} else if (result) {
-				this.dialogLoader = true // always open it to show the result, in case no progress is done it would be closed
-				this.loaderProgress = -1
+				// The outcome carries its own styled message, so drop any
+				// title a previous operation left on the loader
 				this.loaderTitle = ''
-
-				this.loaderText = `<span style="white-space: break-spaces;" class="text-${
-					result.success ? 'success' : 'error'
-				}">Controller firmware update finished ${
-					result.success
-						? 'successfully 🎉. It may take a few seconds for the stick to restart.'
-						: 'with error ❌'
-				}.\n Status: ${result.status}</span>`
+				// finishLoader reopens the dialog, so the outcome shows even
+				// when no progress was reported and the loader already closed
+				this.finishLoader(
+					`<span style="white-space: break-spaces;" class="text-${
+						result.success ? 'success' : 'error'
+					}">Controller firmware update finished ${
+						result.success
+							? 'successfully 🎉. It may take a few seconds for the stick to restart.'
+							: 'with error ❌'
+					}.\n Status: ${result.status}</span>`,
+				)
 			}
 		},
 		// Feed NVM-restore progress into the blocking loader
@@ -860,8 +861,7 @@ export default {
 			if (typeof status !== 'string' || !this.dialogLoader) return
 			const m = /(?:Convert|Restore) NVM progress: (\d+)%/.exec(status)
 			if (m) {
-				this.loaderProgress = parseInt(m[1], 10)
-				this.loaderIndeterminate = this.loaderProgress === 0
+				this.setLoaderProgress(parseInt(m[1], 10))
 				this.loaderText = status.startsWith('Convert')
 					? 'Converting backup to the controller format…'
 					: 'Writing to the controller — do not disconnect…'
@@ -873,6 +873,11 @@ export default {
 			this.loaderText = text || ''
 			this.loaderProgress = 0
 			this.loaderIndeterminate = true
+		},
+		// 0% has no bar to show yet, so fall back to the indeterminate sweep
+		setLoaderProgress(percent) {
+			this.loaderProgress = percent
+			this.loaderIndeterminate = percent === 0
 		},
 		finishLoader(text) {
 			this.dialogLoader = true

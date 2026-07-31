@@ -40,25 +40,26 @@
 				</div>
 			</template>
 
-			<div v-if="$slots.footer || actions.length" class="zw-dlg__footer">
+			<div
+				v-if="$slots['footer-left'] || actions.length"
+				class="zw-dlg__footer"
+			>
 				<div class="zw-dlg__footer-left">
 					<slot name="footer-left" />
 				</div>
-				<slot name="footer">
-					<ZwButton
-						v-for="(a, i) in actions"
-						:key="i"
-						:variant="variantFor(a)"
-						:disabled="a.disabled"
-						:autofocus="a.autoFocus || undefined"
-						@click="a.onClick"
-					>
-						<template v-if="a.icon" #icon>
-							<component :is="a.icon" :size="ICON_SIZE.std" />
-						</template>
-						{{ a.label }}
-					</ZwButton>
-				</slot>
+				<ZwButton
+					v-for="(a, i) in actions"
+					:key="i"
+					:variant="variantFor(a)"
+					:disabled="a.disabled"
+					:autofocus="a.autoFocus || undefined"
+					@click="a.onClick"
+				>
+					<template v-if="a.icon" #icon>
+						<component :is="a.icon" :size="ICON_SIZE.std" />
+					</template>
+					{{ a.label }}
+				</ZwButton>
 			</div>
 		</div>
 	</v-dialog>
@@ -74,6 +75,7 @@ import type {
 	DialogAction,
 	DialogSeverity,
 	DialogSize,
+	ZwButtonVariant,
 } from '@/lib/dashboard-types'
 
 const props = withDefaults(
@@ -87,7 +89,6 @@ const props = withDefaults(
 		blocking?: boolean
 		// Suppress Esc and backdrop dismiss, keep the close button
 		persistent?: boolean
-		dismissable?: boolean
 		loading?: boolean
 		actions?: DialogAction[]
 	}>(),
@@ -99,7 +100,6 @@ const props = withDefaults(
 		icon: null,
 		blocking: false,
 		persistent: false,
-		dismissable: true,
 		loading: false,
 		actions: () => [],
 	},
@@ -143,7 +143,7 @@ const DEFAULT_ICON: Partial<Record<DialogSeverity, Component>> = {
 const chipIcon = computed(
 	() => props.icon ?? DEFAULT_ICON[props.severity] ?? null,
 )
-const showClose = computed(() => props.dismissable && !props.blocking)
+const showClose = computed(() => !props.blocking)
 
 function onModel(v: boolean) {
 	emit('update:modelValue', v)
@@ -168,16 +168,7 @@ const headerVNode = () =>
 		showClose.value && h(ZwDialogClose, { onClick: close }),
 	])
 
-// Subset of ZwButton's `Variant` union used by the footer
-type ButtonVariant =
-	| 'primary'
-	| 'outline'
-	| 'ghost'
-	| 'danger'
-	| 'text'
-	| 'text-danger'
-
-function variantFor(a: DialogAction): ButtonVariant {
+function variantFor(a: DialogAction): ZwButtonVariant {
 	const kind = a.kind ?? 'text'
 	const tone = a.tone ?? 'accent'
 	if (kind === 'filled') return tone === 'danger' ? 'danger' : 'primary'
@@ -257,7 +248,7 @@ function variantFor(a: DialogAction): ButtonVariant {
 	display: flex;
 	align-items: center;
 	gap: 14px;
-	padding: 18px 20px 14px;
+	padding: var(--zw-dlg-pad-top) var(--zw-dlg-pad-x) 14px;
 	flex-shrink: 0;
 }
 
@@ -294,7 +285,7 @@ function variantFor(a: DialogAction): ButtonVariant {
 
 /* ── body ── */
 .zw-dlg__body {
-	padding: 2px 20px 16px;
+	padding: 2px var(--zw-dlg-pad-x) 16px;
 	overflow-y: auto;
 	flex: 0 1 auto;
 	font: var(--zw-text-body);
@@ -322,21 +313,12 @@ function variantFor(a: DialogAction): ButtonVariant {
 	display: flex;
 	align-items: center;
 	gap: 8px;
-	padding: 12px 20px;
+	padding: 12px var(--zw-dlg-pad-x);
 	flex-shrink: 0;
 	border-top: 1px solid var(--zw-line-soft);
 }
 
 .zw-dlg__footer-left {
 	margin-right: auto;
-}
-
-/* Force every footer action to the app's uppercase button style — the
-   neutral (ghost) variant otherwise renders Title Case at weight 500, so the
-   cancel/confirm pair would look mismatched. */
-.zw-dlg__footer .zw-btn {
-	text-transform: uppercase;
-	letter-spacing: 0.4px;
-	font-weight: 600;
 }
 </style>

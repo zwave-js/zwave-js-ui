@@ -253,6 +253,17 @@ export type DialogSeverity =
 	| 'warning'
 	| 'danger'
 
+// ZwButton's visual variants, shared so the dialog footer can map onto them.
+export type ZwButtonVariant =
+	| 'primary'
+	| 'outline'
+	| 'destructive'
+	| 'ghost'
+	| 'mono-outline'
+	| 'danger'
+	| 'text'
+	| 'text-danger'
+
 export type DialogButtonKind = 'text' | 'filled' | 'outline'
 export type DialogButtonTone = 'accent' | 'danger' | 'neutral'
 

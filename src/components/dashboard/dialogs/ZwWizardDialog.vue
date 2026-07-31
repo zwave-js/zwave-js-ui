@@ -2,8 +2,6 @@
 	<ZwDialog
 		:model-value="modelValue"
 		:size="size"
-		:severity="severity"
-		:blocking="blocking"
 		:persistent="persistent"
 		:loading="loading"
 		:actions="actions"
@@ -26,7 +24,6 @@
 				:steps="steps"
 				:current="current"
 				:subtitle="subtitle"
-				:closable="!blocking"
 				@close="requestClose"
 			/>
 		</template>
@@ -45,11 +42,7 @@ import ZwDialog from './ZwDialog.vue'
 import ZwDialogStepRail from './ZwDialogStepRail.vue'
 import ZwDialogStepProgress from './ZwDialogStepProgress.vue'
 import { TWO_PANE_BREAKPOINT } from '@/lib/dashboard-breakpoints'
-import type {
-	DialogAction,
-	DialogSeverity,
-	DialogSize,
-} from '@/lib/dashboard-types'
+import type { DialogAction, DialogSize } from '@/lib/dashboard-types'
 
 withDefaults(
 	defineProps<{
@@ -59,8 +52,6 @@ withDefaults(
 		title: string
 		subtitle?: string
 		size?: DialogSize
-		severity?: DialogSeverity
-		blocking?: boolean
 		persistent?: boolean
 		loading?: boolean
 		actions?: DialogAction[]
@@ -68,8 +59,6 @@ withDefaults(
 	{
 		subtitle: '',
 		size: 'xl',
-		severity: 'default',
-		blocking: false,
 		persistent: false,
 		loading: false,
 		actions: () => [],

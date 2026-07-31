@@ -368,16 +368,7 @@ import InstancesMixin from '../../mixins/InstancesMixin.js'
 import { nextTick } from 'vue'
 import ZwWizardDialog from '@/components/dashboard/dialogs/ZwWizardDialog.vue'
 import ZwButton from '@/components/dashboard/atoms/ZwButton.vue'
-
-const STEP_SUBTITLES = {
-	inclusionNaming: 'Optionally name and place the new device.',
-	inclusionMode: 'How the new device negotiates security when it joins.',
-	replaceInclusionMode: 'Security strategy for the replacement device.',
-	replaceFailed: 'Pick the failed node to replace.',
-	s2Classes: 'Grant the security classes the device requested.',
-	s2Pin: 'Enter the DSK PIN printed on the device.',
-	done: '',
-}
+import { confirmAction } from '@/lib/dashboard-types'
 
 export default {
 	props: {
@@ -403,6 +394,7 @@ export default {
 				inclusionNaming: {
 					key: 'inclusionNaming',
 					title: 'Name and Location',
+					subtitle: 'Optionally name and place the new device.',
 					values: {
 						name: '',
 						location: '',
@@ -411,6 +403,8 @@ export default {
 				inclusionMode: {
 					key: 'inclusionMode',
 					title: 'Inclusion Mode',
+					subtitle:
+						'How the new device negotiates security when it joins.',
 					values: {
 						inclusionMode: InclusionStrategy.Default, //default, smartstart no encryption
 						forceSecurity: false,
@@ -419,6 +413,7 @@ export default {
 				replaceInclusionMode: {
 					key: 'replaceInclusionMode',
 					title: 'Inclusion Mode',
+					subtitle: 'Security strategy for the replacement device.',
 					values: {
 						inclusionMode: InclusionStrategy.Default, //default, smartstart no encryption
 					},
@@ -426,6 +421,8 @@ export default {
 				s2Classes: {
 					key: 's2Classes',
 					title: 'Security Classes',
+					subtitle:
+						'Grant the security classes the device requested.',
 					values: {
 						s2AccessControl: undefined,
 						s2Authenticated: undefined,
@@ -437,6 +434,7 @@ export default {
 				s2Pin: {
 					key: 's2Pin',
 					title: 'DSK validation',
+					subtitle: 'Enter the DSK PIN printed on the device.',
 					suffix: '', // Ex: '-12345-12345-12345-12345-12345-12345-12345',
 					values: {
 						pin: '',
@@ -445,6 +443,7 @@ export default {
 				replaceFailed: {
 					key: 'replaceFailed',
 					title: 'Node Id',
+					subtitle: 'Pick the failed node to replace.',
 					values: {
 						replaceId: null, //default
 					},
@@ -493,7 +492,7 @@ export default {
 			return this.steps.map((s) => s.title)
 		},
 		currentSubtitle() {
-			return STEP_SUBTITLES[this.step?.key] ?? ''
+			return this.step?.subtitle ?? ''
 		},
 		showBack() {
 			const s = this.step
@@ -512,70 +511,46 @@ export default {
 			const acts = []
 
 			if (s.key === 'replaceFailed') {
-				acts.push({
-					label: 'Next',
-					kind: 'filled',
-					tone: 'accent',
-					onClick: this.submitReplaceFailed,
-				})
+				acts.push(confirmAction('Next', this.submitReplaceFailed))
 			} else if (s.key === 'inclusionNaming') {
-				acts.push({
-					label: 'Next',
-					kind: 'filled',
-					tone: 'accent',
-					onClick: this.submitNameLoc,
-				})
+				acts.push(confirmAction('Next', this.submitNameLoc))
 			} else if (
 				s.key === 'inclusionMode' ||
 				s.key === 'replaceInclusionMode'
 			) {
 				if (running) {
-					acts.push({
-						label:
+					acts.push(
+						confirmAction(
 							s.key === 'inclusionMode'
 								? `Stop running ${this.currentAction}`
 								: 'Stop',
-						kind: 'filled',
-						tone: 'danger',
-						onClick: this.stopAction,
-					})
+							this.stopAction,
+							{ tone: 'danger' },
+						),
+					)
 				}
 				if (!this.loading) {
-					acts.push({
-						label: 'Next',
-						kind: 'filled',
-						tone: 'accent',
-						onClick: this.nextStep,
-					})
+					acts.push(confirmAction('Next', this.nextStep))
 				}
 			} else if (s.key === 's2Classes' || s.key === 's2Pin') {
 				if (!this.loading) {
-					acts.push({
-						label: 'Abort',
-						kind: 'filled',
-						tone: 'danger',
-						onClick: this.abortInclusion,
-					})
+					acts.push(
+						confirmAction('Abort', this.abortInclusion, {
+							tone: 'danger',
+						}),
+					)
 					if (!this.aborted) {
-						acts.push({
-							label: 'Next',
-							kind: 'filled',
-							tone: 'accent',
-							disabled:
-								s.key === 's2Pin'
-									? this.validPin(s.values.pin) !== true
-									: false,
-							onClick: this.nextStep,
-						})
+						acts.push(
+							confirmAction('Next', this.nextStep, {
+								disabled:
+									s.key === 's2Pin' &&
+									this.validPin(s.values.pin) !== true,
+							}),
+						)
 					}
 				}
 			} else if (s.key === 'done') {
-				acts.push({
-					label: 'Close',
-					kind: 'filled',
-					tone: 'accent',
-					onClick: this.close,
-				})
+				acts.push(confirmAction('Close', this.close))
 			}
 
 			return acts

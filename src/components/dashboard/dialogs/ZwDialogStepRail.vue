@@ -47,7 +47,7 @@ function labelClass(i: number) {
 	flex-shrink: 0;
 	background: var(--zw-bg-soft);
 	border-right: 1px solid var(--zw-line-soft);
-	padding: 18px 20px;
+	padding: var(--zw-dlg-pad-top) var(--zw-dlg-pad-x);
 }
 
 .zw-rail__title {
