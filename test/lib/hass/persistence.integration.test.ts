@@ -7,6 +7,8 @@ import { cleanupTestEnv, ensureTestEnv } from './env.ts'
 import type ZWaveClient from '#api/lib/ZwaveClient.ts'
 import type jsonStoreType from '#api/lib/jsonStore.ts'
 import type storeType from '#api/config/store.ts'
+import type { NodesStoreRecordByHome } from '#api/config/store.ts'
+import type { HassDevice } from '#api/hass/types.ts'
 
 const HOME_ID = '0x12345678'
 const OTHER_HOME_ID = '0x87654321'
@@ -48,10 +50,18 @@ describe('ZWaveClient HASS persistence integration', () => {
 	})
 
 	it('updates only the active home in nodes.json', async () => {
-		await jsonStore.put(store.nodes, {
+		const preservedDevice: HassDevice = {
+			type: 'sensor',
+			object_id: 'preserved',
+			discovery_payload: {},
+		}
+		const storedNodes: NodesStoreRecordByHome = {
 			[HOME_ID]: { 2: { hassDevices: {} } },
-			[OTHER_HOME_ID]: { 3: { hassDevices: { preserved: {} } } },
-		})
+			[OTHER_HOME_ID]: {
+				3: { hassDevices: { preserved: preservedDevice } },
+			},
+		}
+		await jsonStore.put(store.nodes, storedNodes)
 		const client = createClient()
 		client.nodes.set(2, buildNode({ id: 2, hassDevices: {} }))
 		await client.getStoreNodes()
@@ -78,7 +88,9 @@ describe('ZWaveClient HASS persistence integration', () => {
 					},
 				},
 			},
-			[OTHER_HOME_ID]: { 3: { hassDevices: { preserved: {} } } },
+			[OTHER_HOME_ID]: {
+				3: { hassDevices: { preserved: preservedDevice } },
+			},
 		})
 	})
 

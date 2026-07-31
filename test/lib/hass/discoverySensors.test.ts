@@ -146,7 +146,7 @@ describe('Alarm Sensor discovery', () => {
 	})
 
 	it('preserves reverse enum lookup for string alarm types', () => {
-		const { device } = discover(
+		const { device } = discoverExpected(
 			buildValueId({
 				commandClass: cc,
 				property: 'state',
@@ -265,7 +265,7 @@ describe('Multilevel Sensor discovery', () => {
 	})
 
 	it('falls through empty metadata units to the value unit', () => {
-		const { payload } = discover(
+		const { payload } = discoverExpected(
 			buildValueId({
 				commandClass: cc,
 				property: 'foo',

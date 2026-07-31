@@ -18,6 +18,7 @@ import type {
 	HassValue,
 	HassZwavePort,
 } from '#api/hass/ports.ts'
+import { ensureHassNode } from '#api/hass/ports.ts'
 import type {
 	HassDevice,
 	HassDeviceCatalog,
@@ -25,6 +26,7 @@ import type {
 } from '#api/hass/types.ts'
 import { getIdWithoutNode, PayloadType } from '#api/lib/shared.ts'
 import { cleanupTestEnv, ensureTestEnv, TEST_SESSION_SECRET } from './env.ts'
+import { buildNode } from './fixtures.ts'
 import { assertDefined } from '../testUtils.ts'
 
 const GENERIC_DEVICE_CLASS_THERMOSTAT = 0x08
@@ -102,7 +104,7 @@ function value(overrides: Partial<HassValue> = {}): HassValue {
 }
 
 function node(overrides: Partial<HassNode> = {}): HassNode {
-	return {
+	const result = buildNode({
 		id: 2,
 		ready: true,
 		values: {},
@@ -114,7 +116,9 @@ function node(overrides: Partial<HassNode> = {}): HassNode {
 			specific: BINARY_POWER_SWITCH_SPECIFIC_DEVICE_CLASS,
 		},
 		...overrides,
-	}
+	})
+	ensureHassNode(result)
+	return result
 }
 
 function device(overrides: Partial<HassDevice> = {}): HassDevice {
@@ -274,7 +278,7 @@ describe('DiscoveryGenerator', () => {
 			},
 		})
 		const { generator, emitted, published } = setup({
-			nodes: new Map<number, unknown>([
+			nodes: new Map<number, HassNode>([
 				[2, hassNode],
 				[4, node({ id: 4, virtual: true })],
 			]),
@@ -550,7 +554,7 @@ describe('DiscoveryGenerator', () => {
 			persistent: true,
 			discovery_payload: { state_topic: 'x' },
 		})
-		const nodes = new Map<number, unknown>([
+		const nodes = new Map<number, HassNode>([
 			[2, node({ hassDevices: { stored } })],
 		])
 		const harness = setup({ nodes })
