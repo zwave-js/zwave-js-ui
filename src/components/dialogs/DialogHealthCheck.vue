@@ -1,280 +1,243 @@
 <template>
-	<v-dialog v-model="_value" max-width="800px" persistent>
-		<v-card :loading="loading">
-			<v-card-title>
-				<span class="text-h5"
-					>Node {{ activeNode ? activeNode.id : '' }} - Health
-					check</span
+	<ZwDialog
+		:model-value="_value"
+		size="lg"
+		persistent
+		:loading="loading"
+		:title="`Node ${activeNode ? activeNode.id : ''} - Health check`"
+		:actions="dialogActions"
+		@update:model-value="_value = $event"
+		@close="$emit('close')"
+		@after-leave="teardown"
+	>
+		<v-container class="pa-0">
+			<v-row class="ma-3" justify="start">
+				<v-col>
+					<v-combobox
+						style="max-width: 300px"
+						label="Target Node"
+						v-model="targetNode"
+						:items="filteredNodes"
+						return-object
+						hint="Target node to run the route health check on"
+						persistent-hint
+						item-title="_name"
+						item-value="id"
+					></v-combobox>
+				</v-col>
+				<v-col>
+					<v-text-field
+						v-model.number="rounds"
+						hint="Number of rounds to run the health check"
+						label="Rounds"
+						min="1"
+						max="10"
+						type="number"
+						persistent-hint
+					></v-text-field>
+				</v-col>
+			</v-row>
+
+			<v-row class="mb-2" justify="space-around">
+				<v-btn
+					variant="flat"
+					:color="loading ? 'error' : 'success'"
+					:disabled="!targetNode"
+					@click="loading ? stopHealth() : checkHealth()"
+					>{{ loading ? 'Stop' : 'Check' }}</v-btn
 				>
-			</v-card-title>
 
-			<v-card-text>
-				<v-container>
-					<v-row class="ma-3" justify="start">
-						<v-col>
-							<v-combobox
-								style="max-width: 300px"
-								label="Target Node"
-								v-model="targetNode"
-								:items="filteredNodes"
-								return-object
-								hint="Target node to run the route health check on"
-								persistent-hint
-								item-title="_name"
-								item-value="id"
-							></v-combobox>
-						</v-col>
-						<v-col>
-							<v-text-field
-								v-model.number="rounds"
-								hint="Number of rounds to run the health check"
-								label="Rounds"
-								min="1"
-								max="10"
-								type="number"
-								persistent-hint
-							></v-text-field>
-						</v-col>
-					</v-row>
+				<v-btn variant="flat" color="primary" @click="infoMenu = true">
+					Info
+					<v-icon>help</v-icon>
+				</v-btn>
+			</v-row>
 
-					<v-row class="mb-2" justify="space-around">
+			<v-row
+				v-if="averages && !loading"
+				class="mb-2"
+				justify="space-around"
+			>
+				<v-col
+					v-if="averages.numNeighbors && !isLR"
+					class="text-center"
+				>
+					<p class="mb-1 text-subtitle-1 font-weight-bold">
+						No. Neighbors
+					</p>
+					<span
+						:class="getNeighborsColor(averages.numNeighbors)"
+						class="text-h3"
+						>{{ averages.numNeighbors }}</span
+					>
+				</v-col>
+
+				<v-col v-if="averages.rating" class="text-center">
+					<p class="mb-1 text-subtitle-1 font-weight-bold">Rating</p>
+					<span
+						:class="'text-' + getRatingColor(averages.rating)"
+						class="text-h3"
+						>{{ averages.rating }}/10</span
+					>
+				</v-col>
+			</v-row>
+
+			<v-data-table
+				:headers="headers"
+				:items="results"
+				item-key="id"
+				class="elevation-1"
+				v-if="results.length > 0"
+				hide-default-footer
+				:items-per-page="-1"
+			>
+				<template #top>
+					<v-row class="py-2" align="center" justify="center">
 						<v-btn
 							variant="flat"
-							:color="loading ? 'error' : 'success'"
-							:disabled="!targetNode"
-							@click="loading ? stopHealth() : checkHealth()"
-							>{{ loading ? 'Stop' : 'Check' }}</v-btn
-						>
-
-						<v-btn
-							variant="flat"
+							v-if="!loading && resultsTargetNode >= 0"
 							color="primary"
-							@click="infoMenu = true"
-						>
-							Info
-							<v-icon>help</v-icon>
+							@click="exportResults"
+							class="mb-2"
+							>Export
+							<v-icon>file_download</v-icon>
 						</v-btn>
 					</v-row>
-
-					<v-row
-						v-if="averages && !loading"
-						class="mb-2"
-						justify="space-around"
+				</template>
+				<template #[`item.rating`]="{ item }">
+					<v-progress-linear
+						rounded
+						style="min-width: 80px"
+						height="25"
+						:model-value="item.rating * 10"
+						:color="getRatingColor(item.rating)"
+						:indeterminate="item.rating === undefined"
 					>
-						<v-col
-							v-if="averages.numNeighbors && !isLR"
-							class="text-center"
+						<strong v-if="item.rating !== undefined"
+							>{{ item.rating }}/10</strong
 						>
-							<p class="mb-1 text-subtitle-1 font-weight-bold">
-								No. Neighbors
-							</p>
-							<span
-								:class="
-									getNeighborsColor(averages.numNeighbors)
-								"
-								class="text-h3"
-								>{{ averages.numNeighbors }}</span
-							>
-						</v-col>
-
-						<v-col v-if="averages.rating" class="text-center">
-							<p class="mb-1 text-subtitle-1 font-weight-bold">
-								Rating
-							</p>
-							<span
-								:class="
-									'text-' + getRatingColor(averages.rating)
-								"
-								class="text-h3"
-								>{{ averages.rating }}/10</span
-							>
-						</v-col>
-					</v-row>
-
-					<v-data-table
-						:headers="headers"
-						:items="results"
-						item-key="id"
-						class="elevation-1"
-						v-if="results.length > 0"
-						hide-default-footer
-						:items-per-page="-1"
+					</v-progress-linear>
+				</template>
+				<template #[`item.latency`]="{ item }">
+					<strong
+						:class="getLatencyColor(item.latency)"
+						v-if="item.latency !== undefined"
+						>{{ item.latency }} ms</strong
 					>
-						<template #top>
-							<v-row class="py-2" align="center" justify="center">
-								<v-btn
-									variant="flat"
-									v-if="!loading && resultsTargetNode >= 0"
-									color="primary"
-									@click="exportResults"
-									class="mb-2"
-									>Export
-									<v-icon>file_download</v-icon>
-								</v-btn>
-							</v-row>
-						</template>
-						<template #[`item.rating`]="{ item }">
-							<v-progress-linear
-								rounded
-								style="min-width: 80px"
-								height="25"
-								:model-value="item.rating * 10"
-								:color="getRatingColor(item.rating)"
-								:indeterminate="item.rating === undefined"
-							>
-								<strong v-if="item.rating !== undefined"
-									>{{ item.rating }}/10</strong
-								>
-							</v-progress-linear>
-						</template>
-						<template #[`item.latency`]="{ item }">
-							<strong
-								:class="getLatencyColor(item.latency)"
-								v-if="item.latency !== undefined"
-								>{{ item.latency }} ms</strong
-							>
-						</template>
-						<template #[`item.snrMargin`]="{ item }">
-							<strong
-								:class="getSnrMarginColor(item.snrMargin)"
-								v-if="item.snrMargin !== undefined"
-								>{{ item.snrMargin }} dBm</strong
-							>
-						</template>
+				</template>
+				<template #[`item.snrMargin`]="{ item }">
+					<strong
+						:class="getSnrMarginColor(item.snrMargin)"
+						v-if="item.snrMargin !== undefined"
+						>{{ item.snrMargin }} dBm</strong
+					>
+				</template>
 
-						<template #[`item.routeChanges`]="{ item }">
-							<strong v-if="item.routeChanges !== undefined">{{
-								item.routeChanges
-							}}</strong>
-						</template>
+				<template #[`item.routeChanges`]="{ item }">
+					<strong v-if="item.routeChanges !== undefined">{{
+						item.routeChanges
+					}}</strong>
+				</template>
 
-						<template #[`item.minPowerlevel`]="{ item }">
-							<strong
-								:class="getPowerLevelColor(item.minPowerlevel)"
-								v-if="item.minPowerlevel !== undefined"
-								>{{ getPowerLevel(item.minPowerlevel) }}</strong
-							>
-						</template>
+				<template #[`item.minPowerlevel`]="{ item }">
+					<strong
+						:class="getPowerLevelColor(item.minPowerlevel)"
+						v-if="item.minPowerlevel !== undefined"
+						>{{ getPowerLevel(item.minPowerlevel) }}</strong
+					>
+				</template>
 
-						<template #[`item.failedPingsNode`]="{ item }">
-							<p
-								class="mb-0"
-								v-if="item.failedPingsNode !== undefined"
-							>
-								{{ resultsTargetNode }} → {{ activeNode.id }}:
-								<strong
-									:class="
-										getFailedPingsColor(
-											item.failedPingsNode,
-										)
-									"
-									>{{ item.failedPingsNode }}/10</strong
-								>
-							</p>
-							<p
-								class="mb-0"
-								v-if="item.failedPingsController !== undefined"
-							>
-								{{ resultsTargetNode }} ← {{ activeNode.id }}:
-								<strong
-									:class="
-										getFailedPingsColor(
-											item.failedPingsController,
-										)
-									"
-									>{{ item.failedPingsController }}/10</strong
-								>
-							</p>
-						</template>
+				<template #[`item.failedPingsNode`]="{ item }">
+					<p class="mb-0" v-if="item.failedPingsNode !== undefined">
+						{{ resultsTargetNode }} → {{ activeNode.id }}:
+						<strong
+							:class="getFailedPingsColor(item.failedPingsNode)"
+							>{{ item.failedPingsNode }}/10</strong
+						>
+					</p>
+					<p
+						class="mb-0"
+						v-if="item.failedPingsController !== undefined"
+					>
+						{{ resultsTargetNode }} ← {{ activeNode.id }}:
+						<strong
+							:class="
+								getFailedPingsColor(item.failedPingsController)
+							"
+							>{{ item.failedPingsController }}/10</strong
+						>
+					</p>
+				</template>
 
-						<template #[`item.failedPingsToSource`]="{ item }">
-							<p
-								class="mb-0"
-								v-if="item.failedPingsToSource !== undefined"
-							>
-								{{ resultsTargetNode }} → {{ activeNode.id }}:
-								<strong
-									:class="
-										getFailedPingsColor(
-											item.failedPingsToSource,
-										)
-									"
-									>{{ item.failedPingsToSource }}/10</strong
-								>
-							</p>
-							<p
-								class="mb-0"
-								v-if="item.failedPingsToTarget !== undefined"
-							>
-								{{ resultsTargetNode }} ← {{ activeNode.id }}:
-								<strong
-									:class="
-										getFailedPingsColor(
-											item.failedPingsToTarget,
-										)
-									"
-									>{{ item.failedPingsToTarget }}/10</strong
-								>
-							</p>
-						</template>
+				<template #[`item.failedPingsToSource`]="{ item }">
+					<p
+						class="mb-0"
+						v-if="item.failedPingsToSource !== undefined"
+					>
+						{{ resultsTargetNode }} → {{ activeNode.id }}:
+						<strong
+							:class="
+								getFailedPingsColor(item.failedPingsToSource)
+							"
+							>{{ item.failedPingsToSource }}/10</strong
+						>
+					</p>
+					<p
+						class="mb-0"
+						v-if="item.failedPingsToTarget !== undefined"
+					>
+						{{ resultsTargetNode }} ← {{ activeNode.id }}:
+						<strong
+							:class="
+								getFailedPingsColor(item.failedPingsToTarget)
+							"
+							>{{ item.failedPingsToTarget }}/10</strong
+						>
+					</p>
+				</template>
 
-						<template #[`item.minPowerlevelSource`]="{ item }">
-							<p
-								class="mb-0"
-								v-if="item.minPowerlevelSource !== undefined"
-							>
-								Node {{ activeNode.id }}:
-								<strong
-									:class="
-										getPowerLevelColor(
-											item.minPowerlevelSource,
-										)
-									"
-									>{{
-										getPowerLevel(item.minPowerlevelSource)
-									}}</strong
-								>
-							</p>
-							<p
-								class="mb-0"
-								v-if="item.minPowerlevelTarget !== undefined"
-							>
-								Node {{ resultsTargetNode }}:
-								<strong
-									:class="
-										getPowerLevelColor(
-											item.minPowerlevelTarget,
-										)
-									"
-									>{{
-										getPowerLevel(item.minPowerlevelTarget)
-									}}</strong
-								>
-							</p>
-						</template>
-					</v-data-table>
-				</v-container>
-			</v-card-text>
-
-			<v-card-actions>
-				<v-spacer></v-spacer>
-				<v-btn
-					color="blue-darken-1"
-					variant="text"
-					@click="$emit('close')"
-					>Close</v-btn
-				>
-			</v-card-actions>
-		</v-card>
-		<dialog-health-check-info
-			v-model="infoMenu"
-			v-if="infoMenu"
-		></dialog-health-check-info>
-	</v-dialog>
+				<template #[`item.minPowerlevelSource`]="{ item }">
+					<p
+						class="mb-0"
+						v-if="item.minPowerlevelSource !== undefined"
+					>
+						Node {{ activeNode.id }}:
+						<strong
+							:class="
+								getPowerLevelColor(item.minPowerlevelSource)
+							"
+							>{{
+								getPowerLevel(item.minPowerlevelSource)
+							}}</strong
+						>
+					</p>
+					<p
+						class="mb-0"
+						v-if="item.minPowerlevelTarget !== undefined"
+					>
+						Node {{ resultsTargetNode }}:
+						<strong
+							:class="
+								getPowerLevelColor(item.minPowerlevelTarget)
+							"
+							>{{
+								getPowerLevel(item.minPowerlevelTarget)
+							}}</strong
+						>
+					</p>
+				</template>
+			</v-data-table>
+		</v-container>
+	</ZwDialog>
+	<dialog-health-check-info
+		v-model="infoMenu"
+		v-if="infoMenu"
+	></dialog-health-check-info>
 </template>
 
 <script>
 import { copy } from '@/lib/utils'
+import { cancelAction } from '@/lib/dashboard-types'
 import { getEnumMemberName } from '@zwave-js/shared'
 import { Powerlevel } from '@zwave-js/cc'
 import { mapState } from 'pinia'
@@ -283,13 +246,16 @@ import { Protocols } from '@zwave-js/core'
 import useBaseStore from '../../stores/base.js'
 import InstancesMixin from '../../mixins/InstancesMixin.js'
 import { defineAsyncComponent } from 'vue'
+import ZwDialog from '@/components/dashboard/dialogs/ZwDialog.vue'
 
 export default {
 	components: {
+		ZwDialog,
 		DialogHealthCheckInfo: defineAsyncComponent(
 			() => import('./DialogHealthCheckInfo.vue'),
 		),
 	},
+	emits: ['update:modelValue', 'close'],
 	props: {
 		modelValue: Boolean, // show or hide
 		node: Object,
@@ -298,11 +264,14 @@ export default {
 	mixins: [InstancesMixin],
 	watch: {
 		modelValue(v) {
-			this.init(v)
+			if (v) this.init(v)
 		},
 	},
 	computed: {
 		...mapState(useBaseStore, ['nodes']),
+		dialogActions() {
+			return [cancelAction(() => this.$emit('close'), { label: 'Close' })]
+		},
 		_value: {
 			get() {
 				return this.modelValue
@@ -442,13 +411,14 @@ export default {
 					'healthCheckProgress',
 					this.onHealthCheckProgress.bind(this),
 				)
-			} else if (open === false) {
-				this.unbindEvents()
-				this.results = []
-				this.loading = false
-				this.targetNode = null
-				this.averages = null
 			}
+		},
+		teardown() {
+			this.unbindEvents()
+			this.results = []
+			this.loading = false
+			this.targetNode = null
+			this.averages = null
 		},
 		onHealthCheckProgress(data) {
 			const { request, round, totalRounds, lastResult } = data

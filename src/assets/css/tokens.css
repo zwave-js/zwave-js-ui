@@ -213,6 +213,17 @@
 	}
 }
 
+/* Indeterminate progress sweep — a short segment slides across the track
+   and back, for operations with no known percentage. */
+@keyframes zw-indeterminate {
+	0% {
+		left: -40%;
+	}
+	100% {
+		left: 100%;
+	}
+}
+
 /* Card-view ring heartbeat that matches the row shimmer rhythm.
    Ported from `b-ring-shimmer`. */
 @keyframes zw-ring-shimmer {

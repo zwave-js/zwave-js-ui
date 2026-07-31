@@ -241,3 +241,48 @@ export type DeviceAction =
 	| { type: 'shutdown' }
 	| { type: 'soft-reset' }
 	| { type: 'factory-reset' }
+
+// ── Dialog system ─────────────────────────────────────────────
+
+export type DialogSize = 'sm' | 'md' | 'lg' | 'xl'
+
+export type DialogSeverity =
+	| 'default'
+	| 'info'
+	| 'success'
+	| 'warning'
+	| 'danger'
+
+export type DialogButtonKind = 'text' | 'filled' | 'outline'
+export type DialogButtonTone = 'accent' | 'danger' | 'neutral'
+
+export interface DialogAction {
+	label: string
+	kind?: DialogButtonKind
+	tone?: DialogButtonTone
+	onClick?: (e: MouseEvent) => void
+	disabled?: boolean
+	icon?: Component
+	autoFocus?: boolean
+}
+
+export function cancelAction(
+	onClick: DialogAction['onClick'],
+	overrides: Partial<DialogAction> = {},
+): DialogAction {
+	return {
+		label: 'Cancel',
+		kind: 'text',
+		tone: 'neutral',
+		onClick,
+		...overrides,
+	}
+}
+
+export function confirmAction(
+	label: string,
+	onClick: DialogAction['onClick'],
+	overrides: Partial<DialogAction> = {},
+): DialogAction {
+	return { label, kind: 'filled', tone: 'accent', onClick, ...overrides }
+}

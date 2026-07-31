@@ -48,6 +48,10 @@ interface AppLike {
 	showUpdateDialog: () => Promise<void>
 	startDebugCapture: () => Promise<void>
 	finishDebugCapture: () => Promise<void>
+	showBlockingLoader: (title: string, text: string) => void
+	finishLoader: (text?: string) => void
+	showNodesManagerAction: (kind: 'include' | 'replace-failed') => void
+	showExcludeDevice: () => void
 }
 
 function appInstance(): AppLike | null {
@@ -195,16 +199,26 @@ async function onAction(device: Device, action: DeviceAction) {
 		}
 		const key = actionPendingKey(device, action)
 		if (key) setStatus(key, 'pending')
+		// Restore can brick the controller, so block interaction until it settles
+		app.showBlockingLoader(
+			'Restoring NVM',
+			'While doing the restore the Z-Wave radio will be turned on/off. Do not disconnect the controller…',
+		)
 		let ok = false
 		try {
 			const response = await app.apiRequest(
 				'restoreNVM',
 				[nvmData, result.useRaw],
-				{ infoSnack: true, errorSnack: true },
+				{ infoSnack: false, errorSnack: true },
 			)
 			ok = response.success
 		} finally {
 			if (key) completeAction(key, ok, DONE_VISIBLE_MS)
+			app.finishLoader(
+				ok
+					? '<span class="text-success">NVM restored successfully 🎉. It may take a few seconds for the controller to restart.</span>'
+					: '<span class="text-error">NVM restore failed ❌</span>',
+			)
 		}
 		return
 	}
@@ -318,10 +332,11 @@ async function onAction(device: Device, action: DeviceAction) {
 function onAddAction(kind: 'include' | 'replace-failed' | 'exclude') {
 	const app = appInstance()
 	if (!app) return
-	const api = kind === 'exclude' ? 'startExclusion' : 'startInclusion'
-	// 'replaceFailed' is the zwave-js socket-API mode for startInclusion.
-	const args = kind === 'replace-failed' ? ['replaceFailed'] : []
-	void app.apiRequest(api, args, { infoSnack: true, errorSnack: true })
+	if (kind === 'exclude') {
+		app.showExcludeDevice()
+	} else {
+		app.showNodesManagerAction(kind)
+	}
 }
 
 function onRestart() {

@@ -350,6 +350,8 @@
 			ref="nodesManager"
 		/>
 
+		<DialogExcludeDevice v-model="dialogExclude" :socket="socket" />
+
 		<DialogFirmwareUpdate
 			v-model="firmwareUpdateDialog"
 			:node="firmwareUpdateNode"
@@ -409,6 +411,7 @@ import { getEnumMemberName } from '@zwave-js/shared'
 import { FirmwareUpdateStatus } from '@zwave-js/cc'
 import { SecurityBootstrapFailure, InclusionState } from 'zwave-js'
 import DialogNodesManager from '@/components/dialogs/DialogNodesManager.vue'
+import DialogExcludeDevice from '@/components/dialogs/DialogExcludeDevice.vue'
 import DialogFirmwareUpdate from '@/components/dialogs/DialogFirmwareUpdate.vue'
 import { uuid } from './lib/utils'
 import InstancesMixin from './mixins/InstancesMixin.js'
@@ -424,6 +427,7 @@ export default {
 		LoaderDialog,
 		Confirm,
 		DialogNodesManager,
+		DialogExcludeDevice,
 		DialogFirmwareUpdate,
 		VSonner,
 		Logo,
@@ -643,6 +647,7 @@ export default {
 			loaderIndeterminate: false,
 			password: {},
 			nodesManagerDialog: false,
+			dialogExclude: false,
 			firmwareUpdateDialog: false,
 			firmwareUpdateNode: null,
 			status: '',
@@ -807,8 +812,15 @@ export default {
 			}
 		},
 		showNodesManager(stepOrStepsValues) {
-			// used in ControlPanel.vue
-			this.$refs.nodesManager.show(stepOrStepsValues)
+			this.$refs.nodesManager.show(
+				stepOrStepsValues || { inclusionNaming: {} },
+			)
+		},
+		showNodesManagerAction(kind) {
+			this.$refs.nodesManager.showForAction(kind)
+		},
+		showExcludeDevice() {
+			this.dialogExclude = true
 		},
 		onGrantSecurityClasses(requested) {
 			if (this.nodesManagerDialog) {
@@ -840,6 +852,33 @@ export default {
 						: 'with error ❌'
 				}.\n Status: ${result.status}</span>`
 			}
+		},
+		// Feed NVM-restore progress into the blocking loader
+		onControllerStatus(data) {
+			this.setControllerStatus(data)
+			const status = data?.status
+			if (typeof status !== 'string' || !this.dialogLoader) return
+			const m = /(?:Convert|Restore) NVM progress: (\d+)%/.exec(status)
+			if (m) {
+				this.loaderProgress = parseInt(m[1], 10)
+				this.loaderIndeterminate = this.loaderProgress === 0
+				this.loaderText = status.startsWith('Convert')
+					? 'Converting backup to the controller format…'
+					: 'Writing to the controller — do not disconnect…'
+			}
+		},
+		showBlockingLoader(title, text) {
+			this.dialogLoader = true
+			this.loaderTitle = title || ''
+			this.loaderText = text || ''
+			this.loaderProgress = 0
+			this.loaderIndeterminate = true
+		},
+		finishLoader(text) {
+			this.dialogLoader = true
+			this.loaderProgress = -1
+			this.loaderIndeterminate = false
+			if (text !== undefined) this.loaderText = text
 		},
 		...mapActions(useBaseStore, [
 			'init',
@@ -1461,7 +1500,7 @@ export default {
 			this.socket.on(socketEvents.connected, this.setAppInfo.bind(this))
 			this.socket.on(
 				socketEvents.controller,
-				this.setControllerStatus.bind(this),
+				this.onControllerStatus.bind(this),
 			)
 
 			this.socket.on(socketEvents.nodeUpdated, this.updateNode.bind(this))

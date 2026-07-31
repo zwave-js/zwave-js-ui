@@ -1,248 +1,222 @@
 <template>
-	<v-dialog v-model="_value" max-width="500px" persistent>
-		<v-card>
-			<v-card-title>
-				<span class="text-h5">{{ title }}</span>
-			</v-card-title>
-
-			<v-card-text>
-				<v-container grid-list-md>
-					<v-form v-model="valid" ref="form" validate-on="lazy">
-						<v-row>
-							<v-col cols="12">
-								<v-select
-									v-model="editedValue.device"
-									label="Device"
-									required
-									:rules="[required]"
-									item-title="name"
-									:items="devices"
-								></v-select>
-							</v-col>
-							<v-col cols="12">
-								<v-select
-									v-model="editedValue.value"
-									label="Value"
-									:hint="
-										editedValue.value
-											? editedValue.value.description
-											: ''
+	<ZwDialog
+		:model-value="_value"
+		size="lg"
+		persistent
+		:title="title"
+		:actions="dialogActions"
+		@update:model-value="_value = $event"
+		@close="$emit('close')"
+	>
+		<v-container grid-list-md class="pa-0">
+			<v-form v-model="valid" ref="form" validate-on="lazy">
+				<v-row>
+					<v-col cols="12">
+						<v-select
+							v-model="editedValue.device"
+							label="Device"
+							required
+							:rules="[required]"
+							item-title="name"
+							:items="devices"
+						></v-select>
+					</v-col>
+					<v-col cols="12">
+						<v-select
+							v-model="editedValue.value"
+							label="Value"
+							:hint="
+								editedValue.value
+									? editedValue.value.description
+									: ''
+							"
+							required
+							return-object
+							:rules="[required]"
+							item-title="label"
+							item-value="id"
+							:items="deviceValues"
+						>
+							<template #selection="{ item }">
+								{{
+									(item.raw.label || item.raw.id) +
+									(item.raw.endpoint > 1
+										? ' - Endpoint ' + item.raw.endpoint
+										: '')
+								}}
+							</template>
+							<template #item="{ item, props: itemProps }">
+								<v-list-item
+									v-bind="itemProps"
+									:title="
+										(item.raw.label || item.raw.id) +
+										(item.raw.endpoint > 0
+											? ' - Endpoint ' + item.raw.endpoint
+											: '')
 									"
-									required
-									return-object
-									:rules="[required]"
-									item-title="label"
-									item-value="id"
-									:items="deviceValues"
+									:subtitle="
+										item.raw.description ||
+										'No description available'
+									"
 								>
-									<template #selection="{ item }">
-										{{
-											(item.raw.label || item.raw.id) +
-											(item.raw.endpoint > 1
-												? ' - Endpoint ' +
-													item.raw.endpoint
-												: '')
-										}}
-									</template>
-									<template
-										#item="{ item, props: itemProps }"
-									>
-										<v-list-item
-											v-bind="itemProps"
-											:title="
-												(item.raw.label ||
-													item.raw.id) +
-												(item.raw.endpoint > 0
-													? ' - Endpoint ' +
-														item.raw.endpoint
-													: '')
-											"
-											:subtitle="
-												item.raw.description ||
-												'No description available'
-											"
-										>
-										</v-list-item>
-									</template>
-								</v-select>
-							</v-col>
-							<v-col
-								v-if="
-									!this.mqtt.disabled &&
-									this.gateway.hassDiscovery
-								"
-								cols="12"
-							>
-								<v-select
-									v-model="editedValue.device_class"
-									label="Device Class"
-									hint="Specify a device class for Home assistant"
-									item-title="name"
-									:items="deviceClasses"
-								></v-select>
-							</v-col>
-							<v-col v-if="isSensor(editedValue.value)" cols="12">
-								<v-text-field
-									v-model.number="editedValue.icon"
-									hint="Specify a device icon for Home assistant, format is <prefix>:<icons-alias> (Eg: 'mdi:water'). Check http://materialdesignicons.com/"
-									label="Device Icon"
-								></v-text-field>
-							</v-col>
-							<v-col v-if="!this.mqtt.disabled" cols="12">
-								<v-text-field
-									v-model.trim="editedValue.topic"
-									label="Topic"
-									:rules="[requiredTopic]"
-									required
-								></v-text-field>
-							</v-col>
-							<v-col v-if="!this.mqtt.disabled" cols="6">
-								<v-select
-									v-model="editedValue.qos"
-									label="QoS"
-									hint="If specified, overrides the default QoS in MQTT settings"
-									:items="[
-										{ title: '', value: undefined },
-										{ title: '0: At most once', value: 0 },
-										{ title: '1: At least once', value: 1 },
-										{ title: '2: Exactly once', value: 2 },
-									]"
-									persistent-hint
-									required
-									type="number"
-								></v-select>
-							</v-col>
-							<v-col v-if="!this.mqtt.disabled" cols="6">
-								<v-select
-									v-model="editedValue.retain"
-									label="Retain"
-									persistent-hint
-									hint="If specified, overrides the default retain in MQTT settings"
-									:items="[
-										{ title: '', value: undefined },
-										{ title: 'True', value: true },
-										{ title: 'False', value: false },
-									]"
-									required
-									type="number"
-								></v-select>
-							</v-col>
-							<v-col cols="12">
-								<v-text-field
-									v-model="editedValue.postOperation"
-									label="Post operation"
-									hint="Example: '/10' '*100' '+20'"
-									required
-								></v-text-field>
-							</v-col>
-							<v-col cols="6">
-								<v-checkbox
-									label="Poll"
-									hint="Enable poll of this value. ATTENTION: This could create lot traffic in your network and kill the life of battery powered devices. Use at your own risk"
-									persistent-hint
-									v-model="editedValue.enablePoll"
-								></v-checkbox>
-							</v-col>
-							<v-col v-if="editedValue.enablePoll" cols="6">
-								<v-text-field
-									v-model.number="editedValue.pollInterval"
-									label="Poll interval"
-									hint="Seconds between to wait between poll requests. The timer starts when the request ends"
-									:rules="[requiredIntensity]"
-									suffix="seconds"
-									required
-									type="number"
-								></v-text-field>
-							</v-col>
+								</v-list-item>
+							</template>
+						</v-select>
+					</v-col>
+					<v-col
+						v-if="!this.mqtt.disabled && this.gateway.hassDiscovery"
+						cols="12"
+					>
+						<v-select
+							v-model="editedValue.device_class"
+							label="Device Class"
+							hint="Specify a device class for Home assistant"
+							item-title="name"
+							:items="deviceClasses"
+						></v-select>
+					</v-col>
+					<v-col v-if="isSensor(editedValue.value)" cols="12">
+						<v-text-field
+							v-model.number="editedValue.icon"
+							hint="Specify a device icon for Home assistant, format is <prefix>:<icons-alias> (Eg: 'mdi:water'). Check http://materialdesignicons.com/"
+							label="Device Icon"
+						></v-text-field>
+					</v-col>
+					<v-col v-if="!this.mqtt.disabled" cols="12">
+						<v-text-field
+							v-model.trim="editedValue.topic"
+							label="Topic"
+							:rules="[requiredTopic]"
+							required
+						></v-text-field>
+					</v-col>
+					<v-col v-if="!this.mqtt.disabled" cols="6">
+						<v-select
+							v-model="editedValue.qos"
+							label="QoS"
+							hint="If specified, overrides the default QoS in MQTT settings"
+							:items="[
+								{ title: '', value: undefined },
+								{ title: '0: At most once', value: 0 },
+								{ title: '1: At least once', value: 1 },
+								{ title: '2: Exactly once', value: 2 },
+							]"
+							persistent-hint
+							required
+							type="number"
+						></v-select>
+					</v-col>
+					<v-col v-if="!this.mqtt.disabled" cols="6">
+						<v-select
+							v-model="editedValue.retain"
+							label="Retain"
+							persistent-hint
+							hint="If specified, overrides the default retain in MQTT settings"
+							:items="[
+								{ title: '', value: undefined },
+								{ title: 'True', value: true },
+								{ title: 'False', value: false },
+							]"
+							required
+							type="number"
+						></v-select>
+					</v-col>
+					<v-col cols="12">
+						<v-text-field
+							v-model="editedValue.postOperation"
+							label="Post operation"
+							hint="Example: '/10' '*100' '+20'"
+							required
+						></v-text-field>
+					</v-col>
+					<v-col cols="6">
+						<v-checkbox
+							label="Poll"
+							hint="Enable poll of this value. ATTENTION: This could create lot traffic in your network and kill the life of battery powered devices. Use at your own risk"
+							persistent-hint
+							v-model="editedValue.enablePoll"
+						></v-checkbox>
+					</v-col>
+					<v-col v-if="editedValue.enablePoll" cols="6">
+						<v-text-field
+							v-model.number="editedValue.pollInterval"
+							label="Poll interval"
+							hint="Seconds between to wait between poll requests. The timer starts when the request ends"
+							:rules="[requiredIntensity]"
+							suffix="seconds"
+							required
+							type="number"
+						></v-text-field>
+					</v-col>
 
-							<v-col
-								cols="6"
-								v-if="
-									editedValue.value &&
-									editedValue.value.commandClass === 112
-								"
-							>
-								<v-checkbox
-									label="Enable discovery"
-									hint="Configuration CC values are disabled by default in MQTT discovery. Set this to true to force enable them"
-									persistent-hint
-									v-model="
-										editedValue.ccConfigEnableDiscovery
-									"
-								></v-checkbox>
-							</v-col>
+					<v-col
+						cols="6"
+						v-if="
+							editedValue.value &&
+							editedValue.value.commandClass === 112
+						"
+					>
+						<v-checkbox
+							label="Enable discovery"
+							hint="Configuration CC values are disabled by default in MQTT discovery. Set this to true to force enable them"
+							persistent-hint
+							v-model="editedValue.ccConfigEnableDiscovery"
+						></v-checkbox>
+					</v-col>
 
-							<v-col cols="6">
-								<v-checkbox
-									label="Parse send"
-									hint="Create a function that parse the value sent via MQTT"
-									persistent-hint
-									v-model="editedValue.parseSend"
-								></v-checkbox>
-							</v-col>
+					<v-col cols="6">
+						<v-checkbox
+							label="Parse send"
+							hint="Create a function that parse the value sent via MQTT"
+							persistent-hint
+							v-model="editedValue.parseSend"
+						></v-checkbox>
+					</v-col>
 
-							<v-container v-if="editedValue.parseSend">
-								<p>
-									Write the function here. Args are:
-									<code>value</code>, <code>valueId</code>,
-									<code>node</code>, <code>logger</code>. The
-									function is sync and must return the parsed
-									<code>value</code>.
-								</p>
-								<prism-editor
-									lineNumbers
-									v-model="editedValue.sendFunction"
-									language="js"
-									:highlight="highlighter"
-								></prism-editor>
-							</v-container>
+					<v-container v-if="editedValue.parseSend">
+						<p>
+							Write the function here. Args are:
+							<code>value</code>, <code>valueId</code>,
+							<code>node</code>, <code>logger</code>. The function
+							is sync and must return the parsed
+							<code>value</code>.
+						</p>
+						<prism-editor
+							lineNumbers
+							v-model="editedValue.sendFunction"
+							language="js"
+							:highlight="highlighter"
+						></prism-editor>
+					</v-container>
 
-							<v-col cols="6">
-								<v-checkbox
-									label="Parse receive"
-									hint="Create a function that parse the received value from MQTT"
-									persistent-hint
-									v-model="editedValue.parseReceive"
-								></v-checkbox>
-							</v-col>
+					<v-col cols="6">
+						<v-checkbox
+							label="Parse receive"
+							hint="Create a function that parse the received value from MQTT"
+							persistent-hint
+							v-model="editedValue.parseReceive"
+						></v-checkbox>
+					</v-col>
 
-							<v-container v-if="editedValue.parseReceive">
-								<p>
-									Write the function here. Args are:
-									<code>value</code>, <code>valueId</code>,
-									<code>node</code>, <code>logger</code>. The
-									function is sync and must return the parsed
-									<code>value</code>.
-								</p>
-								<prism-editor
-									lineNumbers
-									v-model="editedValue.receiveFunction"
-									language="js"
-									:highlight="highlighter"
-								></prism-editor>
-							</v-container>
-						</v-row>
-					</v-form>
-				</v-container>
-			</v-card-text>
-
-			<v-card-actions>
-				<v-spacer></v-spacer>
-				<v-btn
-					color="blue-darken-1"
-					variant="text"
-					@click="$emit('close')"
-					>Cancel</v-btn
-				>
-				<v-btn
-					color="blue-darken-1"
-					variant="text"
-					@click="handleSave"
-					>{{ isNew ? 'Add' : 'Update' }}</v-btn
-				>
-			</v-card-actions>
-		</v-card>
-	</v-dialog>
+					<v-container v-if="editedValue.parseReceive">
+						<p>
+							Write the function here. Args are:
+							<code>value</code>, <code>valueId</code>,
+							<code>node</code>, <code>logger</code>. The function
+							is sync and must return the parsed
+							<code>value</code>.
+						</p>
+						<prism-editor
+							lineNumbers
+							v-model="editedValue.receiveFunction"
+							language="js"
+							:highlight="highlighter"
+						></prism-editor>
+					</v-container>
+				</v-row>
+			</v-form>
+		</v-container>
+	</ZwDialog>
 </template>
 
 <script>
@@ -257,14 +231,18 @@ import 'prismjs/themes/prism-tomorrow.css' // import syntax highlighting styles
 
 import { mapState } from 'pinia'
 import useBaseStore from '../../stores/base.js'
+import { cancelAction, confirmAction } from '../../lib/dashboard-types'
 import { defineAsyncComponent } from 'vue'
+import ZwDialog from '@/components/dashboard/dialogs/ZwDialog.vue'
 
 export default {
 	components: {
+		ZwDialog,
 		PrismEditor: defineAsyncComponent(() =>
 			import('vue-prism-editor').then((m) => m.PrismEditor),
 		),
 	},
+	emits: ['update:modelValue', 'close', 'save'],
 	props: {
 		modelValue: Boolean,
 		gw_type: Number,
@@ -282,6 +260,12 @@ export default {
 	},
 	computed: {
 		...mapState(useBaseStore, ['gateway', 'mqtt']),
+		dialogActions() {
+			return [
+				cancelAction(() => this.$emit('close')),
+				confirmAction(this.isNew ? 'Add' : 'Update', this.handleSave),
+			]
+		},
 		_value: {
 			get() {
 				return this.modelValue
@@ -434,7 +418,7 @@ export default {
 <style scoped>
 /* Custom focus indicator for better accessibility */
 .prism-editor__textarea:focus {
-	outline: 2px solid #1976d2;
+	outline: 2px solid var(--zw-accent);
 	outline-offset: 2px;
 }
 </style>

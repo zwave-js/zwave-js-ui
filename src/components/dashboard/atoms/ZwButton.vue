@@ -15,7 +15,15 @@
 <script setup lang="ts">
 import { Button } from '@vuetify/v0'
 
-type Variant = 'primary' | 'outline' | 'destructive' | 'ghost' | 'mono-outline'
+type Variant =
+	| 'primary'
+	| 'outline'
+	| 'destructive'
+	| 'ghost'
+	| 'mono-outline'
+	| 'danger'
+	| 'text'
+	| 'text-danger'
 
 withDefaults(
 	defineProps<{
@@ -116,5 +124,28 @@ const emit = defineEmits<{ click: [MouseEvent] }>()
 	--btn-border: var(--zw-line);
 	font: var(--zw-text-mono-small);
 	letter-spacing: 0.4px;
+}
+
+/* Solid-red destructive primary (dialog footers: Restore, Hard reset).
+   Distinct from `destructive`, which is a soft-tinted secondary. */
+.zw-btn--danger {
+	--btn-bg: var(--zw-danger);
+	--btn-bg-hover: rgb(var(--v0-error-darken-1));
+	--btn-color: var(--zw-on-accent);
+	--btn-shadow: 0 1px 2px rgba(var(--v0-error), 0.3);
+}
+
+/* Text button, accent tone (dialog footer confirm-as-text). */
+.zw-btn--text {
+	--btn-bg: transparent;
+	--btn-bg-hover: var(--zw-accent-soft);
+	--btn-color: var(--zw-accent-dark);
+}
+
+/* Text button, danger tone (dialog footer "Leave"-style action). */
+.zw-btn--text-danger {
+	--btn-bg: transparent;
+	--btn-bg-hover: var(--zw-danger-soft);
+	--btn-color: var(--zw-danger);
 }
 </style>
