@@ -5,7 +5,7 @@ import { CommandClasses } from '@zwave-js/core'
 import * as Constants from './Constants.ts'
 import type { LogLevel } from './logger.ts'
 import { module } from './logger.ts'
-import { PayloadType } from './shared.ts'
+import { getIdWithoutNode, PayloadType } from './shared.ts'
 import type { IClientPublishOptions } from 'mqtt'
 import MqttClient, { type MqttClientEventCallbacks } from './MqttClient.ts'
 import type {
@@ -19,7 +19,7 @@ import type {
 import type ZwaveClient from './ZwaveClient.ts'
 import Cron from 'croner'
 
-import type { HassDevice } from '../hass/types.ts'
+import { HASS_NODE_PREFIX, type HassDevice } from '../hass/types.ts'
 import { DiscoveryGenerator } from '../hass/DiscoveryGenerator.ts'
 import type {
 	HassDeviceRegistryLifecyclePort,
@@ -28,12 +28,10 @@ import type {
 	HassValue,
 	HassValueTopic,
 } from '../hass/ports.ts'
-import { isHassNode } from '../hass/ports.ts'
+import { ensureHassNode } from '../hass/ports.ts'
 
 const logger = module('Gateway')
 const hassLogger = module('HASS')
-
-const NODE_PREFIX = 'nodeID_'
 
 const GATEWAY_TYPE = {
 	VALUEID: 0,
@@ -204,40 +202,14 @@ export default class Gateway<
 		this._zwave = zwave
 		this.customDeviceRegistry = customDeviceRegistry
 		const getDiscovered = () => this.discovered
-		const getMqtt = () => this._mqtt
-		const getZwave = () => this._zwave
 		this.discoveryGenerator = new DiscoveryGenerator({
 			config: this.config,
-			mqtt: {
-				get disabled() {
-					const client = getMqtt()
-					return !client || client.disabled
-				},
-				getTopic: (topic, set) => getMqtt().getTopic(topic, set),
-				getStatusTopic: () => getMqtt().getStatusTopic(),
-				publish: (topic, payload, options, prefix) =>
-					getMqtt().publish(topic, payload, options, prefix),
-			},
-			zwave: {
-				get homeHex() {
-					return getZwave().homeHex
-				},
-				getNode: (nodeId) => getZwave().nodes.get(nodeId),
-				getNodes: () => getZwave().nodes,
-				updateDevice: (device, nodeId, deleteDevice) =>
-					getZwave().updateDevice(device, nodeId, deleteDevice),
+			mqtt,
+			zwave,
+			nodeUpdates: {
 				emitNodeUpdate: (nodeId, hassDevices) => {
-					const node = getZwave().nodes.get(nodeId)
-					if (node) getZwave().emitNodeUpdate(node, { hassDevices })
-				},
-				writeCoverStop: async (value) => {
-					await getZwave().writeValue(
-						{
-							...value,
-							property: 'Up',
-						},
-						false,
-					)
+					const node = this.zwave.nodes.get(nodeId)
+					if (node) this.zwave.emitNodeUpdate(node, { hassDevices })
 				},
 			},
 			topics: {
@@ -539,17 +511,19 @@ export default class Gateway<
 		switch (this.config.type) {
 			case GATEWAY_TYPE.MANUAL:
 			case GATEWAY_TYPE.NAMED:
-				topic.push(node.name ? node.name : NODE_PREFIX + node.id)
+				topic.push(node.name ? node.name : HASS_NODE_PREFIX + node.id)
 				break
 			case GATEWAY_TYPE.VALUEID:
 				if (!this.config.nodeNames) {
 					topic.push(node.id)
 				} else {
-					topic.push(node.name ? node.name : NODE_PREFIX + node.id)
+					topic.push(
+						node.name ? node.name : HASS_NODE_PREFIX + node.id,
+					)
 				}
 				break
 			default:
-				topic.push(NODE_PREFIX + node.id)
+				topic.push(HASS_NODE_PREFIX + node.id)
 		}
 
 		// clean topic parts
@@ -577,12 +551,14 @@ export default class Gateway<
 			(v: GatewayValue) => v.device === node.deviceId,
 		)
 		if (values && values.length > 0) {
-			const vID = this._getIdWithoutNode(valueId)
+			const vID = getIdWithoutNode(valueId)
 			valueConf = values.find((v: GatewayValue) => v.value.id === vID)
 		}
 
 		if (valueConf && valueConf.topic) {
-			topic.push(node.name ? node.name : NODE_PREFIX + valueId.nodeId)
+			topic.push(
+				node.name ? node.name : HASS_NODE_PREFIX + valueId.nodeId,
+			)
 			topic.push(valueConf.topic)
 		}
 
@@ -605,7 +581,9 @@ export default class Gateway<
 			switch (this.config.type) {
 				case GATEWAY_TYPE.NAMED:
 					topic.push(
-						node.name ? node.name : NODE_PREFIX + valueId.nodeId,
+						node.name
+							? node.name
+							: HASS_NODE_PREFIX + valueId.nodeId,
 					)
 					topic.push(Constants.commandClass(valueId.commandClass))
 
@@ -623,7 +601,7 @@ export default class Gateway<
 						topic.push(
 							node.name
 								? node.name
-								: NODE_PREFIX + valueId.nodeId,
+								: HASS_NODE_PREFIX + valueId.nodeId,
 						)
 					}
 					topic.push(valueId.commandClass)
@@ -698,21 +676,18 @@ export default class Gateway<
 	}
 
 	discoverDevice(node: ZUINode, device: HassDevice): void {
-		if (isHassNode(node)) {
-			this.discoveryGenerator.discoverDevice(node, device)
-		}
+		ensureHassNode(node)
+		this.discoveryGenerator.discoverDevice(node, device)
 	}
 
 	discoverClimates(node: ZUINode): void {
-		if (isHassNode(node)) {
-			this.discoveryGenerator.discoverClimates(node)
-		}
+		ensureHassNode(node)
+		this.discoveryGenerator.discoverClimates(node)
 	}
 
 	discoverValue(node: ZUINode, valueIdKey: string): void {
-		if (isHassNode(node)) {
-			this.discoveryGenerator.discoverValue(node, valueIdKey)
-		}
+		ensureHassNode(node)
+		this.discoveryGenerator.discoverValue(node, valueIdKey)
 	}
 
 	updateNodeTopics(nodeId: number): void {
@@ -782,9 +757,8 @@ export default class Gateway<
 		node: ZUINode,
 		changed?: boolean,
 	): void {
-		if (isHassNode(node)) {
-			this.discoveryGenerator.discoverValueIfNeeded(node, valueId)
-		}
+		ensureHassNode(node)
+		this.discoveryGenerator.discoverValueIfNeeded(node, valueId)
 
 		const result = this.valueTopic(node, valueId, true) as ValueIdTopic
 
@@ -825,13 +799,11 @@ export default class Gateway<
 			}
 		}
 
-		if (isHassNode(node)) {
-			this.discoveryGenerator.updateClimateDiscovery(
-				valueId,
-				node,
-				changed ?? false,
-			)
-		}
+		this.discoveryGenerator.updateClimateDiscovery(
+			valueId,
+			node,
+			changed ?? false,
+		)
 
 		let data: Record<string, any>
 
@@ -958,7 +930,8 @@ export default class Gateway<
 			}
 		}
 
-		if (isHassNode(node)) this.discoveryGenerator.onNodeInited(node)
+		ensureHassNode(node)
+		this.discoveryGenerator.onNodeInited(node)
 	}
 
 	/**
@@ -1248,12 +1221,5 @@ export default class Gateway<
 		}
 
 		return result
-	}
-
-	/**
-	 * Get node name from node object
-	 */
-	private _getIdWithoutNode(valueId: HassValue): string {
-		return valueId.id.replace(valueId.nodeId + '-', '')
 	}
 }

@@ -125,7 +125,7 @@ function device(overrides: Partial<HassDevice> = {}): HassDevice {
 function setup(options: {
 	config?: DiscoveryGeneratorOptions['config']
 	disabled?: boolean
-	nodes?: Map<number, unknown>
+	nodes?: Map<number, HassNode>
 	catalog?: HassDeviceCatalog
 	publishError?: unknown
 }) {
@@ -141,8 +141,8 @@ function setup(options: {
 		deleteDevice?: boolean
 	}> = []
 	const emitted: Array<{ nodeId: number; devices: HassDeviceMap }> = []
-	const writes: HassValue[] = []
-	const nodes = options.nodes ?? new Map<number, unknown>()
+	const writes: Array<{ valueId: HassValue; value: unknown }> = []
+	const nodes = options.nodes ?? new Map<number, HassNode>()
 	const catalog = new Map(
 		Object.entries(options.catalog ?? {}).map(([key, devices]) => [
 			key,
@@ -169,8 +169,7 @@ function setup(options: {
 	}
 	const zwave: HassZwavePort = {
 		homeHex: '0x12345678',
-		getNode: (nodeId) => nodes.get(nodeId),
-		getNodes: () => nodes,
+		nodes,
 		updateDevice: (hassDevice, nodeId, deleteDevice) => {
 			updates.push({
 				nodeId,
@@ -178,10 +177,9 @@ function setup(options: {
 				deleteDevice,
 			})
 		},
-		emitNodeUpdate: (nodeId, devices) => emitted.push({ nodeId, devices }),
-		writeCoverStop: (hassValue) => {
-			writes.push(hassValue)
-			return Promise.resolve()
+		writeValue: (valueId, value) => {
+			writes.push({ valueId, value })
+			return Promise.resolve({ status: 0 })
 		},
 	}
 	const registry: HassDeviceRegistryPort = {
@@ -210,6 +208,10 @@ function setup(options: {
 		},
 		mqtt,
 		zwave,
+		nodeUpdates: {
+			emitNodeUpdate: (nodeId, devices) =>
+				emitted.push({ nodeId, devices }),
+		},
 		topics: {
 			nodeTopic: (hassNode) => `node/${hassNode.id}`,
 			valueTopic: (_node, hassValue, returnObject) =>
@@ -244,7 +246,7 @@ function setup(options: {
 }
 
 describe('DiscoveryGenerator', () => {
-	it('rediscovers valid nodes and updates disabled or removed entries', () => {
+	it('rediscovers nodes and updates disabled or removed entries', () => {
 		const hassNode = node({
 			name: 'Switch',
 			manufacturer: 'Test',
@@ -261,14 +263,12 @@ describe('DiscoveryGenerator', () => {
 		const { generator, discovered, emitted, published } = setup({
 			nodes: new Map([
 				[2, hassNode],
-				[3, { id: 3 }],
 				[4, node({ id: 4, virtual: true })],
 			]),
 		})
 		discovered['2-stale'] = device()
 		discovered['9-keep'] = device()
 
-		generator.rediscoverNode(3)
 		generator.rediscoverNode(4)
 		generator.rediscoverNode(2)
 		expect(discovered['2-stale']).toBeUndefined()
@@ -467,6 +467,19 @@ describe('DiscoveryGenerator', () => {
 			expect.stringContaining('publish failed'),
 			expect.any(Object),
 		)
+
+		const missingTopic = setup({})
+		missingTopic.generator.publishDiscovery(
+			device({ discoveryTopic: undefined }),
+			2,
+			{ forceUpdate: true },
+		)
+		expect(missingTopic.log).toHaveBeenCalledWith(
+			'error',
+			expect.stringContaining('has no discovery topic'),
+			expect.any(Object),
+		)
+		expect(missingTopic.updates).toHaveLength(0)
 	})
 
 	it('republishes persistent devices for valid nodes', () => {
@@ -474,8 +487,7 @@ describe('DiscoveryGenerator', () => {
 			discoveryTopic: 'sensor/node/stored/config',
 			persistent: true,
 		})
-		const nodes = new Map<number, unknown>([
-			[1, { id: 1 }],
+		const nodes = new Map<number, HassNode>([
 			[
 				2,
 				node({
@@ -544,7 +556,14 @@ describe('DiscoveryGenerator', () => {
 			'unchanged',
 		)
 		expect(generator.transformPayload('HALT', cover)).toBeNull()
-		await vi.waitFor(() => expect(writes).toEqual([cover]))
+		await vi.waitFor(() =>
+			expect(writes).toEqual([
+				{
+					valueId: { ...cover, property: 'Up' },
+					value: false,
+				},
+			]),
+		)
 	})
 
 	it('publishes setpoint topics for the current thermostat mode', () => {
@@ -911,6 +930,7 @@ describe('DiscoveryGenerator', () => {
 				}),
 			},
 		})
+
 		const { generator, published, logError } = setup({})
 
 		generator.discoverValue(hassNode, key)
@@ -918,6 +938,30 @@ describe('DiscoveryGenerator', () => {
 		expect(published).toHaveLength(0)
 		expect(hassNode.hassDevices).toEqual({})
 		expect(logError).not.toHaveBeenCalled()
+	})
+
+	it('skips binary notifications without a discoverable object ID', () => {
+		const key = ccValueKey(CommandClasses.Notification, 'unknown')
+		const hassNode = node({
+			values: {
+				[key]: value({
+					id: ccValueId(CommandClasses.Notification, 'unknown'),
+					commandClass: CommandClasses.Notification,
+					property: 'unknown',
+					type: 'number',
+					states: [
+						{ value: 0, text: 'Idle' },
+						{ value: 1, text: 'Active' },
+					],
+				}),
+			},
+		})
+		const { generator, published } = setup({})
+
+		generator.discoverValue(hassNode, key)
+
+		expect(published).toHaveLength(0)
+		expect(hassNode.hassDevices).toEqual({})
 	})
 
 	it('discovers thermostat climates and skips unsupported nodes', () => {

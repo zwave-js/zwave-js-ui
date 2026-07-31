@@ -1,6 +1,6 @@
-import { CustomDeviceRegistry } from './CustomDeviceRegistry.ts'
-import type { HassLogger } from './ports.ts'
-import type { HassDeviceCatalog } from './types.ts'
+import { CustomDeviceRegistry } from '../hass/CustomDeviceRegistry.ts'
+import type { HassLogger } from '../hass/ports.ts'
+import type { HassDeviceCatalog } from '../hass/types.ts'
 import Gateway from '../lib/Gateway.ts'
 import type {
 	GatewayConfig,

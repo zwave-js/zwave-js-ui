@@ -19,7 +19,12 @@ import type { PersistedSettings } from '../config/store.ts'
 import * as loggers from '../lib/logger.ts'
 import * as utils from '../lib/utils.ts'
 import { snippetsDir } from '../config/app.ts'
-import type { GatewayPort, ZnifferPort, ZwaveClientPort } from './ports.ts'
+import type {
+	GatewayFactoryPort,
+	GatewayPort,
+	ZnifferPort,
+	ZwaveClientPort,
+} from './ports.ts'
 
 const logger = loggers.module('Runtime')
 
@@ -29,15 +34,6 @@ export function isAuthEnabled(): boolean {
 
 export interface ManagedService {
 	close(): Promise<void>
-}
-
-export interface GatewayFactoryPort {
-	create(
-		config: GatewayConfig,
-		zwave: ZWaveClient | undefined,
-		mqtt: MqttClient | undefined,
-	): GatewayPort
-	dispose(): void
 }
 
 export interface AppRuntimeDeps {

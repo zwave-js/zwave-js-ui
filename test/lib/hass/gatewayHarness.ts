@@ -1,4 +1,4 @@
-import type { GatewayFactory as GatewayFactoryType } from '#api/hass/GatewayFactory.ts'
+import type { GatewayFactory as GatewayFactoryType } from '#api/runtime/GatewayFactory.ts'
 import type { HassDeviceCatalog } from '#api/hass/types.ts'
 import type GatewayType from '#api/lib/Gateway.ts'
 import type { GatewayConfig } from '#api/lib/Gateway.ts'
@@ -48,7 +48,7 @@ export async function createGatewayHarness(
 
 	const [{ GatewayFactory }, { GatewayType }, { default: MqttClient }] =
 		await Promise.all([
-			import('#api/hass/GatewayFactory.ts'),
+			import('#api/runtime/GatewayFactory.ts'),
 			import('#api/lib/Gateway.ts'),
 			import('#api/lib/MqttClient.ts'),
 		])

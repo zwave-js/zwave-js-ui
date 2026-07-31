@@ -1,4 +1,3 @@
-import type { IClientPublishOptions } from 'mqtt'
 import type {
 	ZUIDeviceClass,
 	ZUIEndpoint,
@@ -6,36 +5,22 @@ import type {
 	ZUIValueId,
 	ZUIValueIdState,
 } from '../lib/ZwaveClient.ts'
+import type ZWaveClient from '../lib/ZwaveClient.ts'
+import type MqttClient from '../lib/MqttClient.ts'
+import type { ModuleLogger } from '../lib/logger.ts'
 import type { PayloadType } from '../lib/shared.ts'
 import type { HassDevice, HassDeviceMap } from './types.ts'
 
-export interface HassLogger {
-	debug(message: string, ...meta: unknown[]): unknown
-	info(message: string, ...meta: unknown[]): unknown
-	warn(message: string, ...meta: unknown[]): unknown
-	error(message: string, ...meta: unknown[]): unknown
-	log(level: string, message: string, ...meta: unknown[]): unknown
-}
+export type HassLogger = Pick<
+	ModuleLogger,
+	'debug' | 'info' | 'warn' | 'error' | 'log'
+>
 
 export type HassValueState = ZUIValueIdState
 export type HassValue = ZUIValueId
 export type HassDeviceClass = ZUIDeviceClass
 export type HassEndpoint = Pick<ZUIEndpoint, 'deviceClass' | 'index'>
-export type HassNode = Pick<
-	ZUINode,
-	| 'deviceClass'
-	| 'deviceId'
-	| 'endpoints'
-	| 'firmwareVersion'
-	| 'id'
-	| 'loc'
-	| 'manufacturer'
-	| 'name'
-	| 'productDescription'
-	| 'productLabel'
-	| 'ready'
-	| 'virtual'
-> &
+export type HassNode = ZUINode &
 	Required<Pick<ZUINode, 'hassDevices' | 'values'>>
 export type HassTopicNode = Pick<
 	ZUINode,
@@ -63,29 +48,18 @@ export interface HassTopicPort {
 	): string | HassValueTopic | null
 }
 
-export interface HassMqttPort {
-	readonly disabled: boolean
-	getTopic(topic: string, set?: boolean): string
-	getStatusTopic(): string
-	publish(
-		topic: string,
-		data: unknown,
-		options?: IClientPublishOptions,
-		prefix?: string,
-	): unknown
-}
+export type HassMqttPort = Pick<
+	MqttClient,
+	'disabled' | 'getTopic' | 'getStatusTopic' | 'publish'
+>
 
-export interface HassZwavePort {
-	readonly homeHex: string | undefined
-	getNode(nodeId: number): unknown
-	getNodes(): Iterable<readonly [number, unknown]>
-	updateDevice(
-		device: HassDevice,
-		nodeId: number,
-		deleteDevice?: boolean,
-	): void
+export type HassZwavePort = Pick<
+	ZWaveClient,
+	'homeHex' | 'nodes' | 'updateDevice' | 'writeValue'
+>
+
+export interface HassNodeUpdatePort {
 	emitNodeUpdate(nodeId: number, devices: HassDeviceMap): void
-	writeCoverStop(value: HassValue): Promise<unknown>
 }
 
 export interface HassDiscoveryConfig {
@@ -126,17 +100,7 @@ export interface HassDeviceStorePort {
 	updateStoreNodes(): Promise<void>
 }
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-	return value !== null && typeof value === 'object' && !Array.isArray(value)
-}
-
-export function isHassNode(value: unknown): value is HassNode {
-	if (!isRecord(value)) return false
-
-	return (
-		typeof value.id === 'number' &&
-		typeof value.ready === 'boolean' &&
-		isRecord(value.values) &&
-		isRecord(value.hassDevices)
-	)
+export function ensureHassNode(node: ZUINode): asserts node is HassNode {
+	node.values ??= {}
+	node.hassDevices ??= {}
 }

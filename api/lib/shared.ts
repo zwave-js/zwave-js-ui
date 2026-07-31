@@ -8,6 +8,13 @@ export const PayloadType = {
 
 export type PayloadType = (typeof PayloadType)[keyof typeof PayloadType]
 
+export function getIdWithoutNode(valueId: {
+	id: string
+	nodeId: number
+}): string {
+	return valueId.id.replace(`${valueId.nodeId}-`, '')
+}
+
 export function regionSupportsAutoPowerlevel(region: RFRegion): boolean {
 	return (
 		region === RFRegion.Europe ||

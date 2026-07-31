@@ -3,7 +3,7 @@ import { AlarmSensorType, ThermostatSetpointType } from 'zwave-js'
 import hassCfg, { type ColorMode } from './configurations.ts'
 import * as Constants from '../lib/Constants.ts'
 import { getErrorMessage } from '../lib/errors.ts'
-import { PayloadType } from '../lib/shared.ts'
+import { getIdWithoutNode, PayloadType } from '../lib/shared.ts'
 import * as utils from '../lib/utils.ts'
 import type {
 	HassDeviceRegistryPort,
@@ -12,13 +12,14 @@ import type {
 	HassLogger,
 	HassMqttPort,
 	HassNode,
+	HassNodeUpdatePort,
 	HassTopicPort,
 	HassValue,
 	HassValueState,
 	HassValueTopic,
 	HassZwavePort,
 } from './ports.ts'
-import { isHassNode } from './ports.ts'
+import { ensureHassNode } from './ports.ts'
 import {
 	HASS_NODE_PREFIX,
 	type HassDevice,
@@ -27,6 +28,11 @@ import {
 } from './types.ts'
 
 const UID_DISCOVERY_PREFIX = process.env.UID_DISCOVERY_PREFIX || 'zwavejs2mqtt_'
+const GENERIC_DEVICE_CLASS_THERMOSTAT = 0x08
+const SIMON_IO_ROLLER_BLIND_DEVICE_ID = '615-0-258'
+// Keep cover payloads in Z-Wave's 0..99 level range because tilt positions are separate values
+const HASS_COVER_OPEN_POSITION = 99
+const HASS_COVER_CLOSED_POSITION = 0
 
 interface DeviceInfo {
 	identifiers: string[]
@@ -50,8 +56,9 @@ interface SensorDefinition {
 
 export interface DiscoveryGeneratorOptions {
 	config: HassDiscoveryConfig
-	mqtt: HassMqttPort
-	zwave: HassZwavePort
+	mqtt?: HassMqttPort
+	zwave?: HassZwavePort
+	nodeUpdates: HassNodeUpdatePort
 	topics: HassTopicPort
 	registry: HassDeviceRegistryPort
 	state: HassDiscoveryState
@@ -65,8 +72,9 @@ function valueUnit(value: unknown): string | undefined {
 
 export class DiscoveryGenerator {
 	private readonly config: HassDiscoveryConfig
-	private readonly mqtt: HassMqttPort
-	private readonly zwave: HassZwavePort
+	private readonly mqttPort?: HassMqttPort
+	private readonly zwavePort?: HassZwavePort
+	private readonly nodeUpdates: HassNodeUpdatePort
 	private readonly topics: HassTopicPort
 	private readonly registry: HassDeviceRegistryPort
 	private readonly state: HassDiscoveryState
@@ -74,8 +82,9 @@ export class DiscoveryGenerator {
 
 	public constructor(options: DiscoveryGeneratorOptions) {
 		this.config = options.config
-		this.mqtt = options.mqtt
-		this.zwave = options.zwave
+		this.mqttPort = options.mqtt
+		this.zwavePort = options.zwave
+		this.nodeUpdates = options.nodeUpdates
 		this.topics = options.topics
 		this.registry = options.registry
 		this.state = options.state
@@ -83,12 +92,23 @@ export class DiscoveryGenerator {
 	}
 
 	private get mqttEnabled(): boolean {
-		return !this.mqtt.disabled
+		return !!this.mqttPort && !this.mqttPort.disabled
+	}
+
+	private get mqtt(): HassMqttPort {
+		if (!this.mqttPort) throw new Error('MQTT client is not available')
+		return this.mqttPort
+	}
+
+	private get zwave(): HassZwavePort {
+		if (!this.zwavePort) throw new Error('Z-Wave client is not available')
+		return this.zwavePort
 	}
 
 	public rediscoverNode(nodeId: number): void {
-		const candidate = this.zwave.getNode(nodeId)
-		if (!isHassNode(candidate) || candidate.virtual) return
+		const candidate = this.zwave.nodes.get(nodeId)
+		if (!candidate || candidate.virtual) return
+		ensureHassNode(candidate)
 
 		this.removeNode(candidate)
 		candidate.hassDevices = {}
@@ -100,17 +120,18 @@ export class DiscoveryGenerator {
 			this.discoverValue(candidate, id)
 		}
 
-		this.zwave.emitNodeUpdate(candidate.id, candidate.hassDevices)
+		this.nodeUpdates.emitNodeUpdate(candidate.id, candidate.hassDevices)
 	}
 
 	public disableDiscovery(nodeId: number): void {
-		const candidate = this.zwave.getNode(nodeId)
-		if (!isHassNode(candidate)) return
+		const candidate = this.zwave.nodes.get(nodeId)
+		if (!candidate) return
+		ensureHassNode(candidate)
 
 		for (const device of Object.values(candidate.hassDevices)) {
 			device.ignoreDiscovery = true
 		}
-		this.zwave.emitNodeUpdate(candidate.id, candidate.hassDevices)
+		this.nodeUpdates.emitNodeUpdate(candidate.id, candidate.hassDevices)
 	}
 
 	public publishDiscovery(
@@ -157,7 +178,12 @@ export class DiscoveryGenerator {
 			const skipDiscovery =
 				hassDevice.ignoreDiscovery ||
 				(this.config.manualDiscovery && !options.forceUpdate)
-			if (!skipDiscovery && hassDevice.discoveryTopic) {
+			if (!skipDiscovery) {
+				if (!hassDevice.discoveryTopic) {
+					throw new Error(
+						'HASS discovery device has no discovery topic',
+					)
+				}
 				this.mqtt.publish(
 					hassDevice.discoveryTopic,
 					options.deleteDevice ? '' : hassDevice.discovery_payload,
@@ -209,8 +235,8 @@ export class DiscoveryGenerator {
 	public rediscoverAll(): void {
 		if (!this.config.hassDiscovery) return
 
-		for (const [nodeId, candidate] of this.zwave.getNodes()) {
-			if (!isHassNode(candidate)) continue
+		for (const [nodeId, candidate] of this.zwave.nodes) {
+			ensureHassNode(candidate)
 			for (const device of Object.values(candidate.hassDevices)) {
 				if (device.discoveryTopic && device.discovery_payload) {
 					this.publishDiscovery(device, nodeId)
@@ -395,7 +421,12 @@ export class DiscoveryGenerator {
 	}
 
 	public discoverClimates(node: HassNode): void {
-		if (!node.deviceClass || node.deviceClass.generic !== 0x08) return
+		if (
+			!node.deviceClass ||
+			node.deviceClass.generic !== GENERIC_DEVICE_CLASS_THERMOSTAT
+		) {
+			return
+		}
 
 		try {
 			const nodeDevices = this.registry.get(node.deviceId)
@@ -649,7 +680,8 @@ export class DiscoveryGenerator {
 							'specific_type_class_motor_multiposition',
 							'specific_type_motor_multiposition',
 						].includes(specificDeviceClass) ||
-						node.deviceId === '615-0-258'
+						// Treat the Simon IO Roller Blind as a cover because it reports a generic motor class (#3088)
+						node.deviceId === SIMON_IO_ROLLER_BLIND_DEVICE_ID
 					) {
 						config = utils.copy(hassCfg.cover_position)
 						config.discovery_payload.command_topic = setTopic
@@ -657,10 +689,14 @@ export class DiscoveryGenerator {
 						config.discovery_payload.set_position_topic = setTopic
 						config.discovery_payload.position_template =
 							'{{ value_json.value | round(0) }}'
-						config.discovery_payload.position_open = 99
-						config.discovery_payload.position_closed = 0
-						config.discovery_payload.payload_open = 99
-						config.discovery_payload.payload_close = 0
+						config.discovery_payload.position_open =
+							HASS_COVER_OPEN_POSITION
+						config.discovery_payload.position_closed =
+							HASS_COVER_CLOSED_POSITION
+						config.discovery_payload.payload_open =
+							HASS_COVER_OPEN_POSITION
+						config.discovery_payload.payload_close =
+							HASS_COVER_CLOSED_POSITION
 					} else {
 						config = utils.copy(hassCfg.light_dimmer)
 						config.discovery_payload.supported_color_modes = [
@@ -849,6 +885,7 @@ export class DiscoveryGenerator {
 								discoveredObjectId = valueId.propertyName
 								break
 						}
+						if (discoveredObjectId === undefined) return
 						config ||= utils.copy(hassCfg.binary_sensor)
 						this.setBinaryPayloadFromSensor(config, states, off)
 						config.object_id = String(discoveredObjectId)
@@ -1107,7 +1144,9 @@ export class DiscoveryGenerator {
 			valueId.property === 'targetValue' &&
 			payload === (hassDevice.discovery_payload.payload_stop ?? 'STOP')
 		) {
-			this.zwave.writeCoverStop(valueId).catch(() => {})
+			this.zwave
+				.writeValue({ ...valueId, property: 'Up' }, false)
+				.catch(() => {})
 			return null
 		}
 
@@ -1154,7 +1193,7 @@ export class DiscoveryGenerator {
 
 	public discoverValueIfNeeded(node: HassNode, valueId: HassValue): void {
 		if (this.config.hassDiscovery && !this.state.discovered[valueId.id]) {
-			this.discoverValue(node, this.getIdWithoutNode(valueId))
+			this.discoverValue(node, getIdWithoutNode(valueId))
 		}
 	}
 
@@ -1199,10 +1238,6 @@ export class DiscoveryGenerator {
 			}
 		}
 		return prioritizedValueIds
-	}
-
-	private getIdWithoutNode(valueId: HassValue): string {
-		return valueId.id.replace(valueId.nodeId + '-', '')
 	}
 
 	private deviceInfo(
