@@ -152,7 +152,7 @@ describe('Gateway Home Assistant behavior', () => {
 		})
 	})
 
-	it('forwards a literal null payload to Z-Wave writes', async () => {
+	it('forwards literal null payloads to direct and broadcast writes', async () => {
 		const harness = await createGatewayHarness()
 		harnesses.push(harness)
 		const writable = buildValueId({
@@ -170,6 +170,17 @@ describe('Gateway Home Assistant behavior', () => {
 		if (typeof topic !== 'string') throw new Error('Missing value topic')
 
 		harness.mqtt.emit('writeRequest', topic.split('/'), null)
+
+		await vi.waitFor(() => {
+			expect(harness.zwave.writeValue).toHaveBeenCalledWith(
+				writable,
+				null,
+				undefined,
+			)
+		})
+
+		harness.zwave.writeValue.mockClear()
+		harness.mqtt.emit('broadcastRequest', topic.split('/'), null)
 
 		await vi.waitFor(() => {
 			expect(harness.zwave.writeValue).toHaveBeenCalledWith(

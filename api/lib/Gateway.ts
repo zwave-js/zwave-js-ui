@@ -1100,15 +1100,14 @@ export default class Gateway<
 			)
 			if (values.length > 0) {
 				// all values are the same type just different node,parse the Payload by using the first one
-				payload = this.parsePayload(
+				const result = this.parsePayloadResult(
 					payload,
 					this.topicValues[values[0]],
 					this.topicValues[values[0]].conf,
 				)
 
-				if (payload === null) {
-					return
-				}
+				if (result.handled) return
+				payload = result.value
 
 				for (let i = 0; i < values.length; i++) {
 					await this._zwave.writeValue(
