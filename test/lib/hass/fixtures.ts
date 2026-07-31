@@ -9,6 +9,7 @@
  */
 import { vi, type Mock } from 'vitest'
 import { EventEmitter } from 'node:events'
+import { SetValueStatus } from 'zwave-js'
 import type { StoreHassDevicesResult } from '#api/hass/types.ts'
 import type { MqttConfig } from '#api/lib/MqttClient.ts'
 import type { GatewayZwave } from '#api/lib/Gateway.ts'
@@ -256,7 +257,9 @@ export function createFakeGatewayZwave(
 		getNode: vi.fn(() => undefined),
 		connect: vi.fn<GatewayZwave['connect']>(() => Promise.resolve()),
 		setPollInterval: vi.fn<GatewayZwave['setPollInterval']>(),
-		writeValue: vi.fn<GatewayZwave['writeValue']>(),
+		writeValue: vi.fn<GatewayZwave['writeValue']>(() =>
+			Promise.resolve({ status: SetValueStatus.Success }),
+		),
 		writeBroadcast: vi.fn<GatewayZwave['writeBroadcast']>(),
 		writeMulticast: vi.fn<GatewayZwave['writeMulticast']>(),
 		callApi: vi.fn<GatewayZwave['callApi']>(() =>
