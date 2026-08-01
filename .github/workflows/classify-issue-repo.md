@@ -21,7 +21,7 @@ on:
       uses: actions/github-script@v9
       with:
         script: |
-          const { excludedUsers } = require(`${process.env.GITHUB_WORKSPACE}/.github/bot-scripts/authorizedUsers.cjs`);
+          const { excludedUsers } = require(`${process.env.GITHUB_WORKSPACE}/.github/bot-scripts/config.cjs`);
           const user = context.payload.issue?.user;
           let skip;
           // The type check catches GitHub Apps; zwave-js-bot is a classic

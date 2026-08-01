@@ -18,15 +18,15 @@ const {
 	DOCS_ANSWER_COMMENT_TAG,
 	DOCS_ANSWER_METADATA_TAG,
 	DOCS_ANSWER_METADATA_VERSION,
-	DOCS_BASE_URL,
 } = require("./answerFromDocs.cjs");
 const { config } = require("./config.cjs");
 const { ghGraphql } = require("./githubApi.cjs");
 const { EMBEDDING_MODEL, embedBatched } = require("./localEmbeddings.cjs");
 const { cleanQuestion } = require("./postsIndex.cjs");
-const { authorizedUsers } = require("./authorizedUsers.cjs");
 
 const BOT_USER = config.bot.login;
+const DOCS_BASE_URL = config.docs.baseUrl;
+const authorizedUsers = config.users.authorized;
 const SCAN_WINDOW_DAYS = Number(process.env.FEEDBACK_WINDOW_DAYS || "180");
 
 // Maintainers know best whether an answer is correct,

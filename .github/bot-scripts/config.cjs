@@ -12,104 +12,97 @@ const path = require("node:path");
 
 const CONFIG_PATH = path.join(__dirname, "..", "zwave-js-bot.config.json");
 
-// Each node is either a group (`fields`) or a leaf (`type`). Groups reject
-// unknown keys; `optional` groups may be absent entirely. `type` is matched
-// against typeof, except "string[]" which requires a non-empty string array.
-const SCHEMA = {
-	fields: {
-		bot: {
-			fields: {
-				login: { type: "string" },
-				email: { type: "string" },
-				name: { type: "string" },
-			},
-		},
-		docs: {
-			fields: {
-				baseUrl: { type: "string" },
-				questionCategorySlugs: { type: "string[]" },
-			},
-		},
-		users: {
-			fields: {
-				authorized: { type: "string[]" },
-			},
-		},
-		issues: {
-			fields: {
-				docsFeedbackTitle: { type: "string" },
-			},
-		},
-		evalCases: {
-			fields: {
-				docsAnswersFile: { type: "string" },
-				relatedPostsFile: { type: "string" },
-			},
-		},
-		// Present in zwave-js-ui (redirects mis-filed issues to the driver
-		// repo); absent in zwave-js, which is that repo
-		redirects: {
-			optional: true,
-			fields: {
-				issueTracker: { type: "string" },
-			},
-		},
-	},
-};
-
-/** @param {string} p */
-function label(p) {
-	return p === "" ? "config root" : `config key "${p}"`;
-}
+// Flat lists of every allowed dotted path and its expected type.
+// "string[]" requires a non-empty array of non-empty strings.
+const STRING_KEYS = [
+	"bot.login",
+	"bot.email",
+	"bot.name",
+	"docs.baseUrl",
+	"issues.docsFeedbackTitle",
+	"evalCases.docsAnswersFile",
+	"evalCases.relatedPostsFile",
+	"redirects.issueTracker",
+];
+const STRING_ARRAY_KEYS = [
+	"docs.questionCategorySlugs",
+	"users.authorized",
+];
+// Present in zwave-js-ui (redirects mis-filed issues to the driver
+// repo); absent in zwave-js, which is that repo
+const OPTIONAL_GROUPS = new Set(["redirects"]);
 
 /**
- * @param {any} node
- * @param {any} value
- * @param {string} p Dotted path of the value being checked
+ * @param {any} obj
+ * @param {string} path Dotted path
  */
-function validate(node, value, p) {
-	if (node.fields) {
+function get(obj, path) {
+	let value = obj;
+	for (const key of path.split(".")) {
+		if (typeof value !== "object" || value === null) return undefined;
+		value = value[key];
+	}
+	return value;
+}
+
+/** @param {any} parsed */
+function validate(parsed) {
+	if (
+		typeof parsed !== "object" || parsed === null || Array.isArray(parsed)
+	) {
+		throw new Error(`config root must be an object`);
+	}
+
+	const allKeys = [...STRING_KEYS, ...STRING_ARRAY_KEYS];
+
+	// Reject unknown keys at the group and leaf levels
+	const allowedGroups = new Set(allKeys.map((k) => k.split(".")[0]));
+	for (const [group, value] of Object.entries(parsed)) {
+		if (!allowedGroups.has(group)) {
+			throw new Error(`Unknown config key "${group}"`);
+		}
 		if (
 			typeof value !== "object" || value === null || Array.isArray(value)
 		) {
-			throw new Error(`${label(p)} must be an object`);
+			throw new Error(`config key "${group}" must be an object`);
 		}
-		const known = new Set(Object.keys(node.fields));
 		for (const key of Object.keys(value)) {
-			if (!known.has(key)) {
+			const path = `${group}.${key}`;
+			if (!allKeys.includes(path)) {
+				throw new Error(`Unknown config key "${path}"`);
+			}
+		}
+	}
+
+	// Require every known key, skipping absent optional groups
+	for (const path of allKeys) {
+		const group = path.split(".")[0];
+		if (OPTIONAL_GROUPS.has(group) && !(group in parsed)) continue;
+		if (!(group in parsed)) {
+			throw new Error(`Missing config key "${group}"`);
+		}
+		const value = get(parsed, path);
+		if (value === undefined) {
+			throw new Error(`Missing config key "${path}"`);
+		}
+		if (STRING_ARRAY_KEYS.includes(path)) {
+			const ok = Array.isArray(value)
+				&& value.length > 0
+				&& value.every((v) => typeof v === "string" && v.length > 0);
+			if (!ok) {
 				throw new Error(
-					`Unknown ${label(p === "" ? key : `${p}.${key}`)}`,
+					`config key "${path}" must be a non-empty array of strings`,
 				);
 			}
+		} else if (typeof value !== "string") {
+			throw new Error(`config key "${path}" must be a string`);
+		} else if (value.length === 0) {
+			throw new Error(`config key "${path}" must not be empty`);
 		}
-		for (const [key, child] of Object.entries(node.fields)) {
-			const childPath = p === "" ? key : `${p}.${key}`;
-			if (!Object.prototype.hasOwnProperty.call(value, key)) {
-				if (child.optional) continue;
-				throw new Error(`Missing ${label(childPath)}`);
-			}
-			validate(child, value[key], childPath);
-		}
-		return;
-	}
-	if (node.type === "string[]") {
-		const ok = Array.isArray(value)
-			&& value.length > 0
-			&& value.every((v) => typeof v === "string" && v.length > 0);
-		if (!ok) {
-			throw new Error(`${label(p)} must be a non-empty array of strings`);
-		}
-		return;
-	}
-	if (typeof value !== node.type) {
-		throw new Error(`${label(p)} must be a ${node.type}`);
-	}
-	if (node.type === "string" && value.length === 0) {
-		throw new Error(`${label(p)} must not be empty`);
 	}
 }
 
-/** @param {string} text Raw JSON, exposed for the round-trip test */
+/** @param {string} text Raw JSON, exposed for tests */
 function loadConfig(text) {
 	let parsed;
 	try {
@@ -117,7 +110,7 @@ function loadConfig(text) {
 	} catch (e) {
 		throw new Error(`Invalid JSON in ${CONFIG_PATH}: ${e.message}`);
 	}
-	validate(SCHEMA, parsed, "");
+	validate(parsed);
 	return parsed;
 }
 

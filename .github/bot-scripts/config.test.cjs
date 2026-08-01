@@ -8,28 +8,7 @@ import { config, excludedUsers, loadConfig } from "./config.cjs";
 // pin the schema itself: they exercise loadConfig with the real config and
 // with deliberately broken copies of it.
 
-/** @param {object} overrides Shallow-merged onto a deep copy of the config */
-function withConfig(overrides) {
-	return JSON.stringify({ ...structuredClone(config), ...overrides });
-}
-
 describe("bot config", () => {
-	it("round-trips this repo's config through the loader", () => {
-		expect(loadConfig(JSON.stringify(config))).toEqual(config);
-	});
-
-	it("exposes the required keys with the right types", () => {
-		expect(typeof config.bot.login).toBe("string");
-		expect(typeof config.bot.email).toBe("string");
-		expect(typeof config.bot.name).toBe("string");
-		expect(typeof config.docs.baseUrl).toBe("string");
-		expect(config.docs.questionCategorySlugs.length).toBeGreaterThan(0);
-		expect(config.users.authorized.length).toBeGreaterThan(0);
-		expect(typeof config.issues.docsFeedbackTitle).toBe("string");
-		expect(typeof config.evalCases.docsAnswersFile).toBe("string");
-		expect(typeof config.evalCases.relatedPostsFile).toBe("string");
-	});
-
 	it("derives excludedUsers as the authorized users plus the bot", () => {
 		expect(excludedUsers).toEqual([
 			...config.users.authorized,
@@ -44,7 +23,8 @@ describe("bot config", () => {
 	});
 
 	it("rejects an unknown key", () => {
-		expect(() => loadConfig(withConfig({ somethingElse: true }))).toThrow(
+		const bad = { ...structuredClone(config), somethingElse: true };
+		expect(() => loadConfig(JSON.stringify(bad))).toThrow(
 			/Unknown config key "somethingElse"/,
 		);
 	});

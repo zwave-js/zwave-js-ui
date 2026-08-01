@@ -10,8 +10,8 @@ import {
 import {
 	DOCS_ANSWER_METADATA_TAG,
 	DOCS_ANSWER_METADATA_VERSION,
-	DOCS_BASE_URL,
 } from "./answerFromDocs.cjs";
+import { config } from "./config.cjs";
 
 function metadataComment(metadata) {
 	return `<!-- ${DOCS_ANSWER_METADATA_TAG} ${
@@ -140,7 +140,7 @@ describe("collectDocsFeedback", () => {
 
 		it("falls back to link parsing when the metadata tag is absent", () => {
 			const body =
-				`See [Install](${DOCS_BASE_URL}/docs/guide/install?id=setup) for details.`;
+				`See [Install](${config.docs.baseUrl}/docs/guide/install?id=setup) for details.`;
 			expect(parseAnswerMetadata(body)).toEqual({
 				style: "answer",
 				confidence: null,
