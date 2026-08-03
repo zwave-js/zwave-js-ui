@@ -1,7 +1,7 @@
+// Only the repo-specific classic bot scripts live here; the docs-answer,
+// classification, index and eval pipeline comes from zwave-js/bot-workflows
 module.exports = {
 	checkAuthorized: (...args) => require("./checkAuthorized.cjs")(...args),
-	postClassifyIssueFeedback: (...args) =>
-		require("./postClassifyIssueFeedback.cjs")(...args),
 	hideTransferredComments: (...args) =>
 		require("./hideTransferredComments.cjs")(...args),
 	fixLintFeedback: (...args) => require("./fixLintFeedback.cjs")(...args),
@@ -12,11 +12,4 @@ module.exports = {
 	renameCommitCheck: (...args) => require("./renameCommitCheck.cjs")(...args),
 	renameCommitFeedback: (...args) =>
 		require("./renameCommitFeedback.cjs")(...args),
-	prepareDocsAnswer: (...args) =>
-		require("./answerFromDocs.cjs").prepareDocsAnswer(...args),
-	postDocsAnswer: (...args) =>
-		require("./answerFromDocs.cjs").postDocsAnswer(...args),
-	updatePostsIndex: (...args) => require("./updatePostsIndex.cjs")(...args),
-	updateEvalTrackingIssue: (...args) =>
-		require("./updateEvalTrackingIssue.cjs")(...args),
 };
