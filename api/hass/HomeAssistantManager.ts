@@ -60,8 +60,8 @@ export type HomeAssistantLifecycleState =
  *
  * Discovery/server start stays locked to `Gateway.start()` and the driver
  * points, since the clients drive the very instances this manager constructed.
- * Concurrent stops share one in-flight teardown, and a restart attaches a fresh
- * generation with the previous one disposed.
+ * Concurrent stops of one generation share its in-flight teardown, and a
+ * restart attaches a fresh generation with the previous one disposed.
  */
 export default class HomeAssistantManager {
 	private readonly logger: HassLogger
@@ -69,7 +69,9 @@ export default class HomeAssistantManager {
 	private _generation = 0
 	private _discovery: HassManagedDiscovery | undefined
 	private _server: HassManagedServer | undefined
-	private stopInFlight: Promise<void> | undefined
+	private stopInFlight:
+		| { generation: number; teardown: Promise<void> }
+		| undefined
 
 	public constructor(options: HomeAssistantManagerOptions) {
 		this.logger = options.logger
@@ -156,21 +158,24 @@ export default class HomeAssistantManager {
 	 * then await the `@zwave-js/server` destroy so the server's port is released
 	 * before the driver is destroyed.
 	 *
-	 * Concurrent calls share one in-flight teardown. The teardown captures its
-	 * generation and only clears the owned handles if that generation is still
-	 * current, so an overlapping re-attach is never erased by a stale stop. A
-	 * rejected destroy retains the handles (retryable) and moves to `failed`.
+	 * Concurrent calls for one generation share its in-flight teardown. The
+	 * teardown captures its generation and only clears the owned handles if that
+	 * generation is still current, so an overlapping re-attach is never erased
+	 * by a stale stop. A rejected destroy retains the handles (retryable) and
+	 * moves to `failed`.
 	 */
 	public async stop(): Promise<void> {
-		if (this.stopInFlight) return this.stopInFlight
+		const generation = this._generation
+		if (this.stopInFlight?.generation === generation) {
+			return this.stopInFlight.teardown
+		}
 		if (this._state === 'idle' || this._state === 'initialized') return
 
-		const generation = this._generation
 		this._state = 'stopping'
 		const discovery = this._discovery
 		const server = this._server
 
-		this.stopInFlight = (async () => {
+		const teardown = (async () => {
 			try {
 				discovery?.stop()
 				// Await the server destroy so its port is gone before the
@@ -193,10 +198,13 @@ export default class HomeAssistantManager {
 				}
 				throw error
 			} finally {
-				this.stopInFlight = undefined
+				if (this.stopInFlight?.generation === generation) {
+					this.stopInFlight = undefined
+				}
 			}
 		})()
 
-		return this.stopInFlight
+		this.stopInFlight = { generation, teardown }
+		return teardown
 	}
 }
