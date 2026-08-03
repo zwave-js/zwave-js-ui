@@ -12,7 +12,7 @@ import {
 	gte as semverGte,
 	lte as semverLte,
 } from 'semver'
-import { getErrorMessage } from '../errors.ts'
+import { getErrorMessage } from '#api/lib/errors'
 
 import type {
 	ZUIConfigurationTemplate,
@@ -24,7 +24,7 @@ import type {
 	TemplateNodeState,
 	TemplateConfigManagerPort,
 	ServiceLogger,
-} from './ports.ts'
+} from '#api/lib/zwave/ports'
 
 export class ConfigurationTemplateService {
 	private _templates: ZUIConfigurationTemplate[]

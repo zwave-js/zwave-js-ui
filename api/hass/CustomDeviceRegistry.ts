@@ -6,8 +6,8 @@ import type {
 	HassDevice,
 	HassDeviceCatalog,
 	HassDeviceCatalogSource,
-} from './types.ts'
-import type { HassDeviceRegistryPort, HassLogger } from './ports.ts'
+} from '#api/hass/types'
+import type { HassDeviceRegistryPort, HassLogger } from '#api/hass/ports'
 
 const require = createRequire(import.meta.url)
 

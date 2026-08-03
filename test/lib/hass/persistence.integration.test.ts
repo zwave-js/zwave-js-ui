@@ -4,11 +4,11 @@ import { Server as SocketServer } from 'socket.io'
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import { buildNode } from './fixtures.ts'
 import { cleanupTestEnv, ensureTestEnv } from './env.ts'
-import type ZWaveClient from '#api/lib/ZwaveClient.ts'
-import type jsonStoreType from '#api/lib/jsonStore.ts'
-import type storeType from '#api/config/store.ts'
-import type { NodesStoreRecordByHome } from '#api/config/store.ts'
-import type { HassDevice } from '#api/hass/types.ts'
+import type ZWaveClient from '#api/lib/ZwaveClient'
+import type jsonStoreType from '#api/lib/jsonStore'
+import type storeType from '#api/config/store'
+import type { NodesStoreRecordByHome } from '#api/config/store'
+import type { HassDevice } from '#api/hass/types'
 
 const HOME_ID = '0x12345678'
 const OTHER_HOME_ID = '0x87654321'
@@ -33,9 +33,9 @@ describe('ZWaveClient HASS persistence integration', () => {
 			{ default: jsonStore },
 			{ default: store },
 		] = await Promise.all([
-			import('#api/lib/ZwaveClient.ts'),
-			import('#api/lib/jsonStore.ts'),
-			import('#api/config/store.ts'),
+			import('#api/lib/ZwaveClient'),
+			import('#api/lib/jsonStore'),
+			import('#api/config/store'),
 		])
 		await jsonStore.init(store)
 		socket = new SocketServer()

@@ -1,4 +1,4 @@
-import { getErrorMessage } from '../errors.ts'
+import { getErrorMessage } from '#api/lib/errors'
 import type {
 	ScenePersistencePort,
 	SceneNodeStorePort,
@@ -7,7 +7,7 @@ import type {
 	ServiceLogger,
 	ZUISceneRecord,
 	ZUISceneValueRef,
-} from './ports.ts'
+} from '#api/lib/zwave/ports'
 
 // Generic over the scene-value shape so ZwaveClient can keep using its richer ZUIValueIdScene without a circular import
 export class SceneService<V extends ZUISceneValueRef = ZUISceneValueRef> {

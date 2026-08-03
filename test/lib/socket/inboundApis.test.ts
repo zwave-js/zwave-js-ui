@@ -4,9 +4,9 @@
 import { describe, it, expect, beforeAll, vi } from 'vitest'
 import { ZnifferLRChannelConfig } from '@zwave-js/core'
 import type { Driver } from 'zwave-js'
-import { ALL_CHANNELS } from '#api/lib/SocketEvents.ts'
-import { module as createLogger } from '#api/lib/logger.ts'
-import type ZWaveClientType from '#api/lib/ZwaveClient.ts'
+import { ALL_CHANNELS } from '#api/lib/SocketEvents'
+import type * as LoggerModule from '#api/lib/logger'
+import type ZWaveClientType from '#api/lib/ZwaveClient'
 import { useSocketHarness } from './harness.ts'
 import {
 	createFakeGateway,
@@ -18,11 +18,13 @@ import { connectedClient, emit } from './helpers.ts'
 
 describe('Socket contract: inbound ACK APIs', () => {
 	const getHarness = useSocketHarness()
+	let createLogger: typeof LoggerModule.module
 	let ZWaveClient: typeof ZWaveClientType
 
 	beforeAll(async () => {
 		// Registered after useSocketHarness()'s beforeAll, so STORE_DIR is isolated first
-		;({ default: ZWaveClient } = await import('#api/lib/ZwaveClient.ts'))
+		;({ default: ZWaveClient } = await import('#api/lib/ZwaveClient'))
+		;({ module: createLogger } = await import('#api/lib/logger'))
 	})
 
 	describe('INITED', () => {

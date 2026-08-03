@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import type { ZnifferApiRequest } from '#api/socket/znifferApi.ts'
+import type { ZnifferApiRequest } from '#api/socket/znifferApi'
 import {
 	createFakeGateway,
 	createFakeZniffer,

@@ -7,14 +7,14 @@
  * shared/env.ts)
  */
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
-import type * as ConstantsModule from '#api/lib/Constants.ts'
+import type * as ConstantsModule from '#api/lib/Constants'
 import { ensureTestEnv, cleanupTestEnv } from './shared/env.ts'
 
 let mod: typeof ConstantsModule
 
 beforeAll(async () => {
 	ensureTestEnv()
-	mod = await import('#api/lib/Constants.ts')
+	mod = await import('#api/lib/Constants')
 })
 
 afterAll(() => {

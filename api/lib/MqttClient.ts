@@ -13,15 +13,15 @@ import {
 	sanitizeTopic,
 	pkgJson,
 	stringifyJSON,
-} from './utils.ts'
-import { module } from './logger.ts'
-import { TypedEventEmitter } from './EventEmitter.ts'
-import { storeDir } from '../config/app.ts'
-import { ensureDir } from './utils.ts'
+} from '#api/lib/utils'
+import { module } from '#api/lib/logger'
+import { TypedEventEmitter } from '#api/lib/EventEmitter'
+import { storeDir } from '#api/config/app'
+import { ensureDir } from '#api/lib/utils'
 import { Manager } from 'mqtt-jsonl-store'
 import { join } from 'node:path'
 import url from 'node:url'
-import { getErrorMessage } from './errors.ts'
+import { getErrorMessage } from '#api/lib/errors'
 
 const logger = module('Mqtt')
 

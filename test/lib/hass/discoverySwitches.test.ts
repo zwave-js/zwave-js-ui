@@ -23,7 +23,7 @@ import {
 	requireDefined,
 	valueMapKey,
 } from './fixtures.ts'
-import type { ZUINode, ZUIValueId } from '#api/lib/ZwaveClient.ts'
+import type { ZUINode, ZUIValueId } from '#api/lib/ZwaveClient'
 import { assertDefined } from '../testUtils.ts'
 
 vi.mock('mqtt', () => mqttMockFactory())

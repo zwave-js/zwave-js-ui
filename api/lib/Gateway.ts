@@ -1,14 +1,14 @@
-import * as utils from './utils.ts'
+import * as utils from '#api/lib/utils'
 import type { SetValueAPIOptions } from 'zwave-js'
 import type { ValueID } from '@zwave-js/core'
 import { CommandClasses } from '@zwave-js/core'
-import * as Constants from './Constants.ts'
-import type { LogLevel } from './logger.ts'
-import { module } from './logger.ts'
-import { getErrorMessage } from './errors.ts'
-import { getIdWithoutNode, PayloadType } from './shared.ts'
+import * as Constants from '#api/lib/Constants'
+import type { LogLevel } from '#api/lib/logger'
+import { module } from '#api/lib/logger'
+import { getErrorMessage } from '#api/lib/errors'
+import { getIdWithoutNode, PayloadType } from '#api/lib/shared'
 import type { IClientPublishOptions } from 'mqtt'
-import MqttClient, { type MqttClientEventCallbacks } from './MqttClient.ts'
+import MqttClient, { type MqttClientEventCallbacks } from '#api/lib/MqttClient'
 import type {
 	AllowedApis,
 	CallAPIResult,
@@ -17,25 +17,25 @@ import type {
 	ZUIValueId,
 	ZUIValueIdState,
 	ZwaveClientEventCallbacks,
-} from './ZwaveClient.ts'
-import type ZwaveClient from './ZwaveClient.ts'
+} from '#api/lib/ZwaveClient'
+import type ZwaveClient from '#api/lib/ZwaveClient'
 import Cron from 'croner'
 
 import {
 	HASS_COMMAND_HANDLED,
 	type DiscoveryGenerator,
-} from '../hass/DiscoveryGenerator.ts'
+} from '#api/hass/DiscoveryGenerator'
 import MqttDiscoveryManager, {
 	type MqttDiscoveryManagerOptions,
-} from '../hass/MqttDiscoveryManager.ts'
-import { HASS_NODE_PREFIX, type HassDevice } from '../hass/types.ts'
+} from '#api/hass/MqttDiscoveryManager'
+import { HASS_NODE_PREFIX, type HassDevice } from '#api/hass/types'
 import type {
 	HassDeviceRegistryLifecyclePort,
 	HassDeviceRegistrySourcePort,
 	HassTopicNode,
 	HassValueTopic,
-} from '../hass/ports.ts'
-import { ensureHassNode } from '../hass/ports.ts'
+} from '#api/hass/ports'
+import { ensureHassNode } from '#api/hass/ports'
 
 const logger = module('Gateway')
 const hassLogger = module('HASS')

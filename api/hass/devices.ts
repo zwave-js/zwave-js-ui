@@ -1,6 +1,6 @@
 // Place here repeated patterns
 
-import type { HassDevice } from './types.ts'
+import type { HassDevice } from '#api/hass/types'
 
 const FAN_DIMMER: HassDevice = {
 	type: 'fan',

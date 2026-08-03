@@ -11,8 +11,8 @@ import {
 import {
 	InclusionCoordinator,
 	InclusionLifecycleCancelledError,
-} from '#api/lib/zwave/InclusionCoordinator.ts'
-import { socketEvents } from '#api/lib/SocketEvents.ts'
+} from '#api/lib/zwave/InclusionCoordinator'
+import { socketEvents } from '#api/lib/SocketEvents'
 import type {
 	InclusionBackupPort,
 	InclusionConfigPort,
@@ -24,7 +24,7 @@ import type {
 	QRProvisioningInformation,
 	InclusionServerManagerPort,
 	InclusionSocketPort,
-} from '#api/lib/zwave/ports.ts'
+} from '#api/lib/zwave/ports'
 import { createServiceLogger } from './serviceTestSupport.ts'
 import { createDeferred } from '../testUtils.ts'
 

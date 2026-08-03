@@ -7,10 +7,10 @@ import type {
 	MqttClientPort,
 	ZnifferPort,
 	ZwaveClientPort,
-} from '#api/runtime/ports.ts'
-import type { StoreHassDevicesResult } from '#api/hass/types.ts'
-import type { MqttDiscoveryManagerOptions } from '#api/hass/MqttDiscoveryManager.ts'
-import { CustomDeviceRegistry } from '#api/hass/CustomDeviceRegistry.ts'
+} from '#api/runtime/ports'
+import type { StoreHassDevicesResult } from '#api/hass/types'
+import type { MqttDiscoveryManagerOptions } from '#api/hass/MqttDiscoveryManager'
+import { CustomDeviceRegistry } from '#api/hass/CustomDeviceRegistry'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 

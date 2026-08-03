@@ -1,12 +1,8 @@
-import type Gateway from '../lib/Gateway.ts'
-import type {
-	GatewayConfig,
-	GatewayMqtt,
-	GatewayZwave,
-} from '../lib/Gateway.ts'
-import type MqttClient from '../lib/MqttClient.ts'
-import type ZWaveClient from '../lib/ZwaveClient.ts'
-import type ZnifferManager from '../lib/ZnifferManager.ts'
+import type { GatewayConfig, GatewayMqtt, GatewayZwave } from '#api/lib/Gateway'
+import type Gateway from '#api/lib/Gateway'
+import type MqttClient from '#api/lib/MqttClient'
+import type ZWaveClient from '#api/lib/ZwaveClient'
+import type ZnifferManager from '#api/lib/ZnifferManager'
 import type { Driver } from 'zwave-js'
 
 export type MqttClientPort = Pick<MqttClient, 'getStatus'>

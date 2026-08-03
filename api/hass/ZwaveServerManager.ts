@@ -1,7 +1,7 @@
 import { serverVersion, ZwavejsServer } from '@zwave-js/server'
 import type { Driver } from 'zwave-js'
-import type { ZwaveConfig } from '../lib/ZwaveClient.ts'
-import type { HassLogger } from './ports.ts'
+import type { ZwaveConfig } from '#api/lib/ZwaveClient'
+import type { HassLogger } from '#api/hass/ports'
 
 /**
  * The slice of gateway configuration the `@zwave-js/server` integration reads,

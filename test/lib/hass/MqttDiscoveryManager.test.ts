@@ -13,22 +13,44 @@
  * The end-to-end delivery of a real `homeassistant/status` retained message is
  * covered by `mqttLifecycle.test.ts` through the Gateway harness.
  */
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import {
+	describe,
+	it,
+	expect,
+	beforeAll,
+	beforeEach,
+	afterAll,
+	vi,
+} from 'vitest'
 import type { Mock } from 'vitest'
 import { SetValueStatus } from 'zwave-js'
-import MqttDiscoveryManager, {
-	HASS_STATUS_TOPIC,
-	type HassStatusSource,
-	type MqttDiscoveryManagerOptions,
-} from '#api/hass/MqttDiscoveryManager.ts'
-import { CustomDeviceRegistry } from '#api/hass/CustomDeviceRegistry.ts'
+import type MqttDiscoveryManagerClass from '#api/hass/MqttDiscoveryManager'
+import type {
+	HASS_STATUS_TOPIC as HassStatusTopic,
+	HassStatusSource,
+	MqttDiscoveryManagerOptions,
+} from '#api/hass/MqttDiscoveryManager'
+import { CustomDeviceRegistry } from '#api/hass/CustomDeviceRegistry'
 import type {
 	HassMqttPort,
 	HassNodeUpdatePort,
 	HassTopicPort,
 	HassZwavePort,
-} from '#api/hass/ports.ts'
-import type { HassDevice } from '#api/hass/types.ts'
+} from '#api/hass/ports'
+import type { HassDevice } from '#api/hass/types'
+import { cleanupTestEnv, ensureTestEnv } from '../shared/env.ts'
+
+let MqttDiscoveryManager: typeof MqttDiscoveryManagerClass
+let HASS_STATUS_TOPIC: typeof HassStatusTopic
+
+beforeAll(async () => {
+	ensureTestEnv()
+	const managerModule = await import('#api/hass/MqttDiscoveryManager')
+	MqttDiscoveryManager = managerModule.default
+	HASS_STATUS_TOPIC = managerModule.HASS_STATUS_TOPIC
+})
+
+afterAll(cleanupTestEnv)
 
 // Methods declared as function-valued properties let tests reference
 // `logger.info` for assertions without the unbound-method rule firing
@@ -162,7 +184,7 @@ function device(overrides: Partial<HassDevice> = {}): HassDevice {
 }
 
 interface Harness {
-	manager: MqttDiscoveryManager
+	manager: MqttDiscoveryManagerClass
 	source: CustomDeviceRegistry
 	logger: MockLogger
 	options: MqttDiscoveryManagerOptions

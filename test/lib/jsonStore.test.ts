@@ -18,8 +18,8 @@ import type {
 	StorageHelper as StorageHelperClass,
 	StorageHelperDeps,
 	StoreConfig,
-} from '#api/lib/jsonStore.ts'
-import type { StoreFile } from '#api/config/store.ts'
+} from '#api/lib/jsonStore'
+import type { StoreFile } from '#api/config/store'
 import { ensureTestEnv, cleanupTestEnv } from './shared/env.ts'
 
 let StorageHelper: typeof StorageHelperClass
@@ -143,7 +143,7 @@ async function loadFile<T>(
 
 beforeAll(async () => {
 	ensureTestEnv()
-	;({ StorageHelper } = await import('#api/lib/jsonStore.ts'))
+	;({ StorageHelper } = await import('#api/lib/jsonStore'))
 })
 
 afterAll(() => {

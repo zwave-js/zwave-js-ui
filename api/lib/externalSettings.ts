@@ -1,7 +1,7 @@
 import { readFileSync, existsSync } from 'node:fs'
 import type { PartialZWaveOptions } from 'zwave-js'
 import { driverPresets } from 'zwave-js'
-import { module } from './logger.ts'
+import { module } from '#api/lib/logger'
 
 const logger = module('ExternalSettings')
 

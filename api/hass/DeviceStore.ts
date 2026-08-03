@@ -1,10 +1,10 @@
-import * as utils from '../lib/utils.ts'
-import type { HassDeviceStorePort, HassPersistenceNode } from './ports.ts'
+import * as utils from '#api/lib/utils'
+import type { HassDeviceStorePort, HassPersistenceNode } from '#api/hass/ports'
 import type {
 	HassDevice,
 	HassDeviceMap,
 	StoreHassDevicesResult,
-} from './types.ts'
+} from '#api/hass/types'
 
 export class HassDeviceStore {
 	private readonly port: HassDeviceStorePort

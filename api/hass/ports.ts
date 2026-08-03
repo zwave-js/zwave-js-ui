@@ -4,12 +4,12 @@ import type {
 	ZUINode,
 	ZUIValueId,
 	ZUIValueIdState,
-} from '../lib/ZwaveClient.ts'
-import type ZWaveClient from '../lib/ZwaveClient.ts'
-import type MqttClient from '../lib/MqttClient.ts'
-import type { ModuleLogger } from '../lib/logger.ts'
-import type { PayloadType } from '../lib/shared.ts'
-import type { HassDevice, HassDeviceMap } from './types.ts'
+} from '#api/lib/ZwaveClient'
+import type ZWaveClient from '#api/lib/ZwaveClient'
+import type MqttClient from '#api/lib/MqttClient'
+import type { ModuleLogger } from '#api/lib/logger'
+import type { PayloadType } from '#api/lib/shared'
+import type { HassDevice, HassDeviceMap } from '#api/hass/types'
 
 export type HassLogger = Pick<
 	ModuleLogger,
