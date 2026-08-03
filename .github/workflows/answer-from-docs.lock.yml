@@ -1,5 +1,5 @@
-# gh-aw-metadata: {"schema_version":"v4","frontmatter_hash":"a4028353bb0517f4f5c9d247db39b3be3b41142b1fc8e98dee8bbfc3c71a5cd2","body_hash":"503d6ab6731bb33543e46ecbbc821d1938ca368bd18838ac7a3eb056254848ba","compiler_version":"v0.81.6","strict":true,"agent_id":"copilot","engine_versions":{"copilot":"1.0.65"}}
-# gh-aw-manifest: {"version":1,"secrets":["BOT_TOKEN","COPILOT_GITHUB_TOKEN","GH_AW_GITHUB_MCP_SERVER_TOKEN","GH_AW_GITHUB_TOKEN","GITHUB_TOKEN"],"actions":[{"repo":"actions/cache/restore","sha":"27d5ce7f107fe9357f9df03efb73ab90386fccae","version":"v5.0.5"},{"repo":"actions/cache/restore","sha":"55cc8345863c7cc4c66a329aec7e433d2d1c52a9","version":"v6"},{"repo":"actions/cache/save","sha":"27d5ce7f107fe9357f9df03efb73ab90386fccae","version":"v5.0.5"},{"repo":"actions/checkout","sha":"9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0","version":"v7.0.0"},{"repo":"actions/checkout","sha":"df4cb1c069e1874edd31b4311f1884172cec0e10","version":"v6.0.3 (source v6)"},{"repo":"actions/download-artifact","sha":"3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c","version":"v8.0.1"},{"repo":"actions/github-script","sha":"3a2844b7e9c422d3c10d287c895573f7108da1b3","version":"v9.0.0"},{"repo":"actions/setup-node","sha":"48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e","version":"v6.4.0"},{"repo":"actions/upload-artifact","sha":"043fb46d1a93c77aae656e7c1c64a875d1fc6a0a","version":"v7.0.1"},{"repo":"github/gh-aw-actions/setup","sha":"ba6380cc6e5be5d21677bebe04d52fb48e3abec7","version":"v0.81.6"}],"containers":[{"image":"ghcr.io/github/gh-aw-firewall/agent:0.27.11","digest":"sha256:979723c628182da7729333f2208bb249fd25ddee579645cf9a3892d681a929c7","pinned_image":"ghcr.io/github/gh-aw-firewall/agent:0.27.11@sha256:979723c628182da7729333f2208bb249fd25ddee579645cf9a3892d681a929c7"},{"image":"ghcr.io/github/gh-aw-firewall/api-proxy:0.27.11","digest":"sha256:807e4831999b44513b0a66e5859d478dc4da7ae74ab1918cec967d513f95bf9d","pinned_image":"ghcr.io/github/gh-aw-firewall/api-proxy:0.27.11@sha256:807e4831999b44513b0a66e5859d478dc4da7ae74ab1918cec967d513f95bf9d"},{"image":"ghcr.io/github/gh-aw-firewall/squid:0.27.11","digest":"sha256:ff27ea0525ad953a6adee28a5fbe9d2e22be47dbec755c15767af4ea3f91df7d","pinned_image":"ghcr.io/github/gh-aw-firewall/squid:0.27.11@sha256:ff27ea0525ad953a6adee28a5fbe9d2e22be47dbec755c15767af4ea3f91df7d"},{"image":"ghcr.io/github/gh-aw-mcpg:v0.3.30","digest":"sha256:35625d1a2269b1238606078c879f59a91cffc4ac33eb54bf39c6418822c1a8be","pinned_image":"ghcr.io/github/gh-aw-mcpg:v0.3.30@sha256:35625d1a2269b1238606078c879f59a91cffc4ac33eb54bf39c6418822c1a8be"},{"image":"ghcr.io/github/gh-aw-node","digest":"sha256:529d02eb970b1161aa25c593a9c3df57fdfad5a8add328cb3b6eccef66f3183b","pinned_image":"ghcr.io/github/gh-aw-node@sha256:529d02eb970b1161aa25c593a9c3df57fdfad5a8add328cb3b6eccef66f3183b"}]}
+# gh-aw-metadata: {"schema_version":"v4","frontmatter_hash":"2c984172f7d3184172a950926a2a5b4a20b3ffb3f7aab621dd2ac3d2f4d42d5b","body_hash":"50330112d0264b529543e7614f0e2b8496dc4e73e5f9a85c8e7feb553f6d8fc1","compiler_version":"v0.81.6","strict":true,"agent_id":"copilot","engine_versions":{"copilot":"1.0.65"}}
+# gh-aw-manifest: {"version":1,"secrets":["BOT_TOKEN","COPILOT_GITHUB_TOKEN","GH_AW_GITHUB_MCP_SERVER_TOKEN","GH_AW_GITHUB_TOKEN","GITHUB_TOKEN"],"actions":[{"repo":"actions/cache/restore","sha":"27d5ce7f107fe9357f9df03efb73ab90386fccae","version":"v5.0.5"},{"repo":"actions/cache/restore","sha":"55cc8345863c7cc4c66a329aec7e433d2d1c52a9","version":"v6"},{"repo":"actions/cache/save","sha":"27d5ce7f107fe9357f9df03efb73ab90386fccae","version":"v5.0.5"},{"repo":"actions/checkout","sha":"9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0","version":"v7.0.0"},{"repo":"actions/checkout","sha":"df4cb1c069e1874edd31b4311f1884172cec0e10","version":"v6.0.3 (source v6)"},{"repo":"actions/download-artifact","sha":"3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c","version":"v8.0.1"},{"repo":"actions/github-script","sha":"3a2844b7e9c422d3c10d287c895573f7108da1b3","version":"v9.0.0"},{"repo":"actions/setup-node","sha":"48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e","version":"v6.4.0"},{"repo":"actions/upload-artifact","sha":"043fb46d1a93c77aae656e7c1c64a875d1fc6a0a","version":"v7.0.1"},{"repo":"github/gh-aw-actions/setup","sha":"ba6380cc6e5be5d21677bebe04d52fb48e3abec7","version":"v0.81.6"},{"repo":"zwave-js/bot-workflows/actions/report-index-status","sha":"ab0bc5d7f9172ce658daf685b3554a57cf99ec39","version":"v1"},{"repo":"zwave-js/bot-workflows/actions/restore-bot-index","sha":"ab0bc5d7f9172ce658daf685b3554a57cf99ec39","version":"v1"},{"repo":"zwave-js/bot-workflows/actions/setup-bot","sha":"ab0bc5d7f9172ce658daf685b3554a57cf99ec39","version":"v1"}],"containers":[{"image":"ghcr.io/github/gh-aw-firewall/agent:0.27.11","digest":"sha256:979723c628182da7729333f2208bb249fd25ddee579645cf9a3892d681a929c7","pinned_image":"ghcr.io/github/gh-aw-firewall/agent:0.27.11@sha256:979723c628182da7729333f2208bb249fd25ddee579645cf9a3892d681a929c7"},{"image":"ghcr.io/github/gh-aw-firewall/api-proxy:0.27.11","digest":"sha256:807e4831999b44513b0a66e5859d478dc4da7ae74ab1918cec967d513f95bf9d","pinned_image":"ghcr.io/github/gh-aw-firewall/api-proxy:0.27.11@sha256:807e4831999b44513b0a66e5859d478dc4da7ae74ab1918cec967d513f95bf9d"},{"image":"ghcr.io/github/gh-aw-firewall/squid:0.27.11","digest":"sha256:ff27ea0525ad953a6adee28a5fbe9d2e22be47dbec755c15767af4ea3f91df7d","pinned_image":"ghcr.io/github/gh-aw-firewall/squid:0.27.11@sha256:ff27ea0525ad953a6adee28a5fbe9d2e22be47dbec755c15767af4ea3f91df7d"},{"image":"ghcr.io/github/gh-aw-mcpg:v0.3.30","digest":"sha256:35625d1a2269b1238606078c879f59a91cffc4ac33eb54bf39c6418822c1a8be","pinned_image":"ghcr.io/github/gh-aw-mcpg:v0.3.30@sha256:35625d1a2269b1238606078c879f59a91cffc4ac33eb54bf39c6418822c1a8be"},{"image":"ghcr.io/github/gh-aw-node","digest":"sha256:529d02eb970b1161aa25c593a9c3df57fdfad5a8add328cb3b6eccef66f3183b","pinned_image":"ghcr.io/github/gh-aw-node@sha256:529d02eb970b1161aa25c593a9c3df57fdfad5a8add328cb3b6eccef66f3183b"}]}
 # This file was automatically generated by gh-aw (v0.81.6). DO NOT EDIT. To debug this workflow, load the skill at https://github.com/github/gh-aw/blob/main/debug.md
 #
 #    ___                   _   _      
@@ -17,13 +17,20 @@
 #  \/  \/ \___/|_| |_|\_\|_| |_|\___/ \_/\_/ |___/
 #
 #
-# To update this file, edit the corresponding .md file and run:
+# To update this file, edit zwave-js/bot-workflows/workflows/answer-from-docs.md@ab0bc5d7f9172ce658daf685b3554a57cf99ec39 and run:
 #   gh aw compile
 # Not all edits will cause changes to this file.
 #
 # For more information: https://github.github.com/gh-aw/introduction/overview/
 #
 # Answer questions in issues and discussions based on the documentation
+#
+# Source: zwave-js/bot-workflows/workflows/answer-from-docs.md@ab0bc5d7f9172ce658daf685b3554a57cf99ec39
+#
+# Resolved workflow manifest:
+#   Imports:
+#     - zwave-js/bot-workflows/workflows/shared/docs-answer-judge.md@75148e07b701ca92e052212a9b7710864068ef6e
+#     - zwave-js/bot-workflows/workflows/shared/hardening.md@75148e07b701ca92e052212a9b7710864068ef6e
 #
 # Secrets used:
 #   - BOT_TOKEN
@@ -46,6 +53,9 @@
 #   - actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
 #   - actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1 (source v7)
 #   - github/gh-aw-actions/setup@ba6380cc6e5be5d21677bebe04d52fb48e3abec7 # v0.81.6
+#   - zwave-js/bot-workflows/actions/report-index-status@ab0bc5d7f9172ce658daf685b3554a57cf99ec39 # v1
+#   - zwave-js/bot-workflows/actions/restore-bot-index@ab0bc5d7f9172ce658daf685b3554a57cf99ec39 # v1
+#   - zwave-js/bot-workflows/actions/setup-bot@ab0bc5d7f9172ce658daf685b3554a57cf99ec39 # v1
 #
 # Container images used:
 #   - ghcr.io/github/gh-aw-firewall/agent:0.27.11@sha256:979723c628182da7729333f2208bb249fd25ddee579645cf9a3892d681a929c7
@@ -54,7 +64,7 @@
 #   - ghcr.io/github/gh-aw-mcpg:v0.3.30@sha256:35625d1a2269b1238606078c879f59a91cffc4ac33eb54bf39c6418822c1a8be
 #   - ghcr.io/github/gh-aw-node@sha256:529d02eb970b1161aa25c593a9c3df57fdfad5a8add328cb3b6eccef66f3183b
 
-name: "Z-Wave JS UI Documentation Answer Judge"
+name: "Answer From Docs"
 on:
   discussion:
     types:
@@ -73,15 +83,17 @@ on:
   # steps: # Steps injected into pre-activation job
   # - name: Checkout repository
     # uses: actions/checkout@v6
+    # with:
+      # persist-credentials: false
   # - id: docs-index
     # name: Restore docs index
-    # uses: ./.github/actions/restore-bot-index
+    # uses: zwave-js/bot-workflows/actions/restore-bot-index@v1
     # with:
       # github-token: ${{ github.token }}
       # index: docs
   # - id: posts-index
     # name: Restore posts index
-    # uses: ./.github/actions/restore-bot-index
+    # uses: zwave-js/bot-workflows/actions/restore-bot-index@v1
     # with:
       # github-token: ${{ github.token }}
       # index: posts
@@ -102,18 +114,23 @@ on:
     # run: "echo \"::warning::Only one of the two indexes was restored (docs: $DOCS_FOUND, posts: $POSTS_FOUND) - answers will be degraded\"\n"
   # - if: always()
     # name: Report index status
-    # uses: ./.github/actions/report-index-status
+    # uses: zwave-js/bot-workflows/actions/report-index-status@v1
     # with:
       # docs: ${{ steps.docs-index.outputs.found }}
-      # docs-stale: ${{ steps.docs-index.outputs.stale }}
+      # docs-age-days: ${{ steps.docs-index.outputs.age-days }}
+      # docs-source: ${{ steps.docs-index.outputs.source }}
+      # docs-status: ${{ steps.docs-index.outputs.status }}
+      # github-token: ${{ secrets.BOT_TOKEN }}
       # posts: ${{ steps.posts-index.outputs.found }}
-      # posts-stale: ${{ steps.posts-index.outputs.stale }}
+      # posts-age-days: ${{ steps.posts-index.outputs.age-days }}
+      # posts-source: ${{ steps.posts-index.outputs.source }}
+      # posts-status: ${{ steps.posts-index.outputs.status }}
       # quiet: "true"
   # - if: steps.docs-index.outputs.found != 'true' && steps.posts-index.outputs.found != 'true'
     # name: Fail if neither index is available
     # run: "echo \"::error::Neither the docs index nor the posts index could be restored, from cache or from artifacts - the answer bot cannot run\"\nexit 1\n"
-  # - name: Setup bot embeddings
-    # uses: ./.github/actions/setup-bot-embeddings
+  # - name: Setup bot
+    # uses: zwave-js/bot-workflows/actions/setup-bot@v1
   # - env:
       # DOCS_FEEDBACK_PATH: .docs-feedback/feedback.json
       # DOCS_HANDOFF_PATH: /tmp/docs-answer/handoff.json
@@ -124,7 +141,7 @@ on:
     # uses: actions/github-script@v9
     # with:
       # github-token: ${{ secrets.BOT_TOKEN }}
-      # script: "const bot = require(`${process.env.GITHUB_WORKSPACE}/.github/bot-scripts/index.cjs`);\nconst shouldContinue = await bot.prepareDocsAnswer({github, context});\ncore.setOutput(\"shouldContinue\", shouldContinue ? \"true\" : \"false\");\n"
+      # script: "const bot = require(`${process.env.BOT_SCRIPTS_DIR}/index.cjs`);\nconst shouldContinue = await bot.prepareDocsAnswer({github, context});\ncore.setOutput(\"shouldContinue\", shouldContinue ? \"true\" : \"false\");\n"
   # - if: steps.prepare.outputs.shouldContinue == 'true'
     # name: Upload handoff for the judge
     # uses: actions/upload-artifact@v7
@@ -132,7 +149,7 @@ on:
       # name: docs-answer-handoff
       # overwrite: true
       # path: /tmp/docs-answer/
-      # retention-days: 7
+      # retention-days: 7.0
   # - id: gate
     # if: steps.prepare.outputs.shouldContinue == 'true'
     # name: Gate agentic judge
@@ -143,7 +160,7 @@ permissions: {}
 concurrency:
   group: "gh-aw-${{ github.workflow }}-${{ github.event.issue.number || github.event.discussion.number || github.run_id }}"
 
-run-name: "Z-Wave JS UI Documentation Answer Judge"
+run-name: "Answer From Docs"
 
 jobs:
   activation:
@@ -184,10 +201,11 @@ jobs:
           parent-span-id: ${{ needs.pre_activation.outputs.setup-parent-span-id || needs.pre_activation.outputs.setup-span-id }}
           safe-output-artifact-client: ${{ env.GH_AW_MAX_DAILY_AI_CREDITS != '' }}
         env:
-          GH_AW_SETUP_WORKFLOW_NAME: "Z-Wave JS UI Documentation Answer Judge"
+          GH_AW_SETUP_WORKFLOW_NAME: "Answer From Docs"
           GH_AW_CURRENT_WORKFLOW_REF: ${{ github.repository }}/.github/workflows/answer-from-docs.lock.yml@${{ github.ref }}
           GH_AW_INFO_VERSION: "1.0.65"
           GH_AW_INFO_AWF_VERSION: "v0.27.11"
+          GH_AW_INFO_BODY_MODIFIED: "false"
           GH_AW_INFO_ENGINE_ID: "copilot"
       - name: Generate agentic run info
         id: generate_aw_info
@@ -198,7 +216,7 @@ jobs:
           GH_AW_INFO_VERSION: "1.0.65"
           GH_AW_INFO_AGENT_VERSION: "1.0.65"
           GH_AW_INFO_CLI_VERSION: "v0.81.6"
-          GH_AW_INFO_WORKFLOW_NAME: "Z-Wave JS UI Documentation Answer Judge"
+          GH_AW_INFO_WORKFLOW_NAME: "Answer From Docs"
           GH_AW_INFO_EXPERIMENTAL: "false"
           GH_AW_INFO_SUPPORTS_TOOLS_ALLOWLIST: "true"
           GH_AW_INFO_STAGED: "false"
@@ -207,6 +225,8 @@ jobs:
           GH_AW_INFO_AWF_VERSION: "v0.27.11"
           GH_AW_INFO_AWMG_VERSION: ""
           GH_AW_INFO_FIREWALL_TYPE: "squid"
+          GH_AW_INFO_FRONTMATTER_SOURCE: "zwave-js/bot-workflows/workflows/answer-from-docs.md@ab0bc5d7f9172ce658daf685b3554a57cf99ec39"
+          GH_AW_INFO_BODY_MODIFIED: "false"
           GH_AW_COMPILED_STRICT: "true"
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         with:
@@ -244,7 +264,7 @@ jobs:
         if: ${{ env.GH_AW_MAX_DAILY_AI_CREDITS != '' }}
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
-          GH_AW_WORKFLOW_NAME: "Z-Wave JS UI Documentation Answer Judge"
+          GH_AW_WORKFLOW_NAME: "Answer From Docs"
           GH_AW_WORKFLOW_ID: "answer-from-docs"
           GH_AW_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           GH_AW_WORKFLOW_DISPATCH_AW_CONTEXT: ${{ github.event.inputs.aw_context || '' }}
@@ -330,23 +350,25 @@ jobs:
         run: |
           bash "${RUNNER_TEMP}/gh-aw/actions/create_prompt_first.sh"
           {
-          cat << 'GH_AW_PROMPT_1113da16e9224e27_EOF'
+          cat << 'GH_AW_PROMPT_871927cd3839623f_EOF'
           <system>
-          GH_AW_PROMPT_1113da16e9224e27_EOF
+          GH_AW_PROMPT_871927cd3839623f_EOF
           cat "${RUNNER_TEMP}/gh-aw/prompts/xpia.md"
           cat "${RUNNER_TEMP}/gh-aw/prompts/temp_folder_prompt.md"
           cat "${RUNNER_TEMP}/gh-aw/prompts/markdown.md"
           cat "${RUNNER_TEMP}/gh-aw/prompts/safe_outputs_prompt.md"
-          cat << 'GH_AW_PROMPT_1113da16e9224e27_EOF'
+          cat << 'GH_AW_PROMPT_871927cd3839623f_EOF'
           <safe-output-tools>
           Tools: missing_tool, missing_data, noop, post_docs_answer
           </safe-output-tools>
-          GH_AW_PROMPT_1113da16e9224e27_EOF
+          GH_AW_PROMPT_871927cd3839623f_EOF
           cat "${RUNNER_TEMP}/gh-aw/prompts/mcp_cli_tools_prompt.md"
-          cat << 'GH_AW_PROMPT_1113da16e9224e27_EOF'
+          cat << 'GH_AW_PROMPT_871927cd3839623f_EOF'
           </system>
+          {{#runtime-import .github/aw/imports/zwave-js/bot-workflows/75148e07b701ca92e052212a9b7710864068ef6e/workflows_shared_hardening.md}}
+          {{#runtime-import .github/aw/imports/zwave-js/bot-workflows/75148e07b701ca92e052212a9b7710864068ef6e/workflows_shared_docs-answer-judge.md}}
           {{#runtime-import .github/workflows/answer-from-docs.md}}
-          GH_AW_PROMPT_1113da16e9224e27_EOF
+          GH_AW_PROMPT_871927cd3839623f_EOF
           } > "$GH_AW_PROMPT"
       - name: Substitute placeholders
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
@@ -440,10 +462,11 @@ jobs:
           trace-id: ${{ needs.activation.outputs.setup-trace-id }}
           parent-span-id: ${{ needs.activation.outputs.setup-parent-span-id || needs.activation.outputs.setup-span-id }}
         env:
-          GH_AW_SETUP_WORKFLOW_NAME: "Z-Wave JS UI Documentation Answer Judge"
+          GH_AW_SETUP_WORKFLOW_NAME: "Answer From Docs"
           GH_AW_CURRENT_WORKFLOW_REF: ${{ github.repository }}/.github/workflows/answer-from-docs.lock.yml@${{ github.ref }}
           GH_AW_INFO_VERSION: "1.0.65"
           GH_AW_INFO_AWF_VERSION: "v0.27.11"
+          GH_AW_INFO_BODY_MODIFIED: "false"
           GH_AW_INFO_ENGINE_ID: "copilot"
       - name: Set runtime paths
         id: set-runtime-paths
@@ -989,10 +1012,11 @@ jobs:
           trace-id: ${{ needs.activation.outputs.setup-trace-id }}
           parent-span-id: ${{ needs.activation.outputs.setup-parent-span-id || needs.activation.outputs.setup-span-id }}
         env:
-          GH_AW_SETUP_WORKFLOW_NAME: "Z-Wave JS UI Documentation Answer Judge"
+          GH_AW_SETUP_WORKFLOW_NAME: "Answer From Docs"
           GH_AW_CURRENT_WORKFLOW_REF: ${{ github.repository }}/.github/workflows/answer-from-docs.lock.yml@${{ github.ref }}
           GH_AW_INFO_VERSION: "1.0.65"
           GH_AW_INFO_AWF_VERSION: "v0.27.11"
+          GH_AW_INFO_BODY_MODIFIED: "false"
           GH_AW_INFO_ENGINE_ID: "copilot"
       - name: Download agent output artifact
         id: download-agent-output
@@ -1096,8 +1120,9 @@ jobs:
         env:
           GH_AW_AGENT_OUTPUT: ${{ steps.setup-agent-output-env.outputs.GH_AW_AGENT_OUTPUT }}
           GH_AW_NOOP_MAX: "1"
-          GH_AW_WORKFLOW_NAME: "Z-Wave JS UI Documentation Answer Judge"
-          GH_AW_WORKFLOW_SOURCE_URL: "${{ github.server_url }}/${{ github.repository }}/blob/${{ github.ref_name }}/.github/workflows/answer-from-docs.md"
+          GH_AW_WORKFLOW_NAME: "Answer From Docs"
+          GH_AW_WORKFLOW_SOURCE: "zwave-js/bot-workflows/workflows/answer-from-docs.md@ab0bc5d7f9172ce658daf685b3554a57cf99ec39"
+          GH_AW_WORKFLOW_SOURCE_URL: "${{ github.server_url }}/zwave-js/bot-workflows/blob/ab0bc5d7f9172ce658daf685b3554a57cf99ec39/workflows/answer-from-docs.md"
           GH_AW_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           GH_AW_AGENT_CONCLUSION: ${{ needs.agent.result }}
           GH_AW_NOOP_REPORT_AS_ISSUE: "true"
@@ -1117,8 +1142,9 @@ jobs:
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
           GH_AW_AGENT_OUTPUT: ${{ steps.setup-agent-output-env.outputs.GH_AW_AGENT_OUTPUT }}
-          GH_AW_WORKFLOW_NAME: "Z-Wave JS UI Documentation Answer Judge"
-          GH_AW_WORKFLOW_SOURCE_URL: "${{ github.server_url }}/${{ github.repository }}/blob/${{ github.ref_name }}/.github/workflows/answer-from-docs.md"
+          GH_AW_WORKFLOW_NAME: "Answer From Docs"
+          GH_AW_WORKFLOW_SOURCE: "zwave-js/bot-workflows/workflows/answer-from-docs.md@ab0bc5d7f9172ce658daf685b3554a57cf99ec39"
+          GH_AW_WORKFLOW_SOURCE_URL: "${{ github.server_url }}/zwave-js/bot-workflows/blob/ab0bc5d7f9172ce658daf685b3554a57cf99ec39/workflows/answer-from-docs.md"
           GH_AW_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           GH_AW_DETECTION_CONCLUSION: ${{ needs.detection.outputs.detection_conclusion }}
           GH_AW_DETECTION_REASON: ${{ needs.detection.outputs.detection_reason }}
@@ -1135,8 +1161,9 @@ jobs:
         env:
           GH_AW_AGENT_OUTPUT: ${{ steps.setup-agent-output-env.outputs.GH_AW_AGENT_OUTPUT }}
           GH_AW_MISSING_TOOL_CREATE_ISSUE: "true"
-          GH_AW_WORKFLOW_NAME: "Z-Wave JS UI Documentation Answer Judge"
-          GH_AW_WORKFLOW_SOURCE_URL: "${{ github.server_url }}/${{ github.repository }}/blob/${{ github.ref_name }}/.github/workflows/answer-from-docs.md"
+          GH_AW_WORKFLOW_NAME: "Answer From Docs"
+          GH_AW_WORKFLOW_SOURCE: "zwave-js/bot-workflows/workflows/answer-from-docs.md@ab0bc5d7f9172ce658daf685b3554a57cf99ec39"
+          GH_AW_WORKFLOW_SOURCE_URL: "${{ github.server_url }}/zwave-js/bot-workflows/blob/ab0bc5d7f9172ce658daf685b3554a57cf99ec39/workflows/answer-from-docs.md"
         with:
           github-token: ${{ secrets.GH_AW_GITHUB_TOKEN || secrets.GITHUB_TOKEN }}
           script: |
@@ -1150,8 +1177,9 @@ jobs:
         env:
           GH_AW_AGENT_OUTPUT: ${{ steps.setup-agent-output-env.outputs.GH_AW_AGENT_OUTPUT }}
           GH_AW_REPORT_INCOMPLETE_CREATE_ISSUE: "true"
-          GH_AW_WORKFLOW_NAME: "Z-Wave JS UI Documentation Answer Judge"
-          GH_AW_WORKFLOW_SOURCE_URL: "${{ github.server_url }}/${{ github.repository }}/blob/${{ github.ref_name }}/.github/workflows/answer-from-docs.md"
+          GH_AW_WORKFLOW_NAME: "Answer From Docs"
+          GH_AW_WORKFLOW_SOURCE: "zwave-js/bot-workflows/workflows/answer-from-docs.md@ab0bc5d7f9172ce658daf685b3554a57cf99ec39"
+          GH_AW_WORKFLOW_SOURCE_URL: "${{ github.server_url }}/zwave-js/bot-workflows/blob/ab0bc5d7f9172ce658daf685b3554a57cf99ec39/workflows/answer-from-docs.md"
         with:
           github-token: ${{ secrets.GH_AW_GITHUB_TOKEN || secrets.GITHUB_TOKEN }}
           script: |
@@ -1165,8 +1193,9 @@ jobs:
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
           GH_AW_AGENT_OUTPUT: ${{ steps.setup-agent-output-env.outputs.GH_AW_AGENT_OUTPUT }}
-          GH_AW_WORKFLOW_NAME: "Z-Wave JS UI Documentation Answer Judge"
-          GH_AW_WORKFLOW_SOURCE_URL: "${{ github.server_url }}/${{ github.repository }}/blob/${{ github.ref_name }}/.github/workflows/answer-from-docs.md"
+          GH_AW_WORKFLOW_NAME: "Answer From Docs"
+          GH_AW_WORKFLOW_SOURCE: "zwave-js/bot-workflows/workflows/answer-from-docs.md@ab0bc5d7f9172ce658daf685b3554a57cf99ec39"
+          GH_AW_WORKFLOW_SOURCE_URL: "${{ github.server_url }}/zwave-js/bot-workflows/blob/ab0bc5d7f9172ce658daf685b3554a57cf99ec39/workflows/answer-from-docs.md"
           GH_AW_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           GH_AW_AGENT_CONCLUSION: ${{ needs.agent.result }}
           GH_AW_WORKFLOW_ID: "answer-from-docs"
@@ -1228,10 +1257,11 @@ jobs:
           trace-id: ${{ needs.activation.outputs.setup-trace-id }}
           parent-span-id: ${{ needs.activation.outputs.setup-parent-span-id || needs.activation.outputs.setup-span-id }}
         env:
-          GH_AW_SETUP_WORKFLOW_NAME: "Z-Wave JS UI Documentation Answer Judge"
+          GH_AW_SETUP_WORKFLOW_NAME: "Answer From Docs"
           GH_AW_CURRENT_WORKFLOW_REF: ${{ github.repository }}/.github/workflows/answer-from-docs.lock.yml@${{ github.ref }}
           GH_AW_INFO_VERSION: "1.0.65"
           GH_AW_INFO_AWF_VERSION: "v0.27.11"
+          GH_AW_INFO_BODY_MODIFIED: "false"
           GH_AW_INFO_ENGINE_ID: "copilot"
       - name: Download agent output artifact
         id: download-agent-output
@@ -1301,7 +1331,7 @@ jobs:
         if: always() && steps.detection_guard.outputs.run_detection == 'true'
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
-          WORKFLOW_NAME: "Z-Wave JS UI Documentation Answer Judge"
+          WORKFLOW_NAME: "Answer From Docs"
           WORKFLOW_DESCRIPTION: "Answer questions in issues and discussions based on the documentation"
           HAS_PATCH: ${{ needs.agent.outputs.has_patch }}
         with:
@@ -1468,6 +1498,12 @@ jobs:
         uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3 (source v6)
         env:
           GH_AW_AGENT_OUTPUT: ${{ runner.temp }}/gh-aw/safe-jobs/agent_output.json
+        with:
+          persist-credentials: false
+      - name: Setup bot
+        uses: zwave-js/bot-workflows/actions/setup-bot@ab0bc5d7f9172ce658daf685b3554a57cf99ec39 # v1
+        env:
+          GH_AW_AGENT_OUTPUT: ${{ runner.temp }}/gh-aw/safe-jobs/agent_output.json
       - name: Download handoff
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1 (source v8)
         env:
@@ -1483,7 +1519,7 @@ jobs:
         with:
           github-token: ${{ secrets.BOT_TOKEN }}
           script: |
-            const bot = require(`${process.env.GITHUB_WORKSPACE}/.github/bot-scripts/index.cjs`);
+            const bot = require(`${process.env.BOT_SCRIPTS_DIR}/index.cjs`);
             await bot.postDocsAnswer({github, context});
 
   pre_activation:
@@ -1513,22 +1549,25 @@ jobs:
           destination: ${{ runner.temp }}/gh-aw/actions
           job-name: ${{ github.job }}
         env:
-          GH_AW_SETUP_WORKFLOW_NAME: "Z-Wave JS UI Documentation Answer Judge"
+          GH_AW_SETUP_WORKFLOW_NAME: "Answer From Docs"
           GH_AW_CURRENT_WORKFLOW_REF: ${{ github.repository }}/.github/workflows/answer-from-docs.lock.yml@${{ github.ref }}
           GH_AW_INFO_VERSION: "1.0.65"
           GH_AW_INFO_AWF_VERSION: "v0.27.11"
+          GH_AW_INFO_BODY_MODIFIED: "false"
           GH_AW_INFO_ENGINE_ID: "copilot"
       - name: Checkout repository
         uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3 (source v6)
+        with:
+          persist-credentials: false
       - name: Restore docs index
         id: docs-index
-        uses: ./.github/actions/restore-bot-index
+        uses: zwave-js/bot-workflows/actions/restore-bot-index@ab0bc5d7f9172ce658daf685b3554a57cf99ec39 # v1
         with:
           github-token: ${{ github.token }}
           index: docs
       - name: Restore posts index
         id: posts-index
-        uses: ./.github/actions/restore-bot-index
+        uses: zwave-js/bot-workflows/actions/restore-bot-index@ab0bc5d7f9172ce658daf685b3554a57cf99ec39 # v1
         with:
           github-token: ${{ github.token }}
           index: posts
@@ -1550,20 +1589,25 @@ jobs:
           POSTS_FOUND: ${{ steps.posts-index.outputs.found }}
       - name: Report index status
         if: always()
-        uses: ./.github/actions/report-index-status
+        uses: zwave-js/bot-workflows/actions/report-index-status@ab0bc5d7f9172ce658daf685b3554a57cf99ec39 # v1
         with:
           docs: ${{ steps.docs-index.outputs.found }}
-          docs-stale: ${{ steps.docs-index.outputs.stale }}
+          docs-age-days: ${{ steps.docs-index.outputs.age-days }}
+          docs-source: ${{ steps.docs-index.outputs.source }}
+          docs-status: ${{ steps.docs-index.outputs.status }}
+          github-token: ${{ secrets.BOT_TOKEN }}
           posts: ${{ steps.posts-index.outputs.found }}
-          posts-stale: ${{ steps.posts-index.outputs.stale }}
+          posts-age-days: ${{ steps.posts-index.outputs.age-days }}
+          posts-source: ${{ steps.posts-index.outputs.source }}
+          posts-status: ${{ steps.posts-index.outputs.status }}
           quiet: "true"
       - name: Fail if neither index is available
         if: steps.docs-index.outputs.found != 'true' && steps.posts-index.outputs.found != 'true'
         run: |
           echo "::error::Neither the docs index nor the posts index could be restored, from cache or from artifacts - the answer bot cannot run"
           exit 1
-      - name: Setup bot embeddings
-        uses: ./.github/actions/setup-bot-embeddings
+      - name: Setup bot
+        uses: zwave-js/bot-workflows/actions/setup-bot@ab0bc5d7f9172ce658daf685b3554a57cf99ec39 # v1
       - name: Prepare docs answer
         id: prepare
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0 (source v9)
@@ -1575,7 +1619,7 @@ jobs:
         with:
           github-token: ${{ secrets.BOT_TOKEN }}
           script: |
-            const bot = require(`${process.env.GITHUB_WORKSPACE}/.github/bot-scripts/index.cjs`);
+            const bot = require(`${process.env.BOT_SCRIPTS_DIR}/index.cjs`);
             const shouldContinue = await bot.prepareDocsAnswer({github, context});
             core.setOutput("shouldContinue", shouldContinue ? "true" : "false");
       - name: Upload handoff for the judge
@@ -1614,8 +1658,9 @@ jobs:
       GH_AW_RUNTIME_FEATURES: ${{ vars.GH_AW_RUNTIME_FEATURES }}
       GH_AW_THREAT_DETECTION_AIC: ${{ needs.detection.outputs.aic }}
       GH_AW_WORKFLOW_ID: "answer-from-docs"
-      GH_AW_WORKFLOW_NAME: "Z-Wave JS UI Documentation Answer Judge"
-      GH_AW_WORKFLOW_SOURCE_URL: "${{ github.server_url }}/${{ github.repository }}/blob/${{ github.ref_name }}/.github/workflows/answer-from-docs.md"
+      GH_AW_WORKFLOW_NAME: "Answer From Docs"
+      GH_AW_WORKFLOW_SOURCE: "zwave-js/bot-workflows/workflows/answer-from-docs.md@ab0bc5d7f9172ce658daf685b3554a57cf99ec39"
+      GH_AW_WORKFLOW_SOURCE_URL: "${{ github.server_url }}/zwave-js/bot-workflows/blob/ab0bc5d7f9172ce658daf685b3554a57cf99ec39/workflows/answer-from-docs.md"
     outputs:
       code_push_failure_count: ${{ steps.process_safe_outputs.outputs.code_push_failure_count }}
       code_push_failure_errors: ${{ steps.process_safe_outputs.outputs.code_push_failure_errors }}
@@ -1633,10 +1678,11 @@ jobs:
           trace-id: ${{ needs.activation.outputs.setup-trace-id }}
           parent-span-id: ${{ needs.activation.outputs.setup-parent-span-id || needs.activation.outputs.setup-span-id }}
         env:
-          GH_AW_SETUP_WORKFLOW_NAME: "Z-Wave JS UI Documentation Answer Judge"
+          GH_AW_SETUP_WORKFLOW_NAME: "Answer From Docs"
           GH_AW_CURRENT_WORKFLOW_REF: ${{ github.repository }}/.github/workflows/answer-from-docs.lock.yml@${{ github.ref }}
           GH_AW_INFO_VERSION: "1.0.65"
           GH_AW_INFO_AWF_VERSION: "v0.27.11"
+          GH_AW_INFO_BODY_MODIFIED: "false"
           GH_AW_INFO_ENGINE_ID: "copilot"
       - name: Download agent output artifact
         id: download-agent-output

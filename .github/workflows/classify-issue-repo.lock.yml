@@ -1,5 +1,5 @@
-# gh-aw-metadata: {"schema_version":"v4","frontmatter_hash":"21832d1a82a59e813462340c62fa7329a00deeb16a6aee57480fee38316da7b2","body_hash":"116f0cd2c98779dcb7b52d260ab64e6c7e12293cbbe6f9acfc0387eedfa66892","compiler_version":"v0.81.6","strict":true,"agent_id":"copilot","engine_versions":{"copilot":"1.0.65"}}
-# gh-aw-manifest: {"version":1,"secrets":["BOT_TOKEN","COPILOT_GITHUB_TOKEN","GH_AW_GITHUB_MCP_SERVER_TOKEN","GH_AW_GITHUB_TOKEN","GITHUB_TOKEN"],"actions":[{"repo":"actions/cache/restore","sha":"27d5ce7f107fe9357f9df03efb73ab90386fccae","version":"v5.0.5"},{"repo":"actions/cache/restore","sha":"55cc8345863c7cc4c66a329aec7e433d2d1c52a9","version":"v6"},{"repo":"actions/cache/save","sha":"27d5ce7f107fe9357f9df03efb73ab90386fccae","version":"v5.0.5"},{"repo":"actions/checkout","sha":"9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0","version":"v7.0.0"},{"repo":"actions/download-artifact","sha":"3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c","version":"v8.0.1"},{"repo":"actions/github-script","sha":"3a2844b7e9c422d3c10d287c895573f7108da1b3","version":"v9.0.0"},{"repo":"actions/setup-node","sha":"48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e","version":"v6.4.0"},{"repo":"actions/upload-artifact","sha":"043fb46d1a93c77aae656e7c1c64a875d1fc6a0a","version":"v7.0.1"},{"repo":"github/gh-aw-actions/setup","sha":"ba6380cc6e5be5d21677bebe04d52fb48e3abec7","version":"v0.81.6"}],"containers":[{"image":"ghcr.io/github/gh-aw-firewall/agent:0.27.11","digest":"sha256:979723c628182da7729333f2208bb249fd25ddee579645cf9a3892d681a929c7","pinned_image":"ghcr.io/github/gh-aw-firewall/agent:0.27.11@sha256:979723c628182da7729333f2208bb249fd25ddee579645cf9a3892d681a929c7"},{"image":"ghcr.io/github/gh-aw-firewall/api-proxy:0.27.11","digest":"sha256:807e4831999b44513b0a66e5859d478dc4da7ae74ab1918cec967d513f95bf9d","pinned_image":"ghcr.io/github/gh-aw-firewall/api-proxy:0.27.11@sha256:807e4831999b44513b0a66e5859d478dc4da7ae74ab1918cec967d513f95bf9d"},{"image":"ghcr.io/github/gh-aw-firewall/squid:0.27.11","digest":"sha256:ff27ea0525ad953a6adee28a5fbe9d2e22be47dbec755c15767af4ea3f91df7d","pinned_image":"ghcr.io/github/gh-aw-firewall/squid:0.27.11@sha256:ff27ea0525ad953a6adee28a5fbe9d2e22be47dbec755c15767af4ea3f91df7d"},{"image":"ghcr.io/github/gh-aw-mcpg:v0.3.30","digest":"sha256:35625d1a2269b1238606078c879f59a91cffc4ac33eb54bf39c6418822c1a8be","pinned_image":"ghcr.io/github/gh-aw-mcpg:v0.3.30@sha256:35625d1a2269b1238606078c879f59a91cffc4ac33eb54bf39c6418822c1a8be"},{"image":"ghcr.io/github/gh-aw-node","digest":"sha256:529d02eb970b1161aa25c593a9c3df57fdfad5a8add328cb3b6eccef66f3183b","pinned_image":"ghcr.io/github/gh-aw-node@sha256:529d02eb970b1161aa25c593a9c3df57fdfad5a8add328cb3b6eccef66f3183b"}]}
+# gh-aw-metadata: {"schema_version":"v4","frontmatter_hash":"a04fad1493072c8062abc86efe97f1d9785ab7a69afe9c31e1984550f6ce9554","body_hash":"859c6ee7e07e80e656a1c0907d33ffa1092d45b7021b79c3431a512aa25a1a8b","compiler_version":"v0.81.6","strict":true,"agent_id":"copilot","engine_versions":{"copilot":"1.0.65"}}
+# gh-aw-manifest: {"version":1,"secrets":["BOT_TOKEN","COPILOT_GITHUB_TOKEN","GH_AW_GITHUB_MCP_SERVER_TOKEN","GH_AW_GITHUB_TOKEN","GITHUB_TOKEN"],"actions":[{"repo":"actions/cache/restore","sha":"27d5ce7f107fe9357f9df03efb73ab90386fccae","version":"v5.0.5"},{"repo":"actions/cache/restore","sha":"55cc8345863c7cc4c66a329aec7e433d2d1c52a9","version":"v6"},{"repo":"actions/cache/save","sha":"27d5ce7f107fe9357f9df03efb73ab90386fccae","version":"v5.0.5"},{"repo":"actions/checkout","sha":"9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0","version":"v7.0.0"},{"repo":"actions/download-artifact","sha":"3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c","version":"v8.0.1"},{"repo":"actions/github-script","sha":"3a2844b7e9c422d3c10d287c895573f7108da1b3","version":"v9.0.0"},{"repo":"actions/setup-node","sha":"48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e","version":"v6.4.0"},{"repo":"actions/upload-artifact","sha":"043fb46d1a93c77aae656e7c1c64a875d1fc6a0a","version":"v7.0.1"},{"repo":"github/gh-aw-actions/setup","sha":"ba6380cc6e5be5d21677bebe04d52fb48e3abec7","version":"v0.81.6"},{"repo":"zwave-js/bot-workflows/actions/setup-bot","sha":"ab0bc5d7f9172ce658daf685b3554a57cf99ec39","version":"v1"}],"containers":[{"image":"ghcr.io/github/gh-aw-firewall/agent:0.27.11","digest":"sha256:979723c628182da7729333f2208bb249fd25ddee579645cf9a3892d681a929c7","pinned_image":"ghcr.io/github/gh-aw-firewall/agent:0.27.11@sha256:979723c628182da7729333f2208bb249fd25ddee579645cf9a3892d681a929c7"},{"image":"ghcr.io/github/gh-aw-firewall/api-proxy:0.27.11","digest":"sha256:807e4831999b44513b0a66e5859d478dc4da7ae74ab1918cec967d513f95bf9d","pinned_image":"ghcr.io/github/gh-aw-firewall/api-proxy:0.27.11@sha256:807e4831999b44513b0a66e5859d478dc4da7ae74ab1918cec967d513f95bf9d"},{"image":"ghcr.io/github/gh-aw-firewall/squid:0.27.11","digest":"sha256:ff27ea0525ad953a6adee28a5fbe9d2e22be47dbec755c15767af4ea3f91df7d","pinned_image":"ghcr.io/github/gh-aw-firewall/squid:0.27.11@sha256:ff27ea0525ad953a6adee28a5fbe9d2e22be47dbec755c15767af4ea3f91df7d"},{"image":"ghcr.io/github/gh-aw-mcpg:v0.3.30","digest":"sha256:35625d1a2269b1238606078c879f59a91cffc4ac33eb54bf39c6418822c1a8be","pinned_image":"ghcr.io/github/gh-aw-mcpg:v0.3.30@sha256:35625d1a2269b1238606078c879f59a91cffc4ac33eb54bf39c6418822c1a8be"},{"image":"ghcr.io/github/gh-aw-node","digest":"sha256:529d02eb970b1161aa25c593a9c3df57fdfad5a8add328cb3b6eccef66f3183b","pinned_image":"ghcr.io/github/gh-aw-node@sha256:529d02eb970b1161aa25c593a9c3df57fdfad5a8add328cb3b6eccef66f3183b"}]}
 # This file was automatically generated by gh-aw (v0.81.6). DO NOT EDIT. To debug this workflow, load the skill at https://github.com/github/gh-aw/blob/main/debug.md
 #
 #    ___                   _   _      
@@ -17,13 +17,19 @@
 #  \/  \/ \___/|_| |_|\_\|_| |_|\___/ \_/\_/ |___/
 #
 #
-# To update this file, edit the corresponding .md file and run:
+# To update this file, edit zwave-js/bot-workflows/workflows/classify-issue-repo.md@ab0bc5d7f9172ce658daf685b3554a57cf99ec39 and run:
 #   gh aw compile
 # Not all edits will cause changes to this file.
 #
 # For more information: https://github.github.com/gh-aw/introduction/overview/
 #
-# Notify issue authors when their issue belongs in the zwave-js repository
+# Notify issue authors when their issue belongs in the driver repository
+#
+# Source: zwave-js/bot-workflows/workflows/classify-issue-repo.md@ab0bc5d7f9172ce658daf685b3554a57cf99ec39
+#
+# Resolved workflow manifest:
+#   Imports:
+#     - zwave-js/bot-workflows/workflows/shared/hardening.md@75148e07b701ca92e052212a9b7710864068ef6e
 #
 # Secrets used:
 #   - BOT_TOKEN
@@ -44,6 +50,7 @@
 #   - actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
 #   - actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
 #   - github/gh-aw-actions/setup@ba6380cc6e5be5d21677bebe04d52fb48e3abec7 # v0.81.6
+#   - zwave-js/bot-workflows/actions/setup-bot@ab0bc5d7f9172ce658daf685b3554a57cf99ec39 # v1
 #
 # Container images used:
 #   - ghcr.io/github/gh-aw-firewall/agent:0.27.11@sha256:979723c628182da7729333f2208bb249fd25ddee579645cf9a3892d681a929c7
@@ -52,7 +59,7 @@
 #   - ghcr.io/github/gh-aw-mcpg:v0.3.30@sha256:35625d1a2269b1238606078c879f59a91cffc4ac33eb54bf39c6418822c1a8be
 #   - ghcr.io/github/gh-aw-node@sha256:529d02eb970b1161aa25c593a9c3df57fdfad5a8add328cb3b6eccef66f3183b
 
-name: "Z-Wave JS UI Issue Classification"
+name: "Issue Classification"
 on:
   issues:
     types:
@@ -65,12 +72,14 @@ on:
   # - name: Checkout repository
     # uses: actions/checkout@v7
     # with:
-      # sparse-checkout: .github/bot-scripts
+      # sparse-checkout: .github
+  # - name: Set up bot scripts
+    # uses: zwave-js/bot-workflows/actions/setup-bot@v1
   # - id: check
     # name: Check whether this issue needs classification
     # uses: actions/github-script@v9
     # with:
-      # script: "const { excludedUsers } = require(`${process.env.GITHUB_WORKSPACE}/.github/bot-scripts/config.cjs`);\nconst user = context.payload.issue?.user;\nlet skip;\n// The type check catches GitHub Apps; zwave-js-bot is a classic\n// machine user (type \"User\") and is caught by excludedUsers\nif (!user || user.type === \"Bot\" || excludedUsers.includes(user.login)) {\n  skip = `author ${user?.login} is excluded`;\n} else if (context.payload.action === \"edited\" && !context.payload.changes?.body) {\n  skip = \"the edit did not change the issue body\";\n}\nif (skip) console.log(`Skipping classification: ${skip}`);\ncore.setOutput(\"shouldContinue\", skip ? \"false\" : \"true\");\n"
+      # script: "const { excludedUsers } = require(`${process.env.BOT_SCRIPTS_DIR}/config.cjs`);\nconst user = context.payload.issue?.user;\nlet skip;\n// The type check catches GitHub Apps; the bot account is a classic\n// machine user (type \"User\") and is caught by excludedUsers\nif (!user || user.type === \"Bot\" || excludedUsers.includes(user.login)) {\n  skip = `author ${user?.login} is excluded`;\n} else if (context.payload.action === \"edited\" && !context.payload.changes?.body) {\n  skip = \"the edit did not change the issue body\";\n}\nif (skip) console.log(`Skipping classification: ${skip}`);\ncore.setOutput(\"shouldContinue\", skip ? \"false\" : \"true\");\n"
   # - id: gate
     # if: steps.check.outputs.shouldContinue == 'true'
     # name: Gate agentic classification
@@ -81,7 +90,7 @@ permissions: {}
 concurrency:
   group: "gh-aw-${{ github.workflow }}-${{ github.event.issue.number || github.run_id }}"
 
-run-name: "Z-Wave JS UI Issue Classification"
+run-name: "Issue Classification"
 
 jobs:
   activation:
@@ -122,10 +131,11 @@ jobs:
           parent-span-id: ${{ needs.pre_activation.outputs.setup-parent-span-id || needs.pre_activation.outputs.setup-span-id }}
           safe-output-artifact-client: ${{ env.GH_AW_MAX_DAILY_AI_CREDITS != '' }}
         env:
-          GH_AW_SETUP_WORKFLOW_NAME: "Z-Wave JS UI Issue Classification"
+          GH_AW_SETUP_WORKFLOW_NAME: "Issue Classification"
           GH_AW_CURRENT_WORKFLOW_REF: ${{ github.repository }}/.github/workflows/classify-issue-repo.lock.yml@${{ github.ref }}
           GH_AW_INFO_VERSION: "1.0.65"
           GH_AW_INFO_AWF_VERSION: "v0.27.11"
+          GH_AW_INFO_BODY_MODIFIED: "false"
           GH_AW_INFO_ENGINE_ID: "copilot"
       - name: Generate agentic run info
         id: generate_aw_info
@@ -136,7 +146,7 @@ jobs:
           GH_AW_INFO_VERSION: "1.0.65"
           GH_AW_INFO_AGENT_VERSION: "1.0.65"
           GH_AW_INFO_CLI_VERSION: "v0.81.6"
-          GH_AW_INFO_WORKFLOW_NAME: "Z-Wave JS UI Issue Classification"
+          GH_AW_INFO_WORKFLOW_NAME: "Issue Classification"
           GH_AW_INFO_EXPERIMENTAL: "false"
           GH_AW_INFO_SUPPORTS_TOOLS_ALLOWLIST: "true"
           GH_AW_INFO_STAGED: "false"
@@ -145,6 +155,8 @@ jobs:
           GH_AW_INFO_AWF_VERSION: "v0.27.11"
           GH_AW_INFO_AWMG_VERSION: ""
           GH_AW_INFO_FIREWALL_TYPE: "squid"
+          GH_AW_INFO_FRONTMATTER_SOURCE: "zwave-js/bot-workflows/workflows/classify-issue-repo.md@ab0bc5d7f9172ce658daf685b3554a57cf99ec39"
+          GH_AW_INFO_BODY_MODIFIED: "false"
           GH_AW_COMPILED_STRICT: "true"
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         with:
@@ -182,7 +194,7 @@ jobs:
         if: ${{ env.GH_AW_MAX_DAILY_AI_CREDITS != '' }}
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
-          GH_AW_WORKFLOW_NAME: "Z-Wave JS UI Issue Classification"
+          GH_AW_WORKFLOW_NAME: "Issue Classification"
           GH_AW_WORKFLOW_ID: "classify-issue-repo"
           GH_AW_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           GH_AW_WORKFLOW_DISPATCH_AW_CONTEXT: ${{ github.event.inputs.aw_context || '' }}
@@ -264,34 +276,37 @@ jobs:
         env:
           GH_AW_PROMPT: /tmp/gh-aw/aw-prompts/prompt.txt
           GH_AW_SAFE_OUTPUTS: ${{ runner.temp }}/gh-aw/safeoutputs/outputs.jsonl
+          GH_AW_GITHUB_REPOSITORY: ${{ github.repository }}
           GH_AW_STEPS_SANITIZED_OUTPUTS_TEXT: ${{ steps.sanitized.outputs.text }}
         # poutine:ignore untrusted_checkout_exec
         run: |
           bash "${RUNNER_TEMP}/gh-aw/actions/create_prompt_first.sh"
           {
-          cat << 'GH_AW_PROMPT_c154427ac153f3a3_EOF'
+          cat << 'GH_AW_PROMPT_97bc8705fe84acbe_EOF'
           <system>
-          GH_AW_PROMPT_c154427ac153f3a3_EOF
+          GH_AW_PROMPT_97bc8705fe84acbe_EOF
           cat "${RUNNER_TEMP}/gh-aw/prompts/xpia.md"
           cat "${RUNNER_TEMP}/gh-aw/prompts/temp_folder_prompt.md"
           cat "${RUNNER_TEMP}/gh-aw/prompts/markdown.md"
           cat "${RUNNER_TEMP}/gh-aw/prompts/safe_outputs_prompt.md"
-          cat << 'GH_AW_PROMPT_c154427ac153f3a3_EOF'
+          cat << 'GH_AW_PROMPT_97bc8705fe84acbe_EOF'
           <safe-output-tools>
           Tools: missing_tool, missing_data, noop, post_classification
           </safe-output-tools>
-          GH_AW_PROMPT_c154427ac153f3a3_EOF
+          GH_AW_PROMPT_97bc8705fe84acbe_EOF
           cat "${RUNNER_TEMP}/gh-aw/prompts/mcp_cli_tools_prompt.md"
-          cat << 'GH_AW_PROMPT_c154427ac153f3a3_EOF'
+          cat << 'GH_AW_PROMPT_97bc8705fe84acbe_EOF'
           </system>
+          {{#runtime-import .github/aw/imports/zwave-js/bot-workflows/75148e07b701ca92e052212a9b7710864068ef6e/workflows_shared_hardening.md}}
           {{#runtime-import .github/workflows/classify-issue-repo.md}}
-          GH_AW_PROMPT_c154427ac153f3a3_EOF
+          GH_AW_PROMPT_97bc8705fe84acbe_EOF
           } > "$GH_AW_PROMPT"
       - name: Interpolate variables and render templates
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
           GH_AW_PROMPT: /tmp/gh-aw/aw-prompts/prompt.txt
           GH_AW_ENGINE_ID: "copilot"
+          GH_AW_GITHUB_REPOSITORY: ${{ github.repository }}
           GH_AW_STEPS_SANITIZED_OUTPUTS_TEXT: ${{ steps.sanitized.outputs.text }}
         with:
           script: |
@@ -303,6 +318,7 @@ jobs:
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
           GH_AW_PROMPT: /tmp/gh-aw/aw-prompts/prompt.txt
+          GH_AW_GITHUB_REPOSITORY: ${{ github.repository }}
           GH_AW_MCP_CLI_SERVERS_LIST: '- `safeoutputs` — run `safeoutputs --help` to see available tools'
           GH_AW_NEEDS_PRE_ACTIVATION_OUTPUTS_ACTIVATED: ${{ needs.pre_activation.outputs.activated }}
           GH_AW_STEPS_SANITIZED_OUTPUTS_TEXT: ${{ steps.sanitized.outputs.text }}
@@ -317,6 +333,7 @@ jobs:
             return await substitutePlaceholders({
               file: process.env.GH_AW_PROMPT,
               substitutions: {
+                GH_AW_GITHUB_REPOSITORY: process.env.GH_AW_GITHUB_REPOSITORY,
                 GH_AW_MCP_CLI_SERVERS_LIST: process.env.GH_AW_MCP_CLI_SERVERS_LIST,
                 GH_AW_NEEDS_PRE_ACTIVATION_OUTPUTS_ACTIVATED: process.env.GH_AW_NEEDS_PRE_ACTIVATION_OUTPUTS_ACTIVATED,
                 GH_AW_STEPS_SANITIZED_OUTPUTS_TEXT: process.env.GH_AW_STEPS_SANITIZED_OUTPUTS_TEXT
@@ -393,10 +410,11 @@ jobs:
           trace-id: ${{ needs.activation.outputs.setup-trace-id }}
           parent-span-id: ${{ needs.activation.outputs.setup-parent-span-id || needs.activation.outputs.setup-span-id }}
         env:
-          GH_AW_SETUP_WORKFLOW_NAME: "Z-Wave JS UI Issue Classification"
+          GH_AW_SETUP_WORKFLOW_NAME: "Issue Classification"
           GH_AW_CURRENT_WORKFLOW_REF: ${{ github.repository }}/.github/workflows/classify-issue-repo.lock.yml@${{ github.ref }}
           GH_AW_INFO_VERSION: "1.0.65"
           GH_AW_INFO_AWF_VERSION: "v0.27.11"
+          GH_AW_INFO_BODY_MODIFIED: "false"
           GH_AW_INFO_ENGINE_ID: "copilot"
       - name: Set runtime paths
         id: set-runtime-paths
@@ -928,10 +946,11 @@ jobs:
           trace-id: ${{ needs.activation.outputs.setup-trace-id }}
           parent-span-id: ${{ needs.activation.outputs.setup-parent-span-id || needs.activation.outputs.setup-span-id }}
         env:
-          GH_AW_SETUP_WORKFLOW_NAME: "Z-Wave JS UI Issue Classification"
+          GH_AW_SETUP_WORKFLOW_NAME: "Issue Classification"
           GH_AW_CURRENT_WORKFLOW_REF: ${{ github.repository }}/.github/workflows/classify-issue-repo.lock.yml@${{ github.ref }}
           GH_AW_INFO_VERSION: "1.0.65"
           GH_AW_INFO_AWF_VERSION: "v0.27.11"
+          GH_AW_INFO_BODY_MODIFIED: "false"
           GH_AW_INFO_ENGINE_ID: "copilot"
       - name: Download agent output artifact
         id: download-agent-output
@@ -1035,8 +1054,9 @@ jobs:
         env:
           GH_AW_AGENT_OUTPUT: ${{ steps.setup-agent-output-env.outputs.GH_AW_AGENT_OUTPUT }}
           GH_AW_NOOP_MAX: "1"
-          GH_AW_WORKFLOW_NAME: "Z-Wave JS UI Issue Classification"
-          GH_AW_WORKFLOW_SOURCE_URL: "${{ github.server_url }}/${{ github.repository }}/blob/${{ github.ref_name }}/.github/workflows/classify-issue-repo.md"
+          GH_AW_WORKFLOW_NAME: "Issue Classification"
+          GH_AW_WORKFLOW_SOURCE: "zwave-js/bot-workflows/workflows/classify-issue-repo.md@ab0bc5d7f9172ce658daf685b3554a57cf99ec39"
+          GH_AW_WORKFLOW_SOURCE_URL: "${{ github.server_url }}/zwave-js/bot-workflows/blob/ab0bc5d7f9172ce658daf685b3554a57cf99ec39/workflows/classify-issue-repo.md"
           GH_AW_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           GH_AW_AGENT_CONCLUSION: ${{ needs.agent.result }}
           GH_AW_NOOP_REPORT_AS_ISSUE: "true"
@@ -1056,8 +1076,9 @@ jobs:
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
           GH_AW_AGENT_OUTPUT: ${{ steps.setup-agent-output-env.outputs.GH_AW_AGENT_OUTPUT }}
-          GH_AW_WORKFLOW_NAME: "Z-Wave JS UI Issue Classification"
-          GH_AW_WORKFLOW_SOURCE_URL: "${{ github.server_url }}/${{ github.repository }}/blob/${{ github.ref_name }}/.github/workflows/classify-issue-repo.md"
+          GH_AW_WORKFLOW_NAME: "Issue Classification"
+          GH_AW_WORKFLOW_SOURCE: "zwave-js/bot-workflows/workflows/classify-issue-repo.md@ab0bc5d7f9172ce658daf685b3554a57cf99ec39"
+          GH_AW_WORKFLOW_SOURCE_URL: "${{ github.server_url }}/zwave-js/bot-workflows/blob/ab0bc5d7f9172ce658daf685b3554a57cf99ec39/workflows/classify-issue-repo.md"
           GH_AW_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           GH_AW_DETECTION_CONCLUSION: ${{ needs.detection.outputs.detection_conclusion }}
           GH_AW_DETECTION_REASON: ${{ needs.detection.outputs.detection_reason }}
@@ -1074,8 +1095,9 @@ jobs:
         env:
           GH_AW_AGENT_OUTPUT: ${{ steps.setup-agent-output-env.outputs.GH_AW_AGENT_OUTPUT }}
           GH_AW_MISSING_TOOL_CREATE_ISSUE: "true"
-          GH_AW_WORKFLOW_NAME: "Z-Wave JS UI Issue Classification"
-          GH_AW_WORKFLOW_SOURCE_URL: "${{ github.server_url }}/${{ github.repository }}/blob/${{ github.ref_name }}/.github/workflows/classify-issue-repo.md"
+          GH_AW_WORKFLOW_NAME: "Issue Classification"
+          GH_AW_WORKFLOW_SOURCE: "zwave-js/bot-workflows/workflows/classify-issue-repo.md@ab0bc5d7f9172ce658daf685b3554a57cf99ec39"
+          GH_AW_WORKFLOW_SOURCE_URL: "${{ github.server_url }}/zwave-js/bot-workflows/blob/ab0bc5d7f9172ce658daf685b3554a57cf99ec39/workflows/classify-issue-repo.md"
         with:
           github-token: ${{ secrets.GH_AW_GITHUB_TOKEN || secrets.GITHUB_TOKEN }}
           script: |
@@ -1089,8 +1111,9 @@ jobs:
         env:
           GH_AW_AGENT_OUTPUT: ${{ steps.setup-agent-output-env.outputs.GH_AW_AGENT_OUTPUT }}
           GH_AW_REPORT_INCOMPLETE_CREATE_ISSUE: "true"
-          GH_AW_WORKFLOW_NAME: "Z-Wave JS UI Issue Classification"
-          GH_AW_WORKFLOW_SOURCE_URL: "${{ github.server_url }}/${{ github.repository }}/blob/${{ github.ref_name }}/.github/workflows/classify-issue-repo.md"
+          GH_AW_WORKFLOW_NAME: "Issue Classification"
+          GH_AW_WORKFLOW_SOURCE: "zwave-js/bot-workflows/workflows/classify-issue-repo.md@ab0bc5d7f9172ce658daf685b3554a57cf99ec39"
+          GH_AW_WORKFLOW_SOURCE_URL: "${{ github.server_url }}/zwave-js/bot-workflows/blob/ab0bc5d7f9172ce658daf685b3554a57cf99ec39/workflows/classify-issue-repo.md"
         with:
           github-token: ${{ secrets.GH_AW_GITHUB_TOKEN || secrets.GITHUB_TOKEN }}
           script: |
@@ -1104,8 +1127,9 @@ jobs:
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
           GH_AW_AGENT_OUTPUT: ${{ steps.setup-agent-output-env.outputs.GH_AW_AGENT_OUTPUT }}
-          GH_AW_WORKFLOW_NAME: "Z-Wave JS UI Issue Classification"
-          GH_AW_WORKFLOW_SOURCE_URL: "${{ github.server_url }}/${{ github.repository }}/blob/${{ github.ref_name }}/.github/workflows/classify-issue-repo.md"
+          GH_AW_WORKFLOW_NAME: "Issue Classification"
+          GH_AW_WORKFLOW_SOURCE: "zwave-js/bot-workflows/workflows/classify-issue-repo.md@ab0bc5d7f9172ce658daf685b3554a57cf99ec39"
+          GH_AW_WORKFLOW_SOURCE_URL: "${{ github.server_url }}/zwave-js/bot-workflows/blob/ab0bc5d7f9172ce658daf685b3554a57cf99ec39/workflows/classify-issue-repo.md"
           GH_AW_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           GH_AW_AGENT_CONCLUSION: ${{ needs.agent.result }}
           GH_AW_WORKFLOW_ID: "classify-issue-repo"
@@ -1167,10 +1191,11 @@ jobs:
           trace-id: ${{ needs.activation.outputs.setup-trace-id }}
           parent-span-id: ${{ needs.activation.outputs.setup-parent-span-id || needs.activation.outputs.setup-span-id }}
         env:
-          GH_AW_SETUP_WORKFLOW_NAME: "Z-Wave JS UI Issue Classification"
+          GH_AW_SETUP_WORKFLOW_NAME: "Issue Classification"
           GH_AW_CURRENT_WORKFLOW_REF: ${{ github.repository }}/.github/workflows/classify-issue-repo.lock.yml@${{ github.ref }}
           GH_AW_INFO_VERSION: "1.0.65"
           GH_AW_INFO_AWF_VERSION: "v0.27.11"
+          GH_AW_INFO_BODY_MODIFIED: "false"
           GH_AW_INFO_ENGINE_ID: "copilot"
       - name: Download agent output artifact
         id: download-agent-output
@@ -1240,8 +1265,8 @@ jobs:
         if: always() && steps.detection_guard.outputs.run_detection == 'true'
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
-          WORKFLOW_NAME: "Z-Wave JS UI Issue Classification"
-          WORKFLOW_DESCRIPTION: "Notify issue authors when their issue belongs in the zwave-js repository"
+          WORKFLOW_NAME: "Issue Classification"
+          WORKFLOW_DESCRIPTION: "Notify issue authors when their issue belongs in the driver repository"
           HAS_PATCH: ${{ needs.agent.outputs.has_patch }}
         with:
           script: |
@@ -1408,7 +1433,11 @@ jobs:
         env:
           GH_AW_AGENT_OUTPUT: ${{ runner.temp }}/gh-aw/safe-jobs/agent_output.json
         with:
-          sparse-checkout: .github/bot-scripts
+          sparse-checkout: .github
+      - name: Set up bot scripts
+        uses: zwave-js/bot-workflows/actions/setup-bot@ab0bc5d7f9172ce658daf685b3554a57cf99ec39 # v1
+        env:
+          GH_AW_AGENT_OUTPUT: ${{ runner.temp }}/gh-aw/safe-jobs/agent_output.json
       - name: Give feedback
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0 (source v9)
         env:
@@ -1416,7 +1445,7 @@ jobs:
         with:
           github-token: ${{ secrets.BOT_TOKEN }}
           script: |
-            const bot = require(`${process.env.GITHUB_WORKSPACE}/.github/bot-scripts/index.cjs`);
+            const bot = require(`${process.env.BOT_SCRIPTS_DIR}/index.cjs`);
             await bot.postClassifyIssueFeedback({github, context});
 
   pre_activation:
@@ -1441,24 +1470,27 @@ jobs:
           destination: ${{ runner.temp }}/gh-aw/actions
           job-name: ${{ github.job }}
         env:
-          GH_AW_SETUP_WORKFLOW_NAME: "Z-Wave JS UI Issue Classification"
+          GH_AW_SETUP_WORKFLOW_NAME: "Issue Classification"
           GH_AW_CURRENT_WORKFLOW_REF: ${{ github.repository }}/.github/workflows/classify-issue-repo.lock.yml@${{ github.ref }}
           GH_AW_INFO_VERSION: "1.0.65"
           GH_AW_INFO_AWF_VERSION: "v0.27.11"
+          GH_AW_INFO_BODY_MODIFIED: "false"
           GH_AW_INFO_ENGINE_ID: "copilot"
       - name: Checkout repository
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0 (source v7)
         with:
-          sparse-checkout: .github/bot-scripts
+          sparse-checkout: .github
+      - name: Set up bot scripts
+        uses: zwave-js/bot-workflows/actions/setup-bot@ab0bc5d7f9172ce658daf685b3554a57cf99ec39 # v1
       - name: Check whether this issue needs classification
         id: check
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0 (source v9)
         with:
           script: |
-            const { excludedUsers } = require(`${process.env.GITHUB_WORKSPACE}/.github/bot-scripts/config.cjs`);
+            const { excludedUsers } = require(`${process.env.BOT_SCRIPTS_DIR}/config.cjs`);
             const user = context.payload.issue?.user;
             let skip;
-            // The type check catches GitHub Apps; zwave-js-bot is a classic
+            // The type check catches GitHub Apps; the bot account is a classic
             // machine user (type "User") and is caught by excludedUsers
             if (!user || user.type === "Bot" || excludedUsers.includes(user.login)) {
               skip = `author ${user?.login} is excluded`;
@@ -1495,8 +1527,9 @@ jobs:
       GH_AW_RUNTIME_FEATURES: ${{ vars.GH_AW_RUNTIME_FEATURES }}
       GH_AW_THREAT_DETECTION_AIC: ${{ needs.detection.outputs.aic }}
       GH_AW_WORKFLOW_ID: "classify-issue-repo"
-      GH_AW_WORKFLOW_NAME: "Z-Wave JS UI Issue Classification"
-      GH_AW_WORKFLOW_SOURCE_URL: "${{ github.server_url }}/${{ github.repository }}/blob/${{ github.ref_name }}/.github/workflows/classify-issue-repo.md"
+      GH_AW_WORKFLOW_NAME: "Issue Classification"
+      GH_AW_WORKFLOW_SOURCE: "zwave-js/bot-workflows/workflows/classify-issue-repo.md@ab0bc5d7f9172ce658daf685b3554a57cf99ec39"
+      GH_AW_WORKFLOW_SOURCE_URL: "${{ github.server_url }}/zwave-js/bot-workflows/blob/ab0bc5d7f9172ce658daf685b3554a57cf99ec39/workflows/classify-issue-repo.md"
     outputs:
       code_push_failure_count: ${{ steps.process_safe_outputs.outputs.code_push_failure_count }}
       code_push_failure_errors: ${{ steps.process_safe_outputs.outputs.code_push_failure_errors }}
@@ -1514,10 +1547,11 @@ jobs:
           trace-id: ${{ needs.activation.outputs.setup-trace-id }}
           parent-span-id: ${{ needs.activation.outputs.setup-parent-span-id || needs.activation.outputs.setup-span-id }}
         env:
-          GH_AW_SETUP_WORKFLOW_NAME: "Z-Wave JS UI Issue Classification"
+          GH_AW_SETUP_WORKFLOW_NAME: "Issue Classification"
           GH_AW_CURRENT_WORKFLOW_REF: ${{ github.repository }}/.github/workflows/classify-issue-repo.lock.yml@${{ github.ref }}
           GH_AW_INFO_VERSION: "1.0.65"
           GH_AW_INFO_AWF_VERSION: "v0.27.11"
+          GH_AW_INFO_BODY_MODIFIED: "false"
           GH_AW_INFO_ENGINE_ID: "copilot"
       - name: Download agent output artifact
         id: download-agent-output

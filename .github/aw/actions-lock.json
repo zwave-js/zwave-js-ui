@@ -24,6 +24,21 @@
       "repo": "github/gh-aw-actions/setup",
       "version": "v0.81.6",
       "sha": "ba6380cc6e5be5d21677bebe04d52fb48e3abec7"
+    },
+    "zwave-js/bot-workflows/actions/report-index-status@v1": {
+      "repo": "zwave-js/bot-workflows/actions/report-index-status",
+      "version": "v1",
+      "sha": "ab0bc5d7f9172ce658daf685b3554a57cf99ec39"
+    },
+    "zwave-js/bot-workflows/actions/restore-bot-index@v1": {
+      "repo": "zwave-js/bot-workflows/actions/restore-bot-index",
+      "version": "v1",
+      "sha": "ab0bc5d7f9172ce658daf685b3554a57cf99ec39"
+    },
+    "zwave-js/bot-workflows/actions/setup-bot@v1": {
+      "repo": "zwave-js/bot-workflows/actions/setup-bot",
+      "version": "v1",
+      "sha": "ab0bc5d7f9172ce658daf685b3554a57cf99ec39"
     }
   }
 }
