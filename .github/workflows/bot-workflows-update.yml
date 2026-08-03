@@ -1,0 +1,103 @@
+name: Update bot-workflows
+
+# Weekly sync with the shared zwave-js/bot-workflows repo. Two things move
+# independently and both are covered here:
+# - the installed agentic workflow sources (source:/imports pins), via
+#   gh aw update
+# - the shared action SHAs in .github/aw/actions-lock.json, which gh aw
+#   pins at install time and never refreshes on its own - a fix released
+#   to the floating v1 tag does not reach the compiled locks without this
+#   (see zwave-js/zwave-js#9052 for the outage that motivates it)
+# Changes arrive as a PR, so nothing lands unreviewed.
+
+on:
+  schedule:
+    - cron: '0 3 * * 1'
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  update:
+    runs-on: [ubuntu-latest]
+    timeout-minutes: 15
+    permissions:
+      contents: read
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v7
+      with:
+        # The push below authenticates explicitly with BOT_TOKEN; leave no
+        # ambient credential in .git/config
+        persist-credentials: false
+
+    - name: Install gh-aw
+      env:
+        GH_TOKEN: ${{ github.token }}
+      # Keep the pin in sync with gh-aw-compile-check.yml
+      run: gh extension install github/gh-aw --pin v0.81.6
+
+    - name: Update installed workflows
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: gh aw update
+
+    - name: Fail on merge conflicts
+      # gh aw update does a 3-way merge preserving local edits; conflicts
+      # need a human, not a PR that fails compile-check cryptically
+      run: |
+        if grep -rl '^<<<<<<< ' .github/workflows/*.md; then
+          echo "::error::gh aw update produced merge conflicts - resolve manually with 'gh aw update' locally"
+          exit 1
+        fi
+
+    - name: Repin shared actions to the current v1
+      run: |
+        set -euo pipefail
+        sha=$(git ls-remote https://github.com/zwave-js/bot-workflows refs/tags/v1 | cut -f1)
+        [ -n "$sha" ]
+        node -e '
+          const fs = require("node:fs");
+          const path = ".github/aw/actions-lock.json";
+          const lock = JSON.parse(fs.readFileSync(path, "utf8"));
+          const entries = lock.entries ?? lock;
+          for (const value of Object.values(entries)) {
+            if (value.repo?.startsWith("zwave-js/bot-workflows")) value.sha = process.argv[1];
+          }
+          fs.writeFileSync(path, JSON.stringify(lock, null, 2) + "\n");
+        ' "$sha"
+
+    - name: Recompile
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: gh aw compile
+
+    - name: Open a pull request
+      env:
+        GH_TOKEN: ${{ secrets.BOT_TOKEN }}
+      run: |
+        set -euo pipefail
+        # git status also catches untracked files (a new workflow would
+        # arrive as an untracked .md + .lock.yml pair)
+        if [ -z "$(git status --porcelain)" ]; then
+          echo "Already up to date"
+          exit 0
+        fi
+        # Fixed branch name, force-pushed: a rerun replaces last week's
+        # still-open update PR instead of stacking a second one next to it
+        branch="bot-workflows-update"
+        git config user.name "Z-Wave JS Bot"
+        git config user.email "bot@zwave-js.io"
+        git checkout -b "$branch"
+        git add -A
+        git commit -m "ci(bot): update to the latest bot-workflows release"
+        # Authenticate git through gh's credential helper so the token
+        # never appears in a command line
+        gh auth setup-git
+        git push --force origin "$branch"
+        if [ "$(gh pr list --head "$branch" --state open --json number --jq length)" = "0" ]; then
+          gh pr create \
+            --title "ci(bot): update to the latest bot-workflows release" \
+            --body "Weekly automated sync with [zwave-js/bot-workflows](https://github.com/zwave-js/bot-workflows): updates the installed agentic workflow sources and repins the shared action SHAs to the current \`v1\`. See the lock diffs for what changed."
+        fi
