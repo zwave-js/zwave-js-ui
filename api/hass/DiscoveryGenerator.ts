@@ -92,6 +92,12 @@ export class DiscoveryGenerator {
 	private readonly logger: HassLogger
 	private discovered: Record<string, HassDevice> = {}
 
+	// Publication fence. While `false` every retained-discovery producer is a
+	// no-op, so no node/value/remove/status event emits a retained MQTT
+	// discovery message once the owning manager has begun its (possibly
+	// deferred) teardown. Starts active
+	private _active = true
+
 	public constructor(options: DiscoveryGeneratorOptions) {
 		this.config = options.config
 		this.mqttPort = options.mqtt
@@ -118,6 +124,32 @@ export class DiscoveryGenerator {
 
 	public reset(): void {
 		this.discovered = {}
+	}
+
+	/** Whether retained-discovery publication is currently permitted. */
+	public get active(): boolean {
+		return this._active
+	}
+
+	/**
+	 * Re-arm retained-discovery publication. Called by the owning
+	 * {@link MqttDiscoveryManager} on start, including a restart that reuses the
+	 * same generator instance (the standalone `Gateway` path memoizes it).
+	 */
+	public activate(): void {
+		this._active = true
+	}
+
+	/**
+	 * Fence off retained-discovery publication synchronously, at the very start
+	 * of the owning manager's stop (before it disposes the scoped status
+	 * subscription and before the coordinator awaits the server destroy), so any
+	 * node/value/remove/status event during the deferred teardown window cannot
+	 * publish a retained MQTT discovery message or adopt resources against a
+	 * subsystem that is going away.
+	 */
+	public deactivate(): void {
+		this._active = false
 	}
 
 	public rediscoverNode(nodeId: number): void {
@@ -155,6 +187,15 @@ export class DiscoveryGenerator {
 		options: PublishDiscoveryOptions = {},
 	): void {
 		try {
+			// Publication fence: skip once the owning manager has begun teardown
+			// so no late event publishes a retained discovery message
+			if (!this._active) {
+				this.logger.debug(
+					'Discovery is quiesced; skipping retained publication',
+				)
+				return
+			}
+
 			if (!this.mqttEnabled || !this.config.hassDiscovery) {
 				this.logger.debug(
 					'Enable MQTT gateway and hass discovery to use this function',
@@ -248,6 +289,7 @@ export class DiscoveryGenerator {
 	}
 
 	public rediscoverAll(): void {
+		if (!this._active) return
 		if (!this.config.hassDiscovery) return
 
 		for (const [nodeId, candidate] of this.zwave.nodes) {
