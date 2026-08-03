@@ -9,6 +9,7 @@
 
 const fs = require("node:fs/promises");
 const path = require("node:path");
+const { config } = require("./config.cjs");
 const { logCase, reportResults } = require("./evalUtils.cjs");
 const { embed, indexMatchesModel } = require("./localEmbeddings.cjs");
 const { rankRelatedPosts } = require("./postsIndex.cjs");
@@ -28,7 +29,7 @@ async function main() {
 	/** @type {{question: string, expectedPosts: {type: string, number: number}[]}[]} */
 	const allCases = JSON.parse(
 		await fs.readFile(
-			path.join(__dirname, "relatedPostsEvalCases.json"),
+			path.join(__dirname, config.evalCases.relatedPostsFile),
 			"utf8",
 		),
 	);

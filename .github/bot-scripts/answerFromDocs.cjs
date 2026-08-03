@@ -5,7 +5,7 @@
 const fs = require("node:fs/promises");
 const path = require("node:path");
 const { readAgentOutputItem } = require("./agentOutput.cjs");
-const { excludedUsers } = require("./authorizedUsers.cjs");
+const { config, excludedUsers } = require("./config.cjs");
 const { cosineSimilarity, loadDocsIndex, retrieve } = require(
 	"./docsIndex.cjs",
 );
@@ -19,7 +19,6 @@ const {
 const { sanitizeModelAnswer } = require("./sanitizeAnswer.cjs");
 const { listCommentsSinceTransfer } = require("./utils.cjs");
 
-const DOCS_BASE_URL = "https://zwave-js.github.io/zwave-js-ui/#";
 const DOCS_ANSWER_COMMENT_TAG = "<!-- DOCS_ANSWER_COMMENT_TAG -->";
 const DOCS_ANSWER_METADATA_TAG = "DOCS_ANSWER_METADATA";
 const DOCS_ANSWER_METADATA_VERSION = 1;
@@ -53,7 +52,7 @@ const SUPPRESS_SIMILARITY = 0.9;
 /** @param {{file: string, anchor: string}} chunk */
 function chunkUrl(chunk) {
 	const docPath = chunk.file.replace(/(README|index)?\.md$/, "");
-	let url = `${DOCS_BASE_URL}/${docPath}`;
+	let url = `${config.docs.baseUrl}/${docPath}`;
 	if (chunk.anchor) url += `?id=${chunk.anchor}`;
 	return url;
 }
@@ -754,5 +753,4 @@ module.exports = {
 	DOCS_ANSWER_COMMENT_TAG,
 	DOCS_ANSWER_METADATA_TAG,
 	DOCS_ANSWER_METADATA_VERSION,
-	DOCS_BASE_URL,
 };
