@@ -3,8 +3,7 @@ import type { Express } from 'express'
 import supertest, { type Test as SupertestTest } from 'supertest'
 import { vi } from 'vitest'
 import type { Driver } from 'zwave-js'
-import type { FakeGateway } from '../shared/fakes.ts'
-import type { FakeZniffer } from '../socket/fakes.ts'
+import type { FakeGateway, FakeZniffer } from '../shared/fakes.ts'
 import {
 	useHarnessLifecycle,
 	listenOnEphemeralPort,

@@ -1,4 +1,9 @@
 import type Gateway from '../lib/Gateway.ts'
+import type {
+	GatewayConfig,
+	GatewayMqtt,
+	GatewayZwave,
+} from '../lib/Gateway.ts'
 import type MqttClient from '../lib/MqttClient.ts'
 import type ZWaveClient from '../lib/ZwaveClient.ts'
 import type ZnifferManager from '../lib/ZnifferManager.ts'
@@ -73,3 +78,12 @@ export type ZnifferPort = Pick<
 	| 'loadCaptureFromBuffer'
 	| 'close'
 >
+
+export interface GatewayFactoryPort {
+	create<TZwave extends GatewayZwave, TMqtt extends GatewayMqtt>(
+		config: GatewayConfig,
+		zwave: TZwave | undefined,
+		mqtt: TMqtt | undefined,
+	): Gateway<TZwave, TMqtt>
+	dispose(): void
+}

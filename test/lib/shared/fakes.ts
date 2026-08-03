@@ -8,6 +8,7 @@ import type {
 	ZnifferPort,
 	ZwaveClientPort,
 } from '#api/runtime/ports.ts'
+import type { StoreHassDevicesResult } from '#api/hass/types.ts'
 
 export interface FakeZwaveClient extends ZwaveClientPort {
 	devices: ZwaveClientPort['devices']
@@ -59,7 +60,11 @@ export function createFakeZwaveClient(
 		})),
 		getState: vi.fn(() => ({ nodes: [], info: {}, error: null })),
 		callApi: vi.fn(() => Promise.resolve({ success: true, message: 'OK' })),
-		storeDevices: vi.fn(() => Promise.resolve(undefined)),
+		storeDevices: vi.fn(() =>
+			Promise.resolve({
+				status: 'stored',
+			} satisfies StoreHassDevicesResult),
+		),
 		updateDevice: vi.fn(() => undefined),
 		addDevice: vi.fn(() => undefined),
 		getConfigurationTemplates: vi.fn(() => []),

@@ -97,6 +97,31 @@ describe('HTTP contract: import/export config', () => {
 			)
 		})
 
+		it.each(['node-not-found', 'invalid-stored-node'] as const)(
+			'reports a %s HASS persistence failure',
+			async (status) => {
+				const gw = createFakeGateway()
+				gw.zwave.storeDevices.mockResolvedValueOnce({ status })
+				const harness = await getHarness({ gateway: gw })
+
+				const res = await harness.request
+					.post('/api/importConfig')
+					.send({
+						data: {
+							2: {
+								hassDevices: { light_2: { type: 'light' } },
+							},
+						},
+					})
+
+				expect(res.status).toBe(200)
+				expect(res.body).toEqual({
+					success: false,
+					message: `Unable to import HASS devices for node 2: ${status}`,
+				})
+			},
+		)
+
 		it('skips non-numeric node-id keys without calling any collaborator', async () => {
 			const gw = createFakeGateway()
 			const harness = await getHarness({ gateway: gw })

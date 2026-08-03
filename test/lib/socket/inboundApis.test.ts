@@ -357,7 +357,7 @@ describe('Socket contract: inbound ACK APIs', () => {
 			})
 		})
 
-		it('"store" persists the device set and acks success', async () => {
+		it('acknowledges stored devices without exposing persistence status', async () => {
 			const devices = { switch_sw: { type: 'switch' } }
 			const gateway = createFakeGateway()
 			const harness = await getHarness({ gateway })
@@ -375,6 +375,21 @@ describe('Socket contract: inbound ACK APIs', () => {
 				false,
 			)
 			expect(result).toStrictEqual({
+				success: true,
+				message: 'Success HASS api call',
+				api: 'store',
+			})
+
+			gateway.zwave.storeDevices.mockResolvedValueOnce({
+				status: 'invalid-stored-node',
+			})
+			const invalidResult = await emit(client, 'HASS_API', {
+				apiName: 'store',
+				devices,
+				nodeId: 2,
+				remove: false,
+			})
+			expect(invalidResult).toStrictEqual({
 				success: true,
 				message: 'Success HASS api call',
 				api: 'store',
@@ -405,7 +420,6 @@ describe('Socket contract: inbound ACK APIs', () => {
 				api: 'store',
 			})
 		})
-
 		it('reports success:false with "Unknown HASS api <name>" for an unknown apiName', async () => {
 			const error = vi.spyOn(createLogger('App'), 'error')
 			try {

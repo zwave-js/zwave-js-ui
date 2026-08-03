@@ -19,7 +19,6 @@ import {
 	cleanupTestEnv as cleanupSharedTestEnv,
 	TEST_SESSION_SECRET,
 } from '../shared/env.ts'
-
 /**
  * Env vars the HASS discovery modules read, snapshotted and cleared before any
  * HASS module imports so an ambient value can't repoint a discovery prefix,

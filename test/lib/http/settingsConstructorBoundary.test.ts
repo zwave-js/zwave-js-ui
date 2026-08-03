@@ -32,7 +32,6 @@ vi.mock('#api/lib/Gateway.ts', () => ({
 		start = vi.fn(() => Promise.resolve())
 		close = vi.fn(() => Promise.resolve())
 	},
-	closeWatchers: vi.fn(),
 }))
 
 vi.mock('#api/lib/ZnifferManager.ts', () => ({

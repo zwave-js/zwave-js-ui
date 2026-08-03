@@ -1,5 +1,5 @@
 import type { Socket } from 'socket.io'
-import type { HassDevice } from '../lib/ZwaveClient.ts'
+import type { HassDevice, HassDeviceMap } from '../hass/types.ts'
 import { getErrorMessage } from '../lib/errors.ts'
 import * as loggers from '../lib/logger.ts'
 import { inboundEvents } from '../lib/SocketEvents.ts'
@@ -25,7 +25,7 @@ export type HassApiRequest =
 	  }
 	| {
 			apiName: 'store'
-			devices: Record<string, HassDevice>
+			devices: HassDeviceMap
 			nodeId: number
 			remove: boolean
 	  }
@@ -82,8 +82,8 @@ export function registerHassApiHandler(
 							.ensureZWaveClient()
 							.addDevice(data.device, data.nodeId)
 						break
-					case 'store':
-						res = await runtime
+					case 'store': {
+						await runtime
 							.ensureZWaveClient()
 							.storeDevices(
 								data.devices,
@@ -91,6 +91,7 @@ export function registerHassApiHandler(
 								data.remove,
 							)
 						break
+					}
 					default:
 						err = `Unknown HASS api ${apiName}`
 						logger.error(

@@ -4,7 +4,6 @@ import path from 'node:path'
 import { readdir, readFile, stat } from 'node:fs/promises'
 import type { Server as SocketServer } from 'socket.io'
 import type { GatewayConfig } from '../lib/Gateway.ts'
-import Gateway from '../lib/Gateway.ts'
 import type { MqttConfig } from '../lib/MqttClient.ts'
 import MqttClient from '../lib/MqttClient.ts'
 import type { ZwaveConfig } from '../lib/ZwaveClient.ts'
@@ -20,7 +19,12 @@ import type { PersistedSettings } from '../config/store.ts'
 import * as loggers from '../lib/logger.ts'
 import * as utils from '../lib/utils.ts'
 import { snippetsDir } from '../config/app.ts'
-import type { GatewayPort, ZnifferPort, ZwaveClientPort } from './ports.ts'
+import type {
+	GatewayFactoryPort,
+	GatewayPort,
+	ZnifferPort,
+	ZwaveClientPort,
+} from './ports.ts'
 
 const logger = loggers.module('Runtime')
 
@@ -37,6 +41,7 @@ export interface AppRuntimeDeps {
 	gateway?: GatewayPort
 	zniffer?: ZnifferPort
 	restarting?: boolean
+	gatewayFactory: GatewayFactoryPort
 }
 
 export class AppRuntime {
@@ -196,7 +201,11 @@ export class AppRuntime {
 
 		backupManager.init(zwave, this.backupManagerOwner)
 
-		const gw = new Gateway(settings.gateway as GatewayConfig, zwave, mqtt)
+		const gw = this.deps.gatewayFactory.create(
+			settings.gateway as GatewayConfig,
+			zwave,
+			mqtt,
+		)
 		this.setGateway(gw)
 
 		await gw.start()
@@ -280,6 +289,12 @@ export class AppRuntime {
 			await this.closeIfPresent(this._gateway)
 		} catch (error) {
 			logger.error('Error while closing gateway', error)
+		}
+
+		try {
+			this.deps.gatewayFactory.dispose()
+		} catch (error) {
+			logger.error('Error while disposing gateway factory', error)
 		}
 
 		try {

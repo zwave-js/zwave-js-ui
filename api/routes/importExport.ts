@@ -112,9 +112,14 @@ export function registerImportExportRoutes(
 					}
 
 					if (utils.isRecord(node.hassDevices)) {
-						await runtime
+						const result = await runtime
 							.ensureZWaveClient()
 							.storeDevices(node.hassDevices, nodeIdNumber, false)
+						if (result.status !== 'stored') {
+							throw new Error(
+								`Unable to import HASS devices for node ${nodeId}: ${result.status}`,
+							)
+						}
 					}
 				}
 
