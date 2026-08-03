@@ -2,11 +2,10 @@
 	<ZwDialog
 		:model-value="_value"
 		size="lg"
-		persistent
+		dismiss="button"
 		:title="`Node ${activeNode ? activeNode.id : ''} - Link Statistics`"
 		:actions="dialogActions"
 		@update:model-value="_value = $event"
-		@close="$emit('close')"
 		@after-leave="teardown"
 	>
 		<v-container class="pa-0">
@@ -226,14 +225,21 @@ export default {
 	},
 	computed: {
 		dialogActions() {
-			return [cancelAction(() => this.$emit('close'), { label: 'Close' })]
+			return [
+				cancelAction(() => (this._value = false), { label: 'Close' }),
+			]
 		},
 		_value: {
 			get() {
 				return this.modelValue
 			},
+			// Lowering the model is the only dismissal path, so `close` rides it
 			set(val) {
+				// Abort here rather than on `after-leave`: the check keeps
+				// running on the controller until this call lands
+				if (!val && this.running) this.abortLinkReliabilityCheck()
 				this.$emit('update:modelValue', val)
+				if (!val) this.$emit('close')
 			},
 		},
 	},
@@ -281,12 +287,8 @@ export default {
 			}
 		},
 		teardown() {
-			const wasRunning = this.running
 			this.init(undefined)
 			this.unbindEvents()
-			if (wasRunning) {
-				this.abortLinkReliabilityCheck()
-			}
 		},
 		onProgress(data) {
 			this.statistics = data.args[0]

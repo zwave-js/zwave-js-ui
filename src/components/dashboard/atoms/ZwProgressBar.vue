@@ -48,8 +48,11 @@ const pct = computed(() =>
 	position: absolute;
 	top: 0;
 	bottom: 0;
+	left: 0;
 	width: 40%;
+	/* Keyframes translate by multiples of this width, so the two must agree */
 	animation: zw-indeterminate 1.4s ease-in-out infinite;
+	will-change: transform;
 }
 
 @media (prefers-reduced-motion: reduce) {

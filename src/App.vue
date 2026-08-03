@@ -452,6 +452,10 @@ export default {
 			showTabLabels: (store) => store.ui.showTabLabels,
 		}),
 		...mapWritableState(useBaseStore, ['debugCaptureActive']),
+		// Mirrors DialogLoader's own `ended`, which decides whether it blocks
+		loaderEnded() {
+			return this.loaderProgress === 100 || this.loaderProgress === -1
+		},
 		menuItems() {
 			const items = [
 				{
@@ -826,7 +830,9 @@ export default {
 			if (this.nodesManagerDialog) {
 				return
 			}
-			this.showNodesManager('')
+			// Driver-initiated, so push nothing: a Name and Location step here
+			// would sit ahead of Security Classes and never be read
+			this.showNodesManager({})
 			this.$refs.nodesManager.onGrantSecurityCC(requested)
 		},
 		onOTWFirmwareUpdate(data) {
@@ -841,9 +847,9 @@ export default {
 				// The outcome carries its own styled message, so drop any
 				// title a previous operation left on the loader
 				this.loaderTitle = ''
-				// finishLoader reopens the dialog, so the outcome shows even
+				// finishLoaderHtml reopens the dialog, so the outcome shows even
 				// when no progress was reported and the loader already closed
-				this.finishLoader(
+				this.finishLoaderHtml(
 					`<span style="white-space: break-spaces;" class="text-${
 						result.success ? 'success' : 'error'
 					}">Controller firmware update finished ${
@@ -879,11 +885,13 @@ export default {
 			this.loaderProgress = percent
 			this.loaderIndeterminate = percent === 0
 		},
-		finishLoader(text) {
+		// `html` is rendered with v-html by DialogLoader, so it must never
+		// carry socket- or node-derived text
+		finishLoaderHtml(html) {
 			this.dialogLoader = true
 			this.loaderProgress = -1
 			this.loaderIndeterminate = false
-			if (text !== undefined) this.loaderText = text
+			if (html !== undefined) this.loaderText = html
 		},
 		...mapActions(useBaseStore, [
 			'init',
@@ -1457,6 +1465,14 @@ export default {
 			this.socket.on('disconnect', () => {
 				log.info('Socket disconnected')
 				this.updateStatus('Disconnected', 'error')
+				// A blocking loader hides its close button and suppresses Esc,
+				// so without a terminal state here the user is stuck on a
+				// spinner for a request that can no longer settle
+				if (this.dialogLoader && !this.loaderEnded) {
+					this.finishLoaderHtml(
+						'<span class="text-error">Connection lost ❌ — the operation may still be running on the controller.</span>',
+					)
+				}
 			})
 
 			this.socket.on('connect_error', (err) => {

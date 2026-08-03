@@ -5,7 +5,7 @@
 		severity="warning"
 		:icon="TrashIcon"
 		title="Exclude Device"
-		:persistent="running"
+		:dismiss="busy ? 'button' : 'all'"
 		:actions="dialogActions"
 		@update:model-value="onModel"
 		@after-leave="reset"
@@ -20,7 +20,7 @@
 					The device was excluded from the network.
 				</p>
 			</template>
-			<template v-else-if="stopped">
+			<template v-else-if="phase === 'stopped'">
 				<span class="zw-exclude__chip zw-tone-warn">
 					<AlertIcon :size="ICON_SIZE.drawerHeader" />
 				</span>
@@ -51,7 +51,7 @@ import useBaseStore from '../../stores/base.js'
 import InstancesMixin from '../../mixins/InstancesMixin.js'
 import ZwDialog from '@/components/dashboard/dialogs/ZwDialog.vue'
 import { AlertIcon, CheckIcon, ICON_SIZE, TrashIcon } from '@/lib/icons'
-import { confirmAction } from '@/lib/dashboard-types'
+import { confirmAction, pendingAction } from '@/lib/dashboard-types'
 
 // Wait for a trailing nodeRemoved because it can lag the "stopped" status
 const SETTLE_MS = 3000
@@ -67,9 +67,12 @@ export default {
 	},
 	data() {
 		return {
-			phase: 'running',
+			// `idle` until exclusion actually starts, so teardown before the
+			// dialog is ever opened doesn't fire a stray stopExclusion
+			phase: 'idle',
 			removed: null,
 			settleTimer: null,
+			run: 0,
 			TrashIcon,
 			ICON_SIZE,
 		}
@@ -82,19 +85,15 @@ export default {
 		running() {
 			return this.phase === 'running' || this.phase === 'stopping'
 		},
-		stopped() {
-			return this.phase === 'stopped'
+		// Exclusion is live on the controller and must not be silently dropped
+		busy() {
+			return this.running || this.phase === 'settling'
 		},
 		dialogActions() {
-			if (this.phase === 'stopping') {
-				return [
-					confirmAction('Stopping…', undefined, {
-						tone: 'danger',
-						disabled: true,
-					}),
-				]
+			if (this.phase === 'stopping' || this.phase === 'settling') {
+				return [pendingAction('Stopping…', { tone: 'danger' })]
 			}
-			if (this.phase === 'running') {
+			if (this.running) {
 				return [confirmAction('Stop', this.stop, { tone: 'danger' })]
 			}
 			return [confirmAction('Close', this.close)]
@@ -105,12 +104,7 @@ export default {
 			if (v) this.begin()
 		},
 		controllerStatus(status) {
-			if (
-				!status ||
-				(this.phase !== 'running' && this.phase !== 'stopping') ||
-				this.removed
-			)
-				return
+			if (!status || !this.running || this.removed) return
 			if (/exclusion/i.test(status) && /stopped/i.test(status)) {
 				this.settle()
 			}
@@ -118,6 +112,8 @@ export default {
 	},
 	methods: {
 		begin() {
+			this.clearSettle()
+			this.run++
 			this.phase = 'running'
 			this.removed = null
 			this.subscribeChannels(['nodes'])
@@ -133,17 +129,25 @@ export default {
 			this.phase = 'removed'
 		},
 		async stop() {
+			const run = this.run
 			this.phase = 'stopping'
 			await this.app.apiRequest('stopExclusion', [], {
 				infoSnack: false,
 				errorSnack: true,
 			})
+			// A close-and-reopen during the await starts a new run, whose
+			// exclusion must not be settled by this one
+			if (run !== this.run) return
 			this.settle()
 		},
 		settle() {
 			this.clearSettle()
+			// Leaves `running`, so the footer stops offering Stop while the
+			// trailing nodeRemoved is still expected
+			this.phase = 'settling'
+			const run = this.run
 			this.settleTimer = setTimeout(() => {
-				if (!this.removed) this.phase = 'stopped'
+				if (run === this.run && !this.removed) this.phase = 'stopped'
 			}, SETTLE_MS)
 		},
 		clearSettle() {
@@ -156,19 +160,30 @@ export default {
 			if (!v) this.close()
 		},
 		close() {
+			// Stop the controller now rather than on `after-leave`: the leave
+			// transition can be cancelled, and Vue then never emits it
+			this.abandon()
 			this.$emit('update:modelValue', false)
 			this.$emit('close')
 		},
-		reset() {
-			if (this.phase === 'running') {
-				this.app.apiRequest('stopExclusion', [], {
+		// Release a live exclusion without reporting an outcome to a dialog
+		// that is on its way out
+		abandon() {
+			if (!this.running) return
+			this.phase = 'idle'
+			this.app
+				.apiRequest('stopExclusion', [], {
 					infoSnack: false,
 					errorSnack: false,
 				})
-			}
+				.catch((err) => console.error('Failed to stop exclusion', err))
+		},
+		reset() {
+			this.abandon()
+			this.run++
 			this.clearSettle()
 			this.unbindEvents()
-			this.phase = 'running'
+			this.phase = 'idle'
 			this.removed = null
 		},
 	},

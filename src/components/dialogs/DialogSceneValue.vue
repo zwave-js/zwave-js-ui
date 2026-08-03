@@ -5,7 +5,6 @@
 		:title="title || 'Scene value'"
 		:actions="dialogActions"
 		@update:model-value="_value = $event"
-		@close="$emit('close')"
 	>
 		<v-container grid-list-md class="pa-0">
 			<v-form v-model="valid" ref="form" validate-on="lazy">
@@ -107,7 +106,7 @@ export default {
 	computed: {
 		dialogActions() {
 			return [
-				cancelAction(() => this.$emit('close')),
+				cancelAction(() => (this._value = false)),
 				confirmAction('Save', this.handleSave),
 			]
 		},
@@ -115,8 +114,10 @@ export default {
 			get() {
 				return this.modelValue
 			},
+			// Lowering the model is the only dismissal path, so `close` rides it
 			set(val) {
 				this.$emit('update:modelValue', val)
+				if (!val) this.$emit('close')
 			},
 		},
 	},

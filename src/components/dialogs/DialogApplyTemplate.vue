@@ -2,7 +2,7 @@
 	<ZwDialog
 		:model-value="_value"
 		size="xl"
-		:blocking="running"
+		:dismiss="running ? 'none' : 'all'"
 		:loading="running"
 		:title="`Apply Template: ${template?.name ?? ''}`"
 		:actions="dialogActions"

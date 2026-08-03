@@ -4,7 +4,7 @@
 		:size="dialogSize"
 		:severity="severity"
 		:title="title"
-		:blocking="options.persistent"
+		:dismiss="dismiss"
 		:actions="dialogActions"
 		@update:model-value="show = $event"
 		@after-leave="reset"
@@ -269,9 +269,17 @@ export default {
 					return 'default'
 			}
 		},
-		// Quantise `options.width` to a DialogSize breakpoint
+		// `noCancel` callers have no Cancel action, so the X would be the only
+		// way out of a dialog whose whole point is an acknowledgement
+		dismiss() {
+			if (this.options?.noCancel) return 'none'
+			return this.options?.persistent ? 'button' : 'all'
+		},
+		// Quantise `options.width` to a DialogSize breakpoint. Callers pass
+		// either a number or a CSS length, as `:max-width` used to accept.
 		dialogSize() {
-			const w = this.options?.width ?? 290
+			const parsed = parseInt(this.options?.width, 10)
+			const w = Number.isNaN(parsed) ? 290 : parsed
 			if (w <= 400) return 'sm'
 			if (w <= 560) return 'md'
 			if (w <= 760) return 'lg'
@@ -401,12 +409,9 @@ export default {
 			Object.assign(this.options, options)
 
 			return new Promise((resolve, reject) => {
-				this.resolve = this.beforeClose(resolve)
-				this.reject = this.beforeClose(reject)
+				this.resolve = resolve
+				this.reject = reject
 			})
-		},
-		beforeClose(fn) {
-			return (...args) => fn(...args)
 		},
 		async agree() {
 			if (this.options.inputs) {

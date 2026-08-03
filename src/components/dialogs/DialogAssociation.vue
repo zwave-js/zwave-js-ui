@@ -3,10 +3,9 @@
 		:model-value="_value"
 		size="md"
 		title="New Association"
-		persistent
+		dismiss="button"
 		:actions="dialogActions"
 		@update:model-value="_value = $event"
-		@close="$emit('close')"
 		@after-leave="resetForm"
 	>
 		<v-container grid-list-md class="pa-0">
@@ -116,7 +115,7 @@ import { Protocols } from '@zwave-js/core'
 import { mapState } from 'pinia'
 import useBaseStore from '../../stores/base.js'
 import { getAssociationAddress } from '../../lib/utils'
-import { cancelAction, confirmAction } from '../../lib/dashboard-types'
+import { cancelAction, confirmAction } from '@/lib/dashboard-types'
 import { AssociationCheckResult } from '@zwave-js/cc'
 import { getEnumMemberName } from '@zwave-js/shared'
 import InstancesMixin from '../../mixins/InstancesMixin.js'
@@ -132,6 +131,10 @@ export default {
 		node: Object,
 	},
 	watch: {
+		modelValue(v) {
+			// `after-leave` never fires when a re-open cancels the leave
+			if (v) this.resetForm()
+		},
 		group: {
 			deep: true,
 			async handler() {
@@ -147,7 +150,7 @@ export default {
 		...mapState(useBaseStore, ['controllerNode', 'nodes']),
 		dialogActions() {
 			return [
-				cancelAction(() => this.$emit('close')),
+				cancelAction(() => (this._value = false)),
 				confirmAction('Add', this.handleAdd, {
 					disabled:
 						this.nodesInGroup >= this.maxNodes ||
@@ -217,8 +220,10 @@ export default {
 			get() {
 				return this.modelValue
 			},
+			// Lowering the model is the only dismissal path, so `close` rides it
 			set(val) {
 				this.$emit('update:modelValue', val)
+				if (!val) this.$emit('close')
 			},
 		},
 	},

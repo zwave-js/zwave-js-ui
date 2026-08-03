@@ -4,7 +4,6 @@
 		size="lg"
 		:title="title"
 		@update:model-value="_value = $event"
-		@close="$emit('close')"
 	>
 		<div :class="['action-grid', $vuetify.display.name]">
 			<div v-for="(a, i) in actions" :key="i">
@@ -48,8 +47,10 @@ export default {
 			get() {
 				return this.modelValue
 			},
+			// Lowering the model is the only dismissal path, so `close` rides it
 			set(val) {
 				this.$emit('update:modelValue', val)
+				if (!val) this.$emit('close')
 			},
 		},
 	},

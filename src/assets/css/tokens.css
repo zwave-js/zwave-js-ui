@@ -21,6 +21,7 @@
 
 	/* ── Color · status ──────────────────────────────────────── */
 	--zw-ok: rgb(var(--v0-success));
+	--zw-ok-soft: rgba(var(--v0-success), 0.12);
 	--zw-warning: rgb(var(--v0-warning));
 	--zw-warn-soft: rgb(var(--v0-warn-soft));
 	--zw-danger: rgb(var(--v0-error));
@@ -84,6 +85,8 @@
 	   so a mismatch visibly offsets the rail from the body. */
 	--zw-dlg-pad-x: 20px;
 	--zw-dlg-pad-top: 18px;
+	--zw-dlg-max-h: 90vh;
+	--zw-dlg-rail-w: 210px;
 
 	/* ── Elevation ───────────────────────────────────────────── */
 	/* Shadow colour reads from --v0-on-surface so light-mode keeps the
@@ -115,7 +118,7 @@
 }
 
 .zw-tone-ok {
-	--tone-bg: rgba(var(--v0-success), 0.12);
+	--tone-bg: var(--zw-ok-soft);
 	--tone-fg: var(--zw-ok);
 }
 
@@ -219,14 +222,16 @@
 	}
 }
 
-/* Indeterminate progress sweep — a short segment slides across the track
-   and back, for operations with no known percentage. */
+/* Indeterminate progress sweep — a short segment slides across the track,
+   for operations with no known percentage. Uses `transform` so the sweep
+   stays compositor-only: it runs for minutes during an NVM restore,
+   alongside live socket-driven re-renders elsewhere in the tree. */
 @keyframes zw-indeterminate {
 	0% {
-		left: -40%;
+		transform: translateX(-100%);
 	}
 	100% {
-		left: 100%;
+		transform: translateX(250%);
 	}
 }
 

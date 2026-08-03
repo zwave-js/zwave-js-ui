@@ -43,7 +43,9 @@ function labelClass(i: number) {
 
 <style scoped>
 .zw-rail {
-	width: 210px;
+	/* Step marks and the connector line between them share this size */
+	--rail-mark: 22px;
+	width: var(--zw-dlg-rail-w);
 	flex-shrink: 0;
 	background: var(--zw-bg-soft);
 	border-right: 1px solid var(--zw-line-soft);
@@ -70,8 +72,8 @@ function labelClass(i: number) {
 }
 
 .zw-rail__num {
-	width: 22px;
-	height: 22px;
+	width: var(--rail-mark);
+	height: var(--rail-mark);
 	border-radius: var(--zw-radius-pill);
 	flex-shrink: 0;
 	display: inline-flex;
@@ -82,7 +84,7 @@ function labelClass(i: number) {
 }
 
 .zw-rail__num--done {
-	background: rgba(var(--v0-success), 0.12);
+	background: var(--zw-ok-soft);
 	color: var(--zw-ok);
 }
 
@@ -99,13 +101,13 @@ function labelClass(i: number) {
 .zw-rail__line {
 	width: 2px;
 	flex: 1;
-	min-height: 22px;
+	min-height: var(--rail-mark);
 	background: var(--zw-line);
 	margin: 4px 0;
 }
 
 .zw-rail__line--done {
-	background: rgba(var(--v0-success), 0.12);
+	background: var(--zw-ok-soft);
 }
 
 .zw-rail__label {

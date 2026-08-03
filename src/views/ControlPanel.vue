@@ -133,6 +133,14 @@ export default {
 					tooltip: 'Manage nodes',
 					action: () => this.showNodesManager(),
 				})
+				// Exclusion left the nodes manager wizard, so this panel needs
+				// its own entry point
+				items.push({
+					icon: 'remove_circle_outline',
+					color: 'error',
+					tooltip: 'Exclude device',
+					action: () => this.showExcludeDevice(),
+				})
 			}
 
 			// Always show "Advanced actions" button
@@ -431,6 +439,9 @@ export default {
 		jsonToList,
 		showNodesManager() {
 			this.app.showNodesManager()
+		},
+		showExcludeDevice() {
+			this.app.showExcludeDevice()
 		},
 		async onAction(action, args = {}) {
 			if (action === 'import') {

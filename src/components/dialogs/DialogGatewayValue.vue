@@ -2,11 +2,10 @@
 	<ZwDialog
 		:model-value="_value"
 		size="lg"
-		persistent
+		dismiss="button"
 		:title="title"
 		:actions="dialogActions"
 		@update:model-value="_value = $event"
-		@close="$emit('close')"
 	>
 		<v-container grid-list-md class="pa-0">
 			<v-form v-model="valid" ref="form" validate-on="lazy">
@@ -231,7 +230,7 @@ import 'prismjs/themes/prism-tomorrow.css' // import syntax highlighting styles
 
 import { mapState } from 'pinia'
 import useBaseStore from '../../stores/base.js'
-import { cancelAction, confirmAction } from '../../lib/dashboard-types'
+import { cancelAction, confirmAction } from '@/lib/dashboard-types'
 import { defineAsyncComponent } from 'vue'
 import ZwDialog from '@/components/dashboard/dialogs/ZwDialog.vue'
 
@@ -262,7 +261,7 @@ export default {
 		...mapState(useBaseStore, ['gateway', 'mqtt']),
 		dialogActions() {
 			return [
-				cancelAction(() => this.$emit('close')),
+				cancelAction(() => (this._value = false)),
 				confirmAction(this.isNew ? 'Add' : 'Update', this.handleSave),
 			]
 		},
@@ -270,8 +269,10 @@ export default {
 			get() {
 				return this.modelValue
 			},
+			// Lowering the model is the only dismissal path, so `close` rides it
 			set(val) {
 				this.$emit('update:modelValue', val)
+				if (!val) this.$emit('close')
 			},
 		},
 		deviceValues() {

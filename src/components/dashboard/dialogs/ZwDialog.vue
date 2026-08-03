@@ -2,15 +2,21 @@
 	<v-dialog
 		:model-value="modelValue"
 		:width="widthPx"
-		:persistent="blocking || persistent"
+		:persistent="dismiss !== 'all'"
 		content-class="zw-dlg__vcontent"
 		class="zw-dlg__overlay"
-		:class="{ 'zw-dlg__overlay--blocking': blocking }"
+		:class="{ 'zw-dlg__overlay--blocking': dismiss === 'none' }"
 		scrim="black"
 		@update:model-value="onModel"
 		@after-leave="emit('afterLeave')"
 	>
-		<div class="zw-dlg" role="dialog" aria-modal="true" :aria-label="title">
+		<div
+			ref="content"
+			class="zw-dlg"
+			role="dialog"
+			aria-modal="true"
+			:aria-label="title"
+		>
 			<ZwProgressBar
 				v-if="loading"
 				:value="null"
@@ -23,7 +29,7 @@
 				<slot name="rail" />
 				<div class="zw-dlg__main">
 					<slot name="header" :close="close">
-						<component :is="headerVNode" />
+						<ZwDialogHeader v-bind="headerProps" @close="close" />
 					</slot>
 					<div class="zw-dlg__body">
 						<slot />
@@ -33,7 +39,7 @@
 
 			<template v-else>
 				<slot name="header" :close="close">
-					<component :is="headerVNode" />
+					<ZwDialogHeader v-bind="headerProps" @close="close" />
 				</slot>
 				<div class="zw-dlg__body">
 					<slot />
@@ -66,13 +72,14 @@
 </template>
 
 <script setup lang="ts">
-import { computed, h, type Component } from 'vue'
+import { computed, onBeforeUnmount, ref, watch, type Component } from 'vue'
 import ZwButton from '@/components/dashboard/atoms/ZwButton.vue'
 import ZwProgressBar from '@/components/dashboard/atoms/ZwProgressBar.vue'
-import ZwDialogClose from './ZwDialogClose.vue'
-import { AlertIcon, CheckIcon, ICON_SIZE } from '@/lib/icons'
+import ZwDialogHeader from './ZwDialogHeader.vue'
+import { AlertIcon, CheckIcon, InfoIcon, ICON_SIZE } from '@/lib/icons'
 import type {
 	DialogAction,
+	DialogDismiss,
 	DialogSeverity,
 	DialogSize,
 	ZwButtonVariant,
@@ -86,9 +93,8 @@ const props = withDefaults(
 		title?: string
 		subtitle?: string
 		icon?: Component | null
-		blocking?: boolean
-		// Suppress Esc and backdrop dismiss, keep the close button
-		persistent?: boolean
+		// Which dismissal affordances the dialog offers
+		dismiss?: DialogDismiss
 		loading?: boolean
 		actions?: DialogAction[]
 	}>(),
@@ -98,8 +104,7 @@ const props = withDefaults(
 		title: '',
 		subtitle: '',
 		icon: null,
-		blocking: false,
-		persistent: false,
+		dismiss: 'all',
 		loading: false,
 		actions: () => [],
 	},
@@ -107,9 +112,26 @@ const props = withDefaults(
 
 const emit = defineEmits<{
 	'update:modelValue': [boolean]
-	close: []
 	afterLeave: []
+	// Measured content width, for consumers that switch layout on it
+	'update:contentWidth': [number]
 }>()
+
+// Reported rather than derived from the window: dashboard breakpoints are
+// container widths, and the dialog is narrower than the viewport
+const content = ref<HTMLElement | null>(null)
+let ro: ResizeObserver | null = null
+
+watch(content, (el) => {
+	ro?.disconnect()
+	ro = null
+	if (!el) return
+	emit('update:contentWidth', el.clientWidth)
+	ro = new ResizeObserver(() => emit('update:contentWidth', el.clientWidth))
+	ro.observe(el)
+})
+
+onBeforeUnmount(() => ro?.disconnect())
 
 const WIDTHS: Record<DialogSize, number> = {
 	sm: 400,
@@ -119,10 +141,12 @@ const WIDTHS: Record<DialogSize, number> = {
 }
 const widthPx = computed(() => WIDTHS[props.size])
 
-const RULE = { success: true, warning: true, danger: true } as Record<
-	DialogSeverity,
-	boolean
->
+const RULE = {
+	info: true,
+	success: true,
+	warning: true,
+	danger: true,
+} as Record<DialogSeverity, boolean>
 const hasRule = computed(() => !!RULE[props.severity])
 const ruleClass = computed(() => `zw-dlg__rule--${props.severity}`)
 
@@ -135,6 +159,7 @@ const TONE: Record<DialogSeverity, string> = {
 }
 
 const DEFAULT_ICON: Partial<Record<DialogSeverity, Component>> = {
+	info: InfoIcon,
 	success: CheckIcon,
 	warning: AlertIcon,
 	danger: AlertIcon,
@@ -143,35 +168,30 @@ const DEFAULT_ICON: Partial<Record<DialogSeverity, Component>> = {
 const chipIcon = computed(
 	() => props.icon ?? DEFAULT_ICON[props.severity] ?? null,
 )
-const showClose = computed(() => !props.blocking)
+const showClose = computed(() => props.dismiss !== 'none')
 
 function onModel(v: boolean) {
 	emit('update:modelValue', v)
-	if (!v) emit('close')
 }
 function close() {
 	onModel(false)
 }
 
-// VNode so the `header` slot can replace the whole region
-const headerVNode = () =>
-	h('div', { class: 'zw-dlg__header' }, [
-		chipIcon.value &&
-			h('div', { class: ['zw-dlg__chip', TONE[props.severity]] }, [
-				h(chipIcon.value, { size: ICON_SIZE.topbar }),
-			]),
-		h('div', { class: 'zw-dlg__titles' }, [
-			props.title && h('h2', { class: 'zw-dlg__title' }, props.title),
-			props.subtitle &&
-				h('div', { class: 'zw-dlg__subtitle' }, props.subtitle),
-		]),
-		showClose.value && h(ZwDialogClose, { onClick: close }),
-	])
+const headerProps = computed(() => ({
+	title: props.title,
+	subtitle: props.subtitle,
+	icon: chipIcon.value,
+	tone: TONE[props.severity],
+	showClose: showClose.value,
+}))
 
 function variantFor(a: DialogAction): ZwButtonVariant {
 	const kind = a.kind ?? 'text'
 	const tone = a.tone ?? 'accent'
-	if (kind === 'filled') return tone === 'danger' ? 'danger' : 'primary'
+	if (kind === 'filled') {
+		if (tone === 'danger') return 'danger'
+		return tone === 'neutral' ? 'outline' : 'primary'
+	}
 	if (kind === 'outline') return 'outline'
 	if (tone === 'danger') return 'text-danger'
 	if (tone === 'neutral') return 'ghost'
@@ -189,7 +209,7 @@ function variantFor(a: DialogAction): ZwButtonVariant {
    dialog fills the screen with only a small margin on phones. */
 .v-overlay__content.zw-dlg__vcontent {
 	max-width: calc(100vw - 32px);
-	max-height: 90vh;
+	max-height: var(--zw-dlg-max-h);
 	margin: 16px;
 }
 
@@ -213,7 +233,7 @@ function variantFor(a: DialogAction): ZwButtonVariant {
 	display: flex;
 	flex-direction: column;
 	width: 100%;
-	max-height: 86vh;
+	max-height: var(--zw-dlg-max-h);
 	background: var(--zw-card);
 	color: var(--zw-fg);
 	border-radius: var(--zw-radius-lg);
@@ -229,6 +249,10 @@ function variantFor(a: DialogAction): ZwButtonVariant {
 .zw-dlg__rule {
 	height: 3px;
 	flex-shrink: 0;
+}
+
+.zw-dlg__rule--info {
+	background: var(--zw-accent);
 }
 
 .zw-dlg__rule--success {

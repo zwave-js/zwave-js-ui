@@ -3,7 +3,7 @@
 		:model-value="_value"
 		size="md"
 		:title="title"
-		:blocking="!ended"
+		:dismiss="ended ? 'all' : 'none'"
 		@update:model-value="_value = $event"
 	>
 		<p v-if="text" v-html="text" class="ma-0"></p>

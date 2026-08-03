@@ -3,7 +3,7 @@
 		:model-value="_value"
 		size="xl"
 		:title="`Firmware Updates - Node ${node?.id}`"
-		persistent
+		dismiss="button"
 		@update:model-value="_value = $event"
 	>
 		<OTWUpdates

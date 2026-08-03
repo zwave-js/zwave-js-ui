@@ -6,7 +6,7 @@
 		title="Nodes Manager"
 		:subtitle="currentSubtitle"
 		size="xl"
-		:persistent="loading || state === 'start'"
+		:dismiss="dismiss"
 		:loading="loading"
 		:actions="footerActions"
 		@update:model-value="(v) => !v && close()"
@@ -503,6 +503,14 @@ export default {
 				!['s2Classes', 's2Pin', 'done'].includes(s.key)
 			)
 		},
+		dismiss() {
+			// No X while an inclusion is live: closing would leave the
+			// controller including with nothing driving it. The footer offers
+			// Stop there, so this can't trap the user
+			if (this.state === 'start') return 'none'
+			// Keep the X during a transient request, drop Esc and the scrim
+			return this.loading ? 'button' : 'all'
+		},
 		footerActions() {
 			const s = this.step
 			if (!s) return []
@@ -710,14 +718,6 @@ export default {
 			this.nodeFound = node
 			if (this.loading) {
 				this.showResults(result)
-			}
-		},
-		onNodeRemoved(node) {
-			this.nodeFound = node
-
-			// the add/remove dialog is waiting for a feedback
-			if (this.waitTimeout) {
-				this.showResults()
 			}
 		},
 		async onParseQrCode(data) {
@@ -969,6 +969,9 @@ export default {
 		},
 		init(bind) {
 			this.steps = []
+			// `current` is derived from this, so a stale index would point past
+			// the freshly emptied steps until the first pushStep lands
+			this.currentStep = 1
 
 			// Keep the stop flag while an inclusion is still running
 			if (this.state !== 'start') {
@@ -998,7 +1001,6 @@ export default {
 					this.onGrantSecurityCC.bind(this),
 				)
 				this.bindEvent('validateDSK', this.onValidateDSK.bind(this))
-				this.bindEvent('nodeRemoved', this.onNodeRemoved.bind(this))
 				this.bindEvent('nodeAdded', this.onNodeAdded.bind(this))
 			} else if (bind === false) {
 				this.unbindEvents()
@@ -1007,6 +1009,9 @@ export default {
 		async pushStep(step) {
 			const s =
 				typeof step === 'string' ? this.availableSteps[step] : step
+			if (!s) {
+				throw new Error(`Unknown nodes manager step "${step}"`)
+			}
 			s.index = this.steps.length + 1
 			this.alert = null
 			const newStep = copy(s)

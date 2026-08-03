@@ -2,12 +2,11 @@
 	<ZwDialog
 		:model-value="_value"
 		size="lg"
-		persistent
+		dismiss="button"
 		:loading="loading"
 		:title="`Node ${activeNode ? activeNode.id : ''} - Health check`"
 		:actions="dialogActions"
 		@update:model-value="_value = $event"
-		@close="$emit('close')"
 		@after-leave="teardown"
 	>
 		<v-container class="pa-0">
@@ -270,14 +269,18 @@ export default {
 	computed: {
 		...mapState(useBaseStore, ['nodes']),
 		dialogActions() {
-			return [cancelAction(() => this.$emit('close'), { label: 'Close' })]
+			return [
+				cancelAction(() => (this._value = false), { label: 'Close' }),
+			]
 		},
 		_value: {
 			get() {
 				return this.modelValue
 			},
+			// Lowering the model is the only dismissal path, so `close` rides it
 			set(val) {
 				this.$emit('update:modelValue', val)
+				if (!val) this.$emit('close')
 			},
 		},
 		isLR() {
@@ -397,6 +400,13 @@ export default {
 			}
 		},
 		init(open) {
+			// `after-leave` never fires when a re-open cancels the leave, so
+			// the reset has to happen here as well
+			this.results = []
+			this.averages = null
+			this.loading = false
+			this.targetNode = null
+
 			if (open) {
 				this.rounds = 5
 				this.activeNode = copy(this.node)
@@ -415,10 +425,7 @@ export default {
 		},
 		teardown() {
 			this.unbindEvents()
-			this.results = []
-			this.loading = false
-			this.targetNode = null
-			this.averages = null
+			this.init(false)
 		},
 		onHealthCheckProgress(data) {
 			const { request, round, totalRounds, lastResult } = data
@@ -507,7 +514,7 @@ export default {
 		},
 	},
 	beforeUnmount() {
-		this.init(false)
+		this.teardown()
 	},
 }
 </script>

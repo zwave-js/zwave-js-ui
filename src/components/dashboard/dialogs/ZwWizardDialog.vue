@@ -1,14 +1,10 @@
 <template>
 	<ZwDialog
-		:model-value="modelValue"
-		:size="size"
-		:persistent="persistent"
-		:loading="loading"
-		:actions="actions"
+		v-bind="dialogProps"
 		:title="railLayout ? steps[current] : ''"
 		:subtitle="railLayout ? subtitle : ''"
 		@update:model-value="(v) => emit('update:modelValue', v)"
-		@close="emit('close')"
+		@update:content-width="onContentWidth"
 		@after-leave="emit('afterLeave')"
 	>
 		<!-- Wide: vertical rail spanning header+body. Narrow: circular header. -->
@@ -23,7 +19,9 @@
 			<ZwDialogStepProgress
 				:steps="steps"
 				:current="current"
+				:title="title"
 				:subtitle="subtitle"
+				:show-close="dismiss !== 'none'"
 				@close="requestClose"
 			/>
 		</template>
@@ -37,14 +35,18 @@
 </template>
 
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, ref } from 'vue'
 import ZwDialog from './ZwDialog.vue'
 import ZwDialogStepRail from './ZwDialogStepRail.vue'
 import ZwDialogStepProgress from './ZwDialogStepProgress.vue'
 import { TWO_PANE_BREAKPOINT } from '@/lib/dashboard-breakpoints'
-import type { DialogAction, DialogSize } from '@/lib/dashboard-types'
+import type {
+	DialogAction,
+	DialogDismiss,
+	DialogSize,
+} from '@/lib/dashboard-types'
 
-withDefaults(
+const props = withDefaults(
 	defineProps<{
 		modelValue: boolean
 		steps: string[]
@@ -52,14 +54,14 @@ withDefaults(
 		title: string
 		subtitle?: string
 		size?: DialogSize
-		persistent?: boolean
+		dismiss?: DialogDismiss
 		loading?: boolean
 		actions?: DialogAction[]
 	}>(),
 	{
 		subtitle: '',
 		size: 'xl',
-		persistent: false,
+		dismiss: 'all',
 		loading: false,
 		actions: () => [],
 	},
@@ -67,24 +69,26 @@ withDefaults(
 
 const emit = defineEmits<{
 	'update:modelValue': [boolean]
-	close: []
 	afterLeave: []
 }>()
 
-// Switch to circular header below the two-pane breakpoint
-const mql =
-	typeof window !== 'undefined'
-		? window.matchMedia(`(min-width: ${TWO_PANE_BREAKPOINT}px)`)
-		: null
-const railLayout = ref(mql?.matches ?? true)
-function onBreakpoint(e: MediaQueryListEvent) {
-	railLayout.value = e.matches
+// Forwarded as a group so the wrapper can't silently shrink ZwDialog's API
+const dialogProps = computed(() => ({
+	modelValue: props.modelValue,
+	size: props.size,
+	dismiss: props.dismiss,
+	loading: props.loading,
+	actions: props.actions,
+}))
+
+// TWO_PANE_BREAKPOINT is a container width, and the dialog is narrower than
+// the viewport, so switch on the measured content box rather than the window
+const railLayout = ref(true)
+function onContentWidth(width: number) {
+	railLayout.value = width >= TWO_PANE_BREAKPOINT
 }
-onMounted(() => mql?.addEventListener('change', onBreakpoint))
-onBeforeUnmount(() => mql?.removeEventListener('change', onBreakpoint))
 
 function requestClose() {
 	emit('update:modelValue', false)
-	emit('close')
 }
 </script>

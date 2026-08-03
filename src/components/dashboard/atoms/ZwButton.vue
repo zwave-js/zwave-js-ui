@@ -3,6 +3,7 @@
 		class="zw-btn zw-focus-ring"
 		:class="[`zw-btn--${variant}`, `zw-btn--${size}`]"
 		:disabled="disabled"
+		:autofocus="autofocus || undefined"
 		@click="emit('click', $event)"
 	>
 		<span v-if="$slots.icon" class="zw-btn__icon">
@@ -21,8 +22,9 @@ withDefaults(
 		variant?: ZwButtonVariant
 		size?: 'sm' | 'md'
 		disabled?: boolean
+		autofocus?: boolean
 	}>(),
-	{ variant: 'primary', size: 'md', disabled: false },
+	{ variant: 'primary', size: 'md', disabled: false, autofocus: false },
 )
 
 const emit = defineEmits<{ click: [MouseEvent] }>()
@@ -91,13 +93,6 @@ const emit = defineEmits<{ click: [MouseEvent] }>()
 	--btn-border: var(--zw-line);
 }
 
-.zw-btn--destructive {
-	--btn-bg: var(--zw-danger-soft);
-	--btn-bg-hover: rgba(var(--v0-danger-soft), 0.7);
-	--btn-color: rgb(var(--v0-error-darken-1));
-	--btn-border: rgba(var(--v0-error), 0.3);
-}
-
 .zw-btn--ghost {
 	--btn-bg: transparent;
 	--btn-bg-hover: rgba(var(--v0-on-surface), 0.04);
@@ -114,8 +109,7 @@ const emit = defineEmits<{ click: [MouseEvent] }>()
 	letter-spacing: 0.4px;
 }
 
-/* Solid-red destructive primary (dialog footers: Restore, Hard reset).
-   Distinct from `destructive`, which is a soft-tinted secondary. */
+/* Solid-red destructive primary (dialog footers: Restore, Hard reset). */
 .zw-btn--danger {
 	--btn-bg: var(--zw-danger);
 	--btn-bg-hover: rgb(var(--v0-error-darken-1));

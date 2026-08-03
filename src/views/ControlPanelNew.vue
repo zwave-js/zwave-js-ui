@@ -49,7 +49,7 @@ interface AppLike {
 	startDebugCapture: () => Promise<void>
 	finishDebugCapture: () => Promise<void>
 	showBlockingLoader: (title: string, text: string) => void
-	finishLoader: (text?: string) => void
+	finishLoaderHtml: (html?: string) => void
 	showNodesManagerAction: (kind: 'include' | 'replace-failed') => void
 	showExcludeDevice: () => void
 }
@@ -214,7 +214,7 @@ async function onAction(device: Device, action: DeviceAction) {
 			ok = response.success
 		} finally {
 			if (key) completeAction(key, ok, DONE_VISIBLE_MS)
-			app.finishLoader(
+			app.finishLoaderHtml(
 				ok
 					? '<span class="text-success">NVM restored successfully 🎉. It may take a few seconds for the controller to restart.</span>'
 					: '<span class="text-error">NVM restore failed ❌</span>',

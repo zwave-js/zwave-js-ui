@@ -6,8 +6,7 @@
 		title="Password Change"
 		:actions="dialogActions"
 		@update:model-value="_value = $event"
-		@close="$emit('close')"
-		@after-leave="$refs.form && $refs.form.reset()"
+		@after-leave="resetForm"
 	>
 		<v-container grid-list-md class="pa-0">
 			<v-form v-model="valid" ref="form" validate-on="lazy">
@@ -107,9 +106,17 @@ export default {
 			get() {
 				return this.modelValue
 			},
+			// Lowering the model is the only dismissal path, so `close` rides it
 			set(val) {
 				this.$emit('update:modelValue', val)
+				if (!val) this.$emit('close')
 			},
+		},
+	},
+	watch: {
+		modelValue(v) {
+			// `after-leave` never fires when a re-open cancels the leave
+			if (v) this.resetForm()
 		},
 	},
 	methods: {
@@ -119,8 +126,11 @@ export default {
 				this.$emit('updatePassword')
 			}
 		},
+		resetForm() {
+			this.$refs.form?.reset()
+		},
 		closeDialog: function () {
-			this.$emit('close')
+			this._value = false
 		},
 	},
 }

@@ -257,7 +257,6 @@ export type DialogSeverity =
 export type ZwButtonVariant =
 	| 'primary'
 	| 'outline'
-	| 'destructive'
 	| 'ghost'
 	| 'mono-outline'
 	| 'danger'
@@ -267,19 +266,27 @@ export type ZwButtonVariant =
 export type DialogButtonKind = 'text' | 'filled' | 'outline'
 export type DialogButtonTone = 'accent' | 'danger' | 'neutral'
 
-export interface DialogAction {
+// `all` = Esc, scrim and the X; `button` = the X only; `none` = no user dismissal
+export type DialogDismiss = 'all' | 'button' | 'none'
+
+interface DialogActionBase {
 	label: string
 	kind?: DialogButtonKind
 	tone?: DialogButtonTone
-	onClick?: (e: MouseEvent) => void
-	disabled?: boolean
 	icon?: Component
 	autoFocus?: boolean
 }
 
+// A clickable action must carry a handler; only a disabled one may omit it
+export type DialogAction = DialogActionBase &
+	(
+		| { onClick: (e: MouseEvent) => void; disabled?: boolean }
+		| { onClick?: undefined; disabled: true }
+	)
+
 export function cancelAction(
-	onClick: DialogAction['onClick'],
-	overrides: Partial<DialogAction> = {},
+	onClick: (e: MouseEvent) => void,
+	overrides: Partial<DialogActionBase> = {},
 ): DialogAction {
 	return {
 		label: 'Cancel',
@@ -292,8 +299,22 @@ export function cancelAction(
 
 export function confirmAction(
 	label: string,
-	onClick: DialogAction['onClick'],
-	overrides: Partial<DialogAction> = {},
+	onClick: (e: MouseEvent) => void,
+	overrides: Partial<DialogActionBase> & { disabled?: boolean } = {},
 ): DialogAction {
 	return { label, kind: 'filled', tone: 'accent', onClick, ...overrides }
+}
+
+// A footer action that is present but not yet actionable
+export function pendingAction(
+	label: string,
+	overrides: Partial<DialogActionBase> = {},
+): DialogAction {
+	return {
+		label,
+		kind: 'filled',
+		tone: 'accent',
+		disabled: true,
+		...overrides,
+	}
 }
