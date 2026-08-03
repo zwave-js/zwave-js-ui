@@ -417,6 +417,64 @@ describe('HomeAssistantManager', () => {
 	})
 
 	describe('stop() generation-scoped race + failure semantics', () => {
+		it('stops a re-attached generation while the stale generation is still tearing down', async () => {
+			const manager = new HomeAssistantManager({ logger })
+			let releaseFirstDestroy: () => void = () => undefined
+			const firstDestroyGate = new Promise<void>((resolve) => {
+				releaseFirstDestroy = resolve
+			})
+			const discovery1 = makeDiscovery()
+			const server1: FakeServer = {
+				version: '1',
+				destroy: vi.fn(() => firstDestroyGate),
+			}
+			manager.attachClients(makeFactories(discovery1, server1))
+			manager.start()
+
+			const staleStop = manager.stop()
+
+			let releaseSecondDestroy: () => void = () => undefined
+			const secondDestroyGate = new Promise<void>((resolve) => {
+				releaseSecondDestroy = resolve
+			})
+			const discovery2 = makeDiscovery()
+			const server2: FakeServer = {
+				version: '2',
+				destroy: vi.fn(() => secondDestroyGate),
+			}
+			manager.attachClients(makeFactories(discovery2, server2))
+			manager.start()
+
+			const currentStop = manager.stop()
+			let currentStopSettled = false
+			void currentStop.then(() => {
+				currentStopSettled = true
+			})
+
+			expect(discovery2.stop).toHaveBeenCalledTimes(1)
+			expect(server2.destroy).toHaveBeenCalledTimes(1)
+			expect(manager.state).toBe('stopping')
+
+			releaseFirstDestroy()
+			await staleStop
+			await Promise.resolve()
+
+			expect(currentStopSettled).toBe(false)
+			expect(manager.state).toBe('stopping')
+			expect(manager.discovery).toBe(discovery2)
+			expect(manager.server).toBe(server2)
+
+			releaseSecondDestroy()
+			await currentStop
+
+			expect(manager.state).toBe('initialized')
+			expect(manager.discovery).toBeUndefined()
+			expect(manager.server).toBeUndefined()
+			expect(server1.destroy).toHaveBeenCalledTimes(1)
+			expect(discovery2.stop).toHaveBeenCalledTimes(1)
+			expect(server2.destroy).toHaveBeenCalledTimes(1)
+		})
+
 		it('a stale stop does not erase a generation re-attached while it awaits the server destroy', async () => {
 			const manager = new HomeAssistantManager({ logger })
 			const discovery1 = makeDiscovery()
