@@ -1,5 +1,4 @@
 // Extends the shared base fakes with the members only the Socket.IO wiring reads, so both suites share one FakeGateway/FakeZwaveClient shape
-import { vi } from 'vitest'
 import {
 	createFakeGateway as createSharedFakeGateway,
 	createFakeMqttClient,
@@ -18,32 +17,37 @@ export {
 	type FakeZniffer,
 }
 
-// setUserCallbacks/removeUserCallbacks fire on first-connect/last-disconnect in the 'clients' handler
-export interface FakeZwaveClient extends SharedFakeZwaveClient {
-	setUserCallbacks: ReturnType<typeof vi.fn>
-	removeUserCallbacks: ReturnType<typeof vi.fn>
-}
+export type FakeZwaveClient = SharedFakeZwaveClient
 
 export function createFakeZwaveClient(
 	overrides: Partial<FakeZwaveClient> = {},
 ): FakeZwaveClient {
-	return {
-		...createSharedFakeZwaveClient(overrides),
-		setUserCallbacks: vi.fn(),
-		removeUserCallbacks: vi.fn(),
-		...overrides,
-	}
+	return createSharedFakeZwaveClient(overrides)
 }
 
 export interface FakeGateway extends SharedFakeGateway {
 	zwave?: FakeZwaveClient
 }
 
+export type FakeGatewayWithClient = FakeGateway & {
+	zwave: FakeZwaveClient
+}
+
+export function createFakeGateway(
+	overrides: Partial<FakeGateway> & {
+		zwave: undefined
+	},
+): FakeGateway
+export function createFakeGateway(
+	overrides?: Partial<Omit<FakeGateway, 'zwave'>> & {
+		zwave?: FakeZwaveClient
+	},
+): FakeGatewayWithClient
 export function createFakeGateway(
 	overrides: Partial<FakeGateway> = {},
 ): FakeGateway {
 	return {
-		...createSharedFakeGateway(overrides as Partial<SharedFakeGateway>),
+		...createSharedFakeGateway(),
 		zwave: createFakeZwaveClient(),
 		...overrides,
 	}

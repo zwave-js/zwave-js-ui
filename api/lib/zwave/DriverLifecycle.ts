@@ -53,9 +53,9 @@ export interface DriverLifecycleHost {
 	getConfig(): ZwaveConfig
 	getDriver(): Driver | null
 	setDriver(driver: Driver | null): void
-	isDriverReady(): boolean
+	isDriverReady(): boolean | null | undefined
 	/** Raw `_driverReady` field without the driver/closed checks `isDriverReady` applies */
-	isDriverReadyRaw(): boolean
+	isDriverReadyRaw(): boolean | null | undefined
 	isClosed(): boolean
 	setClosed(closed: boolean): void
 	isDestroyed(): boolean
@@ -763,6 +763,7 @@ export class DriverLifecycle {
 
 		logger.info('Client closed')
 		if (teardownError !== undefined) {
+			// eslint-disable-next-line @typescript-eslint/only-throw-error -- Preserve the first teardown rejection after completing all cleanup
 			throw teardownError
 		}
 	}

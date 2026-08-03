@@ -1,0 +1,18 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "strict": true,
+    "noEmit": true,
+    "rootDir": ".",
+    "baseUrl": ".",
+    "paths": {
+      "#api/*": ["api/*"]
+    },
+    "allowImportingTsExtensions": true,
+    "rewriteRelativeImportExtensions": false
+  },
+  "include": [
+    "test/**/*.ts",
+    "vitest.config.ts"
+  ]
+}

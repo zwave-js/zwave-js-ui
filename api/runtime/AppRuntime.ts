@@ -62,7 +62,7 @@ export type GatewayLifecycleState =
 	| 'failed'
 
 export interface AppRuntimeDeps {
-	getSocketServer(): SocketServer
+	getSocketServer(): SocketServer | undefined
 	gateway?: GatewayPort
 	zniffer?: ZnifferPort
 	restarting?: boolean

@@ -60,11 +60,11 @@ function makeServer(version: string): FakeServer {
  * constructs exactly one fresh generation per attach.
  */
 function makeFactories(
-	discovery: HassManagedDiscovery | undefined,
+	discovery: HassManagedDiscovery,
 	server: HassManagedServer | undefined,
 ): HomeAssistantClientFactories & {
-	createDiscovery: Mock
-	createServer: Mock
+	createDiscovery: Mock<() => HassManagedDiscovery>
+	createServer: Mock<() => HassManagedServer | undefined>
 } {
 	return {
 		createDiscovery: vi.fn(() => discovery),

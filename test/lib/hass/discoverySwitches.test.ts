@@ -16,8 +16,15 @@ import {
 	discoverValueOnNode,
 	type GatewayHarness,
 } from './gatewayHarness.ts'
-import { buildNode, buildValueId, addValue, valueMapKey } from './fixtures.ts'
+import {
+	addValue,
+	buildNode,
+	buildValueId,
+	requireDefined,
+	valueMapKey,
+} from './fixtures.ts'
 import type { ZUINode, ZUIValueId } from '#api/lib/ZwaveClient.ts'
+import { assertDefined } from '../testUtils.ts'
 
 vi.mock('mqtt', () => mqttMockFactory())
 
@@ -91,7 +98,7 @@ describe('Binary Switch discovery', () => {
 		})
 
 		const device = discoverValueOnNode(harness.gw, node, key)
-		expect(device).toBeDefined()
+		assertDefined(device, 'expected a discovered device')
 		expect(device.type).toBe('switch')
 		expect(device.object_id).toBe('switch')
 
@@ -161,8 +168,12 @@ describe('Binary Switch discovery', () => {
 		discoverValueOnNode(harness.gw, node, key)
 
 		const published = harness.lastDiscovery()
-		expect(published.options.qos).toBe(0)
-		expect(published.options.retain).toBe(false)
+		const options = requireDefined(
+			published.options,
+			'expected discovery publish options',
+		)
+		expect(options.qos).toBe(0)
+		expect(options.retain).toBe(false)
 	})
 
 	it('skips non-current values (targetValue alone) on switch CC', () => {
@@ -189,6 +200,7 @@ describe('Binary Switch discovery', () => {
 			const node = readyNode()
 			const key = addCurrentTargetPair(node, { cc })
 			const device = discoverValueOnNode(harness.gw, node, key)
+			assertDefined(device, 'expected a discovered device')
 			expect(device.type).toBe('switch')
 			expect(device.object_id).toBe('switch')
 		}
@@ -203,6 +215,7 @@ describe('Barrier Operator discovery', () => {
 		})
 
 		const device = discoverValueOnNode(harness.gw, node, key)
+		assertDefined(device, 'expected a discovered device')
 		expect(device.type).toBe('cover')
 		expect(device.object_id).toBe('barrier_state')
 
@@ -241,6 +254,7 @@ describe('Multilevel Switch discovery', () => {
 		})
 
 		const device = discoverValueOnNode(harness.gw, node, key)
+		assertDefined(device, 'expected a discovered device')
 		expect(device.type).toBe('cover')
 		expect(device.object_id).toBe('position')
 
@@ -269,6 +283,7 @@ describe('Multilevel Switch discovery', () => {
 		})
 
 		const device = discoverValueOnNode(harness.gw, node, key)
+		assertDefined(device, 'expected a discovered device')
 		expect(device.type).toBe('light')
 		expect(device.object_id).toBe('dimmer')
 
@@ -301,6 +316,7 @@ describe('Multilevel Switch discovery', () => {
 			cc: CommandClasses['Multilevel Switch'],
 		})
 		const device = discoverValueOnNode(harness.gw, node, key)
+		assertDefined(device, 'expected a discovered device')
 		expect(device.type).toBe('cover')
 		expect(device.object_id).toBe('position')
 	})
@@ -314,6 +330,7 @@ describe('Door Lock discovery', () => {
 		})
 
 		const device = discoverValueOnNode(harness.gw, node, key)
+		assertDefined(device, 'expected a discovered device')
 		expect(device.type).toBe('lock')
 		expect(device.object_id).toBe('lock')
 
@@ -345,6 +362,7 @@ describe('Sound Switch volume discovery', () => {
 		const key = addValue(node, value)
 
 		const device = discoverValueOnNode(harness.gw, node, key)
+		assertDefined(device, 'expected a discovered device')
 		expect(device.type).toBe('light')
 		expect(device.object_id).toBe('volume_dimmer')
 
@@ -406,6 +424,7 @@ describe('Color Switch RGB discovery', () => {
 		const key = addValue(node, currentColor)
 
 		const device = discoverValueOnNode(harness.gw, node, key)
+		assertDefined(device, 'expected a discovered device')
 		expect(device.type).toBe('light')
 		expect(device.object_id).toBe('rgb_dimmer')
 

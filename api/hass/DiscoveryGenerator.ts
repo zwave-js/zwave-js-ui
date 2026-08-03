@@ -977,14 +977,16 @@ export class DiscoveryGenerator {
 					let isSensor = true
 					if (commandClass === CommandClasses['Multilevel Sensor']) {
 						// Skip auxiliary values because zwave-js omits their sensor metadata
-						if (!valueId.ccSpecific) return
-						const sensorType = valueId.ccSpecific.sensorType
+						const ccSpecific = valueId.ccSpecific
+						if (ccSpecific === undefined) return
+						const sensorType = ccSpecific.sensorType
 						if (typeof sensorType !== 'number') return
 						sensor = Constants.sensorType(sensorType)
 					} else if (commandClass === CommandClasses.Meter) {
-						if (!valueId.ccSpecific) return
-						const meterType = valueId.ccSpecific.meterType
-						const scale = valueId.ccSpecific.scale
+						const ccSpecific = valueId.ccSpecific
+						if (ccSpecific === undefined) return
+						const meterType = ccSpecific.meterType
+						const scale = ccSpecific.scale
 						if (
 							typeof meterType !== 'number' ||
 							typeof scale !== 'number'

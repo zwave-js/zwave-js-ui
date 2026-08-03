@@ -1,9 +1,10 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, type Mock } from 'vitest'
 import { ConfigurationTemplateService } from '#api/lib/zwave/ConfigurationTemplateService.ts'
 import type {
 	ZUIConfigurationTemplate,
 	ZUIConfigurationTemplateValue,
 	TemplateNodeState,
+	TemplateNodeStorePort,
 	TemplateDriverPort,
 	TemplateConfigManagerPort,
 } from '#api/lib/zwave/ports.ts'
@@ -60,6 +61,9 @@ function createNodeStorePort(
 	nodes: Map<number, TemplateNodeState> = new Map(),
 	storeNodes: Record<number, Partial<TemplateNodeState>> = {},
 ) {
+	const writeValue: Mock<TemplateNodeStorePort['writeValue']> = vi
+		.fn<TemplateNodeStorePort['writeValue']>()
+		.mockResolvedValue({ status: SetValueStatus.Success })
 	return {
 		getNode: vi.fn((id: number) => nodes.get(id)),
 		getNodes: () => nodes.entries(),
@@ -69,14 +73,10 @@ function createNodeStorePort(
 		}),
 		updateStoreNodes: vi.fn(() => Promise.resolve()),
 		emitNodeUpdate: vi.fn(),
-		writeValue: vi.fn(() =>
-			Promise.resolve({
-				status: SetValueStatus.Success,
-			}),
-		),
+		writeValue,
 		logNode: vi.fn(),
 		throttle: vi.fn((_key: string, fn: () => unknown) => fn()),
-	}
+	} satisfies TemplateNodeStorePort
 }
 
 function makeNode(
@@ -680,7 +680,7 @@ describe('ConfigurationTemplateService', () => {
 				callIdx++
 				if (callIdx === 2) {
 					return Promise.resolve({
-						status: SetValueStatus.Fail,
+						status: SetValueStatus.InvalidValue,
 						message: 'Custom error message',
 					})
 				}
@@ -1120,7 +1120,6 @@ describe('ConfigurationTemplateService', () => {
 					description: 'Wake duration',
 					valueSize: 1,
 					allowed: [],
-					readOnly: false,
 					writeOnly: undefined,
 					minValue: 0,
 					maxValue: 255,
@@ -1503,7 +1502,7 @@ describe('ConfigurationTemplateService', () => {
 			const nodeStore = createNodeStorePort(nodes)
 			nodeStore.writeValue = vi.fn(() =>
 				Promise.resolve({
-					status: SetValueStatus.Fail,
+					status: SetValueStatus.InvalidValue,
 					message: 'Custom error message',
 				}),
 			)
@@ -1538,7 +1537,7 @@ describe('ConfigurationTemplateService', () => {
 				callCount++
 				if (callCount > 1) {
 					return Promise.resolve({
-						status: SetValueStatus.Fail,
+						status: SetValueStatus.InvalidValue,
 						message: 'Failed',
 					})
 				}
@@ -1864,7 +1863,9 @@ describe('ConfigurationTemplateService', () => {
 			const importedTemplate = templates.find(
 				(t) => t.name === 'Imported',
 			)
-			expect(importedTemplate).toBeDefined()
+			if (!importedTemplate) {
+				throw new Error('Expected the imported template')
+			}
 			expect(importedTemplate.id).not.toBe('existing-id')
 		})
 	})
@@ -1968,8 +1969,7 @@ describe('ConfigurationTemplateService', () => {
 			)
 
 			await svc.applyConfigurationTemplate(template.id, 2)
-			expect(node.appliedTemplateContentHashes).toBeDefined()
-			expect(node.appliedTemplateContentHashes.length).toBe(1)
+			expect(node.appliedTemplateContentHashes).toHaveLength(1)
 		})
 	})
 
