@@ -276,17 +276,20 @@ describe('Socket contract: outbound producers', () => {
 			expect(data.zwaveVersion).toEqual(expect.any(String))
 		})
 
-		it("_deleteGroup() sends NODE_REMOVED with just {id}, one of NODE_REMOVED's real shapes", async () => {
+		it('_deleteGroup() sends NODE_REMOVED with the deleted group id', async () => {
 			const harness = await getHarness({ gateway: benignGateway() })
+			const groupId = 0x1000
+			await harness.jsonStore.put(harness.store.groups, [
+				{ id: groupId, name: 'Test group', nodeIds: [] },
+			])
 			const zwave = realZwave(harness)
-			zwave['groups'] = [{ id: 42, name: 'Test group', nodeIds: [] }]
 			const client = await connectedSubscriber(harness, 'nodes')
 			const received = waitForEvent(client, 'NODE_REMOVED')
 
-			const deleted = await zwave._deleteGroup(42)
+			const deleted = await zwave._deleteGroup(groupId)
 
 			expect(deleted).toBe(true)
-			expect(await received).toEqual({ id: 42 })
+			expect(await received).toEqual({ id: groupId })
 		})
 	})
 

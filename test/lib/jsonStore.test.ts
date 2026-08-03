@@ -1,6 +1,34 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { StorageHelper } from '../../api/lib/jsonStore.ts'
-import type { StoreFile, StoreKeys } from '../../api/config/store.ts'
+/**
+ * jsonStore.ts statically imports storeDir/storeBackupsDir from
+ * config/app.ts, which writes a session-secret file to the real repo
+ * store/ dir if STORE_DIR isn't set yet - importing the module (even
+ * though every test here injects its own readFile/writeFile fakes, with no
+ * real disk I/O through StorageHelper itself) is enough to trigger that, so
+ * it must be a dynamic import() after ensureTestEnv() (see shared/env.ts)
+ */
+import {
+	describe,
+	it,
+	expect,
+	beforeEach,
+	beforeAll,
+	afterAll,
+	vi,
+} from 'vitest'
+import type { StorageHelper as StorageHelperClass } from '#api/lib/jsonStore.ts'
+import type { StoreFile, StoreKeys } from '#api/config/store.ts'
+import { ensureTestEnv, cleanupTestEnv } from './shared/env.ts'
+
+let StorageHelper: typeof StorageHelperClass
+
+beforeAll(async () => {
+	ensureTestEnv()
+	;({ StorageHelper } = await import('#api/lib/jsonStore.ts'))
+})
+
+afterAll(() => {
+	cleanupTestEnv()
+})
 
 describe('#jsonStore', () => {
 	describe('#getFile()', () => {
@@ -86,11 +114,14 @@ describe('#jsonStore', () => {
 		})
 
 		describe('#get()', () => {
-			const mod = new StorageHelper({
-				readFile: vi.fn().mockResolvedValue('bar') as any,
-			})
+			let mod: StorageHelperClass
 
-			beforeEach(async () => await mod.init(fakeStore))
+			beforeEach(async () => {
+				mod = new StorageHelper({
+					readFile: vi.fn().mockResolvedValue('bar') as any,
+				})
+				await mod.init(fakeStore)
+			})
 
 			it('known', () =>
 				expect(

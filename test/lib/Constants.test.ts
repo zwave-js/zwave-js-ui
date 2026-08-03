@@ -1,6 +1,25 @@
-import { describe, it, expect } from 'vitest'
+/**
+ * Constants.ts statically imports storeDir from config/app.ts, which
+ * writes a session-secret file to the real repo store/ dir if STORE_DIR
+ * isn't set yet - importing the module (even though these tests are pure
+ * classification-table lookups that never touch storeDir) is enough to
+ * trigger that, so it must be a dynamic import() after ensureTestEnv() (see
+ * shared/env.ts)
+ */
+import { describe, it, expect, beforeAll, afterAll } from 'vitest'
+import type * as ConstantsModule from '#api/lib/Constants.ts'
+import { ensureTestEnv, cleanupTestEnv } from './shared/env.ts'
 
-import * as mod from '../../api/lib/Constants.ts'
+let mod: typeof ConstantsModule
+
+beforeAll(async () => {
+	ensureTestEnv()
+	mod = await import('#api/lib/Constants.ts')
+})
+
+afterAll(() => {
+	cleanupTestEnv()
+})
 
 describe('#Constants', () => {
 	describe('#productionType()', () => {
