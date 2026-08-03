@@ -75,8 +75,10 @@ const cx = SIZE / 2
 const C = 2 * Math.PI * r
 
 const total = computed(() => props.steps.length)
+// Clamp to 1 so an empty steps array keeps the arc math finite
+const divisor = computed(() => Math.max(total.value, 1))
 const gap = computed(() => (total.value > 1 ? 22 : 0))
-const segArc = computed(() => ((360 / total.value - gap.value) / 360) * C)
+const segArc = computed(() => ((360 / divisor.value - gap.value) / 360) * C)
 const gapArc = computed(() => (gap.value / 360) * C)
 const rot = computed(() => `rotate(${gap.value / 2 - 90} ${cx} ${cx})`)
 
