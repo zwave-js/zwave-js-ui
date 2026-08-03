@@ -20,6 +20,8 @@ import type {
 	JoinNetworkResult,
 	PlannedProvisioningEntry,
 	QRProvisioningInformation,
+	ZWaveOptions,
+	RFRegion,
 } from 'zwave-js'
 import { InclusionStrategy, QRCodeVersion } from 'zwave-js'
 import type {
@@ -29,6 +31,7 @@ import type {
 } from '@zwave-js/core'
 import type { ConfigManager } from '@zwave-js/config'
 import type { DeepPartial } from '../utils.ts'
+import type * as LogManager from '../logger.ts'
 
 export type {
 	FirmwareFileFormat,
@@ -46,6 +49,78 @@ export type {
 	QRProvisioningInformation,
 }
 export { InclusionStrategy, QRCodeVersion }
+
+// Defined here so extracted services like DriverLifecycle can reference client config/status types without an import cycle on ZwaveClient
+export type SensorTypeScale = {
+	key: string | number
+	sensor: string
+	label: string
+	unit?: string
+	description?: string
+}
+
+export type ZwaveConfig = {
+	enabled?: boolean
+	allowBootloaderOnly?: boolean
+	port?: string
+	networkKey?: string
+	securityKeys?: DeepPartial<{
+		S2_Unauthenticated: string
+		S2_Authenticated: string
+		S2_AccessControl: string
+		S0_Legacy: string
+	}>
+	securityKeysLongRange?: DeepPartial<{
+		S2_Authenticated: string
+		S2_AccessControl: string
+	}>
+	serverEnabled?: boolean
+	enableSoftReset?: boolean
+	disableWatchdog?: boolean
+	deviceConfigPriorityDir?: string
+	serverPort?: number
+	serverHost?: string
+	logEnabled?: boolean
+	maxFiles?: number
+	logLevel?: LogManager.LogLevel
+	commandsTimeout?: number
+	sendToSleepTimeout?: number
+	responseTimeout?: number
+	enableStatistics?: boolean
+	disableOptimisticValueUpdate?: boolean
+	disclaimerVersion?: number
+	options?: ZWaveOptions
+	// healNetwork?: boolean
+	healHour?: number
+	logToFile?: boolean
+	nodeFilter?: string[]
+	scales?: SensorTypeScale[]
+	serverServiceDiscoveryDisabled?: boolean
+	maxNodeEventsQueueSize?: number
+	higherReportsTimeout?: boolean
+	disableControllerRecovery?: boolean
+	disableAutomaticFirmwareUpdateChecks?: boolean
+	rf?: {
+		region?: RFRegion
+		maxLongRangePowerlevel?: number | 'auto'
+		autoPowerlevels?: boolean
+		txPower?: {
+			powerlevel: number | 'auto'
+			measured0dBm?: number
+		}
+	}
+}
+
+export const ZwaveClientStatus = {
+	CONNECTED: 'connected',
+	BOOTLOADER_READY: 'bootloader ready',
+	DRIVER_READY: 'driver ready',
+	SCAN_DONE: 'scan done',
+	DRIVER_FAILED: 'driver failed',
+	CLOSED: 'closed',
+} as const
+export type ZwaveClientStatus =
+	(typeof ZwaveClientStatus)[keyof typeof ZwaveClientStatus]
 
 export const ZUIScheduleEntryLockMode = {
 	DAILY: 'daily',
