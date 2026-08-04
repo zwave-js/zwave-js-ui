@@ -111,11 +111,8 @@
 							:style="{
 								'--zw-progress-fill': ratingFill(item.rating),
 							}"
-							:value="
-								item.rating === undefined
-									? null
-									: item.rating / 10
-							"
+							:max="10"
+							:value="item.rating ?? null"
 						/>
 						<strong v-if="item.rating !== undefined"
 							>{{ item.rating }}/10</strong

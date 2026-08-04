@@ -11,10 +11,22 @@
 			:style="{ width: `${widthPx}px` }"
 			:close-on-click-outside="dismiss === 'all'"
 			:blocking="dismiss !== 'all'"
-			:data-blocking="dismiss === 'none' || undefined"
+			:data-no-dismiss="dismiss === 'none' || undefined"
 			@keydown.capture="onKeydown"
 		>
-			<div ref="content" class="zw-dlg" :aria-label="title">
+			<!-- v0 puts aria-labelledby/-describedby on the <dialog>, so the
+			     names have to come from these; the visible header repeats them -->
+			<Dialog.Title :namespace="dialogId" class="zw-dlg__a11y">
+				{{ title }}
+			</Dialog.Title>
+			<Dialog.Description
+				v-if="subtitle"
+				:namespace="dialogId"
+				class="zw-dlg__a11y"
+			>
+				{{ subtitle }}
+			</Dialog.Description>
+			<div ref="content" class="zw-dlg">
 				<ZwProgressBar
 					v-if="loading"
 					:value="null"
@@ -158,6 +170,11 @@ watch(isMounted, (mounted) => {
 // traps focus in the top dialog, so that is where the keydown lands.
 function onKeydown(e: KeyboardEvent) {
 	if (e.key !== 'Escape') return
+	// Vuetify menus teleport into this dialog and close on Escape from their
+	// activator, not from their own content, so an open one gets first refusal —
+	// the capture phase would otherwise close the dialog under it
+	const el = e.currentTarget
+	if (el instanceof Element && el.querySelector('.v-overlay--active')) return
 	e.preventDefault()
 	if (props.dismiss === 'all') close()
 }
@@ -265,9 +282,10 @@ function variantFor(a: DialogAction): ZwButtonVariant {
 	animation: zw-fade-in 0.16s;
 }
 
-/* Darker where the dialog offers no dismissal affordance, so the block reads
-   as deliberate rather than as an unresponsive page */
-.zw-dlg__native[data-blocking]::backdrop {
+/* Darker where the dialog offers no dismissal affordance at all (`dismiss:
+   'none'`, a narrower set than v0's `blocking`), so the block reads as
+   deliberate rather than as an unresponsive page */
+.zw-dlg__native[data-no-dismiss]::backdrop {
 	background: rgba(0, 0, 0, 0.62);
 }
 
@@ -302,6 +320,19 @@ function variantFor(a: DialogAction): ZwButtonVariant {
 	box-shadow: var(--zw-e8);
 	overflow: hidden;
 	font-family: var(--zw-font);
+}
+
+/* Announced only: the header already shows both strings */
+.zw-dlg__a11y {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	margin: -1px;
+	padding: 0;
+	overflow: hidden;
+	clip-path: inset(50%);
+	white-space: nowrap;
+	border: 0;
 }
 
 .zw-dlg__loading {

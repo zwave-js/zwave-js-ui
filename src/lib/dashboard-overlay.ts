@@ -17,10 +17,18 @@ export function useOverlayLayer(): void {
 	const stack = useStack()
 
 	// `showModal()` inerts the page but leaves it scrollable
+	let priorOverflow: string | null = null
 	watch(
 		() => stack.isActive.value,
 		(active) => {
-			document.documentElement.style.overflow = active ? 'hidden' : ''
+			const style = document.documentElement.style
+			if (active) {
+				priorOverflow ??= style.overflow
+				style.overflow = 'hidden'
+				return
+			}
+			style.overflow = priorOverflow ?? ''
+			priorOverflow = null
 		},
 		{ flush: 'post' },
 	)
@@ -29,17 +37,32 @@ export function useOverlayLayer(): void {
 	// paints over. Promoting it to a popover puts it in the top layer too, and
 	// paint order there follows open order — so it is re-shown whenever the
 	// stack changes, to stay above whatever opened last.
-	function applyToastLayer() {
-		const el = document.querySelector<HTMLElement>(TOASTER)
-		if (!el) return
+	let toaster = document.querySelector<HTMLElement>(TOASTER)
+	let warnedMissingToaster = false
+	function applyToastLayer(stackChanged: boolean) {
+		toaster ??= document.querySelector<HTMLElement>(TOASTER)
 		const wanted = !!stack.topElement.value
-		if (el.matches(':popover-open')) el.hidePopover()
-		if (!wanted) {
-			el.removeAttribute('popover')
+		if (!toaster) {
+			// The selector is vuetify-sonner's internal DOM: if a bump renames
+			// it, toasts silently vanish behind every modal
+			if (wanted && !warnedMissingToaster && import.meta.env.DEV) {
+				warnedMissingToaster = true
+				console.warn(
+					`[dashboard-overlay] no ${TOASTER} to promote — toasts will render behind dialogs`,
+				)
+			}
 			return
 		}
-		el.setAttribute('popover', 'manual')
-		el.showPopover()
+		// Re-showing is only needed to get back above a newly-opened dialog
+		if (!stackChanged && !!toaster.getAttribute('popover') === wanted)
+			return
+		if (toaster.matches(':popover-open')) toaster.hidePopover()
+		if (!wanted) {
+			toaster.removeAttribute('popover')
+			return
+		}
+		toaster.setAttribute('popover', 'manual')
+		toaster.showPopover()
 	}
 
 	// Vuetify teleports its overlays (`v-select` menus, `v-menu`, `v-tooltip`,
@@ -60,20 +83,26 @@ export function useOverlayLayer(): void {
 		if (container.parentElement !== host) host.append(container)
 	}
 
-	function apply() {
-		applyToastLayer()
-		applyVuetifyContainer()
-	}
-
-	watch(() => stack.topElement.value, apply, {
-		flush: 'post',
-		immediate: true,
-	})
+	watch(
+		() => stack.topElement.value,
+		() => {
+			applyToastLayer(true)
+			applyVuetifyContainer()
+		},
+		{ flush: 'post', immediate: true },
+	)
 
 	// Both containers are created lazily — sonner's with the first toast,
 	// Vuetify's with the first overlay — so one raised while a dialog is already
-	// open would otherwise never be relocated
-	const observer = new MutationObserver(apply)
+	// open would otherwise never be relocated. Everything else appended to
+	// `<body>` (every tooltip popover) also lands here, hence the cheap
+	// already-correct bail in both appliers.
+	const observer = new MutationObserver(() => {
+		if (!toaster || !container) {
+			applyToastLayer(false)
+			applyVuetifyContainer()
+		}
+	})
 	observer.observe(document.body, { childList: true })
 	onScopeDispose(() => observer.disconnect())
 }

@@ -1,7 +1,12 @@
 <template>
 	<span class="zw-tx" :class="`zw-tx--${variant}`" :title="title">
 		<component :is="iconComp" :size="ICON_SIZE.chip" class="zw-tx__icon" />
-		<ZwProgressBar as="span" shimmer class="zw-tx__bar" :value="fraction" />
+		<ZwProgressBar
+			as="span"
+			shimmer
+			class="zw-tx__bar"
+			:value="pct ?? null"
+		/>
 		<span v-if="pct !== undefined" class="zw-tx__pct">{{ pct }}%</span>
 	</span>
 </template>
@@ -45,10 +50,6 @@ const pct = computed(() =>
 		: undefined,
 )
 
-const fraction = computed(() =>
-	pct.value !== undefined ? pct.value / 100 : null,
-)
-
 const title = computed(() =>
 	pct.value !== undefined
 		? `${props.activity.label} · ${pct.value}%`
@@ -81,7 +82,7 @@ const title = computed(() =>
 
 .zw-tx__bar {
 	--zw-progress-h: 4px;
-	--zw-progress-radius: 2px;
+	--zw-progress-radius: var(--zw-radius-xs);
 	--zw-progress-track: rgba(var(--v0-primary), 0.18);
 }
 

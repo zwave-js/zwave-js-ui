@@ -276,8 +276,7 @@
 										<ZwProgressBar
 											class="mt-1"
 											:value="
-												item.raw.firmwareUpdate
-													.progress / 100
+												item.raw.firmwareUpdate.progress
 											"
 										/>
 										<p

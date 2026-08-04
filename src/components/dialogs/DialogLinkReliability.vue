@@ -85,7 +85,7 @@
 				<ZwProgressBar
 					v-if="running"
 					class="zw-lr__bar"
-					:value="infinite ? null : progress / 100"
+					:value="infinite ? null : progress"
 				/>
 				<v-list class="mr-2" density="compact">
 					<v-list-item>
