@@ -6,6 +6,7 @@
 		v-model="rootOpen"
 	>
 		<Dialog.Content
+			ref="native"
 			:namespace="dialogId"
 			class="zw-dlg__native"
 			:style="{ width: `${widthPx}px` }"
@@ -26,18 +27,40 @@
 			>
 				{{ subtitle }}
 			</Dialog.Description>
-			<div ref="content" class="zw-dlg">
-				<ZwProgressBar
-					v-if="loading"
-					:value="null"
-					class="zw-dlg__loading"
-				/>
-				<div v-if="hasRule" class="zw-dlg__rule" :class="ruleClass" />
+			<!-- Vuetify bridge: its overlays teleport into a `.v-overlay-container`
+			     under `<body>`, which this top-layer dialog paints over — hand
+			     them the dialog element to attach to instead. Goes away with the
+			     last Vuetify overlay raised from a dialog. -->
+			<v-defaults-provider :defaults="vuetifyDefaults">
+				<div ref="content" class="zw-dlg">
+					<ZwProgressBar
+						v-if="loading"
+						:value="null"
+						class="zw-dlg__loading"
+					/>
+					<div
+						v-if="hasRule"
+						class="zw-dlg__rule"
+						:class="ruleClass"
+					/>
 
-				<!-- Vertical-rail wizard layout: rail spans header+body, footer stays full-width. -->
-				<div v-if="$slots.rail" class="zw-dlg__split">
-					<slot name="rail" />
-					<div class="zw-dlg__main">
+					<!-- Vertical-rail wizard layout: rail spans header+body, footer stays full-width. -->
+					<div v-if="$slots.rail" class="zw-dlg__split">
+						<slot name="rail" />
+						<div class="zw-dlg__main">
+							<slot name="header" :close="close">
+								<ZwDialogHeader
+									v-bind="headerProps"
+									@close="close"
+								/>
+							</slot>
+							<div class="zw-dlg__body">
+								<slot />
+							</div>
+						</div>
+					</div>
+
+					<template v-else>
 						<slot name="header" :close="close">
 							<ZwDialogHeader
 								v-bind="headerProps"
@@ -47,40 +70,31 @@
 						<div class="zw-dlg__body">
 							<slot />
 						</div>
-					</div>
-				</div>
+					</template>
 
-				<template v-else>
-					<slot name="header" :close="close">
-						<ZwDialogHeader v-bind="headerProps" @close="close" />
-					</slot>
-					<div class="zw-dlg__body">
-						<slot />
-					</div>
-				</template>
-
-				<div
-					v-if="$slots['footer-left'] || actions.length"
-					class="zw-dlg__footer"
-				>
-					<div class="zw-dlg__footer-left">
-						<slot name="footer-left" />
-					</div>
-					<ZwButton
-						v-for="(a, i) in actions"
-						:key="i"
-						:variant="variantFor(a)"
-						:disabled="a.disabled"
-						:autofocus="a.autoFocus || undefined"
-						@click="a.onClick"
+					<div
+						v-if="$slots['footer-left'] || actions.length"
+						class="zw-dlg__footer"
 					>
-						<template v-if="a.icon" #icon>
-							<component :is="a.icon" :size="ICON_SIZE.std" />
-						</template>
-						{{ a.label }}
-					</ZwButton>
+						<div class="zw-dlg__footer-left">
+							<slot name="footer-left" />
+						</div>
+						<ZwButton
+							v-for="(a, i) in actions"
+							:key="i"
+							:variant="variantFor(a)"
+							:disabled="a.disabled"
+							:autofocus="a.autoFocus || undefined"
+							@click="a.onClick"
+						>
+							<template v-if="a.icon" #icon>
+								<component :is="a.icon" :size="ICON_SIZE.std" />
+							</template>
+							{{ a.label }}
+						</ZwButton>
+					</div>
 				</div>
-			</div>
+			</v-defaults-provider>
 		</Dialog.Content>
 	</Dialog.Root>
 </template>
@@ -93,6 +107,7 @@ import {
 	useId,
 	watch,
 	type Component,
+	type ComponentPublicInstance,
 } from 'vue'
 import { Dialog, usePresence } from '@vuetify/v0'
 import ZwButton from '@/components/dashboard/atoms/ZwButton.vue'
@@ -170,14 +185,24 @@ watch(isMounted, (mounted) => {
 // traps focus in the top dialog, so that is where the keydown lands.
 function onKeydown(e: KeyboardEvent) {
 	if (e.key !== 'Escape') return
-	// Vuetify menus teleport into this dialog and close on Escape from their
-	// activator, not from their own content, so an open one gets first refusal —
-	// the capture phase would otherwise close the dialog under it
+	// Vuetify bridge: its menus teleport into this dialog and close on Escape
+	// from their activator, not from their own content, so an open one gets
+	// first refusal — the capture phase would otherwise close the dialog first
 	const el = e.currentTarget
 	if (el instanceof Element && el.querySelector('.v-overlay--active')) return
 	e.preventDefault()
 	if (props.dismiss === 'all') close()
 }
+
+// Vuetify bridge: `attach` only picks the teleport target, so overlays keep
+// positioning against the viewport while rendering inside this dialog's
+// non-inert, top-layer subtree. Falls back to `false` (Vuetify's own `<body>`
+// container) until the element exists.
+const native = ref<ComponentPublicInstance | null>(null)
+const vuetifyDefaults = computed(() => {
+	const el: unknown = native.value?.$el
+	return { global: { attach: el instanceof HTMLElement ? el : false } }
+})
 
 // Reported rather than derived from the window: dashboard breakpoints are
 // container widths, and the dialog is narrower than the viewport

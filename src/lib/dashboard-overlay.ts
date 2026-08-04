@@ -7,7 +7,6 @@ import { useStack } from '@vuetify/v0'
 // return-focus and Esc.
 
 const TOASTER = '[data-sonner-toaster]'
-const VUETIFY_CONTAINER = '.v-overlay-container'
 
 // Mount once, at the app root. Every concern here is global to the overlay
 // stack rather than per-dialog, and v0's stack already tracks it — deriving
@@ -62,42 +61,20 @@ export function useOverlayLayer(): void {
 		toaster.showPopover()
 	}
 
-	// Vuetify teleports its overlays (`v-select` menus, `v-menu`, `v-tooltip`,
-	// legacy `v-dialog`) into a single container under `<body>`. A modal dialog
-	// both paints over that container and inerts it, so an overlay raised from
-	// inside a dashboard dialog was invisible and dead to clicks. Moving the
-	// container into the topmost modal shares that element's top-layer context
-	// and its non-inert subtree; the container is `display: contents`, so the
-	// move changes no layout, and its children position against the viewport
-	// either way.
-	let container = document.querySelector<HTMLElement>(VUETIFY_CONTAINER)
-	function applyVuetifyContainer() {
-		container ??= document.querySelector<HTMLElement>(VUETIFY_CONTAINER)
-		if (!container) return
-		// A closing dialog takes the container down with it, so resolve the host
-		// even when the container is already detached
-		const host = stack.topElement.value ?? document.body
-		if (container.parentElement !== host) host.append(container)
-	}
+	watch(() => stack.topElement.value, applyToastLayer, {
+		flush: 'post',
+		immediate: true,
+	})
 
-	watch(
-		() => stack.topElement.value,
-		() => {
-			applyToastLayer()
-			applyVuetifyContainer()
-		},
-		{ flush: 'post', immediate: true },
-	)
-
-	// Both containers are created lazily — sonner's with the first toast,
-	// Vuetify's with the first overlay — so one raised while a dialog is already
-	// open would otherwise never be relocated. Once both exist the watch above
-	// keeps them placed, so stop watching `<body>`: everything else appended
-	// there would otherwise re-run both selector scans.
+	// Sonner creates its region with the first toast, so one raised while a
+	// dialog is already open would otherwise never be promoted. The watch above
+	// keeps it placed once it exists, so stop watching `<body>` then.
 	const observer = new MutationObserver(() => {
-		if (!toaster) applyToastLayer()
-		if (!container) applyVuetifyContainer()
-		if (toaster && container) observer.disconnect()
+		if (toaster) {
+			observer.disconnect()
+			return
+		}
+		applyToastLayer()
 	})
 	observer.observe(document.body, { childList: true })
 	onScopeDispose(() => observer.disconnect())
