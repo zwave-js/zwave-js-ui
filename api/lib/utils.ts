@@ -338,22 +338,7 @@ export function allSettled(promises: Promise<any>[]): Promise<any> {
 	return Promise.all(wrappedPromises)
 }
 
-/**
- * Deduplicates concurrent runs of an idempotent async teardown. While a run is
- * in flight, {@link run} returns the shared promise so callers converge on one
- * teardown; once it settles (success OR failure) the slot is released, so a
- * later call starts a fresh run and can retry. The caller decides what to clear
- * on success and what to retain for a retry.
- *
- * This is the one shared primitive for the "share one in-flight teardown,
- * release when it settles" rule that `HomeAssistantManager.stop()` and
- * `ZwaveServerManager.destroy()` both need, so the release rule is written once.
- */
-/**
- * Wraps `fn` so it runs at most once; later calls are no-ops. Replaces the
- * hand-rolled `let disposed = false` idempotent-disposer closures scattered
- * across the MQTT/discovery teardown paths.
- */
+/** Wraps `fn` so it runs at most once; later calls are no-ops */
 export function once(fn: () => void): () => void {
 	let called = false
 	return (): void => {
@@ -363,6 +348,11 @@ export function once(fn: () => void): () => void {
 	}
 }
 
+/**
+ * Deduplicates concurrent runs of an idempotent async teardown: while one is in
+ * flight {@link run} hands back the shared promise, and the slot is released once
+ * it settles either way, so a later call starts fresh and can retry.
+ */
 export class SingleFlight {
 	private inFlight: Promise<void> | undefined
 

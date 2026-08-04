@@ -27,12 +27,11 @@ import { ZwaveClientStatus } from '#api/lib/ZwaveClient.ts'
 import { NODE_ID_BROADCAST, NODE_ID_BROADCAST_LR } from '@zwave-js/core'
 
 /**
- * Narrow view of the lifecycle internals with no public accessor: the status
- * enum and the held server instance. Driving stays on public connect/close.
+ * Narrow view of the status enum, which has no public accessor. Driving stays on
+ * public connect/close.
  */
 type ClientInternals = {
 	status: ZwaveClientStatus
-	server: unknown
 }
 const internals = (zwave: ZWaveClientType) =>
 	zwave as unknown as ClientInternals
@@ -46,45 +45,13 @@ const hoisted = vi.hoisted(() => ({
 	SERVER_VERSION: '1.2.3-test',
 }))
 
-// Faithful `@zwave-js/server` fake. `start()` sets the internal `server` prop
-// (the duplicate-start guard reads `this.server['server']`), and `destroy()`
-// is deferred to a later tick so the close() ordering assertion proves the
-// driver teardown awaited the server.
+// Imported inside the factory: `vi.mock` is hoisted above this file's own
+// imports, so a top-level binding would not be initialized yet
 vi.mock('@zwave-js/server', async () => {
-	const { EventEmitter } = await import('node:events')
-
-	class ZwavejsServerMock extends EventEmitter {
-		driver: any
-		options: any
-		/** Undefined until start(), mirroring the real class. */
-		server: any = undefined
-		start = vi.fn((..._args: any[]) => {
-			// The real ZwavejsServer assigns its internal http server here
-			this.server = {}
-			return Promise.resolve()
-		})
-		destroy = vi.fn(
-			() =>
-				new Promise<void>((resolve) => {
-					setImmediate(() => {
-						hoisted.destroyOrder.push('server')
-						resolve()
-					})
-				}),
-		)
-
-		constructor(driver: any, options: any) {
-			super()
-			this.driver = driver
-			this.options = options
-			hoisted.servers.push(this)
-		}
-	}
-
-	return {
-		serverVersion: hoisted.SERVER_VERSION,
-		ZwavejsServer: ZwavejsServerMock,
-	}
+	const { zwaveServerMockFactory } = await import(
+		'../shared/zwaveServerMock.ts'
+	)
+	return zwaveServerMockFactory(hoisted)
 })
 
 // Faithful `zwave-js` Driver fake: only `Driver` is replaced (importActual
@@ -287,7 +254,6 @@ describe('connecting and reaching driver ready', () => {
 		// server.destroy() resolves on a later tick yet still lands first,
 		// proving close() awaited the server before destroying the driver
 		expect(hoisted.destroyOrder).toEqual(['server', 'driver'])
-		expect(internals(zwave).server).toBeNull()
 		expect(zwave.driver).toBeNull()
 	})
 
@@ -328,7 +294,6 @@ describe('server construction options', () => {
 		// created, so it always exists before the driver becomes ready
 		expect(server.driver).toBe(driver)
 		expect(server.options.port).toBe(3000)
-		expect(internals(zwave).server).toBe(server)
 		await zwave.close(true)
 	})
 

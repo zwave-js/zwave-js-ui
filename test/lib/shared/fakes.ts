@@ -133,7 +133,6 @@ export interface FakeGateway extends GatewayPort {
 	publishDiscovery: Mock
 	rediscoverNode: Mock
 	disableDiscovery: Mock
-	mqttDiscovery: { stop: Mock }
 }
 
 export function createFakeGateway(
@@ -149,11 +148,8 @@ export function createFakeGateway(
 		publishDiscovery: vi.fn(),
 		rediscoverNode: vi.fn(),
 		disableDiscovery: vi.fn(),
-		// The runtime holds this as the HA discovery handle and drives its
-		// `stop()`; a fake gateway never starts a real discovery engine
-		mqttDiscovery: { stop: vi.fn() },
 		...overrides,
-	} as FakeGateway
+	}
 }
 
 // Avoids constructing a real Zniffer, which would open a real serial port

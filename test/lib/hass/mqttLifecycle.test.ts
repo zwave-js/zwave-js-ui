@@ -256,6 +256,41 @@ describe('Home Assistant status and broker reconnect re-announce all devices', (
 		expect(topics).toContain(`zwave/_CLIENTS/${cid}/multicast/#`)
 	})
 
+	it('close() unsubscribes homeassistant/status even while the Z-Wave teardown hangs', async () => {
+		// A driver teardown that never settles is the exit-137 shutdown class, so
+		// discovery must stop before it, not in a finally the hang never reaches.
+		// Only the first close hangs, so the harness cleanup can still finish
+		let release: () => void = () => {}
+		const hang = new Promise<void>((resolve) => {
+			release = resolve
+		})
+		let calls = 0
+		const replaced = await gatewayHarness.replace({
+			zwave: {
+				close: vi.fn(() => (++calls === 1 ? hang : Promise.resolve())),
+			},
+		})
+		replaced.broker.triggerConnect()
+		await tick()
+		replaced.broker.unsubscribed.length = 0
+
+		// Deliberately not awaited: the close cannot finish while zwave.close()
+		// hangs, and that is exactly the case under test
+		const closing = replaced.gw.close()
+		await tick()
+
+		expect(replaced.broker.unsubscribed).toContain('homeassistant/status')
+
+		// A status message arriving after the stop drives no further publication
+		replaced.resetPublishes()
+		replaced.broker.deliver('homeassistant/status', 'online')
+		await tick()
+		expect(replaced.broker.published).toHaveLength(0)
+
+		release()
+		await closing
+	})
+
 	it('HA "online" (any case) republishes the device discovery topic', async () => {
 		harness.resetPublishes()
 		harness.zwave.nodes.clear()

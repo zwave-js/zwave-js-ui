@@ -12,14 +12,6 @@ import type {
 } from './ports.ts'
 
 /**
- * A disposable scoped subscription handle; kept local so the manager never
- * imports the concrete `MqttClient`.
- */
-export interface HassBrokerSubscription {
-	dispose(): void
-}
-
-/**
  * The narrow MQTT surface the scoped status subscription needs; kept minimal so
  * the manager never depends on the concrete `MqttClient`.
  */
@@ -27,15 +19,10 @@ export interface HassStatusSource {
 	subscribeExact(
 		topic: string,
 		listener: (payload: string | undefined) => void,
-	): HassBrokerSubscription
+	): { dispose(): void }
 	on(event: 'brokerStatus', handler: (online: boolean) => void): unknown
 	off(event: 'brokerStatus', handler: (online: boolean) => void): unknown
-	/**
-	 * Re-emit the plugin-facing `hassStatus` event with the parsed boolean.
-	 * Routing the emit back through the source keeps the broker subscription
-	 * manager-owned rather than re-adding an unconditional one to `MqttClient`.
-	 */
-	emitHassStatus(online: boolean): void
+	emit(event: 'hassStatus', online: boolean): unknown
 }
 
 /**
@@ -99,9 +86,8 @@ export default class MqttDiscoveryManager {
 	}
 
 	/**
-	 * Start the catalog view, reset the generator-owned discovery index, and
-	 * subscribe to status transitions when enabled. Safe to call again after
-	 * {@link stop}.
+	 * Start the catalog view, re-arm the generator, and subscribe to status
+	 * transitions when enabled. Safe to call again after {@link stop}.
 	 */
 	public start(statusSource?: HassStatusSource, statusEnabled = false): void {
 		this._customDeviceRegistry.start()
@@ -113,25 +99,23 @@ export default class MqttDiscoveryManager {
 
 	/**
 	 * Dispose the status subscription and the catalog view; idempotent. The
-	 * publication fence is dropped synchronously before anything else, so no
-	 * retained discovery can publish once stop begins - even from an event that
-	 * arrives while an outer coordinator still awaits the server destroy.
+	 * publication fence drops synchronously first, so no retained discovery can
+	 * publish from an event arriving later in the teardown.
 	 */
 	public stop(): void {
 		this._discoveryGenerator.deactivate()
-		this.disposeStatus()
+		this._statusDisposer?.()
 		this._customDeviceRegistry.dispose()
 	}
 
 	/**
 	 * Subscribe the Home Assistant birth/will topic plus broker-reconnect
-	 * transitions; an `online` status (case-insensitive) or a broker reconnect
-	 * triggers a full {@link rediscoverAll}. Returns an idempotent disposer and
-	 * never double-subscribes. The status parsing and its log messages live here
-	 * so the whole Home Assistant status concern stays in the discovery subsystem.
+	 * transitions, either of which triggers a full rediscovery. Parsing and its
+	 * log messages live here, so the whole status concern stays in the discovery
+	 * subsystem.
 	 */
-	public subscribeStatus(source: HassStatusSource): () => void {
-		if (this._statusDisposer) return this._statusDisposer
+	private subscribeStatus(source: HassStatusSource): void {
+		if (this._statusDisposer) return
 
 		const onStatusMessage = (payload: string | undefined): void => {
 			if (typeof payload !== 'string') {
@@ -142,14 +126,13 @@ export default class MqttDiscoveryManager {
 			this.logger.info(
 				`Home Assistant is ${online ? 'ONLINE' : 'OFFLINE'}`,
 			)
-			if (online) this.rediscoverAll()
-			// Emit the plugin-facing compatibility event after the internal
-			// rediscovery, so a misbehaving listener cannot block it, and only
-			// from this single manager-owned subscription
-			source.emitHassStatus(online)
+			if (online) this._discoveryGenerator.rediscoverAll()
+			// Emit after the internal rediscovery, so a misbehaving plugin
+			// listener cannot block it
+			source.emit('hassStatus', online)
 		}
 		const onBrokerStatus = (online: boolean): void => {
-			if (online) this.rediscoverAll()
+			if (online) this._discoveryGenerator.rediscoverAll()
 		}
 
 		const subscription = source.subscribeExact(
@@ -163,16 +146,5 @@ export default class MqttDiscoveryManager {
 			source.off('brokerStatus', onBrokerStatus)
 			this._statusDisposer = undefined
 		})
-		return this._statusDisposer
-	}
-
-	/** Dispose the active status subscription, if any. Idempotent. */
-	public disposeStatus(): void {
-		this._statusDisposer?.()
-	}
-
-	/** Rediscover every persistent device on every node. */
-	public rediscoverAll(): void {
-		this._discoveryGenerator.rediscoverAll()
 	}
 }

@@ -57,11 +57,9 @@ export interface MqttClientEventCallbacks {
 	connect: () => void
 	brokerStatus: (online: boolean) => void
 	/**
-	 * Plugin-facing compatibility event fired with the parsed online/offline
-	 * boolean on every Home Assistant birth/will (`homeassistant/status`)
-	 * message. The broker subscription is owned by `MqttDiscoveryManager`, which
-	 * routes the emit back here via {@link default.emitHassStatus}, so the event
-	 * fires once per status message with no duplicate broker ownership.
+	 * Plugin-facing event carrying the parsed online/offline boolean of every Home
+	 * Assistant birth/will message. `MqttDiscoveryManager` owns the broker
+	 * subscription and emits this, so it fires once per status message.
 	 */
 	hassStatus: (online: boolean) => void
 }
@@ -271,22 +269,19 @@ class MqttClient extends TypedEventEmitter<MqttClientEventCallbacks> {
 	}
 
 	/**
-	 * The single broker `subscribe` primitive both the prefixed write-tag path
-	 * ({@link subscribe}) and the scoped exact-topic path
-	 * ({@link subscribeExactTopic}) route through, so one client has one
-	 * subscribe implementation and one place that interprets the grant and logs.
-	 *
-	 * A denied subscription is reported by mqtt.js as `granted[].qos === 128`
-	 * with no `err`, so both are treated as failures. Resolves with the outcome
-	 * so callers can own their own retry disposition; never requeues.
+	 * The single broker `subscribe` primitive behind both the prefixed write-tag
+	 * path ({@link subscribe}) and the scoped exact-topic path
+	 * ({@link subscribeExactTopic}), so one client interprets the grant and logs
+	 * in one place. Resolves `false` on a failure worth retrying; never requeues,
+	 * so each caller owns its own retry disposition.
 	 */
 	private subscribeToBroker(
 		topic: string,
 		qos: IClientSubscribeOptions['qos'],
-	): Promise<'ok' | 'denied' | 'error'> {
+	): Promise<boolean> {
 		return new Promise((resolve) => {
 			if (!this.client?.connected) {
-				resolve('error')
+				resolve(false)
 				return
 			}
 			logger.log('debug', `Subscribing to ${topic} with options %o`, {
@@ -295,18 +290,20 @@ class MqttClient extends TypedEventEmitter<MqttClientEventCallbacks> {
 			this.client.subscribe(topic, { qos }, (err, granted) => {
 				if (err) {
 					logger.error(`Error subscribing to ${topic}`, err)
-					resolve('error')
+					resolve(false)
 					return
 				}
+				// mqtt.js reports a denial as `qos === 128` with no `err`, and a
+				// retry cannot fix a permission error, so it counts as settled
 				if ((granted ?? []).some((res) => res.qos === 128)) {
 					logger.error(
 						`Error subscribing to ${topic}, client doesn't have permission to subscribe to it`,
 					)
-					resolve('denied')
+					resolve(true)
 					return
 				}
 				logger.info(`Subscribed to ${topic}`)
-				resolve('ok')
+				resolve(true)
 			})
 		})
 	}
@@ -337,15 +334,12 @@ class MqttClient extends TypedEventEmitter<MqttClientEventCallbacks> {
 		}
 
 		return this.subscribeToBroker(fullTopic, options.qos).then(
-			(outcome) => {
-				if (outcome === 'error') {
-					// A transient broker error keeps the topic queued so the next
-					// connect retries it
+			(settled) => {
+				if (!settled) {
+					// Keep a transient broker error queued so the next connect retries
 					this.toSubscribe.set(fullTopic, retryOptions)
 					throw Error(`Error subscribing to ${fullTopic}`)
 				}
-				// Subscribed, or denied (a retry cannot fix a permission error):
-				// settled, so drop it from the retry queue
 				this.toSubscribe.delete(fullTopic)
 			},
 		)
@@ -381,18 +375,17 @@ class MqttClient extends TypedEventEmitter<MqttClientEventCallbacks> {
 			throw Error(`Cannot subscribe to ${topic} on a closed MQTT client`)
 		}
 
+		// `dispose()` removes the key once its last listener goes, so a present
+		// key always has listeners and only a missing one needs a subscribe
 		let listeners = this.exactSubscriptions.get(topic)
-		const firstForTopic = !listeners || listeners.size === 0
+		const firstForTopic = !listeners
 		if (!listeners) {
 			listeners = new Set()
 			this.exactSubscriptions.set(topic, listeners)
 		}
 		listeners.add(listener)
 
-		// Subscribe now when already connected and this is the topic's first
-		// listener; otherwise `_onConnect` resubscribes it. The helper never
-		// requeues into `toSubscribe`, so a callback that lands after this topic
-		// is disposed cannot leak it back onto the broker or into a reconnect
+		// Subscribe now when already connected; otherwise `_onConnect` does it
 		if (firstForTopic && this.client?.connected) {
 			this.subscribeExactTopic(topic)
 		}
@@ -440,12 +433,10 @@ class MqttClient extends TypedEventEmitter<MqttClientEventCallbacks> {
 	}
 
 	/**
-	 * Best-effort unsubscribe of an exact broker topic plus removal of any
-	 * pending retry. Safe when disconnected or closed, since the topic is
-	 * already gone from `exactSubscriptions`.
+	 * Best-effort unsubscribe of an exact broker topic. Safe when disconnected or
+	 * closed, since the topic is already gone from `exactSubscriptions`.
 	 */
 	private unsubscribeBroker(topic: string): void {
-		this.toSubscribe.delete(topic)
 		if (this.client?.connected) {
 			this.client.unsubscribe(topic, (err?: Error) => {
 				if (err) {
@@ -455,16 +446,6 @@ class MqttClient extends TypedEventEmitter<MqttClientEventCallbacks> {
 				}
 			})
 		}
-	}
-
-	/**
-	 * Emit the plugin-facing `hassStatus` compatibility event. Called from the
-	 * discovery subsystem's status handler (which owns the scoped
-	 * `homeassistant/status` subscription) so the plugin event is preserved
-	 * without this client subscribing the topic.
-	 */
-	public emitHassStatus(online: boolean): void {
-		this.emit('hassStatus', online)
 	}
 
 	/**

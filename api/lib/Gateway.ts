@@ -23,12 +23,9 @@ import {
 	HASS_COMMAND_HANDLED,
 	type DiscoveryGenerator,
 } from '../hass/DiscoveryGenerator.ts'
-import MqttDiscoveryManager, {
-	type MqttDiscoveryManagerOptions,
-} from '../hass/MqttDiscoveryManager.ts'
+import MqttDiscoveryManager from '../hass/MqttDiscoveryManager.ts'
 import { HASS_NODE_PREFIX, type HassDevice } from '../hass/types.ts'
 import type {
-	HassDeviceRegistryLifecyclePort,
 	HassDeviceRegistrySourcePort,
 	HassNode,
 	HassTopicNode,
@@ -144,7 +141,7 @@ export type GatewayMqtt = Pick<
 	| 'clientID'
 	| 'close'
 	| 'disabled'
-	| 'emitHassStatus'
+	| 'emit'
 	| 'getStatusTopic'
 	| 'getTopic'
 	| 'off'
@@ -193,18 +190,6 @@ export default class Gateway<
 		return this._zwave
 	}
 
-	/**
-	 * The lifecycle-managed Home Assistant MQTT discovery subsystem this gateway
-	 * owns, constructed once in the constructor so there is a single wiring path
-	 * (production and standalone alike). The `AppRuntime`-owned
-	 * `HomeAssistantManager` holds this same instance as its discovery handle and
-	 * drives its `stop()`; the gateway drives `start()`. Exposed so the
-	 * `HomeAssistantManager` and the discovery facades below can reach it.
-	 */
-	public get mqttDiscovery(): MqttDiscoveryManager {
-		return this._mqttDiscovery
-	}
-
 	public get closed() {
 		return this._closed
 	}
@@ -224,20 +209,9 @@ export default class Gateway<
 		this._mqtt = mqtt
 		this._zwave = zwave
 		this.customDeviceRegistrySource = customDeviceRegistry
-		// Construct the owned discovery subsystem eagerly, so there is exactly
-		// one wiring path and no lazily-built fallback that only the tests see
-		this._mqttDiscovery = new MqttDiscoveryManager(
-			this.buildDiscoveryOptions(),
-		)
-	}
-
-	/**
-	 * Build the {@link MqttDiscoveryManagerOptions} that wire the owned discovery
-	 * manager to this gateway's live clients. The ports adapt the live clients so
-	 * the manager never binds to a concrete client.
-	 */
-	private buildDiscoveryOptions(): MqttDiscoveryManagerOptions {
-		return {
+		// The ports adapt the live clients, so the manager never binds to a
+		// concrete client
+		this._mqttDiscovery = new MqttDiscoveryManager({
 			config: this.config,
 			mqtt: this._mqtt,
 			zwave: this._zwave,
@@ -254,20 +228,16 @@ export default class Gateway<
 			},
 			registrySource: this.customDeviceRegistrySource,
 			logger: hassLogger,
-		}
+		})
 	}
 
-	// Discovery facades kept on the Gateway that delegate to the owned manager
+	// Discovery facade kept on the Gateway that delegates to the owned manager
 	private get discoveryGenerator(): DiscoveryGenerator {
-		return this.mqttDiscovery.discoveryGenerator
-	}
-
-	private get customDeviceRegistry(): HassDeviceRegistryLifecyclePort {
-		return this.mqttDiscovery.customDeviceRegistry
+		return this._mqttDiscovery.discoveryGenerator
 	}
 
 	async start(): Promise<void> {
-		this.mqttDiscovery.start(this._mqtt, this.mqttEnabled)
+		this._mqttDiscovery.start(this._mqtt, this.mqttEnabled)
 		// gateway configuration
 		this.config.values = this.config.values || []
 
@@ -287,7 +257,7 @@ export default class Gateway<
 				await this._zwave.connect()
 			} catch (error) {
 				this.detachListeners()
-				this.mqttDiscovery.stop()
+				this._mqttDiscovery.stop()
 				throw error
 			}
 		} else {
@@ -470,40 +440,36 @@ export default class Gateway<
 
 		logger.info('Closing Gateway...')
 
-		// Drop the discovery publication fence up front, before the Z-Wave
-		// client closes, so a `nodeRemoved`/`valueChanged`/`notification`
-		// emitted during driver shutdown cannot publish retained discovery on
-		// the standalone path (no `HomeAssistantManager.stop()` ran first)
-		this._mqttDiscovery.discoveryGenerator.deactivate()
-
-		try {
-			if (this._zwave) {
-				await this._zwave.close()
-			}
-		} finally {
-			// Each cleanup step gets its own scope, so a throw in one cannot
-			// skip the next: the scoped `homeassistant/status` subscription must
-			// unsubscribe (via the discovery stop) while MQTT is still connected
-			// (a `clean:false` session then keeps no server-side subscription),
-			// even if `cancelJobs()`/`detachListeners()` throw
+		// Every step runs even if an earlier one throws, so the first error is
+		// reported without any cleanup being skipped
+		const errors: unknown[] = []
+		const step = async (fn: () => void | Promise<void>): Promise<void> => {
 			try {
-				this.cancelJobs()
-			} finally {
-				try {
-					this.detachListeners()
-				} finally {
-					try {
-						this._mqttDiscovery.stop()
-					} finally {
-						// Preserve the Z-Wave-before-MQTT shutdown contract
-						if (this.mqttEnabled) {
-							await this._mqtt.close()
-						}
-					}
-				}
+				await fn()
+			} catch (error) {
+				errors.push(error)
 			}
 		}
 
+		// Stop discovery before the Z-Wave client: it drops the publication fence
+		// synchronously, so no late `nodeRemoved`/`valueChanged` publishes retained
+		// discovery, and the `homeassistant/status` unsubscribe reaches the broker
+		// even if the driver teardown below hangs
+		await step(() => this._mqttDiscovery.stop())
+		await step(() => this._zwave?.close())
+		await step(() => this.cancelJobs())
+		await step(() => this.detachListeners())
+		// Preserve the Z-Wave-before-MQTT shutdown contract
+		if (this.mqttEnabled) {
+			await step(() => this._mqtt.close())
+		}
+
+		// Always log a completion marker, so the logs can tell "finished" from
+		// "stuck in here"
+		if (errors.length > 0) {
+			logger.info('Gateway closed with errors')
+			throw errors[0]
+		}
 		logger.info('Gateway closed')
 	}
 

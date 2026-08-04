@@ -15,8 +15,8 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import ZwaveServerManager, {
 	type ZwaveServerConfig,
 	type ZwaveServerHost,
-} from '#api/hass/ZwaveServerManager.ts'
-import { makeHassLogger, tick } from './fixtures.ts'
+} from '#api/lib/ZwaveServerManager.ts'
+import { makeHassLogger, tick } from './hass/fixtures.ts'
 
 const hoisted = vi.hoisted(() => ({
 	servers: [] as any[],
@@ -24,43 +24,13 @@ const hoisted = vi.hoisted(() => ({
 	SERVER_VERSION: '9.9.9-managed',
 }))
 
+// Imported inside the factory: `vi.mock` is hoisted above this file's own
+// imports, so a top-level binding would not be initialized yet
 vi.mock('@zwave-js/server', async () => {
-	const { EventEmitter: NodeEmitter } = await import('node:events')
-
-	class ZwavejsServerMock extends NodeEmitter {
-		driver: any
-		options: any
-		/** Undefined until `start()`; the real class sets this internally. */
-		server: any = undefined
-		/** Undefined until a socket is accepted; guards inclusion hand-back. */
-		sockets: any = undefined
-		setInclusionUserCallbacks = vi.fn()
-		start = vi.fn((..._args: any[]) => {
-			this.server = {}
-			return Promise.resolve()
-		})
-		destroy = vi.fn(
-			() =>
-				new Promise<void>((resolve) => {
-					setImmediate(() => {
-						hoisted.destroyOrder.push('server')
-						resolve()
-					})
-				}),
-		)
-
-		constructor(driver: any, options: any) {
-			super()
-			this.driver = driver
-			this.options = options
-			hoisted.servers.push(this)
-		}
-	}
-
-	return {
-		serverVersion: hoisted.SERVER_VERSION,
-		ZwavejsServer: ZwavejsServerMock,
-	}
+	const { zwaveServerMockFactory } = await import(
+		'./shared/zwaveServerMock.ts'
+	)
+	return zwaveServerMockFactory(hoisted)
 })
 
 function lastServer() {
@@ -347,9 +317,11 @@ describe('ZwaveServerManager.destroy()', () => {
 		)
 
 		const destroying = manager.destroy()
-		// A replacement generation is adopted (via the setter) mid-teardown.
-		const replacement = { start: vi.fn(), destroy: vi.fn() } as any
-		manager.server = replacement
+		// A replacement generation is created mid-teardown, exactly as a restart
+		// racing an older destroy would
+		manager.create()
+		const replacement = lastServer()
+		expect(replacement).not.toBe(original)
 
 		release()
 		await destroying

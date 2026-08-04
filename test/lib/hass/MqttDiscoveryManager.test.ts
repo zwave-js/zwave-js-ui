@@ -74,8 +74,9 @@ function makeStatusSource() {
 			if (index >= 0) brokerListeners.splice(index, 1)
 			return source
 		},
-		emitHassStatus(online) {
+		emit(_event, online) {
 			source.hassStatusEmits.push(online)
+			return true
 		},
 		hassStatusEmits: [],
 		deliver(topic, payload) {
@@ -156,30 +157,21 @@ describe('MqttDiscoveryManager start/stop lifecycle', () => {
 		expect(() => manager.stop()).not.toThrow()
 	})
 
-	it('stop() fences discovery publication synchronously and does not re-arm', () => {
+	it('stop() fences discovery publication synchronously, and a later start re-arms it', () => {
 		const { manager } = makeManager()
 		const generator = manager.discoveryGenerator
 
 		manager.start()
 		expect(generator.active).toBe(true)
 
-		// stop() must drop the fence synchronously (before any await a
-		// coordinator performs on the server destroy), so no producer can
-		// publish retained discovery once the teardown has begun.
+		// stop() must drop the fence synchronously, before anything it awaits, so
+		// no producer can publish retained discovery once teardown has begun
 		manager.stop()
 		expect(generator.active).toBe(false)
 
-		const rediscoverAll = vi.spyOn(generator, 'rediscoverAll')
-		manager.rediscoverAll()
-		// The manager facade still forwards, but the fenced generator no-ops
-		// its retained publication (proven in DiscoveryGenerator.test.ts).
-		expect(rediscoverAll).toHaveBeenCalledTimes(1)
-		expect(generator.active).toBe(false)
-
-		// The fence is one-way: a restart builds a fresh manager/generator
-		// rather than re-arming this one, so start() never revives the fence.
+		// A restart re-arms, so a manager started again publishes as documented
 		manager.start()
-		expect(generator.active).toBe(false)
+		expect(generator.active).toBe(true)
 	})
 })
 
@@ -188,7 +180,7 @@ describe('MqttDiscoveryManager scoped status subscription', () => {
 		const { manager } = makeManager()
 		const status = makeStatusSource()
 
-		manager.subscribeStatus(status)
+		manager.start(status, true)
 
 		expect(status.exactCount('homeassistant/status')).toBe(1)
 	})
@@ -200,7 +192,7 @@ describe('MqttDiscoveryManager scoped status subscription', () => {
 			.mockImplementation(() => {})
 		const status = makeStatusSource()
 
-		manager.subscribeStatus(status)
+		manager.start(status, true)
 		status.deliver(HASS_STATUS_TOPIC, 'online')
 
 		expect(rediscoverAll).toHaveBeenCalledTimes(1)
@@ -214,7 +206,7 @@ describe('MqttDiscoveryManager scoped status subscription', () => {
 			.mockImplementation(() => {})
 		const status = makeStatusSource()
 
-		manager.subscribeStatus(status)
+		manager.start(status, true)
 		status.deliver(HASS_STATUS_TOPIC, 'OnLiNe')
 
 		expect(rediscoverAll).toHaveBeenCalledTimes(1)
@@ -227,7 +219,7 @@ describe('MqttDiscoveryManager scoped status subscription', () => {
 			.mockImplementation(() => {})
 		const status = makeStatusSource()
 
-		manager.subscribeStatus(status)
+		manager.start(status, true)
 		status.deliver(HASS_STATUS_TOPIC, 'offline')
 
 		expect(logger.info).toHaveBeenCalledWith('Home Assistant is OFFLINE')
@@ -242,7 +234,7 @@ describe('MqttDiscoveryManager scoped status subscription', () => {
 		).mockImplementation(() => {})
 		const status = makeStatusSource()
 
-		manager.subscribeStatus(status)
+		manager.start(status, true)
 		status.deliver(HASS_STATUS_TOPIC, 'online')
 		status.deliver(HASS_STATUS_TOPIC, 'offline')
 		status.deliver(HASS_STATUS_TOPIC, 'ONLINE')
@@ -259,7 +251,7 @@ describe('MqttDiscoveryManager scoped status subscription', () => {
 		).mockImplementation(() => {})
 		const status = makeStatusSource()
 
-		manager.subscribeStatus(status)
+		manager.start(status, true)
 		// Non-string payload logs a complaint with no compat emit
 		status.deliver(HASS_STATUS_TOPIC, undefined)
 		// Broker reconnect drives an internal rediscovery but is not a HA
@@ -276,7 +268,7 @@ describe('MqttDiscoveryManager scoped status subscription', () => {
 			.mockImplementation(() => {})
 		const status = makeStatusSource()
 
-		manager.subscribeStatus(status)
+		manager.start(status, true)
 		status.deliver(HASS_STATUS_TOPIC, undefined)
 
 		expect(logger.error).toHaveBeenCalledWith(
@@ -292,7 +284,7 @@ describe('MqttDiscoveryManager scoped status subscription', () => {
 			.mockImplementation(() => {})
 		const status = makeStatusSource()
 
-		manager.subscribeStatus(status)
+		manager.start(status, true)
 		status.emitBroker(false)
 		expect(rediscoverAll).not.toHaveBeenCalled()
 
@@ -300,69 +292,51 @@ describe('MqttDiscoveryManager scoped status subscription', () => {
 		expect(rediscoverAll).toHaveBeenCalledTimes(1)
 	})
 
-	it('subscribeStatus is idempotent: a second call returns the same disposer and does not double-subscribe', () => {
+	it('a second start does not double-subscribe', () => {
 		const { manager } = makeManager()
 		const status = makeStatusSource()
 
-		const first = manager.subscribeStatus(status)
-		const second = manager.subscribeStatus(status)
+		manager.start(status, true)
+		manager.start(status, true)
 
-		expect(second).toBe(first)
 		expect(status.exactCount()).toBe(1)
 		expect(status.brokerCount()).toBe(1)
 	})
 
-	it('the returned disposer removes exactly its listeners and is idempotent', () => {
+	it('stop() removes exactly the listeners start() added, and is idempotent', () => {
 		const { manager } = makeManager()
 		const status = makeStatusSource()
 
-		const dispose = manager.subscribeStatus(status)
+		manager.start(status, true)
 		expect(status.exactCount()).toBe(1)
 		expect(status.brokerCount()).toBe(1)
 
-		dispose()
+		manager.stop()
 		expect(status.exactCount()).toBe(0)
 		expect(status.brokerCount()).toBe(0)
 
-		expect(() => dispose()).not.toThrow()
+		expect(() => manager.stop()).not.toThrow()
 		expect(status.exactCount()).toBe(0)
 	})
 
-	it('after disposing, a fresh subscribeStatus re-subscribes with a new disposer', () => {
+	it('a start after a stop re-subscribes', () => {
 		const { manager } = makeManager()
 		const status = makeStatusSource()
 
-		const first = manager.subscribeStatus(status)
-		first()
-		const second = manager.subscribeStatus(status)
+		manager.start(status, true)
+		manager.stop()
+		manager.start(status, true)
 
-		expect(second).not.toBe(first)
 		expect(status.exactCount()).toBe(1)
+		expect(status.brokerCount()).toBe(1)
 	})
 
-	it('disposeStatus() is a no-op when nothing is subscribed', () => {
+	it('stop() is a no-op when nothing was subscribed', () => {
 		const { manager } = makeManager()
-		expect(() => manager.disposeStatus()).not.toThrow()
+		expect(() => manager.stop()).not.toThrow()
 	})
 
-	it('a disposed subscription no longer reacts to status transitions', () => {
-		const { manager } = makeManager()
-		const rediscoverAll = vi
-			.spyOn(manager.discoveryGenerator, 'rediscoverAll')
-			.mockImplementation(() => {})
-		const status = makeStatusSource()
-
-		manager.subscribeStatus(status)
-		manager.disposeStatus()
-		status.deliver(HASS_STATUS_TOPIC, 'online')
-		status.emitBroker(true)
-
-		expect(rediscoverAll).not.toHaveBeenCalled()
-	})
-})
-
-describe('MqttDiscoveryManager start() status wiring', () => {
-	it('start(source, true) wires the status subscription', () => {
+	it('a stopped subscription no longer reacts to status transitions', () => {
 		const { manager } = makeManager()
 		const rediscoverAll = vi
 			.spyOn(manager.discoveryGenerator, 'rediscoverAll')
@@ -370,10 +344,11 @@ describe('MqttDiscoveryManager start() status wiring', () => {
 		const status = makeStatusSource()
 
 		manager.start(status, true)
-		expect(status.exactCount()).toBe(1)
-
+		manager.stop()
 		status.deliver(HASS_STATUS_TOPIC, 'online')
-		expect(rediscoverAll).toHaveBeenCalledTimes(1)
+		status.emitBroker(true)
+
+		expect(rediscoverAll).not.toHaveBeenCalled()
 	})
 
 	it('start(source, false) does not subscribe to status', () => {

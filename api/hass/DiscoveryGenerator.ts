@@ -93,11 +93,9 @@ export class DiscoveryGenerator {
 	private discovered: Record<string, HassDevice> = {}
 
 	/**
-	 * Publication fence. While `false` every retained-discovery producer is a
-	 * no-op, so no node/value/remove/status event emits a retained MQTT
-	 * discovery message once the owning manager has begun its (possibly
-	 * deferred) teardown. Starts active and is only ever dropped (never
-	 * re-armed): production builds a fresh generator per generation.
+	 * Publication fence. While `false` every retained-discovery producer no-ops,
+	 * so no node/value/remove/status event emits a retained MQTT discovery
+	 * message once the owning manager has begun its teardown.
 	 */
 	private _active = true
 
@@ -125,8 +123,10 @@ export class DiscoveryGenerator {
 		return this.zwavePort
 	}
 
+	/** Clear the discovery index and re-arm the publication fence, so a restarted manager publishes again */
 	public reset(): void {
 		this.discovered = {}
+		this._active = true
 	}
 
 	/** Whether retained-discovery publication is currently permitted. */
@@ -135,12 +135,9 @@ export class DiscoveryGenerator {
 	}
 
 	/**
-	 * Fence off retained-discovery publication synchronously, at the very start
-	 * of the owning manager's stop (before it disposes the scoped status
-	 * subscription and before the coordinator awaits the server destroy), so any
-	 * node/value/remove/status event during the deferred teardown window cannot
-	 * publish a retained MQTT discovery message or adopt resources against a
-	 * subsystem that is going away.
+	 * Fence off retained-discovery publication synchronously, at the top of the
+	 * owning manager's stop, so an event arriving later in the teardown cannot
+	 * publish a retained message against a subsystem that is going away.
 	 */
 	public deactivate(): void {
 		this._active = false
