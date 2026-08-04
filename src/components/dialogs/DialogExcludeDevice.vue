@@ -30,11 +30,11 @@
 				</p>
 			</template>
 			<template v-else>
-				<v-progress-circular
-					indeterminate
-					color="error"
+				<ZwSpinner
+					tone="danger"
 					:size="48"
 					:width="4"
+					label="Waiting for a device to exclude"
 				/>
 				<p class="zw-exclude__title">Exclusion started</p>
 				<p class="zw-exclude__sub">
@@ -50,6 +50,7 @@ import { mapState } from 'pinia'
 import useBaseStore from '../../stores/base.js'
 import InstancesMixin from '../../mixins/InstancesMixin.js'
 import ZwDialog from '@/components/dashboard/dialogs/ZwDialog.vue'
+import ZwSpinner from '@/components/dashboard/atoms/ZwSpinner.vue'
 import { AlertIcon, CheckIcon, ICON_SIZE, TrashIcon } from '@/lib/icons'
 import { confirmAction, pendingAction } from '@/lib/dashboard-types'
 
@@ -58,7 +59,7 @@ const SETTLE_MS = 3000
 
 export default {
 	name: 'DialogExcludeDevice',
-	components: { ZwDialog, AlertIcon, CheckIcon },
+	components: { ZwDialog, ZwSpinner, AlertIcon, CheckIcon },
 	mixins: [InstancesMixin],
 	emits: ['update:modelValue', 'close'],
 	props: {

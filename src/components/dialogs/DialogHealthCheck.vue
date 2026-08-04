@@ -104,18 +104,23 @@
 					</v-row>
 				</template>
 				<template #[`item.rating`]="{ item }">
-					<v-progress-linear
-						rounded
-						style="min-width: 80px"
-						height="25"
-						:model-value="item.rating * 10"
-						:color="getRatingColor(item.rating)"
-						:indeterminate="item.rating === undefined"
-					>
+					<span class="zw-hc-rating">
+						<ZwProgressBar
+							as="span"
+							class="zw-hc-rating__bar"
+							:style="{
+								'--zw-progress-fill': ratingFill(item.rating),
+							}"
+							:value="
+								item.rating === undefined
+									? null
+									: item.rating / 10
+							"
+						/>
 						<strong v-if="item.rating !== undefined"
 							>{{ item.rating }}/10</strong
 						>
-					</v-progress-linear>
+					</span>
 				</template>
 				<template #[`item.latency`]="{ item }">
 					<strong
@@ -246,10 +251,12 @@ import useBaseStore from '../../stores/base.js'
 import InstancesMixin from '../../mixins/InstancesMixin.js'
 import { defineAsyncComponent } from 'vue'
 import ZwDialog from '@/components/dashboard/dialogs/ZwDialog.vue'
+import ZwProgressBar from '@/components/dashboard/atoms/ZwProgressBar.vue'
 
 export default {
 	components: {
 		ZwDialog,
+		ZwProgressBar,
 		DialogHealthCheckInfo: defineAsyncComponent(
 			() => import('./DialogHealthCheckInfo.vue'),
 		),
@@ -373,6 +380,12 @@ export default {
 			} else {
 				return 'text-error'
 			}
+		},
+		ratingFill(rating) {
+			if (rating === undefined) return 'var(--zw-accent)'
+			if (rating >= 6) return 'var(--zw-ok)'
+			if (rating >= 4) return 'var(--zw-warning)'
+			return 'var(--zw-danger)'
 		},
 		getRatingColor(rating) {
 			if (rating === undefined) {
@@ -518,3 +531,18 @@ export default {
 	},
 }
 </script>
+
+<style scoped>
+.zw-hc-rating {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	min-width: 80px;
+}
+
+.zw-hc-rating__bar {
+	--zw-progress-h: 5px;
+	flex: 1;
+	min-width: 48px;
+}
+</style>

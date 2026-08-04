@@ -120,9 +120,7 @@
 					<v-row class="pa-0">
 						<v-col cols="12" class="text-center">
 							<h3 class="font-weight-light">Loading Nodes...</h3>
-							<v-progress-circular
-								indeterminate
-							></v-progress-circular>
+							<ZwSpinner label="Loading nodes" />
 						</v-col>
 					</v-row>
 				</v-container>
@@ -268,16 +266,15 @@
 									</v-badge>
 
 									<div v-else @click.stop class="text-center">
-										<v-progress-circular
-											indeterminate
+										<ZwSpinner
 											class="ma-1"
-											size="32"
-											color="primary"
+											:size="32"
+											label="Interviewing node"
 											v-tooltip:bottom="
 												'Interview stage: ' +
 												item.raw.interviewStage
 											"
-										></v-progress-circular>
+										/>
 									</div>
 
 									<div
@@ -287,15 +284,13 @@
 										"
 										class="mt-2"
 									>
-										<v-progress-linear
-											:model-value="
-												item.raw.firmwareUpdate.progress
-											"
-											height="5"
+										<ZwProgressBar
 											class="mt-1"
-											color="primary"
-										>
-										</v-progress-linear>
+											:value="
+												item.raw.firmwareUpdate
+													.progress / 100
+											"
+										/>
 										<p
 											class="text-caption font-weight-bold mb-0 mt-1"
 										>
@@ -374,6 +369,8 @@ import { mapState } from 'pinia'
 import useBaseStore from '../../stores/base.js'
 import { getBatteryDescription, jsonToList } from '../../lib/utils.js'
 import ZwDialog from '@/components/dashboard/dialogs/ZwDialog.vue'
+import ZwProgressBar from '@/components/dashboard/atoms/ZwProgressBar.vue'
+import ZwSpinner from '@/components/dashboard/atoms/ZwSpinner.vue'
 
 export default {
 	props: {
@@ -381,6 +378,8 @@ export default {
 	},
 	components: {
 		ZwDialog,
+		ZwProgressBar,
+		ZwSpinner,
 		ExpandedNode: defineAsyncComponent(
 			() => import('@/components/nodes-table/ExpandedNode.vue'),
 		),

@@ -63,11 +63,11 @@
 				>
 					--
 				</span>
-				<v-progress-circular
+				<ZwSpinner
 					v-else-if="nodeResults[item.id].status === 'running'"
-					indeterminate
-					size="20"
-					width="2"
+					:size="20"
+					:width="2"
+					label="Applying template"
 				/>
 				<v-icon
 					v-else-if="nodeResults[item.id].status === 'success'"
@@ -162,6 +162,7 @@ import useBaseStore from '../../stores/base.js'
 import InstancesMixin from '../../mixins/InstancesMixin.js'
 import logger from '../../lib/logger'
 import ZwDialog from '@/components/dashboard/dialogs/ZwDialog.vue'
+import ZwSpinner from '@/components/dashboard/atoms/ZwSpinner.vue'
 import { PlayIcon, RefreshIcon } from '@/lib/icons'
 import { cancelAction, confirmAction } from '@/lib/dashboard-types'
 
@@ -169,7 +170,7 @@ const log = logger.get('DialogApplyTemplate')
 
 export default {
 	name: 'DialogApplyTemplate',
-	components: { ZwDialog },
+	components: { ZwDialog, ZwSpinner },
 	mixins: [InstancesMixin],
 	props: {
 		modelValue: { type: Boolean, default: false },
