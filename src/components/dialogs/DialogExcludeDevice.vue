@@ -33,7 +33,6 @@
 				<ZwSpinner
 					tone="danger"
 					:size="48"
-					:width="4"
 					label="Waiting for a device to exclude"
 				/>
 				<p class="zw-exclude__title">Exclusion started</p>

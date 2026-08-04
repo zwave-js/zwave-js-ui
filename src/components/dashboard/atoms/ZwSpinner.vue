@@ -7,7 +7,11 @@
 		aria-busy="true"
 		:aria-label="label"
 	>
-		<svg class="zw-spinner__svg" :viewBox="VIEWBOX" aria-hidden="true">
+		<svg
+			class="zw-spinner__svg zw-spin"
+			:viewBox="VIEWBOX"
+			aria-hidden="true"
+		>
 			<circle
 				class="zw-spinner__track"
 				:cx="CENTER"
@@ -21,7 +25,7 @@
 				:cy="CENTER"
 				:r="RADIUS"
 				:stroke-width="strokeUnits"
-				:stroke-dasharray="dashArray"
+				:stroke-dasharray="DASH_ARRAY"
 			/>
 		</svg>
 	</span>
@@ -33,12 +37,10 @@ import { computed } from 'vue'
 const props = withDefaults(
 	defineProps<{
 		size?: number
-		// Stroke thickness in px; scales with the size when left unset
-		width?: number
 		tone?: 'accent' | 'danger'
 		label?: string
 	}>(),
-	{ size: 32, width: 0, tone: 'accent', label: 'Loading' },
+	{ size: 32, tone: 'accent', label: 'Loading' },
 )
 
 const SPAN = 24
@@ -50,20 +52,15 @@ const VIEWBOX = `0 0 ${SPAN} ${SPAN}`
 const SIZE_TO_STROKE = 12
 const MIN_STROKE_PX = 2
 
-const strokePx = computed(
-	() =>
-		props.width ||
-		Math.max(MIN_STROKE_PX, Math.round(props.size / SIZE_TO_STROKE)),
-)
+// A quarter-circle arc chasing a three-quarter gap
+const CIRCUMFERENCE = 2 * Math.PI * RADIUS
+const DASH_ARRAY = `${CIRCUMFERENCE / 4} ${CIRCUMFERENCE}`
 
 // The stroke is authored in px but drawn in viewBox units, so scale it by the
 // ratio the SVG is rendered at
-const strokeUnits = computed(() => (strokePx.value * SPAN) / props.size)
-
-// A quarter-circle arc chasing a three-quarter gap
-const dashArray = computed(() => {
-	const circumference = 2 * Math.PI * RADIUS
-	return `${circumference / 4} ${circumference}`
+const strokeUnits = computed(() => {
+	const px = Math.max(MIN_STROKE_PX, Math.round(props.size / SIZE_TO_STROKE))
+	return (px * SPAN) / props.size
 })
 </script>
 
@@ -86,7 +83,6 @@ const dashArray = computed(() => {
 .zw-spinner__svg {
 	width: 100%;
 	height: 100%;
-	animation: zw-spin 0.9s linear infinite;
 }
 
 .zw-spinner__track,

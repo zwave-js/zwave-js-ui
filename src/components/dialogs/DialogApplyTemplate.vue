@@ -66,7 +66,6 @@
 				<ZwSpinner
 					v-else-if="nodeResults[item.id].status === 'running'"
 					:size="20"
-					:width="2"
 					label="Applying template"
 				/>
 				<v-icon

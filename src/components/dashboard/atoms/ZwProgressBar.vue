@@ -2,30 +2,20 @@
 	<!-- The track is authored here rather than being v0's `Progress.Root`
 	     element: Root renders a fragment, so no scope id reaches it and neither
 	     this file nor a consumer can style it. -->
-	<component
-		:is="as"
-		class="zw-progress"
-		role="progressbar"
-		:aria-label="label"
-		:aria-valuemin="min"
-		:aria-valuemax="max"
-		:aria-valuenow="modelValue"
-		:aria-valuetext="valueText"
-		:aria-busy="indeterminate || undefined"
-		:data-state="indeterminate ? 'indeterminate' : 'determinate'"
+	<Progress.Root
+		:key="indeterminate ? 'indeterminate' : 'determinate'"
+		renderless
+		:model-value="modelValue"
+		:max="max"
 	>
-		<Progress.Root
-			:key="indeterminate ? 'indeterminate' : 'determinate'"
-			renderless
-			:model-value="modelValue"
-			:min="min"
-			:max="max"
-		>
-			<Progress.Fill :as="as" class="zw-progress__fill">
-				<span v-if="shimmer" class="zw-progress__shimmer" />
-			</Progress.Fill>
-		</Progress.Root>
-	</component>
+		<template #default="{ attrs }">
+			<component :is="as" class="zw-progress" v-bind="attrs">
+				<Progress.Fill as="span" class="zw-progress__fill">
+					<span v-if="shimmer" class="zw-progress__shimmer" />
+				</Progress.Fill>
+			</component>
+		</template>
+	</Progress.Root>
 </template>
 
 <script setup lang="ts">
@@ -35,23 +25,14 @@ import { progressValue } from '@/lib/progress'
 
 const props = withDefaults(
 	defineProps<{
-		// In `min`..`max` units; null for an indeterminate sweep
+		// In 0..`max` units; null for an indeterminate sweep
 		value?: number | null
-		min?: number
 		max?: number
 		// Render as a span where the bar sits inside inline content
 		as?: 'div' | 'span'
 		shimmer?: boolean
-		label?: string
 	}>(),
-	{
-		value: null,
-		min: 0,
-		max: 100,
-		as: 'div',
-		shimmer: false,
-		label: undefined,
-	},
+	{ value: null, max: 100, as: 'div', shimmer: false },
 )
 
 // v0 captures whether a value was supplied when the progress context is built,
@@ -59,16 +40,7 @@ const props = withDefaults(
 // context to switch modes
 const indeterminate = computed(() => props.value == null)
 
-const modelValue = computed(() =>
-	progressValue(props.value, props.min, props.max),
-)
-
-const valueText = computed(() => {
-	if (modelValue.value === undefined) return undefined
-	const extent = props.max - props.min
-	if (extent <= 0) return undefined
-	return `${Math.round(((modelValue.value - props.min) / extent) * 100)}%`
-})
+const modelValue = computed(() => progressValue(props.value))
 </script>
 
 <style scoped>

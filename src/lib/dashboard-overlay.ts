@@ -39,7 +39,7 @@ export function useOverlayLayer(): void {
 	// stack changes, to stay above whatever opened last.
 	let toaster = document.querySelector<HTMLElement>(TOASTER)
 	let warnedMissingToaster = false
-	function applyToastLayer(stackChanged: boolean) {
+	function applyToastLayer() {
 		toaster ??= document.querySelector<HTMLElement>(TOASTER)
 		const wanted = !!stack.topElement.value
 		if (!toaster) {
@@ -53,9 +53,6 @@ export function useOverlayLayer(): void {
 			}
 			return
 		}
-		// Re-showing is only needed to get back above a newly-opened dialog
-		if (!stackChanged && !!toaster.getAttribute('popover') === wanted)
-			return
 		if (toaster.matches(':popover-open')) toaster.hidePopover()
 		if (!wanted) {
 			toaster.removeAttribute('popover')
@@ -86,7 +83,7 @@ export function useOverlayLayer(): void {
 	watch(
 		() => stack.topElement.value,
 		() => {
-			applyToastLayer(true)
+			applyToastLayer()
 			applyVuetifyContainer()
 		},
 		{ flush: 'post', immediate: true },
@@ -94,14 +91,13 @@ export function useOverlayLayer(): void {
 
 	// Both containers are created lazily — sonner's with the first toast,
 	// Vuetify's with the first overlay — so one raised while a dialog is already
-	// open would otherwise never be relocated. Everything else appended to
-	// `<body>` (every tooltip popover) also lands here, hence the cheap
-	// already-correct bail in both appliers.
+	// open would otherwise never be relocated. Once both exist the watch above
+	// keeps them placed, so stop watching `<body>`: everything else appended
+	// there would otherwise re-run both selector scans.
 	const observer = new MutationObserver(() => {
-		if (!toaster || !container) {
-			applyToastLayer(false)
-			applyVuetifyContainer()
-		}
+		if (!toaster) applyToastLayer()
+		if (!container) applyVuetifyContainer()
+		if (toaster && container) observer.disconnect()
 	})
 	observer.observe(document.body, { childList: true })
 	onScopeDispose(() => observer.disconnect())
