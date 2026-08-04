@@ -1,4 +1,4 @@
-import { inject, onScopeDispose, provide, watch, type InjectionKey } from 'vue'
+import { onScopeDispose, watch } from 'vue'
 import { useStack } from '@vuetify/v0'
 
 // Dashboard overlays are native `<dialog>` elements via v0's Dialog primitive,
@@ -6,26 +6,10 @@ import { useStack } from '@vuetify/v0'
 // with `::backdrop` as the scrim and the platform providing focus trap,
 // return-focus and Esc.
 
-// Vuetify overlays (`v-select`, `v-menu`, `v-tooltip`, …) teleport into
-// `.v-overlay-container` under `<body>`, which the top layer paints over — so
-// inside a dialog they must be re-targeted into the dialog's own subtree. A
-// dialog publishes an `attach` selector for the Vuetify controls still in its
-// body to consume; see `useOverlayAttach` and OverlayAttachMixin.
-export const ATTACH_KEY = Symbol('zw-overlay-attach') as InjectionKey<string>
-
-export function provideOverlayAttach(selector: string): void {
-	provide(ATTACH_KEY, selector)
-}
-
-// Returns a selector for Vuetify's `attach` prop, or undefined outside a
-// dialog, where the default body teleport is already correct.
-export function useOverlayAttach(): string | undefined {
-	return inject(ATTACH_KEY, undefined)
-}
-
 const TOASTER = '[data-sonner-toaster]'
+const VUETIFY_CONTAINER = '.v-overlay-container'
 
-// Mount once, at the app root. Both concerns here are global to the overlay
+// Mount once, at the app root. Every concern here is global to the overlay
 // stack rather than per-dialog, and v0's stack already tracks it — deriving
 // from that avoids per-instance lock counting getting out of balance when a
 // dialog is torn down mid-leave.
@@ -58,14 +42,38 @@ export function useOverlayLayer(): void {
 		el.showPopover()
 	}
 
-	watch(() => stack.topElement.value, applyToastLayer, {
+	// Vuetify teleports its overlays (`v-select` menus, `v-menu`, `v-tooltip`,
+	// legacy `v-dialog`) into a single container under `<body>`. A modal dialog
+	// both paints over that container and inerts it, so an overlay raised from
+	// inside a dashboard dialog was invisible and dead to clicks. Moving the
+	// container into the topmost modal shares that element's top-layer context
+	// and its non-inert subtree; the container is `display: contents`, so the
+	// move changes no layout, and its children position against the viewport
+	// either way.
+	let container = document.querySelector<HTMLElement>(VUETIFY_CONTAINER)
+	function applyVuetifyContainer() {
+		container ??= document.querySelector<HTMLElement>(VUETIFY_CONTAINER)
+		if (!container) return
+		// A closing dialog takes the container down with it, so resolve the host
+		// even when the container is already detached
+		const host = stack.topElement.value ?? document.body
+		if (container.parentElement !== host) host.append(container)
+	}
+
+	function apply() {
+		applyToastLayer()
+		applyVuetifyContainer()
+	}
+
+	watch(() => stack.topElement.value, apply, {
 		flush: 'post',
 		immediate: true,
 	})
 
-	// Sonner only creates its container with the first toast, so a toast raised
-	// while a dialog is already open would otherwise never be promoted
-	const observer = new MutationObserver(applyToastLayer)
+	// Both containers are created lazily — sonner's with the first toast,
+	// Vuetify's with the first overlay — so one raised while a dialog is already
+	// open would otherwise never be relocated
+	const observer = new MutationObserver(apply)
 	observer.observe(document.body, { childList: true })
 	onScopeDispose(() => observer.disconnect())
 }

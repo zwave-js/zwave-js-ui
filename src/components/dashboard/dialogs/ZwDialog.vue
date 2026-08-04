@@ -87,7 +87,6 @@ import ZwButton from '@/components/dashboard/atoms/ZwButton.vue'
 import ZwProgressBar from '@/components/dashboard/atoms/ZwProgressBar.vue'
 import ZwDialogHeader from './ZwDialogHeader.vue'
 import { AlertIcon, CheckIcon, InfoIcon, ICON_SIZE } from '@/lib/icons'
-import { provideOverlayAttach } from '@/lib/dashboard-overlay'
 import type {
 	DialogAction,
 	DialogDismiss,
@@ -131,10 +130,7 @@ const emit = defineEmits<{
 // Doubles as the v0 injection namespace: contexts are registered per namespace
 // rather than through the component hierarchy, so two dialogs sharing the
 // default would resolve to one context and dismiss together.
-// Vuetify controls still living in dialog bodies also teleport their menus
-// here, so they land inside the top-layer subtree instead of behind it.
 const dialogId = `zw-dlg-${useId()}`
-provideOverlayAttach(`#${dialogId}`)
 
 // Presence only defers unmount by a tick so `afterLeave` has a moment to fire
 // after the element is gone; the native dialog closes immediately either way.
@@ -338,7 +334,7 @@ function variantFor(a: DialogAction): ZwButtonVariant {
 	display: flex;
 	align-items: center;
 	gap: 14px;
-	padding: var(--zw-dlg-pad-top) var(--zw-dlg-pad-x) 14px;
+	padding: var(--zw-dlg-pad-top) var(--zw-dlg-pad-x) 6px;
 	flex-shrink: 0;
 }
 
@@ -375,7 +371,9 @@ function variantFor(a: DialogAction): ZwButtonVariant {
 
 /* ── body ── */
 .zw-dlg__body {
-	padding: 2px var(--zw-dlg-pad-x) 16px;
+	/* Scrolling clips both axes, and a Vuetify floating label sits ~8px above
+	   its field, so the first row of a form needs that much headroom */
+	padding: 10px var(--zw-dlg-pad-x) 16px;
 	overflow-y: auto;
 	flex: 0 1 auto;
 	font: var(--zw-text-body);

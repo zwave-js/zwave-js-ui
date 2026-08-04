@@ -39,7 +39,6 @@
 			<v-row>
 				<v-col cols="12" style="max-width: 350px">
 					<v-select
-						:menu-props="zwMenuProps"
 						label="RF Region"
 						:items="node.rfRegions"
 						v-model="selectedRFRegion"
@@ -153,7 +152,6 @@
 			<v-row v-if="node.supportsLongRange">
 				<v-col cols="12" style="max-width: 350px">
 					<v-select
-						:menu-props="zwMenuProps"
 						label="Maximum LR Power Level"
 						:items="maxLRPowerLevels"
 						v-model="node.maxLongRangePowerlevel"
@@ -417,7 +415,6 @@
 										</v-col>
 										<v-col cols="3">
 											<v-select
-												:menu-props="zwMenuProps"
 												label="Size"
 												hide-details
 												:items="[1, 2, 3, 4]"
@@ -437,7 +434,6 @@
 											:cols="$vuetify.display.xs ? 4 : 3"
 										>
 											<v-select
-												:menu-props="zwMenuProps"
 												label="Format"
 												hide-details
 												:items="configCCValueFormats"
@@ -494,7 +490,6 @@ import useBaseStore from '../../stores/base.js'
 import InstancesMixin from '../../mixins/InstancesMixin.js'
 import { isUnsupervisedOrSucceeded, ConfigValueFormat } from '@zwave-js/core'
 import { regionSupportsAutoPowerlevel } from '@server/lib/shared'
-import OverlayAttachMixin from '@/mixins/OverlayAttachMixin.js'
 
 export default {
 	props: {
@@ -504,7 +499,7 @@ export default {
 	components: {
 		ValueID: defineAsyncComponent(() => import('../ValueId.vue')),
 	},
-	mixins: [OverlayAttachMixin, InstancesMixin],
+	mixins: [InstancesMixin],
 	data() {
 		return {
 			locError: null,

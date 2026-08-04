@@ -12,7 +12,6 @@
 			<v-row class="ma-3" justify="start">
 				<v-col cols="12" align="center">
 					<v-select
-						:menu-props="zwMenuProps"
 						label="Mode"
 						style="max-width: 325px"
 						v-model="mode"
@@ -216,7 +215,6 @@ import { cancelAction } from '@/lib/dashboard-types'
 import InstancesMixin from '../../mixins/InstancesMixin.js'
 import ZwDialog from '@/components/dashboard/dialogs/ZwDialog.vue'
 import ZwProgressBar from '@/components/dashboard/atoms/ZwProgressBar.vue'
-import OverlayAttachMixin from '@/mixins/OverlayAttachMixin.js'
 
 export default {
 	components: { ZwDialog, ZwProgressBar },
@@ -226,7 +224,7 @@ export default {
 		node: Object,
 		socket: Object,
 	},
-	mixins: [OverlayAttachMixin, InstancesMixin],
+	mixins: [InstancesMixin],
 	watch: {
 		modelValue(v) {
 			if (v) this.init(v)

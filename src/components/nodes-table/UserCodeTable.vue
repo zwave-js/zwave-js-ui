@@ -59,7 +59,6 @@
 				</span>
 				<div v-else>
 					<v-select
-						:menu-props="zwMenuProps"
 						v-model="editingState[item.id].newStatus"
 						:items="statuses"
 						style="max-width: 250px"
@@ -128,10 +127,9 @@
 <script>
 import { defineAsyncComponent } from 'vue'
 import InstancesMixin from '../../mixins/InstancesMixin.js'
-import OverlayAttachMixin from '@/mixins/OverlayAttachMixin.js'
 
 export default {
-	mixins: [OverlayAttachMixin, InstancesMixin],
+	mixins: [InstancesMixin],
 	props: { node: Object },
 	components: {
 		NodeScheduler: defineAsyncComponent(

@@ -12,7 +12,6 @@
 				<v-row>
 					<v-col cols="12">
 						<v-select
-							:menu-props="zwMenuProps"
 							v-model="editedValue.device"
 							label="Device"
 							required
@@ -23,7 +22,6 @@
 					</v-col>
 					<v-col cols="12">
 						<v-select
-							:menu-props="zwMenuProps"
 							v-model="editedValue.value"
 							label="Value"
 							:hint="
@@ -69,7 +67,6 @@
 						cols="12"
 					>
 						<v-select
-							:menu-props="zwMenuProps"
 							v-model="editedValue.device_class"
 							label="Device Class"
 							hint="Specify a device class for Home assistant"
@@ -94,7 +91,6 @@
 					</v-col>
 					<v-col v-if="!this.mqtt.disabled" cols="6">
 						<v-select
-							:menu-props="zwMenuProps"
 							v-model="editedValue.qos"
 							label="QoS"
 							hint="If specified, overrides the default QoS in MQTT settings"
@@ -111,7 +107,6 @@
 					</v-col>
 					<v-col v-if="!this.mqtt.disabled" cols="6">
 						<v-select
-							:menu-props="zwMenuProps"
 							v-model="editedValue.retain"
 							label="Retain"
 							persistent-hint
@@ -238,10 +233,8 @@ import useBaseStore from '../../stores/base.js'
 import { cancelAction, confirmAction } from '@/lib/dashboard-types'
 import { defineAsyncComponent } from 'vue'
 import ZwDialog from '@/components/dashboard/dialogs/ZwDialog.vue'
-import OverlayAttachMixin from '@/mixins/OverlayAttachMixin.js'
 
 export default {
-	mixins: [OverlayAttachMixin],
 	components: {
 		ZwDialog,
 		PrismEditor: defineAsyncComponent(() =>

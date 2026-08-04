@@ -74,7 +74,7 @@
 								>
 
 								<v-spacer></v-spacer>
-								<v-menu :attach="zwOverlayAttach">
+								<v-menu>
 									<template #activator="{ props }">
 										<v-btn
 											variant="outlined"
@@ -208,7 +208,6 @@ import useBaseStore from '../../stores/base.js'
 import { mapState } from 'pinia'
 import InstancesMixin from '../../mixins/InstancesMixin.js'
 import { RFRegion } from '@zwave-js/core'
-import OverlayAttachMixin from '@/mixins/OverlayAttachMixin.js'
 import ZwSpinner from '@/components/dashboard/atoms/ZwSpinner.vue'
 
 export default {
@@ -235,7 +234,7 @@ export default {
 			default: false,
 		},
 	},
-	mixins: [OverlayAttachMixin, InstancesMixin],
+	mixins: [InstancesMixin],
 	data() {
 		return {
 			RFRegion,

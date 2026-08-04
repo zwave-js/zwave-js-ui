@@ -13,7 +13,6 @@
 				<v-row>
 					<v-col cols="12">
 						<v-select
-							:menu-props="zwMenuProps"
 							label="Node Endpoint"
 							hint="Used to filter available groups"
 							v-model="group.endpoint"
@@ -24,7 +23,6 @@
 
 					<v-col cols="12">
 						<v-select
-							:menu-props="zwMenuProps"
 							label="Group"
 							hint="Node/Endpoint Group association to Add/Remove"
 							persistent-hint
@@ -67,7 +65,6 @@
 					<v-col class="pa-0" v-if="nodesInGroup < maxNodes">
 						<v-col cols="12">
 							<v-combobox
-								:menu-props="zwMenuProps"
 								label="Target Node"
 								v-model="group.target"
 								:items="filteredNodes"
@@ -84,7 +81,6 @@
 							cols="12"
 						>
 							<v-select
-								:menu-props="zwMenuProps"
 								v-model.number="group.targetEndpoint"
 								persistent-hint
 								label="Target Endpoint"
@@ -124,10 +120,9 @@ import { AssociationCheckResult } from '@zwave-js/cc'
 import { getEnumMemberName } from '@zwave-js/shared'
 import InstancesMixin from '../../mixins/InstancesMixin.js'
 import ZwDialog from '@/components/dashboard/dialogs/ZwDialog.vue'
-import OverlayAttachMixin from '@/mixins/OverlayAttachMixin.js'
 
 export default {
-	mixins: [OverlayAttachMixin, InstancesMixin],
+	mixins: [InstancesMixin],
 	components: { ZwDialog },
 	emits: ['update:modelValue', 'close', 'add'],
 	props: {
