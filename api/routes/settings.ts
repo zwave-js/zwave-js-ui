@@ -323,6 +323,11 @@ export function registerSettingsRoutes(
 		apisLimiter,
 		isAuthenticated,
 		async function (req, res) {
+			// Tracks whether the old gateway has already been torn down, so the
+			// catch can distinguish "restart failed, app unchanged" (threw before
+			// teardown) from "restart failed after teardown, app now has no
+			// working gateway"
+			let gatewayTornDown = false
 			try {
 				runtime.assertNotRestarting()
 
@@ -338,6 +343,7 @@ export function registerSettingsRoutes(
 				// `/api/restart` requires a running gateway to close before it
 				// restarts, so a missing one is surfaced as a caller error
 				await runtime.teardownGateway({ requireGateway: true })
+				gatewayTornDown = true
 				if (settings.gateway) {
 					runtime.setupLogging({ gateway: settings.gateway })
 				}
@@ -355,6 +361,15 @@ export function registerSettingsRoutes(
 				})
 			} catch (error) {
 				runtime.setRestarting(false)
+				// Once the old gateway is torn down, a failure here leaves the app
+				// running with no working gateway rather than merely unchanged;
+				// say so distinctly so an operator knows the app is down, not just
+				// that the restart request failed
+				if (gatewayTornDown) {
+					logger.error(
+						'Gateway restart failed after tearing the old gateway down: the app is now running without a working gateway. Fix the error and restart again.',
+					)
+				}
 				logger.error(error)
 				res.json({ success: false, message: getErrorMessage(error) })
 			}

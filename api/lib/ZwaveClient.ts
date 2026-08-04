@@ -814,27 +814,34 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 	/**
 	 * Owns the `@zwave-js/server` lifecycle; the `server` accessor below
-	 * delegates to it.
-	 *
-	 * Optional because in production the `AppRuntime`-owned
-	 * `HomeAssistantManager` constructs the manager (via {@link buildServerHost})
-	 * and adopts it through {@link adoptServerManager} before the driver
-	 * connects, while a directly-constructed client (standalone/tests) lazily
-	 * builds its own fallback on first access to {@link zwaveServer}.
+	 * delegates to it. Constructed once in the constructor (a single wiring
+	 * path), so it is always present. The `AppRuntime`-owned
+	 * `HomeAssistantManager` holds this same instance as its server handle and
+	 * awaits its `destroy()`; this client drives `create()`/`startIfNeeded()`.
 	 */
-	private _serverManager?: ZwaveServerManager
+	private readonly _serverManager: ZwaveServerManager
 
 	/**
 	 * The narrow {@link ZwaveServerHost} port the server manager uses to reach
 	 * back into this client. Every accessor resolves the current value so a
 	 * driver/config swap on restart is honoured with nothing captured at
-	 * construction time. Public so the `HomeAssistantManager` factory can build a
-	 * manager this client then adopts.
+	 * construction time.
+	 *
+	 * `getConfig()` projects only the four server fields the port declares, so
+	 * the runtime object matches the declared slice and never hands out a live
+	 * reference to the full `ZwaveConfig` (which carries `networkKey`,
+	 * `securityKeys` and `securityKeysLongRange`).
 	 */
-	public buildServerHost(): ZwaveServerHost {
+	private buildServerHost(): ZwaveServerHost {
 		return {
 			getDriver: () => this._driver,
-			getConfig: () => this.cfg,
+			getConfig: () => ({
+				serverEnabled: this.cfg.serverEnabled,
+				serverPort: this.cfg.serverPort,
+				serverHost: this.cfg.serverHost,
+				serverServiceDiscoveryDisabled:
+					this.cfg.serverServiceDiscoveryDisabled,
+			}),
 			getHasUserCallbacks: () => this.hasUserCallbacks,
 			onHardReset: () => this.init(),
 			logger,
@@ -843,36 +850,19 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	}
 
 	/**
-	 * Adopt the HA-owned server manager. Called by `HomeAssistantManager` once,
-	 * before the driver connects, so `create()/startIfNeeded()/destroy()` below
-	 * all drive the manager the coordinator owns. Idempotent per generation.
-	 */
-	public adoptServerManager(manager: ZwaveServerManager): void {
-		this._serverManager = manager
-	}
-
-	/**
-	 * The `@zwave-js/server` (`ZwavejsServer`) subsystem this client owns. In
-	 * production it is the HA-owned manager adopted via
-	 * {@link adoptServerManager}; a directly-constructed client lazily builds a
-	 * standalone fallback here on first access. Exposed so the
-	 * `HomeAssistantManager` can resolve the current manager across restarts.
+	 * The `@zwave-js/server` (`ZwavejsServer`) subsystem this client owns.
+	 * Exposed so the `HomeAssistantManager` can hold it as its server handle.
 	 */
 	public get zwaveServer(): ZwaveServerManager {
-		if (!this._serverManager) {
-			this._serverManager = new ZwaveServerManager(this.buildServerHost())
-		}
 		return this._serverManager
 	}
 
 	private get server(): ZwavejsServer | null {
-		return this._serverManager?.server ?? null
+		return this._serverManager.server
 	}
 
 	private set server(value: ZwavejsServer | null) {
-		// Route through the lazy accessor so a directly-constructed client that
-		// assigns `server` before any create() still has a manager to hold it
-		this.zwaveServer.server = value
+		this._serverManager.server = value
 	}
 
 	private statelessTimeouts: Record<string, NodeJS.Timeout>
@@ -962,6 +952,11 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		this.cfg = config
 		this.socket = socket
+		// Construct the owned `@zwave-js/server` manager eagerly, so there is a
+		// single wiring path and no lazily-built fallback that only the tests
+		// see. The host port resolves the driver/config lazily, so the manager
+		// is safe to build before `connect()` creates the driver
+		this._serverManager = new ZwaveServerManager(this.buildServerHost())
 		this.hassDeviceStore = new HassDeviceStore({
 			hasNode: (nodeId) => this._nodes.has(nodeId),
 			getNodeDevices: (nodeId) => this._nodes.get(nodeId)?.hassDevices,
@@ -1243,7 +1238,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		})
 
 		// when no user is connected, give back the control to HA server
-		this._serverManager?.handInclusionControlBack()
+		this._serverManager.handInclusionControlBack()
 	}
 
 	/**
@@ -1330,34 +1325,14 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	}
 
 	/**
-	 * Construct the official `@zwave-js/server` instance and wire its
-	 * `error`/`hard reset` listeners. Called from `connect()` right after the
-	 * driver is created (and only when `serverEnabled`), so the server always
-	 * exists BEFORE the driver becomes ready. Extracted verbatim from
-	 * `connect()` so its behavior is unchanged.
-	 */
-	private _createServer() {
-		this.zwaveServer.create()
-	}
-
-	/**
-	 * Start the official `@zwave-js/server` once the driver is ready and nodes
-	 * are restored (called from `_onDriverReady`). The `!this.server['server']`
-	 * guard prevents a second `start()` when the driver re-emits `driver ready`
-	 * (see #602). Extracted verbatim from `_onDriverReady` so its behavior is
-	 * unchanged.
-	 */
-	private _startServerIfNeeded() {
-		this.zwaveServer.startIfNeeded()
-	}
-
-	/**
 	 * Method used to close client connection, use this before destroy
 	 */
 	async close(keepListeners = false) {
 		this.status = ZwaveClientStatus.CLOSED
 		this.closed = true
 		this.driverReady = false
+
+		logger.info('Closing client...')
 
 		if (this.commandsTimeout) {
 			clearTimeout(this.commandsTimeout)
@@ -1403,11 +1378,14 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			this.throttledFunctions.delete(key)
 		}
 
-		if (this._serverManager) {
-			await this._serverManager.destroy()
-		}
+		// Destroy the `@zwave-js/server` before the driver, so its listening
+		// port is released before the driver it wraps goes away. Logged per
+		// await, since both are the most hang-prone steps in shutdown
+		logger.info('Destroying Z-Wave server...')
+		await this._serverManager.destroy()
 
 		if (this._driver) {
+			logger.info('Destroying driver...')
 			await this._driver.destroy()
 			this._driver = null
 		}
@@ -2612,9 +2590,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				return
 			}
 
-			if (this.cfg.serverEnabled) {
-				this._createServer()
-			}
+			// The `serverEnabled` gate lives in the manager's `create()`, so
+			// call unconditionally and let it decide whether a server is built
+			this.zwaveServer.create()
 
 			if (this.cfg.enableStatistics) {
 				this.enableStatistics()
@@ -6419,7 +6397,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		this._error = undefined
 
 		// start server only when driver is ready. Fixes #602
-		this._startServerIfNeeded()
+		this.zwaveServer.startIfNeeded()
 
 		logger.info(`Scanning network with homeid: ${homeHex}`)
 

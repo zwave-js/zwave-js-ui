@@ -60,8 +60,7 @@ export type GatewayPort = Pick<
 	| 'publishDiscovery'
 	| 'rediscoverNode'
 	| 'disableDiscovery'
-	| 'buildDiscoveryOptions'
-	| 'adoptDiscoveryManager'
+	| 'mqttDiscovery'
 > & {
 	readonly zwave?: ZwaveClientPort
 	readonly mqtt?: MqttClientPort
