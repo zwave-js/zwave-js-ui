@@ -82,11 +82,12 @@
 				justify="center"
 				align="center"
 			>
-				<ZwProgressBar
+				<v-progress-linear
 					v-if="running"
-					class="zw-lr__bar"
-					:value="infinite ? null : progress"
-				/>
+					:indeterminate="this.infinite"
+					:model-value="this.infinite ? null : this.progress"
+					color="success"
+				></v-progress-linear>
 				<v-list class="mr-2" density="compact">
 					<v-list-item>
 						<v-list-item-title class="text-info"
@@ -196,13 +197,6 @@
 </template>
 
 <style>
-/* Full-bleed row of the surrounding v-row, toned green like the check it tracks */
-.zw-lr__bar {
-	--zw-progress-fill: var(--zw-ok);
-	flex: 1 0 100%;
-	margin-bottom: 8px;
-}
-
 .help-menu {
 	max-height: 90vh;
 	overflow: scroll;
@@ -214,10 +208,9 @@ import { copy } from '@/lib/utils'
 import { cancelAction } from '@/lib/dashboard-types'
 import InstancesMixin from '../../mixins/InstancesMixin.js'
 import ZwDialog from '@/components/dashboard/dialogs/ZwDialog.vue'
-import ZwProgressBar from '@/components/dashboard/atoms/ZwProgressBar.vue'
 
 export default {
-	components: { ZwDialog, ZwProgressBar },
+	components: { ZwDialog },
 	emits: ['update:modelValue', 'close'],
 	props: {
 		modelValue: Boolean, // show or hide

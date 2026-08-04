@@ -27,17 +27,17 @@
 				>{{ value.displayValue }}</span
 			>
 		</v-layout>
-		<ZwSpinner
+		<v-progress-circular
 			v-else-if="value && value.loading"
+			color="primary"
 			:size="value.size || 24"
-			label="Loading value"
-		/>
+			indeterminate
+		></v-progress-circular>
 	</div>
 </template>
 
 <script>
 import SvgIcon from '@jamescoyle/vue-icon'
-import ZwSpinner from '@/components/dashboard/atoms/ZwSpinner.vue'
 export default {
 	props: {
 		value: {
@@ -58,7 +58,6 @@ export default {
 		},
 	},
 	components: {
-		ZwSpinner,
 		SvgIcon,
 	},
 }

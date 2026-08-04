@@ -264,10 +264,11 @@
 				</div>
 				<div v-else>
 					<v-col class="text-center">
-						<ZwSpinner
-							:size="64"
-							label="Waiting for node response"
-						/>
+						<v-progress-circular
+							size="64"
+							indeterminate
+							color="primary"
+						></v-progress-circular>
 						<p class="mt-3 text-h5">
 							Waiting response from node...
 						</p>
@@ -303,10 +304,11 @@
 				</div>
 				<div v-else>
 					<v-col class="text-center">
-						<ZwSpinner
-							:size="64"
-							label="Waiting for node response"
-						/>
+						<v-progress-circular
+							size="64"
+							indeterminate
+							color="primary"
+						></v-progress-circular>
 						<p class="mt-3 text-h5">
 							Waiting response from node...
 						</p>
@@ -359,7 +361,6 @@ import InstancesMixin from '../../mixins/InstancesMixin.js'
 import { nextTick } from 'vue'
 import ZwWizardDialog from '@/components/dashboard/dialogs/ZwWizardDialog.vue'
 import ZwButton from '@/components/dashboard/atoms/ZwButton.vue'
-import ZwSpinner from '@/components/dashboard/atoms/ZwSpinner.vue'
 import { confirmAction } from '@/lib/dashboard-types'
 
 export default {
@@ -369,7 +370,6 @@ export default {
 	components: {
 		ZwWizardDialog,
 		ZwButton,
-		ZwSpinner,
 		MissingKeysAlert: defineAsyncComponent(
 			() => import('../custom/MissingKeysAlert.vue'),
 		),

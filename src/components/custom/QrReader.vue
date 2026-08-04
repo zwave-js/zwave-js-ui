@@ -46,7 +46,10 @@
 								v-if="loadingQr"
 							>
 								<p class="text-caption">Loading camera</p>
-								<ZwSpinner class="mt-2" label="Scanning" />
+								<v-progress-circular
+									class="mt-2"
+									indeterminate
+								></v-progress-circular>
 							</div>
 							<div
 								class="d-flex flex-column align-center mt-5"
@@ -153,7 +156,6 @@ import logger from '../../lib/logger'
 const log = logger.get('QrReader')
 
 import QrScanner from 'qr-scanner'
-import ZwSpinner from '@/components/dashboard/atoms/ZwSpinner.vue'
 
 setZXingModuleOverrides({
 	locateFile: (path, prefix) => {
@@ -167,7 +169,6 @@ setZXingModuleOverrides({
 })
 
 export default {
-	components: { ZwSpinner },
 	props: {
 		qrbox: {
 			type: Number,

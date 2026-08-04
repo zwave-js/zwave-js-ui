@@ -172,7 +172,7 @@
 				class="text-center"
 				v-else-if="loading || node.firmwareUpdate"
 			>
-				<ZwSpinner label="Firmware update in progress" />
+				<v-progress-circular indeterminate color="primary" />
 				<p class="text-caption">
 					{{
 						node.firmwareUpdate
@@ -208,10 +208,9 @@ import useBaseStore from '../../stores/base.js'
 import { mapState } from 'pinia'
 import InstancesMixin from '../../mixins/InstancesMixin.js'
 import { RFRegion } from '@zwave-js/core'
-import ZwSpinner from '@/components/dashboard/atoms/ZwSpinner.vue'
 
 export default {
-	components: { ZwSpinner },
+	components: {},
 	props: {
 		node: {
 			type: Object,

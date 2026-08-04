@@ -1,19 +1,31 @@
 <template>
-	<span class="zw-tx" :class="`zw-tx--${variant}`" :title="title">
+	<span
+		class="zw-tx"
+		:class="[
+			`zw-tx--${variant}`,
+			{ 'zw-tx--indeterminate': pct === undefined },
+		]"
+		:title="title"
+	>
 		<component :is="iconComp" :size="ICON_SIZE.chip" class="zw-tx__icon" />
-		<ZwProgressBar
+		<Progress.Root
 			as="span"
-			shimmer
 			class="zw-tx__bar"
-			:value="pct ?? null"
-		/>
+			:model-value="pct ?? 0"
+			:min="0"
+			:max="100"
+		>
+			<Progress.Fill as="span" class="zw-tx__fill">
+				<span class="zw-tx__shimmer" />
+			</Progress.Fill>
+		</Progress.Root>
 		<span v-if="pct !== undefined" class="zw-tx__pct">{{ pct }}%</span>
 	</span>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import ZwProgressBar from '@/components/dashboard/atoms/ZwProgressBar.vue'
+import { Progress } from '@vuetify/v0'
 import {
 	DownloadIcon,
 	RefreshIcon,
@@ -81,9 +93,35 @@ const title = computed(() =>
 }
 
 .zw-tx__bar {
-	--zw-progress-h: 4px;
-	--zw-progress-radius: var(--zw-radius-xs);
-	--zw-progress-track: rgba(var(--v0-primary), 0.18);
+	position: relative;
+	height: 4px;
+	background: rgba(var(--v0-primary), 0.18);
+	border-radius: 2px;
+	overflow: hidden;
+}
+
+/* Indeterminate: hide fill, animate a sweep instead. */
+.zw-tx--indeterminate .zw-tx__fill {
+	display: none;
+}
+
+.zw-tx--indeterminate .zw-tx__bar::after {
+	content: '';
+	position: absolute;
+	inset: 0;
+	width: 40%;
+	background: var(--zw-accent);
+	border-radius: 2px;
+	animation: zw-tx-indeterminate 1.2s ease-in-out infinite;
+}
+
+@keyframes zw-tx-indeterminate {
+	0% {
+		transform: translateX(-100%);
+	}
+	100% {
+		transform: translateX(300%);
+	}
 }
 
 .zw-tx--table .zw-tx__bar {
@@ -94,6 +132,29 @@ const title = computed(() =>
 .zw-tx--card .zw-tx__bar {
 	flex: 1;
 	min-width: 24px;
+}
+
+.zw-tx__fill {
+	display: block;
+	height: 100%;
+	background: var(--zw-accent);
+	border-radius: 2px;
+	transition: width 0.3s;
+	position: relative;
+}
+
+.zw-tx__shimmer {
+	position: absolute;
+	inset: 0;
+	background: linear-gradient(
+		to right,
+		transparent 0%,
+		rgba(255, 255, 255, 0.25) 50%,
+		transparent 100%
+	);
+	transform: translateX(-100%);
+	animation: zw-shimmer 4s linear infinite;
+	pointer-events: none;
 }
 
 .zw-tx__pct {
