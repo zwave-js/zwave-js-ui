@@ -74,7 +74,7 @@
 								>
 
 								<v-spacer></v-spacer>
-								<v-menu>
+								<v-menu :attach="zwOverlayAttach">
 									<template #activator="{ props }">
 										<v-btn
 											variant="outlined"
@@ -157,7 +157,7 @@
 
 								<template #append>
 									<v-btn
-										v-tooltip:bottom="'Download'"
+										v-zw-tooltip:bottom="'Download'"
 										@click="download(f.url)"
 										icon="download"
 										color="success"
@@ -172,7 +172,7 @@
 				class="text-center"
 				v-else-if="loading || node.firmwareUpdate"
 			>
-				<v-progress-circular indeterminate color="primary" />
+				<ZwSpinner label="Firmware update in progress" />
 				<p class="text-caption">
 					{{
 						node.firmwareUpdate
@@ -208,9 +208,11 @@ import useBaseStore from '../../stores/base.js'
 import { mapState } from 'pinia'
 import InstancesMixin from '../../mixins/InstancesMixin.js'
 import { RFRegion } from '@zwave-js/core'
+import OverlayAttachMixin from '@/mixins/OverlayAttachMixin.js'
+import ZwSpinner from '@/components/dashboard/atoms/ZwSpinner.vue'
 
 export default {
-	components: {},
+	components: { ZwSpinner },
 	props: {
 		node: {
 			type: Object,
@@ -233,7 +235,7 @@ export default {
 			default: false,
 		},
 	},
-	mixins: [InstancesMixin],
+	mixins: [OverlayAttachMixin, InstancesMixin],
 	data() {
 		return {
 			RFRegion,

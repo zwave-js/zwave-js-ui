@@ -39,6 +39,7 @@
 			<v-row>
 				<v-col cols="12" style="max-width: 350px">
 					<v-select
+						:menu-props="zwMenuProps"
 						label="RF Region"
 						:items="node.rfRegions"
 						v-model="selectedRFRegion"
@@ -62,7 +63,7 @@
 								<v-btn
 									color="primary"
 									size="small"
-									v-tooltip:bottom="`Refresh`"
+									v-zw-tooltip:bottom="`Refresh`"
 									icon
 									@click="
 										updateControllerNodeProp('RFRegion')
@@ -73,7 +74,7 @@
 								<v-btn
 									color="primary"
 									size="small"
-									v-tooltip:bottom="`Save`"
+									v-zw-tooltip:bottom="`Save`"
 									icon
 									@click="updateRFRegion"
 								>
@@ -127,7 +128,7 @@
 								<v-btn
 									color="primary"
 									size="small"
-									v-tooltip:bottom="`Refresh`"
+									v-zw-tooltip:bottom="`Refresh`"
 									icon
 									@click="
 										updateControllerNodeProp('powerlevel')
@@ -138,7 +139,7 @@
 								<v-btn
 									color="primary"
 									size="small"
-									v-tooltip:bottom="`Save`"
+									v-zw-tooltip:bottom="`Save`"
 									icon
 									@click="updatePowerLevel"
 								>
@@ -152,6 +153,7 @@
 			<v-row v-if="node.supportsLongRange">
 				<v-col cols="12" style="max-width: 350px">
 					<v-select
+						:menu-props="zwMenuProps"
 						label="Maximum LR Power Level"
 						:items="maxLRPowerLevels"
 						v-model="node.maxLongRangePowerlevel"
@@ -175,7 +177,7 @@
 								<v-btn
 									color="primary"
 									size="small"
-									v-tooltip:bottom="`Refresh`"
+									v-zw-tooltip:bottom="`Refresh`"
 									icon
 									@click="
 										updateControllerNodeProp(
@@ -188,7 +190,7 @@
 								<v-btn
 									color="primary"
 									size="small"
-									v-tooltip:bottom="`Save`"
+									v-zw-tooltip:bottom="`Save`"
 									icon
 									@click="updateMaxLRPowerLevel"
 								>
@@ -258,7 +260,7 @@
 								<v-btn
 									icon
 									size="small"
-									v-tooltip:bottom="`Clear`"
+									v-zw-tooltip:bottom="`Clear`"
 									@click="
 										options.transitionDuration =
 											node.defaultTransitionDuration || ''
@@ -269,7 +271,7 @@
 								<v-btn
 									icon
 									size="small"
-									v-tooltip:bottom="`Save`"
+									v-zw-tooltip:bottom="`Save`"
 									@click="setDefaults('transitionDuration')"
 								>
 									<v-icon>save</v-icon>
@@ -297,7 +299,7 @@
 								<v-btn
 									icon
 									size="small"
-									v-tooltip:bottom="`Clear`"
+									v-zw-tooltip:bottom="`Clear`"
 									@click="
 										options.volume =
 											node.defaultVolume || ''
@@ -308,7 +310,7 @@
 								<v-btn
 									icon
 									size="small"
-									v-tooltip:bottom="`Save`"
+									v-zw-tooltip:bottom="`Save`"
 									@click="setDefaults('volume')"
 								>
 									<v-icon>save</v-icon>
@@ -415,6 +417,7 @@
 										</v-col>
 										<v-col cols="3">
 											<v-select
+												:menu-props="zwMenuProps"
 												label="Size"
 												hide-details
 												:items="[1, 2, 3, 4]"
@@ -434,6 +437,7 @@
 											:cols="$vuetify.display.xs ? 4 : 3"
 										>
 											<v-select
+												:menu-props="zwMenuProps"
 												label="Format"
 												hide-details
 												:items="configCCValueFormats"
@@ -490,6 +494,7 @@ import useBaseStore from '../../stores/base.js'
 import InstancesMixin from '../../mixins/InstancesMixin.js'
 import { isUnsupervisedOrSucceeded, ConfigValueFormat } from '@zwave-js/core'
 import { regionSupportsAutoPowerlevel } from '@server/lib/shared'
+import OverlayAttachMixin from '@/mixins/OverlayAttachMixin.js'
 
 export default {
 	props: {
@@ -499,7 +504,7 @@ export default {
 	components: {
 		ValueID: defineAsyncComponent(() => import('../ValueId.vue')),
 	},
-	mixins: [InstancesMixin],
+	mixins: [OverlayAttachMixin, InstancesMixin],
 	data() {
 		return {
 			locError: null,

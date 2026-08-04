@@ -1,7 +1,7 @@
 <template>
 	<v-btn
 		v-if="hasAvailableFirmwareUpdate"
-		v-tooltip:bottom="
+		v-zw-tooltip:bottom="
 			`${availableUpdatesCount} firmware update(s) available. Click to open firmware update tab.`
 		"
 		:style="bStyle"

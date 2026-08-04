@@ -13,6 +13,7 @@
 			<v-row class="ma-3" justify="start">
 				<v-col>
 					<v-combobox
+						:menu-props="zwMenuProps"
 						style="max-width: 300px"
 						label="Target Node"
 						v-model="targetNode"
@@ -252,6 +253,7 @@ import InstancesMixin from '../../mixins/InstancesMixin.js'
 import { defineAsyncComponent } from 'vue'
 import ZwDialog from '@/components/dashboard/dialogs/ZwDialog.vue'
 import ZwProgressBar from '@/components/dashboard/atoms/ZwProgressBar.vue'
+import OverlayAttachMixin from '@/mixins/OverlayAttachMixin.js'
 
 export default {
 	components: {
@@ -267,7 +269,7 @@ export default {
 		node: Object,
 		socket: Object,
 	},
-	mixins: [InstancesMixin],
+	mixins: [OverlayAttachMixin, InstancesMixin],
 	watch: {
 		modelValue(v) {
 			if (v) this.init(v)

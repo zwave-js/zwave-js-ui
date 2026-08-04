@@ -40,7 +40,7 @@
 
 			<v-chip
 				v-if="!compact && isDefault"
-				v-tooltip:bottom="'This value is set to its default'"
+				v-zw-tooltip:bottom="'This value is set to its default'"
 				class="ml-2 mb-1"
 				size="x-small"
 				variant="outlined"
@@ -355,7 +355,7 @@
 			never resolve. -->
 			<v-progress-circular
 				v-if="!compact && modelValue.toUpdate && !node?.virtual"
-				v-tooltip:bottom="
+				v-zw-tooltip:bottom="
 					node?.status === 'Asleep'
 						? 'Wake up your device in order to send commands'
 						: 'Set value in progress...'

@@ -21,6 +21,7 @@
 		<template v-if="step">
 			<div v-if="step.key === 'replaceFailed'">
 				<v-combobox
+					:menu-props="zwMenuProps"
 					label="Node"
 					v-model="step.values.replaceId"
 					:items="nodes.filter((n) => !n.isControllerNode)"
@@ -361,6 +362,7 @@ import ZwWizardDialog from '@/components/dashboard/dialogs/ZwWizardDialog.vue'
 import ZwButton from '@/components/dashboard/atoms/ZwButton.vue'
 import ZwSpinner from '@/components/dashboard/atoms/ZwSpinner.vue'
 import { confirmAction } from '@/lib/dashboard-types'
+import OverlayAttachMixin from '@/mixins/OverlayAttachMixin.js'
 
 export default {
 	props: {
@@ -374,7 +376,7 @@ export default {
 			() => import('../custom/MissingKeysAlert.vue'),
 		),
 	},
-	mixins: [InstancesMixin],
+	mixins: [OverlayAttachMixin, InstancesMixin],
 	emits: ['open', 'close'],
 	data() {
 		return {

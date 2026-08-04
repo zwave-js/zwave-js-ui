@@ -2,6 +2,7 @@
 	<v-container grid-list-md>
 		<v-row justify="center">
 			<v-select
+				:menu-props="zwMenuProps"
 				class="ma-2"
 				style="max-width: 200px"
 				v-model="mode"
@@ -84,6 +85,7 @@ import InstancesMixin from '../../mixins/InstancesMixin.js'
 import { getEnumMemberName } from '@zwave-js/shared'
 import { ScheduleEntryLockWeekday } from '@zwave-js/cc'
 import { padNumber, copy } from '../../lib/utils.js'
+import OverlayAttachMixin from '@/mixins/OverlayAttachMixin.js'
 
 const months = [
 	{
@@ -137,7 +139,7 @@ const months = [
 ]
 
 export default {
-	mixins: [InstancesMixin],
+	mixins: [OverlayAttachMixin, InstancesMixin],
 	props: {
 		node: Object,
 		_user: Object,

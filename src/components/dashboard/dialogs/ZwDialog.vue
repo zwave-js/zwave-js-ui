@@ -1,82 +1,93 @@
 <template>
-	<v-dialog
-		:model-value="modelValue"
-		:width="widthPx"
-		:persistent="dismiss !== 'all'"
-		content-class="zw-dlg__vcontent"
-		class="zw-dlg__overlay"
-		:class="{ 'zw-dlg__overlay--blocking': dismiss === 'none' }"
-		scrim="black"
-		@update:model-value="onModel"
-		@after-leave="emit('afterLeave')"
+	<Dialog.Root
+		v-if="isMounted"
+		:id="dialogId"
+		:namespace="dialogId"
+		v-model="rootOpen"
 	>
-		<div
-			ref="content"
-			class="zw-dlg"
-			role="dialog"
-			aria-modal="true"
-			:aria-label="title"
+		<Dialog.Content
+			:namespace="dialogId"
+			class="zw-dlg__native"
+			:style="{ width: `${widthPx}px` }"
+			:close-on-click-outside="dismiss === 'all'"
+			:blocking="dismiss !== 'all'"
+			:data-blocking="dismiss === 'none' || undefined"
+			@keydown.capture="onKeydown"
 		>
-			<ZwProgressBar
-				v-if="loading"
-				:value="null"
-				class="zw-dlg__loading"
-			/>
-			<div v-if="hasRule" class="zw-dlg__rule" :class="ruleClass" />
+			<div ref="content" class="zw-dlg" :aria-label="title">
+				<ZwProgressBar
+					v-if="loading"
+					:value="null"
+					class="zw-dlg__loading"
+				/>
+				<div v-if="hasRule" class="zw-dlg__rule" :class="ruleClass" />
 
-			<!-- Vertical-rail wizard layout: rail spans header+body, footer stays full-width. -->
-			<div v-if="$slots.rail" class="zw-dlg__split">
-				<slot name="rail" />
-				<div class="zw-dlg__main">
+				<!-- Vertical-rail wizard layout: rail spans header+body, footer stays full-width. -->
+				<div v-if="$slots.rail" class="zw-dlg__split">
+					<slot name="rail" />
+					<div class="zw-dlg__main">
+						<slot name="header" :close="close">
+							<ZwDialogHeader
+								v-bind="headerProps"
+								@close="close"
+							/>
+						</slot>
+						<div class="zw-dlg__body">
+							<slot />
+						</div>
+					</div>
+				</div>
+
+				<template v-else>
 					<slot name="header" :close="close">
 						<ZwDialogHeader v-bind="headerProps" @close="close" />
 					</slot>
 					<div class="zw-dlg__body">
 						<slot />
 					</div>
-				</div>
-			</div>
+				</template>
 
-			<template v-else>
-				<slot name="header" :close="close">
-					<ZwDialogHeader v-bind="headerProps" @close="close" />
-				</slot>
-				<div class="zw-dlg__body">
-					<slot />
-				</div>
-			</template>
-
-			<div
-				v-if="$slots['footer-left'] || actions.length"
-				class="zw-dlg__footer"
-			>
-				<div class="zw-dlg__footer-left">
-					<slot name="footer-left" />
-				</div>
-				<ZwButton
-					v-for="(a, i) in actions"
-					:key="i"
-					:variant="variantFor(a)"
-					:disabled="a.disabled"
-					:autofocus="a.autoFocus || undefined"
-					@click="a.onClick"
+				<div
+					v-if="$slots['footer-left'] || actions.length"
+					class="zw-dlg__footer"
 				>
-					<template v-if="a.icon" #icon>
-						<component :is="a.icon" :size="ICON_SIZE.std" />
-					</template>
-					{{ a.label }}
-				</ZwButton>
+					<div class="zw-dlg__footer-left">
+						<slot name="footer-left" />
+					</div>
+					<ZwButton
+						v-for="(a, i) in actions"
+						:key="i"
+						:variant="variantFor(a)"
+						:disabled="a.disabled"
+						:autofocus="a.autoFocus || undefined"
+						@click="a.onClick"
+					>
+						<template v-if="a.icon" #icon>
+							<component :is="a.icon" :size="ICON_SIZE.std" />
+						</template>
+						{{ a.label }}
+					</ZwButton>
+				</div>
 			</div>
-		</div>
-	</v-dialog>
+		</Dialog.Content>
+	</Dialog.Root>
 </template>
 
 <script setup lang="ts">
-import { computed, onBeforeUnmount, ref, watch, type Component } from 'vue'
+import {
+	computed,
+	onBeforeUnmount,
+	ref,
+	useId,
+	watch,
+	type Component,
+} from 'vue'
+import { Dialog, usePresence } from '@vuetify/v0'
 import ZwButton from '@/components/dashboard/atoms/ZwButton.vue'
 import ZwProgressBar from '@/components/dashboard/atoms/ZwProgressBar.vue'
 import ZwDialogHeader from './ZwDialogHeader.vue'
 import { AlertIcon, CheckIcon, InfoIcon, ICON_SIZE } from '@/lib/icons'
+import { provideOverlayAttach } from '@/lib/dashboard-overlay'
 import type {
 	DialogAction,
 	DialogDismiss,
@@ -117,6 +128,44 @@ const emit = defineEmits<{
 	'update:contentWidth': [number]
 }>()
 
+// Doubles as the v0 injection namespace: contexts are registered per namespace
+// rather than through the component hierarchy, so two dialogs sharing the
+// default would resolve to one context and dismiss together.
+// Vuetify controls still living in dialog bodies also teleport their menus
+// here, so they land inside the top-layer subtree instead of behind it.
+const dialogId = `zw-dlg-${useId()}`
+provideOverlayAttach(`#${dialogId}`)
+
+// Presence only defers unmount by a tick so `afterLeave` has a moment to fire
+// after the element is gone; the native dialog closes immediately either way.
+const { isMounted } = usePresence({
+	present: () => props.modelValue,
+	immediate: true,
+})
+
+// `modelValue` is the single source of truth. Routing v0's dismissal straight
+// back out avoids a local mirror that v0 can re-raise, which would call
+// `showModal()` a second time and re-promote the dialog in the top layer.
+const rootOpen = computed({
+	get: () => props.modelValue,
+	set: (v) => {
+		if (!v) close()
+	},
+})
+
+watch(isMounted, (mounted) => {
+	if (!mounted) emit('afterLeave')
+})
+
+// One Escape natively closes *every* open modal dialog, not just the topmost
+// (Chrome 150), so cancel the default and dismiss only this one. `showModal`
+// traps focus in the top dialog, so that is where the keydown lands.
+function onKeydown(e: KeyboardEvent) {
+	if (e.key !== 'Escape') return
+	e.preventDefault()
+	if (props.dismiss === 'all') close()
+}
+
 // Reported rather than derived from the window: dashboard breakpoints are
 // container widths, and the dialog is narrower than the viewport
 const content = ref<HTMLElement | null>(null)
@@ -131,7 +180,9 @@ watch(content, (el) => {
 	ro.observe(el)
 })
 
-onBeforeUnmount(() => ro?.disconnect())
+onBeforeUnmount(() => {
+	ro?.disconnect()
+})
 
 const WIDTHS: Record<DialogSize, number> = {
 	sm: 400,
@@ -170,11 +221,8 @@ const chipIcon = computed(
 )
 const showClose = computed(() => props.dismiss !== 'none')
 
-function onModel(v: boolean) {
-	emit('update:modelValue', v)
-}
 function close() {
-	onModel(false)
+	emit('update:modelValue', false)
 }
 
 const headerProps = computed(() => ({
@@ -200,30 +248,50 @@ function variantFor(a: DialogAction): ZwButtonVariant {
 </script>
 
 <style>
-/* Non-scoped because v-dialog teleports its content out of this component's
-   DOM subtree, so scoped selectors would not reach it. */
+/* Non-scoped: the native dialog lives in the top layer outside this
+   component's DOM subtree, so scoped selectors would not reach it. */
 
-/* Overrides Vuetify's default calc(100% − 48px) cap so the dialog fills the
-   screen with only a small margin on phones. */
-.v-overlay__content.zw-dlg__vcontent {
+/* The <dialog> element is the positioning box, .zw-dlg inside is the panel */
+/* Width arrives inline from the size prop */
+.zw-dlg__native {
 	max-width: calc(100vw - 32px);
 	max-height: var(--zw-dlg-max-h);
-	margin: 16px;
+	margin: auto;
+	padding: 0;
+	border: none;
+	background: transparent;
+	overflow: visible;
+	animation: zw-dlg-enter 0.16s ease-out;
+}
+
+.zw-dlg__native::backdrop {
+	background: rgba(0, 0, 0, 0.48);
+	animation: zw-fade-in 0.16s;
+}
+
+/* Darker where the dialog offers no dismissal affordance, so the block reads
+   as deliberate rather than as an unresponsive page */
+.zw-dlg__native[data-blocking]::backdrop {
+	background: rgba(0, 0, 0, 0.62);
 }
 
 @media (max-width: 600px) {
-	.v-overlay__content.zw-dlg__vcontent {
+	.zw-dlg__native {
 		max-width: calc(100vw - 16px);
-		margin: 8px;
 	}
 }
 
-.zw-dlg__overlay .v-overlay__scrim {
-	opacity: 0.48;
+@keyframes zw-dlg-enter {
+	from {
+		opacity: 0;
+		transform: scale(0.96);
+	}
 }
 
-.zw-dlg__overlay--blocking .v-overlay__scrim {
-	opacity: 0.62;
+@media (prefers-reduced-motion: reduce) {
+	.zw-dlg__native {
+		animation-duration: 0.01ms;
+	}
 }
 
 .zw-dlg {

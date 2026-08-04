@@ -11,6 +11,7 @@
 				<v-row>
 					<v-col cols="12">
 						<v-select
+							:menu-props="zwMenuProps"
 							v-model="editedValue.node"
 							label="Node"
 							required
@@ -23,6 +24,7 @@
 					</v-col>
 					<v-col v-if="editedValue.node" cols="12">
 						<v-select
+							:menu-props="zwMenuProps"
 							v-model="editedValue.value"
 							label="Value"
 							required
@@ -85,8 +87,10 @@
 import { defineAsyncComponent } from 'vue'
 import ZwDialog from '@/components/dashboard/dialogs/ZwDialog.vue'
 import { cancelAction, confirmAction } from '@/lib/dashboard-types'
+import OverlayAttachMixin from '@/mixins/OverlayAttachMixin.js'
 
 export default {
+	mixins: [OverlayAttachMixin],
 	components: {
 		ZwDialog,
 		ValueID: defineAsyncComponent(() => import('@/components/ValueId.vue')),
