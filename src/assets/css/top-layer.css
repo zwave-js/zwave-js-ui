@@ -1,5 +1,25 @@
 /* Overrides for surfaces promoted into the browser top layer. Tokens stay in tokens.css */
 
+/* Popover surface for the v-zw-tooltip directive. Sits in the top layer, so
+   it needs no z-index; Floating UI writes top/left. */
+.zw-tip {
+	position: fixed;
+	margin: 0;
+	inset: auto;
+	max-width: 260px;
+	padding: 5px 8px;
+	border: none;
+	border-radius: var(--zw-radius-sm);
+	background: var(--zw-tip-bg);
+	color: var(--zw-tip-fg);
+	font: var(--zw-text-caption);
+	line-height: 1.35;
+	white-space: pre-wrap;
+	overflow: visible;
+	box-shadow: var(--zw-e8);
+	animation: zw-fade-in 0.1s;
+}
+
 /* Strip the popover UA box so sonner's own top/right positioning still applies */
 [data-sonner-toaster][popover] {
 	inset: auto;

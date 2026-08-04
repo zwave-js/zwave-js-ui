@@ -1,19 +1,7 @@
 <template>
-	<div>
-		<!--
-			Use the component form (not v-tooltip directive) so the overlay tracks
-			the parent's mount lifecycle. On chatty meshes the row re-renders many
-			times per second; the directive form leaks orphan tooltips (see #4639).
-			The open-delay also keeps transient mouse-overs from triggering at all.
-		-->
-		<v-tooltip
-			v-if="value && value.description"
-			activator="parent"
-			location="bottom"
-			:open-delay="300"
-		>
-			{{ value.description }}
-		</v-tooltip>
+	<!-- The directive owns one popover per host element and drops it on unmount,
+		 so a row re-rendering many times per second cannot orphan tooltips (#4639) -->
+	<div v-zw-tooltip:bottom="value && value.description">
 		<span
 			v-if="value !== undefined && value.icon === ''"
 			:style="'padding-top: 4px; ' + value.displayStyle"

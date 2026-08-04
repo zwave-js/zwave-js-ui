@@ -40,7 +40,7 @@
 
 			<v-chip
 				v-if="!compact && isDefault"
-				v-tooltip:bottom="'This value is set to its default'"
+				v-zw-tooltip:bottom="'This value is set to its default'"
 				class="ml-2 mb-1"
 				size="x-small"
 				variant="outlined"
@@ -325,37 +325,26 @@
 			</div>
 
 			<!-- Button Input -->
-			<v-tooltip
+			<v-btn
 				v-else-if="
 					modelValue.type === 'boolean' && !modelValue.readable
 				"
-				location="right"
+				v-zw-tooltip:right="'[' + modelValue.id + '] ' + help"
+				max-width="100%"
+				size="small"
+				variant="flat"
+				color="primary"
+				@click="updateValue(modelValue)"
+				class="mb-2 mt-4"
+				>{{ trueLabel || falseLabel || modelValue.label }}</v-btn
 			>
-				<template #activator="{ props }">
-					<v-btn
-						max-width="100%"
-						size="small"
-						variant="flat"
-						v-bind="props"
-						color="primary"
-						@click="updateValue(modelValue)"
-						class="mb-2 mt-4"
-						>{{
-							trueLabel || falseLabel || modelValue.label
-						}}</v-btn
-					>
-				</template>
-				<span class="help">{{
-					'[' + modelValue.id + '] ' + help
-				}}</span>
-			</v-tooltip>
 
 			<!-- Suffix loader with tooltip. Virtual nodes (broadcast/multicast)
 			don't return device feedback, so showing a "waiting" spinner would
 			never resolve. -->
 			<v-progress-circular
 				v-if="!compact && modelValue.toUpdate && !node?.virtual"
-				v-tooltip:bottom="
+				v-zw-tooltip:bottom="
 					node?.status === 'Asleep'
 						? 'Wake up your device in order to send commands'
 						: 'Set value in progress...'

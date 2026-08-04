@@ -157,7 +157,7 @@
 
 								<template #append>
 									<v-btn
-										v-tooltip:bottom="'Download'"
+										v-zw-tooltip:bottom="'Download'"
 										@click="download(f.url)"
 										icon="download"
 										color="success"

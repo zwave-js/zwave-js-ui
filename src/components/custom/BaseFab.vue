@@ -18,7 +18,7 @@
 		>
 			<v-btn
 				v-for="(item, i) in items.filter((x) => !x.hide)"
-				v-tooltip="{
+				v-zw-tooltip="{
 					disabled: !item.tooltip,
 					text: item.tooltip,
 					location: item.left
