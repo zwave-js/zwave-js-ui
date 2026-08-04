@@ -77,13 +77,13 @@
 						>
 							<v-btn
 								value="physical"
-								v-zw-tooltip:bottom="'Physical devices'"
+								v-tooltip:bottom="'Physical devices'"
 							>
 								<v-icon>device_hub</v-icon>
 							</v-btn>
 							<v-btn
 								value="virtual"
-								v-zw-tooltip:bottom="
+								v-tooltip:bottom="
 									'Virtual devices (broadcast / multicast groups)'
 								"
 							>
@@ -164,7 +164,7 @@
 													!isSelected(item),
 												)
 											"
-											v-zw-tooltip:bottom="
+											v-tooltip:bottom="
 												item.raw.virtual
 													? 'Virtual devices cannot be selected'
 													: 'Click to select'
@@ -221,20 +221,31 @@
 										"
 									>
 										<div>
-											<div
-												class="text-h4"
-												v-zw-tooltip:bottom="
-													nodeInfo(item.raw)
-												"
-											>
-												<rich-value
-													:value="
-														statusRichValue(
-															item.raw,
-														)
+											<v-tooltip location="bottom">
+												<template
+													#activator="{ props }"
+												>
+													<div
+														v-bind="props"
+														class="text-h4"
+													>
+														<rich-value
+															:value="
+																statusRichValue(
+																	item.raw,
+																)
+															"
+														/>
+													</div>
+												</template>
+												<span
+													style="
+														white-space: pre-wrap;
 													"
-												/>
-											</div>
+													v-text="nodeInfo(item.raw)"
+												>
+												</span>
+											</v-tooltip>
 
 											<reinterview-badge
 												:node="item.raw"
@@ -262,7 +273,7 @@
 											class="ma-1"
 											size="32"
 											color="primary"
-											v-zw-tooltip:bottom="
+											v-tooltip:bottom="
 												'Interview stage: ' +
 												item.raw.interviewStage
 											"

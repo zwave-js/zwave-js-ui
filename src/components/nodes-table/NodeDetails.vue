@@ -62,7 +62,7 @@
 								<v-btn
 									color="primary"
 									size="small"
-									v-zw-tooltip:bottom="`Refresh`"
+									v-tooltip:bottom="`Refresh`"
 									icon
 									@click="
 										updateControllerNodeProp('RFRegion')
@@ -73,7 +73,7 @@
 								<v-btn
 									color="primary"
 									size="small"
-									v-zw-tooltip:bottom="`Save`"
+									v-tooltip:bottom="`Save`"
 									icon
 									@click="updateRFRegion"
 								>
@@ -127,7 +127,7 @@
 								<v-btn
 									color="primary"
 									size="small"
-									v-zw-tooltip:bottom="`Refresh`"
+									v-tooltip:bottom="`Refresh`"
 									icon
 									@click="
 										updateControllerNodeProp('powerlevel')
@@ -138,7 +138,7 @@
 								<v-btn
 									color="primary"
 									size="small"
-									v-zw-tooltip:bottom="`Save`"
+									v-tooltip:bottom="`Save`"
 									icon
 									@click="updatePowerLevel"
 								>
@@ -175,7 +175,7 @@
 								<v-btn
 									color="primary"
 									size="small"
-									v-zw-tooltip:bottom="`Refresh`"
+									v-tooltip:bottom="`Refresh`"
 									icon
 									@click="
 										updateControllerNodeProp(
@@ -188,7 +188,7 @@
 								<v-btn
 									color="primary"
 									size="small"
-									v-zw-tooltip:bottom="`Save`"
+									v-tooltip:bottom="`Save`"
 									icon
 									@click="updateMaxLRPowerLevel"
 								>
@@ -258,7 +258,7 @@
 								<v-btn
 									icon
 									size="small"
-									v-zw-tooltip:bottom="`Clear`"
+									v-tooltip:bottom="`Clear`"
 									@click="
 										options.transitionDuration =
 											node.defaultTransitionDuration || ''
@@ -269,7 +269,7 @@
 								<v-btn
 									icon
 									size="small"
-									v-zw-tooltip:bottom="`Save`"
+									v-tooltip:bottom="`Save`"
 									@click="setDefaults('transitionDuration')"
 								>
 									<v-icon>save</v-icon>
@@ -297,7 +297,7 @@
 								<v-btn
 									icon
 									size="small"
-									v-zw-tooltip:bottom="`Clear`"
+									v-tooltip:bottom="`Clear`"
 									@click="
 										options.volume =
 											node.defaultVolume || ''
@@ -308,7 +308,7 @@
 								<v-btn
 									icon
 									size="small"
-									v-zw-tooltip:bottom="`Save`"
+									v-tooltip:bottom="`Save`"
 									@click="setDefaults('volume')"
 								>
 									<v-icon>save</v-icon>

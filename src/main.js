@@ -4,7 +4,6 @@ import vuetify0 from './plugins/vuetify0'
 import vuetify from './plugins/vuetify' // legacy — removed once Phase 6 lands
 import router from './router'
 import App from './App.vue'
-import zwTooltip from './directives/zwTooltip'
 import { registerSW } from 'virtual:pwa-register'
 
 // Self-host the dashboard typography. Each @fontsource weight CSS ships
@@ -48,6 +47,5 @@ app.use(pinia)
 vuetify0(app)
 app.use(vuetify)
 app.use(router)
-app.directive('zw-tooltip', zwTooltip)
 
 app.mount('#app')

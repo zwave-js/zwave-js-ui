@@ -21,7 +21,7 @@
 								:color="button.disabled ? 'grey' : button.color"
 								:disabled="button.disabled"
 								@click="button.action"
-								v-zw-tooltip:bottom="button.tooltip"
+								v-tooltip:bottom="button.tooltip"
 							>
 								<v-icon>{{ button.icon }}</v-icon>
 							</v-btn>
@@ -148,7 +148,7 @@
 						>
 							<template #[`item.timestamp`]="{ item }">
 								<span
-									v-zw-tooltip:bottom="
+									v-tooltip:bottom="
 										new Date(
 											item.timestamp,
 										).toLocaleDateString()
@@ -254,7 +254,7 @@
 							location="top right"
 							absolute
 							style="top: 40px"
-							v-zw-tooltip:bottom="'Enable autoscroll'"
+							v-tooltip:bottom="'Enable autoscroll'"
 						>
 							<v-icon>vertical_align_bottom</v-icon>
 						</v-fab>

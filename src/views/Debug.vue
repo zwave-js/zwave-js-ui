@@ -7,7 +7,7 @@
 						size="small"
 						v-for="button in buttons"
 						:key="button.label"
-						v-zw-tooltip:bottom="button.tooltip"
+						v-tooltip:bottom="button.tooltip"
 						:id="button.id"
 						:color="button.disabled ? 'grey' : button.color"
 						:disabled="button.disabled"

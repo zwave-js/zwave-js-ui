@@ -20,7 +20,7 @@
 		<v-row v-if="hassDevices.length > 0">
 			<v-col cols="12" md="6">
 				<v-btn
-					v-zw-tooltip:bottom="
+					v-tooltip:bottom="
 						'Store all discovered devices in nodes.json in store directory. Prevents re-discovery on startup'
 					"
 					color="primary"
@@ -31,7 +31,7 @@
 				</v-btn>
 
 				<v-btn
-					v-zw-tooltip:bottom="
+					v-tooltip:bottom="
 						'Remove devices from nodes.json in store directory'
 					"
 					color="error"
@@ -42,7 +42,7 @@
 				</v-btn>
 
 				<v-btn
-					v-zw-tooltip:bottom="
+					v-tooltip:bottom="
 						'Rediscover all node entities. Useful when changing node name/location and need to recalculate topics'
 					"
 					color="success"
@@ -53,7 +53,7 @@
 				</v-btn>
 
 				<v-btn
-					v-zw-tooltip:bottom="
+					v-tooltip:bottom="
 						'Set the ignoreDiscovery flag to true on all entities of this node to skip the discovery of them'
 					"
 					color="warning"
@@ -105,9 +105,7 @@
 			<v-col cols="12" md="6" pa-1>
 				<v-btn
 					v-if="!selectedDevice"
-					v-zw-tooltip:bottom="
-						'Add this device to discovered entities'
-					"
+					v-tooltip:bottom="'Add this device to discovered entities'"
 					color="primary"
 					:disabled="errorDevice"
 					variant="text"
@@ -118,7 +116,7 @@
 
 				<v-btn
 					v-if="selectedDevice"
-					v-zw-tooltip:bottom="
+					v-tooltip:bottom="
 						'Update the in-memory discover template. You have to press Rediscover in order to send this to HA'
 					"
 					color="primary"
@@ -131,7 +129,7 @@
 
 				<v-btn
 					v-if="selectedDevice"
-					v-zw-tooltip:bottom="'Send this payload to HA'"
+					v-tooltip:bottom="'Send this payload to HA'"
 					color="success"
 					:disabled="errorDevice"
 					variant="text"
@@ -142,7 +140,7 @@
 
 				<v-btn
 					v-if="selectedDevice"
-					v-zw-tooltip:bottom="'Delete this entity'"
+					v-tooltip:bottom="'Delete this entity'"
 					color="error"
 					:disabled="errorDevice"
 					variant="text"

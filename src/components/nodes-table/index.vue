@@ -45,14 +45,14 @@
 				>
 					<v-btn
 						value="physical"
-						v-zw-tooltip:bottom="'Physical devices'"
+						v-tooltip:bottom="'Physical devices'"
 					>
 						<v-icon start size="small">device_hub</v-icon>
 						Physical
 					</v-btn>
 					<v-btn
 						value="virtual"
-						v-zw-tooltip:bottom="
+						v-tooltip:bottom="
 							'Virtual devices (broadcast / multicast groups)'
 						"
 					>
@@ -121,7 +121,7 @@
 					color="primary"
 					class="my-auto"
 					variant="text"
-					v-zw-tooltip:bottom="'Show only selected nodes'"
+					v-tooltip:bottom="'Show only selected nodes'"
 					@click="managedNodes.setFilterToSelected()"
 					:disabled="managedNodes.selected.length === 0"
 				>
@@ -131,7 +131,7 @@
 					color="primary"
 					class="my-auto"
 					variant="text"
-					v-zw-tooltip:bottom="'Reset all table settings'"
+					v-tooltip:bottom="'Reset all table settings'"
 					@click="managedNodes.reset()"
 				>
 					Reset Table
@@ -205,7 +205,7 @@
 						item.kind === 'broadcast' || item.kind === 'broadcastLR'
 					"
 					color="purple"
-					v-zw-tooltip:bottom="item.name"
+					v-tooltip:bottom="item.name"
 				>
 					sensors
 				</v-icon>
@@ -213,7 +213,7 @@
 				<v-icon
 					v-else-if="item.kind === 'multicast'"
 					color="purple"
-					v-zw-tooltip:bottom="item.name"
+					v-tooltip:bottom="item.name"
 				>
 					more_horiz
 				</v-icon>
@@ -340,9 +340,7 @@
 						undefined
 					"
 					class="ml-3"
-					v-zw-tooltip:bottom="
-						item.rebuildRoutesProgress.toUpperCase()
-					"
+					v-tooltip:bottom="item.rebuildRoutesProgress.toUpperCase()"
 					:color="
 						getRebuildRoutesIcon(item.rebuildRoutesProgress).color
 					"

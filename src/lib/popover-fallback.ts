@@ -1,7 +1,6 @@
-// Floating-UI-backed positioner for top-layer content.
-// V0 hard-codes `position-area: bottom` with no override, and Firefox does not
-// implement CSS anchor positioning at all, so we drive top/left ourselves via
-// computePosition + autoUpdate.
+// Floating-UI-backed positioner for V0 Popover content.
+// V0 hard-codes `position-area: bottom` with no override, so we disable its
+// anchor styles and drive top/left ourselves via computePosition + autoUpdate.
 
 import { onBeforeUnmount, watch, toValue } from 'vue'
 import type { MaybeRefOrGetter, Ref } from 'vue'
@@ -18,45 +17,6 @@ import type { Placement } from '@floating-ui/dom'
 const FALLBACK_PLACEMENTS: Partial<Record<Placement, Placement[]>> = {
 	'bottom-end': ['bottom-start', 'top-end', 'top-start'],
 	'bottom-start': ['top-start', 'bottom-end', 'top-end'],
-}
-
-// Keeps a flipped or shifted panel clear of the viewport edge.
-const VIEWPORT_PADDING_PX = 8
-
-interface TrackOptions {
-	placement: Placement
-	offsetPx: number
-	fallbackPlacements?: Placement[]
-	// Write through `!important`, needed where V0 sets its own anchor styles
-	important?: boolean
-}
-
-// Pins `floating` to `anchor` and keeps it there across scroll, resize and
-// element-size changes. Returns the autoUpdate teardown.
-export function trackAnchor(
-	anchor: HTMLElement,
-	floating: HTMLElement,
-	{ placement, offsetPx, fallbackPlacements, important }: TrackOptions,
-): () => void {
-	const priority = important ? 'important' : ''
-	return autoUpdate(anchor, floating, () => {
-		computePosition(anchor, floating, {
-			placement,
-			strategy: 'fixed',
-			middleware: [
-				offset(offsetPx),
-				flip(fallbackPlacements ? { fallbackPlacements } : {}),
-				shift({ padding: VIEWPORT_PADDING_PX }),
-			],
-		})
-			.then(({ x, y }) => {
-				floating.style.setProperty('top', `${y}px`, priority)
-				floating.style.setProperty('left', `${x}px`, priority)
-			})
-			.catch((err: unknown) => {
-				console.error('[popover-fallback] computePosition failed', err)
-			})
-	})
 }
 
 interface FallbackPositionOptions {
@@ -90,13 +50,30 @@ export function usePopoverFallback({
 		c.style.setProperty('right', 'auto', 'important')
 		c.style.setProperty('bottom', 'auto', 'important')
 
-		cleanup = trackAnchor(a, c, {
-			placement,
-			offsetPx,
-			fallbackPlacements:
-				FALLBACK_PLACEMENTS[placement] ??
-				FALLBACK_PLACEMENTS['bottom-end'],
-			important: true,
+		cleanup = autoUpdate(a, c, () => {
+			computePosition(a, c, {
+				placement,
+				strategy: 'fixed',
+				middleware: [
+					offset(offsetPx),
+					flip({
+						fallbackPlacements:
+							FALLBACK_PLACEMENTS[placement] ??
+							FALLBACK_PLACEMENTS['bottom-end'],
+					}),
+					shift({ padding: 8 }),
+				],
+			})
+				.then(({ x, y }) => {
+					c.style.setProperty('top', `${y}px`, 'important')
+					c.style.setProperty('left', `${x}px`, 'important')
+				})
+				.catch((err: unknown) => {
+					console.error(
+						'[popover-fallback] computePosition failed',
+						err,
+					)
+				})
 		})
 	}
 

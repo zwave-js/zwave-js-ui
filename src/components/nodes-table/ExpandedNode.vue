@@ -24,7 +24,7 @@
 					v-if="!node.virtual"
 					@click="openLink(node.dbLink)"
 					class="ml-2"
-					v-zw-tooltip:bottom="'See device config'"
+					v-tooltip:bottom="'See device config'"
 				>
 					open_in_new
 				</v-icon>
@@ -294,7 +294,7 @@
 									@click="toggleAutoScroll()"
 									icon="autorenew"
 									color="primary"
-									v-zw-tooltip:bottom="
+									v-tooltip:bottom="
 										'Enable/Disable auto scroll'
 									"
 								/>
@@ -306,7 +306,7 @@
 									:variant="inverseSort ? 'flat' : 'outlined'"
 									size="small"
 									color="primary"
-									v-zw-tooltip:bottom="'Inverse Sort'"
+									v-tooltip:bottom="'Inverse Sort'"
 								/>
 							</template>
 						</v-text-field>
