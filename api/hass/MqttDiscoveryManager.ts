@@ -1,4 +1,5 @@
 import { DiscoveryGenerator } from './DiscoveryGenerator.ts'
+import { once } from '../lib/utils.ts'
 import type {
 	HassDiscoveryConfig,
 	HassDeviceRegistryLifecyclePort,
@@ -103,9 +104,6 @@ export default class MqttDiscoveryManager {
 	 * {@link stop}.
 	 */
 	public start(statusSource?: HassStatusSource, statusEnabled = false): void {
-		// Re-arm the publication fence because a restart may reuse this very
-		// generator instance on the standalone Gateway path
-		this._discoveryGenerator.activate()
 		this._customDeviceRegistry.start()
 		this._discoveryGenerator.reset()
 		if (statusSource && statusEnabled) {
@@ -160,14 +158,11 @@ export default class MqttDiscoveryManager {
 		)
 		source.on('brokerStatus', onBrokerStatus)
 
-		let disposed = false
-		this._statusDisposer = (): void => {
-			if (disposed) return
-			disposed = true
+		this._statusDisposer = once((): void => {
 			subscription.dispose()
 			source.off('brokerStatus', onBrokerStatus)
 			this._statusDisposer = undefined
-		}
+		})
 		return this._statusDisposer
 	}
 

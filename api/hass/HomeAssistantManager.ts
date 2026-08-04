@@ -1,9 +1,12 @@
+import { SingleFlight } from '../lib/utils.ts'
 import type { HassLogger } from './ports.ts'
 
 /**
  * Control handle for the discovery subsystem the coordinator owns; exposes only
  * `stop()` because discovery start stays locked to `Gateway.start()` on the
- * instance the coordinator constructed and the gateway adopted.
+ * instance the coordinator holds. `stop()` is a synchronous halt (no port to
+ * await); the server's `destroy()` below is the awaited release, which is why
+ * the two verbs differ.
  */
 export interface HassManagedDiscovery {
 	/** Halt every discovery producer, listener and subscription; idempotent */
@@ -23,15 +26,13 @@ export interface HassManagedServer {
 }
 
 /**
- * Factories that construct a sub-manager against the current gateway/client and
- * adopt it into that client, returning the control handle the coordinator
- * holds. Building the concrete instance behind this seam keeps the coordinator
- * decoupled from the client classes, so there is no import cycle. `createServer`
- * returns `undefined` when the generation has no Z-Wave client.
+ * The discovery + `@zwave-js/server` handles the clients constructed and own,
+ * handed to the coordinator for one gateway generation. `server` is `undefined`
+ * when the generation has no Z-Wave client.
  */
-export interface HomeAssistantClientFactories {
-	createDiscovery(): HassManagedDiscovery
-	createServer(): HassManagedServer | undefined
+export interface HomeAssistantGeneration {
+	discovery: HassManagedDiscovery
+	server: HassManagedServer | undefined
 }
 
 export interface HomeAssistantManagerOptions {
@@ -39,105 +40,61 @@ export interface HomeAssistantManagerOptions {
 }
 
 /**
- * Lifecycle states of the Home Assistant subsystem. `initialized` is both the
- * pre-attach state and the resting state a completed {@link
- * HomeAssistantManager.stop} returns to; `failed` stays stoppable so the
- * coordinator can still quiesce a partially-started generation.
- */
-export type HomeAssistantLifecycleState =
-	| 'idle'
-	| 'initialized'
-	| 'starting'
-	| 'started'
-	| 'stopping'
-	| 'failed'
-
-/**
  * The single, process-lifetime owner of the built-in Home Assistant subsystem.
- * Constructs a fresh generation of the discovery and `@zwave-js/server`
- * managers through the injected {@link HomeAssistantClientFactories}, holds
- * their disposers, and drives an idempotent state machine.
+ * It holds the current generation's discovery and `@zwave-js/server` handles
+ * (constructed and owned by the clients, adopted here through
+ * {@link attachClients}) and drives their ordered, idempotent teardown.
  *
  * Discovery/server start stays locked to `Gateway.start()` and the driver
- * points, since the clients drive the very instances this manager constructed.
- * Concurrent stops of one generation share its in-flight teardown, and a
- * restart attaches a fresh generation with the previous one disposed.
+ * points, since the clients drive the very instances this manager holds. The
+ * only guarantee callers actually need is an idempotent, retryable {@link stop}
+ * that halts discovery before the server is released; a restart attaches a
+ * fresh generation after the previous one has been stopped.
  */
 export default class HomeAssistantManager {
 	private readonly logger: HassLogger
-	private _state: HomeAssistantLifecycleState = 'idle'
-	private _generation = 0
+	private _initialized = false
 	private _discovery: HassManagedDiscovery | undefined
 	private _server: HassManagedServer | undefined
-	private stopInFlight:
-		| { generation: number; teardown: Promise<void> }
-		| undefined
+	private readonly stopFlight = new SingleFlight()
 
 	public constructor(options: HomeAssistantManagerOptions) {
 		this.logger = options.logger
 	}
 
-	public get state(): HomeAssistantLifecycleState {
-		return this._state
-	}
-
-	/** Whether {@link initialize} has run (ownership taken). */
-	public get initialized(): boolean {
-		return this._state !== 'idle'
-	}
-
-	public get started(): boolean {
-		return this._state === 'started'
-	}
-
-	/** Monotonic counter bumped on every {@link attachClients}, so a restart is always a fresh generation */
-	public get generation(): number {
-		return this._generation
-	}
-
-	public get discovery(): HassManagedDiscovery | undefined {
-		return this._discovery
-	}
-
-	public get server(): HassManagedServer | undefined {
-		return this._server
-	}
-
-	/** Take ownership before any client is constructed; idempotent so a restart re-entering never regresses a running generation */
+	/** Take ownership before any client is constructed; logs once, idempotent so a restart re-entering is a no-op */
 	public initialize(): void {
-		if (this._state !== 'idle') return
-		this._state = 'initialized'
+		if (this._initialized) return
+		this._initialized = true
 		this.logger.info('Home Assistant subsystem initialized')
 	}
 
 	/**
-	 * Construct and adopt a fresh generation through the injected factories.
-	 * Called after the new clients exist but before they start, so the clients
-	 * drive the instances this manager owns at their locked timing points.
+	 * Adopt a fresh generation's discovery + server handles, after the new
+	 * clients exist but before they start, so the clients drive the instances
+	 * this manager owns at their locked timing points.
+	 *
+	 * Requires a clean slate: every production caller stops the previous
+	 * generation before re-attaching (boot attaches once; a restart tears down
+	 * before it starts). A lingering handle therefore means a caller closed the
+	 * clients out of order, so this refuses rather than silently dropping — and
+	 * leaking — the previous discovery/server.
 	 */
-	public attachClients(factories: HomeAssistantClientFactories): void {
-		if (this._state === 'idle') this.initialize()
-
-		// Halt a still-live generation's discovery synchronously so nothing
-		// leaks when a generation is replaced without a stop first
-		if (this._discovery) this._discovery.stop()
-
-		this._generation += 1
-		this._discovery = factories.createDiscovery()
-		this._server = factories.createServer()
-		this._state = 'starting'
-		this.logger.info(
-			`Home Assistant subsystem attached (generation ${this._generation})`,
-		)
+	public attachClients(generation: HomeAssistantGeneration): void {
+		this.initialize()
+		if (this._discovery || this._server) {
+			throw new Error(
+				'Home Assistant subsystem still owns a generation; stop it before attaching a new one',
+			)
+		}
+		this._discovery = generation.discovery
+		this._server = generation.server
+		this.logger.info('Home Assistant subsystem attached')
 	}
 
-	/** Confirm the current generation is up, once `Gateway.start()` has started discovery and the server; idempotent */
+	/** Confirm the current generation is up, once `Gateway.start()` has started discovery and the server */
 	public start(): void {
-		if (this._state === 'started') return
-		// Only a freshly attached generation can be started
-		if (this._state !== 'starting') return
-
-		this._state = 'started'
+		if (!this._discovery) return
 		this.logger.info(
 			`Home Assistant subsystem started (server: ${
 				this._server ? this._server.version : 'inactive'
@@ -145,66 +102,55 @@ export default class HomeAssistantManager {
 		)
 	}
 
-	/** Record a startup failure, keeping the owned handles so a subsequent {@link stop} can still quiesce the partial generation */
-	public markFailed(): void {
-		if (this._state === 'starting' || this._state === 'started') {
-			this._state = 'failed'
-			this.logger.warn('Home Assistant subsystem entered failed state')
-		}
-	}
-
 	/**
 	 * Quiesce the current generation before the clients close: halt discovery,
 	 * then await the `@zwave-js/server` destroy so the server's port is released
-	 * before the driver is destroyed.
+	 * before the driver is destroyed downstream.
 	 *
-	 * Concurrent calls for one generation share its in-flight teardown. The
-	 * teardown captures its generation and only clears the owned handles if that
-	 * generation is still current, so an overlapping re-attach is never erased
-	 * by a stale stop. A rejected destroy retains the handles (retryable) and
-	 * moves to `failed`.
+	 * The two steps are isolated so a discovery failure cannot skip the server
+	 * destroy, and both failures are aggregated rather than the first aborting
+	 * the sequence. Idempotent and single-flight: concurrent/repeat calls share
+	 * one in-flight teardown. A successful stop clears the handles, so a later
+	 * stop is a clean no-op; a failed stop retains them (retryable), logs at
+	 * `warn`, and rethrows the first error.
 	 */
 	public async stop(): Promise<void> {
-		const generation = this._generation
-		if (this.stopInFlight?.generation === generation) {
-			return this.stopInFlight.teardown
-		}
-		if (this._state === 'idle' || this._state === 'initialized') return
-
-		this._state = 'stopping'
 		const discovery = this._discovery
 		const server = this._server
+		if (!discovery && !server) return
 
-		const teardown = (async () => {
+		return this.stopFlight.run(async () => {
+			this.logger.info('Stopping Home Assistant subsystem')
+			const errors: unknown[] = []
+
 			try {
+				// Drop the discovery fence first so no producer/subscription
+				// survives the server release
 				discovery?.stop()
-				// Await the server destroy so its port is gone before the
-				// driver is destroyed downstream
-				await server?.destroy()
-				// Clear the owned handles only if no newer generation was wired
-				// while quiescing, so an overlapping re-attach survives
-				if (this._generation === generation) {
-					this._discovery = undefined
-					this._server = undefined
-					this._state = 'initialized'
-					this.logger.info('Home Assistant subsystem stopped')
-				}
 			} catch (error) {
-				// Retain the handles and surface a failed state on a rejected
-				// destroy so a later stop can retry, unless a newer generation
-				// already superseded this one
-				if (this._generation === generation) {
-					this._state = 'failed'
-				}
-				throw error
-			} finally {
-				if (this.stopInFlight?.generation === generation) {
-					this.stopInFlight = undefined
-				}
+				errors.push(error)
 			}
-		})()
 
-		this.stopInFlight = { generation, teardown }
-		return teardown
+			try {
+				// Await the server destroy so its port is gone before the driver
+				// is destroyed downstream
+				await server?.destroy()
+			} catch (error) {
+				errors.push(error)
+			}
+
+			if (errors.length > 0) {
+				// Retain the handles so a later stop retries; surface the first
+				this.logger.warn(
+					'Home Assistant subsystem stop failed; retained for retry',
+					errors[0],
+				)
+				throw errors[0]
+			}
+
+			this._discovery = undefined
+			this._server = undefined
+			this.logger.info('Home Assistant subsystem stopped')
+		})
 	}
 }

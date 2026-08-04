@@ -1,7 +1,11 @@
 import { serverVersion, ZwavejsServer } from '@zwave-js/server'
 import type { Driver } from 'zwave-js'
 import type { ZwaveConfig } from '../lib/ZwaveClient.ts'
+import { SingleFlight } from '../lib/utils.ts'
 import type { HassLogger } from './ports.ts'
+
+/** Default `@zwave-js/server` listen port when none is configured. */
+const DEFAULT_SERVER_PORT = 3000
 
 /**
  * The slice of gateway configuration the `@zwave-js/server` integration reads,
@@ -64,11 +68,9 @@ export default class ZwaveServerManager {
 	private _server: ZwavejsServer | null = null
 	private readonly host: ZwaveServerHost
 
-	// Scope each `destroy()` to one upstream `server.destroy()` per captured
-	// instance: concurrent calls for the same server share this promise, while a
-	// call after the instance was replaced starts a fresh teardown
-	private destroyInFlight: Promise<void> | undefined
-	private destroying: ZwavejsServer | null = null
+	// Share one upstream `server.destroy()` across concurrent calls; the shared
+	// primitive releases the slot when it settles so a later call can retry
+	private readonly destroyFlight = new SingleFlight()
 
 	public constructor(host: ZwaveServerHost) {
 		this.host = host
@@ -91,11 +93,17 @@ export default class ZwaveServerManager {
 		return serverVersion
 	}
 
-	/** Construct the `ZwavejsServer` and wire its `error`/`hard reset` listeners */
+	/**
+	 * Construct the `ZwavejsServer` (only when `serverEnabled`) and wire its
+	 * `error`/`hard reset` listeners. Owning the `serverEnabled` gate here keeps
+	 * the enablement check in one place: `ZwaveClient.connect()` calls this
+	 * unconditionally and the manager decides whether a server is created.
+	 */
 	public create(): void {
 		const cfg = this.host.getConfig()
+		if (!cfg.serverEnabled) return
 		this._server = new ZwavejsServer(this.host.getDriver(), {
-			port: cfg.serverPort || 3000,
+			port: cfg.serverPort || DEFAULT_SERVER_PORT,
 			host: cfg.serverHost,
 			logger: this.host.serverLogger,
 			enableDNSServiceDiscovery: !cfg.serverServiceDiscoveryDisabled,
@@ -140,40 +148,24 @@ export default class ZwaveServerManager {
 	 * server is gone before it destroys the driver; a no-op when none was ever
 	 * created.
 	 *
-	 * Concurrent `destroy()` calls for the same captured server share one
-	 * in-flight teardown, so the upstream `server.destroy()` runs once. The
-	 * reference is cleared only if the destroyed instance is still current, so a
-	 * replacement created while an older destroy runs survives; a rejected
-	 * destroy leaves the reference intact (retryable) and propagates.
+	 * Concurrent `destroy()` calls share one in-flight teardown, so the upstream
+	 * `server.destroy()` runs once. The reference is cleared only if the
+	 * destroyed instance is still current, so a replacement created while an
+	 * older destroy runs survives; a rejected destroy leaves the reference
+	 * intact (retryable) and propagates.
 	 */
 	public async destroy(): Promise<void> {
 		const server = this._server
 		if (!server) return
 
-		if (this.destroyInFlight && this.destroying === server) {
-			return this.destroyInFlight
-		}
-
-		this.destroying = server
-		const run = (async () => {
-			try {
-				await server.destroy()
-				if (this._server === server) {
-					this._server = null
-				}
-			} finally {
-				// Release the guard only if this captured server is still the one
-				// being destroyed, so a replacement destroy started while this ran
-				// keeps its own guard. Identity is used rather than the promise so
-				// the guard needn't reference `run` inside its own initializer
-				if (this.destroying === server) {
-					this.destroyInFlight = undefined
-					this.destroying = null
-				}
+		return this.destroyFlight.run(async () => {
+			await server.destroy()
+			// Clear only if this captured server is still current, so a
+			// replacement adopted while this destroy ran is not erased
+			if (this._server === server) {
+				this._server = null
 			}
-		})()
-		this.destroyInFlight = run
-		return run
+		})
 	}
 
 	/**

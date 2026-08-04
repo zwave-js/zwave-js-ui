@@ -92,10 +92,13 @@ export class DiscoveryGenerator {
 	private readonly logger: HassLogger
 	private discovered: Record<string, HassDevice> = {}
 
-	// Publication fence. While `false` every retained-discovery producer is a
-	// no-op, so no node/value/remove/status event emits a retained MQTT
-	// discovery message once the owning manager has begun its (possibly
-	// deferred) teardown. Starts active
+	/**
+	 * Publication fence. While `false` every retained-discovery producer is a
+	 * no-op, so no node/value/remove/status event emits a retained MQTT
+	 * discovery message once the owning manager has begun its (possibly
+	 * deferred) teardown. Starts active and is only ever dropped (never
+	 * re-armed): production builds a fresh generator per generation.
+	 */
 	private _active = true
 
 	public constructor(options: DiscoveryGeneratorOptions) {
@@ -129,15 +132,6 @@ export class DiscoveryGenerator {
 	/** Whether retained-discovery publication is currently permitted. */
 	public get active(): boolean {
 		return this._active
-	}
-
-	/**
-	 * Re-arm retained-discovery publication. Called by the owning
-	 * {@link MqttDiscoveryManager} on start, including a restart that reuses the
-	 * same generator instance (the standalone `Gateway` path memoizes it).
-	 */
-	public activate(): void {
-		this._active = true
 	}
 
 	/**
