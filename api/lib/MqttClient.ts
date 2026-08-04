@@ -9,6 +9,7 @@ import type {
 import { connect } from 'mqtt'
 import {
 	allSettled,
+	once,
 	parseJSON,
 	sanitizeTopic,
 	pkgJson,
@@ -168,18 +169,10 @@ class MqttClient extends TypedEventEmitter<MqttClientEventCallbacks> {
 			// Unsubscribe the scoped exact topics from the broker while still
 			// connected so a `clean: false` session is not left with a lingering
 			// server-side subscription that would redeliver on the next connect,
-			// then clear the map so a closed client can never re-subscribe
-			if (this.client?.connected) {
-				for (const topic of this.exactSubscriptions.keys()) {
-					this.client.unsubscribe(topic, (err?: Error) => {
-						if (err) {
-							logger.error(
-								`Error unsubscribing from ${topic}`,
-								err,
-							)
-						}
-					})
-				}
+			// then clear the map so a closed client can never re-subscribe.
+			// Reuse `unsubscribeBroker` so both teardown paths log identically
+			for (const topic of this.exactSubscriptions.keys()) {
+				this.unsubscribeBroker(topic)
 			}
 			this.exactSubscriptions.clear()
 
@@ -278,6 +271,47 @@ class MqttClient extends TypedEventEmitter<MqttClientEventCallbacks> {
 	}
 
 	/**
+	 * The single broker `subscribe` primitive both the prefixed write-tag path
+	 * ({@link subscribe}) and the scoped exact-topic path
+	 * ({@link subscribeExactTopic}) route through, so one client has one
+	 * subscribe implementation and one place that interprets the grant and logs.
+	 *
+	 * A denied subscription is reported by mqtt.js as `granted[].qos === 128`
+	 * with no `err`, so both are treated as failures. Resolves with the outcome
+	 * so callers can own their own retry disposition; never requeues.
+	 */
+	private subscribeToBroker(
+		topic: string,
+		qos: IClientSubscribeOptions['qos'],
+	): Promise<'ok' | 'denied' | 'error'> {
+		return new Promise((resolve) => {
+			if (!this.client?.connected) {
+				resolve('error')
+				return
+			}
+			logger.log('debug', `Subscribing to ${topic} with options %o`, {
+				qos,
+			})
+			this.client.subscribe(topic, { qos }, (err, granted) => {
+				if (err) {
+					logger.error(`Error subscribing to ${topic}`, err)
+					resolve('error')
+					return
+				}
+				if ((granted ?? []).some((res) => res.qos === 128)) {
+					logger.error(
+						`Error subscribing to ${topic}, client doesn't have permission to subscribe to it`,
+					)
+					resolve('denied')
+					return
+				}
+				logger.info(`Subscribed to ${topic}`)
+				resolve('ok')
+			})
+		})
+	}
+
+	/**
 	 * Method used to subscribe tags for write requests
 	 */
 	subscribe(
@@ -287,50 +321,34 @@ class MqttClient extends TypedEventEmitter<MqttClientEventCallbacks> {
 			addPrefix: true,
 		},
 	): Promise<void> {
-		return new Promise((resolve, reject) => {
-			const subOptions: IClientSubscribeOptions = {
-				qos: options.qos,
-			}
+		const fullTopic = options.addPrefix
+			? this.config.prefix + '/' + topic + '/set'
+			: topic
 
-			topic = options.addPrefix
-				? this.config.prefix + '/' + topic + '/set'
-				: topic
+		// in case of retry, don't add the prefix again
+		const retryOptions = { ...options, addPrefix: false }
 
-			options.addPrefix = false // in case of retry, don't add again the prefix
+		if (!this.client?.connected) {
+			logger.debug(
+				`Client not connected yet, subscribing to ${fullTopic} later...`,
+			)
+			this.toSubscribe.set(fullTopic, retryOptions)
+			return Promise.reject(Error('Client not connected'))
+		}
 
-			if (this.client && this.client.connected) {
-				logger.log(
-					'debug',
-					`Subscribing to ${topic} with options %o`,
-					subOptions,
-				)
-				this.client.subscribe(topic, subOptions, (err, granted) => {
-					if (err) {
-						logger.error(`Error subscribing to ${topic}`, err)
-						this.toSubscribe.set(topic, options)
-						reject(err)
-					} else {
-						for (const res of granted ?? []) {
-							if (res.qos === 128) {
-								logger.error(
-									`Error subscribing to ${topic}, client doesn't have permission to subscribe to it`,
-								)
-							} else {
-								logger.info(`Subscribed to ${topic}`)
-							}
-							this.toSubscribe.delete(topic)
-						}
-						resolve()
-					}
-				})
-			} else {
-				logger.debug(
-					`Client not connected yet, subscribing to ${topic} later...`,
-				)
-				this.toSubscribe.set(topic, options)
-				reject(Error('Client not connected'))
-			}
-		})
+		return this.subscribeToBroker(fullTopic, options.qos).then(
+			(outcome) => {
+				if (outcome === 'error') {
+					// A transient broker error keeps the topic queued so the next
+					// connect retries it
+					this.toSubscribe.set(fullTopic, retryOptions)
+					throw Error(`Error subscribing to ${fullTopic}`)
+				}
+				// Subscribed, or denied (a retry cannot fix a permission error):
+				// settled, so drop it from the retry queue
+				this.toSubscribe.delete(fullTopic)
+			},
+		)
 	}
 
 	/**
@@ -343,11 +361,26 @@ class MqttClient extends TypedEventEmitter<MqttClientEventCallbacks> {
 	 * and are reconnect-safe: `_onConnect` resubscribes every registered topic.
 	 * Disposing removes this listener and, when it was the topic's last,
 	 * unsubscribes the topic. Interpreting the payload is the caller's concern.
+	 *
+	 * The topic is an exact broker filter, so an MQTT wildcard (`+`/`#`) is
+	 * rejected: dispatch is an exact-key `Map.get(topic)` a wildcard could never
+	 * match, and a wildcard would widen the broker subscription past the single
+	 * topic the caller named. Calling after {@link close} is likewise rejected,
+	 * since the closed client can never (re)subscribe it.
 	 */
 	subscribeExact(
 		topic: string,
 		listener: MqttExactListener,
 	): MqttSubscription {
+		if (topic.includes('+') || topic.includes('#')) {
+			throw Error(
+				`subscribeExact requires an exact topic, got wildcard "${topic}"`,
+			)
+		}
+		if (this.closed) {
+			throw Error(`Cannot subscribe to ${topic} on a closed MQTT client`)
+		}
+
 		let listeners = this.exactSubscriptions.get(topic)
 		const firstForTopic = !listeners || listeners.size === 0
 		if (!listeners) {
@@ -364,11 +397,8 @@ class MqttClient extends TypedEventEmitter<MqttClientEventCallbacks> {
 			this.subscribeExactTopic(topic)
 		}
 
-		let disposed = false
 		return {
-			dispose: (): void => {
-				if (disposed) return
-				disposed = true
+			dispose: once((): void => {
 				const set = this.exactSubscriptions.get(topic)
 				if (!set) return
 				set.delete(listener)
@@ -376,42 +406,36 @@ class MqttClient extends TypedEventEmitter<MqttClientEventCallbacks> {
 					this.exactSubscriptions.delete(topic)
 					this.unsubscribeBroker(topic)
 				}
-			},
+			}),
 		}
 	}
 
 	/**
-	 * Resubscribe a single scoped exact broker topic, honoring desired state.
+	 * Resubscribe a single scoped exact broker topic through the shared
+	 * {@link subscribeToBroker} primitive, honoring desired state.
 	 *
 	 * An exact topic's desired state lives only in `exactSubscriptions`; this
 	 * helper never touches `toSubscribe`, and its async broker callback rechecks
 	 * that state so a subscribe completing after the owner disposed the topic (or
 	 * the client closed) neither requeues it nor leaves it subscribed. A
-	 * still-desired topic that failed is retried by the next `_onConnect`.
+	 * still-desired topic that failed (broker error or `qos === 128` denial) is
+	 * retried by the next `_onConnect`, since it stays in `exactSubscriptions`.
 	 */
 	private subscribeExactTopic(topic: string): void {
-		const client = this.client
-		if (!client?.connected) return
+		if (!this.client?.connected) return
 
-		client.subscribe(topic, { qos: 1 }, (err) => {
+		void this.subscribeToBroker(topic, 1).then(() => {
 			const stillDesired =
 				!this.closed && this.exactSubscriptions.has(topic)
-			if (!stillDesired) {
+			if (!stillDesired && this.client?.connected) {
 				// Dispose or close may have raced ahead while this subscribe was
 				// in flight, so unsubscribe a topic nothing wants anymore
-				if (this.client?.connected) {
-					this.client.unsubscribe(topic, () => {
-						/* best-effort */
-					})
-				}
-				return
+				this.client.unsubscribe(topic, () => {
+					/* best-effort */
+				})
 			}
-			if (err) {
-				logger.error(`Error subscribing to ${topic}`, err)
-				// Left in `exactSubscriptions` and retried on the next connect
-				return
-			}
-			logger.info(`Subscribed to ${topic}`)
+			// A still-desired failure is left in `exactSubscriptions` and
+			// retried on the next connect
 		})
 	}
 
