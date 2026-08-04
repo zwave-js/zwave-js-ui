@@ -55,7 +55,7 @@ jobs:
     # evicted cache entry heals itself between two nightly rebuilds
     - name: Restore posts index
       id: posts-index
-      uses: ./.github/actions/restore-bot-index
+      uses: zwave-js/bot-workflows/actions/restore-bot-index@v1
       with:
         index: posts
         github-token: ${{ github.token }}
@@ -69,9 +69,11 @@ jobs:
       run: |
         echo "::warning::The posts index could not be restored, from cache or from artifacts - this post will only be indexed by the next nightly rebuild"
 
-    - name: Setup embeddings
+    # Installs the shared bot-scripts dependencies (including the local
+    # embedding model cache) and exports BOT_SCRIPTS_DIR
+    - name: Setup bot scripts
       if: steps.posts-index.outputs.found == 'true'
-      uses: ./.github/actions/setup-bot-embeddings
+      uses: zwave-js/bot-workflows/actions/setup-bot@v1
 
     - name: Add post to index
       id: update
@@ -81,12 +83,13 @@ jobs:
         POSTS_INDEX_PATH: .posts-index/index.json
       with:
         script: |
-          const bot = require(`${process.env.GITHUB_WORKSPACE}/.github/bot-scripts/index.cjs`);
+          const bot = require(`${process.env.BOT_SCRIPTS_DIR}/index.cjs`);
           return bot.updatePostsIndex({github, context});
 
+    # Save under the same version-derived prefix the producers use
     - name: Save posts index
       if: steps.update.outputs.result == 'true'
       uses: actions/cache/save@v6
       with:
         path: .posts-index
-        key: posts-embeddings-v2-${{ github.run_id }}
+        key: ${{ steps.posts-index.outputs.prefix }}${{ github.run_id }}

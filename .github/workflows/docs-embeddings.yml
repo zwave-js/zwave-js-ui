@@ -2,6 +2,8 @@ name: Build docs embeddings index
 
 # Builds and caches a semantic search index over the documentation,
 # used by the bot to answer questions in issues and discussions.
+# The heavy lifting lives in zwave-js/bot-workflows; this caller owns
+# the schedule and push filter.
 
 on:
   schedule:
@@ -11,18 +13,6 @@ on:
     branches: [master]
     paths:
       - 'docs/**/*.md'
-      - '.github/bot-scripts/buildDocsIndex.cjs'
-      - '.github/bot-scripts/docsIndex.cjs'
-      - '.github/bot-scripts/localEmbeddings.cjs'
-      - '.github/bot-scripts/package.json'
-      - '.github/bot-scripts/package-lock.json'
-      - '.github/bot-scripts/githubApi.cjs'
-      - '.github/bot-scripts/evalDocsAnswers.cjs'
-      - '.github/bot-scripts/evalUtils.cjs'
-      - '.github/bot-scripts/docsAnswersEvalCases.json'
-      - '.github/bot-scripts/updateEvalTrackingIssue.cjs'
-      - '.github/bot-scripts/collectDocsFeedback.cjs'
-      - '.github/bot-scripts/updateDocsFeedbackIssue.cjs'
       - '.github/workflows/docs-embeddings.yml'
   workflow_dispatch:
 
@@ -30,133 +20,11 @@ permissions:
   contents: read
 
 jobs:
-  build-index:
-    runs-on: [ubuntu-latest]
-    timeout-minutes: 15
-
-    steps:
-    - name: Checkout master branch
-      uses: actions/checkout@v7
-
-    - name: Restore previous index
-      id: cache
-      uses: actions/cache@v6
-      with:
-        path: .docs-index
-        key: docs-embeddings-v3-${{ hashFiles('docs/**/*.md', '.github/bot-scripts/buildDocsIndex.cjs', '.github/bot-scripts/docsIndex.cjs', '.github/bot-scripts/localEmbeddings.cjs', '.github/bot-scripts/package-lock.json') }}
-        # Restore an older index so only changed chunks need to be re-embedded
-        restore-keys: |
-          docs-embeddings-v3-
-
-    - name: Setup embeddings
-      if: steps.cache.outputs.cache-hit != 'true'
-      uses: ./.github/actions/setup-bot-embeddings
-      with:
-        save-model-cache: 'true'
-
-    - name: Build index
-      # An exact cache hit means the index is already up to date
-      if: steps.cache.outputs.cache-hit != 'true'
-      run: node .github/bot-scripts/buildDocsIndex.cjs docs .docs-index/index.json
-
-    # The cache entry is regularly evicted before the answer bot gets to use it
-    # (the repository cache is capped and evicted least-recently-used), so keep
-    # a durable copy it can fall back to. Runs on a cache hit too - the index
-    # ends up in .docs-index either way.
-    - name: Upload index artifact
-      uses: actions/upload-artifact@v7
-      with:
-        name: docs-index
-        path: .docs-index
-        retention-days: 30
-        # .docs-index is a dot-directory and the glob skips hidden entries by
-        # default, search root included - without this the upload matches zero
-        # files and silently produces no artifact at all
-        include-hidden-files: true
-        # The answer bot depends on this artifact existing, so an empty upload
-        # is a failure, not a warning
-        if-no-files-found: error
-
-  evaluate:
-    needs: build-index
-    runs-on: [ubuntu-latest]
-    timeout-minutes: 15
-    permissions:
-      contents: read
-      issues: write
-
-    steps:
-    - name: Checkout master branch
-      uses: actions/checkout@v7
-
-    - name: Restore docs index
-      id: restore-index
-      uses: actions/cache/restore@v6
-      with:
-        path: .docs-index
-        key: docs-embeddings-v3-${{ hashFiles('docs/**/*.md', '.github/bot-scripts/buildDocsIndex.cjs', '.github/bot-scripts/docsIndex.cjs', '.github/bot-scripts/localEmbeddings.cjs', '.github/bot-scripts/package-lock.json') }}
-
-    - name: Fail if docs index is missing
-      # build-index should always have produced this exact cache entry;
-      # surface the problem loudly instead of silently skipping the
-      # evaluation and reporting green
-      if: steps.restore-index.outputs.cache-hit != 'true'
-      run: |
-        echo "::error::Docs index cache miss after build-index - cannot evaluate retrieval quality"
-        exit 1
-
-    - name: Setup embeddings
-      uses: ./.github/actions/setup-bot-embeddings
-
-    - name: Evaluate retrieval quality
-      id: eval
-      continue-on-error: true
-      run: node .github/bot-scripts/evalDocsAnswers.cjs .docs-index/index.json
-
-    - name: Update tracking issue
-      uses: actions/github-script@v9
-      env:
-        TRACKING_ISSUE_TITLE: "🚨 Docs answer bot retrieval quality regression"
-        EVAL_NAME: docs answer bot
-        EVAL_OUTCOME: ${{ steps.eval.outcome }}
-        EVAL_SUMMARY: ${{ steps.eval.outputs.summary }}
-      with:
-        script: |
-          const bot = require(`${process.env.GITHUB_WORKSPACE}/.github/bot-scripts/index.cjs`);
-          await bot.updateEvalTrackingIssue({github, context});
-
-  # Learn from reactions to the bot's answers: update the feedback
-  # digest issue and build the suppression list for the answer bot
-  feedback:
-    needs: build-index
-    runs-on: [ubuntu-latest]
-    timeout-minutes: 15
+  docs-embeddings:
     permissions:
       contents: read
       issues: write
       discussions: read
-
-    steps:
-    - name: Checkout master branch
-      uses: actions/checkout@v7
-
-    - name: Setup embeddings
-      uses: ./.github/actions/setup-bot-embeddings
-
-    - name: Collect feedback on bot answers
-      env:
-        GITHUB_TOKEN: ${{ github.token }}
-      run: node .github/bot-scripts/collectDocsFeedback.cjs .docs-feedback/feedback.json .docs-feedback/records.json
-
-    - name: Update feedback digest issue
-      env:
-        GITHUB_TOKEN: ${{ github.token }}
-      run: node .github/bot-scripts/updateDocsFeedbackIssue.cjs .docs-feedback/records.json
-
-    # A per-run key means every nightly run saves a fresh entry,
-    # the answer bot restores the latest one by prefix
-    - name: Save suppression list for the answer bot
-      uses: actions/cache/save@v6
-      with:
-        path: .docs-feedback/feedback.json
-        key: docs-feedback-v2-${{ github.run_id }}
+    uses: zwave-js/bot-workflows/.github/workflows/docs-embeddings.yml@v1
+    with:
+      docs-path: docs

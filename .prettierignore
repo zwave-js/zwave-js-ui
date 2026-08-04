@@ -5,3 +5,6 @@ dist
 server
 store
 /.github/bot-scripts/
+# Vendored verbatim by gh aw add/update; formatting them creates
+# permanent drift against the shared bot-workflows sources
+/.github/aw/imports/
