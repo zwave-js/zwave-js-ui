@@ -3,7 +3,7 @@
 	     element: Root renders a fragment, so no scope id reaches it and neither
 	     this file nor a consumer can style it. -->
 	<Progress.Root
-		:key="indeterminate ? 'indeterminate' : 'determinate'"
+		:key="`${indeterminate ? 'indeterminate' : 'determinate'}-${max}`"
 		renderless
 		:model-value="modelValue"
 		:max="max"
@@ -35,9 +35,9 @@ const props = withDefaults(
 	{ value: null, max: 100, as: 'div', shimmer: false },
 )
 
-// v0 captures whether a value was supplied when the progress context is built,
-// so `isIndeterminate` never flips afterwards — the `:key` remounts the whole
-// context to switch modes
+// v0 reads `max` and whether a value was supplied once, when the progress
+// context is built: `extent` is a plain const and `isIndeterminate` never flips
+// afterwards. The `:key` covers both by remounting the context.
 const indeterminate = computed(() => props.value == null)
 
 const modelValue = computed(() => progressValue(props.value))

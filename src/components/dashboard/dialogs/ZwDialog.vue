@@ -20,11 +20,10 @@
 			<Dialog.Title :namespace="dialogId" class="zw-dlg__a11y">
 				{{ title }}
 			</Dialog.Title>
-			<Dialog.Description
-				v-if="subtitle"
-				:namespace="dialogId"
-				class="zw-dlg__a11y"
-			>
+			<!-- Rendered even without a subtitle: v0 puts `aria-describedby` on
+			     the <dialog> unconditionally, and an empty description beats an
+			     id that resolves to nothing -->
+			<Dialog.Description :namespace="dialogId" class="zw-dlg__a11y">
 				{{ subtitle }}
 			</Dialog.Description>
 			<!-- Vuetify bridge: its overlays teleport into a `.v-overlay-container`
@@ -185,12 +184,13 @@ watch(isMounted, (mounted) => {
 // traps focus in the top dialog, so that is where the keydown lands.
 function onKeydown(e: KeyboardEvent) {
 	if (e.key !== 'Escape') return
-	// Vuetify bridge: its menus teleport into this dialog and close on Escape
-	// from their activator, not from their own content, so an open one gets
-	// first refusal — the capture phase would otherwise close the dialog first
+	// Cancel before anything else: v0 lowers the dialog from the native `cancel`
+	// event whatever `dismiss` says, so the close request must never reach it
+	e.preventDefault()
+	// Vuetify bridge: its menus close on Escape from a `window` listener that
+	// ignores `defaultPrevented`, so an open one still gets first refusal here
 	const el = e.currentTarget
 	if (el instanceof Element && el.querySelector('.v-overlay--active')) return
-	e.preventDefault()
 	if (props.dismiss === 'all') close()
 }
 

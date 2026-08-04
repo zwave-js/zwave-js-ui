@@ -1,4 +1,4 @@
-import { onScopeDispose, watch } from 'vue'
+import { watch } from 'vue'
 import { useStack } from '@vuetify/v0'
 
 // Dashboard overlays are native `<dialog>` elements via v0's Dialog primitive,
@@ -8,11 +8,25 @@ import { useStack } from '@vuetify/v0'
 
 const TOASTER = '[data-sonner-toaster]'
 
+let installed = false
+
 // Mount once, at the app root. Every concern here is global to the overlay
 // stack rather than per-dialog, and v0's stack already tracks it — deriving
 // from that avoids per-instance lock counting getting out of balance when a
 // dialog is torn down mid-leave.
 export function useOverlayLayer(): void {
+	if (installed) {
+		// A second caller would capture `priorOverflow` from the first lock and
+		// leave `<html>` unscrollable once the last dialog closes
+		if (import.meta.env.DEV) {
+			console.warn(
+				'[dashboard-overlay] useOverlayLayer() is app-global — ignoring a second call',
+			)
+		}
+		return
+	}
+	installed = true
+
 	const stack = useStack()
 
 	// `showModal()` inerts the page but leaves it scrollable
@@ -35,7 +49,9 @@ export function useOverlayLayer(): void {
 	// The toast region renders in normal DOM flow, which a top-layer `<dialog>`
 	// paints over. Promoting it to a popover puts it in the top layer too, and
 	// paint order there follows open order — so it is re-shown whenever the
-	// stack changes, to stay above whatever opened last.
+	// stack changes, to stay above whatever opened last. Promotion fixes paint
+	// order only: the region stays in the app tree, which `showModal()` inerts,
+	// so a toast's own close button is unclickable while a dialog is open.
 	let toaster = document.querySelector<HTMLElement>(TOASTER)
 	let warnedMissingToaster = false
 	function applyToastLayer() {
@@ -61,21 +77,11 @@ export function useOverlayLayer(): void {
 		toaster.showPopover()
 	}
 
+	// Sonner renders its region eagerly, inside the app tree, so the post-flush
+	// pass below already finds it; the `??=` re-query covers a caller that runs
+	// before `<VSonner>` has mounted.
 	watch(() => stack.topElement.value, applyToastLayer, {
 		flush: 'post',
 		immediate: true,
 	})
-
-	// Sonner creates its region with the first toast, so one raised while a
-	// dialog is already open would otherwise never be promoted. The watch above
-	// keeps it placed once it exists, so stop watching `<body>` then.
-	const observer = new MutationObserver(() => {
-		if (toaster) {
-			observer.disconnect()
-			return
-		}
-		applyToastLayer()
-	})
-	observer.observe(document.body, { childList: true })
-	onScopeDispose(() => observer.disconnect())
 }

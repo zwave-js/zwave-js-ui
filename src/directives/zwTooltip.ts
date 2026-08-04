@@ -1,16 +1,21 @@
 // Drop-in for Vuetify's `v-tooltip` directive, on the native popover API.
 //
-// Vuetify teleports its tooltip into `.v-overlay-container` under `<body>`,
-// which a top-layer `<dialog>` paints over — so tooltips inside a dashboard
-// dialog were invisible. A popover is itself promoted to the top layer and
-// stacks in open order, so it shows above the dialog that opened it.
+// Vuetify's directive is `useDirectiveComponent(VTooltip)`, which walks the
+// vnode tree with `findComponentParent` and mounts a component on `mounted`
+// *and* every `updated` (vuetify/lib/util/directiveComponent.js) — the
+// mechanism behind #4639. The node grid renders ~9 tooltip hosts per row with
+// no pagination, so this one keeps a single popover element and no components.
 //
-// Positioning goes through Floating UI rather than CSS anchor positioning,
-// which Firefox does not implement; see lib/popover-fallback.ts.
+// A popover also sits in the top layer, which is what lets a tip show over a
+// modal dashboard dialog. Positioning goes through Floating UI rather than CSS
+// anchor positioning, which Firefox does not implement; see popover-fallback.
 //
 // Usage matches Vuetify: `v-zw-tooltip:bottom="'text'"`, or the object form
 // `v-zw-tooltip="{ text, disabled, location }"`. The directive arg defaults to
-// 'top' and an object `location` overrides it.
+// 'top' and an object `location` overrides it. Two things it does not do:
+// `start`/`end` map to `left`/`right` without consulting the text direction,
+// and there is no rich content or `open-on-click`, which is why App.vue keeps
+// two `<v-tooltip>` components.
 
 import type { Placement } from '@floating-ui/dom'
 import type { Directive, DirectiveBinding } from 'vue'
@@ -29,6 +34,7 @@ const PLACEMENT: Record<Side, Placement> = {
 
 const SHOW_DELAY_MS = 400
 const GAP_PX = 6
+const TIP_ID = 'zw-tip'
 
 const HOST_EVENTS = [
 	'pointerenter',
@@ -55,17 +61,24 @@ const shared: {
 	tip?: HTMLElement
 	host?: HTMLElement
 	untrack?: () => void
+	// The host we put `aria-describedby` on, so only that one is cleaned up
+	described?: HTMLElement
 } = {}
 
-function tipElement(): HTMLElement {
+// Parented under the host's dialog when there is one: `showModal()` inerts
+// everything outside that subtree, and an inert tip is out of the a11y tree
+// however the top layer paints it
+function tipElement(host: HTMLElement): HTMLElement {
 	if (!shared.tip) {
 		const el = document.createElement('div')
 		el.className = 'zw-tip'
+		el.id = TIP_ID
 		el.setAttribute('popover', 'manual')
 		el.setAttribute('role', 'tooltip')
-		document.body.append(el)
 		shared.tip = el
 	}
+	const parent = host.closest('dialog[open]') ?? document.body
+	if (shared.tip.parentElement !== parent) parent.append(shared.tip)
 	return shared.tip
 }
 
@@ -73,6 +86,8 @@ function hideTip() {
 	shared.untrack?.()
 	shared.untrack = undefined
 	shared.host = undefined
+	shared.described?.removeAttribute('aria-describedby')
+	shared.described = undefined
 	document.removeEventListener('pointermove', onDocumentMove)
 	if (shared.tip?.matches(':popover-open')) shared.tip.hidePopover()
 }
@@ -130,17 +145,24 @@ class Tooltip implements EventListenerObject {
 				: arg && arg in PLACEMENT
 					? arg
 					: 'top'
+		const previous = this.placement
 		this.placement = PLACEMENT[side]
 
 		if (shared.host !== this.host || !shared.tip) return
 		const label = this.label()
+		if (!label) {
+			hideTip()
+			return
+		}
 		// autoUpdate re-runs on the tip's own resize, so new text re-places
-		if (label) shared.tip.textContent = label
-		else hideTip()
+		shared.tip.textContent = label
+		// autoUpdate does not re-place on a placement change though
+		if (this.placement !== previous) this.track(shared.tip)
 	}
 
 	handleEvent(e: Event) {
-		if (e.type === 'pointerenter' || e.type === 'focusin') this.show()
+		if (e.type === 'pointerenter') this.show(true)
+		else if (e.type === 'focusin') this.show(false)
 		else this.hide()
 	}
 
@@ -161,15 +183,15 @@ class Tooltip implements EventListenerObject {
 		return this.disabled ? '' : stringify(this.source)
 	}
 
-	private show() {
+	private show(pointer: boolean) {
 		if (this.timer !== null || !this.label()) return
 		this.timer = window.setTimeout(() => {
 			this.timer = null
-			this.open()
+			this.open(pointer)
 		}, SHOW_DELAY_MS)
 	}
 
-	private open() {
+	private open(pointer: boolean) {
 		// The anchor can be detached between hover and timeout
 		if (!this.host.isConnected) return
 		// Focus then hover reaches here twice
@@ -177,15 +199,27 @@ class Tooltip implements EventListenerObject {
 		const label = this.label()
 		if (!label) return
 		hideTip()
-		const el = tipElement()
+		const el = tipElement(this.host)
 		el.textContent = label
 		el.showPopover()
 		shared.host = this.host
+		// An `aria-describedby` the host already has is its own, so leave it
+		if (!this.host.hasAttribute('aria-describedby')) {
+			this.host.setAttribute('aria-describedby', TIP_ID)
+			shared.described = this.host
+		}
+		this.track(el)
+		// Only for a pointer-shown tip: a keyboard user reading one would
+		// otherwise lose it to any stray mouse movement on the page
+		if (pointer) document.addEventListener('pointermove', onDocumentMove)
+	}
+
+	private track(el: HTMLElement) {
+		shared.untrack?.()
 		shared.untrack = trackAnchor(this.host, el, {
 			placement: this.placement,
 			offsetPx: GAP_PX,
 		})
-		document.addEventListener('pointermove', onDocumentMove)
 	}
 }
 
