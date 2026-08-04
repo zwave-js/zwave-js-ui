@@ -16,6 +16,7 @@ import ZwaveServerManager, {
 	type ZwaveServerConfig,
 	type ZwaveServerHost,
 } from '#api/hass/ZwaveServerManager.ts'
+import { makeHassLogger, tick } from './fixtures.ts'
 
 const hoisted = vi.hoisted(() => ({
 	servers: [] as any[],
@@ -66,10 +67,6 @@ function lastServer() {
 	return hoisted.servers[hoisted.servers.length - 1]
 }
 
-function tick(): Promise<void> {
-	return new Promise((resolve) => setImmediate(resolve))
-}
-
 interface HarnessOptions {
 	config?: ZwaveServerConfig
 	hasUserCallbacks?: boolean
@@ -78,13 +75,7 @@ interface HarnessOptions {
 
 function createHost(options: HarnessOptions = {}) {
 	const driver = options.driver ?? { destroy: vi.fn(() => Promise.resolve()) }
-	const logger = {
-		debug: vi.fn(),
-		info: vi.fn(),
-		warn: vi.fn(),
-		error: vi.fn(),
-		log: vi.fn(),
-	}
+	const logger = makeHassLogger()
 	const serverLogger = {
 		error: vi.fn(),
 		warn: vi.fn(),
@@ -204,6 +195,18 @@ describe('ZwaveServerManager.create()', () => {
 		current = second
 		manager.create()
 		expect(lastServer().driver).toBe(second)
+	})
+
+	it('does not build a server when serverEnabled is false (gate lives here)', () => {
+		const { host } = createHost({ config: { serverEnabled: false } })
+		const manager = new ZwaveServerManager(host)
+
+		manager.create()
+
+		// The enablement gate is owned by the manager, so create() is a no-op
+		// and the caller (ZwaveClient.connect) can call it unconditionally
+		expect(hoisted.servers).toHaveLength(0)
+		expect(manager.server).toBeNull()
 	})
 })
 

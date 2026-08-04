@@ -24,14 +24,13 @@ import {
 	vi,
 } from 'vitest'
 import { mqttMockFactory, latestBroker, resetMqttBrokers } from './mqttMock.ts'
-import { defaultMqttConfig } from './fixtures.ts'
+import { defaultMqttConfig, tick } from './fixtures.ts'
 import { ensureTestEnv, cleanupTestEnv } from './env.ts'
 import MqttClient from '#api/lib/MqttClient.ts'
 
 vi.mock('mqtt', () => mqttMockFactory())
 
 const STATUS_TOPIC = 'homeassistant/status'
-const tick = () => new Promise<void>((r) => setImmediate(r))
 
 /** Every recorded `subscribe(topic)` for the exact status topic. */
 function statusSubscribes(): number {
@@ -352,5 +351,112 @@ describe('MqttClient scoped exact-topic subscription', () => {
 		expect(received).toEqual([])
 		// The desired topic was unsubscribed as part of the close.
 		expect(broker.unsubscribed).toContain(STATUS_TOPIC)
+	})
+
+	it('re-subscribes on a connected client when the refcount drops to 0 and rises again', async () => {
+		const client = makeClient()
+		const first: string[] = []
+		const second: string[] = []
+
+		const broker = latestBroker()
+		broker.triggerConnect()
+		await tick()
+
+		// First owner subscribes, then disposes: the last listener leaving
+		// unsubscribes the exact topic from the broker while still connected
+		const subA = client.subscribeExact(STATUS_TOPIC, (p) =>
+			first.push(p ?? ''),
+		)
+		expect(statusSubscribes()).toBe(1)
+		subA.dispose()
+		expect(broker.subscribed.some((s) => s.topic === STATUS_TOPIC)).toBe(
+			false,
+		)
+		broker.subscribed.length = 0
+
+		// A new owner subscribes on the still-connected client: the topic is
+		// re-subscribed immediately (not left waiting for a reconnect)
+		const subB = client.subscribeExact(STATUS_TOPIC, (p) =>
+			second.push(p ?? ''),
+		)
+		expect(statusSubscribes()).toBe(1)
+
+		broker.deliver(STATUS_TOPIC, 'online')
+		await tick()
+		expect(first).toEqual([])
+		expect(second).toEqual(['online'])
+
+		subB.dispose()
+		await client.close()
+	})
+
+	it('a dispose before any connect never subscribes the topic on the eventual connect', async () => {
+		const client = makeClient()
+		const received: string[] = []
+
+		// Subscribe and dispose while still offline: nothing was sent to the
+		// broker yet, and the disposed topic must not be armed for the connect
+		const sub = client.subscribeExact(STATUS_TOPIC, (p) =>
+			received.push(p ?? ''),
+		)
+		sub.dispose()
+
+		const broker = latestBroker()
+		broker.triggerConnect()
+		await tick()
+
+		expect(statusSubscribes()).toBe(0)
+		broker.deliver(STATUS_TOPIC, 'online')
+		await tick()
+		expect(received).toEqual([])
+
+		await client.close()
+	})
+
+	it('does not deliver a near-miss topic to the exact listener', async () => {
+		const client = makeClient()
+		const received: Array<string | undefined> = []
+		client.subscribeExact(STATUS_TOPIC, (payload) => received.push(payload))
+
+		const broker = latestBroker()
+		broker.triggerConnect()
+		await tick()
+
+		// A sibling topic under the same prefix must not reach the exact
+		// listener: dispatch is an exact-key `Map.get(topic)`, so only the
+		// registered topic matches
+		broker.deliver(`${STATUS_TOPIC}/foo`, 'online')
+		await tick()
+		expect(received).toEqual([])
+
+		broker.deliver(STATUS_TOPIC, 'online')
+		await tick()
+		expect(received).toEqual(['online'])
+
+		await client.close()
+	})
+
+	it('rejects a wildcard topic and rejects subscribing after close', async () => {
+		const client = makeClient()
+
+		// `+`/`#` would widen the broker subscription past the named exact topic
+		// and can never match the exact-key dispatch, so both are rejected
+		expect(() =>
+			client.subscribeExact('homeassistant/+', () => {}),
+		).toThrow(/wildcard/)
+		expect(() =>
+			client.subscribeExact('homeassistant/#', () => {}),
+		).toThrow(/wildcard/)
+
+		const broker = latestBroker()
+		broker.triggerConnect()
+		await tick()
+		await client.close()
+
+		// A closed client can never (re)subscribe, so a scoped subscribe must
+		// fail loudly rather than hand back a silently-dead handle
+		expect(() => client.subscribeExact(STATUS_TOPIC, () => {})).toThrow(
+			/closed/,
+		)
 	})
 })

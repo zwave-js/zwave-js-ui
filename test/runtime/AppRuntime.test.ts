@@ -13,6 +13,7 @@ import {
 	readFileSync,
 	rmSync,
 	writeFileSync,
+	existsSync,
 } from 'node:fs'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
@@ -170,10 +171,13 @@ describe('App runtime behavior', () => {
 		}
 	})
 
-	it('destroys plugins after earlier shutdown steps fail', async () => {
+	it('destroys plugins after an earlier shutdown step fails', async () => {
 		const pluginDir = mkdtempSync(path.join(tmpdir(), 'runtime-plugin-'))
 		const marker = path.join(pluginDir, 'events.txt')
 		const plugin = path.join(pluginDir, 'observable-plugin.mjs')
+		// A gateway whose close rejects is an earlier teardown step failing; the
+		// plugin must still be destroyed afterwards (errors are aggregated, not
+		// fatal), proving cleanup continues past a failed step
 		const gateway = createFakeGateway({
 			close: vi.fn().mockRejectedValue(new Error('gateway close failed')),
 		})
@@ -197,9 +201,6 @@ export default class ObservablePlugin {
 			await runtime.startGateway({
 				gateway: { plugins: [plugin] },
 			})
-			vi.spyOn(runtime.getHomeAssistant(), 'stop').mockRejectedValue(
-				new Error('Home Assistant stop failed'),
-			)
 			await runtime.shutdown()
 
 			expect(readFileSync(marker, 'utf8')).toBe('loaded\ndestroyed\n')
@@ -326,7 +327,21 @@ export default class WorkingPlugin {
 		expect(close).toHaveBeenCalled()
 	})
 
-	it('completes shutdown while a gateway start is still hanging', async () => {
+	it('completes shutdown while a gateway start is still hanging, without resurrecting the cancelled generation', async () => {
+		const pluginDir = mkdtempSync(path.join(tmpdir(), 'runtime-plugin-'))
+		const marker = path.join(pluginDir, 'loaded.txt')
+		const plugin = path.join(pluginDir, 'late-plugin.mjs')
+		// A plugin whose constructor writes a marker: it loads only if the
+		// cancelled generation's continuation runs past the hung start, so its
+		// ABSENCE proves the cancellation actually bailed the continuation
+		writeFileSync(
+			plugin,
+			`import { appendFileSync } from 'node:fs'
+export default class LatePlugin {
+	constructor() { appendFileSync(${JSON.stringify(marker)}, 'loaded') }
+}
+`,
+		)
 		let releaseStart = (): void => {}
 		const startHang = new Promise<void>((resolve) => {
 			releaseStart = resolve
@@ -340,16 +355,56 @@ export default class WorkingPlugin {
 			gatewayFactory: { create: () => gateway, dispose: vi.fn() },
 		})
 
-		// the start never settles on its own, so the teardown must not block on
-		// it; closing the gateway is what unblocks a real hung start
-		const starting = runtime.startGateway({})
-		await runtime.shutdown()
+		try {
+			// the start never settles on its own, so the teardown must not block
+			// on it; closing the gateway is what unblocks a real hung start
+			const starting = runtime.startGateway({
+				gateway: { plugins: [plugin] },
+			})
+			await runtime.shutdown()
 
-		expect(close).toHaveBeenCalled()
+			expect(close).toHaveBeenCalled()
 
-		// releasing the hung start lets its continuation observe the cancelled
-		// generation and finish without throwing or resurrecting the gateway
-		releaseStart()
-		await expect(starting).resolves.toBeUndefined()
+			// releasing the hung start lets its continuation observe the
+			// cancelled generation and finish without throwing or resurrecting
+			// the gateway — and crucially without loading the plugin
+			releaseStart()
+			await expect(starting).resolves.toBeUndefined()
+
+			// The plugin was never loaded: the cancelled continuation bailed
+			// before plugin loading. If cancellation were a no-op, the marker
+			// would exist
+			expect(existsSync(marker)).toBe(false)
+		} finally {
+			rmSync(pluginDir, { recursive: true, force: true })
+		}
+	})
+
+	it('runs the gateway close and plugin destroy once under concurrent teardowns', async () => {
+		let releaseClose = (): void => {}
+		const closeGate = new Promise<void>((resolve) => {
+			releaseClose = resolve
+		})
+		const close = vi.fn(() => closeGate)
+		const gateway = createFakeGateway({ close })
+		const runtime = createRuntime({
+			gateway,
+			gatewayFactory: {
+				create: () => createFakeGateway(),
+				dispose: vi.fn(),
+			},
+		})
+
+		// Two teardowns overlap (a settings restart racing a graceful shutdown):
+		// gate the gateway close so both callers are in flight before either
+		// finishes, then release
+		const first = runtime.teardownGateway({ requireGateway: true })
+		const second = runtime.teardownGateway()
+		releaseClose()
+		await Promise.all([first, second])
+
+		// The shared in-flight teardown collapses both callers, so the gateway
+		// close runs exactly once
+		expect(close).toHaveBeenCalledOnce()
 	})
 })

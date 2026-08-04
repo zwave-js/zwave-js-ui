@@ -21,8 +21,13 @@ vi.mock('#api/lib/ZwaveClient.ts', () => ({
 		}
 		on = vi.fn()
 		connect = vi.fn(() => Promise.resolve())
-		buildServerHost = vi.fn(() => ({}))
-		adoptServerManager = vi.fn()
+		// The runtime reads the client's owned server manager handle
+		zwaveServer = {
+			get version(): string {
+				return '0.0.0-test'
+			},
+			destroy: vi.fn(() => Promise.resolve()),
+		}
 	},
 }))
 
@@ -32,8 +37,8 @@ vi.mock('#api/lib/Gateway.ts', () => ({
 			gatewayCtor(...args)
 		}
 		start = vi.fn(() => Promise.resolve())
-		buildDiscoveryOptions = vi.fn(() => ({}))
-		adoptDiscoveryManager = vi.fn()
+		// The runtime reads the gateway's owned discovery handle
+		mqttDiscovery = { stop: vi.fn() }
 		close = vi.fn(() => Promise.resolve())
 	},
 }))

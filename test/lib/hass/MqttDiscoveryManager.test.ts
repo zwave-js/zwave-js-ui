@@ -14,76 +14,21 @@
  * covered by `mqttLifecycle.test.ts` through the Gateway harness.
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import type { Mock } from 'vitest'
-import { SetValueStatus } from 'zwave-js'
 import MqttDiscoveryManager, {
 	HASS_STATUS_TOPIC,
 	type HassStatusSource,
 	type MqttDiscoveryManagerOptions,
 } from '#api/hass/MqttDiscoveryManager.ts'
 import { CustomDeviceRegistry } from '#api/hass/CustomDeviceRegistry.ts'
-import type {
-	HassMqttPort,
-	HassNodeUpdatePort,
-	HassTopicPort,
-	HassZwavePort,
-} from '#api/hass/ports.ts'
 import type { HassDevice } from '#api/hass/types.ts'
-
-// Methods declared as function-valued properties let tests reference
-// `logger.info` for assertions without the unbound-method rule firing
-interface MockLogger {
-	debug: Mock
-	info: Mock
-	warn: Mock
-	error: Mock
-	log: Mock
-}
-
-function makeLogger(): MockLogger {
-	return {
-		debug: vi.fn(),
-		info: vi.fn(),
-		warn: vi.fn(),
-		error: vi.fn(),
-		log: vi.fn(),
-	}
-}
-
-function makeMqttPort(): HassMqttPort {
-	return {
-		disabled: false,
-		getTopic: (topic: string) => topic,
-		getStatusTopic: () => 'status',
-		publish: vi.fn(),
-	}
-}
-
-function makeZwavePort(): HassZwavePort {
-	return {
-		homeHex: '0xdeadbeef',
-		nodes: new Map(),
-		updateDevice: vi.fn(),
-		writeValue: vi.fn<HassZwavePort['writeValue']>(() =>
-			Promise.resolve({
-				status: SetValueStatus.Success,
-			}),
-		),
-	}
-}
-
-function makeNodeUpdatePort(): HassNodeUpdatePort {
-	return {
-		emitNodeUpdate: vi.fn(),
-	}
-}
-
-function makeTopicPort(): HassTopicPort {
-	return {
-		nodeTopic: () => 'node',
-		valueTopic: () => 'value',
-	}
-}
+import {
+	makeHassLogger,
+	makeMqttPort,
+	makeNodeUpdatePort,
+	makeTopicPort,
+	makeZwavePort,
+	type MockHassLogger,
+} from './fixtures.ts'
 
 /**
  * A minimal `HassStatusSource` that records the scoped exact-topic
@@ -164,14 +109,14 @@ function device(overrides: Partial<HassDevice> = {}): HassDevice {
 interface Harness {
 	manager: MqttDiscoveryManager
 	source: CustomDeviceRegistry
-	logger: MockLogger
+	logger: MockHassLogger
 	options: MqttDiscoveryManagerOptions
 }
 
 function makeManager(
 	overrides: Partial<MqttDiscoveryManagerOptions> = {},
 ): Harness {
-	const logger = makeLogger()
+	const logger = makeHassLogger()
 	// A real registry source, deliberately not started: the manager forks a
 	// child in its constructor and the fork subscribes to this source on
 	// start()/unsubscribes on stop(), so no file watchers are ever installed
@@ -211,7 +156,7 @@ describe('MqttDiscoveryManager start/stop lifecycle', () => {
 		expect(() => manager.stop()).not.toThrow()
 	})
 
-	it('stop() fences discovery publication synchronously; start() re-arms it', () => {
+	it('stop() fences discovery publication synchronously and does not re-arm', () => {
 		const { manager } = makeManager()
 		const generator = manager.discoveryGenerator
 
@@ -231,9 +176,10 @@ describe('MqttDiscoveryManager start/stop lifecycle', () => {
 		expect(rediscoverAll).toHaveBeenCalledTimes(1)
 		expect(generator.active).toBe(false)
 
-		// A restart reusing this same generator instance re-arms the fence.
+		// The fence is one-way: a restart builds a fresh manager/generator
+		// rather than re-arming this one, so start() never revives the fence.
 		manager.start()
-		expect(generator.active).toBe(true)
+		expect(generator.active).toBe(false)
 	})
 })
 
@@ -471,7 +417,7 @@ describe('MqttDiscoveryManager multi-instance isolation', () => {
 	beforeEach(() => {
 		sharedSource = new CustomDeviceRegistry({
 			storeDir: '/tmp/mqtt-discovery-manager-shared',
-			logger: makeLogger(),
+			logger: makeHassLogger(),
 		})
 	})
 

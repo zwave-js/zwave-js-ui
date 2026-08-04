@@ -9,10 +9,6 @@ import type {
 	ZwaveClientPort,
 } from '#api/runtime/ports.ts'
 import type { StoreHassDevicesResult } from '#api/hass/types.ts'
-import type { MqttDiscoveryManagerOptions } from '#api/hass/MqttDiscoveryManager.ts'
-import { CustomDeviceRegistry } from '#api/hass/CustomDeviceRegistry.ts'
-import { tmpdir } from 'node:os'
-import path from 'node:path'
 
 export interface FakeZwaveClient extends ZwaveClientPort {
 	devices: ZwaveClientPort['devices']
@@ -137,8 +133,7 @@ export interface FakeGateway extends GatewayPort {
 	publishDiscovery: Mock
 	rediscoverNode: Mock
 	disableDiscovery: Mock
-	buildDiscoveryOptions: Mock
-	adoptDiscoveryManager: Mock
+	mqttDiscovery: { stop: Mock }
 }
 
 export function createFakeGateway(
@@ -154,55 +149,11 @@ export function createFakeGateway(
 		publishDiscovery: vi.fn(),
 		rediscoverNode: vi.fn(),
 		disableDiscovery: vi.fn(),
-		buildDiscoveryOptions: vi.fn(() => createFakeDiscoveryOptions()),
-		adoptDiscoveryManager: vi.fn(),
+		// The runtime holds this as the HA discovery handle and drives its
+		// `stop()`; a fake gateway never starts a real discovery engine
+		mqttDiscovery: { stop: vi.fn() },
 		...overrides,
-	}
-}
-
-/**
- * A valid but inert `MqttDiscoveryManagerOptions` for a fake gateway. The
- * runtime's `attachClients()` builds a real `MqttDiscoveryManager` from these
- * during `startGateway()`, but a fake gateway's `start()` never starts it, so
- * the ports below are never exercised and no MQTT or file I/O occurs. The
- * registry source is a real, unstarted registry so the manager's constructor
- * `fork()` succeeds without installing any file watchers.
- */
-function createFakeDiscoveryOptions(): MqttDiscoveryManagerOptions {
-	const logger = {
-		debug: vi.fn(),
-		info: vi.fn(),
-		warn: vi.fn(),
-		error: vi.fn(),
-		log: vi.fn(),
-	}
-	return {
-		config: { hassDiscovery: false },
-		mqtt: {
-			disabled: true,
-			getTopic: vi.fn(() => ''),
-			getStatusTopic: vi.fn(() => ''),
-			publish: vi.fn(),
-		},
-		zwave: {
-			homeHex: undefined,
-			nodes: new Map(),
-			updateDevice: vi.fn(),
-			writeValue: vi.fn(),
-		},
-		nodeUpdates: {
-			emitNodeUpdate: vi.fn(),
-		},
-		topics: {
-			nodeTopic: vi.fn(() => ''),
-			valueTopic: vi.fn(() => null),
-		},
-		registrySource: new CustomDeviceRegistry({
-			storeDir: path.join(tmpdir(), 'zwave-js-ui-fake-gateway-registry'),
-			logger,
-		}),
-		logger,
-	}
+	} as FakeGateway
 }
 
 // Avoids constructing a real Zniffer, which would open a real serial port

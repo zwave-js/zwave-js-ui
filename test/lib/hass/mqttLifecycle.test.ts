@@ -24,7 +24,7 @@ import {
 	discoverValueOnNode,
 	type GatewayHarness,
 } from './gatewayHarness.ts'
-import { buildNode, buildValueId, addValue } from './fixtures.ts'
+import { buildNode, buildValueId, addValue, tick } from './fixtures.ts'
 import type { HassDevice, ZUINode } from '#api/lib/ZwaveClient.ts'
 import type { GatewayConfig } from '#api/lib/Gateway.ts'
 
@@ -32,8 +32,6 @@ vi.mock('mqtt', () => mqttMockFactory())
 
 const gatewayHarness = useGatewayHarness()
 let harness: GatewayHarness
-
-const tick = () => new Promise<void>((r) => setImmediate(r))
 
 /**
  * The discovery-config topic the seeded 'Dev' switch republishes on reconnect.

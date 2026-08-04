@@ -539,7 +539,7 @@ describe('DiscoveryGenerator', () => {
 		expect(disabled.published).toHaveLength(0)
 	})
 
-	it('the publication fence quiesces every producer and re-arms on activate', () => {
+	it('the publication fence quiesces every producer once dropped (never re-armed)', () => {
 		const stored = device({
 			discoveryTopic: 'sensor/node/stored/config',
 			persistent: true,
@@ -570,11 +570,12 @@ describe('DiscoveryGenerator', () => {
 		generator.rediscoverAll()
 		expect(published).toHaveLength(0)
 
-		// Re-arm: publication resumes exactly once.
-		generator.activate()
-		expect(generator.active).toBe(true)
+		// The fence is one-way: it stays dropped for this generator's life
+		// (production builds a fresh generator per generation rather than
+		// re-arming this one), so nothing publishes after a deactivate.
+		expect(generator.active).toBe(false)
 		generator.rediscoverAll()
-		expect(published).toHaveLength(1)
+		expect(published).toHaveLength(0)
 	})
 
 	it('translates thermostat modes and stops covers', async () => {
