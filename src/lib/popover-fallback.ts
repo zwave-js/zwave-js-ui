@@ -20,7 +20,7 @@ const FALLBACK_PLACEMENTS: Partial<Record<Placement, Placement[]>> = {
 	'bottom-start': ['top-start', 'bottom-end', 'top-end'],
 }
 
-// Keeps a flipped or shifted panel clear of the viewport edge.
+// Keeps a flipped or shifted panel clear of the viewport edge
 const VIEWPORT_PADDING_PX = 8
 
 interface TrackOptions {

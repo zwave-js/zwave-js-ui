@@ -1,6 +1,6 @@
 <template>
-	<!-- The directive owns one popover per host element and drops it on unmount,
-		 so a row re-rendering many times per second cannot orphan tooltips (#4639) -->
+	<!-- Use the tooltip directive because this row can re-render many
+		 times per second -->
 	<div v-zw-tooltip:bottom="value && value.description">
 		<span
 			v-if="value !== undefined && value.icon === ''"

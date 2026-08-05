@@ -1,21 +1,9 @@
-// Drop-in for Vuetify's `v-tooltip` directive, on the native popover API.
+// Drop-in for Vuetify's `v-tooltip` that renders via the native popover
+// API instead of mounting a component. Vuetify mounts one on `mounted`
+// and remounts it on every `updated`, which gets expensive when many
+// tooltips are on screen at once.
 //
-// Vuetify's directive is `useDirectiveComponent(VTooltip)`, which walks the
-// vnode tree with `findComponentParent` and mounts a component on `mounted`
-// *and* every `updated` (vuetify/lib/util/directiveComponent.js) — the
-// mechanism behind #4639. The node grid renders ~9 tooltip hosts per row with
-// no pagination, so this one keeps a single popover element and no components.
-//
-// A popover also sits in the top layer, which is what lets a tip show over a
-// modal dashboard dialog. Positioning goes through Floating UI rather than CSS
-// anchor positioning, which Firefox does not implement; see popover-fallback.
-//
-// Usage matches Vuetify: `v-zw-tooltip:bottom="'text'"`, or the object form
-// `v-zw-tooltip="{ text, disabled, location }"`. The directive arg defaults to
-// 'top' and an object `location` overrides it. Two things it does not do:
-// `start`/`end` map to `left`/`right` without consulting the text direction,
-// and there is no rich content or `open-on-click`, which is why App.vue keeps
-// two `<v-tooltip>` components.
+// Usage: `v-zw-tooltip:bottom="'text'"` or `{ text, disabled, location }`
 
 import type { Placement } from '@floating-ui/dom'
 import type { Directive, DirectiveBinding } from 'vue'
@@ -54,9 +42,8 @@ interface TooltipHost extends HTMLElement {
 	_zwTip?: Tooltip
 }
 
-// One tip element and one visible tooltip for the whole app: a node grid holds
-// hundreds of hosts, and a per-host element would leave a permanent `<body>`
-// child behind every row ever pointed at
+// One shared tip element for the whole app: a per-host one would leave a
+// permanent `<body>` child behind every row ever pointed at
 const shared: {
 	tip?: HTMLElement
 	host?: HTMLElement
@@ -65,9 +52,8 @@ const shared: {
 	described?: HTMLElement
 } = {}
 
-// Parented under the host's dialog when there is one: `showModal()` inerts
-// everything outside that subtree, and an inert tip is out of the a11y tree
-// however the top layer paints it
+// Parented under the host's dialog: `showModal()` inerts everything outside
+// that subtree, and an inert tip is out of the a11y tree
 function tipElement(host: HTMLElement): HTMLElement {
 	if (!shared.tip) {
 		const el = document.createElement('div')
@@ -92,8 +78,8 @@ function hideTip() {
 	if (shared.tip?.matches(':popover-open')) shared.tip.hidePopover()
 }
 
-// A host that goes `pointer-events: none` while hovered — a button disabling
-// itself on click — never fires pointerleave
+// Hide from a document-level pointermove as well, because a host that goes
+// `pointer-events: none` while hovered never fires pointerleave
 function onDocumentMove(e: PointerEvent) {
 	const host = shared.host
 	if (!host) return
@@ -156,7 +142,7 @@ class Tooltip implements EventListenerObject {
 		}
 		// autoUpdate re-runs on the tip's own resize, so new text re-places
 		shared.tip.textContent = label
-		// autoUpdate does not re-place on a placement change though
+		// Re-track on a placement change: autoUpdate follows scroll and resize
 		if (this.placement !== previous) this.track(shared.tip)
 	}
 
