@@ -222,8 +222,6 @@
 	}
 }
 
-/* Animates transform, not position, so the sweep stays compositor-only
-   through the minutes-long re-renders of an NVM restore. */
 @keyframes zw-indeterminate {
 	0% {
 		transform: translateX(-100%);

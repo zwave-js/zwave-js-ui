@@ -274,9 +274,9 @@ export default {
 			if (this.options?.noCancel) return 'none'
 			return this.options?.persistent ? 'button' : 'all'
 		},
-		// `options.width` may be a bare number or a CSS length string, so parse
-		// leading digits and bucket the result into a DialogSize breakpoint
 		dialogSize() {
+			// parseInt drops any unit suffix, so a CSS length string like
+			// '400px' parses the same as a bare number
 			const parsed = parseInt(this.options?.width, 10)
 			const w = Number.isNaN(parsed) ? 290 : parsed
 			if (w <= 400) return 'sm'

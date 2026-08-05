@@ -497,9 +497,7 @@ export default {
 			)
 		},
 		dismiss() {
-			// No X while an inclusion is live, because closing would leave the
-			// controller including with nothing driving it and the footer
-			// already offers Stop as the way out
+			// While an inclusion is active, the dialog must not be dismissed
 			if (this.state === 'start') return 'none'
 			// Keep the X during a transient request, drop Esc and the scrim
 			return this.loading ? 'button' : 'all'

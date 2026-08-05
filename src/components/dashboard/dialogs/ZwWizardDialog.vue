@@ -81,9 +81,8 @@ const dialogProps = computed(() => ({
 	actions: props.actions,
 }))
 
-// Switch on the measured content box rather than the window because
-// TWO_PANE_BREAKPOINT is a container width and the dialog is narrower than
-// the viewport
+// railLayout switches on the measured content box because TWO_PANE_BREAKPOINT
+// is a container width and the dialog is narrower than the viewport
 const railLayout = ref(true)
 function onContentWidth(width: number) {
 	railLayout.value = width >= TWO_PANE_BREAKPOINT

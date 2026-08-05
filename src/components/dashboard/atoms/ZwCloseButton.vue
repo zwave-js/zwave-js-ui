@@ -33,8 +33,7 @@ defineExpose({ el, focus: () => el.value?.focus() })
 </script>
 
 <style scoped>
-/* Scoped rules ride the component's own data-attr, so they still apply
-   after v-dialog teleports the content out of the DOM subtree */
+/* Scoped, because v-dialog can teleport this button away from its parent in the DOM */
 .zw-close {
 	appearance: none;
 	border: none;
