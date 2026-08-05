@@ -27,7 +27,7 @@ export function stepRing(
 	circumference: number,
 ): StepRing {
 	const steps = Math.max(0, Math.floor(total))
-	// Empty steps would divide by zero; treat it as one full segment
+	// Treat empty steps as one full segment because zero would divide by zero
 	const segments = Math.max(1, steps)
 	const gap = gapFor(segments, steps > 1)
 	const segArc = Math.max(0, ((360 / segments - gap) / 360) * circumference)

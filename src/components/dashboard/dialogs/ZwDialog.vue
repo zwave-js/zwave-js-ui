@@ -200,13 +200,11 @@ function variantFor(a: DialogAction): ZwButtonVariant {
 </script>
 
 <style>
-/* Non-scoped: v-dialog teleports its content out of this component's DOM
-   subtree, so scoped selectors would not reach it. Everything is
-   namespaced under .zw-dlg to stay isolated. */
+/* Non-scoped because v-dialog teleports its content out of this component's
+   DOM subtree, so scoped selectors would not reach it. */
 
-/* Content box: width = min(breakpoint, viewport − margin); the specific
-   selector overrides Vuetify's default calc(100% − 48px) cap so the
-   dialog fills the screen with only a small margin on phones. */
+/* Overrides Vuetify's default calc(100% − 48px) cap so the dialog fills the
+   screen with only a small margin on phones. */
 .v-overlay__content.zw-dlg__vcontent {
 	max-width: calc(100vw - 32px);
 	max-height: var(--zw-dlg-max-h);

@@ -92,8 +92,7 @@ export default {
 			this.app.dismissSnackbar(toastId)
 		},
 		bindEvent(eventName, handler) {
-			// Only the last handler per event is tracked, so drop any previous
-			// one first — a re-bind without an unbind would leak it
+			// Drop any previous handler because a re-bind would otherwise leak it
 			const previous = this.bindedSocketEvents[eventName]
 			if (previous) {
 				this.socket.off(socketEvents[eventName], previous)

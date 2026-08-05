@@ -135,8 +135,8 @@ export default {
 				infoSnack: false,
 				errorSnack: true,
 			})
-			// A close-and-reopen during the await starts a new run, whose
-			// exclusion must not be settled by this one
+			// Bail out because a close-and-reopen during the await can start a
+			// new run that must settle its own exclusion, not this one
 			if (run !== this.run) return
 			this.settle()
 		},

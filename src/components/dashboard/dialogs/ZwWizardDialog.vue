@@ -7,7 +7,7 @@
 		@update:content-width="onContentWidth"
 		@after-leave="emit('afterLeave')"
 	>
-		<!-- Wide: vertical rail spanning header+body. Narrow: circular header. -->
+		<!-- Switches between a vertical rail (wide) and a circular progress header (narrow). -->
 		<template v-if="railLayout" #rail>
 			<ZwDialogStepRail
 				:title="title"
@@ -81,8 +81,9 @@ const dialogProps = computed(() => ({
 	actions: props.actions,
 }))
 
-// TWO_PANE_BREAKPOINT is a container width, and the dialog is narrower than
-// the viewport, so switch on the measured content box rather than the window
+// Switch on the measured content box rather than the window because
+// TWO_PANE_BREAKPOINT is a container width and the dialog is narrower than
+// the viewport
 const railLayout = ref(true)
 function onContentWidth(width: number) {
 	railLayout.value = width >= TWO_PANE_BREAKPOINT

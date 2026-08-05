@@ -109,7 +109,7 @@ const emit = defineEmits<{ click: [MouseEvent] }>()
 	letter-spacing: 0.4px;
 }
 
-/* Solid-red destructive primary (dialog footers: Restore, Hard reset). */
+/* Solid-red destructive primary (dialog footers: Restore, Hard reset) */
 .zw-btn--danger {
 	--btn-bg: var(--zw-danger);
 	--btn-bg-hover: rgb(var(--v0-error-darken-1));

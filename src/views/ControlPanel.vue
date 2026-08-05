@@ -133,8 +133,8 @@ export default {
 					tooltip: 'Manage nodes',
 					action: () => this.showNodesManager(),
 				})
-				// Exclusion left the nodes manager wizard, so this panel needs
-				// its own entry point
+				// Exclusion isn't part of the nodes manager wizard, so it needs
+				// its own entry point here
 				items.push({
 					icon: 'remove_circle_outline',
 					color: 'error',

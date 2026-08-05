@@ -860,7 +860,6 @@ export default {
 				)
 			}
 		},
-		// Feed NVM-restore progress into the blocking loader
 		onControllerStatus(data) {
 			this.setControllerStatus(data)
 			const status = data?.status

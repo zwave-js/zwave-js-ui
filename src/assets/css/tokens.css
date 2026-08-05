@@ -222,10 +222,8 @@
 	}
 }
 
-/* Indeterminate progress sweep — a short segment slides across the track,
-   for operations with no known percentage. Uses `transform` so the sweep
-   stays compositor-only: it runs for minutes during an NVM restore,
-   alongside live socket-driven re-renders elsewhere in the tree. */
+/* Animates transform, not position, so the sweep stays compositor-only
+   through the minutes-long re-renders of an NVM restore. */
 @keyframes zw-indeterminate {
 	0% {
 		transform: translateX(-100%);

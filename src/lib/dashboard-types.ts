@@ -253,7 +253,7 @@ export type DialogSeverity =
 	| 'warning'
 	| 'danger'
 
-// ZwButton's visual variants, shared so the dialog footer can map onto them.
+// ZwButton's visual variants, shared so the dialog footer can map onto them
 export type ZwButtonVariant =
 	| 'primary'
 	| 'outline'
@@ -277,7 +277,7 @@ interface DialogActionBase {
 	autoFocus?: boolean
 }
 
-// A clickable action must carry a handler; only a disabled one may omit it
+// Only a disabled action may omit the click handler
 export type DialogAction = DialogActionBase &
 	(
 		| { onClick: (e: MouseEvent) => void; disabled?: boolean }

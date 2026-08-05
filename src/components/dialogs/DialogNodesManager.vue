@@ -19,7 +19,6 @@
 		</template>
 
 		<template v-if="step">
-			<!-- replaceFailed -->
 			<div v-if="step.key === 'replaceFailed'">
 				<v-combobox
 					label="Node"
@@ -33,7 +32,6 @@
 				></v-combobox>
 			</div>
 
-			<!-- inclusionNaming -->
 			<div v-else-if="step.key === 'inclusionNaming'">
 				<v-form
 					ref="namingForm"
@@ -66,7 +64,6 @@
 				</v-form>
 			</div>
 
-			<!-- inclusionMode -->
 			<div v-else-if="step.key === 'inclusionMode'">
 				<div v-if="!loading">
 					<v-radio-group
@@ -163,7 +160,6 @@
 				</v-col>
 			</div>
 
-			<!-- replaceInclusionMode -->
 			<div v-else-if="step.key === 'replaceInclusionMode'">
 				<v-radio-group
 					v-if="!loading"
@@ -228,7 +224,6 @@
 				</v-col>
 			</div>
 
-			<!-- s2Classes -->
 			<div v-else-if="step.key === 's2Classes'">
 				<div v-if="!loading">
 					<v-checkbox
@@ -281,7 +276,6 @@
 				</div>
 			</div>
 
-			<!-- s2Pin -->
 			<div v-else-if="step.key === 's2Pin'">
 				<div v-if="!loading">
 					<v-text-field
@@ -322,7 +316,6 @@
 				</div>
 			</div>
 
-			<!-- done -->
 			<div v-else-if="step.key === 'done'">
 				<v-col class="d-flex flex-column align-center">
 					<v-icon
@@ -504,9 +497,9 @@ export default {
 			)
 		},
 		dismiss() {
-			// No X while an inclusion is live: closing would leave the
-			// controller including with nothing driving it. The footer offers
-			// Stop there, so this can't trap the user
+			// No X while an inclusion is live, because closing would leave the
+			// controller including with nothing driving it and the footer
+			// already offers Stop as the way out
 			if (this.state === 'start') return 'none'
 			// Keep the X during a transient request, drop Esc and the scrim
 			return this.loading ? 'button' : 'all'
@@ -596,7 +589,7 @@ export default {
 			this.nvmProgress = 0
 			// Exclusion is driven by DialogExcludeDevice, so only track inclusion here
 			if (/inclusion/i.test(status)) {
-				// inclusion started, start the countdown timer
+				// Inclusion started, start the countdown timer
 				if (status.indexOf('started') > 0) {
 					this.commandEndDate = new Date(
 						new Date().getTime() + this.timeoutMs,
@@ -604,7 +597,7 @@ export default {
 					this.nodeFound = null
 					this.state = 'start'
 				} else if (status.indexOf('stopped') > 0) {
-					// inclusion stopped, check what happened
+					// Inclusion stopped, check what happened
 
 					// inclusion has been stopped manually
 					if (this.stopped || this.commandTimedOut) {

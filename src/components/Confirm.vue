@@ -254,7 +254,6 @@ export default {
 		menuProps() {
 			return { attach: `#${this.id}` }
 		},
-		// Map `options.color` to a DialogSeverity
 		severity() {
 			switch (this.options?.color) {
 				case 'error':
@@ -275,8 +274,8 @@ export default {
 			if (this.options?.noCancel) return 'none'
 			return this.options?.persistent ? 'button' : 'all'
 		},
-		// Quantise `options.width` to a DialogSize breakpoint. Callers pass
-		// either a number or a CSS length, as `:max-width` used to accept.
+		// `options.width` may be a bare number or a CSS length string, so parse
+		// leading digits and bucket the result into a DialogSize breakpoint
 		dialogSize() {
 			const parsed = parseInt(this.options?.width, 10)
 			const w = Number.isNaN(parsed) ? 290 : parsed
