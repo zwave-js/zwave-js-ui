@@ -1,8 +1,7 @@
-/* Surfaces that live in the browser top layer, and the vendor overrides needed
-   to put them there. Tokens stay in tokens.css; these are concrete rules. */
+/* Concrete overrides for surfaces promoted into the browser top layer; tokens themselves stay in tokens.css. */
 
-/* Toast region promoted to the top layer so it clears native dialogs; strip
-   the popover UA box so sonner's own top/right positioning still applies. */
+/* Toast region promoted to the top layer so it clears native dialogs. */
+/* Strips the popover UA box so sonner's own top/right positioning still applies. */
 [data-sonner-toaster][popover] {
 	inset: auto;
 	margin: 0;

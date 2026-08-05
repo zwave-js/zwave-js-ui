@@ -50,8 +50,8 @@ export function useOverlayLayer(): void {
 		toaster ??= document.querySelector<HTMLElement>(TOASTER)
 		const wanted = !!stack.topElement.value
 		if (!toaster) {
-			// The selector is vuetify-sonner's internal DOM: if a bump renames
-			// it, toasts silently vanish behind every modal
+			// The selector reaches into vuetify-sonner's internal DOM, so a
+			// rename on upgrade would silently vanish toasts behind every modal
 			if (wanted && !warnedMissingToaster && import.meta.env.DEV) {
 				warnedMissingToaster = true
 				console.warn(
