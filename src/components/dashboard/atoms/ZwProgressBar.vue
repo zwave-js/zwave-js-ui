@@ -1,6 +1,8 @@
 <template>
 	<!-- Track authored here: `Progress.Root` renders a fragment, so no scope id
 	     reaches its element -->
+	<!-- :key remounts the context when max or the indeterminate state changes,
+	     because v0 reads both only once when it builds the context -->
 	<Progress.Root
 		:key="`${indeterminate ? 'indeterminate' : 'determinate'}-${max}`"
 		renderless
@@ -34,16 +36,12 @@ const props = withDefaults(
 	{ value: null, max: 100, as: 'div', shimmer: false },
 )
 
-// v0 reads `max` and the initial value once, when the progress context is built,
-// so the `:key` above remounts the context when either changes
 const indeterminate = computed(() => props.value == null)
 
 const modelValue = computed(() => progressValue(props.value))
 </script>
 
 <style scoped>
-/* Tunables so consumers can restyle the bar without fighting these rules'
-   specificity */
 .zw-progress {
 	position: relative;
 	display: block;
