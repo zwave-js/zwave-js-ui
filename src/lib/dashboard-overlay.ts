@@ -1,23 +1,19 @@
 import { watch } from 'vue'
 import { useStack } from '@vuetify/v0'
 
-// Dashboard overlays are native `<dialog>` elements via v0's Dialog primitive,
-// so they sit in the browser top layer: above every z-index stacking context,
-// with `::backdrop` as the scrim and the platform providing focus trap,
-// return-focus and Esc.
+// Dashboard dialogs are native `<dialog>` elements, so they sit in the top
+// layer, above every z-index stacking context
 
 const TOASTER = '[data-sonner-toaster]'
 
 let installed = false
 
-// Mount once, at the app root. Every concern here is global to the overlay
-// stack rather than per-dialog, and v0's stack already tracks it — deriving
-// from that avoids per-instance lock counting getting out of balance when a
-// dialog is torn down mid-leave.
+// Mount once at the app root: every lock here is global to the overlay stack,
+// which v0's stack already tracks
 export function useOverlayLayer(): void {
 	if (installed) {
-		// A second caller would capture `priorOverflow` from the first lock and
-		// leave `<html>` unscrollable once the last dialog closes
+		// Ignore a repeat call, which would capture `priorOverflow` from the
+		// first lock and never restore it
 		if (import.meta.env.DEV) {
 			console.warn(
 				'[dashboard-overlay] useOverlayLayer() is app-global — ignoring a second call',
@@ -46,12 +42,8 @@ export function useOverlayLayer(): void {
 		{ flush: 'post' },
 	)
 
-	// The toast region renders in normal DOM flow, which a top-layer `<dialog>`
-	// paints over. Promoting it to a popover puts it in the top layer too, and
-	// paint order there follows open order — so it is re-shown whenever the
-	// stack changes, to stay above whatever opened last. Promotion fixes paint
-	// order only: the region stays in the app tree, which `showModal()` inerts,
-	// so a toast's own close button is unclickable while a dialog is open.
+	// Promote the toast region to the top layer so it clears an open modal,
+	// re-showing it on each stack change to stay above the newest dialog
 	let toaster = document.querySelector<HTMLElement>(TOASTER)
 	let warnedMissingToaster = false
 	function applyToastLayer() {
@@ -74,12 +66,13 @@ export function useOverlayLayer(): void {
 			return
 		}
 		toaster.setAttribute('popover', 'manual')
+		// Paint order only: the region stays in the subtree `showModal()` inerts,
+		// so a toast's close button is dead while a dialog is open
 		toaster.showPopover()
 	}
 
-	// Sonner renders its region eagerly, inside the app tree, so the post-flush
-	// pass below already finds it; the `??=` re-query covers a caller that runs
-	// before `<VSonner>` has mounted.
+	// Sonner renders its region eagerly inside the app tree, so this post-flush
+	// pass finds it
 	watch(() => stack.topElement.value, applyToastLayer, {
 		flush: 'post',
 		immediate: true,

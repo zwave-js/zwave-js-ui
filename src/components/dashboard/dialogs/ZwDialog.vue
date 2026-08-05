@@ -27,9 +27,8 @@
 				{{ subtitle }}
 			</Dialog.Description>
 			<!-- Vuetify bridge: its overlays teleport into a `.v-overlay-container`
-			     under `<body>`, which this top-layer dialog paints over — hand
-			     them the dialog element to attach to instead. Goes away with the
-			     last Vuetify overlay raised from a dialog. -->
+			     under `<body>`, which this top-layer dialog paints over, so hand
+			     them the dialog element to attach to instead -->
 			<v-defaults-provider :defaults="vuetifyDefaults">
 				<div ref="content" class="zw-dlg">
 					<ZwProgressBar
@@ -43,7 +42,7 @@
 						:class="ruleClass"
 					/>
 
-					<!-- Vertical-rail wizard layout: rail spans header+body, footer stays full-width. -->
+					<!-- Vertical-rail wizard layout: the rail spans header+body, the footer stays full-width -->
 					<div v-if="$slots.rail" class="zw-dlg__split">
 						<slot name="rail" />
 						<div class="zw-dlg__main">
@@ -153,21 +152,19 @@ const emit = defineEmits<{
 	'update:contentWidth': [number]
 }>()
 
-// Doubles as the v0 injection namespace: contexts are registered per namespace
-// rather than through the component hierarchy, so two dialogs sharing the
-// default would resolve to one context and dismiss together.
+// Doubles as the v0 injection namespace: v0 registers contexts per namespace, so
+// two dialogs on the default would share one context and dismiss together
 const dialogId = `zw-dlg-${useId()}`
 
-// Presence only defers unmount by a tick so `afterLeave` has a moment to fire
-// after the element is gone; the native dialog closes immediately either way.
+// Presence defers unmount by a tick so `afterLeave` fires after the element is
+// gone
 const { isMounted } = usePresence({
 	present: () => props.modelValue,
 	immediate: true,
 })
 
-// `modelValue` is the single source of truth. Routing v0's dismissal straight
-// back out avoids a local mirror that v0 can re-raise, which would call
-// `showModal()` a second time and re-promote the dialog in the top layer.
+// Route v0's dismissal straight back out rather than mirroring it locally: a
+// mirror v0 re-raises calls `showModal()` twice and re-promotes the dialog
 const rootOpen = computed({
 	get: () => props.modelValue,
 	set: (v) => {
@@ -179,13 +176,10 @@ watch(isMounted, (mounted) => {
 	if (!mounted) emit('afterLeave')
 })
 
-// One Escape natively closes *every* open modal dialog, not just the topmost
-// (Chrome 150), so cancel the default and dismiss only this one. `showModal`
-// traps focus in the top dialog, so that is where the keydown lands.
 function onKeydown(e: KeyboardEvent) {
 	if (e.key !== 'Escape') return
-	// Cancel before anything else: v0 lowers the dialog from the native `cancel`
-	// event whatever `dismiss` says, so the close request must never reach it
+	// Cancel before anything else: one Escape closes every open modal (Chrome
+	// 150), and v0 lowers this one from `cancel` whatever `dismiss` says
 	e.preventDefault()
 	// Vuetify bridge: its menus close on Escape from a `window` listener that
 	// ignores `defaultPrevented`, so an open one still gets first refusal here
@@ -194,10 +188,8 @@ function onKeydown(e: KeyboardEvent) {
 	if (props.dismiss === 'all') close()
 }
 
-// Vuetify bridge: `attach` only picks the teleport target, so overlays keep
-// positioning against the viewport while rendering inside this dialog's
-// non-inert, top-layer subtree. Falls back to `false` (Vuetify's own `<body>`
-// container) until the element exists.
+// Vuetify bridge: `attach` only picks the teleport target, so overlays render
+// inside this dialog's non-inert subtree and still position against the viewport
 const native = ref<ComponentPublicInstance | null>(null)
 const vuetifyDefaults = computed(() => {
 	const el: unknown = native.value?.$el
@@ -286,11 +278,10 @@ function variantFor(a: DialogAction): ZwButtonVariant {
 </script>
 
 <style>
-/* Non-scoped: the native dialog lives in the top layer outside this
-   component's DOM subtree, so scoped selectors would not reach it. */
+/* Non-scoped: the native dialog lives in the top layer, outside this
+   component's DOM subtree, so scoped selectors would not reach it */
 
-/* The <dialog> element is the positioning box, .zw-dlg inside is the panel */
-/* Width arrives inline from the size prop */
+/* The <dialog> element is the positioning box; .zw-dlg inside is the panel */
 .zw-dlg__native {
 	max-width: calc(100vw - 32px);
 	max-height: var(--zw-dlg-max-h);
@@ -307,9 +298,8 @@ function variantFor(a: DialogAction): ZwButtonVariant {
 	animation: zw-fade-in 0.16s;
 }
 
-/* Darker where the dialog offers no dismissal affordance at all (`dismiss:
-   'none'`, a narrower set than v0's `blocking`), so the block reads as
-   deliberate rather than as an unresponsive page */
+/* Darker where the dialog offers no dismissal affordance (`dismiss: 'none'`),
+   so the block reads as deliberate */
 .zw-dlg__native[data-no-dismiss]::backdrop {
 	background: rgba(0, 0, 0, 0.62);
 }
