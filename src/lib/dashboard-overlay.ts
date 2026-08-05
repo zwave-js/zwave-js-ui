@@ -8,12 +8,10 @@ const TOASTER = '[data-sonner-toaster]'
 
 let installed = false
 
-// Mount once at the app root: every lock here is global to the overlay stack,
-// which v0's stack already tracks
+// Call once, from the app root — `installed` and the scroll lock below are
+// module-level singletons shared by the whole app
 export function useOverlayLayer(): void {
 	if (installed) {
-		// Ignore a repeat call, which would capture `priorOverflow` from the
-		// first lock and never restore it
 		if (import.meta.env.DEV) {
 			console.warn(
 				'[dashboard-overlay] useOverlayLayer() is app-global — ignoring a second call',
@@ -42,8 +40,7 @@ export function useOverlayLayer(): void {
 		{ flush: 'post' },
 	)
 
-	// Promote the toast region to the top layer so it clears an open modal,
-	// re-showing it on each stack change to stay above the newest dialog
+	// Promote the toast region to the top layer so it clears an open modal
 	let toaster = document.querySelector<HTMLElement>(TOASTER)
 	let warnedMissingToaster = false
 	function applyToastLayer() {
@@ -71,8 +68,8 @@ export function useOverlayLayer(): void {
 		toaster.showPopover()
 	}
 
-	// Sonner renders its region eagerly inside the app tree, so this post-flush
-	// pass finds it
+	// Re-show the toast region on each stack change, so it stays above the
+	// newest dialog
 	watch(() => stack.topElement.value, applyToastLayer, {
 		flush: 'post',
 		immediate: true,

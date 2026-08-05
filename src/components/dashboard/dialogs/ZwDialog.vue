@@ -156,8 +156,7 @@ const emit = defineEmits<{
 // two dialogs on the default would share one context and dismiss together
 const dialogId = `zw-dlg-${useId()}`
 
-// Presence defers unmount by a tick so `afterLeave` fires after the element is
-// gone
+// Defer unmount by a tick so `afterLeave` fires after the element is gone
 const { isMounted } = usePresence({
 	present: () => props.modelValue,
 	immediate: true,
@@ -176,10 +175,11 @@ watch(isMounted, (mounted) => {
 	if (!mounted) emit('afterLeave')
 })
 
+// Pressing Escape in Chrome 150 closes every open dialog at once. v0 always
+// closes the current dialog on the native cancel event, regardless of
+// `dismiss`. Therefore, we implement our own dismissal policy
 function onKeydown(e: KeyboardEvent) {
 	if (e.key !== 'Escape') return
-	// Cancel before anything else: one Escape closes every open modal (Chrome
-	// 150), and v0 lowers this one from `cancel` whatever `dismiss` says
 	e.preventDefault()
 	// Vuetify bridge: its menus close on Escape from a `window` listener that
 	// ignores `defaultPrevented`, so an open one still gets first refusal here
@@ -188,8 +188,10 @@ function onKeydown(e: KeyboardEvent) {
 	if (props.dismiss === 'all') close()
 }
 
-// Vuetify bridge: `attach` only picks the teleport target, so overlays render
-// inside this dialog's non-inert subtree and still position against the viewport
+// `attach` only picks where the overlay's markup gets teleported. Positioning
+// is still calculated against the viewport regardless. This points it at the
+// dialog's own element, so overlays don't land in the part of the page that
+// `showModal()` disables
 const native = ref<ComponentPublicInstance | null>(null)
 const vuetifyDefaults = computed(() => {
 	const el: unknown = native.value?.$el
@@ -298,8 +300,7 @@ function variantFor(a: DialogAction): ZwButtonVariant {
 	animation: zw-fade-in 0.16s;
 }
 
-/* Darker where the dialog offers no dismissal affordance (`dismiss: 'none'`),
-   so the block reads as deliberate */
+/* Render a darker backdrop for non-dismissable dialogs */
 .zw-dlg__native[data-no-dismiss]::backdrop {
 	background: rgba(0, 0, 0, 0.62);
 }
