@@ -104,18 +104,21 @@
 					</v-row>
 				</template>
 				<template #[`item.rating`]="{ item }">
-					<v-progress-linear
-						rounded
-						style="min-width: 80px"
-						height="25"
-						:model-value="item.rating * 10"
-						:color="getRatingColor(item.rating)"
-						:indeterminate="item.rating === undefined"
-					>
+					<span class="zw-hc-rating">
+						<ZwProgressBar
+							as="span"
+							class="zw-hc-rating__bar"
+							:style="{
+								'--zw-progress-fill': ratingFill(item.rating),
+							}"
+							:max="10"
+							:value="item.rating ?? null"
+							label="Route health rating"
+						/>
 						<strong v-if="item.rating !== undefined"
 							>{{ item.rating }}/10</strong
 						>
-					</v-progress-linear>
+					</span>
 				</template>
 				<template #[`item.latency`]="{ item }">
 					<strong
@@ -246,10 +249,12 @@ import useBaseStore from '../../stores/base.js'
 import InstancesMixin from '../../mixins/InstancesMixin.js'
 import { defineAsyncComponent } from 'vue'
 import ZwDialog from '@/components/dashboard/dialogs/ZwDialog.vue'
+import ZwProgressBar from '@/components/dashboard/atoms/ZwProgressBar.vue'
 
 export default {
 	components: {
 		ZwDialog,
+		ZwProgressBar,
 		DialogHealthCheckInfo: defineAsyncComponent(
 			() => import('./DialogHealthCheckInfo.vue'),
 		),
@@ -374,16 +379,27 @@ export default {
 				return 'text-error'
 			}
 		},
+		ratingBand(rating) {
+			if (rating == null) return 'unknown'
+			if (rating >= 6) return 'ok'
+			if (rating >= 4) return 'warning'
+			return 'danger'
+		},
+		ratingFill(rating) {
+			return {
+				unknown: 'var(--zw-accent)',
+				ok: 'var(--zw-ok)',
+				warning: 'var(--zw-warning)',
+				danger: 'var(--zw-danger)',
+			}[this.ratingBand(rating)]
+		},
 		getRatingColor(rating) {
-			if (rating === undefined) {
-				return 'primary'
-			} else if (rating >= 6) {
-				return 'success'
-			} else if (rating >= 4) {
-				return 'warning'
-			} else {
-				return 'error'
-			}
+			return {
+				unknown: 'primary',
+				ok: 'success',
+				warning: 'warning',
+				danger: 'error',
+			}[this.ratingBand(rating)]
 		},
 		getPowerLevel(v) {
 			return getEnumMemberName(Powerlevel, v)
@@ -518,3 +534,20 @@ export default {
 	},
 }
 </script>
+
+<style>
+/* `ZwProgressBar` renders a fragment root, so no scope id reaches the bar and
+   `.zw-hc-rating__bar` must stay unscoped */
+.zw-hc-rating {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	min-width: 80px;
+}
+
+.zw-hc-rating__bar {
+	--zw-progress-height: 5px;
+	flex: 1;
+	min-width: 48px;
+}
+</style>
