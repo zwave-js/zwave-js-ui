@@ -3,6 +3,7 @@
 		class="zw-btn zw-focus-ring"
 		:class="[`zw-btn--${variant}`, `zw-btn--${size}`]"
 		:disabled="disabled"
+		:autofocus="autofocus || undefined"
 		@click="emit('click', $event)"
 	>
 		<span v-if="$slots.icon" class="zw-btn__icon">
@@ -14,16 +15,16 @@
 
 <script setup lang="ts">
 import { Button } from '@vuetify/v0'
-
-type Variant = 'primary' | 'outline' | 'destructive' | 'ghost' | 'mono-outline'
+import type { ZwButtonVariant } from '@/lib/dashboard-types'
 
 withDefaults(
 	defineProps<{
-		variant?: Variant
+		variant?: ZwButtonVariant
 		size?: 'sm' | 'md'
 		disabled?: boolean
+		autofocus?: boolean
 	}>(),
-	{ variant: 'primary', size: 'md', disabled: false },
+	{ variant: 'primary', size: 'md', disabled: false, autofocus: false },
 )
 
 const emit = defineEmits<{ click: [MouseEvent] }>()
@@ -92,20 +93,10 @@ const emit = defineEmits<{ click: [MouseEvent] }>()
 	--btn-border: var(--zw-line);
 }
 
-.zw-btn--destructive {
-	--btn-bg: var(--zw-danger-soft);
-	--btn-bg-hover: rgba(var(--v0-danger-soft), 0.7);
-	--btn-color: rgb(var(--v0-error-darken-1));
-	--btn-border: rgba(var(--v0-error), 0.3);
-}
-
 .zw-btn--ghost {
 	--btn-bg: transparent;
 	--btn-bg-hover: rgba(var(--v0-on-surface), 0.04);
 	--btn-color: var(--zw-fg-soft);
-	text-transform: none;
-	letter-spacing: 0;
-	font-weight: 500;
 }
 
 /* node-details Advanced tab grid — mono caps on an outlined chip. */
@@ -116,5 +107,27 @@ const emit = defineEmits<{ click: [MouseEvent] }>()
 	--btn-border: var(--zw-line);
 	font: var(--zw-text-mono-small);
 	letter-spacing: 0.4px;
+}
+
+/* Solid-red destructive primary (dialog footers: Restore, Hard reset) */
+.zw-btn--danger {
+	--btn-bg: var(--zw-danger);
+	--btn-bg-hover: rgb(var(--v0-error-darken-1));
+	--btn-color: var(--zw-on-accent);
+	--btn-shadow: 0 1px 2px rgba(var(--v0-error), 0.3);
+}
+
+/* Text button, accent tone (dialog footer confirm-as-text). */
+.zw-btn--text {
+	--btn-bg: transparent;
+	--btn-bg-hover: var(--zw-accent-soft);
+	--btn-color: var(--zw-accent-dark);
+}
+
+/* Text button, danger tone (dialog footer "Leave"-style action). */
+.zw-btn--text-danger {
+	--btn-bg: transparent;
+	--btn-bg-hover: var(--zw-danger-soft);
+	--btn-color: var(--zw-danger);
 }
 </style>

@@ -207,24 +207,15 @@
 			:items="fabItems"
 		/>
 
-		<v-dialog
-			:fullscreen="$vuetify.display.xs"
-			max-width="1200px"
-			v-model="expandedNodeDialog"
-			@keydown.exit="closeDialog()"
+		<ZwDialog
+			size="xl"
+			:model-value="expandedNodeDialog"
+			:title="expandedNode ? `Node ${expandedNode.id}` : ''"
+			@update:model-value="(v) => !v && closeDialog()"
+			@after-leave="expandedNode = null"
 		>
-			<v-card min-height="90vh">
-				<v-fab
-					style="position: absolute; right: 5px; top: 5px"
-					size="x-small"
-					@click="closeDialog()"
-					icon="close"
-				/>
-				<v-card-text class="pt-3">
-					<expanded-node :node="expandedNode" :socket="socket" />
-				</v-card-text>
-			</v-card>
-		</v-dialog>
+			<expanded-node :node="expandedNode" :socket="socket" />
+		</ZwDialog>
 	</v-container>
 </template>
 <script>
@@ -240,6 +231,7 @@ import {
 import useBaseStore from '../stores/base.js'
 import InstancesMixin from '../mixins/InstancesMixin.js'
 import { protocolsItems } from '../lib/items.js'
+import ZwDialog from '@/components/dashboard/dialogs/ZwDialog.vue'
 
 export default {
 	name: 'SmartStart',
@@ -248,6 +240,7 @@ export default {
 	},
 	mixins: [InstancesMixin],
 	components: {
+		ZwDialog,
 		BaseFab: defineAsyncComponent(
 			() => import('@/components/custom/BaseFab.vue'),
 		),
@@ -394,7 +387,6 @@ export default {
 			}
 		},
 		closeDialog() {
-			this.expandedNode = null
 			this.expandedNodeDialog = false
 		},
 		async refreshItems() {

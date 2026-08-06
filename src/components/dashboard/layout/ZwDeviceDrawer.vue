@@ -27,15 +27,11 @@
 						</template>
 					</div>
 				</div>
-				<button
+				<ZwCloseButton
 					ref="closeRef"
-					type="button"
-					class="zw-drawer__close"
-					aria-label="Close drawer"
+					label="Close drawer"
 					@click="emit('close')"
-				>
-					<XIcon :size="ICON_SIZE.topbar" />
-				</button>
+				/>
 			</header>
 			<div class="zw-drawer__body">
 				<ZwNodeDetailsBody
@@ -52,7 +48,8 @@
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
 import { createFocusTrap, type FocusTrap } from 'focus-trap'
 import ZwNodeDetailsBody from '@/components/dashboard/components/ZwNodeDetailsBody.vue'
-import { ICON_SIZE, XIcon } from '@/lib/icons'
+import ZwCloseButton from '@/components/dashboard/atoms/ZwCloseButton.vue'
+import { ICON_SIZE } from '@/lib/icons'
 import { MOBILE_BREAKPOINT } from '@/lib/dashboard-breakpoints'
 import { padNumber } from '@/lib/utils'
 import type { Device, DeviceAction } from '@/lib/dashboard-types'
@@ -64,7 +61,7 @@ const emit = defineEmits<{
 }>()
 
 const panelRef = ref<HTMLElement | null>(null)
-const closeRef = ref<HTMLButtonElement | null>(null)
+const closeRef = ref<InstanceType<typeof ZwCloseButton> | null>(null)
 let trap: FocusTrap | null = null
 
 const paddedNodeId = computed(() => padNumber(props.device?.nodeId ?? 0, 3))
@@ -78,7 +75,7 @@ function activateTrap() {
 	if (!panelRef.value) return
 	trap = createFocusTrap(panelRef.value, {
 		escapeDeactivates: false,
-		initialFocus: () => closeRef.value ?? panelRef.value!,
+		initialFocus: () => closeRef.value?.el ?? panelRef.value!,
 		allowOutsideClick: true,
 	})
 	trap.activate()
@@ -192,26 +189,6 @@ onBeforeUnmount(() => {
 	font-size: 11px;
 	color: var(--zw-muted);
 	margin-top: 2px;
-}
-
-.zw-drawer__close {
-	appearance: none;
-	background: transparent;
-	border: none;
-	cursor: pointer;
-	color: var(--zw-fg-soft);
-	padding: 6px;
-	border-radius: 999px;
-	transition: background 0.12s;
-}
-
-.zw-drawer__close:hover {
-	background: rgba(0, 0, 0, 0.04);
-}
-
-.zw-drawer__close:focus-visible {
-	outline: 2px solid var(--zw-accent);
-	outline-offset: 1px;
 }
 
 .zw-drawer__body {

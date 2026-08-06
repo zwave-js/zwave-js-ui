@@ -350,6 +350,8 @@
 			ref="nodesManager"
 		/>
 
+		<DialogExcludeDevice v-model="dialogExclude" :socket="socket" />
+
 		<DialogFirmwareUpdate
 			v-model="firmwareUpdateDialog"
 			:node="firmwareUpdateNode"
@@ -409,6 +411,7 @@ import { getEnumMemberName } from '@zwave-js/shared'
 import { FirmwareUpdateStatus } from '@zwave-js/cc'
 import { SecurityBootstrapFailure, InclusionState } from 'zwave-js'
 import DialogNodesManager from '@/components/dialogs/DialogNodesManager.vue'
+import DialogExcludeDevice from '@/components/dialogs/DialogExcludeDevice.vue'
 import DialogFirmwareUpdate from '@/components/dialogs/DialogFirmwareUpdate.vue'
 import { uuid } from './lib/utils'
 import InstancesMixin from './mixins/InstancesMixin.js'
@@ -424,6 +427,7 @@ export default {
 		LoaderDialog,
 		Confirm,
 		DialogNodesManager,
+		DialogExcludeDevice,
 		DialogFirmwareUpdate,
 		VSonner,
 		Logo,
@@ -448,6 +452,10 @@ export default {
 			showTabLabels: (store) => store.ui.showTabLabels,
 		}),
 		...mapWritableState(useBaseStore, ['debugCaptureActive']),
+		// Mirrors DialogLoader's own `ended`, which decides whether it blocks
+		loaderEnded() {
+			return this.loaderProgress === 100 || this.loaderProgress === -1
+		},
 		menuItems() {
 			const items = [
 				{
@@ -643,6 +651,7 @@ export default {
 			loaderIndeterminate: false,
 			password: {},
 			nodesManagerDialog: false,
+			dialogExclude: false,
 			firmwareUpdateDialog: false,
 			firmwareUpdateNode: null,
 			status: '',
@@ -807,39 +816,81 @@ export default {
 			}
 		},
 		showNodesManager(stepOrStepsValues) {
-			// used in ControlPanel.vue
-			this.$refs.nodesManager.show(stepOrStepsValues)
+			this.$refs.nodesManager.show(
+				stepOrStepsValues || { inclusionNaming: {} },
+			)
+		},
+		showNodesManagerAction(kind) {
+			this.$refs.nodesManager.showForAction(kind)
+		},
+		showExcludeDevice() {
+			this.dialogExclude = true
 		},
 		onGrantSecurityClasses(requested) {
 			if (this.nodesManagerDialog) {
 				return
 			}
-			this.showNodesManager('')
+			// Driver-initiated, so push nothing: a Name and Location step here
+			// would sit ahead of Security Classes and never be read
+			this.showNodesManager({})
 			this.$refs.nodesManager.onGrantSecurityCC(requested)
 		},
 		onOTWFirmwareUpdate(data) {
 			const { progress, result } = data
 			if (progress) {
-				if (!this.dialogLoader) {
-					this.dialogLoader = true
-				}
-				this.loaderTitle = ''
-				this.loaderText = 'Updating controller firmware, please wait...'
-				this.loaderProgress = progress.progress
-				this.loaderIndeterminate = this.loaderProgress === 0
+				this.showBlockingLoader(
+					'',
+					'Updating controller firmware, please wait...',
+				)
+				this.setLoaderProgress(progress.progress)
 			} else if (result) {
-				this.dialogLoader = true // always open it to show the result, in case no progress is done it would be closed
-				this.loaderProgress = -1
+				// The outcome carries its own styled message, so drop any
+				// title a previous operation left on the loader
 				this.loaderTitle = ''
-
-				this.loaderText = `<span style="white-space: break-spaces;" class="text-${
-					result.success ? 'success' : 'error'
-				}">Controller firmware update finished ${
-					result.success
-						? 'successfully 🎉. It may take a few seconds for the stick to restart.'
-						: 'with error ❌'
-				}.\n Status: ${result.status}</span>`
+				// finishLoaderHtml reopens the dialog, so the outcome shows even
+				// when no progress was reported and the loader already closed
+				this.finishLoaderHtml(
+					`<span style="white-space: break-spaces;" class="text-${
+						result.success ? 'success' : 'error'
+					}">Controller firmware update finished ${
+						result.success
+							? 'successfully 🎉. It may take a few seconds for the stick to restart.'
+							: 'with error ❌'
+					}.\n Status: ${result.status}</span>`,
+				)
 			}
+		},
+		onControllerStatus(data) {
+			this.setControllerStatus(data)
+			const status = data?.status
+			if (typeof status !== 'string' || !this.dialogLoader) return
+			const m = /(?:Convert|Restore) NVM progress: (\d+)%/.exec(status)
+			if (m) {
+				this.setLoaderProgress(parseInt(m[1], 10))
+				this.loaderText = status.startsWith('Convert')
+					? 'Converting backup to the controller format…'
+					: 'Writing to the controller — do not disconnect…'
+			}
+		},
+		showBlockingLoader(title, text) {
+			this.dialogLoader = true
+			this.loaderTitle = title || ''
+			this.loaderText = text || ''
+			this.loaderProgress = 0
+			this.loaderIndeterminate = true
+		},
+		// 0% has no bar to show yet, so fall back to the indeterminate sweep
+		setLoaderProgress(percent) {
+			this.loaderProgress = percent
+			this.loaderIndeterminate = percent === 0
+		},
+		// `html` is rendered with v-html by DialogLoader, so it must never
+		// carry socket- or node-derived text
+		finishLoaderHtml(html) {
+			this.dialogLoader = true
+			this.loaderProgress = -1
+			this.loaderIndeterminate = false
+			if (html !== undefined) this.loaderText = html
 		},
 		...mapActions(useBaseStore, [
 			'init',
@@ -1413,6 +1464,14 @@ export default {
 			this.socket.on('disconnect', () => {
 				log.info('Socket disconnected')
 				this.updateStatus('Disconnected', 'error')
+				// A blocking loader hides its close button and suppresses Esc,
+				// so without a terminal state here the user is stuck on a
+				// spinner for a request that can no longer settle
+				if (this.dialogLoader && !this.loaderEnded) {
+					this.finishLoaderHtml(
+						'<span class="text-error">Connection lost ❌ — the operation may still be running on the controller.</span>',
+					)
+				}
 			})
 
 			this.socket.on('connect_error', (err) => {
@@ -1461,7 +1520,7 @@ export default {
 			this.socket.on(socketEvents.connected, this.setAppInfo.bind(this))
 			this.socket.on(
 				socketEvents.controller,
-				this.setControllerStatus.bind(this),
+				this.onControllerStatus.bind(this),
 			)
 
 			this.socket.on(socketEvents.nodeUpdated, this.updateNode.bind(this))

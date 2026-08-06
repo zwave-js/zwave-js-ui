@@ -92,6 +92,11 @@ export default {
 			this.app.dismissSnackbar(toastId)
 		},
 		bindEvent(eventName, handler) {
+			// Drop any previous handler because a re-bind would otherwise leak it
+			const previous = this.bindedSocketEvents[eventName]
+			if (previous) {
+				this.socket.off(socketEvents[eventName], previous)
+			}
 			this.socket.on(socketEvents[eventName], handler)
 			this.bindedSocketEvents[eventName] = handler
 		},
@@ -621,7 +626,6 @@ export default {
 				} else if (action === 'replaceFailedNode') {
 					// open nodes manager dialog
 					this.app.showNodesManager({
-						action: { action: 1 },
 						replaceFailed: { replaceId: nodeId },
 						replaceInclusionMode: { inclusionMode: 0 },
 					})

@@ -1,229 +1,199 @@
 <template>
-	<v-dialog v-model="_value" max-width="800px" persistent>
-		<v-card>
-			<v-card-title>
-				<span class="text-h5"
-					>Node {{ activeNode ? activeNode.id : '' }} - Link
-					Statistics</span
-				>
-			</v-card-title>
+	<ZwDialog
+		:model-value="_value"
+		size="lg"
+		dismiss="button"
+		:title="`Node ${activeNode ? activeNode.id : ''} - Link Statistics`"
+		:actions="dialogActions"
+		@update:model-value="_value = $event"
+		@after-leave="teardown"
+	>
+		<v-container class="pa-0">
+			<v-row class="ma-3" justify="start">
+				<v-col cols="12" align="center">
+					<v-select
+						label="Mode"
+						style="max-width: 325px"
+						v-model="mode"
+						:items="modes"
+						persistent-hint
+					></v-select>
+				</v-col>
 
-			<v-card-text>
-				<v-container>
-					<v-row class="ma-3" justify="start">
-						<v-col cols="12" align="center">
-							<v-select
-								label="Mode"
-								style="max-width: 325px"
-								v-model="mode"
-								:items="modes"
-								persistent-hint
-							></v-select>
-						</v-col>
-
-						<v-col cols="12" sm="6">
-							<v-radio-group
-								class="justify-center"
-								v-model="infinite"
-								inline
-							>
-								<v-radio
-									label="Infinite"
-									:value="true"
-								></v-radio>
-								<v-radio label="XX" :value="false">
-									<template #label>
-										<v-number-input
-											:disabled="infinite"
-											label="Iterations"
-											v-model.number="iterations"
-											type="number"
-											:min="1"
-											:max="10000"
-											persistent-hint
-										></v-number-input>
-									</template>
-								</v-radio>
-							</v-radio-group>
-						</v-col>
-
-						<v-col cols="12" sm="6" class="mt-4">
-							<v-number-input
-								label="Interval"
-								v-model.number="interval"
-								suffix="ms"
-								type="number"
-								:min="1"
-								:max="10000"
-								persistent-hint
-							></v-number-input>
-						</v-col>
-					</v-row>
-
-					<v-row class="mb-4" justify="space-around">
-						<v-btn
-							variant="flat"
-							color="success"
-							@click="checkLinkReliability"
-							:disabled="running"
-							:loading="running"
-							>Run</v-btn
-						>
-						<v-btn
-							variant="flat"
-							color="error"
-							@click="abortLinkReliabilityCheck"
-							:disabled="!running"
-							>Stop</v-btn
-						>
-					</v-row>
-
-					<v-divider></v-divider>
-
-					<v-row
-						v-if="statistics"
-						class="ma-3"
-						justify="center"
-						align="center"
+				<v-col cols="12" sm="6">
+					<v-radio-group
+						class="justify-center"
+						v-model="infinite"
+						inline
 					>
-						<v-progress-linear
-							v-if="running"
-							:indeterminate="this.infinite"
-							:model-value="this.infinite ? null : this.progress"
-							color="success"
-						></v-progress-linear>
-						<v-list class="mr-2" density="compact">
-							<v-list-item>
-								<v-list-item-title class="text-info"
-									>Commands Sent</v-list-item-title
-								>
-								<v-list-item-subtitle>{{
-									statistics.commandsSent
-								}}</v-list-item-subtitle>
-							</v-list-item>
-							<v-list-item>
-								<v-list-item-title class="text-error"
-									>Failed Commands</v-list-item-title
-								>
-								<v-list-item-subtitle
-									>{{ statistics.commandErrors }} ({{
-										(
-											(statistics.commandErrors /
-												statistics.rounds) *
-											100
-										).toFixed(1)
-									}}
-									%)</v-list-item-subtitle
-								>
-							</v-list-item>
-							<v-list-item
-								v-if="statistics?.missingResponses != undefined"
-							>
-								<v-list-item-title class="text-error"
-									>Missing Responses</v-list-item-title
-								>
-								<v-list-item-subtitle
-									>{{ statistics.missingResponses }} ({{
-										(
-											(statistics.missingResponses /
-												statistics.commandsSent) *
-											100
-										).toFixed(1)
-									}}
-									%)</v-list-item-subtitle
-								>
-							</v-list-item>
-						</v-list>
-
-						<v-table>
-							<template #default>
-								<thead>
-									<tr>
-										<th class="text-left"></th>
-										<th class="text-left">Min</th>
-										<th class="text-left">Max</th>
-										<th class="text-left">Avg</th>
-									</tr>
-								</thead>
-								<tbody v-if="statistics.latency">
-									<tr>
-										<td>Latency [ms]</td>
-										<td>{{ statistics.latency.min }}</td>
-										<td>{{ statistics.latency.max }}</td>
-										<td>
-											{{
-												Math.round(
-													statistics.latency.average,
-												)
-											}}
-										</td>
-									</tr>
-									<tr>
-										<td>Round-Trip Time [ms]</td>
-										<td>{{ statistics.rtt.min }}</td>
-										<td>{{ statistics.rtt.max }}</td>
-										<td>
-											{{
-												Math.round(
-													statistics.rtt.average,
-												)
-											}}
-										</td>
-									</tr>
-									<tr>
-										<td>ACK RSSI [dBm]</td>
-										<td>{{ statistics.ackRSSI.min }}</td>
-										<td>{{ statistics.ackRSSI.max }}</td>
-										<td>
-											{{
-												Math.round(
-													statistics.ackRSSI.average,
-												)
-											}}
-										</td>
-									</tr>
-									<tr
-										v-if="
-											Number.isFinite(
-												statistics.responseRSSI
-													?.average,
-											)
-										"
-									>
-										<td>Response RSSI [dBm]</td>
-										<td>
-											{{ statistics.responseRSSI.min }}
-										</td>
-										<td>
-											{{ statistics.responseRSSI.max }}
-										</td>
-										<td>
-											{{
-												Math.round(
-													statistics.responseRSSI
-														.average,
-												)
-											}}
-										</td>
-									</tr>
-								</tbody>
+						<v-radio label="Infinite" :value="true"></v-radio>
+						<v-radio label="XX" :value="false">
+							<template #label>
+								<v-number-input
+									:disabled="infinite"
+									label="Iterations"
+									v-model.number="iterations"
+									type="number"
+									:min="1"
+									:max="10000"
+									persistent-hint
+								></v-number-input>
 							</template>
-						</v-table>
-					</v-row>
-				</v-container>
-			</v-card-text>
+						</v-radio>
+					</v-radio-group>
+				</v-col>
 
-			<v-card-actions>
-				<v-spacer></v-spacer>
+				<v-col cols="12" sm="6" class="mt-4">
+					<v-number-input
+						label="Interval"
+						v-model.number="interval"
+						suffix="ms"
+						type="number"
+						:min="1"
+						:max="10000"
+						persistent-hint
+					></v-number-input>
+				</v-col>
+			</v-row>
+
+			<v-row class="mb-4" justify="space-around">
 				<v-btn
-					color="blue-darken-1"
-					variant="text"
-					@click="$emit('close')"
-					>Close</v-btn
+					variant="flat"
+					color="success"
+					@click="checkLinkReliability"
+					:disabled="running"
+					:loading="running"
+					>Run</v-btn
 				>
-			</v-card-actions>
-		</v-card>
-	</v-dialog>
+				<v-btn
+					variant="flat"
+					color="error"
+					@click="abortLinkReliabilityCheck"
+					:disabled="!running"
+					>Stop</v-btn
+				>
+			</v-row>
+
+			<v-divider></v-divider>
+
+			<v-row
+				v-if="statistics"
+				class="ma-3"
+				justify="center"
+				align="center"
+			>
+				<v-progress-linear
+					v-if="running"
+					:indeterminate="this.infinite"
+					:model-value="this.infinite ? null : this.progress"
+					color="success"
+				></v-progress-linear>
+				<v-list class="mr-2" density="compact">
+					<v-list-item>
+						<v-list-item-title class="text-info"
+							>Commands Sent</v-list-item-title
+						>
+						<v-list-item-subtitle>{{
+							statistics.commandsSent
+						}}</v-list-item-subtitle>
+					</v-list-item>
+					<v-list-item>
+						<v-list-item-title class="text-error"
+							>Failed Commands</v-list-item-title
+						>
+						<v-list-item-subtitle
+							>{{ statistics.commandErrors }} ({{
+								(
+									(statistics.commandErrors /
+										statistics.rounds) *
+									100
+								).toFixed(1)
+							}}
+							%)</v-list-item-subtitle
+						>
+					</v-list-item>
+					<v-list-item
+						v-if="statistics?.missingResponses != undefined"
+					>
+						<v-list-item-title class="text-error"
+							>Missing Responses</v-list-item-title
+						>
+						<v-list-item-subtitle
+							>{{ statistics.missingResponses }} ({{
+								(
+									(statistics.missingResponses /
+										statistics.commandsSent) *
+									100
+								).toFixed(1)
+							}}
+							%)</v-list-item-subtitle
+						>
+					</v-list-item>
+				</v-list>
+
+				<v-table>
+					<template #default>
+						<thead>
+							<tr>
+								<th class="text-left"></th>
+								<th class="text-left">Min</th>
+								<th class="text-left">Max</th>
+								<th class="text-left">Avg</th>
+							</tr>
+						</thead>
+						<tbody v-if="statistics.latency">
+							<tr>
+								<td>Latency [ms]</td>
+								<td>{{ statistics.latency.min }}</td>
+								<td>{{ statistics.latency.max }}</td>
+								<td>
+									{{ Math.round(statistics.latency.average) }}
+								</td>
+							</tr>
+							<tr>
+								<td>Round-Trip Time [ms]</td>
+								<td>{{ statistics.rtt.min }}</td>
+								<td>{{ statistics.rtt.max }}</td>
+								<td>
+									{{ Math.round(statistics.rtt.average) }}
+								</td>
+							</tr>
+							<tr>
+								<td>ACK RSSI [dBm]</td>
+								<td>{{ statistics.ackRSSI.min }}</td>
+								<td>{{ statistics.ackRSSI.max }}</td>
+								<td>
+									{{ Math.round(statistics.ackRSSI.average) }}
+								</td>
+							</tr>
+							<tr
+								v-if="
+									Number.isFinite(
+										statistics.responseRSSI?.average,
+									)
+								"
+							>
+								<td>Response RSSI [dBm]</td>
+								<td>
+									{{ statistics.responseRSSI.min }}
+								</td>
+								<td>
+									{{ statistics.responseRSSI.max }}
+								</td>
+								<td>
+									{{
+										Math.round(
+											statistics.responseRSSI.average,
+										)
+									}}
+								</td>
+							</tr>
+						</tbody>
+					</template>
+				</v-table>
+			</v-row>
+		</v-container>
+	</ZwDialog>
 </template>
 
 <style>
@@ -235,10 +205,13 @@
 
 <script>
 import { copy } from '@/lib/utils'
+import { cancelAction } from '@/lib/dashboard-types'
 import InstancesMixin from '../../mixins/InstancesMixin.js'
+import ZwDialog from '@/components/dashboard/dialogs/ZwDialog.vue'
 
 export default {
-	components: {},
+	components: { ZwDialog },
+	emits: ['update:modelValue', 'close'],
 	props: {
 		modelValue: Boolean, // show or hide
 		node: Object,
@@ -247,16 +220,26 @@ export default {
 	mixins: [InstancesMixin],
 	watch: {
 		modelValue(v) {
-			this.init(v)
+			if (v) this.init(v)
 		},
 	},
 	computed: {
+		dialogActions() {
+			return [
+				cancelAction(() => (this._value = false), { label: 'Close' }),
+			]
+		},
 		_value: {
 			get() {
 				return this.modelValue
 			},
+			// Lowering the model is the only dismissal path, so `close` rides it
 			set(val) {
+				// Abort here rather than on `after-leave`: the check keeps
+				// running on the controller until this call lands
+				if (!val && this.running) this.abortLinkReliabilityCheck()
 				this.$emit('update:modelValue', val)
+				if (!val) this.$emit('close')
 			},
 		},
 	},
@@ -289,7 +272,6 @@ export default {
 			)
 		},
 		init(open) {
-			const wasRunning = this.running
 			this.mode = 0
 			this.statistics = null
 			this.infinite = false
@@ -300,15 +282,13 @@ export default {
 
 			if (open) {
 				this.activeNode = copy(this.node)
-
 				this.subscribeChannels(['diagnostics'])
 				this.bindEvent('linkReliability', this.onProgress.bind(this))
-			} else if (open === false) {
-				this.unbindEvents()
-				if (wasRunning) {
-					this.abortLinkReliabilityCheck()
-				}
 			}
+		},
+		teardown() {
+			this.init(undefined)
+			this.unbindEvents()
 		},
 		onProgress(data) {
 			this.statistics = data.args[0]

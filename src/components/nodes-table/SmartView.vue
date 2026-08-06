@@ -330,25 +330,15 @@
 			</template>
 		</v-data-iterator>
 
-		<v-dialog
-			:fullscreen="$vuetify.display.xs"
-			max-width="1200px"
-			v-model="expandedNodeDialog"
-			@keydown.exit="closeDialog()"
+		<ZwDialog
+			size="xl"
+			:model-value="expandedNodeDialog"
+			:title="expandedNode ? `Node ${expandedNode.id}` : ''"
+			@update:model-value="(v) => !v && closeDialog()"
+			@after-leave="expandedNode = null"
 		>
-			<v-card min-height="90vh">
-				<v-fab
-					style="position: absolute; right: 5px; top: 5px"
-					size="small"
-					variant="text"
-					@click="closeDialog()"
-					icon="close"
-				/>
-				<v-card-text class="pt-5">
-					<expanded-node :node="expandedNode" :socket="socket" />
-				</v-card-text>
-			</v-card>
-		</v-dialog>
+			<expanded-node :node="expandedNode" :socket="socket" />
+		</ZwDialog>
 	</v-container>
 </template>
 
@@ -383,12 +373,14 @@ import {
 import { mapState } from 'pinia'
 import useBaseStore from '../../stores/base.js'
 import { getBatteryDescription, jsonToList } from '../../lib/utils.js'
+import ZwDialog from '@/components/dashboard/dialogs/ZwDialog.vue'
 
 export default {
 	props: {
 		socket: Object,
 	},
 	components: {
+		ZwDialog,
 		ExpandedNode: defineAsyncComponent(
 			() => import('@/components/nodes-table/ExpandedNode.vue'),
 		),
@@ -508,7 +500,6 @@ export default {
 			this.expandedNodeDialog = true
 		},
 		closeDialog() {
-			this.expandedNode = null
 			this.expandedNodeDialog = false
 		},
 		getProgress(node) {

@@ -241,3 +241,80 @@ export type DeviceAction =
 	| { type: 'shutdown' }
 	| { type: 'soft-reset' }
 	| { type: 'factory-reset' }
+
+// ── Dialog system ─────────────────────────────────────────────
+
+export type DialogSize = 'sm' | 'md' | 'lg' | 'xl'
+
+export type DialogSeverity =
+	| 'default'
+	| 'info'
+	| 'success'
+	| 'warning'
+	| 'danger'
+
+// ZwButton's visual variants, shared so the dialog footer can map onto them
+export type ZwButtonVariant =
+	| 'primary'
+	| 'outline'
+	| 'ghost'
+	| 'mono-outline'
+	| 'danger'
+	| 'text'
+	| 'text-danger'
+
+export type DialogButtonKind = 'text' | 'filled' | 'outline'
+export type DialogButtonTone = 'accent' | 'danger' | 'neutral'
+
+// `all` = Esc, scrim and the X; `button` = the X only; `none` = no user dismissal
+export type DialogDismiss = 'all' | 'button' | 'none'
+
+interface DialogActionBase {
+	label: string
+	kind?: DialogButtonKind
+	tone?: DialogButtonTone
+	icon?: Component
+	autoFocus?: boolean
+}
+
+// Only a disabled action may omit the click handler
+export type DialogAction = DialogActionBase &
+	(
+		| { onClick: (e: MouseEvent) => void; disabled?: boolean }
+		| { onClick?: undefined; disabled: true }
+	)
+
+export function cancelAction(
+	onClick: (e: MouseEvent) => void,
+	overrides: Partial<DialogActionBase> = {},
+): DialogAction {
+	return {
+		label: 'Cancel',
+		kind: 'text',
+		tone: 'neutral',
+		onClick,
+		...overrides,
+	}
+}
+
+export function confirmAction(
+	label: string,
+	onClick: (e: MouseEvent) => void,
+	overrides: Partial<DialogActionBase> & { disabled?: boolean } = {},
+): DialogAction {
+	return { label, kind: 'filled', tone: 'accent', onClick, ...overrides }
+}
+
+// A footer action that is present but not yet actionable
+export function pendingAction(
+	label: string,
+	overrides: Partial<DialogActionBase> = {},
+): DialogAction {
+	return {
+		label,
+		kind: 'filled',
+		tone: 'accent',
+		disabled: true,
+		...overrides,
+	}
+}

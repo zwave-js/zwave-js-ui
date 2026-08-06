@@ -1,36 +1,30 @@
 <template>
-	<v-dialog v-model="_value" :persistent="!ended" width="500">
-		<v-card>
-			<v-card-title v-if="title">
-				<span class="text-h5">{{ title }}</span>
-			</v-card-title>
-			<v-btn
-				v-if="ended"
-				icon="close"
-				size="x-small"
-				@click="_value = false"
-				style="position: absolute; right: 5px; top: 5px"
-			/>
-			<v-card-text :class="{ 'pt-5': !title }" class="text-center">
-				<v-col class="pa-0">
-					<p v-html="text" class="ma-0"></p>
-					<div v-if="!ended">
-						<v-progress-linear
-							:model-value="progress"
-							:indeterminate="indeterminate"
-							class="mt-1"
-						>
-						</v-progress-linear>
-						<span>{{ progress }}%</span>
-					</div>
-				</v-col>
-			</v-card-text>
-		</v-card>
-	</v-dialog>
+	<ZwDialog
+		:model-value="_value"
+		size="md"
+		:title="title"
+		:dismiss="ended ? 'all' : 'none'"
+		@update:model-value="_value = $event"
+	>
+		<p v-if="text" v-html="text" class="ma-0"></p>
+		<div v-if="!ended" class="loader-progress">
+			<ZwProgressBar :value="indeterminate ? null : progress / 100" />
+			<span v-if="!indeterminate" class="loader-pct"
+				>{{ progress }}%</span
+			>
+		</div>
+	</ZwDialog>
 </template>
 
 <script>
+import ZwDialog from '@/components/dashboard/dialogs/ZwDialog.vue'
+import ZwProgressBar from '@/components/dashboard/atoms/ZwProgressBar.vue'
+
 export default {
+	components: {
+		ZwDialog,
+		ZwProgressBar,
+	},
 	props: {
 		modelValue: {
 			type: Boolean,
@@ -68,3 +62,16 @@ export default {
 	},
 }
 </script>
+
+<style scoped>
+.loader-progress {
+	margin-top: 14px;
+}
+
+.loader-pct {
+	display: block;
+	margin-top: 6px;
+	font: var(--zw-text-mono-small);
+	color: var(--zw-muted);
+}
+</style>

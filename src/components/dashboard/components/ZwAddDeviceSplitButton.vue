@@ -13,7 +13,6 @@
 			<Popover.Activator
 				as="button"
 				class="zw-asb__chev"
-				:class="{ 'zw-asb__chev--open': open }"
 				aria-haspopup="menu"
 			>
 				<ChevronDownIcon :size="ICON_SIZE.inline" />
@@ -154,15 +153,16 @@ function onItemClick(id: Action): void {
 	padding: 7px 10px;
 }
 
-.zw-asb__chev--open,
+.zw-asb__chev svg {
+	transition: transform 0.15s;
+}
+
 .zw-asb__chev[data-open] {
 	background: var(--zw-accent-dark);
 }
 
-.zw-asb__chev--open svg,
 .zw-asb__chev[data-open] svg {
 	transform: rotate(180deg);
-	transition: transform 0.15s;
 }
 
 /* V0 hard-codes `position-area: bottom` inline on the popover and Vue

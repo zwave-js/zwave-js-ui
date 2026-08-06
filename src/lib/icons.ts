@@ -29,6 +29,7 @@ export {
 	HardDrive as DatabaseIcon,
 	Filter as FilterIcon,
 	House as LocationsIcon,
+	Info as InfoIcon,
 	LayoutGrid as GridIcon,
 	Layers as SceneIcon,
 	Link as LinkIcon,
