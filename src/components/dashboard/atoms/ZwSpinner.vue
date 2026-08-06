@@ -48,12 +48,13 @@ const CENTER = SPAN / 2
 const RADIUS = 10
 const VIEWBOX = `0 0 ${SPAN} ${SPAN}`
 
-// Matches Vuetify's circular progress ratio, so the two read alike side by side
+// `SIZE_TO_STROKE` matches Vuetify's circular progress ratio, so the two look
+// alike side by side
 const SIZE_TO_STROKE = 12
 const MIN_STROKE_PX = 2
 
-// A quarter-circle arc chasing a three-quarter gap
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS
+// `DASH_ARRAY` draws a quarter-circle arc, then a three-quarter gap
 const DASH_ARRAY = `${CIRCUMFERENCE / 4} ${CIRCUMFERENCE}`
 
 // The stroke is authored in px but drawn in viewBox units, so scale it by the

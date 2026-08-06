@@ -1,6 +1,6 @@
 <template>
-	<!-- Track authored here: `Progress.Root` renders a fragment, so no scope id
-	     reaches its element -->
+	<!-- `Progress.Root` renders a fragment, so no scope id reaches its element.
+	     The track element must stay authored here -->
 	<!-- :key remounts the context when max or the indeterminate state changes,
 	     because v0 reads both only once when it builds the context -->
 	<Progress.Root
@@ -26,7 +26,7 @@ import { progressValue } from '@/lib/progress'
 
 const props = withDefaults(
 	defineProps<{
-		// In 0..`max` units; null for an indeterminate sweep
+		// `value` is in 0..`max` units. `null` renders an indeterminate sweep
 		value?: number | null
 		max?: number
 		// Render as a span where the bar sits inside inline content
@@ -69,10 +69,11 @@ const modelValue = computed(() => progressValue(props.value))
 	content: '';
 	position: absolute;
 	inset: 0;
+	/* The `zw-indeterminate` keyframes translate by multiples of this width, so
+	   both must change together */
 	width: 40%;
 	border-radius: inherit;
 	background: var(--zw-progress-fill, var(--zw-accent));
-	/* Keyframes translate by multiples of this width, so the two must agree */
 	animation: zw-indeterminate 1.4s ease-in-out infinite;
 	will-change: transform;
 }

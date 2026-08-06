@@ -196,7 +196,7 @@
 </template>
 
 <style>
-/* Full-bleed row of the surrounding v-row, toned green like the check it tracks */
+/* The bar sits inside a v-row, so it needs a full-width basis to get its own line */
 .zw-lr__bar {
 	--zw-progress-fill: var(--zw-ok);
 	flex: 1 0 100%;
