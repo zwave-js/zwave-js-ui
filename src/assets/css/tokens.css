@@ -47,8 +47,8 @@
 	--zw-chip-fg: rgba(var(--v0-on-surface), 0.65);
 	--zw-row-hover: rgba(var(--v0-primary), 0.04);
 
-	/* Tooltip inverts the surface so it reads as an overlay, not a panel.
-	   on-surface is black in the light theme, so the fill flips with it */
+	/* The tooltip inverts the surface so it looks like an overlay. `on-surface` is
+	   black in the light theme, so the fill flips with the theme */
 	--zw-tip-bg: rgba(var(--v0-on-surface), 0.88);
 	--zw-tip-fg: rgb(var(--v0-surface));
 

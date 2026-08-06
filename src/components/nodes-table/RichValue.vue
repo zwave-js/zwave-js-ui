@@ -1,6 +1,6 @@
 <template>
-	<!-- Use the tooltip directive because this row can re-render many
-		 times per second -->
+	<!-- Use the tooltip directive because this row can re-render many times
+	     per second -->
 	<div v-zw-tooltip:bottom="value && value.description">
 		<span
 			v-if="value !== undefined && value.icon === ''"

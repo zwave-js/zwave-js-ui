@@ -1,7 +1,6 @@
-// Drop-in for Vuetify's `v-tooltip` that renders via the native popover
-// API instead of mounting a component. Vuetify mounts one on `mounted`
-// and remounts it on every `updated`, which gets expensive when many
-// tooltips are on screen at once.
+// Drop-in for Vuetify's `v-tooltip`, rendered through the native popover API.
+// Vuetify mounts a component on `mounted` and remounts it on every `updated`.
+// That gets expensive with many tooltips on screen.
 //
 // Usage: `v-zw-tooltip:bottom="'text'"` or `{ text, disabled, location }`
 
@@ -42,18 +41,19 @@ interface TooltipHost extends HTMLElement {
 	_zwTip?: Tooltip
 }
 
-// One shared tip element for the whole app: a per-host one would leave a
-// permanent `<body>` child behind every row ever pointed at
+// `shared` holds one tip element for the whole app. A per-host element would
+// leave a permanent `<body>` child behind every row ever pointed at
 const shared: {
 	tip?: HTMLElement
 	host?: HTMLElement
 	untrack?: () => void
-	// The host we put `aria-describedby` on, so only that one is cleaned up
+	// `described` is the host that got `aria-describedby`, so only that one is
+	// cleaned up
 	described?: HTMLElement
 } = {}
 
-// Parented under the host's dialog: `showModal()` inerts everything outside
-// that subtree, and an inert tip is out of the a11y tree
+// Put the tip inside the host's dialog. `showModal()` hides everything outside
+// that subtree from the accessibility tree
 function tipElement(host: HTMLElement): HTMLElement {
 	if (!shared.tip) {
 		const el = document.createElement('div')
@@ -90,8 +90,8 @@ function onDocumentMove(e: PointerEvent) {
 function stringify(v: unknown): string {
 	if (typeof v === 'string') return v
 	if (typeof v === 'number' || typeof v === 'bigint') return String(v)
-	// Anything else — including an object from a malformed binding — has no
-	// sensible label, and Vuetify treats false/null as "no tooltip"
+	// Anything else has no sensible label, and Vuetify treats false and null as
+	// "no tooltip"
 	return ''
 }
 
@@ -100,7 +100,7 @@ class Tooltip implements EventListenerObject {
 	private disabled = false
 	private placement: Placement = 'top'
 	private timer: number | null = null
-	// Detaches every host listener in one call, so no listener bookkeeping
+	// `abort` detaches every host listener in one call
 	private readonly abort = new AbortController()
 
 	constructor(
@@ -113,8 +113,8 @@ class Tooltip implements EventListenerObject {
 		}
 	}
 
-	// Only the derived fields are kept: holding the binding would retain its
-	// `instance`, i.e. the whole host component, for the host's lifetime
+	// Keep only the derived fields. The binding holds an `instance` reference to
+	// the whole host component
 	update(binding: DirectiveBinding) {
 		const value: unknown = binding.value
 		const opts =
@@ -140,9 +140,10 @@ class Tooltip implements EventListenerObject {
 			hideTip()
 			return
 		}
-		// autoUpdate re-runs on the tip's own resize, so new text re-places
+		// autoUpdate re-runs on the tip's own resize, so new text repositions it
 		shared.tip.textContent = label
-		// Re-track on a placement change: autoUpdate follows scroll and resize
+		// autoUpdate follows scroll and resize only, so re-track on a placement
+		// change
 		if (this.placement !== previous) this.track(shared.tip)
 	}
 
@@ -189,14 +190,15 @@ class Tooltip implements EventListenerObject {
 		el.textContent = label
 		el.showPopover()
 		shared.host = this.host
-		// An `aria-describedby` the host already has is its own, so leave it
+		// The host may already have its own `aria-describedby`, so leave that
+		// one alone
 		if (!this.host.hasAttribute('aria-describedby')) {
 			this.host.setAttribute('aria-describedby', TIP_ID)
 			shared.described = this.host
 		}
 		this.track(el)
-		// Only for a pointer-shown tip: a keyboard user reading one would
-		// otherwise lose it to any stray mouse movement on the page
+		// Listen only for a pointer-shown tip. A keyboard-shown tip must survive
+		// stray mouse movement on the page
 		if (pointer) document.addEventListener('pointermove', onDocumentMove)
 	}
 

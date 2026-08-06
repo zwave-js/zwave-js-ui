@@ -1,7 +1,7 @@
-// Floating-UI-backed positioner for top-layer content.
+// Floating-UI-backed positioner for top-layer content. It drives top/left
+// through computePosition + autoUpdate.
 // V0 hard-codes `position-area: bottom` with no override, and Firefox does not
-// implement CSS anchor positioning at all, so we drive top/left ourselves via
-// computePosition + autoUpdate.
+// implement CSS anchor positioning at all.
 
 import { onBeforeUnmount, watch, toValue } from 'vue'
 import type { MaybeRefOrGetter, Ref } from 'vue'
@@ -20,19 +20,22 @@ const FALLBACK_PLACEMENTS: Partial<Record<Placement, Placement[]>> = {
 	'bottom-start': ['top-start', 'bottom-end', 'top-end'],
 }
 
-// Keeps a flipped or shifted panel clear of the viewport edge
+// `VIEWPORT_PADDING_PX` keeps a flipped or shifted panel clear of the viewport
+// edge
 const VIEWPORT_PADDING_PX = 8
 
 interface TrackOptions {
 	placement: Placement
 	offsetPx: number
 	fallbackPlacements?: Placement[]
-	// Write through `!important`, needed where V0 sets its own anchor styles
+	// Write through `!important` where V0 sets its own anchor styles
 	important?: boolean
 }
 
-// Pins `floating` to `anchor` and keeps it there across scroll, resize and
-// element-size changes. Returns the autoUpdate teardown.
+/**
+ * Pins `floating` to `anchor` and keeps it there across scroll, resize and
+ * element-size changes. Returns the autoUpdate teardown.
+ */
 export function trackAnchor(
 	anchor: HTMLElement,
 	floating: HTMLElement,
