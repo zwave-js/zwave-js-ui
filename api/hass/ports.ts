@@ -53,6 +53,18 @@ export type HassMqttPort = Pick<
 	'disabled' | 'getTopic' | 'getStatusTopic' | 'publish'
 >
 
+/**
+ * The narrow MQTT surface the scoped `homeassistant/status` subscription needs,
+ * kept minimal so the discovery manager never depends on the concrete
+ * `MqttClient`. `emit` is narrowed to `hassStatus`, so a holder cannot
+ * synthesize other client events.
+ */
+export type HassStatusSource = Pick<MqttClient, 'subscribeExact'> & {
+	on(event: 'brokerStatus', handler: (online: boolean) => void): void
+	off(event: 'brokerStatus', handler: (online: boolean) => void): void
+	emit(event: 'hassStatus', online: boolean): boolean
+}
+
 export type HassZwavePort = Pick<
 	ZWaveClient,
 	'homeHex' | 'nodes' | 'updateDevice' | 'writeValue'
@@ -84,8 +96,12 @@ export interface HassDeviceRegistryLifecyclePort
 	dispose(): void
 }
 
-export interface HassDeviceRegistrySourcePort
-	extends HassDeviceRegistryLifecyclePort {
+/**
+ * Handed to the Gateway so it can only fork a per-instance view, never start,
+ * dispose or write the shared root registry, keeping the single-fork ownership
+ * invariant enforced by the type rather than a comment.
+ */
+export interface HassDeviceRegistrySourcePort {
 	fork(): HassDeviceRegistryLifecyclePort
 }
 

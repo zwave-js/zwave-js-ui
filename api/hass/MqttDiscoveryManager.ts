@@ -6,23 +6,14 @@ import type {
 	HassLogger,
 	HassMqttPort,
 	HassNodeUpdatePort,
+	HassStatusSource,
 	HassTopicPort,
 	HassZwavePort,
 } from './ports.ts'
 
-/**
- * The narrow MQTT surface the scoped status subscription needs; kept minimal so
- * the manager never depends on the concrete `MqttClient`.
- */
-export interface HassStatusSource {
-	subscribeExact(
-		topic: string,
-		listener: (payload: string | undefined) => void,
-	): { dispose(): void }
-	on(event: 'brokerStatus', handler: (online: boolean) => void): unknown
-	off(event: 'brokerStatus', handler: (online: boolean) => void): unknown
-	emit(event: 'hassStatus', online: boolean): unknown
-}
+// Re-exported so the discovery subsystem's status-source shape stays reachable
+// from the manager that consumes it, while it is declared with the sibling ports
+export type { HassStatusSource } from './ports.ts'
 
 /**
  * The fixed Home Assistant birth/will topic. Home Assistant publishes `online`

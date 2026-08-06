@@ -141,7 +141,6 @@ export type GatewayMqtt = Pick<
 	| 'clientID'
 	| 'close'
 	| 'disabled'
-	| 'emit'
 	| 'getStatusTopic'
 	| 'getTopic'
 	| 'off'
@@ -149,8 +148,11 @@ export type GatewayMqtt = Pick<
 	| 'publish'
 	| 'subscribe'
 	| 'subscribeExact'
->
-
+> & {
+	// The discovery manager emits `hassStatus` through this client, so the port
+	// exposes only that event instead of the full typed emitter
+	emit(event: 'hassStatus', online: boolean): boolean
+}
 export default class Gateway<
 	TZwave extends GatewayZwave = ZwaveClient,
 	TMqtt extends GatewayMqtt = MqttClient,
