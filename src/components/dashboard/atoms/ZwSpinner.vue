@@ -1,4 +1,7 @@
 <template>
+	<!-- The ARIA is authored here rather than taken from `Progress.Root`,
+	     because this spinner never carries a value and v0's set would add
+	     `aria-valuemin` and `aria-valuemax` with nothing to bound -->
 	<span
 		class="zw-spinner"
 		:class="`zw-spinner--${tone}`"
@@ -17,15 +20,17 @@
 				:cx="CENTER"
 				:cy="CENTER"
 				:r="RADIUS"
-				:stroke-width="strokeUnits"
+				:stroke-width="strokePx"
+				vector-effect="non-scaling-stroke"
 			/>
 			<circle
 				class="zw-spinner__arc"
 				:cx="CENTER"
 				:cy="CENTER"
 				:r="RADIUS"
-				:stroke-width="strokeUnits"
+				:stroke-width="strokePx"
 				:stroke-dasharray="DASH_ARRAY"
+				vector-effect="non-scaling-stroke"
 			/>
 		</svg>
 	</span>
@@ -57,12 +62,10 @@ const CIRCUMFERENCE = 2 * Math.PI * RADIUS
 // `DASH_ARRAY` draws a quarter-circle arc, then a three-quarter gap
 const DASH_ARRAY = `${CIRCUMFERENCE / 4} ${CIRCUMFERENCE}`
 
-// The stroke is authored in px but drawn in viewBox units, so scale it by the
-// ratio the SVG is rendered at
-const strokeUnits = computed(() => {
-	const px = Math.max(MIN_STROKE_PX, Math.round(props.size / SIZE_TO_STROKE))
-	return (px * SPAN) / props.size
-})
+// `vector-effect="non-scaling-stroke"` on both circles keeps this in px
+const strokePx = computed(() =>
+	Math.max(MIN_STROKE_PX, Math.round(props.size / SIZE_TO_STROKE)),
+)
 </script>
 
 <style scoped>

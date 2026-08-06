@@ -113,6 +113,7 @@
 							}"
 							:max="10"
 							:value="item.rating ?? null"
+							label="Route health rating"
 						/>
 						<strong v-if="item.rating !== undefined"
 							>{{ item.rating }}/10</strong
@@ -378,22 +379,27 @@ export default {
 				return 'text-error'
 			}
 		},
+		ratingBand(rating) {
+			if (rating == null) return 'unknown'
+			if (rating >= 6) return 'ok'
+			if (rating >= 4) return 'warning'
+			return 'danger'
+		},
 		ratingFill(rating) {
-			if (rating === undefined) return 'var(--zw-accent)'
-			if (rating >= 6) return 'var(--zw-ok)'
-			if (rating >= 4) return 'var(--zw-warning)'
-			return 'var(--zw-danger)'
+			return {
+				unknown: 'var(--zw-accent)',
+				ok: 'var(--zw-ok)',
+				warning: 'var(--zw-warning)',
+				danger: 'var(--zw-danger)',
+			}[this.ratingBand(rating)]
 		},
 		getRatingColor(rating) {
-			if (rating === undefined) {
-				return 'primary'
-			} else if (rating >= 6) {
-				return 'success'
-			} else if (rating >= 4) {
-				return 'warning'
-			} else {
-				return 'error'
-			}
+			return {
+				unknown: 'primary',
+				ok: 'success',
+				warning: 'warning',
+				danger: 'error',
+			}[this.ratingBand(rating)]
 		},
 		getPowerLevel(v) {
 			return getEnumMemberName(Powerlevel, v)
@@ -529,7 +535,9 @@ export default {
 }
 </script>
 
-<style scoped>
+<style>
+/* `ZwProgressBar` renders a fragment root, so no scope id reaches the bar and
+   `.zw-hc-rating__bar` must stay unscoped */
 .zw-hc-rating {
 	display: inline-flex;
 	align-items: center;
@@ -538,7 +546,7 @@ export default {
 }
 
 .zw-hc-rating__bar {
-	--zw-progress-h: 5px;
+	--zw-progress-height: 5px;
 	flex: 1;
 	min-width: 48px;
 }

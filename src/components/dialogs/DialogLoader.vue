@@ -8,7 +8,10 @@
 	>
 		<p v-if="text" v-html="text" class="ma-0"></p>
 		<div v-if="!ended" class="loader-progress">
-			<ZwProgressBar :value="indeterminate ? null : progress" />
+			<ZwProgressBar
+				:value="indeterminate ? null : progress"
+				:label="title"
+			/>
 			<span v-if="!indeterminate" class="loader-pct"
 				>{{ progress }}%</span
 			>

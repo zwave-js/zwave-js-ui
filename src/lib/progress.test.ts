@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { progressValue } from './progress.ts'
+import { progressPercent, progressValue } from './progress.ts'
 
 describe('progressValue', () => {
 	it('maps a missing value to v0 indeterminate', () => {
@@ -14,10 +14,28 @@ describe('progressValue', () => {
 		expect(progressValue(-5)).toBe(-5)
 	})
 
-	it('falls back to min for non-finite input rather than rendering NaN', () => {
+	it('falls back to 0 for non-finite input rather than rendering NaN', () => {
 		expect(progressValue(NaN)).toBe(0)
 		expect(progressValue(Infinity)).toBe(0)
 		expect(progressValue(-Infinity)).toBe(0)
-		expect(progressValue(NaN, 2)).toBe(2)
+	})
+})
+
+describe('progressPercent', () => {
+	it('scales a value against its max', () => {
+		expect(progressPercent(5, 10)).toBe(50)
+		expect(progressPercent(0, 100)).toBe(0)
+		expect(progressPercent(100, 100)).toBe(100)
+		expect(progressPercent(1, 3)).toBe(33)
+	})
+
+	it('clamps out-of-range input', () => {
+		expect(progressPercent(140, 100)).toBe(100)
+		expect(progressPercent(-5, 100)).toBe(0)
+	})
+
+	it('returns 0 for a max that spans nothing', () => {
+		expect(progressPercent(5, 0)).toBe(0)
+		expect(progressPercent(5, -1)).toBe(0)
 	})
 })

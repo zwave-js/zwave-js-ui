@@ -6,6 +6,7 @@
 			shimmer
 			class="zw-tx__bar"
 			:value="pct ?? null"
+			:label="title"
 		/>
 		<span v-if="pct !== undefined" class="zw-tx__pct">{{ pct }}%</span>
 	</span>
@@ -81,7 +82,7 @@ const title = computed(() =>
 }
 
 .zw-tx__bar {
-	--zw-progress-h: 4px;
+	--zw-progress-height: 4px;
 	--zw-progress-radius: var(--zw-radius-xs);
 	--zw-progress-track: rgba(var(--v0-primary), 0.18);
 }

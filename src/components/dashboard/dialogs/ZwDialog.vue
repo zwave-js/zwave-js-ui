@@ -31,6 +31,7 @@
 						v-if="loading"
 						:value="null"
 						class="zw-dlg__loading"
+						label="Loading"
 					/>
 					<div
 						v-if="hasRule"

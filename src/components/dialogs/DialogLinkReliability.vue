@@ -86,6 +86,7 @@
 					v-if="running"
 					class="zw-lr__bar"
 					:value="infinite ? null : progress"
+					label="Link reliability test progress"
 				/>
 				<v-list class="mr-2" density="compact">
 					<v-list-item>
