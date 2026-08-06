@@ -13,6 +13,10 @@ import { SetValueStatus } from 'zwave-js'
 import { DeviceConfig, type ParamInformation } from '@zwave-js/config'
 import { ObjectKeyMap } from '@zwave-js/shared'
 
+// ---------------------------------------------------------------------------
+// Helpers: minimal fakes for ports
+// ---------------------------------------------------------------------------
+
 let idCounter = 0
 
 function createUtilsPort() {
