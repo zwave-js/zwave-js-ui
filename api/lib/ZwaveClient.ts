@@ -136,7 +136,10 @@ import jsonStore from './jsonStore.ts'
 import * as LogManager from './logger.ts'
 import * as utils from './utils.ts'
 
-import { serverVersion, ZwavejsServer } from '@zwave-js/server'
+import { serverVersion } from '@zwave-js/server'
+import ZwaveServerManager, {
+	type ZwaveServerHost,
+} from './ZwaveServerManager.ts'
 import type { Server as SocketServer } from 'socket.io'
 import { TypedEventEmitter } from './EventEmitter.ts'
 import type { GatewayValue } from './Gateway.ts'
@@ -809,7 +812,27 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 	private _driver: Driver
 
-	private server: ZwavejsServer
+	private readonly _serverManager: ZwaveServerManager
+
+	private buildServerHost(): ZwaveServerHost {
+		return {
+			getDriver: () => this._driver,
+			// Project only the four server fields, so the manager never sees
+			// `networkKey`/`securityKeys`/`securityKeysLongRange`
+			getConfig: () => ({
+				serverEnabled: this.cfg.serverEnabled,
+				serverPort: this.cfg.serverPort,
+				serverHost: this.cfg.serverHost,
+				serverServiceDiscoveryDisabled:
+					this.cfg.serverServiceDiscoveryDisabled,
+			}),
+			getHasUserCallbacks: () => this.hasUserCallbacks,
+			onHardReset: () => this.init(),
+			logger,
+			serverLogger: LogManager.module('Z-Wave-Server'),
+		}
+	}
+
 	private statelessTimeouts: Record<string, NodeJS.Timeout>
 	private commandsTimeout: NodeJS.Timeout
 	private healTimeout: NodeJS.Timeout
@@ -897,6 +920,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		this.cfg = config
 		this.socket = socket
+		// The host port resolves the driver and config on demand, so the manager
+		// is safe to build before `connect()` creates the driver
+		this._serverManager = new ZwaveServerManager(this.buildServerHost())
 		this.hassDeviceStore = new HassDeviceStore({
 			hasNode: (nodeId) => this._nodes.has(nodeId),
 			getNodeDevices: (nodeId) => this._nodes.get(nodeId)?.hassDevices,
@@ -1178,9 +1204,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		})
 
 		// when no user is connected, give back the control to HA server
-		if (this.server?.['sockets'] !== undefined) {
-			this.server.setInclusionUserCallbacks()
-		}
+		this._serverManager.handInclusionControlBack()
 	}
 
 	/**
@@ -1274,6 +1298,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		this.closed = true
 		this.driverReady = false
 
+		logger.info('Closing client...')
+
 		if (this.commandsTimeout) {
 			clearTimeout(this.commandsTimeout)
 			this.commandsTimeout = null
@@ -1318,12 +1344,14 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			this.throttledFunctions.delete(key)
 		}
 
-		if (this.server) {
-			await this.server.destroy()
-			this.server = null
-		}
+		// Destroy the server before the driver, so its listening port is released
+		// before the driver it wraps goes away
+		await this._serverManager.destroy()
 
 		if (this._driver) {
+			// Logged because this and the server destroy are the two most
+			// hang-prone awaits in shutdown
+			logger.info('Destroying driver...')
 			await this._driver.destroy()
 			this._driver = null
 		}
@@ -2528,25 +2556,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				return
 			}
 
-			if (this.cfg.serverEnabled) {
-				this.server = new ZwavejsServer(this._driver, {
-					port: this.cfg.serverPort || 3000,
-					host: this.cfg.serverHost,
-					logger: LogManager.module('Z-Wave-Server'),
-					enableDNSServiceDiscovery:
-						!this.cfg.serverServiceDiscoveryDisabled,
-				})
-
-				this.server.on('error', () => {
-					// this is already logged by the server but we need this to prevent
-					// unhandled exceptions
-				})
-
-				this.server.on('hard reset', () => {
-					logger.info('Hard reset requested by ZwaveJS Server')
-					this.init()
-				})
-			}
+			// The `serverEnabled` gate lives in the manager's `create()`, so
+			// call unconditionally and let it decide whether a server is built
+			this._serverManager.create()
 
 			if (this.cfg.enableStatistics) {
 				this.enableStatistics()
@@ -6351,21 +6363,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		this._error = undefined
 
 		// start server only when driver is ready. Fixes #602
-		if (this.cfg.serverEnabled && this.server) {
-			// fix prevent to start server when already inited
-			if (!this.server['server']) {
-				this.server
-					.start(!this.hasUserCallbacks)
-					.then(() => {
-						logger.info('Z-Wave server started')
-					})
-					.catch((error) => {
-						logger.error(
-							`Failed to start zwave-js server: ${error.message}`,
-						)
-					})
-			}
-		}
+		this._serverManager.startIfNeeded()
 
 		logger.info(`Scanning network with homeid: ${homeHex}`)
 

@@ -43,7 +43,32 @@ export interface FakeBroker extends EventEmitter {
 	connected: boolean
 	published: RecordedPublish[]
 	subscribed: RecordedSubscribe[]
+	/** Every topic passed to `unsubscribe`, flattened, in call order. */
+	unsubscribed: string[]
 	ended: boolean
+	/**
+	 * When true, `subscribe` records the subscribe but withholds its callback
+	 * (queued in `pendingSubscribes`) instead of firing it synchronously, so a
+	 * test can land the broker's grant/error later — after an interleaved
+	 * dispose/close — via `flushSubscribes`, modelling the real network
+	 * round-trip. Defaults to false (synchronous success).
+	 */
+	deferSubscribe: boolean
+	/** Queued deferred subscribe callbacks awaiting `flushSubscribes`. */
+	pendingSubscribes: Array<{
+		topic: string
+		options: Record<string, any> | undefined
+		cb?: (
+			err: Error | null,
+			granted: { topic: string; qos: number }[],
+		) => void
+	}>
+	/**
+	 * Exact topics the broker denies: `subscribe` grants them `qos === 128`
+	 * with no error, exactly how `mqtt.js` surfaces a broker permission denial.
+	 * Applies to both the synchronous and `flushSubscribes` grant paths.
+	 */
+	denySubscribe: Set<string>
 	publish(
 		topic: string,
 		payload: string,
@@ -55,11 +80,22 @@ export interface FakeBroker extends EventEmitter {
 		options?: IClientSubscribeOptions,
 		cb?: (err: Error | null, granted: ISubscriptionGrant[]) => void,
 	): FakeBroker
+	unsubscribe(
+		topic: string | string[],
+		options?: Record<string, any> | ((err?: Error) => void),
+		cb?: (err?: Error) => void,
+	): FakeBroker
 	end(
 		force?: boolean,
 		opts?: Partial<IDisconnectPacket>,
 		cb?: () => void,
 	): FakeBroker
+	/**
+	 * Fire every queued deferred subscribe callback. With no argument each
+	 * lands as a successful grant; with an `err` each lands as a broker
+	 * subscribe error - exercising the real wrapper's failure path.
+	 */
+	flushSubscribes(err?: Error | null): void
 	/**
 	 * Deliver an inbound message through the real `'message'`/`Buffer`
 	 * contract so `_onMessageReceived` runs — but only when connected and the
@@ -132,7 +168,18 @@ export function createFakeBroker(): FakeBroker {
 	broker.connected = false
 	broker.published = []
 	broker.subscribed = []
+	broker.unsubscribed = []
 	broker.ended = false
+	broker.deferSubscribe = false
+	broker.pendingSubscribes = []
+	broker.denySubscribe = new Set()
+
+	// A denied topic is granted qos 128, like a real broker refusing permission
+	const grantedQos = (
+		topic: string,
+		options: Record<string, any> | undefined,
+	) =>
+		broker.denySubscribe.has(topic) ? 128 : ((options?.qos as number) ?? 0)
 
 	broker.publish = (topic, payload, options, cb) => {
 		// Mirror `mqtt`'s `publish(topic, payload, cb)` overload where the 3rd
@@ -158,9 +205,43 @@ export function createFakeBroker(): FakeBroker {
 
 	broker.subscribe = (topic, options, cb) => {
 		broker.subscribed.push({ topic, options })
-		// Real `mqtt` grants `{ topic, qos }[]`; the wrapper treats qos 128 as
-		// a permission error, so return the requested qos to model a grant.
-		cb?.(null, [{ topic, qos: options?.qos ?? 0 }])
+		// Deferred mode: withhold the callback so a test can land it later (after
+		// an interleaved dispose/close) via `flushSubscribes`
+		if (broker.deferSubscribe) {
+			broker.pendingSubscribes.push({ topic, options, cb })
+			return broker
+		}
+		// Real `mqtt` grants `{ topic, qos }[]`; a denied topic comes back as
+		// qos 128, which the wrapper treats as a permission error
+		cb?.(null, [{ topic, qos: grantedQos(topic, options) }])
+		return broker
+	}
+
+	broker.flushSubscribes = (err = null) => {
+		const pending = broker.pendingSubscribes.splice(0)
+		for (const p of pending) {
+			if (err) {
+				p.cb?.(err, [])
+			} else {
+				p.cb?.(null, [
+					{ topic: p.topic, qos: grantedQos(p.topic, p.options) },
+				])
+			}
+		}
+	}
+
+	broker.unsubscribe = (topic, options, cb) => {
+		// Real `mqtt` allows `unsubscribe(topic, cb)`; mirror that so the
+		// wrapper's `unsubscribeBroker` call shape resolves. Drop every recorded
+		// subscription for the exact topic(s) so a later `deliver()` to it is no
+		// longer routed - modelling a real broker dropping the subscription.
+		const topics = Array.isArray(topic) ? topic : [topic]
+		broker.unsubscribed.push(...topics)
+		broker.subscribed = broker.subscribed.filter(
+			(s) => !topics.includes(s.topic),
+		)
+		const callback = typeof options === 'function' ? options : cb
+		callback?.()
 		return broker
 	}
 

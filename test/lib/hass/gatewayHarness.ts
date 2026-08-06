@@ -14,6 +14,7 @@ import {
 	type FakeGatewayZwave,
 } from './fixtures.ts'
 import { useManagedCurrent, type ManagedCurrent } from '../shared/harness.ts'
+import { vi } from 'vitest'
 
 export interface PublishedDiscovery {
 	topic: string
@@ -69,8 +70,8 @@ export async function createGatewayHarness(
 		new GatewayFactory({
 			storeDir,
 			logger: {
-				error: () => undefined,
-				info: () => undefined,
+				error: vi.fn(),
+				info: vi.fn(),
 			},
 			devices: options.catalogs ?? {},
 		})

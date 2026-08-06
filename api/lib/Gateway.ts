@@ -19,13 +19,14 @@ import type {
 import type ZwaveClient from './ZwaveClient.ts'
 import Cron from 'croner'
 
-import { HASS_NODE_PREFIX, type HassDevice } from '../hass/types.ts'
 import {
-	DiscoveryGenerator,
 	HASS_COMMAND_HANDLED,
+	type DiscoveryGenerator,
 } from '../hass/DiscoveryGenerator.ts'
+import MqttDiscoveryManager from '../hass/MqttDiscoveryManager.ts'
+import { HASS_NODE_PREFIX, type HassDevice } from '../hass/types.ts'
 import type {
-	HassDeviceRegistryLifecyclePort,
+	HassDeviceRegistrySourcePort,
 	HassNode,
 	HassTopicNode,
 	HassValue,
@@ -103,6 +104,7 @@ export type GatewayConfig = {
 	}
 	disableChangelog?: boolean
 	notifyNewVersions?: boolean
+	/** Enable HTTPS for the web server (see `startServer` in `app.ts`). */
 	https?: boolean
 }
 
@@ -145,8 +147,12 @@ export type GatewayMqtt = Pick<
 	| 'on'
 	| 'publish'
 	| 'subscribe'
->
-
+	| 'subscribeExact'
+> & {
+	// The discovery manager emits `hassStatus` through this client, so the port
+	// exposes only that event instead of the full typed emitter
+	emit(event: 'hassStatus', online: boolean): boolean
+}
 export default class Gateway<
 	TZwave extends GatewayZwave = ZwaveClient,
 	TMqtt extends GatewayMqtt = MqttClient,
@@ -158,8 +164,8 @@ export default class Gateway<
 	private topicLevels: number[] = []
 	private _closed = false
 	private jobs: Map<string, Cron> = new Map()
-	private customDeviceRegistry: HassDeviceRegistryLifecyclePort
-	private discoveryGenerator: DiscoveryGenerator
+	private readonly _mqttDiscovery: MqttDiscoveryManager
+	private readonly customDeviceRegistrySource: HassDeviceRegistrySourcePort
 	private listenersAttached = false
 	private readonly onWriteRequest = this._onWriteRequest.bind(this)
 	private readonly onBroadRequest = this._onBroadRequest.bind(this)
@@ -169,8 +175,6 @@ export default class Gateway<
 		apiName,
 		payload,
 	) => void this._onApiRequest(topic, apiName as AllowedApis, payload)
-	private readonly onHassStatus = this._onHassStatus.bind(this)
-	private readonly onBrokerStatus = this._onBrokerStatus.bind(this)
 	private readonly onNodeInited = this._onNodeInited.bind(this)
 	private readonly onDriverStatus = this._onDriverStatus.bind(this)
 	private readonly onNodeStatus = this._onNodeStatus.bind(this)
@@ -200,17 +204,19 @@ export default class Gateway<
 		config: GatewayConfig,
 		zwave: TZwave | undefined,
 		mqtt: TMqtt | undefined,
-		customDeviceRegistry: HassDeviceRegistryLifecyclePort,
+		customDeviceRegistry: HassDeviceRegistrySourcePort,
 	) {
 		this.config = config || { type: 1 }
 		// clients
 		this._mqtt = mqtt
 		this._zwave = zwave
-		this.customDeviceRegistry = customDeviceRegistry
-		this.discoveryGenerator = new DiscoveryGenerator({
+		this.customDeviceRegistrySource = customDeviceRegistry
+		// The ports adapt the live clients, so the manager never binds to a
+		// concrete client
+		this._mqttDiscovery = new MqttDiscoveryManager({
 			config: this.config,
-			mqtt,
-			zwave,
+			mqtt: this._mqtt,
+			zwave: this._zwave,
 			nodeUpdates: {
 				emitNodeUpdate: (nodeId, hassDevices) => {
 					const node = this.zwave.nodes.get(nodeId)
@@ -222,21 +228,24 @@ export default class Gateway<
 				valueTopic: (node, value, returnObject) =>
 					this.valueTopic(node, value, returnObject),
 			},
-			registry: this.customDeviceRegistry,
+			registrySource: this.customDeviceRegistrySource,
 			logger: hassLogger,
 		})
 	}
 
+	// Discovery facade kept on the Gateway that delegates to the owned manager
+	private get discoveryGenerator(): DiscoveryGenerator {
+		return this._mqttDiscovery.discoveryGenerator
+	}
+
 	async start(): Promise<void> {
-		this.customDeviceRegistry.start()
+		this._mqttDiscovery.start(this._mqtt, this.mqttEnabled)
 		// gateway configuration
 		this.config.values = this.config.values || []
 
 		// Object where keys are topic and values can be both zwave valueId object
 		// or a valueConf if the topic is a broadcast topic
 		this.topicValues = {}
-
-		this.discoveryGenerator.reset()
 
 		this._closed = false
 
@@ -250,7 +259,7 @@ export default class Gateway<
 				await this._zwave.connect()
 			} catch (error) {
 				this.detachListeners()
-				this.customDeviceRegistry.dispose()
+				this._mqttDiscovery.stop()
 				throw error
 			}
 		} else {
@@ -433,25 +442,42 @@ export default class Gateway<
 
 		logger.info('Closing Gateway...')
 
-		try {
-			if (this._zwave) {
-				await this._zwave.close()
-			}
-		} finally {
+		// Every step runs even if an earlier one throws, so the first error is
+		// reported without any cleanup being skipped
+		const errors: unknown[] = []
+		const step = async (
+			label: string,
+			fn: () => void | Promise<void>,
+		): Promise<void> => {
 			try {
-				this.cancelJobs()
-			} finally {
-				try {
-					// Preserve the Z-Wave-before-MQTT shutdown contract
-					if (this.mqttEnabled) {
-						await this._mqtt.close()
-					}
-				} finally {
-					this.detachListeners()
-					this.customDeviceRegistry.dispose()
-				}
+				await fn()
+			} catch (error) {
+				errors.push(error)
+				logger.error(`Error while closing Gateway (${label})`, error)
 			}
 		}
+
+		// Stop discovery before the Z-Wave client: it drops the publication fence
+		// synchronously, so no late `nodeRemoved`/`valueChanged` publishes retained
+		// discovery, and the `homeassistant/status` unsubscribe reaches the broker
+		// even if the driver teardown below hangs
+		await step('discovery', () => this._mqttDiscovery.stop())
+		await step('zwave', () => this._zwave?.close())
+		await step('jobs', () => this.cancelJobs())
+		await step('listeners', () => this.detachListeners())
+		// Preserve the Z-Wave-before-MQTT shutdown contract
+		if (this.mqttEnabled) {
+			await step('mqtt', () => this._mqtt.close())
+		}
+
+		// Report the first failure, but raise the completion line above info and
+		// carry the count, so a real teardown failure is not lost when grepping
+		// for errors
+		if (errors.length > 0) {
+			logger.warn(`Gateway closed with ${errors.length} error(s)`)
+			throw errors[0]
+		}
+		logger.info('Gateway closed')
 	}
 
 	private attachListeners(): void {
@@ -462,8 +488,6 @@ export default class Gateway<
 			this._mqtt.on('broadcastRequest', this.onBroadRequest)
 			this._mqtt.on('multicastRequest', this.onMulticastRequest)
 			this._mqtt.on('apiCall', this.onApiRequest)
-			this._mqtt.on('hassStatus', this.onHassStatus)
-			this._mqtt.on('brokerStatus', this.onBrokerStatus)
 		}
 
 		if (this._zwave) {
@@ -493,8 +517,6 @@ export default class Gateway<
 			this._mqtt.off('broadcastRequest', this.onBroadRequest)
 			this._mqtt.off('multicastRequest', this.onMulticastRequest)
 			this._mqtt.off('apiCall', this.onApiRequest)
-			this._mqtt.off('hassStatus', this.onHassStatus)
-			this._mqtt.off('brokerStatus', this.onBrokerStatus)
 		}
 
 		if (this._zwave) {
@@ -1030,28 +1052,6 @@ export default class Gateway<
 
 		if (this.mqttEnabled) {
 			this._mqtt.publish('driver/status', ready)
-		}
-	}
-
-	/**
-	 * When mqtt client goes online/offline
-	 *
-	 */
-	private _onBrokerStatus(online: boolean): void {
-		if (online) {
-			this.rediscoverAll()
-		}
-	}
-
-	/**
-	 * Hass will/birth
-	 *
-	 */
-	private _onHassStatus(online: boolean): void {
-		logger.info(`Home Assistant is ${online ? 'ONLINE' : 'OFFLINE'}`)
-
-		if (online) {
-			this.rediscoverAll()
 		}
 	}
 

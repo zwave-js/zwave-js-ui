@@ -24,7 +24,7 @@ import {
 	discoverValueOnNode,
 	type GatewayHarness,
 } from './gatewayHarness.ts'
-import { buildNode, buildValueId, addValue } from './fixtures.ts'
+import { buildNode, buildValueId, addValue, tick } from './fixtures.ts'
 import type { HassDevice, ZUINode } from '#api/lib/ZwaveClient.ts'
 import type { GatewayConfig } from '#api/lib/Gateway.ts'
 
@@ -32,8 +32,6 @@ vi.mock('mqtt', () => mqttMockFactory())
 
 const gatewayHarness = useGatewayHarness()
 let harness: GatewayHarness
-
-const tick = () => new Promise<void>((r) => setImmediate(r))
 
 /**
  * The discovery-config topic the seeded 'Dev' switch republishes on reconnect.
@@ -258,6 +256,79 @@ describe('Home Assistant status and broker reconnect re-announce all devices', (
 		expect(topics).toContain(`zwave/_CLIENTS/${cid}/multicast/#`)
 	})
 
+	it('close() unsubscribes homeassistant/status even while the Z-Wave teardown hangs', async () => {
+		// A driver teardown that never settles is the exit-137 shutdown class, so
+		// discovery must stop before it, not in a finally the hang never reaches.
+		// Only the first close hangs, so the harness cleanup can still finish
+		let release: () => void = () => {}
+		const hang = new Promise<void>((resolve) => {
+			release = resolve
+		})
+		let calls = 0
+		const replaced = await gatewayHarness.replace({
+			zwave: {
+				close: vi.fn(() => (++calls === 1 ? hang : Promise.resolve())),
+			},
+		})
+		replaced.broker.triggerConnect()
+		await tick()
+		replaced.broker.unsubscribed.length = 0
+
+		// Deliberately not awaited: the close cannot finish while zwave.close()
+		// hangs, and that is exactly the case under test
+		const closing = replaced.gw.close()
+		await tick()
+
+		expect(replaced.broker.unsubscribed).toContain('homeassistant/status')
+
+		// A status message arriving after the stop drives no further publication
+		replaced.resetPublishes()
+		replaced.broker.deliver('homeassistant/status', 'online')
+		await tick()
+		expect(replaced.broker.published).toHaveLength(0)
+
+		release()
+		await closing
+	})
+
+	it('close() runs every teardown step and throws the first error when zwave and mqtt both reject', async () => {
+		const zwaveError = new Error('zwave close failed')
+		let zwaveCalls = 0
+		// Only the first close rejects, so the harness cleanup can still finish
+		const replaced = await gatewayHarness.replace({
+			zwave: {
+				close: vi.fn(() =>
+					++zwaveCalls === 1
+						? Promise.reject(zwaveError)
+						: Promise.resolve(),
+				),
+			},
+		})
+		replaced.broker.triggerConnect()
+		await tick()
+
+		// The real MqttClient's close rejects once, through its public method
+		const mqttError = new Error('mqtt close failed')
+		const mqttClose = vi
+			.spyOn(replaced.mqtt, 'close')
+			.mockRejectedValueOnce(mqttError)
+		// detachListeners removes the gateway's zwave listeners
+		const zwaveOff = vi.spyOn(replaced.zwave, 'off')
+
+		// The first error (an early step) surfaces even though mqtt (a later
+		// step) also rejects
+		await expect(replaced.gw.close()).rejects.toBe(zwaveError)
+
+		// mqtt.close was still reached (the last step) and listeners were
+		// detached, so cancelJobs between them ran too: the failing zwave.close
+		// skipped no later step
+		expect(mqttClose).toHaveBeenCalledTimes(1)
+		expect(zwaveOff).toHaveBeenCalled()
+
+		mqttClose.mockRestore()
+		zwaveOff.mockRestore()
+	})
+
 	it('HA "online" (any case) republishes the device discovery topic', async () => {
 		harness.resetPublishes()
 		harness.zwave.nodes.clear()
@@ -321,6 +392,44 @@ describe('Home Assistant status and broker reconnect re-announce all devices', (
 				(p) => p.topic === SWITCH_DISCOVERY_TOPIC,
 			),
 		).toBe(true)
+	})
+
+	it('a plugin-style mqtt.on(hassStatus) sees each status once, with no duplicate across reconnect', async () => {
+		harness.resetPublishes()
+		harness.zwave.nodes.clear()
+
+		// A plugin subscribes the public compatibility event through the concrete
+		// MqttClient
+		const emits: boolean[] = []
+		const listener = (online: boolean): void => {
+			emits.push(online)
+		}
+		harness.mqtt.on('hassStatus', listener)
+		try {
+			harness.broker.triggerConnect()
+			await tick()
+
+			harness.broker.deliver('homeassistant/status', 'online')
+			harness.broker.deliver('homeassistant/status', 'offline')
+			harness.broker.deliver('homeassistant/status', 'ONLINE')
+			await tick()
+			expect(emits).toEqual([true, false, true])
+
+			// A broker reconnect re-subscribes the topic but must not surface a
+			// spurious hassStatus, since that path emits only brokerStatus
+			harness.broker.triggerReconnect()
+			harness.broker.triggerConnect()
+			await tick()
+			expect(emits).toEqual([true, false, true])
+
+			// The single manager-owned subscription still delivers the next real
+			// message once, proving no duplicate listener leaked
+			harness.broker.deliver('homeassistant/status', 'offline')
+			await tick()
+			expect(emits).toEqual([true, false, true, false])
+		} finally {
+			harness.mqtt.off('hassStatus', listener)
+		}
 	})
 })
 
