@@ -20,6 +20,7 @@ import path from 'node:path'
 import type {
 	AppRuntime as AppRuntimeClass,
 	AppRuntimeDeps,
+	GatewayStartCancelledError as GatewayStartCancelledErrorClass,
 } from '#api/runtime/AppRuntime.ts'
 import type JsonStoreModule from '#api/lib/jsonStore.ts'
 import type StoreModule from '#api/config/store.ts'
@@ -33,6 +34,10 @@ import { cleanupTestEnv, ensureTestEnv } from '../lib/shared/env.ts'
 
 describe('App runtime behavior', () => {
 	let AppRuntimeCtor: typeof AppRuntimeClass
+	// Captured from the dynamic import below rather than a top-level value import,
+	// so importing AppRuntime never evals `config/app.ts` before `env.ts`'s mock
+	// of it registers
+	let GatewayStartCancelledError: typeof GatewayStartCancelledErrorClass
 	let jsonStore: typeof JsonStoreModule
 	let store: typeof StoreModule
 	const originalSecret = process.env.SESSION_SECRET
@@ -47,6 +52,7 @@ describe('App runtime behavior', () => {
 			],
 		)
 		AppRuntimeCtor = runtimeModule.AppRuntime
+		GatewayStartCancelledError = runtimeModule.GatewayStartCancelledError
 		jsonStore = jsonStoreModule.default
 		store = storeModule.default
 		await jsonStore.init(store)
@@ -366,16 +372,90 @@ export default class LatePlugin {
 			expect(close).toHaveBeenCalled()
 
 			// releasing the hung start lets its continuation observe the
-			// cancelled generation and finish without throwing or resurrecting
-			// the gateway — and crucially without loading the plugin
+			// cancelled generation and finish without resurrecting the gateway.
+			// The cancellation now surfaces to the caller instead of resolving
+			// as a success, and crucially the plugin is never loaded
 			releaseStart()
-			await expect(starting).resolves.toBeUndefined()
+			await expect(starting).rejects.toBeInstanceOf(
+				GatewayStartCancelledError,
+			)
+
+			// The gateway closed exactly once: the teardown owns `this.gateway`,
+			// so the resolved-after-abort start must not close it a second time
+			expect(close).toHaveBeenCalledTimes(1)
 
 			// The plugin was never loaded: the cancelled continuation bailed
 			// before plugin loading. If cancellation were a no-op, the marker
 			// would exist
 			expect(existsSync(marker)).toBe(false)
 		} finally {
+			rmSync(pluginDir, { recursive: true, force: true })
+		}
+	})
+
+	it('cancels a start whose plugin import is still pending, never instantiating the plugin', async () => {
+		const pluginDir = mkdtempSync(path.join(tmpdir(), 'runtime-plugin-'))
+		const marker = path.join(pluginDir, 'instantiated.txt')
+		const plugin = path.join(pluginDir, 'hanging-import-plugin.mjs')
+		// A real barrier through the real `import()` path: the module signals
+		// once its evaluation starts, then blocks on `release` via top-level
+		// await, so the import stays pending until the test releases it. The
+		// constructor writes the marker, so its ABSENCE proves the plugin was
+		// never instantiated after the cancelled import resolved
+		const barrier = `__hangingPluginBarrier_${Date.now()}`
+		let importStarted = (): void => {}
+		const importStartedPromise = new Promise<void>((resolve) => {
+			importStarted = resolve
+		})
+		let releaseImport = (): void => {}
+		const releaseImportPromise = new Promise<void>((resolve) => {
+			releaseImport = resolve
+		})
+		;(globalThis as Record<string, unknown>)[barrier] = {
+			started: importStarted,
+			release: releaseImportPromise,
+		}
+		writeFileSync(
+			plugin,
+			`import { appendFileSync } from 'node:fs'
+const barrier = globalThis[${JSON.stringify(barrier)}]
+barrier.started()
+await barrier.release
+export default class HangingImportPlugin {
+	constructor() { appendFileSync(${JSON.stringify(marker)}, 'instantiated') }
+}
+`,
+		)
+		const runtime = createRuntime({
+			gatewayFactory: {
+				create: () => createFakeGateway(),
+				dispose: vi.fn(),
+			},
+		})
+
+		try {
+			const starting = runtime.startGateway({
+				gateway: { plugins: [plugin] },
+			})
+
+			// Wait for the import to actually be in flight before tearing down,
+			// so the teardown lands while the plugin import is pending
+			await importStartedPromise
+			await runtime.teardownGateway()
+
+			// The import resolves only now, after the abort: the post-import
+			// checkpoint must observe the cancellation and bail before creating
+			// the plugin
+			releaseImport()
+			await expect(starting).rejects.toBeInstanceOf(
+				GatewayStartCancelledError,
+			)
+
+			// The plugin was never instantiated: cancellation stopped loading
+			// after the import settled but before construction/registration
+			expect(existsSync(marker)).toBe(false)
+		} finally {
+			delete (globalThis as Record<string, unknown>)[barrier]
 			rmSync(pluginDir, { recursive: true, force: true })
 		}
 	})

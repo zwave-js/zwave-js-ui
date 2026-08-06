@@ -28,6 +28,19 @@ import type {
 
 const logger = loggers.module('Runtime')
 
+/**
+ * Thrown by {@link AppRuntime.startGateway} when a concurrent teardown aborted
+ * the generation. Lets a caller report the cancellation instead of a success.
+ */
+export class GatewayStartCancelledError extends Error {
+	constructor(
+		message = 'Gateway start was cancelled by a concurrent teardown',
+	) {
+		super(message)
+		this.name = 'GatewayStartCancelledError'
+	}
+}
+
 export function isAuthEnabled(): boolean {
 	return jsonStore.get(store.settings).gateway?.authEnabled === true
 }
@@ -77,8 +90,8 @@ export class AppRuntime {
 		this.deps = deps
 		this._gateway = deps.gateway
 		this._zniffer = deps.zniffer
-		// An injected restart (createApp rebuilds the app with restarting=true)
-		// stays restarting until the subsequent startGateway() completes
+		// Seed the marker from an injected restart; the `/api/restart` route owns
+		// setting and clearing it from then on
 		this._restarting = deps.restarting ?? false
 	}
 
@@ -193,27 +206,31 @@ export class AppRuntime {
 	}
 
 	async startGateway(settings: PersistedSettings): Promise<void> {
+		// A shutdown has begun, so refuse to build or reopen anything. Report the
+		// cancellation so a restart caller never claims success while exiting
+		if (this._closed) {
+			this.logStartAborted('runtime already shutting down')
+			throw new GatewayStartCancelledError()
+		}
+
 		// Publish the token synchronously, so a concurrent teardown can abort this
 		// generation and detach rather than serialize behind a possibly-hung start
 		const generation = new AbortController()
 		this.currentStart = generation
 		try {
 			await this.runStartGateway(settings, generation.signal)
-		} catch (error) {
-			// The teardown that aborted this generation owns its cleanup, so a
-			// rejection it caused (by closing the gateway under a hung
-			// `gw.start()`) neither surfaces here nor resets the restart marker
-			if (generation.signal.aborted) return
-			throw error
 		} finally {
-			// Clear the restart marker here rather than trust the teardown to
-			// reach one, so a restart never leaves `restarting` stuck true and
-			// locking out the API. An aborted generation leaves it to whichever
-			// teardown or replacement now owns the state
+			// Only this generation clears its own token, so a replacement start's
+			// token is left intact
 			if (this.currentStart === generation) {
 				this.currentStart = undefined
-				if (!generation.signal.aborted) this._restarting = false
 			}
+		}
+
+		// A teardown aborted this generation, so report the cancellation rather
+		// than resolve as a success. The restart marker is the caller's to clear
+		if (generation.signal.aborted) {
+			throw new GatewayStartCancelledError()
 		}
 	}
 
@@ -270,28 +287,34 @@ export class AppRuntime {
 			// listener, subscription, server port, or open client leaks past a
 			// failed start. Cleanup errors may not replace the caller's original
 			// startup error, so they are logged rather than rethrown
-			for (const cleanupError of await this.closeGeneration(gw)) {
+			for (const cleanupError of await this.closeGatewayCollectingErrors(
+				gw,
+			)) {
 				logger.error(
 					'Error while cleaning up a failed gateway start (original startup error is preserved)',
 					cleanupError,
 				)
 			}
+			await this.destroyPlugins()
 			throw error
 		}
 
 		// The teardown does not await this start, so its `gw.close()` may have
 		// landed before the connect finished, leaving a live driver, MQTT
-		// connection and listeners. Close this generation's own gateway (never a
-		// newer one the teardown installed) so nothing survives
+		// connection and listeners. The teardown closes `this.gateway`, so only
+		// close this generation's own gateway when the teardown never adopted it,
+		// to avoid a second concurrent close of the same gateway
 		if (cancelled.aborted) {
 			this.logStartAborted('gw.start() resolved')
-			try {
-				await gw.close()
-			} catch (error) {
-				logger.error(
-					'Error closing a cancelled gateway start (its start had already resolved)',
-					error,
-				)
+			if (this.gateway !== gw) {
+				try {
+					await gw.close()
+				} catch (error) {
+					logger.error(
+						'Error closing a cancelled gateway start (its start had already resolved)',
+						error,
+					)
+				}
 			}
 			return
 		}
@@ -351,16 +374,11 @@ export class AppRuntime {
 	}
 
 	/**
-	 * Close one gateway generation, returning every error it collected so each
-	 * caller picks its own disposition. The gateway close is isolated from the
-	 * plugin destroy, so one failure cannot skip the other.
-	 *
-	 * `destroyPlugins` is opt-out for graceful shutdown, which destroys plugins
-	 * after the zniffer instead.
+	 * Close one gateway generation's gateway, returning every error it collected
+	 * so each caller picks its own disposition. A missing gateway is a no-op.
 	 */
-	private async closeGeneration(
+	private async closeGatewayCollectingErrors(
 		gw: GatewayPort | undefined,
-		options?: { destroyPlugins?: boolean },
 	): Promise<unknown[]> {
 		const errors: unknown[] = []
 
@@ -368,12 +386,6 @@ export class AppRuntime {
 			if (gw) await gw.close()
 		} catch (error) {
 			errors.push(error)
-		}
-
-		// `destroyPlugins` swallows each plugin's own failure, so it needs no
-		// isolation of its own here
-		if (options?.destroyPlugins !== false) {
-			await this.destroyPlugins()
 		}
 
 		return errors
@@ -418,38 +430,50 @@ export class AppRuntime {
 	/**
 	 * The one teardown path for the current gateway generation, shared by graceful
 	 * {@link shutdown}, `/api/restart` and a settings-change restart, so all three
-	 * get an identical order. Deduplicated through {@link teardownFlight}, so a
-	 * `shutdown()` racing an `/api/restart` closes the gateway exactly once.
+	 * close the gateway in the same order. The latch dedups only the gateway
+	 * close, so a `shutdown()` racing an `/api/restart` closes the gateway once.
 	 *
-	 * `requireGateway` surfaces a missing gateway as a caller error, which
-	 * `/api/restart` wants and graceful shutdown does not.
+	 * `requireGateway` is validated outside the latch, so a joiner's requirement
+	 * is enforced instead of dropped. `destroyPlugins` runs per caller after the
+	 * shared close, so a joiner's choice and ordering are never overridden by the
+	 * caller that won the race. Graceful shutdown opts out and destroys plugins
+	 * after the zniffer.
 	 */
 	async teardownGateway(options?: {
 		requireGateway?: boolean
 		destroyPlugins?: boolean
 	}): Promise<void> {
-		return this.teardownFlight.run(async () => {
-			// Abort the in-flight start rather than await it, because a hung
-			// `gw.start()` or plugin import may never settle. Closing the gateway
-			// below is what unblocks a hung start, by destroying the driver
-			this.currentStart?.abort()
+		const gw = options?.requireGateway ? this.ensureGateway() : this.gateway
 
-			const gw = options?.requireGateway
-				? this.ensureGateway()
-				: this.gateway
-			const teardownErrors = await this.closeGeneration(gw, {
-				destroyPlugins: options?.destroyPlugins,
-			})
+		try {
+			await this.teardownFlight.run(async () => {
+				// Abort the in-flight start rather than await it, because a hung
+				// `gw.start()` or plugin import may never settle. Closing the
+				// gateway below is what unblocks a hung start, by destroying the
+				// driver
+				this.currentStart?.abort()
 
-			// Log every error before rethrowing the first, so nothing behind it is
-			// silently discarded
-			if (teardownErrors.length > 0) {
-				for (const error of teardownErrors) {
-					logger.error('Error while tearing down the gateway', error)
+				const errors = await this.closeGatewayCollectingErrors(gw)
+
+				// Log every error before rethrowing the first, so nothing behind
+				// it is silently discarded
+				if (errors.length > 0) {
+					for (const error of errors) {
+						logger.error(
+							'Error while tearing down the gateway',
+							error,
+						)
+					}
+					throw errors[0]
 				}
-				throw teardownErrors[0]
+			})
+		} finally {
+			// Destroy plugins even when the close rejected, matching the old
+			// fall-through teardown. Idempotent, so joined callers can each run it
+			if (options?.destroyPlugins !== false) {
+				await this.destroyPlugins()
 			}
-		})
+		}
 	}
 
 	/**
