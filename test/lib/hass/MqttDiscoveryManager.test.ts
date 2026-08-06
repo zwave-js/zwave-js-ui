@@ -384,6 +384,39 @@ describe('MqttDiscoveryManager scoped status subscription', () => {
 		status.deliver(HASS_STATUS_TOPIC, 'online')
 		expect(rediscoverAll).not.toHaveBeenCalled()
 	})
+
+	it('stop() isolates a throwing status disposer, still disposing the registry and re-subscribing later', () => {
+		const { manager } = makeManager()
+		const disposeRegistry = vi.spyOn(
+			manager.customDeviceRegistry,
+			'dispose',
+		)
+		const status = makeStatusSource()
+		// The scoped unsubscribe throws synchronously: the listener is removed,
+		// then the dispose throws, the wedge case `once` used to leave latched
+		const realSubscribeExact = status.subscribeExact.bind(status)
+		status.subscribeExact = (topic, listener) => {
+			const sub = realSubscribeExact(topic, listener)
+			return {
+				dispose() {
+					sub.dispose()
+					throw new Error('unsubscribe failed')
+				},
+			}
+		}
+
+		manager.start(status, true)
+		expect(status.exactCount()).toBe(1)
+
+		// The first error surfaces, but the registry is still disposed
+		expect(() => manager.stop()).toThrow('unsubscribe failed')
+		expect(disposeRegistry).toHaveBeenCalledTimes(1)
+
+		// The disposer field was cleared despite the throw, so a later start
+		// re-subscribes instead of being blocked by a stale guard
+		manager.start(status, true)
+		expect(status.exactCount()).toBe(1)
+	})
 })
 
 describe('MqttDiscoveryManager multi-instance isolation', () => {

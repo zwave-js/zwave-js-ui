@@ -291,6 +291,44 @@ describe('Home Assistant status and broker reconnect re-announce all devices', (
 		await closing
 	})
 
+	it('close() runs every teardown step and throws the first error when zwave and mqtt both reject', async () => {
+		const zwaveError = new Error('zwave close failed')
+		let zwaveCalls = 0
+		// Only the first close rejects, so the harness cleanup can still finish
+		const replaced = await gatewayHarness.replace({
+			zwave: {
+				close: vi.fn(() =>
+					++zwaveCalls === 1
+						? Promise.reject(zwaveError)
+						: Promise.resolve(),
+				),
+			},
+		})
+		replaced.broker.triggerConnect()
+		await tick()
+
+		// The real MqttClient's close rejects once, through its public method
+		const mqttError = new Error('mqtt close failed')
+		const mqttClose = vi
+			.spyOn(replaced.mqtt, 'close')
+			.mockRejectedValueOnce(mqttError)
+		// detachListeners removes the gateway's zwave listeners
+		const zwaveOff = vi.spyOn(replaced.zwave, 'off')
+
+		// The first error (an early step) surfaces even though mqtt (a later
+		// step) also rejects
+		await expect(replaced.gw.close()).rejects.toBe(zwaveError)
+
+		// mqtt.close was still reached (the last step) and listeners were
+		// detached, so cancelJobs between them ran too: the failing zwave.close
+		// skipped no later step
+		expect(mqttClose).toHaveBeenCalledTimes(1)
+		expect(zwaveOff).toHaveBeenCalled()
+
+		mqttClose.mockRestore()
+		zwaveOff.mockRestore()
+	})
+
 	it('HA "online" (any case) republishes the device discovery topic', async () => {
 		harness.resetPublishes()
 		harness.zwave.nodes.clear()

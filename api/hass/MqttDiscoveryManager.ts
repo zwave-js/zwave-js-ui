@@ -1,5 +1,4 @@
 import { DiscoveryGenerator } from './DiscoveryGenerator.ts'
-import { once } from '../lib/utils.ts'
 import type {
 	HassDiscoveryConfig,
 	HassDeviceRegistryLifecyclePort,
@@ -100,12 +99,32 @@ export default class MqttDiscoveryManager {
 	/**
 	 * Dispose the status subscription and the catalog view; idempotent. The
 	 * publication fence drops synchronously first, so no retained discovery can
-	 * publish from an event arriving later in the teardown.
+	 * publish from an event arriving later in the teardown. Each step is isolated,
+	 * so one throwing does not skip the rest, and the first error is rethrown.
 	 */
 	public stop(): void {
-		this._discoveryGenerator.deactivate()
-		this._statusDisposer?.()
-		this._customDeviceRegistry.dispose()
+		const errors: unknown[] = []
+		const step = (label: string, fn: () => void): void => {
+			try {
+				fn()
+			} catch (error) {
+				errors.push(error)
+				this.logger.error(
+					`Error while stopping discovery (${label})`,
+					error,
+				)
+			}
+		}
+
+		step('deactivate', () => this._discoveryGenerator.deactivate())
+		// Clear the field before invoking the disposer, so a throwing disposer
+		// still leaves it clear and a later start() can re-subscribe
+		const disposeStatus = this._statusDisposer
+		this._statusDisposer = undefined
+		if (disposeStatus) step('status', disposeStatus)
+		step('registry', () => this._customDeviceRegistry.dispose())
+
+		if (errors.length > 0) throw errors[0]
 	}
 
 	/**
@@ -141,10 +160,11 @@ export default class MqttDiscoveryManager {
 		)
 		source.on('brokerStatus', onBrokerStatus)
 
-		this._statusDisposer = once((): void => {
+		// `stop()` clears `_statusDisposer` before invoking this, so a throwing
+		// dispose cannot wedge the field truthy and block a later re-subscribe
+		this._statusDisposer = (): void => {
 			subscription.dispose()
 			source.off('brokerStatus', onBrokerStatus)
-			this._statusDisposer = undefined
-		})
+		}
 	}
 }

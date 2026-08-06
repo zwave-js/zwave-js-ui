@@ -443,11 +443,15 @@ export default class Gateway<
 		// Every step runs even if an earlier one throws, so the first error is
 		// reported without any cleanup being skipped
 		const errors: unknown[] = []
-		const step = async (fn: () => void | Promise<void>): Promise<void> => {
+		const step = async (
+			label: string,
+			fn: () => void | Promise<void>,
+		): Promise<void> => {
 			try {
 				await fn()
 			} catch (error) {
 				errors.push(error)
+				logger.error(`Error while closing Gateway (${label})`, error)
 			}
 		}
 
@@ -455,19 +459,20 @@ export default class Gateway<
 		// synchronously, so no late `nodeRemoved`/`valueChanged` publishes retained
 		// discovery, and the `homeassistant/status` unsubscribe reaches the broker
 		// even if the driver teardown below hangs
-		await step(() => this._mqttDiscovery.stop())
-		await step(() => this._zwave?.close())
-		await step(() => this.cancelJobs())
-		await step(() => this.detachListeners())
+		await step('discovery', () => this._mqttDiscovery.stop())
+		await step('zwave', () => this._zwave?.close())
+		await step('jobs', () => this.cancelJobs())
+		await step('listeners', () => this.detachListeners())
 		// Preserve the Z-Wave-before-MQTT shutdown contract
 		if (this.mqttEnabled) {
-			await step(() => this._mqtt.close())
+			await step('mqtt', () => this._mqtt.close())
 		}
 
-		// Always log a completion marker, so the logs can tell "finished" from
-		// "stuck in here"
+		// Report the first failure, but raise the completion line above info and
+		// carry the count, so a real teardown failure is not lost when grepping
+		// for errors
 		if (errors.length > 0) {
-			logger.info('Gateway closed with errors')
+			logger.warn(`Gateway closed with ${errors.length} error(s)`)
 			throw errors[0]
 		}
 		logger.info('Gateway closed')

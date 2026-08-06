@@ -111,10 +111,12 @@ export default class ZwaveServerManager {
 	}
 
 	/**
-	 * Tear down the server, awaiting `destroy()` so the caller can rely on the
-	 * listening port being released before it destroys the driver. A no-op when
-	 * none was created; a rejected destroy keeps the reference so a later call
-	 * retries.
+	 * Tear down the server, awaiting `destroy()` so a created server releases its
+	 * listening port before the caller destroys the driver. A no-op when none was
+	 * created; a rejected destroy keeps the reference so a later call retries.
+	 *
+	 * A `startIfNeeded()` still in flight is fire-and-forget: this neither awaits
+	 * nor cancels it, so a start landing mid-destroy can still finish binding.
 	 */
 	public async destroy(): Promise<void> {
 		const server = this._server
