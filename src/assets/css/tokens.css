@@ -47,6 +47,11 @@
 	--zw-chip-fg: rgba(var(--v0-on-surface), 0.65);
 	--zw-row-hover: rgba(var(--v0-primary), 0.04);
 
+	/* The tooltip inverts the surface so it looks like an overlay. `on-surface` is
+	   black in the light theme, so the fill flips with the theme */
+	--zw-tip-bg: rgba(var(--v0-on-surface), 0.88);
+	--zw-tip-fg: rgb(var(--v0-surface));
+
 	/* ── Typography ──────────────────────────────────────────── */
 	--zw-font: 'Roboto', system-ui, sans-serif;
 	--zw-mono: 'Roboto Mono', ui-monospace, monospace;

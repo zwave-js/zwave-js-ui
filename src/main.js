@@ -4,6 +4,7 @@ import vuetify0 from './plugins/vuetify0'
 import vuetify from './plugins/vuetify' // legacy — removed once Phase 6 lands
 import router from './router'
 import App from './App.vue'
+import { registerDirectives } from './directives'
 import { registerSW } from 'virtual:pwa-register'
 
 // Self-host the dashboard typography. Each @fontsource weight CSS ships
@@ -47,5 +48,6 @@ app.use(pinia)
 vuetify0(app)
 app.use(vuetify)
 app.use(router)
+registerDirectives(app)
 
 app.mount('#app')

@@ -77,13 +77,13 @@
 						>
 							<v-btn
 								value="physical"
-								v-tooltip:bottom="'Physical devices'"
+								v-zw-tooltip:bottom="'Physical devices'"
 							>
 								<v-icon>device_hub</v-icon>
 							</v-btn>
 							<v-btn
 								value="virtual"
-								v-tooltip:bottom="
+								v-zw-tooltip:bottom="
 									'Virtual devices (broadcast / multicast groups)'
 								"
 							>
@@ -164,7 +164,7 @@
 													!isSelected(item),
 												)
 											"
-											v-tooltip:bottom="
+											v-zw-tooltip:bottom="
 												item.raw.virtual
 													? 'Virtual devices cannot be selected'
 													: 'Click to select'
@@ -221,31 +221,21 @@
 										"
 									>
 										<div>
-											<v-tooltip location="bottom">
-												<template
-													#activator="{ props }"
-												>
-													<div
-														v-bind="props"
-														class="text-h4"
-													>
-														<rich-value
-															:value="
-																statusRichValue(
-																	item.raw,
-																)
-															"
-														/>
-													</div>
-												</template>
-												<span
-													style="
-														white-space: pre-wrap;
+											<div
+												class="text-h4"
+												v-zw-tooltip:bottom="
+													nodeInfo(item.raw)
+												"
+											>
+												<rich-value
+													no-tooltip
+													:value="
+														statusRichValue(
+															item.raw,
+														)
 													"
-													v-text="nodeInfo(item.raw)"
-												>
-												</span>
-											</v-tooltip>
+												/>
+											</div>
 
 											<reinterview-badge
 												:node="item.raw"
@@ -273,7 +263,7 @@
 											class="ma-1"
 											size="32"
 											color="primary"
-											v-tooltip:bottom="
+											v-zw-tooltip:bottom="
 												'Interview stage: ' +
 												item.raw.interviewStage
 											"
@@ -489,6 +479,9 @@ export default {
 		},
 		nodeInfo(node) {
 			return jsonToList({
+				// The status icon's own tooltip is suppressed here, so this
+				// carries the label it would have shown
+				Status: node.virtual ? 'Virtual node' : node.status,
 				Manufacturer: node.manufacturer,
 				'Product Description': node.productDescription,
 				'Product Label': node.productLabel,

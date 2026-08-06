@@ -130,7 +130,7 @@
 					class="ml-3"
 					style="cursor: default"
 					:color="inclusionState.color"
-					v-tooltip:bottom="inclusionState.message"
+					v-zw-tooltip:bottom="inclusionState.message"
 				>
 					{{ inclusionState.icon }}
 				</v-icon>
@@ -140,7 +140,7 @@
 					class="mr-3 ml-3"
 					style="cursor: default"
 					:color="statusColor || 'warning'"
-					v-tooltip:bottom="status"
+					v-zw-tooltip:bottom="status"
 				>
 					swap_horizontal_circle
 				</v-icon>
@@ -182,7 +182,7 @@
 					class="mr-3"
 					:content="updateAvailable"
 					:model-value="!!updateAvailable"
-					v-tooltip:bottom="`Check Updates`"
+					v-zw-tooltip:bottom="`Check Updates`"
 					color="error"
 				>
 					<v-btn
@@ -234,7 +234,7 @@
 								density="compact"
 								class="mr-2"
 								v-bind="props"
-								v-tooltip:bottom="item.tooltip"
+								v-zw-tooltip:bottom="item.tooltip"
 								:icon="item.icon"
 								:color="item.color || 'primary'"
 								@click="item.func"
