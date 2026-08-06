@@ -152,10 +152,15 @@ export default class MqttDiscoveryManager {
 		source.on('brokerStatus', onBrokerStatus)
 
 		// `stop()` clears `_statusDisposer` before invoking this, so a throwing
-		// dispose cannot wedge the field truthy and block a later re-subscribe
+		// dispose cannot wedge the field truthy and block a later re-subscribe.
+		// The `finally` drops the broker listener even if the unsubscribe throws,
+		// so a later start() cannot leave a duplicate `brokerStatus` listener
 		this._statusDisposer = (): void => {
-			subscription.dispose()
-			source.off('brokerStatus', onBrokerStatus)
+			try {
+				subscription.dispose()
+			} finally {
+				source.off('brokerStatus', onBrokerStatus)
+			}
 		}
 	}
 }

@@ -413,9 +413,11 @@ describe('MqttDiscoveryManager scoped status subscription', () => {
 		expect(disposeRegistry).toHaveBeenCalledTimes(1)
 
 		// The disposer field was cleared despite the throw, so a later start
-		// re-subscribes instead of being blocked by a stale guard
+		// re-subscribes instead of being blocked by a stale guard, and the broker
+		// listener was still removed, so no duplicate is left behind
 		manager.start(status, true)
 		expect(status.exactCount()).toBe(1)
+		expect(status.brokerCount()).toBe(1)
 	})
 })
 
