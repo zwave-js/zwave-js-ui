@@ -15,20 +15,16 @@
 			:data-no-dismiss="dismiss === 'none' || undefined"
 			@keydown.capture="onKeydown"
 		>
-			<!-- v0 puts aria-labelledby/-describedby on the <dialog>, so the
-			     names have to come from these; the visible header repeats them -->
+			<!-- v0 points the dialog's `aria-labelledby` at this element, so the
+			     accessible name must live here -->
 			<Dialog.Title :namespace="dialogId" class="zw-dlg__a11y">
 				{{ title }}
 			</Dialog.Title>
-			<!-- Rendered even without a subtitle: v0 puts `aria-describedby` on
-			     the <dialog> unconditionally, and an empty description beats an
-			     id that resolves to nothing -->
+			<!-- v0 sets `aria-describedby` on the <dialog> unconditionally, so
+			     this element must render even without a subtitle -->
 			<Dialog.Description :namespace="dialogId" class="zw-dlg__a11y">
 				{{ subtitle }}
 			</Dialog.Description>
-			<!-- Vuetify bridge: its overlays teleport into a `.v-overlay-container`
-			     under `<body>`, which this top-layer dialog paints over, so hand
-			     them the dialog element to attach to instead -->
 			<v-defaults-provider :defaults="vuetifyDefaults">
 				<div ref="content" class="zw-dlg">
 					<ZwProgressBar
@@ -42,7 +38,7 @@
 						:class="ruleClass"
 					/>
 
-					<!-- Vertical-rail wizard layout: the rail spans header+body, the footer stays full-width -->
+					<!-- The rail spans the header and body, and the footer stays full-width -->
 					<div v-if="$slots.rail" class="zw-dlg__split">
 						<slot name="rail" />
 						<div class="zw-dlg__main">
@@ -152,8 +148,8 @@ const emit = defineEmits<{
 	'update:contentWidth': [number]
 }>()
 
-// Doubles as the v0 injection namespace: v0 registers contexts per namespace, so
-// two dialogs on the default would share one context and dismiss together
+// `dialogId` doubles as the v0 injection namespace. v0 registers contexts per
+// namespace, so each dialog needs its own
 const dialogId = `zw-dlg-${useId()}`
 
 // Defer unmount by a tick so `afterLeave` fires after the element is gone
@@ -162,8 +158,8 @@ const { isMounted } = usePresence({
 	immediate: true,
 })
 
-// Route v0's dismissal straight back out rather than mirroring it locally: a
-// mirror v0 re-raises calls `showModal()` twice and re-promotes the dialog
+// `rootOpen` must stay a pass-through of `modelValue`. A local copy makes v0
+// call `showModal()` twice and re-promote the dialog
 const rootOpen = computed({
 	get: () => props.modelValue,
 	set: (v) => {
@@ -175,24 +171,23 @@ watch(isMounted, (mounted) => {
 	if (!mounted) emit('afterLeave')
 })
 
-// Pressing Escape in Chrome 150 closes every open dialog at once. v0 always
-// closes the current dialog on the native cancel event, regardless of
-// `dismiss`. Therefore, we implement our own dismissal policy
+// Close on Escape only when `dismiss` is 'all'. v0 closes the dialog on the
+// native cancel event whatever `dismiss` says, and Chrome 150 closes every open
+// dialog at once
 function onKeydown(e: KeyboardEvent) {
 	if (e.key !== 'Escape') return
 	e.preventDefault()
-	// Vuetify bridge: its menus close on Escape from a `window` listener that
-	// ignores `defaultPrevented`, so an open one still gets first refusal here
+	// Vuetify menus close on Escape from a `window` listener that ignores
+	// `defaultPrevented`, so return early while one is open
 	const el = e.currentTarget
 	if (el instanceof Element && el.querySelector('.v-overlay--active')) return
 	if (props.dismiss === 'all') close()
 }
 
-// `attach` only picks where the overlay's markup gets teleported. Positioning
-// is still calculated against the viewport regardless. This points it at the
-// dialog's own element, so overlays don't land in the part of the page that
-// `showModal()` disables
 const native = ref<ComponentPublicInstance | null>(null)
+// Point `attach` at the dialog's own element, so Vuetify overlays render inside
+// the part of the page `showModal()` leaves interactive. `attach` only picks the
+// teleport target. Positioning is still measured against the viewport
 const vuetifyDefaults = computed(() => {
 	const el: unknown = native.value?.$el
 	return { global: { attach: el instanceof HTMLElement ? el : false } }
@@ -280,10 +275,10 @@ function variantFor(a: DialogAction): ZwButtonVariant {
 </script>
 
 <style>
-/* Non-scoped: the native dialog lives in the top layer, outside this
-   component's DOM subtree, so scoped selectors would not reach it */
+/* The native dialog lives in the top layer, outside this component's DOM
+   subtree, so these rules must stay unscoped */
 
-/* The <dialog> element is the positioning box; .zw-dlg inside is the panel */
+/* The <dialog> element is the positioning box, and .zw-dlg inside it is the panel */
 .zw-dlg__native {
 	max-width: calc(100vw - 32px);
 	max-height: var(--zw-dlg-max-h);
@@ -300,7 +295,6 @@ function variantFor(a: DialogAction): ZwButtonVariant {
 	animation: zw-fade-in 0.16s;
 }
 
-/* Render a darker backdrop for non-dismissable dialogs */
 .zw-dlg__native[data-no-dismiss]::backdrop {
 	background: rgba(0, 0, 0, 0.62);
 }
@@ -338,7 +332,7 @@ function variantFor(a: DialogAction): ZwButtonVariant {
 	font-family: var(--zw-font);
 }
 
-/* Announced only: the header already shows both strings */
+/* The header already shows both strings, so these elements are announced only */
 .zw-dlg__a11y {
 	position: absolute;
 	width: 1px;
@@ -418,8 +412,8 @@ function variantFor(a: DialogAction): ZwButtonVariant {
 
 /* ── body ── */
 .zw-dlg__body {
-	/* Scrolling clips both axes, and a Vuetify floating label sits ~8px above
-	   its field, so the first row of a form needs that much headroom */
+	/* A Vuetify floating label sits ~8px above its field, so the first form row
+	   needs that much headroom. Scrolling clips both axes */
 	padding: 10px var(--zw-dlg-pad-x) 16px;
 	overflow-y: auto;
 	flex: 0 1 auto;

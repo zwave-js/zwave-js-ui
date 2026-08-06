@@ -1,15 +1,14 @@
-import { watch } from 'vue'
-import { useStack } from '@vuetify/v0'
-
 // Dashboard dialogs are native `<dialog>` elements, so they sit in the top
 // layer, above every z-index stacking context
+
+import { watch } from 'vue'
+import { useStack } from '@vuetify/v0'
 
 const TOASTER = '[data-sonner-toaster]'
 
 let installed = false
 
-// Call once, from the app root — `installed` and the scroll lock below are
-// module-level singletons shared by the whole app
+/** Call once, from the app root. The scroll lock and the toast promotion are module-wide. */
 export function useOverlayLayer(): void {
 	if (installed) {
 		if (import.meta.env.DEV) {
@@ -23,7 +22,8 @@ export function useOverlayLayer(): void {
 
 	const stack = useStack()
 
-	// `showModal()` inerts the page but leaves it scrollable
+	// `showModal()` blocks clicks outside the dialog but leaves the page
+	// scrollable
 	let priorOverflow: string | null = null
 	watch(
 		() => stack.isActive.value,
@@ -47,8 +47,8 @@ export function useOverlayLayer(): void {
 		toaster ??= document.querySelector<HTMLElement>(TOASTER)
 		const wanted = !!stack.topElement.value
 		if (!toaster) {
-			// The selector reaches into vuetify-sonner's internal DOM, so a
-			// rename on upgrade would silently vanish toasts behind every modal
+			// `TOASTER` matches vuetify-sonner's internal DOM, so an upgrade
+			// may rename it
 			if (wanted && !warnedMissingToaster && import.meta.env.DEV) {
 				warnedMissingToaster = true
 				console.warn(
@@ -63,8 +63,9 @@ export function useOverlayLayer(): void {
 			return
 		}
 		toaster.setAttribute('popover', 'manual')
-		// Paint order only: the region stays in the subtree `showModal()` inerts,
-		// so a toast's close button is dead while a dialog is open
+		// `showPopover()` changes paint order only. The region stays outside the
+		// dialog, where `showModal()` blocks clicks, so a toast's close button
+		// is dead while a dialog is open
 		toaster.showPopover()
 	}
 
