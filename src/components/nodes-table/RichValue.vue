@@ -1,7 +1,7 @@
 <template>
 	<!-- Use the tooltip directive because this row can re-render many times
 	     per second -->
-	<div v-zw-tooltip:bottom="value && value.description">
+	<div v-zw-tooltip:bottom="noTooltip ? '' : value && value.description">
 		<span
 			v-if="value !== undefined && value.icon === ''"
 			:style="'padding-top: 4px; ' + value.displayStyle"
@@ -55,6 +55,12 @@ export default {
 					rawValue: undefined,
 				}
 			},
+		},
+		// Set where an ancestor already carries a tooltip over the same pixels.
+		// The inner label is the more specific one and would win
+		noTooltip: {
+			type: Boolean,
+			default: false,
 		},
 	},
 	components: {

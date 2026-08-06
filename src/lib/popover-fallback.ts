@@ -24,6 +24,9 @@ const FALLBACK_PLACEMENTS: Partial<Record<Placement, Placement[]>> = {
 // edge
 const VIEWPORT_PADDING_PX = 8
 
+// Shared gap between an anchor and the surface pinned to it
+export const DEFAULT_OFFSET_PX = 6
+
 interface TrackOptions {
 	placement: Placement
 	offsetPx: number
@@ -42,7 +45,8 @@ export function trackAnchor(
 	{ placement, offsetPx, fallbackPlacements, important }: TrackOptions,
 ): () => void {
 	const priority = important ? 'important' : ''
-	return autoUpdate(anchor, floating, () => {
+	let stopped = false
+	const stop = autoUpdate(anchor, floating, () => {
 		computePosition(anchor, floating, {
 			placement,
 			strategy: 'fixed',
@@ -53,6 +57,10 @@ export function trackAnchor(
 			],
 		})
 			.then(({ x, y }) => {
+				// autoUpdate's teardown can't cancel a promise already in
+				// flight, and callers that share one floating element would
+				// otherwise get it parked at the previous anchor
+				if (stopped) return
 				floating.style.setProperty('top', `${y}px`, priority)
 				floating.style.setProperty('left', `${x}px`, priority)
 			})
@@ -60,6 +68,10 @@ export function trackAnchor(
 				console.error('[popover-fallback] computePosition failed', err)
 			})
 	})
+	return () => {
+		stopped = true
+		stop()
+	}
 }
 
 interface FallbackPositionOptions {
@@ -67,7 +79,7 @@ interface FallbackPositionOptions {
 	contentId: MaybeRefOrGetter<string>
 	// Default: 'bottom-end'. Pass 'bottom-start' for left-anchored menus.
 	placement?: Placement
-	// Gap between activator and panel in pixels. Default: 6.
+	// Gap between activator and panel in pixels.
 	offsetPx?: number
 }
 
@@ -75,7 +87,7 @@ export function usePopoverFallback({
 	open,
 	contentId,
 	placement = 'bottom-end',
-	offsetPx = 6,
+	offsetPx = DEFAULT_OFFSET_PX,
 }: FallbackPositionOptions): void {
 	let cleanup: (() => void) | null = null
 

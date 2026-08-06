@@ -7,6 +7,9 @@
 	margin: 0;
 	inset: auto;
 	max-width: 260px;
+	/* jsonToList output for a controller runs long, and flip can't rescue a tip
+	   taller than the viewport */
+	max-height: 60vh;
 	padding: 5px 8px;
 	border: none;
 	border-radius: var(--zw-radius-sm);
@@ -15,7 +18,7 @@
 	font: var(--zw-text-caption);
 	line-height: 1.35;
 	white-space: pre-wrap;
-	overflow: visible;
+	overflow: hidden auto;
 	box-shadow: var(--zw-e8);
 	animation: zw-fade-in 0.1s;
 }

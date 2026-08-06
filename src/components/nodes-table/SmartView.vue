@@ -228,6 +228,7 @@
 												"
 											>
 												<rich-value
+													no-tooltip
 													:value="
 														statusRichValue(
 															item.raw,
@@ -478,6 +479,9 @@ export default {
 		},
 		nodeInfo(node) {
 			return jsonToList({
+				// The status icon's own tooltip is suppressed here, so this
+				// carries the label it would have shown
+				Status: node.virtual ? 'Virtual node' : node.status,
 				Manufacturer: node.manufacturer,
 				'Product Description': node.productDescription,
 				'Product Label': node.productLabel,

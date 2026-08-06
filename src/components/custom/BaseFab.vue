@@ -16,16 +16,14 @@
 			:attach="true"
 			:transition="transition"
 		>
+			<!-- Speed-dial items stack vertically, so a top-placed tip would
+			     cover the item above -->
 			<v-btn
 				v-for="(item, i) in items.filter((x) => !x.hide)"
 				v-zw-tooltip="{
 					disabled: !item.tooltip,
 					text: item.tooltip,
-					location: item.left
-						? 'left'
-						: item.right
-							? 'right'
-							: undefined,
+					location: item.left ? 'left' : 'right',
 				}"
 				variant="flat"
 				:key="i"
