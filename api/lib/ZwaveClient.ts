@@ -7825,6 +7825,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				zwaveValue,
 				existingValues,
 				true,
+				values,
 			)
 
 			if (!res) continue
@@ -9096,6 +9097,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			[key: string]: ZUIValueId
 		},
 		skipUpdate = false,
+		definedValueIds?: TranslatedValueID[],
 	) {
 		const node = this._nodes.get(zwaveNode.id)
 
@@ -9121,6 +9123,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				zwaveNode,
 				zwaveValue,
 				zwaveValueMeta,
+				definedValueIds,
 			)
 
 			const vID = this._getValueID(valueId)
@@ -9158,6 +9161,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		zwaveNode: ZWaveNode,
 		zwaveValue: TranslatedValueID & { [x: string]: any },
 		zwaveValueMeta: ValueMetadata,
+		definedValueIds?: TranslatedValueID[],
 	) {
 		const node = this._nodes.get(zwaveNode.id)
 		const valueId = this._updateValueMetadata(
@@ -9187,9 +9191,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		if (this._isCurrentValue(valueId)) {
 			valueId.isCurrentValue = true
+			// Reuse the caller's list because getDefinedValueIDs() rebuilds it on every call
 			const targetValue = this._findTargetValue(
 				valueId,
-				zwaveNode.getDefinedValueIDs(),
+				definedValueIds ?? zwaveNode.getDefinedValueIDs(),
 			)
 			if (targetValue) {
 				valueId.targetValue = this._getValueID(targetValue)
