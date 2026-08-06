@@ -68,7 +68,6 @@
 			></v-text-field>
 			<v-select
 				v-if="input.inputType === 'select'"
-				:menu-props="menuProps"
 				v-model="item"
 				:label="input.label"
 				:hint="input.hint"
@@ -81,7 +80,6 @@
 			></v-select>
 			<v-autocomplete
 				v-if="input.inputType === 'autocomplete'"
-				:menu-props="menuProps"
 				v-model.trim="item"
 				:label="input.label"
 				:persistent-hint="!!input.hint"
@@ -95,7 +93,6 @@
 			></v-autocomplete>
 			<v-combobox
 				v-if="input.inputType === 'combobox'"
-				:menu-props="menuProps"
 				v-model.trim="item"
 				:label="input.label"
 				:hint="input.hint"
@@ -125,7 +122,6 @@ export default {
 		input: Object,
 		modelValue: Array,
 		toggleEdit: { type: Boolean, default: true },
-		menuProps: Object,
 	},
 	components: {
 		draggable,

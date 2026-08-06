@@ -391,6 +391,7 @@ import io from 'socket.io-client'
 import 'vuetify-sonner/style.css'
 import { toast, VSonner } from 'vuetify-sonner'
 
+import { useOverlayLayer } from '@/lib/dashboard-overlay'
 import ConfigApis from '@/apis/ConfigApis'
 import Confirm from '@/components/Confirm.vue'
 import PasswordDialog from '@/components/dialogs/Password.vue'
@@ -434,6 +435,9 @@ export default {
 	},
 	mixins: [InstancesMixin],
 	name: 'app',
+	setup() {
+		useOverlayLayer()
+	},
 	computed: {
 		...mapState(useBaseStore, [
 			'user',

@@ -1,7 +1,12 @@
 <template>
 	<!-- Mobile: V0 Dialog overlay (focus trap, ESC, ::backdrop) -->
-	<Dialog.Root v-if="modeIsMobile" v-model="mobileOpenModel">
+	<Dialog.Root
+		v-if="modeIsMobile"
+		v-model="mobileOpenModel"
+		namespace="zw-sidebar"
+	>
 		<Dialog.Content
+			namespace="zw-sidebar"
 			class="zw-sidebar__dialog"
 			:close-on-click-outside="true"
 		>

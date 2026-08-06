@@ -1,0 +1,11 @@
+/* Overrides for surfaces promoted into the browser top layer. Tokens stay in tokens.css */
+
+/* Strip the popover UA box so sonner's own top/right positioning still applies */
+[data-sonner-toaster][popover] {
+	inset: auto;
+	margin: 0;
+	padding: 0;
+	border: none;
+	background: transparent;
+	overflow: visible;
+}
