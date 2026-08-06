@@ -63,6 +63,12 @@ export interface FakeBroker extends EventEmitter {
 			granted: { topic: string; qos: number }[],
 		) => void
 	}>
+	/**
+	 * Exact topics the broker denies: `subscribe` grants them `qos === 128`
+	 * with no error, exactly how `mqtt.js` surfaces a broker permission denial.
+	 * Applies to both the synchronous and `flushSubscribes` grant paths.
+	 */
+	denySubscribe: Set<string>
 	publish(
 		topic: string,
 		payload: string,
@@ -166,6 +172,14 @@ export function createFakeBroker(): FakeBroker {
 	broker.ended = false
 	broker.deferSubscribe = false
 	broker.pendingSubscribes = []
+	broker.denySubscribe = new Set()
+
+	// A denied topic is granted qos 128, like a real broker refusing permission
+	const grantedQos = (
+		topic: string,
+		options: Record<string, any> | undefined,
+	) =>
+		broker.denySubscribe.has(topic) ? 128 : ((options?.qos as number) ?? 0)
 
 	broker.publish = (topic, payload, options, cb) => {
 		// Mirror `mqtt`'s `publish(topic, payload, cb)` overload where the 3rd
@@ -197,9 +211,9 @@ export function createFakeBroker(): FakeBroker {
 			broker.pendingSubscribes.push({ topic, options, cb })
 			return broker
 		}
-		// Real `mqtt` grants `{ topic, qos }[]`; the wrapper treats qos 128 as
-		// a permission error, so return the requested qos to model a grant.
-		cb?.(null, [{ topic, qos: options?.qos ?? 0 }])
+		// Real `mqtt` grants `{ topic, qos }[]`; a denied topic comes back as
+		// qos 128, which the wrapper treats as a permission error
+		cb?.(null, [{ topic, qos: grantedQos(topic, options) }])
 		return broker
 	}
 
@@ -210,7 +224,7 @@ export function createFakeBroker(): FakeBroker {
 				p.cb?.(err, [])
 			} else {
 				p.cb?.(null, [
-					{ topic: p.topic, qos: (p.options?.qos as number) ?? 0 },
+					{ topic: p.topic, qos: grantedQos(p.topic, p.options) },
 				])
 			}
 		}

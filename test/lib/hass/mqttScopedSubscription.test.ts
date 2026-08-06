@@ -27,6 +27,7 @@ import { mqttMockFactory, latestBroker, resetMqttBrokers } from './mqttMock.ts'
 import { defaultMqttConfig, tick } from './fixtures.ts'
 import { ensureTestEnv, cleanupTestEnv } from './env.ts'
 import MqttClient from '#api/lib/MqttClient.ts'
+import { module } from '#api/lib/logger.ts'
 
 vi.mock('mqtt', () => mqttMockFactory())
 
@@ -458,5 +459,118 @@ describe('MqttClient scoped exact-topic subscription', () => {
 		expect(() => client.subscribeExact(STATUS_TOPIC, () => {})).toThrow(
 			/closed/,
 		)
+	})
+
+	it('retries a transient scoped subscribe failure on the 5s timer while still connected', async () => {
+		const client = makeClient()
+		const received: string[] = []
+
+		const broker = latestBroker()
+		broker.triggerConnect()
+		await tick()
+
+		vi.useFakeTimers()
+		try {
+			broker.deferSubscribe = true
+			broker.subscribed.length = 0
+
+			client.subscribeExact(STATUS_TOPIC, (p) => received.push(p ?? ''))
+			// The first attempt fails transiently while still connected and
+			// desired, so it schedules a retry rather than waiting for a reconnect
+			broker.flushSubscribes(new Error('transient'))
+			await vi.advanceTimersByTimeAsync(0)
+
+			// No reconnect happened: the link stayed up, one attempt was made
+			expect(broker.connected).toBe(true)
+			expect(statusSubscribes()).toBe(1)
+
+			// The shared 5s timer fires a second attempt that succeeds
+			broker.deferSubscribe = false
+			await vi.advanceTimersByTimeAsync(5000)
+			expect(statusSubscribes()).toBe(2)
+
+			broker.deliver(STATUS_TOPIC, 'online')
+			expect(received).toEqual(['online'])
+		} finally {
+			vi.useRealTimers()
+		}
+
+		await client.close()
+	})
+
+	it('logs a qos-128 denial on the scoped path and never retries it', async () => {
+		const client = makeClient()
+		const errorSpy = vi.spyOn(module('Mqtt'), 'error')
+
+		try {
+			const broker = latestBroker()
+			// The broker denies the topic: the grant comes back qos 128, exactly
+			// how mqtt.js surfaces a permission denial
+			broker.denySubscribe.add(STATUS_TOPIC)
+			broker.triggerConnect()
+			await tick()
+
+			vi.useFakeTimers()
+			try {
+				broker.subscribed.length = 0
+				client.subscribeExact(STATUS_TOPIC, () => {})
+				await vi.advanceTimersByTimeAsync(0)
+
+				// Attempted once and denied, logged as a permission error
+				expect(statusSubscribes()).toBe(1)
+				expect(errorSpy).toHaveBeenCalledWith(
+					expect.stringContaining("doesn't have permission"),
+				)
+
+				// A denial is final: the 5s retry timer never re-attempts it
+				await vi.advanceTimersByTimeAsync(5000)
+				expect(statusSubscribes()).toBe(1)
+			} finally {
+				vi.useRealTimers()
+			}
+		} finally {
+			errorSpy.mockRestore()
+		}
+
+		await client.close()
+	})
+
+	it('logs a qos-128 denial on the ordinary subscribe path and never requeues it', async () => {
+		const client = makeClient()
+		const errorSpy = vi.spyOn(module('Mqtt'), 'error')
+		const DENIED = 'zwave/denied/topic'
+
+		try {
+			const broker = latestBroker()
+			broker.denySubscribe.add(DENIED)
+			broker.triggerConnect()
+			await tick()
+			broker.subscribed.length = 0
+
+			// A denial resolves the subscribe (a retry cannot fix a permission
+			// error), it does not reject
+			await expect(
+				client.subscribe(DENIED, { addPrefix: false, qos: 1 }),
+			).resolves.toBeUndefined()
+			expect(
+				broker.subscribed.filter((s) => s.topic === DENIED),
+			).toHaveLength(1)
+			expect(errorSpy).toHaveBeenCalledWith(
+				expect.stringContaining("doesn't have permission"),
+			)
+
+			// Not requeued: a reconnect does not re-attempt the denied topic
+			broker.triggerOffline()
+			broker.triggerReconnect()
+			broker.triggerConnect()
+			await tick()
+			expect(
+				broker.subscribed.filter((s) => s.topic === DENIED),
+			).toHaveLength(1)
+		} finally {
+			errorSpy.mockRestore()
+		}
+
+		await client.close()
 	})
 })
