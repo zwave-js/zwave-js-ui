@@ -1,5 +1,11 @@
 # Changelog
 
+## [11.22.2](https://github.com/zwave-js/zwave-js-ui/compare/v11.22.1...v11.22.2) (2026-08-07)
+
+### ✨ Features
+
+* bump @zwave-js/server@3.10.1 ([#4781](https://github.com/zwave-js/zwave-js-ui/issues/4781)) ([11f41f0](https://github.com/zwave-js/zwave-js-ui/commit/11f41f0edd4d7b762f8663a388704217617f95eb))
+
 ## [11.22.1](https://github.com/zwave-js/zwave-js-ui/compare/v11.22.0...v11.22.1) (2026-08-07)
 
 ### ✨ Features
