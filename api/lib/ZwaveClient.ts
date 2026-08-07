@@ -455,6 +455,14 @@ export type ZUIValueId = {
 	conf?: GatewayValue
 	allowManualEntry?: boolean
 	destructive?: boolean
+	/**
+	 * Set on virtual (broadcast/multicast) boolean values that map to a genuine
+	 * two-state actuator (readable + writeable on the physical device), as
+	 * opposed to a momentary write-only trigger. Lets the UI render an On/Off
+	 * toggle even though the virtual value itself is not readable. See
+	 * `_buildVirtualValueId`.
+	 */
+	booleanToggle?: boolean
 	commandClassVersion?: number
 } & TranslatedValueID
 
@@ -4390,13 +4398,12 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				? zwaveValue.ccVersion
 				: 1
 
+		const vId = this._getValueID(zwaveValue as unknown as ZUIValueId)
+
 		// Preserve any existing fields on the previous valueId (e.g. user-set
 		// poll config) so rebuilds don't drop them — mirrors the spread used
 		// in `_updateValueMetadata` for physical nodes.
-		const existing =
-			this._nodes.get(nodeId)?.values?.[
-				this._getValueID(zwaveValue as unknown as ZUIValueId)
-			]
+		const existing = this._nodes.get(nodeId)?.values?.[vId]
 
 		const valueId: ZUIValueId = {
 			...(existing || {}),
@@ -4421,6 +4428,23 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			default: meta.default,
 			ccSpecific: meta.ccSpecific,
 			stateless: false,
+			// zwave-js `VirtualNode.getDefinedValueIDs()` strips `readable` from
+			// every virtual value (a virtual node's state can't be read back),
+			// which erases the difference between a two-state actuator (e.g.
+			// Binary Switch `targetValue`, a readable+writeable Boolean) and a
+			// momentary write-only trigger (e.g. Multilevel Switch
+			// `restorePrevious`, a WriteOnlyBoolean): both arrive as a bare
+			// writeable boolean, so the UI rendered every one as a single
+			// fire-once button that could only send `true` (#4749). Readability
+			// is a property of the CC value, not the node, so recover it from a
+			// physical node exposing the same value to flag genuine two-state
+			// booleans — the UI renders those as an On/Off toggle while leaving
+			// triggers as a single button. `readable` stays `false` because the
+			// virtual value genuinely can't be read back.
+			booleanToggle:
+				meta.type === 'boolean'
+					? this._resolvePhysicalReadable(vId) === true
+					: false,
 			commandClassVersion: ccVersion,
 			value,
 			lastUpdate: Date.now(),
@@ -4429,6 +4453,32 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		this._applyValueMetadataFields(valueId, meta)
 
 		return valueId
+	}
+
+	/**
+	 * Recover the true readability of a command-class value from the physical
+	 * nodes that expose it.
+	 *
+	 * See `_buildVirtualValueId`: virtual (broadcast/multicast) value IDs always
+	 * arrive with `readable: false` because a virtual node's state can't be read
+	 * back, which flattens two-state actuators and momentary write-only triggers
+	 * into the same shape (#4749). Readability is a property of the CC value, not
+	 * of a node, so every physical node exposing the same value id should agree —
+	 * but we scan all of them and prefer `true` if *any* node reports the value
+	 * as readable, so the result never depends on `Map` iteration order. Returns
+	 * `false` only when at least one node exposes the value and none is readable,
+	 * and `undefined` when no physical node currently exposes it.
+	 */
+	private _resolvePhysicalReadable(vId: string): boolean | undefined {
+		let readable: boolean | undefined
+		for (const node of this._nodes.values()) {
+			if (node.virtual) continue
+			const value = node.values?.[vId]
+			if (!value) continue
+			if (value.readable) return true
+			readable = false
+		}
+		return readable
 	}
 
 	/**
