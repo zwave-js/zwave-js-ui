@@ -1,5 +1,28 @@
 # Changelog
 
+## [11.22.1](https://github.com/zwave-js/zwave-js-ui/compare/v11.22.0...v11.22.1) (2026-08-07)
+
+### ✨ Features
+
+* **bot:** classify issue repository with an agentic workflow ([#4764](https://github.com/zwave-js/zwave-js-ui/issues/4764)) ([1dacfa3](https://github.com/zwave-js/zwave-js-ui/commit/1dacfa38ccb6e5de1ba380a9ec716bbdc44337d8)), closes [#4763](https://github.com/zwave-js/zwave-js-ui/issues/4763)
+* **bot:** compute embeddings locally instead of using GitHub Models ([#4763](https://github.com/zwave-js/zwave-js-ui/issues/4763)) ([f220b8a](https://github.com/zwave-js/zwave-js-ui/commit/f220b8a08d5ced21b1680da8578accf2aa15c186)), closes [zwave-js/zwave-js#8985](https://github.com/zwave-js/zwave-js/issues/8985) [zwave-js/zwave-js#8974](https://github.com/zwave-js/zwave-js/issues/8974)
+* **bot:** judge docs answers with an agentic workflow ([#4765](https://github.com/zwave-js/zwave-js-ui/issues/4765)) ([5169a12](https://github.com/zwave-js/zwave-js-ui/commit/5169a12b16cae70cfd77e79a9815f5d864118b7a)), closes [#4764](https://github.com/zwave-js/zwave-js-ui/issues/4764) [zwave-js/zwave-js#8987](https://github.com/zwave-js/zwave-js/issues/8987)
+* bump zwave-js@15.27.0 ([#4780](https://github.com/zwave-js/zwave-js-ui/issues/4780)) ([69b0057](https://github.com/zwave-js/zwave-js-ui/commit/69b0057a2b978afc523e4644f972938caf079c08))
+
+### 🐛 Bug Fixes
+
+* **bot:** keep the answer bot working when its index cache is evicted ([#4753](https://github.com/zwave-js/zwave-js-ui/issues/4753)) ([b07cb44](https://github.com/zwave-js/zwave-js-ui/commit/b07cb44491db7c0deeec92b95d23898356f35551)), closes [#4743](https://github.com/zwave-js/zwave-js-ui/issues/4743) [#4752](https://github.com/zwave-js/zwave-js-ui/issues/4752)
+* **bot:** measure index staleness by upload time, not content age ([#4754](https://github.com/zwave-js/zwave-js-ui/issues/4754)) ([c236df2](https://github.com/zwave-js/zwave-js-ui/commit/c236df2d684dea1f935c2dd2b2b41ea1c5cb31c3)), closes [#4753](https://github.com/zwave-js/zwave-js-ui/issues/4753) [#4749](https://github.com/zwave-js/zwave-js-ui/issues/4749) [#4682](https://github.com/zwave-js/zwave-js-ui/issues/4682) [#4753](https://github.com/zwave-js/zwave-js-ui/issues/4753)
+* **bot:** run triage on transferred issues ([#4762](https://github.com/zwave-js/zwave-js-ui/issues/4762)) ([9643f6e](https://github.com/zwave-js/zwave-js-ui/commit/9643f6e9a8cf8e3f46cd7d5b179cbb70794330c7)), closes [zwave-js/zwave-js#8982](https://github.com/zwave-js/zwave-js/issues/8982)
+
+### ♻️ Code Refactoring
+
+* **bot:** extract per-repo config into zwave-js-bot.config.json ([#4770](https://github.com/zwave-js/zwave-js-ui/issues/4770)) ([0edab73](https://github.com/zwave-js/zwave-js-ui/commit/0edab73ed7a7df99688defacacf2e4c4a122461c))
+
+### ⚡ Performance Improvements
+
+* **api:** call `getDefinedValueIDs` once per node ready ([#4778](https://github.com/zwave-js/zwave-js-ui/issues/4778)) ([942dcfe](https://github.com/zwave-js/zwave-js-ui/commit/942dcfed673773a2cdc18c50597d997fd3f8882c))
+
 ## [11.22.0](https://github.com/zwave-js/zwave-js-ui/compare/v11.21.1...v11.22.0) (2026-07-21)
 
 ### ✨ Features
