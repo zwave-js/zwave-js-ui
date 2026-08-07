@@ -116,7 +116,6 @@ import {
 	setValueFailed,
 	SetValueStatus,
 	setValueWasUnsupervisedOrSucceeded,
-	UserCodeCC,
 	UserIDStatus,
 	ProvisioningEntryStatus,
 	AssociationCheckResult,
@@ -2016,11 +2015,17 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			// TODO: should we check also other endpoints?
 			const endpointIndex = 0
 			const endpoint = zwaveNode.getEndpoint(endpointIndex)
+			const userCapabilities = endpoint.getUserCapabilitiesCached()
 
-			const userCodes = UserCodeCC.getSupportedUsersCached(
-				this.driver,
-				endpoint,
-			)
+			if (!userCapabilities) {
+				this.logNode(
+					zwaveNode,
+					'debug',
+					'User capabilities are not cached yet, skipping users cache scan',
+				)
+			}
+
+			const maxUsers = userCapabilities?.maxUsers ?? 0
 
 			const numSlots = {
 				numWeekDaySlots: ScheduleEntryLockCC.getNumWeekDaySlotsCached(
@@ -2063,7 +2068,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			}
 
 			node.userCodes = {
-				total: userCodes,
+				total: maxUsers,
 				available: [],
 				enabled: [],
 			}
@@ -2096,19 +2101,11 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				}
 			}
 
-			for (let i = 1; i <= userCodes; i++) {
-				const status = UserCodeCC.getUserIdStatusCached(
-					this.driver,
-					endpoint,
-					i,
-				)
+			for (let i = 1; i <= maxUsers; i++) {
+				const user = endpoint.getUserCached(i)
 
-				if (
-					status === undefined ||
-					status === UserIDStatus.Available ||
-					status === UserIDStatus.StatusNotAvailable
-				) {
-					// skip query on not enabled userIds or empty codes
+				if (!user) {
+					// skip if no cached user data is available for this slot
 					continue
 				}
 
@@ -2121,7 +2118,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 						i,
 					)
 
-				if (enabledUserId) {
+				// keep schedule-enabled cache in sync and support unified user API active state
+				if (enabledUserId || user.active) {
 					node.userCodes.enabled.push(i)
 				}
 
