@@ -186,9 +186,9 @@ class DebugManager {
 			duration: new Date().getTime() - session.startTime.getTime() + 'ms',
 			nodesIncluded: nodeIds,
 			os: os.platform(),
-			nodeVersion: process.version,
+			nodeVersion: process.version.replace(/^v/, ''),
 			driverVersion: libVersion,
-			appVersion: getVersion(),
+			zuiVersion: getVersion(),
 		}
 		archive.append(JSON.stringify(metadata, null, 2), {
 			name: 'session-metadata.json',
