@@ -3,13 +3,15 @@ import { transports } from 'winston'
 import { customFormat, logContainer } from './logger.ts'
 import archiver from 'archiver'
 import type ZWaveClient from './ZwaveClient.ts'
-import { joinPath, pathExists } from './utils.ts'
+import { joinPath, pathExists, getVersion } from './utils.ts'
 import { storeDir } from '../config/app.ts'
 import { rm, mkdir } from 'node:fs/promises'
 import { createWriteStream } from 'node:fs'
 import { setTimeout } from 'node:timers/promises'
 import { createDefaultTransportFormat } from '@zwave-js/core/bindings/log/node'
 import { JSONTransport } from '@zwave-js/log-transport-json'
+import { libVersion } from 'zwave-js'
+import os from 'node:os'
 
 const debugTempDir = joinPath(storeDir, '.debug-temp')
 
@@ -183,6 +185,10 @@ class DebugManager {
 			endTime: new Date().toISOString(),
 			duration: new Date().getTime() - session.startTime.getTime() + 'ms',
 			nodesIncluded: nodeIds,
+			os: os.platform(),
+			nodeVersion: process.version,
+			driverVersion: libVersion,
+			appVersion: getVersion(),
 		}
 		archive.append(JSON.stringify(metadata, null, 2), {
 			name: 'session-metadata.json',
