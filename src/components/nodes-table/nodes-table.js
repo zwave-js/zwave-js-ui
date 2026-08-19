@@ -32,6 +32,9 @@ import {
 import { instances, manager } from '../../lib/instanceManager.js'
 import { defineAsyncComponent } from 'vue'
 
+const RATE_LABELS = { 1: '9.6k', 2: '40k', 3: '100k', 4: '100k LR' }
+const RATE_TO_BPS = { 1: 9600, 2: 40000, 3: 100000, 4: 100000 }
+
 export default {
 	props: {
 		socket: Object,
@@ -237,6 +240,28 @@ export default {
 						v.description = getProtocol(node)
 						v.iconStyle = `color: ${getProtocolColor(node, this.currentTheme)}`
 						return v
+					},
+				},
+				lwrSpeed: {
+					type: 'string',
+					label: 'Speed',
+					richValue: (node) => {
+						const rate = node.statistics?.lwr?.protocolDataRate
+						if (!rate) {
+							return { align: 'center', icon: '', displayValue: '-' }
+						}
+
+						const lwrBps = RATE_TO_BPS[rate]
+						const maxBps = node.maxDataRate
+
+						return {
+							align: 'center',
+							icon: '',
+							displayValue: RATE_LABELS[rate],
+							description: maxBps
+								? `${lwrBps / 1000} kbps (capable of ${maxBps / 1000} kbps)`
+								: `${lwrBps / 1000} kbps`,
+						}
 					},
 				},
 				firmwareVersion: {
