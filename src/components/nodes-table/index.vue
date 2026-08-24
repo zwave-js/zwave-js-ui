@@ -310,6 +310,13 @@
 			</div>
 			<div v-else></div>
 		</template>
+		<template #[`item.lwrSpeed`]="{ item }">
+			<rich-value
+				v-if="!item.isControllerNode && !item.virtual"
+				:value="richValue(item, 'lwrSpeed')"
+			/>
+			<div v-else></div>
+		</template>
 		<template #[`item.failed`]="{ item }">
 			<rich-value
 				v-if="!item.isControllerNode && !item.virtual"
