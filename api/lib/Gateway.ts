@@ -442,11 +442,19 @@ export default class Gateway {
 						payload ===
 						(hassDevice.discovery_payload.payload_stop ?? 'STOP')
 					) {
+						// the value used to stop an ongoing level change
+						// depends on the command class
+						const stopProperty =
+							valueId.commandClass ===
+							CommandClasses['Window Covering']
+								? 'levelChangeUp'
+								: 'Up'
+
 						this._zwave
 							.writeValue(
 								{
 									...valueId,
-									property: 'Up',
+									property: stopProperty,
 								},
 								false,
 							)
@@ -1279,6 +1287,26 @@ export default class Gateway {
 					if (valueId.isCurrentValue) {
 						cfg = utils.copy(hassCfg.barrier_state)
 						cfg.discovery_payload.position_topic = getTopic
+					} else return
+					break
+				case CommandClasses['Window Covering']:
+					// Values are duplicated for each supported parameter
+					// (propertyKey). Only odd parameters support positioning,
+					// even ones can just be moved with levelChangeUp/Down
+					if (
+						valueId.isCurrentValue &&
+						typeof valueId.propertyKey === 'number' &&
+						valueId.propertyKey % 2 !== 0
+					) {
+						cfg = utils.copy(hassCfg.cover_position)
+						cfg.discovery_payload.command_topic = setTopic
+						cfg.discovery_payload.position_topic = getTopic
+						cfg.discovery_payload.set_position_topic = setTopic
+						// a node can expose more than one cover, one per parameter
+						cfg.object_id = utils.joinProps(
+							cfg.object_id,
+							valueId.propertyKeyName || valueId.propertyKey,
+						)
 					} else return
 					break
 				case CommandClasses['Multilevel Switch']:
