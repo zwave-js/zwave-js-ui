@@ -108,7 +108,7 @@ NVM:
 - **Response timeout**: How long to wait for a controller response in milliseconds. Leave blank to use the default (10000ms)
 - **Send to sleep timeout**: How long to wait without pending commands before sending a node back to sleep in milliseconds. Leave blank to use the default (250ms)
 - **Increase node report timeout**: This can help with the inclusion or interview of some devices, but can also slow down communication
-- **Soft reset**: Soft Reset is required after some commands like changing the RF region or restoring an NVM backup. Because it may cause problems in Docker containers with certain Z-Wave sticks, this functionality may be disabled
+- **Soft reset**: Soft Reset is required after some commands like changing the RF region or restoring an NVM backup. Because it may cause problems in Docker containers with certain Z-Wave sticks, this functionality may be disabled. **This setting only affects 500 series and older controllers**: on 700/800 series controllers Z-Wave JS always performs a soft reset, because those controllers require it in too many situations, so disabling it there has no effect
 - **Controller recovery**: When disabled, commands will simply fail when the controller is unresponsive and nodes may get randomly marked as dead until the controller recovers on its own
 - **Watchdog**: Controllers of the 700 series and newer have a hardware watchdog that can be enabled to automatically reset the chip in case it becomes unresponsive
 - **Bootloader only**: Enable this to start the driver in bootloader-only mode, useful to recover sticks when a firmware upgrade fails. When enabled, the stick will NOT be able to communicate with the network
@@ -415,7 +415,7 @@ The external settings file should be a JSON file with the following structure:
 
 **Features**:
 
-- `enableSoftReset` (boolean): Enable soft reset functionality
+- `enableSoftReset` (boolean): Enable soft reset functionality. Ignored on 700/800 series controllers, which are always soft reset
 - `enableStatistics` (boolean): Enable Z-Wave JS usage statistics. When set, the statistics opt-in dialog is not shown and the managing application is expected to control the statistics opt-in (e.g. via the Z-Wave JS Server API)
 
 **Z-Wave JS Server Settings**:
