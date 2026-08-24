@@ -226,7 +226,11 @@
 	</div>
 </template>
 
-<style></style>
+<style>
+.vis-navigation .vis-button {
+	background-color: transparent !important;
+}
+</style>
 
 <script>
 import { Network } from 'vis-network'
