@@ -226,7 +226,55 @@
 	</div>
 </template>
 
-<style></style>
+<style>
+/* vis-network ships its nav icons as PNGs with a 60%-white disc baked in, which
+   composites to gray on a dark canvas. Mask the shape instead so the glyph takes
+   the theme's foreground colour. */
+.vis-navigation .vis-button {
+	background-color: rgb(var(--v-theme-on-surface)) !important;
+	background-image: none !important;
+	-webkit-mask: var(--nav-icon) center / 22px 22px no-repeat;
+	mask: var(--nav-icon) center / 22px 22px no-repeat;
+	opacity: 0.7;
+}
+
+.vis-navigation .vis-button:hover {
+	opacity: 1;
+	box-shadow: none !important;
+}
+
+.vis-navigation .vis-button:active {
+	box-shadow: none !important;
+}
+
+.vis-navigation .vis-button.vis-up {
+	--nav-icon: url("data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20viewBox%3D'0%200%2024%2024'%3E%3Cpath%20d%3D'M13%2020h-2V8l-5.5%205.5-1.42-1.42L12%204.16l7.92%207.92-1.42%201.42L13%208v12z'%2F%3E%3C%2Fsvg%3E");
+}
+
+.vis-navigation .vis-button.vis-down {
+	--nav-icon: url("data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20viewBox%3D'0%200%2024%2024'%3E%3Cpath%20d%3D'M11%204h2v12l5.5-5.5%201.42%201.42L12%2019.84l-7.92-7.92L5.5%2010.5%2011%2016V4z'%2F%3E%3C%2Fsvg%3E");
+}
+
+.vis-navigation .vis-button.vis-left {
+	--nav-icon: url("data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20viewBox%3D'0%200%2024%2024'%3E%3Cpath%20d%3D'M20%2011v2H8l5.5%205.5-1.42%201.42L4.16%2012l7.92-7.92L13.5%205.5%208%2011h12z'%2F%3E%3C%2Fsvg%3E");
+}
+
+.vis-navigation .vis-button.vis-right {
+	--nav-icon: url("data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20viewBox%3D'0%200%2024%2024'%3E%3Cpath%20d%3D'M4%2013v-2h12L10.5%205.5l1.42-1.42L19.84%2012l-7.92%207.92-1.42-1.42L16%2013H4z'%2F%3E%3C%2Fsvg%3E");
+}
+
+.vis-navigation .vis-button.vis-zoomIn {
+	--nav-icon: url("data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20viewBox%3D'0%200%2024%2024'%3E%3Cpath%20d%3D'M15.5%2014h-.79l-.28-.27A6.47%206.47%200%200%200%2016%209.5%206.5%206.5%200%201%200%209.5%2016c1.61%200%203.09-.59%204.23-1.57l.27.28v.79l5%204.99L20.49%2019l-4.99-5zm-6%200C7.01%2014%205%2011.99%205%209.5S7.01%205%209.5%205%2014%207.01%2014%209.5%2011.99%2014%209.5%2014zM12%2010h-2v2H9v-2H7V9h2V7h1v2h2v1z'%2F%3E%3C%2Fsvg%3E");
+}
+
+.vis-navigation .vis-button.vis-zoomOut {
+	--nav-icon: url("data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20viewBox%3D'0%200%2024%2024'%3E%3Cpath%20d%3D'M15.5%2014h-.79l-.28-.27A6.47%206.47%200%200%200%2016%209.5%206.5%206.5%200%201%200%209.5%2016c1.61%200%203.09-.59%204.23-1.57l.27.28v.79l5%204.99L20.49%2019l-4.99-5zm-6%200C7.01%2014%205%2011.99%205%209.5S7.01%205%209.5%205%2014%207.01%2014%209.5%2011.99%2014%209.5%2014zM7%209h5v1H7V9z'%2F%3E%3C%2Fsvg%3E");
+}
+
+.vis-navigation .vis-button.vis-zoomExtends {
+	--nav-icon: url("data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20viewBox%3D'0%200%2024%2024'%3E%3Cpath%20d%3D'M5%205h5v2H7v3H5V5zm9%200h5v5h-2V7h-3V5zM5%2014h2v3h3v2H5v-5zm12%200h2v5h-5v-2h3v-3z'%2F%3E%3C%2Fsvg%3E");
+}
+</style>
 
 <script>
 import { Network } from 'vis-network'
