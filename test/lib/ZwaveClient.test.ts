@@ -48,8 +48,10 @@ describe('#ZwaveClient', () => {
 
 		it('coalesces calls made while a fn slower than wait was running', () => {
 			const startedAt: number[] = []
-			// Moving the system clock without running timers is what a
-			// synchronous 2500ms `fn` does to the event loop
+			// `vi.setSystemTime` shifts every pending timer deadline along with
+			// the clock, so a slow `fn` here models a clock jump. A blocked
+			// event loop instead leaves deadlines in place and fires them late.
+			// Both reach the push-back branch and end at the same run times.
 			const slowFn = () => {
 				startedAt.push(Date.now())
 				vi.setSystemTime(Date.now() + 2500)
@@ -89,8 +91,8 @@ describe('#ZwaveClient', () => {
 			expect(startedAt).to.deep.equal([0])
 			expect(Date.now()).to.equal(2500)
 
-			// The call at 500 queued a timer due at 1000, and the run held the
-			// event loop past it
+			// The call at 500 queued a trailing timer, and the clock jump moved
+			// its deadline out along with everything else
 			vi.advanceTimersByTime(500)
 			expect(startedAt).to.deep.equal([0])
 
@@ -128,6 +130,45 @@ describe('#ZwaveClient', () => {
 			vi.advanceTimersByTime(1001)
 			throttle(fn)
 			expect(fn).toHaveBeenCalledTimes(2)
+		})
+
+		it('drops a pending trailing run when a later call takes the leading edge', () => {
+			const fn = vi.fn()
+			throttle(fn)
+			vi.setSystemTime(500)
+			throttle(fn)
+			expect(fn).toHaveBeenCalledTimes(1)
+
+			// The trailing timer is still armed here, and this call runs the
+			// same queued `fn` on the leading edge
+			vi.setSystemTime(3600)
+			throttle(fn)
+			expect(fn).toHaveBeenCalledTimes(2)
+
+			// The armed timer must not add a third run
+			vi.advanceTimersByTime(5000)
+			expect(fn).toHaveBeenCalledTimes(2)
+		})
+
+		it('cancels a pending trailing run on clearThrottle', () => {
+			const fn = vi.fn()
+			throttle(fn)
+			vi.setSystemTime(500)
+			throttle(fn)
+
+			client['clearThrottle']('key')
+			vi.advanceTimersByTime(5000)
+			expect(fn).toHaveBeenCalledTimes(1)
+		})
+
+		it('logs a throw on the trailing path instead of crashing the process', () => {
+			throttle(() => {})
+			vi.setSystemTime(500)
+			throttle(() => {
+				throw new Error('boom')
+			})
+
+			expect(() => vi.advanceTimersByTime(1000)).to.not.throw()
 		})
 
 		it('stamps the window even when fn throws', () => {

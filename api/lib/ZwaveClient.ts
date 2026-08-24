@@ -861,6 +861,15 @@ export interface ZwaveClientEventCallbacks {
 
 export type ZwaveClientEvents = Extract<keyof ZwaveClientEventCallbacks, string>
 
+interface ThrottleEntry {
+	/** When the last run returned */
+	lastUpdate: number
+	/** The most recently queued function, replaced on every coalesced call */
+	fn: () => void
+	timeout: NodeJS.Timeout
+	running: boolean
+}
+
 class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	private cfg: ZwaveConfig
 	private socket: SocketServer
@@ -932,15 +941,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	private _grantResolve: (grant: InclusionGrant | false) => void | null
 	private _dskResolve: (dsk: string | false) => void | null
 
-	private throttledFunctions: Map<
-		string,
-		{
-			lastUpdate: number
-			fn: () => void
-			timeout: NodeJS.Timeout
-			running: boolean
-		}
-	> = new Map()
+	private throttledFunctions: Map<string, ThrottleEntry> = new Map()
 
 	private inclusionUserCallbacks: InclusionUserCallbacks = {
 		grantSecurityClasses: this._onGrantSecurityClasses.bind(this),
@@ -1163,7 +1164,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	// }
 
 	/**
-	 * Call `fn` function at most once every `wait` milliseconds
+	 * Call `fn` at most once every `wait` milliseconds, counted from the end of
+	 * the previous run. A `fn` that takes longer than `wait` therefore stretches
+	 * the effective interval to its own duration plus `wait`.
 	 * */
 	private throttle(key: string, fn: () => void, wait: number) {
 		const entry = this.throttledFunctions.get(key)
@@ -1177,7 +1180,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				clearTimeout(entry.timeout)
 			}
 
-			const newEntry = {
+			const newEntry: ThrottleEntry = {
 				lastUpdate: now,
 				fn,
 				timeout: null,
@@ -1197,11 +1200,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 * returns. A `fn` slower than its own `wait` then still coalesces the calls
 	 * made while it was running.
 	 */
-	private runThrottled(entry: {
-		lastUpdate: number
-		fn: () => void
-		running: boolean
-	}) {
+	private runThrottled(entry: ThrottleEntry) {
 		entry.running = true
 		try {
 			entry.fn()
@@ -1236,8 +1235,15 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				}
 
 				// Run the most recently queued function so the final value of
-				// a burst is never dropped
-				this.runThrottled(current)
+				// a burst is never dropped. A throw here would be an uncaught
+				// exception, since nothing else wraps this timer callback
+				try {
+					this.runThrottled(current)
+				} catch (error) {
+					logger.error(
+						`Error in throttled function ${key}: ${error.message}`,
+					)
+				}
 			},
 			Math.max(0, entry.lastUpdate + wait - Date.now()),
 		)
