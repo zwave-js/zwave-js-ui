@@ -1,6 +1,7 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { CommandClasses } from '@zwave-js/core'
 import Gateway, { closeWatchers } from '../../api/lib/Gateway.ts'
-import type { ZUINode } from '../../api/lib/ZwaveClient.ts'
+import type { ZUINode, ZUIValueId } from '../../api/lib/ZwaveClient.ts'
 
 describe('#Gateway', () => {
 	const gw = new Gateway({ type: 0 }, null as any, null as any)
@@ -131,6 +132,69 @@ describe('#Gateway', () => {
 			expect(trimmed.suggested_area).to.equal('Kitchen')
 			expect(blank).to.not.have.property('suggested_area')
 			closeWatchers()
+		})
+	})
+
+	describe('#parsePayload()', () => {
+		const targetValue = (commandClass: CommandClasses) =>
+			({
+				id: `1-${commandClass}-0-targetValue-13`,
+				nodeId: 1,
+				commandClass,
+				endpoint: 0,
+				property: 'targetValue',
+				propertyKey: 13,
+				type: 'number',
+			}) as unknown as ZUIValueId
+
+		let writeValue: ReturnType<typeof vi.fn>
+
+		beforeEach(() => {
+			writeValue = vi.fn(() => Promise.resolve())
+			gw['_zwave'] = { writeValue } as any
+			gw['discovered'] = {}
+		})
+
+		it('stops an ongoing Window Covering level change', () => {
+			const valueId = targetValue(CommandClasses['Window Covering'])
+			gw['discovered'][valueId.id] = {
+				type: 'cover',
+				discovery_payload: { payload_stop: 'stop' },
+			} as any
+
+			expect(gw.parsePayload('stop', valueId, null)).to.equal(null)
+			expect(writeValue).toHaveBeenCalledWith(
+				expect.objectContaining({
+					property: 'levelChangeUp',
+					propertyKey: 13,
+				}),
+				false,
+			)
+		})
+
+		it('stops an ongoing Multilevel Switch level change', () => {
+			const valueId = targetValue(CommandClasses['Multilevel Switch'])
+			gw['discovered'][valueId.id] = {
+				type: 'cover',
+				discovery_payload: { payload_stop: 'stop' },
+			} as any
+
+			expect(gw.parsePayload('stop', valueId, null)).to.equal(null)
+			expect(writeValue).toHaveBeenCalledWith(
+				expect.objectContaining({ property: 'Up' }),
+				false,
+			)
+		})
+
+		it('leaves position payloads untouched', () => {
+			const valueId = targetValue(CommandClasses['Window Covering'])
+			gw['discovered'][valueId.id] = {
+				type: 'cover',
+				discovery_payload: { payload_stop: 'stop' },
+			} as any
+
+			expect(gw.parsePayload('42', valueId, null)).to.equal('42')
+			expect(writeValue).not.toHaveBeenCalled()
 		})
 	})
 })
