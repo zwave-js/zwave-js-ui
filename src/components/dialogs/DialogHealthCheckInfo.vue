@@ -13,13 +13,21 @@
 					<v-icon>close</v-icon>
 				</v-btn>
 			</v-row>
+			<v-card-text class="pt-0 pb-0 text-body-2">
+				A lifeline check measures the two directions with different
+				mechanisms: controller → node is measured by pinging the node,
+				node → controller by asking the node to run a Powerlevel CC
+				test. Most columns below therefore describe only one of the two
+				directions.
+			</v-card-text>
 			<v-list density="compact">
 				<v-list-item>
 					<v-list-item-title>Route changes</v-list-item-title>
 					<v-list-item-subtitle
 						>How many times at least one new route was needed. Lower
 						= better, ideally 0. Only available if the controller
-						supports TX reports</v-list-item-subtitle
+						supports TX reports. Counted on the pings sent from the
+						controller to the node.</v-list-item-subtitle
 					>
 				</v-list-item>
 				<v-list-item>
@@ -28,7 +36,9 @@
 						>The maximum time it took to send a ping to the node.
 						Lower = better, ideally 10 ms. Will use the time in TX
 						reports if available, otherwise fall back to measuring
-						the round trip time.</v-list-item-subtitle
+						the round trip time. Only covers the controller → node
+						direction, the opposite one is not
+						timed.</v-list-item-subtitle
 					>
 				</v-list-item>
 				<v-list-item>
@@ -65,7 +75,9 @@
 					<v-list-item-subtitle
 						>An estimation of the Signal-to-Noise Ratio Margin in
 						dBm. Only available if the controller supports TX
-						reports.</v-list-item-subtitle
+						reports. Measured by the controller on the ACKs it
+						receives, so it describes the node → controller
+						direction.</v-list-item-subtitle
 					>
 				</v-list-item>
 				<v-list-item>
