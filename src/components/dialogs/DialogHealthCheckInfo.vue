@@ -17,7 +17,7 @@
 				A lifeline check measures the two directions with different
 				mechanisms: controller → node is measured by pinging the node,
 				node → controller by asking the node to run a Powerlevel CC
-				test. Most columns below therefore describe only one of the two
+				test. Some columns below therefore describe only one of the two
 				directions.
 			</v-card-text>
 			<v-list density="compact">
@@ -36,9 +36,10 @@
 						>The maximum time it took to send a ping to the node.
 						Lower = better, ideally 10 ms. Will use the time in TX
 						reports if available, otherwise fall back to measuring
-						the round trip time. Only covers the controller → node
-						direction, the opposite one is not
-						timed.</v-list-item-subtitle
+						the round trip time. Measured by pinging the node from
+						the controller, but since it is a round trip
+						(NoOperation sent, ACK received) it applies to both
+						directions.</v-list-item-subtitle
 					>
 				</v-list-item>
 				<v-list-item>
