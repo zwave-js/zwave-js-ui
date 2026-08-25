@@ -39,10 +39,13 @@
 					>
 				</v-list-item>
 				<v-list-item>
-					<v-list-item-title>Failed Pings node</v-list-item-title>
+					<v-list-item-title>Failed pings</v-list-item-title>
 					<v-list-item-subtitle
-						>How many pings were not ACKed by the node. Lower =
-						better, ideally 0.</v-list-item-subtitle
+						>How many of the 10 pings sent in each direction were
+						not ACKed. Lower = better, ideally 0. Pings sent
+						<em>by</em> a node can only be counted when that node
+						supports Powerlevel CC, otherwise the direction is shown
+						as <em>not measured</em>.</v-list-item-subtitle
 					>
 				</v-list-item>
 				<v-list-item>
@@ -50,20 +53,11 @@
 					<v-list-item-subtitle
 						>The minimum powerlevel where all pings from the
 						(source) node were ACKed by the target node /
-						controller. Lower = better, ideally -6dBm or less. Only
-						available if the (source) node supports Powerlevel
-						CC</v-list-item-subtitle
-					>
-				</v-list-item>
-				<v-list-item>
-					<v-list-item-title
-						>Failed pings Controller</v-list-item-title
-					>
-					<v-list-item-subtitle
-						>If no powerlevel was found where the controller ACKed
-						all pings from the node, this contains the number of
-						pings that weren't ACKed. Lower = better, ideally
-						0.</v-list-item-subtitle
+						controller. Lower = better, ideally -6dBm or less. Shown
+						as <em>none</em> when pings kept failing even at normal
+						power, and as <em>not measured</em> when the (source)
+						node doesn't support Powerlevel
+						CC.</v-list-item-subtitle
 					>
 				</v-list-item>
 				<v-list-item>
