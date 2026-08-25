@@ -861,6 +861,15 @@ export interface ZwaveClientEventCallbacks {
 
 export type ZwaveClientEvents = Extract<keyof ZwaveClientEventCallbacks, string>
 
+interface ThrottleEntry {
+	/** When the last run returned */
+	lastUpdate: number
+	/** The most recently queued function, replaced on every coalesced call */
+	fn: () => void
+	timeout: NodeJS.Timeout
+	running: boolean
+}
+
 class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	private cfg: ZwaveConfig
 	private socket: SocketServer
@@ -932,10 +941,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	private _grantResolve: (grant: InclusionGrant | false) => void | null
 	private _dskResolve: (dsk: string | false) => void | null
 
-	private throttledFunctions: Map<
-		string,
-		{ lastUpdate: number; fn: () => void; timeout: NodeJS.Timeout }
-	> = new Map()
+	private throttledFunctions: Map<string, ThrottleEntry> = new Map()
 
 	private inclusionUserCallbacks: InclusionUserCallbacks = {
 		grantSecurityClasses: this._onGrantSecurityClasses.bind(this),
@@ -1158,43 +1164,89 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	// }
 
 	/**
-	 * Call `fn` function at most once every `wait` milliseconds
+	 * Call `fn` at most once every `wait` milliseconds, counted from the end of
+	 * the previous run. A `fn` that takes longer than `wait` therefore stretches
+	 * the effective interval to its own duration plus `wait`.
 	 * */
 	private throttle(key: string, fn: () => void, wait: number) {
 		const entry = this.throttledFunctions.get(key)
 		const now = Date.now()
 
 		// first time it's called or wait is already passed since last call
-		if (!entry || entry.lastUpdate + wait < now) {
-			this.throttledFunctions.set(key, {
+		if (!entry || (!entry.running && entry.lastUpdate + wait < now)) {
+			// Clear any pending trailing run because this call already runs
+			// the latest `fn`
+			if (entry?.timeout) {
+				clearTimeout(entry.timeout)
+			}
+
+			const newEntry: ThrottleEntry = {
 				lastUpdate: now,
 				fn,
 				timeout: null,
-			})
-			fn()
-		} else {
-			// if it's called again and no timeout is set, set a timeout to call function
-			if (!entry.timeout) {
-				entry.timeout = setTimeout(
-					() => {
-						const oldEntry = this.throttledFunctions.get(key)
-						if (oldEntry) {
-							oldEntry.lastUpdate = Date.now()
-							// clear the timeout so later calls can schedule a
-							// new trailing emit
-							oldEntry.timeout = null
-							// run the most recently queued function, not the one
-							// captured when this timeout was scheduled, so the
-							// final value of a burst is never dropped
-							oldEntry.fn()
-						}
-					},
-					entry.lastUpdate + wait - now,
-				)
+				running: false,
 			}
+			this.throttledFunctions.set(key, newEntry)
+			this.runThrottled(newEntry)
+		} else {
+			this.scheduleThrottled(key, wait)
 			// discard the old function and store the new one
 			entry.fn = fn
 		}
+	}
+
+	/**
+	 * Run a throttled function and measure the next window from the moment it
+	 * returns. A `fn` slower than its own `wait` then still coalesces the calls
+	 * made while it was running.
+	 */
+	private runThrottled(entry: ThrottleEntry) {
+		entry.running = true
+		try {
+			entry.fn()
+		} finally {
+			entry.running = false
+			entry.lastUpdate = Date.now()
+		}
+	}
+
+	/**
+	 * Schedule the trailing run of a throttled function, `wait` ms after the
+	 * last run finished. Does nothing when one is already scheduled.
+	 */
+	private scheduleThrottled(key: string, wait: number) {
+		const entry = this.throttledFunctions.get(key)
+		if (!entry || entry.timeout) return
+
+		entry.timeout = setTimeout(
+			() => {
+				const current = this.throttledFunctions.get(key)
+				if (!current) return
+
+				// Clear the timeout so later calls can schedule a new trailing
+				// emit
+				current.timeout = null
+
+				// Push the trailing run back by the remainder when the previous
+				// run overshot its window
+				if (current.lastUpdate + wait > Date.now()) {
+					this.scheduleThrottled(key, wait)
+					return
+				}
+
+				// Run the most recently queued function so the final value of
+				// a burst is never dropped. A throw here would be an uncaught
+				// exception, since nothing else wraps this timer callback
+				try {
+					this.runThrottled(current)
+				} catch (error) {
+					logger.error(
+						`Error in throttled function ${key}: ${error.message}`,
+					)
+				}
+			},
+			Math.max(0, entry.lastUpdate + wait - Date.now()),
+		)
 	}
 
 	private clearThrottle(key: string) {
