@@ -136,16 +136,28 @@ async function main() {
 	console.log(`Build took ${Date.now() - start}ms`)
 	await printSize(outfile)
 
-	const content = (await readFile(outfile, 'utf-8'))
-		.replace(
-			/__dirname, "\.\.\/"/g,
-			'__dirname, "./node_modules/@serialport/bindings-cpp"',
-		)
-		.replace(
-			`("../../package.json").version`,
-			`("./node_modules/@zwave-js/server/package.json").version`,
-		)
-		.replace(`("../../package.json")`, `("./package.json")`)
+	// a pattern that stops matching would silently ship a broken bundle, so fail
+	// the build instead
+	const patch = (source, pattern, replacement) => {
+		const patched = source.replace(pattern, replacement)
+		if (patched === source) {
+			throw new Error(`Cannot patch bundle: ${pattern} did not match`)
+		}
+		return patched
+	}
+
+	let content = await readFile(outfile, 'utf-8')
+	content = patch(
+		content,
+		/__dirname, "\.\.\/"/g,
+		'__dirname, "./node_modules/@serialport/bindings-cpp"',
+	)
+	content = patch(
+		content,
+		`("../../package.json").version`,
+		`("./node_modules/@zwave-js/server/package.json").version`,
+	)
+	content = patch(content, `("../../package.json")`, `("./package.json")`)
 
 	await writeFile(outfile, content)
 

@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-24.04-arm
     strategy:
       matrix:
-        node-version: [20.x] # NB: when pkg-fetch bumps binaries, this must be updated
+        node-version: [22.x] # NB: host only; the packaged target major is LEGACY_NODE_MAJOR in package.sh
     steps:
       - uses: actions/checkout@v5
 

@@ -380,10 +380,14 @@ npm run pkg
 **Output**:
 ```
 build/pkg/
-├── zwave-js-ui-linux           # SEA, stock Node 22
-├── zwave-js-ui-win.exe         # SEA, stock Node 22
+├── zwave-js-ui-linux           # x64  - SEA, stock Node from .nvmrc
+├── zwave-js-ui-win.exe         # x64  - SEA, stock Node from .nvmrc
+├── zwave-js-ui                 # arm64 or armv7, depending on --arch
 └── zwave-js-ui-vX.Y.Z-*.zip    # release assets
 ```
+
+A release therefore ships two Node majors: armv7 on the legacy pkg-fetch Node 20,
+every other target on the stock Node pinned by `.nvmrc`.
 
 ## Build Validation
 

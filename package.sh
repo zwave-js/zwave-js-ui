@@ -52,12 +52,17 @@ else
 	ARCH=$(uname -m)
 fi
 
-# Node version baked into SEA builds. Pinned to the full x.y.z on purpose: pkg
-# would otherwise resolve `node22` to whatever nodejs.org calls latest at build
-# time, so two builds of the same tag would not ship the same runtime. Keep it in
-# sync with NODE_VERSION in docker/Dockerfile. Must stay >= 22, which is the
-# first release exposing the `node:sea` API on stock binaries.
-SEA_NODE_VERSION=22.20.0
+# Node version baked into SEA builds. Read from .nvmrc so the renovate bump that
+# moves the rest of the repo onto a Node security release moves the packaged
+# binaries too. The full x.y.z matters: given just `node22`, pkg resolves it to
+# whatever nodejs.org calls latest at build time, so two builds of the same tag
+# would not ship the same runtime. Must stay >= 22, which is what pkg requires
+# for its enhanced SEA pipeline.
+SEA_NODE_VERSION=$(tr -d 'v \t\n\r' < .nvmrc)
+if ! [[ "$SEA_NODE_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+	echo "Expected a x.y.z Node version in .nvmrc, got '$SEA_NODE_VERSION'" >&2
+	exit 1
+fi
 
 # Node major used by the legacy pkg-fetch targets, which only exist for the
 # architectures pkg-fetch still publishes patched binaries for.

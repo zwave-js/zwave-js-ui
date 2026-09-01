@@ -2,11 +2,12 @@ name: "End-to-end test"
 description: "Boots the app against the mock Z-Wave stick and an MQTT broker, then checks it works end to end"
 
 inputs:
-  start-command:
-    description: "Command that starts the app under test"
-    required: true
   binary:
-    description: "Path to the packaged binary. When set, the assets embedded in it are checked too."
+    description: "Path to the packaged binary under test. When set it is also what gets started, and the assets embedded in it are checked too."
+    required: false
+    default: ""
+  start-command:
+    description: "Command that starts the app under test, when it is not a packaged binary. Trusted literals only: it is passed to a shell."
     required: false
     default: ""
 
@@ -23,24 +24,35 @@ runs:
       env:
         BINARY: ${{ inputs.binary }}
       run: |
-        STORE_DIR=$(mktemp -d) ZWAVE_PORT=/dev/ttyUSB-does-not-exist \
-          timeout 30 "$BINARY" > native.log 2>&1 || true
+        # own store and http port so this probe cannot collide with the app run
+        STORE_DIR=$(mktemp -d) PORT=18091 ZWAVE_PORT=/dev/ttyUSB-does-not-exist \
+          timeout -k 5 30 "$BINARY" > native.log 2>&1 || true
         cat native.log
+        if ! grep -q "Listening on port" native.log; then
+          echo "The packaged binary did not start, so the addon was never reached" && exit 1
+        fi
         if grep -qE "Cannot find module|MODULE_NOT_FOUND" native.log; then
           echo "The serialport addon was not loadable from the packaged binary" && exit 1
         fi
-        grep -q "cannot open /dev/ttyUSB-does-not-exist" native.log \
-          || { echo "The serialport addon did not report the expected open failure" && exit 1; }
+        if ! grep -q "cannot open /dev/ttyUSB-does-not-exist" native.log; then
+          echo "The serialport addon did not report the expected open failure" && exit 1
+        fi
 
     - name: Spawn fake stick
       shell: bash
       run: |
-        nohup npm run fake-stick > fake-stick.log 2>&1 &
+        # own process group, so tear-down can kill npm and the node child it spawns
+        setsid nohup npm run fake-stick > fake-stick.log 2>&1 &
         echo $! > fake-stick.pid
 
+    # pinned by digest: this runs in the same job that holds the release token.
+    # Bump with: docker manifest inspect eclipse-mosquitto:<version>
     - name: Start broker container
       shell: bash
-      run: docker run -d --name broker --network="host" eclipse-mosquitto:latest
+      run: |
+        docker run -d --name broker -p 1883:1883 \
+          -v "$PWD/test/e2e/mosquitto.conf:/mosquitto/config/mosquitto.conf" \
+          eclipse-mosquitto@sha256:212f89e1eaeb2c322d6441b64396e3346026674db8fa9c27beac293405c32b3c
 
     - name: Create settings.json
       shell: bash
@@ -50,15 +62,22 @@ runs:
       shell: bash
       env:
         START_COMMAND: ${{ inputs.start-command }}
+        BINARY: ${{ inputs.binary }}
       run: |
-        nohup bash -c "$START_COMMAND" > server.log 2>&1 &
+        COMMAND=${START_COMMAND:-$BINARY}
+        if [ -z "$COMMAND" ]; then
+          echo "Pass either 'binary' or 'start-command' to this action" && exit 1
+        fi
+        setsid nohup bash -c "$COMMAND" > server.log 2>&1 &
         echo $! > app.pid
 
     - name: Wait for the application to answer
       shell: bash
       run: |
+        # any HTTP answer means the server is listening; the status itself is not
+        # meaningful here because the UI is only built for the packaged binary
         for _ in $(seq 1 60); do
-          if curl -fs -o /dev/null http://127.0.0.1:8091/; then
+          if curl -s -o /dev/null http://127.0.0.1:8091/; then
             echo "Application is up" && exit 0
           fi
           if ! kill -0 "$(cat app.pid)" 2>/dev/null; then
@@ -68,11 +87,43 @@ runs:
         done
         echo "Application did not answer within 60s" && cat server.log && exit 1
 
+    # The HTTP server is up long before the driver has interviewed the mock nodes,
+    # and only then does the gateway act on `.../set` topics.
+    - name: Wait for the Z-Wave driver
+      shell: bash
+      run: |
+        for _ in $(seq 1 90); do
+          if grep -q "Driver ready" server.log; then
+            echo "Driver is ready" && exit 0
+          fi
+          if ! kill -0 "$(cat app.pid)" 2>/dev/null; then
+            echo "Application exited before the driver was ready" && cat server.log && exit 1
+          fi
+          sleep 1
+        done
+        echo "Driver was not ready within 90s" && cat server.log && exit 1
+
     - name: Test MQTT write and read
       shell: bash
       run: |
-        docker exec broker mosquitto_pub -h localhost -p 1883 -t "zwave/nodeID_2/106/0/targetValue/3/set" -m "1"
-        timeout 60 docker exec broker mosquitto_sub -h localhost -p 1883 -t "zwave/nodeID_2/106/0/currentValue/3" -C 1
+        # subscribe first, and with -R so the copy retained from startup is
+        # skipped: otherwise this reads back the pre-set value and passes
+        # whether or not the gateway ever handled the write
+        received=$(mktemp)
+        timeout 60 docker exec broker \
+          mosquitto_sub -h localhost -p 1883 -t "zwave/nodeID_2/106/0/currentValue/3" -C 1 -R \
+          > "$received" &
+        subscriber=$!
+        sleep 2
+        timeout 30 docker exec broker \
+          mosquitto_pub -h localhost -p 1883 -t "zwave/nodeID_2/106/0/targetValue/3/set" -m "1"
+        wait "$subscriber"
+        value=$(cat "$received")
+        echo "currentValue reported over MQTT: $value"
+        case "$value" in
+          *'"value":1'*|1) ;;
+          *) echo "The gateway did not apply the write" && exit 1 ;;
+        esac
 
     # The UI and the Z-Wave config DB are read out of the binary at runtime, so a
     # broken virtual filesystem only shows up when they are actually read.
@@ -80,10 +131,15 @@ runs:
       if: inputs.binary != ''
       shell: bash
       run: |
-        index_size=$(curl -fsS http://127.0.0.1:8091/ | wc -c)
+        # a temp file, not ./index.html: that one is the Vite entry point
+        index=$(mktemp)
+        if ! curl -fsS http://127.0.0.1:8091/ > "$index"; then
+          echo "The UI was not served from the packaged binary" && exit 1
+        fi
+        index_size=$(wc -c < "$index")
         echo "UI index.html served from the binary: $index_size bytes"
         if [ "$index_size" -lt 500 ]; then
-          echo "The UI was not served from the packaged binary" && exit 1
+          echo "The UI served from the packaged binary looks truncated" && exit 1
         fi
         if [ ! -d store/.config-db ]; then
           echo "The config DB was not extracted from the packaged binary" && exit 1
@@ -94,20 +150,24 @@ runs:
           echo "The config DB was only partially extracted from the packaged binary" && exit 1
         fi
 
-    - name: Output application logs
+    - name: Output logs
       if: always()
       shell: bash
-      run: cat server.log
-
-    - name: Output broker logs
-      if: always()
-      shell: bash
-      run: docker logs broker
+      run: |
+        for log in server.log fake-stick.log; do
+          echo "===== $log ====="
+          [ -f "$log" ] && cat "$log"
+        done
+        echo "===== broker ====="
+        docker logs broker || true
 
     - name: Ensure application is still running
       if: always()
       shell: bash
       run: |
+        if [ ! -f app.pid ]; then
+          echo "Application was never started" && exit 1
+        fi
         if ! kill -0 "$(cat app.pid)" 2>/dev/null; then
           echo "Application crashed!" && exit 1
         fi
@@ -120,12 +180,13 @@ runs:
         for pidfile in app.pid fake-stick.pid; do
           [ -f "$pidfile" ] || continue
           pid=$(cat "$pidfile")
-          pkill -P "$pid" 2>/dev/null || true
-          kill "$pid" 2>/dev/null || true
+          # the process is its own group leader thanks to setsid, so this reaches
+          # every child npm or the app spawned
+          kill -- "-$pid" 2>/dev/null || true
           for _ in $(seq 1 10); do
             kill -0 "$pid" 2>/dev/null || break
             sleep 1
           done
-          kill -9 "$pid" 2>/dev/null || true
+          kill -9 -- "-$pid" 2>/dev/null || true
         done
         docker rm -f broker || true

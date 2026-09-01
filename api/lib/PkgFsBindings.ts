@@ -38,7 +38,7 @@ function toPkgPath(filePath: string): string | undefined {
 		(p) => filePath === p || filePath.startsWith(p + path.sep),
 	)
 	return configPath
-		? filePath.replace(configPath, CONFIG_PATH_IN_PKG)
+		? CONFIG_PATH_IN_PKG + filePath.slice(configPath.length)
 		: undefined
 }
 
@@ -73,7 +73,7 @@ export class PkgFsBindings implements FileSystem {
 		}
 		return nodeFs.copyFile(source, dest)
 	}
-	open(
+	async open(
 		filePath: string,
 		flags: {
 			read: boolean
