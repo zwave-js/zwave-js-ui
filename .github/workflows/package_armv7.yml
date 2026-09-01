@@ -6,20 +6,20 @@ on:
       - created
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build:
     name: Build package and attach to release
     runs-on: ubuntu-24.04-arm
-    strategy:
-      matrix:
-        node-version: [22.x] # NB: host only; the packaged target major is LEGACY_NODE_MAJOR in package.sh
     steps:
       - uses: actions/checkout@v5
 
-      - name: Setup Node.js
+      - name: Use Node.js
         uses: actions/setup-node@v5
         with:
-          node-version: ${{ matrix.node-version }}
+          node-version-file: ".nvmrc"
           cache: "npm"
 
       - name: Install and pre-build

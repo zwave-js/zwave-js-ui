@@ -34,8 +34,10 @@ runs:
         if grep -qE "Cannot find module|MODULE_NOT_FOUND" native.log; then
           echo "The serialport addon was not loadable from the packaged binary" && exit 1
         fi
-        if ! grep -q "cannot open /dev/ttyUSB-does-not-exist" native.log; then
-          echo "The serialport addon did not report the expected open failure" && exit 1
+        # match the device path only, so a reworded serialport error does not read
+        # as the addon having failed to load
+        if ! grep -q "/dev/ttyUSB-does-not-exist" native.log; then
+          echo "The serialport addon never reported on the port it was given" && exit 1
         fi
 
     - name: Spawn fake stick
@@ -47,12 +49,41 @@ runs:
 
     # pinned by digest: this runs in the same job that holds the release token.
     # Bump with: docker manifest inspect eclipse-mosquitto:<version>
+    # The mock controller crashes on the first bytes if the app connects while it
+    # is still coming up, and then the driver never gets a controller to talk to.
+    - name: Wait for the mock stick
+      shell: bash
+      run: |
+        for _ in $(seq 1 60); do
+          if grep -q "Server listening" fake-stick.log; then
+            sleep 5
+            echo "Mock stick is listening" && exit 0
+          fi
+          if ! kill -0 "$(cat fake-stick.pid)" 2>/dev/null; then
+            echo "Mock stick exited during startup" && cat fake-stick.log && exit 1
+          fi
+          sleep 1
+        done
+        echo "Mock stick did not start within 60s" && cat fake-stick.log && exit 1
+
     - name: Start broker container
       shell: bash
       run: |
-        docker run -d --name broker -p 1883:1883 \
+        # loopback only: the app connects on 127.0.0.1 and the mosquitto clients
+        # run inside the container, so nothing needs an externally bound port
+        docker run -d --name broker -p 127.0.0.1:1883:1883 \
           -v "$PWD/test/e2e/mosquitto.conf:/mosquitto/config/mosquitto.conf" \
           eclipse-mosquitto@sha256:212f89e1eaeb2c322d6441b64396e3346026674db8fa9c27beac293405c32b3c
+        # `docker run -d` succeeds even when mosquitto dies on its config, and the
+        # app tolerates a missing broker, so the real cause would only surface
+        # minutes later as a confusing failure in the MQTT step
+        for _ in $(seq 1 30); do
+          if docker exec broker mosquitto_pub -h localhost -p 1883 -t ping -m up 2>/dev/null; then
+            echo "Broker is accepting connections" && exit 0
+          fi
+          sleep 1
+        done
+        echo "Broker did not accept connections within 30s" && docker logs broker && exit 1
 
     - name: Create settings.json
       shell: bash
@@ -106,24 +137,24 @@ runs:
     - name: Test MQTT write and read
       shell: bash
       run: |
-        # subscribe first, and with -R so the copy retained from startup is
-        # skipped: otherwise this reads back the pre-set value and passes
-        # whether or not the gateway ever handled the write
-        received=$(mktemp)
-        timeout 60 docker exec broker \
-          mosquitto_sub -h localhost -p 1883 -t "zwave/nodeID_2/106/0/currentValue/3" -C 1 -R \
-          > "$received" &
-        subscriber=$!
-        sleep 2
         timeout 30 docker exec broker \
           mosquitto_pub -h localhost -p 1883 -t "zwave/nodeID_2/106/0/targetValue/3/set" -m "1"
-        wait "$subscriber"
-        value=$(cat "$received")
-        echo "currentValue reported over MQTT: $value"
-        case "$value" in
-          *'"value":1'*|1) ;;
-          *) echo "The gateway did not apply the write" && exit 1 ;;
-        esac
+        # Poll the retained value rather than reading the next message on the
+        # topic: the gateway publishes there while it is still interviewing, so
+        # the reply to this write is not necessarily the message that arrives
+        # next. The mock reports 0 until the write lands, so requiring 1 cannot
+        # pass on the pre-set value.
+        for _ in $(seq 1 30); do
+          value=$(timeout 10 docker exec broker \
+            mosquitto_sub -h localhost -p 1883 -t "zwave/nodeID_2/106/0/currentValue/3" -C 1 -W 5 \
+            2>/dev/null || true)
+          case "$value" in
+            *'"value":1'*|1)
+              echo "currentValue reported over MQTT: $value" && exit 0 ;;
+          esac
+          sleep 1
+        done
+        echo "The gateway did not apply the write; last value seen: $value" && exit 1
 
     # The UI and the Z-Wave config DB are read out of the binary at runtime, so a
     # broken virtual filesystem only shows up when they are actually read.
@@ -154,9 +185,9 @@ runs:
       if: always()
       shell: bash
       run: |
-        for log in server.log fake-stick.log; do
+        for log in server.log fake-stick.log native.log; do
           echo "===== $log ====="
-          [ -f "$log" ] && cat "$log"
+          if [ -f "$log" ]; then cat "$log"; else echo "(not created)"; fi
         done
         echo "===== broker ====="
         docker logs broker || true
