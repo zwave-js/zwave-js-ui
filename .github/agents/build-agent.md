@@ -196,7 +196,7 @@ esbuild.build({
   entryPoints: ['api/app.ts'],
   bundle: true,
   platform: 'node',
-  target: 'node20',
+  target: 'node18',
   outfile: 'build/zwavejs2mqtt',
   external: [
     // Native modules that can't be bundled

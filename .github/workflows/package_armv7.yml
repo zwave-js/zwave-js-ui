@@ -48,7 +48,8 @@ jobs:
       # target parser rejects, so `--sea` cannot be used here yet.
       - name: Build for armv7
         run: |
-          curl https://github.com/yao-pkg/pkg-binaries/releases/download/node20/node-v20.19.5-linux-armv7 -LOJ
+          # -f so a 404 fails here instead of saving an HTML body as PKG_NODE_PATH
+          curl https://github.com/yao-pkg/pkg-binaries/releases/download/node20/node-v20.19.5-linux-armv7 -fLOJ
           export PKG_NODE_PATH=$(pwd)/node-v20.19.5-linux-armv7
           npm run pkg -- --bundle --skip-build --arch=armv7
 
