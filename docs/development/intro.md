@@ -7,7 +7,9 @@ In first terminal run `npm run dev` to start webpack-dev for front-end developin
 
 In the second terminal run `npm run dev:server` to start the backend server with inspect and auto restart features
 
-To package the application run `npm run pkg` command and follow the steps
+To package the application run `npm run pkg` command and follow the steps.
+x64 and arm64 binaries are built as [single executable applications](https://nodejs.org/api/single-executable-applications.html)
+on top of a stock Node.js binary, which requires Node >= 22 on the build machine.
 
 ## Developing against a different backend
 

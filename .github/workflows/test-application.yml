@@ -29,52 +29,8 @@ jobs:
                   nohup npm run fake-stick &
 
             - name: Create settings.json
-              run: |
-                  echo '{
-                    "zwave": {
-                      "port": "tcp://127.0.0.1:5555",
-                      "enabled": true,
-                      "logLevel": "debug",
-                      "logEnabled": true,
-                       "logToFile": true,
-                       "serverEnabled": true
-                    },
-                    "mqtt": {
-                        "name": "zwavejs2mqtt",
-                        "host": "127.0.0.1",
-                        "port": 1883,
-                        "qos": 1,
-                        "prefix": "zwave",
-                        "reconnectPeriod": 3000,
-                        "retain": true,
-                        "clean": true,
-                        "disabled": false
-                    },
-                    "gateway": {
-                        "type": 0,
-                        "payloadType": 0,
-                        "nodeNames": true,
-                        "hassDiscovery": true,
-                        "discoveryPrefix": "homeassistant",
-                        "logEnabled": true,
-                        "logLevel": "debug",
-                        "logToFile": true
-                    },
-                    "backup": {
-                        "storeBackup": true,
-                        "storeCron": "10 9 * * *",
-                        "storeKeep": 7,
-                        "nvmBackup": true,
-                        "nvmBackupOnEvent": false,
-                        "nvmCron": "19 9 * * *",
-                        "nvmKeep": 7,
-                        "enabled": true,
-                        "cron": "0 * * * *",
-                        "keep": 2
-                    }
-                  }' > store/settings.json
-            
-            
+              run: cp test/e2e/settings.json store/settings.json
+
             - name: Start Broker container
               run: |
                   docker run -d --name broker --network="host" eclipse-mosquitto:latest

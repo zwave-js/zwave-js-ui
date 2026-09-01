@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: [20.x]
+        node-version: [22.x] # NB: SEA builds require Node >= 22 on the build host
     steps:
       - uses: actions/checkout@v5
 
@@ -35,26 +35,57 @@ jobs:
         run: |
           npm run pkg -- --bundle --skip-build
 
-      - name: Test built package
+      - name: Spawn fake stick
         run: |
-          
-          echo "Testing application startup..."
-          timeout 10s ./build/pkg/zwave-js-ui-linux &
-          app_pid=$!
-          
-          # Wait a few seconds for the app to start
-          sleep 5
-          
-          # Check if process is still running (indicates successful startup)
-          if kill -0 $app_pid 2>/dev/null; then
-            echo "Package test passed: Application started successfully"
-            # Kill the application
-            kill $app_pid 2>/dev/null || true
-            wait $app_pid 2>/dev/null || true
-          else
-            echo "Package test failed: Application failed to start or crashed immediately"
-            exit 1
+          nohup npm run fake-stick &
+
+      - name: Start Broker container
+        run: |
+          docker run -d --name broker --network="host" eclipse-mosquitto:latest
+
+      - name: Create settings.json
+        run: cp test/e2e/settings.json store/settings.json
+
+      - name: Start packaged binary
+        run: |
+          nohup ./build/pkg/zwave-js-ui-linux > server.log 2>&1 &
+          sleep 25
+
+      - name: Test MQTT write and read
+        timeout-minutes: 1
+        run: |
+          docker exec broker mosquitto_pub -h localhost -p 1883 -t "zwave/nodeID_2/106/0/targetValue/3/set" -m "1"
+          docker exec broker mosquitto_sub -h localhost -p 1883 -t "zwave/nodeID_2/106/0/currentValue/3" -C 1
+
+      - name: Test embedded assets
+        run: |
+          # the UI and the Z-Wave config DB live inside the binary: a broken
+          # virtual filesystem only shows up when they are actually read
+          curl -fsS -o /dev/null http://127.0.0.1:8091/health/
+          config_files=$(find store/.config-db -name '*.json' | wc -l)
+          echo "Config DB files extracted: $config_files"
+          if [ "$config_files" -lt 100 ]; then
+            echo "Config DB was not extracted from the packaged binary" && exit 1
           fi
+
+      - name: Output backend logs
+        if: always()
+        run: |
+          sleep 5
+          cat server.log
+
+      - name: Output broker logs
+        if: always()
+        run: |
+          docker logs broker
+
+      - name: Ensure backend is running
+        if: always()
+        run: |
+          if ! pgrep -f "zwave-js-ui-linux" > /dev/null; then
+            echo "Backend crashed!" && exit 1
+          fi
+          echo "Backend is running successfully."
 
       - name: Upload artifacts
         if: github.event_name == 'workflow_dispatch'

@@ -184,6 +184,9 @@ async function main() {
 	}
 
 	pkgJson.bin = 'index.js'
+	// esbuild emits CommonJS, while the root package.json says "module". SEA runs
+	// the bundle on stock node, which would parse it as ESM and fail on `require`.
+	pkgJson.type = 'commonjs'
 	pkgJson.pkg = {
 		assets: ['dist/**', 'snippets/**', 'node_modules/**'],
 	}

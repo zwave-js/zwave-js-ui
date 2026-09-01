@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-24.04-arm
     strategy:
       matrix:
-        node-version: [20.x]
+        node-version: [22.x] # NB: SEA builds require Node >= 22 on the build host
     steps:
       - uses: actions/checkout@v5
 
@@ -30,7 +30,27 @@ jobs:
       - name: Build for arm64
         run: |
           npm run pkg -- --bundle --skip-build --arch=arm64
-      
+
+      - name: Test built package
+        run: |
+          echo "Testing application startup..."
+          ./build/pkg/zwave-js-ui > server.log 2>&1 &
+          app_pid=$!
+          sleep 15
+          if ! kill -0 $app_pid 2>/dev/null; then
+            echo "Package test failed: application crashed on startup"
+            cat server.log
+            exit 1
+          fi
+          kill $app_pid 2>/dev/null || true
+          wait $app_pid 2>/dev/null || true
+          if ! grep -q "Listening on port" server.log; then
+            echo "Package test failed: server never started listening"
+            cat server.log
+            exit 1
+          fi
+          echo "Package test passed: application started successfully"
+
       - name: Upload artifacts
         if: github.event_name == 'workflow_dispatch'
         uses: actions/upload-artifact@v4

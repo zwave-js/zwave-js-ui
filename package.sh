@@ -54,7 +54,24 @@ else
 	ARCH=$(uname -m)
 fi
 
-pack() {
+# Node major baked into SEA builds. Stock nodejs.org binaries only expose the
+# `node:sea` API from v22, and it must stay in sync with docker/Dockerfile.
+SEA_NODE_MAJOR=22
+
+# Compression of the SEA archive. Brotli gives the smallest binary and, since the
+# archive is decompressed lazily per file, costs no measurable startup time.
+SEA_COMPRESS=Brotli
+
+# SEA mode bakes the payload into a stock, unpatched nodejs.org binary, so there
+# is no pkg-fetch patched-Node dependency to wait on.
+pack_sea() {
+	echo executing: pkg . --sea --compress $SEA_COMPRESS --out-path $PKG_FOLDER -t $1
+	npx pkg . --sea --compress $SEA_COMPRESS --out-path $PKG_FOLDER -t $1
+}
+
+# Legacy pkg-fetch pipeline, still needed for targets nodejs.org has no stock
+# binary for (armv6/armv7/x86) or that pkg cannot address in SEA mode (alpine).
+pack_legacy() {
 	echo executing: pkg . --out-path $PKG_FOLDER --options experimental-require-module -t $1 $2
 	npx pkg . --out-path $PKG_FOLDER --options experimental-require-module -t $1 $2
 }
@@ -82,11 +99,11 @@ if [ ! -z "$1" ]; then
 	fi
 
 	if [ "$ARCH" = "aarch64" ] || [ "$ARCH" = "arm64" ]; then
-		pack node$NODE_MAJOR-linux-arm64
+		pack_sea node$SEA_NODE_MAJOR-linux-arm64
 	elif [ "$ARCH" = "armv7" ]; then
-		pack node$NODE_MAJOR-linux-armv7 --public-packages=*
+		pack_legacy node$NODE_MAJOR-linux-armv7 --public-packages=*
 	else
-		pack node$NODE_MAJOR-linux-x64,node$NODE_MAJOR-win-x64
+		pack_sea node$SEA_NODE_MAJOR-linux-x64,node$SEA_NODE_MAJOR-win-x64
 	fi
 
 else
@@ -115,32 +132,32 @@ else
 		case "$REPLY" in
 			1)
 				echo "## Creating application package in $PKG_FOLDER folder"
-				pack node$NODE_MAJOR-linux-x64
+				pack_sea node$SEA_NODE_MAJOR-linux-x64
 				break
 				;;
 			2)
 				echo "## Creating application package in $PKG_FOLDER folder"
-				pack node$NODE_MAJOR-linux-armv7 --public-packages=*
+				pack_legacy node$NODE_MAJOR-linux-armv7 --public-packages=*
 				break
 				;;
 			3)
 				echo "## Creating application package in $PKG_FOLDER folder"
-				pack node$NODE_MAJOR-linux-armv6 --public-packages=*
+				pack_legacy node$NODE_MAJOR-linux-armv6 --public-packages=*
 				break
 				;;
 			4)
 				echo "## Creating application package in $PKG_FOLDER folder"
-				pack node$NODE_MAJOR-linux-x86
+				pack_legacy node$NODE_MAJOR-linux-x86
 				break
 				;;
 			5)
 				echo "## Creating application package in $PKG_FOLDER folder"
-				pack node$NODE_MAJOR-alpine-x64
+				pack_legacy node$NODE_MAJOR-alpine-x64
 				break
 				;;
 			6)
 				echo "## Creating application package in $PKG_FOLDER folder"
-				pack node$NODE_MAJOR-linux-arm64 --public-packages=*
+				pack_sea node$SEA_NODE_MAJOR-linux-arm64
 				break
 				;;
 			*)

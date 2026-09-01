@@ -352,6 +352,10 @@ services:
 
 ## Binary Packaging
 
+x64 and arm64 targets are packaged with `pkg --sea`, which bakes the app into a
+stock Node.js binary instead of a patched one, so they need Node >= 22 on the
+build machine. armv7 still uses the legacy `pkg-fetch` pipeline.
+
 ### pkg Configuration
 
 ```json
@@ -364,10 +368,10 @@ services:
       "node_modules/serialport/**/*"
     ],
     "targets": [
-      "node20-linux-x64",
-      "node20-linux-arm64",
-      "node20-macos-x64",
-      "node20-win-x64"
+      "node22-linux-x64",
+      "node22-linux-arm64",
+      "node22-macos-x64",
+      "node22-win-x64"
     ],
     "outputPath": "build/pkg"
   }
