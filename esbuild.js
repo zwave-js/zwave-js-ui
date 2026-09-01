@@ -136,8 +136,9 @@ async function main() {
 	console.log(`Build took ${Date.now() - start}ms`)
 	await printSize(outfile)
 
-	// a pattern that stops matching would silently ship a broken bundle, so fail
-	// the build instead
+	// A pattern that stops matching would silently ship a broken bundle, so fail
+	// the build instead. Patterns are global, so a second occurrence introduced by
+	// a future dependency gets patched too rather than slipping through.
 	const patch = (source, pattern, replacement) => {
 		const patched = source.replace(pattern, replacement)
 		if (patched === source) {
@@ -154,10 +155,14 @@ async function main() {
 	)
 	content = patch(
 		content,
-		`("../../package.json").version`,
-		`("./node_modules/@zwave-js/server/package.json").version`,
+		/\("\.\.\/\.\.\/package\.json"\)\.version/g,
+		'("./node_modules/@zwave-js/server/package.json").version',
 	)
-	content = patch(content, `("../../package.json")`, `("./package.json")`)
+	content = patch(
+		content,
+		/\("\.\.\/\.\.\/package\.json"\)/g,
+		'("./package.json")',
+	)
 
 	await writeFile(outfile, content)
 

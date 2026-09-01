@@ -34,10 +34,12 @@ runs:
         if grep -qE "Cannot find module|MODULE_NOT_FOUND" native.log; then
           echo "The serialport addon was not loadable from the packaged binary" && exit 1
         fi
-        # match the device path only, so a reworded serialport error does not read
-        # as the addon having failed to load
-        if ! grep -q "/dev/ttyUSB-does-not-exist" native.log; then
-          echo "The serialport addon never reported on the port it was given" && exit 1
+        # "cannot open" is the addon's own errno message. The app logs
+        # "Connecting to <port>" before serialport is reached, so matching the
+        # device path alone would pass with a completely broken addon.
+        if ! grep -q "cannot open /dev/ttyUSB-does-not-exist" native.log; then
+          echo "The serialport addon did not report the expected open failure;" \
+               "either it was not usable from the binary, or its error wording changed" && exit 1
         fi
 
     - name: Spawn fake stick
@@ -47,8 +49,6 @@ runs:
         setsid nohup npm run fake-stick > fake-stick.log 2>&1 &
         echo $! > fake-stick.pid
 
-    # pinned by digest: this runs in the same job that holds the release token.
-    # Bump with: docker manifest inspect eclipse-mosquitto:<version>
     # The mock controller crashes on the first bytes if the app connects while it
     # is still coming up, and then the driver never gets a controller to talk to.
     - name: Wait for the mock stick
@@ -66,6 +66,8 @@ runs:
         done
         echo "Mock stick did not start within 60s" && cat fake-stick.log && exit 1
 
+    # pinned by digest: this runs in the same job that holds the release token.
+    # Bump with: docker manifest inspect eclipse-mosquitto:<version>
     - name: Start broker container
       shell: bash
       run: |
@@ -118,38 +120,42 @@ runs:
         done
         echo "Application did not answer within 60s" && cat server.log && exit 1
 
-    # The HTTP server is up long before the driver has interviewed the mock nodes,
-    # and only then does the gateway act on `.../set` topics.
-    - name: Wait for the Z-Wave driver
+    # The HTTP server is up long before the driver has the mock nodes, and the
+    # gateway only acts on `.../set` for a node that is ready. "Ready" rather than
+    # "Interview COMPLETED": the interview is skipped when the store is warm.
+    - name: Wait for the mock nodes
       shell: bash
       run: |
-        for _ in $(seq 1 90); do
-          if grep -q "Driver ready" server.log; then
-            echo "Driver is ready" && exit 0
+        for _ in $(seq 1 120); do
+          if grep -q "\[Node 002\] Ready" server.log; then
+            echo "Node 2 is ready" && exit 0
           fi
           if ! kill -0 "$(cat app.pid)" 2>/dev/null; then
-            echo "Application exited before the driver was ready" && cat server.log && exit 1
+            echo "Application exited before the nodes were ready" && cat server.log && exit 1
           fi
           sleep 1
         done
-        echo "Driver was not ready within 90s" && cat server.log && exit 1
+        echo "Node 2 was not ready within 120s" && cat server.log && exit 1
 
     - name: Test MQTT write and read
       shell: bash
       run: |
-        timeout 30 docker exec broker \
-          mosquitto_pub -h localhost -p 1883 -t "zwave/nodeID_2/106/0/targetValue/3/set" -m "1"
-        # Poll the retained value rather than reading the next message on the
-        # topic: the gateway publishes there while it is still interviewing, so
-        # the reply to this write is not necessarily the message that arrives
-        # next. The mock reports 0 until the write lands, so requiring 1 cannot
-        # pass on the pre-set value.
+        # Read the retained value rather than the next message on the topic: the
+        # gateway also publishes there on its own, so the reply to this write is
+        # not necessarily what arrives next. The mock reports 0 until the write
+        # lands, so requiring 1 cannot pass on the pre-set value.
+        #
+        # The write is repeated because it is idempotent, and is dropped outright
+        # if the gateway is not subscribed yet.
         for _ in $(seq 1 30); do
+          timeout 10 docker exec broker \
+            mosquitto_pub -h localhost -p 1883 -t "zwave/nodeID_2/106/0/targetValue/3/set" -m "1" \
+            || true
           value=$(timeout 10 docker exec broker \
             mosquitto_sub -h localhost -p 1883 -t "zwave/nodeID_2/106/0/currentValue/3" -C 1 -W 5 \
             2>/dev/null || true)
           case "$value" in
-            *'"value":1'*|1)
+            *'"value":1}'*|1)
               echo "currentValue reported over MQTT: $value" && exit 0 ;;
           esac
           sleep 1

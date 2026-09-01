@@ -59,8 +59,8 @@ fi
 # would not ship the same runtime. Must stay >= 22, which is what pkg requires
 # for its enhanced SEA pipeline.
 SEA_NODE_VERSION=$(tr -d 'v \t\n\r' < .nvmrc)
-if ! [[ "$SEA_NODE_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-	echo "Expected a x.y.z Node version in .nvmrc, got '$SEA_NODE_VERSION'" >&2
+if ! [[ "$SEA_NODE_VERSION" =~ ^([0-9]+)\.[0-9]+\.[0-9]+$ ]] || ((BASH_REMATCH[1] < 22)); then
+	echo "Expected a x.y.z Node version >= 22 in .nvmrc, got '$SEA_NODE_VERSION'" >&2
 	exit 1
 fi
 
