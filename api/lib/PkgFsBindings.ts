@@ -33,7 +33,10 @@ const CONFIG_PATH_IN_PKG = path.join(
  * with the bundle. Returns `undefined` for any path outside of it.
  */
 function toPkgPath(filePath: string): string | undefined {
-	const configPath = CONFIG_PATHS.find((p) => filePath.startsWith(p))
+	// the separator boundary keeps siblings like `/config-db` out of the match
+	const configPath = CONFIG_PATHS.find(
+		(p) => filePath === p || filePath.startsWith(p + path.sep),
+	)
 	return configPath
 		? filePath.replace(configPath, CONFIG_PATH_IN_PKG)
 		: undefined
@@ -44,7 +47,10 @@ export class PkgFsBindings implements FileSystem {
 		filePath = path.normalize(filePath)
 		return nodeFs.readFile(toPkgPath(filePath) ?? filePath)
 	}
-	writeFile(filePath: string, data: Uint8Array<ArrayBuffer>): Promise<void> {
+	async writeFile(
+		filePath: string,
+		data: Uint8Array<ArrayBuffer>,
+	): Promise<void> {
 		filePath = path.normalize(filePath)
 		if (toPkgPath(filePath)) {
 			// The pkg assets are readonly
@@ -92,7 +98,7 @@ export class PkgFsBindings implements FileSystem {
 		filePath = path.normalize(filePath)
 		return nodeFs.stat(toPkgPath(filePath) ?? filePath)
 	}
-	ensureDir(dirPath: string): Promise<void> {
+	async ensureDir(dirPath: string): Promise<void> {
 		dirPath = path.normalize(dirPath)
 		if (toPkgPath(dirPath)) {
 			// The pkg assets are readonly
@@ -100,7 +106,7 @@ export class PkgFsBindings implements FileSystem {
 		}
 		return nodeFs.ensureDir(dirPath)
 	}
-	deleteDir(dirPath: string): Promise<void> {
+	async deleteDir(dirPath: string): Promise<void> {
 		dirPath = path.normalize(dirPath)
 		if (toPkgPath(dirPath)) {
 			// The pkg assets are readonly

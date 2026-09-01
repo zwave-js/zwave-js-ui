@@ -358,22 +358,15 @@ build machine. armv7 still uses the legacy `pkg-fetch` pipeline.
 
 ### pkg Configuration
 
+`package.json`'s `pkg` field lists what to embed; the targets, the SEA/legacy
+split and the pinned Node version live in [`package.sh`](../../package.sh).
+
 ```json
 // package.json
 {
   "pkg": {
-    "scripts": "server/**/*.js",
-    "assets": [
-      "dist/**/*",
-      "node_modules/serialport/**/*"
-    ],
-    "targets": [
-      "node22-linux-x64",
-      "node22-linux-arm64",
-      "node22-macos-x64",
-      "node22-win-x64"
-    ],
-    "outputPath": "build/pkg"
+    "scripts": ["server/**/*", "node_modules/axios/dist/node/*"],
+    "assets": ["dist/**/*", "snippets/**", "node_modules/@serialport/**", "..."]
   }
 }
 ```
@@ -387,10 +380,9 @@ npm run pkg
 **Output**:
 ```
 build/pkg/
-├── zwave-js-ui-linux-x64
-├── zwave-js-ui-linux-arm64
-├── zwave-js-ui-macos-x64
-└── zwave-js-ui-win-x64.exe
+├── zwave-js-ui-linux           # SEA, stock Node 22
+├── zwave-js-ui-win.exe         # SEA, stock Node 22
+└── zwave-js-ui-vX.Y.Z-*.zip    # release assets
 ```
 
 ## Build Validation

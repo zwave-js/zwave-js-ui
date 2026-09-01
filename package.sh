@@ -42,8 +42,6 @@ echo "App-name: $APP"
 VERSION=$(node -p "require('./package.json').version")
 echo "Version: $VERSION"
 
-NODE_MAJOR=$(node -v | grep -E -o '[0-9].' | head -n 1)
-
 echo "## Clear $PKG_FOLDER folder"
 rm -rf $PKG_FOLDER/*
 
@@ -54,9 +52,16 @@ else
 	ARCH=$(uname -m)
 fi
 
-# Node major baked into SEA builds. Stock nodejs.org binaries only expose the
-# `node:sea` API from v22, and it must stay in sync with docker/Dockerfile.
-SEA_NODE_MAJOR=22
+# Node version baked into SEA builds. Pinned to the full x.y.z on purpose: pkg
+# would otherwise resolve `node22` to whatever nodejs.org calls latest at build
+# time, so two builds of the same tag would not ship the same runtime. Keep it in
+# sync with NODE_VERSION in docker/Dockerfile. Must stay >= 22, which is the
+# first release exposing the `node:sea` API on stock binaries.
+SEA_NODE_VERSION=22.20.0
+
+# Node major used by the legacy pkg-fetch targets, which only exist for the
+# architectures pkg-fetch still publishes patched binaries for.
+LEGACY_NODE_MAJOR=20
 
 # Compression of the SEA archive. Brotli gives the smallest binary and, since the
 # archive is decompressed lazily per file, costs no measurable startup time.
@@ -64,6 +69,11 @@ SEA_COMPRESS=Brotli
 
 # SEA mode bakes the payload into a stock, unpatched nodejs.org binary, so there
 # is no pkg-fetch patched-Node dependency to wait on.
+#
+# No `--options experimental-require-module`: SEA runs on Node >= 22, which has
+# `require(esm)` on by default, and pkg does not bake v8 options in SEA mode.
+# No `--public-packages` either: it only controls V8-bytecode packing, which SEA
+# does not do -- it stores sources as-is.
 pack_sea() {
 	echo executing: pkg . --sea --compress $SEA_COMPRESS --out-path $PKG_FOLDER -t $1
 	npx pkg . --sea --compress $SEA_COMPRESS --out-path $PKG_FOLDER -t $1
@@ -99,11 +109,11 @@ if [ ! -z "$1" ]; then
 	fi
 
 	if [ "$ARCH" = "aarch64" ] || [ "$ARCH" = "arm64" ]; then
-		pack_sea node$SEA_NODE_MAJOR-linux-arm64
+		pack_sea node$SEA_NODE_VERSION-linux-arm64
 	elif [ "$ARCH" = "armv7" ]; then
-		pack_legacy node$NODE_MAJOR-linux-armv7 --public-packages=*
+		pack_legacy node$LEGACY_NODE_MAJOR-linux-armv7 --public-packages=*
 	else
-		pack_sea node$SEA_NODE_MAJOR-linux-x64,node$SEA_NODE_MAJOR-win-x64
+		pack_sea node$SEA_NODE_VERSION-linux-x64,node$SEA_NODE_VERSION-win-x64
 	fi
 
 else
@@ -132,32 +142,32 @@ else
 		case "$REPLY" in
 			1)
 				echo "## Creating application package in $PKG_FOLDER folder"
-				pack_sea node$SEA_NODE_MAJOR-linux-x64
+				pack_sea node$SEA_NODE_VERSION-linux-x64
 				break
 				;;
 			2)
 				echo "## Creating application package in $PKG_FOLDER folder"
-				pack_legacy node$NODE_MAJOR-linux-armv7 --public-packages=*
+				pack_legacy node$LEGACY_NODE_MAJOR-linux-armv7 --public-packages=*
 				break
 				;;
 			3)
 				echo "## Creating application package in $PKG_FOLDER folder"
-				pack_legacy node$NODE_MAJOR-linux-armv6 --public-packages=*
+				pack_legacy node$LEGACY_NODE_MAJOR-linux-armv6 --public-packages=*
 				break
 				;;
 			4)
 				echo "## Creating application package in $PKG_FOLDER folder"
-				pack_legacy node$NODE_MAJOR-linux-x86
+				pack_legacy node$LEGACY_NODE_MAJOR-linux-x86
 				break
 				;;
 			5)
 				echo "## Creating application package in $PKG_FOLDER folder"
-				pack_legacy node$NODE_MAJOR-alpine-x64
+				pack_legacy node$LEGACY_NODE_MAJOR-alpine-x64
 				break
 				;;
 			6)
 				echo "## Creating application package in $PKG_FOLDER folder"
-				pack_sea node$SEA_NODE_MAJOR-linux-arm64
+				pack_sea node$SEA_NODE_VERSION-linux-arm64
 				break
 				;;
 			*)

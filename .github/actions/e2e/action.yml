@@ -1,0 +1,124 @@
+name: "End-to-end test"
+description: "Boots the app against the mock Z-Wave stick and an MQTT broker, then checks it works end to end"
+
+inputs:
+  start-command:
+    description: "Command that starts the app under test"
+    required: true
+  process-pattern:
+    description: "pgrep -f pattern matching the started process"
+    required: true
+  binary:
+    description: "Path to the packaged binary. When set, the assets embedded in it are checked too."
+    required: false
+    default: ""
+
+runs:
+  using: composite
+  steps:
+    # The serialport addon is unpacked from the binary the first time it is used,
+    # and that unpacking works differently under SEA than it did under legacy pkg.
+    # Pointing at a device that does not exist proves the addon loaded: the failure
+    # then comes from the addon itself rather than from module resolution.
+    - name: Check the native addon can be loaded
+      if: inputs.binary != ''
+      shell: bash
+      env:
+        BINARY: ${{ inputs.binary }}
+      run: |
+        STORE_DIR=$(mktemp -d) ZWAVE_PORT=/dev/ttyUSB-does-not-exist \
+          timeout 30 "$BINARY" > native.log 2>&1 || true
+        cat native.log
+        if grep -qE "Cannot find module|MODULE_NOT_FOUND" native.log; then
+          echo "The serialport addon was not loadable from the packaged binary" && exit 1
+        fi
+        grep -q "cannot open /dev/ttyUSB-does-not-exist" native.log \
+          || { echo "The serialport addon did not report the expected open failure" && exit 1; }
+
+    - name: Spawn fake stick
+      shell: bash
+      run: nohup npm run fake-stick > fake-stick.log 2>&1 &
+
+    - name: Start broker container
+      shell: bash
+      run: docker run -d --name broker --network="host" eclipse-mosquitto:latest
+
+    - name: Create settings.json
+      shell: bash
+      run: cp test/e2e/settings.json store/settings.json
+
+    - name: Start application
+      shell: bash
+      env:
+        START_COMMAND: ${{ inputs.start-command }}
+      run: nohup bash -c "exec $START_COMMAND" > server.log 2>&1 &
+
+    - name: Wait for the application to answer
+      shell: bash
+      env:
+        PROCESS_PATTERN: ${{ inputs.process-pattern }}
+      run: |
+        for _ in $(seq 1 60); do
+          if curl -fsS -o /dev/null http://127.0.0.1:8091/; then
+            echo "Application is up" && exit 0
+          fi
+          if ! pgrep -f "$PROCESS_PATTERN" > /dev/null; then
+            echo "Application exited during startup" && cat server.log && exit 1
+          fi
+          sleep 1
+        done
+        echo "Application did not answer within 60s" && cat server.log && exit 1
+
+    - name: Test MQTT write and read
+      shell: bash
+      run: |
+        docker exec broker mosquitto_pub -h localhost -p 1883 -t "zwave/nodeID_2/106/0/targetValue/3/set" -m "1"
+        timeout 60 docker exec broker mosquitto_sub -h localhost -p 1883 -t "zwave/nodeID_2/106/0/currentValue/3" -C 1
+
+    # The UI and the Z-Wave config DB are read out of the binary at runtime, so a
+    # broken virtual filesystem only shows up when they are actually read.
+    - name: Test embedded assets
+      if: inputs.binary != ''
+      shell: bash
+      run: |
+        index_size=$(curl -fsS http://127.0.0.1:8091/ | wc -c)
+        echo "UI index.html served from the binary: $index_size bytes"
+        if [ "$index_size" -lt 500 ]; then
+          echo "The UI was not served from the packaged binary" && exit 1
+        fi
+        config_files=$(find store/.config-db -name '*.json' | wc -l)
+        echo "Config DB files extracted: $config_files"
+        if [ "$config_files" -lt 100 ]; then
+          echo "The config DB was not extracted from the packaged binary" && exit 1
+        fi
+
+    - name: Output application logs
+      if: always()
+      shell: bash
+      run: cat server.log
+
+    - name: Output broker logs
+      if: always()
+      shell: bash
+      run: docker logs broker
+
+    - name: Ensure application is still running
+      if: always()
+      shell: bash
+      env:
+        PROCESS_PATTERN: ${{ inputs.process-pattern }}
+      run: |
+        if ! pgrep -f "$PROCESS_PATTERN" > /dev/null; then
+          echo "Application crashed!" && exit 1
+        fi
+        echo "Application is running successfully."
+
+    - name: Tear down
+      if: always()
+      shell: bash
+      env:
+        PROCESS_PATTERN: ${{ inputs.process-pattern }}
+      run: |
+        pkill -f "$PROCESS_PATTERN" || true
+        pkill -f mock-server || true
+        docker rm -f broker || true

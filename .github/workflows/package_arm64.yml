@@ -31,25 +31,12 @@ jobs:
         run: |
           npm run pkg -- --bundle --skip-build --arch=arm64
 
-      - name: Test built package
-        run: |
-          echo "Testing application startup..."
-          ./build/pkg/zwave-js-ui > server.log 2>&1 &
-          app_pid=$!
-          sleep 15
-          if ! kill -0 $app_pid 2>/dev/null; then
-            echo "Package test failed: application crashed on startup"
-            cat server.log
-            exit 1
-          fi
-          kill $app_pid 2>/dev/null || true
-          wait $app_pid 2>/dev/null || true
-          if ! grep -q "Listening on port" server.log; then
-            echo "Package test failed: server never started listening"
-            cat server.log
-            exit 1
-          fi
-          echo "Package test passed: application started successfully"
+      - name: Test packaged binary
+        uses: ./.github/actions/e2e
+        with:
+          start-command: ./build/pkg/zwave-js-ui
+          process-pattern: build/pkg/zwave-js-ui
+          binary: ./build/pkg/zwave-js-ui
 
       - name: Upload artifacts
         if: github.event_name == 'workflow_dispatch'
