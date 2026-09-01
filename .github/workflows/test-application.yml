@@ -31,4 +31,3 @@ jobs:
               uses: ./.github/actions/e2e
               with:
                   start-command: npm start
-                  process-pattern: npm start

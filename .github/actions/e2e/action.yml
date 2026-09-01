@@ -5,9 +5,6 @@ inputs:
   start-command:
     description: "Command that starts the app under test"
     required: true
-  process-pattern:
-    description: "pgrep -f pattern matching the started process"
-    required: true
   binary:
     description: "Path to the packaged binary. When set, the assets embedded in it are checked too."
     required: false
@@ -37,7 +34,9 @@ runs:
 
     - name: Spawn fake stick
       shell: bash
-      run: nohup npm run fake-stick > fake-stick.log 2>&1 &
+      run: |
+        nohup npm run fake-stick > fake-stick.log 2>&1 &
+        echo $! > fake-stick.pid
 
     - name: Start broker container
       shell: bash
@@ -51,18 +50,18 @@ runs:
       shell: bash
       env:
         START_COMMAND: ${{ inputs.start-command }}
-      run: nohup bash -c "exec $START_COMMAND" > server.log 2>&1 &
+      run: |
+        nohup bash -c "$START_COMMAND" > server.log 2>&1 &
+        echo $! > app.pid
 
     - name: Wait for the application to answer
       shell: bash
-      env:
-        PROCESS_PATTERN: ${{ inputs.process-pattern }}
       run: |
         for _ in $(seq 1 60); do
-          if curl -fsS -o /dev/null http://127.0.0.1:8091/; then
+          if curl -fs -o /dev/null http://127.0.0.1:8091/; then
             echo "Application is up" && exit 0
           fi
-          if ! pgrep -f "$PROCESS_PATTERN" > /dev/null; then
+          if ! kill -0 "$(cat app.pid)" 2>/dev/null; then
             echo "Application exited during startup" && cat server.log && exit 1
           fi
           sleep 1
@@ -86,10 +85,13 @@ runs:
         if [ "$index_size" -lt 500 ]; then
           echo "The UI was not served from the packaged binary" && exit 1
         fi
+        if [ ! -d store/.config-db ]; then
+          echo "The config DB was not extracted from the packaged binary" && exit 1
+        fi
         config_files=$(find store/.config-db -name '*.json' | wc -l)
         echo "Config DB files extracted: $config_files"
         if [ "$config_files" -lt 100 ]; then
-          echo "The config DB was not extracted from the packaged binary" && exit 1
+          echo "The config DB was only partially extracted from the packaged binary" && exit 1
         fi
 
     - name: Output application logs
@@ -105,10 +107,8 @@ runs:
     - name: Ensure application is still running
       if: always()
       shell: bash
-      env:
-        PROCESS_PATTERN: ${{ inputs.process-pattern }}
       run: |
-        if ! pgrep -f "$PROCESS_PATTERN" > /dev/null; then
+        if ! kill -0 "$(cat app.pid)" 2>/dev/null; then
           echo "Application crashed!" && exit 1
         fi
         echo "Application is running successfully."
@@ -116,9 +116,16 @@ runs:
     - name: Tear down
       if: always()
       shell: bash
-      env:
-        PROCESS_PATTERN: ${{ inputs.process-pattern }}
       run: |
-        pkill -f "$PROCESS_PATTERN" || true
-        pkill -f mock-server || true
+        for pidfile in app.pid fake-stick.pid; do
+          [ -f "$pidfile" ] || continue
+          pid=$(cat "$pidfile")
+          pkill -P "$pid" 2>/dev/null || true
+          kill "$pid" 2>/dev/null || true
+          for _ in $(seq 1 10); do
+            kill -0 "$pid" 2>/dev/null || break
+            sleep 1
+          done
+          kill -9 "$pid" 2>/dev/null || true
+        done
         docker rm -f broker || true

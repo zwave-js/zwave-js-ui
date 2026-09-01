@@ -35,7 +35,6 @@ jobs:
         uses: ./.github/actions/e2e
         with:
           start-command: ./build/pkg/zwave-js-ui
-          process-pattern: build/pkg/zwave-js-ui
           binary: ./build/pkg/zwave-js-ui
 
       - name: Upload artifacts
