@@ -17,6 +17,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
 
     steps:
       - uses: actions/checkout@v5
@@ -28,11 +29,27 @@ jobs:
           cache: 'npm'
 
       - name: Update dependency
+        env:
+          DEP: ${{ github.event.inputs.dep }}
+          VERSION: ${{ github.event.inputs.version || 'latest' }}
         run: |
-          if [ "${{ github.event.inputs.dep }}" = "zwave-js" ]; then
-            npm install --save-exact ${{github.event.inputs.dep}}@${{github.event.inputs.version || 'latest'}}
+          # A dispatch right after a release can arrive before the registry serves
+          # the new version. Poll with --prefer-online so the cached packument
+          # restored by setup-node does not hide it.
+          for attempt in $(seq 20); do
+            if npm view --prefer-online "$DEP@$VERSION" version > /dev/null 2>&1; then
+              break
+            fi
+            echo "$DEP@$VERSION is not available on the registry yet, retrying in 30s ($attempt/20)"
+            sleep 30
+          done
+          # Fail here with a clear message if the version never showed up
+          npm view --prefer-online "$DEP@$VERSION" version
+
+          if [ "$DEP" = "zwave-js" ]; then
+            npm install --save-exact "$DEP@$VERSION"
           else
-            npm install ${{github.event.inputs.dep}}@${{github.event.inputs.version || 'latest'}}
+            npm install "$DEP@$VERSION"
           fi
       - name: Check for changes
         id: check
