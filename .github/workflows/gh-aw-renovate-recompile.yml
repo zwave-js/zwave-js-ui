@@ -13,9 +13,9 @@ on:
   # Details under
   # https://github.blog/changelog/2021-02-19-github-actions-workflows-triggered-by-dependabot-prs-will-run-with-read-only-permissions/
   pull_request_target:
+    # The two workflows that carry a literal gh-aw version pin
     paths:
       - '.github/workflows/gh-aw-compile-check.yml'
-      - '.github/workflows/gh-aw-renovate-recompile.yml'
       - '.github/workflows/bot-workflows-update.yml'
 
 permissions: {}
@@ -27,7 +27,6 @@ jobs:
     timeout-minutes: 15
     permissions:
       contents: read
-      pull-requests: write
 
     steps:
     - name: Checkout PR head
