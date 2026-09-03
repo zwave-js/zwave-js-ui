@@ -196,7 +196,7 @@ esbuild.build({
   entryPoints: ['api/app.ts'],
   bundle: true,
   platform: 'node',
-  target: 'node20',
+  target: 'node18',
   outfile: 'build/zwavejs2mqtt',
   external: [
     // Native modules that can't be bundled
@@ -352,24 +352,21 @@ services:
 
 ## Binary Packaging
 
+x64 and arm64 targets are packaged with `pkg --sea`, which bakes the app into a
+stock Node.js binary instead of a patched one, so they need Node >= 22 on the
+build machine. armv7 still uses the legacy `pkg-fetch` pipeline.
+
 ### pkg Configuration
+
+`package.json`'s `pkg` field lists what to embed; the targets, the SEA/legacy
+split and the pinned Node version live in [`package.sh`](../../package.sh).
 
 ```json
 // package.json
 {
   "pkg": {
-    "scripts": "server/**/*.js",
-    "assets": [
-      "dist/**/*",
-      "node_modules/serialport/**/*"
-    ],
-    "targets": [
-      "node20-linux-x64",
-      "node20-linux-arm64",
-      "node20-macos-x64",
-      "node20-win-x64"
-    ],
-    "outputPath": "build/pkg"
+    "scripts": ["server/**/*", "node_modules/axios/dist/node/*"],
+    "assets": ["dist/**/*", "snippets/**", "node_modules/@serialport/**", "..."]
   }
 }
 ```
@@ -383,11 +380,14 @@ npm run pkg
 **Output**:
 ```
 build/pkg/
-├── zwave-js-ui-linux-x64
-├── zwave-js-ui-linux-arm64
-├── zwave-js-ui-macos-x64
-└── zwave-js-ui-win-x64.exe
+├── zwave-js-ui-linux           # x64  - SEA, stock Node from .nvmrc
+├── zwave-js-ui-win.exe         # x64  - SEA, stock Node from .nvmrc
+├── zwave-js-ui                 # arm64 or armv7, depending on --arch
+└── zwave-js-ui-vX.Y.Z-*.zip    # release assets
 ```
+
+A release therefore ships two Node majors: armv7 on the legacy pkg-fetch Node 20,
+every other target on the stock Node pinned by `.nvmrc`.
 
 ## Build Validation
 

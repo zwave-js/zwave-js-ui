@@ -236,7 +236,7 @@ Example MCP queries:
 
 ### Prerequisites and Installation
 
--   Requires Node.js 20.19+ (check with `node --version`)
+-   Requires Node.js 20.19+ to run (check with `node --version`); `npm run pkg` needs Node 22+ because the SEA binaries are built on a stock Node 22
 -   Use npm for package management (bundled with Node.js)
 -   Install dependencies: `npm ci` -- takes ~60 seconds with network delays
 

@@ -42,8 +42,6 @@ echo "App-name: $APP"
 VERSION=$(node -p "require('./package.json').version")
 echo "Version: $VERSION"
 
-NODE_MAJOR=$(node -v | grep -E -o '[0-9].' | head -n 1)
-
 echo "## Clear $PKG_FOLDER folder"
 rm -rf $PKG_FOLDER/*
 
@@ -54,7 +52,41 @@ else
 	ARCH=$(uname -m)
 fi
 
-pack() {
+# Node version baked into SEA builds. Read from .nvmrc so the renovate bump that
+# moves the rest of the repo onto a Node security release moves the packaged
+# binaries too. The full x.y.z matters: given just `node22`, pkg resolves it to
+# whatever nodejs.org calls latest at build time, so two builds of the same tag
+# would not ship the same runtime. Must stay >= 22, which is what pkg requires
+# for its enhanced SEA pipeline.
+SEA_NODE_VERSION=$(tr -d 'v \t\n\r' < .nvmrc)
+if ! [[ "$SEA_NODE_VERSION" =~ ^([0-9]+)\.[0-9]+\.[0-9]+$ ]] || ((BASH_REMATCH[1] < 22)); then
+	echo "Expected a x.y.z Node version >= 22 in .nvmrc, got '$SEA_NODE_VERSION'" >&2
+	exit 1
+fi
+
+# Node major used by the legacy pkg-fetch targets, which only exist for the
+# architectures pkg-fetch still publishes patched binaries for.
+LEGACY_NODE_MAJOR=20
+
+# Compression of the SEA archive. Brotli gives the smallest binary and, since the
+# archive is decompressed lazily per file, costs no measurable startup time.
+SEA_COMPRESS=Brotli
+
+# SEA mode bakes the payload into a stock, unpatched nodejs.org binary, so there
+# is no pkg-fetch patched-Node dependency to wait on.
+#
+# No `--options experimental-require-module`: SEA runs on Node >= 22, which has
+# `require(esm)` on by default, and pkg does not bake v8 options in SEA mode.
+# No `--public-packages` either: it only controls V8-bytecode packing, which SEA
+# does not do -- it stores sources as-is.
+pack_sea() {
+	echo executing: pkg . --sea --compress $SEA_COMPRESS --out-path $PKG_FOLDER -t $1
+	npx pkg . --sea --compress $SEA_COMPRESS --out-path $PKG_FOLDER -t $1
+}
+
+# Legacy pkg-fetch pipeline, still needed for targets nodejs.org has no stock
+# binary for (armv6/armv7/x86) or that pkg cannot address in SEA mode (alpine).
+pack_legacy() {
 	echo executing: pkg . --out-path $PKG_FOLDER --options experimental-require-module -t $1 $2
 	npx pkg . --out-path $PKG_FOLDER --options experimental-require-module -t $1 $2
 }
@@ -82,11 +114,11 @@ if [ ! -z "$1" ]; then
 	fi
 
 	if [ "$ARCH" = "aarch64" ] || [ "$ARCH" = "arm64" ]; then
-		pack node$NODE_MAJOR-linux-arm64
+		pack_sea node$SEA_NODE_VERSION-linux-arm64
 	elif [ "$ARCH" = "armv7" ]; then
-		pack node$NODE_MAJOR-linux-armv7 --public-packages=*
+		pack_legacy node$LEGACY_NODE_MAJOR-linux-armv7 --public-packages=*
 	else
-		pack node$NODE_MAJOR-linux-x64,node$NODE_MAJOR-win-x64
+		pack_sea node$SEA_NODE_VERSION-linux-x64,node$SEA_NODE_VERSION-win-x64
 	fi
 
 else
@@ -115,32 +147,32 @@ else
 		case "$REPLY" in
 			1)
 				echo "## Creating application package in $PKG_FOLDER folder"
-				pack node$NODE_MAJOR-linux-x64
+				pack_sea node$SEA_NODE_VERSION-linux-x64
 				break
 				;;
 			2)
 				echo "## Creating application package in $PKG_FOLDER folder"
-				pack node$NODE_MAJOR-linux-armv7 --public-packages=*
+				pack_legacy node$LEGACY_NODE_MAJOR-linux-armv7 --public-packages=*
 				break
 				;;
 			3)
 				echo "## Creating application package in $PKG_FOLDER folder"
-				pack node$NODE_MAJOR-linux-armv6 --public-packages=*
+				pack_legacy node$LEGACY_NODE_MAJOR-linux-armv6 --public-packages=*
 				break
 				;;
 			4)
 				echo "## Creating application package in $PKG_FOLDER folder"
-				pack node$NODE_MAJOR-linux-x86
+				pack_legacy node$LEGACY_NODE_MAJOR-linux-x86
 				break
 				;;
 			5)
 				echo "## Creating application package in $PKG_FOLDER folder"
-				pack node$NODE_MAJOR-alpine-x64
+				pack_legacy node$LEGACY_NODE_MAJOR-alpine-x64
 				break
 				;;
 			6)
 				echo "## Creating application package in $PKG_FOLDER folder"
-				pack node$NODE_MAJOR-linux-arm64 --public-packages=*
+				pack_sea node$SEA_NODE_VERSION-linux-arm64
 				break
 				;;
 			*)

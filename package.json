@@ -129,7 +129,7 @@
     "@typescript-eslint/parser": "^8.45.0",
     "@vitejs/plugin-vue": "^6.0.2",
     "@vitest/coverage-v8": "^4.1.9",
-    "@yao-pkg/pkg": "^6.10.1",
+    "@yao-pkg/pkg": "^6.22.0",
     "ansi_up": "^6.0.2",
     "axios": "^1.7.2",
     "barcode-detector": "^2.2.11",
