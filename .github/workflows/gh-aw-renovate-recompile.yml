@@ -1,0 +1,97 @@
+name: Recompile gh-aw workflows on Renovate PRs
+
+# Renovate bumps the gh-aw version pin in the hand-written workflows. A new
+# gh-aw release regenerates every compiled *.lock.yml, so this workflow runs
+# gh aw compile with the bumped version on the PR and pushes the result.
+# Renovate never touches the generated files itself (see ignorePaths in
+# .github/renovate.json5).
+
+on:
+  # WARNING: This runs in the PR base with access to secrets while checking
+  # out PR code, so it must stay restricted to Renovate branches from this
+  # repository, and to pushes made by Renovate. No step both holds a write
+  # credential and runs PR-authored content; gh aw compile only gets the
+  # read-only github.token for API lookups.
+  # Details under
+  # https://github.blog/changelog/2021-02-19-github-actions-workflows-triggered-by-dependabot-prs-will-run-with-read-only-permissions/
+  pull_request_target:
+    # The two workflows that carry a literal gh-aw version pin
+    paths:
+      - '.github/workflows/gh-aw-compile-check.yml'
+      - '.github/workflows/bot-workflows-update.yml'
+
+permissions: {}
+
+jobs:
+  recompile:
+    if: ${{ github.event.pull_request.user.login == 'renovate[bot]' && github.actor == 'renovate[bot]' && github.event.pull_request.head.repo.full_name == github.repository }}
+    runs-on: [ubuntu-latest]
+    timeout-minutes: 15
+    permissions:
+      contents: read
+
+    steps:
+    - name: Checkout PR head
+      uses: actions/checkout@v7
+      with:
+        # Pin to the SHA the event fired for, so a push to the branch cannot
+        # swap the code out between the event and the checkout
+        ref: ${{ github.event.pull_request.head.sha }}
+        # gh aw compile runs over PR-authored content, so leave no credential
+        # behind in .git/config
+        persist-credentials: false
+
+    - name: Read the gh-aw pin from the PR
+      id: pin
+      # pull_request_target runs the base branch's copy of this file, so the
+      # version Renovate proposes has to be read from the checked-out PR head.
+      # The pin in the compile check is the reference version.
+      run: |
+        set -euo pipefail
+        pin=$(grep -oP 'gh extension install github/gh-aw --pin \K\S+' .github/workflows/gh-aw-compile-check.yml)
+        [[ "$pin" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "::error::Unexpected gh-aw pin '$pin'"; exit 1; }
+        echo "pin=$pin" >> "$GITHUB_OUTPUT"
+
+    - name: Install gh-aw
+      env:
+        GH_TOKEN: ${{ github.token }}
+        PIN: ${{ steps.pin.outputs.pin }}
+      run: gh extension install github/gh-aw --pin "$PIN"
+
+    - name: Recompile workflows
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: gh aw compile
+
+    - name: Check the diff
+      id: decide
+      run: |
+        # Refuse to commit anything outside the generated files, since that
+        # would mean the compile step did something unanticipated
+        unexpected=$(git diff --name-only | grep -Ev '^\.github/(workflows/([^/]+\.lock\.yml|agentics-maintenance\.yml)|aw/actions-lock\.json)$' || true)
+        if [ -n "$unexpected" ]; then
+          echo "::error::gh aw compile modified unexpected files:"
+          echo "$unexpected"
+          exit 1
+        fi
+        if git diff --quiet; then
+          echo "action=none" >> "$GITHUB_OUTPUT"
+        else
+          echo "action=push" >> "$GITHUB_OUTPUT"
+        fi
+
+    - name: Push recompiled workflows
+      if: ${{ steps.decide.outputs.action == 'push' }}
+      env:
+        # A PAT, so the push retriggers CI on the PR
+        BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+        HEAD_REF: ${{ github.event.pull_request.head.ref }}
+      run: |
+        git config user.email "bot@zwave-js.io"
+        git config user.name "Z-Wave JS Bot"
+        # Read the PAT from the environment at push time, so it reaches
+        # neither .git/config nor a process argument
+        git config credential.helper '!f() { echo username=x-access-token; echo "password=$BOT_TOKEN"; }; f'
+        git commit -am "chore: recompile gh-aw workflows"
+        # Fails if the branch moved since the checkout, which is intended
+        git push origin "HEAD:refs/heads/$HEAD_REF"
