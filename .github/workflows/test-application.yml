@@ -18,7 +18,7 @@ jobs:
             - name: Set up Node.js
               uses: actions/setup-node@v5
               with:
-                  node-version: '22.23.2'
+                  node-version: '24.20.0'
                   cache: 'npm'
 
             - name: Install dependencies

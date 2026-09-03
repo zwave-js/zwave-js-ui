@@ -185,7 +185,7 @@
     "rollup": "npm:@rollup/wasm-node"
   },
   "engines": {
-    "node": ">= 20.19"
+    "node": ">= 24.20.0"
   },
   "publishConfig": {
     "registry": "https://registry.npmjs.org",

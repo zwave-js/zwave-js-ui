@@ -3,7 +3,7 @@ ARG image=zwave-js-ui
 ARG BUILDPLATFORM
 
 # STEP: 1 - Build JS/TS artifacts once on native amd64 (dist/ and server/ are platform-agnostic)
-FROM --platform=$BUILDPLATFORM node:22.23.2-bookworm@sha256:8a34c4ab3ea2c5cd194f07e317b2a8f09461d3c8b05c4e34c8ccd56d56024c4d AS build-js
+FROM --platform=$BUILDPLATFORM node:24.19.0-bookworm@sha256:4196d66a565c6f195728d9952f161f4adfe2ad753052a08b7ec7f1c5a6bda42b AS build-js
 
 WORKDIR /usr/src/app
 
@@ -23,7 +23,7 @@ COPY --link . .
 RUN npm run build
 
 # STEP: 2 - Install platform-specific production dependencies and native addons
-FROM node:22.23.2-bookworm@sha256:8a34c4ab3ea2c5cd194f07e317b2a8f09461d3c8b05c4e34c8ccd56d56024c4d AS build-native
+FROM node:24.19.0-bookworm@sha256:4196d66a565c6f195728d9952f161f4adfe2ad753052a08b7ec7f1c5a6bda42b AS build-native
 
 WORKDIR /usr/src/app
 
@@ -62,7 +62,7 @@ RUN if [ ! -z "$updateDevices" ]; \
     fi
 
 # STEP: 3 (runtime)
-FROM node:22.23.2-bookworm-slim@sha256:83f487e0a63425e5b4d146fb5e5be574bcbe1b7b843d3ebafdd95eaf7767a7e5
+FROM node:24.19.0-bookworm-slim@sha256:a9f5f7c91a432850b2a8a7797adf5eadb6c733ceed61167806cee7ea7fbc29df
 
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt,sharing=locked \
