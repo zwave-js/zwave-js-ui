@@ -1,4 +1,4 @@
-import { getMeter, getMeterScale } from '@zwave-js/core'
+import { getCCName, getMeter, getMeterScale } from '@zwave-js/core'
 import { join } from 'node:path'
 import { storeDir } from '../config/app.ts'
 
@@ -545,7 +545,17 @@ const _commandClassMap = {
 	0xf0: 'non_interoperable',
 }
 export function commandClass(cmd: number): string {
-	return _commandClassMap[cmd] || `unknownClass_${cmd}`
+	// legacy names take precedence: renaming them would break existing MQTT topics
+	if (_commandClassMap[cmd]) return _commandClassMap[cmd]
+
+	const name = getCCName(cmd)
+	// getCCName returns `unknown (0x24)` for CCs it doesn't know
+	if (name.startsWith('unknown')) return `unknownClass_${cmd}`
+
+	return name
+		.replace(/[^A-Za-z0-9]+/g, '_')
+		.replace(/^_+|_+$/g, '')
+		.toLowerCase()
 }
 const _genericDeviceClassMap: IDeviceClass = {
 	// https://github.com/OpenZWave/open-zwave/blob/master/config/device_classes.xml

@@ -97,6 +97,12 @@ describe('#Constants', () => {
 		it('known', () => expect(mod.commandClass(0)).to.equal('no_operation'))
 		it('unknown', () =>
 			expect(mod.commandClass(-1)).to.equal('unknownClass_-1'))
+		it('legacy name wins over the zwave-js one', () =>
+			expect(mod.commandClass(0x26)).to.equal('switch_multilevel'))
+		it('falls back to zwave-js for CCs not in the legacy map', () =>
+			expect(mod.commandClass(0x6a)).to.equal('window_covering'))
+		it('normalizes punctuation in zwave-js names', () =>
+			expect(mod.commandClass(0x9f)).to.equal('security_2'))
 	})
 	describe('#genericDeviceClass()', () => {
 		it('known generic type', () =>
