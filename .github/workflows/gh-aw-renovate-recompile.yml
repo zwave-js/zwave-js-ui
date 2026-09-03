@@ -9,7 +9,9 @@ name: Recompile gh-aw workflows on Renovate PRs
 on:
   # WARNING: This runs in the PR base with access to secrets while checking
   # out PR code, so it must stay restricted to Renovate branches from this
-  # repository. No step both holds a credential and runs PR-authored content.
+  # repository, and to pushes made by Renovate. No step both holds a write
+  # credential and runs PR-authored content; gh aw compile only gets the
+  # read-only github.token for API lookups.
   # Details under
   # https://github.blog/changelog/2021-02-19-github-actions-workflows-triggered-by-dependabot-prs-will-run-with-read-only-permissions/
   pull_request_target:
@@ -22,7 +24,7 @@ permissions: {}
 
 jobs:
   recompile:
-    if: ${{ github.event.pull_request.user.login == 'renovate[bot]' && github.event.pull_request.head.repo.full_name == github.repository }}
+    if: ${{ github.event.pull_request.user.login == 'renovate[bot]' && github.actor == 'renovate[bot]' && github.event.pull_request.head.repo.full_name == github.repository }}
     runs-on: [ubuntu-latest]
     timeout-minutes: 15
     permissions:
