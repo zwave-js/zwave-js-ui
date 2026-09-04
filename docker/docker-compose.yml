@@ -2,7 +2,7 @@ version: '3.7'
 services:
   zwave-js-ui:
     container_name: zwave-js-ui
-    image: zwavejs/zwave-js-ui:latest
+    image: zwavejs/zwave-js-ui:latest@sha256:86f418050ce658cb6b9a5b17c33065b113376f9ccef98b36b3f2c42050b59672
     restart: always
     tty: true
     stop_signal: SIGINT
