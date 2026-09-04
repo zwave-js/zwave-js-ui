@@ -1,12 +1,15 @@
 # syntax=docker/dockerfile:1
 ARG image=zwave-js-ui
-ARG NODE_VERSION=22.20.0
-ARG ALPINE_VERSION=3.22
+# Full image refs, one per ARG: Renovate rewrites the ARG line that holds the whole
+# ref, so a shared version fragment gets the digest of only one of the two images.
+# Keep the -alpine suffix here in sync with ALPINE_IMAGE.
+ARG NODE_IMAGE=node:22.20.0-alpine3.22
+ARG ALPINE_IMAGE=alpine:3.22
 ARG BUILDPLATFORM
 
-FROM node:${NODE_VERSION}-alpine${ALPINE_VERSION} AS node
+FROM ${NODE_IMAGE} AS node
 
-FROM alpine:${ALPINE_VERSION} AS base
+FROM ${ALPINE_IMAGE} AS base
 
 RUN --mount=type=cache,target=/var/cache/apk,sharing=locked \
     apk add \

@@ -42,13 +42,24 @@
       "pinDigests": true
     },
     {
-      // ALPINE_VERSION feeds two refs in docker/Dockerfile: `alpine:${ALPINE_VERSION}`
-      // and `node:${NODE_VERSION}-alpine${ALPINE_VERSION}`. A digest appended to the ARG
-      // is only valid for the first, so pinning it yields an unresolvable
-      // `node:<v>-alpine<v>@sha256:<alpine digest>` and breaks the docker build.
+      // docker/Dockerfile stands node's binaries on a bare alpine base, so both images
+      // must be on the same Alpine release - the apk packages (openssl, libusb, eudev)
+      // have to match what the node binary was linked against. Keep the two in one PR.
+      "matchManagers": ["dockerfile"],
+      "matchDepNames": ["node", "alpine"],
+      "groupName": "docker base images"
+    },
+    {
+      // Docker versioning keeps the tag suffix fixed, so node only ever moves
+      // 22.x-alpine3.22 -> 22.y-alpine3.22; it can't tell whether the alpine bump has a
+      // matching node tag (node:22.20.0-alpine3.24 does not exist - Alpine variants are
+      // only published for the newest patch of a line). Alpine minors therefore need a
+      // human to move the ALPINE_IMAGE and the NODE_IMAGE suffix together. Digest pins
+      // and node patch updates stay automatic.
       "matchManagers": ["dockerfile"],
       "matchDepNames": ["alpine"],
-      "pinDigests": false
+      "matchUpdateTypes": ["major", "minor"],
+      "dependencyDashboardApproval": true
     },
     {
       // All gh-aw pins move in one PR so the recompiled workflows match
