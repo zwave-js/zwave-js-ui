@@ -42,6 +42,15 @@
       "pinDigests": true
     },
     {
+      // ALPINE_VERSION feeds two refs in docker/Dockerfile: `alpine:${ALPINE_VERSION}`
+      // and `node:${NODE_VERSION}-alpine${ALPINE_VERSION}`. A digest appended to the ARG
+      // is only valid for the first, so pinning it yields an unresolvable
+      // `node:<v>-alpine<v>@sha256:<alpine digest>` and breaks the docker build.
+      "matchManagers": ["dockerfile"],
+      "matchDepNames": ["alpine"],
+      "pinDigests": false
+    },
+    {
       // All gh-aw pins move in one PR so the recompiled workflows match
       "matchDepNames": ["github/gh-aw"],
       "groupName": "gh-aw",
