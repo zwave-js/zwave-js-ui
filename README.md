@@ -55,10 +55,3 @@ Full featured Z-Wave **Control Panel** and MQTT **Gateway**.
 ## Documentation
 
 [Project documentation](https://zwave-js.github.io/zwave-js-ui/#/)
-
-## Contributing
-
-AI tools may assist contributors only when a human reviews, understands, and
-can explain every change. Autonomous-agent contributions and unreviewed AI
-communication are prohibited. Read the [AI policy](AI_POLICY.md) before
-contributing.
