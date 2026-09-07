@@ -51,3 +51,11 @@ Full featured Z-Wave **Control Panel** and MQTT **Gateway**.
 - [HomeSeer](https://homeseer.com/): Using [Z-Wave Plus Plugin](https://docs.homeseer.com/products/setting-up-the-z-wave-plus-plugin)
 - [Homebridge](https://homebridge.io/): Using [homebridge-zwave-usb plugin](https://github.com/sapireli/homebridge-zwave-usb)
 - [ioBroker](https://iobroker.com): Using the offical adapter [ioBroker.zwave-ws](https://github.com/arteck/ioBroker.zwavews)
+
+## Contributing
+
+AI tools may assist contributors only when a human reviews, understands, and
+can explain every change. Autonomous-agent contributions and unreviewed AI
+communication are prohibited. Read the
+[AI policy](https://github.com/zwave-js/zwave-js-ui/blob/master/AI_POLICY.md)
+before contributing.
