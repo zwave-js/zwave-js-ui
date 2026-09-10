@@ -31,6 +31,17 @@ import {
 } from '../../lib/utils.js'
 import { instances, manager } from '../../lib/instanceManager.js'
 import { defineAsyncComponent } from 'vue'
+import { ProtocolDataRate, protocolDataRateToString } from '@zwave-js/core'
+
+// Short labels for the table cell, `protocolDataRateToString` is too verbose here
+const RATE_LABELS = {
+	[ProtocolDataRate.ZWave_9k6]: '9.6k',
+	[ProtocolDataRate.ZWave_40k]: '40k',
+	[ProtocolDataRate.ZWave_100k]: '100k',
+	[ProtocolDataRate.LongRange_100k]: '100k LR',
+}
+
+const NO_RATE = '-'
 
 export default {
 	props: {
@@ -239,6 +250,15 @@ export default {
 						return v
 					},
 				},
+				lwrSpeed: {
+					type: 'string',
+					label: 'Speed',
+					customValue: (node) => this.lwrSpeedLabel(node),
+					customSort: (sortDesc, nodeA, nodeB) =>
+						this.lwrSpeedSort(sortDesc, nodeA, nodeB),
+					richValue: (node) => this.lwrSpeedRichValue(node),
+					undefinedPlaceholder: NO_RATE, // must match the text of undefined value
+				},
 				firmwareVersion: {
 					type: 'string',
 					label: 'FW',
@@ -402,6 +422,42 @@ export default {
 				description: description,
 				rawValue: level,
 			}
+		},
+		lwrSpeedLabel(node) {
+			return RATE_LABELS[node.statistics?.lwr?.protocolDataRate]
+		},
+		lwrSpeedRichValue(node) {
+			const rate = node.statistics?.lwr?.protocolDataRate
+			const label = RATE_LABELS[rate]
+
+			if (!label) {
+				return {
+					align: 'center',
+					icon: '',
+					displayValue: NO_RATE,
+					displayStyle: '',
+				}
+			}
+
+			const maxBps = node.maxDataRate
+
+			return {
+				align: 'center',
+				icon: '',
+				displayValue: label,
+				displayStyle: '',
+				description: maxBps
+					? `${protocolDataRateToString(rate)} (capable of ${maxBps / 1000} kbit/s)`
+					: protocolDataRateToString(rate),
+			}
+		},
+		lwrSpeedSort(sortDesc, nodeA, nodeB) {
+			// Sort on the rate enum, the labels would order 100k before 40k
+			const rateA = nodeA.statistics?.lwr?.protocolDataRate || 0
+			const rateB = nodeB.statistics?.lwr?.protocolDataRate || 0
+
+			const res = rateA < rateB ? -1 : rateA > rateB ? 1 : 0
+			return sortDesc ? -res : res
 		},
 		powerSort(sortDesc, nodeA, nodeB) {
 			// Special sort for power column

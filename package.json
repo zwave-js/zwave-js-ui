@@ -1,7 +1,7 @@
 {
   "name": "zwave-js-ui",
   "type": "module",
-  "version": "11.22.3",
+  "version": "11.23.0",
   "description": "Z-Wave Control Panel and MQTT Gateway",
   "keywords": [
     "mqtt",
@@ -93,7 +93,7 @@
     "jsonfile": "^6.1.0",
     "jsonwebtoken": "^9.0.2",
     "merge": "^2.1.1",
-    "morgan": "~1.10.0",
+    "morgan": "~1.12.0",
     "mqtt": "^5.7.2",
     "mqtt-jsonl-store": "^0.3.1",
     "multer": "^2.0.2",
@@ -104,7 +104,7 @@
     "socket.io": "^4.7.5",
     "winston": "^3.13.0",
     "winston-daily-rotate-file": "^5.0.0",
-    "zwave-js": "15.27.1"
+    "zwave-js": "15.28.0"
   },
   "devDependencies": {
     "@actions/github": "^6.0.0",
@@ -185,7 +185,7 @@
     "rollup": "npm:@rollup/wasm-node"
   },
   "engines": {
-    "node": ">= 20.19"
+    "node": ">= 24.20.0"
   },
   "publishConfig": {
     "registry": "https://registry.npmjs.org",

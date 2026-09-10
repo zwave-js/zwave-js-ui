@@ -1,5 +1,26 @@
 # Changelog
 
+## [11.23.0](https://github.com/zwave-js/zwave-js-ui/compare/v11.22.3...v11.23.0) (2026-09-01)
+
+### ✨ Features
+
+* add speed column for control panel ([#4791](https://github.com/zwave-js/zwave-js-ui/issues/4791)) ([a2dc5f1](https://github.com/zwave-js/zwave-js-ui/commit/a2dc5f1aa624478f30cc243a503ba47ff458fb82))
+* bump zwave-js@15.28.0 ([#4804](https://github.com/zwave-js/zwave-js-ui/issues/4804)) ([b30acf9](https://github.com/zwave-js/zwave-js-ui/commit/b30acf9dc83d8f6bd79a04d3d6e74b79ccc12116))
+* **debug:** add environment metadata to debug capture session ([#4784](https://github.com/zwave-js/zwave-js-ui/issues/4784)) ([4e77cef](https://github.com/zwave-js/zwave-js-ui/commit/4e77cef4f7c2123e411c0cdb79453ac18634d0c1)), closes [#4783](https://github.com/zwave-js/zwave-js-ui/issues/4783)
+* **mqtt:** discover Window Covering CC as HA cover entities ([#4794](https://github.com/zwave-js/zwave-js-ui/issues/4794)) ([bb96594](https://github.com/zwave-js/zwave-js-ui/commit/bb96594dc9c01378e0b105b9ad156923996b37b1)), closes [#4782](https://github.com/zwave-js/zwave-js-ui/issues/4782)
+
+### 🐛 Bug Fixes
+
+* **api:** coalesce throttled calls when `fn` outlasts its wait window ([#4779](https://github.com/zwave-js/zwave-js-ui/issues/4779)) ([a753819](https://github.com/zwave-js/zwave-js-ui/commit/a753819eaea6cb262f7c667bf70503a8cc757000)), closes [zwave-js#9024](https://github.com/zwave-js/zwave-js/issues/9024) [#fff3cd](https://github.com/zwave-js/zwave-js-ui/issues/fff3cd) [#d39e00](https://github.com/zwave-js/zwave-js-ui/issues/d39e00) [#000](https://github.com/zwave-js/zwave-js-ui/issues/000)
+
+### 📚 Documentation
+
+* clarify that soft reset cannot be disabled on 700/800 series ([#4795](https://github.com/zwave-js/zwave-js-ui/issues/4795)) ([96cffdb](https://github.com/zwave-js/zwave-js-ui/commit/96cffdb0ab3085195d35792a1d36fabf23373dd5)), closes [zwave-js#6154](https://github.com/zwave-js/zwave-js/issues/6154)
+
+### 💎 Styles
+
+* **graph:** make mesh network navigation buttons transparent ([#4793](https://github.com/zwave-js/zwave-js-ui/issues/4793)) ([de3b0e2](https://github.com/zwave-js/zwave-js-ui/commit/de3b0e25e596f7471c2e4f5b47dba821f965211a)), closes [#4788](https://github.com/zwave-js/zwave-js-ui/issues/4788)
+
 ## [11.22.3](https://github.com/zwave-js/zwave-js-ui/compare/v11.22.2...v11.22.3) (2026-08-14)
 
 ### ✨ Features
