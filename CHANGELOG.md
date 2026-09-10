@@ -1,5 +1,30 @@
 # Changelog
 
+## [11.24.0](https://github.com/zwave-js/zwave-js-ui/compare/v11.23.0...v11.24.0) (2026-09-10)
+
+### ✨ Features
+
+* bump zwave-js@15.29.0 ([#4823](https://github.com/zwave-js/zwave-js-ui/issues/4823)) ([167552d](https://github.com/zwave-js/zwave-js-ui/commit/167552d3bf8f25f1e532e68ea1b1fccfb6dccde1))
+
+### 🐛 Bug Fixes
+
+* **deps:** update dependency morgan to ~1.11.0 ([#4814](https://github.com/zwave-js/zwave-js-ui/issues/4814)) ([1eb7de0](https://github.com/zwave-js/zwave-js-ui/commit/1eb7de018459e19e3b37ea4032142136902845d5))
+* **deps:** update dependency morgan to ~1.12.0 ([#4822](https://github.com/zwave-js/zwave-js-ui/issues/4822)) ([909250d](https://github.com/zwave-js/zwave-js-ui/commit/909250d6ef7c6f463697a637d2ebcae0c5e4d1a6))
+* **mqtt:** resolve unknown command class names via zwave-js ([#4815](https://github.com/zwave-js/zwave-js-ui/issues/4815)) ([f7990b8](https://github.com/zwave-js/zwave-js-ui/commit/f7990b8301a21a528aaa711bd4a1505616101ef6)), closes [#4803](https://github.com/zwave-js/zwave-js-ui/issues/4803) [#4794](https://github.com/zwave-js/zwave-js-ui/issues/4794)
+
+### 🔧 Chores
+
+* **deps:** update dependency multer to v2.2.0 ([#4813](https://github.com/zwave-js/zwave-js-ui/issues/4813)) ([e66fac1](https://github.com/zwave-js/zwave-js-ui/commit/e66fac106e9796d8b0a06d583f0a5793963488a7))
+* **deps:** update dependency multer to v2.3.0 ([#4821](https://github.com/zwave-js/zwave-js-ui/issues/4821)) ([caab5ce](https://github.com/zwave-js/zwave-js-ui/commit/caab5ce59116ad8730d38cc0565ba76752310200))
+* **deps:** update node.js ([#4811](https://github.com/zwave-js/zwave-js-ui/issues/4811)) ([c2b64a4](https://github.com/zwave-js/zwave-js-ui/commit/c2b64a4c688ba1ca96baa76b13cde2804049d714))
+* **deps:** update node.js to v24 ([#4812](https://github.com/zwave-js/zwave-js-ui/issues/4812)) ([23e9931](https://github.com/zwave-js/zwave-js-ui/commit/23e99319ff4afcea801646084711050c1a2d237e))
+* replace the stale Renovate config and drop the disabled Dependabot config ([#4810](https://github.com/zwave-js/zwave-js-ui/issues/4810)) ([36ea386](https://github.com/zwave-js/zwave-js-ui/commit/36ea38631ad8755c9cee0e63be3db04682d0e84b))
+
+### 📚 Documentation
+
+* add AI contribution policy ([#4819](https://github.com/zwave-js/zwave-js-ui/issues/4819)) ([a5944cd](https://github.com/zwave-js/zwave-js-ui/commit/a5944cd2220ee094fcc75b5165952cb6c95f1c60))
+* **faq:** add entry for battery device going to sleep during interview ([#4820](https://github.com/zwave-js/zwave-js-ui/issues/4820)) ([469ffaa](https://github.com/zwave-js/zwave-js-ui/commit/469ffaa47b124bab541b5c773a9a5221726784ec))
+
 ## [11.23.0](https://github.com/zwave-js/zwave-js-ui/compare/v11.22.3...v11.23.0) (2026-09-01)
 
 ### ✨ Features
