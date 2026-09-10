@@ -321,6 +321,7 @@ export const allowedApis = validateMethods([
 	'accessControlCancelCredentialLearn',
 	'accessControlGetAdminCode',
 	'accessControlSetAdminCode',
+	'accessControlSetUserLocalName',
 ] as const)
 
 export type ZwaveNodeEvents = ZWaveNodeEvents | 'statistics updated'
@@ -607,7 +608,10 @@ export interface ZUIScheduleConfig<T> {
 	slots: ZUISlot<T>[]
 }
 
-export type ZUIAccessControlUser = UserData
+export type ZUIAccessControlUser = UserData & {
+	/** Local-only friendly name, stored in zwave-js-ui and never sent to the device. */
+	localName?: string
+}
 
 export type ZUIAccessControlCredential = {
 	userId: number
@@ -734,6 +738,8 @@ export type ZUINode = {
 		enabled: number[]
 	}
 	accessControl?: ZUIAccessControl
+	/** Local-only access-control user names, keyed by endpointIndex then userId. Never sent to the device. */
+	accessControlUserNames?: Record<number, Record<number, string>>
 	defaultTransitionDuration?: string
 	defaultVolume?: number
 	protocol?: Protocols
@@ -1685,7 +1691,15 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 					zwaveNode,
 					idx,
 				)
-				const users = accessControl.getUsersCached()
+				const localNames =
+					this.storeNodes[zwaveNode.id]?.accessControlUserNames?.[idx]
+				const users = accessControl
+					.getUsersCached()
+					.map((u) =>
+						localNames?.[u.userId]
+							? { ...u, localName: localNames[u.userId] }
+							: u,
+					)
 				const credentials = accessControl
 					.getAllCredentialsCached()
 					.map((c) => this._mapCredentialData(c))
@@ -1753,6 +1767,41 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		const users = await accessControl.getUsers()
 		this._refreshAccessControlState(zwaveNode)
 		return users
+	}
+
+	/**
+	 * Sets a local-only friendly name for an access-control user. This is
+	 * stored in zwave-js-ui's local store only — it is never sent to the
+	 * Z-Wave device (unlike `userName`, which is part of the User
+	 * Credential CC and lives on the lock itself).
+	 */
+	async accessControlSetUserLocalName(
+		nodeId: number,
+		endpointIndex: number | undefined,
+		userId: number,
+		name: string,
+	): Promise<void> {
+		const zwaveNode = this._requireNode(nodeId)
+		const { index: idx } = this._resolveAccessControlEndpoint(
+			zwaveNode,
+			endpointIndex,
+		)
+		if (!this.storeNodes[nodeId]) {
+			this.storeNodes[nodeId] = {} as ZUINode
+		}
+		if (!this.storeNodes[nodeId].accessControlUserNames) {
+			this.storeNodes[nodeId].accessControlUserNames = {}
+		}
+		if (!this.storeNodes[nodeId].accessControlUserNames[idx]) {
+			this.storeNodes[nodeId].accessControlUserNames[idx] = {}
+		}
+		if (name) {
+			this.storeNodes[nodeId].accessControlUserNames[idx][userId] = name
+		} else {
+			delete this.storeNodes[nodeId].accessControlUserNames[idx][userId]
+		}
+		await this.updateStoreNodes()
+		this._refreshAccessControlState(zwaveNode)
 	}
 
 	async accessControlRefreshCredentials(
@@ -1826,11 +1875,18 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		userId: number,
 	): Promise<SetUserResult> {
 		const zwaveNode = this._requireNode(nodeId)
-		const { accessControl } = this._resolveAccessControlEndpoint(
-			zwaveNode,
-			endpointIndex,
-		)
-		return accessControl.deleteUser(userId)
+		const { index: idx, accessControl } =
+			this._resolveAccessControlEndpoint(zwaveNode, endpointIndex)
+		const result = await accessControl.deleteUser(userId)
+		if (
+			result === SetUserResult.OK &&
+			this.storeNodes[nodeId]?.accessControlUserNames?.[idx]?.[userId] !==
+				undefined
+		) {
+			delete this.storeNodes[nodeId].accessControlUserNames[idx][userId]
+			await this.updateStoreNodes()
+		}
+		return result
 	}
 
 	async accessControlDeleteAllUsers(
@@ -1838,15 +1894,17 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		endpointIndex?: number,
 	): Promise<SetUserResult> {
 		const zwaveNode = this._requireNode(nodeId)
-		const { accessControl } = this._resolveAccessControlEndpoint(
-			zwaveNode,
-			endpointIndex,
-		)
+		const { index: idx, accessControl } =
+			this._resolveAccessControlEndpoint(zwaveNode, endpointIndex)
 		// zwave-js purges its cache silently here without emitting per-user
 		// `user deleted` / `credential deleted` events, so push a refresh so
 		// the UI catches up.
 		const result = await accessControl.deleteAllUsers()
 		if (result === SetUserResult.OK) {
+			if (this.storeNodes[nodeId]?.accessControlUserNames?.[idx]) {
+				this.storeNodes[nodeId].accessControlUserNames[idx] = {}
+				await this.updateStoreNodes()
+			}
 			this._refreshAccessControlState(zwaveNode)
 		}
 		return result
