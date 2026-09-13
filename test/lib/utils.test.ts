@@ -20,6 +20,7 @@ import {
 	isValidNodeIdString,
 	isValidOperation,
 	applyOperation,
+	settledWithin,
 } from '../../api/lib/utils.ts'
 
 declare let process: NodeJS.Process & {
@@ -354,5 +355,32 @@ describe('#utils', () => {
 		it('returns the value on a non-finite result (divide by zero)', () => {
 			expect(applyOperation(100, '/0')).to.equal(100)
 		})
+	})
+})
+
+describe('settledWithin', () => {
+	it('resolves true when the promise settles in time', async () => {
+		expect(await settledWithin(Promise.resolve(), 100)).toBe(true)
+	})
+
+	it('resolves false when the timeout elapses first', async () => {
+		expect(await settledWithin(new Promise(() => {}), 10)).toBe(false)
+	})
+
+	it('propagates a rejection that happens in time', async () => {
+		await expect(
+			settledWithin(Promise.reject(new Error('boom')), 100),
+		).rejects.toThrow('boom')
+	})
+
+	it('ignores a rejection that happens after the timeout', async () => {
+		let reject!: (error: Error) => void
+		const promise = new Promise<void>((_, r) => {
+			reject = r
+		})
+		expect(await settledWithin(promise, 10)).toBe(false)
+		reject(new Error('late'))
+		// An unhandled rejection here would fail the test run
+		await new Promise((resolve) => setTimeout(resolve, 0))
 	})
 })

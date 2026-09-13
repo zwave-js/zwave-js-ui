@@ -714,3 +714,25 @@ export function applyOperation(value: any, op: string): any {
 
 	return Number.isFinite(result) ? result : value
 }
+
+/**
+ * Waits for `promise` to settle, but at most `timeoutMs` milliseconds.
+ * Resolves with `true` when the promise settled in time and `false` when the
+ * timeout elapsed first. A rejection is propagated when it happens in time and
+ * ignored afterwards, so a late failure cannot surface as an unhandled rejection.
+ */
+export async function settledWithin(
+	promise: Promise<unknown>,
+	timeoutMs: number,
+): Promise<boolean> {
+	let timer: NodeJS.Timeout | undefined
+	const timeout = new Promise<false>((resolve) => {
+		timer = setTimeout(() => resolve(false), timeoutMs)
+	})
+	try {
+		return await Promise.race([promise.then(() => true as const), timeout])
+	} finally {
+		clearTimeout(timer)
+		promise.catch(() => {})
+	}
+}
