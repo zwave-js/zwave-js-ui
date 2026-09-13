@@ -175,6 +175,10 @@ export const configManager = new ConfigManager({
 
 const logger = LogManager.module('Z-Wave')
 
+// How long close() waits for the server and the driver to shut down before
+// carrying on without them
+const CLOSE_STEP_TIMEOUT = 60_000
+
 const NEIGHBORS_LOCK_REFRESH = 60 * 1000
 
 /** Maximum length of a multicast group name (avoids bloating MQTT topics). */
@@ -1494,13 +1498,32 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			this.throttledFunctions.delete(key)
 		}
 
+		// A cleanup step that never completes would block every later restart,
+		// so the client could never reconnect after the driver failed. Log which
+		// step timed out and carry on, leaking the stuck instance instead.
 		if (this.server) {
-			await this.server.destroy()
+			const settled = await utils.settledWithin(
+				this.server.destroy(),
+				CLOSE_STEP_TIMEOUT,
+			)
+			if (!settled) {
+				logger.error(
+					`Timed out after ${CLOSE_STEP_TIMEOUT / 1000}s waiting for the Z-Wave server to close, continuing anyway`,
+				)
+			}
 			this.server = null
 		}
 
 		if (this._driver) {
-			await this._driver.destroy()
+			const settled = await utils.settledWithin(
+				this._driver.destroy(),
+				CLOSE_STEP_TIMEOUT,
+			)
+			if (!settled) {
+				logger.error(
+					`Timed out after ${CLOSE_STEP_TIMEOUT / 1000}s waiting for the driver to be destroyed, continuing anyway`,
+				)
+			}
 			this._driver = null
 		}
 
