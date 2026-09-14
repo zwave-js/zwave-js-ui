@@ -27,11 +27,15 @@ WORKDIR /usr/src/app
 # STEP: 1 - Build JS/TS artifacts once on native amd64 (dist/ and server/ are platform-agnostic)
 FROM --platform=$BUILDPLATFORM base AS build-js
 
+# nodejs-dev carries node's headers, which the node: image used to supply at
+# /usr/local/include. Without them node-gyp fetches them from nodejs.org on every
+# architecture - slow, and it fails the build on any network hiccup.
 RUN --mount=type=cache,target=/var/cache/apk,sharing=locked \
     apk add --virtual .build-dependencies \
         jq \
         build-base \
         linux-headers \
+        nodejs-dev \
         python3-dev
 
 # Cache dependency layer independently of source changes
@@ -53,6 +57,7 @@ RUN --mount=type=cache,target=/var/cache/apk,sharing=locked \
         jq \
         build-base \
         linux-headers \
+        nodejs-dev \
         python3-dev
 
 COPY --link package.json package-lock.json ./
