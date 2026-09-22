@@ -49,6 +49,46 @@ describe('#ZwaveClient', () => {
 				driverPresets.NO_WATCHDOG,
 			])
 		})
+
+		// order decides precedence: the driver merges left to right
+		it('keeps several presets in the order they were requested', () => {
+			expect(buildArgs(['NO_WATCHDOG', 'SAFE_MODE'])).to.deep.equal([
+				'/dev/null',
+				{ features: { softReset: false } },
+				driverPresets.NO_WATCHDOG,
+				driverPresets.SAFE_MODE,
+			])
+		})
+	})
+
+	describe('#effectiveOptionsLog()', () => {
+		const options = {
+			features: { softReset: false },
+			timeouts: { response: 10000 },
+			attempts: { sendData: 3 },
+			storage: { cacheDir: '/cache' },
+		} as any
+
+		function log(overridden: boolean) {
+			const client = Object.create(ZwaveClient.prototype) as ZwaveClient
+			return client['effectiveOptionsLog'](options, overridden)
+		}
+
+		// invisible at the default level, which is info
+		it('stays at debug when nothing overrode the settings', () => {
+			expect(log(false).level).to.equal('debug')
+		})
+
+		it('is raised to info when a preset or raw options applied', () => {
+			expect(log(true).level).to.equal('info')
+		})
+
+		it('reports the merged groups and nothing else', () => {
+			expect(log(true).message).to.equal(
+				'Effective driver options: {"features":{"softReset":false},' +
+					'"timeouts":{"response":10000},"attempts":{"sendData":3}}',
+			)
+		})
 	})
 
 	describe('#throttle()', () => {

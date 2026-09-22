@@ -5,7 +5,7 @@ import {
 	applyExternalDriverSettings,
 	getExternalDriverPresets,
 	getExternallyManagedPaths,
-	getActiveExternalPresets,
+	getActiveExternalPresetNames,
 } from '../../api/lib/externalSettings.ts'
 
 const log = vi.hoisted(() => ({
@@ -158,17 +158,25 @@ describe('#externalSettings', () => {
 		})
 	})
 
-	describe('#getActiveExternalPresets()', () => {
+	describe('#getActiveExternalPresetNames()', () => {
 		it('names the presets in effect, for the settings UI', () => {
 			useSettings({ presets: ['SAFE_MODE', 'NOPE'] })
-			expect(getActiveExternalPresets()).to.deep.equal(['SAFE_MODE'])
+			expect(getActiveExternalPresetNames()).to.deep.equal(['SAFE_MODE'])
 		})
 
 		// this runs on every settings read; only the driver path reports
 		it('stays silent about unusable entries', () => {
 			useSettings({ presets: ['NOPE'] })
-			getActiveExternalPresets()
+			getActiveExternalPresetNames()
 			expect(log.warn).not.toHaveBeenCalled()
+		})
+
+		// the driver is rebuilt on every reconnect attempt
+		it('reports the same outcome only once', () => {
+			useSettings({ presets: ['NOPE'] })
+			getExternalDriverPresets()
+			getExternalDriverPresets()
+			expect(log.warn).toHaveBeenCalledTimes(1)
 		})
 
 		it('warns about a deprecated preset on the driver path', () => {

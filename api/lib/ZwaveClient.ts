@@ -2955,6 +2955,23 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	}
 
 	/**
+	 * Support log line for the options the driver actually resolved. They are
+	 * merged inside the `Driver` constructor, so reading them back is the only
+	 * way to see them; raised to info when a preset or the raw options are in
+	 * play, since that is when they don't match what the settings say.
+	 */
+	private effectiveOptionsLog(
+		options: PartialZWaveOptions,
+		overridden: boolean,
+	): { level: 'info' | 'debug'; message: string } {
+		const { features, timeouts, attempts } = options
+		return {
+			level: overridden ? 'info' : 'debug',
+			message: `Effective driver options: ${JSON.stringify({ features, timeouts, attempts })}`,
+		}
+	}
+
+	/**
 	 * Arguments for the `Driver` constructor. External presets go last: the
 	 * driver deep merges each argument over the previous ones, so a preset
 	 * overrides only the values it defines.
@@ -3194,15 +3211,11 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			const driverArgs = this.buildDriverArgs(zwaveOptions)
 			this._driver = new Driver(...driverArgs)
 
-			// the effective values are resolved inside the Driver, so this is
-			// the only place they can be read back for a support log. Raised to
-			// info when a preset or the raw options are in play, since that is
-			// when they don't match what the settings say
-			const { features, timeouts, attempts } = this._driver.options
-			const overridden = driverArgs.length > 2 || !!this.cfg.options
-			logger[overridden ? 'info' : 'debug'](
-				`Effective driver options: ${JSON.stringify({ features, timeouts, attempts })}`,
+			const { level, message } = this.effectiveOptionsLog(
+				this._driver.options,
+				driverArgs.length > 2 || !!this.cfg.options,
 			)
+			logger[level](message)
 
 			this._driver.on('error', this._onDriverError.bind(this))
 			this._driver.on('driver ready', this._onDriverReady.bind(this))

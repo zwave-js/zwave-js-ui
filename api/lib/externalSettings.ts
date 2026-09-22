@@ -60,11 +60,15 @@ export interface ExternalZwaveSettings {
 
 let cachedSettings: ExternalZwaveSettings | null = null
 let settingsLoaded = false
+// what the last report said, so a driver retry loop doesn't repeat it every
+// backoff cycle
+let lastPresetReport: string | null = null
 
 /** Test seam: drop everything cached from the settings file. */
 export function resetExternalSettingsCache(): void {
 	cachedSettings = null
 	settingsLoaded = false
+	lastPresetReport = null
 }
 
 export function loadExternalSettings(): ExternalZwaveSettings | null {
@@ -222,7 +226,7 @@ function requestedPresets(): { names: PresetName[]; problems: string[] } {
 }
 
 /** Preset names currently in effect, for the settings UI. */
-export function getActiveExternalPresets(): string[] {
+export function getActiveExternalPresetNames(): string[] {
 	return requestedPresets().names
 }
 
@@ -239,9 +243,15 @@ export function getActiveExternalPresets(): string[] {
 export function getExternalDriverPresets(): PartialZWaveOptions[] {
 	const { names, problems } = requestedPresets()
 
-	for (const problem of problems) logger.warn(problem)
-	if (names.length > 0) {
-		logger.info(`Using driver presets: ${names.join(', ')}`)
+	// the driver is rebuilt on every reconnect attempt, so report only when
+	// the outcome changes rather than on each backoff cycle
+	const report = JSON.stringify([names, problems])
+	if (report !== lastPresetReport) {
+		lastPresetReport = report
+		for (const problem of problems) logger.warn(problem)
+		if (names.length > 0) {
+			logger.info(`Using driver presets: ${names.join(', ')}`)
+		}
 	}
 
 	return names.map((name) => structuredClone(driverPresets[name]))
@@ -253,7 +263,8 @@ export function getExternalDriverPresets(): PartialZWaveOptions[] {
  * externally like any other external setting.
  */
 const SETTING_BY_PRESET_OPTION: Record<string, `zwave.${keyof ZwaveConfig}`> = {
-	// no shipped preset sets softReset today; kept so one that does is mapped
+	// no shipped preset sets softReset today; mapped so that one added
+	// upstream locks the UI switch without a code change here
 	'features.softReset': 'zwave.enableSoftReset',
 	'features.unresponsiveControllerRecovery':
 		'zwave.disableControllerRecovery',

@@ -395,6 +395,25 @@ describe('#applyRawOptions()', () => {
 		expect(merged.inclusionUserCallbacks).to.equal(cb)
 	})
 
+	// pinned because `merge` decides these, not us
+	it('replaces arrays rather than merging them element-wise', () => {
+		const merged = applyRawOptions(
+			{ rf: { txPower: [1, 2] } },
+			{ rf: { txPower: [9] } },
+		)
+
+		expect(merged.rf.txPower).to.deep.equal([9])
+	})
+
+	it('ignores a null leaf instead of blanking the setting', () => {
+		const merged = applyRawOptions(
+			{ features: { softReset: false } },
+			{ features: null },
+		)
+
+		expect(merged.features).to.deep.equal({ softReset: false })
+	})
+
 	it('is a no-op without raw options', () => {
 		expect(applyRawOptions({ features: {} }, undefined)).to.deep.equal({
 			features: {},

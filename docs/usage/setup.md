@@ -123,7 +123,7 @@ NVM:
 - **Maximum LR Power Level**: The maximum power level to be used by the dynamic power algorithm of Z-Wave Long Range. Applied on every startup if the current setting differs. Only LR-capable controllers support this setting
 
 - **Hidden settings**: Advanced settings not visible to the user interface, you can edit these by setting in the `settings.json` file you fins in store directory
-  - `zwave.options` overrides options passed to the Z-Wave JS Driver constructor [ZWaveOptions](https://zwave-js.github.io/node-zwave-js/#/api/driver?id=zwaveoptions)
+  - `zwave.options` overrides options passed to the Z-Wave JS Driver constructor [ZWaveOptions](https://zwave-js.github.io/node-zwave-js/#/api/driver?id=zwaveoptions). It is deep merged, so it overrides the individual values it sets and leaves the rest of the group alone: `options.timeouts = { "response": 500 }` changes the response timeout without discarding a `sendToSleep` timeout configured in the UI. Full precedence, lowest first: UI settings → `zwave.options` → driver presets from the external settings file (see [Driver presets](#driver-presets))
 
 ## Disable Gateway
 
