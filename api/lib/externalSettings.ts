@@ -274,24 +274,27 @@ const SETTING_BY_PRESET_OPTION: Record<string, `zwave.${keyof ZwaveConfig}`> = {
 	'timeouts.sendToSleep': 'zwave.sendToSleepTimeout',
 }
 
+/** Every option a preset sets, as a dotted path: `features.watchdog`. */
+function presetOptionPaths(preset: object, prefix = ''): string[] {
+	return Object.entries(preset).flatMap(([key, value]) => {
+		const path = prefix ? `${prefix}.${key}` : key
+		// recurse rather than assume depth 2, so a preset setting a top-level
+		// option is mapped like any other
+		return value !== null && typeof value === 'object'
+			? presetOptionPaths(value, path)
+			: [path]
+	})
+}
+
 function presetManagedPaths(): string[] {
-	const paths: string[] = []
+	const paths = requestedPresets().names.flatMap((name) =>
+		presetOptionPaths(driverPresets[name])
+			.map((path) => SETTING_BY_PRESET_OPTION[path])
+			.filter((setting) => !!setting),
+	)
 
-	for (const name of requestedPresets().names) {
-		for (const [group, groupOptions] of Object.entries(
-			driverPresets[name],
-		)) {
-			if (typeof groupOptions !== 'object' || groupOptions === null) {
-				continue
-			}
-			for (const key of Object.keys(groupOptions)) {
-				const path = SETTING_BY_PRESET_OPTION[`${group}.${key}`]
-				if (path) paths.push(path)
-			}
-		}
-	}
-
-	return paths
+	// two presets can touch the same option; this is a set by intent
+	return [...new Set(paths)]
 }
 
 /**

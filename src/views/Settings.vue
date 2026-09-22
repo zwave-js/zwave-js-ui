@@ -538,6 +538,38 @@
 					<v-expansion-panel-text v-if="newZwave.enabled">
 						<v-card flat>
 							<v-card-text>
+								<v-row v-if="activePresets.length > 0">
+									<v-col cols="12">
+										<v-alert
+											type="info"
+											variant="tonal"
+											density="compact"
+										>
+											Driver
+											{{
+												activePresets.length > 1
+													? 'presets'
+													: 'preset'
+											}}
+											<strong>{{
+												activePresets.join(', ')
+											}}</strong>
+											{{
+												activePresets.length > 1
+													? 'are'
+													: 'is'
+											}}
+											active. The settings
+											{{
+												activePresets.length > 1
+													? 'they override'
+													: 'it overrides'
+											}}
+											are hidden and controlled by the
+											external settings file.
+										</v-alert>
+									</v-col>
+								</v-row>
 								<v-row>
 									<v-col cols="12" sm="6">
 										<v-combobox
@@ -1061,40 +1093,6 @@
 											>
 												Startup and recovery behavior
 											</v-list-subheader>
-										</v-col>
-
-										<v-col
-											v-if="activePresets.length > 0"
-											cols="12"
-										>
-											<v-alert
-												type="info"
-												variant="tonal"
-												density="compact"
-											>
-												Driver
-												{{
-													activePresets.length > 1
-														? 'presets'
-														: 'preset'
-												}}
-												<strong>{{
-													activePresets.join(', ')
-												}}</strong>
-												{{
-													activePresets.length > 1
-														? 'are'
-														: 'is'
-												}}
-												active. The settings
-												{{
-													activePresets.length > 1
-														? 'they override are'
-														: 'it overrides are'
-												}}
-												hidden here and controlled by
-												the external settings file.
-											</v-alert>
 										</v-col>
 
 										<v-col

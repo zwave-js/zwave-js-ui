@@ -213,11 +213,16 @@ describe('#externalSettings', () => {
 				'attempts.nodeInterview',
 			]
 
+			const optionPaths = (value: object, prefix = ''): string[] =>
+				Object.entries(value).flatMap(([key, leaf]) => {
+					const path = prefix ? `${prefix}.${key}` : key
+					return leaf !== null && typeof leaf === 'object'
+						? optionPaths(leaf, path)
+						: [path]
+				})
+
 			for (const [name, preset] of Object.entries(driverPresets)) {
-				const keys = Object.entries(preset).flatMap(
-					([group, options]) =>
-						Object.keys(options).map((key) => `${group}.${key}`),
-				)
+				const keys = optionPaths(preset)
 				const expected = keys.filter(
 					(path) => !noUiCounterpart.includes(path),
 				)
@@ -233,6 +238,14 @@ describe('#externalSettings', () => {
 
 		it('reports nothing for presets with no UI counterpart', () => {
 			useSettings({ presets: ['BATTERY_SAVE'] })
+
+			expect(getExternallyManagedPaths()).to.deep.equal([
+				'zwave.sendToSleepTimeout',
+			])
+		})
+
+		it('reports a setting two presets both override only once', () => {
+			useSettings({ presets: ['BATTERY_SAVE', 'AWAKE_LONGER'] })
 
 			expect(getExternallyManagedPaths()).to.deep.equal([
 				'zwave.sendToSleepTimeout',
