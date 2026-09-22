@@ -21,6 +21,7 @@ const useBaseStore = defineStore('base', {
 		controllerId: undefined,
 		serial_ports: [],
 		managedExternally: [],
+		activePresets: [],
 		scales: [],
 		nodes: [],
 		nodesMap: new Map(),
@@ -648,6 +649,7 @@ const useBaseStore = defineStore('base', {
 				this.initScales(data.scales)
 				this.initDevices(data.devices)
 				this.managedExternally = data.managedExternally || []
+				this.activePresets = data.activePresets || []
 
 				this.inited = true
 			}

@@ -1,5 +1,6 @@
 import { readFileSync, existsSync } from 'node:fs'
 import type { PartialZWaveOptions } from 'zwave-js'
+import type { ZwaveConfig } from './ZwaveClient.ts'
 import { driverPresets } from 'zwave-js'
 import { module } from './logger.ts'
 
@@ -59,6 +60,16 @@ export interface ExternalZwaveSettings {
 
 let cachedSettings: ExternalZwaveSettings | null = null
 let settingsLoaded = false
+// what the last report said, so a driver retry loop doesn't repeat it every
+// backoff cycle
+let lastPresetReport: string | null = null
+
+/** Test seam: drop everything cached from the settings file. */
+export function resetExternalSettingsCache(): void {
+	cachedSettings = null
+	settingsLoaded = false
+	lastPresetReport = null
+}
 
 export function loadExternalSettings(): ExternalZwaveSettings | null {
 	if (settingsLoaded) return cachedSettings
@@ -134,7 +145,9 @@ export function getExternallyManagedPaths(): string[] {
 	if (settings.serverServiceDiscoveryDisabled !== undefined)
 		paths.push('zwave.serverServiceDiscoveryDisabled')
 
-	// Presets (driver-only, no UI mapping)
+	// Presets win over the settings they touch, so their UI fields are managed
+	// externally for as long as the preset is active
+	paths.push(...presetManagedPaths())
 
 	return paths
 }
@@ -163,18 +176,125 @@ export function applyExternalDriverSettings(
 		if (settings.storage.throttle !== undefined)
 			zwaveOptions.storage.throttle = settings.storage.throttle
 	}
+}
 
-	if (settings.presets && settings.presets.length > 0) {
-		for (const presetName of settings.presets) {
-			const preset =
-				driverPresets[presetName as keyof typeof driverPresets]
-			if (preset) {
-				Object.assign(zwaveOptions, preset)
-			} else {
-				logger.warn(`Unknown driver preset: ${presetName}`)
-			}
+type PresetName = keyof typeof driverPresets
+
+// zwave-js marks these `@deprecated` in its typings, which don't survive to
+// runtime; kept here so an operator hears about it once rather than reading
+// the upstream source
+const DEPRECATED_PRESETS: string[] = ['NO_WATCHDOG']
+
+/**
+ * Preset names from the settings, filtered to the ones that exist upstream.
+ *
+ * `problems` is returned rather than logged so the callers that only need the
+ * names — which run on every settings read — stay silent.
+ */
+function requestedPresets(): { names: PresetName[]; problems: string[] } {
+	const settings = loadExternalSettings()
+	if (settings?.presets == null) return { names: [], problems: [] }
+
+	if (!Array.isArray(settings.presets)) {
+		return {
+			names: [],
+			problems: [
+				`Ignoring \`presets\`: expected an array of preset names, got ${typeof settings.presets}`,
+			],
 		}
 	}
+
+	const names: PresetName[] = []
+	const problems: string[] = []
+
+	for (const presetName of settings.presets) {
+		// own-key check: `toString` & co. resolve on the prototype and would
+		// be forwarded as silent no-op presets
+		if (!Object.hasOwn(driverPresets, presetName)) {
+			problems.push(
+				`Unknown driver preset: ${presetName}. Known presets: ${Object.keys(driverPresets).join(', ')}`,
+			)
+			continue
+		}
+		if (DEPRECATED_PRESETS.includes(presetName)) {
+			problems.push(`Driver preset ${presetName} is deprecated upstream`)
+		}
+		names.push(presetName as PresetName)
+	}
+
+	return { names, problems }
+}
+
+/** Preset names currently in effect, for the settings UI. */
+export function getActiveExternalPresetNames(): string[] {
+	return requestedPresets().names
+}
+
+/**
+ * Resolve the driver presets requested by external settings.
+ *
+ * They are returned instead of merged into the driver options because presets
+ * carry nested objects (`features`, `timeouts`, ...) that would overwrite the
+ * ones built from the settings. `Driver` deep merges every preset it is given.
+ *
+ * Each call returns fresh copies: `Driver` adopts preset sub-objects by
+ * reference and fills them with its own defaults.
+ */
+export function getExternalDriverPresets(): PartialZWaveOptions[] {
+	const { names, problems } = requestedPresets()
+
+	// the driver is rebuilt on every reconnect attempt, so report only when
+	// the outcome changes rather than on each backoff cycle
+	const report = JSON.stringify([names, problems])
+	if (report !== lastPresetReport) {
+		lastPresetReport = report
+		for (const problem of problems) logger.warn(problem)
+		if (names.length > 0) {
+			logger.info(`Using driver presets: ${names.join(', ')}`)
+		}
+	}
+
+	return names.map((name) => structuredClone(driverPresets[name]))
+}
+
+/**
+ * Driver options a preset can set that also have a UI setting. While the
+ * preset is active the driver ignores the UI value, so the field is managed
+ * externally like any other external setting.
+ */
+const SETTING_BY_PRESET_OPTION: Record<string, `zwave.${keyof ZwaveConfig}`> = {
+	// no shipped preset sets softReset today; mapped so that one added
+	// upstream locks the UI switch without a code change here
+	'features.softReset': 'zwave.enableSoftReset',
+	'features.unresponsiveControllerRecovery':
+		'zwave.disableControllerRecovery',
+	'features.watchdog': 'zwave.disableWatchdog',
+	'timeouts.response': 'zwave.responseTimeout',
+	'timeouts.report': 'zwave.higherReportsTimeout',
+	'timeouts.sendToSleep': 'zwave.sendToSleepTimeout',
+}
+
+/** Every option a preset sets, as a dotted path: `features.watchdog`. */
+function presetOptionPaths(preset: object, prefix = ''): string[] {
+	return Object.entries(preset).flatMap(([key, value]) => {
+		const path = prefix ? `${prefix}.${key}` : key
+		// recurse rather than assume depth 2, so a preset setting a top-level
+		// option is mapped like any other
+		return value !== null && typeof value === 'object'
+			? presetOptionPaths(value, path)
+			: [path]
+	})
+}
+
+function presetManagedPaths(): string[] {
+	const paths = requestedPresets().names.flatMap((name) =>
+		presetOptionPaths(driverPresets[name])
+			.map((path) => SETTING_BY_PRESET_OPTION[path])
+			.filter((setting) => !!setting),
+	)
+
+	// two presets can touch the same option; this is a set by intent
+	return [...new Set(paths)]
 }
 
 /**
