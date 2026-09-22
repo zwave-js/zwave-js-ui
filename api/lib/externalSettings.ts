@@ -163,18 +163,31 @@ export function applyExternalDriverSettings(
 		if (settings.storage.throttle !== undefined)
 			zwaveOptions.storage.throttle = settings.storage.throttle
 	}
+}
 
-	if (settings.presets && settings.presets.length > 0) {
-		for (const presetName of settings.presets) {
-			const preset =
-				driverPresets[presetName as keyof typeof driverPresets]
-			if (preset) {
-				Object.assign(zwaveOptions, preset)
-			} else {
-				logger.warn(`Unknown driver preset: ${presetName}`)
-			}
+/**
+ * Resolve the driver presets requested by external settings.
+ *
+ * They are returned instead of merged into the driver options because presets
+ * carry nested objects (`features`, `timeouts`, ...) that would overwrite the
+ * ones built from the settings. `Driver` deep merges every preset it is given.
+ */
+export function getExternalDriverPresets(): PartialZWaveOptions[] {
+	const settings = loadExternalSettings()
+	if (!settings?.presets?.length) return []
+
+	const presets: PartialZWaveOptions[] = []
+
+	for (const presetName of settings.presets) {
+		const preset = driverPresets[presetName as keyof typeof driverPresets]
+		if (preset) {
+			presets.push(preset)
+		} else {
+			logger.warn(`Unknown driver preset: ${presetName}`)
 		}
 	}
+
+	return presets
 }
 
 /**

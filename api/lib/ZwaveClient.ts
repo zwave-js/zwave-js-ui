@@ -26,7 +26,10 @@ import {
 	extractFirmware,
 } from '@zwave-js/core'
 import { createDefaultTransportFormat } from '@zwave-js/core/bindings/log/node'
-import { applyExternalDriverSettings } from './externalSettings.ts'
+import {
+	applyExternalDriverSettings,
+	getExternalDriverPresets,
+} from './externalSettings.ts'
 import { JSONTransport } from '@zwave-js/log-transport-json'
 import type {
 	AssociationAddress,
@@ -3176,7 +3179,11 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			}
 			// init driver here because if connect fails the driver is destroyed
 			// this could throw so include in the try/catch
-			this._driver = new Driver(this.cfg.port, zwaveOptions)
+			this._driver = new Driver(
+				this.cfg.port,
+				zwaveOptions,
+				...getExternalDriverPresets(),
+			)
 			this._driver.on('error', this._onDriverError.bind(this))
 			this._driver.on('driver ready', this._onDriverReady.bind(this))
 			this._driver.on('all nodes ready', this._onScanComplete.bind(this))
