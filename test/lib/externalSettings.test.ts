@@ -5,6 +5,7 @@ import {
 	applyExternalDriverSettings,
 	getExternalDriverPresets,
 	getExternallyManagedPaths,
+	getActiveExternalPresets,
 } from '../../api/lib/externalSettings.ts'
 
 const log = vi.hoisted(() => ({
@@ -154,6 +155,28 @@ describe('#externalSettings', () => {
 			// and the siblings the preset doesn't mention survive
 			expect(driver.options.timeouts.sendToSleep).to.equal(777)
 			expect(driver.options.features.softReset).to.equal(false)
+		})
+	})
+
+	describe('#getActiveExternalPresets()', () => {
+		it('names the presets in effect, for the settings UI', () => {
+			useSettings({ presets: ['SAFE_MODE', 'NOPE'] })
+			expect(getActiveExternalPresets()).to.deep.equal(['SAFE_MODE'])
+		})
+
+		// this runs on every settings read; only the driver path reports
+		it('stays silent about unusable entries', () => {
+			useSettings({ presets: ['NOPE'] })
+			getActiveExternalPresets()
+			expect(log.warn).not.toHaveBeenCalled()
+		})
+
+		it('warns about a deprecated preset on the driver path', () => {
+			useSettings({ presets: ['NO_WATCHDOG'] })
+			getExternalDriverPresets()
+			expect(log.warn).toHaveBeenCalledWith(
+				'Driver preset NO_WATCHDOG is deprecated upstream',
+			)
 		})
 	})
 

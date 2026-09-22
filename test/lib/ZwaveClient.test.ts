@@ -51,43 +51,6 @@ describe('#ZwaveClient', () => {
 		})
 	})
 
-	describe('#applyRawOptions()', () => {
-		function applyRawOptions(options: any, raw: any) {
-			const client = Object.create(ZwaveClient.prototype) as ZwaveClient
-			client['cfg'] = { options: raw } as any
-			client['applyRawOptions'](options)
-			return options
-		}
-
-		it('keeps the sibling keys the raw options do not mention', () => {
-			const merged = applyRawOptions(
-				{ features: { softReset: false, watchdog: true } },
-				{ features: { watchdog: false } },
-			)
-
-			expect(merged.features).to.deep.equal({
-				softReset: false,
-				watchdog: false,
-			})
-		})
-
-		// the driver merges its own defaults into these sub-objects, and
-		// `cfg.options` is the live object inside the stored settings
-		it('does not hand the driver the stored settings objects', () => {
-			const raw = { attempts: { sendData: 4 } }
-			const merged = applyRawOptions({}, raw)
-
-			expect(merged.attempts).to.deep.equal(raw.attempts)
-			expect(merged.attempts).not.toBe(raw.attempts)
-		})
-
-		it('is a no-op without raw options', () => {
-			expect(applyRawOptions({ features: {} }, undefined)).to.deep.equal({
-				features: {},
-			})
-		})
-	})
-
 	describe('#throttle()', () => {
 		let client: ZwaveClient
 

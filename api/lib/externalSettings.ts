@@ -60,13 +60,11 @@ export interface ExternalZwaveSettings {
 
 let cachedSettings: ExternalZwaveSettings | null = null
 let settingsLoaded = false
-let cachedPresetNames: string[] | null = null
 
 /** Test seam: drop everything cached from the settings file. */
 export function resetExternalSettingsCache(): void {
 	cachedSettings = null
 	settingsLoaded = false
-	cachedPresetNames = null
 }
 
 export function loadExternalSettings(): ExternalZwaveSettings | null {
@@ -178,41 +176,54 @@ export function applyExternalDriverSettings(
 
 type PresetName = keyof typeof driverPresets
 
-/** Resolve the requested preset names once, reporting the unusable ones. */
-function resolvePresetNames(): PresetName[] {
-	if (cachedPresetNames) return cachedPresetNames as PresetName[]
+// zwave-js marks these `@deprecated` in its typings, which don't survive to
+// runtime; kept here so an operator hears about it once rather than reading
+// the upstream source
+const DEPRECATED_PRESETS: string[] = ['NO_WATCHDOG']
 
+/**
+ * Preset names from the settings, filtered to the ones that exist upstream.
+ *
+ * `problems` is returned rather than logged so the callers that only need the
+ * names — which run on every settings read — stay silent.
+ */
+function requestedPresets(): { names: PresetName[]; problems: string[] } {
 	const settings = loadExternalSettings()
-	if (settings?.presets == null) return []
+	if (settings?.presets == null) return { names: [], problems: [] }
 
 	if (!Array.isArray(settings.presets)) {
-		logger.warn(
-			`Ignoring \`presets\`: expected an array of preset names, got ${typeof settings.presets}`,
-		)
-		cachedPresetNames = []
-		return []
+		return {
+			names: [],
+			problems: [
+				`Ignoring \`presets\`: expected an array of preset names, got ${typeof settings.presets}`,
+			],
+		}
 	}
 
-	const names: string[] = []
+	const names: PresetName[] = []
+	const problems: string[] = []
 
 	for (const presetName of settings.presets) {
 		// own-key check: `toString` & co. resolve on the prototype and would
 		// be forwarded as silent no-op presets
 		if (!Object.hasOwn(driverPresets, presetName)) {
-			logger.warn(
+			problems.push(
 				`Unknown driver preset: ${presetName}. Known presets: ${Object.keys(driverPresets).join(', ')}`,
 			)
 			continue
 		}
-		names.push(presetName)
+		if (DEPRECATED_PRESETS.includes(presetName)) {
+			problems.push(`Driver preset ${presetName} is deprecated upstream`)
+		}
+		names.push(presetName as PresetName)
 	}
 
-	if (names.length > 0) {
-		logger.info(`Using driver presets: ${names.join(', ')}`)
-	}
+	return { names, problems }
+}
 
-	cachedPresetNames = names
-	return names as PresetName[]
+/** Preset names currently in effect, for the settings UI. */
+export function getActiveExternalPresets(): string[] {
+	return requestedPresets().names
 }
 
 /**
@@ -226,9 +237,14 @@ function resolvePresetNames(): PresetName[] {
  * reference and fills them with its own defaults.
  */
 export function getExternalDriverPresets(): PartialZWaveOptions[] {
-	return resolvePresetNames().map((name) =>
-		structuredClone(driverPresets[name]),
-	)
+	const { names, problems } = requestedPresets()
+
+	for (const problem of problems) logger.warn(problem)
+	if (names.length > 0) {
+		logger.info(`Using driver presets: ${names.join(', ')}`)
+	}
+
+	return names.map((name) => structuredClone(driverPresets[name]))
 }
 
 /**
@@ -250,7 +266,7 @@ const SETTING_BY_PRESET_OPTION: Record<string, `zwave.${keyof ZwaveConfig}`> = {
 function presetManagedPaths(): string[] {
 	const paths: string[] = []
 
-	for (const name of resolvePresetNames()) {
+	for (const name of requestedPresets().names) {
 		for (const [group, groupOptions] of Object.entries(
 			driverPresets[name],
 		)) {

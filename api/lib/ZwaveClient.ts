@@ -31,7 +31,6 @@ import {
 	getExternalDriverPresets,
 } from './externalSettings.ts'
 import { JSONTransport } from '@zwave-js/log-transport-json'
-import { recursive as merge } from 'merge'
 import type {
 	AssociationAddress,
 	AssociationGroup,
@@ -2956,23 +2955,6 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	}
 
 	/**
-	 * Merge the raw `options` escape hatch from the settings into the driver
-	 * options.
-	 *
-	 * Deep, and on a copy: `Object.assign` let a single `features` or
-	 * `timeouts` key here replace the whole object built from the settings,
-	 * and `Driver` writes its merged result back into these sub-objects, which
-	 * belong to the stored settings.
-	 */
-	private applyRawOptions(zwaveOptions: PartialZWaveOptions): void {
-		if (!this.cfg.options) return
-		// `merge(true, ...)` copies rather than clones, so a non-serializable
-		// leaf this type allows (callbacks, bindings) passes through instead
-		// of throwing the way `structuredClone` would
-		merge(zwaveOptions, merge(true, {}, this.cfg.options))
-	}
-
-	/**
 	 * Arguments for the `Driver` constructor. External presets go last: the
 	 * driver deep merges each argument over the previous ones, so a preset
 	 * overrides only the values it defines.
@@ -3138,7 +3120,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			}
 		}
 
-		this.applyRawOptions(zwaveOptions)
+		utils.applyRawOptions(this.cfg, zwaveOptions)
 
 		let s0Key: string
 

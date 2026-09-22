@@ -50,6 +50,7 @@ import {
 import * as utils from './lib/utils.ts'
 import backupManager from './lib/BackupManager.ts'
 import {
+	getActiveExternalPresets,
 	getExternallyManagedPaths,
 	loadExternalSettings,
 	mergeExternalSettings,
@@ -1207,6 +1208,7 @@ app.get('/api/settings', apisLimiter, isAuthenticated, function (req, res) {
 		scales: scales,
 		sslDisabled: sslDisabled(),
 		managedExternally,
+		activePresets: getActiveExternalPresets(),
 		tz: process.env.TZ,
 		locale: process.env.LOCALE,
 		deprecationWarning: process.env.TAG_NAME === 'zwavejs2mqtt',

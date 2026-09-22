@@ -20,6 +20,7 @@ import {
 	isValidNodeIdString,
 	isValidOperation,
 	applyOperation,
+	applyRawOptions as applyRawOptionsToDriver,
 } from '../../api/lib/utils.ts'
 
 declare let process: NodeJS.Process & {
@@ -353,6 +354,50 @@ describe('#utils', () => {
 		})
 		it('returns the value on a non-finite result (divide by zero)', () => {
 			expect(applyOperation(100, '/0')).to.equal(100)
+		})
+	})
+})
+
+describe('#applyRawOptions()', () => {
+	function applyRawOptions(options: any, raw: any) {
+		applyRawOptionsToDriver({ options: raw } as any, options)
+		return options
+	}
+
+	it('keeps the sibling keys the raw options do not mention', () => {
+		const merged = applyRawOptions(
+			{ features: { softReset: false, watchdog: true } },
+			{ features: { watchdog: false } },
+		)
+
+		expect(merged.features).to.deep.equal({
+			softReset: false,
+			watchdog: false,
+		})
+	})
+
+	// the driver merges its own defaults into these sub-objects, and
+	// `cfg.options` is the live object inside the stored settings
+	it('does not hand the driver the stored settings objects', () => {
+		const raw = { attempts: { sendData: 4 } }
+		const merged = applyRawOptions({}, raw)
+
+		expect(merged.attempts).to.deep.equal(raw.attempts)
+		expect(merged.attempts).not.toBe(raw.attempts)
+	})
+
+	// `ZWaveOptions` allows callbacks and bindings, which structuredClone
+	// rejects
+	it('passes non-serializable leaves through', () => {
+		const cb = () => undefined
+		const merged = applyRawOptions({}, { inclusionUserCallbacks: cb })
+
+		expect(merged.inclusionUserCallbacks).to.equal(cb)
+	})
+
+	it('is a no-op without raw options', () => {
+		expect(applyRawOptions({ features: {} }, undefined)).to.deep.equal({
+			features: {},
 		})
 	})
 })
