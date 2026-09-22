@@ -434,7 +434,7 @@ The external settings file should be a JSON file with the following structure:
 
 Presets are deep merged over the other settings, so a preset overrides only the individual values it defines and leaves its siblings untouched: `SAFE_MODE` changes `timeouts.response` without discarding a configured `timeouts.sendToSleep`. Precedence runs left to right — settings.json and the UI lose to the first preset, which loses to the second, so two presets setting the same value resolve to the last one listed.
 
-Unlike the driver-only settings above, a preset *does* overlap the UI: the settings it overrides are hidden in the Settings page for as long as the preset is active, the same as any other externally managed setting.
+Unlike the driver-only settings above, a preset _does_ overlap the UI: the settings it overrides are hidden in the Settings page for as long as the preset is active, the same as any other externally managed setting.
 
 #### Example: Home Assistant Add-on Configuration
 
