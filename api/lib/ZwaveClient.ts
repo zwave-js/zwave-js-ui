@@ -3129,8 +3129,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		utils.parseSecurityKeys(this.cfg, zwaveOptions)
 
-		// Apply driver-only external settings (storage, presets, logFilename, forceConsole).
+		// Apply driver-only external settings (storage, logFilename, forceConsole).
 		// These are not in ZwaveConfig/settings.json, so they must be applied directly to driver options.
+		// Presets are not applied here: they go to the `Driver` constructor below, which deep merges them.
 		applyExternalDriverSettings(zwaveOptions)
 
 		const logTransport = new JSONTransport()

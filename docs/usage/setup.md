@@ -427,7 +427,7 @@ The external settings file should be a JSON file with the following structure:
 
 **Driver Presets** (driver-only):
 
-- `presets` (string[]): Array of preset names to apply (e.g., `["zniffer"]`)
+- `presets` (string[]): Array of driver preset names to apply, e.g. `["SAFE_MODE"]`. Available presets: `SAFE_MODE`, `NO_CONTROLLER_RECOVERY`, `NO_WATCHDOG`, `BATTERY_SAVE`, `AWAKE_LONGER`. Presets are deep merged over the other settings, so a preset overrides only the individual values it defines and leaves its siblings untouched (e.g. `SAFE_MODE` changes `timeouts.response` without discarding a configured `timeouts.sendToSleep`)
 
 > [!NOTE]
 > Settings marked as "driver-only" are passed directly to the Z-Wave JS driver and have no corresponding UI configuration. They can only be configured through the external settings file.

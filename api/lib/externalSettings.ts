@@ -174,17 +174,36 @@ export function applyExternalDriverSettings(
  */
 export function getExternalDriverPresets(): PartialZWaveOptions[] {
 	const settings = loadExternalSettings()
-	if (!settings?.presets?.length) return []
+	if (!settings?.presets) return []
+
+	if (!Array.isArray(settings.presets)) {
+		logger.warn('Ignoring `presets`: expected an array of preset names')
+		return []
+	}
 
 	const presets: PartialZWaveOptions[] = []
+	const applied: string[] = []
 
 	for (const presetName of settings.presets) {
-		const preset = driverPresets[presetName as keyof typeof driverPresets]
-		if (preset) {
-			presets.push(preset)
-		} else {
+		// own-key check: `toString` & co. resolve on the prototype and would
+		// be forwarded as silent no-op presets
+		if (!Object.hasOwn(driverPresets, presetName)) {
 			logger.warn(`Unknown driver preset: ${presetName}`)
+			continue
 		}
+
+		// copy: `Driver` adopts preset sub-objects by reference and fills them
+		// with its own defaults, which would leak into the next driver instance
+		presets.push(
+			structuredClone(
+				driverPresets[presetName as keyof typeof driverPresets],
+			),
+		)
+		applied.push(presetName)
+	}
+
+	if (applied.length > 0) {
+		logger.info(`Applying driver presets: ${applied.join(', ')}`)
 	}
 
 	return presets
