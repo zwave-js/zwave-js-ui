@@ -1,10 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
-import { mkdtempSync, rmSync, writeFileSync } from 'node:fs'
-import { tmpdir } from 'node:os'
-import { join } from 'node:path'
 import { driverPresets } from 'zwave-js'
 import ZwaveClient from '../../api/lib/ZwaveClient.ts'
-import { resetExternalSettingsCache } from '../../api/lib/externalSettings.ts'
+import { externalSettingsFixture } from './helpers/externalSettings.ts'
 
 // `throttle` only touches `throttledFunctions`, so these tests skip the real
 // constructor. It reads the json stores and needs a socket server.
@@ -18,25 +15,20 @@ describe('#ZwaveClient', () => {
 	// The presets have to reach the Driver constructor to be applied at all;
 	// building the argument list here is what makes that testable (#4829).
 	describe('#buildDriverArgs()', () => {
-		let tmpDir: string
+		let fixture: ReturnType<typeof externalSettingsFixture>
 
 		beforeEach(() => {
-			tmpDir = mkdtempSync(join(tmpdir(), 'zui-driver-args-'))
+			fixture = externalSettingsFixture()
 		})
 
 		afterEach(() => {
-			delete process.env.ZWAVE_EXTERNAL_SETTINGS
-			resetExternalSettingsCache()
-			rmSync(tmpDir, { recursive: true, force: true })
+			fixture.cleanup()
 		})
 
 		function buildArgs(presets?: string[]) {
-			if (presets) {
-				const file = join(tmpDir, 'zwave_config.json')
-				writeFileSync(file, JSON.stringify({ presets }))
-				process.env.ZWAVE_EXTERNAL_SETTINGS = file
-			}
-			resetExternalSettingsCache()
+			// no argument clears an ambient ZWAVE_EXTERNAL_SETTINGS too, so the
+			// no-presets case can't pick up the operator's real settings file
+			fixture.use(presets ? { presets } : undefined)
 
 			const client = Object.create(ZwaveClient.prototype) as ZwaveClient
 			client['cfg'] = { port: '/dev/null' } as any

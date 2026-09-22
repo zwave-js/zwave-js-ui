@@ -2966,7 +2966,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 */
 	private applyRawOptions(zwaveOptions: PartialZWaveOptions): void {
 		if (!this.cfg.options) return
-		merge(zwaveOptions, structuredClone(this.cfg.options))
+		// `merge(true, ...)` copies rather than clones, so a non-serializable
+		// leaf this type allows (callbacks, bindings) passes through instead
+		// of throwing the way `structuredClone` would
+		merge(zwaveOptions, merge(true, {}, this.cfg.options))
 	}
 
 	/**
@@ -3206,12 +3209,16 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			}
 			// init driver here because if connect fails the driver is destroyed
 			// this could throw so include in the try/catch
-			this._driver = new Driver(...this.buildDriverArgs(zwaveOptions))
+			const driverArgs = this.buildDriverArgs(zwaveOptions)
+			this._driver = new Driver(...driverArgs)
 
 			// the effective values are resolved inside the Driver, so this is
-			// the only place they can be read back for a support log
+			// the only place they can be read back for a support log. Raised to
+			// info when a preset or the raw options are in play, since that is
+			// when they don't match what the settings say
 			const { features, timeouts, attempts } = this._driver.options
-			logger.debug(
+			const overridden = driverArgs.length > 2 || !!this.cfg.options
+			logger[overridden ? 'info' : 'debug'](
 				`Effective driver options: ${JSON.stringify({ features, timeouts, attempts })}`,
 			)
 

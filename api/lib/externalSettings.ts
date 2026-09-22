@@ -1,5 +1,6 @@
 import { readFileSync, existsSync } from 'node:fs'
 import type { PartialZWaveOptions } from 'zwave-js'
+import type { ZwaveConfig } from './ZwaveClient.ts'
 import { driverPresets } from 'zwave-js'
 import { module } from './logger.ts'
 
@@ -185,7 +186,9 @@ function resolvePresetNames(): PresetName[] {
 	if (settings?.presets == null) return []
 
 	if (!Array.isArray(settings.presets)) {
-		logger.warn('Ignoring `presets`: expected an array of preset names')
+		logger.warn(
+			`Ignoring \`presets\`: expected an array of preset names, got ${typeof settings.presets}`,
+		)
 		cachedPresetNames = []
 		return []
 	}
@@ -233,7 +236,8 @@ export function getExternalDriverPresets(): PartialZWaveOptions[] {
  * preset is active the driver ignores the UI value, so the field is managed
  * externally like any other external setting.
  */
-const SETTING_BY_PRESET_OPTION: Record<string, string> = {
+const SETTING_BY_PRESET_OPTION: Record<string, `zwave.${keyof ZwaveConfig}`> = {
+	// no shipped preset sets softReset today; kept so one that does is mapped
 	'features.softReset': 'zwave.enableSoftReset',
 	'features.unresponsiveControllerRecovery':
 		'zwave.disableControllerRecovery',
@@ -247,8 +251,13 @@ function presetManagedPaths(): string[] {
 	const paths: string[] = []
 
 	for (const name of resolvePresetNames()) {
-		for (const [group, values] of Object.entries(driverPresets[name])) {
-			for (const key of Object.keys(values)) {
+		for (const [group, groupOptions] of Object.entries(
+			driverPresets[name],
+		)) {
+			if (typeof groupOptions !== 'object' || groupOptions === null) {
+				continue
+			}
+			for (const key of Object.keys(groupOptions)) {
 				const path = SETTING_BY_PRESET_OPTION[`${group}.${key}`]
 				if (path) paths.push(path)
 			}

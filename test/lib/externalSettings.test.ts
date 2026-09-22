@@ -1,16 +1,11 @@
 import { describe, it, expect, afterEach, beforeEach, vi } from 'vitest'
-import { mkdtempSync, rmSync, writeFileSync } from 'node:fs'
-import { tmpdir } from 'node:os'
-import { join } from 'node:path'
 import { Driver, driverPresets } from 'zwave-js'
 import type { PartialZWaveOptions } from 'zwave-js'
 import {
 	applyExternalDriverSettings,
 	getExternalDriverPresets,
 	getExternallyManagedPaths,
-	resetExternalSettingsCache,
 } from '../../api/lib/externalSettings.ts'
-import type { ExternalZwaveSettings } from '../../api/lib/externalSettings.ts'
 
 const log = vi.hoisted(() => ({
 	info: vi.fn(),
@@ -19,32 +14,24 @@ const log = vi.hoisted(() => ({
 }))
 vi.mock('../../api/lib/logger.ts', () => ({ module: () => log }))
 
-let tmpDir: string
+// imported after the logger mock so the module under test picks it up
+const { externalSettingsFixture } = await import(
+	'./helpers/externalSettings.ts'
+)
 
-// The module caches what it read, so each case points it at its own file and
-// drops the cache.
-function useSettings(settings?: ExternalZwaveSettings) {
-	if (settings) {
-		const file = join(tmpDir, 'zwave_config.json')
-		writeFileSync(file, JSON.stringify(settings))
-		process.env.ZWAVE_EXTERNAL_SETTINGS = file
-	} else {
-		delete process.env.ZWAVE_EXTERNAL_SETTINGS
-	}
-
-	resetExternalSettingsCache()
-}
+let fixture: ReturnType<typeof externalSettingsFixture>
+const useSettings = (...args: Parameters<typeof fixture.use>) =>
+	fixture.use(...args)
 
 describe('#externalSettings', () => {
 	beforeEach(() => {
-		tmpDir = mkdtempSync(join(tmpdir(), 'zui-external-'))
+		fixture = externalSettingsFixture()
 		log.info.mockClear()
 		log.warn.mockClear()
 	})
 
 	afterEach(() => {
-		delete process.env.ZWAVE_EXTERNAL_SETTINGS
-		rmSync(tmpDir, { recursive: true, force: true })
+		fixture.cleanup()
 	})
 
 	describe('#getExternalDriverPresets()', () => {
@@ -124,7 +111,7 @@ describe('#externalSettings', () => {
 
 			expect(getExternalDriverPresets()).to.deep.equal([])
 			expect(log.warn).toHaveBeenCalledWith(
-				'Ignoring `presets`: expected an array of preset names',
+				'Ignoring `presets`: expected an array of preset names, got string',
 			)
 		})
 	})
@@ -147,8 +134,16 @@ describe('#externalSettings', () => {
 				...getExternalDriverPresets(),
 			)
 
-			// every SAFE_MODE value differs from the driver defaults, so these
-			// fail if the presets never reach the constructor
+			// the assertions below only discriminate while the preset differs
+			// from what the driver would have used anyway
+			const defaults = new Driver('/dev/null', {}).options
+			expect(preset.timeouts.response).not.to.equal(
+				defaults.timeouts.response,
+			)
+			expect(preset.attempts.sendData).not.to.equal(
+				defaults.attempts.sendData,
+			)
+
 			expect(driver.options.timeouts.response).to.equal(
 				preset.timeouts.response,
 			)
@@ -172,6 +167,37 @@ describe('#externalSettings', () => {
 				'zwave.higherReportsTimeout',
 				'zwave.disableWatchdog',
 			])
+		})
+
+		// an upstream preset gaining an option with a UI counterpart must be
+		// added to the map, or the UI keeps offering a control the driver wins.
+		// Counted through the public result so the map stays module-private.
+		it('maps every preset option that has a UI setting', () => {
+			const noUiCounterpart = [
+				'timeouts.nonce',
+				'timeouts.sendDataAbort',
+				'timeouts.sendDataCallback',
+				'attempts.sendData',
+				'attempts.sendDataJammed',
+				'attempts.nodeInterview',
+			]
+
+			for (const [name, preset] of Object.entries(driverPresets)) {
+				const keys = Object.entries(preset).flatMap(
+					([group, options]) =>
+						Object.keys(options).map((key) => `${group}.${key}`),
+				)
+				const expected = keys.filter(
+					(path) => !noUiCounterpart.includes(path),
+				)
+
+				useSettings({ presets: [name] })
+
+				expect(
+					getExternallyManagedPaths(),
+					`unmapped option in ${name}`,
+				).to.have.lengthOf(expected.length)
+			}
 		})
 
 		it('reports nothing for presets with no UI counterpart', () => {
