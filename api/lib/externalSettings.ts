@@ -134,7 +134,9 @@ export function getExternallyManagedPaths(): string[] {
 	if (settings.serverServiceDiscoveryDisabled !== undefined)
 		paths.push('zwave.serverServiceDiscoveryDisabled')
 
-	// Presets (driver-only, no UI mapping)
+	// Presets are not listed: they are driver options, and the settings they
+	// override (timeouts, features) stay editable in the UI even though the
+	// preset wins over them.
 
 	return paths
 }
@@ -174,7 +176,7 @@ export function applyExternalDriverSettings(
  */
 export function getExternalDriverPresets(): PartialZWaveOptions[] {
 	const settings = loadExternalSettings()
-	if (!settings?.presets) return []
+	if (settings?.presets == null) return []
 
 	if (!Array.isArray(settings.presets)) {
 		logger.warn('Ignoring `presets`: expected an array of preset names')
@@ -188,7 +190,9 @@ export function getExternalDriverPresets(): PartialZWaveOptions[] {
 		// own-key check: `toString` & co. resolve on the prototype and would
 		// be forwarded as silent no-op presets
 		if (!Object.hasOwn(driverPresets, presetName)) {
-			logger.warn(`Unknown driver preset: ${presetName}`)
+			logger.warn(
+				`Unknown driver preset: ${presetName}. Known presets: ${Object.keys(driverPresets).join(', ')}`,
+			)
 			continue
 		}
 
@@ -203,7 +207,7 @@ export function getExternalDriverPresets(): PartialZWaveOptions[] {
 	}
 
 	if (applied.length > 0) {
-		logger.info(`Applying driver presets: ${applied.join(', ')}`)
+		logger.info(`Using driver presets: ${applied.join(', ')}`)
 	}
 
 	return presets

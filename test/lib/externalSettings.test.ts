@@ -32,7 +32,7 @@ async function loadWithSettings(settings?: ExternalZwaveSettings) {
 
 describe('#externalSettings', () => {
 	beforeEach(() => {
-		tmpDir = mkdtempSync(join(tmpdir(), 'zwave-external-'))
+		tmpDir = mkdtempSync(join(tmpdir(), 'zui-external-'))
 		log.info.mockClear()
 		log.warn.mockClear()
 	})
@@ -66,7 +66,7 @@ describe('#externalSettings', () => {
 				driverPresets.NO_WATCHDOG,
 			])
 			expect(log.info).toHaveBeenCalledWith(
-				'Applying driver presets: NO_CONTROLLER_RECOVERY, NO_WATCHDOG',
+				'Using driver presets: NO_CONTROLLER_RECOVERY, NO_WATCHDOG',
 			)
 		})
 
@@ -78,13 +78,14 @@ describe('#externalSettings', () => {
 				presets: ['SAFE_MODE'],
 			})
 
+			const original = driverPresets.SAFE_MODE.attempts.sendData
 			const [preset] = getExternalDriverPresets()
 
 			expect(preset).not.toBe(driverPresets.SAFE_MODE)
 			expect(preset.attempts).not.toBe(driverPresets.SAFE_MODE.attempts)
 
-			preset.attempts.sendData = 1
-			expect(driverPresets.SAFE_MODE.attempts.sendData).to.equal(5)
+			preset.attempts.sendData = original + 1
+			expect(driverPresets.SAFE_MODE.attempts.sendData).to.equal(original)
 		})
 
 		it('skips unknown presets and says so', async () => {
@@ -95,7 +96,9 @@ describe('#externalSettings', () => {
 			expect(getExternalDriverPresets()).to.deep.equal([
 				driverPresets.NO_WATCHDOG,
 			])
-			expect(log.warn).toHaveBeenCalledWith('Unknown driver preset: NOPE')
+			expect(log.warn).toHaveBeenCalledWith(
+				expect.stringContaining('Unknown driver preset: NOPE'),
+			)
 		})
 
 		it('skips inherited keys instead of forwarding them as presets', async () => {
@@ -105,7 +108,7 @@ describe('#externalSettings', () => {
 
 			expect(getExternalDriverPresets()).to.deep.equal([])
 			expect(log.warn).toHaveBeenCalledWith(
-				'Unknown driver preset: toString',
+				expect.stringContaining('Unknown driver preset: toString'),
 			)
 		})
 
@@ -126,25 +129,31 @@ describe('#externalSettings', () => {
 	describe('preset merge semantics', () => {
 		it('keeps the options a preset does not mention', async () => {
 			const { getExternalDriverPresets } = await loadWithSettings({
-				presets: ['NO_WATCHDOG'],
+				presets: ['SAFE_MODE'],
 			})
+			const preset = driverPresets.SAFE_MODE
 
 			const driver = new Driver(
 				'/dev/null',
 				{
-					features: {
-						softReset: false,
-						unresponsiveControllerRecovery: false,
-					},
+					features: { softReset: false },
+					timeouts: { sendToSleep: 777 },
 				},
 				...getExternalDriverPresets(),
 			)
 
-			expect(driver.options.features).to.include({
-				softReset: false,
-				unresponsiveControllerRecovery: false,
-				watchdog: false,
-			})
+			// every SAFE_MODE value differs from the driver defaults, so these
+			// fail if the presets never reach the constructor
+			expect(driver.options.timeouts.response).to.equal(
+				preset.timeouts.response,
+			)
+			expect(driver.options.attempts.sendData).to.equal(
+				preset.attempts.sendData,
+			)
+
+			// and the siblings the preset doesn't mention survive
+			expect(driver.options.timeouts.sendToSleep).to.equal(777)
+			expect(driver.options.features.softReset).to.equal(false)
 		})
 	})
 

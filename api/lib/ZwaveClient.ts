@@ -3109,7 +3109,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			}
 		}
 
-		Object.assign(zwaveOptions, this.cfg.options)
+		// copy: `Driver` merges presets and its own defaults into these
+		// sub-objects, and they are the live objects inside the stored settings
+		Object.assign(zwaveOptions, structuredClone(this.cfg.options))
 
 		let s0Key: string
 
