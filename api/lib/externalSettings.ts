@@ -59,6 +59,14 @@ export interface ExternalZwaveSettings {
 
 let cachedSettings: ExternalZwaveSettings | null = null
 let settingsLoaded = false
+let cachedPresetNames: string[] | null = null
+
+/** Test seam: drop everything cached from the settings file. */
+export function resetExternalSettingsCache(): void {
+	cachedSettings = null
+	settingsLoaded = false
+	cachedPresetNames = null
+}
 
 export function loadExternalSettings(): ExternalZwaveSettings | null {
 	if (settingsLoaded) return cachedSettings
@@ -134,9 +142,9 @@ export function getExternallyManagedPaths(): string[] {
 	if (settings.serverServiceDiscoveryDisabled !== undefined)
 		paths.push('zwave.serverServiceDiscoveryDisabled')
 
-	// Presets are not listed: they are driver options, and the settings they
-	// override (timeouts, features) stay editable in the UI even though the
-	// preset wins over them.
+	// Presets win over the settings they touch, so their UI fields are managed
+	// externally for as long as the preset is active
+	paths.push(...presetManagedPaths())
 
 	return paths
 }
@@ -167,24 +175,22 @@ export function applyExternalDriverSettings(
 	}
 }
 
-/**
- * Resolve the driver presets requested by external settings.
- *
- * They are returned instead of merged into the driver options because presets
- * carry nested objects (`features`, `timeouts`, ...) that would overwrite the
- * ones built from the settings. `Driver` deep merges every preset it is given.
- */
-export function getExternalDriverPresets(): PartialZWaveOptions[] {
+type PresetName = keyof typeof driverPresets
+
+/** Resolve the requested preset names once, reporting the unusable ones. */
+function resolvePresetNames(): PresetName[] {
+	if (cachedPresetNames) return cachedPresetNames as PresetName[]
+
 	const settings = loadExternalSettings()
 	if (settings?.presets == null) return []
 
 	if (!Array.isArray(settings.presets)) {
 		logger.warn('Ignoring `presets`: expected an array of preset names')
+		cachedPresetNames = []
 		return []
 	}
 
-	const presets: PartialZWaveOptions[] = []
-	const applied: string[] = []
+	const names: string[] = []
 
 	for (const presetName of settings.presets) {
 		// own-key check: `toString` & co. resolve on the prototype and would
@@ -195,22 +201,61 @@ export function getExternalDriverPresets(): PartialZWaveOptions[] {
 			)
 			continue
 		}
-
-		// copy: `Driver` adopts preset sub-objects by reference and fills them
-		// with its own defaults, which would leak into the next driver instance
-		presets.push(
-			structuredClone(
-				driverPresets[presetName as keyof typeof driverPresets],
-			),
-		)
-		applied.push(presetName)
+		names.push(presetName)
 	}
 
-	if (applied.length > 0) {
-		logger.info(`Using driver presets: ${applied.join(', ')}`)
+	if (names.length > 0) {
+		logger.info(`Using driver presets: ${names.join(', ')}`)
 	}
 
-	return presets
+	cachedPresetNames = names
+	return names as PresetName[]
+}
+
+/**
+ * Resolve the driver presets requested by external settings.
+ *
+ * They are returned instead of merged into the driver options because presets
+ * carry nested objects (`features`, `timeouts`, ...) that would overwrite the
+ * ones built from the settings. `Driver` deep merges every preset it is given.
+ *
+ * Each call returns fresh copies: `Driver` adopts preset sub-objects by
+ * reference and fills them with its own defaults.
+ */
+export function getExternalDriverPresets(): PartialZWaveOptions[] {
+	return resolvePresetNames().map((name) =>
+		structuredClone(driverPresets[name]),
+	)
+}
+
+/**
+ * Driver options a preset can set that also have a UI setting. While the
+ * preset is active the driver ignores the UI value, so the field is managed
+ * externally like any other external setting.
+ */
+const SETTING_BY_PRESET_OPTION: Record<string, string> = {
+	'features.softReset': 'zwave.enableSoftReset',
+	'features.unresponsiveControllerRecovery':
+		'zwave.disableControllerRecovery',
+	'features.watchdog': 'zwave.disableWatchdog',
+	'timeouts.response': 'zwave.responseTimeout',
+	'timeouts.report': 'zwave.higherReportsTimeout',
+	'timeouts.sendToSleep': 'zwave.sendToSleepTimeout',
+}
+
+function presetManagedPaths(): string[] {
+	const paths: string[] = []
+
+	for (const name of resolvePresetNames()) {
+		for (const [group, values] of Object.entries(driverPresets[name])) {
+			for (const key of Object.keys(values)) {
+				const path = SETTING_BY_PRESET_OPTION[`${group}.${key}`]
+				if (path) paths.push(path)
+			}
+		}
+	}
+
+	return paths
 }
 
 /**

@@ -31,6 +31,7 @@ import {
 	getExternalDriverPresets,
 } from './externalSettings.ts'
 import { JSONTransport } from '@zwave-js/log-transport-json'
+import { recursive as merge } from 'merge'
 import type {
 	AssociationAddress,
 	AssociationGroup,
@@ -2955,6 +2956,31 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	}
 
 	/**
+	 * Merge the raw `options` escape hatch from the settings into the driver
+	 * options.
+	 *
+	 * Deep, and on a copy: `Object.assign` let a single `features` or
+	 * `timeouts` key here replace the whole object built from the settings,
+	 * and `Driver` writes its merged result back into these sub-objects, which
+	 * belong to the stored settings.
+	 */
+	private applyRawOptions(zwaveOptions: PartialZWaveOptions): void {
+		if (!this.cfg.options) return
+		merge(zwaveOptions, structuredClone(this.cfg.options))
+	}
+
+	/**
+	 * Arguments for the `Driver` constructor. External presets go last: the
+	 * driver deep merges each argument over the previous ones, so a preset
+	 * overrides only the values it defines.
+	 */
+	private buildDriverArgs(
+		zwaveOptions: PartialZWaveOptions,
+	): [string, PartialZWaveOptions, ...PartialZWaveOptions[]] {
+		return [this.cfg.port, zwaveOptions, ...getExternalDriverPresets()]
+	}
+
+	/**
 	 * Method used to start Z-Wave connection using configuration `port`
 	 */
 	async connect() {
@@ -3109,9 +3135,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			}
 		}
 
-		// copy: `Driver` merges presets and its own defaults into these
-		// sub-objects, and they are the live objects inside the stored settings
-		Object.assign(zwaveOptions, structuredClone(this.cfg.options))
+		this.applyRawOptions(zwaveOptions)
 
 		let s0Key: string
 
@@ -3182,11 +3206,15 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			}
 			// init driver here because if connect fails the driver is destroyed
 			// this could throw so include in the try/catch
-			this._driver = new Driver(
-				this.cfg.port,
-				zwaveOptions,
-				...getExternalDriverPresets(),
+			this._driver = new Driver(...this.buildDriverArgs(zwaveOptions))
+
+			// the effective values are resolved inside the Driver, so this is
+			// the only place they can be read back for a support log
+			const { features, timeouts, attempts } = this._driver.options
+			logger.debug(
+				`Effective driver options: ${JSON.stringify({ features, timeouts, attempts })}`,
 			)
+
 			this._driver.on('error', this._onDriverError.bind(this))
 			this._driver.on('driver ready', this._onDriverReady.bind(this))
 			this._driver.on('all nodes ready', this._onScanComplete.bind(this))

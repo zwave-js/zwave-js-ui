@@ -1,5 +1,10 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
+import { driverPresets } from 'zwave-js'
 import ZwaveClient from '../../api/lib/ZwaveClient.ts'
+import { resetExternalSettingsCache } from '../../api/lib/externalSettings.ts'
 
 // `throttle` only touches `throttledFunctions`, so these tests skip the real
 // constructor. It reads the json stores and needs a socket server.
@@ -10,6 +15,87 @@ function createClient() {
 }
 
 describe('#ZwaveClient', () => {
+	// The presets have to reach the Driver constructor to be applied at all;
+	// building the argument list here is what makes that testable (#4829).
+	describe('#buildDriverArgs()', () => {
+		let tmpDir: string
+
+		beforeEach(() => {
+			tmpDir = mkdtempSync(join(tmpdir(), 'zui-driver-args-'))
+		})
+
+		afterEach(() => {
+			delete process.env.ZWAVE_EXTERNAL_SETTINGS
+			resetExternalSettingsCache()
+			rmSync(tmpDir, { recursive: true, force: true })
+		})
+
+		function buildArgs(presets?: string[]) {
+			if (presets) {
+				const file = join(tmpDir, 'zwave_config.json')
+				writeFileSync(file, JSON.stringify({ presets }))
+				process.env.ZWAVE_EXTERNAL_SETTINGS = file
+			}
+			resetExternalSettingsCache()
+
+			const client = Object.create(ZwaveClient.prototype) as ZwaveClient
+			client['cfg'] = { port: '/dev/null' } as any
+			return client['buildDriverArgs']({ features: { softReset: false } })
+		}
+
+		it('passes the port and the options', () => {
+			expect(buildArgs()).to.deep.equal([
+				'/dev/null',
+				{ features: { softReset: false } },
+			])
+		})
+
+		it('appends the external presets after the options', () => {
+			expect(buildArgs(['NO_WATCHDOG'])).to.deep.equal([
+				'/dev/null',
+				{ features: { softReset: false } },
+				driverPresets.NO_WATCHDOG,
+			])
+		})
+	})
+
+	describe('#applyRawOptions()', () => {
+		function applyRawOptions(options: any, raw: any) {
+			const client = Object.create(ZwaveClient.prototype) as ZwaveClient
+			client['cfg'] = { options: raw } as any
+			client['applyRawOptions'](options)
+			return options
+		}
+
+		it('keeps the sibling keys the raw options do not mention', () => {
+			const merged = applyRawOptions(
+				{ features: { softReset: false, watchdog: true } },
+				{ features: { watchdog: false } },
+			)
+
+			expect(merged.features).to.deep.equal({
+				softReset: false,
+				watchdog: false,
+			})
+		})
+
+		// the driver merges its own defaults into these sub-objects, and
+		// `cfg.options` is the live object inside the stored settings
+		it('does not hand the driver the stored settings objects', () => {
+			const raw = { attempts: { sendData: 4 } }
+			const merged = applyRawOptions({}, raw)
+
+			expect(merged.attempts).to.deep.equal(raw.attempts)
+			expect(merged.attempts).not.toBe(raw.attempts)
+		})
+
+		it('is a no-op without raw options', () => {
+			expect(applyRawOptions({ features: {} }, undefined)).to.deep.equal({
+				features: {},
+			})
+		})
+	})
+
 	describe('#throttle()', () => {
 		let client: ZwaveClient
 

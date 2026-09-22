@@ -1093,7 +1093,15 @@
 											></v-switch>
 										</v-col>
 
-										<v-col cols="12" sm="6">
+										<v-col
+											cols="12"
+											sm="6"
+											v-if="
+												!isSettingManagedExternally(
+													'zwave.disableControllerRecovery',
+												)
+											"
+										>
 											<inverted-checkbox
 												hint="When disabled, commands will simply fail when the controller is unresponsive and nodes may get randomly marked as dead until the controller recovers on its own."
 												persistent-hint
@@ -1103,7 +1111,15 @@
 												"
 											></inverted-checkbox>
 										</v-col>
-										<v-col cols="12" sm="6">
+										<v-col
+											cols="12"
+											sm="6"
+											v-if="
+												!isSettingManagedExternally(
+													'zwave.disableWatchdog',
+												)
+											"
+										>
 											<inverted-checkbox
 												persistent-hint
 												label="Watchdog"
@@ -1113,7 +1129,15 @@
 												"
 											></inverted-checkbox>
 										</v-col>
-										<v-col cols="12" sm="6">
+										<v-col
+											cols="12"
+											sm="6"
+											v-if="
+												!isSettingManagedExternally(
+													'zwave.responseTimeout',
+												)
+											"
+										>
 											<v-text-field
 												v-model.number="
 													newZwave.responseTimeout
@@ -1127,7 +1151,15 @@
 											></v-text-field>
 										</v-col>
 
-										<v-col cols="12" sm="6">
+										<v-col
+											cols="12"
+											sm="6"
+											v-if="
+												!isSettingManagedExternally(
+													'zwave.higherReportsTimeout',
+												)
+											"
+										>
 											<v-checkbox
 												hint="This can help with the inclusion or interview of some devices, but can also slow down communication a lot."
 												persistent-hint
@@ -1244,7 +1276,15 @@
 												type="number"
 											></v-text-field>
 										</v-col>
-										<v-col cols="12" sm="6">
+										<v-col
+											cols="12"
+											sm="6"
+											v-if="
+												!isSettingManagedExternally(
+													'zwave.sendToSleepTimeout',
+												)
+											"
+										>
 											<v-text-field
 												v-model.number="
 													newZwave.sendToSleepTimeout

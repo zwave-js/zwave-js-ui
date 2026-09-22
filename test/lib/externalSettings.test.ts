@@ -4,6 +4,12 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { Driver, driverPresets } from 'zwave-js'
 import type { PartialZWaveOptions } from 'zwave-js'
+import {
+	applyExternalDriverSettings,
+	getExternalDriverPresets,
+	getExternallyManagedPaths,
+	resetExternalSettingsCache,
+} from '../../api/lib/externalSettings.ts'
 import type { ExternalZwaveSettings } from '../../api/lib/externalSettings.ts'
 
 const log = vi.hoisted(() => ({
@@ -15,9 +21,9 @@ vi.mock('../../api/lib/logger.ts', () => ({ module: () => log }))
 
 let tmpDir: string
 
-// The module caches the parsed file, so every case writes its own settings
-// file and re-imports the module.
-async function loadWithSettings(settings?: ExternalZwaveSettings) {
+// The module caches what it read, so each case points it at its own file and
+// drops the cache.
+function useSettings(settings?: ExternalZwaveSettings) {
 	if (settings) {
 		const file = join(tmpDir, 'zwave_config.json')
 		writeFileSync(file, JSON.stringify(settings))
@@ -26,8 +32,7 @@ async function loadWithSettings(settings?: ExternalZwaveSettings) {
 		delete process.env.ZWAVE_EXTERNAL_SETTINGS
 	}
 
-	vi.resetModules()
-	return import('../../api/lib/externalSettings.ts')
+	resetExternalSettingsCache()
 }
 
 describe('#externalSettings', () => {
@@ -43,21 +48,21 @@ describe('#externalSettings', () => {
 	})
 
 	describe('#getExternalDriverPresets()', () => {
-		it('returns nothing when no external settings are configured', async () => {
-			const { getExternalDriverPresets } = await loadWithSettings()
+		it('returns nothing when no external settings are configured', () => {
+			useSettings()
 			expect(getExternalDriverPresets()).to.deep.equal([])
 		})
 
-		it('returns nothing for an empty preset list', async () => {
-			const { getExternalDriverPresets } = await loadWithSettings({
+		it('returns nothing for an empty preset list', () => {
+			useSettings({
 				presets: [],
 			})
 			expect(getExternalDriverPresets()).to.deep.equal([])
 			expect(log.warn).not.toHaveBeenCalled()
 		})
 
-		it('returns one entry per known preset, in order', async () => {
-			const { getExternalDriverPresets } = await loadWithSettings({
+		it('returns one entry per known preset, in order', () => {
+			useSettings({
 				presets: ['NO_CONTROLLER_RECOVERY', 'NO_WATCHDOG'],
 			})
 
@@ -73,8 +78,8 @@ describe('#externalSettings', () => {
 		// `Driver` adopts preset sub-objects by reference and fills them with
 		// its defaults, so handing out the library's own objects pollutes them
 		// for every later driver instance in the process.
-		it('returns copies, not the shared preset objects', async () => {
-			const { getExternalDriverPresets } = await loadWithSettings({
+		it('returns copies, not the shared preset objects', () => {
+			useSettings({
 				presets: ['SAFE_MODE'],
 			})
 
@@ -88,8 +93,8 @@ describe('#externalSettings', () => {
 			expect(driverPresets.SAFE_MODE.attempts.sendData).to.equal(original)
 		})
 
-		it('skips unknown presets and says so', async () => {
-			const { getExternalDriverPresets } = await loadWithSettings({
+		it('skips unknown presets and says so', () => {
+			useSettings({
 				presets: ['NOPE', 'NO_WATCHDOG'],
 			})
 
@@ -101,8 +106,8 @@ describe('#externalSettings', () => {
 			)
 		})
 
-		it('skips inherited keys instead of forwarding them as presets', async () => {
-			const { getExternalDriverPresets } = await loadWithSettings({
+		it('skips inherited keys instead of forwarding them as presets', () => {
+			useSettings({
 				presets: ['toString'],
 			})
 
@@ -112,8 +117,8 @@ describe('#externalSettings', () => {
 			)
 		})
 
-		it('rejects a presets field that is not an array', async () => {
-			const { getExternalDriverPresets } = await loadWithSettings({
+		it('rejects a presets field that is not an array', () => {
+			useSettings({
 				presets: 'SAFE_MODE' as unknown as string[],
 			})
 
@@ -127,8 +132,8 @@ describe('#externalSettings', () => {
 	// The regression behind #4829: a preset carrying `features` used to replace
 	// the whole object and take `softReset` with it.
 	describe('preset merge semantics', () => {
-		it('keeps the options a preset does not mention', async () => {
-			const { getExternalDriverPresets } = await loadWithSettings({
+		it('keeps the options a preset does not mention', () => {
+			useSettings({
 				presets: ['SAFE_MODE'],
 			})
 			const preset = driverPresets.SAFE_MODE
@@ -157,11 +162,32 @@ describe('#externalSettings', () => {
 		})
 	})
 
+	describe('#getExternallyManagedPaths()', () => {
+		// a preset overrides these settings, so the UI must stop offering them
+		it('reports the UI settings the requested presets override', () => {
+			useSettings({ presets: ['SAFE_MODE', 'NO_WATCHDOG'] })
+
+			expect(getExternallyManagedPaths()).to.have.members([
+				'zwave.responseTimeout',
+				'zwave.higherReportsTimeout',
+				'zwave.disableWatchdog',
+			])
+		})
+
+		it('reports nothing for presets with no UI counterpart', () => {
+			useSettings({ presets: ['BATTERY_SAVE'] })
+
+			expect(getExternallyManagedPaths()).to.deep.equal([
+				'zwave.sendToSleepTimeout',
+			])
+		})
+	})
+
 	describe('#applyExternalDriverSettings()', () => {
 		// Presets are handed to the Driver instead, which deep merges them.
 		// Merging them here would drop sibling keys like `features.softReset`.
-		it('leaves driver options untouched by presets', async () => {
-			const { applyExternalDriverSettings } = await loadWithSettings({
+		it('leaves driver options untouched by presets', () => {
+			useSettings({
 				presets: ['NO_WATCHDOG'],
 			})
 
@@ -176,8 +202,8 @@ describe('#externalSettings', () => {
 			})
 		})
 
-		it('applies storage and log settings', async () => {
-			const { applyExternalDriverSettings } = await loadWithSettings({
+		it('applies storage and log settings', () => {
+			useSettings({
 				storage: { throttle: 'slow' },
 				forceConsole: true,
 			})
