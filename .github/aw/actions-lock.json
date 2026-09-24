@@ -10,6 +10,11 @@
       "version": "v6.1.0",
       "sha": "55cc8345863c7cc4c66a329aec7e433d2d1c52a9"
     },
+    "actions/checkout@v6": {
+      "repo": "actions/checkout",
+      "version": "v6",
+      "sha": "d23441a48e516b6c34aea4fa41551a30e30af803"
+    },
     "actions/checkout@v7.0.1": {
       "repo": "actions/checkout",
       "version": "v7.0.1",
@@ -20,15 +25,15 @@
       "version": "v7.0.0",
       "sha": "820762786026740c76f36085b0efc47a31fe5020"
     },
-    "github/gh-aw-actions/setup-cli@v0.81.6": {
+    "github/gh-aw-actions/setup-cli@v0.83.2": {
       "repo": "github/gh-aw-actions/setup-cli",
-      "version": "v0.81.6",
-      "sha": "ba6380cc6e5be5d21677bebe04d52fb48e3abec7"
+      "version": "v0.83.2",
+      "sha": "39143c7eb25e92c0ab748285770483709db03c05"
     },
-    "github/gh-aw-actions/setup@v0.81.6": {
+    "github/gh-aw-actions/setup@v0.83.2": {
       "repo": "github/gh-aw-actions/setup",
-      "version": "v0.81.6",
-      "sha": "ba6380cc6e5be5d21677bebe04d52fb48e3abec7"
+      "version": "v0.83.2",
+      "sha": "39143c7eb25e92c0ab748285770483709db03c05"
     },
     "zwave-js/bot-workflows/actions/report-index-status@v1": {
       "repo": "zwave-js/bot-workflows/actions/report-index-status",

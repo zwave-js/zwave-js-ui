@@ -75,6 +75,7 @@ description: Notify issue authors when their issue belongs in the driver reposit
 engine:
   id: copilot
   max-turns: 5
+model: gpt-5.6-luna
 source: zwave-js/bot-workflows/workflows/classify-issue-repo.md@af08eadd9af802c4d28ba310867710d0b266328e
 timeout-minutes: 10
 ---
