@@ -1,5 +1,5 @@
-# gh-aw-metadata: {"schema_version":"v4","frontmatter_hash":"53c8367f33dfa0deb1de8d0748f06d07ea24f3a84d8495a26de0cce77c5a6873","body_hash":"50330112d0264b529543e7614f0e2b8496dc4e73e5f9a85c8e7feb553f6d8fc1","compiler_version":"v0.83.2","strict":true,"agent_id":"copilot","agent_model":"claude-sonnet-5","engine_versions":{"copilot":"1.0.73"}}
-# gh-aw-manifest: {"version":1,"secrets":["BOT_TOKEN","COPILOT_GITHUB_TOKEN","GH_AW_GITHUB_MCP_SERVER_TOKEN","GH_AW_GITHUB_TOKEN","GITHUB_TOKEN"],"actions":[{"repo":"actions/cache/restore","sha":"55cc8345863c7cc4c66a329aec7e433d2d1c52a9","version":"v6.1.0"},{"repo":"actions/cache/save","sha":"55cc8345863c7cc4c66a329aec7e433d2d1c52a9","version":"v6.1.0"},{"repo":"actions/checkout","sha":"3d3c42e5aac5ba805825da76410c181273ba90b1","version":"v7.0.1"},{"repo":"actions/checkout","sha":"d23441a48e516b6c34aea4fa41551a30e30af803","version":"v6"},{"repo":"actions/download-artifact","sha":"3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c","version":"v8.0.1"},{"repo":"actions/github-script","sha":"3a2844b7e9c422d3c10d287c895573f7108da1b3","version":"v9.0.0"},{"repo":"actions/setup-node","sha":"820762786026740c76f36085b0efc47a31fe5020","version":"v7.0.0"},{"repo":"actions/upload-artifact","sha":"043fb46d1a93c77aae656e7c1c64a875d1fc6a0a","version":"v7.0.1"},{"repo":"github/gh-aw-actions/setup","sha":"39143c7eb25e92c0ab748285770483709db03c05","version":"v0.83.2"},{"repo":"zwave-js/bot-workflows/actions/report-index-status","sha":"ab0bc5d7f9172ce658daf685b3554a57cf99ec39","version":"v1"},{"repo":"zwave-js/bot-workflows/actions/restore-bot-index","sha":"ab0bc5d7f9172ce658daf685b3554a57cf99ec39","version":"v1"},{"repo":"zwave-js/bot-workflows/actions/setup-bot","sha":"ab0bc5d7f9172ce658daf685b3554a57cf99ec39","version":"v1"}],"containers":[{"image":"ghcr.io/github/gh-aw-firewall/agent:0.27.41","digest":"sha256:053ba306623a1a0d4c3c5ac9a2c3dc3217ce04d44329b61929fe7f8b0dc457f3","pinned_image":"ghcr.io/github/gh-aw-firewall/agent:0.27.41@sha256:053ba306623a1a0d4c3c5ac9a2c3dc3217ce04d44329b61929fe7f8b0dc457f3"},{"image":"ghcr.io/github/gh-aw-firewall/api-proxy:0.27.41","digest":"sha256:a3d33153b6abb2dd39540ef7def8aa8a5020022c11822d88f5b87ebe350276d1","pinned_image":"ghcr.io/github/gh-aw-firewall/api-proxy:0.27.41@sha256:a3d33153b6abb2dd39540ef7def8aa8a5020022c11822d88f5b87ebe350276d1"},{"image":"ghcr.io/github/gh-aw-firewall/squid:0.27.41","digest":"sha256:61d653d372ac417c6e22d5e77becd9e60bde96e6c2d26bb023e3cc3fd60c0920","pinned_image":"ghcr.io/github/gh-aw-firewall/squid:0.27.41@sha256:61d653d372ac417c6e22d5e77becd9e60bde96e6c2d26bb023e3cc3fd60c0920"},{"image":"ghcr.io/github/gh-aw-mcpg:v0.4.5","digest":"sha256:7550c5132d007266b696d77218e8d1b01f29e6e55520875b2431ef4044df71c9","pinned_image":"ghcr.io/github/gh-aw-mcpg:v0.4.5@sha256:7550c5132d007266b696d77218e8d1b01f29e6e55520875b2431ef4044df71c9"},{"image":"ghcr.io/github/gh-aw-node","digest":"sha256:529d02eb970b1161aa25c593a9c3df57fdfad5a8add328cb3b6eccef66f3183b","pinned_image":"ghcr.io/github/gh-aw-node@sha256:529d02eb970b1161aa25c593a9c3df57fdfad5a8add328cb3b6eccef66f3183b"}]}
+# gh-aw-metadata: {"schema_version":"v4","frontmatter_hash":"f0f1e34fbb8471c1cdd963742fa850449f69f1b2acc6c0271575cf75d9b788a5","body_hash":"50330112d0264b529543e7614f0e2b8496dc4e73e5f9a85c8e7feb553f6d8fc1","compiler_version":"v0.83.2","strict":true,"agent_id":"copilot","agent_model":"claude-sonnet-5","engine_versions":{"copilot":"1.0.73"}}
+# gh-aw-manifest: {"version":1,"secrets":["BOT_TOKEN","COPILOT_GITHUB_TOKEN","GH_AW_GITHUB_MCP_SERVER_TOKEN","GH_AW_GITHUB_TOKEN","GITHUB_TOKEN"],"actions":[{"repo":"actions/cache/restore","sha":"55cc8345863c7cc4c66a329aec7e433d2d1c52a9","version":"v6.1.0"},{"repo":"actions/cache/save","sha":"55cc8345863c7cc4c66a329aec7e433d2d1c52a9","version":"v6.1.0"},{"repo":"actions/checkout","sha":"3d3c42e5aac5ba805825da76410c181273ba90b1","version":"v7.0.1"},{"repo":"actions/checkout","sha":"d23441a48e516b6c34aea4fa41551a30e30af803","version":"v6"},{"repo":"actions/download-artifact","sha":"3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c","version":"v8.0.1"},{"repo":"actions/github-script","sha":"3a2844b7e9c422d3c10d287c895573f7108da1b3","version":"v9.0.0"},{"repo":"actions/setup-node","sha":"820762786026740c76f36085b0efc47a31fe5020","version":"v7.0.0"},{"repo":"actions/upload-artifact","sha":"043fb46d1a93c77aae656e7c1c64a875d1fc6a0a","version":"v7.0.1"},{"repo":"github/gh-aw-actions/setup","sha":"39143c7eb25e92c0ab748285770483709db03c05","version":"v0.83.2"},{"repo":"zwave-js/bot-workflows/actions/report-index-status","sha":"af08eadd9af802c4d28ba310867710d0b266328e","version":"v1"},{"repo":"zwave-js/bot-workflows/actions/restore-bot-index","sha":"af08eadd9af802c4d28ba310867710d0b266328e","version":"v1"},{"repo":"zwave-js/bot-workflows/actions/setup-bot","sha":"af08eadd9af802c4d28ba310867710d0b266328e","version":"v1"}],"containers":[{"image":"ghcr.io/github/gh-aw-firewall/agent:0.27.41","digest":"sha256:053ba306623a1a0d4c3c5ac9a2c3dc3217ce04d44329b61929fe7f8b0dc457f3","pinned_image":"ghcr.io/github/gh-aw-firewall/agent:0.27.41@sha256:053ba306623a1a0d4c3c5ac9a2c3dc3217ce04d44329b61929fe7f8b0dc457f3"},{"image":"ghcr.io/github/gh-aw-firewall/api-proxy:0.27.41","digest":"sha256:a3d33153b6abb2dd39540ef7def8aa8a5020022c11822d88f5b87ebe350276d1","pinned_image":"ghcr.io/github/gh-aw-firewall/api-proxy:0.27.41@sha256:a3d33153b6abb2dd39540ef7def8aa8a5020022c11822d88f5b87ebe350276d1"},{"image":"ghcr.io/github/gh-aw-firewall/squid:0.27.41","digest":"sha256:61d653d372ac417c6e22d5e77becd9e60bde96e6c2d26bb023e3cc3fd60c0920","pinned_image":"ghcr.io/github/gh-aw-firewall/squid:0.27.41@sha256:61d653d372ac417c6e22d5e77becd9e60bde96e6c2d26bb023e3cc3fd60c0920"},{"image":"ghcr.io/github/gh-aw-mcpg:v0.4.5","digest":"sha256:7550c5132d007266b696d77218e8d1b01f29e6e55520875b2431ef4044df71c9","pinned_image":"ghcr.io/github/gh-aw-mcpg:v0.4.5@sha256:7550c5132d007266b696d77218e8d1b01f29e6e55520875b2431ef4044df71c9"},{"image":"ghcr.io/github/gh-aw-node","digest":"sha256:529d02eb970b1161aa25c593a9c3df57fdfad5a8add328cb3b6eccef66f3183b","pinned_image":"ghcr.io/github/gh-aw-node@sha256:529d02eb970b1161aa25c593a9c3df57fdfad5a8add328cb3b6eccef66f3183b"}]}
 # This file was automatically generated by gh-aw (v0.83.2). DO NOT EDIT. To debug this workflow, load the skill at https://github.com/github/gh-aw/blob/main/debug.md
 #
 #    ___                   _   _
@@ -17,7 +17,7 @@
 #  \/  \/ \___/|_| |_|\_\|_| |_|\___/ \_/\_/ |___/
 #
 #
-# To update this file, edit zwave-js/bot-workflows/workflows/answer-from-docs.md@af08eadd9af802c4d28ba310867710d0b266328e and run:
+# To update this file, edit zwave-js/bot-workflows/workflows/answer-from-docs.md@ab873f558d606e5379c405d70ed2b769952a4716 and run:
 #   gh aw compile
 # Not all edits will cause changes to this file.
 #
@@ -25,7 +25,7 @@
 #
 # Answer questions in issues and discussions based on the documentation
 #
-# Source: zwave-js/bot-workflows/workflows/answer-from-docs.md@af08eadd9af802c4d28ba310867710d0b266328e
+# Source: zwave-js/bot-workflows/workflows/answer-from-docs.md@ab873f558d606e5379c405d70ed2b769952a4716
 #
 # Resolved workflow manifest:
 #   Imports:
@@ -51,9 +51,9 @@
 #   - actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
 #   - actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
 #   - github/gh-aw-actions/setup@39143c7eb25e92c0ab748285770483709db03c05 # v0.83.2
-#   - zwave-js/bot-workflows/actions/report-index-status@ab0bc5d7f9172ce658daf685b3554a57cf99ec39 # v1
-#   - zwave-js/bot-workflows/actions/restore-bot-index@ab0bc5d7f9172ce658daf685b3554a57cf99ec39 # v1
-#   - zwave-js/bot-workflows/actions/setup-bot@ab0bc5d7f9172ce658daf685b3554a57cf99ec39 # v1
+#   - zwave-js/bot-workflows/actions/report-index-status@af08eadd9af802c4d28ba310867710d0b266328e # v1
+#   - zwave-js/bot-workflows/actions/restore-bot-index@af08eadd9af802c4d28ba310867710d0b266328e # v1
+#   - zwave-js/bot-workflows/actions/setup-bot@af08eadd9af802c4d28ba310867710d0b266328e # v1
 #
 # Container images used:
 #   - ghcr.io/github/gh-aw-firewall/agent:0.27.41@sha256:053ba306623a1a0d4c3c5ac9a2c3dc3217ce04d44329b61929fe7f8b0dc457f3
@@ -224,7 +224,7 @@ jobs:
           GH_AW_INFO_AWF_VERSION: "v0.27.41"
           GH_AW_INFO_AWMG_VERSION: ""
           GH_AW_INFO_FIREWALL_TYPE: "squid"
-          GH_AW_INFO_FRONTMATTER_SOURCE: "zwave-js/bot-workflows/workflows/answer-from-docs.md@af08eadd9af802c4d28ba310867710d0b266328e"
+          GH_AW_INFO_FRONTMATTER_SOURCE: "zwave-js/bot-workflows/workflows/answer-from-docs.md@ab873f558d606e5379c405d70ed2b769952a4716"
           GH_AW_INFO_BODY_MODIFIED: "false"
           GH_AW_COMPILED_STRICT: "true"
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
@@ -1127,8 +1127,8 @@ jobs:
           GH_AW_AGENT_OUTPUT: ${{ steps.setup-agent-output-env.outputs.GH_AW_AGENT_OUTPUT }}
           GH_AW_NOOP_MAX: "1"
           GH_AW_WORKFLOW_NAME: "Answer From Docs"
-          GH_AW_WORKFLOW_SOURCE: "zwave-js/bot-workflows/workflows/answer-from-docs.md@af08eadd9af802c4d28ba310867710d0b266328e"
-          GH_AW_WORKFLOW_SOURCE_URL: "${{ github.server_url }}/zwave-js/bot-workflows/blob/af08eadd9af802c4d28ba310867710d0b266328e/workflows/answer-from-docs.md"
+          GH_AW_WORKFLOW_SOURCE: "zwave-js/bot-workflows/workflows/answer-from-docs.md@ab873f558d606e5379c405d70ed2b769952a4716"
+          GH_AW_WORKFLOW_SOURCE_URL: "${{ github.server_url }}/zwave-js/bot-workflows/blob/ab873f558d606e5379c405d70ed2b769952a4716/workflows/answer-from-docs.md"
           GH_AW_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           GH_AW_AGENT_CONCLUSION: ${{ needs.agent.result }}
           GH_AW_NOOP_REPORT_AS_ISSUE: "true"
@@ -1149,8 +1149,8 @@ jobs:
         env:
           GH_AW_AGENT_OUTPUT: ${{ steps.setup-agent-output-env.outputs.GH_AW_AGENT_OUTPUT }}
           GH_AW_WORKFLOW_NAME: "Answer From Docs"
-          GH_AW_WORKFLOW_SOURCE: "zwave-js/bot-workflows/workflows/answer-from-docs.md@af08eadd9af802c4d28ba310867710d0b266328e"
-          GH_AW_WORKFLOW_SOURCE_URL: "${{ github.server_url }}/zwave-js/bot-workflows/blob/af08eadd9af802c4d28ba310867710d0b266328e/workflows/answer-from-docs.md"
+          GH_AW_WORKFLOW_SOURCE: "zwave-js/bot-workflows/workflows/answer-from-docs.md@ab873f558d606e5379c405d70ed2b769952a4716"
+          GH_AW_WORKFLOW_SOURCE_URL: "${{ github.server_url }}/zwave-js/bot-workflows/blob/ab873f558d606e5379c405d70ed2b769952a4716/workflows/answer-from-docs.md"
           GH_AW_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           GH_AW_DETECTION_CONCLUSION: ${{ needs.detection.outputs.detection_conclusion }}
           GH_AW_DETECTION_REASON: ${{ needs.detection.outputs.detection_reason }}
@@ -1168,8 +1168,8 @@ jobs:
           GH_AW_AGENT_OUTPUT: ${{ steps.setup-agent-output-env.outputs.GH_AW_AGENT_OUTPUT }}
           GH_AW_MISSING_TOOL_CREATE_ISSUE: "true"
           GH_AW_WORKFLOW_NAME: "Answer From Docs"
-          GH_AW_WORKFLOW_SOURCE: "zwave-js/bot-workflows/workflows/answer-from-docs.md@af08eadd9af802c4d28ba310867710d0b266328e"
-          GH_AW_WORKFLOW_SOURCE_URL: "${{ github.server_url }}/zwave-js/bot-workflows/blob/af08eadd9af802c4d28ba310867710d0b266328e/workflows/answer-from-docs.md"
+          GH_AW_WORKFLOW_SOURCE: "zwave-js/bot-workflows/workflows/answer-from-docs.md@ab873f558d606e5379c405d70ed2b769952a4716"
+          GH_AW_WORKFLOW_SOURCE_URL: "${{ github.server_url }}/zwave-js/bot-workflows/blob/ab873f558d606e5379c405d70ed2b769952a4716/workflows/answer-from-docs.md"
         with:
           github-token: ${{ secrets.GH_AW_GITHUB_TOKEN || secrets.GITHUB_TOKEN }}
           script: |
@@ -1184,8 +1184,8 @@ jobs:
           GH_AW_AGENT_OUTPUT: ${{ steps.setup-agent-output-env.outputs.GH_AW_AGENT_OUTPUT }}
           GH_AW_REPORT_INCOMPLETE_CREATE_ISSUE: "true"
           GH_AW_WORKFLOW_NAME: "Answer From Docs"
-          GH_AW_WORKFLOW_SOURCE: "zwave-js/bot-workflows/workflows/answer-from-docs.md@af08eadd9af802c4d28ba310867710d0b266328e"
-          GH_AW_WORKFLOW_SOURCE_URL: "${{ github.server_url }}/zwave-js/bot-workflows/blob/af08eadd9af802c4d28ba310867710d0b266328e/workflows/answer-from-docs.md"
+          GH_AW_WORKFLOW_SOURCE: "zwave-js/bot-workflows/workflows/answer-from-docs.md@ab873f558d606e5379c405d70ed2b769952a4716"
+          GH_AW_WORKFLOW_SOURCE_URL: "${{ github.server_url }}/zwave-js/bot-workflows/blob/ab873f558d606e5379c405d70ed2b769952a4716/workflows/answer-from-docs.md"
         with:
           github-token: ${{ secrets.GH_AW_GITHUB_TOKEN || secrets.GITHUB_TOKEN }}
           script: |
@@ -1200,8 +1200,8 @@ jobs:
         env:
           GH_AW_AGENT_OUTPUT: ${{ steps.setup-agent-output-env.outputs.GH_AW_AGENT_OUTPUT }}
           GH_AW_WORKFLOW_NAME: "Answer From Docs"
-          GH_AW_WORKFLOW_SOURCE: "zwave-js/bot-workflows/workflows/answer-from-docs.md@af08eadd9af802c4d28ba310867710d0b266328e"
-          GH_AW_WORKFLOW_SOURCE_URL: "${{ github.server_url }}/zwave-js/bot-workflows/blob/af08eadd9af802c4d28ba310867710d0b266328e/workflows/answer-from-docs.md"
+          GH_AW_WORKFLOW_SOURCE: "zwave-js/bot-workflows/workflows/answer-from-docs.md@ab873f558d606e5379c405d70ed2b769952a4716"
+          GH_AW_WORKFLOW_SOURCE_URL: "${{ github.server_url }}/zwave-js/bot-workflows/blob/ab873f558d606e5379c405d70ed2b769952a4716/workflows/answer-from-docs.md"
           GH_AW_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           GH_AW_AGENT_CONCLUSION: ${{ needs.agent.result }}
           GH_AW_WORKFLOW_ID: "answer-from-docs"
@@ -1507,7 +1507,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Setup bot
-        uses: zwave-js/bot-workflows/actions/setup-bot@ab0bc5d7f9172ce658daf685b3554a57cf99ec39 # v1
+        uses: zwave-js/bot-workflows/actions/setup-bot@af08eadd9af802c4d28ba310867710d0b266328e # v1
         env:
           GH_AW_AGENT_OUTPUT: ${{ runner.temp }}/gh-aw/safe-jobs/agent_output.json
       - name: Download handoff
@@ -1567,13 +1567,13 @@ jobs:
           persist-credentials: false
       - name: Restore docs index
         id: docs-index
-        uses: zwave-js/bot-workflows/actions/restore-bot-index@ab0bc5d7f9172ce658daf685b3554a57cf99ec39 # v1
+        uses: zwave-js/bot-workflows/actions/restore-bot-index@af08eadd9af802c4d28ba310867710d0b266328e # v1
         with:
           github-token: ${{ github.token }}
           index: docs
       - name: Restore posts index
         id: posts-index
-        uses: zwave-js/bot-workflows/actions/restore-bot-index@ab0bc5d7f9172ce658daf685b3554a57cf99ec39 # v1
+        uses: zwave-js/bot-workflows/actions/restore-bot-index@af08eadd9af802c4d28ba310867710d0b266328e # v1
         with:
           github-token: ${{ github.token }}
           index: posts
@@ -1595,7 +1595,7 @@ jobs:
           POSTS_FOUND: ${{ steps.posts-index.outputs.found }}
       - name: Report index status
         if: always()
-        uses: zwave-js/bot-workflows/actions/report-index-status@ab0bc5d7f9172ce658daf685b3554a57cf99ec39 # v1
+        uses: zwave-js/bot-workflows/actions/report-index-status@af08eadd9af802c4d28ba310867710d0b266328e # v1
         with:
           docs: ${{ steps.docs-index.outputs.found }}
           docs-age-days: ${{ steps.docs-index.outputs.age-days }}
@@ -1613,7 +1613,7 @@ jobs:
           echo "::error::Neither the docs index nor the posts index could be restored, from cache or from artifacts - the answer bot cannot run"
           exit 1
       - name: Setup bot
-        uses: zwave-js/bot-workflows/actions/setup-bot@ab0bc5d7f9172ce658daf685b3554a57cf99ec39 # v1
+        uses: zwave-js/bot-workflows/actions/setup-bot@af08eadd9af802c4d28ba310867710d0b266328e # v1
       - name: Prepare docs answer
         id: prepare
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
@@ -1665,8 +1665,8 @@ jobs:
       GH_AW_THREAT_DETECTION_AIC: ${{ needs.detection.outputs.aic }}
       GH_AW_WORKFLOW_ID: "answer-from-docs"
       GH_AW_WORKFLOW_NAME: "Answer From Docs"
-      GH_AW_WORKFLOW_SOURCE: "zwave-js/bot-workflows/workflows/answer-from-docs.md@af08eadd9af802c4d28ba310867710d0b266328e"
-      GH_AW_WORKFLOW_SOURCE_URL: "${{ github.server_url }}/zwave-js/bot-workflows/blob/af08eadd9af802c4d28ba310867710d0b266328e/workflows/answer-from-docs.md"
+      GH_AW_WORKFLOW_SOURCE: "zwave-js/bot-workflows/workflows/answer-from-docs.md@ab873f558d606e5379c405d70ed2b769952a4716"
+      GH_AW_WORKFLOW_SOURCE_URL: "${{ github.server_url }}/zwave-js/bot-workflows/blob/ab873f558d606e5379c405d70ed2b769952a4716/workflows/answer-from-docs.md"
     outputs:
       code_push_failure_count: ${{ steps.process_safe_outputs.outputs.code_push_failure_count }}
       code_push_failure_errors: ${{ steps.process_safe_outputs.outputs.code_push_failure_errors }}
