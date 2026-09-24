@@ -36,7 +36,7 @@ jobs:
       env:
         GH_TOKEN: ${{ github.token }}
       # Keep the pin in sync with gh-aw-compile-check.yml
-      run: gh extension install github/gh-aw --pin v0.81.6
+      run: gh extension install github/gh-aw --pin v0.83.2
 
     - name: Update installed workflows
       env:

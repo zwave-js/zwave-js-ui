@@ -114,8 +114,9 @@ description: Answer questions in issues and discussions based on the documentati
 engine:
   id: copilot
   max-turns: 5
+model: claude-sonnet-5
 runs-on-slim: ubuntu-latest
-source: zwave-js/bot-workflows/workflows/answer-from-docs.md@af08eadd9af802c4d28ba310867710d0b266328e
+source: zwave-js/bot-workflows/workflows/answer-from-docs.md@ab873f558d606e5379c405d70ed2b769952a4716
 timeout-minutes: 15
 ---
 Follow the Documentation Answer Judge instructions below.
