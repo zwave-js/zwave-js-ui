@@ -15,6 +15,7 @@ Configuration steps:
 
 - In your **Z-Wave JS UI** settings, [Home Assistant](/usage/setup?id=home-assistant) section, enable the `MQTT discovery` flag and enable the **retain** flag in the [MQTT](/usage/setup?id=mqtt) section. That flag is suggested to ensure that, once discovered, each device has the last published value available on startup (otherwise you have to wait for a value change).
 - Optionally enable `Use node location as suggested area` if you want the Z-Wave node `Location` to be published as Home Assistant `device.suggested_area`.
+- Configuration CC entities (device parameters) are discovered disabled, since a device can have dozens of them. Enable `Enable Configuration CC entities` to have Home Assistant add them enabled, or use the `Enable discovery` flag of a single value in Gateway values. Home Assistant only reads this when an entity is first added: for existing entities, remove them in Home Assistant and rediscover the node.
 
 > [!NOTE]
 > Beginning with version `4.0.0`, the default birth/will topic is `homeassistant/status` in order to reflect the default birth/will of Home Assistant, which changed in version `0.113`.
