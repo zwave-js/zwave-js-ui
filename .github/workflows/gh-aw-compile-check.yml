@@ -35,7 +35,7 @@ jobs:
         GH_TOKEN: ${{ github.token }}
       # Pin to the version the locks were generated with. Upgrading it
       # regenerates all locks, which then land in the same PR.
-      run: gh extension install github/gh-aw --pin v0.81.6
+      run: gh extension install github/gh-aw --pin v0.83.2
 
     - name: Recompile workflows
       env:
