@@ -41,15 +41,13 @@ jobs:
     - name: Update installed workflows
       env:
         GH_TOKEN: ${{ github.token }}
-      # --no-release-bump keeps the action refs as the shared workflows write
-      # them; without it the sync rewrites every floating major as the newest
-      # exact release, so a major upgrade rides along in a pin-sync PR.
-      # --no-merge takes the upstream source as is. The installed copies are
-      # not edited locally (per-repo settings live in zwave-js-bot.config.json),
-      # and the 3-way merge conflicts on every run because gh aw rewrites the
-      # installed frontmatter in canonical key order.
-      # --cool-down 0: bot-workflows releases are our own, so the default
-      # 7-day wait for new releases would only delay fixes
+      # --no-release-bump keeps each action ref on the floating major the
+      # shared workflows use.
+      # --no-merge overwrites the installed copies because the 3-way merge
+      # conflicts on every run. Local edits to those copies are lost, so
+      # per-repo settings must stay in zwave-js-bot.config.json.
+      # --cool-down 0 applies bot-workflows releases right away because we
+      # publish them ourselves.
       run: gh aw update --no-release-bump --no-merge --cool-down 0
 
     - name: Repin shared actions to the current v1
