@@ -1,5 +1,21 @@
 # Changelog
 
+## [11.24.2](https://github.com/zwave-js/zwave-js-ui/compare/v11.24.1...v11.24.2) (2026-09-29)
+
+### ✨ Features
+
+* bump zwave-js@15.30.0 ([#4833](https://github.com/zwave-js/zwave-js-ui/issues/4833)) ([e61be98](https://github.com/zwave-js/zwave-js-ui/commit/e61be98c5569ab63f3ab77570acd5a80d50aaea3))
+* bump zwave-js@15.31.0 ([#4835](https://github.com/zwave-js/zwave-js-ui/issues/4835)) ([729d9ff](https://github.com/zwave-js/zwave-js-ui/commit/729d9ff049d031b996dda4697d57b27fb51a81cb))
+
+### 🐛 Bug Fixes
+
+* **deps:** update dependency @zwave-js/server to ^3.11.0 ([#4840](https://github.com/zwave-js/zwave-js-ui/issues/4840)) ([8900ded](https://github.com/zwave-js/zwave-js-ui/commit/8900dedd6c268390e2a4cf57f359ad0df09e8c2d))
+
+### 🔧 Chores
+
+* **deps:** update dependency morgan to v1.12.1 ([#4838](https://github.com/zwave-js/zwave-js-ui/issues/4838)) ([275faab](https://github.com/zwave-js/zwave-js-ui/commit/275faabf5e5f9031b61481f9a71bc1eff684dde3))
+* **deps:** update dependency multer to v2.4.0 ([#4837](https://github.com/zwave-js/zwave-js-ui/issues/4837)) ([99f0566](https://github.com/zwave-js/zwave-js-ui/commit/99f05667082ceb7720e7150b90def70a3cbed7be))
+
 ## [11.24.1](https://github.com/zwave-js/zwave-js-ui/compare/v11.24.0...v11.24.1) (2026-09-15)
 
 ### ✨ Features
