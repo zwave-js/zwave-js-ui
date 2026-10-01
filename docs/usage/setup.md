@@ -123,7 +123,7 @@ NVM:
 - **Maximum LR Power Level**: The maximum power level to be used by the dynamic power algorithm of Z-Wave Long Range. Applied on every startup if the current setting differs. Only LR-capable controllers support this setting
 
 - **Hidden settings**: Advanced settings not visible to the user interface, you can edit these by setting in the `settings.json` file you fins in store directory
-  - `zwave.options` overrides options passed to the Z-Wave JS Driver constructor [ZWaveOptions](https://zwave-js.github.io/node-zwave-js/#/api/driver?id=zwaveoptions)
+  - `zwave.options` overrides options passed to the Z-Wave JS Driver constructor [ZWaveOptions](https://zwave-js.github.io/node-zwave-js/#/api/driver?id=zwaveoptions). It is deep merged, so it overrides the individual values it sets and leaves the rest of the group alone: `options.timeouts = { "response": 500 }` changes the response timeout without discarding a `sendToSleep` timeout configured in the UI. Full precedence, lowest first: UI settings → `zwave.options` → driver presets from the external settings file (see [Driver presets](#driver-presets))
 
 ## Disable Gateway
 
@@ -425,12 +425,16 @@ The external settings file should be a JSON file with the following structure:
 - `serverHost` (string): Websocket server host
 - `serverServiceDiscoveryDisabled` (boolean): Disable DNS service discovery
 
-**Driver Presets** (driver-only):
-
-- `presets` (string[]): Array of preset names to apply (e.g., `["zniffer"]`)
-
 > [!NOTE]
 > Settings marked as "driver-only" are passed directly to the Z-Wave JS driver and have no corresponding UI configuration. They can only be configured through the external settings file.
+
+#### Driver presets
+
+- `presets` (string[]): Array of driver preset names to apply, e.g. `["SAFE_MODE"]`. The names come from Z-Wave JS's own `driverPresets`; an unrecognised one is skipped and the accepted names are listed in the warning. `NO_WATCHDOG` is deprecated upstream — disabling the watchdog is already the default.
+
+Presets are deep merged over the other settings, so a preset overrides only the individual values it defines and leaves its siblings untouched: `SAFE_MODE` changes `timeouts.response` without discarding a configured `timeouts.sendToSleep`. Precedence runs left to right — settings.json and the UI lose to the first preset, which loses to the second, so two presets setting the same value resolve to the last one listed.
+
+Unlike the driver-only settings above, a preset _does_ overlap the UI: the settings it overrides are hidden in the Settings page for as long as the preset is active, the same as any other externally managed setting.
 
 #### Example: Home Assistant Add-on Configuration
 

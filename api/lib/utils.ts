@@ -8,6 +8,7 @@ import { createRequire } from 'node:module'
 import { mkdir, access, readdir, readlink, realpath } from 'node:fs/promises'
 import { fileURLToPath } from 'node:url'
 import tripleBeam from 'triple-beam'
+import { recursive as merge } from 'merge'
 import { MAX_NODES_LR } from '@zwave-js/core'
 
 const loglevels = tripleBeam.configs.npm.levels
@@ -371,6 +372,25 @@ export function stringifyJSON(obj: any): string {
 		}
 		return v
 	})
+}
+
+/**
+ * Merge the raw `options` escape hatch from the settings into the driver
+ * options.
+ *
+ * Deep, and on a copy: `Object.assign` let a single `features` or `timeouts`
+ * key here replace the whole object built from the settings, and `Driver`
+ * writes its merged result back into these sub-objects, which belong to the
+ * stored settings. `merge(true, ...)` copies rather than clones, so a
+ * non-serializable leaf the type allows (callbacks, bindings) passes through
+ * instead of throwing the way `structuredClone` would.
+ */
+export function applyRawOptions(
+	config: ZwaveConfig,
+	options: PartialZWaveOptions,
+): void {
+	if (!config.options) return
+	merge(options, merge(true, {}, config.options))
 }
 
 export function parseSecurityKeys(

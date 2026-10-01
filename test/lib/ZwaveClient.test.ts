@@ -1,5 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
+import { driverPresets } from 'zwave-js'
 import ZwaveClient from '../../api/lib/ZwaveClient.ts'
+import { externalSettingsFixture } from './helpers/externalSettings.ts'
 
 // `throttle` only touches `throttledFunctions`, so these tests skip the real
 // constructor. It reads the json stores and needs a socket server.
@@ -10,6 +12,85 @@ function createClient() {
 }
 
 describe('#ZwaveClient', () => {
+	// The presets have to reach the Driver constructor to be applied at all;
+	// building the argument list here is what makes that testable (#4829).
+	describe('#buildDriverArgs()', () => {
+		let fixture: ReturnType<typeof externalSettingsFixture>
+
+		beforeEach(() => {
+			fixture = externalSettingsFixture()
+		})
+
+		afterEach(() => {
+			fixture.cleanup()
+		})
+
+		function buildArgs(presets?: string[]) {
+			// no argument clears an ambient ZWAVE_EXTERNAL_SETTINGS too, so the
+			// no-presets case can't pick up the operator's real settings file
+			fixture.use(presets ? { presets } : undefined)
+
+			const client = Object.create(ZwaveClient.prototype) as ZwaveClient
+			client['cfg'] = { port: '/dev/null' } as any
+			return client['buildDriverArgs']({ features: { softReset: false } })
+		}
+
+		it('passes the port and the options', () => {
+			expect(buildArgs()).to.deep.equal([
+				'/dev/null',
+				{ features: { softReset: false } },
+			])
+		})
+
+		it('appends the external presets after the options', () => {
+			expect(buildArgs(['NO_WATCHDOG'])).to.deep.equal([
+				'/dev/null',
+				{ features: { softReset: false } },
+				driverPresets.NO_WATCHDOG,
+			])
+		})
+
+		// order decides precedence: the driver merges left to right
+		it('keeps several presets in the order they were requested', () => {
+			expect(buildArgs(['NO_WATCHDOG', 'SAFE_MODE'])).to.deep.equal([
+				'/dev/null',
+				{ features: { softReset: false } },
+				driverPresets.NO_WATCHDOG,
+				driverPresets.SAFE_MODE,
+			])
+		})
+	})
+
+	describe('#effectiveOptionsLog()', () => {
+		const options = {
+			features: { softReset: false },
+			timeouts: { response: 10000 },
+			attempts: { sendData: 3 },
+			storage: { cacheDir: '/cache' },
+		} as any
+
+		function log(overridden: boolean) {
+			const client = Object.create(ZwaveClient.prototype) as ZwaveClient
+			return client['effectiveOptionsLog'](options, overridden)
+		}
+
+		// invisible at the default level, which is info
+		it('stays at debug when nothing overrode the settings', () => {
+			expect(log(false).level).to.equal('debug')
+		})
+
+		it('is raised to info when a preset or raw options applied', () => {
+			expect(log(true).level).to.equal('info')
+		})
+
+		it('reports the merged groups and nothing else', () => {
+			expect(log(true).message).to.equal(
+				'Effective driver options: {"features":{"softReset":false},' +
+					'"timeouts":{"response":10000},"attempts":{"sendData":3}}',
+			)
+		})
+	})
+
 	describe('#throttle()', () => {
 		let client: ZwaveClient
 

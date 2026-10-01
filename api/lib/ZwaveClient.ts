@@ -26,7 +26,10 @@ import {
 	extractFirmware,
 } from '@zwave-js/core'
 import { createDefaultTransportFormat } from '@zwave-js/core/bindings/log/node'
-import { applyExternalDriverSettings } from './externalSettings.ts'
+import {
+	applyExternalDriverSettings,
+	getExternalDriverPresets,
+} from './externalSettings.ts'
 import { JSONTransport } from '@zwave-js/log-transport-json'
 import type {
 	AssociationAddress,
@@ -2952,6 +2955,34 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	}
 
 	/**
+	 * Support log line for the options the driver actually resolved. They are
+	 * merged inside the `Driver` constructor, so reading them back is the only
+	 * way to see them; raised to info when a preset or the raw options are in
+	 * play, since that is when they don't match what the settings say.
+	 */
+	private effectiveOptionsLog(
+		options: PartialZWaveOptions,
+		overridden: boolean,
+	): { level: 'info' | 'debug'; message: string } {
+		const { features, timeouts, attempts } = options
+		return {
+			level: overridden ? 'info' : 'debug',
+			message: `Effective driver options: ${JSON.stringify({ features, timeouts, attempts })}`,
+		}
+	}
+
+	/**
+	 * Arguments for the `Driver` constructor. External presets go last: the
+	 * driver deep merges each argument over the previous ones, so a preset
+	 * overrides only the values it defines.
+	 */
+	private buildDriverArgs(
+		zwaveOptions: PartialZWaveOptions,
+	): [string, PartialZWaveOptions, ...PartialZWaveOptions[]] {
+		return [this.cfg.port, zwaveOptions, ...getExternalDriverPresets()]
+	}
+
+	/**
 	 * Method used to start Z-Wave connection using configuration `port`
 	 */
 	async connect() {
@@ -3106,7 +3137,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			}
 		}
 
-		Object.assign(zwaveOptions, this.cfg.options)
+		utils.applyRawOptions(this.cfg, zwaveOptions)
 
 		let s0Key: string
 
@@ -3126,8 +3157,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		utils.parseSecurityKeys(this.cfg, zwaveOptions)
 
-		// Apply driver-only external settings (storage, presets, logFilename, forceConsole).
+		// Apply driver-only external settings (storage, logFilename, forceConsole).
 		// These are not in ZwaveConfig/settings.json, so they must be applied directly to driver options.
+		// Presets are not applied here: they go to the `Driver` constructor below, which deep merges them.
 		applyExternalDriverSettings(zwaveOptions)
 
 		const logTransport = new JSONTransport()
@@ -3176,7 +3208,15 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			}
 			// init driver here because if connect fails the driver is destroyed
 			// this could throw so include in the try/catch
-			this._driver = new Driver(this.cfg.port, zwaveOptions)
+			const driverArgs = this.buildDriverArgs(zwaveOptions)
+			this._driver = new Driver(...driverArgs)
+
+			const { level, message } = this.effectiveOptionsLog(
+				this._driver.options,
+				driverArgs.length > 2 || !!this.cfg.options,
+			)
+			logger[level](message)
+
 			this._driver.on('error', this._onDriverError.bind(this))
 			this._driver.on('driver ready', this._onDriverReady.bind(this))
 			this._driver.on('all nodes ready', this._onScanComplete.bind(this))
