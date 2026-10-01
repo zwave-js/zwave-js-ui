@@ -188,6 +188,7 @@ export type GatewayConfig = {
 	hassDiscovery?: boolean
 	discoveryPrefix?: string
 	useLocationAsSuggestedArea?: boolean
+	ccConfigEnabledByDefault?: boolean
 	logEnabled?: boolean
 	logLevel?: LogLevel
 	logToFile?: boolean
@@ -1794,11 +1795,10 @@ export default class Gateway {
 							return
 					}
 
-					// by default configuration CC discovery entities are disabled
-					// them can be enabled by setting ccConfigEnableDiscovery to true
-					// on gateway values configuration
+					// per-value ccConfigEnableDiscovery overrides the global default
 					cfg.discovery_payload.enabled_by_default =
-						!!valueConf?.ccConfigEnableDiscovery
+						valueConf?.ccConfigEnableDiscovery ??
+						!!this.config.ccConfigEnabledByDefault
 
 					break
 				}
