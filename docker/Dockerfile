@@ -1,40 +1,41 @@
 # syntax=docker/dockerfile:1
 ARG image=zwave-js-ui
-# Full image refs, one per ARG: Renovate rewrites the ARG line that holds the whole
-# ref, so a shared version fragment gets the digest of only one of the two images.
-# Keep the -alpine suffix here in sync with ALPINE_IMAGE.
-ARG NODE_IMAGE=node:22.20.0-alpine3.22
-ARG ALPINE_IMAGE=alpine:3.22
+# Node comes from Alpine's own package, not the official node: image. Node.js dropped
+# 32-bit ARM binaries in v24, so node:24-alpine has no armv6/armv7 variant while this
+# image is published for both (#4755). Alpine builds Node itself for those arches.
+#
+# The trade-off: the Node patch level is whatever the Alpine release ships (3.23 ->
+# 24.18.x) and moves on Alpine's schedule, not nodejs.org's, so .nvmrc and this image
+# agree on major only. Bumping ALPINE_IMAGE can therefore change the Node major -
+# check https://pkgs.alpinelinux.org/packages?name=nodejs&branch=v3.23 before moving it.
+ARG ALPINE_IMAGE=alpine:3.23
 ARG BUILDPLATFORM
-
-FROM ${NODE_IMAGE} AS node
 
 FROM ${ALPINE_IMAGE} AS base
 
 RUN --mount=type=cache,target=/var/cache/apk,sharing=locked \
     apk add \
+    nodejs \
+    npm \
     openssl \
     libusb \
     tzdata \
     eudev
-
-COPY --link --from=node /usr/lib /usr/lib
-COPY --link --from=node /usr/local/lib /usr/local/lib
-COPY --link --from=node /usr/local/include /usr/local/include
-COPY --link --from=node /usr/local/bin /usr/local/bin
-
-# https://pkgs.alpinelinux.org/packages?name=nodejs&branch=edge&repo=&arch=&maintainer=
 
 WORKDIR /usr/src/app
 
 # STEP: 1 - Build JS/TS artifacts once on native amd64 (dist/ and server/ are platform-agnostic)
 FROM --platform=$BUILDPLATFORM base AS build-js
 
+# nodejs-dev carries node's headers, which the node: image used to supply at
+# /usr/local/include. Without them node-gyp fetches them from nodejs.org on every
+# architecture - slow, and it fails the build on any network hiccup.
 RUN --mount=type=cache,target=/var/cache/apk,sharing=locked \
     apk add --virtual .build-dependencies \
         jq \
         build-base \
         linux-headers \
+        nodejs-dev \
         python3-dev
 
 # Cache dependency layer independently of source changes
@@ -56,6 +57,7 @@ RUN --mount=type=cache,target=/var/cache/apk,sharing=locked \
         jq \
         build-base \
         linux-headers \
+        nodejs-dev \
         python3-dev
 
 COPY --link package.json package-lock.json ./
