@@ -8,6 +8,7 @@ import { storeDir } from '../config/app.ts'
 import { rm, mkdir } from 'node:fs/promises'
 import { createWriteStream } from 'node:fs'
 import { setTimeout } from 'node:timers/promises'
+import { pipeline } from 'node:stream/promises'
 import { createDefaultTransportFormat } from '@zwave-js/core/bindings/log/node'
 import { JSONTransport } from '@zwave-js/log-transport-json'
 import { libVersion } from 'zwave-js'
@@ -20,6 +21,7 @@ export interface DebugSession {
 	logFilePath: string
 	driverLogFilePath: string
 	transport: winston.transport
+	logStream: NodeJS.WritableStream
 	originalLogLevel: string
 	driverDebugTransport?: any
 	driverLogStream?: NodeJS.WritableStream
@@ -68,9 +70,10 @@ class DebugManager {
 			`driver-logs-${timestamp}.log`,
 		)
 
-		// Create a file transport to capture UI logs
-		const transport = new transports.File({
-			filename: logFilePath,
+		// not a File transport: logger.remove() closes it and strands any pending backlog
+		const logStream = createWriteStream(logFilePath)
+		const transport = new transports.Stream({
+			stream: logStream,
 			format: customFormat(true),
 			level: 'debug',
 		})
@@ -105,6 +108,7 @@ class DebugManager {
 			logFilePath,
 			driverLogFilePath,
 			transport,
+			logStream,
 			originalLogLevel,
 			driverDebugTransport,
 			driverLogStream,
@@ -118,12 +122,12 @@ class DebugManager {
 	}
 
 	/**
-	 * Stop the debug session and generate a zip file with logs and node dumps
+	 * Stop the debug session and stream a zip file with logs and node dumps to `output`
 	 */
-	async stopSession(nodeIds: number[]): Promise<{
-		archive: NodeJS.ReadableStream
-		cleanup: () => Promise<void>
-	}> {
+	async stopSession(
+		nodeIds: number[],
+		output: NodeJS.WritableStream,
+	): Promise<void> {
 		const session = this.session
 
 		await this.restoreSession(session)
@@ -194,18 +198,15 @@ class DebugManager {
 			name: 'session-metadata.json',
 		})
 
-		// Finalize the archive
-		await archive.finalize()
-
-		// Prepare cleanup function to delete temp files after download
-		const cleanup = async () => {
+		try {
+			// pipe before finalizing: finalize() only resolves once the output is consumed
+			await Promise.all([pipeline(archive, output), archive.finalize()])
+		} finally {
 			await this.cleanupTempFiles(
 				session.logFilePath,
 				session.driverLogFilePath,
 			)
 		}
-
-		return { archive, cleanup }
 	}
 
 	/**
@@ -233,10 +234,10 @@ class DebugManager {
 			logger.level = session.originalLogLevel
 		})
 
-		// wait for transport to close properly
-		await new Promise<void>((resolve) => {
-			session.transport.on('finish', () => resolve())
-			session.transport.end()
+		// wait for all UI logs to be flushed to disk
+		await new Promise<void>((resolve, reject) => {
+			session.logStream.end(() => resolve())
+			session.logStream.on('error', reject)
 		})
 
 		// Restore original driver log level

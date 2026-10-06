@@ -2229,24 +2229,22 @@ app.post(
 
 			const nodeIds: number[] = req.body.nodeIds || []
 
-			const { archive, cleanup } = await debugManager.stopSession(nodeIds)
-
 			const timestamp = new Date().toISOString().replace(/[:.]/g, '-')
 			res.attachment(`zwave-debug-${timestamp}.zip`)
 			res.setHeader('Content-Type', 'application/zip')
 
-			// Clean up temp files after the archive has been sent
-			archive.on('end', async () => {
-				await cleanup()
-			})
-
-			archive.pipe(res)
+			await debugManager.stopSession(nodeIds, res)
 		} catch (err) {
 			logger.error('Error stopping debug session:', err)
-			res.json({
-				success: false,
-				message: err.message,
-			})
+			// once streaming started the response is already destroyed by the pipeline
+			if (!res.headersSent) {
+				res.removeHeader('Content-Disposition')
+				res.removeHeader('Content-Type')
+				res.json({
+					success: false,
+					message: err.message,
+				})
+			}
 		}
 	},
 )
