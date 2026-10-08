@@ -129,7 +129,7 @@ describe('POST /api/debug/stop', () => {
 		)
 
 		// the server destroyed the socket, so the client sees a network error
-		await expect(stop()).rejects.toThrow()
+		await expect(stop()).rejects.toThrow('fetch failed')
 		expect(json).not.toHaveBeenCalled()
 	})
 
@@ -145,7 +145,9 @@ describe('POST /api/debug/stop', () => {
 			},
 		)
 
-		await expect(stop().then((res) => res.arrayBuffer())).rejects.toThrow()
+		await expect(stop().then((res) => res.arrayBuffer())).rejects.toThrow(
+			/fetch failed|terminated/,
+		)
 		expect(json).not.toHaveBeenCalled()
 	})
 })
