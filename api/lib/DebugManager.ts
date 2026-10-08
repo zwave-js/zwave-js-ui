@@ -35,7 +35,7 @@ export interface DebugSession {
 
 class DebugManager {
 	private session: DebugSession | null = null
-	// set while start creates the temp dir and while stop restores the loggers
+	// set while start creates the temp dir and while stop or cancel restores the loggers
 	private transitioning = false
 
 	/**
@@ -239,7 +239,8 @@ class DebugManager {
 	}
 
 	/**
-	 * Cancel the current debug session without generating a package
+	 * Cancel the current debug session without generating a package.
+	 * Rejects, after cleaning up, when the driver log level could not be restored.
 	 */
 	async cancelSession(): Promise<void> {
 		const session = this.detachSession()

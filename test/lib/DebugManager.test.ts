@@ -10,7 +10,7 @@ import {
 } from 'vitest'
 import { mkdtemp, rm, readdir, readlink } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
-import { join } from 'node:path'
+import { basename, join } from 'node:path'
 import { randomBytes } from 'node:crypto'
 import { inflateRawSync } from 'node:zlib'
 import { Writable } from 'node:stream'
@@ -283,6 +283,29 @@ describe('DebugManager', () => {
 		}
 	})
 
+	it('still sends the package when the driver rejects the log level restore', async () => {
+		const client = zwaveClient as any
+		client.driverReady = true
+		client.driver = {
+			updateLogConfig: () => {
+				throw new Error('driver busy')
+			},
+		}
+		const { output, zip } = collectOutput()
+		try {
+			await debugManager.stopSession([], output)
+		} finally {
+			client.driverReady = false
+			delete client.driver
+		}
+
+		expect(
+			JSON.parse(readZipEntry(zip(), 'session-metadata.json')),
+		).toMatchObject({ restoreError: 'driver busy' })
+		expect(await readdir(debugTempDir())).toEqual([])
+		await expectNoOpenTempFds()
+	})
+
 	it('restores the driver log level when the driver is running', async () => {
 		const client = zwaveClient as any
 		const updateLogConfig = vi.fn()
@@ -339,6 +362,8 @@ describe('DebugManager', () => {
 				debugManager.stopSession([], makeOutput()),
 			).rejects.toThrow(/EISDIR/)
 			expect(debugManager.isSessionActive()).toBe(false)
+			// removing the (directory) UI log fails, the driver log is still removed
+			expect(await readdir(debugTempDir())).toEqual([basename(uiLogPath)])
 		} finally {
 			await rm(uiLogPath, { force: true })
 		}

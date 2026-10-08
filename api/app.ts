@@ -193,6 +193,26 @@ function configureTrustProxy() {
 // a debug package download with no progress for this long is dropped (an app setting so tests can shorten it)
 app.set('debugDownloadIdleTimeout', 60_000)
 
+/**
+ * Handle a failed file download: `reply` with an error while nothing has been sent yet,
+ * otherwise only log, since the stream pipeline has already destroyed the response.
+ */
+function failDownload(
+	res: Response,
+	what: string,
+	err: Error,
+	reply: () => void,
+): void {
+	if (res.headersSent || res.destroyed) {
+		logger.warn(`${what} not delivered:`, err)
+		return
+	}
+	// the error must not reach the client labelled as the file
+	res.removeHeader('Content-Disposition')
+	res.removeHeader('Content-Type')
+	reply()
+}
+
 // apis response codes
 const RESPONSE_CODES = {
 	OK: 'OK',
@@ -1483,7 +1503,15 @@ app.post(
 			restarting = true
 
 			if (debugManager.isSessionActive()) {
-				await debugManager.cancelSession()
+				// the driver is about to be torn down: a log level it couldn't restore must not block the restart
+				await debugManager
+					.cancelSession()
+					.catch((error) =>
+						logger.warn(
+							'Debug capture cancelled with errors:',
+							error,
+						),
+					)
 			}
 
 			// Close gateway and restart
@@ -2075,15 +2103,11 @@ app.post(
 			await streamZip(res, entries)
 			logger.debug('zip archive ready')
 		} catch (err) {
-			// once streaming started the pipeline has destroyed the response: nothing left to send
-			if (res.headersSent || res.destroyed) {
-				logger.warn(`Store download not delivered: ${err.message}`)
-			} else {
-				res.removeHeader('Content-Disposition')
+			failDownload(res, 'Store download', err, () =>
 				res.status(500).send({
 					error: err.message,
-				})
-			}
+				}),
+			)
 		}
 	},
 )
@@ -2096,15 +2120,11 @@ app.get(
 		try {
 			await jsonStore.backup(res)
 		} catch (error) {
-			if (res.headersSent || res.destroyed) {
-				logger.warn(
-					`Store backup download not delivered: ${error.message}`,
-				)
-			} else {
+			failDownload(res, 'Store backup download', error, () =>
 				res.status(500).send({
 					error: error.message,
-				})
-			}
+				}),
+			)
 		}
 	},
 )
@@ -2253,24 +2273,16 @@ app.post(
 
 			await debugManager.stopSession(nodeIds, res)
 		} catch (err) {
-			// once streaming started the pipeline has destroyed the response: nothing left to send
-			if (res.headersSent || res.destroyed) {
-				logger.warn(
-					'Debug package not delivered, capture discarded:',
-					err,
-				)
-			} else {
+			failDownload(res, 'Debug package (capture discarded)', err, () => {
 				logger.error(
 					'Error stopping debug session, capture discarded:',
 					err,
 				)
-				res.removeHeader('Content-Disposition')
-				res.removeHeader('Content-Type')
 				res.json({
 					success: false,
 					message: err.message,
 				})
-			}
+			})
 		}
 	},
 )

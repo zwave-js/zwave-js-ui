@@ -1,11 +1,20 @@
-import { mkdtemp, readdir, readFile, rm, writeFile } from 'node:fs/promises'
+import {
+	mkdir,
+	mkdtemp,
+	readdir,
+	readFile,
+	rm,
+	symlink,
+	writeFile,
+} from 'node:fs/promises'
+import express from 'express'
 import { randomBytes } from 'node:crypto'
 import type { Server as HttpServer } from 'node:http'
 import { createServer } from 'node:http'
 import type { AddressInfo } from 'node:net'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
 
 // Set before the app config module loads
 const testStoreDir = await mkdtemp(join(tmpdir(), 'zui-store-zip-'))
@@ -15,6 +24,7 @@ const { default: jsonStore } = await import('../../api/lib/jsonStore.ts')
 const { default: storeConfig } = await import('../../api/config/store.ts')
 const { storeBackupsDir } = await import('../../api/config/app.ts')
 const { default: app } = await import('../../api/app.ts')
+const { logContainer } = await import('../../api/lib/logger.ts')
 
 describe('store zip routes', () => {
 	let server: HttpServer
@@ -22,6 +32,7 @@ describe('store zip routes', () => {
 
 	beforeAll(async () => {
 		await jsonStore.init(storeConfig)
+		// writes settings.json to disk, so there is a store file to zip
 		await jsonStore.put(storeConfig.settings, {
 			...jsonStore.get(storeConfig.settings),
 		})
@@ -88,5 +99,65 @@ describe('store zip routes', () => {
 		const zip = await readFile(join(storeBackupsDir, backup))
 		// a complete zip ends with its end-of-central-directory record
 		expect(zip.includes(Buffer.from([0x50, 0x4b, 0x05, 0x06]))).toBe(true)
+		expect(zip.includes('big.jsonl')).toBe(true)
+		await rm(join(testStoreDir, 'big.jsonl'))
+	})
+
+	it('answers with an error and keeps no partial backup when the backup fails', async () => {
+		await rm(storeBackupsDir, { recursive: true, force: true })
+		// a directory matching the backup glob fails to read with EISDIR
+		const unreadable = join(testStoreDir, 'broken.jsonl')
+		await mkdir(unreadable)
+		try {
+			const res = await fetch(`${baseUrl}/api/store/backup`, {
+				headers: { Accept: 'application/json' },
+			})
+
+			expect(res.status).toBe(500)
+			expect(res.headers.get('content-disposition')).toBeNull()
+			expect(await res.json()).toMatchObject({
+				error: expect.stringContaining('EISDIR'),
+			})
+			expect(await readdir(storeBackupsDir)).toEqual([])
+		} finally {
+			await rm(unreadable, { recursive: true })
+		}
+	})
+
+	it('appends no error once the store zip has started streaming', async () => {
+		const appLogger = logContainer.loggers.get('App')
+		const warn = vi.spyOn(appLogger, 'warn')
+		const send = vi.spyOn(express.response, 'send')
+		// a link to a directory passes the store checks but fails to read with EISDIR
+		await mkdir(join(testStoreDir, 'somedir'))
+		await symlink(
+			join(testStoreDir, 'somedir'),
+			join(testStoreDir, 'dirlink'),
+		)
+		try {
+			const res = fetch(`${baseUrl}/api/store-multi`, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					files: [join(testStoreDir, 'dirlink')],
+				}),
+			})
+
+			// the server destroyed the socket, so the client sees a network error
+			await expect(res.then((r) => r.arrayBuffer())).rejects.toThrow(
+				/fetch failed|terminated/,
+			)
+			await vi.waitFor(() =>
+				expect(warn).toHaveBeenCalledWith(
+					'Store download not delivered:',
+					expect.objectContaining({ code: 'EISDIR' }),
+				),
+			)
+			expect(send).not.toHaveBeenCalled()
+		} finally {
+			vi.restoreAllMocks()
+			await rm(join(testStoreDir, 'dirlink'))
+			await rm(join(testStoreDir, 'somedir'), { recursive: true })
+		}
 	})
 })

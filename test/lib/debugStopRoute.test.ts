@@ -27,6 +27,8 @@ const { default: jsonStore } = await import('../../api/lib/jsonStore.ts')
 const { default: storeConfig } = await import('../../api/config/store.ts')
 const { default: app } = await import('../../api/app.ts')
 const { default: debugManager } = await import('../../api/lib/DebugManager.ts')
+const { logContainer } = await import('../../api/lib/logger.ts')
+const appLogger = logContainer.loggers.get('App')
 
 const zwaveClient = {
 	driverReady: false,
@@ -95,6 +97,7 @@ describe('POST /api/debug/stop', () => {
 	})
 
 	it('answers with JSON and no attachment when stopping fails before streaming', async () => {
+		const errorLog = vi.spyOn(appLogger, 'error')
 		vi.spyOn(debugManager, 'stopSession').mockRejectedValue(
 			new Error('restore failed'),
 		)
@@ -106,6 +109,10 @@ describe('POST /api/debug/stop', () => {
 			success: false,
 			message: 'restore failed',
 		})
+		expect(errorLog).toHaveBeenCalledWith(
+			'Error stopping debug session, capture discarded:',
+			expect.objectContaining({ message: 'restore failed' }),
+		)
 	})
 
 	it.each([['../x'], [[1.5]], [['1']], [{ 0: 1 }]])(
@@ -175,6 +182,7 @@ describe('POST /api/debug/stop', () => {
 
 	it('appends nothing once the zip has started streaming', async () => {
 		const json = vi.spyOn(express.response, 'json')
+		const warn = vi.spyOn(appLogger, 'warn')
 		vi.spyOn(debugManager, 'stopSession').mockImplementation(
 			(_nodeIds, output) => {
 				const res = output as Writable
@@ -189,5 +197,11 @@ describe('POST /api/debug/stop', () => {
 			/fetch failed|terminated/,
 		)
 		expect(json).not.toHaveBeenCalled()
+		await vi.waitFor(() =>
+			expect(warn).toHaveBeenCalledWith(
+				'Debug package (capture discarded) not delivered:',
+				expect.objectContaining({ message: 'archive failed' }),
+			),
+		)
 	})
 })
