@@ -112,7 +112,7 @@ describe('POST /api/debug/stop', () => {
 			message: 'restore failed',
 		})
 		expect(errorLog).toHaveBeenCalledWith(
-			'Error stopping debug session, capture discarded:',
+			'Debug package (capture discarded) failed:',
 			expect.objectContaining({ message: 'restore failed' }),
 		)
 	})
