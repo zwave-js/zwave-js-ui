@@ -31,6 +31,7 @@ export interface DebugSession {
 
 class DebugManager {
 	private session: DebugSession | null = null
+	private restoring = false
 
 	/**
 	 * Initialize the debug manager by cleaning up any old temp files
@@ -60,6 +61,10 @@ class DebugManager {
 		if (this.session) {
 			throw new Error('A debug session is already active')
 		}
+		// the previous session's restore would reset the log levels under the new one
+		if (this.restoring) {
+			throw new Error('The previous debug session is still stopping')
+		}
 
 		// Ensure debug temp directory exists
 		await mkdir(debugTempDir, { recursive: true })
@@ -83,10 +88,10 @@ class DebugManager {
 		})
 
 		// Add transport to all existing loggers
-		logContainer.loggers.forEach((logger: winston.Logger) => {
-			logger.add(transport)
+		logContainer.loggers.forEach((moduleLogger: winston.Logger) => {
+			moduleLogger.add(transport)
 			// Also set logger level to debug
-			logger.level = 'debug'
+			moduleLogger.level = 'debug'
 		})
 
 		// Set up driver debug transport that persists across restarts
@@ -129,7 +134,8 @@ class DebugManager {
 	}
 
 	/**
-	 * Stop the debug session and stream a zip file with logs and node dumps to `output`
+	 * Stop the debug session and stream a zip file with logs and node dumps to `output`.
+	 * The session and its temp files are consumed even when this rejects.
 	 */
 	async stopSession(
 		nodeIds: number[],
@@ -214,6 +220,9 @@ class DebugManager {
 
 			// pipe before finalizing: finalize() only resolves once the output is consumed
 			await Promise.all([pipeline(archive, output), archive.finalize()])
+			logger.info(
+				`Debug package sent: ${archive.pointer()} bytes, ${nodeIds.length} nodes`,
+			)
 		} finally {
 			for (const stream of fileStreams) {
 				stream.destroy()
@@ -254,20 +263,31 @@ class DebugManager {
 	}
 
 	private async restoreSession(session: DebugSession): Promise<void> {
-		// Remove the debug transport from all loggers and restore log level
-		logContainer.loggers.forEach((logger: winston.Logger) => {
-			logger.remove(session.transport)
-			logger.level = session.originalLogLevel
-		})
-
+		this.restoring = true
 		try {
+			// Remove the debug transport from all loggers and restore log level
+			logContainer.loggers.forEach((moduleLogger: winston.Logger) => {
+				moduleLogger.remove(session.transport)
+				moduleLogger.level = session.originalLogLevel
+			})
+
 			// wait for all UI logs to be flushed to disk
-			session.logStream.end()
-			await finished(session.logStream)
-		} finally {
+			await this.closeLogStream(session.logStream)
+
 			// Restore original driver log level
 			await this.restoreDriverLogLevel(session)
+		} finally {
+			this.restoring = false
 		}
+	}
+
+	/**
+	 * End a capture stream and wait for it to flush. A write error was already logged by its
+	 * error listener, so it doesn't stop the package: whatever reached disk is still archived.
+	 */
+	private async closeLogStream(stream: NodeJS.WritableStream): Promise<void> {
+		stream.end()
+		await finished(stream).catch(() => {})
 	}
 
 	/**
@@ -294,8 +314,7 @@ class DebugManager {
 
 			// Close driver log stream properly
 			if (session.driverLogStream) {
-				session.driverLogStream.end()
-				await finished(session.driverLogStream)
+				await this.closeLogStream(session.driverLogStream)
 			}
 		}
 	}
@@ -307,16 +326,16 @@ class DebugManager {
 		logFilePath: string,
 		driverLogFilePath: string,
 	): Promise<void> {
-		try {
-			if (await pathExists(logFilePath)) {
-				await rm(logFilePath, { force: true })
+		for (const filePath of [logFilePath, driverLogFilePath]) {
+			try {
+				await rm(filePath, { force: true })
+			} catch (error) {
+				// Log but don't throw - cleanup is best effort
+				logger.warn(
+					`Error removing debug temp file ${filePath}:`,
+					error,
+				)
 			}
-			if (await pathExists(driverLogFilePath)) {
-				await rm(driverLogFilePath, { force: true })
-			}
-		} catch (error) {
-			// Log but don't throw - cleanup is best effort
-			console.error('Error cleaning up debug temp files:', error)
 		}
 	}
 }

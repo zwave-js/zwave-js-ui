@@ -70,6 +70,7 @@ describe('DebugManager', () => {
 	})
 
 	afterEach(async () => {
+		vi.restoreAllMocks()
 		if (debugManager.isSessionActive()) {
 			await debugManager.cancelSession()
 		}
@@ -81,16 +82,16 @@ describe('DebugManager', () => {
 
 		// read the UI log just before it is deleted
 		let uiLog = ''
-		const cleanup = (debugManager as any).cleanupTempFiles.bind(
-			debugManager,
-		)
+		const originalCleanupTempFiles = (
+			debugManager as any
+		).cleanupTempFiles.bind(debugManager)
 		vi.spyOn(
 			debugManager as any,
 			'cleanupTempFiles',
 		).mockImplementationOnce(
 			async (logFilePath: string, driverLogFilePath: string) => {
 				uiLog = await readFile(logFilePath, 'utf8')
-				return cleanup(logFilePath, driverLogFilePath)
+				return originalCleanupTempFiles(logFilePath, driverLogFilePath)
 			},
 		)
 
@@ -112,38 +113,43 @@ describe('DebugManager', () => {
 		expect(await readdir(debugTempDir())).toEqual([])
 	})
 
-	it('releases the log files when the output fails mid-stream', async () => {
-		logLargeCapture()
+	// the fd check reads /proc/self/fd
+	it.skipIf(process.platform !== 'linux')(
+		'releases the log files when the output fails mid-stream',
+		async () => {
+			logLargeCapture()
 
-		let chunks = 0
-		const output = new Writable({
-			write(_chunk, _enc, cb) {
-				if (++chunks > 3) {
-					cb(new Error('client gone'))
-				} else {
-					setImmediate(cb)
-				}
-			},
-		})
-
-		await expect(debugManager.stopSession([], output)).rejects.toThrow(
-			'client gone',
-		)
-		expect(await readdir(debugTempDir())).toEqual([])
-		expect(await openTempFds()).toEqual([])
-	})
-
-	it('rejects a concurrent stop of the same session', async () => {
-		const output = () =>
-			new Writable({
+			let chunks = 0
+			const output = new Writable({
 				write(_chunk, _enc, cb) {
-					cb()
+					if (++chunks > 3) {
+						cb(new Error('client gone'))
+					} else {
+						setImmediate(cb)
+					}
 				},
 			})
 
+			await expect(debugManager.stopSession([], output)).rejects.toThrow(
+				'client gone',
+			)
+			expect(output.destroyed).toBe(true)
+			expect(await readdir(debugTempDir())).toEqual([])
+			expect(await openTempFds()).toEqual([])
+		},
+	)
+
+	const makeOutput = () =>
+		new Writable({
+			write(_chunk, _enc, cb) {
+				cb()
+			},
+		})
+
+	it('rejects a concurrent stop of the same session', async () => {
 		const [first, second] = await Promise.allSettled([
-			debugManager.stopSession([], output()),
-			debugManager.stopSession([], output()),
+			debugManager.stopSession([], makeOutput()),
+			debugManager.stopSession([], makeOutput()),
 		])
 
 		expect(first.status).toBe('fulfilled')
@@ -151,6 +157,48 @@ describe('DebugManager', () => {
 			status: 'rejected',
 			reason: new Error('No active debug session'),
 		})
+	})
+
+	it('rejects a new session while the previous one is still stopping', async () => {
+		const stopping = debugManager.stopSession([], makeOutput())
+
+		await expect(
+			debugManager.startSession(zwaveClient, 'info'),
+		).rejects.toThrow('The previous debug session is still stopping')
+		await stopping
+	})
+
+	it('consumes the session and its temp files when the restore fails', async () => {
+		vi.spyOn(zwaveClient, 'removeExtraLogTransport').mockImplementationOnce(
+			() => {
+				throw new Error('driver gone')
+			},
+		)
+
+		await expect(
+			debugManager.stopSession([], makeOutput()),
+		).rejects.toThrow('driver gone')
+		expect(debugManager.isSessionActive()).toBe(false)
+		expect(await readdir(debugTempDir())).toEqual([])
+		// a failed restore must not block the next capture
+		await debugManager.startSession(zwaveClient, 'info')
+	})
+
+	it('still sends the package when the UI log stream failed during capture', async () => {
+		;(debugManager as any).session.logStream.destroy(new Error('ENOSPC'))
+
+		let bytesWritten = 0
+		const output = new Writable({
+			write(chunk, _enc, cb) {
+				bytesWritten += chunk.length
+				cb()
+			},
+		})
+
+		await debugManager.stopSession([], output)
+
+		expect(bytesWritten).toBeGreaterThan(0)
+		expect(await readdir(debugTempDir())).toEqual([])
 	})
 
 	it('removes the temp files when the output fails on the first write', async () => {
