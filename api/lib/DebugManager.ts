@@ -1,13 +1,13 @@
 import type winston from 'winston'
 import { transports } from 'winston'
 import { customFormat, logContainer, module } from './logger.ts'
-import archiver from 'archiver'
 import type ZWaveClient from './ZwaveClient.ts'
 import { joinPath, pathExists, getVersion } from './utils.ts'
 import { storeDir } from '../config/app.ts'
 import { rm, mkdir } from 'node:fs/promises'
-import { createReadStream, createWriteStream, type ReadStream } from 'node:fs'
-import { finished, pipeline } from 'node:stream/promises'
+import { createWriteStream } from 'node:fs'
+import { finished } from 'node:stream/promises'
+import { streamZip, type ZipEntry } from './zip.ts'
 import { createDefaultTransportFormat } from '@zwave-js/core/bindings/log/node'
 import { JSONTransport } from '@zwave-js/log-transport-json'
 import { libVersion } from 'zwave-js'
@@ -153,48 +153,34 @@ class DebugManager {
 		output: NodeJS.WritableStream,
 	): Promise<void> {
 		const session = this.detachSession()
-		// owned rather than archive.file(): archiver never closes those if the output fails
-		const fileStreams: ReadStream[] = []
 
 		try {
 			await this.restoreSession(session)
 
-			// Create archive
-			const archive = archiver('zip', {
-				zlib: { level: 9 }, // Maximum compression
-			})
-			// piped before any source is added, so a source error always reaches the pipeline
-			const streaming = pipeline(archive, output)
-			// observed below; this only stops an early rejection being reported as unhandled
-			streaming.catch(() => {})
-
-			const addFile = async (path: string, name: string) => {
-				if (await pathExists(path)) {
-					const stream = createReadStream(path)
-					// archiver pipes sources without forwarding their errors: fail the archive instead of hanging
-					stream.on('error', (error) => archive.destroy(error))
-					fileStreams.push(stream)
-					archive.append(stream, { name })
-				}
-			}
+			const entries: ZipEntry[] = []
 
 			// Add UI logs to archive
-			await addFile(
-				session.logFilePath,
-				`ui-logs-${session.startTime.toISOString()}.log`,
-			)
+			if (await pathExists(session.logFilePath)) {
+				entries.push({
+					path: session.logFilePath,
+					name: `ui-logs-${session.startTime.toISOString()}.log`,
+				})
+			}
 
 			// Add driver logs to archive
-			await addFile(
-				session.driverLogFilePath,
-				`driver-logs-${session.startTime.toISOString()}.log`,
-			)
+			if (await pathExists(session.driverLogFilePath)) {
+				entries.push({
+					path: session.driverLogFilePath,
+					name: `driver-logs-${session.startTime.toISOString()}.log`,
+				})
+			}
 
 			// Add node dumps to archive
 			for (const nodeId of nodeIds) {
 				try {
 					const driverDump = session.zwaveClient.dumpNode(nodeId)
-					archive.append(JSON.stringify(driverDump, null, 2), {
+					entries.push({
+						data: JSON.stringify(driverDump, null, 2),
 						name: `node-${nodeId}-driver-dump.json`,
 					})
 
@@ -203,19 +189,18 @@ class DebugManager {
 					if (node) {
 						const uiDump = session.zwaveClient.nodes.get(nodeId)
 						if (uiDump) {
-							archive.append(JSON.stringify(uiDump, null, 2), {
+							entries.push({
+								data: JSON.stringify(uiDump, null, 2),
 								name: `node-${nodeId}-ui-dump.json`,
 							})
 						}
 					}
 				} catch (error) {
 					// Record the error in the package and continue with other nodes
-					archive.append(
-						`Error dumping node ${nodeId}: ${error.message}`,
-						{
-							name: `node-${nodeId}-error.txt`,
-						},
-					)
+					entries.push({
+						data: `Error dumping node ${nodeId}: ${error.message}`,
+						name: `node-${nodeId}-error.txt`,
+					})
 				}
 			}
 
@@ -234,27 +219,18 @@ class DebugManager {
 				incompleteLogs: session.incompleteLogs,
 				restoreError: session.restoreError,
 			}
-			archive.append(JSON.stringify(metadata, null, 2), {
+			entries.push({
+				data: JSON.stringify(metadata, null, 2),
 				name: 'session-metadata.json',
 			})
 
-			// finalize() only resolves once the output has consumed the archive
-			await Promise.all([streaming, archive.finalize()])
+			const bytes = await streamZip(output, entries, {
+				zlib: { level: 9 }, // Maximum compression
+			})
 			logger.info(
-				`Debug package sent: ${archive.pointer()} bytes, ${nodeIds.length} nodes`,
+				`Debug package sent: ${bytes} bytes, ${nodeIds.length} nodes`,
 			)
 		} finally {
-			// destroy() only schedules the close: removing an open file fails on Windows
-			await Promise.all(
-				fileStreams.map((stream) => {
-					// resolves on close only: an open error must not skip the cleanup below
-					const closed = new Promise<void>((resolve) =>
-						stream.once('close', () => resolve()),
-					)
-					stream.destroy()
-					return stream.closed ? undefined : closed
-				}),
-			)
 			await this.cleanupTempFiles(
 				session.logFilePath,
 				session.driverLogFilePath,
@@ -269,6 +245,12 @@ class DebugManager {
 		const session = this.detachSession()
 		try {
 			await this.restoreSession(session)
+			// nothing is packaged on cancel, so the caller is the only one who can report it
+			if (session.restoreError) {
+				throw new Error(
+					`Could not restore the driver log level: ${session.restoreError}`,
+				)
+			}
 		} finally {
 			// Clean up temp files
 			await this.cleanupTempFiles(

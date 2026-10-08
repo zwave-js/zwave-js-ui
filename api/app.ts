@@ -9,6 +9,7 @@ import store from './config/store.ts'
 import type { GatewayConfig } from './lib/Gateway.ts'
 import Gateway, { GatewayType } from './lib/Gateway.ts'
 import jsonStore from './lib/jsonStore.ts'
+import { streamZip, type ZipEntry } from './lib/zip.ts'
 import * as loggers from './lib/logger.ts'
 import { logContainer } from './lib/logger.ts'
 import MqttClient from './lib/MqttClient.ts'
@@ -18,7 +19,6 @@ import ZWaveClient from './lib/ZwaveClient.ts'
 import multer, { diskStorage } from 'multer'
 import extract from 'extract-zip'
 import { serverVersion } from '@zwave-js/server'
-import archiver from 'archiver'
 import rateLimit from 'express-rate-limit'
 import session from 'express-session'
 import type { Server as HttpServer } from 'node:http'
@@ -26,7 +26,6 @@ import { createServer as createHttpServer } from 'node:http'
 import { createServer as createHttpsServer } from 'node:https'
 import jwt from 'jsonwebtoken'
 import path from 'node:path'
-import { pipeline } from 'node:stream/promises'
 import sessionStore from 'session-file-store'
 import type { Socket } from 'socket.io'
 import { promisify } from 'node:util'
@@ -2046,22 +2045,7 @@ app.post(
 	isAuthenticated,
 	async function (req, res) {
 		const files = req.body.files || []
-
-		const archive = archiver('zip')
-
-		// on stream closed we can end the request
-		archive.on('end', function () {
-			logger.debug('zip archive ready')
-		})
-
-		// set the archive name
-		res.attachment('zwave-js-ui-store.zip')
-		res.setHeader('Content-Type', 'application/zip')
-
-		// use res as stream so I don't need to create a temp file; piped before any source is added
-		const streaming = pipeline(archive, res)
-		// observed below; this only stops an early rejection being reported as unhandled
-		streaming.catch(() => {})
+		const entries: ZipEntry[] = []
 
 		for (const f of files) {
 			try {
@@ -2071,23 +2055,35 @@ app.post(
 				const s = await lstat(safe)
 				const name = safe.replace(storeDir, '')
 				if (s.isFile()) {
-					archive.file(safe, { name })
+					entries.push({ path: safe, name })
 				} else if (s.isSymbolicLink()) {
 					// getSafePath already resolved the link target and checked
 					// it stays in the store; add the dereferenced target
-					const targetPath = await realpath(safe)
-					archive.file(targetPath, { name })
+					entries.push({ path: await realpath(safe), name })
 				}
 			} catch (e) {
 				// ignore unsafe or unreadable entries
 			}
 		}
 
+		// set the archive name
+		res.attachment('zwave-js-ui-store.zip')
+		res.setHeader('Content-Type', 'application/zip')
+
 		try {
-			await Promise.all([streaming, archive.finalize()])
+			// use res as stream so I don't need to create a temp file
+			await streamZip(res, entries)
+			logger.debug('zip archive ready')
 		} catch (err) {
-			// the pipeline already destroyed the response: nothing left to send
-			logger.warn(`Store download not delivered: ${err.message}`)
+			// once streaming started the pipeline has destroyed the response: nothing left to send
+			if (res.headersSent || res.destroyed) {
+				logger.warn(`Store download not delivered: ${err.message}`)
+			} else {
+				res.removeHeader('Content-Disposition')
+				res.status(500).send({
+					error: err.message,
+				})
+			}
 		}
 	},
 )

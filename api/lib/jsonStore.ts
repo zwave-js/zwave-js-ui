@@ -3,11 +3,12 @@ import { storeBackupsDir, storeDir } from '../config/app.ts'
 import type { StoreFile, StoreKeys } from '../config/store.ts'
 import { module } from './logger.ts'
 import { recursive as merge } from 'merge'
-import archiver from 'archiver'
-import { createWriteStream, existsSync } from 'node:fs'
+import { createReadStream, createWriteStream, existsSync } from 'node:fs'
+import { readdir, rm } from 'node:fs/promises'
 import { pipeline } from 'node:stream/promises'
 import type { Response } from 'express'
 import { ensureDir, fileDate, joinPath } from './utils.ts'
+import { streamZip, type ZipEntry } from './zip.ts'
 
 const logger = module('Store')
 
@@ -59,43 +60,38 @@ export class StorageHelper {
 
 		await ensureDir(storeBackupsDir)
 
-		const fileStream = createWriteStream(
-			joinPath(storeBackupsDir, backupFile),
-		)
+		const backupPath = joinPath(storeBackupsDir, backupFile)
 
-		const archive = archiver('zip')
+		// backup zwavejs files too
+		const entries: ZipEntry[] = (await readdir(storeDir))
+			.filter((file) => file.endsWith('.jsonl'))
+			.map((file) => ({ path: joinPath(storeDir, file), name: file }))
 
-		// piped before any source is added; each pipeline rejects on a source or destination error
-		const outputs = [pipeline(archive, fileStream)]
+		for (const model in this.config) {
+			const config: StoreFile = this.config[model]
+			const filePath = joinPath(storeDir, config.file)
+			if (existsSync(filePath)) {
+				entries.push({ path: filePath, name: config.file })
+			}
+		}
+
+		// written in full before it is sent, so a client that drops the download can't truncate the copy on disk
+		try {
+			await streamZip(createWriteStream(backupPath), entries)
+		} catch (error) {
+			// a partial zip would count as a backup and could push a good one out of retention
+			await rm(backupPath, { force: true })
+			throw error
+		}
+
 		if (res) {
 			res.set({
 				'Content-Type': 'application/json',
 				'Content-Disposition': `attachment; filename="${backupFile}"`,
 			})
 
-			outputs.push(pipeline(archive, res))
+			await pipeline(createReadStream(backupPath), res)
 		}
-		// observed below; this only stops an early rejection being reported as unhandled
-		for (const output of outputs) {
-			output.catch(() => {})
-		}
-
-		// backup zwavejs files too
-		archive.glob('*.jsonl', {
-			cwd: storeDir,
-		})
-
-		for (const model in this.config) {
-			const config: StoreFile = this.config[model]
-			const filePath = joinPath(storeDir, config.file)
-			if (existsSync(filePath)) {
-				archive.file(filePath, {
-					name: config.file,
-				})
-			}
-		}
-
-		await Promise.all([...outputs, archive.finalize()])
 
 		return backupFile
 	}
