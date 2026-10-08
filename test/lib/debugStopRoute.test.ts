@@ -5,6 +5,7 @@ import type { AddressInfo } from 'node:net'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import type { Writable } from 'node:stream'
+import { once } from 'node:events'
 import express from 'express'
 import {
 	afterAll,
@@ -131,6 +132,27 @@ describe('POST /api/debug/stop', () => {
 		// the server destroyed the socket, so the client sees a network error
 		await expect(stop()).rejects.toThrow('fetch failed')
 		expect(json).not.toHaveBeenCalled()
+	})
+
+	it('drops a download that stops making progress', async () => {
+		app.set('debugDownloadIdleTimeout', 50)
+		let outputClosed = false
+		vi.spyOn(debugManager, 'stopSession').mockImplementation(
+			async (_nodeIds, output) => {
+				// stands in for an archive stuck on a client that stopped reading
+				await once(output as Writable, 'close')
+				outputClosed = true
+				throw new Error('Debug package download stalled')
+			},
+		)
+
+		try {
+			await expect(stop()).rejects.toThrow('fetch failed')
+		} finally {
+			app.set('debugDownloadIdleTimeout', 60_000)
+		}
+		// the client can see the dropped socket before the server handles its close
+		await vi.waitFor(() => expect(outputClosed).toBe(true))
 	})
 
 	it('appends nothing once the zip has started streaming', async () => {

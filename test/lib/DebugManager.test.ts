@@ -234,7 +234,10 @@ describe('DebugManager', () => {
 		expect(
 			JSON.parse(readZipEntry(zip(), 'session-metadata.json')),
 		).toMatchObject({
-			incompleteLogs: ['ui-logs: ENOSPC', 'driver-logs: EIO'],
+			incompleteLogs: [
+				{ file: 'ui-logs', error: 'ENOSPC' },
+				{ file: 'driver-logs', error: 'EIO' },
+			],
 		})
 		expect(await readdir(debugTempDir())).toEqual([])
 	})

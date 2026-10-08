@@ -12,6 +12,7 @@ import { createDefaultTransportFormat } from '@zwave-js/core/bindings/log/node'
 import { JSONTransport } from '@zwave-js/log-transport-json'
 import { libVersion } from 'zwave-js'
 import os from 'node:os'
+import { once } from 'node:events'
 
 const logger = module('DebugManager')
 
@@ -28,7 +29,7 @@ export interface DebugSession {
 	driverLogStream?: NodeJS.WritableStream
 	zwaveClient: ZWaveClient
 	// log files that were cut short, reported in the package metadata
-	incompleteLogs: string[]
+	incompleteLogs: { file: string; error: string }[]
 }
 
 class DebugManager {
@@ -241,9 +242,14 @@ class DebugManager {
 				`Debug package sent: ${archive.pointer()} bytes, ${nodeIds.length} nodes`,
 			)
 		} finally {
-			for (const stream of fileStreams) {
-				stream.destroy()
-			}
+			// destroy() only schedules the close: removing an open file fails on Windows
+			await Promise.all(
+				fileStreams.map((stream) => {
+					const closed = once(stream, 'close')
+					stream.destroy()
+					return stream.closed ? undefined : closed
+				}),
+			)
 			await this.cleanupTempFiles(
 				session.logFilePath,
 				session.driverLogFilePath,
@@ -309,7 +315,7 @@ class DebugManager {
 	): Promise<void> {
 		stream.end()
 		await finished(stream).catch((error: Error) => {
-			session.incompleteLogs.push(`${name}: ${error.message}`)
+			session.incompleteLogs.push({ file: name, error: error.message })
 			logger.warn(`Debug ${name} capture is incomplete: ${error.message}`)
 		})
 	}

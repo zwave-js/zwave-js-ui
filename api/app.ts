@@ -190,8 +190,8 @@ function configureTrustProxy() {
 	logger.info(`Express 'trust proxy' set to: ${value}`)
 }
 
-// a debug package download with no progress for this long is dropped
-const DEBUG_DOWNLOAD_IDLE_TIMEOUT = 60_000
+// a debug package download with no progress for this long is dropped (an app setting so tests can shorten it)
+app.set('debugDownloadIdleTimeout', 60_000)
 
 // apis response codes
 const RESPONSE_CODES = {
@@ -2236,7 +2236,7 @@ app.post(
 			res.attachment(`zwave-debug-${timestamp}.zip`)
 			res.setHeader('Content-Type', 'application/zip')
 			// a client that stops reading would otherwise pin the temp files forever
-			res.setTimeout(DEBUG_DOWNLOAD_IDLE_TIMEOUT, () =>
+			res.setTimeout(req.app.get('debugDownloadIdleTimeout'), () =>
 				res.destroy(new Error('Debug package download stalled')),
 			)
 
