@@ -24,7 +24,7 @@ async function main(param) {
 	if (context.payload.issue.html_url.includes("/pull/")) {
 		console.log("Comment appears in a PR, retrieving PR info...");
 		// Only the pull request author and authorized users may execute this command
-		const { data: pull } = await github.pulls.get({
+		const { data: pull } = await github.rest.pulls.get({
 			...options,
 			pull_number: context.payload.issue.number,
 		});
@@ -46,14 +46,14 @@ async function main(param) {
 
 	if (isAuthorized) {
 		// Let the user know we're working on it
-		await github.reactions.createForIssueComment({
+		await github.rest.reactions.createForIssueComment({
 			...options,
 			comment_id: context.payload.comment.id,
 			content: "rocket",
 		});
 	} else {
 		// Let the user know he can't do that
-		await github.issues.createComment({
+		await github.rest.issues.createComment({
 			...options,
 			issue_number: context.payload.issue.number,
 			body: `Sorry ${user}, you're not authorized to do that 🙁!`,

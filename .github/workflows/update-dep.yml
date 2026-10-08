@@ -34,23 +34,20 @@ jobs:
           VERSION: ${{ github.event.inputs.version || 'latest' }}
         run: |
           # A dispatch right after a release can arrive before the registry serves
-          # the new version. Poll with --prefer-online so the cached packument
-          # restored by setup-node does not hide it.
+          # the new version of every package in the release. Retry the whole install
+          # because each sub-package, like @zwave-js/serial, shows up at its own time.
+          # --prefer-online stops the npm cache restored by setup-node from hiding it.
+          if [ "$DEP" = "zwave-js" ]; then
+            FLAGS="--save-exact"
+          fi
           for attempt in $(seq 20); do
-            if npm view --prefer-online "$DEP@$VERSION" version > /dev/null 2>&1; then
-              break
+            if npm install --prefer-online $FLAGS "$DEP@$VERSION"; then
+              exit 0
             fi
-            echo "$DEP@$VERSION is not available on the registry yet, retrying in 30s ($attempt/20)"
+            echo "Installing $DEP@$VERSION failed, retrying in 30s ($attempt/20)"
             sleep 30
           done
-          # Fail here with a clear message if the version never showed up
-          npm view --prefer-online "$DEP@$VERSION" version
-
-          if [ "$DEP" = "zwave-js" ]; then
-            npm install --save-exact "$DEP@$VERSION"
-          else
-            npm install "$DEP@$VERSION"
-          fi
+          exit 1
       - name: Check for changes
         id: check
         run: |
@@ -70,7 +67,7 @@ jobs:
       - name: Create Pull Request
         if: ${{ steps.check.outputs.changed == 'true' }}
         id: cpr
-        uses: peter-evans/create-pull-request@v4
+        uses: peter-evans/create-pull-request@v8
         with:
           token: ${{ secrets.BOT_TOKEN }}
           commit-message: "feat: bump ${{github.event.inputs.dep}}@${{ steps.check.outputs.version }}"
