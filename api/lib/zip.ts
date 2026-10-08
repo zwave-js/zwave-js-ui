@@ -1,4 +1,5 @@
 import archiver from 'archiver'
+import { once } from 'node:events'
 import { createReadStream, type ReadStream } from 'node:fs'
 import { pipeline } from 'node:stream/promises'
 
@@ -24,6 +25,7 @@ export async function streamZip(
 
 	try {
 		for (const entry of entries) {
+			const processed = once(archive, 'entry')
 			if ('path' in entry) {
 				const stream = createReadStream(entry.path)
 				// archiver pipes sources without forwarding their errors
@@ -33,6 +35,8 @@ export async function streamZip(
 			} else {
 				archive.append(entry.data, { name: entry.name })
 			}
+			// the next file is opened only once this entry is in the zip, so a long list holds one descriptor at a time
+			await Promise.race([processed, streaming])
 		}
 
 		// finalize() only resolves once the output has consumed the archive

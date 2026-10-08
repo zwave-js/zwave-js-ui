@@ -2266,9 +2266,12 @@ app.post(
 			const timestamp = new Date().toISOString().replace(/[:.]/g, '-')
 			res.attachment(`zwave-debug-${timestamp}.zip`)
 			res.setHeader('Content-Type', 'application/zip')
-			// a client that stops reading would otherwise pin the temp files forever
-			res.setTimeout(req.app.get('debugDownloadIdleTimeout'), () =>
-				res.destroy(new Error('Debug package download stalled')),
+			// a client that stops reading would otherwise pin the temp files forever;
+			// armed once the zip is piped in, so preparing the package doesn't count as idle
+			res.once('pipe', () =>
+				res.setTimeout(req.app.get('debugDownloadIdleTimeout'), () =>
+					res.destroy(new Error('Debug package download stalled')),
+				),
 			)
 
 			await debugManager.stopSession(nodeIds, res)

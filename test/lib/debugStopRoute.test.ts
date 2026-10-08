@@ -4,7 +4,9 @@ import { createServer } from 'node:http'
 import type { AddressInfo } from 'node:net'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import type { Writable } from 'node:stream'
+import { PassThrough, Readable, type Writable } from 'node:stream'
+import { pipeline } from 'node:stream/promises'
+import { setTimeout } from 'node:timers/promises'
 import { once } from 'node:events'
 import express from 'express'
 import {
@@ -165,6 +167,7 @@ describe('POST /api/debug/stop', () => {
 		vi.spyOn(debugManager, 'stopSession').mockImplementation(
 			async (_nodeIds, output) => {
 				// stands in for an archive stuck on a client that stopped reading
+				new PassThrough().pipe(output as Writable)
 				await once(output as Writable, 'close')
 				outputClosed = true
 				throw new Error('Debug package download stalled')
@@ -178,6 +181,25 @@ describe('POST /api/debug/stop', () => {
 		}
 		// the client can see the dropped socket before the server handles its close
 		await vi.waitFor(() => expect(outputClosed).toBe(true))
+	})
+
+	it('does not count preparing the package as idle', async () => {
+		const idleTimeout = app.get('debugDownloadIdleTimeout')
+		app.set('debugDownloadIdleTimeout', 50)
+		vi.spyOn(debugManager, 'stopSession').mockImplementation(
+			async (_nodeIds, output) => {
+				// restore and flush taking longer than the idle timeout
+				await setTimeout(150)
+				await pipeline(Readable.from(['PK zip']), output as Writable)
+			},
+		)
+
+		try {
+			const res = await stop()
+			expect(await res.text()).toBe('PK zip')
+		} finally {
+			app.set('debugDownloadIdleTimeout', idleTimeout)
+		}
 	})
 
 	it('appends nothing once the zip has started streaming', async () => {
