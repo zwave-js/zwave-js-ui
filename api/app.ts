@@ -2235,9 +2235,13 @@ app.post(
 
 			await debugManager.stopSession(nodeIds, res)
 		} catch (err) {
-			logger.error('Error stopping debug session:', err)
-			// once streaming started the response is already destroyed by the pipeline
-			if (!res.headersSent) {
+			// once streaming started the pipeline has destroyed the response: nothing left to send
+			if (res.headersSent || res.destroyed) {
+				logger.warn(
+					`Debug package not delivered, capture discarded: ${err.message}`,
+				)
+			} else {
+				logger.error('Error stopping debug session:', err)
 				res.removeHeader('Content-Disposition')
 				res.removeHeader('Content-Type')
 				res.json({

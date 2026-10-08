@@ -1,18 +1,19 @@
 import type winston from 'winston'
 import { transports } from 'winston'
-import { customFormat, logContainer } from './logger.ts'
+import { customFormat, logContainer, module } from './logger.ts'
 import archiver from 'archiver'
 import type ZWaveClient from './ZwaveClient.ts'
 import { joinPath, pathExists, getVersion } from './utils.ts'
 import { storeDir } from '../config/app.ts'
 import { rm, mkdir } from 'node:fs/promises'
-import { createWriteStream } from 'node:fs'
-import { setTimeout } from 'node:timers/promises'
-import { pipeline } from 'node:stream/promises'
+import { createReadStream, createWriteStream, type ReadStream } from 'node:fs'
+import { finished, pipeline } from 'node:stream/promises'
 import { createDefaultTransportFormat } from '@zwave-js/core/bindings/log/node'
 import { JSONTransport } from '@zwave-js/log-transport-json'
 import { libVersion } from 'zwave-js'
 import os from 'node:os'
+
+const logger = module('DebugManager')
 
 const debugTempDir = joinPath(storeDir, '.debug-temp')
 
@@ -72,6 +73,9 @@ class DebugManager {
 
 		// not a File transport: logger.remove() closes it and strands any pending backlog
 		const logStream = createWriteStream(logFilePath)
+		logStream.on('error', (err) =>
+			logger.error('Error writing debug UI logs:', err),
+		)
 		const transport = new transports.Stream({
 			stream: logStream,
 			format: customFormat(true),
@@ -94,6 +98,9 @@ class DebugManager {
 
 		// Write driver logs to file
 		driverLogStream = createWriteStream(driverLogFilePath)
+		driverLogStream.on('error', (err) =>
+			logger.error('Error writing debug driver logs:', err),
+		)
 		debugTransport.stream.on('data', (data) => {
 			driverLogStream.write(data.message.toString() + '\n')
 		})
@@ -128,80 +135,89 @@ class DebugManager {
 		nodeIds: number[],
 		output: NodeJS.WritableStream,
 	): Promise<void> {
-		const session = this.session
-
-		await this.restoreSession(session)
-
-		// Wait a bit to ensure all logs are flushed to disk
-		await setTimeout(200)
-
-		// Create archive
-		const archive = archiver('zip', {
-			zlib: { level: 9 }, // Maximum compression
-		})
-
-		// Add UI logs to archive
-		if (await pathExists(session.logFilePath)) {
-			archive.file(session.logFilePath, {
-				name: `ui-logs-${session.startTime.toISOString()}.log`,
-			})
-		}
-
-		// Add driver logs to archive
-		if (await pathExists(session.driverLogFilePath)) {
-			archive.file(session.driverLogFilePath, {
-				name: `driver-logs-${session.startTime.toISOString()}.log`,
-			})
-		}
-
-		// Add node dumps to archive
-		for (const nodeId of nodeIds) {
-			try {
-				const driverDump = session.zwaveClient.dumpNode(nodeId)
-				archive.append(JSON.stringify(driverDump, null, 2), {
-					name: `node-${nodeId}-driver-dump.json`,
-				})
-
-				// Get node from client for UI dump
-				const node = session.zwaveClient.getNode(nodeId)
-				if (node) {
-					const uiDump = session.zwaveClient.nodes.get(nodeId)
-					if (uiDump) {
-						archive.append(JSON.stringify(uiDump, null, 2), {
-							name: `node-${nodeId}-ui-dump.json`,
-						})
-					}
-				}
-			} catch (error) {
-				// Log error but continue with other nodes
-				archive.append(
-					`Error dumping node ${nodeId}: ${error.message}`,
-					{
-						name: `node-${nodeId}-error.txt`,
-					},
-				)
-			}
-		}
-
-		// Add session metadata
-		const metadata = {
-			startTime: session.startTime.toISOString(),
-			endTime: new Date().toISOString(),
-			duration: new Date().getTime() - session.startTime.getTime() + 'ms',
-			nodesIncluded: nodeIds,
-			os: os.platform(),
-			nodeVersion: process.version.replace(/^v/, ''),
-			driverVersion: libVersion,
-			zuiVersion: getVersion(),
-		}
-		archive.append(JSON.stringify(metadata, null, 2), {
-			name: 'session-metadata.json',
-		})
+		const session = this.detachSession()
+		// owned rather than archive.file(): archiver never closes those if the output fails
+		const fileStreams: ReadStream[] = []
 
 		try {
+			await this.restoreSession(session)
+
+			// Create archive
+			const archive = archiver('zip', {
+				zlib: { level: 9 }, // Maximum compression
+			})
+
+			const addFile = async (path: string, name: string) => {
+				if (await pathExists(path)) {
+					const stream = createReadStream(path)
+					fileStreams.push(stream)
+					archive.append(stream, { name })
+				}
+			}
+
+			// Add UI logs to archive
+			await addFile(
+				session.logFilePath,
+				`ui-logs-${session.startTime.toISOString()}.log`,
+			)
+
+			// Add driver logs to archive
+			await addFile(
+				session.driverLogFilePath,
+				`driver-logs-${session.startTime.toISOString()}.log`,
+			)
+
+			// Add node dumps to archive
+			for (const nodeId of nodeIds) {
+				try {
+					const driverDump = session.zwaveClient.dumpNode(nodeId)
+					archive.append(JSON.stringify(driverDump, null, 2), {
+						name: `node-${nodeId}-driver-dump.json`,
+					})
+
+					// Get node from client for UI dump
+					const node = session.zwaveClient.getNode(nodeId)
+					if (node) {
+						const uiDump = session.zwaveClient.nodes.get(nodeId)
+						if (uiDump) {
+							archive.append(JSON.stringify(uiDump, null, 2), {
+								name: `node-${nodeId}-ui-dump.json`,
+							})
+						}
+					}
+				} catch (error) {
+					// Log error but continue with other nodes
+					archive.append(
+						`Error dumping node ${nodeId}: ${error.message}`,
+						{
+							name: `node-${nodeId}-error.txt`,
+						},
+					)
+				}
+			}
+
+			// Add session metadata
+			const metadata = {
+				startTime: session.startTime.toISOString(),
+				endTime: new Date().toISOString(),
+				duration:
+					new Date().getTime() - session.startTime.getTime() + 'ms',
+				nodesIncluded: nodeIds,
+				os: os.platform(),
+				nodeVersion: process.version.replace(/^v/, ''),
+				driverVersion: libVersion,
+				zuiVersion: getVersion(),
+			}
+			archive.append(JSON.stringify(metadata, null, 2), {
+				name: 'session-metadata.json',
+			})
+
 			// pipe before finalizing: finalize() only resolves once the output is consumed
 			await Promise.all([pipeline(archive, output), archive.finalize()])
 		} finally {
+			for (const stream of fileStreams) {
+				stream.destroy()
+			}
 			await this.cleanupTempFiles(
 				session.logFilePath,
 				session.driverLogFilePath,
@@ -213,38 +229,45 @@ class DebugManager {
 	 * Cancel the current debug session without generating a package
 	 */
 	async cancelSession(): Promise<void> {
-		const session = this.session
-		await this.restoreSession(session)
+		const session = this.detachSession()
+		try {
+			await this.restoreSession(session)
+		} finally {
+			// Clean up temp files
+			await this.cleanupTempFiles(
+				session.logFilePath,
+				session.driverLogFilePath,
+			)
+		}
+	}
 
-		// Clean up temp files
-		await this.cleanupTempFiles(
-			session.logFilePath,
-			session.driverLogFilePath,
-		)
+	/**
+	 * Take the active session synchronously so a concurrent stop or a failed restore can't reuse it
+	 */
+	private detachSession(): DebugSession {
+		const session = this.session
+		if (!session) {
+			throw new Error('No active debug session')
+		}
+		this.session = null
+		return session
 	}
 
 	private async restoreSession(session: DebugSession): Promise<void> {
-		if (!this.session) {
-			throw new Error('No active debug session')
-		}
-
 		// Remove the debug transport from all loggers and restore log level
 		logContainer.loggers.forEach((logger: winston.Logger) => {
 			logger.remove(session.transport)
 			logger.level = session.originalLogLevel
 		})
 
-		// wait for all UI logs to be flushed to disk
-		await new Promise<void>((resolve, reject) => {
-			session.logStream.end(() => resolve())
-			session.logStream.on('error', reject)
-		})
-
-		// Restore original driver log level
-		await this.restoreDriverLogLevel(session)
-
-		// Clear session
-		this.session = null
+		try {
+			// wait for all UI logs to be flushed to disk
+			session.logStream.end()
+			await finished(session.logStream)
+		} finally {
+			// Restore original driver log level
+			await this.restoreDriverLogLevel(session)
+		}
 	}
 
 	/**
@@ -271,10 +294,8 @@ class DebugManager {
 
 			// Close driver log stream properly
 			if (session.driverLogStream) {
-				await new Promise<void>((resolve, reject) => {
-					session.driverLogStream.end(() => resolve())
-					session.driverLogStream.on('error', reject)
-				})
+				session.driverLogStream.end()
+				await finished(session.driverLogStream)
 			}
 		}
 	}

@@ -6,8 +6,9 @@ import {
 	afterAll,
 	beforeEach,
 	afterEach,
+	vi,
 } from 'vitest'
-import { mkdtemp, rm, readdir } from 'node:fs/promises'
+import { mkdtemp, rm, readdir, readFile, readlink } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { randomBytes } from 'node:crypto'
@@ -15,6 +16,10 @@ import { Writable } from 'node:stream'
 import type ZWaveClient from '../../api/lib/ZwaveClient.ts'
 import type DebugManager from '../../api/lib/DebugManager.ts'
 import type { ModuleLogger } from '../../api/lib/logger.ts'
+
+// well above the archiver and fs stream buffers, so the zip must stream to finish
+const CAPTURE_BYTES = 4 * 1024 * 1024
+const CHUNK_BYTES = 64 * 1024
 
 describe('DebugManager', () => {
 	let storeDir: string
@@ -31,6 +36,22 @@ describe('DebugManager', () => {
 	} as unknown as ZWaveClient
 
 	const debugTempDir = () => join(storeDir, '.debug-temp')
+
+	const logLargeCapture = () => {
+		// random bytes can't deflate below their own size, so the zip is at least CAPTURE_BYTES
+		for (let i = 0; i < CAPTURE_BYTES / CHUNK_BYTES; i++) {
+			logger.debug(randomBytes(CHUNK_BYTES).toString('base64'))
+		}
+	}
+
+	// fds still pointing into the debug temp dir, e.g. `ui-logs-….log (deleted)`
+	const openTempFds = async () => {
+		const fds = await readdir('/proc/self/fd').catch(() => [])
+		const targets = await Promise.all(
+			fds.map((fd) => readlink(`/proc/self/fd/${fd}`).catch(() => '')),
+		)
+		return targets.filter((target) => target.startsWith(debugTempDir()))
+	}
 
 	beforeAll(async () => {
 		storeDir = await mkdtemp(join(tmpdir(), 'zui-debug-'))
@@ -55,27 +76,84 @@ describe('DebugManager', () => {
 	})
 
 	it('streams a large capture and removes the temp files', async () => {
-		// larger than the archiver and log stream buffers
-		for (let i = 0; i < 64; i++) {
-			logger.debug(randomBytes(64 * 1024).toString('base64'))
-		}
+		logLargeCapture()
+		logger.debug('last line before stop')
 
-		let bytes = 0
+		// read the UI log just before it is deleted
+		let uiLog = ''
+		const cleanup = (debugManager as any).cleanupTempFiles.bind(
+			debugManager,
+		)
+		vi.spyOn(
+			debugManager as any,
+			'cleanupTempFiles',
+		).mockImplementationOnce(
+			async (logFilePath: string, driverLogFilePath: string) => {
+				uiLog = await readFile(logFilePath, 'utf8')
+				return cleanup(logFilePath, driverLogFilePath)
+			},
+		)
+
+		let bytesWritten = 0
 		const output = new Writable({
 			write(chunk, _enc, cb) {
-				bytes += chunk.length
+				bytesWritten += chunk.length
 				setImmediate(cb)
 			},
 		})
 
+		// node 1 also adds a node dump entry to the archive
 		await debugManager.stopSession([1], output)
 
-		expect(bytes).toBeGreaterThan(4 * 1024 * 1024)
+		expect(bytesWritten).toBeGreaterThan(CAPTURE_BYTES)
+		// the log backlog was flushed before the transport was detached
+		expect(uiLog).toContain('last line before stop')
 		expect(debugManager.isSessionActive()).toBe(false)
 		expect(await readdir(debugTempDir())).toEqual([])
 	})
 
-	it('removes the temp files when the output fails', async () => {
+	it('releases the log files when the output fails mid-stream', async () => {
+		logLargeCapture()
+
+		let chunks = 0
+		const output = new Writable({
+			write(_chunk, _enc, cb) {
+				if (++chunks > 3) {
+					cb(new Error('client gone'))
+				} else {
+					setImmediate(cb)
+				}
+			},
+		})
+
+		await expect(debugManager.stopSession([], output)).rejects.toThrow(
+			'client gone',
+		)
+		expect(await readdir(debugTempDir())).toEqual([])
+		expect(await openTempFds()).toEqual([])
+	})
+
+	it('rejects a concurrent stop of the same session', async () => {
+		const output = () =>
+			new Writable({
+				write(_chunk, _enc, cb) {
+					cb()
+				},
+			})
+
+		const [first, second] = await Promise.allSettled([
+			debugManager.stopSession([], output()),
+			debugManager.stopSession([], output()),
+		])
+
+		expect(first.status).toBe('fulfilled')
+		expect(second).toMatchObject({
+			status: 'rejected',
+			reason: new Error('No active debug session'),
+		})
+	})
+
+	it('removes the temp files when the output fails on the first write', async () => {
 		const output = new Writable({
 			write(_chunk, _enc, cb) {
 				cb(new Error('client gone'))
