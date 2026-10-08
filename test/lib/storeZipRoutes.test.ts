@@ -1,4 +1,5 @@
-import { mkdtemp, readdir, rm } from 'node:fs/promises'
+import { mkdtemp, readdir, readFile, rm, writeFile } from 'node:fs/promises'
+import { randomBytes } from 'node:crypto'
 import type { Server as HttpServer } from 'node:http'
 import { createServer } from 'node:http'
 import type { AddressInfo } from 'node:net'
@@ -65,5 +66,27 @@ describe('store zip routes', () => {
 		expect(body.subarray(0, 2).toString()).toBe('PK')
 		expect(body.includes('settings.json')).toBe(true)
 		expect(await readdir(storeBackupsDir)).toHaveLength(1)
+	})
+
+	it('keeps a complete backup on disk when the client drops the download', async () => {
+		await rm(storeBackupsDir, { recursive: true, force: true })
+		// big enough that the download is still running when the client drops it
+		await writeFile(
+			join(testStoreDir, 'big.jsonl'),
+			randomBytes(8 * 1024 * 1024).toString('base64'),
+		)
+		const abort = new AbortController()
+
+		const res = await fetch(`${baseUrl}/api/store/backup`, {
+			headers: { Accept: 'application/json' },
+			signal: abort.signal,
+		})
+		abort.abort()
+		await res.arrayBuffer().catch(() => {})
+
+		const [backup] = await readdir(storeBackupsDir)
+		const zip = await readFile(join(storeBackupsDir, backup))
+		// a complete zip ends with its end-of-central-directory record
+		expect(zip.includes(Buffer.from([0x50, 0x4b, 0x05, 0x06]))).toBe(true)
 	})
 })

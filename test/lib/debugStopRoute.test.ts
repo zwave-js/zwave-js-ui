@@ -108,19 +108,22 @@ describe('POST /api/debug/stop', () => {
 		})
 	})
 
-	it('rejects invalid node ids without ending the session', async () => {
-		const res = await fetch(stopUrl, {
-			method: 'POST',
-			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({ nodeIds: '../x' }),
-		})
+	it.each([['../x'], [[1.5]], [['1']], [{ 0: 1 }]])(
+		'rejects invalid node ids %j without ending the session',
+		async (nodeIds) => {
+			const res = await fetch(stopUrl, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ nodeIds }),
+			})
 
-		expect(await res.json()).toEqual({
-			success: false,
-			message: 'nodeIds must be an array of integers',
-		})
-		expect(debugManager.isSessionActive()).toBe(true)
-	})
+			expect(await res.json()).toEqual({
+				success: false,
+				message: 'nodeIds must be an array of integers',
+			})
+			expect(debugManager.isSessionActive()).toBe(true)
+		},
+	)
 
 	it('answers with JSON when no session is active', async () => {
 		await debugManager.cancelSession()
@@ -149,6 +152,7 @@ describe('POST /api/debug/stop', () => {
 	})
 
 	it('drops a download that stops making progress', async () => {
+		const idleTimeout = app.get('debugDownloadIdleTimeout')
 		app.set('debugDownloadIdleTimeout', 50)
 		let outputClosed = false
 		vi.spyOn(debugManager, 'stopSession').mockImplementation(
@@ -163,7 +167,7 @@ describe('POST /api/debug/stop', () => {
 		try {
 			await expect(stop()).rejects.toThrow('fetch failed')
 		} finally {
-			app.set('debugDownloadIdleTimeout', 60_000)
+			app.set('debugDownloadIdleTimeout', idleTimeout)
 		}
 		// the client can see the dropped socket before the server handles its close
 		await vi.waitFor(() => expect(outputClosed).toBe(true))

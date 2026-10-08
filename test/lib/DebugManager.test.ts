@@ -8,7 +8,7 @@ import {
 	afterEach,
 	vi,
 } from 'vitest'
-import { mkdtemp, rm, readdir, readFile, readlink } from 'node:fs/promises'
+import { mkdtemp, rm, readdir, readlink } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { randomBytes } from 'node:crypto'
@@ -115,25 +115,13 @@ describe('DebugManager', () => {
 		logLargeCapture()
 		logger.debug('last line before stop')
 
-		// read the UI log just before it is deleted
-		let uiLog = ''
-		const originalCleanupTempFiles = (
-			debugManager as any
-		).cleanupTempFiles.bind(debugManager)
-		vi.spyOn(
-			debugManager as any,
-			'cleanupTempFiles',
-		).mockImplementationOnce(
-			async (logFilePath: string, driverLogFilePath: string) => {
-				uiLog = await readFile(logFilePath, 'utf8')
-				return originalCleanupTempFiles(logFilePath, driverLogFilePath)
-			},
-		)
+		const uiLogName = `ui-logs-${(debugManager as any).session.startTime.toISOString()}.log`
 
-		let bytesWritten = 0
+		const chunks: Buffer[] = []
 		const output = new Writable({
 			write(chunk, _enc, cb) {
-				bytesWritten += chunk.length
+				chunks.push(chunk)
+				// a slow consumer, so the zip has to stream rather than buffer
 				setImmediate(cb)
 			},
 		})
@@ -141,9 +129,10 @@ describe('DebugManager', () => {
 		// node 1 also adds a node dump entry to the archive
 		await debugManager.stopSession([1], output)
 
-		expect(bytesWritten).toBeGreaterThan(CAPTURE_BYTES)
-		// the log backlog was flushed before the temp files were removed
-		expect(uiLog).toContain('last line before stop')
+		const zip = Buffer.concat(chunks)
+		expect(zip.length).toBeGreaterThan(CAPTURE_BYTES)
+		// the log backlog was flushed before the transport was detached
+		expect(readZipEntry(zip, uiLogName)).toContain('last line before stop')
 		expect(debugManager.isSessionActive()).toBe(false)
 		expect(await readdir(debugTempDir())).toEqual([])
 		await expectNoOpenTempFds()
@@ -168,6 +157,27 @@ describe('DebugManager', () => {
 			'client gone',
 		)
 		expect(output.destroyed).toBe(true)
+		expect(await readdir(debugTempDir())).toEqual([])
+		await expectNoOpenTempFds()
+	})
+
+	it('releases the log files when the output is closed mid-stream', async () => {
+		logLargeCapture()
+
+		let chunks = 0
+		const output = new Writable({
+			write(_chunk, _enc, cb) {
+				// a stalled client dropped by the idle timeout: closed without an error
+				if (++chunks > 3) {
+					output.destroy()
+				}
+				setImmediate(cb)
+			},
+		})
+
+		await expect(debugManager.stopSession([], output)).rejects.toThrow(
+			'Premature close',
+		)
 		expect(await readdir(debugTempDir())).toEqual([])
 		await expectNoOpenTempFds()
 	})
@@ -303,14 +313,16 @@ describe('DebugManager', () => {
 		})
 	})
 
-	it('cleans up on cancel even when the restore fails', async () => {
+	it('reports a failed restore on cancel and still cleans up', async () => {
 		vi.spyOn(zwaveClient, 'removeExtraLogTransport').mockImplementationOnce(
 			() => {
 				throw new Error('driver gone')
 			},
 		)
 
-		await debugManager.cancelSession()
+		await expect(debugManager.cancelSession()).rejects.toThrow(
+			'Could not restore the driver log level: driver gone',
+		)
 		expect(debugManager.isSessionActive()).toBe(false)
 		expect(await readdir(debugTempDir())).toEqual([])
 		await expectNoOpenTempFds()
