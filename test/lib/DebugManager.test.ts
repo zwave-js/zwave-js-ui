@@ -111,6 +111,7 @@ describe('DebugManager', () => {
 		expect(uiLog).toContain('last line before stop')
 		expect(debugManager.isSessionActive()).toBe(false)
 		expect(await readdir(debugTempDir())).toEqual([])
+		expect(await openTempFds()).toEqual([])
 	})
 
 	// the fd check reads /proc/self/fd
@@ -164,7 +165,7 @@ describe('DebugManager', () => {
 
 		await expect(
 			debugManager.startSession(zwaveClient, 'info'),
-		).rejects.toThrow('The previous debug session is still stopping')
+		).rejects.toThrow('A debug session is still starting or stopping')
 		await stopping
 	})
 
@@ -180,6 +181,7 @@ describe('DebugManager', () => {
 		).rejects.toThrow('driver gone')
 		expect(debugManager.isSessionActive()).toBe(false)
 		expect(await readdir(debugTempDir())).toEqual([])
+		expect(await openTempFds()).toEqual([])
 		// a failed restore must not block the next capture
 		await debugManager.startSession(zwaveClient, 'info')
 	})
@@ -187,18 +189,49 @@ describe('DebugManager', () => {
 	it('still sends the package when the UI log stream failed during capture', async () => {
 		;(debugManager as any).session.logStream.destroy(new Error('ENOSPC'))
 
-		let bytesWritten = 0
+		const chunks: Buffer[] = []
 		const output = new Writable({
 			write(chunk, _enc, cb) {
-				bytesWritten += chunk.length
+				chunks.push(chunk)
 				cb()
 			},
 		})
 
 		await debugManager.stopSession([], output)
 
-		expect(bytesWritten).toBeGreaterThan(0)
+		// entry names are stored uncompressed in the zip directory
+		expect(Buffer.concat(chunks).includes('ui-logs-')).toBe(true)
 		expect(await readdir(debugTempDir())).toEqual([])
+	})
+
+	it('restores the driver log level when the driver is running', async () => {
+		const client = zwaveClient as any
+		const updateLogConfig = vi.fn()
+		client.driverReady = true
+		client.driver = { updateLogConfig }
+		try {
+			await debugManager.stopSession([], makeOutput())
+		} finally {
+			client.driverReady = false
+			delete client.driver
+		}
+
+		expect(updateLogConfig).toHaveBeenCalledWith({ level: 'info' })
+	})
+
+	it('rejects an overlapping start', async () => {
+		await debugManager.cancelSession()
+
+		const [first, second] = await Promise.allSettled([
+			debugManager.startSession(zwaveClient, 'info'),
+			debugManager.startSession(zwaveClient, 'info'),
+		])
+
+		expect(first.status).toBe('fulfilled')
+		expect(second).toMatchObject({
+			status: 'rejected',
+			reason: new Error('A debug session is still starting or stopping'),
+		})
 	})
 
 	it('removes the temp files when the output fails on the first write', async () => {

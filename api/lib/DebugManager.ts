@@ -31,7 +31,8 @@ export interface DebugSession {
 
 class DebugManager {
 	private session: DebugSession | null = null
-	private restoring = false
+	// a start or stop is between its guard and its state change
+	private transitioning = false
 
 	/**
 	 * Initialize the debug manager by cleaning up any old temp files
@@ -61,13 +62,18 @@ class DebugManager {
 		if (this.session) {
 			throw new Error('A debug session is already active')
 		}
-		// the previous session's restore would reset the log levels under the new one
-		if (this.restoring) {
-			throw new Error('The previous debug session is still stopping')
+		// an overlapping start would orphan one session; a pending restore would reset our log levels
+		if (this.transitioning) {
+			throw new Error('A debug session is still starting or stopping')
 		}
 
-		// Ensure debug temp directory exists
-		await mkdir(debugTempDir, { recursive: true })
+		this.transitioning = true
+		try {
+			// Ensure debug temp directory exists
+			await mkdir(debugTempDir, { recursive: true })
+		} finally {
+			this.transitioning = false
+		}
 
 		const timestamp = new Date().toISOString().replace(/[:.]/g, '-')
 		const logFilePath = joinPath(debugTempDir, `ui-logs-${timestamp}.log`)
@@ -192,7 +198,7 @@ class DebugManager {
 						}
 					}
 				} catch (error) {
-					// Log error but continue with other nodes
+					// Record the error in the package and continue with other nodes
 					archive.append(
 						`Error dumping node ${nodeId}: ${error.message}`,
 						{
@@ -263,7 +269,7 @@ class DebugManager {
 	}
 
 	private async restoreSession(session: DebugSession): Promise<void> {
-		this.restoring = true
+		this.transitioning = true
 		try {
 			// Remove the debug transport from all loggers and restore log level
 			logContainer.loggers.forEach((moduleLogger: winston.Logger) => {
@@ -277,7 +283,7 @@ class DebugManager {
 			// Restore original driver log level
 			await this.restoreDriverLogLevel(session)
 		} finally {
-			this.restoring = false
+			this.transitioning = false
 		}
 	}
 
@@ -295,26 +301,26 @@ class DebugManager {
 	 */
 	private async restoreDriverLogLevel(session: DebugSession): Promise<void> {
 		if (session.driverDebugTransport) {
-			// Remove extra transport (works even if driver was restarted)
-			session.zwaveClient.removeExtraLogTransport(
-				session.driverDebugTransport,
-			)
+			try {
+				// Remove extra transport (works even if driver was restarted)
+				session.zwaveClient.removeExtraLogTransport(
+					session.driverDebugTransport,
+				)
 
-			// Restore original log level if driver is still running
-			if (session.zwaveClient.driverReady) {
-				session.zwaveClient.driver.updateLogConfig({
-					level: session.originalLogLevel as any,
-				})
-			}
-
-			// Clean up debug transport
-			if (session.driverDebugTransport.stream) {
-				session.driverDebugTransport.stream.destroy()
-			}
-
-			// Close driver log stream properly
-			if (session.driverLogStream) {
-				await this.closeLogStream(session.driverLogStream)
+				// Restore original log level if driver is still running
+				if (session.zwaveClient.driverReady) {
+					session.zwaveClient.driver.updateLogConfig({
+						level: session.originalLogLevel as any,
+					})
+				}
+			} finally {
+				// the capture streams must be released even if the driver refused the restore
+				if (session.driverDebugTransport.stream) {
+					session.driverDebugTransport.stream.destroy()
+				}
+				if (session.driverLogStream) {
+					await this.closeLogStream(session.driverLogStream)
+				}
 			}
 		}
 	}
