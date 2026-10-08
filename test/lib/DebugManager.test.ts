@@ -39,7 +39,7 @@ describe('DebugManager', () => {
 	const debugTempDir = () => join(storeDir, '.debug-temp')
 
 	const logLargeCapture = () => {
-		// random bytes can't deflate below their own size, so the zip is at least CAPTURE_BYTES
+		// the base64 text carries CAPTURE_BYTES of entropy, so no deflate gets the zip below that
 		for (let i = 0; i < CAPTURE_BYTES / CHUNK_BYTES; i++) {
 			logger.debug(randomBytes(CHUNK_BYTES).toString('base64'))
 		}
@@ -69,13 +69,15 @@ describe('DebugManager', () => {
 		return { output, zip: () => Buffer.concat(chunks) }
 	}
 
-	// deflated entry from the local file header; names are stored uncompressed
+	// deflated entry from its zip local file header; names are stored uncompressed
+	const LOCAL_HEADER_SIZE = 30
+	const EXTRA_LENGTH_OFFSET = 28
 	const readZipEntry = (zip: Buffer, name: string) => {
-		const nameAt = zip.indexOf(name)
-		const header = nameAt - 30
-		const extraLength = zip.readUInt16LE(header + 28)
+		const nameStart = zip.indexOf(name)
+		const headerStart = nameStart - LOCAL_HEADER_SIZE
+		const extraLength = zip.readUInt16LE(headerStart + EXTRA_LENGTH_OFFSET)
 		return inflateRawSync(
-			zip.subarray(nameAt + name.length + extraLength),
+			zip.subarray(nameStart + name.length + extraLength),
 		).toString()
 	}
 
@@ -170,6 +172,16 @@ describe('DebugManager', () => {
 		await expectNoOpenTempFds()
 	})
 
+	it('rejects a cancel while the session is being stopped', async () => {
+		const stopping = debugManager.stopSession([], makeOutput())
+
+		await expect(debugManager.cancelSession()).rejects.toThrow(
+			'No active debug session',
+		)
+		await stopping
+		expect(await readdir(debugTempDir())).toEqual([])
+	})
+
 	it('rejects a concurrent stop of the same session', async () => {
 		const [first, second] = await Promise.allSettled([
 			debugManager.stopSession([], makeOutput()),
@@ -209,9 +221,10 @@ describe('DebugManager', () => {
 		await debugManager.startSession(zwaveClient, 'info')
 	})
 
-	it('still sends the package when the UI log stream failed during capture', async () => {
+	it('still sends the package when a capture stream failed', async () => {
 		const session = (debugManager as any).session
 		session.logStream.destroy(new Error('ENOSPC'))
+		session.driverLogStream.destroy(new Error('EIO'))
 
 		const { output, zip } = collectOutput()
 
@@ -220,7 +233,9 @@ describe('DebugManager', () => {
 		expect(zip().includes('ui-logs-')).toBe(true)
 		expect(
 			JSON.parse(readZipEntry(zip(), 'session-metadata.json')),
-		).toMatchObject({ incompleteLogs: ['ui-logs: ENOSPC'] })
+		).toMatchObject({
+			incompleteLogs: ['ui-logs: ENOSPC', 'driver-logs: EIO'],
+		})
 		expect(await readdir(debugTempDir())).toEqual([])
 	})
 
@@ -302,11 +317,14 @@ describe('DebugManager', () => {
 		// a directory passes the exists check but fails to read with EISDIR
 		session.logFilePath = debugTempDir()
 
-		await expect(
-			debugManager.stopSession([], makeOutput()),
-		).rejects.toThrow(/EISDIR/)
-		expect(debugManager.isSessionActive()).toBe(false)
-		await rm(uiLogPath, { force: true })
+		try {
+			await expect(
+				debugManager.stopSession([], makeOutput()),
+			).rejects.toThrow(/EISDIR/)
+			expect(debugManager.isSessionActive()).toBe(false)
+		} finally {
+			await rm(uiLogPath, { force: true })
+		}
 	})
 
 	it('removes the temp files when the output fails on the first write', async () => {

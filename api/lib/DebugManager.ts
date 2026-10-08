@@ -161,6 +161,10 @@ class DebugManager {
 			const archive = archiver('zip', {
 				zlib: { level: 9 }, // Maximum compression
 			})
+			// piped before any source is added, so a source error always reaches the pipeline
+			const streaming = pipeline(archive, output)
+			// observed below; this only stops an early rejection being reported as unhandled
+			streaming.catch(() => {})
 
 			const addFile = async (path: string, name: string) => {
 				if (await pathExists(path)) {
@@ -231,16 +235,11 @@ class DebugManager {
 				name: 'session-metadata.json',
 			})
 
-			// pipe before finalizing: finalize() only resolves once the output is consumed
-			await Promise.all([pipeline(archive, output), archive.finalize()])
+			// finalize() only resolves once the output has consumed the archive
+			await Promise.all([streaming, archive.finalize()])
 			logger.info(
 				`Debug package sent: ${archive.pointer()} bytes, ${nodeIds.length} nodes`,
 			)
-			if (session.incompleteLogs.length > 0) {
-				logger.warn(
-					`Debug package sent with incomplete logs: ${session.incompleteLogs.join('; ')}`,
-				)
-			}
 		} finally {
 			for (const stream of fileStreams) {
 				stream.destroy()
@@ -311,6 +310,7 @@ class DebugManager {
 		stream.end()
 		await finished(stream).catch((error: Error) => {
 			session.incompleteLogs.push(`${name}: ${error.message}`)
+			logger.warn(`Debug ${name} capture is incomplete: ${error.message}`)
 		})
 	}
 
