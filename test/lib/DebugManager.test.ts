@@ -12,6 +12,7 @@ import { mkdtemp, rm, readdir, readFile, readlink } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { randomBytes } from 'node:crypto'
+import { inflateRawSync } from 'node:zlib'
 import { Writable } from 'node:stream'
 import type ZWaveClient from '../../api/lib/ZwaveClient.ts'
 import type DebugManager from '../../api/lib/DebugManager.ts'
@@ -44,13 +45,38 @@ describe('DebugManager', () => {
 		}
 	}
 
-	// fds still pointing into the debug temp dir, e.g. `ui-logs-….log (deleted)`
-	const openTempFds = async () => {
-		const fds = await readdir('/proc/self/fd').catch(() => [])
+	// no fd may still point into the debug temp dir, e.g. `ui-logs-….log (deleted)`
+	const expectNoOpenTempFds = async () => {
+		// fds are only listable through /proc: the check is Linux only (CI runs there)
+		if (process.platform !== 'linux') return
+		const fds = await readdir('/proc/self/fd')
 		const targets = await Promise.all(
 			fds.map((fd) => readlink(`/proc/self/fd/${fd}`).catch(() => '')),
 		)
-		return targets.filter((target) => target.startsWith(debugTempDir()))
+		expect(
+			targets.filter((target) => target.startsWith(debugTempDir())),
+		).toEqual([])
+	}
+
+	const collectOutput = () => {
+		const chunks: Buffer[] = []
+		const output = new Writable({
+			write(chunk, _enc, cb) {
+				chunks.push(chunk)
+				cb()
+			},
+		})
+		return { output, zip: () => Buffer.concat(chunks) }
+	}
+
+	// deflated entry from the local file header; names are stored uncompressed
+	const readZipEntry = (zip: Buffer, name: string) => {
+		const nameAt = zip.indexOf(name)
+		const header = nameAt - 30
+		const extraLength = zip.readUInt16LE(header + 28)
+		return inflateRawSync(
+			zip.subarray(nameAt + name.length + extraLength),
+		).toString()
 	}
 
 	beforeAll(async () => {
@@ -118,35 +144,31 @@ describe('DebugManager', () => {
 		expect(uiLog).toContain('last line before stop')
 		expect(debugManager.isSessionActive()).toBe(false)
 		expect(await readdir(debugTempDir())).toEqual([])
-		expect(await openTempFds()).toEqual([])
+		await expectNoOpenTempFds()
 	})
 
-	// the fd check reads /proc/self/fd
-	it.skipIf(process.platform !== 'linux')(
-		'releases the log files when the output fails mid-stream',
-		async () => {
-			logLargeCapture()
+	it('releases the log files when the output fails mid-stream', async () => {
+		logLargeCapture()
 
-			let chunks = 0
-			const output = new Writable({
-				write(_chunk, _enc, cb) {
-					// fail after some zip bytes have already flowed
-					if (++chunks > 3) {
-						cb(new Error('client gone'))
-					} else {
-						setImmediate(cb)
-					}
-				},
-			})
+		let chunks = 0
+		const output = new Writable({
+			write(_chunk, _enc, cb) {
+				// fail after some zip bytes have already flowed
+				if (++chunks > 3) {
+					cb(new Error('client gone'))
+				} else {
+					setImmediate(cb)
+				}
+			},
+		})
 
-			await expect(debugManager.stopSession([], output)).rejects.toThrow(
-				'client gone',
-			)
-			expect(output.destroyed).toBe(true)
-			expect(await readdir(debugTempDir())).toEqual([])
-			expect(await openTempFds()).toEqual([])
-		},
-	)
+		await expect(debugManager.stopSession([], output)).rejects.toThrow(
+			'client gone',
+		)
+		expect(output.destroyed).toBe(true)
+		expect(await readdir(debugTempDir())).toEqual([])
+		await expectNoOpenTempFds()
+	})
 
 	it('rejects a concurrent stop of the same session', async () => {
 		const [first, second] = await Promise.allSettled([
@@ -182,7 +204,7 @@ describe('DebugManager', () => {
 		).rejects.toThrow('driver gone')
 		expect(debugManager.isSessionActive()).toBe(false)
 		expect(await readdir(debugTempDir())).toEqual([])
-		expect(await openTempFds()).toEqual([])
+		await expectNoOpenTempFds()
 		// a failed restore must not block the next capture
 		await debugManager.startSession(zwaveClient, 'info')
 	})
@@ -191,20 +213,14 @@ describe('DebugManager', () => {
 		const session = (debugManager as any).session
 		session.logStream.destroy(new Error('ENOSPC'))
 
-		const chunks: Buffer[] = []
-		const output = new Writable({
-			write(chunk, _enc, cb) {
-				chunks.push(chunk)
-				cb()
-			},
-		})
+		const { output, zip } = collectOutput()
 
 		await debugManager.stopSession([], output)
 
-		// entry names are stored uncompressed in the zip directory
-		expect(Buffer.concat(chunks).includes('ui-logs-')).toBe(true)
-		// reported in session-metadata.json
-		expect(session.incompleteLogs).toEqual(['ui-logs: ENOSPC'])
+		expect(zip().includes('ui-logs-')).toBe(true)
+		expect(
+			JSON.parse(readZipEntry(zip(), 'session-metadata.json')),
+		).toMatchObject({ incompleteLogs: ['ui-logs: ENOSPC'] })
 		expect(await readdir(debugTempDir())).toEqual([])
 	})
 
@@ -219,26 +235,19 @@ describe('DebugManager', () => {
 			return { id }
 		})
 
-		const chunks: Buffer[] = []
-		const output = new Writable({
-			write(chunk, _enc, cb) {
-				chunks.push(chunk)
-				cb()
-			},
-		})
+		const { output, zip } = collectOutput()
 		try {
 			await debugManager.stopSession([1, 2], output)
 		} finally {
 			client.nodes.clear()
 		}
 
-		const zip = Buffer.concat(chunks)
 		for (const entry of [
 			'node-1-driver-dump.json',
 			'node-1-ui-dump.json',
 			'node-2-error.txt',
 		]) {
-			expect(zip.includes(entry)).toBe(true)
+			expect(zip().includes(entry)).toBe(true)
 		}
 	})
 
@@ -270,6 +279,34 @@ describe('DebugManager', () => {
 			status: 'rejected',
 			reason: new Error('A debug session is still starting or stopping'),
 		})
+	})
+
+	it('cleans up on cancel even when the restore fails', async () => {
+		vi.spyOn(zwaveClient, 'removeExtraLogTransport').mockImplementationOnce(
+			() => {
+				throw new Error('driver gone')
+			},
+		)
+
+		await expect(debugManager.cancelSession()).rejects.toThrow(
+			'driver gone',
+		)
+		expect(debugManager.isSessionActive()).toBe(false)
+		expect(await readdir(debugTempDir())).toEqual([])
+		await expectNoOpenTempFds()
+	})
+
+	it('fails instead of hanging when a log file cannot be read', async () => {
+		const session = (debugManager as any).session
+		const uiLogPath = session.logFilePath
+		// a directory passes the exists check but fails to read with EISDIR
+		session.logFilePath = debugTempDir()
+
+		await expect(
+			debugManager.stopSession([], makeOutput()),
+		).rejects.toThrow(/EISDIR/)
+		expect(debugManager.isSessionActive()).toBe(false)
+		await rm(uiLogPath, { force: true })
 	})
 
 	it('removes the temp files when the output fails on the first write', async () => {

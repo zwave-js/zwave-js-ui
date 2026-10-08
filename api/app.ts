@@ -2242,7 +2242,10 @@ app.post(
 					err,
 				)
 			} else {
-				logger.error('Error stopping debug session:', err)
+				logger.error(
+					'Error stopping debug session, capture discarded:',
+					err,
+				)
 				res.removeHeader('Content-Disposition')
 				res.removeHeader('Content-Type')
 				res.json({

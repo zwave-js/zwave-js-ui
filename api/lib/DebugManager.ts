@@ -165,6 +165,8 @@ class DebugManager {
 			const addFile = async (path: string, name: string) => {
 				if (await pathExists(path)) {
 					const stream = createReadStream(path)
+					// archiver pipes sources without forwarding their errors: fail the archive instead of hanging
+					stream.on('error', (error) => archive.destroy(error))
 					fileStreams.push(stream)
 					archive.append(stream, { name })
 				}
@@ -212,11 +214,12 @@ class DebugManager {
 			}
 
 			// Add session metadata
+			const endTime = new Date()
 			const metadata = {
 				startTime: session.startTime.toISOString(),
-				endTime: new Date().toISOString(),
+				endTime: endTime.toISOString(),
 				duration:
-					new Date().getTime() - session.startTime.getTime() + 'ms',
+					endTime.getTime() - session.startTime.getTime() + 'ms',
 				nodesIncluded: nodeIds,
 				os: os.platform(),
 				nodeVersion: process.version.replace(/^v/, ''),
