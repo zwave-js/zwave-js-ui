@@ -204,16 +204,20 @@ describe('DebugManager', () => {
 		await stopping
 	})
 
-	it('consumes the session and its temp files when the restore fails', async () => {
+	it('still sends the package when the driver log level cannot be restored', async () => {
 		vi.spyOn(zwaveClient, 'removeExtraLogTransport').mockImplementationOnce(
 			() => {
 				throw new Error('driver gone')
 			},
 		)
+		const { output, zip } = collectOutput()
 
-		await expect(
-			debugManager.stopSession([], makeOutput()),
-		).rejects.toThrow('driver gone')
+		await debugManager.stopSession([], output)
+
+		expect(zip().includes('ui-logs-')).toBe(true)
+		expect(
+			JSON.parse(readZipEntry(zip(), 'session-metadata.json')),
+		).toMatchObject({ restoreError: 'driver gone' })
 		expect(debugManager.isSessionActive()).toBe(false)
 		expect(await readdir(debugTempDir())).toEqual([])
 		await expectNoOpenTempFds()
@@ -306,9 +310,7 @@ describe('DebugManager', () => {
 			},
 		)
 
-		await expect(debugManager.cancelSession()).rejects.toThrow(
-			'driver gone',
-		)
+		await debugManager.cancelSession()
 		expect(debugManager.isSessionActive()).toBe(false)
 		expect(await readdir(debugTempDir())).toEqual([])
 		await expectNoOpenTempFds()

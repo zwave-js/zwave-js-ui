@@ -779,6 +779,13 @@ export default {
 					`Failed to generate debug package: ${error.message}`,
 					'error',
 				)
+				// a failed stop usually ends the session on the server too
+				ConfigApis.getDebugStatus()
+					.then((status) => {
+						if (status.success)
+							this.debugCaptureActive = status.active
+					})
+					.catch(() => {})
 			}
 		},
 		verifyRoute() {

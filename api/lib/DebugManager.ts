@@ -12,7 +12,6 @@ import { createDefaultTransportFormat } from '@zwave-js/core/bindings/log/node'
 import { JSONTransport } from '@zwave-js/log-transport-json'
 import { libVersion } from 'zwave-js'
 import os from 'node:os'
-import { once } from 'node:events'
 
 const logger = module('DebugManager')
 
@@ -30,6 +29,8 @@ export interface DebugSession {
 	zwaveClient: ZWaveClient
 	// log files that were cut short, reported in the package metadata
 	incompleteLogs: { file: string; error: string }[]
+	// the driver log level could not be restored, reported in the package metadata
+	restoreError?: string
 }
 
 class DebugManager {
@@ -231,6 +232,7 @@ class DebugManager {
 				driverVersion: libVersion,
 				zuiVersion: getVersion(),
 				incompleteLogs: session.incompleteLogs,
+				restoreError: session.restoreError,
 			}
 			archive.append(JSON.stringify(metadata, null, 2), {
 				name: 'session-metadata.json',
@@ -245,7 +247,10 @@ class DebugManager {
 			// destroy() only schedules the close: removing an open file fails on Windows
 			await Promise.all(
 				fileStreams.map((stream) => {
-					const closed = once(stream, 'close')
+					// resolves on close only: an open error must not skip the cleanup below
+					const closed = new Promise<void>((resolve) =>
+						stream.once('close', () => resolve()),
+					)
 					stream.destroy()
 					return stream.closed ? undefined : closed
 				}),
@@ -297,8 +302,16 @@ class DebugManager {
 			// wait for all UI logs to be flushed to disk
 			await this.closeLogStream(session, session.logStream, 'ui-logs')
 
-			// Restore original driver log level
-			await this.restoreDriverLogLevel(session)
+			// a misbehaving driver is when the capture matters most: keep it and report the failure
+			try {
+				await this.restoreDriverLogLevel(session)
+			} catch (error) {
+				session.restoreError = error.message
+				logger.warn(
+					'Could not restore the driver log level after the debug capture:',
+					error,
+				)
+			}
 		} finally {
 			this.transitioning = false
 		}

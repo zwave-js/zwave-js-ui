@@ -108,6 +108,20 @@ describe('POST /api/debug/stop', () => {
 		})
 	})
 
+	it('rejects invalid node ids without ending the session', async () => {
+		const res = await fetch(stopUrl, {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ nodeIds: '../x' }),
+		})
+
+		expect(await res.json()).toEqual({
+			success: false,
+			message: 'nodeIds must be an array of integers',
+		})
+		expect(debugManager.isSessionActive()).toBe(true)
+	})
+
 	it('answers with JSON when no session is active', async () => {
 		await debugManager.cancelSession()
 
