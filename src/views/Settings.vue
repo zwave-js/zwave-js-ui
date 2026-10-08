@@ -538,38 +538,6 @@
 					<v-expansion-panel-text v-if="newZwave.enabled">
 						<v-card flat>
 							<v-card-text>
-								<v-row v-if="activePresets.length > 0">
-									<v-col cols="12">
-										<v-alert
-											type="info"
-											variant="tonal"
-											density="compact"
-										>
-											Driver
-											{{
-												activePresets.length > 1
-													? 'presets'
-													: 'preset'
-											}}
-											<strong>{{
-												activePresets.join(', ')
-											}}</strong>
-											{{
-												activePresets.length > 1
-													? 'are'
-													: 'is'
-											}}
-											active. The settings
-											{{
-												activePresets.length > 1
-													? 'they override'
-													: 'it overrides'
-											}}
-											are hidden and controlled by the
-											external settings file.
-										</v-alert>
-									</v-col>
-								</v-row>
 								<v-row>
 									<v-col cols="12" sm="6">
 										<v-combobox
@@ -1125,15 +1093,7 @@
 											></v-switch>
 										</v-col>
 
-										<v-col
-											cols="12"
-											sm="6"
-											v-if="
-												!isSettingManagedExternally(
-													'zwave.disableControllerRecovery',
-												)
-											"
-										>
+										<v-col cols="12" sm="6">
 											<inverted-checkbox
 												hint="When disabled, commands will simply fail when the controller is unresponsive and nodes may get randomly marked as dead until the controller recovers on its own."
 												persistent-hint
@@ -1143,15 +1103,7 @@
 												"
 											></inverted-checkbox>
 										</v-col>
-										<v-col
-											cols="12"
-											sm="6"
-											v-if="
-												!isSettingManagedExternally(
-													'zwave.disableWatchdog',
-												)
-											"
-										>
+										<v-col cols="12" sm="6">
 											<inverted-checkbox
 												persistent-hint
 												label="Watchdog"
@@ -1161,15 +1113,7 @@
 												"
 											></inverted-checkbox>
 										</v-col>
-										<v-col
-											cols="12"
-											sm="6"
-											v-if="
-												!isSettingManagedExternally(
-													'zwave.responseTimeout',
-												)
-											"
-										>
+										<v-col cols="12" sm="6">
 											<v-text-field
 												v-model.number="
 													newZwave.responseTimeout
@@ -1183,15 +1127,7 @@
 											></v-text-field>
 										</v-col>
 
-										<v-col
-											cols="12"
-											sm="6"
-											v-if="
-												!isSettingManagedExternally(
-													'zwave.higherReportsTimeout',
-												)
-											"
-										>
+										<v-col cols="12" sm="6">
 											<v-checkbox
 												hint="This can help with the inclusion or interview of some devices, but can also slow down communication a lot."
 												persistent-hint
@@ -1308,15 +1244,7 @@
 												type="number"
 											></v-text-field>
 										</v-col>
-										<v-col
-											cols="12"
-											sm="6"
-											v-if="
-												!isSettingManagedExternally(
-													'zwave.sendToSleepTimeout',
-												)
-											"
-										>
+										<v-col cols="12" sm="6">
 											<v-text-field
 												v-model.number="
 													newZwave.sendToSleepTimeout
@@ -2493,7 +2421,6 @@ export default {
 			'serial_ports',
 			'scales',
 			'ui',
-			'activePresets',
 			'isSettingManagedExternally',
 		]),
 		allClassicSecurityKeysManagedExternally() {
