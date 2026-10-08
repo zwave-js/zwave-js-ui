@@ -103,6 +103,23 @@ describe('store zip routes', () => {
 		await rm(join(testStoreDir, 'big.jsonl'))
 	})
 
+	it('leaves only complete backups when two run in the same second', async () => {
+		await rm(storeBackupsDir, { recursive: true, force: true })
+
+		// fileDate() has second resolution, so both target the same file name
+		await Promise.all([jsonStore.backup(), jsonStore.backup()])
+
+		const files = await readdir(storeBackupsDir)
+		// no temp files left behind, and every backup is one complete zip
+		expect(files.every((f) => f.startsWith('store-backup_'))).toBe(true)
+		const eocd = Buffer.from([0x50, 0x4b, 0x05, 0x06])
+		for (const file of files) {
+			const zip = await readFile(join(storeBackupsDir, file))
+			expect(zip.indexOf(eocd)).toBeGreaterThan(0)
+			expect(zip.indexOf(eocd)).toBe(zip.lastIndexOf(eocd))
+		}
+	})
+
 	it('answers with an error and keeps no partial backup when the backup fails', async () => {
 		await rm(storeBackupsDir, { recursive: true, force: true })
 		// a directory matching the backup glob fails to read with EISDIR

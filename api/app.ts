@@ -194,8 +194,8 @@ function configureTrustProxy() {
 app.set('debugDownloadIdleTimeout', 60_000)
 
 /**
- * Handle a failed file download: `reply` with an error while nothing has been sent yet,
- * otherwise only log, since the stream pipeline has already destroyed the response.
+ * Handle a failed file download: log it, then `reply` with an error while nothing has been sent yet.
+ * Once streaming started the stream pipeline has already destroyed the response.
  */
 function failDownload(
 	res: Response,
@@ -207,6 +207,7 @@ function failDownload(
 		logger.warn(`${what} not delivered:`, err)
 		return
 	}
+	logger.error(`${what} failed:`, err)
 	// the error must not reach the client labelled as the file
 	res.removeHeader('Content-Disposition')
 	res.removeHeader('Content-Type')
@@ -2277,10 +2278,6 @@ app.post(
 			await debugManager.stopSession(nodeIds, res)
 		} catch (err) {
 			failDownload(res, 'Debug package (capture discarded)', err, () => {
-				logger.error(
-					'Error stopping debug session, capture discarded:',
-					err,
-				)
 				res.json({
 					success: false,
 					message: err.message,

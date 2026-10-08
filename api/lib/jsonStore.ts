@@ -4,7 +4,8 @@ import type { StoreFile, StoreKeys } from '../config/store.ts'
 import { module } from './logger.ts'
 import { recursive as merge } from 'merge'
 import { createReadStream, createWriteStream, existsSync } from 'node:fs'
-import { readdir, rm } from 'node:fs/promises'
+import { readdir, rename, rm } from 'node:fs/promises'
+import { randomUUID } from 'node:crypto'
 import { pipeline } from 'node:stream/promises'
 import type { Response } from 'express'
 import { ensureDir, fileDate, joinPath } from './utils.ts'
@@ -75,14 +76,16 @@ export class StorageHelper {
 			}
 		}
 
-		// written in full before it is sent, so a client that drops the download can't truncate the copy on disk
-		const file = createWriteStream(backupPath)
+		// written in full before it is sent, so a dropped download can't truncate the copy on disk, and under
+		// a unique name until complete: same-second backups would share one file, and retention must not see a partial one
+		const tmpPath = joinPath(storeBackupsDir, `.tmp-${randomUUID()}.zip`)
+		const file = createWriteStream(tmpPath)
 		try {
 			await streamZip(file, entries)
+			await rename(tmpPath, backupPath)
 		} catch (error) {
-			// a partial zip would count as a backup and could push a good one out of retention
 			await closeFileStream(file)
-			await rm(backupPath, { force: true })
+			await rm(tmpPath, { force: true })
 			throw error
 		}
 
