@@ -5,6 +5,7 @@ import { module } from './logger.ts'
 import { recursive as merge } from 'merge'
 import archiver from 'archiver'
 import { createWriteStream, existsSync } from 'node:fs'
+import { pipeline } from 'node:stream/promises'
 import type { Response } from 'express'
 import { ensureDir, fileDate, joinPath } from './utils.ts'
 
@@ -62,46 +63,41 @@ export class StorageHelper {
 			joinPath(storeBackupsDir, backupFile),
 		)
 
-		return new Promise((resolve, reject) => {
-			const archive = archiver('zip')
+		const archive = archiver('zip')
 
-			archive.on('error', (err) => {
-				reject(err)
+		// piped before any source is added; each pipeline rejects on a source or destination error
+		const outputs = [pipeline(archive, fileStream)]
+		if (res) {
+			res.set({
+				'Content-Type': 'application/json',
+				'Content-Disposition': `attachment; filename="${backupFile}"`,
 			})
 
-			// on stream closed we can end the request
-			archive.on('end', () => {
-				resolve(backupFile)
-			})
+			outputs.push(pipeline(archive, res))
+		}
+		// observed below; this only stops an early rejection being reported as unhandled
+		for (const output of outputs) {
+			output.catch(() => {})
+		}
 
-			if (res) {
-				res.set({
-					'Content-Type': 'application/json',
-					'Content-Disposition': `attachment; filename="${backupFile}"`,
-				})
-
-				archive.pipe(res)
-			}
-
-			archive.pipe(fileStream)
-
-			// backup zwavejs files too
-			archive.glob('*.jsonl', {
-				cwd: storeDir,
-			})
-
-			for (const model in this.config) {
-				const config: StoreFile = this.config[model]
-				const filePath = joinPath(storeDir, config.file)
-				if (existsSync(filePath)) {
-					archive.file(filePath, {
-						name: config.file,
-					})
-				}
-			}
-
-			void archive.finalize()
+		// backup zwavejs files too
+		archive.glob('*.jsonl', {
+			cwd: storeDir,
 		})
+
+		for (const model in this.config) {
+			const config: StoreFile = this.config[model]
+			const filePath = joinPath(storeDir, config.file)
+			if (existsSync(filePath)) {
+				archive.file(filePath, {
+					name: config.file,
+				})
+			}
+		}
+
+		await Promise.all([...outputs, archive.finalize()])
+
+		return backupFile
 	}
 
 	private async _getFile(config: StoreFile) {

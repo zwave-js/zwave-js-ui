@@ -26,6 +26,7 @@ import { createServer as createHttpServer } from 'node:http'
 import { createServer as createHttpsServer } from 'node:https'
 import jwt from 'jsonwebtoken'
 import path from 'node:path'
+import { pipeline } from 'node:stream/promises'
 import sessionStore from 'session-file-store'
 import type { Socket } from 'socket.io'
 import { promisify } from 'node:util'
@@ -2048,12 +2049,6 @@ app.post(
 
 		const archive = archiver('zip')
 
-		archive.on('error', function (err: utils.ErrnoException) {
-			res.status(500).send({
-				error: err.message,
-			})
-		})
-
 		// on stream closed we can end the request
 		archive.on('end', function () {
 			logger.debug('zip archive ready')
@@ -2063,8 +2058,10 @@ app.post(
 		res.attachment('zwave-js-ui-store.zip')
 		res.setHeader('Content-Type', 'application/zip')
 
-		// use res as stream so I don't need to create a temp file
-		archive.pipe(res)
+		// use res as stream so I don't need to create a temp file; piped before any source is added
+		const streaming = pipeline(archive, res)
+		// observed below; this only stops an early rejection being reported as unhandled
+		streaming.catch(() => {})
 
 		for (const f of files) {
 			try {
@@ -2086,7 +2083,12 @@ app.post(
 			}
 		}
 
-		await archive.finalize()
+		try {
+			await Promise.all([streaming, archive.finalize()])
+		} catch (err) {
+			// the pipeline already destroyed the response: nothing left to send
+			logger.warn(`Store download not delivered: ${err.message}`)
+		}
 	},
 )
 
@@ -2098,9 +2100,15 @@ app.get(
 		try {
 			await jsonStore.backup(res)
 		} catch (error) {
-			res.status(500).send({
-				error: error.message,
-			})
+			if (res.headersSent || res.destroyed) {
+				logger.warn(
+					`Store backup download not delivered: ${error.message}`,
+				)
+			} else {
+				res.status(500).send({
+					error: error.message,
+				})
+			}
 		}
 	},
 )
@@ -2230,7 +2238,14 @@ app.post(
 				})
 			}
 
-			const nodeIds: number[] = req.body.nodeIds || []
+			const nodeIds: unknown = req.body.nodeIds ?? []
+			// checked before the session is consumed, and node ids end up in zip entry names
+			if (!Array.isArray(nodeIds) || !nodeIds.every(Number.isInteger)) {
+				return res.json({
+					success: false,
+					message: 'nodeIds must be an array of integers',
+				})
+			}
 
 			const timestamp = new Date().toISOString().replace(/[:.]/g, '-')
 			res.attachment(`zwave-debug-${timestamp}.zip`)
