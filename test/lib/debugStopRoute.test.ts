@@ -107,6 +107,31 @@ describe('POST /api/debug/stop', () => {
 		})
 	})
 
+	it('answers with JSON when no session is active', async () => {
+		await debugManager.cancelSession()
+
+		const res = await stop()
+
+		expect(res.headers.get('content-disposition')).toBeNull()
+		expect(await res.json()).toEqual({
+			success: false,
+			message: 'No active debug session',
+		})
+	})
+
+	it('answers nothing when the response is destroyed before any byte', async () => {
+		const json = vi.spyOn(express.response, 'json')
+		vi.spyOn(debugManager, 'stopSession').mockImplementation(
+			(_nodeIds, output) => {
+				;(output as Writable).destroy()
+				return Promise.reject(new Error('archive failed'))
+			},
+		)
+
+		await expect(stop()).rejects.toThrow()
+		expect(json).not.toHaveBeenCalled()
+	})
+
 	it('appends nothing once the zip has started streaming', async () => {
 		const json = vi.spyOn(express.response, 'json')
 		vi.spyOn(debugManager, 'stopSession').mockImplementation(

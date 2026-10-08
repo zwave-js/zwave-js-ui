@@ -27,11 +27,13 @@ export interface DebugSession {
 	driverDebugTransport?: any
 	driverLogStream?: NodeJS.WritableStream
 	zwaveClient: ZWaveClient
+	// log files that were cut short, reported in the package metadata
+	incompleteLogs: string[]
 }
 
 class DebugManager {
 	private session: DebugSession | null = null
-	// a start or stop is between its guard and its state change
+	// set while start creates the temp dir and while stop restores the loggers
 	private transitioning = false
 
 	/**
@@ -131,6 +133,7 @@ class DebugManager {
 			driverDebugTransport,
 			driverLogStream,
 			zwaveClient,
+			incompleteLogs: [],
 		}
 
 		// Restart driver if requested to capture startup logs
@@ -219,6 +222,7 @@ class DebugManager {
 				nodeVersion: process.version.replace(/^v/, ''),
 				driverVersion: libVersion,
 				zuiVersion: getVersion(),
+				incompleteLogs: session.incompleteLogs,
 			}
 			archive.append(JSON.stringify(metadata, null, 2), {
 				name: 'session-metadata.json',
@@ -229,6 +233,11 @@ class DebugManager {
 			logger.info(
 				`Debug package sent: ${archive.pointer()} bytes, ${nodeIds.length} nodes`,
 			)
+			if (session.incompleteLogs.length > 0) {
+				logger.warn(
+					`Debug package sent with incomplete logs: ${session.incompleteLogs.join('; ')}`,
+				)
+			}
 		} finally {
 			for (const stream of fileStreams) {
 				stream.destroy()
@@ -278,7 +287,7 @@ class DebugManager {
 			})
 
 			// wait for all UI logs to be flushed to disk
-			await this.closeLogStream(session.logStream)
+			await this.closeLogStream(session, session.logStream, 'ui-logs')
 
 			// Restore original driver log level
 			await this.restoreDriverLogLevel(session)
@@ -288,12 +297,18 @@ class DebugManager {
 	}
 
 	/**
-	 * End a capture stream and wait for it to flush. A write error was already logged by its
-	 * error listener, so it doesn't stop the package: whatever reached disk is still archived.
+	 * End a capture stream and wait for it to flush. A failed stream doesn't stop the package:
+	 * whatever reached disk is still archived, and the failure is recorded in its metadata.
 	 */
-	private async closeLogStream(stream: NodeJS.WritableStream): Promise<void> {
+	private async closeLogStream(
+		session: DebugSession,
+		stream: NodeJS.WritableStream,
+		name: string,
+	): Promise<void> {
 		stream.end()
-		await finished(stream).catch(() => {})
+		await finished(stream).catch((error: Error) => {
+			session.incompleteLogs.push(`${name}: ${error.message}`)
+		})
 	}
 
 	/**
@@ -319,7 +334,11 @@ class DebugManager {
 					session.driverDebugTransport.stream.destroy()
 				}
 				if (session.driverLogStream) {
-					await this.closeLogStream(session.driverLogStream)
+					await this.closeLogStream(
+						session,
+						session.driverLogStream,
+						'driver-logs',
+					)
 				}
 			}
 		}

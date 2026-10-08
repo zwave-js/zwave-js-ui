@@ -76,6 +76,13 @@ describe('DebugManager', () => {
 		}
 	})
 
+	const makeOutput = () =>
+		new Writable({
+			write(_chunk, _enc, cb) {
+				cb()
+			},
+		})
+
 	it('streams a large capture and removes the temp files', async () => {
 		logLargeCapture()
 		logger.debug('last line before stop')
@@ -107,7 +114,7 @@ describe('DebugManager', () => {
 		await debugManager.stopSession([1], output)
 
 		expect(bytesWritten).toBeGreaterThan(CAPTURE_BYTES)
-		// the log backlog was flushed before the transport was detached
+		// the log backlog was flushed before the temp files were removed
 		expect(uiLog).toContain('last line before stop')
 		expect(debugManager.isSessionActive()).toBe(false)
 		expect(await readdir(debugTempDir())).toEqual([])
@@ -123,6 +130,7 @@ describe('DebugManager', () => {
 			let chunks = 0
 			const output = new Writable({
 				write(_chunk, _enc, cb) {
+					// fail after some zip bytes have already flowed
 					if (++chunks > 3) {
 						cb(new Error('client gone'))
 					} else {
@@ -139,13 +147,6 @@ describe('DebugManager', () => {
 			expect(await openTempFds()).toEqual([])
 		},
 	)
-
-	const makeOutput = () =>
-		new Writable({
-			write(_chunk, _enc, cb) {
-				cb()
-			},
-		})
 
 	it('rejects a concurrent stop of the same session', async () => {
 		const [first, second] = await Promise.allSettled([
@@ -187,7 +188,8 @@ describe('DebugManager', () => {
 	})
 
 	it('still sends the package when the UI log stream failed during capture', async () => {
-		;(debugManager as any).session.logStream.destroy(new Error('ENOSPC'))
+		const session = (debugManager as any).session
+		session.logStream.destroy(new Error('ENOSPC'))
 
 		const chunks: Buffer[] = []
 		const output = new Writable({
@@ -201,7 +203,43 @@ describe('DebugManager', () => {
 
 		// entry names are stored uncompressed in the zip directory
 		expect(Buffer.concat(chunks).includes('ui-logs-')).toBe(true)
+		// reported in session-metadata.json
+		expect(session.incompleteLogs).toEqual(['ui-logs: ENOSPC'])
 		expect(await readdir(debugTempDir())).toEqual([])
+	})
+
+	it('adds node dumps, and an error entry for a node that fails to dump', async () => {
+		const client = zwaveClient as any
+		client.nodes.set(1, { id: 1 })
+		vi.spyOn(client, 'getNode').mockImplementation((id) =>
+			id === 1 ? {} : undefined,
+		)
+		vi.spyOn(client, 'dumpNode').mockImplementation((id) => {
+			if (id === 2) throw new Error('unknown node')
+			return { id }
+		})
+
+		const chunks: Buffer[] = []
+		const output = new Writable({
+			write(chunk, _enc, cb) {
+				chunks.push(chunk)
+				cb()
+			},
+		})
+		try {
+			await debugManager.stopSession([1, 2], output)
+		} finally {
+			client.nodes.clear()
+		}
+
+		const zip = Buffer.concat(chunks)
+		for (const entry of [
+			'node-1-driver-dump.json',
+			'node-1-ui-dump.json',
+			'node-2-error.txt',
+		]) {
+			expect(zip.includes(entry)).toBe(true)
+		}
 	})
 
 	it('restores the driver log level when the driver is running', async () => {
