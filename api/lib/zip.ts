@@ -1,6 +1,6 @@
 import archiver from 'archiver'
 import { once } from 'node:events'
-import { createReadStream, type ReadStream } from 'node:fs'
+import { createReadStream, type ReadStream, type WriteStream } from 'node:fs'
 import { pipeline } from 'node:stream/promises'
 
 export type ZipEntry = { name: string } & ({ path: string } | { data: string })
@@ -26,34 +26,43 @@ export async function streamZip(
 	try {
 		for (const entry of entries) {
 			const processed = once(archive, 'entry')
+			let file: ReadStream | undefined
 			if ('path' in entry) {
-				const stream = createReadStream(entry.path)
+				file = createReadStream(entry.path)
 				// archiver pipes sources without forwarding their errors
-				stream.on('error', (error) => archive.destroy(error))
-				files.push(stream)
-				archive.append(stream, { name: entry.name })
+				file.on('error', (error) => archive.destroy(error))
+				files.push(file)
+				archive.append(file, { name: entry.name })
 			} else {
 				archive.append(entry.data, { name: entry.name })
 			}
-			// the next file is opened only once this entry is in the zip, so a long list holds one descriptor at a time
+			// the next file is opened only once this one is in the zip and closed, so a long list holds one descriptor at a time
 			await Promise.race([processed, streaming])
+			await closeFileStream(file)
 		}
 
 		// finalize() only resolves once the output has consumed the archive
 		await Promise.all([streaming, archive.finalize()])
 		return archive.pointer()
 	} finally {
-		await Promise.all(files.map(release))
+		await Promise.all(files.map(closeFileStream))
 	}
 }
 
-// destroy() only schedules the close: callers may remove the file right after, which fails on Windows while it is open
-function release(stream: ReadStream): Promise<void> | undefined {
-	if (stream.closed) return
+/**
+ * Destroy a file stream and wait until its descriptor is closed.
+ * destroy() only schedules the close, and removing a file that is still open fails on Windows.
+ */
+export async function closeFileStream(
+	stream:
+		| (NodeJS.EventEmitter & { closed: boolean; destroy(): unknown })
+		| undefined,
+): Promise<void> {
+	if (!stream || stream.closed) return
 	// resolves on close only: an open error must not skip the caller's cleanup
 	const closed = new Promise<void>((resolve) =>
 		stream.once('close', () => resolve()),
 	)
 	stream.destroy()
-	return closed
+	await closed
 }

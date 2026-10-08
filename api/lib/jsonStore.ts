@@ -8,7 +8,7 @@ import { readdir, rm } from 'node:fs/promises'
 import { pipeline } from 'node:stream/promises'
 import type { Response } from 'express'
 import { ensureDir, fileDate, joinPath } from './utils.ts'
-import { streamZip, type ZipEntry } from './zip.ts'
+import { closeFileStream, streamZip, type ZipEntry } from './zip.ts'
 
 const logger = module('Store')
 
@@ -76,10 +76,12 @@ export class StorageHelper {
 		}
 
 		// written in full before it is sent, so a client that drops the download can't truncate the copy on disk
+		const file = createWriteStream(backupPath)
 		try {
-			await streamZip(createWriteStream(backupPath), entries)
+			await streamZip(file, entries)
 		} catch (error) {
 			// a partial zip would count as a backup and could push a good one out of retention
+			await closeFileStream(file)
 			await rm(backupPath, { force: true })
 			throw error
 		}
