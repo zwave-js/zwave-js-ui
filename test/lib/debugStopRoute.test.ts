@@ -128,6 +128,7 @@ describe('POST /api/debug/stop', () => {
 			},
 		)
 
+		// the server destroyed the socket, so the client sees a network error
 		await expect(stop()).rejects.toThrow()
 		expect(json).not.toHaveBeenCalled()
 	})
