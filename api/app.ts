@@ -2238,7 +2238,8 @@ app.post(
 			// once streaming started the pipeline has destroyed the response: nothing left to send
 			if (res.headersSent || res.destroyed) {
 				logger.warn(
-					`Debug package not delivered, capture discarded: ${err.message}`,
+					'Debug package not delivered, capture discarded:',
+					err,
 				)
 			} else {
 				logger.error('Error stopping debug session:', err)

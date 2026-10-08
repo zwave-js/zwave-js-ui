@@ -82,6 +82,14 @@ describe('POST /api/debug/stop', () => {
 		)
 		const body = Buffer.from(await res.arrayBuffer())
 		expect(body.subarray(0, 2).toString()).toBe('PK')
+		// entry names are stored uncompressed in the zip directory
+		for (const entry of [
+			'ui-logs-',
+			'driver-logs-',
+			'session-metadata.json',
+		]) {
+			expect(body.includes(entry)).toBe(true)
+		}
 		expect(debugManager.isSessionActive()).toBe(false)
 	})
 
