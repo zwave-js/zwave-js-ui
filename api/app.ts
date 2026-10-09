@@ -9,6 +9,7 @@ import store from './config/store.ts'
 import type { GatewayConfig } from './lib/Gateway.ts'
 import Gateway, { GatewayType } from './lib/Gateway.ts'
 import jsonStore from './lib/jsonStore.ts'
+import { streamZip, type ZipEntry } from './lib/zip.ts'
 import * as loggers from './lib/logger.ts'
 import { logContainer } from './lib/logger.ts'
 import MqttClient from './lib/MqttClient.ts'
@@ -18,7 +19,6 @@ import ZWaveClient from './lib/ZwaveClient.ts'
 import multer, { diskStorage } from 'multer'
 import extract from 'extract-zip'
 import { serverVersion } from '@zwave-js/server'
-import archiver from 'archiver'
 import rateLimit from 'express-rate-limit'
 import session from 'express-session'
 import type { Server as HttpServer } from 'node:http'
@@ -188,6 +188,30 @@ function configureTrustProxy() {
 	const value = parseTrustProxy(raw)
 	app.set('trust proxy', value)
 	logger.info(`Express 'trust proxy' set to: ${value}`)
+}
+
+// a debug package download with no progress for this long is dropped (an app setting so tests can shorten it)
+app.set('debugDownloadIdleTimeout', 60_000)
+
+/**
+ * Handle a failed file download: log it, then `reply` with an error while nothing has been sent yet.
+ * Once streaming started the stream pipeline has already destroyed the response.
+ */
+function failDownload(
+	res: Response,
+	what: string,
+	err: Error,
+	reply: () => void,
+): void {
+	if (res.headersSent || res.destroyed) {
+		logger.warn(`${what} not delivered:`, err)
+		return
+	}
+	logger.error(`${what} failed:`, err)
+	// the error must not reach the client labelled as the file
+	res.removeHeader('Content-Disposition')
+	res.removeHeader('Content-Type')
+	reply()
 }
 
 // apis response codes
@@ -1480,7 +1504,15 @@ app.post(
 			restarting = true
 
 			if (debugManager.isSessionActive()) {
-				await debugManager.cancelSession()
+				// the driver is about to be torn down: a log level it couldn't restore must not block the restart
+				await debugManager
+					.cancelSession()
+					.catch((error) =>
+						logger.warn(
+							'Debug capture cancelled with errors:',
+							error,
+						),
+					)
 			}
 
 			// Close gateway and restart
@@ -2042,26 +2074,7 @@ app.post(
 	isAuthenticated,
 	async function (req, res) {
 		const files = req.body.files || []
-
-		const archive = archiver('zip')
-
-		archive.on('error', function (err: utils.ErrnoException) {
-			res.status(500).send({
-				error: err.message,
-			})
-		})
-
-		// on stream closed we can end the request
-		archive.on('end', function () {
-			logger.debug('zip archive ready')
-		})
-
-		// set the archive name
-		res.attachment('zwave-js-ui-store.zip')
-		res.setHeader('Content-Type', 'application/zip')
-
-		// use res as stream so I don't need to create a temp file
-		archive.pipe(res)
+		const entries: ZipEntry[] = []
 
 		for (const f of files) {
 			try {
@@ -2071,19 +2084,32 @@ app.post(
 				const s = await lstat(safe)
 				const name = safe.replace(storeDir, '')
 				if (s.isFile()) {
-					archive.file(safe, { name })
+					entries.push({ path: safe, name })
 				} else if (s.isSymbolicLink()) {
 					// getSafePath already resolved the link target and checked
 					// it stays in the store; add the dereferenced target
-					const targetPath = await realpath(safe)
-					archive.file(targetPath, { name })
+					entries.push({ path: await realpath(safe), name })
 				}
 			} catch (e) {
 				// ignore unsafe or unreadable entries
 			}
 		}
 
-		await archive.finalize()
+		// set the archive name
+		res.attachment('zwave-js-ui-store.zip')
+		res.setHeader('Content-Type', 'application/zip')
+
+		try {
+			// use res as stream so I don't need to create a temp file
+			await streamZip(res, entries)
+			logger.debug('zip archive ready')
+		} catch (err) {
+			failDownload(res, 'Store download', err, () =>
+				res.status(500).send({
+					error: err.message,
+				}),
+			)
+		}
 	},
 )
 
@@ -2095,9 +2121,11 @@ app.get(
 		try {
 			await jsonStore.backup(res)
 		} catch (error) {
-			res.status(500).send({
-				error: error.message,
-			})
+			failDownload(res, 'Store backup download', error, () =>
+				res.status(500).send({
+					error: error.message,
+				}),
+			)
 		}
 	},
 )
@@ -2227,25 +2255,33 @@ app.post(
 				})
 			}
 
-			const nodeIds: number[] = req.body.nodeIds || []
-
-			const { archive, cleanup } = await debugManager.stopSession(nodeIds)
+			const nodeIds: unknown = req.body.nodeIds ?? []
+			// checked before the session is consumed, and node ids end up in zip entry names
+			if (!Array.isArray(nodeIds) || !nodeIds.every(Number.isInteger)) {
+				return res.json({
+					success: false,
+					message: 'nodeIds must be an array of integers',
+				})
+			}
 
 			const timestamp = new Date().toISOString().replace(/[:.]/g, '-')
 			res.attachment(`zwave-debug-${timestamp}.zip`)
 			res.setHeader('Content-Type', 'application/zip')
+			// a client that stops reading would otherwise pin the temp files forever;
+			// armed once the zip is piped in, so preparing the package doesn't count as idle
+			res.once('pipe', () =>
+				res.setTimeout(req.app.get('debugDownloadIdleTimeout'), () =>
+					res.destroy(new Error('Debug package download stalled')),
+				),
+			)
 
-			// Clean up temp files after the archive has been sent
-			archive.on('end', async () => {
-				await cleanup()
-			})
-
-			archive.pipe(res)
+			await debugManager.stopSession(nodeIds, res)
 		} catch (err) {
-			logger.error('Error stopping debug session:', err)
-			res.json({
-				success: false,
-				message: err.message,
+			failDownload(res, 'Debug package (capture discarded)', err, () => {
+				res.json({
+					success: false,
+					message: err.message,
+				})
 			})
 		}
 	},

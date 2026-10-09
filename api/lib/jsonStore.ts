@@ -3,10 +3,13 @@ import { storeBackupsDir, storeDir } from '../config/app.ts'
 import type { StoreFile, StoreKeys } from '../config/store.ts'
 import { module } from './logger.ts'
 import { recursive as merge } from 'merge'
-import archiver from 'archiver'
-import { createWriteStream, existsSync } from 'node:fs'
+import { createReadStream, createWriteStream, existsSync } from 'node:fs'
+import { readdir, rename, rm } from 'node:fs/promises'
+import { randomUUID } from 'node:crypto'
+import { pipeline } from 'node:stream/promises'
 import type { Response } from 'express'
 import { ensureDir, fileDate, joinPath } from './utils.ts'
+import { closeFileStream, streamZip, type ZipEntry } from './zip.ts'
 
 const logger = module('Store')
 
@@ -58,50 +61,44 @@ export class StorageHelper {
 
 		await ensureDir(storeBackupsDir)
 
-		const fileStream = createWriteStream(
-			joinPath(storeBackupsDir, backupFile),
-		)
+		const backupPath = joinPath(storeBackupsDir, backupFile)
 
-		return new Promise((resolve, reject) => {
-			const archive = archiver('zip')
+		// backup zwavejs files too
+		const entries: ZipEntry[] = (await readdir(storeDir))
+			.filter((file) => file.endsWith('.jsonl'))
+			.map((file) => ({ path: joinPath(storeDir, file), name: file }))
 
-			archive.on('error', (err) => {
-				reject(err)
-			})
-
-			// on stream closed we can end the request
-			archive.on('end', () => {
-				resolve(backupFile)
-			})
-
-			if (res) {
-				res.set({
-					'Content-Type': 'application/json',
-					'Content-Disposition': `attachment; filename="${backupFile}"`,
-				})
-
-				archive.pipe(res)
+		for (const model in this.config) {
+			const config: StoreFile = this.config[model]
+			const filePath = joinPath(storeDir, config.file)
+			if (existsSync(filePath)) {
+				entries.push({ path: filePath, name: config.file })
 			}
+		}
 
-			archive.pipe(fileStream)
+		// written in full before it is sent, so a dropped download can't truncate the copy on disk, and under
+		// a unique name until complete: same-second backups would share one file, and retention must not see a partial one
+		const tmpPath = joinPath(storeBackupsDir, `.tmp-${randomUUID()}.zip`)
+		const file = createWriteStream(tmpPath)
+		try {
+			await streamZip(file, entries)
+			await rename(tmpPath, backupPath)
+		} catch (error) {
+			await closeFileStream(file)
+			await rm(tmpPath, { force: true })
+			throw error
+		}
 
-			// backup zwavejs files too
-			archive.glob('*.jsonl', {
-				cwd: storeDir,
+		if (res) {
+			res.set({
+				'Content-Type': 'application/json',
+				'Content-Disposition': `attachment; filename="${backupFile}"`,
 			})
 
-			for (const model in this.config) {
-				const config: StoreFile = this.config[model]
-				const filePath = joinPath(storeDir, config.file)
-				if (existsSync(filePath)) {
-					archive.file(filePath, {
-						name: config.file,
-					})
-				}
-			}
+			await pipeline(createReadStream(backupPath), res)
+		}
 
-			void archive.finalize()
-		})
+		return backupFile
 	}
 
 	private async _getFile(config: StoreFile) {
