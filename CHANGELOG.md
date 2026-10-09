@@ -1,5 +1,15 @@
 # Changelog
 
+## [11.24.3](https://github.com/zwave-js/zwave-js-ui/compare/v11.24.2...v11.24.3) (2026-10-09)
+
+### ✨ Features
+
+* bump zwave-js@15.31.1 ([#4848](https://github.com/zwave-js/zwave-js-ui/issues/4848)) ([2a3a415](https://github.com/zwave-js/zwave-js-ui/commit/2a3a415d49ff9c1c1e3406badc77cd2dc38b21e0))
+
+### 🔧 Chores
+
+* **deps:** update dependency compression to v1.8.2 ([#4849](https://github.com/zwave-js/zwave-js-ui/issues/4849)) ([18cc89f](https://github.com/zwave-js/zwave-js-ui/commit/18cc89f7f92c8667d899d5fc9b5f6909272bcb50))
+
 ## [11.24.2](https://github.com/zwave-js/zwave-js-ui/compare/v11.24.1...v11.24.2) (2026-09-29)
 
 ### ✨ Features
