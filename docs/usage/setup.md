@@ -427,7 +427,7 @@ The external settings file should be a JSON file with the following structure:
 
 **Driver Presets** (driver-only):
 
-- `presets` (string[]): Array of preset names to apply (e.g., `["zniffer"]`)
+- `presets` (string[]): Array of preset names to apply (e.g., `["SAFE_MODE"]`). Presets are deep merged over the other settings, so a preset only overrides the options it sets.
 
 > [!NOTE]
 > Settings marked as "driver-only" are passed directly to the Z-Wave JS driver and have no corresponding UI configuration. They can only be configured through the external settings file.
