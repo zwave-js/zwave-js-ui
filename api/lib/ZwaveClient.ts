@@ -350,9 +350,14 @@ const observedCCProps: {
 		},
 	},
 	[CommandClasses['User Code']]: {
+		userCode(node) {
+			this.scheduleAccessControlRefresh(node.id)
+		},
 		userIdStatus(node, value) {
 			const userId = value.propertyKey as number
 			const status = value.value as UserIDStatus
+
+			this.scheduleAccessControlRefresh(node.id)
 
 			if (!node.userCodes) {
 				return
@@ -1728,6 +1733,31 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		}
 		node.accessControl = ac
 		this.emitNodeUpdate(node, { accessControl: ac })
+	}
+
+	/**
+	 * Re-read access control state, at most once every second.
+	 *
+	 * zwave-js only emits `user added/modified/deleted` from its high level
+	 * access control API and, for User Credential CC, from unsolicited reports.
+	 * User Code CC changes made through the raw CC API (Home Assistant's
+	 * `set_lock_usercode`, another controller, the keypad) surface as plain
+	 * value updates, so without this the Access Control tab keeps showing the
+	 * state read at interview time. Public because value observers are defined
+	 * outside the class.
+	 */
+	scheduleAccessControlRefresh(nodeId: number) {
+		// Values are also added during the interview, before the first read
+		if (!this._nodes.get(nodeId)?.accessControl?.supported) return
+
+		this.throttle(
+			'_refreshAccessControlState_' + nodeId,
+			() => {
+				const zwaveNode = this.getNode(nodeId)
+				if (zwaveNode) this._refreshAccessControlState(zwaveNode)
+			},
+			1000,
+		)
 	}
 
 	/** Returns the cached access-control state — call this from the UI as a primer. */
