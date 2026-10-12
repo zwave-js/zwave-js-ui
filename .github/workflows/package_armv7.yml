@@ -36,6 +36,8 @@ jobs:
           dockerRunArgs: |
             --volume "${PWD}:/app"
 
+          # Stuck on 22: Node.js ships no 32-bit ARM binaries from v24 on, so there is
+          # no arm32v7/node:24-* image to rebuild the native modules against (#4755).
           base_image: '--platform=linux/arm/v7 arm32v7/node:22-bullseye'
 
           # Rebuild .node modules for amv7

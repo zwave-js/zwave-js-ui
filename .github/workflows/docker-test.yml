@@ -14,7 +14,9 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        platforms: [linux/amd64, linux/arm64, linux/arm/v7]
+        # Same set docker-release.yml publishes: the 32-bit ARM legs are the ones
+        # that break on a Node bump (#4755), so they have to be built here.
+        platform: [linux/amd64, linux/arm64, linux/arm/v7, linux/arm/v6]
     steps:
       - uses: actions/checkout@v5
 
