@@ -135,6 +135,78 @@ describe('#Gateway', () => {
 		})
 	})
 
+	describe('#discoverValue() Configuration CC', () => {
+		const vId = '112-0-3'
+		const configValue = {
+			id: `1-${vId}`,
+			nodeId: 1,
+			commandClass: CommandClasses.Configuration,
+			endpoint: 0,
+			property: 3,
+			propertyName: 'LED mode',
+			type: 'number',
+			min: 0,
+			max: 5,
+			writeable: true,
+		} as unknown as ZUIValueId
+
+		const discover = (config: Record<string, any>) => {
+			const gateway = new Gateway(
+				{ type: 1, hassDiscovery: true, values: [], ...config },
+				{ homeHex: 'abcdef01' } as any,
+				{ disabled: false, getTopic: (t: string) => t } as any,
+			)
+			closeWatchers()
+			gateway['discovered'] = {}
+			const publish = vi
+				.spyOn(gateway, 'publishDiscovery')
+				.mockImplementation(() => {})
+			vi.spyOn(gateway, 'setDiscoveryAvailability').mockImplementation(
+				() => {},
+			)
+			const node = {
+				id: 1,
+				deviceId: 'dev-1',
+				name: 'switch',
+				ready: true,
+				values: { [vId]: configValue },
+				endpoints: [],
+				deviceClass: {},
+				hassDevices: {},
+			} as unknown as ZUINode
+			gateway.discoverValue(node, vId)
+			return publish.mock.calls[0][0].discovery_payload.enabled_by_default
+		}
+
+		const valueConf = (ccConfigEnableDiscovery: boolean) => ({
+			values: [
+				{
+					device: 'dev-1',
+					value: { id: vId },
+					ccConfigEnableDiscovery,
+				},
+			],
+		})
+
+		it('is disabled by default', () => {
+			expect(discover({})).to.equal(false)
+		})
+
+		it('follows the global setting', () => {
+			expect(discover({ ccConfigEnabledByDefault: true })).to.equal(true)
+		})
+
+		it('lets the per-value flag override the global setting', () => {
+			expect(
+				discover({
+					ccConfigEnabledByDefault: true,
+					...valueConf(false),
+				}),
+			).to.equal(false)
+			expect(discover(valueConf(true))).to.equal(true)
+		})
+	})
+
 	describe('#parsePayload()', () => {
 		const targetValue = (commandClass: CommandClasses) =>
 			({

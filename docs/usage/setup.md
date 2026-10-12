@@ -280,6 +280,7 @@ Enable this to use Z-Wave JS UI as only a Control Panel
 - **Discovery Prefix**: The prefix to use to send MQTT discovery messages to Home Assistant
 - **Retain Discovery**: Set retain flag to true in discovery messages
 - **Use node location as suggested area**: Adds the node `Location` to the Home Assistant MQTT discovery `device.suggested_area` field
+- **Enable Configuration CC entities**: Set `enabled_by_default: true` in the discovery payloads of Configuration CC entities, which are disabled by default. The per-value **Enable discovery** flag in [Gateway values](/usage/setup?id=gateway) overrides this. Home Assistant only applies it to entities it has not registered yet
 - **Manual Discovery**: Don't automatically send the discovery payloads when a device is discovered
 - **Entity name template**: Custom Entity name based on placeholders. Default is `%ln_%o`
   - `%ln`: Node location with name `<location-?><name>`
