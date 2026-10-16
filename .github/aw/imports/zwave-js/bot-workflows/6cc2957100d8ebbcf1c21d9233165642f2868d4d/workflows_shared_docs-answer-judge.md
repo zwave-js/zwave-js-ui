@@ -5,6 +5,9 @@ safe-outputs:
     post-docs-answer:
       description: "Post the verdict on whether the documentation excerpts answer the user's question. Call exactly once."
       runs-on: ubuntu-latest
+      # Custom safe-output jobs only wait for threat detection, they are not
+      # gated on its verdict
+      if: needs.detection.result == 'success'
       output: "Verdict recorded, the answer comment is posted separately."
       permissions:
         contents: read

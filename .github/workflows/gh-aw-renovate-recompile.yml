@@ -84,14 +84,14 @@ jobs:
       if: ${{ steps.decide.outputs.action == 'push' }}
       env:
         # A PAT, so the push retriggers CI on the PR
-        BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+        PUSH_TOKEN: ${{ secrets.BOT_WORKFLOW_UPDATE_TOKEN }}
         HEAD_REF: ${{ github.event.pull_request.head.ref }}
       run: |
         git config user.email "bot@zwave-js.io"
         git config user.name "Z-Wave JS Bot"
         # Read the PAT from the environment at push time, so it reaches
         # neither .git/config nor a process argument
-        git config credential.helper '!f() { echo username=x-access-token; echo "password=$BOT_TOKEN"; }; f'
+        git config credential.helper '!f() { echo username=x-access-token; echo "password=$PUSH_TOKEN"; }; f'
         git commit -am "chore: recompile gh-aw workflows"
         # Fails if the branch moved since the checkout, which is intended
         git push origin "HEAD:refs/heads/$HEAD_REF"

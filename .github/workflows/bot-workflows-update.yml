@@ -28,7 +28,7 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v7
       with:
-        # The push below authenticates explicitly with BOT_TOKEN; leave no
+        # The push below authenticates explicitly with its own token; leave no
         # ambient credential in .git/config
         persist-credentials: false
 
@@ -73,7 +73,7 @@ jobs:
 
     - name: Open a pull request
       env:
-        GH_TOKEN: ${{ secrets.BOT_TOKEN }}
+        GH_TOKEN: ${{ secrets.BOT_WORKFLOW_UPDATE_TOKEN }}
       run: |
         set -euo pipefail
         # git status also catches untracked files (a new workflow would
