@@ -10,7 +10,7 @@ on:
   roles: all
   steps:
   - name: Checkout repository
-    uses: actions/checkout@v7.0.1
+    uses: actions/checkout@v7
     with:
       persist-credentials: false
       sparse-checkout: .github
@@ -18,7 +18,7 @@ on:
     uses: zwave-js/bot-workflows/actions/setup-bot@v1
   - id: check
     name: Check whether this issue needs classification
-    uses: actions/github-script@v9.0.0
+    uses: actions/github-script@v9
     with:
       script: |
         const { excludedUsers } = require(`${process.env.BOT_SCRIPTS_DIR}/config.cjs`);
@@ -42,11 +42,12 @@ permissions:
 if: needs.pre_activation.outputs.gate_result == 'success'
 network: {}
 imports:
-- zwave-js/bot-workflows/workflows/shared/hardening.md@75148e07b701ca92e052212a9b7710864068ef6e
+- zwave-js/bot-workflows/workflows/shared/hardening.md@6cc2957100d8ebbcf1c21d9233165642f2868d4d
 safe-outputs:
   jobs:
     post-classification:
       description: Report whether the issue belongs to the UI or the driver repository. Call exactly once.
+      if: needs.detection.result == 'success'
       inputs:
         classification:
           description: "\"UI\" if the issue is about the UI, \"driver\" if it is about low-level driver functionality, \"unknown\" if uncertain."
@@ -58,14 +59,14 @@ safe-outputs:
       runs-on: ubuntu-latest
       steps:
       - name: Checkout repository
-        uses: actions/checkout@v7.0.1
+        uses: actions/checkout@v7
         with:
           persist-credentials: false
           sparse-checkout: .github
       - name: Set up bot scripts
         uses: zwave-js/bot-workflows/actions/setup-bot@v1
       - name: Give feedback
-        uses: actions/github-script@v9.0.0
+        uses: actions/github-script@v9
         with:
           github-token: ${{ secrets.BOT_TOKEN }}
           script: |
@@ -76,7 +77,7 @@ engine:
   id: copilot
   max-turns: 5
 model: gpt-5.6-luna
-source: zwave-js/bot-workflows/workflows/classify-issue-repo.md@34a23a27c19b765f304318e730221e400bbd2848
+source: zwave-js/bot-workflows/workflows/classify-issue-repo.md@124f3a48e884febf74a2abbe457ad76b3c7e901d
 timeout-minutes: 10
 ---
 # Issue Classification

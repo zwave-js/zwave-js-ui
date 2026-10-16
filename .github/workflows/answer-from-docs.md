@@ -17,7 +17,7 @@ on:
   roles: all
   steps:
   - name: Checkout repository
-    uses: actions/checkout@v7.0.1
+    uses: actions/checkout@v6
     with:
       persist-credentials: false
   - id: docs-index
@@ -33,7 +33,7 @@ on:
       github-token: ${{ github.token }}
       index: posts
   - name: Restore answer feedback
-    uses: actions/cache/restore@v6.1.0
+    uses: actions/cache/restore@v6
     with:
       key: docs-feedback-v2-
       path: .docs-feedback/feedback.json
@@ -76,7 +76,7 @@ on:
       POSTS_INDEX_PATH: .posts-index/index.json
     id: prepare
     name: Prepare docs answer
-    uses: actions/github-script@v9.0.0
+    uses: actions/github-script@v9
     with:
       github-token: ${{ secrets.BOT_TOKEN }}
       script: |
@@ -85,7 +85,7 @@ on:
         core.setOutput("shouldContinue", shouldContinue ? "true" : "false");
   - if: steps.prepare.outputs.shouldContinue == 'true'
     name: Upload handoff for the judge
-    uses: actions/upload-artifact@v7.0.1
+    uses: actions/upload-artifact@v7
     with:
       name: docs-answer-handoff
       overwrite: true
@@ -100,13 +100,13 @@ permissions:
 if: needs.pre_activation.outputs.gate_result == 'success'
 network: {}
 imports:
-- zwave-js/bot-workflows/workflows/shared/hardening.md@75148e07b701ca92e052212a9b7710864068ef6e
-- zwave-js/bot-workflows/workflows/shared/docs-answer-judge.md@75148e07b701ca92e052212a9b7710864068ef6e
+- zwave-js/bot-workflows/workflows/shared/hardening.md@6cc2957100d8ebbcf1c21d9233165642f2868d4d
+- zwave-js/bot-workflows/workflows/shared/docs-answer-judge.md@6cc2957100d8ebbcf1c21d9233165642f2868d4d
 safe-outputs:
   timeout-minutes: 10
 steps:
 - name: Download handoff
-  uses: actions/download-artifact@v8.0.1
+  uses: actions/download-artifact@v8
   with:
     name: docs-answer-handoff
     path: /tmp/gh-aw/agent/
@@ -116,7 +116,7 @@ engine:
   max-turns: 5
 model: claude-sonnet-5
 runs-on-slim: ubuntu-latest
-source: zwave-js/bot-workflows/workflows/answer-from-docs.md@34a23a27c19b765f304318e730221e400bbd2848
+source: zwave-js/bot-workflows/workflows/answer-from-docs.md@124f3a48e884febf74a2abbe457ad76b3c7e901d
 timeout-minutes: 15
 ---
 Follow the Documentation Answer Judge instructions below.
