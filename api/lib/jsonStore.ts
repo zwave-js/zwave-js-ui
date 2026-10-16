@@ -1,5 +1,5 @@
 import jsonFile from 'jsonfile'
-import { storeBackupsDir, storeDir } from '../config/app.ts'
+import { floorPlansDir, storeBackupsDir, storeDir } from '../config/app.ts'
 import type { StoreFile, StoreKeys } from '../config/store.ts'
 import { module } from './logger.ts'
 import { recursive as merge } from 'merge'
@@ -89,6 +89,11 @@ export class StorageHelper {
 			archive.glob('*.jsonl', {
 				cwd: storeDir,
 			})
+
+			// floorplan maps and their background images
+			if (existsSync(floorPlansDir)) {
+				archive.directory(floorPlansDir, 'floorplans')
+			}
 
 			for (const model in this.config) {
 				const config: StoreFile = this.config[model]
