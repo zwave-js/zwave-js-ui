@@ -163,6 +163,9 @@ export default {
 		'set-nodes',
 		// { center, zoom, layers }
 		'view-change',
+		// the placeholder placement
+		'placeholder-link',
+		'placeholder-delete',
 	],
 	computed: {
 		/** broadcast and multicast nodes aren't part of the mesh, as in the graph */
@@ -339,24 +342,38 @@ export default {
 				})
 			}, 800)
 		},
-		/** right-click on a placed node: a menu, nothing changes until it's used */
-		openNodeMenu(node, marker) {
+		/**
+		 * A right-click menu at a marker: `items` are [label, action] pairs.
+		 * Nothing changes until an item is used.
+		 */
+		openMenu(marker, heading, items) {
 			const box = document.createElement('div')
 			const title = document.createElement('div')
 			title.className = 'text-subtitle-2 mb-1'
-			title.textContent = labelOf(node)
-			const remove = document.createElement('button')
-			remove.className = 'floorplan-menu-btn'
-			remove.textContent = 'Remove from this map'
-			remove.onclick = () => {
-				this.lmap.closePopup()
-				this.$emit('unplace', this.keyOf(node))
+			title.textContent = heading
+			box.append(title)
+			for (const [label, action] of items) {
+				const btn = document.createElement('button')
+				btn.className = 'floorplan-menu-btn'
+				btn.textContent = label
+				btn.onclick = () => {
+					this.lmap.closePopup()
+					action()
+				}
+				box.append(btn)
 			}
-			box.append(title, remove)
 			L.popup({ offset: [0, -10] })
 				.setLatLng(marker.getLatLng())
 				.setContent(box)
 				.openOn(this.lmap)
+		},
+		openNodeMenu(node, marker) {
+			this.openMenu(marker, labelOf(node), [
+				[
+					'Remove from this map',
+					() => this.$emit('unplace', this.keyOf(node)),
+				],
+			])
 		},
 		onResize() {
 			this.lmap?.invalidateSize()
@@ -722,7 +739,10 @@ export default {
 					.filter(Boolean)
 					.map(esc)
 					.join(' · ')
-				L.marker(this.toLatLng(p.x, p.y), {
+				const hint = this.editing
+					? 'right-click to link it to a node'
+					: 'use Edit to link it to a node'
+				const marker = L.marker(this.toLatLng(p.x, p.y), {
 					keyboard: false,
 					icon: L.divIcon({
 						className: 'floorplan-node floorplan-placeholder',
@@ -732,10 +752,25 @@ export default {
 					}),
 				})
 					.bindTooltip(
-						`<b>${esc(label)}</b>${detail ? `<br>${detail}` : ''}<br>Imported position, not linked to a node yet`,
+						`<b>${esc(label)}</b>${detail ? `<br>${detail}` : ''}<br>Imported position, not linked to a node yet<br><span class="muted">${hint}</span>`,
 						{ direction: 'top', offset: [0, -10] },
 					)
 					.addTo(this.groups.nodes)
+				if (this.editing) {
+					marker.on('contextmenu', (e) => {
+						L.DomEvent.preventDefault(e.originalEvent)
+						this.openMenu(marker, label, [
+							[
+								'Link to a node…',
+								() => this.$emit('placeholder-link', p),
+							],
+							[
+								'Delete placeholder',
+								() => this.$emit('placeholder-delete', p),
+							],
+						])
+					})
+				}
 			}
 		},
 	},

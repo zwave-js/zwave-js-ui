@@ -318,6 +318,40 @@ export default {
 		)
 		return response.data
 	},
+	/** the export file of the given maps (all when empty) */
+	async exportFloorPlans(mapIds = []) {
+		const response = await request.get('/floorplans/export', {
+			params: mapIds.length ? { maps: mapIds.join(',') } : {},
+		})
+		return response.data
+	},
+	/** upload an export file: proposed node matches and a token for commit */
+	async previewFloorPlanImport(file) {
+		const form = new FormData()
+		form.append('upload', file)
+		const response = await request.post('/floorplans/import/preview', form)
+		return response.data
+	},
+	async commitFloorPlanImport(token, matches) {
+		const response = await request.post('/floorplans/import/commit', {
+			token,
+			matches,
+		})
+		return response.data
+	},
+	async linkFloorPlanPlaceholder(id, placeholderId, deviceKey) {
+		const response = await request.put(
+			`/floorplans/maps/${id}/placeholders/${placeholderId}`,
+			{ deviceKey },
+		)
+		return response.data
+	},
+	async removeFloorPlanPlaceholder(id, placeholderId) {
+		const response = await request.delete(
+			`/floorplans/maps/${id}/placeholders/${placeholderId}`,
+		)
+		return response.data
+	},
 	async removeFloorPlanPlacement(id, deviceKey) {
 		const response = await request.delete(
 			`/floorplans/maps/${id}/placements/${encodeURIComponent(deviceKey)}`,
