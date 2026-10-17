@@ -1,9 +1,11 @@
+import { existsSync } from 'node:fs'
 import { mkdtemp, rm, writeFile } from 'node:fs/promises'
 import type { Server as HttpServer } from 'node:http'
 import { createServer } from 'node:http'
 import type { AddressInfo } from 'node:net'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
+import extract from 'extract-zip'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 
 // Set before the app config module loads
@@ -228,6 +230,30 @@ describe('floorplans API', () => {
 			success: false,
 			message: expect.stringMatching(/expired/),
 		})
+	})
+
+	it('includes floorplans in the store backup unless asked not to', async () => {
+		await api('POST', '/maps', { name: 'Backed up' })
+		const unzip = async (query: string) => {
+			// like the UI's axios: without application/json the history
+			// fallback takes the request
+			const res = await fetch(`${url}/api/store/backup${query}`, {
+				headers: { Accept: 'application/json, text/plain, */*' },
+			})
+			expect(res.status).toBe(200)
+			const zip = join(testStoreDir, `t${query.length}.zip`)
+			await writeFile(zip, Buffer.from(await res.arrayBuffer()))
+			const dir = await mkdtemp(join(tmpdir(), 'zui-backup-'))
+			await extract(zip, { dir })
+			return dir
+		}
+		const full = await unzip('')
+		expect(existsSync(join(full, 'floorplans', 'maps.json'))).toBe(true)
+		const without = await unzip('?floorPlans=false')
+		expect(existsSync(join(without, 'floorplans'))).toBe(false)
+		expect(existsSync(join(without, 'settings.json'))).toBe(true)
+		await rm(full, { recursive: true, force: true })
+		await rm(without, { recursive: true, force: true })
 	})
 
 	it('requires login when auth is enabled', async () => {

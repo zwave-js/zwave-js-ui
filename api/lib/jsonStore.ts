@@ -53,7 +53,11 @@ export class StorageHelper {
 		return this._store
 	}
 
-	async backup(res?: Response): Promise<string> {
+	/** Zip the store files; `floorPlans: false` leaves the floorplans out */
+	async backup(
+		res?: Response,
+		{ floorPlans = true }: { floorPlans?: boolean } = {},
+	): Promise<string> {
 		const backupFile = `${STORE_BACKUP_PREFIX}${fileDate()}.zip`
 
 		await ensureDir(storeBackupsDir)
@@ -91,7 +95,7 @@ export class StorageHelper {
 			})
 
 			// floorplan maps and their background images
-			if (existsSync(floorPlansDir)) {
+			if (floorPlans && existsSync(floorPlansDir)) {
 				archive.directory(floorPlansDir, 'floorplans')
 			}
 

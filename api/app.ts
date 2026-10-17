@@ -2115,7 +2115,9 @@ app.get(
 	isAuthenticated,
 	async function (req, res) {
 		try {
-			await jsonStore.backup(res)
+			await jsonStore.backup(res, {
+				floorPlans: req.query.floorPlans !== 'false',
+			})
 		} catch (error) {
 			res.status(500).send({
 				error: error.message,

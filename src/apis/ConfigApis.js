@@ -151,8 +151,11 @@ export default {
 	downloadZip(files) {
 		return request.post('/store-multi', { files }, { responseType: 'blob' })
 	},
-	backupStore() {
-		return request.get('/store/backup', { responseType: 'blob' })
+	backupStore(floorPlans = true) {
+		return request.get('/store/backup', {
+			responseType: 'blob',
+			params: floorPlans ? {} : { floorPlans: false },
+		})
 	},
 	async deleteMultiple(files) {
 		const response = await request.put('/store-multi', { files })
