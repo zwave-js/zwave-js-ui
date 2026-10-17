@@ -15,7 +15,7 @@ import MqttClient from './lib/MqttClient.ts'
 import SocketManager from './lib/SocketManager.ts'
 import type { CallAPIResult, ZwaveConfig } from './lib/ZwaveClient.ts'
 import ZWaveClient from './lib/ZwaveClient.ts'
-import multer, { diskStorage } from 'multer'
+import multer, { diskStorage, memoryStorage } from 'multer'
 import extract from 'extract-zip'
 import { serverVersion } from '@zwave-js/server'
 import archiver from 'archiver'
@@ -49,6 +49,7 @@ import {
 } from './lib/SocketEvents.ts'
 import * as utils from './lib/utils.ts'
 import backupManager from './lib/BackupManager.ts'
+import floorPlans, { MAX_IMAGE_BYTES } from './lib/FloorPlans.ts'
 import {
 	getExternallyManagedPaths,
 	loadExternalSettings,
@@ -119,6 +120,13 @@ const Storage = diskStorage({
 const multerUpload = multer({
 	storage: Storage,
 }).array('upload', 1) // Field name and max count
+
+// floorplan background images are kept in memory: they are sniffed and size
+// checked before anything is written to the store
+const floorPlanImageUpload = multer({
+	storage: memoryStorage(),
+	limits: { fileSize: MAX_IMAGE_BYTES, files: 1 },
+}).single('upload')
 
 const FileStore = sessionStore(session)
 const app = express()
@@ -2150,6 +2158,211 @@ app.post(
 
 		if (file && isRestore) {
 			await rm(file.path)
+		}
+	},
+)
+
+// -------- Floorplans API --------
+
+/** Run a floorplans handler and reply with the usual `{ success, data }` shape */
+function floorPlansRoute(
+	handler: (req: Request, res: Response) => Promise<unknown>,
+) {
+	return async function (req: Request, res: Response) {
+		try {
+			res.json({ success: true, data: await handler(req, res) })
+		} catch (error) {
+			res.json({ success: false, message: error.message })
+		}
+	}
+}
+
+/**
+ * Identity snapshot of a node, stored with its placement so the position can
+ * be relinked if the node is re-included under a new ID
+ */
+function floorPlanSeen(deviceKey: unknown) {
+	if (typeof deviceKey !== 'string') return undefined
+	const [, home, id] = deviceKey.split(':')
+	const zwave = gw?.zwave
+	if (!zwave?.homeHex || home !== zwave.homeHex.replace(/^0x/, '')) {
+		return undefined
+	}
+	const node = zwave.nodes.get(Number(id))
+	return node ? { name: node.name, deviceId: node.deviceId } : undefined
+}
+
+app.get(
+	'/api/floorplans',
+	apisLimiter,
+	isAuthenticated,
+	floorPlansRoute(() => floorPlans.load()),
+)
+
+app.patch(
+	'/api/floorplans/settings',
+	apisLimiter,
+	isAuthenticated,
+	floorPlansRoute((req) => floorPlans.updateSettings(req.body ?? {})),
+)
+
+app.post(
+	'/api/floorplans/maps',
+	apisLimiter,
+	isAuthenticated,
+	floorPlansRoute((req) => floorPlans.addMap(req.body ?? {})),
+)
+
+app.patch(
+	'/api/floorplans/maps/:id',
+	apisLimiter,
+	isAuthenticated,
+	floorPlansRoute((req) => floorPlans.updateMap(req.params.id, req.body)),
+)
+
+app.delete(
+	'/api/floorplans/maps/:id',
+	apisLimiter,
+	isAuthenticated,
+	floorPlansRoute((req) => floorPlans.deleteMap(req.params.id)),
+)
+
+// multipart: `upload` file, optional `variant` (light|dark) and the
+// browser-decoded `imgWidthPx`/`imgHeightPx`, used if the header can't be read
+app.put(
+	'/api/floorplans/maps/:id/image',
+	apisLimiter,
+	isAuthenticated,
+	floorPlansRoute(async (req, res) => {
+		await multerPromise(floorPlanImageUpload, req, res)
+		if (!req.file) throw Error('No file uploaded')
+		return floorPlans.setMapImage(req.params.id, {
+			bytes: req.file.buffer,
+			imgWidthPx: Number(req.body.imgWidthPx),
+			imgHeightPx: Number(req.body.imgHeightPx),
+			variant: req.body.variant === 'dark' ? 'dark' : 'light',
+		})
+	}),
+)
+
+// ?variant=dark unsets only the dark version
+app.delete(
+	'/api/floorplans/maps/:id/image',
+	apisLimiter,
+	isAuthenticated,
+	floorPlansRoute((req) =>
+		floorPlans.removeMapImage(
+			req.params.id,
+			req.query.variant === 'dark' ? 'dark' : 'all',
+		),
+	),
+)
+
+// body: { deviceKey, x, y }
+app.put(
+	'/api/floorplans/maps/:id/placements',
+	apisLimiter,
+	isAuthenticated,
+	floorPlansRoute((req) => {
+		const { deviceKey, x, y } = req.body ?? {}
+		return floorPlans.setPlacement(req.params.id, {
+			deviceKey,
+			x,
+			y,
+			seen: floorPlanSeen(deviceKey),
+		})
+	}),
+)
+
+app.delete(
+	'/api/floorplans/maps/:id/placements/:deviceKey',
+	apisLimiter,
+	isAuthenticated,
+	floorPlansRoute((req) =>
+		floorPlans.removePlacement(req.params.id, req.params.deviceKey),
+	),
+)
+
+// link an imported placeholder to a node, body: { deviceKey }
+app.put(
+	'/api/floorplans/maps/:id/placeholders/:phId',
+	apisLimiter,
+	isAuthenticated,
+	floorPlansRoute((req) => {
+		const deviceKey = req.body?.deviceKey
+		return floorPlans.linkPlaceholder(
+			req.params.id,
+			req.params.phId,
+			deviceKey,
+			floorPlanSeen(deviceKey),
+		)
+	}),
+)
+
+app.delete(
+	'/api/floorplans/maps/:id/placeholders/:phId',
+	apisLimiter,
+	isAuthenticated,
+	floorPlansRoute((req) =>
+		floorPlans.removePlaceholder(req.params.id, req.params.phId),
+	),
+)
+
+// image files no background references (e.g. after a store restore)
+app.get(
+	'/api/floorplans/orphans',
+	apisLimiter,
+	isAuthenticated,
+	floorPlansRoute(() => floorPlans.findOrphans()),
+)
+
+// body: { names: string[] }
+app.delete(
+	'/api/floorplans/orphans',
+	apisLimiter,
+	isAuthenticated,
+	floorPlansRoute((req) => {
+		const names = req.body?.names
+		if (!Array.isArray(names)) throw Error('names must be a list')
+		return floorPlans.deleteOrphans(names.map(String))
+	}),
+)
+
+// Background image file. Served by file name: the dot keeps the history
+// fallback from rewriting browser image requests (Accept: */*), and a
+// replaced image always gets a new name, so it can be cached.
+app.get(
+	'/api/floorplans/images/:file',
+	apisLimiter,
+	isAuthenticated,
+	async function (req, res) {
+		try {
+			const { backgrounds } = await floorPlans.load()
+			const file = req.params.file
+			const owned = backgrounds.some(
+				(b) => b.image === file || b.imageDark === file,
+			)
+			if (!owned) {
+				return res.status(404).json({
+					success: false,
+					message: 'No such image',
+				})
+			}
+			res.set({
+				'Cache-Control': 'private, max-age=31536000, immutable',
+				'X-Content-Type-Options': 'nosniff',
+			})
+			// referenced but missing on disk, e.g. after a partial restore
+			res.sendFile(file, { root: floorPlans.imagesDir }, (err) => {
+				if (err && !res.headersSent) {
+					res.status(404).json({
+						success: false,
+						message: 'No such image',
+					})
+				}
+			})
+		} catch (error) {
+			res.status(500).json({ success: false, message: error.message })
 		}
 	},
 )
