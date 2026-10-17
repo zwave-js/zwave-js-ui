@@ -12,6 +12,7 @@ export const storeDir: string = process.env.STORE_DIR || joinPath(true, 'store')
 export const logsDir: string =
 	process.env.ZWAVEJS_LOGS_DIR || joinPath(storeDir, 'logs')
 export const snippetsDir: string = joinPath(storeDir, 'snippets')
+export const floorPlansDir: string = joinPath(storeDir, 'floorplans')
 
 export const tmpDir: string = joinPath(storeDir, '.tmp')
 export const backupsDir: string =

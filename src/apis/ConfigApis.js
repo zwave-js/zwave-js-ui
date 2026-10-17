@@ -35,6 +35,11 @@ const request = {
 		const response = await axios.post(...args)
 		return responseHandler(response)
 	},
+	async patch(...args) {
+		log.debug('Request', ...args)
+		const response = await axios.patch(...args)
+		return responseHandler(response)
+	},
 	async delete(...args) {
 		log.debug('Request', ...args)
 		const response = await axios.delete(...args)
@@ -151,8 +156,11 @@ export default {
 	downloadZip(files) {
 		return request.post('/store-multi', { files }, { responseType: 'blob' })
 	},
-	backupStore() {
-		return request.get('/store/backup', { responseType: 'blob' })
+	backupStore(floorPlans = true) {
+		return request.get('/store/backup', {
+			responseType: 'blob',
+			params: floorPlans ? {} : { floorPlans: false },
+		})
 	},
 	async deleteMultiple(files) {
 		const response = await request.put('/store-multi', { files })
@@ -254,5 +262,115 @@ export default {
 			`/configuration-templates/device-params/${deviceId}`,
 		)
 		return response.data
+	},
+	// ---- FLOORPLANS ------
+	async getFloorPlans() {
+		const response = await request.get('/floorplans')
+		return response.data
+	},
+	async addFloorPlanMap(data) {
+		const response = await request.post('/floorplans/maps', data)
+		return response.data
+	},
+	async updateFloorPlanSettings(data) {
+		const response = await request.patch('/floorplans/settings', data)
+		return response.data
+	},
+	async updateFloorPlanMap(id, changes) {
+		const response = await request.patch(`/floorplans/maps/${id}`, changes)
+		return response.data
+	},
+	async deleteFloorPlanMap(id) {
+		const response = await request.delete(`/floorplans/maps/${id}`)
+		return response.data
+	},
+	/** `size` is the browser-decoded { width, height }, used if the server can't read it */
+	async setFloorPlanImage(id, file, variant = 'light', size = null) {
+		const form = new FormData()
+		form.append('upload', file)
+		form.append('variant', variant)
+		if (size) {
+			form.append('imgWidthPx', size.width)
+			form.append('imgHeightPx', size.height)
+		}
+		const response = await request.put(`/floorplans/maps/${id}/image`, form)
+		return response.data
+	},
+	/** variant 'dark' removes only the dark version, 'all' the background */
+	async removeFloorPlanImage(id, variant = 'all') {
+		const response = await request.delete(`/floorplans/maps/${id}/image`, {
+			params: variant === 'dark' ? { variant } : {},
+		})
+		return response.data
+	},
+	async setFloorPlanPlacement(id, placement) {
+		const response = await request.put(
+			`/floorplans/maps/${id}/placements`,
+			placement,
+		)
+		return response.data
+	},
+	/** several placements in one write */
+	async setFloorPlanPlacements(id, placements) {
+		const response = await request.put(
+			`/floorplans/maps/${id}/placements`,
+			{ placements },
+		)
+		return response.data
+	},
+	/** background image files no map uses, e.g. left by a store restore */
+	async getFloorPlanOrphans() {
+		const response = await request.get('/floorplans/orphans')
+		return response.data
+	},
+	async deleteFloorPlanOrphans(names) {
+		const response = await request.delete('/floorplans/orphans', {
+			data: { names },
+		})
+		return response.data
+	},
+	/** the export file of the given maps (all when empty) */
+	async exportFloorPlans(mapIds = []) {
+		const response = await request.get('/floorplans/export', {
+			params: mapIds.length ? { maps: mapIds.join(',') } : {},
+		})
+		return response.data
+	},
+	/** upload an export file: proposed node matches and a token for commit */
+	async previewFloorPlanImport(file) {
+		const form = new FormData()
+		form.append('upload', file)
+		const response = await request.post('/floorplans/import/preview', form)
+		return response.data
+	},
+	async commitFloorPlanImport(token, matches) {
+		const response = await request.post('/floorplans/import/commit', {
+			token,
+			matches,
+		})
+		return response.data
+	},
+	async linkFloorPlanPlaceholder(id, placeholderId, deviceKey) {
+		const response = await request.put(
+			`/floorplans/maps/${id}/placeholders/${placeholderId}`,
+			{ deviceKey },
+		)
+		return response.data
+	},
+	async removeFloorPlanPlaceholder(id, placeholderId) {
+		const response = await request.delete(
+			`/floorplans/maps/${id}/placeholders/${placeholderId}`,
+		)
+		return response.data
+	},
+	async removeFloorPlanPlacement(id, deviceKey) {
+		const response = await request.delete(
+			`/floorplans/maps/${id}/placements/${encodeURIComponent(deviceKey)}`,
+		)
+		return response.data
+	},
+	/** URL of a background image file, for <img> and map overlays */
+	floorPlanImageUrl(file) {
+		return `${axios.defaults.baseURL}/floorplans/images/${encodeURIComponent(file)}`
 	},
 }
