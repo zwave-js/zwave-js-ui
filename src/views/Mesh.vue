@@ -11,6 +11,21 @@
 				<v-btn value="graph" prepend-icon="hub">Graph</v-btn>
 				<v-btn value="map" prepend-icon="map">Floorplan</v-btn>
 			</v-btn-toggle>
+			<v-btn
+				variant="outlined"
+				prepend-icon="cell_tower"
+				:loading="refreshingNeighbors"
+				:disabled="neighborsCooldown > 0"
+				v-tooltip:bottom="
+					'Read every node\'s neighbor table, for neighbor lines and health checks'
+				"
+				@click="refreshNeighbors"
+				>{{
+					neighborsCooldown
+						? `Refresh neighbors (${neighborsCooldown}s)`
+						: 'Refresh neighbors'
+				}}</v-btn
+			>
 			<v-select
 				v-if="mode === 'map' && floorPlans.maps.length"
 				v-model="mapId"
@@ -382,6 +397,9 @@ export default {
 			orphansChecked: false,
 			orphansKept: false,
 			showOrphanFiles: false,
+			refreshingNeighbors: false,
+			// seconds until the next whole-mesh refresh is allowed
+			neighborsCooldown: 0,
 		}
 	},
 	async mounted() {
@@ -392,6 +410,9 @@ export default {
 			this.autoMode = true
 			this.mode = 'map'
 		}
+	},
+	beforeUnmount() {
+		clearInterval(this.cooldownTimer)
 	},
 	watch: {
 		mode(v) {
@@ -416,6 +437,43 @@ export default {
 	},
 	methods: {
 		...mapActions(useBaseStore, ['setNeighbors']),
+		async refreshNeighbors() {
+			const ok = await this.app.confirm(
+				'Refresh neighbors',
+				"Reads every node's neighbor table from the controller. The radio is off while this runs (a few seconds on most networks), and it can be done once a minute.",
+				'info',
+				{ confirmText: 'Refresh', width: 450 },
+			)
+			if (!ok) return
+			this.refreshingNeighbors = true
+			try {
+				const res = await this.app.apiRequest('refreshNeighbors', [], {
+					infoSnack: false,
+					errorSnack: true,
+				})
+				if (res.success) {
+					this.setNeighbors(res.result)
+					const n = Object.keys(res.result).length
+					this.showSnackbar(
+						`Neighbor tables refreshed for ${n} node${n === 1 ? '' : 's'}`,
+						'success',
+					)
+				}
+			} finally {
+				this.refreshingNeighbors = false
+				// the server holds the lock for 60 s even when it failed
+				this.startNeighborsCooldown()
+			}
+		},
+		startNeighborsCooldown() {
+			clearInterval(this.cooldownTimer)
+			this.neighborsCooldown = 60
+			this.cooldownTimer = setInterval(() => {
+				if (--this.neighborsCooldown <= 0) {
+					clearInterval(this.cooldownTimer)
+				}
+			}, 1000)
+		},
 		async loadFloorPlans() {
 			try {
 				const res = await ConfigApis.getFloorPlans()
