@@ -51,6 +51,15 @@ import * as utils from './lib/utils.ts'
 import backupManager from './lib/BackupManager.ts'
 import floorPlans, { MAX_IMAGE_BYTES } from './lib/FloorPlans.ts'
 import {
+	ImportHolds,
+	MAX_FILE_BYTES as MAX_FLOOR_PLAN_FILE_BYTES,
+	buildExport,
+	exportFileName,
+	localNodes,
+	parseImport,
+	proposeMatches,
+} from './lib/FloorPlanExchange.ts'
+import {
 	getExternallyManagedPaths,
 	loadExternalSettings,
 	mergeExternalSettings,
@@ -126,6 +135,11 @@ const multerUpload = multer({
 const floorPlanImageUpload = multer({
 	storage: memoryStorage(),
 	limits: { fileSize: MAX_IMAGE_BYTES, files: 1 },
+}).single('upload')
+
+const floorPlanFileUpload = multer({
+	storage: memoryStorage(),
+	limits: { fileSize: MAX_FLOOR_PLAN_FILE_BYTES, files: 1 },
 }).single('upload')
 
 const FileStore = sessionStore(session)
@@ -2182,15 +2196,16 @@ function floorPlansRoute(
  * be relinked if the node is re-included under a new ID
  */
 function floorPlanSeen(deviceKey: unknown) {
-	if (typeof deviceKey !== 'string') return undefined
-	const [, home, id] = deviceKey.split(':')
-	const zwave = gw?.zwave
-	if (!zwave?.homeHex || home !== zwave.homeHex.replace(/^0x/, '')) {
-		return undefined
-	}
-	const node = zwave.nodes.get(Number(id))
+	const node = localNodes(gw?.zwave).find((n) => n.key === deviceKey)
 	return node ? { name: node.name, deviceId: node.deviceId } : undefined
 }
+
+/** Home ID of the running network, hex without 0x, or null */
+function floorPlanHome() {
+	return gw?.zwave?.homeHex?.replace(/^0x/, '') || null
+}
+
+const floorPlanImports = new ImportHolds()
 
 app.get(
 	'/api/floorplans',
@@ -2325,6 +2340,90 @@ app.delete(
 		const names = req.body?.names
 		if (!Array.isArray(names)) throw Error('names must be a list')
 		return floorPlans.deleteOrphans(names.map(String))
+	}),
+)
+
+// ?maps=id1,id2 (default: all maps). The UI saves it under a name the user picks.
+app.get(
+	'/api/floorplans/export',
+	apisLimiter,
+	isAuthenticated,
+	async function (req, res) {
+		try {
+			const ids =
+				typeof req.query.maps === 'string' && req.query.maps
+					? req.query.maps.split(',')
+					: null
+			const out = await buildExport({
+				data: await floorPlans.load(),
+				mapIds: ids,
+				nodes: localNodes(gw?.zwave),
+				imagesDir: floorPlans.imagesDir,
+				homeId: floorPlanHome(),
+				appVersion: utils.getVersion(),
+			})
+			res.set(
+				'Content-Disposition',
+				`attachment; filename="${exportFileName()}"`,
+			)
+			res.json(out)
+		} catch (error) {
+			res.json({ success: false, message: error.message })
+		}
+	},
+)
+
+// Import, step 1: multipart `upload` file. Returns proposed matches and a
+// token for the commit step; nothing is written yet.
+app.post(
+	'/api/floorplans/import/preview',
+	apisLimiter,
+	isAuthenticated,
+	floorPlansRoute(async (req, res) => {
+		await multerPromise(floorPlanFileUpload, req, res)
+		if (!req.file) throw Error('No file uploaded')
+		const file = parseImport(req.file.buffer)
+		const nodes = localNodes(gw?.zwave)
+		const proposals = proposeMatches(file.nodes, nodes, floorPlanHome())
+		return {
+			token: floorPlanImports.hold(file),
+			source: file.source,
+			exportedAt: file.exportedAt,
+			maps: file.maps.map((m) => {
+				const bg = file.backgrounds.find(
+					(b) => b.ref === m.background?.ref,
+				)
+				return {
+					name: m.name,
+					widthPx: m.widthPx,
+					heightPx: m.heightPx,
+					placements: m.placements.length,
+					hasImage: !!bg?.image,
+					hasDarkImage: !!bg?.imageDark,
+				}
+			}),
+			entries: file.nodes.map((e) => ({ ...e, ...proposals[e.ref] })),
+			nodes,
+		}
+	}),
+)
+
+// Import, step 2. body: { token, matches: { [ref]: deviceKey | null } }.
+// Adds new maps, never overwrites existing ones.
+app.post(
+	'/api/floorplans/import/commit',
+	apisLimiter,
+	isAuthenticated,
+	floorPlansRoute(async (req) => {
+		const { token, matches } = req.body ?? {}
+		const file = floorPlanImports.get(token)
+		const result = await floorPlans.importMaps(
+			file,
+			matches,
+			localNodes(gw?.zwave),
+		)
+		floorPlanImports.release(token)
+		return result
 	}),
 )
 

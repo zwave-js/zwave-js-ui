@@ -19,6 +19,7 @@ import {
 } from 'node:fs/promises'
 import path from 'node:path'
 import { floorPlansDir } from '../config/app.ts'
+import type { ParsedImport } from './FloorPlanExchange.ts'
 import { module } from './logger.ts'
 
 const logger = module('FloorPlans')
@@ -758,6 +759,149 @@ export class FloorPlans {
 			if (map.placements.length === before) {
 				throw Error('No such placeholder')
 			}
+		})
+	}
+
+	// ------------------------------------------------------------- import
+
+	/**
+	 * Add the maps of a parsed export file (FloorPlanExchange.parseImport),
+	 * given the user's decision for every node entry: a device key, or null
+	 * to keep the position as a placeholder. Never overwrites: a taken name
+	 * gets " (imported)", then " (imported 2)" and so on. `nodes` (this
+	 * network's) supply the identity snapshots of linked placements.
+	 */
+	async importMaps(
+		file: ParsedImport,
+		matches: Record<string, string | null>,
+		nodes: { key: string; name?: string; deviceId?: string }[] = [],
+	) {
+		if (!matches || typeof matches !== 'object') {
+			throw Error(
+				'matches must map each node ref to a device key or null',
+			)
+		}
+		const used = new Set<string>()
+		for (const e of file.nodes) {
+			const label = e.name ?? e.ref
+			if (!Object.hasOwn(matches, e.ref)) {
+				throw Error(`No decision for "${label}"`)
+			}
+			const key = matches[e.ref]
+			if (key === null) continue
+			if (typeof key !== 'string' || !DEVICE_KEY.test(key)) {
+				throw Error(`Bad device for "${label}"`)
+			}
+			if (used.has(key)) {
+				throw Error('The same device is chosen for two entries')
+			}
+			used.add(key)
+		}
+		const byKey = new Map(nodes.map((n) => [n.key, n]))
+		const byRef = new Map(file.nodes.map((e) => [e.ref, e]))
+
+		return this.update(async (data) => {
+			const taken = new Set(data.maps.map((m) => m.name))
+			const freeName = (wanted: string) => {
+				let name = wanted
+				if (taken.has(name)) {
+					const base = `${wanted} (imported`
+					name = `${base})`
+					for (let i = 2; taken.has(name); i++) name = `${base} ${i})`
+				}
+				taken.add(name)
+				return name
+			}
+
+			// one library background per file background
+			const bgIds = new Map<string, string>()
+			for (const b of file.backgrounds) {
+				const bg: Background = {
+					id: `bg-${newId()}`,
+					name: b.name,
+					image: null,
+					widthPx: b.widthPx,
+					heightPx: b.heightPx,
+				}
+				if (b.image) bg.image = await this.writeImage(bg.id, b.image)
+				if (b.imageDark) {
+					bg.imageDark = await this.writeImage(
+						`${bg.id}-dark`,
+						b.imageDark,
+					)
+				}
+				data.backgrounds.push(bg)
+				bgIds.set(b.ref, bg.id)
+			}
+
+			const added: FloorPlanMap[] = []
+			let linked = 0
+			let placeholders = 0
+			for (const m of file.maps) {
+				const map: FloorPlanMap = {
+					id: newId(),
+					name: freeName(m.name),
+					widthPx: m.widthPx,
+					heightPx: m.heightPx,
+					metersPerPixel: m.metersPerPixel,
+					background: m.background
+						? {
+								id: bgIds.get(m.background.ref),
+								imageRect: { ...m.background.imageRect },
+							}
+						: null,
+					nodes: {
+						start: m.nodes.start,
+						exceptions: [
+							...new Set(
+								m.nodes.exceptionRefs
+									.map((ref) => matches[ref])
+									.filter(Boolean),
+							),
+						],
+					},
+					view: checkView(m.view),
+					placements: [],
+				}
+				for (const pl of m.placements) {
+					const key = matches[pl.ref]
+					const x = clamp(pl.x, map.widthPx)
+					const y = clamp(pl.y, map.heightPx)
+					if (key) {
+						const n = byKey.get(key)
+						const placement: Placement = { deviceKey: key, x, y }
+						const seen = cleanSeen({
+							name: n?.name,
+							deviceId: n?.deviceId,
+						})
+						if (Object.keys(seen).length) placement.seen = seen
+						map.placements.push(placement)
+						linked++
+					} else {
+						const e = byRef.get(pl.ref)
+						const info: PlaceholderInfo = {}
+						for (const k of [
+							'name',
+							'loc',
+							'deviceId',
+							'productLabel',
+						] as const) {
+							if (e[k]) info[k] = e[k]
+						}
+						map.placements.push({
+							id: `ph-${newId()}`,
+							deviceKey: null,
+							x,
+							y,
+							placeholder: info,
+						})
+						placeholders++
+					}
+				}
+				data.maps.push(map)
+				added.push(map)
+			}
+			return { maps: added, linked, placeholders }
 		})
 	}
 

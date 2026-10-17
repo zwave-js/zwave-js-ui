@@ -166,6 +166,70 @@ describe('floorplans API', () => {
 		expect(gone.status).toBe(404)
 	})
 
+	it('exports, previews and imports maps', async () => {
+		const { data: map } = await api('POST', '/maps', { name: 'Loft' })
+		await upload(map.id, PNG1)
+		await api('PUT', `/maps/${map.id}/placements`, {
+			deviceKey: K(5),
+			x: 1,
+			y: 1,
+		})
+
+		const res = await fetch(`${url}/api/floorplans/export?maps=${map.id}`, {
+			headers: { Accept: 'application/json' },
+		})
+		expect(res.headers.get('content-disposition')).toMatch(
+			/filename="zwjsui_floorplan_\d{8}\.json"/,
+		)
+		const file = await res.json()
+		expect(file.maps.map((m) => m.name)).toEqual(['Loft'])
+		expect(await api('GET', '/export?maps=nope')).toEqual({
+			success: false,
+			message: 'No such map',
+		})
+
+		const form = new FormData()
+		form.append('upload', new Blob([JSON.stringify(file)]), 'f.json')
+		const preview = await fetch(`${url}/api/floorplans/import/preview`, {
+			method: 'POST',
+			headers: { Accept: 'application/json' },
+			body: form,
+		}).then((r) => r.json())
+		expect(preview.success).toBe(true)
+		expect(preview.data.maps).toEqual([
+			{
+				name: 'Loft',
+				widthPx: 1,
+				heightPx: 1,
+				placements: 1,
+				hasImage: true,
+				hasDarkImage: false,
+			},
+		])
+		// no Z-Wave client running: nothing to propose
+		expect(preview.data.entries).toMatchObject([
+			{ ref: 'n1', nodeId: 5, key: null, confidence: 'none' },
+		])
+
+		const { token } = preview.data
+		const commit = await api('POST', '/import/commit', {
+			token,
+			matches: { n1: null },
+		})
+		expect(commit.data.maps[0].name).toBe('Loft (imported)')
+		expect(commit.data.placeholders).toBe(1)
+		// a token works once
+		expect(
+			await api('POST', '/import/commit', {
+				token,
+				matches: { n1: null },
+			}),
+		).toMatchObject({
+			success: false,
+			message: expect.stringMatching(/expired/),
+		})
+	})
+
 	it('requires login when auth is enabled', async () => {
 		await setAuth(true)
 		try {
