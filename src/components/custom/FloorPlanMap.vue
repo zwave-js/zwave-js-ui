@@ -68,6 +68,13 @@
 			{{ unplacedCount }} shown node{{ unplacedCount === 1 ? '' : 's' }}
 			not placed on this map yet, use Edit to place them
 		</v-chip>
+		<mesh-health-card
+			v-if="showHealth"
+			:items="healthItems"
+			:weak-hops="weakHopCount"
+			:one-way="health.oneWay.length"
+			@select="selectHealth"
+		/>
 	</div>
 </template>
 
@@ -76,6 +83,7 @@ import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import { protocolDataRateToString } from '@zwave-js/core'
 import ConfigApis from '@/apis/ConfigApis.js'
+import MeshHealthCard from '@/components/custom/MeshHealthCard.vue'
 import {
 	HEALTH_COLORS,
 	agoLabel,
@@ -102,6 +110,11 @@ const LAYERS = [
 	['health', 'Mesh health'],
 	['battery', 'Battery level'],
 ]
+// for maps saved before a layer existed (the server fills in the rest)
+const LAYER_DEFAULTS = {
+	backupRoutes: false,
+	battery: false,
+}
 
 const esc = (s) =>
 	String(s ?? '').replace(
@@ -140,6 +153,7 @@ function polygon(cx, cy, r, count, inner = null) {
 
 export default {
 	name: 'FloorPlanMap',
+	components: { MeshHealthCard },
 	props: {
 		/** the floorplan map to show */
 		map: { type: Object, required: true },
@@ -167,6 +181,9 @@ export default {
 		'placeholder-link',
 		'placeholder-delete',
 	],
+	data() {
+		return { showHealth: false }
+	},
 	computed: {
 		/** broadcast and multicast nodes aren't part of the mesh, as in the graph */
 		physicalNodes() {
@@ -187,6 +204,28 @@ export default {
 				shown: this.isShown(node),
 				placed: this.placedKeys.has(this.keyOf(node)),
 			}))
+		},
+		health() {
+			return meshHealth(this.physicalNodes)
+		},
+		/** flagged nodes shown on this map, worst first */
+		healthItems() {
+			const shown = new Map(
+				this.entries
+					.filter((e) => e.shown)
+					.map((e) => [e.node.id, e.node]),
+			)
+			return [...this.health.nodes]
+				.filter(([id]) => shown.has(id))
+				.map(([id, f]) => ({ id, label: labelOf(shown.get(id)), ...f }))
+				.sort(
+					(a, b) =>
+						(a.level === 'bad' ? 0 : 1) -
+							(b.level === 'bad' ? 0 : 1) || a.id - b.id,
+				)
+		},
+		weakHopCount() {
+			return this.health.hops.filter((h) => h.kind === 'lwr').length
 		},
 		unplacedCount() {
 			return this.entries.filter((e) => e.shown && !e.placed).length
@@ -246,13 +285,17 @@ export default {
 			LAYERS.map(([k, label]) => [label, this.groups[k]]),
 		)
 		L.control.layers(null, overlays, { position: 'topright' }).addTo(lmap)
-		// the names layer draws nothing itself, it shows the node labels
+		// the names layer draws nothing itself, it shows the node labels;
+		// the health layer also shows the health card
 		lmap.on('overlayadd overlayremove', (e) => {
 			if (e.layer === this.groups.names) {
 				lmap.getContainer().classList.toggle(
 					'show-names',
 					e.type === 'overlayadd',
 				)
+			}
+			if (e.layer === this.groups.health) {
+				this.showHealth = e.type === 'overlayadd'
 			}
 		})
 		lmap.on('click', () => this.$emit('node-click', null))
@@ -429,6 +472,8 @@ export default {
 			this.drawLinks(view.links, view.pos)
 			this.drawGhosts(view.ghosts)
 			this.drawNodes(nodePos)
+			// for jumping to a node from the health card
+			this.lastPos = view.pos
 			this.drawHealth(nodePos, view.pos)
 			this.drawBattery(nodePos)
 			this.drawPlaceholders()
@@ -480,9 +525,11 @@ export default {
 				})
 			}
 			for (const [k] of LAYERS) {
-				if (v.layers?.[k] ?? true) this.groups[k].addTo(this.lmap)
-				else this.lmap.removeLayer(this.groups[k])
+				if (v.layers?.[k] ?? LAYER_DEFAULTS[k] ?? true) {
+					this.groups[k].addTo(this.lmap)
+				} else this.lmap.removeLayer(this.groups[k])
 			}
+			this.showHealth = this.lmap.hasLayer(this.groups.health)
 			this.lmap
 				.getContainer()
 				.classList.toggle(
@@ -654,8 +701,15 @@ export default {
 			}
 		},
 		/** a ring around flagged nodes, "!" on weak hops, dotted one-way neighbor lines */
+		/** health card click: show the node on the map and open its panel */
+		selectHealth(id) {
+			const p = this.lastPos?.get(id)
+			if (p) this.lmap.setView(p, Math.max(this.lmap.getZoom(), 0))
+			const node = this.physicalNodes.find((n) => n.id === id)
+			if (node) this.$emit('node-click', node)
+		},
 		drawHealth(nodePos, allPos) {
-			const h = meshHealth(this.physicalNodes)
+			const h = this.health
 			const name = this.nameById()
 			for (const [id, f] of h.nodes) {
 				const p = nodePos.get(id)
@@ -782,6 +836,9 @@ export default {
 	position: relative;
 	height: 100%;
 	min-height: 300px;
+	/* keep Leaflet's pane z-indexes (400-1000) inside the map, so the node
+	   panel and dialogs above it aren't covered */
+	isolation: isolate;
 }
 
 .floor-plan-map {
