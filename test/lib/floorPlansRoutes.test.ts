@@ -112,6 +112,23 @@ describe('floorplans API', () => {
 		await api('DELETE', `/maps/${id}/placements/${K(2)}`)
 		expect((await api('GET', '')).data.maps[0].placements).toEqual([])
 
+		// several in one request
+		const many = await api('PUT', `/maps/${id}/placements`, {
+			placements: [
+				{ deviceKey: K(3), x: 1, y: 2 },
+				{ deviceKey: K(4), x: 3, y: 4 },
+			],
+		})
+		expect(many.data).toHaveLength(2)
+		expect(
+			await api('PUT', `/maps/${id}/placements`, { placements: 'no' }),
+		).toMatchObject({
+			success: false,
+			message: 'placements must be a list',
+		})
+		await api('DELETE', `/maps/${id}/placements/${K(3)}`)
+		await api('DELETE', `/maps/${id}/placements/${K(4)}`)
+
 		expect((await api('DELETE', `/maps/${id}`)).success).toBe(true)
 		expect(await api('DELETE', `/maps/${id}`)).toEqual({
 			success: false,

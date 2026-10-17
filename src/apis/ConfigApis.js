@@ -35,6 +35,11 @@ const request = {
 		const response = await axios.post(...args)
 		return responseHandler(response)
 	},
+	async patch(...args) {
+		log.debug('Request', ...args)
+		const response = await axios.patch(...args)
+		return responseHandler(response)
+	},
 	async delete(...args) {
 		log.debug('Request', ...args)
 		const response = await axios.delete(...args)
@@ -265,6 +270,58 @@ export default {
 	},
 	async addFloorPlanMap(data) {
 		const response = await request.post('/floorplans/maps', data)
+		return response.data
+	},
+	async updateFloorPlanSettings(data) {
+		const response = await request.patch('/floorplans/settings', data)
+		return response.data
+	},
+	async updateFloorPlanMap(id, changes) {
+		const response = await request.patch(`/floorplans/maps/${id}`, changes)
+		return response.data
+	},
+	async deleteFloorPlanMap(id) {
+		const response = await request.delete(`/floorplans/maps/${id}`)
+		return response.data
+	},
+	/** `size` is the browser-decoded { width, height }, used if the server can't read it */
+	async setFloorPlanImage(id, file, variant = 'light', size = null) {
+		const form = new FormData()
+		form.append('upload', file)
+		form.append('variant', variant)
+		if (size) {
+			form.append('imgWidthPx', size.width)
+			form.append('imgHeightPx', size.height)
+		}
+		const response = await request.put(`/floorplans/maps/${id}/image`, form)
+		return response.data
+	},
+	/** variant 'dark' removes only the dark version, 'all' the background */
+	async removeFloorPlanImage(id, variant = 'all') {
+		const response = await request.delete(`/floorplans/maps/${id}/image`, {
+			params: variant === 'dark' ? { variant } : {},
+		})
+		return response.data
+	},
+	async setFloorPlanPlacement(id, placement) {
+		const response = await request.put(
+			`/floorplans/maps/${id}/placements`,
+			placement,
+		)
+		return response.data
+	},
+	/** several placements in one write */
+	async setFloorPlanPlacements(id, placements) {
+		const response = await request.put(
+			`/floorplans/maps/${id}/placements`,
+			{ placements },
+		)
+		return response.data
+	},
+	async removeFloorPlanPlacement(id, deviceKey) {
+		const response = await request.delete(
+			`/floorplans/maps/${id}/placements/${encodeURIComponent(deviceKey)}`,
+		)
 		return response.data
 	},
 	/** URL of a background image file, for <img> and map overlays */

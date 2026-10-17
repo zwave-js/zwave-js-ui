@@ -2275,13 +2275,34 @@ app.delete(
 	),
 )
 
-// body: { deviceKey, x, y }
+// body: { deviceKey, x, y }, or { placements: [{ deviceKey, x, y }] } in one write
 app.put(
 	'/api/floorplans/maps/:id/placements',
 	apisLimiter,
 	isAuthenticated,
 	floorPlansRoute((req) => {
-		const { deviceKey, x, y } = req.body ?? {}
+		const body = req.body ?? {}
+		if (body.placements !== undefined) {
+			if (!Array.isArray(body.placements)) {
+				throw Error('placements must be a list')
+			}
+			const nodes = new Map(localNodes(gw?.zwave).map((n) => [n.key, n]))
+			return floorPlans.setPlacements(
+				req.params.id,
+				body.placements.map((p: any) => {
+					const n = nodes.get(p?.deviceKey)
+					return {
+						deviceKey: p?.deviceKey,
+						x: p?.x,
+						y: p?.y,
+						seen: n
+							? { name: n.name, deviceId: n.deviceId }
+							: undefined,
+					}
+				}),
+			)
+		}
+		const { deviceKey, x, y } = body
 		return floorPlans.setPlacement(req.params.id, {
 			deviceKey,
 			x,

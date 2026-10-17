@@ -712,6 +712,44 @@ export class FloorPlans {
 		})
 	}
 
+	/** Place or move several nodes in one write, e.g. "Place all" */
+	async setPlacements(
+		mapId: string,
+		items: { deviceKey: string; x: number; y: number; seen?: Seen }[],
+	) {
+		if (!Array.isArray(items) || items.length > MAX_EXCEPTIONS) {
+			throw Error('placements must be a list')
+		}
+		for (const { deviceKey, x, y } of items) {
+			checkDeviceKey(deviceKey)
+			if (!isCoord(x) || !isCoord(y)) {
+				throw Error('x and y must be numbers')
+			}
+		}
+		return this.update((data) => {
+			const map = this.getMap(data, mapId)
+			const byKey = new Map(
+				map.placements
+					.filter((p) => p.deviceKey)
+					.map((p) => [p.deviceKey, p]),
+			)
+			return items.map(({ deviceKey, x, y, seen }) => {
+				const placement: Placement = {
+					deviceKey,
+					x: clamp(x, map.widthPx),
+					y: clamp(y, map.heightPx),
+				}
+				const s = cleanSeen(seen)
+				if (Object.keys(s).length) placement.seen = s
+				const existing = byKey.get(deviceKey)
+				if (existing) return Object.assign(existing, placement)
+				map.placements.push(placement)
+				byKey.set(deviceKey, placement)
+				return placement
+			})
+		})
+	}
+
 	/** Remove a node's placement on one map; its spots on other maps stay */
 	removePlacement(mapId: string, deviceKey: string) {
 		return this.update((data) => {

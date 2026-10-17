@@ -351,3 +351,46 @@ export function meshHealth(nodes) {
 	}
 	return { nodes: flags, hops: [...hops.values()], oneWay }
 }
+
+/**
+ * Starting spots for nodes not placed yet: a grid along the bottom of the
+ * canvas, filled bottom row first, sorted by location, name and ID. Grid
+ * cells near an already placed node (`occupied`, [x, y] canvas px) are
+ * skipped, and the grid gets finer until every node fits.
+ * Returns [{ id, x, y }] in canvas px (y down).
+ */
+export function gridPlacements(nodes, occupied, widthPx, heightPx) {
+	const sorted = [...nodes].sort(
+		(a, b) =>
+			(a.loc ?? '').localeCompare(b.loc ?? '') ||
+			(a.name ?? '').localeCompare(b.name ?? '') ||
+			a.id - b.id,
+	)
+	for (let perRow = 16; ; perRow = Math.ceil(perRow * 1.5)) {
+		const step = widthPx / perRow
+		const rows = Math.max(1, Math.floor(heightPx / step))
+		const cells = []
+		for (let row = 0; row < rows && cells.length < sorted.length; row++) {
+			const y = heightPx - step * (row + 0.5)
+			for (
+				let col = 0;
+				col < perRow && cells.length < sorted.length;
+				col++
+			) {
+				const x = step * (col + 0.5)
+				const near = occupied.some(
+					([ox, oy]) => Math.hypot(ox - x, oy - y) < step * 0.6,
+				)
+				if (!near) cells.push([x, y])
+			}
+		}
+		// past one cell per pixel nothing finer helps: stack what's left
+		if (cells.length === sorted.length || step < 1) {
+			return sorted.map((n, i) => {
+				const [x, y] = cells[i] ??
+					cells[cells.length - 1] ?? [0, heightPx]
+				return { id: n.id, x: Math.round(x), y: Math.round(y) }
+			})
+		}
+	}
+}

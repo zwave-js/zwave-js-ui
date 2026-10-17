@@ -365,6 +365,29 @@ describe('#FloorPlans', () => {
 		expect((await mapOf(fp, m.id)).placements).toHaveLength(5)
 	})
 
+	it('places several nodes in one write, moving existing ones', async () => {
+		const fp = await fresh()
+		const m = await fp.addMap({ name: 'p', widthPx: 100, heightPx: 100 })
+		await fp.setPlacement(m.id, { deviceKey: K(2), x: 1, y: 1 })
+		const out = await fp.setPlacements(m.id, [
+			{ deviceKey: K(2), x: 5, y: 5 },
+			{ deviceKey: K(3), x: 500, y: 6, seen: { name: 'Lamp' } },
+		])
+		expect(out).toEqual([
+			{ deviceKey: K(2), x: 5, y: 5 },
+			{ deviceKey: K(3), x: 100, y: 6, seen: { name: 'Lamp' } },
+		])
+		expect((await mapOf(fp, m.id)).placements).toHaveLength(2)
+		// all or nothing
+		await expect(
+			fp.setPlacements(m.id, [
+				{ deviceKey: K(4), x: 1, y: 1 },
+				{ deviceKey: 'bogus', x: 1, y: 1 },
+			]),
+		).rejects.toThrow('deviceKey')
+		expect((await mapOf(fp, m.id)).placements).toHaveLength(2)
+	})
+
 	it('lists unreferenced images and deletes only the named ones still unreferenced', async () => {
 		const fp = await fresh()
 		expect(await fp.findOrphans()).toEqual([])

@@ -23,6 +23,107 @@
 				hide-details
 				style="max-width: 300px"
 			></v-select>
+			<template v-if="mode === 'map' && currentMap">
+				<v-menu>
+					<template #activator="{ props }">
+						<v-btn
+							v-bind="props"
+							variant="outlined"
+							append-icon="arrow_drop_down"
+							>Map</v-btn
+						>
+					</template>
+					<v-list density="compact">
+						<v-list-item prepend-icon="add" @click="newMap">
+							<v-list-item-title>New map</v-list-item-title>
+						</v-list-item>
+						<v-list-item
+							prepend-icon="drive_file_rename_outline"
+							@click="renameMap"
+						>
+							<v-list-item-title>Rename</v-list-item-title>
+						</v-list-item>
+						<v-list-item
+							:prepend-icon="
+								isDefaultMap ? 'star' : 'star_border'
+							"
+							@click="toggleDefaultMap"
+						>
+							<v-list-item-title>{{
+								isDefaultMap
+									? 'Stop opening this map by default'
+									: 'Open this map by default'
+							}}</v-list-item-title>
+						</v-list-item>
+						<v-list-item
+							prepend-icon="delete"
+							base-color="error"
+							@click="deleteMap"
+						>
+							<v-list-item-title>Delete map</v-list-item-title>
+						</v-list-item>
+					</v-list>
+				</v-menu>
+				<v-menu>
+					<template #activator="{ props }">
+						<v-btn
+							v-bind="props"
+							variant="outlined"
+							append-icon="arrow_drop_down"
+							>Background</v-btn
+						>
+					</template>
+					<v-list density="compact">
+						<v-list-item
+							prepend-icon="image"
+							@click="uploadBackground('light')"
+						>
+							<v-list-item-title>{{
+								currentBackground?.image
+									? 'Replace picture'
+									: 'Add picture'
+							}}</v-list-item-title>
+						</v-list-item>
+						<v-list-item
+							prepend-icon="dark_mode"
+							:disabled="!currentBackground"
+							@click="uploadBackground('dark')"
+						>
+							<v-list-item-title>{{
+								currentBackground?.imageDark
+									? 'Replace dark mode picture'
+									: 'Add dark mode picture'
+							}}</v-list-item-title>
+						</v-list-item>
+						<v-list-item
+							v-if="currentBackground?.imageDark"
+							prepend-icon="hide_image"
+							@click="removeBackground('dark')"
+						>
+							<v-list-item-title
+								>Remove dark mode picture</v-list-item-title
+							>
+						</v-list-item>
+						<v-list-item
+							v-if="currentBackground"
+							prepend-icon="delete"
+							base-color="error"
+							@click="removeBackground('all')"
+						>
+							<v-list-item-title
+								>Remove background</v-list-item-title
+							>
+						</v-list-item>
+					</v-list>
+				</v-menu>
+				<v-btn
+					:variant="editing ? 'flat' : 'outlined'"
+					color="primary"
+					:prepend-icon="editing ? 'done' : 'edit'"
+					@click="editing = !editing"
+					>{{ editing ? 'Done' : 'Edit' }}</v-btn
+				>
+			</template>
 		</div>
 
 		<div class="mesh-body">
@@ -43,7 +144,13 @@
 					:nodes="nodes"
 					:home-hex="appInfo.homeHex"
 					:dark="$vuetify.theme.current.dark"
+					:editing="editing"
 					@node-click="nodeClick"
+					@place="onPlace"
+					@place-many="onPlaceMany"
+					@unplace="onUnplace"
+					@set-nodes="onSetNodes"
+					@view-change="onViewChange"
 				/>
 				<v-empty-state
 					v-else-if="floorPlansLoaded"
@@ -121,6 +228,13 @@ import { Settings } from '@/modules/Settings'
 
 const settings = new Settings(localStorage)
 
+// confirm messages are HTML
+const esc = (s) => {
+	const el = document.createElement('span')
+	el.textContent = s
+	return el.innerHTML
+}
+
 export default {
 	name: 'Mesh',
 	mixins: [InstancesMixin],
@@ -150,6 +264,19 @@ export default {
 				null
 			)
 		},
+		currentBackground() {
+			const id = this.currentMap?.background?.id
+			return (
+				(id && this.floorPlans.backgrounds.find((b) => b.id === id)) ||
+				null
+			)
+		},
+		isDefaultMap() {
+			return (
+				!!this.currentMap &&
+				this.floorPlans.settings.defaultMapId === this.currentMap.id
+			)
+		},
 	},
 	documentListeners: {},
 	data() {
@@ -160,19 +287,29 @@ export default {
 			mapId: settings.load('meshFloorPlanMap', ''),
 			floorPlans: { settings: {}, backgrounds: [], maps: [] },
 			floorPlansLoaded: false,
+			editing: false,
 		}
 	},
-	mounted() {
-		if (this.mode === 'map') this.loadFloorPlans()
+	async mounted() {
+		// a browser that never picked a mode opens the default map, if any
+		const picked = localStorage.getItem('meshMode')
+		if (this.mode === 'map' || !picked) await this.loadFloorPlans()
+		if (!picked && this.floorPlans.settings.defaultMapId) {
+			this.autoMode = true
+			this.mode = 'map'
+		}
 	},
 	watch: {
 		mode(v) {
-			settings.store('meshMode', v)
+			if (!this.autoMode) settings.store('meshMode', v)
+			this.autoMode = false
+			this.editing = false
 			this.nodeClick(null)
 			if (v === 'map') this.loadFloorPlans()
 		},
 		mapId(v) {
 			settings.store('meshFloorPlanMap', v)
+			this.editing = false
 		},
 		showProperties(v) {
 			// Return to overview map when closing the node properties dialog
@@ -224,6 +361,159 @@ export default {
 					'error',
 				)
 			}
+		},
+		/** run a floorplan API call, then reload the floorplans */
+		async floorPlanCall(what, call, { reload = true } = {}) {
+			try {
+				const res = await call()
+				if (!res.success) throw Error(res.message)
+				if (reload) await this.loadFloorPlans()
+				return res.data
+			} catch (error) {
+				this.showSnackbar(`Couldn't ${what}: ${error.message}`, 'error')
+				// show the stored state again, e.g. a dragged node snaps back
+				if (reload) await this.loadFloorPlans()
+				return undefined
+			}
+		},
+		onPlace(placement) {
+			return this.floorPlanCall('place the node', () =>
+				ConfigApis.setFloorPlanPlacement(this.currentMap.id, placement),
+			)
+		},
+		onPlaceMany(placements) {
+			return this.floorPlanCall('place the nodes', () =>
+				ConfigApis.setFloorPlanPlacements(
+					this.currentMap.id,
+					placements,
+				),
+			)
+		},
+		onUnplace(deviceKey) {
+			return this.floorPlanCall('remove the node', () =>
+				ConfigApis.removeFloorPlanPlacement(
+					this.currentMap.id,
+					deviceKey,
+				),
+			)
+		},
+		onSetNodes(nodes) {
+			return this.floorPlanCall('change the node list', () =>
+				ConfigApis.updateFloorPlanMap(this.currentMap.id, { nodes }),
+			)
+		},
+		/** the view is saved while editing; the map already shows it */
+		onViewChange(view) {
+			const map = this.currentMap
+			return this.floorPlanCall(
+				"save the map's view",
+				async () => {
+					const res = await ConfigApis.updateFloorPlanMap(map.id, {
+						view,
+					})
+					if (res.success) map.view = res.data.view
+					return res
+				},
+				{ reload: false },
+			)
+		},
+		async renameMap() {
+			const map = this.currentMap
+			const { name } = await this.app.confirm('Rename map', '', 'info', {
+				confirmText: 'Rename',
+				width: 400,
+				inputs: [
+					{
+						type: 'text',
+						label: 'Name',
+						key: 'name',
+						required: true,
+						default: map.name,
+					},
+				],
+			})
+			if (!name || name === map.name) return
+			await this.floorPlanCall('rename the map', () =>
+				ConfigApis.updateFloorPlanMap(map.id, { name }),
+			)
+		},
+		toggleDefaultMap() {
+			const defaultMapId = this.isDefaultMap ? null : this.currentMap.id
+			return this.floorPlanCall('change the default map', () =>
+				ConfigApis.updateFloorPlanSettings({ defaultMapId }),
+			)
+		},
+		async deleteMap() {
+			const map = this.currentMap
+			const ok = await this.app.confirm(
+				'Delete map',
+				`Delete <b>${esc(map.name)}</b> with its node positions? Its background picture is deleted too unless another map uses it.`,
+				'alert',
+				{ confirmText: 'Delete', width: 450 },
+			)
+			if (!ok) return
+			await this.floorPlanCall('delete the map', () =>
+				ConfigApis.deleteFloorPlanMap(map.id),
+			)
+			this.editing = false
+		},
+		async uploadBackground(variant) {
+			const map = this.currentMap
+			const dark = variant === 'dark'
+			const { file } = await this.app.confirm(
+				dark ? 'Dark mode picture' : 'Background picture',
+				dark
+					? 'Shown instead of the picture while the UI is in dark mode. Use the same framing as the normal picture.'
+					: 'A PNG, JPEG or WebP image of your floorplan, up to 25 MB. Node positions are kept when you replace it.',
+				'info',
+				{
+					confirmText: 'Upload',
+					width: 500,
+					inputs: [
+						{
+							type: 'file',
+							label: 'Image',
+							key: 'file',
+							required: true,
+							accept: 'image/png,image/jpeg,image/webp',
+						},
+					],
+				},
+			)
+			if (!file) return
+			// the server reads the size from the header; this is the fallback
+			let size = null
+			try {
+				const bitmap = await createImageBitmap(file)
+				size = { width: bitmap.width, height: bitmap.height }
+				bitmap.close()
+			} catch {
+				// not decodable here, the server decides
+			}
+			const res = await this.floorPlanCall('upload the picture', () =>
+				ConfigApis.setFloorPlanImage(map.id, file, variant, size),
+			)
+			if (res?.stretched) {
+				this.showSnackbar(
+					"The picture's shape differs from the map's frame, so it's stretched to fit",
+					'warning',
+				)
+			}
+		},
+		async removeBackground(variant) {
+			const map = this.currentMap
+			if (variant === 'all') {
+				const ok = await this.app.confirm(
+					'Remove background',
+					'Remove the picture from this map? Node positions are kept.',
+					'alert',
+					{ confirmText: 'Remove', width: 450 },
+				)
+				if (!ok) return
+			}
+			await this.floorPlanCall('remove the picture', () =>
+				ConfigApis.removeFloorPlanImage(map.id, variant),
+			)
 		},
 		setInitialPosition(element) {
 			const windowHeight = window.innerHeight

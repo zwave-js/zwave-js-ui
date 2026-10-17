@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import {
 	agoLabel,
 	batteryLevelClass,
+	gridPlacements,
 	mapView,
 	meshHealth,
 	nodeColor,
@@ -243,5 +244,30 @@ describe('meshView', () => {
 				null,
 			].map((t) => agoLabel(t, now)),
 		).toEqual(['just now', '20 min ago', '3 h ago', '3 days ago', 'never'])
+	})
+
+	it('lays unplaced nodes out in a grid along the bottom, around placed ones', () => {
+		const nodes = [
+			{ id: 9, name: 'b', loc: 'Den' },
+			{ id: 5, name: 'a', loc: 'Den' },
+			{ id: 7, name: 'z', loc: 'Attic' },
+		]
+		// 1600 px wide: 16 cells of 100 px, bottom row at y = 950
+		const out = gridPlacements(nodes, [], 1600, 1000)
+		expect(out).toEqual([
+			{ id: 7, x: 50, y: 950 },
+			{ id: 5, x: 150, y: 950 },
+			{ id: 9, x: 250, y: 950 },
+		])
+		// a placed node in the first cell pushes the grid along
+		const around = gridPlacements(nodes, [[60, 940]], 1600, 1000)
+		expect(around.map((p) => p.x)).toEqual([150, 250, 350])
+		// more nodes than cells: the grid gets finer, still on the canvas
+		const many = Array.from({ length: 100 }, (_, i) => ({ id: i + 1 }))
+		const fit = gridPlacements(many, [], 400, 100)
+		expect(new Set(fit.map((p) => `${p.x},${p.y}`)).size).toBe(100)
+		expect(
+			fit.every((p) => p.x >= 0 && p.x <= 400 && p.y >= 0 && p.y <= 100),
+		).toBe(true)
 	})
 })

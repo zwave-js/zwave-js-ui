@@ -1,14 +1,72 @@
 <template>
 	<div class="floor-plan" ref="container" v-resize="onResize">
-		<div class="floor-plan-map" ref="map"></div>
+		<div
+			class="floor-plan-map"
+			ref="map"
+			@dragover.prevent
+			@drop.prevent="onDrop"
+		></div>
+		<v-card v-if="editing" class="floor-plan-tray" density="compact">
+			<v-card-subtitle class="pt-2"> Nodes on this map </v-card-subtitle>
+			<v-card-text class="pa-1 text-caption">
+				Drag a node with
+				<v-icon size="x-small">open_with</v-icon> onto the map. Drag
+				placed nodes to move them, right-click to remove one.
+			</v-card-text>
+			<div v-if="unplacedCount" class="px-2 pb-2">
+				<v-btn
+					size="small"
+					variant="tonal"
+					prepend-icon="grid_view"
+					block
+					@click="placeAll"
+					>Place all {{ unplacedCount }} along the bottom</v-btn
+				>
+			</div>
+			<v-list density="compact" class="py-0">
+				<v-list-item
+					v-for="e in entries"
+					:key="e.node.id"
+					:draggable="e.shown && !e.placed"
+					@dragstart="onDragStart($event, e.node)"
+					:class="{ 'floor-plan-draggable': e.shown && !e.placed }"
+				>
+					<template #prepend>
+						<v-checkbox-btn
+							:model-value="e.shown"
+							density="compact"
+							@update:model-value="setShown(e.node, $event)"
+						></v-checkbox-btn>
+					</template>
+					<v-list-item-title class="text-body-2">
+						{{ labelOf(e.node) }}
+					</v-list-item-title>
+					<template #append>
+						<v-icon
+							v-if="e.shown && !e.placed"
+							size="small"
+							v-tooltip="'Drag onto the map'"
+							>open_with</v-icon
+						>
+						<v-icon
+							v-else-if="e.placed"
+							size="small"
+							color="success"
+							v-tooltip="'Placed on this map'"
+							>place</v-icon
+						>
+					</template>
+				</v-list-item>
+			</v-list>
+		</v-card>
 		<v-chip
-			v-if="unplacedCount"
+			v-if="unplacedCount && !editing"
 			class="floor-plan-notice"
 			size="small"
 			prepend-icon="info"
 		>
 			{{ unplacedCount }} shown node{{ unplacedCount === 1 ? '' : 's' }}
-			not placed on this map yet
+			not placed on this map yet, use Edit to place them
 		</v-chip>
 	</div>
 </template>
@@ -22,6 +80,7 @@ import {
 	HEALTH_COLORS,
 	agoLabel,
 	batteryLevelClass,
+	gridPlacements,
 	hopsOf,
 	lwrOf,
 	mapView,
@@ -89,11 +148,22 @@ export default {
 		nodes: { type: Array, default: () => [] },
 		homeHex: { type: String, default: '' },
 		dark: Boolean,
+		/** edit mode: node list, placing and moving nodes, saving the view */
+		editing: Boolean,
 	},
-	emits: ['node-click'],
-	data() {
-		return { unplacedCount: 0 }
-	},
+	emits: [
+		'node-click',
+		// { deviceKey, x, y } in canvas px
+		'place',
+		// [{ deviceKey, x, y }]
+		'place-many',
+		// deviceKey
+		'unplace',
+		// { start, exceptions }
+		'set-nodes',
+		// { center, zoom, layers }
+		'view-change',
+	],
 	computed: {
 		/** broadcast and multicast nodes aren't part of the mesh, as in the graph */
 		physicalNodes() {
@@ -102,6 +172,22 @@ export default {
 		homeKey() {
 			return (this.homeHex || '').replace(/^0x/, '')
 		},
+		placedKeys() {
+			return new Set(
+				this.map.placements.map((p) => p.deviceKey).filter(Boolean),
+			)
+		},
+		/** every node with whether it's shown and placed on this map */
+		entries() {
+			return this.physicalNodes.map((node) => ({
+				node,
+				shown: this.isShown(node),
+				placed: this.placedKeys.has(this.keyOf(node)),
+			}))
+		},
+		unplacedCount() {
+			return this.entries.filter((e) => e.shown && !e.placed).length
+		},
 		/** what drawing depends on, so value updates don't redraw the map */
 		drawKey() {
 			return JSON.stringify([
@@ -109,6 +195,7 @@ export default {
 				this.backgrounds,
 				this.homeKey,
 				this.dark,
+				this.editing,
 				this.physicalNodes.map((n) => [
 					n.id,
 					n.name,
@@ -166,16 +253,111 @@ export default {
 			}
 		})
 		lmap.on('click', () => this.$emit('node-click', null))
+		// while editing, pans, zooms and layer changes are saved as the map's view
+		lmap.on('moveend overlayadd overlayremove', () => this.saveViewSoon())
 		this.lmap = lmap
 		this.fitted = false
 		this.draw()
 	},
 	beforeUnmount() {
 		cancelAnimationFrame(this.frame)
+		clearTimeout(this.viewTimer)
 		this.lmap?.remove()
 		this.lmap = null
 	},
 	methods: {
+		labelOf,
+		onDragStart(event, node) {
+			event.dataTransfer.setData('text/plain', String(node.id))
+			event.dataTransfer.effectAllowed = 'move'
+		},
+		/** a node dropped from the tray onto the map */
+		onDrop(event) {
+			if (!this.editing || !this.lmap) return
+			const id = Number(event.dataTransfer.getData('text/plain'))
+			const node = this.physicalNodes.find((n) => n.id === id)
+			if (!node) return
+			const { lat, lng } = this.lmap.mouseEventToLatLng(event)
+			this.place(node, lng, this.map.heightPx - lat)
+		},
+		/** every shown node not placed yet, in a grid along the bottom */
+		placeAll() {
+			const todo = this.entries
+				.filter((e) => e.shown && !e.placed)
+				.map((e) => e.node)
+			const occupied = this.map.placements.map((p) => [p.x, p.y])
+			const byId = new Map(todo.map((n) => [n.id, n]))
+			const spots = gridPlacements(
+				todo,
+				occupied,
+				this.map.widthPx,
+				this.map.heightPx,
+			)
+			this.$emit(
+				'place-many',
+				spots.map(({ id, x, y }) => ({
+					deviceKey: this.keyOf(byId.get(id)),
+					x,
+					y,
+				})),
+			)
+		},
+		place(node, x, y) {
+			this.$emit('place', {
+				deviceKey: this.keyOf(node),
+				x: Math.round(x),
+				y: Math.round(y),
+			})
+		},
+		setShown(node, shown) {
+			const key = this.keyOf(node)
+			const { start, exceptions } = this.map.nodes
+			// an exception flips the map's starting rule for that node
+			const flip = start === 'include' ? !shown : shown
+			const rest = exceptions.filter((k) => k !== key)
+			this.$emit('set-nodes', {
+				start,
+				exceptions: flip ? [...rest, key] : rest,
+			})
+		},
+		saveViewSoon() {
+			if (!this.editing || this.applyingView) return
+			clearTimeout(this.viewTimer)
+			this.viewTimer = setTimeout(() => {
+				if (!this.lmap) return
+				const c = this.lmap.getCenter()
+				const layers = Object.fromEntries(
+					LAYERS.map(([k]) => [
+						k,
+						this.lmap.hasLayer(this.groups[k]),
+					]),
+				)
+				this.$emit('view-change', {
+					center: [c.lat, c.lng],
+					zoom: this.lmap.getZoom(),
+					layers,
+				})
+			}, 800)
+		},
+		/** right-click on a placed node: a menu, nothing changes until it's used */
+		openNodeMenu(node, marker) {
+			const box = document.createElement('div')
+			const title = document.createElement('div')
+			title.className = 'text-subtitle-2 mb-1'
+			title.textContent = labelOf(node)
+			const remove = document.createElement('button')
+			remove.className = 'floorplan-menu-btn'
+			remove.textContent = 'Remove from this map'
+			remove.onclick = () => {
+				this.lmap.closePopup()
+				this.$emit('unplace', this.keyOf(node))
+			}
+			box.append(title, remove)
+			L.popup({ offset: [0, -10] })
+				.setLatLng(marker.getLatLng())
+				.setContent(box)
+				.openOn(this.lmap)
+		},
 		onResize() {
 			this.lmap?.invalidateSize()
 		},
@@ -221,9 +403,6 @@ export default {
 				const n = p.deviceKey && byKey.get(p.deviceKey)
 				if (n) positioned.set(n.id, this.toLatLng(p.x, p.y))
 			}
-			this.unplacedCount = [...shown].filter(
-				(id) => !positioned.has(id),
-			).length
 
 			const view = mapView(this.physicalNodes, shown, positioned)
 			const ghostIds = new Set(view.ghosts.map((g) => g.id))
@@ -273,6 +452,7 @@ export default {
 		},
 		/** a newly opened map: its saved view (zoom, center, layers), else fit it */
 		applyView(bounds) {
+			this.applyingView = true
 			const v = this.map.view ?? {}
 			if (Array.isArray(v.center) && typeof v.zoom === 'number') {
 				this.lmap.setView(v.center, v.zoom, { animate: false })
@@ -293,6 +473,10 @@ export default {
 					this.lmap.hasLayer(this.groups.names),
 				)
 			this.fitted = true
+			// moveend fires after this returns, so let it pass first
+			setTimeout(() => {
+				this.applyingView = false
+			}, 0)
 		},
 		nameById() {
 			const byId = new Map(this.physicalNodes.map((n) => [n.id, n]))
@@ -391,7 +575,11 @@ export default {
 			for (const n of this.physicalNodes) {
 				const p = pos.get(n.id)
 				if (!p) continue
-				L.marker(p, { icon: this.nodeIcon(n), keyboard: false })
+				const marker = L.marker(p, {
+					icon: this.nodeIcon(n),
+					keyboard: false,
+					draggable: this.editing,
+				})
 					.bindTooltip(this.nodeTooltip(n), {
 						direction: 'top',
 						offset: [0, -14],
@@ -401,6 +589,16 @@ export default {
 						this.$emit('node-click', n)
 					})
 					.addTo(this.groups.nodes)
+				if (this.editing) {
+					marker.on('dragend', () => {
+						const { lat, lng } = marker.getLatLng()
+						this.place(n, lng, this.map.heightPx - lat)
+					})
+					marker.on('contextmenu', (e) => {
+						L.DomEvent.preventDefault(e.originalEvent)
+						this.openNodeMenu(n, marker)
+					})
+				}
 			}
 		},
 		/**
@@ -561,6 +759,32 @@ export default {
 	left: 12px;
 	bottom: 12px;
 	z-index: 500;
+}
+
+.floor-plan-tray {
+	position: absolute;
+	top: 12px;
+	left: 56px;
+	bottom: 12px;
+	width: 260px;
+	overflow-y: auto;
+	z-index: 500;
+}
+
+.floor-plan-draggable {
+	cursor: grab;
+}
+
+.floorplan-menu-btn {
+	display: block;
+	width: 100%;
+	padding: 4px 8px;
+	border-radius: 4px;
+	text-align: left;
+}
+
+.floorplan-menu-btn:hover {
+	background: rgba(128, 128, 128, 0.2);
 }
 
 .floorplan-node {
