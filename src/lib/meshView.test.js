@@ -6,6 +6,7 @@ import {
 	mapView,
 	meshHealth,
 	nodeColor,
+	RATE_LEGEND,
 	rateColor,
 	routeSegments,
 	rssiLabel,
@@ -81,6 +82,10 @@ describe('meshView', () => {
 			'#3F51B5',
 			'#666666',
 		])
+		// the legend uses the same colors as the lines
+		expect(RATE_LEGEND.map(([, c]) => c)).toEqual(
+			[1, 2, 3, 4].map(rateColor),
+		)
 		expect(rssiLabel(-74)).toBe('-74 dBm')
 		expect(rssiLabel(null)).toBe('')
 		expect(rssiLabel('no-signal')).toBe('no signal')

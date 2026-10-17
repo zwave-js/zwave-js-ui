@@ -5,7 +5,11 @@
 // Nodes are the store's node objects (ZUINode). Colors follow ZwaveGraph.vue,
 // plus a color for 5+ hops.
 
-import { ProtocolDataRate, RssiError } from '@zwave-js/core'
+import {
+	ProtocolDataRate,
+	RssiError,
+	protocolDataRateToString,
+} from '@zwave-js/core'
 
 export const CONTROLLER_COLOR = '#7e57c2'
 export const DEAD_COLOR = '#8b0000'
@@ -25,6 +29,14 @@ const RATE_COLORS = {
 export function rateColor(rate) {
 	return RATE_COLORS[rate] ?? UNKNOWN_COLOR
 }
+
+/** [label, color] for each route data rate, as in the graph's edge legend */
+export const RATE_LEGEND = [
+	ProtocolDataRate.ZWave_9k6,
+	ProtocolDataRate.ZWave_40k,
+	ProtocolDataRate.ZWave_100k,
+	ProtocolDataRate.LongRange_100k,
+].map((rate) => [protocolDataRateToString(rate), RATE_COLORS[rate]])
 
 export const HOP_LEGEND = [
 	['Controller', CONTROLLER_COLOR],

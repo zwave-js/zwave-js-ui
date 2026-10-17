@@ -59,15 +59,19 @@
 				</v-list-item>
 			</v-list>
 		</v-card>
-		<v-chip
-			v-if="unplacedCount && !editing"
-			class="floor-plan-notice"
-			size="small"
-			prepend-icon="info"
-		>
-			{{ unplacedCount }} shown node{{ unplacedCount === 1 ? '' : 's' }}
-			not placed on this map yet, use Edit to place them
-		</v-chip>
+		<div class="floor-plan-bottom-left">
+			<mesh-legend />
+			<v-chip
+				v-if="unplacedCount && !editing"
+				size="small"
+				prepend-icon="info"
+			>
+				{{ unplacedCount }} shown node{{
+					unplacedCount === 1 ? '' : 's'
+				}}
+				not placed on this map yet, use Edit to place them
+			</v-chip>
+		</div>
 		<mesh-health-card
 			v-if="showHealth"
 			:items="healthItems"
@@ -84,6 +88,7 @@ import 'leaflet/dist/leaflet.css'
 import { protocolDataRateToString } from '@zwave-js/core'
 import ConfigApis from '@/apis/ConfigApis.js'
 import MeshHealthCard from '@/components/custom/MeshHealthCard.vue'
+import MeshLegend from '@/components/custom/MeshLegend.vue'
 import {
 	HEALTH_COLORS,
 	agoLabel,
@@ -153,7 +158,7 @@ function polygon(cx, cy, r, count, inner = null) {
 
 export default {
 	name: 'FloorPlanMap',
-	components: { MeshHealthCard },
+	components: { MeshHealthCard, MeshLegend },
 	props: {
 		/** the floorplan map to show */
 		map: { type: Object, required: true },
@@ -846,11 +851,14 @@ export default {
 	background: rgb(var(--v-theme-surface));
 }
 
-.floor-plan-notice {
+.floor-plan-bottom-left {
 	position: absolute;
 	left: 12px;
 	bottom: 12px;
 	z-index: 500;
+	display: flex;
+	align-items: flex-end;
+	gap: 8px;
 }
 
 .floor-plan-tray {
