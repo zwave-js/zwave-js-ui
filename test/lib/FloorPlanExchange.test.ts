@@ -124,6 +124,15 @@ describe('#FloorPlanExchange', () => {
 		expect(score({ controller: true, name: 'old' }, LOCAL[0])).toBe(3)
 		expect(score({ controller: true, ...same })).toBe(0)
 		expect(score({ name: 'wopr3' }, LOCAL[0])).toBe(0)
+		// same network and node, never named: certain on the model alone
+		const unnamed = { ...thermo, name: 'NodeID 14' }
+		const ids = { homeId: 'cdfbb3c7', nodeId: 14, deviceId: '57-1-17479' }
+		expect(score({ ...ids, name: 'NodeID 14' }, unnamed)).toBe(3)
+		expect(score({ ...ids, name: null })).toBe(3)
+		// ...but a real name that differs is worth a look
+		expect(score({ ...ids, name: 'Old thermostat' })).toBe(0)
+		// and a generic name on another network proves nothing
+		expect(score({ ...ids, homeId: 'aaaa', name: 'NodeID 14' })).toBe(0)
 		// other network, same name and model
 		expect(
 			score({ homeId: 'aaaa', nodeId: 27, ...same, name: 'thermostat ' }),

@@ -471,7 +471,8 @@ const LEVELS: Record<number, Confidence> = {
 /**
  * How strongly a file entry matches a local node:
  *  3 certain  - both are the controller; or same home ID and node ID with
- *               the same deviceId and name
+ *               the same deviceId, and the same name or none in the file
+ *               (a generic "NodeID 12" or empty name)
  *  2 likely   - same name and same deviceId
  *  1 possible - same deviceId and same location; or same name only
  *  0          - no evidence, or only one of them is a controller
@@ -494,7 +495,7 @@ export function matchScore(
 		entry.homeId === localHome &&
 		entry.nodeId === node.id &&
 		sameDevice &&
-		sameName
+		(sameName || generic(entry.name))
 	) {
 		return 3
 	}
