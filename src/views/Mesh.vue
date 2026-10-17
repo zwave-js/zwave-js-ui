@@ -136,6 +136,52 @@
 		</div>
 
 		<div class="mesh-body">
+			<v-alert
+				v-if="mode === 'map' && orphans.length && !orphansKept"
+				class="mesh-orphans"
+				type="info"
+				variant="elevated"
+				density="compact"
+				closable
+				@click:close="orphansKept = true"
+			>
+				<div>
+					{{ orphans.length }} picture{{
+						orphans.length === 1 ? '' : 's'
+					}}
+					({{ orphansSize }}) in the floorplan folder
+					{{ orphans.length === 1 ? 'is' : 'are' }} not used by any
+					map, for example left behind by a store restore.
+				</div>
+				<div v-if="showOrphanFiles" class="text-caption mt-1">
+					<div v-for="f in orphans" :key="f.name">
+						{{ f.name }} · {{ formatSize(f.size) }}
+					</div>
+				</div>
+				<div class="mt-2 d-flex ga-2">
+					<v-btn
+						size="small"
+						variant="text"
+						@click="showOrphanFiles = !showOrphanFiles"
+						>{{
+							showOrphanFiles ? 'Hide files' : 'Show files'
+						}}</v-btn
+					>
+					<v-btn
+						size="small"
+						variant="tonal"
+						color="error"
+						@click="deleteOrphans"
+						>Delete</v-btn
+					>
+					<v-btn
+						size="small"
+						variant="tonal"
+						@click="orphansKept = true"
+						>Keep</v-btn
+					>
+				</div>
+			</v-alert>
 			<zwave-graph
 				v-if="mode === 'graph'"
 				ref="mesh"
@@ -218,7 +264,16 @@
 
 <style scoped>
 .mesh-body {
+	position: relative;
 	height: calc(100% - 56px);
+}
+
+.mesh-orphans {
+	position: absolute;
+	top: 12px;
+	right: 60px;
+	max-width: 480px;
+	z-index: 600;
 }
 
 .details {
@@ -298,6 +353,11 @@ export default {
 				null
 			)
 		},
+		orphansSize() {
+			return this.formatSize(
+				this.orphans.reduce((sum, f) => sum + f.size, 0),
+			)
+		},
 		isDefaultMap() {
 			return (
 				!!this.currentMap &&
@@ -317,6 +377,11 @@ export default {
 			editing: false,
 			showImport: false,
 			importPreview: null,
+			// unused background files; Keep hides the notice for this visit
+			orphans: [],
+			orphansChecked: false,
+			orphansKept: false,
+			showOrphanFiles: false,
 		}
 	},
 	async mounted() {
@@ -360,6 +425,49 @@ export default {
 			} catch (error) {
 				this.showSnackbar(
 					`Couldn't load the floorplans: ${error.message}`,
+					'error',
+				)
+			}
+			if (this.mode === 'map' && !this.orphansChecked) {
+				this.orphansChecked = true
+				this.loadOrphans()
+			}
+		},
+		async loadOrphans() {
+			try {
+				const res = await ConfigApis.getFloorPlanOrphans()
+				if (res.success) this.orphans = res.data
+			} catch {
+				// only a notice, nothing to tell the user
+			}
+		},
+		formatSize(bytes) {
+			if (bytes < 1024 * 1024) return `${Math.ceil(bytes / 1024)} KB`
+			return `${(bytes / 1024 / 1024).toFixed(1)} MB`
+		},
+		async deleteOrphans() {
+			const n = this.orphans.length
+			const ok = await this.app.confirm(
+				'Delete unused pictures',
+				`Delete ${n} picture file${n === 1 ? '' : 's'} (${this.orphansSize}) that no floorplan uses? This can't be undone.`,
+				'alert',
+				{ confirmText: 'Delete', width: 450 },
+			)
+			if (!ok) return
+			try {
+				const res = await ConfigApis.deleteFloorPlanOrphans(
+					this.orphans.map((f) => f.name),
+				)
+				if (!res.success) throw Error(res.message)
+				const deleted = new Set(res.data)
+				this.orphans = this.orphans.filter((f) => !deleted.has(f.name))
+				this.showSnackbar(
+					`Deleted ${deleted.size} unused picture${deleted.size === 1 ? '' : 's'}`,
+					'success',
+				)
+			} catch (error) {
+				this.showSnackbar(
+					`Couldn't delete the pictures: ${error.message}`,
 					'error',
 				)
 			}

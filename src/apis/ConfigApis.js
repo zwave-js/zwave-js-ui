@@ -318,6 +318,17 @@ export default {
 		)
 		return response.data
 	},
+	/** background image files no map uses, e.g. left by a store restore */
+	async getFloorPlanOrphans() {
+		const response = await request.get('/floorplans/orphans')
+		return response.data
+	},
+	async deleteFloorPlanOrphans(names) {
+		const response = await request.delete('/floorplans/orphans', {
+			data: { names },
+		})
+		return response.data
+	},
 	/** the export file of the given maps (all when empty) */
 	async exportFloorPlans(mapIds = []) {
 		const response = await request.get('/floorplans/export', {
