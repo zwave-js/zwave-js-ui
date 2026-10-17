@@ -5,6 +5,7 @@ import { tmpdir } from 'node:os'
 import path from 'node:path'
 import {
 	FloorPlans,
+	cleanDeviceId,
 	cleanSeen,
 	imageSize,
 	sniffImage,
@@ -157,6 +158,17 @@ describe('#FloorPlans', () => {
 			fp.setPlacement('nope', { deviceKey: K(2), x: 1, y: 1 }),
 		).rejects.toThrow('No such map')
 		expect(cleanSeen({ name: 5, dsk: 'abc' })).toEqual({ dsk: 'abc' })
+		// a node interviewed without its IDs has no usable model
+		expect(cleanDeviceId('134-120-2')).toBe('134-120-2')
+		expect(cleanDeviceId('undefined-undefined-undefined')).toBeNull()
+		expect(cleanDeviceId('')).toBeNull()
+		expect(cleanDeviceId(undefined)).toBeNull()
+		expect(
+			cleanSeen({
+				name: 'Lamp',
+				deviceId: 'undefined-undefined-undefined',
+			}),
+		).toEqual({ name: 'Lamp' })
 	})
 
 	it('sizes, replaces, forks and unsets backgrounds', async () => {

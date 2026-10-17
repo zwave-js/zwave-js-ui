@@ -77,6 +77,33 @@ describe('#FloorPlanExchange', () => {
 		expect(localNodes(undefined)).toEqual([])
 	})
 
+	it('ignores the device ID of nodes interviewed without their IDs', () => {
+		const BAD = 'undefined-undefined-undefined'
+		const nodes = new Map([
+			[5, { id: 5, name: 'Lamp', deviceId: BAD }],
+			[6, { id: 6, name: 'Lamp', deviceId: BAD }],
+		])
+		const local = localNodes({ homeHex: '0xcdfbb3c7', nodes })
+		expect(local.map((n) => n.deviceId)).toEqual([undefined, undefined])
+		const file = parseImport(
+			json({
+				format: FORMAT,
+				version: 1,
+				backgrounds: [],
+				maps: [{ name: 'M', widthPx: 1, heightPx: 1, placements: [] }],
+				nodes: [{ ref: 'a', name: 'Lamp', deviceId: BAD }],
+			}),
+		)
+		expect(file.nodes[0].deviceId).toBeNull()
+		// same name only: possible, not likely, and two candidates tie
+		expect(matchScore(file.nodes[0], local[0], 'cdfbb3c7')).toBe(1)
+		expect(proposeMatches(file.nodes, local, 'cdfbb3c7').a).toEqual({
+			key: null,
+			confidence: 'none',
+			tied: 2,
+		})
+	})
+
 	it('names exports zwjsui_floorplan_YYYYMMDD.json', () => {
 		expect(exportFileName(new Date(2026, 9, 7))).toBe(
 			'zwjsui_floorplan_20261007.json',

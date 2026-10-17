@@ -13,6 +13,7 @@ import type { FloorPlansData, MapView, NodeFilter, Rect } from './FloorPlans.ts'
 import {
 	MAX_IMAGE_BYTES,
 	checkView,
+	cleanDeviceId,
 	imageSize,
 	sniffImage,
 } from './FloorPlans.ts'
@@ -156,7 +157,7 @@ export function localNodes(
 		id: n.id,
 		name: n.name,
 		loc: n.loc,
-		deviceId: n.deviceId,
+		deviceId: cleanDeviceId(n.deviceId) ?? undefined,
 		productLabel: n.productLabel,
 		manufacturer: n.manufacturer,
 		firmwareVersion: n.firmwareVersion,
@@ -210,7 +211,8 @@ export async function buildExport({
 			nodeId: Number(id),
 			name: n?.name || seen?.name || null,
 			loc: n?.loc || null,
-			deviceId: n?.deviceId || seen?.deviceId || null,
+			deviceId:
+				cleanDeviceId(n?.deviceId) ?? cleanDeviceId(seen?.deviceId),
 			productLabel: n?.productLabel || null,
 			manufacturer: n?.manufacturer || null,
 			firmwareVersion: n?.firmwareVersion || null,
@@ -333,7 +335,7 @@ export function parseImport(bytes: Buffer): ParsedImport {
 			nodeId: Number.isInteger(n.nodeId) ? n.nodeId : null,
 			name: str(n.name),
 			loc: str(n.loc),
-			deviceId: str(n.deviceId),
+			deviceId: cleanDeviceId(n.deviceId),
 			productLabel: str(n.productLabel),
 			manufacturer: str(n.manufacturer),
 			firmwareVersion: str(n.firmwareVersion),

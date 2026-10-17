@@ -226,6 +226,15 @@ export function imageSize(buf: Buffer): { w: number; h: number } | null {
 	return null
 }
 
+/**
+ * A device model ID as Z-Wave JS UI builds it (manufacturerId-productId-
+ * productType), or null. A node interviewed without those IDs has
+ * "undefined-undefined-undefined", which must not count as a model.
+ */
+export function cleanDeviceId(id: unknown): string | null {
+	return typeof id === 'string' && /^\d+-\d+-\d+$/.test(id) ? id : null
+}
+
 /** Keep only the identity fields a placement snapshot carries */
 export function cleanSeen(seen: unknown): Seen {
 	const out: Seen = {}
@@ -233,6 +242,7 @@ export function cleanSeen(seen: unknown): Seen {
 		const v = (seen as Seen)?.[k]
 		if (typeof v === 'string' && v) out[k] = v.slice(0, 200)
 	}
+	if (out.deviceId && !cleanDeviceId(out.deviceId)) delete out.deviceId
 	return out
 }
 
