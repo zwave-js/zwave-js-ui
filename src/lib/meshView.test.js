@@ -5,6 +5,7 @@ import {
 	mapView,
 	meshHealth,
 	nodeColor,
+	rateColor,
 	routeSegments,
 	rssiLabel,
 	statusOf,
@@ -71,6 +72,13 @@ describe('meshView', () => {
 			[1, 2, -75],
 			[2, 3, null],
 			[3, 59, -74],
+		])
+		expect([1, 2, 3, 4, undefined].map(rateColor)).toEqual([
+			'#8b0000',
+			'#F1C40F',
+			'#2DCC70',
+			'#3F51B5',
+			'#666666',
 		])
 		expect(rssiLabel(-74)).toBe('-74 dBm')
 		expect(rssiLabel(null)).toBe('')

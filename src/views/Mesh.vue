@@ -1,13 +1,67 @@
 <template>
 	<v-container class="fill" fluid>
-		<zwave-graph
-			ref="mesh"
-			id="mesh"
-			:nodes="nodes"
-			@node-click="nodeClick"
-			@node-added="fetchNodeRoutes"
-			@node-removed="onNodeRemoved"
-		/>
+		<div class="d-flex align-center flex-wrap ga-3 mb-2">
+			<v-btn-toggle
+				v-model="mode"
+				mandatory
+				density="compact"
+				variant="outlined"
+				divided
+			>
+				<v-btn value="graph" prepend-icon="hub">Graph</v-btn>
+				<v-btn value="map" prepend-icon="map">Floorplan</v-btn>
+			</v-btn-toggle>
+			<v-select
+				v-if="mode === 'map' && floorPlans.maps.length"
+				v-model="mapId"
+				:items="floorPlans.maps"
+				item-title="name"
+				item-value="id"
+				label="Map"
+				density="compact"
+				variant="outlined"
+				hide-details
+				style="max-width: 300px"
+			></v-select>
+		</div>
+
+		<div class="mesh-body">
+			<zwave-graph
+				v-if="mode === 'graph'"
+				ref="mesh"
+				id="mesh"
+				:nodes="nodes"
+				@node-click="nodeClick"
+				@node-added="fetchNodeRoutes"
+				@node-removed="onNodeRemoved"
+			/>
+			<template v-else>
+				<floor-plan-map
+					v-if="currentMap"
+					:map="currentMap"
+					:backgrounds="floorPlans.backgrounds"
+					:nodes="nodes"
+					:home-hex="appInfo.homeHex"
+					:dark="$vuetify.theme.current.dark"
+					@node-click="nodeClick"
+				/>
+				<v-empty-state
+					v-else-if="floorPlansLoaded"
+					icon="map"
+					headline="No floorplans yet"
+					text="Make a map, give it a picture of your floorplan and place your nodes on it to see the mesh where it really is."
+				>
+					<template #actions>
+						<v-btn
+							color="primary"
+							prepend-icon="add"
+							@click="newMap"
+							>New map</v-btn
+						>
+					</template>
+				</v-empty-state>
+			</template>
+		</div>
 		<node-panel
 			v-if="$vuetify.display.mdAndUp"
 			:node="selectedNode"
@@ -33,6 +87,10 @@
 </template>
 
 <style scoped>
+.mesh-body {
+	height: calc(100% - 56px);
+}
+
 .details {
 	position: absolute;
 	top: 150px;
@@ -58,6 +116,10 @@ import { defineAsyncComponent, nextTick } from 'vue'
 import { mapActions, mapState } from 'pinia'
 import useBaseStore from '../stores/base.js'
 import InstancesMixin from '../mixins/InstancesMixin.js'
+import ConfigApis from '../apis/ConfigApis.js'
+import { Settings } from '@/modules/Settings'
+
+const settings = new Settings(localStorage)
 
 export default {
 	name: 'Mesh',
@@ -72,18 +134,46 @@ export default {
 		NodePanel: defineAsyncComponent(
 			() => import('@/components/custom/NodePanel.vue'),
 		),
+		FloorPlanMap: defineAsyncComponent(
+			() => import('@/components/custom/FloorPlanMap.vue'),
+		),
 	},
 	computed: {
-		...mapState(useBaseStore, ['nodes']),
+		...mapState(useBaseStore, ['nodes', 'appInfo']),
+		/** the map picked in this browser, else the default map, else the first */
+		currentMap() {
+			const { maps, settings: s } = this.floorPlans
+			return (
+				maps.find((m) => m.id === this.mapId) ??
+				maps.find((m) => m.id === s.defaultMapId) ??
+				maps[0] ??
+				null
+			)
+		},
 	},
 	documentListeners: {},
 	data() {
 		return {
 			selectedNode: null,
 			showProperties: false,
+			mode: settings.load('meshMode', 'graph'),
+			mapId: settings.load('meshFloorPlanMap', ''),
+			floorPlans: { settings: {}, backgrounds: [], maps: [] },
+			floorPlansLoaded: false,
 		}
 	},
+	mounted() {
+		if (this.mode === 'map') this.loadFloorPlans()
+	},
 	watch: {
+		mode(v) {
+			settings.store('meshMode', v)
+			this.nodeClick(null)
+			if (v === 'map') this.loadFloorPlans()
+		},
+		mapId(v) {
+			settings.store('meshFloorPlanMap', v)
+		},
 		showProperties(v) {
 			// Return to overview map when closing the node properties dialog
 			// using the X in the top right corner
@@ -95,6 +185,46 @@ export default {
 	},
 	methods: {
 		...mapActions(useBaseStore, ['setNeighbors']),
+		async loadFloorPlans() {
+			try {
+				const res = await ConfigApis.getFloorPlans()
+				if (!res.success) throw Error(res.message)
+				this.floorPlans = res.data
+				this.floorPlansLoaded = true
+			} catch (error) {
+				this.showSnackbar(
+					`Couldn't load the floorplans: ${error.message}`,
+					'error',
+				)
+			}
+		},
+		async newMap() {
+			const { name } = await this.app.confirm('New map', '', 'info', {
+				confirmText: 'Create',
+				width: 400,
+				inputs: [
+					{
+						type: 'text',
+						label: 'Name',
+						key: 'name',
+						required: true,
+						default: 'Ground floor',
+					},
+				],
+			})
+			if (!name) return
+			try {
+				const res = await ConfigApis.addFloorPlanMap({ name })
+				if (!res.success) throw Error(res.message)
+				await this.loadFloorPlans()
+				this.mapId = res.data.id
+			} catch (error) {
+				this.showSnackbar(
+					`Couldn't create the map: ${error.message}`,
+					'error',
+				)
+			}
+		},
 		setInitialPosition(element) {
 			const windowHeight = window.innerHeight
 			const windowWidth = window.innerWidth

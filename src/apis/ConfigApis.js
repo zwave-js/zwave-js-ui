@@ -258,4 +258,17 @@ export default {
 		)
 		return response.data
 	},
+	// ---- FLOORPLANS ------
+	async getFloorPlans() {
+		const response = await request.get('/floorplans')
+		return response.data
+	},
+	async addFloorPlanMap(data) {
+		const response = await request.post('/floorplans/maps', data)
+		return response.data
+	},
+	/** URL of a background image file, for <img> and map overlays */
+	floorPlanImageUrl(file) {
+		return `${axios.defaults.baseURL}/floorplans/images/${encodeURIComponent(file)}`
+	},
 }
