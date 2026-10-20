@@ -13,7 +13,7 @@ async function main(param) {
 		pull_number: context.issue.number,
 	};
 
-	const { data: pull } = await github.pulls.get(request);
+	const { data: pull } = await github.rest.pulls.get(request);
 	return {
 		repo: pull.head.repo.full_name,
 		ref: pull.head.ref,

@@ -28,7 +28,7 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v7
       with:
-        # The push below authenticates explicitly with BOT_TOKEN; leave no
+        # The push below authenticates explicitly with its own token; leave no
         # ambient credential in .git/config
         persist-credentials: false
 
@@ -36,21 +36,19 @@ jobs:
       env:
         GH_TOKEN: ${{ github.token }}
       # Keep the pin in sync with gh-aw-compile-check.yml
-      run: gh extension install github/gh-aw --pin v0.83.2
+      run: gh extension install github/gh-aw --pin v0.89.21
 
     - name: Update installed workflows
       env:
         GH_TOKEN: ${{ github.token }}
-      run: gh aw update
-
-    - name: Fail on merge conflicts
-      # gh aw update does a 3-way merge preserving local edits; conflicts
-      # need a human, not a PR that fails compile-check cryptically
-      run: |
-        if grep -rl '^<<<<<<< ' .github/workflows/*.md; then
-          echo "::error::gh aw update produced merge conflicts - resolve manually with 'gh aw update' locally"
-          exit 1
-        fi
+      # --no-release-bump keeps each action ref on the floating major the
+      # shared workflows use.
+      # --no-merge overwrites the installed copies because the 3-way merge
+      # conflicts on every run. Local edits to those copies are lost, so
+      # per-repo settings must stay in zwave-js-bot.config.json.
+      # --cool-down 0 applies bot-workflows releases right away because we
+      # publish them ourselves.
+      run: gh aw update --no-release-bump --no-merge --cool-down 0
 
     - name: Repin shared actions to the current v1
       run: |
@@ -75,7 +73,7 @@ jobs:
 
     - name: Open a pull request
       env:
-        GH_TOKEN: ${{ secrets.BOT_TOKEN }}
+        GH_TOKEN: ${{ secrets.BOT_WORKFLOW_UPDATE_TOKEN }}
       run: |
         set -euo pipefail
         # git status also catches untracked files (a new workflow would

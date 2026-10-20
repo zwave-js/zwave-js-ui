@@ -23,7 +23,7 @@ async function main(param) {
 		return;
 	}
 
-	await github.issues.createComment({
+	await github.rest.issues.createComment({
 		...options,
 		issue_number: context.payload.issue.number,
 		body: feedbackText,
