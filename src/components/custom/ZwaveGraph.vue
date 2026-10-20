@@ -929,6 +929,15 @@ export default {
 				selectedNodes = []
 			}
 
+			// no selection: go back to the filtered overview, not all nodes
+			if (
+				selectedNodes.length === 0 &&
+				(this.nodesFilter.length > 0 || this.locationsFilter.length > 0)
+			) {
+				selectedNodes = this.filteredNodes.map((n) => n.id)
+				this.network.setSelection({ nodes: selectedNodes })
+			}
+
 			this.selectedNodes = selectedNodes
 
 			const showAll = selectedNodes.length === 0
