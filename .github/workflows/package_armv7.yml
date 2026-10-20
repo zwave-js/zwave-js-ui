@@ -36,6 +36,7 @@ jobs:
           dockerRunArgs: |
             --volume "${PWD}:/app"
 
+          # Stuck on 22: there is no arm32v7/node:24-* image (see docker/Dockerfile)
           base_image: '--platform=linux/arm/v7 arm32v7/node:22-bullseye'
 
           # Rebuild .node modules for amv7
