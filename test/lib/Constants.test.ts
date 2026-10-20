@@ -54,6 +54,18 @@ describe('#Constants', () => {
 				device_class: 'energy',
 			})
 		})
+		it('electric kVAh → no device class', () => {
+			const result = mod.meterType({ meterType: 0x01, scale: 0x01 })
+			expect(result.props).to.deep.equal({
+				state_class: 'total_increasing',
+			})
+		})
+		it('electric Pulse count → no device class', () => {
+			const result = mod.meterType({ meterType: 0x01, scale: 0x03 })
+			expect(result.props).to.deep.equal({
+				state_class: 'total_increasing',
+			})
+		})
 		it('electric W → power', () => {
 			const result = mod.meterType({ meterType: 0x01, scale: 0x02 })
 			expect(result.props).to.deep.equal({

@@ -165,10 +165,21 @@ export function meterType(ccSpecific: IMeterCCSpecific): any {
 						device_class: 'energy',
 					}
 					break
+				case 0x01: // kVAh (apparent energy)
+					// HA has no apparent energy device class, keep only the unit
+					cfg.props = {
+						state_class: 'total_increasing',
+					}
+					break
 				case 0x02: // W
 					cfg.props = {
 						state_class: 'measurement',
 						device_class: 'power',
+					}
+					break
+				case 0x03: // Pulse count (unitless)
+					cfg.props = {
+						state_class: 'total_increasing',
 					}
 					break
 				case 0x04: // V
