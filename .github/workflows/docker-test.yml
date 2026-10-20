@@ -14,8 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        # Same set docker-release.yml publishes: the 32-bit ARM legs are the ones
-        # that break on a Node bump (#4755), so they have to be built here.
+        # Same set docker-release.yml publishes
         platform: [linux/amd64, linux/arm64, linux/arm/v7, linux/arm/v6]
     steps:
       - uses: actions/checkout@v5
@@ -64,4 +63,10 @@ jobs:
           # docker-release.yml owns this scope; keep the names in sync.
           cache-from: type=gha,scope=zwave-js-ui
           push: false
+          load: true
           tags: ${{ steps.docker_meta.outputs.tags }}
+
+      - name: Smoke test
+        run: |
+          docker run --rm --platform ${{ matrix.platform }} zwavejs/zwave-js-ui:test \
+            node -e "require('@serialport/bindings-cpp'); console.log(process.version, process.arch)"

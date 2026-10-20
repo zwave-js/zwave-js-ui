@@ -6,7 +6,6 @@ ARG image=zwave-js-ui
 ARG NODE_IMAGE=node:24.22.0-alpine3.23
 ARG ALPINE_IMAGE=alpine:3.23
 ARG BUILDPLATFORM
-ARG TARGETARCH
 
 FROM ${NODE_IMAGE} AS node
 
@@ -21,18 +20,19 @@ RUN --mount=type=cache,target=/var/cache/apk,sharing=locked \
 
 WORKDIR /usr/src/app
 
-# 64-bit arches: official Node binaries, version pinned by NODE_IMAGE
-FROM alpine AS node-official
+# Picked by TARGETARCH below. 64-bit: official Node binaries, pinned by NODE_IMAGE
+FROM alpine AS base-amd64
 
 COPY --link --from=node /usr/lib /usr/lib
 COPY --link --from=node /usr/local/lib /usr/local/lib
 COPY --link --from=node /usr/local/include /usr/local/include
 COPY --link --from=node /usr/local/bin /usr/local/bin
 
-# 32-bit ARM: Node.js ships no armv6/armv7 binaries from v24 on (#4755), so use
-# whatever Node the Alpine release ships. nodejs-dev gives node-gyp the headers the
-# official image has in /usr/local/include, so it doesn't fetch them from nodejs.org.
-FROM alpine AS node-apk
+FROM base-amd64 AS base-arm64
+
+# arm/v6 and arm/v7 (both TARGETARCH=arm): Node.js ships no 32-bit ARM binaries from
+# v24 on (#4755), so use Alpine's nodejs. nodejs-dev gives node-gyp local headers.
+FROM alpine AS base-arm
 
 RUN --mount=type=cache,target=/var/cache/apk,sharing=locked \
     apk add \
@@ -40,9 +40,12 @@ RUN --mount=type=cache,target=/var/cache/apk,sharing=locked \
     nodejs-dev \
     npm
 
-FROM node-official AS base-amd64
-FROM node-official AS base-arm64
-FROM node-apk AS base-arm
+# Fail if an Alpine bump moves Node to a different major than NODE_IMAGE
+ARG NODE_IMAGE
+RUN want=${NODE_IMAGE#node:} && want=${want%%.*} && \
+    have=$(node -p 'process.versions.node.split(".")[0]') && \
+    if [ "$have" != "$want" ]; then \
+    echo "Alpine nodejs is v$have, NODE_IMAGE is v$want"; exit 1; fi
 
 FROM base-${TARGETARCH} AS base
 
