@@ -17,6 +17,11 @@ export function copy(o) {
 
 export function noop() {}
 
+/** "1 node", "3 nodes" */
+export function plural(count, word, many = `${word}s`) {
+	return `${count} ${count === 1 ? word : many}`
+}
+
 export function wait(ms) {
 	return new Promise((r) => setTimeout(r, ms))
 }

@@ -15,6 +15,7 @@ import {
 export const CONTROLLER_COLOR = '#7e57c2'
 export const DEAD_COLOR = '#8b0000'
 export const UNKNOWN_COLOR = '#666666'
+export const NEIGHBOR_COLOR = '#888888'
 
 // index = hop count
 const HOP_COLORS = [null, '#00BCD4', '#2DCC70', '#F1C40F', '#E77E23', '#4a148c']
