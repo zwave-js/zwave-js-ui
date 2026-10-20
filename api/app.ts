@@ -15,7 +15,7 @@ import MqttClient from './lib/MqttClient.ts'
 import SocketManager from './lib/SocketManager.ts'
 import type { CallAPIResult, ZwaveConfig } from './lib/ZwaveClient.ts'
 import ZWaveClient from './lib/ZwaveClient.ts'
-import multer, { diskStorage } from 'multer'
+import multer, { diskStorage, memoryStorage } from 'multer'
 import extract from 'extract-zip'
 import { serverVersion } from '@zwave-js/server'
 import archiver from 'archiver'
@@ -49,6 +49,7 @@ import {
 } from './lib/SocketEvents.ts'
 import * as utils from './lib/utils.ts'
 import backupManager from './lib/BackupManager.ts'
+import floorPlans, { MAX_IMAGE_BYTES, MAX_IMAGE_MB } from './lib/FloorPlans.ts'
 import {
 	getExternallyManagedPaths,
 	loadExternalSettings,
@@ -119,6 +120,13 @@ const Storage = diskStorage({
 const multerUpload = multer({
 	storage: Storage,
 }).array('upload', 1) // Field name and max count
+
+// floorplan background images are kept in memory: they are sniffed and size
+// checked before anything is written to the store
+const floorPlanImageUpload = multer({
+	storage: memoryStorage(),
+	limits: { fileSize: MAX_IMAGE_BYTES, files: 1 },
+}).single('upload')
 
 const FileStore = sessionStore(session)
 const app = express()
@@ -2150,6 +2158,156 @@ app.post(
 
 		if (file && isRestore) {
 			await rm(file.path)
+		}
+	},
+)
+
+// -------- Floorplans API --------
+
+/** Run a floorplans handler and reply with the usual `{ success, data }` shape */
+function floorPlansRoute(
+	handler: (req: Request, res: Response) => Promise<unknown>,
+) {
+	return async function (req: Request, res: Response) {
+		try {
+			res.json({ success: true, data: await handler(req, res) })
+		} catch (error) {
+			logger.error(
+				`Floorplans ${req.method} ${req.path}: ${error.message}`,
+			)
+			res.json({ success: false, message: error.message })
+		}
+	}
+}
+
+app.get(
+	'/api/floorplans',
+	apisLimiter,
+	isAuthenticated,
+	floorPlansRoute(() => floorPlans.load()),
+)
+
+app.patch(
+	'/api/floorplans/settings',
+	apisLimiter,
+	isAuthenticated,
+	floorPlansRoute((req) => floorPlans.updateSettings(req.body ?? {})),
+)
+
+app.post(
+	'/api/floorplans/maps',
+	apisLimiter,
+	isAuthenticated,
+	floorPlansRoute((req) => floorPlans.addMap(req.body ?? {})),
+)
+
+app.patch(
+	'/api/floorplans/maps/:id',
+	apisLimiter,
+	isAuthenticated,
+	floorPlansRoute((req) => floorPlans.updateMap(req.params.id, req.body)),
+)
+
+app.delete(
+	'/api/floorplans/maps/:id',
+	apisLimiter,
+	isAuthenticated,
+	floorPlansRoute((req) => floorPlans.deleteMap(req.params.id)),
+)
+
+// multipart: `upload` file, `dark=true` for the dark theme picture, and the
+// browser-decoded `imgWidthPx`/`imgHeightPx`, used if the header can't be read
+app.put(
+	'/api/floorplans/maps/:id/image',
+	apisLimiter,
+	isAuthenticated,
+	floorPlansRoute(async (req, res) => {
+		try {
+			await multerPromise(floorPlanImageUpload, req, res)
+		} catch (error) {
+			if (error.code === 'LIMIT_FILE_SIZE') {
+				throw Error(`Image is larger than ${MAX_IMAGE_MB} MB`)
+			}
+			throw error
+		}
+		if (!req.file) throw Error('No file uploaded')
+		return floorPlans.setMapImage(req.params.id, {
+			bytes: req.file.buffer,
+			imgWidthPx: Number(req.body.imgWidthPx),
+			imgHeightPx: Number(req.body.imgHeightPx),
+			dark: req.body.dark === 'true',
+		})
+	}),
+)
+
+// ?dark=true removes the dark theme picture, otherwise the light one
+app.delete(
+	'/api/floorplans/maps/:id/image',
+	apisLimiter,
+	isAuthenticated,
+	floorPlansRoute((req) =>
+		floorPlans.removeMapImage(req.params.id, {
+			dark: req.query.dark === 'true',
+		}),
+	),
+)
+
+// body: { deviceKey, x, y }, or { placements: [{ deviceKey, x, y }] } in one write
+app.put(
+	'/api/floorplans/maps/:id/placements',
+	apisLimiter,
+	isAuthenticated,
+	floorPlansRoute((req) => {
+		const body = req.body ?? {}
+		return body.placements !== undefined
+			? floorPlans.setPlacements(req.params.id, body.placements)
+			: floorPlans.setPlacement(req.params.id, body)
+	}),
+)
+
+app.delete(
+	'/api/floorplans/maps/:id/placements/:deviceKey',
+	apisLimiter,
+	isAuthenticated,
+	floorPlansRoute((req) =>
+		floorPlans.removePlacement(req.params.id, req.params.deviceKey),
+	),
+)
+
+// Background image file. Served by file name: the dot keeps the history
+// fallback from rewriting browser image requests (Accept: */*), and a
+// replaced image always gets a new name, so it can be cached. Only files a
+// map references are served.
+app.get(
+	'/api/floorplans/images/:file',
+	apisLimiter,
+	isAuthenticated,
+	async function (req, res) {
+		const notFound = () =>
+			res.status(404).json({ success: false, message: 'No such image' })
+		try {
+			const { maps } = await floorPlans.load()
+			const file = req.params.file
+			const owned = maps.some(
+				(m) =>
+					m.background?.image === file ||
+					m.background?.darkImage === file,
+			)
+			if (!owned) return notFound()
+			res.set({
+				'Cache-Control': 'private, max-age=31536000, immutable',
+				'X-Content-Type-Options': 'nosniff',
+			})
+			// referenced but missing on disk, e.g. after a partial restore
+			res.sendFile(file, { root: floorPlans.imagesDir }, (err) => {
+				if (err && !res.headersSent) {
+					logger.error(`Floorplan image ${file}: ${err.message}`)
+					notFound()
+				}
+			})
+		} catch (error) {
+			logger.error(`Floorplan image ${req.params.file}: ${error.message}`)
+			res.status(500).json({ success: false, message: error.message })
 		}
 	},
 )
