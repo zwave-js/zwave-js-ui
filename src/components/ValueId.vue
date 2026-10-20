@@ -274,7 +274,7 @@
 					modelValue.type === 'boolean' &&
 					((modelValue.writeable && modelValue.readable) ||
 						(modelValue.states && modelValue.states.length === 2) ||
-						modelValue.booleanToggle)
+						(node?.virtual && !isPureButton))
 				"
 			>
 				<v-btn-group class="mt-4 my-2" rounded="xl">
@@ -422,6 +422,11 @@ export default {
 		}
 	},
 	computed: {
+		// zwave-js marks fire-once buttons (Identify, Reset...) with a single `true` state
+		isPureButton() {
+			const states = this.modelValue.states
+			return states?.length === 1 && states[0].value === true
+		},
 		trueLabel() {
 			return this.modelValue.type === 'boolean' &&
 				this.modelValue.states?.length > 0
