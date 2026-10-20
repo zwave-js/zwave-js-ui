@@ -305,4 +305,41 @@ describe('#Gateway', () => {
 			expect(writeValue).not.toHaveBeenCalled()
 		})
 	})
+
+	describe('#_addRgbColorSwitch()', () => {
+		it('sets a color_temp_value_template that inverts the command template', () => {
+			const gateway = new Gateway(
+				{ type: 1, hassDiscovery: true },
+				null as any,
+				{ getTopic: (t: string) => t } as any,
+			)
+			closeWatchers()
+			vi.spyOn(gateway, 'valueTopic').mockReturnValue({
+				topic: 'color',
+				targetTopic: 'color/set',
+			} as any)
+			const currentColor = {
+				id: '1-51-0-currentColor',
+				endpoint: 0,
+			} as unknown as ZUIValueId
+			const node = {
+				id: 1,
+				values: {
+					'51-0-currentColor-0': { id: '1-51-0-currentColor-0' },
+				},
+			} as unknown as ZUINode
+
+			const payload = gateway['_addRgbColorSwitch'](
+				node,
+				currentColor,
+			).discovery_payload
+
+			expect(payload.color_temp_command_template).to.equal(
+				"{{ {'warmWhite': ((value - 245)|round(0)), 'coldWhite': (255 - (value - 245))|round(0)}|to_json }}",
+			)
+			expect(payload.color_temp_value_template).to.equal(
+				'{{ (value_json.value.warmWhite | default(0, true)) + 245 }}',
+			)
+		})
+	})
 })
