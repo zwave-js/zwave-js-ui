@@ -283,12 +283,20 @@ import 'vis-network/styles/vis-network.css'
 // import fakeNodes from '@/assets/testNodes.json'
 import {
 	ProtocolDataRate,
-	protocolDataRateToString,
 	rssiToString,
 	isRssiError,
 	RouteKind,
 } from '@zwave-js/core'
 import { uuid, arraysEqual } from '../../lib/utils'
+import {
+	CONTROLLER_COLOR,
+	DEAD_COLOR,
+	HOP_LEGEND,
+	RATE_LEGEND,
+	UNKNOWN_COLOR,
+	hopColor,
+	rateColor,
+} from '../../lib/meshView.js'
 import useBaseStore from '../../stores/base.js'
 import { mapState } from 'pinia'
 
@@ -379,43 +387,11 @@ export default {
 			updateTimeout: null,
 			loading: false,
 			priorityEdges: {}, // keeps track of the edges that should be shown in overview
-			legends: [
-				{
-					color: '#7e57c2',
-					textColor: '#7e57c2',
-					text: 'Controller',
-				},
-				{
-					color: '#00BCD4',
-					textColor: '#00BCD4',
-					text: '1 hop',
-				},
-				{
-					color: '#2DCC70',
-					textColor: '#2DCC70',
-					text: '2 hops',
-				},
-				{
-					color: '#F1C40F',
-					textColor: '#F1C40F',
-					text: '3 hops',
-				},
-				{
-					color: '#E77E23',
-					textColor: '#E77E23',
-					text: '4 hops',
-				},
-				{
-					color: '#8b0000',
-					textColor: '#8b0000',
-					text: 'Failed Node',
-				},
-				{
-					color: '#666666',
-					textColor: '#666666',
-					text: 'Unknown',
-				},
-			],
+			legends: HOP_LEGEND.map(([text, color]) => ({
+				color,
+				textColor: color,
+				text,
+			})),
 			edgesLegend: [
 				{
 					icon: 'star',
@@ -433,33 +409,9 @@ export default {
 					textColor: '',
 					text: 'Next to last working route',
 				},
-				{
-					color: '#8b0000',
-					textColor: '#8b0000',
-					text: protocolDataRateToString(ProtocolDataRate.ZWave_9k6),
-				},
-				{
-					color: '#F1C40F',
-					textColor: '#F1C40F',
-					text: protocolDataRateToString(ProtocolDataRate.ZWave_40k),
-				},
-				{
-					color: '#2DCC70',
-					textColor: '#2DCC70',
-					text: protocolDataRateToString(ProtocolDataRate.ZWave_100k),
-				},
-				{
-					color: '#3F51B5',
-					textColor: '#3F51B5',
-					text: protocolDataRateToString(
-						ProtocolDataRate.LongRange_100k,
-					),
-				},
-				{
-					color: '#666666',
-					textColor: '#666666',
-					text: 'Unknown',
-				},
+				...[...RATE_LEGEND, ['Unknown', UNKNOWN_COLOR]].map(
+					([text, color]) => ({ color, textColor: color, text }),
+				),
 			],
 		}
 	},
@@ -792,20 +744,6 @@ export default {
 		getEdgeId(edge) {
 			return `${edge.from}-${edge.to}`
 		},
-		getDataRateColor(dataRate) {
-			switch (dataRate) {
-				case ProtocolDataRate.ZWave_9k6:
-					return '#8b0000'
-				case ProtocolDataRate.ZWave_40k:
-					return '#F1C40F'
-				case ProtocolDataRate.ZWave_100k:
-					return '#2DCC70'
-				case ProtocolDataRate.LongRange_100k:
-					return '#3F51B5'
-				default:
-					return '#666666'
-			}
-		},
 		clearSelection() {
 			if (this.network && !this.loading) {
 				this.network.unselectAll()
@@ -1078,7 +1016,7 @@ export default {
 			if (!route) {
 				if (routeKind !== RouteKind.NLWR) {
 					// unknown route
-					node.color = this.legends[6].color
+					node.color = UNKNOWN_COLOR
 				}
 				return
 			}
@@ -1102,7 +1040,7 @@ export default {
 					id: uuid(),
 					from: routeFailedBetween[0],
 					to: routeFailedBetween[1],
-					color: this.getDataRateColor(ProtocolDataRate.ZWave_9k6),
+					color: rateColor(ProtocolDataRate.ZWave_9k6),
 					width: 1,
 					label: 'Failed ❌',
 					font: { align: 'top', size: 0 },
@@ -1193,7 +1131,7 @@ export default {
 					id: uuid(),
 					from,
 					to,
-					color: this.getDataRateColor(protocolDataRate),
+					color: rateColor(protocolDataRate),
 					width,
 					layer: i + 1,
 					label,
@@ -1216,7 +1154,7 @@ export default {
 
 				if (showInOverview) {
 					if (!node.failed && node.available) {
-						node.color = this.legends[repeaters.length + 1].color
+						node.color = hopColor(repeaters.length + 1)
 					}
 
 					// only draw the edge with higher data rate
@@ -1278,7 +1216,7 @@ export default {
 			if (id === hubNode) {
 				entity.shape = 'star'
 				entity.isControllerNode = true
-				entity.color = this.legends[0].color
+				entity.color = CONTROLLER_COLOR
 			} else if (node.isListening) {
 				entity.shape = 'hexagon'
 			} else {
@@ -1288,13 +1226,13 @@ export default {
 			if (node.failed) {
 				entity.label = 'FAILED: ' + entity.label
 				entity.group = 'Failed'
-				entity.color = this.legends[5].color
+				entity.color = DEAD_COLOR
 			}
 
 			if (!node.available) {
 				entity.label = 'DEAD: ' + entity.label
 				entity.group = 'Dead'
-				entity.color = this.legends[5].color
+				entity.color = DEAD_COLOR
 			}
 
 			if (hubNode === id) {
