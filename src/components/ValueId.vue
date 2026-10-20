@@ -215,6 +215,7 @@
 				:return-object="false"
 				:item-title="itemText"
 				item-value="value"
+				:list-props="{ class: 'valueid-list' }"
 				:suffix="modelValue.unit"
 				:append-icon="!disable_send ? 'send' : null"
 				v-model="modelValue.newValue"
@@ -248,6 +249,7 @@
 				:suffix="modelValue.unit"
 				:item-title="itemText"
 				item-value="value"
+				:list-props="{ class: 'valueid-list' }"
 				:type="modelValue.type === 'number' ? 'number' : 'text'"
 				:return-object="false"
 				:append-icon="
@@ -386,6 +388,13 @@
 .valueid-slot :deep(.v-messages__message),
 .valueid-slot :deep(.help) {
 	white-space: pre-line;
+}
+</style>
+
+<style>
+/* dropdown menus are teleported outside this component, so scoped styles can't reach them */
+.valueid-list .v-list-item-title {
+	white-space: normal;
 }
 </style>
 
