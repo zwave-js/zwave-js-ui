@@ -207,6 +207,42 @@ describe('#Gateway', () => {
 		})
 	})
 
+	describe('#publishDiscovery()', () => {
+		it('sends a zero-length payload when deleting a device', () => {
+			const mqtt = {
+				disabled: false,
+				publish: vi.fn(),
+				publishEmpty: vi.fn(),
+			}
+			const gateway = new Gateway(
+				{
+					type: 1,
+					hassDiscovery: true,
+					retainedDiscovery: true,
+					discoveryPrefix: 'homeassistant',
+				},
+				null as any,
+				mqtt as any,
+			)
+			closeWatchers()
+			vi.spyOn(gateway, 'setDiscovery').mockImplementation(() => {})
+			gateway.publishDiscovery(
+				{
+					discoveryTopic: 'switch/dev/config',
+					discovery_payload: {},
+				} as any,
+				1,
+				{ deleteDevice: true },
+			)
+			expect(mqtt.publish).not.toHaveBeenCalled()
+			expect(mqtt.publishEmpty).toHaveBeenCalledWith(
+				'switch/dev/config',
+				{ qos: 0, retain: true },
+				'homeassistant',
+			)
+		})
+	})
+
 	describe('#parsePayload()', () => {
 		const targetValue = (commandClass: CommandClasses) =>
 			({
