@@ -5,7 +5,7 @@
 // pictures. Positions are canvas pixels: x right, y down, origin at the
 // canvas's top-left. Every image file belongs to exactly one map.
 
-import { readFile, rename, rm, writeFile } from 'node:fs/promises'
+import { cp, readFile, rename, rm, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { floorPlansDir } from '../config/app.ts'
 import { module } from './logger.ts'
@@ -328,11 +328,18 @@ export class FloorPlans {
 		return raw.version < VERSION ? migrate(raw) : raw
 	}
 
+	/** Run `fn` after every queued step, before any later one */
+	private enqueue<T>(fn: () => Promise<T>) {
+		const run = this.queue.then(fn)
+		this.queue = run.catch(() => {})
+		return run
+	}
+
 	/** Run read-modify-write steps one at a time so concurrent requests can't lose updates */
 	private update<T>(
 		fn: (data: FloorPlansData, files: FileChanges) => T | Promise<T>,
 	) {
-		const run = this.queue.then(async () => {
+		return this.enqueue(async () => {
 			const files: FileChanges = { added: [], removed: [] }
 			let result: T
 			try {
@@ -346,8 +353,83 @@ export class FloorPlans {
 			await this.removeFiles(files.removed)
 			return result
 		})
-		this.queue = run.catch(() => {})
-		return run
+	}
+
+	/**
+	 * The files a store backup needs, as paths relative to the floorplans
+	 * folder: maps.json and every image a map uses. Read in the write queue,
+	 * so the images match maps.json and none is deleted halfway. Unused and
+	 * in-flight files are left out. A missing image is logged and skipped,
+	 * and an unreadable maps.json is still backed up as it is.
+	 */
+	backupFiles(): Promise<{ name: string; data: Buffer }[]> {
+		return this.enqueue(async () => {
+			let raw: Buffer
+			try {
+				raw = await readFile(this.file)
+			} catch (error) {
+				if (error.code === 'ENOENT') return []
+				throw error
+			}
+			const out = [{ name: 'maps.json', data: raw }]
+			let maps: FloorPlanMap[] = []
+			try {
+				maps = (await this.load()).maps
+			} catch (error) {
+				logger.error(
+					`Backing up floorplans without images: ${error.message}`,
+				)
+			}
+			const names = maps.flatMap((m) =>
+				[m.background?.image, m.background?.darkImage].filter(Boolean),
+			)
+			for (const name of names) {
+				try {
+					out.push({
+						name: `images/${name}`,
+						data: await readFile(path.join(this.imagesDir, name)),
+					})
+				} catch (error) {
+					logger.warn(
+						`Floorplan image ${name} left out of the backup: ${error.message}`,
+					)
+				}
+			}
+			return out
+		})
+	}
+
+	/**
+	 * Replace the floorplans folder with a restored one. Replacing instead
+	 * of merging keeps pictures the backup doesn't use from piling up.
+	 */
+	restoreFrom(dir: string) {
+		return this.enqueue(async () => {
+			const id = generateId()
+			const incoming = `${this.dir}.restore-${id}`
+			const old = `${this.dir}.old-${id}`
+			let moved = false
+			try {
+				await cp(dir, incoming, {
+					recursive: true,
+					verbatimSymlinks: true,
+				})
+				try {
+					await rename(this.dir, old)
+					moved = true
+				} catch (error) {
+					if (error.code !== 'ENOENT') throw error
+				}
+				await rename(incoming, this.dir)
+			} catch (error) {
+				// put the current floorplans back
+				if (moved) await rename(old, this.dir)
+				await rm(incoming, { recursive: true, force: true })
+				throw error
+			}
+			await rm(old, { recursive: true, force: true })
+			logger.info('Floorplans restored from backup')
+		})
 	}
 
 	/** Delete image files; a failure is logged, never thrown, since maps.json no longer uses them */

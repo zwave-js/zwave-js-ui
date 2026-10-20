@@ -1,4 +1,5 @@
-import { mkdtemp, rm, writeFile } from 'node:fs/promises'
+import { existsSync } from 'node:fs'
+import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
 import type { Server as HttpServer } from 'node:http'
 import { createServer } from 'node:http'
 import type { AddressInfo } from 'node:net'
@@ -23,6 +24,18 @@ const PNG1 = Buffer.from(
 	'base64',
 )
 const K = (n: number) => `zwave:cdfbb3c7:${n}`
+
+/** Compression method of each entry in a zip, from its local headers (0 = stored) */
+function zipMethods(zip: Buffer) {
+	const out: Record<string, number> = {}
+	for (let i = zip.indexOf('PK\x03\x04'); i >= 0; ) {
+		const nameLen = zip.readUInt16LE(i + 26)
+		const name = zip.toString('utf8', i + 30, i + 30 + nameLen)
+		out[name] = zip.readUInt16LE(i + 8)
+		i = zip.indexOf('PK\x03\x04', i + 30 + nameLen)
+	}
+	return out
+}
 
 describe('floorplans API', () => {
 	let server: HttpServer
@@ -80,6 +93,33 @@ describe('floorplans API', () => {
 	afterAll(async () => {
 		await new Promise((resolve) => server?.close(resolve))
 		await rm(testStoreDir, { recursive: true, force: true })
+	})
+
+	// the history fallback takes requests without application/json, like the UI's axios
+	const backup = async (query = '') => {
+		const res = await fetch(`${url}/api/store/backup${query}`, {
+			headers: { Accept: 'application/json, text/plain, */*' },
+		})
+		expect(res.status).toBe(200)
+		return Buffer.from(await res.arrayBuffer())
+	}
+
+	const restore = async (zip: Buffer) => {
+		const form = new FormData()
+		form.append('restore', 'true')
+		form.append('upload', new Blob([zip]), 'backup.zip')
+		return fetch(`${url}/api/store/upload`, {
+			method: 'POST',
+			headers: { Accept: 'application/json' },
+			body: form,
+		}).then((res) => res.json())
+	}
+
+	it('backs up a store that has no floorplans yet', async () => {
+		expect(existsSync(floorPlans.dir)).toBe(false)
+		const names = Object.keys(zipMethods(await backup()))
+		expect(names).toContain('settings.json')
+		expect(names.some((n) => n.startsWith('floorplans/'))).toBe(false)
 	})
 
 	it('creates, changes and deletes maps and placements', async () => {
@@ -212,6 +252,39 @@ describe('floorplans API', () => {
 			(await api('GET', '')).data.maps.find((m) => m.id === map.id)
 				.background,
 		).toBeNull()
+	})
+
+	it('backs up floorplans unless asked not to, and restores them', async () => {
+		const { data: map } = await api('POST', '/maps', { name: 'Backed up' })
+		const file = (await upload(map.id, PNG1)).data.map.background.image
+		await writeFile(join(floorPlans.imagesDir, 'stray.png'), PNG1)
+
+		const zip = await backup()
+		const methods = zipMethods(zip)
+		expect(methods['floorplans/maps.json']).toBe(8)
+		// pictures are stored as they are, unused ones left out
+		expect(methods[`floorplans/images/${file}`]).toBe(0)
+		expect(methods['floorplans/images/stray.png']).toBeUndefined()
+
+		const without = zipMethods(await backup('?floorPlans=false'))
+		expect(Object.keys(without)).toContain('settings.json')
+		expect(
+			Object.keys(without).some((n) => n.startsWith('floorplans/')),
+		).toBe(false)
+
+		// lose everything, then restore: the folder is replaced, not merged
+		await api('DELETE', `/maps/${map.id}`)
+		await api('POST', '/maps', { name: 'After the backup' })
+		expect(await restore(zip)).toEqual({ success: true })
+		const { data } = await api('GET', '')
+		expect(data.maps.map((m) => m.name)).toContain('Backed up')
+		expect(data.maps.map((m) => m.name)).not.toContain('After the backup')
+		expect(existsSync(join(floorPlans.imagesDir, 'stray.png'))).toBe(false)
+		const img = await fetch(`${url}/api/floorplans/images/${file}`)
+		expect(img.status).toBe(200)
+		expect(Buffer.from(await img.arrayBuffer())).toEqual(
+			await readFile(join(floorPlans.imagesDir, file)),
+		)
 	})
 
 	it('requires login on every route when auth is enabled', async () => {

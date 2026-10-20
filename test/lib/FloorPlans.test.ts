@@ -289,6 +289,61 @@ describe('#FloorPlans', () => {
 		expect(images(fp)).toEqual([old])
 	})
 
+	it('backs up maps.json and only the pictures maps use', async () => {
+		const fp = await fresh()
+		expect(await fp.backupFiles()).toEqual([])
+		const m = await fp.addMap({ name: 'House' })
+		const set = await fp.setMapImage(m.id, { bytes: PNG1 })
+		const dark = await fp.setMapImage(m.id, { bytes: PNG1, dark: true })
+		await writeFile(path.join(fp.imagesDir, 'stray.png'), PNG1)
+		await writeFile(path.join(fp.imagesDir, 'x.png.1.2.tmp'), 'z')
+		const files = await fp.backupFiles()
+		expect(files.map((f) => f.name).sort()).toEqual(
+			[
+				'maps.json',
+				`images/${set.map.background.image}`,
+				`images/${dark.map.background.darkImage}`,
+			].sort(),
+		)
+		expect(files.find((f) => f.name === 'maps.json').data).toEqual(
+			await readFile(fp.file),
+		)
+
+		// a missing picture is skipped, a broken maps.json still backed up
+		await fsp.rm(path.join(fp.imagesDir, set.map.background.image))
+		expect(await fp.backupFiles()).toHaveLength(2)
+		await writeFile(fp.file, '{ nope')
+		expect(await fp.backupFiles()).toEqual([
+			{ name: 'maps.json', data: Buffer.from('{ nope') },
+		])
+	})
+
+	it('replaces the whole folder on restore', async () => {
+		const fp = await fresh()
+		const m = await fp.addMap({ name: 'Now' })
+		await fp.setMapImage(m.id, { bytes: PNG1 })
+		await writeFile(path.join(fp.imagesDir, 'stray.png'), PNG1)
+
+		const backup = await fresh()
+		const b = await backup.addMap({ name: 'Then' })
+		const set = await backup.setMapImage(b.id, { bytes: PNG1 })
+
+		await fp.restoreFrom(backup.dir)
+		expect((await fp.load()).maps.map((x) => x.name)).toEqual(['Then'])
+		expect(images(fp)).toEqual([set.map.background.image])
+		// nothing left next to the folder
+		expect(
+			readdirSync(path.dirname(fp.dir)).filter((n) =>
+				n.startsWith(`${path.basename(fp.dir)}.`),
+			),
+		).toEqual([])
+
+		// a store without floorplans yet
+		const empty = await fresh()
+		await empty.restoreFrom(backup.dir)
+		expect((await empty.load()).maps).toHaveLength(1)
+	})
+
 	it('keeps all concurrent placements', async () => {
 		const fp = await fresh()
 		const m = await fp.addMap({ name: 'p', widthPx: 100, heightPx: 100 })

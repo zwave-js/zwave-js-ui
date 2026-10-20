@@ -430,6 +430,18 @@
 									v-model.number="newBackup.storeKeep"
 								></v-text-field>
 							</v-col>
+							<v-col
+								v-if="newBackup.storeBackup"
+								cols="12"
+								sm="6"
+							>
+								<v-switch
+									hint="Include floorplans (maps, background pictures and node placements). Pictures are stored as they are, so each backup grows by their total size"
+									persistent-hint
+									label="Floorplans"
+									v-model="newBackup.storeFloorPlans"
+								></v-switch>
+							</v-col>
 						</v-row>
 
 						<v-divider />

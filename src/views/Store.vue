@@ -439,12 +439,23 @@ export default {
 					width: 500,
 					cancelText: 'No',
 					confirmText: 'Yes',
+					inputs: [
+						{
+							type: 'checkbox',
+							key: 'floorPlans',
+							label: 'Include floorplans (maps, background pictures and node placements)',
+							default: true,
+						},
+					],
 				},
 			)
 
-			if (result) {
+			// with inputs, cancel resolves to {}
+			if ('floorPlans' in result) {
 				try {
-					const response = await ConfigApis.backupStore()
+					const response = await ConfigApis.backupStore(
+						result.floorPlans,
+					)
 
 					await this.downloadZip(
 						response,

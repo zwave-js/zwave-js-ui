@@ -2101,7 +2101,10 @@ app.get(
 	isAuthenticated,
 	async function (req, res) {
 		try {
-			await jsonStore.backup(res)
+			await jsonStore.backup({
+				res,
+				floorPlans: req.query.floorPlans !== 'false',
+			})
 		} catch (error) {
 			res.status(500).send({
 				error: error.message,
@@ -2136,6 +2139,16 @@ app.post(
 				try {
 					await extract(file.path, { dir: stageDir })
 					await utils.assertNoEscapingSymlinks(stageDir, stageDir)
+					// floorplans are replaced, not merged
+					const stagedFloorPlans = path.join(stageDir, 'floorplans')
+					const hasFloorPlans = await stat(stagedFloorPlans).then(
+						(s) => s.isDirectory(),
+						() => false,
+					)
+					if (hasFloorPlans) {
+						await floorPlans.restoreFrom(stagedFloorPlans)
+						await rm(stagedFloorPlans, { recursive: true })
+					}
 					await cp(stageDir, storeDir, {
 						recursive: true,
 						// keep in-store links (e.g. *_current.log) as links, don't copy their targets
