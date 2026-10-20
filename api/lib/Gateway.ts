@@ -2821,8 +2821,9 @@ export default class Gateway {
 
 			cfg.discovery_payload.color_temp_command_template =
 				"{{ {'warmWhite': ((value - 245)|round(0)), 'coldWhite': (255 - (value - 245))|round(0)}|to_json }}"
+			// inverse of the command template: warmWhite = mireds - 245
 			cfg.discovery_payload.color_temp_value_template =
-				"{{ '%03d%03d' | format((value_json.value.warmWhite || 0), (value_json.value.coldWhite || 0)) }}"
+				'{{ (value_json.value.warmWhite | default(0, true)) + 245 }}'
 		}
 		return cfg
 	}
