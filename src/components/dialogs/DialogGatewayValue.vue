@@ -164,7 +164,7 @@
 							>
 								<v-checkbox
 									label="Enable discovery"
-									hint="Configuration CC values are disabled by default in MQTT discovery. Set this to true to force enable them"
+									hint="Enable this Configuration CC entity by default in MQTT discovery. Overrides the global Home Assistant setting when set"
 									persistent-hint
 									v-model="
 										editedValue.ccConfigEnableDiscovery
