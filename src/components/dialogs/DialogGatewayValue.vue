@@ -165,11 +165,11 @@
 								<!-- unset (null) inherits the global setting, so it needs its own choice -->
 								<v-select
 									label="Enable discovery"
-									hint="Enable this Configuration CC entity by default in MQTT discovery"
+									hint="Enable this Configuration CC entity by default in MQTT discovery. Global setting: Home Assistant > Enable Configuration CC entities"
 									persistent-hint
 									:items="[
 										{
-											title: 'Use Home Assistant setting',
+											title: 'Use global setting',
 											value: null,
 										},
 										{ title: 'Enabled', value: true },

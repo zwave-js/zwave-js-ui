@@ -49,7 +49,7 @@ Properties of a **valueId configuration**:
 - **Parse receive**: Enable this to allow users to specify a custom `function(value,valueId,node,logger)` to parse the value received via MQTT. The function must be sync
 - **Enable Poll**: Enable poll of this value by using Z-Wave JS [pollValue](https://zwave-js.github.io/node-zwave-js/#/api/node?id=pollvalue)
 - **Poll interval**: Seconds between two poll requests
-- **Enable discovery**: Only for Configuration CC values. Enables or disables this entity by default in Home Assistant discovery, overriding the Home Assistant **Enable Configuration CC entities** setting. Leave it on **Use Home Assistant setting** to follow the global setting. Home Assistant only applies it to entities it has not registered yet
+- **Enable discovery**: Only for Configuration CC values. Enables or disables this entity by default in Home Assistant discovery, overriding the Home Assistant **Enable Configuration CC entities** setting. Leave it on **Use global setting** to follow it. Home Assistant only applies it to entities it has not registered yet
 
 ### Scheduled Jobs
 
