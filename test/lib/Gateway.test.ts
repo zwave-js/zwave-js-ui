@@ -388,7 +388,7 @@ describe('#Gateway', () => {
 	})
 
 	describe('#_addRgbColorSwitch()', () => {
-		it('sets a color_temp_value_template that inverts the command template', () => {
+		it('keeps the rgb and color_temp modes exclusive', () => {
 			const gateway = new Gateway(
 				{ type: 1, hassDiscovery: true },
 				null as any,
@@ -415,12 +415,22 @@ describe('#Gateway', () => {
 				currentColor,
 			).discovery_payload
 
-			expect(payload.color_temp_command_template).to.equal(
-				"{{ {'warmWhite': ((value - 245)|round(0)), 'coldWhite': (255 - (value - 245))|round(0)}|to_json }}",
+			// checked end to end against Home Assistant 2026.10.2: each template
+			// renders only for its own mode, since HA runs the rgb and color_temp
+			// handlers of the shared topic in no fixed order
+			const rgbSum =
+				'(c.red | default(0, true)) + (c.green | default(0, true)) + (c.blue | default(0, true))'
+			expect(payload.rgb_value_template).to.equal(
+				`{% set c = value_json.value %}{% if ${rgbSum} > 0 %}{{ c.red }},{{ c.green }},{{ c.blue }}{% endif %}`,
 			)
-			// renders: {ww:0,cw:0} -> '', {ww:0,cw:255} -> '245', {ww:255,cw:0} -> '500'
 			expect(payload.color_temp_value_template).to.equal(
-				"{% set c = value_json.value %}{% set ww = c.warmWhite | default(0, true) %}{{ ww + 245 if ww + (c.coldWhite | default(0, true)) > 0 else '' }}",
+				`{% set c = value_json.value %}{% set ww = c.warmWhite | default(0, true) %}{% if ${rgbSum} == 0 and ww + (c.coldWhite | default(0, true)) > 0 %}{{ ww + 245 }}{% endif %}`,
+			)
+			expect(payload.rgb_command_template).to.equal(
+				"{{ {'red': red, 'green': green, 'blue': blue, 'warmWhite': 0, 'coldWhite': 0}|to_json }}",
+			)
+			expect(payload.color_temp_command_template).to.equal(
+				"{% set ww = [[(value - 245) | round(0) | int, 0] | max, 255] | min %}{{ {'red': 0, 'green': 0, 'blue': 0, 'warmWhite': ww, 'coldWhite': 255 - ww}|to_json }}",
 			)
 			expect(payload.min_mireds).to.equal(245)
 			expect(payload.max_mireds).to.equal(500)

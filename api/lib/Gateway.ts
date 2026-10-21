@@ -2833,13 +2833,20 @@ export default class Gateway {
 			cfg.discovery_payload.color_temp_command_topic =
 				cfg.discovery_payload.rgb_command_topic
 
+			// HA runs the rgb and color_temp handlers of the shared topic in no
+			// fixed order, so each renders only for its own mode (empty = ignored)
+			const rgbSum =
+				'(c.red | default(0, true)) + (c.green | default(0, true)) + (c.blue | default(0, true))'
+			cfg.discovery_payload.rgb_value_template = `{% set c = value_json.value %}{% if ${rgbSum} > 0 %}{{ c.red }},{{ c.green }},{{ c.blue }}{% endif %}`
+			// inverse of the command template: warmWhite = mireds - 245
+			cfg.discovery_payload.color_temp_value_template = `{% set c = value_json.value %}{% set ww = c.warmWhite | default(0, true) %}{% if ${rgbSum} == 0 and ww + (c.coldWhite | default(0, true)) > 0 %}{{ ww + 245 }}{% endif %}`
+
+			// modes are exclusive in HA, so setting one turns off the other's channels
+			cfg.discovery_payload.rgb_command_template =
+				"{{ {'red': red, 'green': green, 'blue': blue, 'warmWhite': 0, 'coldWhite': 0}|to_json }}"
+			// clamped because HA doesn't apply min/max_mireds to service calls
 			cfg.discovery_payload.color_temp_command_template =
-				"{{ {'warmWhite': ((value - 245)|round(0)), 'coldWhite': (255 - (value - 245))|round(0)}|to_json }}"
-			// inverse of the command template: warmWhite = mireds - 245.
-			// Empty when both whites are off, so HA keeps the RGB color mode
-			cfg.discovery_payload.color_temp_value_template =
-				"{% set c = value_json.value %}{% set ww = c.warmWhite | default(0, true) %}{{ ww + 245 if ww + (c.coldWhite | default(0, true)) > 0 else '' }}"
-			// the command template only maps 245-500 mireds to 0-255 whites
+				"{% set ww = [[(value - 245) | round(0) | int, 0] | max, 255] | min %}{{ {'red': 0, 'green': 0, 'blue': 0, 'warmWhite': ww, 'coldWhite': 255 - ww}|to_json }}"
 			cfg.discovery_payload.min_mireds = 245
 			cfg.discovery_payload.max_mireds = 500
 		}
