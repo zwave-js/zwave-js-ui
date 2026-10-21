@@ -6,6 +6,7 @@ import {
 	mapView,
 	meshHealth,
 	nodeColor,
+	nodeName,
 	RATE_LEGEND,
 	rateColor,
 	routeSegments,
@@ -47,6 +48,13 @@ const NODES = [
 ]
 
 describe('meshView', () => {
+	it('names nodes, falling back to the ID when the name is invisible', () => {
+		expect(nodeName({ id: 5, name: 'Kitchen' })).toBe('Kitchen')
+		for (const name of [undefined, '', '  ', '\u200b', '\u0007 ']) {
+			expect(nodeName({ id: 63, name })).toBe('NodeID 63')
+		}
+	})
+
 	it('builds floorplan device keys with or without 0x', () => {
 		expect(deviceKey('0xcdfbb3c7', 5)).toBe('zwave:cdfbb3c7:5')
 		expect(deviceKey('cdfbb3c7', 5)).toBe('zwave:cdfbb3c7:5')

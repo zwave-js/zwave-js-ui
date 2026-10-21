@@ -19,8 +19,11 @@
 					variant="tonal"
 					prepend-icon="grid_view"
 					block
+					v-tooltip="
+						'In a grid along the bottom, the controller in the middle'
+					"
 					@click="placeAll"
-					>Place all {{ unplacedCount }} along the bottom</v-btn
+					>Place all {{ unplacedCount }}</v-btn
 				>
 			</div>
 			<v-list density="compact" class="py-0">
@@ -95,6 +98,7 @@ import {
 	meshHealth,
 	nlwrOf,
 	nodeColor,
+	nodeName,
 	rateColor,
 	rssiLabel,
 	statusOf,
@@ -118,7 +122,7 @@ const LAYER_DEFAULTS = {
 
 const esc = (s) => escapeHtml(String(s ?? ''))
 
-const nameOf = (n) => n.name || `NodeID ${n.id}`
+const nameOf = nodeName
 
 function labelOf(n) {
 	const status = statusOf(n)

@@ -80,6 +80,16 @@ export function rssiLabel(rssi) {
 	return rssi == null ? '' : rssiToString(rssi)
 }
 
+/**
+ * A node's name for labels, or "NodeID <id>" when it has none. A name of
+ * nothing but spaces, control or format characters (e.g. a zero-width
+ * space) counts as none, or the label would be invisible.
+ */
+export function nodeName(node) {
+	const name = node.name ?? ''
+	return /^[\s\p{C}]*$/u.test(name) ? `NodeID ${node.id}` : name
+}
+
 /** The key a floorplan stores a node under: zwave:<home ID in hex>:<node ID> */
 export function deviceKey(homeHex, nodeId) {
 	return `zwave:${(homeHex || '').replace(/^0x/, '')}:${nodeId}`
