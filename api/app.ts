@@ -2193,11 +2193,15 @@ function floorPlansRoute(
 	}
 }
 
+// the floorplans, plus the limits the UI checks before uploading
 app.get(
 	'/api/floorplans',
 	apisLimiter,
 	isAuthenticated,
-	floorPlansRoute(() => floorPlans.load()),
+	floorPlansRoute(async () => ({
+		...(await floorPlans.load()),
+		limits: { maxImageBytes: MAX_IMAGE_BYTES },
+	})),
 )
 
 app.patch(

@@ -329,6 +329,14 @@ export default {
 				},
 			)
 			if (!file) return
+			const maxBytes = this.floorPlans.limits?.maxImageBytes
+			if (maxBytes && file.size > maxBytes) {
+				this.showSnackbar(
+					`Image is larger than ${maxBytes / 1024 / 1024} MB`,
+					'error',
+				)
+				return
+			}
 			// the server reads the size from the header; this is the fallback
 			let size = null
 			try {
@@ -345,7 +353,8 @@ export default {
 			const res = await this.floorPlanCall('upload the picture', () =>
 				ConfigApis.setFloorPlanImage(map.id, file, { dark, size, fit }),
 			)
-			if (res?.stretched) {
+			// with a known size, stretching was asked for in askImageFit
+			if (res?.stretched && !size) {
 				this.showSnackbar(
 					"The picture's shape differs from the map's frame, so it's stretched to fit",
 					'warning',
