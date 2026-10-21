@@ -244,6 +244,10 @@ export default {
 			}
 		},
 	},
+	created() {
+		// pictures that failed to load, drawn as the outline instead
+		this.brokenImages = new Set()
+	},
 	mounted() {
 		const lmap = L.map(this.$refs.map, {
 			crs: L.CRS.Simple,
@@ -464,7 +468,8 @@ export default {
 			const file = this.dark
 				? (bg?.darkImage ?? bg?.image)
 				: (bg?.image ?? bg?.darkImage)
-			if (file) {
+			// a picture that failed to load isn't asked for again until reload
+			if (file && !this.brokenImages.has(file)) {
 				// imageRect: where the picture sits on the canvas, in canvas px
 				const r = bg.imageRect
 				L.imageOverlay(
@@ -475,7 +480,11 @@ export default {
 					],
 					{ pane: 'floorplan-background' },
 				)
-					.on('error', () => this.$emit('image-error', file))
+					.on('error', () => {
+						this.brokenImages.add(file)
+						this.$emit('image-error', file)
+						this.drawSoon()
+					})
 					.addTo(this.groups.background)
 			} else {
 				L.rectangle(
