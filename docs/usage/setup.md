@@ -69,6 +69,7 @@ Store:
 - **Enabled**: Enable/Disable scheduled backups of store
 - **Cron**: Cron expression to schedule the backup
 - **Max backup files**: Number of backups to keep in storage
+- **Floorplans**: Include floorplans (maps, background images and node placements) in the backup. On by default. The manual backup on the Store page asks each time
 
 NVM:
 

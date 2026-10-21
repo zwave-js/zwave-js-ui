@@ -1,5 +1,5 @@
 import jsonFile from 'jsonfile'
-import { storeBackupsDir, storeDir } from '../config/app.ts'
+import { floorPlansDir, storeBackupsDir, storeDir } from '../config/app.ts'
 import type { StoreFile, StoreKeys } from '../config/store.ts'
 import { module } from './logger.ts'
 import { recursive as merge } from 'merge'
@@ -53,7 +53,11 @@ export class StorageHelper {
 		return this._store
 	}
 
-	async backup(res?: Response): Promise<string> {
+	/** Zip the store files; `floorPlans: false` leaves the floorplans out */
+	async backup(
+		res?: Response,
+		{ floorPlans = true }: { floorPlans?: boolean } = {},
+	): Promise<string> {
 		const backupFile = `${STORE_BACKUP_PREFIX}${fileDate()}.zip`
 
 		await ensureDir(storeBackupsDir)
@@ -89,6 +93,11 @@ export class StorageHelper {
 			archive.glob('*.jsonl', {
 				cwd: storeDir,
 			})
+
+			// floorplan maps and their background images
+			if (floorPlans && existsSync(floorPlansDir)) {
+				archive.directory(floorPlansDir, 'floorplans')
+			}
 
 			for (const model in this.config) {
 				const config: StoreFile = this.config[model]
