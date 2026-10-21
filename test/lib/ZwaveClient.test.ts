@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
+import { SetUserResult } from 'zwave-js'
 import ZwaveClient from '../../api/lib/ZwaveClient.ts'
 
 // `throttle` only touches `throttledFunctions`, so these tests skip the real
@@ -184,6 +185,216 @@ describe('#ZwaveClient', () => {
 
 			vi.advanceTimersByTime(1000)
 			expect(fn).toHaveBeenCalledTimes(1)
+		})
+	})
+
+	describe('access-control local user names', () => {
+		// These methods only touch `storeNodes`, `updateStoreNodes` and the
+		// access-control resolution helpers, so the constructor (which reads
+		// json stores and needs a socket server) is skipped here too.
+		const NODE_ID = 5
+		const ENDPOINT_INDEX = 0
+
+		let client: ZwaveClient
+		let accessControl: {
+			deleteUser: ReturnType<typeof vi.fn>
+			deleteAllUsers: ReturnType<typeof vi.fn>
+		}
+
+		beforeEach(() => {
+			client = Object.create(ZwaveClient.prototype) as ZwaveClient
+			client['storeNodes'] = {}
+			client['_requireNode'] = vi.fn().mockReturnValue({ id: NODE_ID })
+			accessControl = {
+				deleteUser: vi.fn(),
+				deleteAllUsers: vi.fn(),
+			}
+			client['_resolveAccessControlEndpoint'] = vi
+				.fn()
+				.mockImplementation((_zwaveNode, endpointIndex) => ({
+					index: endpointIndex ?? ENDPOINT_INDEX,
+					accessControl,
+					endpoint: {},
+				}))
+			client['updateStoreNodes'] = vi.fn().mockResolvedValue(undefined)
+			client['_refreshAccessControlState'] = vi.fn()
+		})
+
+		describe('#accessControlSetUserLocalName()', () => {
+			it('stores a local name, creating the nested store entries', async () => {
+				await client.accessControlSetUserLocalName(
+					NODE_ID,
+					ENDPOINT_INDEX,
+					1,
+					'Front door key',
+				)
+
+				expect(
+					client['storeNodes'][NODE_ID].accessControlUserNames[
+						ENDPOINT_INDEX
+					][1],
+				).to.equal('Front door key')
+				expect(client['updateStoreNodes']).toHaveBeenCalledTimes(1)
+				expect(
+					client['_refreshAccessControlState'],
+				).toHaveBeenCalledWith({ id: NODE_ID })
+			})
+
+			it('overwrites an existing local name for the same user', async () => {
+				await client.accessControlSetUserLocalName(
+					NODE_ID,
+					ENDPOINT_INDEX,
+					1,
+					'Old name',
+				)
+				await client.accessControlSetUserLocalName(
+					NODE_ID,
+					ENDPOINT_INDEX,
+					1,
+					'New name',
+				)
+
+				expect(
+					client['storeNodes'][NODE_ID].accessControlUserNames[
+						ENDPOINT_INDEX
+					][1],
+				).to.equal('New name')
+			})
+
+			it('clears the local name when given an empty string', async () => {
+				await client.accessControlSetUserLocalName(
+					NODE_ID,
+					ENDPOINT_INDEX,
+					1,
+					'Front door key',
+				)
+				await client.accessControlSetUserLocalName(
+					NODE_ID,
+					ENDPOINT_INDEX,
+					1,
+					'',
+				)
+
+				expect(
+					client['storeNodes'][NODE_ID].accessControlUserNames[
+						ENDPOINT_INDEX
+					],
+				).to.not.have.property('1')
+			})
+
+			it('keys names by endpoint so different endpoints do not collide', async () => {
+				await client.accessControlSetUserLocalName(
+					NODE_ID,
+					0,
+					1,
+					'Root',
+				)
+				await client.accessControlSetUserLocalName(
+					NODE_ID,
+					2,
+					1,
+					'Endpoint 2',
+				)
+
+				expect(
+					client['storeNodes'][NODE_ID].accessControlUserNames[0][1],
+				).to.equal('Root')
+				expect(
+					client['storeNodes'][NODE_ID].accessControlUserNames[2][1],
+				).to.equal('Endpoint 2')
+			})
+		})
+
+		describe('#accessControlDeleteUser()', () => {
+			beforeEach(() => {
+				client['storeNodes'][NODE_ID] = {
+					accessControlUserNames: {
+						[ENDPOINT_INDEX]: { 1: 'Front door key', 2: 'Garage' },
+					},
+				} as never
+			})
+
+			it('removes the stored local name once the device confirms deletion', async () => {
+				accessControl.deleteUser.mockResolvedValue(SetUserResult.OK)
+
+				const result = await client.accessControlDeleteUser(
+					NODE_ID,
+					ENDPOINT_INDEX,
+					1,
+				)
+
+				expect(result).to.equal(SetUserResult.OK)
+				expect(
+					client['storeNodes'][NODE_ID].accessControlUserNames[
+						ENDPOINT_INDEX
+					],
+				).to.deep.equal({ 2: 'Garage' })
+				expect(client['updateStoreNodes']).toHaveBeenCalledTimes(1)
+			})
+
+			it('leaves the stored local name untouched when the device refuses', async () => {
+				accessControl.deleteUser.mockResolvedValue(
+					SetUserResult.Error_Unknown,
+				)
+
+				await client.accessControlDeleteUser(NODE_ID, ENDPOINT_INDEX, 1)
+
+				expect(
+					client['storeNodes'][NODE_ID].accessControlUserNames[
+						ENDPOINT_INDEX
+					],
+				).to.deep.equal({ 1: 'Front door key', 2: 'Garage' })
+				expect(client['updateStoreNodes']).not.toHaveBeenCalled()
+			})
+		})
+
+		describe('#accessControlDeleteAllUsers()', () => {
+			beforeEach(() => {
+				client['storeNodes'][NODE_ID] = {
+					accessControlUserNames: {
+						[ENDPOINT_INDEX]: { 1: 'Front door key', 2: 'Garage' },
+					},
+				} as never
+			})
+
+			it('clears every stored local name once the device confirms deletion', async () => {
+				accessControl.deleteAllUsers.mockResolvedValue(SetUserResult.OK)
+
+				const result = await client.accessControlDeleteAllUsers(
+					NODE_ID,
+					ENDPOINT_INDEX,
+				)
+
+				expect(result).to.equal(SetUserResult.OK)
+				expect(
+					client['storeNodes'][NODE_ID].accessControlUserNames[
+						ENDPOINT_INDEX
+					],
+				).to.deep.equal({})
+				expect(client['updateStoreNodes']).toHaveBeenCalledTimes(1)
+				expect(client['_refreshAccessControlState']).toHaveBeenCalled()
+			})
+
+			it('leaves stored local names untouched when the device refuses', async () => {
+				accessControl.deleteAllUsers.mockResolvedValue(
+					SetUserResult.Error_Unknown,
+				)
+
+				await client.accessControlDeleteAllUsers(
+					NODE_ID,
+					ENDPOINT_INDEX,
+				)
+
+				expect(
+					client['storeNodes'][NODE_ID].accessControlUserNames[
+						ENDPOINT_INDEX
+					],
+				).to.deep.equal({ 1: 'Front door key', 2: 'Garage' })
+				expect(client['updateStoreNodes']).not.toHaveBeenCalled()
+				expect(
+					client['_refreshAccessControlState'],
+				).not.toHaveBeenCalled()
+			})
 		})
 	})
 })
