@@ -49,6 +49,7 @@ export class ColumnFilterHelper {
 
 	static isFilterActive(colType, filter) {
 		return (
+			!!filter &&
 			!!ColumnFilterHelper.defaultFilter(colType) &&
 			Object.keys(ColumnFilterHelper.filterSpec(colType, filter)).length >
 				0
@@ -59,10 +60,7 @@ export class ColumnFilterHelper {
 		for (const column of headers) {
 			const filter = filters ? filters[column.key] : undefined
 			// unset filters match everything, skip the per-item pass
-			if (
-				!filter ||
-				!ColumnFilterHelper.isFilterActive(column.type, filter)
-			)
+			if (!ColumnFilterHelper.isFilterActive(column.type, filter))
 				continue
 			switch (column.type) {
 				case 'number':

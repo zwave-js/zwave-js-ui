@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { CommandClasses } from '@zwave-js/core'
+import nunjucks from 'nunjucks'
 import Gateway, { closeWatchers } from '../../api/lib/Gateway.ts'
 import type { ZUINode, ZUIValueId } from '../../api/lib/ZwaveClient.ts'
 
@@ -388,7 +389,16 @@ describe('#Gateway', () => {
 	})
 
 	describe('#_addRgbColorSwitch()', () => {
-		it('maps a Binary Switch state to ON/OFF', () => {
+		// nunjucks runs the Jinja syntax HA uses; add the Jinja2 min/max and HA to_json filters it lacks
+		const jinja = new nunjucks.Environment(null, { autoescape: false })
+			.addFilter('min', (a: number[]) => Math.min(...a))
+			.addFilter('max', (a: number[]) => Math.max(...a))
+			.addFilter('to_json', (v: unknown) => JSON.stringify(v))
+		// HA parses a JSON_TIME_VALUE payload into value_json
+		const renderState = (template: string, value: unknown) =>
+			jinja.renderString(template, { value_json: { time: 1, value } })
+
+		const discover = (values: Record<string, any>) => {
 			const gateway = new Gateway(
 				{ type: 1, hassDiscovery: true },
 				null as any,
@@ -396,80 +406,108 @@ describe('#Gateway', () => {
 			)
 			closeWatchers()
 			vi.spyOn(gateway, 'valueTopic').mockReturnValue({
-				topic: 'switch',
-				targetTopic: 'switch/set',
+				topic: 'topic',
+				targetTopic: 'topic/set',
 			} as any)
 			const currentColor = {
 				id: '1-51-0-currentColor',
 				endpoint: 0,
 			} as unknown as ZUIValueId
-			const node = {
-				id: 1,
-				values: {
-					'37-0-currentValue': {
-						id: '1-37-0-currentValue',
-						targetValue: '37-0-targetValue',
-					},
-				},
-			} as unknown as ZUINode
-
-			const payload = gateway['_addRgbColorSwitch'](
-				node,
+			return gateway['_addRgbColorSwitch'](
+				{ id: 1, values } as unknown as ZUINode,
 				currentColor,
 			).discovery_payload
+		}
 
-			// checked against Home Assistant 2026.10.2 in JSON, VALUEID and RAW modes
-			expect(payload.state_value_template).to.equal(
-				'{{ "ON" if value_json.value | string | lower == "true" else "OFF" }}',
-			)
+		it('maps a Binary Switch state to ON/OFF', () => {
+			const payload = discover({
+				'37-0-currentValue': {
+					id: '1-37-0-currentValue',
+					targetValue: '37-0-targetValue',
+				},
+			})
+			const template = payload.state_value_template as string
+
+			expect(renderState(template, true)).to.equal('ON')
+			expect(renderState(template, false)).to.equal('OFF')
+			// RAW mode rewrites value_json.value to the raw payload string
+			const raw = template.replace(/value_json\.value/g, 'value')
+			expect(jinja.renderString(raw, { value: 'true' })).to.equal('ON')
+			expect(jinja.renderString(raw, { value: 'false' })).to.equal('OFF')
 		})
 
-		it('keeps the rgb and color_temp modes exclusive', () => {
-			const gateway = new Gateway(
-				{ type: 1, hassDiscovery: true },
-				null as any,
-				{ getTopic: (t: string) => t } as any,
-			)
-			closeWatchers()
-			vi.spyOn(gateway, 'valueTopic').mockReturnValue({
-				topic: 'color',
-				targetTopic: 'color/set',
-			} as any)
-			const currentColor = {
-				id: '1-51-0-currentColor',
-				endpoint: 0,
-			} as unknown as ZUIValueId
-			const node = {
-				id: 1,
-				values: {
-					'51-0-currentColor-0': { id: '1-51-0-currentColor-0' },
-				},
-			} as unknown as ZUINode
+		describe('with white channels', () => {
+			const payload = discover({
+				'51-0-currentColor-0': { id: '1-51-0-currentColor-0' },
+			})
+			const color = (rgb: number[], ww: number, cw: number) => ({
+				red: rgb[0],
+				green: rgb[1],
+				blue: rgb[2],
+				warmWhite: ww,
+				coldWhite: cw,
+			})
+			const states = (value: unknown) => [
+				renderState(payload.rgb_value_template, value),
+				renderState(payload.color_temp_value_template, value),
+			]
 
-			const payload = gateway['_addRgbColorSwitch'](
-				node,
-				currentColor,
-			).discovery_payload
+			// HA ignores an empty render, so only one mode updates per message
+			it('renders only the template of the active mode', () => {
+				expect(states(color([255, 0, 0], 0, 0))).to.deep.equal([
+					'255,0,0',
+					'',
+				])
+				expect(states(color([0, 0, 0], 127, 128))).to.deep.equal([
+					'',
+					'372',
+				])
+				expect(states(color([0, 255, 0], 100, 100))).to.deep.equal([
+					'0,255,0',
+					'',
+				])
+				expect(states(color([0, 0, 0], 0, 0))).to.deep.equal(['', ''])
+			})
 
-			// checked end to end against Home Assistant 2026.10.2: each template
-			// renders only for its own mode, since HA runs the rgb and color_temp
-			// handlers of the shared topic in no fixed order
-			const rgbSum =
-				'(c.red | default(0, true)) + (c.green | default(0, true)) + (c.blue | default(0, true))'
-			expect(payload.rgb_value_template).to.equal(
-				`{% set c = value_json.value %}{% if ${rgbSum} > 0 %}{{ c.red }},{{ c.green }},{{ c.blue }}{% endif %}`,
-			)
-			expect(payload.color_temp_value_template).to.equal(
-				`{% set c = value_json.value %}{% set ww = c.warmWhite | default(0, true) %}{% if ${rgbSum} == 0 and ww + (c.coldWhite | default(0, true)) > 0 %}{{ ww + 245 }}{% endif %}`,
-			)
-			expect(payload.rgb_command_template).to.equal(
-				"{{ {'red': red, 'green': green, 'blue': blue, 'warmWhite': 0, 'coldWhite': 0}|to_json }}",
-			)
-			expect(payload.color_temp_command_template).to.equal(
-				"{% set ww = [[(value - 245) | round(0) | int, 0] | max, 255] | min %}{{ {'red': 0, 'green': 0, 'blue': 0, 'warmWhite': ww, 'coldWhite': 255 - ww}|to_json }}",
-			)
-			expect(payload.min_mireds).to.equal(245)
-			expect(payload.max_mireds).to.equal(500)
+			it('turns off the other mode and clamps color temp commands', () => {
+				const colorTemp = (mireds: number) =>
+					JSON.parse(
+						jinja.renderString(
+							payload.color_temp_command_template,
+							{ value: mireds },
+						),
+					)
+				expect(colorTemp(372)).to.deep.equal(color([0, 0, 0], 127, 128))
+				expect(colorTemp(153)).to.deep.equal(color([0, 0, 0], 0, 255))
+				expect(colorTemp(600)).to.deep.equal(color([0, 0, 0], 255, 0))
+				expect(
+					JSON.parse(
+						jinja.renderString(payload.rgb_command_template, {
+							red: 0,
+							green: 0,
+							blue: 255,
+						}),
+					),
+				).to.deep.equal(color([0, 0, 255], 0, 0))
+			})
+
+			it('round-trips color temp commands through the state template', () => {
+				for (const mireds of [245, 372, 500]) {
+					const sent = JSON.parse(
+						jinja.renderString(
+							payload.color_temp_command_template,
+							{
+								value: mireds,
+							},
+						),
+					)
+					expect(
+						renderState(payload.color_temp_value_template, sent),
+					).to.equal(String(mireds))
+				}
+				expect(payload.min_mireds).to.equal(245)
+				expect(payload.max_mireds).to.equal(500)
+			})
 		})
 	})
 })

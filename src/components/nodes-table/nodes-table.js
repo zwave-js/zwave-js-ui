@@ -98,7 +98,7 @@ export default {
 				useBaseStore().setNodeView(value)
 			},
 		},
-		// one pass for all columns, the header slot reads it once per column
+		// cached: propValues rebuilds every column's choices on each read
 		columnChoices() {
 			return this.managedNodes ? this.managedNodes.propValues : {}
 		},

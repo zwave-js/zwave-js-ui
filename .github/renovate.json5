@@ -60,10 +60,11 @@
       // Docker versioning keeps the tag suffix fixed, so node only ever moves
       // X.y-alpineA.B -> X.z-alpineA.B; it can't tell whether the alpine bump has a
       // matching node tag (Alpine variants are only published for the newest patch of a
-      // line). Alpine minors therefore need a human to move the ALPINE_IMAGE and the
-      // NODE_IMAGE suffix together, and check that the new Alpine's apk `nodejs` (used on
-      // 32-bit ARM) has the same major, or the base-arm guard fails the build. Digest pins
-      // and node patch updates stay automatic.
+      // line). Alpine minors therefore need a human to:
+      // - move the ALPINE_IMAGE and the NODE_IMAGE suffix together
+      // - check the new Alpine's apk `nodejs` (32-bit ARM) has the same major, or the
+      //   base-arm guard fails the build
+      // Digest pins and node patch updates stay automatic.
       "matchManagers": ["dockerfile"],
       "matchDepNames": ["alpine"],
       "matchUpdateTypes": ["major", "minor"],

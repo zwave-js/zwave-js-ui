@@ -162,19 +162,11 @@
 									editedValue.value.commandClass === 112
 								"
 							>
-								<!-- unset (null) inherits the global setting, so it needs its own choice -->
 								<v-select
 									label="Enable discovery"
 									hint="Enable this Configuration CC entity by default in MQTT discovery. Global setting: Home Assistant > Enable Configuration CC entities"
 									persistent-hint
-									:items="[
-										{
-											title: 'Use global setting',
-											value: null,
-										},
-										{ title: 'Enabled', value: true },
-										{ title: 'Disabled', value: false },
-									]"
+									:items="discoveryOptions"
 									:model-value="
 										editedValue.ccConfigEnableDiscovery ??
 										null
@@ -423,6 +415,12 @@ export default {
 	},
 	data() {
 		return {
+			// null inherits the global Home Assistant setting
+			discoveryOptions: [
+				{ title: 'Use global setting', value: null },
+				{ title: 'Enabled', value: true },
+				{ title: 'Disabled', value: false },
+			],
 			isNew: null,
 			valid: true,
 			required: (v) => !!v || 'This field is required',
