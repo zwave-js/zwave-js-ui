@@ -253,7 +253,10 @@ export default {
 			crs: L.CRS.Simple,
 			minZoom: -5,
 			maxZoom: 3,
-			zoomSnap: 0.25,
+			// finer than Leaflet's defaults: a floorplan needs small steps
+			zoomSnap: 0.1,
+			zoomDelta: 0.5,
+			wheelPxPerZoomLevel: 120,
 			attributionControl: false,
 		})
 		// backgrounds get their own pane, always under the route lines
@@ -379,7 +382,12 @@ export default {
 		},
 		/** show the whole map; while editing, that becomes its saved view */
 		fitToMap() {
-			this.lmap?.fitBounds(this.canvasBounds(), { padding: [20, 20] })
+			// no animation: moveend, and with it the view save, comes at once,
+			// so a Done right after doesn't miss it
+			this.lmap?.fitBounds(this.canvasBounds(), {
+				padding: [20, 20],
+				animate: false,
+			})
 		},
 		/**
 		 * A right-click menu at a marker: `items` are [label, action] pairs.
