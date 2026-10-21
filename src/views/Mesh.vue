@@ -1,5 +1,5 @@
 <template>
-	<v-container class="fill" fluid>
+	<v-container class="fill mesh-page" fluid>
 		<!-- the floorplan view adds its map tools here -->
 		<div id="mesh-toolbar" class="d-flex align-center flex-wrap ga-3 mb-2">
 			<v-btn-toggle
@@ -50,9 +50,16 @@
 </template>
 
 <style scoped>
+.mesh-page {
+	display: flex;
+	flex-direction: column;
+}
+
+/* the rest of the page under the toolbar, however tall it gets */
 .mesh-body {
 	position: relative;
-	height: calc(100% - 56px);
+	flex: 1;
+	min-height: 0;
 }
 
 .details {
