@@ -152,7 +152,7 @@
 					v-model="managedNodes.filters[column.key]"
 					v-model:group-by="managedNodes.groupBy"
 					:column="column"
-					:items="managedNodes.propValues[column.key]"
+					:items="columnChoices[column.key]"
 					@update:filter="
 						managedNodes.setPropFilter(column.key, $event)
 					"

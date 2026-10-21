@@ -98,6 +98,10 @@ export default {
 				useBaseStore().setNodeView(value)
 			},
 		},
+		// one pass for all columns, the header slot reads it once per column
+		columnChoices() {
+			return this.managedNodes ? this.managedNodes.propValues : {}
+		},
 		// Nodes shown in the table, split between physical and virtual
 		// devices so the two (which have very different characteristics)
 		// are never mixed in the same list. A standard Broadcast virtual
