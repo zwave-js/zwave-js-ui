@@ -60,6 +60,14 @@
 							<v-list-item-title>Rename</v-list-item-title>
 						</v-list-item>
 						<v-list-item
+							prepend-icon="fit_screen"
+							@click="$refs.floorPlanMap?.fitToMap()"
+						>
+							<v-list-item-title
+								>Fit to picture</v-list-item-title
+							>
+						</v-list-item>
+						<v-list-item
 							:prepend-icon="
 								isDefaultMap ? 'star' : 'star_border'
 							"
@@ -142,6 +150,7 @@
 
 		<floor-plan-map
 			v-if="currentMap"
+			ref="floorPlanMap"
 			:map="currentMap"
 			:nodes="nodes"
 			:home-hex="appInfo.homeHex"

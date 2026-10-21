@@ -230,13 +230,18 @@ export default {
 		drawKey() {
 			this.drawSoon()
 		},
-		// a pending view save belongs to the map and the edit it was made in
+		// a pending view save belongs to the map it was made on
 		'map.id'() {
 			clearTimeout(this.viewTimer)
+			this.viewTimer = null
 			this.fitted = false
 		},
-		editing() {
-			clearTimeout(this.viewTimer)
+		// Done saves a view change still waiting to be saved
+		editing(now) {
+			if (!now && this.viewTimer) {
+				clearTimeout(this.viewTimer)
+				this.saveView()
+			}
 		},
 	},
 	mounted() {
@@ -346,21 +351,31 @@ export default {
 		saveViewSoon() {
 			if (!this.editing || this.applyingView) return
 			clearTimeout(this.viewTimer)
-			this.viewTimer = setTimeout(() => {
-				if (!this.lmap) return
-				const c = this.lmap.getCenter()
-				const layers = Object.fromEntries(
-					LAYERS.map(([k]) => [
-						k,
-						this.lmap.hasLayer(this.groups[k]),
-					]),
-				)
-				this.$emit('view-change', {
-					center: [c.lat, c.lng],
-					zoom: this.lmap.getZoom(),
-					layers,
-				})
-			}, 800)
+			this.viewTimer = setTimeout(() => this.saveView(), 800)
+		},
+		saveView() {
+			this.viewTimer = null
+			if (!this.lmap) return
+			const c = this.lmap.getCenter()
+			const layers = Object.fromEntries(
+				LAYERS.map(([k]) => [k, this.lmap.hasLayer(this.groups[k])]),
+			)
+			this.$emit('view-change', {
+				center: [c.lat, c.lng],
+				zoom: this.lmap.getZoom(),
+				layers,
+			})
+		},
+		/** the whole canvas: the picture, or the outline without one */
+		canvasBounds() {
+			return [
+				[0, 0],
+				[this.map.heightPx, this.map.widthPx],
+			]
+		},
+		/** show the whole map; while editing, that becomes its saved view */
+		fitToMap() {
+			this.lmap?.fitBounds(this.canvasBounds(), { padding: [20, 20] })
 		},
 		/**
 		 * A right-click menu at a marker: `items` are [label, action] pairs.
@@ -415,14 +430,8 @@ export default {
 			const lmap = this.lmap
 			if (!lmap) return
 			for (const g of Object.values(this.groups)) g.clearLayers()
-			const { widthPx: w, heightPx: h } = this.map
-			const bounds = [
-				[0, 0],
-				[h, w],
-			]
-
 			this.drawBackground()
-			if (!this.fitted) this.applyView(bounds)
+			if (!this.fitted) this.applyView()
 
 			const byKey = new Map(
 				this.physicalNodes.map((n) => [this.keyOf(n), n]),
@@ -486,13 +495,13 @@ export default {
 			}
 		},
 		/** a newly opened map: its saved view (zoom, center, layers), else fit it */
-		applyView(bounds) {
+		applyView() {
 			this.applyingView = true
 			const v = this.map.view ?? {}
 			if (Array.isArray(v.center) && typeof v.zoom === 'number') {
 				this.lmap.setView(v.center, v.zoom, { animate: false })
 			} else {
-				this.lmap.fitBounds(bounds, {
+				this.lmap.fitBounds(this.canvasBounds(), {
 					padding: [20, 20],
 					animate: false,
 				})
