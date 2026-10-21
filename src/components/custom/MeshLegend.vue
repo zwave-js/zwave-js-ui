@@ -65,11 +65,11 @@
 							:key="label"
 							class="mesh-legend-row"
 						>
-							<svg width="22" height="14">
+							<svg width="40" height="14">
 								<line
 									x1="1"
 									y1="7"
-									x2="21"
+									x2="39"
 									y2="7"
 									:stroke="color"
 									stroke-width="4"
@@ -79,11 +79,11 @@
 						</div>
 						<div class="mesh-legend-head mt-2">Lines</div>
 						<div class="mesh-legend-row">
-							<svg width="22" height="14">
+							<svg width="40" height="14">
 								<line
 									x1="1"
 									y1="7"
-									x2="21"
+									x2="39"
 									y2="7"
 									:stroke="routeSample"
 									stroke-width="4"
@@ -92,11 +92,11 @@
 							Route (last working)
 						</div>
 						<div class="mesh-legend-row">
-							<svg width="22" height="14">
+							<svg width="40" height="14">
 								<line
 									x1="1"
 									y1="7"
-									x2="21"
+									x2="39"
 									y2="7"
 									:stroke="routeSample"
 									stroke-width="1.5"
@@ -106,11 +106,11 @@
 							Backup route
 						</div>
 						<div class="mesh-legend-row">
-							<svg width="22" height="14">
+							<svg width="40" height="14">
 								<line
 									x1="1"
 									y1="7"
-									x2="21"
+									x2="39"
 									y2="7"
 									:stroke="routeSample"
 									stroke-width="4"
@@ -120,11 +120,11 @@
 							Backup route, no main route known
 						</div>
 						<div class="mesh-legend-row">
-							<svg width="22" height="14">
+							<svg width="40" height="14">
 								<line
 									x1="1"
 									y1="7"
-									x2="21"
+									x2="39"
 									y2="7"
 									:stroke="neighborColor"
 									stroke-width="1"
@@ -134,11 +134,11 @@
 							Neighbors
 						</div>
 						<div class="mesh-legend-row">
-							<svg width="22" height="14">
+							<svg width="40" height="14">
 								<line
 									x1="1"
 									y1="7"
-									x2="21"
+									x2="39"
 									y2="7"
 									:stroke="deadColor"
 									stroke-width="1.5"
@@ -148,11 +148,11 @@
 							Failed hop
 						</div>
 						<div class="mesh-legend-row">
-							<svg width="22" height="14">
+							<svg width="40" height="14">
 								<line
 									x1="1"
 									y1="7"
-									x2="21"
+									x2="39"
 									y2="7"
 									:stroke="health.warn"
 									stroke-width="2"
