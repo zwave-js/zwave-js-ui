@@ -162,14 +162,20 @@
 									editedValue.value.commandClass === 112
 								"
 							>
-								<v-checkbox
+								<v-select
 									label="Enable discovery"
-									hint="Enable this Configuration CC entity by default in MQTT discovery. Overrides the global Home Assistant setting when set"
+									hint="Enable this Configuration CC entity by default in MQTT discovery. Global setting: Home Assistant > Enable Configuration CC entities"
 									persistent-hint
-									v-model="
-										editedValue.ccConfigEnableDiscovery
+									:items="discoveryOptions"
+									:model-value="
+										editedValue.ccConfigEnableDiscovery ??
+										null
 									"
-								></v-checkbox>
+									@update:model-value="
+										editedValue.ccConfigEnableDiscovery =
+											$event
+									"
+								></v-select>
 							</v-col>
 
 							<v-col cols="6">
@@ -409,6 +415,12 @@ export default {
 	},
 	data() {
 		return {
+			// null inherits the global Home Assistant setting
+			discoveryOptions: [
+				{ title: 'Use global setting', value: null },
+				{ title: 'Enabled', value: true },
+				{ title: 'Disabled', value: false },
+			],
 			isNew: null,
 			valid: true,
 			required: (v) => !!v || 'This field is required',

@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { CommandClasses } from '@zwave-js/core'
+import nunjucks from 'nunjucks'
 import Gateway, { closeWatchers } from '../../api/lib/Gateway.ts'
 import type { ZUINode, ZUIValueId } from '../../api/lib/ZwaveClient.ts'
 
@@ -178,7 +179,7 @@ describe('#Gateway', () => {
 			return publish.mock.calls[0][0].discovery_payload.enabled_by_default
 		}
 
-		const valueConf = (ccConfigEnableDiscovery: boolean) => ({
+		const valueConf = (ccConfigEnableDiscovery?: boolean | null) => ({
 			values: [
 				{
 					device: 'dev-1',
@@ -204,6 +205,17 @@ describe('#Gateway', () => {
 				}),
 			).to.equal(false)
 			expect(discover(valueConf(true))).to.equal(true)
+		})
+
+		it('follows the global setting when the per-value flag is unset', () => {
+			for (const unset of [undefined, null]) {
+				expect(
+					discover({
+						ccConfigEnabledByDefault: true,
+						...valueConf(unset),
+					}),
+				).to.equal(true)
+			}
 		})
 	})
 
@@ -239,6 +251,76 @@ describe('#Gateway', () => {
 				'switch/dev/config',
 				{ qos: 0, retain: true },
 				'homeassistant',
+			)
+		})
+
+		it('retains the removal even when retained discovery is off', () => {
+			const mqtt = {
+				disabled: false,
+				publish: vi.fn(),
+				publishEmpty: vi.fn(),
+			}
+			const gateway = new Gateway(
+				{
+					type: 1,
+					hassDiscovery: true,
+					retainedDiscovery: false,
+					discoveryPrefix: 'homeassistant',
+				},
+				null as any,
+				mqtt as any,
+			)
+			closeWatchers()
+			vi.spyOn(gateway, 'setDiscovery').mockImplementation(() => {})
+			gateway.publishDiscovery(
+				{
+					discoveryTopic: 'switch/dev/config',
+					discovery_payload: {},
+				} as any,
+				1,
+				{ deleteDevice: true },
+			)
+			expect(mqtt.publishEmpty).toHaveBeenCalledWith(
+				'switch/dev/config',
+				{ qos: 0, retain: true },
+				'homeassistant',
+			)
+		})
+	})
+
+	describe('#removeNodeRetained()', () => {
+		it('clears every value topic with a retained empty payload', () => {
+			const mqtt = {
+				disabled: false,
+				publish: vi.fn(),
+				publishEmpty: vi.fn(),
+			}
+			const node = {
+				id: 1,
+				values: {
+					'37-0-currentValue': { id: '1-37-0-currentValue' },
+					'38-0-currentValue': { id: '1-38-0-currentValue' },
+				},
+			}
+			const gateway = new Gateway(
+				{ type: 1 },
+				{ nodes: new Map([[1, node]]) } as any,
+				mqtt as any,
+			)
+			closeWatchers()
+			vi.spyOn(gateway, 'valueTopic').mockImplementation(
+				(_node, valueId: any) => `topic/${valueId.id}`,
+			)
+			gateway.removeNodeRetained(1)
+			expect(mqtt.publish).not.toHaveBeenCalled()
+			expect(mqtt.publishEmpty).toHaveBeenCalledTimes(2)
+			expect(mqtt.publishEmpty).toHaveBeenCalledWith(
+				'topic/1-37-0-currentValue',
+				{ retain: true },
+			)
+			expect(mqtt.publishEmpty).toHaveBeenCalledWith(
+				'topic/1-38-0-currentValue',
+				{ retain: true },
 			)
 		})
 	})
@@ -307,7 +389,16 @@ describe('#Gateway', () => {
 	})
 
 	describe('#_addRgbColorSwitch()', () => {
-		it('sets a color_temp_value_template that inverts the command template', () => {
+		// nunjucks runs the Jinja syntax HA uses; add the Jinja2 min/max and HA to_json filters it lacks
+		const jinja = new nunjucks.Environment(null, { autoescape: false })
+			.addFilter('min', (a: number[]) => Math.min(...a))
+			.addFilter('max', (a: number[]) => Math.max(...a))
+			.addFilter('to_json', (v: unknown) => JSON.stringify(v))
+		// HA parses a JSON_TIME_VALUE payload into value_json
+		const renderState = (template: string, value: unknown) =>
+			jinja.renderString(template, { value_json: { time: 1, value } })
+
+		const discover = (values: Record<string, any>) => {
 			const gateway = new Gateway(
 				{ type: 1, hassDiscovery: true },
 				null as any,
@@ -315,31 +406,108 @@ describe('#Gateway', () => {
 			)
 			closeWatchers()
 			vi.spyOn(gateway, 'valueTopic').mockReturnValue({
-				topic: 'color',
-				targetTopic: 'color/set',
+				topic: 'topic',
+				targetTopic: 'topic/set',
 			} as any)
 			const currentColor = {
 				id: '1-51-0-currentColor',
 				endpoint: 0,
 			} as unknown as ZUIValueId
-			const node = {
-				id: 1,
-				values: {
-					'51-0-currentColor-0': { id: '1-51-0-currentColor-0' },
-				},
-			} as unknown as ZUINode
-
-			const payload = gateway['_addRgbColorSwitch'](
-				node,
+			return gateway['_addRgbColorSwitch'](
+				{ id: 1, values } as unknown as ZUINode,
 				currentColor,
 			).discovery_payload
+		}
 
-			expect(payload.color_temp_command_template).to.equal(
-				"{{ {'warmWhite': ((value - 245)|round(0)), 'coldWhite': (255 - (value - 245))|round(0)}|to_json }}",
-			)
-			expect(payload.color_temp_value_template).to.equal(
-				'{{ (value_json.value.warmWhite | default(0, true)) + 245 }}',
-			)
+		it('maps a Binary Switch state to ON/OFF', () => {
+			const payload = discover({
+				'37-0-currentValue': {
+					id: '1-37-0-currentValue',
+					targetValue: '37-0-targetValue',
+				},
+			})
+			const template = payload.state_value_template as string
+
+			expect(renderState(template, true)).to.equal('ON')
+			expect(renderState(template, false)).to.equal('OFF')
+			// RAW mode rewrites value_json.value to the raw payload string
+			const raw = template.replace(/value_json\.value/g, 'value')
+			expect(jinja.renderString(raw, { value: 'true' })).to.equal('ON')
+			expect(jinja.renderString(raw, { value: 'false' })).to.equal('OFF')
+		})
+
+		describe('with white channels', () => {
+			const payload = discover({
+				'51-0-currentColor-0': { id: '1-51-0-currentColor-0' },
+			})
+			const color = (rgb: number[], ww: number, cw: number) => ({
+				red: rgb[0],
+				green: rgb[1],
+				blue: rgb[2],
+				warmWhite: ww,
+				coldWhite: cw,
+			})
+			const states = (value: unknown) => [
+				renderState(payload.rgb_value_template, value),
+				renderState(payload.color_temp_value_template, value),
+			]
+
+			// HA ignores an empty render, so only one mode updates per message
+			it('renders only the template of the active mode', () => {
+				expect(states(color([255, 0, 0], 0, 0))).to.deep.equal([
+					'255,0,0',
+					'',
+				])
+				expect(states(color([0, 0, 0], 127, 128))).to.deep.equal([
+					'',
+					'372',
+				])
+				expect(states(color([0, 255, 0], 100, 100))).to.deep.equal([
+					'0,255,0',
+					'',
+				])
+				expect(states(color([0, 0, 0], 0, 0))).to.deep.equal(['', ''])
+			})
+
+			it('turns off the other mode and clamps color temp commands', () => {
+				const colorTemp = (mireds: number) =>
+					JSON.parse(
+						jinja.renderString(
+							payload.color_temp_command_template,
+							{ value: mireds },
+						),
+					)
+				expect(colorTemp(372)).to.deep.equal(color([0, 0, 0], 127, 128))
+				expect(colorTemp(153)).to.deep.equal(color([0, 0, 0], 0, 255))
+				expect(colorTemp(600)).to.deep.equal(color([0, 0, 0], 255, 0))
+				expect(
+					JSON.parse(
+						jinja.renderString(payload.rgb_command_template, {
+							red: 0,
+							green: 0,
+							blue: 255,
+						}),
+					),
+				).to.deep.equal(color([0, 0, 255], 0, 0))
+			})
+
+			it('round-trips color temp commands through the state template', () => {
+				for (const mireds of [245, 372, 500]) {
+					const sent = JSON.parse(
+						jinja.renderString(
+							payload.color_temp_command_template,
+							{
+								value: mireds,
+							},
+						),
+					)
+					expect(
+						renderState(payload.color_temp_value_template, sent),
+					).to.equal(String(mireds))
+				}
+				expect(payload.min_mireds).to.equal(245)
+				expect(payload.max_mireds).to.equal(500)
+			})
 		})
 	})
 })

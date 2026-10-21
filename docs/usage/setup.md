@@ -49,6 +49,7 @@ Properties of a **valueId configuration**:
 - **Parse receive**: Enable this to allow users to specify a custom `function(value,valueId,node,logger)` to parse the value received via MQTT. The function must be sync
 - **Enable Poll**: Enable poll of this value by using Z-Wave JS [pollValue](https://zwave-js.github.io/node-zwave-js/#/api/node?id=pollvalue)
 - **Poll interval**: Seconds between two poll requests
+- **Enable discovery**: Only for Configuration CC values. Enables or disables this entity by default in Home Assistant discovery, overriding the Home Assistant **Enable Configuration CC entities** setting. Leave it on **Use global setting** to follow it. Home Assistant only applies it to entities it has not registered yet
 
 ### Scheduled Jobs
 
@@ -280,7 +281,7 @@ Enable this to use Z-Wave JS UI as only a Control Panel
 - **Discovery Prefix**: The prefix to use to send MQTT discovery messages to Home Assistant
 - **Retain Discovery**: Set retain flag to true in discovery messages
 - **Use node location as suggested area**: Adds the node `Location` to the Home Assistant MQTT discovery `device.suggested_area` field
-- **Enable Configuration CC entities**: Set `enabled_by_default: true` in the discovery payloads of Configuration CC entities, which are disabled by default. The per-value **Enable discovery** flag in [Gateway values](/usage/setup?id=gateway) overrides this. Home Assistant only applies it to entities it has not registered yet
+- **Enable Configuration CC entities**: Set `enabled_by_default: true` in the discovery payloads of Configuration CC entities, which are disabled by default. The per-value **Enable discovery** flag in [Device values configuration](/usage/setup?id=device-values-configuration) overrides this. Home Assistant only applies it to entities it has not registered yet
 - **Manual Discovery**: Don't automatically send the discovery payloads when a device is discovered
 - **Entity name template**: Custom Entity name based on placeholders. Default is `%ln_%o`
   - `%ln`: Node location with name `<location-?><name>`

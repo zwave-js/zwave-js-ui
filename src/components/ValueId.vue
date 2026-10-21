@@ -407,6 +407,7 @@
 
 <script>
 import { manager, instances } from '../lib/instanceManager'
+import { getValueHint } from '../lib/utils.js'
 import useBaseStore from '../stores/base.js'
 
 export default {
@@ -550,30 +551,7 @@ export default {
 			return '[' + this.modelValue.id + '] ' + this.modelValue.label
 		},
 		help() {
-			const { description, list, min, max, step } = this.modelValue
-			const parts = []
-
-			// list values show their states, so these hints would be noise
-			if (!list) {
-				if (this.modelValue.default !== undefined) {
-					parts.push(`default: ${this.modelValue.default}`)
-				}
-				if (min !== max) {
-					if (min !== undefined) parts.push(`min: ${min}`)
-					if (max !== undefined) parts.push(`max: ${max}`)
-				}
-				// a step of 1 is the norm for integers, only show unusual ones
-				if (step !== undefined && step !== 1) {
-					parts.push(`step: ${step}`)
-				}
-			}
-
-			let range = parts.join(', ')
-			if (range) {
-				range = `(${range.charAt(0).toUpperCase()}${range.slice(1)})`
-			}
-
-			return [description, range].filter(Boolean).join(' ')
+			return getValueHint(this.modelValue)
 		},
 		color: {
 			get: function () {

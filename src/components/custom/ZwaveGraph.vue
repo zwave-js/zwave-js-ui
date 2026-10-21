@@ -1046,8 +1046,9 @@ export default {
 		handleClick(params) {
 			if (params.event) {
 				params.event.preventDefault()
-				const nodeId = params.nodes[0]
-				if (nodeId) {
+				// hit test, params.nodes is the filtered set on a background click
+				const nodeId = this.network.getNodeAt(params.pointer.DOM)
+				if (nodeId !== undefined) {
 					const node = this.allNodes.find((n) => n.id === nodeId)
 					this.$emit('node-click', node)
 				} else {
