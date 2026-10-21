@@ -193,6 +193,27 @@ describe('meshView', () => {
 			[68, 'nlwr', [0, 100], [{ id: 80, kind: 'nlwr' }]],
 		])
 
+		// 68 has only a backup route: drawn as its route, marked backup-only;
+		// a hop shared with a real route isn't
+		const v7 = mapView(
+			[...NODES, node(81, { nlwr: route([2], -70, [-71], 3) })],
+			new Set([1, 2, 68, 81]),
+			new Map([
+				[1, [0, 0]],
+				[2, [0, 100]],
+				[68, [0, 200]],
+				[81, [0, 300]],
+			]),
+		)
+		const link = (a, b) =>
+			v7.links.find((l) => l.kind === 'lwr' && l.a === a && l.b === b)
+		expect(link(1, 68).backupOnly).toEqual([68])
+		expect([link(1, 2).routes, link(1, 2).backupOnly]).toEqual([
+			[2, 81],
+			[81],
+		])
+		expect(link(2, 81).backupOnly).toEqual([81])
+
 		// a shown node that isn't placed has no route yet, so its hidden
 		// repeater isn't drawn either: no line ending at a ghost
 		const v6 = mapView(

@@ -542,20 +542,31 @@ export default {
 						.addTo(this.groups.routes)
 				} else {
 					const lwr = l.kind === 'lwr'
+					// a backup route standing in for a missing main route:
+					// as thick as a route, dashed like a backup route
+					const backupOnly =
+						lwr && l.backupOnly.length === l.routes.length
 					const detail = [
 						rssiLabel(l.rssi),
 						l.rate ? protocolDataRateToString(l.rate) : '',
 					]
 						.filter(Boolean)
 						.join(' · ')
+					const owners = l.routes
+						.map((id) =>
+							l.backupOnly.includes(id)
+								? `${name(id)} (backup route, no main route known)`
+								: name(id),
+						)
+						.join(', ')
 					L.polyline([a, b], {
 						color: rateColor(l.rate),
 						weight: lwr ? 4 : 1.5,
-						dashArray: lwr ? null : '5 5',
+						dashArray: backupOnly ? '10 8' : lwr ? null : '5 5',
 						opacity: 0.85,
 					})
 						.bindTooltip(
-							`${tip}<br>${detail}<br><span class="muted">route of ${l.routes.map(name).join(', ')}</span>`,
+							`${tip}<br>${detail}<br><span class="muted">route of ${owners}</span>`,
 							{ sticky: true },
 						)
 						.addTo(

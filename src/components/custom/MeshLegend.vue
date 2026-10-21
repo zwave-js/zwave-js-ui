@@ -112,6 +112,20 @@
 									y1="7"
 									x2="21"
 									y2="7"
+									:stroke="routeSample"
+									stroke-width="4"
+									stroke-dasharray="10 8"
+								/>
+							</svg>
+							Backup route, no main route known
+						</div>
+						<div class="mesh-legend-row">
+							<svg width="22" height="14">
+								<line
+									x1="1"
+									y1="7"
+									x2="21"
+									y2="7"
 									:stroke="neighborColor"
 									stroke-width="1"
 									opacity="0.7"

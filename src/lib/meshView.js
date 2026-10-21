@@ -100,13 +100,16 @@ export function nlwrOf(node) {
 	return node.statistics?.nlwr ?? null
 }
 
-/** The routes a node is drawn with: LWR, and NLWR (as the main route when there is no LWR) */
+/**
+ * The routes a node is drawn with, as [kind, route, backupOnly]: LWR, and
+ * NLWR, which is the main route (backupOnly) when there is no LWR
+ */
 function routesOf(node) {
 	const lwr = lwrOf(node)
 	const nlwr = nlwrOf(node)
 	const out = []
-	if (lwr) out.push(['lwr', lwr])
-	if (nlwr) out.push([lwr ? 'nlwr' : 'lwr', nlwr])
+	if (lwr) out.push(['lwr', lwr, false])
+	if (nlwr) out.push([lwr ? 'nlwr' : 'lwr', nlwr, !lwr])
 	return out
 }
 
@@ -176,7 +179,9 @@ const linkKey = (kind, a, b) => `${kind}:${Math.min(a, b)}-${Math.max(a, b)}`
  *    `routes` lists the { id, kind } routes it repeats for.
  * `shown`: Set of node ids. `positioned`: Map id → [y, x] of every node with
  * a position on this map. Returns { links, ghosts, pos }, links being
- * { kind: 'lwr'|'nlwr'|'failed'|'neighbor', a, b, rssi, rate, routes }.
+ * { kind: 'lwr'|'nlwr'|'failed'|'neighbor', a, b, rssi, rate, routes,
+ * backupOnly }, `backupOnly` listing the routes that are a backup route
+ * drawn as the main one because their node has no main route.
  */
 export function mapView(nodes, shown, positioned) {
 	const cid = controllerIdOf(nodes)
@@ -189,11 +194,11 @@ export function mapView(nodes, shown, positioned) {
 	for (const n of nodes) {
 		// a route is drawn once its node has a spot here, not before
 		if (!pos.has(n.id)) continue
-		for (const [kind, route] of routesOf(n)) {
+		for (const [kind, route, backupOnly] of routesOf(n)) {
 			const path = [cid, ...(route.repeaters ?? []), n.id].filter((id) =>
 				ids.has(id),
 			)
-			paths.push({ kind, n, route, path })
+			paths.push({ kind, n, route, path, backupOnly })
 		}
 	}
 	// LWR first, so a node on both kinds of route is an 'lwr' ghost
@@ -259,17 +264,24 @@ export function mapView(nodes, shown, positioned) {
 			rssi: null,
 			rate: null,
 			routes: [],
+			backupOnly: [],
 		}
 		if (l.rssi === null && extra.rssi !== undefined) l.rssi = extra.rssi
 		if (l.rate === null && extra.rate !== undefined) l.rate = extra.rate
 		if (extra.route !== undefined && !l.routes.includes(extra.route)) {
 			l.routes.push(extra.route)
+			if (extra.backupOnly) l.backupOnly.push(extra.route)
 		}
 		links.set(key, l)
 	}
-	for (const { kind, n, route } of paths) {
+	for (const { kind, n, route, backupOnly } of paths) {
 		for (const s of routeSegments(n, route, cid)) {
-			add(kind, s.from, s.to, { rssi: s.rssi, rate: s.rate, route: n.id })
+			add(kind, s.from, s.to, {
+				rssi: s.rssi,
+				rate: s.rate,
+				route: n.id,
+				backupOnly,
+			})
 		}
 		if (route.routeFailedBetween) {
 			const [a, b] = route.routeFailedBetween
