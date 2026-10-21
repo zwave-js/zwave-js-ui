@@ -388,6 +388,42 @@ describe('#Gateway', () => {
 	})
 
 	describe('#_addRgbColorSwitch()', () => {
+		it('maps a Binary Switch state to ON/OFF', () => {
+			const gateway = new Gateway(
+				{ type: 1, hassDiscovery: true },
+				null as any,
+				{ getTopic: (t: string) => t } as any,
+			)
+			closeWatchers()
+			vi.spyOn(gateway, 'valueTopic').mockReturnValue({
+				topic: 'switch',
+				targetTopic: 'switch/set',
+			} as any)
+			const currentColor = {
+				id: '1-51-0-currentColor',
+				endpoint: 0,
+			} as unknown as ZUIValueId
+			const node = {
+				id: 1,
+				values: {
+					'37-0-currentValue': {
+						id: '1-37-0-currentValue',
+						targetValue: '37-0-targetValue',
+					},
+				},
+			} as unknown as ZUINode
+
+			const payload = gateway['_addRgbColorSwitch'](
+				node,
+				currentColor,
+			).discovery_payload
+
+			// checked against Home Assistant 2026.10.2 in JSON, VALUEID and RAW modes
+			expect(payload.state_value_template).to.equal(
+				'{{ "ON" if value_json.value | string | lower == "true" else "OFF" }}',
+			)
+		})
+
 		it('keeps the rgb and color_temp modes exclusive', () => {
 			const gateway = new Gateway(
 				{ type: 1, hassDiscovery: true },

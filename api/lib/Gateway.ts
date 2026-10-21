@@ -2817,8 +2817,9 @@ export default class Gateway {
 			cfg.discovery_payload.state_topic = discoveredStateTopic
 			cfg.discovery_payload.command_topic = discoveredCommandTopic
 
+			// string compare, so the RAW payload ('true'/'false') works too
 			cfg.discovery_payload.state_value_template =
-				'{{ value_template.json }}'
+				'{{ "ON" if value_json.value | string | lower == "true" else "OFF" }}'
 			cfg.discovery_payload.on_command_type = 'last'
 		}
 
