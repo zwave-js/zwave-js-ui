@@ -315,5 +315,13 @@ describe('meshView', () => {
 		expect(
 			fit.every((p) => p.x >= 0 && p.x <= 400 && p.y >= 0 && p.y <= 100),
 		).toBe(true)
+		// the controller goes in the middle, the rest along the bottom
+		const withHub = gridPlacements(
+			[...nodes, { id: 1, name: 'hub', isControllerNode: true }],
+			[],
+			1600,
+			1000,
+		)
+		expect(withHub).toEqual([{ id: 1, x: 800, y: 500 }, ...out])
 	})
 })

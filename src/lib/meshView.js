@@ -387,10 +387,22 @@ export function meshHealth(nodes) {
  * Starting spots for nodes not placed yet: a grid along the bottom of the
  * canvas, filled bottom row first, sorted by location, name and ID. Grid
  * cells near an already placed node (`occupied`, [x, y] canvas px) are
- * skipped, and the grid gets finer until every node fits.
+ * skipped, and the grid gets finer until every node fits. The controller
+ * goes in the middle instead, so it stands out.
  * Returns [{ id, x, y }] in canvas px (y down).
  */
 export function gridPlacements(nodes, occupied, widthPx, heightPx) {
+	const controller = nodes.find((n) => n.isControllerNode)
+	if (controller) {
+		const center = [Math.round(widthPx / 2), Math.round(heightPx / 2)]
+		const rest = gridPlacements(
+			nodes.filter((n) => n !== controller),
+			[...occupied, center],
+			widthPx,
+			heightPx,
+		)
+		return [{ id: controller.id, x: center[0], y: center[1] }, ...rest]
+	}
 	const sorted = [...nodes].sort(
 		(a, b) =>
 			(a.loc ?? '').localeCompare(b.loc ?? '') ||
