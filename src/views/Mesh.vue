@@ -53,6 +53,9 @@
 .mesh-page {
 	display: flex;
 	flex-direction: column;
+	/* the app footer is fixed over the page bottom (about 36px): end above
+	   it, so the map's bottom controls aren't covered */
+	padding-bottom: 48px;
 }
 
 /* the rest of the page under the toolbar, however tall it gets */
