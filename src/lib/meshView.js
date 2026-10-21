@@ -166,13 +166,14 @@ const linkKey = (kind, a, b) => `${kind}:${Math.min(a, b)}-${Math.max(a, b)}`
 /**
  * What a floorplan map draws, given which nodes are shown and where nodes
  * sit on it.
- *  - routes of shown nodes only, plus their failed hops
+ *  - routes of shown nodes placed on this map, plus their failed hops
  *  - neighbor lines only between shown, positioned nodes
  *  - ghosts: nodes on a shown node's route that aren't drawn as nodes
  *    (hidden repeaters, or shown ones not placed yet). A ghost sits at its
  *    position on this map when it has one, else midway between its nearest
  *    positioned neighbors on the route (`approx`). Its kind is 'lwr' if any
  *    LWR-kind route uses it, else 'nlwr', so the backup routes layer hides it.
+ *    `routes` lists the { id, kind } routes it repeats for.
  * `shown`: Set of node ids. `positioned`: Map id → [y, x] of every node with
  * a position on this map. Returns { links, ghosts, pos }, links being
  * { kind: 'lwr'|'nlwr'|'failed'|'neighbor', a, b, rssi, rate, routes }.
@@ -186,7 +187,8 @@ export function mapView(nodes, shown, positioned) {
 
 	const paths = []
 	for (const n of nodes) {
-		if (!shown.has(n.id)) continue
+		// a route is drawn once its node has a spot here, not before
+		if (!pos.has(n.id)) continue
 		for (const [kind, route] of routesOf(n)) {
 			const path = [cid, ...(route.repeaters ?? []), n.id].filter((id) =>
 				ids.has(id),
@@ -209,6 +211,7 @@ export function mapView(nodes, shown, positioned) {
 				pos: positioned.get(id),
 				approx: false,
 				shown: false,
+				routes: [],
 			})
 		}
 		// then anything still without a position: interpolate along the route
@@ -230,7 +233,18 @@ export function mapView(nodes, shown, positioned) {
 				pos: p,
 				approx: true,
 				shown: shown.has(id),
+				routes: [],
 			})
+		}
+	}
+
+	// whose routes each ghost repeats for
+	for (const { kind, n, path } of paths) {
+		for (const id of path) {
+			const g = ghosts.get(id)
+			if (g && !g.routes.some((r) => r.id === n.id && r.kind === kind)) {
+				g.routes.push({ id: n.id, kind })
+			}
 		}
 	}
 

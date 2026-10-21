@@ -644,6 +644,7 @@ export default {
 		 */
 		drawGhosts(ghosts) {
 			const byId = new Map(this.physicalNodes.map((n) => [n.id, n]))
+			const name = this.nameById()
 			for (const g of ghosts) {
 				const n = byId.get(g.id)
 				const label = n ? labelOf(n) : `NodeID ${g.id}`
@@ -653,6 +654,12 @@ export default {
 				const where = g.approx
 					? 'drawn midway between its route neighbors'
 					: 'shown at its spot on this map'
+				const owners = g.routes
+					.map(
+						(r) =>
+							`${name(r.id)}'s ${r.kind === 'lwr' ? 'route' : 'backup route'}`,
+					)
+					.join(', ')
 				L.marker(g.pos, {
 					keyboard: false,
 					icon: L.divIcon({
@@ -663,7 +670,7 @@ export default {
 					}),
 				})
 					.bindTooltip(
-						`<b>${esc(label)}</b> (node ${g.id})<br>${why}. It repeats for a shown node's ${g.kind === 'lwr' ? 'route' : 'backup route'}, so it's ${where}.`,
+						`<b>${esc(label)}</b> (node ${g.id})<br>${why}. It repeats for ${owners}, so it's ${where}.`,
 						{ direction: 'top', offset: [0, -8] },
 					)
 					.addTo(

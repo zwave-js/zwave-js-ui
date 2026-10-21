@@ -135,6 +135,7 @@ describe('meshView', () => {
 		// only route repeaters, not other hidden nodes
 		expect(Object.keys(g).map(Number)).toEqual([2, 3])
 		expect([g[2].approx, g[2].pos]).toEqual([false, [0, 100]])
+		expect(g[2].routes).toEqual([{ id: 59, kind: 'lwr' }])
 		// unplaced: midway between its route neighbors
 		expect([g[3].approx, g[3].pos, g[3].kind]).toEqual([
 			true,
@@ -188,9 +189,22 @@ describe('meshView', () => {
 				[80, [0, 200]],
 			]),
 		)
-		expect(v3.ghosts.map((x) => [x.id, x.kind, x.pos])).toEqual([
-			[68, 'nlwr', [0, 100]],
+		expect(v3.ghosts.map((x) => [x.id, x.kind, x.pos, x.routes])).toEqual([
+			[68, 'nlwr', [0, 100], [{ id: 80, kind: 'nlwr' }]],
 		])
+
+		// a shown node that isn't placed has no route yet, so its hidden
+		// repeater isn't drawn either: no line ending at a ghost
+		const v6 = mapView(
+			NODES,
+			new Set([1, 59]),
+			new Map([
+				[1, [0, 0]],
+				[2, [0, 100]],
+				[3, [0, 200]],
+			]),
+		)
+		expect([v6.ghosts.length, v6.links.length]).toEqual([0, 0])
 
 		// no positioned anchor on one side: nothing is drawn
 		const v4 = mapView(NODES, new Set([59]), new Map([[59, [0, 400]]]))
