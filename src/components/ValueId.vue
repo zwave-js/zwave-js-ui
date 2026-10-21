@@ -534,11 +534,13 @@ export default {
 			return '[' + this.modelValue.id + '] ' + this.modelValue.label
 		},
 		help() {
-			const { description, list, min, max, step } = this.modelValue
+			const { description, list, allowManualEntry, min, max, step } =
+				this.modelValue
 			const parts = []
 
-			// list values show their states, so these hints would be noise
-			if (!list) {
+			// list values show their states, so these hints would be noise,
+			// unless a custom value can be typed in
+			if (!list || allowManualEntry) {
 				if (this.modelValue.default !== undefined) {
 					parts.push(`default: ${this.modelValue.default}`)
 				}
