@@ -222,7 +222,7 @@
 				@click:append="updateValue(modelValue)"
 			>
 				<template #selection="{ item }">
-					<span>
+					<span class="valueid-selection">
 						{{ itemText(selectedItem || item) }}
 					</span>
 				</template>
@@ -378,6 +378,13 @@
 	padding-left: 0 !important;
 	margin-bottom: -10px !important;
 	white-space: unset;
+}
+
+/* keep the field one line high, the full label is in the open list */
+.valueid-selection {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 }
 
 .readonly {
