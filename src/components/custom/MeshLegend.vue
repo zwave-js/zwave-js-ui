@@ -237,12 +237,13 @@
 				</div>
 			</v-card-text>
 		</v-card>
+		<!-- stays put under the card, so it closes it again -->
 		<v-btn
-			v-else
 			size="small"
 			variant="elevated"
 			prepend-icon="legend_toggle"
-			@click="open = true"
+			:active="open"
+			@click="open = !open"
 			>Legend</v-btn
 		>
 	</div>
@@ -280,6 +281,13 @@ export default {
 </script>
 
 <style scoped>
+.mesh-legend {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 6px;
+}
+
 .mesh-legend-card {
 	max-height: 70vh;
 	overflow-y: auto;
