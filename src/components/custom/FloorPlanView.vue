@@ -14,7 +14,31 @@
 				variant="outlined"
 				hide-details
 				style="max-width: 300px"
-			></v-select>
+			>
+				<!-- a star marks the map that opens by default -->
+				<template #item="{ item, props: itemProps }">
+					<v-list-item v-bind="itemProps">
+						<template v-if="isDefault(item.raw)" #append>
+							<v-icon
+								size="small"
+								color="amber"
+								v-tooltip="'Opens by default'"
+								>star</v-icon
+							>
+						</template>
+					</v-list-item>
+				</template>
+				<template #selection="{ item }">
+					<span>{{ item.raw.name }}</span>
+					<v-icon
+						v-if="isDefault(item.raw)"
+						class="ml-1"
+						size="small"
+						color="amber"
+						>star</v-icon
+					>
+				</template>
+			</v-select>
 			<template v-if="currentMap">
 				<v-menu>
 					<template #activator="{ props }">
@@ -190,10 +214,7 @@ export default {
 			return this.currentMap?.background ?? null
 		},
 		isDefaultMap() {
-			return (
-				!!this.currentMap &&
-				this.floorPlans.settings.defaultMapId === this.currentMap.id
-			)
+			return this.isDefault(this.currentMap)
 		},
 	},
 	watch: {
@@ -211,6 +232,9 @@ export default {
 		this.loadFloorPlans()
 	},
 	methods: {
+		isDefault(map) {
+			return !!map && this.floorPlans.settings.defaultMapId === map.id
+		},
 		selectMap(id) {
 			this.mapId = id
 			settings.store('meshFloorPlanMap', id)
