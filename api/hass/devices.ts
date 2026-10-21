@@ -374,7 +374,7 @@ const devices: { [deviceId: string]: HassDevice[] } = {
 			discovery_payload: {
 				payload_off: false,
 				payload_on: true,
-				state_topic: '37-1-currentValue',
+				state_topic: '37-4-currentValue',
 				command_topic: '37-4-targetValue',
 				value_template: '{{ value_json.value }}',
 			},

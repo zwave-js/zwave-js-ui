@@ -753,12 +753,24 @@ export default class Gateway {
 				(this.config.manualDiscovery && !options.forceUpdate)
 
 			if (!skipDiscovery) {
-				this._mqtt.publish(
-					hassDevice.discoveryTopic,
-					options.deleteDevice ? '' : hassDevice.discovery_payload,
-					{ qos: 0, retain: this.config.retainedDiscovery || false },
-					this.config.discoveryPrefix,
-				)
+				const discoveryOptions = {
+					qos: 0 as const,
+					retain: this.config.retainedDiscovery || false,
+				}
+				if (options.deleteDevice) {
+					this._mqtt.publishEmpty(
+						hassDevice.discoveryTopic,
+						discoveryOptions,
+						this.config.discoveryPrefix,
+					)
+				} else {
+					this._mqtt.publish(
+						hassDevice.discoveryTopic,
+						hassDevice.discovery_payload,
+						discoveryOptions,
+						this.config.discoveryPrefix,
+					)
+				}
 			}
 
 			if (options.forceUpdate) {
@@ -1929,7 +1941,7 @@ export default class Gateway {
 			)
 
 			for (const t of topics) {
-				this._mqtt.publish(t, '', { retain: true })
+				this._mqtt.publishEmpty(t, { retain: true })
 			}
 		}
 	}
@@ -2821,8 +2833,9 @@ export default class Gateway {
 
 			cfg.discovery_payload.color_temp_command_template =
 				"{{ {'warmWhite': ((value - 245)|round(0)), 'coldWhite': (255 - (value - 245))|round(0)}|to_json }}"
+			// inverse of the command template: warmWhite = mireds - 245
 			cfg.discovery_payload.color_temp_value_template =
-				"{{ '%03d%03d' | format((value_json.value.warmWhite || 0), (value_json.value.coldWhite || 0)) }}"
+				'{{ (value_json.value.warmWhite | default(0, true)) + 245 }}'
 		}
 		return cfg
 	}
