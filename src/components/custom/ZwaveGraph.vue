@@ -1014,8 +1014,12 @@ export default {
 			forceShow = false,
 		) {
 			if (!route) {
-				if (routeKind !== RouteKind.NLWR) {
-					// unknown route
+				// unknown route; dead and failed nodes keep their color
+				if (
+					routeKind !== RouteKind.NLWR &&
+					!node.failed &&
+					node.available
+				) {
 					node.color = UNKNOWN_COLOR
 				}
 				return
