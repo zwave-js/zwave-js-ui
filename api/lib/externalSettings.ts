@@ -173,7 +173,8 @@ export function getExternalDriverPresets(): PartialZWaveOptions[] {
 	const presets: PartialZWaveOptions[] = []
 	for (const presetName of loadExternalSettings()?.presets ?? []) {
 		const preset = driverPresets[presetName as keyof typeof driverPresets]
-		if (preset) presets.push(preset)
+		// the Driver merges into presets too, keep the shared ones untouched
+		if (preset) presets.push(structuredClone(preset))
 		else logger.warn(`Unknown driver preset: ${presetName}`)
 	}
 	return presets
