@@ -469,18 +469,23 @@ export default {
 			}
 		},
 		async restoreZip() {
-			const restore = await this.app.confirm('Restore zip', '', 'info', {
-				confirmText: 'Restore',
-				inputs: [
-					{
-						type: 'file',
-						label: 'Zip file',
-						required: true,
-						key: 'file',
-						accept: 'application/zip',
-					},
-				],
-			})
+			const restore = await this.app.confirm(
+				'Restore zip',
+				'Files in the zip replace the ones in the store, settings included. If it has floorplans, they replace all current maps and their pictures. Changes made since the backup are lost.',
+				'warning',
+				{
+					confirmText: 'Restore',
+					inputs: [
+						{
+							type: 'file',
+							label: 'Zip file',
+							required: true,
+							key: 'file',
+							accept: 'application/zip',
+						},
+					],
+				},
+			)
 
 			if (restore.file) {
 				try {
