@@ -60,11 +60,12 @@ describe('floorplans API', () => {
 	const upload = (
 		mapId: string,
 		bytes: Buffer | null,
-		{ dark = false, field = 'upload' } = {},
+		{ dark = false, field = 'upload', fit = '' } = {},
 	) => {
 		const form = new FormData()
 		if (bytes) form.append(field, new Blob([bytes]), 'plan.png')
 		if (dark) form.append('dark', 'true')
+		if (fit) form.append('fit', fit)
 		return fetch(`${url}/api/floorplans/maps/${mapId}/image`, {
 			method: 'PUT',
 			headers: { Accept: 'application/json' },
@@ -230,6 +231,21 @@ describe('floorplans API', () => {
 		expect(gone.status).toBe(404)
 	})
 
+	it('passes the fit of a new picture through', async () => {
+		const { data: map } = await api('POST', '/maps', { name: 'Fit' })
+		await api('PUT', `/maps/${map.id}/placements`, {
+			deviceKey: 'zwave:cdfbb3c7:2',
+			x: 1500,
+			y: 1000,
+		})
+		const set = await upload(map.id, PNG1, { fit: 'scale' })
+		expect(set.data.map).toMatchObject({
+			widthPx: 1,
+			heightPx: 1,
+			placements: [{ x: 1, y: 1 }],
+		})
+	})
+
 	it('refuses bad uploads without hanging', async () => {
 		const { data: map } = await api('POST', '/maps', { name: 'Uploads' })
 		expect(await upload(map.id, Buffer.from('<svg/>'))).toEqual({
@@ -242,6 +258,10 @@ describe('floorplans API', () => {
 		})
 		expect(await upload(map.id, PNG1, { field: 'picture' })).toMatchObject({
 			success: false,
+		})
+		expect(await upload(map.id, PNG1, { fit: 'squash' })).toEqual({
+			success: false,
+			message: 'fit must be one of stretch, scale, keep',
 		})
 		const big = Buffer.concat([PNG1, Buffer.alloc(MAX_IMAGE_BYTES)])
 		expect(await upload(map.id, big)).toEqual({

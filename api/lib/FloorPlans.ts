@@ -22,6 +22,9 @@ export const MAX_NAME_LENGTH = 100
 export const MAX_NODE_LIST = 5000
 /** How far (as a ratio) a picture's aspect may differ from its frame before it counts as stretched */
 const STRETCH_TOLERANCE = 0.02
+/** What a new background picture of another shape does to the map, see setMapImage */
+export const IMAGE_FITS = ['stretch', 'scale', 'keep'] as const
+export type ImageFit = (typeof IMAGE_FITS)[number]
 
 export const DEVICE_KEY = /^zwave:[0-9a-f]+:\d+$/
 
@@ -561,6 +564,11 @@ export class FloorPlans {
 	 * theme one, keeping its placements. The first picture of either kind
 	 * covers the whole canvas, and if nothing is placed yet the canvas takes
 	 * its size so it isn't stretched.
+	 * `fit` says what a picture of another shape does to the map: 'stretch'
+	 * it over the current frame, or use it as is, the canvas taking its size
+	 * and nodes keeping their spots relative to the old frame ('scale') or
+	 * their distance from its top-left corner ('keep'). Using it as is resets
+	 * the saved zoom and center, and stretches the other theme's picture.
 	 * `imgWidthPx`/`imgHeightPx` (decoded by the browser) are used only when
 	 * the header can't be read. `stretched` is set when the picture's aspect
 	 * differs from its frame by more than STRETCH_TOLERANCE.
@@ -572,13 +580,18 @@ export class FloorPlans {
 			imgWidthPx,
 			imgHeightPx,
 			dark = false,
+			fit = 'stretch',
 		}: {
 			bytes: Buffer
 			imgWidthPx?: number
 			imgHeightPx?: number
 			dark?: boolean
+			fit?: ImageFit
 		},
 	) {
+		if (!IMAGE_FITS.includes(fit)) {
+			throw Error(`fit must be one of ${IMAGE_FITS.join(', ')}`)
+		}
 		if (!sniffImage(bytes)) {
 			throw Error('Only PNG, JPEG or WebP images are accepted')
 		}
@@ -593,6 +606,34 @@ export class FloorPlans {
 		return this.update(async (data, files) => {
 			const map = this.getMap(data, id)
 			const name = await this.writeImage(map, dark, bytes, files)
+			if (fit !== 'stretch') {
+				const r = map.background?.imageRect ?? {
+					x: 0,
+					y: 0,
+					w: map.widthPx,
+					h: map.heightPx,
+				}
+				const [sx, sy] =
+					fit === 'scale' ? [size.w / r.w, size.h / r.h] : [1, 1]
+				map.widthPx = size.w
+				map.heightPx = size.h
+				map.placements = map.placements.map((p) =>
+					toPlacement(map, {
+						deviceKey: p.deviceKey,
+						x: Math.round((p.x - r.x) * sx),
+						y: Math.round((p.y - r.y) * sy),
+					}),
+				)
+				if (map.background) {
+					map.background.imageRect = {
+						x: 0,
+						y: 0,
+						w: size.w,
+						h: size.h,
+					}
+				}
+				map.view = { ...map.view, center: null, zoom: null }
+			}
 			if (map.background) {
 				const field = imageField(dark)
 				const old = map.background[field]

@@ -312,7 +312,7 @@ export default {
 			const map = this.currentMap
 			const { file } = await this.app.confirm(
 				dark ? 'Dark theme picture' : 'Light theme picture',
-				`A PNG, JPEG or WebP image of your floorplan, shown while the UI is in ${dark ? 'dark' : 'light'} theme, and in the other theme too when the map has no picture for it. Node positions are kept when you replace it.`,
+				`A PNG, JPEG or WebP image of your floorplan, shown while the UI is in ${dark ? 'dark' : 'light'} theme, and in the other theme too when the map has no picture for it. If its shape differs from the map's, you choose how it fits.`,
 				'info',
 				{
 					confirmText: 'Upload',
@@ -338,8 +338,12 @@ export default {
 			} catch {
 				// not decodable here, the server decides
 			}
+			const fit = size
+				? await this.askImageFit(map, size, dark)
+				: 'stretch'
+			if (!fit) return
 			const res = await this.floorPlanCall('upload the picture', () =>
-				ConfigApis.setFloorPlanImage(map.id, file, { dark, size }),
+				ConfigApis.setFloorPlanImage(map.id, file, { dark, size, fit }),
 			)
 			if (res?.stretched) {
 				this.showSnackbar(
@@ -347,6 +351,56 @@ export default {
 					'warning',
 				)
 			}
+		},
+		/**
+		 * How a new picture of `size` fits `map`: 'stretch', 'scale' or 'keep'
+		 * (see the server's setMapImage), or null when cancelled. Only asked
+		 * when its shape differs from the map's frame and something on the map
+		 * (placed nodes, the other theme's picture) depends on that frame.
+		 */
+		async askImageFit(map, size, dark) {
+			const bg = map.background
+			const frame = bg?.imageRect ?? { w: map.widthPx, h: map.heightPx }
+			const aspect = size.width / size.height / (frame.w / frame.h)
+			// the server's STRETCH_TOLERANCE
+			if (Math.abs(aspect - 1) <= 0.02) return 'stretch'
+			const other = dark ? bg?.image : bg?.darkImage
+			if (!map.placements.length && !other) return 'scale'
+			const { fit } = await this.app.confirm(
+				'The picture has a different shape',
+				`It's ${size.width} × ${size.height} px, the map is ${Math.round(frame.w)} × ${Math.round(frame.h)}.` +
+					(other
+						? ` Using it as is also stretches the ${dark ? 'light' : 'dark'} theme picture to its shape.`
+						: ''),
+				'info',
+				{
+					confirmText: 'Upload',
+					width: 500,
+					inputs: [
+						{
+							type: 'list',
+							label: 'Fit',
+							key: 'fit',
+							default: 'stretch',
+							items: [
+								{
+									title: "Stretch it to the map's shape",
+									value: 'stretch',
+								},
+								{
+									title: 'Use as is, nodes keep their relative spots',
+									value: 'scale',
+								},
+								{
+									title: 'Use as is, nodes keep their exact positions',
+									value: 'keep',
+								},
+							],
+						},
+					],
+				},
+			)
+			return fit ?? null
 		},
 		async removeBackground(dark) {
 			const map = this.currentMap

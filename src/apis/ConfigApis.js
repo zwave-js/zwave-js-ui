@@ -290,10 +290,15 @@ export default {
 	 * `size` is the browser-decoded { width, height }, used if the server
 	 * can't read it.
 	 */
-	async setFloorPlanImage(id, file, { dark = false, size = null } = {}) {
+	async setFloorPlanImage(
+		id,
+		file,
+		{ dark = false, size = null, fit = 'stretch' } = {},
+	) {
 		const form = new FormData()
 		form.append('upload', file)
 		if (dark) form.append('dark', 'true')
+		form.append('fit', fit)
 		if (size) {
 			form.append('imgWidthPx', size.width)
 			form.append('imgHeightPx', size.height)

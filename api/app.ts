@@ -2228,8 +2228,9 @@ app.delete(
 	floorPlansRoute((req) => floorPlans.deleteMap(req.params.id)),
 )
 
-// multipart: `upload` file, `dark=true` for the dark theme picture, and the
-// browser-decoded `imgWidthPx`/`imgHeightPx`, used if the header can't be read
+// multipart: `upload` file, `dark=true` for the dark theme picture, `fit`
+// (see FloorPlans.setMapImage), and the browser-decoded
+// `imgWidthPx`/`imgHeightPx`, used if the header can't be read
 app.put(
 	'/api/floorplans/maps/:id/image',
 	apisLimiter,
@@ -2249,6 +2250,7 @@ app.put(
 			imgWidthPx: Number(req.body.imgWidthPx),
 			imgHeightPx: Number(req.body.imgHeightPx),
 			dark: req.body.dark === 'true',
+			fit: req.body.fit || undefined,
 		})
 	}),
 )

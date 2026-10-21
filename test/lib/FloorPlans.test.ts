@@ -232,6 +232,72 @@ describe('#FloorPlans', () => {
 		)
 	})
 
+	it('fits a picture of another shape by stretching, scaling or keeping positions', async () => {
+		const fp = await fresh()
+		const setup = async () => {
+			const m = await fp.addMap({ name: 'House' })
+			const pic = { bytes: PNG, imgWidthPx: 1000, imgHeightPx: 500 }
+			await fp.setMapImage(m.id, pic)
+			await fp.setPlacement(m.id, { deviceKey: K(2), x: 500, y: 250 })
+			await fp.setPlacement(m.id, { deviceKey: K(3), x: 900, y: 100 })
+			await fp.updateMap(m.id, {
+				view: { center: [1, 2], zoom: 1, layers: {} },
+			})
+			return m.id
+		}
+		const tall = { bytes: PNG, imgWidthPx: 400, imgHeightPx: 800 }
+		const at = (map: { placements: { x: number; y: number }[] }) =>
+			map.placements.map((p) => [p.x, p.y])
+
+		const stretched = await fp.setMapImage(await setup(), tall)
+		expect(stretched.stretched).toBe(true)
+		expect([stretched.map.widthPx, stretched.map.heightPx]).toEqual([
+			1000, 500,
+		])
+		expect(at(stretched.map)).toEqual([
+			[500, 250],
+			[900, 100],
+		])
+		expect(stretched.map.view.zoom).toBe(1)
+
+		const scaled = await fp.setMapImage(await setup(), {
+			...tall,
+			fit: 'scale',
+		})
+		expect(scaled.stretched).toBe(false)
+		expect([scaled.map.widthPx, scaled.map.heightPx]).toEqual([400, 800])
+		expect(scaled.map.background.imageRect).toEqual({
+			x: 0,
+			y: 0,
+			w: 400,
+			h: 800,
+		})
+		expect(at(scaled.map)).toEqual([
+			[200, 400],
+			[360, 160],
+		])
+		// the old zoom and center don't fit the new canvas; layers stay
+		expect(scaled.map.view.center).toBeNull()
+		expect(scaled.map.view.zoom).toBeNull()
+
+		const kept = await fp.setMapImage(await setup(), {
+			...tall,
+			fit: 'keep',
+		})
+		expect(kept.stretched).toBe(false)
+		// pulled onto the new edge when outside it
+		expect(at(kept.map)).toEqual([
+			[400, 250],
+			[400, 100],
+		])
+
+		const id = await setup()
+		await expect(
+			// @ts-expect-error not a fit
+			fp.setMapImage(id, { ...tall, fit: 'squash' }),
+		).rejects.toThrow('fit must be one of')
+	})
+
 	it('starts a background from a dark theme picture alone', async () => {
 		const fp = await fresh()
 		const m = await fp.addMap({ name: 'House' })
