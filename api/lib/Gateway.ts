@@ -163,7 +163,7 @@ export type GatewayValue = {
 	receiveFunction?: string
 	qos?: 0 | 1 | 2
 	retain?: boolean
-	ccConfigEnableDiscovery?: boolean
+	ccConfigEnableDiscovery?: boolean | null
 }
 
 export type ScheduledJob = {
@@ -758,9 +758,11 @@ export default class Gateway {
 					retain: this.config.retainedDiscovery || false,
 				}
 				if (options.deleteDevice) {
+					// always retained: also clears a config retained before
+					// "Retain discovery" was turned off
 					this._mqtt.publishEmpty(
 						hassDevice.discoveryTopic,
-						discoveryOptions,
+						{ ...discoveryOptions, retain: true },
 						this.config.discoveryPrefix,
 					)
 				} else {
@@ -2833,9 +2835,13 @@ export default class Gateway {
 
 			cfg.discovery_payload.color_temp_command_template =
 				"{{ {'warmWhite': ((value - 245)|round(0)), 'coldWhite': (255 - (value - 245))|round(0)}|to_json }}"
-			// inverse of the command template: warmWhite = mireds - 245
+			// inverse of the command template: warmWhite = mireds - 245.
+			// Empty when both whites are off, so HA keeps the RGB color mode
 			cfg.discovery_payload.color_temp_value_template =
-				'{{ (value_json.value.warmWhite | default(0, true)) + 245 }}'
+				"{% set c = value_json.value %}{% set ww = c.warmWhite | default(0, true) %}{{ ww + 245 if ww + (c.coldWhite | default(0, true)) > 0 else '' }}"
+			// the command template only maps 245-500 mireds to 0-255 whites
+			cfg.discovery_payload.min_mireds = 245
+			cfg.discovery_payload.max_mireds = 500
 		}
 		return cfg
 	}

@@ -178,7 +178,7 @@ describe('#Gateway', () => {
 			return publish.mock.calls[0][0].discovery_payload.enabled_by_default
 		}
 
-		const valueConf = (ccConfigEnableDiscovery: boolean) => ({
+		const valueConf = (ccConfigEnableDiscovery?: boolean | null) => ({
 			values: [
 				{
 					device: 'dev-1',
@@ -204,6 +204,17 @@ describe('#Gateway', () => {
 				}),
 			).to.equal(false)
 			expect(discover(valueConf(true))).to.equal(true)
+		})
+
+		it('follows the global setting when the per-value flag is unset', () => {
+			for (const unset of [undefined, null]) {
+				expect(
+					discover({
+						ccConfigEnabledByDefault: true,
+						...valueConf(unset),
+					}),
+				).to.equal(true)
+			}
 		})
 	})
 
@@ -239,6 +250,76 @@ describe('#Gateway', () => {
 				'switch/dev/config',
 				{ qos: 0, retain: true },
 				'homeassistant',
+			)
+		})
+
+		it('retains the removal even when retained discovery is off', () => {
+			const mqtt = {
+				disabled: false,
+				publish: vi.fn(),
+				publishEmpty: vi.fn(),
+			}
+			const gateway = new Gateway(
+				{
+					type: 1,
+					hassDiscovery: true,
+					retainedDiscovery: false,
+					discoveryPrefix: 'homeassistant',
+				},
+				null as any,
+				mqtt as any,
+			)
+			closeWatchers()
+			vi.spyOn(gateway, 'setDiscovery').mockImplementation(() => {})
+			gateway.publishDiscovery(
+				{
+					discoveryTopic: 'switch/dev/config',
+					discovery_payload: {},
+				} as any,
+				1,
+				{ deleteDevice: true },
+			)
+			expect(mqtt.publishEmpty).toHaveBeenCalledWith(
+				'switch/dev/config',
+				{ qos: 0, retain: true },
+				'homeassistant',
+			)
+		})
+	})
+
+	describe('#removeNodeRetained()', () => {
+		it('clears every value topic with a retained empty payload', () => {
+			const mqtt = {
+				disabled: false,
+				publish: vi.fn(),
+				publishEmpty: vi.fn(),
+			}
+			const node = {
+				id: 1,
+				values: {
+					'37-0-currentValue': { id: '1-37-0-currentValue' },
+					'38-0-currentValue': { id: '1-38-0-currentValue' },
+				},
+			}
+			const gateway = new Gateway(
+				{ type: 1 },
+				{ nodes: new Map([[1, node]]) } as any,
+				mqtt as any,
+			)
+			closeWatchers()
+			vi.spyOn(gateway, 'valueTopic').mockImplementation(
+				(_node, valueId: any) => `topic/${valueId.id}`,
+			)
+			gateway.removeNodeRetained(1)
+			expect(mqtt.publish).not.toHaveBeenCalled()
+			expect(mqtt.publishEmpty).toHaveBeenCalledTimes(2)
+			expect(mqtt.publishEmpty).toHaveBeenCalledWith(
+				'topic/1-37-0-currentValue',
+				{ retain: true },
+			)
+			expect(mqtt.publishEmpty).toHaveBeenCalledWith(
+				'topic/1-38-0-currentValue',
+				{ retain: true },
 			)
 		})
 	})
@@ -337,9 +418,12 @@ describe('#Gateway', () => {
 			expect(payload.color_temp_command_template).to.equal(
 				"{{ {'warmWhite': ((value - 245)|round(0)), 'coldWhite': (255 - (value - 245))|round(0)}|to_json }}",
 			)
+			// renders: {ww:0,cw:0} -> '', {ww:0,cw:255} -> '245', {ww:255,cw:0} -> '500'
 			expect(payload.color_temp_value_template).to.equal(
-				'{{ (value_json.value.warmWhite | default(0, true)) + 245 }}',
+				"{% set c = value_json.value %}{% set ww = c.warmWhite | default(0, true) %}{{ ww + 245 if ww + (c.coldWhite | default(0, true)) > 0 else '' }}",
 			)
+			expect(payload.min_mireds).to.equal(245)
+			expect(payload.max_mireds).to.equal(500)
 		})
 	})
 })
