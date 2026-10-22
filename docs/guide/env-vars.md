@@ -16,6 +16,7 @@ This is the list of the supported environment variables:
   - `HTTPS`: Enable https
   - `SSL_CERTIFICATE` (optional): Absolute path to SSL certificate (for Docker, ensure this is the path as it appears within the container)
   - `SSL_KEY` (optional): Absolute path to SSL key (for Docker, ensure this is the path as it appears within the container)
+  - Without these two, a self-signed cert and key are generated in the store (`cert.pem`, `key.pem`). Node.js 24 rejects RSA keys smaller than 2048 bits: an undersized stored pair is regenerated on startup, while a rejected custom pair makes the server fall back to HTTP.
 - `SESSION_SECRET`: Used as secret for session. If not provided the default one is used
 - `USE_SECURE_COOKIE`: Set the cookie [secure](https://github.com/expressjs/session#cookiesecure) option.
 - `PORT`: The port to listen to for incoming requests. Default is `8091`
