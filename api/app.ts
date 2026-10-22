@@ -24,6 +24,7 @@ import session from 'express-session'
 import type { Server as HttpServer } from 'node:http'
 import { createServer as createHttpServer } from 'node:http'
 import { createServer as createHttpsServer } from 'node:https'
+import { createSecureContext } from 'node:tls'
 import jwt from 'jsonwebtoken'
 import path from 'node:path'
 import sessionStore from 'session-file-store'
@@ -271,7 +272,7 @@ export async function startServer(port: number | string, host?: string) {
 				)
 			} else {
 				logger.warn(
-					'HTTPS is enabled but cert or key cannot be generated. Falling back to HTTP',
+					'HTTPS is enabled but cert or key cannot be loaded or generated. Falling back to HTTP',
 				)
 			}
 		} else {
@@ -393,6 +394,7 @@ async function loadCertKey(): Promise<{
 	cert: string
 	key: string
 }> {
+	const userProvided = !!(process.env.SSL_CERTIFICATE || process.env.SSL_KEY)
 	const certFile =
 		process.env.SSL_CERTIFICATE || utils.joinPath(storeDir, 'cert.pem')
 	const keyFile = process.env.SSL_KEY || utils.joinPath(storeDir, 'key.pem')
@@ -405,6 +407,27 @@ async function loadCertKey(): Promise<{
 		key = await readFile(keyFile, 'utf8')
 	} catch (error) {
 		// noop
+	}
+
+	if (cert && key) {
+		try {
+			// same check https.createServer runs, so a rejected pair can't crash the startup
+			createSecureContext({ cert, key })
+		} catch (error) {
+			if (userProvided) {
+				logger.error(
+					`Cert ${certFile} and key ${keyFile} are not accepted by Node.js: ${error.message}`,
+				)
+				return { cert: undefined, key: undefined }
+			}
+
+			// self-signed pairs made before v9.29.0 use 1024-bit keys, rejected since Node 24
+			logger.warn(
+				`Stored cert and key are not accepted by Node.js (${error.message}), regenerating them...`,
+			)
+			cert = undefined
+			key = undefined
+		}
 	}
 
 	if (!cert || !key) {
