@@ -673,10 +673,7 @@
 										Z-Wave Long Range. Choose the protocol
 										to include it with.
 									</p>
-									<v-radio-group
-										v-model="s.values.protocol"
-										mandatory
-									>
+									<v-radio-group v-model="s.values.protocol">
 										<v-radio
 											v-for="p in protocolsItems"
 											:key="p.value"
@@ -686,6 +683,7 @@
 									</v-radio-group>
 									<v-card-actions>
 										<v-btn
+											v-if="!loading"
 											variant="flat"
 											color="primary"
 											:disabled="
@@ -840,7 +838,7 @@ export default {
 				},
 				smartStartProtocol: {
 					key: 'smartStartProtocol',
-					title: 'Protocol',
+					title: 'Select protocol',
 					values: {
 						protocol: null,
 					},
@@ -876,6 +874,7 @@ export default {
 			'nodes',
 			'mqtt',
 			'backup',
+			'controllerNode',
 		]),
 		timeoutMs() {
 			return this.zwave.commandsTimeout * 1000 + 800 // add small buffer
@@ -1124,6 +1123,7 @@ export default {
 					// smart start
 					if (!replaceStep) {
 						if (
+							this.controllerNode?.supportsLongRange &&
 							provisioning.supportedProtocols?.includes(
 								Protocols.ZWaveLongRange,
 							)
@@ -1131,7 +1131,11 @@ export default {
 							this.smartStartProvisioning = provisioning
 							this.pushStep('smartStartProtocol')
 						} else {
-							await this.provisionSmartStart(provisioning)
+							// without a protocol the backend adds LR-capable entries as inactive
+							await this.provisionSmartStart({
+								...provisioning,
+								protocol: Protocols.ZWave,
+							})
 						}
 					} else {
 						// it's a smart start code btw in replace we cannot use it as smart start
@@ -1145,6 +1149,7 @@ export default {
 			}
 		},
 		async provisionSmartStart(provisioning) {
+			this.loading = true
 			const response = await this.app.apiRequest(
 				'provisionSmartStartNode',
 				[provisioning],
@@ -1155,11 +1160,12 @@ export default {
 				this.aborted = false
 				const doneStep = copy(this.availableSteps.done)
 				doneStep.text =
-					'Node added to provisioning list. Power on the device now, waiting for it to join the network...'
+					'Node added to provisioning list. Power on the device to include it.'
 				doneStep.success = true
 				this.pushStep(doneStep)
 				// keep loading until onNodeAdded shows the inclusion result
-				this.loading = true
+			} else {
+				this.loading = false
 			}
 		},
 		changeStep(index) {
