@@ -1,4 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
+import { Protocols } from '@zwave-js/core'
+import { ProvisioningEntryStatus } from 'zwave-js'
 import ZwaveClient from '../../api/lib/ZwaveClient.ts'
 
 // `throttle` only touches `throttledFunctions`, so these tests skip the real
@@ -184,6 +186,53 @@ describe('#ZwaveClient', () => {
 
 			vi.advanceTimersByTime(1000)
 			expect(fn).toHaveBeenCalledTimes(1)
+		})
+	})
+
+	describe('#provisionSmartStartNode()', () => {
+		const dsk = '12345-12345-12345-12345-12345-12345-12345-12345'
+		let client: ZwaveClient
+		let provision: ReturnType<typeof vi.fn>
+
+		beforeEach(() => {
+			provision = vi.fn()
+			client = Object.create(ZwaveClient.prototype) as ZwaveClient
+			client['_driverReady'] = true
+			client['_driver'] = {
+				controller: {
+					getProvisioningEntry: () => undefined,
+					provisionSmartStartNode: provision,
+				},
+			} as any
+		})
+
+		it('adds a new LR-capable entry without protocol as inactive', async () => {
+			const entry = await client.provisionSmartStartNode({
+				dsk,
+				securityClasses: [],
+				supportedProtocols: [Protocols.ZWave, Protocols.ZWaveLongRange],
+			})
+			expect(entry.status).to.equal(ProvisioningEntryStatus.Inactive)
+			expect(provision).toHaveBeenCalledWith(entry)
+		})
+
+		it('keeps an LR-capable entry active when a protocol is chosen', async () => {
+			const entry = await client.provisionSmartStartNode({
+				dsk,
+				securityClasses: [],
+				supportedProtocols: [Protocols.ZWave, Protocols.ZWaveLongRange],
+				protocol: Protocols.ZWaveLongRange,
+			})
+			expect(entry.status).to.equal(undefined)
+		})
+
+		it('keeps an entry without LR support active', async () => {
+			const entry = await client.provisionSmartStartNode({
+				dsk,
+				securityClasses: [],
+				supportedProtocols: [Protocols.ZWave],
+			})
+			expect(entry.status).to.equal(undefined)
 		})
 	})
 })
