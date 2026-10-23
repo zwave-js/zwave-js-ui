@@ -1,5 +1,15 @@
 # Changelog
 
+## [11.25.1](https://github.com/zwave-js/zwave-js-ui/compare/v11.25.0...v11.25.1) (2026-10-23)
+
+### ✨ Features
+
+* bump zwave-js@15.31.2 ([#4878](https://github.com/zwave-js/zwave-js-ui/issues/4878)) ([ee8c95c](https://github.com/zwave-js/zwave-js-ui/commit/ee8c95c6bd1087feef7a869f896546e3d20cefe7))
+
+### 🐛 Bug Fixes
+
+* **docker:** bump Node to 24.22.1 ([#4882](https://github.com/zwave-js/zwave-js-ui/issues/4882)) ([abdac42](https://github.com/zwave-js/zwave-js-ui/commit/abdac42d2c6309a8c294c34db44fa5c62253c526))
+
 ## [11.25.0](https://github.com/zwave-js/zwave-js-ui/compare/v11.24.3...v11.25.0) (2026-10-21)
 
 ### ✨ Features
