@@ -17,7 +17,7 @@ on:
   roles: all
   steps:
   - name: Checkout repository
-    uses: actions/checkout@v6
+    uses: actions/checkout@v7.0.1
     with:
       persist-credentials: false
   - id: docs-index
@@ -33,7 +33,7 @@ on:
       github-token: ${{ github.token }}
       index: posts
   - name: Restore answer feedback
-    uses: actions/cache/restore@v6
+    uses: actions/cache/restore@v6.1.0
     with:
       key: docs-feedback-v2-
       path: .docs-feedback/feedback.json
@@ -76,7 +76,7 @@ on:
       POSTS_INDEX_PATH: .posts-index/index.json
     id: prepare
     name: Prepare docs answer
-    uses: actions/github-script@v9
+    uses: actions/github-script@v9.0.0
     with:
       github-token: ${{ secrets.BOT_TOKEN }}
       script: |
@@ -85,7 +85,7 @@ on:
         core.setOutput("shouldContinue", shouldContinue ? "true" : "false");
   - if: steps.prepare.outputs.shouldContinue == 'true'
     name: Upload handoff for the judge
-    uses: actions/upload-artifact@v7
+    uses: actions/upload-artifact@v7.0.2
     with:
       name: docs-answer-handoff
       overwrite: true
@@ -106,7 +106,7 @@ safe-outputs:
   timeout-minutes: 10
 steps:
 - name: Download handoff
-  uses: actions/download-artifact@v8
+  uses: actions/download-artifact@v8.0.2
   with:
     name: docs-answer-handoff
     path: /tmp/gh-aw/agent/
