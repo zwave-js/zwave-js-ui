@@ -23,8 +23,10 @@ import rateLimit from 'express-rate-limit'
 import session from 'express-session'
 import type { Server as HttpServer } from 'node:http'
 import { createServer as createHttpServer } from 'node:http'
-import { createServer as createHttpsServer } from 'node:https'
-import { createSecureContext } from 'node:tls'
+import {
+	createServer as createHttpsServer,
+	Server as HttpsServer,
+} from 'node:https'
 import jwt from 'jsonwebtoken'
 import path from 'node:path'
 import sessionStore from 'session-file-store'
@@ -272,7 +274,7 @@ export async function startServer(port: number | string, host?: string) {
 				)
 			} else {
 				logger.warn(
-					'HTTPS is enabled but cert or key cannot be loaded or generated. Falling back to HTTP',
+					'HTTPS is enabled but cert or key cannot be generated. Falling back to HTTP',
 				)
 			}
 		} else {
@@ -292,7 +294,7 @@ export async function startServer(port: number | string, host?: string) {
 			typeof addr === 'string' ? 'pipe ' + addr : 'port ' + addr?.port
 		logger.info(
 			`Listening on ${bind}${host ? 'host ' + host : ''} protocol ${
-				httpsEnabled ? 'HTTPS' : 'HTTP'
+				server instanceof HttpsServer ? 'HTTPS' : 'HTTP'
 			}`,
 		)
 	})
@@ -394,10 +396,11 @@ async function loadCertKey(): Promise<{
 	cert: string
 	key: string
 }> {
-	const userProvided = !!(process.env.SSL_CERTIFICATE || process.env.SSL_KEY)
-	const certFile =
-		process.env.SSL_CERTIFICATE || utils.joinPath(storeDir, 'cert.pem')
-	const keyFile = process.env.SSL_KEY || utils.joinPath(storeDir, 'key.pem')
+	const customPaths = !!(process.env.SSL_CERTIFICATE || process.env.SSL_KEY)
+	const storeCertFile = utils.joinPath(storeDir, 'cert.pem')
+	const storeKeyFile = utils.joinPath(storeDir, 'key.pem')
+	const certFile = process.env.SSL_CERTIFICATE || storeCertFile
+	const keyFile = process.env.SSL_KEY || storeKeyFile
 
 	let key: string
 	let cert: string
@@ -409,53 +412,52 @@ async function loadCertKey(): Promise<{
 		// noop
 	}
 
-	if (cert && key) {
-		try {
-			// same check https.createServer runs, so a rejected pair can't crash the startup
-			createSecureContext({ cert, key })
-		} catch (error) {
-			if (userProvided) {
-				logger.error(
-					`Cert ${certFile} and key ${keyFile} are not accepted by Node.js: ${error.message}`,
-				)
-				return { cert: undefined, key: undefined }
-			}
+	const rejection = cert && key ? utils.tlsRejection(cert, key) : undefined
 
-			// self-signed pairs made before v9.29.0 use 1024-bit keys, rejected since Node 24
-			logger.warn(
-				`Stored cert and key are not accepted by Node.js (${error.message}), regenerating them...`,
-			)
-			cert = undefined
-			key = undefined
-		}
+	if (rejection && customPaths) {
+		// fail closed: never swap the operator's cert or serve plain HTTP instead
+		throw new Error(
+			`Cert ${certFile} and key ${keyFile} are not accepted by Node.js: ${rejection}`,
+		)
 	}
 
-	if (!cert || !key) {
+	if (rejection) {
+		// self-signed pairs made before v9.29.0 use 1024-bit keys, rejected since Node 24
+		logger.warn(
+			`Stored cert and key are not accepted by Node.js (${rejection}), generating new ones...`,
+		)
+	} else if (!cert || !key) {
 		logger.info(
 			'Cert and key not found in store, generating fresh new ones...',
 		)
+	} else {
+		return { cert, key }
+	}
 
-		try {
-			const result = await createCertificate([], {
-				days: 99999,
-				keySize: 2048,
-			})
+	try {
+		const result = await createCertificate([], {
+			days: 99999,
+			keySize: 2048,
+		})
 
-			key = result.private
-			cert = result.cert
+		key = result.private
+		cert = result.cert
+	} catch (error) {
+		logger.error('Error creating cert and key for HTTPS', error)
+		return { cert: undefined, key: undefined }
+	}
 
-			// restrict the private key (and cert) to the owner so a permissive
-			// umask can't leave the self-signed TLS key world/group-readable
-			await writeFile(utils.joinPath(storeDir, 'key.pem'), key, {
-				mode: 0o600,
-			})
-			await writeFile(utils.joinPath(storeDir, 'cert.pem'), cert, {
-				mode: 0o600,
-			})
-			logger.info('New cert and key created')
-		} catch (error) {
-			logger.error('Error creating cert and key for HTTPS', error)
-		}
+	try {
+		// restrict the private key (and cert) to the owner so a permissive
+		// umask can't leave the self-signed TLS key world/group-readable
+		await writeFile(storeKeyFile, key, { mode: 0o600 })
+		await writeFile(storeCertFile, cert, { mode: 0o600 })
+		logger.info('New cert and key created')
+	} catch (error) {
+		logger.warn(
+			'Cannot save the new cert and key to store, they will be regenerated on next start',
+			error,
+		)
 	}
 
 	return { cert, key }

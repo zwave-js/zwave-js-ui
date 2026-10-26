@@ -18,9 +18,12 @@ import {
 	isRecord,
 	isPositiveIntegerString,
 	isValidNodeIdString,
+	tlsRejection,
 	isValidOperation,
 	applyOperation,
 } from '../../api/lib/utils.ts'
+import { generate } from 'selfsigned'
+import { promisify } from 'node:util'
 
 declare let process: NodeJS.Process & {
 	pkg?: boolean
@@ -276,6 +279,21 @@ describe('#utils', () => {
 			expect(isPositiveIntegerString(undefined)).to.equal(false)
 			expect(isPositiveIntegerString(null)).to.equal(false)
 			expect(isPositiveIntegerString(1)).to.equal(false)
+		})
+	})
+
+	describe('#tlsRejection()', () => {
+		const createCertificate = promisify(generate)
+
+		it('accepts a valid 2048-bit pair', async () => {
+			const pair = await createCertificate([], { keySize: 2048 })
+			expect(tlsRejection(pair.cert, pair.private)).to.equal(undefined)
+		})
+
+		it('rejects a key that does not match the cert', async () => {
+			const a = await createCertificate([], { keySize: 2048 })
+			const b = await createCertificate([], { keySize: 2048 })
+			expect(tlsRejection(a.cert, b.private)).to.be.a('string')
 		})
 	})
 
