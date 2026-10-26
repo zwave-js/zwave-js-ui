@@ -97,6 +97,25 @@ describe('#tlsCert', () => {
 			expect(await fileMode(storeKey)).to.equal(0o600)
 		})
 
+		// older Node.js releases still accept 1024-bit keys
+		it.skipIf(nodeMajor < 24)(
+			'regenerates a stored 1024-bit pair',
+			async () => {
+				const weak = await createCertificate([], { keySize: 1024 })
+				await writeFile(storeCert, weak.cert)
+				await writeFile(storeKey, weak.private)
+
+				const pair = await loadCertKey(dir)
+
+				expect(getTlsRejectionReason(pair.cert, pair.key)).to.equal(
+					undefined,
+				)
+				expect(await readFile(`${storeKey}.bak`, 'utf8')).to.equal(
+					weak.private,
+				)
+			},
+		)
+
 		it('moves a rejected stored pair to .bak and regenerates it', async () => {
 			await writeFile(storeCert, valid.cert)
 			await writeFile(storeKey, other.private)
@@ -144,6 +163,26 @@ describe('#tlsCert', () => {
 			await expect(
 				loadCertKey(dir, certFile, join(dir, 'missing-key.pem')),
 			).rejects.toThrow(/Cannot read cert/)
+			await expect(stat(storeCert)).rejects.toThrow()
+		})
+
+		it('throws on an empty custom file', async () => {
+			const certFile = join(dir, 'custom-cert.pem')
+			const keyFile = join(dir, 'custom-key.pem')
+			await writeFile(certFile, valid.cert)
+			await writeFile(keyFile, '')
+
+			await expect(loadCertKey(dir, certFile, keyFile)).rejects.toThrow(
+				/is empty/,
+			)
+			await expect(stat(storeCert)).rejects.toThrow()
+		})
+
+		it('throws when only one custom path is set', async () => {
+			const certFile = join(dir, 'custom-cert.pem')
+			await writeFile(certFile, valid.cert)
+
+			await expect(loadCertKey(dir, certFile)).rejects.toThrow(/Set both/)
 			await expect(stat(storeCert)).rejects.toThrow()
 		})
 	})

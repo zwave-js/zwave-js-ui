@@ -40,7 +40,11 @@ export async function loadCertKey(
 	cert: string
 	key: string
 }> {
-	const customPaths = !!(customCertFile || customKeyFile)
+	if (!customCertFile !== !customKeyFile) {
+		throw new Error('Set both SSL_CERTIFICATE and SSL_KEY, or neither')
+	}
+
+	const customPaths = !!customCertFile
 	const storeCertFile = joinPath(storeDir, 'cert.pem')
 	const storeKeyFile = joinPath(storeDir, 'key.pem')
 	const certFile = customCertFile || storeCertFile
@@ -59,6 +63,10 @@ export async function loadCertKey(
 				`Cannot read cert ${certFile} and key ${keyFile}: ${error.message}`,
 			)
 		}
+	}
+
+	if (customPaths && (!cert || !key)) {
+		throw new Error(`Cert ${certFile} or key ${keyFile} is empty`)
 	}
 
 	const rejection = cert && key ? getTlsRejectionReason(cert, key) : undefined
