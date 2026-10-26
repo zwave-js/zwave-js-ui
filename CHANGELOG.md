@@ -1,5 +1,15 @@
 # Changelog
 
+## [11.25.2](https://github.com/zwave-js/zwave-js-ui/compare/v11.25.1...v11.25.2) (2026-10-26)
+
+### 🐛 Bug Fixes
+
+* **https:** regenerate self-signed certs rejected by Node 24 ([#4881](https://github.com/zwave-js/zwave-js-ui/issues/4881)) ([474b72c](https://github.com/zwave-js/zwave-js-ui/commit/474b72cdaa3a77fd4ad7bdcf0f5bc9e349bd1802)), closes [#4757](https://github.com/zwave-js/zwave-js-ui/issues/4757) [#4879](https://github.com/zwave-js/zwave-js-ui/issues/4879)
+
+### 🔧 Chores
+
+* **deps:** update dependency multer to v2.5.0 ([#4884](https://github.com/zwave-js/zwave-js-ui/issues/4884)) ([332f2c1](https://github.com/zwave-js/zwave-js-ui/commit/332f2c1170ff5177aa560192e166cdcf5a50f1e5))
+
 ## [11.25.1](https://github.com/zwave-js/zwave-js-ui/compare/v11.25.0...v11.25.1) (2026-10-23)
 
 ### ✨ Features
