@@ -40,7 +40,7 @@ export async function loadCertKey(
 	cert: string
 	key: string
 }> {
-	if (!customCertFile !== !customKeyFile) {
+	if (Boolean(customCertFile) !== Boolean(customKeyFile)) {
 		throw new Error('Set both SSL_CERTIFICATE and SSL_KEY, or neither')
 	}
 
@@ -113,10 +113,10 @@ export async function loadCertKey(
 		}
 		// restrict the private key (and cert) to the owner so a permissive
 		// umask can't leave the self-signed TLS key world/group-readable
+		await writeFile(storeCertFile, cert, { mode: 0o600 })
 		await writeFile(storeKeyFile, key, { mode: 0o600 })
 		// mode only applies when writeFile creates the file
 		await chmod(storeKeyFile, 0o600)
-		await writeFile(storeCertFile, cert, { mode: 0o600 })
 		logger.info('New cert and key created')
 	} catch (error) {
 		logger.warn(

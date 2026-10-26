@@ -143,6 +143,19 @@ describe('#tlsCert', () => {
 			)
 		})
 
+		it('returns an accepted custom pair without touching the store', async () => {
+			const certFile = join(dir, 'custom-cert.pem')
+			const keyFile = join(dir, 'custom-key.pem')
+			await writeFile(certFile, valid.cert)
+			await writeFile(keyFile, valid.private)
+
+			const pair = await loadCertKey(dir, certFile, keyFile)
+
+			expect(pair).to.deep.equal({ cert: valid.cert, key: valid.private })
+			await expect(stat(storeCert)).rejects.toThrow()
+			await expect(stat(storeKey)).rejects.toThrow()
+		})
+
 		it('throws on a rejected custom pair and leaves it alone', async () => {
 			const certFile = join(dir, 'custom-cert.pem')
 			const keyFile = join(dir, 'custom-key.pem')
