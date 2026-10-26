@@ -11,6 +11,7 @@ import Gateway, { GatewayType } from './lib/Gateway.ts'
 import jsonStore from './lib/jsonStore.ts'
 import * as loggers from './lib/logger.ts'
 import { logContainer } from './lib/logger.ts'
+import { loadCertKey } from './lib/tlsCert.ts'
 import MqttClient from './lib/MqttClient.ts'
 import SocketManager from './lib/SocketManager.ts'
 import type { CallAPIResult, ZwaveConfig } from './lib/ZwaveClient.ts'
@@ -70,7 +71,6 @@ import {
 	mkdtemp,
 	cp,
 } from 'node:fs/promises'
-import { generate } from 'selfsigned'
 import type { ZnifferConfig } from './lib/ZnifferManager.ts'
 import ZnifferManager from './lib/ZnifferManager.ts'
 import { getAllNamedScaleGroups, getAllSensors } from '@zwave-js/core'
@@ -84,8 +84,6 @@ import {
 	isTrustedSocket,
 	startTrustedListener,
 } from './lib/trustedListener.ts'
-
-const createCertificate = promisify(generate)
 
 declare module 'express-session' {
 	export interface SessionData {
@@ -261,7 +259,11 @@ export async function startServer(port: number | string, host?: string) {
 	if (httpsEnabled) {
 		if (!sslDisabled()) {
 			logger.info('HTTPS is enabled. Loading cert and keys')
-			const { cert, key } = await loadCertKey()
+			const { cert, key } = await loadCertKey(
+				storeDir,
+				process.env.SSL_CERTIFICATE,
+				process.env.SSL_KEY,
+			)
 
 			if (cert && key) {
 				server = createHttpsServer(
@@ -390,77 +392,6 @@ async function getSnippets() {
 async function getSafePath(req: Request | string, resolveReal = true) {
 	const reqPath = typeof req === 'string' ? req : req.query.path
 	return utils.resolveSafeStorePath(reqPath, storeDir, resolveReal)
-}
-
-async function loadCertKey(): Promise<{
-	cert: string
-	key: string
-}> {
-	const customPaths = !!(process.env.SSL_CERTIFICATE || process.env.SSL_KEY)
-	const storeCertFile = utils.joinPath(storeDir, 'cert.pem')
-	const storeKeyFile = utils.joinPath(storeDir, 'key.pem')
-	const certFile = process.env.SSL_CERTIFICATE || storeCertFile
-	const keyFile = process.env.SSL_KEY || storeKeyFile
-
-	let key: string
-	let cert: string
-
-	try {
-		cert = await readFile(certFile, 'utf8')
-		key = await readFile(keyFile, 'utf8')
-	} catch (error) {
-		// noop
-	}
-
-	const rejection = cert && key ? utils.tlsRejection(cert, key) : undefined
-
-	if (rejection && customPaths) {
-		// fail closed: never swap the operator's cert or serve plain HTTP instead
-		throw new Error(
-			`Cert ${certFile} and key ${keyFile} are not accepted by Node.js: ${rejection}`,
-		)
-	}
-
-	if (rejection) {
-		// self-signed pairs made before v9.29.0 use 1024-bit keys, rejected since Node 24
-		logger.warn(
-			`Stored cert and key are not accepted by Node.js (${rejection}), generating new ones...`,
-		)
-	} else if (!cert || !key) {
-		logger.info(
-			'Cert and key not found in store, generating fresh new ones...',
-		)
-	} else {
-		return { cert, key }
-	}
-
-	try {
-		const result = await createCertificate([], {
-			days: 99999,
-			keySize: 2048,
-		})
-
-		key = result.private
-		cert = result.cert
-	} catch (error) {
-		logger.error('Error creating cert and key for HTTPS', error)
-		return { cert: undefined, key: undefined }
-	}
-
-	try {
-		// restrict the private key (and cert) to the owner so a permissive
-		// umask can't leave the self-signed TLS key world/group-readable
-		await writeFile(storeKeyFile, key, { mode: 0o600 })
-		await writeFile(storeCertFile, cert, { mode: 0o600 })
-		logger.info('New cert and key created')
-	} catch (error) {
-		logger.warn(
-			'Cannot save the new cert and key to store, they will be regenerated on next start',
-			error,
-		)
-	}
-
-	return { cert, key }
 }
 
 function setupLogging(settings: { gateway: utils.DeepPartial<GatewayConfig> }) {

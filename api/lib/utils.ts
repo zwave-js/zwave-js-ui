@@ -4,7 +4,6 @@ import crypto from 'node:crypto'
 import { readFileSync, statSync } from 'node:fs'
 import type { ZwaveConfig } from './ZwaveClient.ts'
 import { isUint8Array } from 'node:util/types'
-import { createSecureContext } from 'node:tls'
 import { createRequire } from 'node:module'
 import { mkdir, access, readdir, readlink, realpath } from 'node:fs/promises'
 import { fileURLToPath } from 'node:url'
@@ -261,20 +260,6 @@ export function isPositiveIntegerString(value: unknown): boolean {
  */
 export function isValidNodeIdString(value: unknown): boolean {
 	return isPositiveIntegerString(value) && Number(value) <= MAX_NODES_LR
-}
-
-/**
- * Get the reason Node.js refuses to serve TLS with this cert and key
- * (e.g. key too small, key not matching the cert), or undefined if it accepts them
- */
-export function tlsRejection(cert: string, key: string): string | undefined {
-	try {
-		// same check https.createServer runs
-		createSecureContext({ cert, key })
-		return undefined
-	} catch (error) {
-		return error.message
-	}
 }
 
 /**
