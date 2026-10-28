@@ -1,13 +1,30 @@
 <template>
-	<v-container class="fill" fluid>
-		<zwave-graph
-			ref="mesh"
-			id="mesh"
-			:nodes="nodes"
-			@node-click="nodeClick"
-			@node-added="fetchNodeRoutes"
-			@node-removed="onNodeRemoved"
-		/>
+	<v-container class="fill mesh-page" fluid>
+		<!-- the floorplan view adds its map tools here -->
+		<div id="mesh-toolbar" class="d-flex align-center flex-wrap ga-3 mb-2">
+			<v-btn-toggle
+				v-model="mode"
+				mandatory
+				density="compact"
+				variant="outlined"
+				divided
+			>
+				<v-btn value="graph" prepend-icon="hub">Graph</v-btn>
+				<v-btn value="map" prepend-icon="map">Floorplan</v-btn>
+			</v-btn-toggle>
+		</div>
+		<div class="mesh-body">
+			<zwave-graph
+				v-if="mode === 'graph'"
+				ref="mesh"
+				id="mesh"
+				:nodes="nodes"
+				@node-click="nodeClick"
+				@node-added="fetchNodeRoutes"
+				@node-removed="onNodeRemoved"
+			/>
+			<floor-plan-view v-else @node-click="nodeClick" />
+		</div>
 		<node-panel
 			v-if="$vuetify.display.mdAndUp"
 			:node="selectedNode"
@@ -33,6 +50,21 @@
 </template>
 
 <style scoped>
+.mesh-page {
+	display: flex;
+	flex-direction: column;
+	/* the app footer is fixed over the page bottom (about 36px): end above
+	   it, so the map's bottom controls aren't covered */
+	padding-bottom: 48px;
+}
+
+/* the rest of the page under the toolbar, however tall it gets */
+.mesh-body {
+	position: relative;
+	flex: 1;
+	min-height: 0;
+}
+
 .details {
 	position: absolute;
 	top: 150px;
@@ -58,6 +90,10 @@ import { defineAsyncComponent, nextTick } from 'vue'
 import { mapActions, mapState } from 'pinia'
 import useBaseStore from '../stores/base.js'
 import InstancesMixin from '../mixins/InstancesMixin.js'
+import ConfigApis from '../apis/ConfigApis.js'
+import { Settings } from '@/modules/Settings'
+
+const settings = new Settings(localStorage)
 
 export default {
 	name: 'Mesh',
@@ -72,6 +108,9 @@ export default {
 		NodePanel: defineAsyncComponent(
 			() => import('@/components/custom/NodePanel.vue'),
 		),
+		FloorPlanView: defineAsyncComponent(
+			() => import('@/components/custom/FloorPlanView.vue'),
+		),
 	},
 	computed: {
 		...mapState(useBaseStore, ['nodes']),
@@ -81,9 +120,30 @@ export default {
 		return {
 			selectedNode: null,
 			showProperties: false,
+			// 'graph' or 'map', remembered per browser
+			mode: settings.load('meshMode', 'graph'),
+		}
+	},
+	async mounted() {
+		// a browser that never picked a mode opens the default map, if any
+		if (localStorage.getItem('meshMode') !== null) return
+		try {
+			const res = await ConfigApis.getFloorPlans()
+			if (res.success && res.data.settings.defaultMapId) {
+				this.autoMode = true
+				this.mode = 'map'
+			}
+		} catch {
+			// the graph is fine
 		}
 	},
 	watch: {
+		mode(v) {
+			// opening the default map isn't the user's pick
+			if (!this.autoMode) settings.store('meshMode', v)
+			this.autoMode = false
+			this.nodeClick(null)
+		},
 		showProperties(v) {
 			// Return to overview map when closing the node properties dialog
 			// using the X in the top right corner
