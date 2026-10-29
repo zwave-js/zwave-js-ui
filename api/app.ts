@@ -16,7 +16,7 @@ import MqttClient from './lib/MqttClient.ts'
 import SocketManager from './lib/SocketManager.ts'
 import type { CallAPIResult, ZwaveConfig } from './lib/ZwaveClient.ts'
 import ZWaveClient from './lib/ZwaveClient.ts'
-import multer, { diskStorage } from 'multer'
+import multer, { diskStorage, memoryStorage } from 'multer'
 import extract from 'extract-zip'
 import { serverVersion } from '@zwave-js/server'
 import archiver from 'archiver'
@@ -53,6 +53,16 @@ import {
 } from './lib/SocketEvents.ts'
 import * as utils from './lib/utils.ts'
 import backupManager from './lib/BackupManager.ts'
+import floorPlans, { MAX_IMAGE_BYTES } from './lib/FloorPlans.ts'
+import {
+	ImportHolds,
+	MAX_FILE_BYTES as MAX_FLOOR_PLAN_FILE_BYTES,
+	buildExport,
+	exportFileName,
+	localNodes,
+	parseImport,
+	proposeMatches,
+} from './lib/FloorPlanExchange.ts'
 import {
 	getExternallyManagedPaths,
 	loadExternalSettings,
@@ -120,6 +130,18 @@ const Storage = diskStorage({
 const multerUpload = multer({
 	storage: Storage,
 }).array('upload', 1) // Field name and max count
+
+// floorplan background images are kept in memory: they are sniffed and size
+// checked before anything is written to the store
+const floorPlanImageUpload = multer({
+	storage: memoryStorage(),
+	limits: { fileSize: MAX_IMAGE_BYTES, files: 1 },
+}).single('upload')
+
+const floorPlanFileUpload = multer({
+	storage: memoryStorage(),
+	limits: { fileSize: MAX_FLOOR_PLAN_FILE_BYTES, files: 1 },
+}).single('upload')
 
 const FileStore = sessionStore(session)
 const app = express()
@@ -2049,7 +2071,9 @@ app.get(
 	isAuthenticated,
 	async function (req, res) {
 		try {
-			await jsonStore.backup(res)
+			await jsonStore.backup(res, {
+				floorPlans: req.query.floorPlans !== 'false',
+			})
 		} catch (error) {
 			res.status(500).send({
 				error: error.message,
@@ -2106,6 +2130,317 @@ app.post(
 
 		if (file && isRestore) {
 			await rm(file.path)
+		}
+	},
+)
+
+// -------- Floorplans API --------
+
+/** Run a floorplans handler and reply with the usual `{ success, data }` shape */
+function floorPlansRoute(
+	handler: (req: Request, res: Response) => Promise<unknown>,
+) {
+	return async function (req: Request, res: Response) {
+		try {
+			res.json({ success: true, data: await handler(req, res) })
+		} catch (error) {
+			res.json({ success: false, message: error.message })
+		}
+	}
+}
+
+/**
+ * Identity snapshot of a node, stored with its placement so the position can
+ * be relinked if the node is re-included under a new ID
+ */
+function floorPlanSeen(deviceKey: unknown) {
+	const node = localNodes(gw?.zwave).find((n) => n.key === deviceKey)
+	return node ? { name: node.name, deviceId: node.deviceId } : undefined
+}
+
+/** Home ID of the running network, hex without 0x, or null */
+function floorPlanHome() {
+	return gw?.zwave?.homeHex?.replace(/^0x/, '') || null
+}
+
+const floorPlanImports = new ImportHolds()
+
+app.get(
+	'/api/floorplans',
+	apisLimiter,
+	isAuthenticated,
+	floorPlansRoute(() => floorPlans.load()),
+)
+
+app.patch(
+	'/api/floorplans/settings',
+	apisLimiter,
+	isAuthenticated,
+	floorPlansRoute((req) => floorPlans.updateSettings(req.body ?? {})),
+)
+
+app.post(
+	'/api/floorplans/maps',
+	apisLimiter,
+	isAuthenticated,
+	floorPlansRoute((req) => floorPlans.addMap(req.body ?? {})),
+)
+
+app.patch(
+	'/api/floorplans/maps/:id',
+	apisLimiter,
+	isAuthenticated,
+	floorPlansRoute((req) => floorPlans.updateMap(req.params.id, req.body)),
+)
+
+app.delete(
+	'/api/floorplans/maps/:id',
+	apisLimiter,
+	isAuthenticated,
+	floorPlansRoute((req) => floorPlans.deleteMap(req.params.id)),
+)
+
+// multipart: `upload` file, optional `variant` (light|dark) and the
+// browser-decoded `imgWidthPx`/`imgHeightPx`, used if the header can't be read
+app.put(
+	'/api/floorplans/maps/:id/image',
+	apisLimiter,
+	isAuthenticated,
+	floorPlansRoute(async (req, res) => {
+		await multerPromise(floorPlanImageUpload, req, res)
+		if (!req.file) throw Error('No file uploaded')
+		return floorPlans.setMapImage(req.params.id, {
+			bytes: req.file.buffer,
+			imgWidthPx: Number(req.body.imgWidthPx),
+			imgHeightPx: Number(req.body.imgHeightPx),
+			variant: req.body.variant === 'dark' ? 'dark' : 'light',
+		})
+	}),
+)
+
+// ?variant=dark unsets only the dark version
+app.delete(
+	'/api/floorplans/maps/:id/image',
+	apisLimiter,
+	isAuthenticated,
+	floorPlansRoute((req) =>
+		floorPlans.removeMapImage(
+			req.params.id,
+			req.query.variant === 'dark' ? 'dark' : 'all',
+		),
+	),
+)
+
+// body: { deviceKey, x, y }, or { placements: [{ deviceKey, x, y }] } in one write
+app.put(
+	'/api/floorplans/maps/:id/placements',
+	apisLimiter,
+	isAuthenticated,
+	floorPlansRoute((req) => {
+		const body = req.body ?? {}
+		if (body.placements !== undefined) {
+			if (!Array.isArray(body.placements)) {
+				throw Error('placements must be a list')
+			}
+			const nodes = new Map(localNodes(gw?.zwave).map((n) => [n.key, n]))
+			return floorPlans.setPlacements(
+				req.params.id,
+				body.placements.map((p: any) => {
+					const n = nodes.get(p?.deviceKey)
+					return {
+						deviceKey: p?.deviceKey,
+						x: p?.x,
+						y: p?.y,
+						seen: n
+							? { name: n.name, deviceId: n.deviceId }
+							: undefined,
+					}
+				}),
+			)
+		}
+		const { deviceKey, x, y } = body
+		return floorPlans.setPlacement(req.params.id, {
+			deviceKey,
+			x,
+			y,
+			seen: floorPlanSeen(deviceKey),
+		})
+	}),
+)
+
+app.delete(
+	'/api/floorplans/maps/:id/placements/:deviceKey',
+	apisLimiter,
+	isAuthenticated,
+	floorPlansRoute((req) =>
+		floorPlans.removePlacement(req.params.id, req.params.deviceKey),
+	),
+)
+
+// link an imported placeholder to a node, body: { deviceKey }
+app.put(
+	'/api/floorplans/maps/:id/placeholders/:phId',
+	apisLimiter,
+	isAuthenticated,
+	floorPlansRoute((req) => {
+		const deviceKey = req.body?.deviceKey
+		return floorPlans.linkPlaceholder(
+			req.params.id,
+			req.params.phId,
+			deviceKey,
+			floorPlanSeen(deviceKey),
+		)
+	}),
+)
+
+app.delete(
+	'/api/floorplans/maps/:id/placeholders/:phId',
+	apisLimiter,
+	isAuthenticated,
+	floorPlansRoute((req) =>
+		floorPlans.removePlaceholder(req.params.id, req.params.phId),
+	),
+)
+
+// image files no background references (e.g. after a store restore)
+app.get(
+	'/api/floorplans/orphans',
+	apisLimiter,
+	isAuthenticated,
+	floorPlansRoute(() => floorPlans.findOrphans()),
+)
+
+// body: { names: string[] }
+app.delete(
+	'/api/floorplans/orphans',
+	apisLimiter,
+	isAuthenticated,
+	floorPlansRoute((req) => {
+		const names = req.body?.names
+		if (!Array.isArray(names)) throw Error('names must be a list')
+		return floorPlans.deleteOrphans(names.map(String))
+	}),
+)
+
+// ?maps=id1,id2 (default: all maps). The UI saves it under a name the user picks.
+app.get(
+	'/api/floorplans/export',
+	apisLimiter,
+	isAuthenticated,
+	async function (req, res) {
+		try {
+			const ids =
+				typeof req.query.maps === 'string' && req.query.maps
+					? req.query.maps.split(',')
+					: null
+			const out = await buildExport({
+				data: await floorPlans.load(),
+				mapIds: ids,
+				nodes: localNodes(gw?.zwave),
+				imagesDir: floorPlans.imagesDir,
+				homeId: floorPlanHome(),
+				appVersion: utils.getVersion(),
+			})
+			res.set(
+				'Content-Disposition',
+				`attachment; filename="${exportFileName()}"`,
+			)
+			res.json(out)
+		} catch (error) {
+			res.json({ success: false, message: error.message })
+		}
+	},
+)
+
+// Import, step 1: multipart `upload` file. Returns proposed matches and a
+// token for the commit step; nothing is written yet.
+app.post(
+	'/api/floorplans/import/preview',
+	apisLimiter,
+	isAuthenticated,
+	floorPlansRoute(async (req, res) => {
+		await multerPromise(floorPlanFileUpload, req, res)
+		if (!req.file) throw Error('No file uploaded')
+		const file = parseImport(req.file.buffer)
+		const nodes = localNodes(gw?.zwave)
+		const proposals = proposeMatches(file.nodes, nodes, floorPlanHome())
+		return {
+			token: floorPlanImports.hold(file),
+			source: file.source,
+			exportedAt: file.exportedAt,
+			maps: file.maps.map((m) => {
+				const bg = file.backgrounds.find(
+					(b) => b.ref === m.background?.ref,
+				)
+				return {
+					name: m.name,
+					widthPx: m.widthPx,
+					heightPx: m.heightPx,
+					placements: m.placements.length,
+					hasImage: !!bg?.image,
+					hasDarkImage: !!bg?.imageDark,
+				}
+			}),
+			entries: file.nodes.map((e) => ({ ...e, ...proposals[e.ref] })),
+			nodes,
+		}
+	}),
+)
+
+// Import, step 2. body: { token, matches: { [ref]: deviceKey | null } }.
+// Adds new maps, never overwrites existing ones.
+app.post(
+	'/api/floorplans/import/commit',
+	apisLimiter,
+	isAuthenticated,
+	floorPlansRoute(async (req) => {
+		const { token, matches } = req.body ?? {}
+		const file = floorPlanImports.get(token)
+		const result = await floorPlans.importMaps(
+			file,
+			matches,
+			localNodes(gw?.zwave),
+		)
+		floorPlanImports.release(token)
+		return result
+	}),
+)
+
+// Background image file. Served by file name: the dot keeps the history
+// fallback from rewriting browser image requests (Accept: */*), and a
+// replaced image always gets a new name, so it can be cached.
+app.get(
+	'/api/floorplans/images/:file',
+	apisLimiter,
+	isAuthenticated,
+	async function (req, res) {
+		try {
+			const { backgrounds } = await floorPlans.load()
+			const file = req.params.file
+			const owned = backgrounds.some(
+				(b) => b.image === file || b.imageDark === file,
+			)
+			if (!owned) {
+				return res.status(404).json({
+					success: false,
+					message: 'No such image',
+				})
+			}
+			res.set({
+				'Cache-Control': 'private, max-age=31536000, immutable',
+				'X-Content-Type-Options': 'nosniff',
+			})
+			// referenced but missing on disk, e.g. after a partial restore
+			res.sendFile(file, { root: floorPlans.imagesDir }, (err) => {
+				if (err && !res.headersSent) {
+					res.status(404).json({
+						success: false,
+						message: 'No such image',
+					})
+				}
+			})
+		} catch (error) {
+			res.status(500).json({ success: false, message: error.message })
 		}
 	},
 )
