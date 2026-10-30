@@ -247,16 +247,14 @@ export function getRoute(item, withRssi = false) {
 	}
 
 	const repRSSI = item.repeaterRSSI || []
-	const dir = item.direction === 'inbound' ? '←' : '→'
+	// direct frames have no direction, show them as source → destination
+	const inbound = item.direction === 'inbound'
+	const dir = inbound ? '←' : '→'
 	const hop = item.hop !== undefined ? item.hop : -1
 	const route = [
-		item.direction === 'outbound'
-			? item.sourceNodeId
-			: item.destinationNodeId,
+		inbound ? item.destinationNodeId : item.sourceNodeId,
 		...(item.repeaters || []),
-		item.direction === 'outbound'
-			? item.destinationNodeId
-			: item.sourceNodeId,
+		inbound ? item.sourceNodeId : item.destinationNodeId,
 	].map(
 		(r, i) =>
 			`${r}${
