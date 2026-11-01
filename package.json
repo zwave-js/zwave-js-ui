@@ -113,7 +113,7 @@
     "@jamescoyle/vue-icon": "^0.1.2",
     "@mdi/js": "7.4.47",
     "@release-it/conventional-changelog": "^10.0.4",
-    "@tsconfig/node22": "^22.0.2",
+    "@tsconfig/node24": "^24.0.0",
     "@types/archiver": "^6.0.2",
     "@types/compression": "^1.8.1",
     "@types/connect-history-api-fallback": "^1.5.4",
