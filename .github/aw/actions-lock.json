@@ -79,8 +79,8 @@
     },
     "ghcr.io/github/gh-aw-node": {
       "image": "ghcr.io/github/gh-aw-node",
-      "digest": "sha256:2c2ea524e648b91c8333ce246e3838fcf5b19ac70e45baac1a51b9207299749f",
-      "pinned_image": "ghcr.io/github/gh-aw-node@sha256:2c2ea524e648b91c8333ce246e3838fcf5b19ac70e45baac1a51b9207299749f"
+      "digest": "sha256:9c5b5ac81fb106352ca467966aeff760c449114e21d521af866596c3bc6778f1",
+      "pinned_image": "ghcr.io/github/gh-aw-node@sha256:9c5b5ac81fb106352ca467966aeff760c449114e21d521af866596c3bc6778f1"
     }
   }
 }
