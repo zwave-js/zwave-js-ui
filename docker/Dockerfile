@@ -1,4 +1,4 @@
-# syntax=docker/dockerfile:1
+# syntax=docker/dockerfile:1@sha256:4edf897a3ffa55b89f906fc8cc78afdb3f1834cc9c7083565e611a8a7d5fe99e
 ARG image=zwave-js-ui
 # Full image refs, one per ARG: Renovate rewrites the ARG line that holds the whole
 # ref, so a shared version fragment gets the digest of only one of the two images.

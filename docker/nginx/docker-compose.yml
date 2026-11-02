@@ -3,7 +3,7 @@ version: "3.4"
 services:
 
     nginx:
-      image: nginx:alpine
+      image: nginx:alpine@sha256:785835ea65db4bba6f021acc0f3be91b0fef76a53fe41f8588c6698d2aed0606
       container_name: "nginx"
       volumes:
         - ./conf.d/default.conf:/etc/nginx/conf.d/default.conf
