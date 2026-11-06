@@ -9,7 +9,7 @@ on:
 jobs:
   test-install:
     name: Test install and build
-    runs-on: macos-14
+    runs-on: macos-15
     strategy:
       matrix:
         node-version: [20.x]
