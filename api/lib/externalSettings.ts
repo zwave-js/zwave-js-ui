@@ -2,6 +2,7 @@ import { readFileSync, existsSync } from 'node:fs'
 import type { PartialZWaveOptions } from 'zwave-js'
 import { driverPresets } from 'zwave-js'
 import { module } from './logger.ts'
+import * as utils from './utils.ts'
 
 const logger = module('ExternalSettings')
 
@@ -45,6 +46,7 @@ export interface ExternalZwaveSettings {
 
 	// Features
 	enableSoftReset?: boolean
+	enableStatistics?: boolean
 
 	// Z-Wave JS Server settings
 	serverEnabled?: boolean
@@ -119,6 +121,8 @@ export function getExternallyManagedPaths(): string[] {
 	// Features
 	if (settings.enableSoftReset !== undefined)
 		paths.push('zwave.enableSoftReset')
+	if (settings.enableStatistics !== undefined)
+		paths.push('zwave.enableStatistics')
 
 	// Device config
 	if (settings.deviceConfigPriorityDir !== undefined)
@@ -160,18 +164,21 @@ export function applyExternalDriverSettings(
 		if (settings.storage.throttle !== undefined)
 			zwaveOptions.storage.throttle = settings.storage.throttle
 	}
+}
 
-	if (settings.presets && settings.presets.length > 0) {
-		for (const presetName of settings.presets) {
-			const preset =
-				driverPresets[presetName as keyof typeof driverPresets]
-			if (preset) {
-				Object.assign(zwaveOptions, preset)
-			} else {
-				logger.warn(`Unknown driver preset: ${presetName}`)
-			}
-		}
+/**
+ * Resolve the external driver presets, to pass to the `Driver` constructor
+ * after the options so it deep merges them.
+ */
+export function getExternalDriverPresets(): PartialZWaveOptions[] {
+	const presets: PartialZWaveOptions[] = []
+	for (const presetName of loadExternalSettings()?.presets ?? []) {
+		const preset = driverPresets[presetName as keyof typeof driverPresets]
+		// the Driver merges into presets too, keep the shared ones untouched
+		if (preset) presets.push(utils.copy(preset))
+		else logger.warn(`Unknown driver preset: ${presetName}`)
 	}
+	return presets
 }
 
 /**
@@ -236,6 +243,8 @@ export function mergeExternalSettings(
 	// Features
 	if (settings.enableSoftReset !== undefined)
 		zwaveConfig.enableSoftReset = settings.enableSoftReset
+	if (settings.enableStatistics !== undefined)
+		zwaveConfig.enableStatistics = settings.enableStatistics
 
 	// Device config
 	if (settings.deviceConfigPriorityDir !== undefined)

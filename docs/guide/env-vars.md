@@ -16,12 +16,13 @@ This is the list of the supported environment variables:
   - `HTTPS`: Enable https
   - `SSL_CERTIFICATE` (optional): Absolute path to SSL certificate (for Docker, ensure this is the path as it appears within the container)
   - `SSL_KEY` (optional): Absolute path to SSL key (for Docker, ensure this is the path as it appears within the container)
+  - Set both or neither: setting only one stops the startup. Without them, a self-signed cert and key are generated in the store (`cert.pem`, `key.pem`). Node.js 24 rejects RSA keys smaller than 2048 bits: a stored pair that Node.js rejects is moved to `cert.pem.bak` / `key.pem.bak` and regenerated on startup, while a custom pair that is missing, unreadable, empty or rejected stops the startup with an error naming the files.
 - `SESSION_SECRET`: Used as secret for session. If not provided the default one is used
 - `USE_SECURE_COOKIE`: Set the cookie [secure](https://github.com/expressjs/session#cookiesecure) option.
 - `PORT`: The port to listen to for incoming requests. Default is `8091`
 - `HOST`: The host address to bind to. Keep it empty to bind to all interfaces both IPv4 and IPv6
 - `STORE_DIR`: The absolute path to the directory where all files will be stored. Default is `<path to your zui dir>/store`
-- `BACKUPS_DIR`: The absolute path to the directory where all backups files will be stored. Default is `<path to your zui dir>/store/backups`
+- `BACKUPS_DIR`: The absolute path to the directory where all backups files will be stored. Default is `<store_dir>/backups`
 - `ZWAVEJS_EXTERNAL_CONFIG`: It's the path to the folder used by Z-Wave JS to [store config database](https://zwave-js.github.io/node-zwave-js/#/usage/external-config?id=specifying-an-external-config-db-location), by default it is `<store_dir>/.config-db`.
 - `ZWAVEJS_LOGS_DIR`: The folder used to store Z-Wave JS logs if `Log to file` is selected in the Z-Wave settings. By default, this is the `store` folder.
 - `MQTT_NAME`: The name used as client name when connecting to the mqtt server. Overrides `mqtt.name` in `settings.json`
@@ -30,7 +31,7 @@ This is the list of the supported environment variables:
 - `ZUI_LOG_MAXSIZE`: The maximum size of a single log file. Default is `50m` (50MB)
 - `NO_LOG_COLORS`: Set this env var to `'true'` to disable application log colors also in the console.
 - `ZUI_NO_CONSOLE`: Set this env var to `'true'` to disable application log in the console.
-- `TRUST_PROXY`: Set this env in order to trust the proxy. See [express behind proxies](https://expressjs.com/en/guide/behind-proxies.html) for more info about allowed values.
+- `TRUST_PROXY`: Configures Express's `trust proxy` setting when running behind a reverse proxy. Accepts a hop count (e.g. `1`), `true`/`false`, a comma-separated list of trusted IPs/CIDRs, or one of the presets `loopback`/`linklocal`/`uniquelocal`. See [express behind proxies](https://expressjs.com/en/guide/behind-proxies.html) for the allowed values. Setting this resolves the `ERR_ERL_UNEXPECTED_X_FORWARDED_FOR` warning emitted by `express-rate-limit` and ensures rate limiters use the real client IP. Note: setting it to `true` is too permissive and triggers `ERR_ERL_PERMISSIVE_TRUST_PROXY` — prefer an explicit hop count or IP list.
 - `FORCE_DISABLE_SSL`: Set this env var to `'true'` to disable SSL.
 - `BASE_PATH`: Set this env var to the base path where the application is served. Default is `/`.
 - `UID_DISCOVERY_PREFIX`: Sets the prefix used for MQTT Discovery `unique_id` of entities. Default is `zwavejs2mqtt_`.
@@ -39,3 +40,17 @@ This is the list of the supported environment variables:
 - `DISCOVERY_DISABLE_CC_CONFIGURATION`: Set this env var to `'true'` to disable Configuration CC MQTT Discovery.
 - `ZWAVE_PORT`: Forces a specific serial port for the Z-Wave stick, overriding the port configured in the UI. When set, Z-Wave is also automatically enabled.
 - `ZWAVE_EXTERNAL_SETTINGS`: Absolute path to an external JSON file containing Z-Wave settings overrides. Useful for managing settings outside the application store.
+
+## Trusted listener (host API)
+
+A host application that embeds or manages Z-Wave JS UI (for example Home Assistant) can enable a second, **unauthenticated** listener. It serves the full application (UI, REST APIs and Socket.IO) with authentication bypassed, so it must only ever be reachable by the host itself. It is configured exclusively via environment variables so that only whoever controls the process environment can enable it:
+
+- `TRUSTED_API_LISTEN`: Enables the trusted listener. Three forms are accepted:
+  - An absolute path starting with `/`: bind a unix socket at that path. The socket is created with mode `0660` (owner and group only), so the host must run Z-Wave JS UI under a user or group the intended client shares; access is otherwise left to filesystem permissions. A stale socket file from an unclean shutdown is removed automatically on startup; because of this, no two instances may share the same socket path — a second instance would silently take over the socket of the first.
+  - `host:port` with a literal IP (IPv6 in brackets, e.g. `[fd00::1]:8092`): bind exactly that address.
+  - `cidr:port` (e.g. `172.30.32.0/23:8092`): resolve the local interface address inside that network at startup and bind to it. This lets the host name a (docker) network without either side knowing the container's dynamic IP. Startup fails if no (or more than one) local address matches.
+
+  A bare port is rejected: the trusted listener is never bound to all interfaces.
+- `TRUSTED_API_ALLOWED_IPS`: Comma-separated list of IPs/CIDRs (e.g. `172.30.32.2,127.0.0.1`) allowed to connect to a TCP binding. **Required for TCP bindings** — startup fails without it. Ignored for unix sockets.
+
+The allowlist is enforced on the raw TCP peer address before any HTTP parsing: connections from other peers are dropped immediately. Forwarding headers such as `X-Forwarded-For` and the `TRUST_PROXY` setting never influence this check, so a proxying host (or a spoofing client) cannot impersonate an allowed peer. The trusted listener always speaks plain HTTP; confidentiality of the transport is the host's responsibility (private network or unix socket).

@@ -2,7 +2,7 @@ import draggable from 'vuedraggable'
 import colors from 'vuetify/util/colors'
 import { ManagedItems } from '@/modules/ManagedItems'
 
-import { mapState } from 'pinia'
+import { mapActions, mapState } from 'pinia'
 import {
 	mdiBatteryAlertVariantOutline,
 	mdiBattery20,
@@ -31,6 +31,17 @@ import {
 } from '../../lib/utils.js'
 import { instances, manager } from '../../lib/instanceManager.js'
 import { defineAsyncComponent } from 'vue'
+import { ProtocolDataRate, protocolDataRateToString } from '@zwave-js/core'
+
+// Short labels for the table cell, `protocolDataRateToString` is too verbose here
+const RATE_LABELS = {
+	[ProtocolDataRate.ZWave_9k6]: '9.6k',
+	[ProtocolDataRate.ZWave_40k]: '40k',
+	[ProtocolDataRate.ZWave_100k]: '100k',
+	[ProtocolDataRate.LongRange_100k]: '100k LR',
+}
+
+const NO_RATE = '-'
 
 export default {
 	props: {
@@ -61,6 +72,12 @@ export default {
 		'managedNodes.selected': function (val) {
 			this.$emit('selected', val)
 		},
+		// Clear selection when switching between physical and virtual views
+		// so a lingering selection from the other view doesn't drive the
+		// bulk action toolbar.
+		nodeView: function () {
+			if (this.managedNodes) this.managedNodes.selected = []
+		},
 	},
 	computed: {
 		...mapState(useBaseStore, ['nodes']),
@@ -69,6 +86,31 @@ export default {
 		},
 		currentTheme() {
 			return this.app.currentTheme
+		},
+		// Active device view ('physical' | 'virtual'). Backed by the shared
+		// store so the selection stays consistent with the compact (smart)
+		// view when switching between them.
+		nodeView: {
+			get() {
+				return useBaseStore().uiState.nodeView
+			},
+			set(value) {
+				useBaseStore().setNodeView(value)
+			},
+		},
+		// cached: propValues rebuilds every column's choices on each read
+		columnChoices() {
+			return this.managedNodes ? this.managedNodes.propValues : {}
+		},
+		// Nodes shown in the table, split between physical and virtual
+		// devices so the two (which have very different characteristics)
+		// are never mixed in the same list. A standard Broadcast virtual
+		// node always exists, so the split is always relevant.
+		displayedNodes() {
+			if (!this.managedNodes) return []
+			return this.managedNodes.filteredItems.filter((node) =>
+				this.nodeView === 'virtual' ? node.virtual : !node.virtual,
+			)
 		},
 	},
 	data: function () {
@@ -94,6 +136,28 @@ export default {
 				productDescription: { type: 'string', label: 'Product' },
 				productLabel: { type: 'string', label: 'Product code' },
 				name: { type: 'string', label: 'Name' },
+				virtual: {
+					type: 'boolean',
+					label: 'Virtual',
+					richValue: (node) =>
+						this.booleanRichValue(node.virtual, {
+							true: {
+								icon: 'cloud',
+								iconStyle: 'color: purple',
+								description: 'Virtual Node',
+							},
+							false: {
+								icon: 'device_hub',
+								iconStyle: 'color: green',
+								description: 'Physical Node',
+							},
+							default: {
+								icon: 'device_hub',
+								iconStyle: 'color: green',
+								description: 'Physical Node',
+							},
+						}),
+				},
 				loc: { type: 'string', label: 'Location' },
 				security: {
 					type: 'string',
@@ -190,6 +254,15 @@ export default {
 						return v
 					},
 				},
+				lwrSpeed: {
+					type: 'string',
+					label: 'Speed',
+					customValue: (node) => this.lwrSpeedLabel(node),
+					customSort: (sortDesc, nodeA, nodeB) =>
+						this.lwrSpeedSort(sortDesc, nodeA, nodeB),
+					richValue: (node) => this.lwrSpeedRichValue(node),
+					undefinedPlaceholder: NO_RATE, // must match the text of undefined value
+				},
 				firmwareVersion: {
 					type: 'string',
 					label: 'FW',
@@ -235,12 +308,18 @@ export default {
 					label: 'Last Active',
 					groupable: false,
 				},
+				lastAwake: {
+					type: 'date',
+					label: 'Last Awake',
+					groupable: false,
+				},
 			},
 			expanded: [],
 			headersMenu: false,
 		}
 	},
 	methods: {
+		...mapActions(useBaseStore, ['getDateTimeString']),
 		getProgress(node) {
 			return node.firmwareUpdate
 				? Math.round(
@@ -296,6 +375,16 @@ export default {
 			}
 			return map[status] || 'grey'
 		},
+		// Only show the progress indicator while an interview can actually make
+		// progress: not yet complete, and the node is neither dead nor asleep
+		// (a stalled interview would otherwise show a misleading spinner).
+		showInterviewProgress(node) {
+			return (
+				node.interviewStage !== 'Complete' &&
+				node.status !== 'Dead' &&
+				node.status !== 'Asleep'
+			)
+		},
 		powerRichValue(node) {
 			let level = node.minBatteryLevel
 			let iconStyle = `color: ${this.currentTheme.success}`
@@ -337,6 +426,42 @@ export default {
 				description: description,
 				rawValue: level,
 			}
+		},
+		lwrSpeedLabel(node) {
+			return RATE_LABELS[node.statistics?.lwr?.protocolDataRate]
+		},
+		lwrSpeedRichValue(node) {
+			const rate = node.statistics?.lwr?.protocolDataRate
+			const label = RATE_LABELS[rate]
+
+			if (!label) {
+				return {
+					align: 'center',
+					icon: '',
+					displayValue: NO_RATE,
+					displayStyle: '',
+				}
+			}
+
+			const maxBps = node.maxDataRate
+
+			return {
+				align: 'center',
+				icon: '',
+				displayValue: label,
+				displayStyle: '',
+				description: maxBps
+					? `${protocolDataRateToString(rate)} (capable of ${maxBps / 1000} kbit/s)`
+					: protocolDataRateToString(rate),
+			}
+		},
+		lwrSpeedSort(sortDesc, nodeA, nodeB) {
+			// Sort on the rate enum, the labels would order 100k before 40k
+			const rateA = nodeA.statistics?.lwr?.protocolDataRate || 0
+			const rateB = nodeB.statistics?.lwr?.protocolDataRate || 0
+
+			const res = rateA < rateB ? -1 : rateA > rateB ? 1 : 0
+			return sortDesc ? -res : res
 		},
 		powerSort(sortDesc, nodeA, nodeB) {
 			// Special sort for power column

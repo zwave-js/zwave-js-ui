@@ -49,6 +49,7 @@ Properties of a **valueId configuration**:
 - **Parse receive**: Enable this to allow users to specify a custom `function(value,valueId,node,logger)` to parse the value received via MQTT. The function must be sync
 - **Enable Poll**: Enable poll of this value by using Z-Wave JS [pollValue](https://zwave-js.github.io/node-zwave-js/#/api/node?id=pollvalue)
 - **Poll interval**: Seconds between two poll requests
+- **Enable discovery**: Only for Configuration CC values. Enables or disables this entity by default in Home Assistant discovery, overriding the Home Assistant **Enable Configuration CC entities** setting. Leave it on **Use global setting** to follow it. Home Assistant only applies it to entities it has not registered yet
 
 ### Scheduled Jobs
 
@@ -108,7 +109,7 @@ NVM:
 - **Response timeout**: How long to wait for a controller response in milliseconds. Leave blank to use the default (10000ms)
 - **Send to sleep timeout**: How long to wait without pending commands before sending a node back to sleep in milliseconds. Leave blank to use the default (250ms)
 - **Increase node report timeout**: This can help with the inclusion or interview of some devices, but can also slow down communication
-- **Soft reset**: Soft Reset is required after some commands like changing the RF region or restoring an NVM backup. Because it may cause problems in Docker containers with certain Z-Wave sticks, this functionality may be disabled
+- **Soft reset**: Soft Reset is required after some commands like changing the RF region or restoring an NVM backup. Because it may cause problems in Docker containers with certain Z-Wave sticks, this functionality may be disabled. **This setting only affects 500 series and older controllers**: on 700/800 series controllers Z-Wave JS always performs a soft reset, because those controllers require it in too many situations, so disabling it there has no effect
 - **Controller recovery**: When disabled, commands will simply fail when the controller is unresponsive and nodes may get randomly marked as dead until the controller recovers on its own
 - **Watchdog**: Controllers of the 700 series and newer have a hardware watchdog that can be enabled to automatically reset the chip in case it becomes unresponsive
 - **Bootloader only**: Enable this to start the driver in bootloader-only mode, useful to recover sticks when a firmware upgrade fails. When enabled, the stick will NOT be able to communicate with the network
@@ -279,6 +280,8 @@ Enable this to use Z-Wave JS UI as only a Control Panel
 - **MQTT discovery**: Enable this to use MQTT discovery. This is an alternative to the official integration. (more about this [here](/guide/homeassistant))
 - **Discovery Prefix**: The prefix to use to send MQTT discovery messages to Home Assistant
 - **Retain Discovery**: Set retain flag to true in discovery messages
+- **Use node location as suggested area**: Adds the node `Location` to the Home Assistant MQTT discovery `device.suggested_area` field
+- **Enable Configuration CC entities**: Set `enabled_by_default: true` in the discovery payloads of Configuration CC entities, which are disabled by default. The per-value **Enable discovery** flag in [Device values configuration](/usage/setup?id=device-values-configuration) overrides this. Home Assistant only applies it to entities it has not registered yet
 - **Manual Discovery**: Don't automatically send the discovery payloads when a device is discovered
 - **Entity name template**: Custom Entity name based on placeholders. Default is `%ln_%o`
   - `%ln`: Node location with name `<location-?><name>`
@@ -414,7 +417,8 @@ The external settings file should be a JSON file with the following structure:
 
 **Features**:
 
-- `enableSoftReset` (boolean): Enable soft reset functionality
+- `enableSoftReset` (boolean): Enable soft reset functionality. Ignored on 700/800 series controllers, which are always soft reset
+- `enableStatistics` (boolean): Enable Z-Wave JS usage statistics. When set, the statistics opt-in dialog is not shown and the managing application is expected to control the statistics opt-in (e.g. via the Z-Wave JS Server API)
 
 **Z-Wave JS Server Settings**:
 
@@ -425,7 +429,7 @@ The external settings file should be a JSON file with the following structure:
 
 **Driver Presets** (driver-only):
 
-- `presets` (string[]): Array of preset names to apply (e.g., `["zniffer"]`)
+- `presets` (string[]): Array of preset names to apply (e.g., `["SAFE_MODE"]`). Presets are deep merged over the other settings, so a preset only overrides the options it sets.
 
 > [!NOTE]
 > Settings marked as "driver-only" are passed directly to the Z-Wave JS driver and have no corresponding UI configuration. They can only be configured through the external settings file.

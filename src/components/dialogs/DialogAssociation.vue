@@ -36,14 +36,7 @@
 										<v-list-item
 											v-bind="props"
 											:title="item.raw.title"
-											:subtitle="
-												item.raw.endpoint >= 0
-													? getEndpointLabel(
-															node,
-															item.raw.endpoint,
-														)
-													: 'No Endpoint'
-											"
+											:subtitle="`Group ${item.raw.value}`"
 										>
 										</v-list-item>
 									</template>
@@ -334,15 +327,6 @@ export default {
 		},
 		resetGroup() {
 			this.group = Object.assign({}, this.defaultGroup)
-		},
-		getEndpointLabel(node, endpoint) {
-			if (node && node.endpoints) {
-				const ep = node.endpoints.find((e) => e.index === endpoint)
-				if (ep) {
-					return ep.label
-				}
-			}
-			return 'Endpoint ' + endpoint
 		},
 		getEndpointItems(node, noEndpoint = false) {
 			const endpoints = []

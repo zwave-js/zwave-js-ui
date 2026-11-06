@@ -14,8 +14,11 @@ import {
 	dskToString,
 	Duration,
 	isUnsupervisedOrSucceeded,
+	NODE_ID_BROADCAST,
+	NODE_ID_BROADCAST_LR,
 	RouteKind,
 	SecurityClass,
+	supervisedCommandFailed,
 	SupervisionStatus,
 	ZWaveErrorCodes,
 	Protocols,
@@ -23,7 +26,10 @@ import {
 	extractFirmware,
 } from '@zwave-js/core'
 import { createDefaultTransportFormat } from '@zwave-js/core/bindings/log/node'
-import { applyExternalDriverSettings } from './externalSettings.ts'
+import {
+	applyExternalDriverSettings,
+	getExternalDriverPresets,
+} from './externalSettings.ts'
 import { JSONTransport } from '@zwave-js/log-transport-json'
 import type {
 	AssociationAddress,
@@ -72,6 +78,7 @@ import type {
 	ZWaveNodeEvents,
 	ZWaveNodeFirmwareUpdateFinishedCallback,
 	ZWaveNodeFirmwareUpdateProgressCallback,
+	InterviewProgress,
 	ZWaveNodeMetadataUpdatedArgs,
 	ZWaveNodeValueAddedArgs,
 	ZWaveNodeValueNotificationArgs,
@@ -88,6 +95,8 @@ import type {
 	LinkReliabilityCheckResult,
 	JoinNetworkOptions,
 	JoinNetworkResult,
+	VirtualNode,
+	VirtualValueID,
 } from 'zwave-js'
 import {
 	OTWFirmwareUpdateStatus,
@@ -117,9 +126,25 @@ import {
 	JoinNetworkStrategy,
 	DriverMode,
 	BatteryReplacementStatus,
+	SetUserResult,
+	SetCredentialResult,
+	UserCredentialType,
+	UserCredentialAdminCodeOperationResult,
+} from 'zwave-js'
+import type {
+	UserCapabilities,
+	CredentialCapabilities,
+	UserData,
+	CredentialData,
+	SetUserOptions,
+	DeleteCredentialsOptions,
+	UserCredentialUserType,
+	UserCredentialRule,
+	AssignCredentialResult,
 } from 'zwave-js'
 import { getEnumMemberName, parseQRCodeString } from 'zwave-js/Utils'
-import { configDbDir, nvmBackupsDir, storeDir } from '../config/app.ts'
+import { configDbDir, logsDir, nvmBackupsDir, storeDir } from '../config/app.ts'
+import type { Group } from '../config/store.ts'
 import store from '../config/store.ts'
 import jsonStore from './jsonStore.ts'
 import * as LogManager from './logger.ts'
@@ -155,6 +180,17 @@ const logger = LogManager.module('Z-Wave')
 
 const NEIGHBORS_LOCK_REFRESH = 60 * 1000
 
+/** Maximum length of a multicast group name (avoids bloating MQTT topics). */
+const GROUP_NAME_MAX_LENGTH = 64
+
+/**
+ * Lower bound for auto-assigned multicast-group virtual-node IDs. Chosen above
+ * the LR address space so they never collide with physical or broadcast nodes.
+ */
+const GROUP_ID_MIN = 0x1000
+// Ordered from least verbose to most verbose (matching winston/npm log levels)
+const LOG_LEVEL_ORDER = ['error', 'warn', 'info', 'verbose', 'debug', 'silly']
+
 function validateMethods<T extends readonly (keyof ZwaveClient)[]>(
 	methods: T,
 ): T {
@@ -174,6 +210,10 @@ export const allowedApis = validateMethods([
 	'_addSceneValue',
 	'_removeSceneValue',
 	'_activateScene',
+	'_createGroup',
+	'_updateGroup',
+	'_deleteGroup',
+	'_getGroups',
 	'refreshNeighbors',
 	'getNodeNeighbors',
 	'discoverNodeNeighbors',
@@ -269,6 +309,21 @@ export const allowedApis = validateMethods([
 	'applyConfigurationTemplate',
 	'importConfigurationTemplates',
 	'getDeviceConfigurationParams',
+	'accessControlGetState',
+	'accessControlRefreshUsers',
+	'accessControlRefreshCredentials',
+	'accessControlSetUser',
+	'accessControlAddUser',
+	'accessControlDeleteUser',
+	'accessControlDeleteAllUsers',
+	'accessControlSetCredential',
+	'accessControlDeleteCredential',
+	'accessControlDeleteCredentials',
+	'accessControlAssignCredential',
+	'accessControlStartCredentialLearn',
+	'accessControlCancelCredentialLearn',
+	'accessControlGetAdminCode',
+	'accessControlSetAdminCode',
 ] as const)
 
 export type ZwaveNodeEvents = ZWaveNodeEvents | 'statistics updated'
@@ -534,11 +589,13 @@ export interface ZUIEndpoint {
 	}
 }
 
-export enum ZUIScheduleEntryLockMode {
-	DAILY = 'daily',
-	WEEKLY = 'weekly',
-	YEARLY = 'yearly',
-}
+export const ZUIScheduleEntryLockMode = {
+	DAILY: 'daily',
+	WEEKLY: 'weekly',
+	YEARLY: 'yearly',
+} as const
+export type ZUIScheduleEntryLockMode =
+	(typeof ZUIScheduleEntryLockMode)[keyof typeof ZUIScheduleEntryLockMode]
 
 export interface ZUISchedule {
 	[ZUIScheduleEntryLockMode.DAILY]: ZUIScheduleConfig<ScheduleEntryLockDailyRepeatingSchedule>
@@ -551,6 +608,58 @@ export type ZUISlot<T> = T & { enabled: boolean } & ScheduleEntryLockSlotId
 export interface ZUIScheduleConfig<T> {
 	numSlots: number
 	slots: ZUISlot<T>[]
+}
+
+export type ZUIAccessControlUser = UserData
+
+export type ZUIAccessControlCredential = {
+	userId: number
+	type: UserCredentialType
+	slot: number
+	/** Hex-encoded bytes for binary credentials, raw string for PIN/password */
+	data?: string
+	/** True when data was a Uint8Array (binary credential) */
+	isBinary?: boolean
+}
+
+export type ZUIAccessControlCapabilityType = {
+	type: UserCredentialType
+	numberOfCredentialSlots: number
+	minCredentialLength: number
+	maxCredentialLength: number
+	maxCredentialHashLength: number
+	supportsCredentialLearn: boolean
+	credentialLearnRecommendedTimeout?: number
+	credentialLearnNumberOfSteps?: number
+}
+
+export type ZUIAccessControlCapabilities = {
+	maxUsers: number
+	supportedUserTypes: UserCredentialUserType[]
+	maxUserNameLength?: number
+	supportedCredentialRules: UserCredentialRule[]
+	supportedCredentialTypes: ZUIAccessControlCapabilityType[]
+	supportsAdminCode: boolean
+	supportsAdminCodeDeactivation: boolean
+	supportsCredentialAssignment: boolean
+	/** Legacy User Code CC — creating a user requires at least one credential */
+	requiresCredentialAtUserCreation: boolean
+}
+
+export type ZUIAccessControlEndpoint = {
+	endpointIndex: number
+	capabilities: ZUIAccessControlCapabilities
+	users: ZUIAccessControlUser[]
+	credentials: ZUIAccessControlCredential[]
+	/** Whether an admin code is configured, without exposing its value */
+	adminCodeSet?: boolean
+}
+
+export type ZUIAccessControl = {
+	supported: boolean
+	endpoints: ZUIAccessControlEndpoint[]
+	/** Index of the primary endpoint to render — root if it supports, else first that does */
+	primaryEndpoint?: number
 }
 
 export type ZUINode = {
@@ -607,9 +716,11 @@ export type ZUINode = {
 	available: boolean
 	failed: boolean
 	lastActive?: number
+	lastAwake?: number
 	dbLink?: string
 	maxDataRate?: DataRate
 	interviewStage?: keyof typeof InterviewStage
+	interviewProgress?: number
 	status?: keyof typeof NodeStatus
 	inited: boolean
 	rebuildRoutesProgress?: RebuildRoutesStatus | undefined
@@ -625,10 +736,18 @@ export type ZUINode = {
 		available: number[]
 		enabled: number[]
 	}
+	accessControl?: ZUIAccessControl
 	defaultTransitionDuration?: string
 	defaultVolume?: number
 	protocol?: Protocols
 	supportsLongRange?: boolean
+	virtual?: boolean
+	/**
+	 * Virtual-node discriminator. Undefined for physical nodes; set when
+	 * `virtual === true` to identify the kind of virtual node so the UI can
+	 * branch on this instead of magic-numeric-ID checks.
+	 */
+	kind?: 'physical' | 'broadcast' | 'broadcastLR' | 'multicast'
 	availableFirmwareUpdates?: FirmwareUpdateInfo[]
 	firmwareUpdatesDismissed?: { [version: string]: boolean }
 	lastFirmwareUpdateCheck?: number
@@ -708,20 +827,23 @@ export type ZUIDriverInfo = {
 	newConfigVersion?: string | undefined
 }
 
-export enum ZwaveClientStatus {
-	CONNECTED = 'connected',
-	BOOTLOADER_READY = 'bootloader ready',
-	DRIVER_READY = 'driver ready',
-	SCAN_DONE = 'scan done',
-	DRIVER_FAILED = 'driver failed',
-	CLOSED = 'closed',
-}
+export const ZwaveClientStatus = {
+	CONNECTED: 'connected',
+	BOOTLOADER_READY: 'bootloader ready',
+	DRIVER_READY: 'driver ready',
+	SCAN_DONE: 'scan done',
+	DRIVER_FAILED: 'driver failed',
+	CLOSED: 'closed',
+} as const
+export type ZwaveClientStatus =
+	(typeof ZwaveClientStatus)[keyof typeof ZwaveClientStatus]
 
-export enum EventSource {
-	DRIVER = 'driver',
-	CONTROLLER = 'controller',
-	NODE = 'node',
-}
+export const EventSource = {
+	DRIVER: 'driver',
+	CONTROLLER: 'controller',
+	NODE: 'node',
+} as const
+export type EventSource = (typeof EventSource)[keyof typeof EventSource]
 
 export interface ZwaveClientEventCallbacks {
 	nodeStatus: (node: ZUINode) => void
@@ -742,6 +864,15 @@ export interface ZwaveClientEventCallbacks {
 
 export type ZwaveClientEvents = Extract<keyof ZwaveClientEventCallbacks, string>
 
+interface ThrottleEntry {
+	/** When the last run returned */
+	lastUpdate: number
+	/** The most recently queued function, replaced on every coalesced call */
+	fn: () => void
+	timeout: NodeJS.Timeout
+	running: boolean
+}
+
 class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	private cfg: ZwaveConfig
 	private socket: SocketServer
@@ -749,8 +880,20 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	private destroyed = false
 	private _driverReady: boolean
 	private scenes: ZUIScene[]
+	private groups: Group[]
 	private _configTemplates: ZUIConfigurationTemplate[]
 	private _nodes: Map<number, ZUINode>
+	/**
+	 * Holds the live driver-side virtual-node instances (multicast groups +
+	 * standard/LR broadcast). Keyed by virtual nodeId.
+	 */
+	private _virtualNodes: Map<number, VirtualNode>
+	/**
+	 * Index of physical nodeId → groupIds containing it. Rebuilt on group
+	 * create/update/delete so per-value-change lookups are O(1) instead of
+	 * O(groups).
+	 */
+	private _nodeToGroups: Map<number, Set<number>>
 	private storeNodes: Record<number, Partial<ZUINode>>
 	private _devices: Record<string, Partial<ZUINode>>
 	private driverInfo: ZUIDriverInfo
@@ -759,6 +902,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	private tmpNode: utils.DeepPartial<ZUINode>
 	// tells if a node replacement is in progress
 	private isReplacing = false
+	// node ids surfaced to the UI via `node found` that have not yet hit
+	// `node added` — if inclusion fails before the interview completes
+	// they're orphans stuck at ProtocolInfo and must be cleared (see #4639)
+	private _pendingInclusionNodeIds: Set<number> = new Set()
 
 	private hasUserCallbacks = false
 
@@ -789,7 +936,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 	private driverFunctionCache: utils.Snippet[] = []
 
-	private _extraLogTransports: any[] = []
+	private _extraLogTransports: Array<{ transport: any; level?: string }> = []
 
 	// Foreach valueId, we store a callback function to be called when the value changes
 	private valuesObservers: Record<string, ValueIdObserver> = {}
@@ -797,10 +944,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	private _grantResolve: (grant: InclusionGrant | false) => void | null
 	private _dskResolve: (dsk: string | false) => void | null
 
-	private throttledFunctions: Map<
-		string,
-		{ lastUpdate: number; fn: () => void; timeout: NodeJS.Timeout }
-	> = new Map()
+	private throttledFunctions: Map<string, ThrottleEntry> = new Map()
 
 	private inclusionUserCallbacks: InclusionUserCallbacks = {
 		grantSecurityClasses: this._onGrantSecurityClasses.bind(this),
@@ -877,9 +1021,13 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		this.closed = false
 		this.driverReady = false
 		this.scenes = jsonStore.get(store.scenes)
+		this.groups = jsonStore.get(store.groups)
 		this._configTemplates = jsonStore.get(store.configurationTemplates)
 
 		this._nodes = new Map()
+		this._virtualNodes = new Map()
+		this._nodeToGroups = new Map()
+		this._rebuildNodeToGroupsIndex()
 
 		this._devices = {}
 		this.driverInfo = {}
@@ -903,7 +1051,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 * If the driver is already running, the transport is applied immediately.
 	 */
 	addExtraLogTransport(transport: any, level?: string): void {
-		this._extraLogTransports.push(transport)
+		this._extraLogTransports.push({ transport, level })
 		if (this._driver && this._driverReady) {
 			const config: any = {
 				transports: [transport],
@@ -920,7 +1068,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 * If the driver is running, the transport is detached immediately.
 	 */
 	removeExtraLogTransport(transport: any): void {
-		const idx = this._extraLogTransports.indexOf(transport)
+		const idx = this._extraLogTransports.findIndex(
+			(e) => e.transport === transport,
+		)
 		if (idx !== -1) {
 			this._extraLogTransports.splice(idx, 1)
 		}
@@ -1017,37 +1167,89 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	// }
 
 	/**
-	 * Call `fn` function at most once every `wait` milliseconds
+	 * Call `fn` at most once every `wait` milliseconds, counted from the end of
+	 * the previous run. A `fn` that takes longer than `wait` therefore stretches
+	 * the effective interval to its own duration plus `wait`.
 	 * */
 	private throttle(key: string, fn: () => void, wait: number) {
 		const entry = this.throttledFunctions.get(key)
 		const now = Date.now()
 
 		// first time it's called or wait is already passed since last call
-		if (!entry || entry.lastUpdate + wait < now) {
-			this.throttledFunctions.set(key, {
+		if (!entry || (!entry.running && entry.lastUpdate + wait < now)) {
+			// Clear any pending trailing run because this call already runs
+			// the latest `fn`
+			if (entry?.timeout) {
+				clearTimeout(entry.timeout)
+			}
+
+			const newEntry: ThrottleEntry = {
 				lastUpdate: now,
 				fn,
 				timeout: null,
-			})
-			fn()
-		} else {
-			// if it's called again and no timeout is set, set a timeout to call function
-			if (!entry.timeout) {
-				entry.timeout = setTimeout(
-					() => {
-						const oldEntry = this.throttledFunctions.get(key)
-						if (oldEntry?.fn) {
-							oldEntry.lastUpdate = Date.now()
-							fn()
-						}
-					},
-					entry.lastUpdate + wait - now,
-				)
+				running: false,
 			}
+			this.throttledFunctions.set(key, newEntry)
+			this.runThrottled(newEntry)
+		} else {
+			this.scheduleThrottled(key, wait)
 			// discard the old function and store the new one
 			entry.fn = fn
 		}
+	}
+
+	/**
+	 * Run a throttled function and measure the next window from the moment it
+	 * returns. A `fn` slower than its own `wait` then still coalesces the calls
+	 * made while it was running.
+	 */
+	private runThrottled(entry: ThrottleEntry) {
+		entry.running = true
+		try {
+			entry.fn()
+		} finally {
+			entry.running = false
+			entry.lastUpdate = Date.now()
+		}
+	}
+
+	/**
+	 * Schedule the trailing run of a throttled function, `wait` ms after the
+	 * last run finished. Does nothing when one is already scheduled.
+	 */
+	private scheduleThrottled(key: string, wait: number) {
+		const entry = this.throttledFunctions.get(key)
+		if (!entry || entry.timeout) return
+
+		entry.timeout = setTimeout(
+			() => {
+				const current = this.throttledFunctions.get(key)
+				if (!current) return
+
+				// Clear the timeout so later calls can schedule a new trailing
+				// emit
+				current.timeout = null
+
+				// Push the trailing run back by the remainder when the previous
+				// run overshot its window
+				if (current.lastUpdate + wait > Date.now()) {
+					this.scheduleThrottled(key, wait)
+					return
+				}
+
+				// Run the most recently queued function so the final value of
+				// a burst is never dropped. A throw here would be an uncaught
+				// exception, since nothing else wraps this timer callback
+				try {
+					this.runThrottled(current)
+				} catch (error) {
+					logger.error(
+						`Error in throttled function ${key}: ${error.message}`,
+					)
+				}
+			},
+			Math.max(0, entry.lastUpdate + wait - Date.now()),
+		)
 	}
 
 	private clearThrottle(key: string) {
@@ -1061,10 +1263,24 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	}
 
 	/**
-	 * Returns the driver ZWaveNode object
+	 * Check if a nodeId belongs to a virtual node (broadcast or multicast group)
+	 */
+	isVirtualNode(nodeId: number): boolean {
+		return this._virtualNodes.has(nodeId)
+	}
+
+	/**
+	 * Returns the driver ZWaveNode object for physical nodes
 	 */
 	getNode(nodeId: number): ZWaveNode {
 		return this._driver.controller.nodes.get(nodeId)
+	}
+
+	/**
+	 * Returns the virtual node instance (multicast group or broadcast node)
+	 */
+	getVirtualNode(nodeId: number): VirtualNode | null {
+		return this._virtualNodes.get(nodeId) ?? null
 	}
 
 	setUserCallbacks() {
@@ -1320,6 +1536,511 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		}
 	}
 
+	// ---------------- Access Control (User Credential CC / User Code CC) ----------------
+
+	private _supportedAccessControlEndpointIndices(
+		zwaveNode: ZWaveNode,
+	): number[] {
+		const out: number[] = []
+		for (const ep of zwaveNode.getAllEndpoints()) {
+			if (
+				ep.supportsCC(CommandClasses['User Credential']) ||
+				ep.supportsCC(CommandClasses['User Code'])
+			) {
+				out.push(ep.index)
+			}
+		}
+		return out
+	}
+
+	private _resolveAccessControlEndpoint(
+		zwaveNode: ZWaveNode,
+		endpointIndex?: number,
+	) {
+		const indices = this._supportedAccessControlEndpointIndices(zwaveNode)
+		const idx =
+			endpointIndex !== undefined
+				? endpointIndex
+				: indices.includes(0)
+					? 0
+					: indices[0]
+		if (idx === undefined) {
+			throw new Error(
+				`Node ${zwaveNode.id} does not support access control`,
+			)
+		}
+		const ep = zwaveNode.getEndpoint(idx)
+		if (!ep || !ep.accessControl) {
+			throw new Error(
+				`Node ${zwaveNode.id} endpoint ${idx} does not support access control`,
+			)
+		}
+		return { endpoint: ep, accessControl: ep.accessControl, index: idx }
+	}
+
+	private _assertDirectEntryCredentialType(
+		type: UserCredentialType,
+	): asserts type is
+		| UserCredentialType.PINCode
+		| UserCredentialType.Password {
+		if (
+			type !== UserCredentialType.PINCode &&
+			type !== UserCredentialType.Password
+		) {
+			throw new Error(
+				'Only PIN and password credentials can be entered manually',
+			)
+		}
+	}
+
+	private _findAccessControlEndpointEntry(
+		node: ZUINode,
+		endpointIndex?: number,
+	): ZUIAccessControlEndpoint | undefined {
+		const targetEndpoint =
+			endpointIndex ?? node.accessControl?.primaryEndpoint
+		return node.accessControl?.endpoints.find(
+			(endpoint) => endpoint.endpointIndex === targetEndpoint,
+		)
+	}
+
+	private _encodeCredentialData(data: string | Uint8Array | undefined): {
+		data?: string
+		isBinary?: boolean
+	} {
+		if (data === undefined) return {}
+		if (typeof data === 'string') return { data, isBinary: false }
+		const hex = Buffer.from(data).toString('hex')
+		return { data: hex, isBinary: true }
+	}
+
+	private _mapCredentialData(c: CredentialData): ZUIAccessControlCredential {
+		const encoded = this._encodeCredentialData(c.data)
+		return {
+			userId: c.userId,
+			type: c.type,
+			slot: c.slot,
+			...encoded,
+		}
+	}
+
+	private _buildAccessControlCapabilities(
+		zwaveNode: ZWaveNode,
+		endpointIndex: number,
+	): ZUIAccessControlCapabilities {
+		const { accessControl } = this._resolveAccessControlEndpoint(
+			zwaveNode,
+			endpointIndex,
+		)
+		const userCaps: UserCapabilities =
+			accessControl.getUserCapabilitiesCached()
+		const credCaps: CredentialCapabilities =
+			accessControl.getCredentialCapabilitiesCached()
+
+		const supportedCredentialTypes: ZUIAccessControlCapabilityType[] = []
+		for (const [type, c] of credCaps.supportedCredentialTypes.entries()) {
+			supportedCredentialTypes.push({
+				type,
+				numberOfCredentialSlots: c.numberOfCredentialSlots,
+				minCredentialLength: c.minCredentialLength,
+				maxCredentialLength: c.maxCredentialLength,
+				maxCredentialHashLength: c.maxCredentialHashLength,
+				supportsCredentialLearn: c.supportsCredentialLearn,
+				credentialLearnRecommendedTimeout:
+					c.credentialLearnRecommendedTimeout,
+				credentialLearnNumberOfSteps: c.credentialLearnNumberOfSteps,
+			})
+		}
+
+		const requiresCredentialAtUserCreation =
+			!userCaps.supportsUsersWithoutCredentials
+
+		return {
+			maxUsers: userCaps.maxUsers,
+			supportedUserTypes: [...userCaps.supportedUserTypes],
+			maxUserNameLength: userCaps.maxUserNameLength,
+			supportedCredentialRules: [...userCaps.supportedCredentialRules],
+			supportedCredentialTypes,
+			supportsAdminCode: credCaps.supportsAdminCode,
+			supportsAdminCodeDeactivation:
+				credCaps.supportsAdminCodeDeactivation,
+			supportsCredentialAssignment: credCaps.supportsCredentialAssignment,
+			requiresCredentialAtUserCreation,
+		}
+	}
+
+	/** Read access-control state for a node from cache (no network I/O). */
+	private _readAccessControlState(zwaveNode: ZWaveNode): ZUIAccessControl {
+		const indices = this._supportedAccessControlEndpointIndices(zwaveNode)
+		if (indices.length === 0) {
+			return { supported: false, endpoints: [] }
+		}
+		const primary = indices.includes(0) ? 0 : indices[0]
+		const prev = this._nodes.get(zwaveNode.id)?.accessControl
+		const endpoints: ZUIAccessControlEndpoint[] = []
+		for (const idx of indices) {
+			try {
+				const { accessControl } = this._resolveAccessControlEndpoint(
+					zwaveNode,
+					idx,
+				)
+				const capabilities = this._buildAccessControlCapabilities(
+					zwaveNode,
+					idx,
+				)
+				const users = accessControl.getUsersCached()
+				const credentials = accessControl
+					.getAllCredentialsCached()
+					.map((c) => this._mapCredentialData(c))
+				const endpoint: ZUIAccessControlEndpoint = {
+					endpointIndex: idx,
+					capabilities,
+					users,
+					credentials,
+				}
+				// Carry over the previously-known admin-code state — there is no
+				// cheap synchronous accessor for it, so a refresh would
+				// otherwise wipe the value the UI just learned via Get/Set.
+				const prevEp = prev?.endpoints.find(
+					(e) => e.endpointIndex === idx,
+				)
+				if (prevEp && 'adminCodeSet' in prevEp) {
+					endpoint.adminCodeSet = prevEp.adminCodeSet
+				}
+				endpoints.push(endpoint)
+			} catch (e) {
+				logger.warn(
+					`Failed to read access control state for node ${zwaveNode.id} endpoint ${idx}: ${(e as Error).message}`,
+				)
+			}
+		}
+		return { supported: true, endpoints, primaryEndpoint: primary }
+	}
+
+	/** Re-read access control state into node and broadcast a node update. */
+	private _refreshAccessControlState(zwaveNode: ZWaveNode) {
+		const node = this._nodes.get(zwaveNode.id)
+		if (!node) return
+		const ac = this._readAccessControlState(zwaveNode)
+		if (!ac.supported) {
+			if (node.accessControl) {
+				delete node.accessControl
+				this.emitNodeUpdate(node, { accessControl: undefined })
+			}
+			return
+		}
+		node.accessControl = ac
+		this.emitNodeUpdate(node, { accessControl: ac })
+	}
+
+	/** Returns the cached access-control state — call this from the UI as a primer. */
+	accessControlGetState(nodeId: number): ZUIAccessControl {
+		const zwaveNode = this._requireNode(nodeId)
+		const state = this._readAccessControlState(zwaveNode)
+		const node = this._nodes.get(nodeId)
+		if (node) {
+			node.accessControl = state
+		}
+		return state
+	}
+
+	async accessControlRefreshUsers(
+		nodeId: number,
+		endpointIndex?: number,
+	): Promise<ZUIAccessControlUser[]> {
+		const zwaveNode = this._requireNode(nodeId)
+		const { accessControl } = this._resolveAccessControlEndpoint(
+			zwaveNode,
+			endpointIndex,
+		)
+		const users = await accessControl.getUsers()
+		this._refreshAccessControlState(zwaveNode)
+		return users
+	}
+
+	async accessControlRefreshCredentials(
+		nodeId: number,
+		endpointIndex?: number,
+	): Promise<ZUIAccessControlCredential[]> {
+		const zwaveNode = this._requireNode(nodeId)
+		const { accessControl } = this._resolveAccessControlEndpoint(
+			zwaveNode,
+			endpointIndex,
+		)
+		const credentials = await accessControl.getAllCredentials()
+		this._refreshAccessControlState(zwaveNode)
+		return credentials.map((c) => this._mapCredentialData(c))
+	}
+
+	async accessControlSetUser(
+		nodeId: number,
+		endpointIndex: number | undefined,
+		userId: number,
+		options: SetUserOptions,
+	): Promise<SetUserResult> {
+		const zwaveNode = this._requireNode(nodeId)
+		const { accessControl } = this._resolveAccessControlEndpoint(
+			zwaveNode,
+			endpointIndex,
+		)
+		return accessControl.setUser(userId, options)
+	}
+
+	async accessControlAddUser(
+		nodeId: number,
+		endpointIndex: number | undefined,
+		userId: number,
+		options: SetUserOptions,
+		credential?: {
+			type: UserCredentialType
+			slot: number
+			data: string
+		},
+	): Promise<{
+		userResult: SetUserResult
+		credentialResult?: SetCredentialResult
+	}> {
+		const zwaveNode = this._requireNode(nodeId)
+		const { endpoint, accessControl } = this._resolveAccessControlEndpoint(
+			zwaveNode,
+			endpointIndex,
+		)
+		let initialCredential = credential
+		if (credential) {
+			this._assertDirectEntryCredentialType(credential.type)
+			if (!endpoint.supportsCC(CommandClasses['User Credential'])) {
+				initialCredential = { ...credential, slot: userId }
+			}
+		}
+		const result = await accessControl.addUser(
+			userId,
+			options,
+			initialCredential,
+		)
+		return {
+			userResult: result.user,
+			credentialResult: result.credential,
+		}
+	}
+
+	async accessControlDeleteUser(
+		nodeId: number,
+		endpointIndex: number | undefined,
+		userId: number,
+	): Promise<SetUserResult> {
+		const zwaveNode = this._requireNode(nodeId)
+		const { accessControl } = this._resolveAccessControlEndpoint(
+			zwaveNode,
+			endpointIndex,
+		)
+		return accessControl.deleteUser(userId)
+	}
+
+	async accessControlDeleteAllUsers(
+		nodeId: number,
+		endpointIndex?: number,
+	): Promise<SetUserResult> {
+		const zwaveNode = this._requireNode(nodeId)
+		const { accessControl } = this._resolveAccessControlEndpoint(
+			zwaveNode,
+			endpointIndex,
+		)
+		// zwave-js purges its cache silently here without emitting per-user
+		// `user deleted` / `credential deleted` events, so push a refresh so
+		// the UI catches up.
+		const result = await accessControl.deleteAllUsers()
+		if (result === SetUserResult.OK) {
+			this._refreshAccessControlState(zwaveNode)
+		}
+		return result
+	}
+
+	async accessControlSetCredential(
+		nodeId: number,
+		endpointIndex: number | undefined,
+		userId: number,
+		type: UserCredentialType,
+		slot: number,
+		data: string,
+	): Promise<SetCredentialResult> {
+		const zwaveNode = this._requireNode(nodeId)
+		const { accessControl } = this._resolveAccessControlEndpoint(
+			zwaveNode,
+			endpointIndex,
+		)
+		this._assertDirectEntryCredentialType(type)
+		return accessControl.setCredential(userId, type, slot, data)
+	}
+
+	async accessControlDeleteCredential(
+		nodeId: number,
+		endpointIndex: number | undefined,
+		userId: number,
+		type: UserCredentialType,
+		slot: number,
+	): Promise<SetCredentialResult> {
+		const zwaveNode = this._requireNode(nodeId)
+		const { accessControl } = this._resolveAccessControlEndpoint(
+			zwaveNode,
+			endpointIndex,
+		)
+		return accessControl.deleteCredential(userId, type, slot)
+	}
+
+	async accessControlDeleteCredentials(
+		nodeId: number,
+		endpointIndex: number | undefined,
+		options: DeleteCredentialsOptions = {},
+	): Promise<SetCredentialResult> {
+		const zwaveNode = this._requireNode(nodeId)
+		const { accessControl } = this._resolveAccessControlEndpoint(
+			zwaveNode,
+			endpointIndex,
+		)
+		// U3C path emits no per-credential `credential deleted` events for the
+		// wildcard delete, so push a refresh so the UI catches up.
+		const result = await accessControl.deleteCredentials(options)
+		if (result === SetCredentialResult.OK) {
+			this._refreshAccessControlState(zwaveNode)
+		}
+		return result
+	}
+
+	async accessControlAssignCredential(
+		nodeId: number,
+		endpointIndex: number | undefined,
+		type: UserCredentialType,
+		slot: number,
+		destinationUserId: number,
+	): Promise<AssignCredentialResult> {
+		const zwaveNode = this._requireNode(nodeId)
+		const { accessControl } = this._resolveAccessControlEndpoint(
+			zwaveNode,
+			endpointIndex,
+		)
+		return accessControl.assignCredential(type, slot, destinationUserId)
+	}
+
+	async accessControlStartCredentialLearn(
+		nodeId: number,
+		endpointIndex: number | undefined,
+		userId: number,
+		type: UserCredentialType,
+		slot: number,
+		timeout?: number,
+	): Promise<void> {
+		const zwaveNode = this._requireNode(nodeId)
+		const { accessControl } = this._resolveAccessControlEndpoint(
+			zwaveNode,
+			endpointIndex,
+		)
+		const result = await accessControl.startCredentialLearn(
+			userId,
+			type,
+			slot,
+			timeout,
+		)
+		// Handle supervision failure before waiting for further events that might not come
+		if (supervisedCommandFailed(result)) {
+			throw new Error(
+				`Node ${nodeId} refused to start credential learning (${getEnumMemberName(
+					SupervisionStatus,
+					result.status,
+				)})`,
+			)
+		}
+	}
+
+	async accessControlCancelCredentialLearn(
+		nodeId: number,
+		endpointIndex?: number,
+	): Promise<void> {
+		const zwaveNode = this._requireNode(nodeId)
+		const { accessControl } = this._resolveAccessControlEndpoint(
+			zwaveNode,
+			endpointIndex,
+		)
+		const result = await accessControl.cancelCredentialLearn()
+		if (supervisedCommandFailed(result)) {
+			throw new Error(
+				`Node ${nodeId} refused to cancel credential learning (${getEnumMemberName(
+					SupervisionStatus,
+					result.status,
+				)})`,
+			)
+		}
+	}
+
+	async accessControlGetAdminCode(
+		nodeId: number,
+		endpointIndex?: number,
+	): Promise<{ isSet: boolean }> {
+		const zwaveNode = this._requireNode(nodeId)
+		const { accessControl } = this._resolveAccessControlEndpoint(
+			zwaveNode,
+			endpointIndex,
+		)
+		const code = await accessControl.getAdminCode()
+		const isSet = code !== undefined && code !== ''
+		const node = this._nodes.get(nodeId)
+		if (node?.accessControl) {
+			const epEntry = this._findAccessControlEndpointEntry(
+				node,
+				endpointIndex,
+			)
+			if (epEntry) {
+				epEntry.adminCodeSet = isSet
+				this.emitNodeUpdate(node, { accessControl: node.accessControl })
+			}
+		}
+		return { isSet }
+	}
+
+	async accessControlSetAdminCode(
+		nodeId: number,
+		endpointIndex: number | undefined,
+		code: string,
+	): Promise<{ result: UserCredentialAdminCodeOperationResult }> {
+		const zwaveNode = this._requireNode(nodeId)
+		const { accessControl } = this._resolveAccessControlEndpoint(
+			zwaveNode,
+			endpointIndex,
+		)
+		const supervisionResult = await accessControl.setAdminCode(code)
+		const result: UserCredentialAdminCodeOperationResult =
+			isUnsupervisedOrSucceeded(supervisionResult)
+				? UserCredentialAdminCodeOperationResult.Modified
+				: supervisionResult.status === SupervisionStatus.NoSupport
+					? UserCredentialAdminCodeOperationResult.ErrorNotSupported
+					: UserCredentialAdminCodeOperationResult.UnspecifiedNodeError
+		if (isUnsupervisedOrSucceeded(supervisionResult)) {
+			// Reflect the new state immediately so the UI doesn't have to wait
+			// for a follow-up Get to round-trip the lock.
+			const node = this._nodes.get(nodeId)
+			if (node?.accessControl) {
+				const epEntry = this._findAccessControlEndpointEntry(
+					node,
+					endpointIndex,
+				)
+				if (epEntry) {
+					epEntry.adminCodeSet = code !== ''
+					this.emitNodeUpdate(node, {
+						accessControl: node.accessControl,
+					})
+				}
+			}
+		}
+		return { result }
+	}
+
+	private _requireNode(nodeId: number): ZWaveNode {
+		const zwaveNode = this.getNode(nodeId)
+		if (!zwaveNode) {
+			throw new Error(`Node ${nodeId} not found`)
+		}
+		return zwaveNode
+	}
+
 	/**
 	 * If the node supports Schedule Lock CC parses all available schedules and cache them
 	 */
@@ -1491,12 +2212,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 						}
 
 						const schedule = fromCache
-							? <ScheduleEntryLockWeekDaySchedule>(
-									getCached(
-										ScheduleEntryLockScheduleKind.WeekDay,
-										s,
-									)
-								)
+							? (getCached(
+									ScheduleEntryLockScheduleKind.WeekDay,
+									s,
+								) as ScheduleEntryLockWeekDaySchedule)
 							: await zwaveNode.commandClasses[
 									'Schedule Entry Lock'
 								].getWeekDaySchedule(slot)
@@ -1517,12 +2236,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 							slotId: s,
 						}
 						const schedule = fromCache
-							? <ScheduleEntryLockYearDaySchedule>(
-									getCached(
-										ScheduleEntryLockScheduleKind.YearDay,
-										s,
-									)
-								)
+							? (getCached(
+									ScheduleEntryLockScheduleKind.YearDay,
+									s,
+								) as ScheduleEntryLockYearDaySchedule)
 							: await zwaveNode.commandClasses[
 									'Schedule Entry Lock'
 								].getYearDaySchedule(slot)
@@ -1544,12 +2261,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 							slotId: s,
 						}
 						const schedule = fromCache
-							? <ScheduleEntryLockDailyRepeatingSchedule>(
-									getCached(
-										ScheduleEntryLockScheduleKind.DailyRepeating,
-										s,
-									)
-								)
+							? (getCached(
+									ScheduleEntryLockScheduleKind.DailyRepeating,
+									s,
+								) as ScheduleEntryLockDailyRepeatingSchedule)
 							: await zwaveNode.commandClasses[
 									'Schedule Entry Lock'
 								].getDailyRepeatingSchedule(slot)
@@ -2280,7 +2995,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 					this.cfg.deviceConfigPriorityDir || deviceConfigPriorityDir,
 			},
 			// https://zwave-js.github.io/node-zwave-js/#/api/driver?id=logconfig
-			logConfig: utils.buildLogConfig(this.cfg),
+			logConfig: utils.buildLogConfig(this.cfg, logsDir),
 			emitValueUpdateAfterSetValue: true,
 			apiKeys: {
 				firmwareUpdateService:
@@ -2414,7 +3129,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		utils.parseSecurityKeys(this.cfg, zwaveOptions)
 
-		// Apply driver-only external settings (storage, presets, logFilename, forceConsole).
+		// Apply driver-only external settings (storage, logFilename, forceConsole).
 		// These are not in ZwaveConfig/settings.json, so they must be applied directly to driver options.
 		applyExternalDriverSettings(zwaveOptions)
 
@@ -2423,8 +3138,32 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		zwaveOptions.logConfig.transports = [
 			logTransport,
-			...this._extraLogTransports,
+			...this._extraLogTransports.map((e) => e.transport),
 		]
+
+		// If any extra transport requires a more verbose log level, apply it.
+		// Use the most verbose (highest priority) level among all extra transports.
+		const extraLevel = this._extraLogTransports
+			.map((e) => e.level)
+			.filter(Boolean)
+			.reduce<string | undefined>((best, level) => {
+				if (!best) return level
+				return LOG_LEVEL_ORDER.indexOf(level) >
+					LOG_LEVEL_ORDER.indexOf(best)
+					? level
+					: best
+			}, undefined)
+		if (extraLevel) {
+			const currentLevel = zwaveOptions.logConfig.level
+			const currentIdx =
+				typeof currentLevel === 'string'
+					? LOG_LEVEL_ORDER.indexOf(currentLevel)
+					: -1
+			const extraIdx = LOG_LEVEL_ORDER.indexOf(extraLevel)
+			if (extraIdx > currentIdx) {
+				zwaveOptions.logConfig.level = extraLevel
+			}
+		}
 
 		logTransport.stream.on('data', (data) => {
 			this.socket
@@ -2440,7 +3179,11 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			}
 			// init driver here because if connect fails the driver is destroyed
 			// this could throw so include in the try/catch
-			this._driver = new Driver(this.cfg.port, zwaveOptions)
+			this._driver = new Driver(
+				this.cfg.port,
+				zwaveOptions,
+				...getExternalDriverPresets(),
+			)
 			this._driver.on('error', this._onDriverError.bind(this))
 			this._driver.on('driver ready', this._onDriverReady.bind(this))
 			this._driver.on('all nodes ready', this._onScanComplete.bind(this))
@@ -2596,9 +3339,18 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			this.getNode(valueId.nodeId)?.getValueTimestamp(valueId) ??
 			Date.now()
 
-		this.sendToSocket(socketEvents.valueUpdated, valueId)
+		// Skip the socket broadcast when the value didn't actually change.
+		// Chatty meshes can produce ~50% no-op value updates (see #4639) and
+		// each one triggers an unnecessary re-render of the nodes table.
+		// MQTT/HASS still get every event via the local 'valueChanged' below.
+		if (changed) {
+			this.sendToSocket(socketEvents.valueUpdated, valueId)
+		}
 
 		this.emit('valueChanged', valueId, node, changed)
+
+		// Update virtual nodes that contain this node
+		this._updateVirtualNodesForNode(valueId.nodeId)
 	}
 
 	public emitStatistics(
@@ -2945,6 +3697,191 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		return true
 	}
 
+	// === GROUPS MANAGEMENT ===
+
+	/**
+	 * Validate and normalize a group name.
+	 */
+	private _validateGroupName(name: string): string {
+		const trimmed = name?.trim()
+		if (!trimmed) {
+			throw new Error('Group name is required')
+		}
+		if (trimmed.length > GROUP_NAME_MAX_LENGTH) {
+			throw new Error(
+				`Group name must be at most ${GROUP_NAME_MAX_LENGTH} characters`,
+			)
+		}
+		return trimmed
+	}
+
+	/**
+	 * Filter and validate node IDs for group creation/update.
+	 * Removes duplicates, controller node, broadcast IDs, virtual-group IDs,
+	 * and any IDs not present in the controller's physical nodes map.
+	 */
+	private _filterGroupNodeIds(nodeIds: number[]): number[] {
+		const ownNodeId = this._driver?.controller?.ownNodeId
+		const knownPhysicalIds = this._driver?.controller?.nodes
+		const filtered = [...new Set(nodeIds)].filter(
+			(id) =>
+				typeof id === 'number' &&
+				Number.isInteger(id) &&
+				id > 0 &&
+				id !== ownNodeId &&
+				id !== NODE_ID_BROADCAST &&
+				id !== NODE_ID_BROADCAST_LR &&
+				id < GROUP_ID_MIN &&
+				(!knownPhysicalIds || knownPhysicalIds.has(id)),
+		)
+
+		if (filtered.length < 2) {
+			throw new Error('At least 2 valid nodes are required for a group')
+		}
+
+		return filtered
+	}
+
+	/**
+	 * Get next available group ID (>= GROUP_ID_MIN).
+	 */
+	private _getNextGroupId(): number {
+		const existingIds = new Set(this.groups.map((g) => g.id))
+		let nextId = GROUP_ID_MIN
+		while (existingIds.has(nextId)) {
+			nextId++
+		}
+		return nextId
+	}
+
+	/**
+	 * Rebuild the nodeId → groupIds index. Called whenever the groups list
+	 * changes so per-value-change lookups stay O(1).
+	 */
+	private _rebuildNodeToGroupsIndex(): void {
+		this._nodeToGroups.clear()
+		for (const group of this.groups) {
+			for (const nodeId of group.nodeIds) {
+				let set = this._nodeToGroups.get(nodeId)
+				if (!set) {
+					set = new Set()
+					this._nodeToGroups.set(nodeId, set)
+				}
+				set.add(group.id)
+			}
+		}
+	}
+
+	/**
+	 * Create a new group. Builds the multicast instance before persisting so a
+	 * failure leaves no phantom group in `groups.json`.
+	 */
+	async _createGroup(name: string, nodeIds: number[]): Promise<Group> {
+		const trimmedName = this._validateGroupName(name)
+		const validNodeIds = this._filterGroupNodeIds(nodeIds)
+
+		const id = this._getNextGroupId()
+		const group: Group = { id, name: trimmedName, nodeIds: validNodeIds }
+
+		// Build the live multicast instance up-front: if zwave-js rejects the
+		// node set, throw before we touch persistent state.
+		if (this.driverReady) {
+			const multicastGroup =
+				this._driver.controller.getMulticastGroup(validNodeIds)
+			this._virtualNodes.set(id, multicastGroup)
+		}
+
+		this.groups.push(group)
+		try {
+			await jsonStore.put(store.groups, this.groups)
+		} catch (error) {
+			// Rollback in-memory state on persistence failure
+			this.groups.pop()
+			this._virtualNodes.delete(id)
+			throw error
+		}
+
+		this._rebuildNodeToGroupsIndex()
+		this._createVirtualNode(group)
+
+		return group
+	}
+
+	/**
+	 * Update an existing group.
+	 */
+	async _updateGroup(
+		id: number,
+		name: string,
+		nodeIds: number[],
+	): Promise<Group | null> {
+		const trimmedName = this._validateGroupName(name)
+		const validNodeIds = this._filterGroupNodeIds(nodeIds)
+
+		const groupIndex = this.groups.findIndex((g) => g.id === id)
+		if (groupIndex === -1) {
+			return null
+		}
+
+		const previous = { ...this.groups[groupIndex] }
+		this.groups[groupIndex].name = trimmedName
+		this.groups[groupIndex].nodeIds = validNodeIds
+
+		// Refresh the multicast instance with the validated node list before
+		// persisting — if zwave-js rejects, restore previous state and throw.
+		if (this.driverReady) {
+			try {
+				const multicastGroup =
+					this._driver.controller.getMulticastGroup(validNodeIds)
+				this._virtualNodes.set(id, multicastGroup)
+			} catch (error) {
+				this.groups[groupIndex] = previous
+				throw error
+			}
+		}
+
+		try {
+			await jsonStore.put(store.groups, this.groups)
+		} catch (error) {
+			this.groups[groupIndex] = previous
+			throw error
+		}
+
+		this._rebuildNodeToGroupsIndex()
+		this._updateVirtualNode(this.groups[groupIndex])
+
+		return this.groups[groupIndex]
+	}
+
+	/**
+	 * Delete a group.
+	 */
+	async _deleteGroup(id: number): Promise<boolean> {
+		const groupIndex = this.groups.findIndex((g) => g.id === id)
+		if (groupIndex === -1) {
+			return false
+		}
+
+		this._nodes.delete(id)
+		this._virtualNodes.delete(id)
+
+		this.groups.splice(groupIndex, 1)
+		await jsonStore.put(store.groups, this.groups)
+
+		this._rebuildNodeToGroupsIndex()
+
+		this.sendToSocket(socketEvents.nodeRemoved, { id })
+
+		return true
+	}
+
+	/**
+	 * Get all groups
+	 */
+	_getGroups(): Group[] {
+		return this.groups
+	}
+
 	// ------------ CONFIGURATION TEMPLATES MANAGEMENT -----------------------------------
 
 	/**
@@ -3192,6 +4129,77 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	}
 
 	/**
+	 * Build a fresh ZUINode shell for a virtual node (broadcast/multicast).
+	 */
+	private _newVirtualZUINode(
+		id: number,
+		name: string,
+		kind: NonNullable<ZUINode['kind']>,
+	): ZUINode {
+		return {
+			id,
+			name,
+			virtual: true,
+			kind,
+			ready: true,
+			available: true,
+			failed: false,
+			inited: true,
+			values: {},
+			eventsQueue: [],
+		}
+	}
+
+	/**
+	 * Materialize (or re-materialize) the ZUINode shell + initial values for a
+	 * multicast group.
+	 *
+	 * Despite the name, this runs in three scenarios:
+	 *   1. **Driver startup / restore** — `init()` iterates persisted groups
+	 *      and calls this to (re)build their live `VirtualNode` instance and
+	 *      ZUI shell. The live instance is *not* yet in `_virtualNodes`, so it
+	 *      is created here.
+	 *   2. **After `_createGroup` succeeds** — the live `VirtualNode` was
+	 *      already eagerly registered in `_virtualNodes` (so a driver-side
+	 *      rejection happens before we mutate persistent state); this call
+	 *      only needs to build the ZUI shell.
+	 *   3. **As a fallback inside `_updateVirtualNode`** when the ZUI shell is
+	 *      missing for an existing live instance.
+	 *
+	 * The `_virtualNodes.has(group.id)` guard short-circuits case (2)/(3) and
+	 * lazily creates the live instance for case (1).
+	 */
+	private _createVirtualNode(group: Group): void {
+		if (!this.driverReady) return
+
+		try {
+			if (!this._virtualNodes.has(group.id)) {
+				const multicastGroup =
+					this._driver.controller.getMulticastGroup(group.nodeIds)
+				this._virtualNodes.set(group.id, multicastGroup)
+			}
+
+			const virtualNode = this._newVirtualZUINode(
+				group.id,
+				group.name,
+				'multicast',
+			)
+
+			this._nodes.set(group.id, virtualNode)
+
+			// Emit node update (not nodeAdded, which expects {node, result}
+			// and shows a confirmation dialog)
+			this.sendToSocket(socketEvents.nodeUpdated, virtualNode)
+
+			this._updateVirtualNodeValues(group)
+		} catch (error) {
+			logger.error(
+				`Error creating virtual node for group ${group.id}: ${error.message}`,
+			)
+		}
+	}
+
+	/**
 	 * Apply a configuration template to a node
 	 */
 	async applyConfigurationTemplate(
@@ -3394,6 +4402,427 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			}
 			this.storeNodes[node.id].appliedTemplateContentHashes = cleaned
 			await this.updateStoreNodes(false)
+		}
+	}
+
+	/**
+	 * Update virtual node for multicast group
+	 */
+	private _updateVirtualNode(group: Group): void {
+		const virtualNode = this._nodes.get(group.id)
+		if (!virtualNode) {
+			// Create if doesn't exist
+			this._createVirtualNode(group)
+			return
+		}
+
+		virtualNode.name = group.name
+
+		// Update virtual node values based on member nodes
+		this._updateVirtualNodeValues(group)
+
+		// Emit node updated event
+		this.emitNodeUpdate(virtualNode, { name: virtualNode.name })
+	}
+
+	/**
+	 * Build a ZUIValueId for a virtual node (broadcast/multicast) from a value
+	 * ID returned by VirtualNode.getDefinedValueIDs().
+	 *
+	 * zwave-js returns value IDs with inline `.metadata` and `.ccVersion`
+	 * already resolved from the physical nodes. We mirror the structure that
+	 * `_updateValueMetadata()` produces for physical nodes so the frontend
+	 * renders the same controls (select, number input, boolean toggle, etc.).
+	 */
+	private _buildVirtualValueId(
+		nodeId: number,
+		zwaveValue: VirtualValueID,
+		value?: unknown,
+	): ZUIValueId | null {
+		const meta = zwaveValue.metadata
+		if (!meta) return null
+
+		// VirtualValueID always carries ccVersion, but be defensive in case
+		// older zwave-js builds omit it for synthesized Basic CC entries.
+		const ccVersion =
+			typeof zwaveValue.ccVersion === 'number' && zwaveValue.ccVersion > 0
+				? zwaveValue.ccVersion
+				: 1
+
+		// Preserve any existing fields on the previous valueId (e.g. user-set
+		// poll config) so rebuilds don't drop them — mirrors the spread used
+		// in `_updateValueMetadata` for physical nodes.
+		const existing =
+			this._nodes.get(nodeId)?.values?.[
+				this._getValueID(zwaveValue as unknown as ZUIValueId)
+			]
+
+		const valueId: ZUIValueId = {
+			...(existing || {}),
+			id: this._getValueID(
+				{ ...zwaveValue, nodeId } as unknown as ZUIValueId,
+				true,
+			),
+			nodeId,
+			toUpdate: false,
+			commandClass: zwaveValue.commandClass,
+			commandClassName: zwaveValue.commandClassName,
+			endpoint: zwaveValue.endpoint,
+			property: zwaveValue.property,
+			propertyName: zwaveValue.propertyName,
+			propertyKey: zwaveValue.propertyKey,
+			propertyKeyName: zwaveValue.propertyKeyName,
+			type: meta.type,
+			readable: meta.readable ?? false,
+			writeable: meta.writeable ?? true,
+			description: meta.description,
+			label: meta.label || zwaveValue.propertyName + ' (property)',
+			default: meta.default,
+			ccSpecific: meta.ccSpecific,
+			stateless: false,
+			commandClassVersion: ccVersion,
+			value,
+			lastUpdate: Date.now(),
+		}
+
+		this._applyValueMetadataFields(valueId, meta)
+
+		return valueId
+	}
+
+	/**
+	 * Populate values for a multicast group virtual node.
+	 *
+	 * zwave-js `VirtualNode.getDefinedValueIDs()` returns the **union** of all
+	 * writeable actuator value IDs across every physical member node, plus
+	 * Basic CC (always added so heterogeneous groups can be controlled
+	 * together). This means a group may expose CCs that only some members
+	 * support — nodes that don't will simply ignore the command.
+	 *
+	 * For each value we aggregate the current state of all member nodes:
+	 * if every member has the same value it is shown, otherwise `undefined`.
+	 */
+	private _updateVirtualNodeValues(group: Group): void {
+		const virtualNode = this._nodes.get(group.id)
+		if (!virtualNode) return
+
+		const multicastGroup = this._virtualNodes.get(group.id)
+		if (!multicastGroup) return
+
+		try {
+			const definedValueIDs = multicastGroup.getDefinedValueIDs()
+
+			virtualNode.values = {}
+
+			for (const zwaveValue of definedValueIDs) {
+				const vId = this._getValueID(
+					zwaveValue as unknown as ZUIValueId,
+				)
+
+				// Aggregate values from member nodes that support this CC.
+				// Show the value if all supporting members agree (using deep
+				// equality so object-valued CCs like Color compare correctly),
+				// otherwise undefined.
+				const memberValues = group.nodeIds
+					.map((id) => this._nodes.get(id)?.values?.[vId]?.value)
+					.filter((v) => v !== undefined && v !== null)
+				const allSame =
+					memberValues.length > 0 &&
+					memberValues.every((v) =>
+						utils.deepEqual(v, memberValues[0]),
+					)
+
+				const valueId = this._buildVirtualValueId(
+					group.id,
+					zwaveValue,
+					allSame ? memberValues[0] : undefined,
+				)
+				if (!valueId) continue
+
+				virtualNode.values[vId] = valueId
+			}
+
+			// Emit valueChanged for each value so the MQTT gateway
+			// publishes them and registers topics for write-back
+			for (const vId in virtualNode.values) {
+				this.emit(
+					'valueChanged',
+					virtualNode.values[vId],
+					virtualNode,
+					true,
+				)
+			}
+
+			this.emitNodeUpdate(virtualNode, { values: virtualNode.values })
+		} catch (error) {
+			logger.error(
+				`Error updating virtual node values for group ${group.id}: ${error.message}`,
+			)
+		}
+	}
+
+	/**
+	 * Populate values for broadcast virtual nodes (standard + LR).
+	 *
+	 * Like multicast groups, broadcast nodes expose the union of all writeable
+	 * actuator value IDs across the entire network (or LR network). All values
+	 * are write-only (`value: undefined`) since broadcast commands cannot be
+	 * read back.
+	 *
+	 * Uses leading-edge throttling: the first call after a quiet period runs
+	 * synchronously (so users see broadcast controls immediately on startup),
+	 * while bursts of node-ready / node-added / node-removed events during a
+	 * controller interview are coalesced into a single trailing rebuild.
+	 */
+	private _updateBroadcastNodeValues(): void {
+		if (!this.driverReady) return
+
+		// Keep the cached instances in sync with the driver *synchronously*, so
+		// the write-back path (`getVirtualNode` → `setValue`) never targets a
+		// removed node even before the throttled value rebuild below runs.
+		this._refreshBroadcastInstances()
+
+		this.throttle(
+			'broadcast_values_rebuild',
+			() => this._doUpdateBroadcastNodeValues(),
+			1000,
+		)
+	}
+
+	/**
+	 * Re-fetch the cached broadcast VirtualNode instances from the controller.
+	 *
+	 * The driver snapshots the physical node set when a broadcast node is
+	 * constructed, so a long-lived instance keeps referencing nodes that have
+	 * since been removed — using one then throws "Node X was not found" (#4677),
+	 * both when enumerating values and when sending a write. Re-fetching is
+	 * cheap (it just wraps the controller's current node set), so we do it
+	 * eagerly on every node-set change. Only instances that currently exist are
+	 * refreshed; the LR broadcast node exists solely while the network has LR
+	 * nodes (see `_refreshBroadcastLRNode`).
+	 */
+	private _refreshBroadcastInstances(): void {
+		if (!this.driverReady) return
+
+		const controller = this._driver.controller
+
+		if (this._virtualNodes.has(NODE_ID_BROADCAST)) {
+			this._virtualNodes.set(
+				NODE_ID_BROADCAST,
+				controller.getBroadcastNode(),
+			)
+		}
+
+		if (this._virtualNodes.has(NODE_ID_BROADCAST_LR)) {
+			this._virtualNodes.set(
+				NODE_ID_BROADCAST_LR,
+				controller.getBroadcastNodeLR(),
+			)
+		}
+	}
+
+	private _doUpdateBroadcastNodeValues(): void {
+		if (!this.driverReady) return
+
+		const broadcastNodeIds = [NODE_ID_BROADCAST, NODE_ID_BROADCAST_LR]
+
+		for (const nodeId of broadcastNodeIds) {
+			try {
+				// The cached instances are kept current by
+				// `_refreshBroadcastInstances`, so they already reflect the
+				// live node set (no removed nodes) by the time we get here.
+				const broadcastInstance = this._virtualNodes.get(nodeId)
+				const virtualNode = this._nodes.get(nodeId)
+
+				if (!broadcastInstance || !virtualNode) continue
+
+				const definedValueIds = broadcastInstance.getDefinedValueIDs()
+
+				virtualNode.values = {}
+
+				for (const zwaveValue of definedValueIds) {
+					const valueId = this._buildVirtualValueId(
+						nodeId,
+						zwaveValue,
+						undefined, // broadcast values are write-only
+					)
+					if (!valueId) continue
+
+					const vID = this._getValueID(valueId)
+					virtualNode.values[vID] = valueId
+				}
+
+				// Emit valueChanged for each value so the MQTT gateway
+				// publishes them and registers topics for write-back
+				for (const vID in virtualNode.values) {
+					this.emit(
+						'valueChanged',
+						virtualNode.values[vID],
+						virtualNode,
+						true,
+					)
+				}
+
+				this.sendToSocket(socketEvents.nodeUpdated, virtualNode)
+			} catch (error) {
+				logger.error(
+					`Error updating broadcast node ${nodeId} values: ${error.message}`,
+				)
+			}
+		}
+	}
+
+	/**
+	 * Create broadcast virtual nodes (standard + optional LR).
+	 *
+	 * Broadcast nodes send commands to every node in the network. The LR
+	 * broadcast node is only created when the controller actually has at least
+	 * one LR-capable physical node — exposing it on a controller that merely
+	 * *supports* LR is misleading.
+	 */
+	private _createBroadcastNodes(): void {
+		if (!this.driverReady) return
+
+		try {
+			// Standard broadcast — always available.
+			const broadcastNode = this._driver.controller.getBroadcastNode()
+			this._virtualNodes.set(NODE_ID_BROADCAST, broadcastNode)
+
+			const broadcastVirtualNode = this._newVirtualZUINode(
+				NODE_ID_BROADCAST,
+				'Broadcast',
+				'broadcast',
+			)
+
+			this._nodes.set(NODE_ID_BROADCAST, broadcastVirtualNode)
+			this.sendToSocket(socketEvents.nodeUpdated, broadcastVirtualNode)
+
+			this._refreshBroadcastLRNode()
+
+			this._updateBroadcastNodeValues()
+		} catch (error) {
+			logger.error(`Error creating broadcast nodes: ${error.message}`)
+		}
+	}
+
+	/**
+	 * Add or remove the LR broadcast virtual node depending on whether any LR
+	 * physical node is currently part of the network. Called whenever the
+	 * physical node set changes.
+	 */
+	private _refreshBroadcastLRNode(): void {
+		if (!this.driverReady) return
+
+		const controller = this._driver.controller
+		const hasLRNodes =
+			controller.supportsLongRange &&
+			[...controller.nodes.values()].some(
+				(n) => n.protocol === Protocols.ZWaveLongRange,
+			)
+
+		const exists = this._virtualNodes.has(NODE_ID_BROADCAST_LR)
+
+		if (hasLRNodes && !exists) {
+			try {
+				const broadcastNodeLR = controller.getBroadcastNodeLR()
+				this._virtualNodes.set(NODE_ID_BROADCAST_LR, broadcastNodeLR)
+
+				const lrNode = this._newVirtualZUINode(
+					NODE_ID_BROADCAST_LR,
+					'Broadcast LR',
+					'broadcastLR',
+				)
+				this._nodes.set(NODE_ID_BROADCAST_LR, lrNode)
+				this.sendToSocket(socketEvents.nodeUpdated, lrNode)
+			} catch (error) {
+				logger.warn(`LR broadcast node not available: ${error.message}`)
+			}
+		} else if (!hasLRNodes && exists) {
+			this._virtualNodes.delete(NODE_ID_BROADCAST_LR)
+			this._nodes.delete(NODE_ID_BROADCAST_LR)
+			this.sendToSocket(socketEvents.nodeRemoved, {
+				id: NODE_ID_BROADCAST_LR,
+			})
+		}
+	}
+
+	/**
+	 * Update virtual nodes when a member node's value changes.
+	 * Throttled to avoid excessive rebuilds on frequent value updates.
+	 */
+	private _updateVirtualNodesForNode(nodeId: number): void {
+		const groupIds = this._nodeToGroups.get(nodeId)
+		if (!groupIds || groupIds.size === 0) return
+
+		for (const groupId of groupIds) {
+			const group = this.groups.find((g) => g.id === groupId)
+			if (!group) continue
+			this.throttle(
+				`virtual_node_update_${group.id}`,
+				() => {
+					this._updateVirtualNodeValues(group)
+				},
+				1000,
+			)
+		}
+		// Note: broadcast node values are not updated here because they are
+		// write-only and don't need to reflect individual node value changes.
+		// They are rebuilt when nodes are added/removed or become ready.
+	}
+
+	/**
+	 * Drop a removed physical node from any group containing it. Persists
+	 * groups.json before touching live virtual instances, so a crash between
+	 * the in-memory mutation and the disk write can never resurrect the
+	 * removed node on restart. Refreshes the corresponding multicast instances
+	 * and virtual ZUI nodes after the write succeeds.
+	 */
+	private async _removeNodeFromGroups(nodeId: number): Promise<void> {
+		const groupIds = this._nodeToGroups.get(nodeId)
+		if (!groupIds || groupIds.size === 0) return
+
+		const affected: Group[] = []
+		for (const groupId of groupIds) {
+			const group = this.groups.find((g) => g.id === groupId)
+			if (!group) continue
+			group.nodeIds = group.nodeIds.filter((id) => id !== nodeId)
+			affected.push(group)
+		}
+
+		if (affected.length === 0) return
+
+		try {
+			await jsonStore.put(store.groups, this.groups)
+		} catch (error) {
+			logger.error(
+				`Failed to persist groups after removing node ${nodeId}: ${error.message}`,
+			)
+			return
+		}
+
+		this._rebuildNodeToGroupsIndex()
+
+		for (const group of affected) {
+			if (group.nodeIds.length >= 2 && this.driverReady) {
+				try {
+					const refreshed = this._driver.controller.getMulticastGroup(
+						group.nodeIds,
+					)
+					this._virtualNodes.set(group.id, refreshed)
+				} catch (error) {
+					logger.error(
+						`Failed to refresh multicast group ${group.id} after removing node ${nodeId}: ${error.message}`,
+					)
+				}
+				this._updateVirtualNode(group)
+			} else {
+				// Group dropped below the 2-node minimum; tear down the live
+				// virtual node but leave the persisted entry so the user can
+				// fix it from the Groups page.
+				this._virtualNodes.delete(group.id)
+				this._nodes.delete(group.id)
+				this.sendToSocket(socketEvents.nodeRemoved, { id: group.id })
+			}
 		}
 	}
 
@@ -4836,6 +6265,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		rounds = 5,
 	): Promise<LifelineHealthCheckSummary & { targetNodeId: number }> {
 		if (this.driverReady) {
+			if (this.isVirtualNode(nodeId)) {
+				throw new Error(`Node ${nodeId} is a virtual node`)
+			}
 			const result = await this.getNode(nodeId).checkLifelineHealth(
 				rounds,
 				this._onHealthCheckProgress.bind(this, {
@@ -4854,6 +6286,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		options: any,
 	): Promise<LinkReliabilityCheckResult> {
 		if (this.driverReady) {
+			if (this.isVirtualNode(nodeId)) {
+				throw new Error(`Node ${nodeId} is a virtual node`)
+			}
 			const result = await this.getNode(nodeId).checkLinkReliability({
 				...options,
 				onProgress: (progress) =>
@@ -4868,6 +6303,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 	abortLinkReliabilityCheck(nodeId: number): void {
 		if (this.driverReady) {
+			if (this.isVirtualNode(nodeId)) {
+				throw new Error(`Node ${nodeId} is a virtual node`)
+			}
 			this.getNode(nodeId).abortLinkReliabilityCheck()
 			return
 		}
@@ -4884,6 +6322,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		rounds = 5,
 	): Promise<RouteHealthCheckSummary & { targetNodeId: number }> {
 		if (this.driverReady) {
+			if (this.isVirtualNode(nodeId)) {
+				throw new Error(`Node ${nodeId} is a virtual node`)
+			}
 			const zwaveNode = this.getNode(nodeId)
 			const result = await zwaveNode.checkRouteHealth(
 				targetNodeId,
@@ -4936,7 +6377,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			}
 
 			if (zwaveNode) {
-				this._onNodeStatus(zwaveNode, true)
+				this._onNodeStatus(zwaveNode, { updateStatusOnly: true })
 			}
 			return result
 		}
@@ -5360,6 +6801,49 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			const vID = this._getValueID(valueId)
 			logger.log('info', `Writing %o to ${valueId.nodeId}-${vID}`, value)
 
+			// Route writes for virtual nodes (broadcast/multicast) through
+			// the virtual node instance's setValue
+			if (this.isVirtualNode(valueId.nodeId)) {
+				try {
+					const virtualInstance = this.getVirtualNode(valueId.nodeId)
+					if (!virtualInstance) {
+						throw Error(`Virtual node ${valueId.nodeId} not found`)
+					}
+
+					// coerce string to numbers
+					if (
+						valueId.type === 'number' &&
+						typeof value === 'string'
+					) {
+						value = Number(value)
+					}
+
+					result = await virtualInstance.setValue(
+						valueId,
+						value,
+						options,
+					)
+				} catch (error) {
+					logger.log(
+						'error',
+						`Error while writing %o on virtual node ${valueId.nodeId}-${vID}: ${error.message}`,
+						value,
+					)
+				}
+
+				if (setValueFailed(result)) {
+					logger.log(
+						'error',
+						`Unable to write %o on virtual ${vID}: %s`,
+						value,
+						result.message ||
+							getEnumMemberName(SetValueStatus, result.status),
+					)
+				}
+
+				return result
+			}
+
 			try {
 				const zwaveNode = this.getNode(valueId.nodeId)
 
@@ -5524,6 +7008,14 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		// needs home hex to be set
 		await this.getStoreNodes()
 
+		// Create broadcast nodes and recreate virtual nodes for groups
+		this._createBroadcastNodes()
+
+		// Recreate virtual nodes for existing groups
+		for (const group of this.groups) {
+			this._createVirtualNode(group)
+		}
+
 		for (const [, node] of this._driver.controller.nodes) {
 			// node added will not be triggered if the node is in cache
 			this._createNode(node.id)
@@ -5534,6 +7026,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				this._onNodeReady(node)
 			}
 		}
+
+		// Now that physical nodes are populated, decide whether the LR
+		// broadcast virtual node should be exposed.
+		this._refreshBroadcastLRNode()
 
 		this.emit('event', EventSource.DRIVER, 'driver ready', this.driverInfo)
 
@@ -5700,11 +7196,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		}
 
 		this._updateControllerStatus(message)
-		this._onNodeEvent(
-			'status changed',
-			this.getNode(this.driver.controller.ownNodeId),
-			status,
-		)
+		const controllerNode = this.getNode(this.driver.controller.ownNodeId)
+		if (controllerNode) {
+			this._onNodeEvent('status changed', controllerNode, status)
+		}
 		this.emit('event', EventSource.CONTROLLER, 'status changed', status)
 	}
 
@@ -5794,6 +7289,23 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		const message = 'Inclusion failed'
 		this.isReplacing = false
 		this.tmpNode = undefined
+
+		// Clear any ghost nodes the driver surfaced via `node found` but never
+		// promoted to `node added`. zwave-js doesn't always emit `node removed`
+		// for these, so they would stay stuck on ProtocolInfo in the UI forever.
+		for (const nodeId of this._pendingInclusionNodeIds) {
+			const node = this._nodes.get(nodeId)
+			if (node && !node.ready) {
+				this.logNode(
+					nodeId,
+					'info',
+					'Removing ghost node after failed inclusion',
+				)
+				this._removeNode(nodeId)
+			}
+		}
+		this._pendingInclusionNodeIds.clear()
+
 		this._updateControllerStatus(message)
 		this.emit('event', EventSource.CONTROLLER, 'inclusion failed')
 	}
@@ -5815,6 +7327,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		if (this.driverReady) {
 			node = this._createNode(nodeId)
 			this.sendToSocket(socketEvents.nodeFound, { node })
+			// track until `node added` clears it; cleaned up on inclusion failure
+			this._pendingInclusionNodeIds.add(nodeId)
 		} else {
 			node = this._nodes.get(nodeId)
 		}
@@ -5831,6 +7345,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 */
 	private async _onNodeAdded(zwaveNode: ZWaveNode, result: InclusionResult) {
 		let node: ZUINode
+		// node made it past `node found` — no longer a ghost candidate
+		this._pendingInclusionNodeIds.delete(zwaveNode.id)
 		// the driver is ready so this node has been added on fly
 		if (this.driverReady) {
 			node = this._addNode(zwaveNode)
@@ -5858,6 +7374,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			}
 
 			this.sendToSocket(socketEvents.nodeAdded, { node, result })
+
+			// Update broadcast nodes with new capabilities
+			this._refreshBroadcastLRNode()
+			this._updateBroadcastNodeValues()
 		}
 
 		const security =
@@ -5878,7 +7398,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 * Triggered when node is removed
 	 *
 	 */
-	private _onNodeRemoved(zwaveNode: ZWaveNode, reason: RemoveNodeReason) {
+	private async _onNodeRemoved(
+		zwaveNode: ZWaveNode,
+		reason: RemoveNodeReason,
+	) {
 		this.logNode(
 			zwaveNode,
 			'info',
@@ -5895,6 +7418,14 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		)
 
 		this._removeNode(zwaveNode.id)
+
+		// Persist the group cleanup *before* refreshing live virtual nodes /
+		// broadcast values, so the on-disk state reflects the removal.
+		await this._removeNodeFromGroups(zwaveNode.id)
+
+		// Update broadcast nodes after node removal
+		this._refreshBroadcastLRNode()
+		this._updateBroadcastNodeValues()
 	}
 
 	/**
@@ -6213,7 +7744,21 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 * Update current node status and interviewState
 	 *
 	 */
-	private _onNodeStatus(zwaveNode: ZWaveNode, updateStatusOnly = false) {
+	private _onNodeStatus(
+		zwaveNode: ZWaveNode,
+		options?: {
+			/** Only emit the status/availability change instead of the full node */
+			updateStatusOnly?: boolean
+			/**
+			 * Seed the interview stage from the node (e.g. on node ready/added),
+			 * instead of leaving it to the granular interview progress events
+			 */
+			updateInterviewStage?: boolean
+		},
+	) {
+		const { updateStatusOnly = false, updateInterviewStage = false } =
+			options ?? {}
+
 		const node = this._nodes.get(zwaveNode.id)
 
 		if (node) {
@@ -6222,9 +7767,16 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				zwaveNode.status
 			] as keyof typeof NodeStatus
 			node.available = zwaveNode.status !== NodeStatus.Dead
-			node.interviewStage = InterviewStage[
-				zwaveNode.interviewStage
-			] as keyof typeof InterviewStage
+
+			// The interview stage is normally driven by the granular `interview
+			// progress` events; only seed it from the node here when explicitly
+			// requested (e.g. node ready / added), so status changes like
+			// wake/sleep/alive/dead don't regress it during an interview.
+			if (updateInterviewStage) {
+				node.interviewStage = InterviewStage[
+					zwaveNode.interviewStage
+				] as keyof typeof InterviewStage
+			}
 
 			if (zwaveNode.interviewStage === InterviewStage.Complete) {
 				node.hasDeviceConfigChanged = zwaveNode.hasDeviceConfigChanged()
@@ -6236,7 +7788,6 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				changedProps = {
 					status: node.status,
 					available: node.available,
-					interviewStage: node.interviewStage,
 				}
 			}
 
@@ -6259,9 +7810,27 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		zwaveNode: ZWaveNode,
 		...eventArgs: any[]
 	) {
-		const node = this._nodes.get(zwaveNode.id)
+		// Some CC events (User Credential CC, User Code CC) emit
+		// `(endpoint, payload)` — Endpoint has `nodeId` but not `id`.
+		// Regular node events emit `(node, ...args)` where `id === nodeId`.
+		const nodeId = zwaveNode?.nodeId ?? zwaveNode?.id
+		const node = this._nodes.get(nodeId)
 
 		if (node) {
+			if (
+				eventName === 'credential added' ||
+				eventName === 'credential modified'
+			) {
+				// Strip credential payloads before events enter the shared socket queue
+				eventArgs = eventArgs.map((arg) => {
+					if (!arg || typeof arg !== 'object' || !('data' in arg)) {
+						return arg
+					}
+					const redacted = { ...arg }
+					delete redacted.data
+					return redacted
+				})
+			}
 			const event: NodeEvent = {
 				time: new Date(),
 				event: eventName,
@@ -6315,6 +7884,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				zwaveValue,
 				existingValues,
 				true,
+				values,
 			)
 
 			if (!res) continue
@@ -6381,7 +7951,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		this.getGroups(zwaveNode.id, true)
 
-		this._onNodeStatus(zwaveNode)
+		this._onNodeStatus(zwaveNode, { updateInterviewStage: true })
 
 		// Check for matching configuration templates
 		this._checkConfigurationTemplates(node, zwaveNode)
@@ -6415,6 +7985,23 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			)
 		}
 
+		if (this._supportedAccessControlEndpointIndices(zwaveNode).length > 0) {
+			this.logNode(
+				zwaveNode,
+				'info',
+				`Access control (User Credential / User Code) supported`,
+			)
+			try {
+				this._refreshAccessControlState(zwaveNode)
+			} catch (e) {
+				this.logNode(
+					zwaveNode,
+					'warn',
+					`Failed to read access control state: ${(e as Error).message}`,
+				)
+			}
+		}
+
 		// Long range nodes use a star topology, so they don't have return/priority routes
 		if (
 			!zwaveNode.isControllerNode &&
@@ -6431,6 +8018,43 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			this.getCustomSUCReturnRoute(zwaveNode.id)
 			this.getPrioritySUCReturnRoute(zwaveNode.id)
 		}
+
+		// Update broadcast nodes when a node becomes ready
+		this._updateBroadcastNodeValues()
+	}
+
+	/**
+	 * Update a node's interview progress and notify the UI.
+	 * When `throttle` is set the emit is rate-limited, otherwise it is emitted immediately.
+	 */
+	private _setInterviewProgress(
+		zwaveNode: ZWaveNode,
+		progress: number,
+		stage?: keyof typeof InterviewStage,
+		throttle = false,
+	) {
+		const node = this._nodes.get(zwaveNode.id)
+		if (!node) return
+
+		node.interviewProgress = progress
+		const changedProps: utils.DeepPartial<ZUINode> = {
+			interviewProgress: progress,
+		}
+		if (stage !== undefined) {
+			node.interviewStage = stage
+			changedProps.interviewStage = stage
+		}
+
+		if (throttle) {
+			// send at most 4msg per second
+			this.throttle(
+				'_setInterviewProgress_' + node.id,
+				this.emitNodeUpdate.bind(this, node, changedProps),
+				250,
+			)
+		} else {
+			this.emitNodeUpdate(node, changedProps)
+		}
 	}
 
 	/**
@@ -6439,6 +8063,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 */
 	private _onNodeInterviewStarted(zwaveNode: ZWaveNode) {
 		this.logNode(zwaveNode, 'info', 'Interview started')
+
+		// Z-Wave JS sends interview progress events - no need to change the progress here.
 
 		this.emit(
 			'event',
@@ -6462,7 +8088,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			`Interview stage ${stageName.toUpperCase()} completed`,
 		)
 
-		this._onNodeStatus(zwaveNode, true)
+		this._onNodeStatus(zwaveNode, { updateStatusOnly: true })
 
 		this.emit(
 			'event',
@@ -6490,7 +8116,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			'Interview COMPLETED, all values are updated',
 		)
 
-		this._onNodeStatus(zwaveNode, true)
+		this._onNodeStatus(zwaveNode, { updateStatusOnly: true })
 
 		this._checkNodeFirmwareUpdates(zwaveNode.id).catch((error) => {
 			this.logNode(
@@ -6522,7 +8148,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			`Interview FAILED: ${args.errorMessage}`,
 		)
 
-		this._onNodeStatus(zwaveNode, true)
+		// Reset the progress: the interview stopped before completing.
+		this._setInterviewProgress(zwaveNode, 0)
+
+		this._onNodeStatus(zwaveNode, { updateStatusOnly: true })
 
 		this.emit(
 			'event',
@@ -6543,7 +8172,16 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			`Is ${oldStatus === NodeStatus.Unknown ? '' : 'now '}awake`,
 		)
 
-		this._onNodeStatus(zwaveNode, true)
+		this._onNodeStatus(zwaveNode, { updateStatusOnly: true })
+
+		const node = this._nodes.get(zwaveNode.id)
+		if (node) {
+			node.lastAwake = Date.now()
+			this.emitNodeUpdate(node, {
+				lastAwake: node.lastAwake,
+			} as utils.DeepPartial<ZUINode>)
+		}
+
 		this.emit(
 			'event',
 			EventSource.NODE,
@@ -6563,7 +8201,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			`Is ${oldStatus === NodeStatus.Unknown ? '' : 'now '}asleep`,
 		)
 
-		this._onNodeStatus(zwaveNode, true)
+		this._onNodeStatus(zwaveNode, { updateStatusOnly: true })
 		this.emit(
 			'event',
 			EventSource.NODE,
@@ -6577,7 +8215,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 *
 	 */
 	private _onNodeAlive(zwaveNode: ZWaveNode, oldStatus: NodeStatus) {
-		this._onNodeStatus(zwaveNode, true)
+		this._onNodeStatus(zwaveNode, { updateStatusOnly: true })
 		if (oldStatus === NodeStatus.Dead) {
 			this.logNode(zwaveNode, 'info', 'Has returned from the dead')
 		} else {
@@ -6597,7 +8235,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 *
 	 */
 	private _onNodeDead(zwaveNode: ZWaveNode, oldStatus: NodeStatus) {
-		this._onNodeStatus(zwaveNode, true)
+		this._onNodeStatus(zwaveNode, { updateStatusOnly: true })
 		this.logNode(
 			zwaveNode,
 			'info',
@@ -6921,6 +8559,22 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		}
 
 	/**
+	 * Emitted when we receive a node `interview progress` event
+	 *
+	 */
+	private _onNodeInterviewProgress(
+		zwaveNode: ZWaveNode,
+		progress: InterviewProgress,
+	) {
+		this._setInterviewProgress(
+			zwaveNode,
+			Math.round(progress.progress),
+			InterviewStage[progress.stage] as keyof typeof InterviewStage,
+			true,
+		)
+	}
+
+	/**
 	 * Triggered we receive a node `firmware update finished` event
 	 *
 	 */
@@ -6987,6 +8641,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				this._onNodeInterviewCompleted.bind(this),
 			)
 			.on('interview failed', this._onNodeInterviewFailed.bind(this))
+			.on('interview progress', this._onNodeInterviewProgress.bind(this))
 			.on('wake up', this._onNodeWakeUp.bind(this))
 			.on('sleep', this._onNodeSleep.bind(this))
 			.on('alive', this._onNodeAlive.bind(this))
@@ -7025,11 +8680,35 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			'notification',
 			'firmware update progress',
 			'firmware update finished',
+			'user added',
+			'user modified',
+			'user deleted',
+			'credential added',
+			'credential modified',
+			'credential deleted',
+			'credential learn progress',
+			'credential learn completed',
 		]
 
 		for (const event of events) {
 			zwaveNode.on(event, this._onNodeEvent.bind(this, event))
 		}
+
+		const refreshOnAccessControlChange = (event: ZwaveNodeEvents) => {
+			zwaveNode.on(event as any, () => {
+				this._refreshAccessControlState(zwaveNode)
+			})
+		}
+		;(
+			[
+				'user added',
+				'user modified',
+				'user deleted',
+				'credential added',
+				'credential modified',
+				'credential deleted',
+			] as const
+		).forEach((e) => refreshOnAccessControlChange(e))
 	}
 
 	/**
@@ -7039,6 +8718,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	private _removeNode(nodeid: number) {
 		// don't use splice here, nodeid equals to the index in the array
 		const node = this._nodes.get(nodeid)
+		this._pendingInclusionNodeIds.delete(nodeid)
 		if (node) {
 			this._nodes.delete(nodeid)
 
@@ -7133,7 +8813,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		this._bindNodeEvents(zwaveNode)
 		this._dumpNode(zwaveNode)
-		this._onNodeStatus(zwaveNode)
+		this._onNodeStatus(zwaveNode, { updateInterviewStage: true })
 
 		this.logNode(zwaveNode, 'debug', `Has been added to nodes array`)
 
@@ -7385,66 +9065,84 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			)
 		}
 
-		// Value types: https://github.com/zwave-js/node-zwave-js/blob/cb35157da5e95f970447a67cbb2792e364b9d1e1/packages/core/src/values/Metadata.ts#L28
-		if (zwaveValueMeta.type === 'number') {
-			valueId.min = (zwaveValueMeta as ValueMetadataNumeric).min
-			valueId.max = (zwaveValueMeta as ValueMetadataNumeric).max
-			valueId.step = (zwaveValueMeta as ValueMetadataNumeric).steps
-			valueId.allowed = (zwaveValueMeta as ValueMetadataNumeric).allowed
-			valueId.unit = (zwaveValueMeta as ValueMetadataNumeric).unit
-		} else if (zwaveValueMeta.type === 'string') {
-			valueId.minLength = (
-				zwaveValueMeta as ValueMetadataString
-			).minLength
-			valueId.maxLength = (
-				zwaveValueMeta as ValueMetadataString
-			).maxLength
-		}
+		this._applyValueMetadataFields(valueId, zwaveValueMeta)
 
-		if (
-			(zwaveValueMeta as ValueMetadataNumeric).states &&
-			Object.keys((zwaveValueMeta as ValueMetadataNumeric).states)
-				.length > 0
-		) {
-			valueId.list = true
-			valueId.allowManualEntry = (
-				zwaveValueMeta as ConfigurationMetadata
-			).allowManualEntry
-			// If allowManualEntry is not explicitly set and the value has
-			// allowed ranges (not just single values), default to allowing
-			// manual entry. This supports the new value format in zwave-js
-			// v15.21.0+ where values like Wake Up Interval have named states
-			// (e.g., "Default", "Disabled") but also allow custom values
-			// within a range.
-			if (
-				valueId.allowManualEntry === undefined &&
-				valueId.allowed?.some(
-					(entry) => 'from' in entry && 'to' in entry,
-				)
-			) {
-				valueId.allowManualEntry = true
+		return valueId
+	}
+
+	/**
+	 * Apply type-specific metadata fields (numeric, string, states, destructive)
+	 * to a ZUIValueId. Shared between physical and virtual node value creation.
+	 */
+	private _applyValueMetadataFields(
+		valueId: ZUIValueId,
+		meta: ValueMetadata,
+	): void {
+		if (meta.type === 'number') {
+			const numMeta = meta as ValueMetadataNumeric
+
+			valueId.min = numMeta.min
+			valueId.max = numMeta.max
+			valueId.step = numMeta.steps
+			valueId.allowed = numMeta.allowed
+			valueId.unit = numMeta.unit
+
+			if (numMeta.states && Object.keys(numMeta.states).length > 0) {
+				valueId.list = true
+				valueId.allowManualEntry = (
+					numMeta as ConfigurationMetadata
+				).allowManualEntry
+				// If allowManualEntry is not explicitly set and the value has
+				// allowed ranges (not just single values), default to allowing
+				// manual entry. This supports the new value format in zwave-js
+				// v15.21.0+ where values like Wake Up Interval have named states
+				// (e.g., "Default", "Disabled") but also allow custom values
+				// within a range.
+				if (
+					valueId.allowManualEntry === undefined &&
+					numMeta.allowed?.some(
+						(entry) => 'from' in entry && 'to' in entry,
+					)
+				) {
+					valueId.allowManualEntry = true
+				}
+				valueId.states = []
+				for (const k in numMeta.states) {
+					valueId.states.push({
+						text: numMeta.states[k],
+						value: parseInt(k),
+					})
+				}
+			} else {
+				valueId.list = false
 			}
-			valueId.states = []
-			for (const k in (zwaveValueMeta as ValueMetadataNumeric).states) {
-				valueId.states.push({
-					text: (zwaveValueMeta as ValueMetadataNumeric).states[k],
-					value:
-						zwaveValueMeta.type === 'number'
-							? parseInt(k)
-							: zwaveValueMeta.type === 'boolean'
-								? k === 'true'
-								: k,
-				})
+
+			if ((numMeta as ConfigurationMetadata).destructive) {
+				valueId.destructive = true
+			}
+		} else if (meta.type === 'string' || meta.type === 'color') {
+			const strMeta = meta as ValueMetadataString
+			valueId.minLength = strMeta.minLength
+			valueId.maxLength = strMeta.maxLength
+			valueId.list = false
+		} else if (meta.type === 'boolean') {
+			const boolStates = (meta as { states?: Record<string, string> })
+				.states
+			if (boolStates && Object.keys(boolStates).length > 0) {
+				valueId.list = true
+				valueId.states = []
+				for (const k in boolStates) {
+					valueId.states.push({
+						text: boolStates[k],
+						value: k === 'true',
+					})
+				}
+			} else {
+				valueId.list = false
 			}
 		} else {
 			valueId.list = false
 		}
-
-		if ((zwaveValueMeta as ConfigurationMetadata).destructive) {
-			valueId.destructive = true
-		}
-
-		return valueId
 	}
 
 	/**
@@ -7458,6 +9156,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			[key: string]: ZUIValueId
 		},
 		skipUpdate = false,
+		definedValueIds?: TranslatedValueID[],
 	) {
 		const node = this._nodes.get(zwaveNode.id)
 
@@ -7483,6 +9182,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				zwaveNode,
 				zwaveValue,
 				zwaveValueMeta,
+				definedValueIds,
 			)
 
 			const vID = this._getValueID(valueId)
@@ -7520,6 +9220,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		zwaveNode: ZWaveNode,
 		zwaveValue: TranslatedValueID & { [x: string]: any },
 		zwaveValueMeta: ValueMetadata,
+		definedValueIds?: TranslatedValueID[],
 	) {
 		const node = this._nodes.get(zwaveNode.id)
 		const valueId = this._updateValueMetadata(
@@ -7549,9 +9250,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		if (this._isCurrentValue(valueId)) {
 			valueId.isCurrentValue = true
+			// Reuse the caller's list because getDefinedValueIDs() rebuilds it on every call
 			const targetValue = this._findTargetValue(
 				valueId,
-				zwaveNode.getDefinedValueIDs(),
+				definedValueIds ?? zwaveNode.getDefinedValueIDs(),
 			)
 			if (targetValue) {
 				valueId.targetValue = this._getValueID(targetValue)
@@ -7649,7 +9351,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 				this.statelessTimeouts[valueId.id] = setTimeout(() => {
 					valueId.value = undefined
-					this.emitValueChanged(valueId, node, false)
+					// reset is itself a transition (X -> undefined), so the UI
+					// must be told even after the no-op suppression in emitValueChanged
+					this.emitValueChanged(valueId, node, true)
 				}, 1000)
 			}
 		}

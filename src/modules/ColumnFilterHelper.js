@@ -47,10 +47,21 @@ export class ColumnFilterHelper {
 		return filter
 	}
 
+	static isFilterActive(colType, filter) {
+		return (
+			!!filter &&
+			!!ColumnFilterHelper.defaultFilter(colType) &&
+			Object.keys(ColumnFilterHelper.filterSpec(colType, filter)).length >
+				0
+		)
+	}
+
 	static filterByFilterSpec(nodes, headers, filters) {
 		for (const column of headers) {
 			const filter = filters ? filters[column.key] : undefined
-			if (!filter) continue
+			// unset filters match everything, skip the per-item pass
+			if (!ColumnFilterHelper.isFilterActive(column.type, filter))
+				continue
 			switch (column.type) {
 				case 'number':
 					nodes = nodes.filterNumberCol(column.key, filter)

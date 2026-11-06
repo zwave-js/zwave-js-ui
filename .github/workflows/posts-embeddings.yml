@@ -1,0 +1,32 @@
+name: Build posts embeddings index
+
+# Builds and caches a semantic search index over issues and discussions,
+# used by the bot to suggest related/duplicate posts.
+# Between the nightly rebuilds, new posts are appended incrementally by
+# the update-posts-index job in the issue/discussion bot workflow.
+# The heavy lifting lives in zwave-js/bot-workflows; this caller owns
+# the schedule and push filter.
+
+on:
+  schedule:
+    # Nightly, reconciles closed/edited posts and any appends that were
+    # lost to concurrent cache saves
+    - cron: '30 4 * * *'
+  push:
+    branches: [master]
+    paths:
+      - '.github/workflows/posts-embeddings.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: read
+  discussions: read
+
+jobs:
+  posts-embeddings:
+    permissions:
+      contents: read
+      issues: write
+      discussions: read
+    uses: zwave-js/bot-workflows/.github/workflows/posts-embeddings.yml@v1

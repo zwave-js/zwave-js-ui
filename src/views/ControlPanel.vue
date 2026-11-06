@@ -88,6 +88,7 @@ import { jsonToList } from '@/lib/utils'
 import useBaseStore from '../stores/base.js'
 import InstancesMixin from '../mixins/InstancesMixin.js'
 import logger from '../lib/logger'
+import { MAX_NODES_LR } from '@zwave-js/core'
 
 const log = logger.get('ControlPanel')
 
@@ -115,7 +116,12 @@ export default {
 		),
 	},
 	computed: {
-		...mapState(useBaseStore, ['nodes', 'zwave', 'controllerNode']),
+		...mapState(useBaseStore, [
+			'nodes',
+			'zwave',
+			'controllerNode',
+			'appInfo',
+		]),
 		fabItems() {
 			const items = []
 
@@ -447,9 +453,12 @@ export default {
 			) {
 				try {
 					const { data } = await this.app.importFile('json')
-					const response = await ConfigApis.importConfig({
-						data: data,
-					})
+
+					const payload = await this.resolveImportSelection(data)
+					// User dismissed the network picker
+					if (!payload) return
+
+					const response = await ConfigApis.importConfig(payload)
 					this.showSnackbar(
 						response.message,
 						response.success ? 'success' : 'error',
@@ -458,6 +467,97 @@ export default {
 					log.error(error)
 				}
 			}
+		},
+		/**
+		 * Inspect an imported nodes.json payload and, when it bundles multiple
+		 * Z-Wave networks (home-id wrapped), ask the user which one to apply to
+		 * the current controller. Returns the `/importConfig` request body, or
+		 * null if the picker was dismissed.
+		 */
+		async resolveImportSelection(data) {
+			const homeIds = this.getImportHomeIds(data)
+
+			// Flat/array payload, or a single network: nothing to choose.
+			if (homeIds.length <= 1) {
+				return { data }
+			}
+
+			const MERGE_ALL = '__merge_all__'
+			const current = this.appInfo?.homeHex
+
+			const items = homeIds.map(({ homeId, nodeCount }) => ({
+				title:
+					`${homeId}${homeId === current ? ' (current)' : ''} — ` +
+					`${nodeCount} node${nodeCount === 1 ? '' : 's'}`,
+				value: homeId,
+			}))
+			items.push({ title: 'All networks (merge)', value: MERGE_ALL })
+
+			const selection = await this.app.confirm(
+				'Multiple networks found',
+				'This backup contains nodes for more than one Z-Wave ' +
+					'network. Choose which network to import into the ' +
+					'current controller.',
+				'warning',
+				{
+					confirmText: 'Import',
+					width: 450,
+					inputs: [
+						{
+							type: 'list',
+							key: 'homeId',
+							label: 'Network',
+							required: true,
+							items,
+							default: homeIds.some((h) => h.homeId === current)
+								? current
+								: homeIds[0].homeId,
+						},
+					],
+				},
+			)
+
+			if (!selection || !selection.homeId) return null
+
+			return selection.homeId === MERGE_ALL
+				? { data, mergeAll: true }
+				: { data, homeId: selection.homeId }
+		},
+		/**
+		 * Detect the home ids in a home-id-wrapped nodes.json payload, with the
+		 * node count of each. Returns [] for flat/array/legacy payloads.
+		 */
+		getImportHomeIds(data) {
+			if (!data || typeof data !== 'object' || Array.isArray(data)) {
+				return []
+			}
+
+			// A node id is a positive integer within the addressable range
+			// (Long Range tops out at 4000); home ids are far larger, so this
+			// keeps a home-id key from being mistaken for a node-id key.
+			const isNodeId = (key) =>
+				/^\d+$/.test(key) &&
+				Number(key) > 0 &&
+				Number(key) <= MAX_NODES_LR
+			const entries = Object.entries(data)
+
+			// Node-id top-level keys mean a direct node map, not wrapped.
+			if (entries.some(([key]) => isNodeId(key))) {
+				return []
+			}
+
+			return entries
+				.filter(
+					([, value]) =>
+						value &&
+						typeof value === 'object' &&
+						!Array.isArray(value),
+				)
+				.map(([homeId, value]) => ({
+					homeId,
+					nodeCount: Object.keys(value).filter(isNodeId).length,
+				}))
+				.filter(({ nodeCount }) => nodeCount > 0)
 		},
 		async exportConfiguration() {
 			try {

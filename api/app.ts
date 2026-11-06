@@ -11,6 +11,7 @@ import Gateway, { GatewayType } from './lib/Gateway.ts'
 import jsonStore from './lib/jsonStore.ts'
 import * as loggers from './lib/logger.ts'
 import { logContainer } from './lib/logger.ts'
+import { loadCertKey } from './lib/tlsCert.ts'
 import MqttClient from './lib/MqttClient.ts'
 import SocketManager from './lib/SocketManager.ts'
 import type { CallAPIResult, ZwaveConfig } from './lib/ZwaveClient.ts'
@@ -23,7 +24,10 @@ import rateLimit from 'express-rate-limit'
 import session from 'express-session'
 import type { Server as HttpServer } from 'node:http'
 import { createServer as createHttpServer } from 'node:http'
-import { createServer as createHttpsServer } from 'node:https'
+import {
+	createServer as createHttpsServer,
+	Server as HttpsServer,
+} from 'node:https'
 import jwt from 'jsonwebtoken'
 import path from 'node:path'
 import sessionStore from 'session-file-store'
@@ -33,6 +37,7 @@ import { Driver, libVersion } from 'zwave-js'
 import {
 	defaultPsw,
 	defaultUser,
+	logsDir,
 	sessionSecret,
 	snippetsDir,
 	storeDir,
@@ -63,14 +68,22 @@ import {
 	writeFile,
 	lstat,
 	mkdir,
+	mkdtemp,
+	cp,
 } from 'node:fs/promises'
-import { generate } from 'selfsigned'
 import type { ZnifferConfig } from './lib/ZnifferManager.ts'
 import ZnifferManager from './lib/ZnifferManager.ts'
 import { getAllNamedScaleGroups, getAllSensors } from '@zwave-js/core'
 import debugManager from './lib/DebugManager.ts'
-
-const createCertificate = promisify(generate)
+import {
+	getImportedNodeLocation,
+	normalizeImportedNodesConfig,
+} from './lib/importConfig.ts'
+import {
+	isTrustedRequest,
+	isTrustedSocket,
+	startTrustedListener,
+} from './lib/trustedListener.ts'
 
 declare module 'express-session' {
 	export interface SessionData {
@@ -114,9 +127,14 @@ const logger = loggers.module('App')
 
 const verifyJWT = promisify(jwt.verify.bind(jwt))
 
+// The trusted listener skips rate limiting: the host application is trusted,
+// and over a unix socket req.ip is undefined which express-rate-limit rejects
+const skipTrusted = (req: Request) => isTrustedRequest(req)
+
 const storeLimiter = rateLimit({
 	windowMs: 15 * 60 * 1000, // 15 minutes
 	max: 100,
+	skip: skipTrusted,
 	handler: function (req, res) {
 		res.json({
 			success: false,
@@ -129,6 +147,7 @@ const storeLimiter = rateLimit({
 const loginLimiter = rateLimit({
 	windowMs: 60 * 60 * 1000, // keep in memory for 1 hour
 	max: 5, // start blocking after 5 requests
+	skip: skipTrusted,
 	handler: function (req, res) {
 		res.json({ success: false, message: 'Max requests limit reached' })
 	},
@@ -137,6 +156,7 @@ const loginLimiter = rateLimit({
 const apisLimiter = rateLimit({
 	windowMs: 60 * 60 * 1000, // keep in memory for 1 hour
 	max: 500, // start blocking after 500 requests
+	skip: skipTrusted,
 	handler: function (req, res) {
 		res.json({ success: false, message: 'Max requests limit reached' })
 	},
@@ -146,22 +166,50 @@ function sslDisabled() {
 	return process.env.FORCE_DISABLE_SSL === 'true'
 }
 
-// apis response codes
-enum RESPONSE_CODES {
-	OK = 'OK',
-	GENERAL_ERROR = 'General Error',
-	INVALID = 'Invalid data',
-	AUTH_FAILED = 'Authentication failed',
-	PERMISSION_ERROR = 'Insufficient permissions',
+/**
+ * Coerce a raw trust-proxy value into the type Express expects.
+ * Accepts "true"/"false" (booleans), numeric strings (hop count),
+ * and any other string (IP/CIDR list or preset name) verbatim.
+ */
+function parseTrustProxy(raw: string): boolean | number | string {
+	const trimmed = raw.trim()
+	if (trimmed === 'true') return true
+	if (trimmed === 'false') return false
+	if (/^\d+$/.test(trimmed)) return parseInt(trimmed, 10)
+	return trimmed
 }
 
-const socketManager = new SocketManager()
+/**
+ * Configure Express `trust proxy` from the `TRUST_PROXY` env var.
+ * An unset value leaves the default (false) in place.
+ */
+function configureTrustProxy() {
+	const raw = process.env.TRUST_PROXY
+	if (!raw) return
+	const value = parseTrustProxy(raw)
+	app.set('trust proxy', value)
+	logger.info(`Express 'trust proxy' set to: ${value}`)
+}
+
+// apis response codes
+const RESPONSE_CODES = {
+	OK: 'OK',
+	GENERAL_ERROR: 'General Error',
+	INVALID: 'Invalid data',
+	AUTH_FAILED: 'Authentication failed',
+	PERMISSION_ERROR: 'Insufficient permissions',
+} as const
+type RESPONSE_CODES = (typeof RESPONSE_CODES)[keyof typeof RESPONSE_CODES]
+
+export const socketManager = new SocketManager()
 
 socketManager.authMiddleware = function (
 	socket: Socket & { user?: User },
 	next: (err?) => void,
 ) {
-	if (!isAuthEnabled()) {
+	if (isTrustedSocket(socket.request?.socket)) {
+		next()
+	} else if (!isAuthEnabled()) {
 		next()
 	} else if (socket.handshake.auth?.token || socket.handshake.query?.token) {
 		const token = (socket.handshake.auth?.token ||
@@ -178,6 +226,7 @@ socketManager.authMiddleware = function (
 
 let gw: Gateway // the gateway instance
 let zniffer: ZnifferManager // the zniffer instance
+let trustedServer: HttpServer | undefined // the trusted (host API) listener
 const plugins: CustomPlugin[] = []
 let pluginsRouter: Router
 
@@ -203,12 +252,18 @@ export async function startServer(port: number | string, host?: string) {
 	// as the really first thing setup loggers so all logs will go to file if specified in settings
 	setupLogging(settings)
 
+	configureTrustProxy()
+
 	const httpsEnabled = process.env.HTTPS || settings?.gateway?.https
 
 	if (httpsEnabled) {
 		if (!sslDisabled()) {
 			logger.info('HTTPS is enabled. Loading cert and keys')
-			const { cert, key } = await loadCertKey()
+			const { cert, key } = await loadCertKey(
+				storeDir,
+				process.env.SSL_CERTIFICATE,
+				process.env.SSL_KEY,
+			)
 
 			if (cert && key) {
 				server = createHttpsServer(
@@ -241,7 +296,7 @@ export async function startServer(port: number | string, host?: string) {
 			typeof addr === 'string' ? 'pipe ' + addr : 'port ' + addr?.port
 		logger.info(
 			`Listening on ${bind}${host ? 'host ' + host : ''} protocol ${
-				httpsEnabled ? 'HTTPS' : 'HTTP'
+				server instanceof HttpsServer ? 'HTTPS' : 'HTTP'
 			}`,
 		)
 	})
@@ -280,6 +335,10 @@ export async function startServer(port: number | string, host?: string) {
 	}
 
 	setupSocket(server)
+	trustedServer = await startTrustedListener(app)
+	if (trustedServer) {
+		socketManager.attachServer(trustedServer)
+	}
 	setupInterceptor()
 	await loadSnippets()
 	startZniffer(settings.zniffer)
@@ -328,65 +387,11 @@ async function getSnippets() {
 }
 
 /**
- * Get the `path` param from a request. Throws if the path is not safe
+ * Get the `path` param from a request. Throws if the path is not safe - that is if it escapes the storeDir.
  */
-function getSafePath(req: Request | string) {
-	let reqPath = typeof req === 'string' ? req : req.query.path
-
-	if (typeof reqPath !== 'string') {
-		throw Error('Invalid path')
-	}
-
-	reqPath = path.normalize(reqPath)
-
-	if (!reqPath.startsWith(storeDir) || reqPath === storeDir) {
-		throw Error('Path not allowed')
-	}
-
-	return reqPath
-}
-
-async function loadCertKey(): Promise<{
-	cert: string
-	key: string
-}> {
-	const certFile =
-		process.env.SSL_CERTIFICATE || utils.joinPath(storeDir, 'cert.pem')
-	const keyFile = process.env.SSL_KEY || utils.joinPath(storeDir, 'key.pem')
-
-	let key: string
-	let cert: string
-
-	try {
-		cert = await readFile(certFile, 'utf8')
-		key = await readFile(keyFile, 'utf8')
-	} catch (error) {
-		// noop
-	}
-
-	if (!cert || !key) {
-		logger.info(
-			'Cert and key not found in store, generating fresh new ones...',
-		)
-
-		try {
-			const result = await createCertificate([], {
-				days: 99999,
-				keySize: 2048,
-			})
-
-			key = result.private
-			cert = result.cert
-
-			await writeFile(utils.joinPath(storeDir, 'key.pem'), key)
-			await writeFile(utils.joinPath(storeDir, 'cert.pem'), cert)
-			logger.info('New cert and key created')
-		} catch (error) {
-			logger.error('Error creating cert and key for HTTPS', error)
-		}
-	}
-
-	return { cert, key }
+async function getSafePath(req: Request | string, resolveReal = true) {
+	const reqPath = typeof req === 'string' ? req : req.query.path
+	return utils.resolveSafeStorePath(reqPath, storeDir, resolveReal)
 }
 
 function setupLogging(settings: { gateway: utils.DeepPartial<GatewayConfig> }) {
@@ -397,12 +402,10 @@ async function startGateway(settings: Settings) {
 	let mqtt: MqttClient
 	let zwave: ZWaveClient
 
-	if (
-		isAuthEnabled() &&
-		sessionSecret === 'DEFAULT_SESSION_SECRET_CHANGE_ME'
-	) {
-		logger.error(
-			'Session secret is the default one. For security reasons you should change it by using SESSION_SECRET env var',
+	if (isAuthEnabled() && !process.env.SESSION_SECRET) {
+		logger.warn(
+			'SESSION_SECRET env var is not set; using an auto-generated secret persisted in the store. ' +
+				'Set SESSION_SECRET explicitly to control the secret across environments.',
 		)
 	}
 
@@ -531,13 +534,6 @@ logger.info(`Version: ${utils.getVersion()}`)
 logger.info('Application path:' + utils.getPath(true))
 logger.info('Store path:' + storeDir)
 
-if (process.env.TRUST_PROXY) {
-	app.set(
-		'trust proxy',
-		process.env.TRUST_PROXY === 'true' ? true : process.env.TRUST_PROXY,
-	)
-}
-
 app.use(
 	morgan(
 		':remote-addr :method :url :status :res[content-length] - :response-time ms',
@@ -553,10 +549,10 @@ app.use(
 		level: 6, // Balanced compression level (0-9, higher = more compression but slower)
 	}),
 )
-app.use(express.json({ limit: '50mb' }) as RequestHandler)
+app.use(express.json({ limit: '5mb' }) as RequestHandler)
 app.use(
 	express.urlencoded({
-		limit: '50mb',
+		limit: '5mb',
 		extended: true,
 		parameterLimit: 50000,
 	}) as RequestHandler,
@@ -905,7 +901,7 @@ async function parseJWT(req: Request) {
 // middleware to check if user is authenticated
 async function isAuthenticated(req: Request, res: Response, next: () => void) {
 	// if user is authenticated in the session, carry on
-	if (req?.session?.user || !isAuthEnabled()) {
+	if (isTrustedRequest(req) || req?.session?.user || !isAuthEnabled()) {
 		return next()
 	}
 
@@ -927,7 +923,10 @@ async function isAuthenticated(req: Request, res: Response, next: () => void) {
 
 // logout the user
 app.get('/api/auth-enabled', apisLimiter, function (req, res) {
-	res.json({ success: true, data: isAuthEnabled() })
+	res.json({
+		success: true,
+		data: isTrustedRequest(req) ? false : isAuthEnabled(),
+	})
 })
 
 // api to authenticate user
@@ -1056,10 +1055,14 @@ app.put(
 
 			await jsonStore.put(store.users, users)
 
+			// don't leak the password hash to the client (mirrors /api/authenticate)
+			const userData: User = Object.assign({}, oldUser)
+			delete userData.passwordHash
+
 			res.json({
 				success: true,
 				message: 'Password updated',
-				user: oldUser,
+				user: userData,
 			})
 		} catch (error) {
 			res.json({
@@ -1375,6 +1378,7 @@ app.post(
 							// Build logConfig object from our settings
 							editableOptions.logConfig = utils.buildLogConfig(
 								settings.zwave || {},
+								logsDir,
 							)
 						}
 
@@ -1474,6 +1478,12 @@ app.post(
 					'Gateway is restarting, wait a moment before doing another request',
 				)
 			}
+			// Reject changes when the statistics opt-in belongs to the managing application
+			if (
+				getExternallyManagedPaths().includes('zwave.enableStatistics')
+			) {
+				throw Error('Statistics are managed externally')
+			}
 			const { enableStatistics } = req.body
 
 			const settings: Settings =
@@ -1563,46 +1573,71 @@ app.post(
 	apisLimiter,
 	isAuthenticated,
 	async function (req, res) {
-		let config = req.body.data
 		try {
 			if (!gw.zwave) throw Error('Z-Wave client not inited')
 
-			// try convert to node object
-			if (Array.isArray(config)) {
-				const parsed = {}
+			const { nodes, selectedHomeId, skippedHomeIds } =
+				normalizeImportedNodesConfig(req.body.data, gw.zwave.homeHex, {
+					homeId:
+						typeof req.body.homeId === 'string'
+							? req.body.homeId
+							: undefined,
+					mergeAll: req.body.mergeAll === true,
+				})
 
-				for (let i = 0; i < config.length; i++) {
-					if (config[i]) {
-						parsed[i] = config[i]
-					}
-				}
-
-				config = parsed
+			if (skippedHomeIds.length > 0) {
+				logger.warn(
+					`Import: skipped nodes for home id(s) ${skippedHomeIds.join(
+						', ',
+					)}` +
+						(selectedHomeId
+							? `, imported ${selectedHomeId} (current controller)`
+							: ', none matched the current controller'),
+				)
 			}
 
-			for (const nodeId in config) {
-				const node = config[nodeId]
+			if (!selectedHomeId && skippedHomeIds.length > 0) {
+				return res.json({
+					success: false,
+					message: `Import skipped: the backup contains nodes for home ids ${skippedHomeIds.join(
+						', ',
+					)}, none of which match the connected controller (${
+						gw.zwave.homeHex
+					}).`,
+				})
+			}
+
+			for (const nodeId in nodes) {
+				const node = nodes[nodeId]
 				if (!node || typeof node !== 'object') continue
+
+				if (!utils.isValidNodeIdString(nodeId)) {
+					continue
+				}
 
 				// All API calls expect nodeId to be a number, so convert it here.
 				const nodeIdNumber = Number(nodeId)
+
 				if (utils.hasProperty(node, 'name')) {
 					await gw.zwave.callApi(
 						'setNodeName',
 						nodeIdNumber,
-						node.name || '',
+						typeof node.name === 'string' ? node.name : '',
 					)
 				}
 
-				if (utils.hasProperty(node, 'loc')) {
+				if (
+					utils.hasProperty(node, 'loc') ||
+					utils.hasProperty(node, 'location')
+				) {
 					await gw.zwave.callApi(
 						'setNodeLocation',
 						nodeIdNumber,
-						node.loc || '',
+						getImportedNodeLocation(node),
 					)
 				}
 
-				if (node.hassDevices) {
+				if (utils.isRecord(node.hassDevices)) {
 					await gw.zwave.storeDevices(
 						node.hassDevices,
 						nodeIdNumber,
@@ -1852,14 +1887,14 @@ app.get('/api/store', storeLimiter, isAuthenticated, async function (req, res) {
 	try {
 		let data: StoreFileEntry[] | string
 		if (req.query.path) {
-			const reqPath = getSafePath(req)
+			const reqPath = await getSafePath(req)
 			// lgtm [js/path-injection]
 			let stat = await lstat(reqPath)
 
 			// check symlink is secure
 			if (stat.isSymbolicLink()) {
 				const realPath = await realpath(reqPath)
-				getSafePath(realPath)
+				await getSafePath(realPath)
 				stat = await lstat(realPath)
 			}
 
@@ -1891,7 +1926,7 @@ app.get('/api/store', storeLimiter, isAuthenticated, async function (req, res) {
 
 app.put('/api/store', storeLimiter, isAuthenticated, async function (req, res) {
 	try {
-		const reqPath = getSafePath(req)
+		const reqPath = await getSafePath(req)
 
 		const isNew = req.query.isNew === 'true'
 		const isDirectory = req.query.isDirectory === 'true'
@@ -1926,7 +1961,7 @@ app.delete(
 	isAuthenticated,
 	async function (req, res) {
 		try {
-			const reqPath = getSafePath(req)
+			const reqPath = await getSafePath(req)
 
 			// lgtm [js/path-injection]
 			await rm(reqPath, { recursive: true, force: true })
@@ -1947,7 +1982,7 @@ app.put(
 		try {
 			const files = req.body.files || []
 			for (const f of files) {
-				await rm(f, { recursive: true, force: true })
+				await rm(await getSafePath(f), { recursive: true, force: true })
 			}
 			res.json({ success: true })
 		} catch (error) {
@@ -1985,19 +2020,22 @@ app.post(
 		archive.pipe(res)
 
 		for (const f of files) {
-			const s = await lstat(f)
-			const name = f.replace(storeDir, '')
-			if (s.isFile()) {
-				archive.file(f, { name })
-			} else if (s.isSymbolicLink()) {
-				const targetPath = await realpath(f)
-				try {
-					// check path is secure, if so add it as file
-					getSafePath(targetPath)
+			try {
+				// confine the path to the store *before* touching the
+				// filesystem, so unsafe paths can't be probed via lstat/realpath
+				const safe = await getSafePath(f)
+				const s = await lstat(safe)
+				const name = safe.replace(storeDir, '')
+				if (s.isFile()) {
+					archive.file(safe, { name })
+				} else if (s.isSymbolicLink()) {
+					// getSafePath already resolved the link target and checked
+					// it stays in the store; add the dereferenced target
+					const targetPath = await realpath(safe)
 					archive.file(targetPath, { name })
-				} catch (e) {
-					// ignore
 				}
+			} catch (e) {
+				// ignore unsafe or unreadable entries
 			}
 		}
 
@@ -2041,9 +2079,21 @@ app.post(
 			}
 
 			if (isRestore) {
-				await extract(file.path, { dir: storeDir })
+				// Stage, reject symlinks escaping the store, then merge in.
+				const stageDir = await mkdtemp(path.join(storeDir, '.restore-'))
+				try {
+					await extract(file.path, { dir: stageDir })
+					await utils.assertNoEscapingSymlinks(stageDir, stageDir)
+					await cp(stageDir, storeDir, {
+						recursive: true,
+						// keep in-store links (e.g. *_current.log) as links, don't copy their targets
+						verbatimSymlinks: true,
+					})
+				} finally {
+					await rm(stageDir, { recursive: true, force: true })
+				}
 			} else {
-				const destinationPath = getSafePath(
+				const destinationPath = await getSafePath(
 					path.join(storeDir, folder, file.originalname),
 				)
 				await rename(file.path, destinationPath)
@@ -2060,14 +2110,19 @@ app.post(
 	},
 )
 
-app.get('/api/snippet', apisLimiter, async function (req, res) {
-	try {
-		const snippets = await getSnippets()
-		res.json({ success: true, data: snippets })
-	} catch (err) {
-		res.json({ success: false, message: err.message })
-	}
-})
+app.get(
+	'/api/snippet',
+	apisLimiter,
+	isAuthenticated,
+	async function (req, res) {
+		try {
+			const snippets = await getSnippets()
+			res.json({ success: true, data: snippets })
+		} catch (err) {
+			res.json({ success: false, message: err.message })
+		}
+	},
+)
 
 // Debug capture endpoints
 app.get('/api/debug/status', apisLimiter, isAuthenticated, function (req, res) {
@@ -2210,6 +2265,11 @@ process.removeAllListeners('SIGINT')
 async function gracefuShutdown() {
 	logger.warn('Shutdown detected: closing clients...')
 	try {
+		if (trustedServer) {
+			// Await the close so a unix socket file is unlinked before exit
+			const server = trustedServer
+			await new Promise((resolve) => server.close(resolve))
+		}
 		if (gw) await gw.close()
 		await destroyPlugins()
 	} catch (error) {

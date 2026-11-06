@@ -1161,7 +1161,15 @@
 											></v-switch>
 										</v-col>
 
-										<v-col cols="12" sm="6">
+										<v-col
+											cols="12"
+											sm="6"
+											v-if="
+												!isSettingManagedExternally(
+													'zwave.enableStatistics',
+												)
+											"
+										>
 											<v-switch
 												hint="Usage statistics allows us to gain insight how `zwave-js` is used, which manufacturers and devices are most prevalent and where to best focus our efforts in order to improve `zwave-js` the most. We do not store any personal information. Details can be found under https://zwave-js.github.io/node-zwave-js/#/data-collection/data-collection?id=usage-statistics"
 												persistent-hint
@@ -2102,6 +2110,32 @@
 											hint="Set retain flag to true in discovery messages"
 											v-model="
 												newGateway.retainedDiscovery
+											"
+											persistent-hint
+										></v-switch>
+									</v-col>
+									<v-col
+										cols="6"
+										v-if="newGateway.hassDiscovery"
+									>
+										<v-switch
+											label="Use node location as suggested area"
+											hint="Adds Home Assistant MQTT discovery device.suggested_area using the node Location field."
+											v-model="
+												newGateway.useLocationAsSuggestedArea
+											"
+											persistent-hint
+										></v-switch>
+									</v-col>
+									<v-col
+										cols="6"
+										v-if="newGateway.hassDiscovery"
+									>
+										<v-switch
+											label="Enable Configuration CC entities"
+											hint="Enable Configuration CC entities by default. Home Assistant applies this only to newly added entities. Can be overridden per value in Gateway values"
+											v-model="
+												newGateway.ccConfigEnabledByDefault
 											"
 											persistent-hint
 										></v-switch>

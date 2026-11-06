@@ -14,6 +14,7 @@
   - [Driver function](usage/driver_function.md)
   - [Nodes Healthcheck](usage/nodes_healthcheck.md)
   - [Zniffer](usage/zniffer.md)
+  - [Groups](usage/groups.md)
   - [Configuration Templates](usage/configuration-templates.md)
 
 - Device Support

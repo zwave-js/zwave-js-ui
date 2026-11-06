@@ -7,6 +7,7 @@ Z-Wave JS UI is a full-featured Z-Wave Control Panel and MQTT Gateway built with
 ## Commit and PR Standards
 
 **ALWAYS follow conventional commit standards for all commits and PR titles/descriptions:**
+**ALWAYS split work into multiple commits instead of doing a single big commit at the end of implementation.**
 
 ### Commit Messages
 
@@ -297,8 +298,8 @@ npm run test
 ```
 
 -   **NEVER CANCEL**: Tests take ~3 seconds total, but set 30+ minute timeout for safety
--   Backend tests: 51 tests using Mocha + TypeScript
--   Frontend tests: 52 tests using Mocha + Babel
+-   Backend tests: 109 tests using Vitest (TypeScript)
+-   Frontend tests: 52 tests using Vitest
 -   All tests must pass before committing
 
 ### Individual Test Suites
@@ -418,10 +419,11 @@ After making changes, ALWAYS test these complete user scenarios:
 ### Important Files
 
 -   **package.json**: All npm scripts and dependencies
+-   **Dependency pin review note**: Keep `zwave-js` pinned to an exact version in `package.json` (no `^` or `~`) and review matching `package-lock.json` updates whenever that version changes
 -   **tsconfig.json**: TypeScript configuration (compiles api/ to server/)
 -   **vite.config.mjs**: Frontend build configuration
 -   **nodemon.json**: Backend development server configuration
--   **.mocharc.yml**: Test configuration
+-   **vitest.config.ts**: Test configuration (Vitest)
 -   **server_config.js**: Mock Z-Wave controller configuration
 
 ## Environment Configuration

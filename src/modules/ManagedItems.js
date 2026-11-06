@@ -39,10 +39,10 @@ export class ManagedItems {
 				: this.filters
 
 		// sometimes columns are updated in new releases, this allows us to show them
-		if (!this.loadSetting('cleared3', false)) {
+		if (!this.loadSetting('cleared4', false)) {
 			this._filters = this.initialFilters
 			this._columns = this.initialTableColumns
-			this.storeSetting('cleared3', true)
+			this.storeSetting('cleared4', true)
 		}
 
 		this._selected = this.initialSelected
@@ -102,7 +102,8 @@ export class ManagedItems {
 	}
 
 	/**
-	 * Get all property values from items
+	 * Get all property values from the items matching every active filter
+	 * except the one on this property, so its other values stay selectable
 	 */
 	getPropValues(propName) {
 		const uniqueMap = {}
@@ -110,7 +111,9 @@ export class ManagedItems {
 		const undefinedPlaceholder =
 			this.propDefs[propName].undefinedPlaceholder
 
-		this.items.forEach((item) => {
+		const { [propName]: ownFilter, ...otherFilters } = this.filters ?? {}
+
+		this._filterItems(otherFilters).forEach((item) => {
 			const value = this.getPropValue(item, propName)
 			if (value !== undefined && value !== null) {
 				uniqueMap[value] = uniqueMap[value] ?? value
@@ -138,10 +141,17 @@ export class ManagedItems {
 	 * Get filtered items
 	 */
 	get filteredItems() {
+		return this._filterItems(this.filters)
+	}
+
+	/**
+	 * Internal function to get the items matching the given filters
+	 */
+	_filterItems(filters) {
 		return ColumnFilterHelper.filterByFilterSpec(
 			new NodeCollection(this.items, this.propDefs),
 			this.allTableHeaders,
-			this.filters,
+			filters,
 		).nodes // TODO: nodes should be items
 	}
 

@@ -460,16 +460,16 @@ export const useBaseStore = defineStore('base', {
 
 ## Testing Requirements
 
-- Write tests in test/ directory
-- Use Mocha + Babel for frontend tests
+- Write frontend tests in TypeScript in `src/` next to the module (e.g. `src/modules/*.test.ts`)
+- Use Vitest for frontend tests
 - Mock Socket.IO and API calls
 - Test component rendering and interactions
 - Maintain >80% code coverage
 
 ```javascript
-// test/components/DeviceCard.test.js
+// src/components/DeviceCard.test.ts
+import { describe, it, expect } from 'vitest'
 import { mount } from '@vue/test-utils'
-import { expect } from 'chai'
 import DeviceCard from '@/components/DeviceCard.vue'
 
 describe('DeviceCard.vue', () => {
@@ -484,10 +484,15 @@ describe('DeviceCard.vue', () => {
       }
     })
     
-    expect(wrapper.text()).to.include('Living Room Light')
+    expect(wrapper.text()).toContain('Living Room Light')
   })
 })
 ```
+
+> Component tests with `@vue/test-utils` need a `jsdom` environment and the Vue
+> plugin — add a `projects` entry to `vitest.config.ts` (and install
+> `@vue/test-utils`) before writing them. The existing suites test plain
+> JS/TS modules and run in the default `node` environment.
 
 ## Development Workflow
 

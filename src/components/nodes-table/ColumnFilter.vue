@@ -113,7 +113,10 @@ export default {
 	},
 	computed: {
 		hasFilter() {
-			return this.hasDeepValue(this.modelValue)
+			return ColumnFilterHelper.isFilterActive(
+				this.column.type,
+				this.modelValue,
+			)
 		},
 		_value: {
 			get() {
@@ -136,17 +139,6 @@ export default {
 		},
 	},
 	methods: {
-		hasDeepValue(obj) {
-			return (
-				obj !== undefined &&
-				obj !== null &&
-				Object.keys(obj).some(
-					(k) =>
-						(!!obj[k] && !!Object.keys(obj[k]).length) ||
-						typeof obj[k] === 'boolean',
-				)
-			)
-		},
 		showOptions() {
 			this.isVisible = true
 		},

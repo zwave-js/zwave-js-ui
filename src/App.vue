@@ -57,7 +57,7 @@
 					</v-toolbar-title>
 				</template>
 				<template v-else>
-					<v-tabs>
+					<v-tabs show-arrows>
 						<v-tab
 							v-for="item in pages"
 							:key="item.title"
@@ -436,6 +436,7 @@ export default {
 			'znifferState',
 			'inited',
 			'nodes',
+			'isSettingManagedExternally',
 		]),
 		...mapState(useBaseStore, {
 			darkMode: (store) => store.uiState.darkMode,
@@ -531,6 +532,12 @@ export default {
 				})
 
 				pages.splice(4, 0, {
+					icon: 'group_work',
+					title: 'Groups',
+					path: Routes.groups,
+				})
+
+				pages.splice(5, 0, {
 					icon: 'content_copy',
 					title: 'Templates',
 					path: Routes.configurationTemplates,
@@ -1258,9 +1265,13 @@ export default {
 					}
 
 					if (
-						!data.settings ||
-						!data.settings.zwave ||
-						data.settings.zwave.enableStatistics === undefined
+						(!data.settings ||
+							!data.settings.zwave ||
+							data.settings.zwave.enableStatistics ===
+								undefined) &&
+						!this.isSettingManagedExternally(
+							'zwave.enableStatistics',
+						)
 					) {
 						const result = await this.confirm(
 							'Usage statistics',
@@ -1337,6 +1348,24 @@ export default {
 				return
 			}
 
+			// Check if JWT token is expired before attempting connection
+			if (this.auth && this.user?.token) {
+				try {
+					const payload = JSON.parse(
+						atob(this.user.token.split('.')[1]),
+					)
+					if (payload.exp && payload.exp * 1000 < Date.now()) {
+						log.warn('JWT token expired, logging out')
+						await this.logout()
+						return
+					}
+				} catch (e) {
+					log.warn('Invalid JWT token, logging out')
+					await this.logout()
+					return
+				}
+			}
+
 			const auth = this.auth ? { token: this.user.token } : undefined
 
 			this.socket = io('/', {
@@ -1356,7 +1385,10 @@ export default {
 				'znifferState',
 			])
 
+			let authErrors = 0
+
 			this.socket.on('connect', () => {
+				authErrors = 0
 				this.updateStatus('Connected', 'success')
 				log.info('Socket connected')
 
@@ -1381,6 +1413,23 @@ export default {
 			this.socket.on('disconnect', () => {
 				log.info('Socket disconnected')
 				this.updateStatus('Disconnected', 'error')
+			})
+
+			this.socket.on('connect_error', (err) => {
+				log.warn('Socket connect error', err.message)
+				// Matches the error thrown by server auth middleware
+				// in api/app.ts socketManager.authMiddleware
+				if (err.message === 'Authentication error') {
+					authErrors++
+					// Only logout after 3 consecutive auth failures
+					// to avoid logging out on transient issues
+					if (authErrors >= 3) {
+						this.socket.disconnect()
+						this.logout()
+						return
+					}
+				}
+				this.updateStatus('Reconnecting', 'warning')
 			})
 
 			this.socket.on('error', (err) => {

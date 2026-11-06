@@ -33,7 +33,7 @@ In this case
 
 should be entered in the Z-Wave settings instead of `/dev/ttyUSB0`.
 
-If this does not help, the stick restart can be disabled by disabling __Soft Reset__ option under Z-Wave settings, but this may limit functionality.
+If this does not help, the stick restart can be disabled by disabling __Soft Reset__ option under Z-Wave settings, but this may limit functionality. Note that this only works for 500 series and older controllers: 700/800 series controllers are always soft reset, regardless of this setting.
 
 > This is definitely necessary with the zwave.me UZB1. However, the adapter tries to detect this stick by itself.
 

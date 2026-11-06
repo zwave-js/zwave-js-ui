@@ -39,13 +39,13 @@ const GATEWAY_TYPE = {
 	VALUEID: 0,
 	NAMED: 1,
 	MANUAL: 2,
-}
+} as const
 
 const PAYLOAD_TYPE = {
-	TIME_VALUE: 0,
+	JSON_TIME_VALUE: 0,
 	VALUEID: 1,
 	RAW: 2,
-}
+} as const
 
 const CUSTOM_DEVICES = storeDir + '/customDevices'
 let allDevices = hassDevices // will contain customDevices + hassDevices
@@ -142,17 +142,11 @@ export function closeWatchers() {
 	}
 }
 
-export enum GatewayType {
-	VALUEID,
-	NAMED,
-	MANUAL,
-}
+export const GatewayType = GATEWAY_TYPE
+export type GatewayType = (typeof GATEWAY_TYPE)[keyof typeof GATEWAY_TYPE]
 
-export enum PayloadType {
-	JSON_TIME_VALUE,
-	VALUEID,
-	RAW,
-}
+export const PayloadType = PAYLOAD_TYPE
+export type PayloadType = (typeof PAYLOAD_TYPE)[keyof typeof PAYLOAD_TYPE]
 
 export type GatewayValue = {
 	device: string
@@ -169,7 +163,7 @@ export type GatewayValue = {
 	receiveFunction?: string
 	qos?: 0 | 1 | 2
 	retain?: boolean
-	ccConfigEnableDiscovery?: boolean
+	ccConfigEnableDiscovery?: boolean | null
 }
 
 export type ScheduledJob = {
@@ -193,6 +187,8 @@ export type GatewayConfig = {
 	entityTemplate?: string
 	hassDiscovery?: boolean
 	discoveryPrefix?: string
+	useLocationAsSuggestedArea?: boolean
+	ccConfigEnabledByDefault?: boolean
 	logEnabled?: boolean
 	logLevel?: LogLevel
 	logToFile?: boolean
@@ -223,6 +219,7 @@ interface DeviceInfo {
 	model: string
 	name: string
 	sw_version: string
+	suggested_area?: string
 }
 
 export default class Gateway {
@@ -446,11 +443,19 @@ export default class Gateway {
 						payload ===
 						(hassDevice.discovery_payload.payload_stop ?? 'STOP')
 					) {
+						// the value used to stop an ongoing level change
+						// depends on the command class
+						const stopProperty =
+							valueId.commandClass ===
+							CommandClasses['Window Covering']
+								? 'levelChangeUp'
+								: 'Up'
+
 						this._zwave
 							.writeValue(
 								{
 									...valueId,
-									property: 'Up',
+									property: stopProperty,
 								},
 								false,
 							)
@@ -461,7 +466,7 @@ export default class Gateway {
 			}
 
 			if (valueConf) {
-				if (this._isValidOperation(valueConf.postOperation)) {
+				if (utils.isValidOperation(valueConf.postOperation)) {
 					let op = valueConf.postOperation
 
 					// revert operation to write
@@ -470,7 +475,7 @@ export default class Gateway {
 					else if (op.includes('+')) op = op.replace(/\+/, '-')
 					else if (op.includes('-')) op = op.replace(/-/, '+')
 
-					payload = eval(`${payload}${op}`)
+					payload = utils.applyOperation(payload, op)
 				}
 
 				if (valueConf.parseReceive) {
@@ -662,7 +667,7 @@ export default class Gateway {
 	 */
 	rediscoverNode(nodeID: number): void {
 		const node = this._zwave.nodes.get(nodeID)
-		if (node) {
+		if (node && !node.virtual) {
 			// delete all discovered values
 			this._onNodeRemoved(node)
 			node.hassDevices = {}
@@ -748,12 +753,25 @@ export default class Gateway {
 				(this.config.manualDiscovery && !options.forceUpdate)
 
 			if (!skipDiscovery) {
-				this._mqtt.publish(
-					hassDevice.discoveryTopic,
-					options.deleteDevice ? '' : hassDevice.discovery_payload,
-					{ qos: 0, retain: this.config.retainedDiscovery || false },
-					this.config.discoveryPrefix,
-				)
+				const discoveryOptions = {
+					qos: 0 as const,
+					retain: this.config.retainedDiscovery || false,
+				}
+				if (options.deleteDevice) {
+					// always retained, to also clear configs retained by an earlier setting
+					this._mqtt.publishEmpty(
+						hassDevice.discoveryTopic,
+						{ ...discoveryOptions, retain: true },
+						this.config.discoveryPrefix,
+					)
+				} else {
+					this._mqtt.publish(
+						hassDevice.discoveryTopic,
+						hassDevice.discovery_payload,
+						discoveryOptions,
+						this.config.discoveryPrefix,
+					)
+				}
 			}
 
 			if (options.forceUpdate) {
@@ -1100,7 +1118,9 @@ export default class Gateway {
 				config.discovery_payload.mode_command_topic = modeId + '/set'
 
 				// [0, 1, 2 ... ] (['off', 'heat', 'cold', ...])
-				const availableModes = <number[]>mode.states.map((s) => s.value)
+				const availableModes = mode.states.map(
+					(s) => s.value,
+				) as number[]
 
 				// Hass accepted modes as per: https://www.home-assistant.io/integrations/climate.mqtt/#modes
 				const allowedModes = [
@@ -1186,9 +1206,9 @@ export default class Gateway {
 
 				const action = node.values[actionId]
 				// [0, 1, 2 ... ] list of value fields from objects in states list
-				const availableActions = <number[]>(
-					action.states.map((state) => state.value)
-				)
+				const availableActions = action.states.map(
+					(state) => state.value,
+				) as number[]
 				// Hass accepted actions as per https://www.home-assistant.io/integrations/climate.mqtt/#action_topic:
 				// ['off', 'heating', 'cooling', 'drying', 'idle', 'fan']
 				// Z-Wave actions/states: https://github.com/zwave-js/node-zwave-js/blob/master/packages/zwave-js/src/lib/commandclass/ThermostatOperatingStateCC.ts#L43
@@ -1239,6 +1259,9 @@ export default class Gateway {
 			return
 		}
 
+		// Virtual nodes don't have deviceClass/endpoints needed for discovery
+		if (node.virtual) return
+
 		const valueId = node.values[vId]
 
 		// if the node is not ready means we don't have all values added yet so we are not sure to discover this value properly
@@ -1278,6 +1301,26 @@ export default class Gateway {
 					if (valueId.isCurrentValue) {
 						cfg = utils.copy(hassCfg.barrier_state)
 						cfg.discovery_payload.position_topic = getTopic
+					} else return
+					break
+				case CommandClasses['Window Covering']:
+					// Values are duplicated for each supported parameter
+					// (propertyKey). Only odd parameters support positioning,
+					// even ones can just be moved with levelChangeUp/Down
+					if (
+						valueId.isCurrentValue &&
+						typeof valueId.propertyKey === 'number' &&
+						valueId.propertyKey % 2 !== 0
+					) {
+						cfg = utils.copy(hassCfg.cover_position)
+						cfg.discovery_payload.command_topic = setTopic
+						cfg.discovery_payload.position_topic = getTopic
+						cfg.discovery_payload.set_position_topic = setTopic
+						// a node can expose more than one cover, one per parameter
+						cfg.object_id = utils.joinProps(
+							cfg.object_id,
+							valueId.propertyKeyName || valueId.propertyKey,
+						)
 					} else return
 					break
 				case CommandClasses['Multilevel Switch']:
@@ -1693,6 +1736,12 @@ export default class Gateway {
 							unit = 'min'
 						} else if (unit === 'hours') {
 							unit = 'h'
+						} else if (unit === 'kVar') {
+							// HA reactive_power device class requires lowercase unit
+							unit = 'kvar'
+						} else if (unit === 'kVarh') {
+							// Normalize reactive energy unit to lowercase
+							unit = 'kvarh'
 						}
 						cfg.discovery_payload.unit_of_measurement = unit
 					}
@@ -1759,11 +1808,10 @@ export default class Gateway {
 							return
 					}
 
-					// by default configuration CC discovery entities are disabled
-					// them can be enabled by setting ccConfigEnableDiscovery to true
-					// on gateway values configuration
+					// per-value ccConfigEnableDiscovery overrides the global default
 					cfg.discovery_payload.enabled_by_default =
-						!!valueConf?.ccConfigEnableDiscovery
+						valueConf?.ccConfigEnableDiscovery ??
+						!!this.config.ccConfigEnabledByDefault
 
 					break
 				}
@@ -1894,7 +1942,7 @@ export default class Gateway {
 			)
 
 			for (const t of topics) {
-				this._mqtt.publish(t, '', { retain: true })
+				this._mqtt.publishEmpty(t, { retain: true })
 			}
 		}
 	}
@@ -1969,8 +2017,11 @@ export default class Gateway {
 		let tmpVal = valueId.value
 
 		if (valueConf) {
-			if (this._isValidOperation(valueConf.postOperation)) {
-				tmpVal = eval(valueId.value + valueConf.postOperation)
+			if (utils.isValidOperation(valueConf.postOperation)) {
+				tmpVal = utils.applyOperation(
+					valueId.value,
+					valueConf.postOperation,
+				)
 			}
 
 			if (valueConf.parseSend) {
@@ -2122,6 +2173,9 @@ export default class Gateway {
 	}
 
 	private _onNodeInited(node: ZUINode): void {
+		// Virtual nodes (broadcast/multicast) don't need polling or HA discovery
+		if (node.virtual) return
+
 		// enable poll if required
 		const values = this.config.values?.filter(
 			(v: GatewayValue) => v.enablePoll && v.device === node.deviceId,
@@ -2422,14 +2476,6 @@ export default class Gateway {
 	}
 
 	/**
-	 * Checks if an operation is valid, it must exist and must contains
-	 * only numbers and operators
-	 */
-	private _isValidOperation(op: string): boolean {
-		return op && !/[^0-9.()\-+*/,]/g.test(op)
-	}
-
-	/**
 	 * Evaluate the return value of a custom parse Function
 	 *
 	 */
@@ -2500,15 +2546,25 @@ export default class Gateway {
 	 * Get the device Object to send in discovery payload
 	 */
 	private _deviceInfo(node: ZUINode, nodeName: string): DeviceInfo {
-		return {
+		const deviceInfo: DeviceInfo = {
 			identifiers: [
 				UID_DISCOVERY_PREFIX + this._zwave.homeHex + '_node' + node.id,
 			],
-			manufacturer: node.manufacturer,
-			model: node.productDescription + ' (' + node.productLabel + ')',
+			manufacturer: node.manufacturer || 'Z-Wave JS',
+			model:
+				node.productDescription && node.productLabel
+					? node.productDescription + ' (' + node.productLabel + ')'
+					: node.name || 'Virtual Node',
 			name: nodeName,
 			sw_version: node.firmwareVersion || utils.getVersion(),
 		}
+
+		const suggestedArea = node.loc?.trim()
+		if (this.config.useLocationAsSuggestedArea && suggestedArea) {
+			deviceInfo.suggested_area = suggestedArea
+		}
+
+		return deviceInfo
 	}
 
 	private setDiscoveryAvailability(
@@ -2717,7 +2773,7 @@ export default class Gateway {
 			switchValue = `37-${endpoint}-currentValue`
 		}
 
-		/* 
+		/*
 			Find the control switch of the device Brightness or Binary
 			If multilevel is not there use binary
 			Some devices use also endpoint + 1 as on/off/brightness... try to guess that too!
@@ -2760,8 +2816,9 @@ export default class Gateway {
 			cfg.discovery_payload.state_topic = discoveredStateTopic
 			cfg.discovery_payload.command_topic = discoveredCommandTopic
 
+			// string compare, so the RAW payload ('true'/'false') works too
 			cfg.discovery_payload.state_value_template =
-				'{{ value_template.json }}'
+				'{{ "ON" if value_json.value | string | lower == "true" else "OFF" }}'
 			cfg.discovery_payload.on_command_type = 'last'
 		}
 
@@ -2776,10 +2833,27 @@ export default class Gateway {
 			cfg.discovery_payload.color_temp_command_topic =
 				cfg.discovery_payload.rgb_command_topic
 
-			cfg.discovery_payload.color_temp_command_template =
-				"{{ {'warmWhite': ((value - 245)|round(0)), 'coldWhite': (255 - (value - 245))|round(0)}|to_json }}"
-			cfg.discovery_payload.color_temp_value_template =
-				"{{ '%03d%03d' | format((value_json.value.warmWhite || 0), (value_json.value.coldWhite || 0)) }}"
+			// warmWhite = mireds - MIN_MIREDS, so the range maps onto 0-MAX_WHITE
+			const MIN_MIREDS = 245
+			const MAX_WHITE = 255
+			const MAX_MIREDS = MIN_MIREDS + MAX_WHITE
+
+			// HA runs the rgb and color_temp handlers of the shared topic in no
+			// fixed order, so each renders only for its own mode (empty = ignored)
+			const setColor = '{% set c = value_json.value %}'
+			const isRgbMode =
+				'(c.red | default(0, true)) + (c.green | default(0, true)) + (c.blue | default(0, true)) > 0'
+			const isColorTempMode = `not (${isRgbMode}) and (c.warmWhite | default(0, true)) + (c.coldWhite | default(0, true)) > 0`
+			cfg.discovery_payload.rgb_value_template = `${setColor}{% if ${isRgbMode} %}{{ c.red }},{{ c.green }},{{ c.blue }}{% endif %}`
+			cfg.discovery_payload.color_temp_value_template = `${setColor}{% if ${isColorTempMode} %}{{ (c.warmWhite | default(0, true)) + ${MIN_MIREDS} }}{% endif %}`
+
+			// modes are exclusive in HA, so setting one turns off the other's channels
+			cfg.discovery_payload.rgb_command_template =
+				"{{ {'red': red, 'green': green, 'blue': blue, 'warmWhite': 0, 'coldWhite': 0}|to_json }}"
+			// clamped because HA doesn't apply min/max_mireds to service calls
+			cfg.discovery_payload.color_temp_command_template = `{% set ww = [[(value - ${MIN_MIREDS}) | round(0) | int, 0] | max, ${MAX_WHITE}] | min %}{{ {'red': 0, 'green': 0, 'blue': 0, 'warmWhite': ww, 'coldWhite': ${MAX_WHITE} - ww}|to_json }}`
+			cfg.discovery_payload.min_mireds = MIN_MIREDS
+			cfg.discovery_payload.max_mireds = MAX_MIREDS
 		}
 		return cfg
 	}

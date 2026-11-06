@@ -162,14 +162,20 @@
 									editedValue.value.commandClass === 112
 								"
 							>
-								<v-checkbox
+								<v-select
 									label="Enable discovery"
-									hint="Configuration CC values are disabled by default in MQTT discovery. Set this to true to force enable them"
+									hint="Enable this Configuration CC entity by default in MQTT discovery. Global setting: Home Assistant > Enable Configuration CC entities"
 									persistent-hint
-									v-model="
-										editedValue.ccConfigEnableDiscovery
+									:items="discoveryOptions"
+									:model-value="
+										editedValue.ccConfigEnableDiscovery ??
+										null
 									"
-								></v-checkbox>
+									@update:model-value="
+										editedValue.ccConfigEnableDiscovery =
+											$event
+									"
+								></v-select>
 							</v-col>
 
 							<v-col cols="6">
@@ -332,18 +338,46 @@ export default {
 			} else if (this.isSensor(v)) {
 				// sensor multilevel and meters: https://www.home-assistant.io/integrations/sensor/
 				return [
+					'apparent_power',
+					'aqi',
+					'atmospheric_pressure',
 					'battery',
+					'carbon_dioxide',
+					'carbon_monoxide',
+					'current',
+					'distance',
+					'energy',
+					'frequency',
+					'gas',
 					'humidity',
 					'illuminance',
-					'signal_strength',
-					'temperature',
+					'irradiance',
+					'moisture',
+					'nitrogen_dioxide',
+					'nitrogen_monoxide',
+					'nitrous_oxide',
+					'ozone',
+					'pm1',
+					'pm10',
+					'pm25',
 					'power',
 					'power_factor',
 					'pressure',
+					'reactive_energy',
+					'reactive_power',
+					'signal_strength',
+					'sound_pressure',
+					'speed',
+					'sulphur_dioxide',
+					'temperature',
 					'timestamp',
-					'current',
-					'energy',
+					'volatile_organic_compounds',
+					'volatile_organic_compounds_parts',
 					'voltage',
+					'volume',
+					'water',
+					'weight',
+					'wind_speed',
 				]
 			} else if (v.commandClass === 38) {
 				// multilevel switch: home-assistant.io/integrations/cover/
@@ -381,6 +415,12 @@ export default {
 	},
 	data() {
 		return {
+			// null inherits the global Home Assistant setting
+			discoveryOptions: [
+				{ title: 'Use global setting', value: null },
+				{ title: 'Enabled', value: true },
+				{ title: 'Disabled', value: false },
+			],
 			isNew: null,
 			valid: true,
 			required: (v) => !!v || 'This field is required',

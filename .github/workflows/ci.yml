@@ -59,22 +59,23 @@ jobs:
           failure() &&
           github.event_name == 'pull_request' &&
           steps.lint.outputs.changed == 'true'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: lint-fix
           path: fix.patch
 
+      # On 20.x the coverage step below runs the full suite, so only run the
+      # plain test step on the other matrix versions to avoid testing twice.
       - name: Test
+        if: matrix['node-version'] != '20.x'
         run: npm run test
 
       - name: Generate coverage report
         if: matrix['node-version'] == '20.x'
-        run: |
-          npm run coverage
-          npm run record-coverage
+        run: npm run coverage
 
       - name: Coveralls
-        uses: coverallsapp/github-action@master
+        uses: coverallsapp/github-action@v2
         if: matrix['node-version'] == '20.x'
         with:
           github-token: ${{ secrets.github_token }}

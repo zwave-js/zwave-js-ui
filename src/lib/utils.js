@@ -182,6 +182,33 @@ export function getBatteryDescription(node) {
 		: 'Unknown battery level'
 }
 
+export function getValueHint(valueId) {
+	const { description, list, allowManualEntry, min, max, step } = valueId
+	const parts = []
+
+	// list states already describe the value, unless a custom one can be typed
+	if (!list || allowManualEntry) {
+		if (valueId.default !== undefined) {
+			parts.push(`default: ${valueId.default}`)
+		}
+		if (min !== max) {
+			if (min !== undefined) parts.push(`min: ${min}`)
+			if (max !== undefined) parts.push(`max: ${max}`)
+		}
+		// a step of 1 is the norm for integers, only show unusual ones
+		if (step !== undefined && step !== 1) {
+			parts.push(`step: ${step}`)
+		}
+	}
+
+	let range = parts.join(', ')
+	if (range) {
+		range = `(${range.charAt(0).toUpperCase()}${range.slice(1)})`
+	}
+
+	return [description, range].filter(Boolean).join(' ')
+}
+
 export function isUndef(v) {
 	return v === undefined || v === null || v === ''
 }

@@ -1,4 +1,4 @@
-import { getMeter, getMeterScale } from '@zwave-js/core'
+import { getCCName, getMeter, getMeterScale } from '@zwave-js/core'
 import { join } from 'node:path'
 import { storeDir } from '../config/app.ts'
 
@@ -81,18 +81,46 @@ export const deviceClass: IHassClass = {
 		WINDOW: 'window',
 	},
 	sensor: {
+		APPARENT_POWER: 'apparent_power',
+		AQI: 'aqi',
+		ATMOSPHERIC_PRESSURE: 'atmospheric_pressure',
 		BATTERY: 'battery',
+		CARBON_DIOXIDE: 'carbon_dioxide',
+		CARBON_MONOXIDE: 'carbon_monoxide',
+		CURRENT: 'current',
+		DISTANCE: 'distance',
+		ENERGY: 'energy',
+		FREQUENCY: 'frequency',
+		GAS: 'gas',
 		HUMIDITY: 'humidity',
 		ILLUMINANCE: 'illuminance',
-		SIGNAL_STRENGTH: 'signal_strength',
-		TEMPERATURE: 'temperature',
+		IRRADIANCE: 'irradiance',
+		MOISTURE: 'moisture',
+		NITROGEN_DIOXIDE: 'nitrogen_dioxide',
+		NITROGEN_MONOXIDE: 'nitrogen_monoxide',
+		NITROUS_OXIDE: 'nitrous_oxide',
+		OZONE: 'ozone',
+		PM1: 'pm1',
+		PM10: 'pm10',
+		PM25: 'pm25',
 		POWER: 'power',
 		POWER_FACTOR: 'power_factor',
 		PRESSURE: 'pressure',
+		REACTIVE_ENERGY: 'reactive_energy',
+		REACTIVE_POWER: 'reactive_power',
+		SIGNAL_STRENGTH: 'signal_strength',
+		SOUND_PRESSURE: 'sound_pressure',
+		SPEED: 'speed',
+		SULPHUR_DIOXIDE: 'sulphur_dioxide',
+		TEMPERATURE: 'temperature',
 		TIMESTAMP: 'timestamp',
-		CURRENT: 'current',
-		ENERGY: 'energy',
+		VOLATILE_ORGANIC_COMPOUNDS: 'volatile_organic_compounds',
+		VOLATILE_ORGANIC_COMPOUNDS_PARTS: 'volatile_organic_compounds_parts',
 		VOLTAGE: 'voltage',
+		VOLUME: 'volume',
+		WATER: 'water',
+		WEIGHT: 'weight',
+		WIND_SPEED: 'wind_speed',
 	},
 	cover: {
 		AWNING: 'awning',
@@ -137,10 +165,21 @@ export function meterType(ccSpecific: IMeterCCSpecific): any {
 						device_class: 'energy',
 					}
 					break
+				case 0x01: // kVAh (apparent energy)
+					// HA has no apparent energy device class, keep only the unit
+					cfg.props = {
+						state_class: 'total_increasing',
+					}
+					break
 				case 0x02: // W
 					cfg.props = {
 						state_class: 'measurement',
 						device_class: 'power',
+					}
+					break
+				case 0x03: // Pulse count (unitless)
+					cfg.props = {
+						state_class: 'total_increasing',
 					}
 					break
 				case 0x04: // V
@@ -162,6 +201,18 @@ export function meterType(ccSpecific: IMeterCCSpecific): any {
 						unit_of_measurement: null, // https://github.com/home-assistant/core/blob/00627b82e0f791c01146f49c9e12e878395366f4/homeassistant/components/sensor/const.py#L314-L318
 					}
 					break
+				case 0x07: // kVar (reactive power)
+					cfg.props = {
+						state_class: 'measurement',
+						device_class: 'reactive_power',
+					}
+					break
+				case 0x08: // kVarh (reactive energy)
+					cfg.props = {
+						state_class: 'total_increasing',
+						device_class: 'reactive_energy',
+					}
+					break
 				default:
 					cfg.props = {
 						device_class: 'power',
@@ -170,9 +221,19 @@ export function meterType(ccSpecific: IMeterCCSpecific): any {
 			}
 			break
 		case 0x02: // gas
-			cfg.props = {
-				icon: 'mdi:thought-bubble',
-				device_class: 'gas',
+			switch (ccSpecific.scale) {
+				case 0x03: // Pulse count (unitless)
+					// HA rejects a unitless sensor with the gas device class
+					cfg.props = {
+						icon: 'mdi:thought-bubble',
+					}
+					break
+				default:
+					cfg.props = {
+						icon: 'mdi:thought-bubble',
+						device_class: 'gas',
+					}
+					break
 			}
 			break
 		case 0x03: // water
@@ -411,11 +472,10 @@ export function sensorType(index: number): ISensorType {
 
 	return sensorType
 }
+// Only the command classes whose legacy (OpenZWave) name differs from the
+// zwave-js one. Renaming these would break existing MQTT topics, so they win
+// over `getCCName()`. Every other CC is resolved by `commandClass()` below.
 const _commandClassMap = {
-	0x00: 'no_operation',
-	0x20: 'basic',
-	0x21: 'controller_replication',
-	0x22: 'application_status',
 	0x23: 'zip_services',
 	0x24: 'zip_server',
 	0x25: 'switch_binary',
@@ -424,14 +484,12 @@ const _commandClassMap = {
 	0x28: 'switch_toggle_binary',
 	0x29: 'switch_toggle_multilevel',
 	0x2a: 'chimney_fan',
-	0x2b: 'scene_activation',
 	0x2c: 'scene_actuator_conf',
 	0x2d: 'scene_controller_conf',
 	0x2e: 'zip_client',
 	0x2f: 'zip_adv_services',
 	0x30: 'sensor_binary',
 	0x31: 'sensor_multilevel',
-	0x32: 'meter',
 	0x33: 'color',
 	0x34: 'zip_adv_client',
 	0x35: 'meter_pulse',
@@ -439,73 +497,39 @@ const _commandClassMap = {
 	0x3d: 'meter_tbl_monitor',
 	0x3e: 'meter_tbl_pulse',
 	0x38: 'thermostat_heating',
-	0x40: 'thermostat_mode',
-	0x42: 'thermostat_operating_state',
-	0x43: 'thermostat_setpoint',
-	0x44: 'thermostat_fan_mode',
-	0x45: 'thermostat_fan_state',
-	0x46: 'climate_control_schedule',
-	0x47: 'thermostat_setback',
-	0x4c: 'door_lock_logging',
-	0x4e: 'schedule_entry_lock',
-	0x50: 'basic_window_covering',
 	0x51: 'mtp_window_covering',
 	0x56: 'crc16_encap',
-	0x5a: 'device_reset_locally',
-	0x5b: 'central_scene',
 	0x5e: 'zwave_plus_info',
 	0x5d: 'antitheft',
 	0x60: 'multi_instance',
-	0x62: 'door_lock',
-	0x63: 'user_code',
-	0x66: 'barrier_operator',
-	0x70: 'configuration',
-	0x71: 'notification',
-	0x72: 'manufacturer_specific',
-	0x73: 'powerlevel',
-	0x75: 'protection',
-	0x76: 'lock',
 	0x77: 'node_naming',
-	0x79: 'sound_switch',
 	0x7a: 'firmware_update_md',
-	0x7b: 'grouping_name',
 	0x7c: 'remote_association_activate',
 	0x7d: 'remote_association',
-	0x80: 'battery',
-	0x81: 'clock',
-	0x82: 'hail',
-	0x84: 'wake_up',
-	0x85: 'association',
-	0x86: 'version',
-	0x87: 'indicator',
-	0x88: 'proprietary',
-	0x89: 'language',
-	0x8a: 'time',
-	0x8b: 'time_parameters',
-	0x8c: 'geographic_location',
 	0x8d: 'composite',
 	0x8e: 'multi_instance_association',
 	0x8f: 'multi_cmd',
-	0x90: 'energy_production',
-	0x91: 'manufacturer_proprietary',
 	0x92: 'screen_md',
-	0x93: 'screen_attributes',
-	0x94: 'simple_av_control',
 	0x95: 'av_content_directory_md',
 	0x96: 'av_renderer_status',
 	0x97: 'av_content_search_md',
-	0x98: 'security',
 	0x99: 'av_tagging_md',
-	0x9a: 'ip_configuration',
-	0x9b: 'association_command_configuration',
 	0x9c: 'sensor_alarm',
 	0x9d: 'silence_alarm',
-	0x9e: 'sensor_configuration',
 	0xef: 'mark',
 	0xf0: 'non_interoperable',
 }
 export function commandClass(cmd: number): string {
-	return _commandClassMap[cmd] || `unknownClass_${cmd}`
+	if (_commandClassMap[cmd]) return _commandClassMap[cmd]
+
+	const name = getCCName(cmd)
+	// getCCName returns `unknown (0x24)` for CCs it doesn't know
+	if (name.startsWith('unknown')) return `unknownClass_${cmd}`
+
+	return name
+		.replace(/[^A-Za-z0-9]+/g, '_')
+		.replace(/^_+|_+$/g, '')
+		.toLowerCase()
 }
 const _genericDeviceClassMap: IDeviceClass = {
 	// https://github.com/OpenZWave/open-zwave/blob/master/config/device_classes.xml
