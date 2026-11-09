@@ -1,0 +1,3 @@
+/* Layered so unlayered Vuetify icon styles win whatever the chunk order: https://github.com/vitejs/vite/issues/21903 */
+@import 'material-design-icons-iconfont/dist/material-design-icons.css'
+	layer(icon-fonts);
