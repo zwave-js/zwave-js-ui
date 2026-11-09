@@ -116,7 +116,7 @@ engine:
   max-turns: 5
 model: claude-sonnet-5
 runs-on-slim: ubuntu-latest
-source: zwave-js/bot-workflows/workflows/answer-from-docs.md@124f3a48e884febf74a2abbe457ad76b3c7e901d
+source: zwave-js/bot-workflows/workflows/answer-from-docs.md@6e95c90f53efc77bd804027ec6d17b667740ee91
 timeout-minutes: 15
 ---
 Follow the Documentation Answer Judge instructions below.

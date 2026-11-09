@@ -43,17 +43,17 @@
     "zwave-js/bot-workflows/actions/report-index-status@v1": {
       "repo": "zwave-js/bot-workflows/actions/report-index-status",
       "version": "v1",
-      "sha": "124f3a48e884febf74a2abbe457ad76b3c7e901d"
+      "sha": "6e95c90f53efc77bd804027ec6d17b667740ee91"
     },
     "zwave-js/bot-workflows/actions/restore-bot-index@v1": {
       "repo": "zwave-js/bot-workflows/actions/restore-bot-index",
       "version": "v1",
-      "sha": "124f3a48e884febf74a2abbe457ad76b3c7e901d"
+      "sha": "6e95c90f53efc77bd804027ec6d17b667740ee91"
     },
     "zwave-js/bot-workflows/actions/setup-bot@v1": {
       "repo": "zwave-js/bot-workflows/actions/setup-bot",
       "version": "v1",
-      "sha": "124f3a48e884febf74a2abbe457ad76b3c7e901d"
+      "sha": "6e95c90f53efc77bd804027ec6d17b667740ee91"
     }
   },
   "containers": {
@@ -79,8 +79,8 @@
     },
     "ghcr.io/github/gh-aw-node": {
       "image": "ghcr.io/github/gh-aw-node",
-      "digest": "sha256:2c2ea524e648b91c8333ce246e3838fcf5b19ac70e45baac1a51b9207299749f",
-      "pinned_image": "ghcr.io/github/gh-aw-node@sha256:2c2ea524e648b91c8333ce246e3838fcf5b19ac70e45baac1a51b9207299749f"
+      "digest": "sha256:8735428c2d4e602f90781ba0c571c400e8ff93c7ee1508a75d71f87e34e415cc",
+      "pinned_image": "ghcr.io/github/gh-aw-node@sha256:8735428c2d4e602f90781ba0c571c400e8ff93c7ee1508a75d71f87e34e415cc"
     }
   }
 }
