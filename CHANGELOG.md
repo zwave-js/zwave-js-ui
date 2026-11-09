@@ -1,5 +1,16 @@
 # Changelog
 
+## [11.26.0](https://github.com/zwave-js/zwave-js-ui/compare/v11.25.2...v11.26.0) (2026-11-09)
+
+### ✨ Features
+
+* bump zwave-js@15.32.0 ([#4889](https://github.com/zwave-js/zwave-js-ui/issues/4889)) ([8b463ad](https://github.com/zwave-js/zwave-js-ui/commit/8b463ad08a3be153c0fb3e8260e81b16a8f4204f))
+* bump zwave-js@15.32.1 ([#4890](https://github.com/zwave-js/zwave-js-ui/issues/4890)) ([806a1ff](https://github.com/zwave-js/zwave-js-ui/commit/806a1ff7c446ec795436a274f0b812eae288066a))
+
+### 🔧 Chores
+
+* **deps:** replace dependency @tsconfig/node22 with @tsconfig/node24 ([#4886](https://github.com/zwave-js/zwave-js-ui/issues/4886)) ([c38e0d2](https://github.com/zwave-js/zwave-js-ui/commit/c38e0d2cbbb826bf2bab2db596a3452e59ce0e8e))
+
 ## [11.25.2](https://github.com/zwave-js/zwave-js-ui/compare/v11.25.1...v11.25.2) (2026-10-26)
 
 ### 🐛 Bug Fixes
