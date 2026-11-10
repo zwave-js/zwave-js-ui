@@ -125,12 +125,13 @@ describe('floorplans API', () => {
 	})
 
 	it('creates, changes and deletes maps and placements', async () => {
-		expect(await api('GET', '')).toMatchObject({
+		expect(await api('GET', '')).toEqual({
 			success: true,
-			data: {
-				maps: [],
-				settings: { defaultMapId: null },
-				limits: { maxImageBytes: 25 * 1024 * 1024 },
+			data: { version: 1, maps: [], settings: { defaultMapId: null } },
+			limits: {
+				maxImageBytes: 25 * 1024 * 1024,
+				maxImageMb: 25,
+				stretchTolerance: 0.02,
 			},
 		})
 

@@ -49,7 +49,11 @@ import {
 } from './lib/SocketEvents.ts'
 import * as utils from './lib/utils.ts'
 import backupManager from './lib/BackupManager.ts'
-import floorPlans, { MAX_IMAGE_BYTES, MAX_IMAGE_MB } from './lib/FloorPlans.ts'
+import floorPlans, {
+	MAX_IMAGE_BYTES,
+	MAX_IMAGE_MB,
+	STRETCH_TOLERANCE,
+} from './lib/FloorPlans.ts'
 import {
 	getExternallyManagedPaths,
 	loadExternalSettings,
@@ -2213,15 +2217,28 @@ function floorPlansRoute(
 	}
 }
 
-// the floorplans, plus the limits the UI checks before uploading
+// the floorplans as `data` (the shape of maps.json), and next to it the
+// limits the UI checks before uploading
 app.get(
 	'/api/floorplans',
 	apisLimiter,
 	isAuthenticated,
-	floorPlansRoute(async () => ({
-		...(await floorPlans.load()),
-		limits: { maxImageBytes: MAX_IMAGE_BYTES },
-	})),
+	async function (req, res) {
+		try {
+			res.json({
+				success: true,
+				data: await floorPlans.load(),
+				limits: {
+					maxImageBytes: MAX_IMAGE_BYTES,
+					maxImageMb: MAX_IMAGE_MB,
+					stretchTolerance: STRETCH_TOLERANCE,
+				},
+			})
+		} catch (error) {
+			logger.error(`Floorplans GET /api/floorplans: ${error.message}`)
+			res.json({ success: false, message: error.message })
+		}
+	},
 )
 
 app.patch(

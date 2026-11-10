@@ -22,7 +22,7 @@ export const MAX_NAME_LENGTH = 100
 /** Upper bound for node lists: filter exceptions and bulk placements */
 export const MAX_NODE_LIST = 5000
 /** How far (as a ratio) a picture's aspect may differ from its frame before it counts as stretched */
-const STRETCH_TOLERANCE = 0.02
+export const STRETCH_TOLERANCE = 0.02
 /** What a new background picture of another shape does to the map, see setMapImage */
 export const IMAGE_FITS = ['stretch', 'scale', 'keep'] as const
 export type ImageFit = (typeof IMAGE_FITS)[number]

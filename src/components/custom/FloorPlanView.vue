@@ -203,6 +203,8 @@ export default {
 		return {
 			mapId: settings.load('meshFloorPlanMap', ''),
 			floorPlans: { settings: {}, maps: [] },
+			// upload limits from the server, see GET /api/floorplans
+			limits: null,
 			loaded: false,
 			editing: false,
 		}
@@ -259,6 +261,7 @@ export default {
 				if (count !== this.loadCount) return
 				if (!res.success) throw Error(res.message)
 				this.floorPlans = res.data
+				this.limits = res.limits
 				this.loaded = true
 			} catch (error) {
 				if (count !== this.loadCount) return
@@ -362,10 +365,9 @@ export default {
 				},
 			)
 			if (!file) return
-			const maxBytes = this.floorPlans.limits?.maxImageBytes
-			if (maxBytes && file.size > maxBytes) {
+			if (this.limits && file.size > this.limits.maxImageBytes) {
 				this.showSnackbar(
-					`Image is larger than ${maxBytes / 1024 / 1024} MB`,
+					`Image is larger than ${this.limits.maxImageMb} MB`,
 					'error',
 				)
 				return
@@ -404,8 +406,8 @@ export default {
 			const bg = map.background
 			const frame = bg?.imageRect ?? { w: map.widthPx, h: map.heightPx }
 			const aspect = size.width / size.height / (frame.w / frame.h)
-			// the server's STRETCH_TOLERANCE
-			if (Math.abs(aspect - 1) <= 0.02) return 'stretch'
+			const tolerance = this.limits?.stretchTolerance ?? 0
+			if (Math.abs(aspect - 1) <= tolerance) return 'stretch'
 			const other = dark ? bg?.image : bg?.darkImage
 			if (!map.placements.length && !other) return 'scale'
 			const { fit } = await this.app.confirm(
