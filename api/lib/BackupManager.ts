@@ -140,7 +140,7 @@ class BackupManager {
 
 		try {
 			const backupFile = await jsonStore.backup({
-				floorPlans: this.config.storeFloorPlans,
+				includeFloorPlans: this.config.storeFloorPlans,
 			})
 
 			logger.info(`Backup STORE created: ${backupFile}`)

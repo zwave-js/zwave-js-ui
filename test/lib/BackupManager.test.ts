@@ -30,7 +30,7 @@ describe('#BackupManager', () => {
 				storeFloorPlans,
 			}
 			await backupManager.backupStore()
-			expect(backup).toHaveBeenCalledWith({ floorPlans: storeFloorPlans })
+			expect(backup).toHaveBeenCalledWith({ includeFloorPlans: storeFloorPlans })
 		},
 	)
 

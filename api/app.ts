@@ -2110,7 +2110,7 @@ app.get(
 		try {
 			await jsonStore.backup({
 				res,
-				floorPlans: req.query.floorPlans !== 'false',
+				includeFloorPlans: req.query.floorPlans !== 'false',
 			})
 		} catch (error) {
 			res.status(500).send({
