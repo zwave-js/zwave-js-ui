@@ -119,13 +119,11 @@ const LAYERS = [
 
 const esc = (s) => escapeHtml(String(s ?? ''))
 
-const nameOf = nodeName
-
 function labelOf(n) {
 	const status = statusOf(n)
-	if (status === 'failed') return `FAILED: ${nameOf(n)}`
-	if (status === 'dead') return `DEAD: ${nameOf(n)}`
-	return nameOf(n)
+	if (status === 'failed') return `FAILED: ${nodeName(n)}`
+	if (status === 'dead') return `DEAD: ${nodeName(n)}`
+	return nodeName(n)
 }
 
 function polygon(cx, cy, r, count, inner = null) {
@@ -580,8 +578,7 @@ export default {
 		},
 		nameById() {
 			const byId = new Map(this.physicalNodes.map((n) => [n.id, n]))
-			return (id) =>
-				esc(byId.has(id) ? nameOf(byId.get(id)) : `NodeID ${id}`)
+			return (id) => esc(nodeName(byId.get(id) ?? { id }))
 		},
 		drawLinks(links, pos) {
 			const name = this.nameById()
@@ -733,7 +730,7 @@ export default {
 			const name = this.nameById()
 			for (const g of ghosts) {
 				const n = byId.get(g.id)
-				const label = n ? labelOf(n) : `NodeID ${g.id}`
+				const label = n ? labelOf(n) : nodeName({ id: g.id })
 				const why = g.shown
 					? 'Not placed on this map yet'
 					: 'Hidden on this map'
@@ -856,7 +853,7 @@ export default {
 				})
 					.bindTooltip(
 						() =>
-							`${esc(nameOf(n))}: battery ${level}%, last heard from ${agoLabel(n.lastActive)}`,
+							`${esc(nodeName(n))}: battery ${level}%, last heard from ${agoLabel(n.lastActive)}`,
 						{ direction: 'top' },
 					)
 					.addTo(this.groups.battery)

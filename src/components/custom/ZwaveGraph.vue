@@ -295,6 +295,7 @@ import {
 	RATE_LEGEND,
 	UNKNOWN_COLOR,
 	hopColor,
+	nodeName,
 	rateColor,
 } from '../../lib/meshView.js'
 import useBaseStore from '../../stores/base.js'
@@ -1198,14 +1199,13 @@ export default {
 
 			let batlev = node.minBatteryLevel
 
-			const nodeName = node.name || 'NodeID ' + node.id
-
 			// create node
 			// https://visjs.github.io/vis-network/docs/network/nodes.html
 			const entity = {
 				id: id,
 				hidden: false,
-				label: nodeName,
+				// same as the floorplan map, so a node has one label
+				label: nodeName(node),
 				neighbors: node.neighbors,
 				battery_level: batlev,
 				group: node.loc,
