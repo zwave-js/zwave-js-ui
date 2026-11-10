@@ -430,8 +430,15 @@ export class FloorPlans {
 				await rm(incoming, { recursive: true, force: true })
 				throw error
 			}
-			await rm(old, { recursive: true, force: true })
 			logger.info('Floorplans restored from backup')
+			// the swap is done: a leftover old folder is only clutter
+			try {
+				await rm(old, { recursive: true, force: true })
+			} catch (error) {
+				logger.warn(
+					`Restored, but can't remove the old floorplans in ${old}: ${error.message}`,
+				)
+			}
 		})
 	}
 
