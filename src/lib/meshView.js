@@ -198,11 +198,21 @@ const linkKey = (kind, a, b) => `${kind}:${Math.min(a, b)}-${Math.max(a, b)}`
  */
 export function mapView(nodes, shown, positioned) {
 	const cid = controllerIdOf(nodes)
-	const ids = new Set(nodes.map((n) => n.id))
 	const pos = new Map()
 	for (const [id, p] of positioned) if (shown.has(id)) pos.set(id, p)
-	const ghosts = new Map()
+	const paths = routePaths(nodes, pos, cid)
+	const ghosts = placeGhosts(paths, shown, positioned, pos)
+	const links = buildLinks(nodes, paths, shown, ghosts, pos, cid)
+	return { links, ghosts: [...ghosts.values()], pos }
+}
 
+/**
+ * The routes mapView draws, main routes first: every route of a node with a
+ * spot here, as { kind, n, route, path, backupOnly }, `path` running
+ * controller → repeaters → node over nodes that exist
+ */
+function routePaths(nodes, pos, cid) {
+	const ids = new Set(nodes.map((n) => n.id))
 	const paths = []
 	for (const n of nodes) {
 		// a route is drawn once its node has a spot here, not before
@@ -215,47 +225,41 @@ export function mapView(nodes, shown, positioned) {
 		}
 	}
 	// main routes first, so a node on both kinds of route is a 'main' ghost
-	paths.sort(
+	return paths.sort(
 		(a, b) => (a.kind === 'main' ? 0 : 1) - (b.kind === 'main' ? 0 : 1),
 	)
+}
+
+/**
+ * The ghosts on `paths` (see mapView), as a Map id → ghost. Each ghost's
+ * spot is added to `pos`.
+ */
+function placeGhosts(paths, shown, positioned, pos) {
+	const ghosts = new Map()
+	const addGhost = (id, kind, p, approx) => {
+		pos.set(id, p)
+		ghosts.set(id, {
+			id,
+			kind,
+			pos: p,
+			approx,
+			shown: approx && shown.has(id),
+			routes: [],
+		})
+	}
 	for (const { kind, path } of paths) {
 		// exact ghosts: hidden nodes on the route with a position here
 		for (const id of path) {
 			if (pos.has(id) || shown.has(id) || !positioned.has(id)) continue
-			pos.set(id, positioned.get(id))
-			ghosts.set(id, {
-				id,
-				kind,
-				pos: positioned.get(id),
-				approx: false,
-				shown: false,
-				routes: [],
-			})
+			addGhost(id, kind, positioned.get(id), false)
 		}
 		// then anything still without a position: interpolate along the route
 		for (let i = 0; i < path.length; i++) {
-			const id = path[i]
-			if (pos.has(id)) continue
-			let j = i - 1
-			while (j >= 0 && !pos.has(path[j])) j--
-			let k = i + 1
-			while (k < path.length && !pos.has(path[k])) k++
-			if (j < 0 || k >= path.length) continue
-			const [a, b] = [pos.get(path[j]), pos.get(path[k])]
-			const t = (i - j) / (k - j)
-			const p = [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t]
-			pos.set(id, p)
-			ghosts.set(id, {
-				id,
-				kind,
-				pos: p,
-				approx: true,
-				shown: shown.has(id),
-				routes: [],
-			})
+			if (pos.has(path[i])) continue
+			const p = between(path, i, pos)
+			if (p) addGhost(path[i], kind, p, true)
 		}
 	}
-
 	// whose routes each ghost repeats for
 	for (const { kind, n, path } of paths) {
 		for (const id of path) {
@@ -265,7 +269,27 @@ export function mapView(nodes, shown, positioned) {
 			}
 		}
 	}
+	return ghosts
+}
 
+/**
+ * A spot for path[i] on the line between the nearest positioned nodes
+ * before and after it on the path, spaced by their distance in hops, or
+ * null when one side has none
+ */
+function between(path, i, pos) {
+	let j = i - 1
+	while (j >= 0 && !pos.has(path[j])) j--
+	let k = i + 1
+	while (k < path.length && !pos.has(path[k])) k++
+	if (j < 0 || k >= path.length) return null
+	const [a, b] = [pos.get(path[j]), pos.get(path[k])]
+	const t = (i - j) / (k - j)
+	return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t]
+}
+
+/** The lines mapView draws: route hops, failed hops and neighbor lines */
+function buildLinks(nodes, paths, shown, ghosts, pos, cid) {
 	const links = new Map()
 	const add = (kind, a, b, extra = {}) => {
 		if (!pos.has(a) || !pos.has(b) || a === b) return
@@ -304,7 +328,7 @@ export function mapView(nodes, shown, positioned) {
 			if (shown.has(nb) && !ghosts.has(nb)) add('neighbor', n.id, nb)
 		}
 	}
-	return { links: [...links.values()], ghosts: [...ghosts.values()], pos }
+	return [...links.values()]
 }
 
 /**
