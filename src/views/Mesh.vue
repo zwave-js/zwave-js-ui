@@ -5,14 +5,10 @@
 				variant="outlined"
 				prepend-icon="cell_tower"
 				:loading="refreshingNeighbors"
-				:disabled="neighborsCooldown > 0"
+				:disabled="refreshingNeighbors"
 				v-tooltip:bottom="'Read every node\'s neighbor table'"
 				@click="refreshNeighbors"
-				>{{
-					neighborsCooldown
-						? `Refresh neighbors (${neighborsCooldown}s)`
-						: 'Refresh neighbors'
-				}}</v-btn
+				>Refresh neighbors</v-btn
 			>
 		</div>
 		<zwave-graph
@@ -97,12 +93,7 @@ export default {
 			selectedNode: null,
 			showProperties: false,
 			refreshingNeighbors: false,
-			// seconds until the next whole-mesh refresh is allowed
-			neighborsCooldown: 0,
 		}
-	},
-	beforeUnmount() {
-		clearInterval(this.cooldownTimer)
 	},
 	watch: {
 		showProperties(v) {
@@ -140,18 +131,7 @@ export default {
 				}
 			} finally {
 				this.refreshingNeighbors = false
-				// the server holds the lock for 60 s even when it failed
-				this.startNeighborsCooldown()
 			}
-		},
-		startNeighborsCooldown() {
-			clearInterval(this.cooldownTimer)
-			this.neighborsCooldown = 60
-			this.cooldownTimer = setInterval(() => {
-				if (--this.neighborsCooldown <= 0) {
-					clearInterval(this.cooldownTimer)
-				}
-			}, 1000)
 		},
 		setInitialPosition(element) {
 			const windowHeight = window.innerHeight
