@@ -246,6 +246,14 @@ export default {
 			this.viewTimer = null
 			this.fitted = false
 		},
+		// a picture that resizes the canvas resets the saved view on the
+		// server, so frame the new canvas
+		'map.widthPx'() {
+			this.fitted = false
+		},
+		'map.heightPx'() {
+			this.fitted = false
+		},
 		// Done saves a view change still waiting to be saved
 		editing(now) {
 			if (!now && this.viewTimer) {
