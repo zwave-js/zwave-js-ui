@@ -236,8 +236,6 @@ export default {
 	created() {
 		// only the newest load may update the page, see loadFloorPlans
 		this.loadCount = 0
-		// pictures already reported as missing
-		this.brokenImages = new Set()
 	},
 	mounted() {
 		this.loadFloorPlans()
@@ -459,9 +457,8 @@ export default {
 				ConfigApis.removeFloorPlanImage(map.id, { dark }),
 			)
 		},
-		onImageError(file) {
-			if (this.brokenImages.has(file)) return
-			this.brokenImages.add(file)
+		/** the map reports each picture that won't load once */
+		onImageError() {
 			this.showSnackbar(
 				"This map's background picture couldn't be loaded. Upload it again from the Background menu.",
 				'error',

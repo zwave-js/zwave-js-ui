@@ -2337,8 +2337,6 @@ app.delete(
 // fallback from rewriting browser image requests (Accept: */*), and a
 // replaced image always gets a new name, so it can be cached. Only files a
 // map references are served.
-/** pictures already logged as missing */
-const missingFloorPlanImages = new Set<string>()
 
 app.get(
 	'/api/floorplans/images/:file',
@@ -2360,16 +2358,11 @@ app.get(
 				'Cache-Control': 'private, max-age=31536000, immutable',
 				'X-Content-Type-Options': 'nosniff',
 			})
-			// referenced but missing on disk, e.g. after a partial restore;
-			// logged once until it's served again, not on every request
+			// referenced but missing on disk only if someone deleted it: the
+			// UI doesn't ask for it again until the page is reloaded
 			res.sendFile(file, { root: floorPlans.imagesDir }, (err) => {
-				if (!err) {
-					missingFloorPlanImages.delete(file)
-				} else if (!res.headersSent) {
-					if (!missingFloorPlanImages.has(file)) {
-						missingFloorPlanImages.add(file)
-						logger.error(`Floorplan image ${file}: ${err.message}`)
-					}
+				if (err && !res.headersSent) {
+					logger.warn(`Floorplan image ${file}: ${err.message}`)
 					notFound()
 				}
 			})
