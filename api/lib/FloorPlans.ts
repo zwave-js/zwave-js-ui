@@ -333,6 +333,13 @@ interface FileChanges {
 	removed: string[]
 }
 
+/** A file for the store backup, see withBackupFiles */
+export interface BackupFile {
+	/** Path inside the floorplans folder, e.g. images/<name> */
+	name: string
+	file: string
+}
+
 export interface AddMapOptions {
 	name?: string
 	widthPx?: number
@@ -403,47 +410,52 @@ export class FloorPlans {
 	}
 
 	/**
-	 * The files a store backup needs, as paths relative to the floorplans
-	 * folder: maps.json and every image a map uses. Read in the write queue,
-	 * so the images match maps.json and none is deleted halfway. Unused and
-	 * in-flight files are left out. A missing image is logged and skipped,
-	 * and an unreadable maps.json is still backed up as it is.
+	 * Run `fn` with the files a store backup needs: maps.json and every
+	 * image a map uses, as `name` (relative to the floorplans folder) and
+	 * `file` (full path), for `fn` to stream into the zip. The write queue
+	 * waits until `fn` is done, so the images match maps.json and none is
+	 * deleted halfway. Unused and in-flight files are left out. A missing
+	 * image is logged and skipped, and an unreadable maps.json is still
+	 * backed up as it is. If even listing them fails, that is logged and
+	 * `fn` gets none, so the rest of the backup still happens.
 	 */
-	backupFiles(): Promise<{ name: string; data: Buffer }[]> {
+	withBackupFiles<T>(fn: (files: BackupFile[]) => Promise<T>): Promise<T> {
 		return this.enqueue(async () => {
-			let raw: Buffer
+			let files: BackupFile[] = []
 			try {
-				raw = await readFile(this.file)
-			} catch (error) {
-				if (error.code === 'ENOENT') return []
-				throw error
-			}
-			const out = [{ name: 'maps.json', data: raw }]
-			let maps: FloorPlanMap[] = []
-			try {
-				maps = (await this.load()).maps
+				files = await this.listBackupFiles()
 			} catch (error) {
 				logger.error(
-					`Backing up floorplans without images: ${error.message}`,
+					`Floorplans left out of the backup: ${error.message}`,
 				)
 			}
-			const names = maps.flatMap((m) =>
-				[m.background?.image, m.background?.darkImage].filter(Boolean),
-			)
-			for (const name of names) {
-				try {
-					out.push({
-						name: `images/${name}`,
-						data: await readFile(path.join(this.imagesDir, name)),
-					})
-				} catch (error) {
-					logger.warn(
-						`Floorplan image ${name} left out of the backup: ${error.message}`,
-					)
-				}
-			}
-			return out
+			return fn(files)
 		})
+	}
+
+	private async listBackupFiles(): Promise<BackupFile[]> {
+		if (!existsSync(this.file)) return []
+		const out = [{ name: 'maps.json', file: this.file }]
+		let maps: FloorPlanMap[] = []
+		try {
+			maps = (await this.load()).maps
+		} catch (error) {
+			logger.error(
+				`Backing up floorplans without images: ${error.message}`,
+			)
+		}
+		for (const m of maps) {
+			for (const name of [m.background?.image, m.background?.darkImage]) {
+				if (!name) continue
+				const file = path.join(this.imagesDir, name)
+				if (existsSync(file)) out.push({ name: `images/${name}`, file })
+				else
+					logger.warn(
+						`Floorplan image ${name} is missing, left out of the backup`,
+					)
+			}
+		}
+		return out
 	}
 
 	/**

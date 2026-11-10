@@ -2,7 +2,7 @@ import jsonFile from 'jsonfile'
 import { storeBackupsDir, storeDir } from '../config/app.ts'
 import type { StoreFile, StoreKeys } from '../config/store.ts'
 import { module } from './logger.ts'
-import floorPlansStore from './FloorPlans.ts'
+import floorPlansStore, { type BackupFile } from './FloorPlans.ts'
 import { recursive as merge } from 'merge'
 import archiver from 'archiver'
 import { createWriteStream, existsSync } from 'node:fs'
@@ -63,21 +63,18 @@ export class StorageHelper {
 		floorPlans = true,
 	}: { res?: Response; floorPlans?: boolean } = {}): Promise<string> {
 		const backupFile = `${STORE_BACKUP_PREFIX}${fileDate()}.zip`
-
-		// a floorplans problem must not cost the rest of the backup
-		let floorPlanFiles: { name: string; data: Buffer }[] = []
-		if (floorPlans) {
-			try {
-				floorPlanFiles = await floorPlansStore.backupFiles()
-			} catch (error) {
-				logger.error(
-					`Floorplans left out of the backup: ${error.message}`,
-				)
-			}
-		}
-
 		await ensureDir(storeBackupsDir)
+		const zip = (floorPlanFiles: BackupFile[]) =>
+			this.writeZip(backupFile, floorPlanFiles, res)
+		// the floorplans can't change while their files are being zipped
+		return floorPlans ? floorPlansStore.withBackupFiles(zip) : zip([])
+	}
 
+	private writeZip(
+		backupFile: string,
+		floorPlanFiles: BackupFile[],
+		res?: Response,
+	): Promise<string> {
 		const fileStream = createWriteStream(
 			joinPath(storeBackupsDir, backupFile),
 		)
@@ -111,11 +108,13 @@ export class StorageHelper {
 			})
 
 			// pictures are already compressed: store them as they are
-			for (const { name, data } of floorPlanFiles) {
-				archive.append(data, {
+			for (const { name, file } of floorPlanFiles) {
+				// file() is typed with EntryData, but the zip format honors store
+				const entry: archiver.ZipEntryData = {
 					name: `floorplans/${name}`,
 					store: name.startsWith('images/'),
-				})
+				}
+				archive.file(file, entry)
 			}
 
 			for (const model in this.config) {

@@ -405,13 +405,14 @@ describe('#FloorPlans', () => {
 
 	it('backs up maps.json and only the pictures maps use', async () => {
 		const fp = await fresh()
-		expect(await fp.backupFiles()).toEqual([])
+		const list = () => fp.withBackupFiles((files) => Promise.resolve(files))
+		expect(await list()).toEqual([])
 		const m = await fp.addMap({ name: 'House' })
 		const set = await fp.setMapImage(m.id, { bytes: PNG1 })
 		const dark = await fp.setMapImage(m.id, { bytes: PNG1, dark: true })
 		await writeFile(path.join(fp.imagesDir, 'stray.png'), PNG1)
 		await writeFile(path.join(fp.imagesDir, 'x.png.1.2.tmp'), 'z')
-		const files = await fp.backupFiles()
+		const files = await list()
 		expect(files.map((f) => f.name).sort()).toEqual(
 			[
 				'maps.json',
@@ -419,17 +420,36 @@ describe('#FloorPlans', () => {
 				`images/${dark.map.background.darkImage}`,
 			].sort(),
 		)
-		expect(files.find((f) => f.name === 'maps.json').data).toEqual(
-			await readFile(fp.file),
-		)
+		for (const { name, file } of files) {
+			expect(file).toBe(path.join(fp.dir, name))
+		}
 
 		// a missing picture is skipped, a broken maps.json still backed up
 		await fsp.rm(path.join(fp.imagesDir, set.map.background.image))
-		expect(await fp.backupFiles()).toHaveLength(2)
+		expect(await list()).toHaveLength(2)
 		await writeFile(fp.file, '{ nope')
-		expect(await fp.backupFiles()).toEqual([
-			{ name: 'maps.json', data: Buffer.from('{ nope') },
-		])
+		expect(await list()).toEqual([{ name: 'maps.json', file: fp.file }])
+	})
+
+	it('holds floorplan writes until the backup has its files', async () => {
+		const fp = await fresh()
+		const m = await fp.addMap({ name: 'House' })
+		const set = await fp.setMapImage(m.id, { bytes: PNG1 })
+		const order: string[] = []
+		let release: () => void
+		const backup = fp.withBackupFiles(async () => {
+			order.push('backup start')
+			await new Promise<void>((r) => (release = r))
+			order.push('backup end')
+		})
+		const remove = fp
+			.removeMapImage(m.id)
+			.then(() => order.push('image removed'))
+		await new Promise((r) => setTimeout(r, 20))
+		expect(images(fp)).toEqual([set.map.background.image])
+		release()
+		await Promise.all([backup, remove])
+		expect(order).toEqual(['backup start', 'backup end', 'image removed'])
 	})
 
 	it('replaces the whole folder on restore', async () => {
