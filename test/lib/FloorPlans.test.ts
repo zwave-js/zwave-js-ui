@@ -224,6 +224,19 @@ describe('#FloorPlans', () => {
 		])
 	})
 
+	it('says why a picture of unknown or too large a size is refused', async () => {
+		const fp = await fresh()
+		const m = await fp.addMap({ name: 'House' })
+		await expect(fp.setMapImage(m.id, { bytes: PNG })).rejects.toThrow(
+			"Couldn't tell the image's size",
+		)
+		const wide = Buffer.from(PNG1)
+		wide.writeUInt32BE(30000, 16)
+		await expect(fp.setMapImage(m.id, { bytes: wide })).rejects.toThrow(
+			'30000 x 1 pixels, each side must be a whole number 1-20000',
+		)
+	})
+
 	it('sizes, replaces and unsets backgrounds', async () => {
 		const fp = await fresh()
 		const a = await fp.addMap({ name: 'House' })

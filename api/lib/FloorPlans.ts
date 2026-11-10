@@ -713,8 +713,11 @@ export class FloorPlans {
 			(isDim(imgWidthPx) && isDim(imgHeightPx)
 				? { w: imgWidthPx, h: imgHeightPx }
 				: null)
-		if (!size || !isDim(size.w) || !isDim(size.h)) {
-			throw Error("Couldn't tell the image's size")
+		if (!size) throw Error("Couldn't tell the image's size")
+		if (!isDim(size.w) || !isDim(size.h)) {
+			throw Error(
+				`The image is ${size.w} x ${size.h} pixels, each side must be ${DIM_RULE}`,
+			)
 		}
 		return this.update(async (data, files) => {
 			const map = this.getMap(data, id)
