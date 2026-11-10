@@ -116,11 +116,6 @@ const LAYERS = [
 	['health', 'Mesh health'],
 	['battery', 'Battery level'],
 ]
-// for maps saved before a layer existed (the server fills in the rest)
-const LAYER_DEFAULTS = {
-	backupRoutes: false,
-	battery: false,
-}
 
 const esc = (s) => escapeHtml(String(s ?? ''))
 
@@ -566,7 +561,7 @@ export default {
 				})
 			}
 			for (const [k] of LAYERS) {
-				if (v.layers?.[k] ?? LAYER_DEFAULTS[k] ?? true) {
+				if (v.layers?.[k] ?? true) {
 					this.groups[k].addTo(this.lmap)
 				} else this.lmap.removeLayer(this.groups[k])
 			}
