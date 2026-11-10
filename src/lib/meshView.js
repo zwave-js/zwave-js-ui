@@ -189,9 +189,11 @@ const linkKey = (kind, a, b) => `${kind}:${Math.min(a, b)}-${Math.max(a, b)}`
  *    `routes` lists the { id, kind } routes it repeats for.
  * `shown`: Set of node ids. `positioned`: Map id → [y, x] of every node with
  * a position on this map. Returns { links, ghosts, pos }, links being
- * { kind: 'lwr'|'nlwr'|'failed'|'neighbor', a, b, rssi, rate, routes,
+ * { kind: 'lwr'|'nlwr'|'failed'|'neighbor', a, b, rate, routes,
  * backupOnly }, `backupOnly` listing the routes that are a backup route
- * drawn as the main one because their node has no main route.
+ * drawn as the main one because their node has no main route. RSSI isn't
+ * part of a link, so a signal change doesn't change what is drawn: see
+ * linkRssi.
  */
 export function mapView(nodes, shown, positioned) {
 	const cid = controllerIdOf(nodes)
@@ -271,12 +273,10 @@ export function mapView(nodes, shown, positioned) {
 			kind,
 			a,
 			b,
-			rssi: null,
 			rate: null,
 			routes: [],
 			backupOnly: [],
 		}
-		if (l.rssi === null && extra.rssi !== undefined) l.rssi = extra.rssi
 		if (l.rate === null && extra.rate !== undefined) l.rate = extra.rate
 		if (extra.route !== undefined && !l.routes.includes(extra.route)) {
 			l.routes.push(extra.route)
@@ -287,7 +287,6 @@ export function mapView(nodes, shown, positioned) {
 	for (const { kind, n, route, backupOnly } of paths) {
 		for (const s of routeSegments(n, route, cid)) {
 			add(kind, s.from, s.to, {
-				rssi: s.rssi,
 				rate: s.rate,
 				route: n.id,
 				backupOnly,
@@ -305,6 +304,54 @@ export function mapView(nodes, shown, positioned) {
 		}
 	}
 	return { links: [...links.values()], ghosts: [...ghosts.values()], pos }
+}
+
+/**
+ * The current RSSI of a route link from mapView, read from the first of
+ * its routes that measured it, or null
+ */
+export function linkRssi(nodes, link) {
+	const cid = controllerIdOf(nodes)
+	for (const id of link.routes) {
+		const n = nodes.find((x) => x.id === id)
+		const route = n && routesOf(n).find(([kind]) => kind === link.kind)?.[1]
+		if (!route) continue
+		for (const s of routeSegments(n, route, cid)) {
+			const same =
+				(s.from === link.a && s.to === link.b) ||
+				(s.from === link.b && s.to === link.a)
+			if (same && s.rssi != null) return s.rssi
+		}
+	}
+	return null
+}
+
+/**
+ * What a node's drawing depends on, as a string that changes only when the
+ * drawing does: route shapes (repeaters, data rate, failed hop) but not
+ * RSSI, which updates often and is read when a tooltip opens
+ */
+export function drawnShapeKey(n) {
+	const shape = (r) =>
+		r && [
+			r.repeaters,
+			r.routeSpeed ?? r.protocolDataRate,
+			r.routeFailedBetween,
+		]
+	return JSON.stringify([
+		n.id,
+		n.name,
+		n.loc,
+		n.failed,
+		n.available,
+		n.isControllerNode,
+		n.isListening,
+		n.isFrequentListening,
+		n.neighbors,
+		n.minBatteryLevel,
+		shape(lwrOf(n)),
+		shape(nlwrOf(n)),
+	])
 }
 
 function hopLevel(rssi) {

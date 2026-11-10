@@ -11,7 +11,9 @@ import {
 	rateColor,
 	routeSegments,
 	deviceKey,
+	drawnShapeKey,
 	hopColor,
+	linkRssi,
 	HOP_LEGEND,
 	rssiLabel,
 	statusOf,
@@ -250,6 +252,36 @@ describe('meshView', () => {
 			]),
 		)
 		expect(v5.links.some((l) => l.kind === 'failed')).toBe(true)
+	})
+
+	it('reads link RSSI from the current statistics, keeping it out of the drawing', () => {
+		const all = new Set(NODES.map((n) => n.id))
+		const pos = new Map(NODES.map((n, i) => [n.id, [0, i * 10]]))
+		const link = (nodes, a, b) =>
+			mapView(nodes, all, pos).links.find(
+				(l) => l.kind === 'lwr' && l.a === a && l.b === b,
+			)
+		// 2 → 3 is measured by no route (127 = not available)
+		expect(linkRssi(NODES, link(NODES, 2, 3))).toBeNull()
+		const l = link(NODES, 3, 59)
+		expect(l).not.toHaveProperty('rssi')
+		expect(linkRssi(NODES, l)).toBe(-74)
+		const louder = NODES.map((n) =>
+			n.id === 59
+				? node(59, { lwr: route([2, 3], -75, [127, -60], 3) })
+				: n,
+		)
+		expect(linkRssi(louder, l)).toBe(-60)
+		// a new RSSI keeps the drawing key, a new repeater or data rate doesn't
+		const key = (n) => drawnShapeKey(n)
+		const n59 = NODES.find((n) => n.id === 59)
+		expect(key(louder.find((n) => n.id === 59))).toBe(key(n59))
+		expect(key(node(59, { lwr: route([2], -75, [127], 3) }))).not.toBe(
+			key(n59),
+		)
+		expect(
+			key(node(59, { lwr: route([2, 3], -75, [127, -74], 1) })),
+		).not.toBe(key(n59))
 	})
 
 	it('flags isolated, few neighbors, weak hops, backup-only, failed hops, one-way links', () => {

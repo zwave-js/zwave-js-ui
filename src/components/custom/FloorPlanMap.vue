@@ -91,8 +91,10 @@ import {
 	agoLabel,
 	batteryLevelClass,
 	deviceKey,
+	drawnShapeKey,
 	gridPlacements,
 	hopsOf,
+	linkRssi,
 	lwrOf,
 	mapView,
 	meshHealth,
@@ -204,35 +206,39 @@ export default {
 			return this.entries.filter((e) => e.shown && !e.placed).length
 		},
 		/**
-		 * What drawing depends on, so value updates don't redraw the map.
-		 * Times like lastActive are left out: tooltips read them when shown.
+		 * What the nodes' drawing depends on, so value updates don't redraw
+		 * the map. RSSI and times like lastActive are left out: tooltips read
+		 * them when shown, and the health layer redraws on its own.
 		 */
-		drawKey() {
+		nodesKey() {
+			return this.physicalNodes.map(drawnShapeKey).join('\n')
+		},
+		/** what the health layer shows, without RSSI values (read by tooltips) */
+		healthKey() {
+			const h = this.health
 			return JSON.stringify([
-				this.map,
-				this.homeHex,
-				this.dark,
-				this.editing,
-				this.physicalNodes.map((n) => [
-					n.id,
-					n.name,
-					n.loc,
-					n.failed,
-					n.available,
-					n.isControllerNode,
-					n.isListening,
-					n.isFrequentListening,
-					n.neighbors,
-					n.minBatteryLevel,
-					n.statistics?.lwr,
-					n.statistics?.nlwr,
-				]),
+				[...h.nodes],
+				h.hops.map(({ a, b, kind, level }) => [a, b, kind, level]),
+				h.oneWay,
 			])
 		},
 	},
 	watch: {
-		drawKey() {
+		// the map itself is replaced, not changed in place, when it changes
+		map() {
 			this.drawSoon()
+		},
+		nodesKey() {
+			this.drawSoon()
+		},
+		homeHex() {
+			this.drawSoon()
+		},
+		dark() {
+			this.drawSoon()
+		},
+		healthKey() {
+			this.drawHealth()
 		},
 		// a pending view save belongs to the map it was made on
 		'map.id'() {
@@ -246,6 +252,7 @@ export default {
 				clearTimeout(this.viewTimer)
 				this.saveView()
 			}
+			this.drawSoon()
 		},
 	},
 	created() {
@@ -471,7 +478,9 @@ export default {
 			this.drawLinks(view.links, view.pos)
 			this.drawGhosts(view.ghosts)
 			this.drawNodes(nodePos)
-			this.drawHealth(nodePos, view.pos)
+			// kept for the health layer, which also redraws on its own
+			this.drawn = { nodePos, allPos: view.pos }
+			this.drawHealth()
 			this.drawBattery(nodePos)
 		},
 		drawBackground() {
@@ -576,12 +585,14 @@ export default {
 					// as thick as a route, dashed like a backup route
 					const backupOnly =
 						lwr && l.backupOnly.length === l.routes.length
-					const detail = [
-						rssiLabel(l.rssi),
-						l.rate ? protocolDataRateToString(l.rate) : '',
-					]
-						.filter(Boolean)
-						.join(' · ')
+					// RSSI read when shown, so signal changes don't redraw
+					const detail = () =>
+						[
+							rssiLabel(linkRssi(this.physicalNodes, l)),
+							l.rate ? protocolDataRateToString(l.rate) : '',
+						]
+							.filter(Boolean)
+							.join(' · ')
 					const owners = l.routes
 						.map((id) =>
 							l.backupOnly.includes(id)
@@ -596,7 +607,8 @@ export default {
 						opacity: 0.85,
 					})
 						.bindTooltip(
-							`${tip}<br>${detail}<br><span class="muted">route of ${owners}</span>`,
+							() =>
+								`${tip}<br>${detail()}<br><span class="muted">route of ${owners}</span>`,
 							{ sticky: true },
 						)
 						.addTo(
@@ -721,8 +733,14 @@ export default {
 					)
 			}
 		},
-		/** a ring around flagged nodes, "!" on weak hops, dotted one-way neighbor lines */
-		drawHealth(nodePos, allPos) {
+		/**
+		 * A ring around flagged nodes, "!" on weak hops, dotted one-way
+		 * neighbor lines, at the spots of the last draw()
+		 */
+		drawHealth() {
+			if (!this.drawn) return
+			const { nodePos, allPos } = this.drawn
+			this.groups.health.clearLayers()
 			const h = this.health
 			const name = this.nameById()
 			for (const [id, f] of h.nodes) {
@@ -754,8 +772,17 @@ export default {
 						html: '!',
 					}),
 				})
+					// the current reading, not the one when this was drawn
 					.bindTooltip(
-						`${hop.level === 'bad' ? 'Very weak' : 'Weak'} hop ${name(hop.a)} ↔ ${name(hop.b)}: ${esc(rssiLabel(hop.rssi))}`,
+						() => {
+							const now = this.health.hops.find(
+								(x) =>
+									x.a === hop.a &&
+									x.b === hop.b &&
+									x.kind === hop.kind,
+							)
+							return `${hop.level === 'bad' ? 'Very weak' : 'Weak'} hop ${name(hop.a)} ↔ ${name(hop.b)}: ${esc(rssiLabel((now ?? hop).rssi))}`
+						},
 						{ direction: 'top' },
 					)
 					.addTo(this.groups.health)
