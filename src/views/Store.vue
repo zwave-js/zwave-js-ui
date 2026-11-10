@@ -496,7 +496,8 @@ export default {
 					if (!res.success)
 						throw new Error(res.message || 'Restore failed')
 					await this.refreshTree()
-					this.showSnackbar('Restore successful', 'success')
+					if (res.message) this.showSnackbar(res.message, 'warning')
+					else this.showSnackbar('Restore successful', 'success')
 				} catch (err) {
 					this.showSnackbar(err.message || err, 'error')
 				}
