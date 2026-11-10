@@ -1,5 +1,11 @@
 # Changelog
 
+## [11.26.1](https://github.com/zwave-js/zwave-js-ui/compare/v11.26.0...v11.26.1) (2026-11-10)
+
+### ✨ Features
+
+* bump zwave-js@15.32.2 ([#4895](https://github.com/zwave-js/zwave-js-ui/issues/4895)) ([43c2a0a](https://github.com/zwave-js/zwave-js-ui/commit/43c2a0ace9fecee45a8242de1043261bb7709eae))
+
 ## [11.26.0](https://github.com/zwave-js/zwave-js-ui/compare/v11.25.2...v11.26.0) (2026-11-09)
 
 ### ✨ Features
