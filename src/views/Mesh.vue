@@ -9,8 +9,15 @@
 				variant="outlined"
 				divided
 			>
-				<v-btn value="graph" prepend-icon="hub">Graph</v-btn>
-				<v-btn value="map" prepend-icon="map">Floorplan</v-btn>
+				<v-btn
+					value="graph"
+					prepend-icon="hub"
+					@click="pickMode('graph')"
+					>Graph</v-btn
+				>
+				<v-btn value="map" prepend-icon="map" @click="pickMode('map')"
+					>Floorplan</v-btn
+				>
 			</v-btn-toggle>
 		</div>
 		<div class="mesh-body">
@@ -122,8 +129,6 @@ export default {
 			showProperties: false,
 			// 'graph' or 'map', remembered per browser once picked
 			mode: this.pickedMode() ?? 'graph',
-			// set while mounted() opens the default map, which isn't a pick
-			autoMode: false,
 		}
 	},
 	async mounted() {
@@ -134,7 +139,6 @@ export default {
 			// unless a mode was picked while the request ran
 			if (this.pickedMode()) return
 			if (res.success && res.data.settings.defaultMapId) {
-				this.autoMode = true
 				this.mode = 'map'
 			}
 		} catch {
@@ -142,10 +146,7 @@ export default {
 		}
 	},
 	watch: {
-		mode(v) {
-			// opening the default map isn't the user's pick
-			if (!this.autoMode) settings.store('meshMode', v)
-			this.autoMode = false
+		mode() {
 			this.nodeClick(null)
 		},
 		showProperties(v) {
@@ -162,6 +163,14 @@ export default {
 		/** the mode picked in this browser, or undefined if none yet */
 		pickedMode() {
 			return settings.load('meshMode')
+		},
+		/**
+		 * A click on Graph or Floorplan is the user's pick, stored even when
+		 * that mode is already shown, so a default map still loading doesn't
+		 * override it. Opening the default map isn't a pick and isn't stored.
+		 */
+		pickMode(mode) {
+			settings.store('meshMode', mode)
 		},
 		setInitialPosition(element) {
 			const windowHeight = window.innerHeight
