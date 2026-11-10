@@ -496,7 +496,19 @@ export default {
 			this.drawGhosts(view.ghosts)
 			this.drawNodes(nodePos)
 			// kept for the health layer, which also redraws on its own
-			this.drawn = { nodePos, allPos: view.pos }
+			this.drawn = {
+				nodePos,
+				allPos: view.pos,
+				// route lines drawn, as 'a-b' with a < b
+				routeLinks: new Set(
+					view.links
+						.filter((l) => l.kind === 'lwr')
+						.map(
+							(l) =>
+								`${Math.min(l.a, l.b)}-${Math.max(l.a, l.b)}`,
+						),
+				),
+			}
 			this.drawHealth()
 			this.drawBattery(nodePos)
 		},
@@ -764,7 +776,7 @@ export default {
 		 */
 		drawHealth() {
 			if (!this.drawn) return
-			const { nodePos, allPos } = this.drawn
+			const { nodePos, allPos, routeLinks } = this.drawn
 			this.groups.health.clearLayers()
 			const h = this.health
 			const name = this.nameById()
@@ -784,7 +796,10 @@ export default {
 					.addTo(this.groups.health)
 			}
 			for (const hop of h.hops) {
-				if (hop.kind !== 'lwr') continue
+				// only on a drawn route line: a hidden node's weak hop between
+				// two shown nodes has none
+				const link = `${Math.min(hop.a, hop.b)}-${Math.max(hop.a, hop.b)}`
+				if (hop.kind !== 'lwr' || !routeLinks.has(link)) continue
 				const a = allPos.get(hop.a)
 				const b = allPos.get(hop.b)
 				if (!a || !b) continue
