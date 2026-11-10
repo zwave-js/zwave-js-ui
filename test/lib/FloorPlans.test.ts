@@ -458,6 +458,69 @@ describe('#FloorPlans', () => {
 		expect((await empty.load()).maps).toHaveLength(1)
 	})
 
+	/** the folders a restore leaves next to the floorplans folder */
+	const leftovers = (fp: FloorPlans) =>
+		readdirSync(path.dirname(fp.dir)).filter((n) =>
+			n.startsWith(`${path.basename(fp.dir)}.`),
+		)
+
+	it('puts the current floorplans back when the restore swap fails', async () => {
+		const fp = await fresh()
+		const m = await fp.addMap({ name: 'Now' })
+		const set = await fp.setMapImage(m.id, { bytes: PNG1 })
+		const backup = await fresh()
+		await backup.addMap({ name: 'Then' })
+
+		// moving the old folder aside works, moving the restored one in fails
+		const real = vi.mocked(fsp.rename).getMockImplementation()
+		vi.mocked(fsp.rename).mockImplementation(async (from, to) => {
+			if (String(from).includes('.restore-') && String(to) === fp.dir) {
+				throw Error('EIO')
+			}
+			return real(from, to)
+		})
+		try {
+			await expect(fp.restoreFrom(backup.dir)).rejects.toThrow('EIO')
+		} finally {
+			vi.mocked(fsp.rename).mockImplementation(real)
+		}
+		expect((await fp.load()).maps.map((x) => x.name)).toEqual(['Now'])
+		expect(images(fp)).toEqual([set.map.background.image])
+		expect(leftovers(fp)).toEqual([])
+	})
+
+	it('refuses a restored maps.json it cannot use, keeping the current one', async () => {
+		const fp = await fresh()
+		await fp.addMap({ name: 'Now' })
+		const backup = await fresh()
+		await mkdir(backup.dir, { recursive: true })
+		for (const [content, error] of [
+			['{ nope', "can't be read"],
+			[JSON.stringify({ version: 99, maps: [] }), 'version 99'],
+			[
+				JSON.stringify({ version: 1, maps: [{ id: '../x' }] }),
+				'invalid id',
+			],
+		]) {
+			await writeFile(backup.file, content)
+			await expect(fp.restoreFrom(backup.dir)).rejects.toThrow(error)
+			expect((await fp.load()).maps.map((x) => x.name)).toEqual(['Now'])
+			expect(leftovers(fp)).toEqual([])
+		}
+	})
+
+	it('restores maps whose picture is missing from the backup', async () => {
+		const fp = await fresh()
+		const backup = await fresh()
+		const b = await backup.addMap({ name: 'Then' })
+		const set = await backup.setMapImage(b.id, { bytes: PNG1 })
+		await fsp.rm(path.join(backup.imagesDir, set.map.background.image))
+		await fp.restoreFrom(backup.dir)
+		expect((await mapOf(fp, b.id)).background.image).toBe(
+			set.map.background.image,
+		)
+	})
+
 	it('keeps all concurrent placements', async () => {
 		const fp = await fresh()
 		const m = await fp.addMap({ name: 'p', widthPx: 100, heightPx: 100 })

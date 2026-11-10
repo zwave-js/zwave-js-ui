@@ -6,6 +6,7 @@
 // canvas's top-left. Every image file belongs to exactly one map.
 
 import { cp, readFile, rename, rm, writeFile } from 'node:fs/promises'
+import { existsSync } from 'node:fs'
 import path from 'node:path'
 import { floorPlansDir } from '../config/app.ts'
 import { module } from './logger.ts'
@@ -448,9 +449,34 @@ export class FloorPlans {
 	/**
 	 * Replace the floorplans folder with a restored one. Replacing instead
 	 * of merging keeps pictures the backup doesn't use from piling up.
+	 * The restored maps.json is checked first: one this release can't use
+	 * is refused and the current floorplans stay. A picture it names that
+	 * isn't in the backup is only logged, the map shows without it.
 	 */
 	restoreFrom(dir: string) {
 		return this.enqueue(async () => {
+			const file = path.join(dir, 'maps.json')
+			let raw: unknown
+			try {
+				raw = JSON.parse(await readFile(file, 'utf8'))
+			} catch (error) {
+				throw Error(
+					`The backup's floorplans/maps.json can't be read: ${error.message}`,
+				)
+			}
+			const data = checkData(raw, "The backup's floorplans/maps.json", {
+				strict: true,
+			})
+			for (const name of data.maps.flatMap((m) => [
+				m.background?.image,
+				m.background?.darkImage,
+			])) {
+				if (name && !existsSync(path.join(dir, 'images', name))) {
+					logger.warn(
+						`Restored floorplans are missing picture ${name}`,
+					)
+				}
+			}
 			const id = generateId()
 			const incoming = `${this.dir}.restore-${id}`
 			const old = `${this.dir}.old-${id}`

@@ -5,6 +5,7 @@ import { createServer } from 'node:http'
 import type { AddressInfo } from 'node:net'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
+import archiver from 'archiver'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 
 // Set before the app config module loads
@@ -309,6 +310,27 @@ describe('floorplans API', () => {
 		expect(Buffer.from(await img.arrayBuffer())).toEqual(
 			await readFile(join(floorPlans.imagesDir, file)),
 		)
+	})
+
+	it('restores the rest of the store but not a broken floorplans folder', async () => {
+		const { data: map } = await api('POST', '/maps', { name: 'Kept' })
+		const zip = await new Promise<Buffer>((resolve, reject) => {
+			const archive = archiver('zip')
+			const chunks: Buffer[] = []
+			archive.on('data', (c: Buffer) => chunks.push(c))
+			archive.on('end', () => resolve(Buffer.concat(chunks)))
+			archive.on('error', reject)
+			archive.append('{"restored":true}\n', { name: 'marker.jsonl' })
+			archive.append('{ nope', { name: 'floorplans/maps.json' })
+			void archive.finalize()
+		})
+		const res = await restore(zip)
+		expect(res.success).toBe(true)
+		expect(res.message).toMatch(/floorplans were not/)
+		expect(existsSync(join(testStoreDir, 'marker.jsonl'))).toBe(true)
+		const { data } = await api('GET', '')
+		expect(data.maps.map((m) => m.name)).toContain('Kept')
+		await api('DELETE', `/maps/${map.id}`)
 	})
 
 	it('requires login on every route when auth is enabled', async () => {
