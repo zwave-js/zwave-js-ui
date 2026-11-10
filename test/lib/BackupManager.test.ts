@@ -30,11 +30,29 @@ describe('#BackupManager', () => {
 				storeFloorPlans,
 			}
 			await backupManager.backupStore()
-			expect(backup).toHaveBeenCalledWith({ includeFloorPlans: storeFloorPlans })
+			expect(backup).toHaveBeenCalledWith({
+				includeFloorPlans: storeFloorPlans,
+			})
 		},
 	)
 
 	it('includes floorplans by default', () => {
 		expect(backupManager.default.storeFloorPlans).toBe(true)
+	})
+
+	it.each([
+		['settings saved before the option existed', {}, true],
+		['the option turned off', { storeFloorPlans: false }, false],
+	])('reads %s through init()', async (_, stored, includeFloorPlans) => {
+		vi.spyOn(jsonStore, 'get').mockReturnValue({
+			// no jobs scheduled
+			backup: { storeBackup: false, nvmBackup: false, ...stored },
+		})
+		const backup = vi
+			.spyOn(jsonStore, 'backup')
+			.mockResolvedValue('store-backup_test.zip')
+		backupManager.init({} as any)
+		await backupManager.backupStore()
+		expect(backup).toHaveBeenCalledWith({ includeFloorPlans })
 	})
 })
