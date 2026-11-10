@@ -26,36 +26,18 @@
 							{{ label }}
 						</div>
 						<div class="mesh-legend-head mt-2">Shapes</div>
-						<div class="mesh-legend-row">
-							<svg width="22" height="14" viewBox="0 0 24 24">
-								<polygon
-									points="12,0 15,8 24,9 17,15 19,24 12,19 5,24 7,15 0,9 9,8"
-									:fill="controllerColor"
-								/>
-							</svg>
-							Controller
-						</div>
-						<div class="mesh-legend-row">
-							<svg width="22" height="14" viewBox="0 0 24 24">
-								<polygon
-									points="12,2 21,7 21,17 12,22 3,17 3,7"
-									fill="#9e9e9e"
-								/>
-							</svg>
-							Mains powered
-						</div>
-						<div class="mesh-legend-row">
-							<svg width="22" height="14" viewBox="0 0 24 24">
-								<rect
-									x="4"
-									y="4"
-									width="16"
-									height="16"
-									rx="2"
-									fill="#9e9e9e"
-								/>
-							</svg>
-							Battery
+						<div
+							v-for="[label, svg] in shapes"
+							:key="label"
+							class="mesh-legend-row"
+						>
+							<svg
+								width="22"
+								height="14"
+								viewBox="0 0 24 24"
+								v-html="svg"
+							/>
+							{{ label }}
 						</div>
 					</div>
 					<div>
@@ -78,89 +60,21 @@
 							{{ label }}
 						</div>
 						<div class="mesh-legend-head mt-2">Lines</div>
-						<div class="mesh-legend-row">
+						<div
+							v-for="[label, attrs] in lines"
+							:key="label"
+							class="mesh-legend-row"
+						>
 							<svg width="40" height="14">
 								<line
 									x1="1"
 									y1="7"
 									x2="39"
 									y2="7"
-									:stroke="routeSample"
-									stroke-width="4"
+									v-bind="attrs"
 								/>
 							</svg>
-							Route (last working)
-						</div>
-						<div class="mesh-legend-row">
-							<svg width="40" height="14">
-								<line
-									x1="1"
-									y1="7"
-									x2="39"
-									y2="7"
-									:stroke="routeSample"
-									stroke-width="1.5"
-									stroke-dasharray="5 5"
-								/>
-							</svg>
-							Backup route
-						</div>
-						<div class="mesh-legend-row">
-							<svg width="40" height="14">
-								<line
-									x1="1"
-									y1="7"
-									x2="39"
-									y2="7"
-									:stroke="routeSample"
-									stroke-width="4"
-									stroke-dasharray="10 8"
-								/>
-							</svg>
-							Backup route, no main route known
-						</div>
-						<div class="mesh-legend-row">
-							<svg width="40" height="14">
-								<line
-									x1="1"
-									y1="7"
-									x2="39"
-									y2="7"
-									:stroke="neighborColor"
-									stroke-width="1"
-									opacity="0.7"
-								/>
-							</svg>
-							Neighbors
-						</div>
-						<div class="mesh-legend-row">
-							<svg width="40" height="14">
-								<line
-									x1="1"
-									y1="7"
-									x2="39"
-									y2="7"
-									:stroke="deadColor"
-									stroke-width="1.5"
-									stroke-dasharray="2 4"
-								/>
-							</svg>
-							Failed hop
-						</div>
-						<div class="mesh-legend-row">
-							<svg width="40" height="14">
-								<line
-									x1="1"
-									y1="7"
-									x2="39"
-									y2="7"
-									:stroke="health.warn"
-									stroke-width="2"
-									stroke-dasharray="1 6"
-									stroke-linecap="round"
-								/>
-							</svg>
-							One-way neighbor
+							{{ label }}
 						</div>
 					</div>
 					<div>
@@ -205,8 +119,8 @@
 									cx="11"
 									cy="7"
 									r="4.5"
-									fill="#9e9e9e"
-									stroke="#616161"
+									:fill="ghost.fill"
+									:stroke="ghost.stroke"
 								/>
 							</svg>
 							Hidden repeater
@@ -218,7 +132,7 @@
 									cy="7"
 									r="4.5"
 									fill="none"
-									stroke="#616161"
+									:stroke="ghost.stroke"
 									stroke-dasharray="2 2"
 								/>
 							</svg>
@@ -254,13 +168,44 @@ import { ProtocolDataRate } from '@zwave-js/core'
 import {
 	BATTERY_LOW,
 	CONTROLLER_COLOR,
-	DEAD_COLOR,
+	GHOST_COLORS,
 	HEALTH_COLORS,
 	HOP_LEGEND,
-	NEIGHBOR_COLOR,
+	LINE_STYLES,
 	RATE_LEGEND,
+	nodeShapeSvg,
 	rateColor,
 } from '@/lib/meshView.js'
+
+// a sample for each line the map draws, in the map's styles
+const ROUTE_SAMPLE = rateColor(ProtocolDataRate.ZWave_100k)
+const LINES = [
+	['main', 'Route (last working)'],
+	['backup', 'Backup route'],
+	['backupOnly', 'Backup route, no main route known'],
+	['neighbor', 'Neighbors'],
+	['failed', 'Failed hop'],
+	['oneWay', 'One-way neighbor'],
+].map(([kind, label]) => {
+	const s = LINE_STYLES[kind]
+	return [
+		label,
+		{
+			stroke: s.color ?? ROUTE_SAMPLE,
+			'stroke-width': s.weight,
+			'stroke-dasharray': s.dashArray,
+			'stroke-linecap': s.lineCap,
+			opacity: s.opacity,
+		},
+	]
+})
+
+const UNSHADED = '#9e9e9e'
+const SHAPES = [
+	['Controller', nodeShapeSvg('controller', CONTROLLER_COLOR)],
+	['Mains powered', nodeShapeSvg('mains', UNSHADED)],
+	['Battery', nodeShapeSvg('battery', UNSHADED)],
+]
 
 export default {
 	name: 'MeshLegend',
@@ -271,10 +216,9 @@ export default {
 			rates: RATE_LEGEND,
 			health: HEALTH_COLORS,
 			battery: BATTERY_LOW,
-			controllerColor: CONTROLLER_COLOR,
-			deadColor: DEAD_COLOR,
-			neighborColor: NEIGHBOR_COLOR,
-			routeSample: rateColor(ProtocolDataRate.ZWave_100k),
+			ghost: GHOST_COLORS,
+			lines: LINES,
+			shapes: SHAPES,
 		}
 	},
 }

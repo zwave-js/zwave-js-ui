@@ -7,6 +7,9 @@ import {
 	meshHealth,
 	nodeColor,
 	nodeName,
+	nodeShapeSvg,
+	nodeShapeType,
+	polygon,
 	RATE_LEGEND,
 	rateColor,
 	routeSegments,
@@ -330,6 +333,19 @@ describe('meshView', () => {
 			node(2, { lwr: route([], 125, [], 3) }),
 		])
 		expect(h3.nodes.get(2).level).toBe('bad')
+	})
+
+	it('draws node shapes the same for the map and the legend', () => {
+		expect(polygon(12, 12, 10, 6).split(' ')).toHaveLength(6)
+		// a star has an inner and an outer point per tip
+		expect(polygon(12, 12, 12, 5, 5).split(' ')).toHaveLength(10)
+		expect(nodeShapeType({ isControllerNode: true })).toBe('controller')
+		expect(nodeShapeType({ isListening: true })).toBe('mains')
+		expect(nodeShapeType({ isListening: false })).toBe('battery')
+		expect(nodeShapeSvg('controller', '#123')).toBe(
+			`<polygon points="${polygon(12, 12, 12, 5, 5)}" fill="#123" stroke="none" stroke-width="1.5"/>`,
+		)
+		expect(nodeShapeSvg('battery', '#123', '#fff')).toContain('<rect ')
 	})
 
 	it('battery tag levels and report ages', () => {

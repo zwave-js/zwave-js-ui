@@ -70,6 +70,68 @@ export const HEALTH_COLORS = { warn: '#ff9800', bad: '#e53935' }
 // battery tags turn amber / red at or below these percentages
 export const BATTERY_LOW = { warn: 30, bad: 15 }
 
+/**
+ * How the floorplan map draws each kind of line, as Leaflet path options.
+ * Route lines take their color from rateColor. The legend draws its
+ * samples from the same table.
+ */
+export const LINE_STYLES = {
+	main: { weight: 4, opacity: 0.85 },
+	backup: { weight: 1.5, dashArray: '5 5', opacity: 0.85 },
+	// a backup route standing in for a missing main route: as thick as a
+	// route, dashed like a backup route
+	backupOnly: { weight: 4, dashArray: '10 8', opacity: 0.85 },
+	neighbor: { color: NEIGHBOR_COLOR, weight: 1, opacity: 0.45 },
+	failed: { color: DEAD_COLOR, weight: 1.5, dashArray: '2 4' },
+	oneWay: {
+		color: HEALTH_COLORS.warn,
+		weight: 2,
+		dashArray: '1 6',
+		lineCap: 'round',
+	},
+}
+
+/** Repeaters drawn on a route but not as nodes (ghosts) */
+export const GHOST_COLORS = { fill: '#9e9e9e', stroke: '#616161' }
+
+/**
+ * SVG points of a regular polygon with `count` corners around (cx, cy),
+ * or with `inner` a star with `count` points
+ */
+export function polygon(cx, cy, r, count, inner = null) {
+	const pts = []
+	const steps = inner ? count * 2 : count
+	for (let i = 0; i < steps; i++) {
+		const radius = inner && i % 2 ? inner : r
+		const a = (Math.PI * 2 * i) / steps - Math.PI / 2
+		pts.push(
+			`${(cx + radius * Math.cos(a)).toFixed(1)},${(cy + radius * Math.sin(a)).toFixed(1)}`,
+		)
+	}
+	return pts.join(' ')
+}
+
+/**
+ * A node marker's shape as SVG markup for a 24 x 24 box: a star for the
+ * controller, a hexagon for mains powered nodes, a square for battery ones
+ */
+export function nodeShapeSvg(type, fill, stroke = 'none') {
+	const paint = `fill="${fill}" stroke="${stroke}" stroke-width="1.5"`
+	if (type === 'controller') {
+		return `<polygon points="${polygon(12, 12, 12, 5, 5)}" ${paint}/>`
+	}
+	if (type === 'mains') {
+		return `<polygon points="${polygon(12, 12, 10, 6)}" ${paint}/>`
+	}
+	return `<rect x="3" y="3" width="18" height="18" rx="2" ${paint}/>`
+}
+
+/** Which of nodeShapeSvg's shapes a node gets */
+export function nodeShapeType(node) {
+	if (node.isControllerNode) return 'controller'
+	return node.isListening ? 'mains' : 'battery'
+}
+
 /** An RSSI value as reported (dBm or an RssiError code), or null when not measured */
 export function toRssi(value) {
 	return value == null || value === RssiError.NotAvailable ? null : value

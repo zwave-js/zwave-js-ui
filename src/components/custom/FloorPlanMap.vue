@@ -84,8 +84,9 @@ import ConfigApis from '@/apis/ConfigApis.js'
 import MeshLegend from '@/components/custom/MeshLegend.vue'
 import { escapeHtml, plural } from '@/lib/utils.js'
 import {
-	DEAD_COLOR,
+	GHOST_COLORS,
 	HEALTH_COLORS,
+	LINE_STYLES,
 	NEIGHBOR_COLOR,
 	agoLabel,
 	batteryLevelClass,
@@ -100,6 +101,8 @@ import {
 	nlwrOf,
 	nodeColor,
 	nodeName,
+	nodeShapeSvg,
+	nodeShapeType,
 	rateColor,
 	rssiLabel,
 	statusOf,
@@ -123,19 +126,6 @@ function labelOf(n) {
 	if (status === 'failed') return `FAILED: ${nodeName(n)}`
 	if (status === 'dead') return `DEAD: ${nodeName(n)}`
 	return nodeName(n)
-}
-
-function polygon(cx, cy, r, count, inner = null) {
-	const pts = []
-	const steps = inner ? count * 2 : count
-	for (let i = 0; i < steps; i++) {
-		const radius = inner && i % 2 ? inner : r
-		const a = (Math.PI * 2 * i) / steps - Math.PI / 2
-		pts.push(
-			`${(cx + radius * Math.cos(a)).toFixed(1)},${(cy + radius * Math.sin(a)).toFixed(1)}`,
-		)
-	}
-	return pts.join(' ')
 }
 
 export default {
@@ -172,6 +162,8 @@ export default {
 			return {
 				'--floorplan-warn': HEALTH_COLORS.warn,
 				'--floorplan-bad': HEALTH_COLORS.bad,
+				'--floorplan-ghost-fill': GHOST_COLORS.fill,
+				'--floorplan-ghost-stroke': GHOST_COLORS.stroke,
 			}
 		},
 		/** broadcast and multicast nodes aren't part of the mesh, as in the graph */
@@ -570,23 +562,15 @@ export default {
 				const tip = `${name(l.a)} ↔ ${name(l.b)}`
 				if (l.kind === 'neighbor') {
 					L.polyline([a, b], {
-						color: NEIGHBOR_COLOR,
-						weight: 1,
-						opacity: 0.45,
+						...LINE_STYLES.neighbor,
 						interactive: false,
 					}).addTo(this.groups.neighbors)
 				} else if (l.kind === 'failed') {
-					L.polyline([a, b], {
-						color: DEAD_COLOR,
-						weight: 1.5,
-						dashArray: '2 4',
-					})
+					L.polyline([a, b], LINE_STYLES.failed)
 						.bindTooltip(`${tip}<br>Failed ❌`, { sticky: true })
 						.addTo(this.groups.routes)
 				} else {
 					const main = l.kind === 'main'
-					// a backup route standing in for a missing main route:
-					// as thick as a route, dashed like a backup route
 					const backupOnly =
 						main && l.backupOnly.length === l.routes.length
 					// RSSI read when shown, so signal changes don't redraw
@@ -604,11 +588,14 @@ export default {
 								: name(id),
 						)
 						.join(', ')
+					const style = backupOnly
+						? 'backupOnly'
+						: main
+							? 'main'
+							: 'backup'
 					L.polyline([a, b], {
+						...LINE_STYLES[style],
 						color: rateColor(l.rate),
-						weight: main ? 4 : 1.5,
-						dashArray: backupOnly ? '10 8' : main ? null : '5 5',
-						opacity: 0.85,
 					})
 						.bindTooltip(
 							() =>
@@ -624,16 +611,8 @@ export default {
 			}
 		},
 		nodeIcon(n) {
-			const color = nodeColor(n)
 			const stroke = statusOf(n) === 'ok' ? '#222' : '#fff'
-			let shape
-			if (n.isControllerNode) {
-				shape = `<polygon points="${polygon(12, 12, 12, 5, 5)}" fill="${color}" stroke="${stroke}" stroke-width="1.5"/>`
-			} else if (n.isListening) {
-				shape = `<polygon points="${polygon(12, 12, 10, 6)}" fill="${color}" stroke="${stroke}" stroke-width="1.5"/>`
-			} else {
-				shape = `<rect x="3" y="3" width="18" height="18" rx="2" fill="${color}" stroke="${stroke}" stroke-width="1.5"/>`
-			}
+			const shape = nodeShapeSvg(nodeShapeType(n), nodeColor(n), stroke)
 			return L.divIcon({
 				className: 'floorplan-node',
 				iconSize: [24, 24],
@@ -808,12 +787,7 @@ export default {
 				const a = nodePos.get(w.from)
 				const b = nodePos.get(w.to)
 				if (!a || !b) continue
-				L.polyline([a, b], {
-					color: HEALTH_COLORS.warn,
-					weight: 2,
-					dashArray: '1 6',
-					lineCap: 'round',
-				})
+				L.polyline([a, b], LINE_STYLES.oneWay)
 					.bindTooltip(
 						`One-way: ${name(w.from)} lists ${name(w.to)} as a neighbor, but not the other way round`,
 						{ sticky: true },
@@ -922,8 +896,8 @@ export default {
 }
 
 .floorplan-ghost circle {
-	fill: #9e9e9e;
-	stroke: #616161;
+	fill: var(--floorplan-ghost-fill);
+	stroke: var(--floorplan-ghost-stroke);
 	stroke-width: 1;
 }
 
