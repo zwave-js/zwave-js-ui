@@ -120,15 +120,19 @@ export default {
 		return {
 			selectedNode: null,
 			showProperties: false,
-			// 'graph' or 'map', remembered per browser
-			mode: settings.load('meshMode', 'graph'),
+			// 'graph' or 'map', remembered per browser once picked
+			mode: this.pickedMode() ?? 'graph',
+			// set while mounted() opens the default map, which isn't a pick
+			autoMode: false,
 		}
 	},
 	async mounted() {
 		// a browser that never picked a mode opens the default map, if any
-		if (localStorage.getItem('meshMode') !== null) return
+		if (this.pickedMode()) return
 		try {
 			const res = await ConfigApis.getFloorPlans()
+			// unless a mode was picked while the request ran
+			if (this.pickedMode()) return
 			if (res.success && res.data.settings.defaultMapId) {
 				this.autoMode = true
 				this.mode = 'map'
@@ -155,6 +159,10 @@ export default {
 	},
 	methods: {
 		...mapActions(useBaseStore, ['setNeighbors']),
+		/** the mode picked in this browser, or undefined if none yet */
+		pickedMode() {
+			return settings.load('meshMode')
+		},
 		setInitialPosition(element) {
 			const windowHeight = window.innerHeight
 			const windowWidth = window.innerWidth
