@@ -249,8 +249,9 @@ export default {
 			settings.store('meshFloorPlanMap', id)
 		},
 		/**
-		 * Reload the floorplans. Writes reload when they finish, so a slow
-		 * reply can arrive after a newer one: only the newest is used.
+		 * Reload the floorplans: on open, and after a failed write. Two can
+		 * overlap, and a slow reply can arrive after a newer one: only the
+		 * newest is used.
 		 */
 		async loadFloorPlans() {
 			const count = ++this.loadCount
@@ -269,19 +270,34 @@ export default {
 				)
 			}
 		},
-		/** run a floorplan API call, then reload the floorplans */
-		async floorPlanCall(what, call, { reload = true } = {}) {
+		/**
+		 * Run a floorplan API call and `apply` its reply to the local copy,
+		 * so a write costs one request. Only a failure reloads everything.
+		 */
+		async floorPlanCall(what, call, apply) {
 			try {
 				const res = await call()
 				if (!res.success) throw Error(res.message)
-				if (reload) await this.loadFloorPlans()
+				apply(res.data)
 				return res.data
 			} catch (error) {
 				this.showSnackbar(`Couldn't ${what}: ${error.message}`, 'error')
 				// show the stored state again, e.g. a dragged node snaps back
-				if (reload) await this.loadFloorPlans()
+				await this.loadFloorPlans()
 				return undefined
 			}
+		},
+		/** put a map the server sent back in place of the local copy */
+		putMap(map) {
+			const maps = this.floorPlans.maps
+			const i = maps.findIndex((m) => m.id === map.id)
+			if (i < 0) maps.push(map)
+			else maps.splice(i, 1, map)
+		},
+		/** a new copy of map `id`, so the map component redraws */
+		changeMap(id, change) {
+			const map = this.floorPlans.maps.find((m) => m.id === id)
+			if (map) this.putMap({ ...map, ...change(map) })
 		},
 		async newMap() {
 			const { name } = await this.app.confirm('New map', '', 'info', {
@@ -298,8 +314,10 @@ export default {
 				],
 			})
 			if (!name) return
-			const map = await this.floorPlanCall('create the map', () =>
-				ConfigApis.addFloorPlanMap({ name }),
+			const map = await this.floorPlanCall(
+				'create the map',
+				() => ConfigApis.addFloorPlanMap({ name }),
+				this.putMap,
 			)
 			if (map) this.selectMap(map.id)
 		},
@@ -319,14 +337,18 @@ export default {
 				],
 			})
 			if (!name || name === map.name) return
-			await this.floorPlanCall('rename the map', () =>
-				ConfigApis.updateFloorPlanMap(map.id, { name }),
+			await this.floorPlanCall(
+				'rename the map',
+				() => ConfigApis.updateFloorPlanMap(map.id, { name }),
+				this.putMap,
 			)
 		},
 		toggleDefaultMap() {
 			const defaultMapId = this.isDefaultMap ? null : this.currentMap.id
-			return this.floorPlanCall('change the default map', () =>
-				ConfigApis.updateFloorPlanSettings({ defaultMapId }),
+			return this.floorPlanCall(
+				'change the default map',
+				() => ConfigApis.updateFloorPlanSettings({ defaultMapId }),
+				(s) => (this.floorPlans.settings = s),
 			)
 		},
 		async deleteMap() {
@@ -338,8 +360,16 @@ export default {
 				{ confirmText: 'Delete', width: 450 },
 			)
 			if (!ok) return
-			await this.floorPlanCall('delete the map', () =>
-				ConfigApis.deleteFloorPlanMap(map.id),
+			await this.floorPlanCall(
+				'delete the map',
+				() => ConfigApis.deleteFloorPlanMap(map.id),
+				() => {
+					const fp = this.floorPlans
+					fp.maps = fp.maps.filter((m) => m.id !== map.id)
+					if (fp.settings.defaultMapId === map.id) {
+						fp.settings.defaultMapId = null
+					}
+				},
 			)
 		},
 		async uploadBackground(dark) {
@@ -383,8 +413,15 @@ export default {
 				? await this.askImageFit(map, size, dark)
 				: 'stretch'
 			if (!fit) return
-			const res = await this.floorPlanCall('upload the picture', () =>
-				ConfigApis.setFloorPlanImage(map.id, file, { dark, size, fit }),
+			const res = await this.floorPlanCall(
+				'upload the picture',
+				() =>
+					ConfigApis.setFloorPlanImage(map.id, file, {
+						dark,
+						size,
+						fit,
+					}),
+				(data) => this.putMap(data.map),
 			)
 			// with a known size, stretching was asked for in askImageFit
 			if (res?.stretched && !size) {
@@ -453,8 +490,10 @@ export default {
 				{ confirmText: 'Remove', width: 450 },
 			)
 			if (!ok) return
-			await this.floorPlanCall('remove the picture', () =>
-				ConfigApis.removeFloorPlanImage(map.id, { dark }),
+			await this.floorPlanCall(
+				'remove the picture',
+				() => ConfigApis.removeFloorPlanImage(map.id, { dark }),
+				this.putMap,
 			)
 		},
 		/** the map reports each picture that won't load once */
@@ -465,46 +504,59 @@ export default {
 			)
 		},
 		onPlace(placement) {
-			return this.floorPlanCall('place the node', () =>
-				ConfigApis.setFloorPlanPlacements(this.currentMap.id, [
-					placement,
-				]),
-			)
+			return this.onPlaceMany([placement], 'place the node')
 		},
-		onPlaceMany(placements) {
-			return this.floorPlanCall('place the nodes', () =>
-				ConfigApis.setFloorPlanPlacements(
-					this.currentMap.id,
-					placements,
-				),
+		/** the server replies with the placements as stored (clamped) */
+		onPlaceMany(placements, what = 'place the nodes') {
+			const id = this.currentMap.id
+			return this.floorPlanCall(
+				what,
+				() => ConfigApis.setFloorPlanPlacements(id, placements),
+				(stored) =>
+					this.changeMap(id, (map) => {
+						const byKey = new Map(
+							stored.map((p) => [p.deviceKey, p]),
+						)
+						const kept = map.placements.filter(
+							(p) => !byKey.has(p.deviceKey),
+						)
+						return { placements: [...kept, ...stored] }
+					}),
 			)
 		},
 		onUnplace(deviceKey) {
-			return this.floorPlanCall('remove the node', () =>
-				ConfigApis.removeFloorPlanPlacement(
-					this.currentMap.id,
-					deviceKey,
-				),
+			const id = this.currentMap.id
+			return this.floorPlanCall(
+				'remove the node',
+				() => ConfigApis.removeFloorPlanPlacement(id, deviceKey),
+				() =>
+					this.changeMap(id, (map) => ({
+						placements: map.placements.filter(
+							(p) => p.deviceKey !== deviceKey,
+						),
+					})),
 			)
 		},
 		onSetNodes(nodes) {
-			return this.floorPlanCall('change the node list', () =>
-				ConfigApis.updateFloorPlanMap(this.currentMap.id, { nodes }),
+			return this.floorPlanCall(
+				'change the node list',
+				() =>
+					ConfigApis.updateFloorPlanMap(this.currentMap.id, {
+						nodes,
+					}),
+				this.putMap,
 			)
 		},
-		/** the view is saved while editing; the map already shows it */
+		/**
+		 * The view is saved while editing. The map already shows it, so it's
+		 * stored in place without a new map copy, which would redraw.
+		 */
 		onViewChange(view) {
 			const map = this.currentMap
 			return this.floorPlanCall(
 				"save the map's view",
-				async () => {
-					const res = await ConfigApis.updateFloorPlanMap(map.id, {
-						view,
-					})
-					if (res.success) map.view = res.data.view
-					return res
-				},
-				{ reload: false },
+				() => ConfigApis.updateFloorPlanMap(map.id, { view }),
+				(saved) => (map.view = saved.view),
 			)
 		},
 	},
