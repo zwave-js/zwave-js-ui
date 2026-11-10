@@ -17,6 +17,18 @@ export function copy(o) {
 
 export function noop() {}
 
+/** Escape text for use inside HTML */
+export function escapeHtml(value) {
+	const entities = {
+		'&': '&amp;',
+		'<': '&lt;',
+		'>': '&gt;',
+		'"': '&quot;',
+		"'": '&#39;',
+	}
+	return value.replace(/[&<>"']/g, (character) => entities[character])
+}
+
 /** "1 node", "3 nodes" */
 export function plural(count, word, many = `${word}s`) {
 	return `${count} ${count === 1 ? word : many}`

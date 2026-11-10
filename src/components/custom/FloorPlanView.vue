@@ -186,7 +186,7 @@ import useBaseStore from '../../stores/base.js'
 import InstancesMixin from '../../mixins/InstancesMixin.js'
 import ConfigApis from '../../apis/ConfigApis.js'
 import { Settings } from '@/modules/Settings'
-import { escapeHtml } from '@/lib/accessControl.ts'
+import { escapeHtml } from '@/lib/utils.js'
 
 const settings = new Settings(localStorage)
 

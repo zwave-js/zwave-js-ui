@@ -82,8 +82,7 @@ import 'leaflet/dist/leaflet.css'
 import { protocolDataRateToString } from '@zwave-js/core'
 import ConfigApis from '@/apis/ConfigApis.js'
 import MeshLegend from '@/components/custom/MeshLegend.vue'
-import { escapeHtml } from '@/lib/accessControl.ts'
-import { plural } from '@/lib/utils.js'
+import { escapeHtml, plural } from '@/lib/utils.js'
 import {
 	DEAD_COLOR,
 	HEALTH_COLORS,
