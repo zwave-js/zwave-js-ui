@@ -406,38 +406,24 @@ export default {
 				animate: false,
 			})
 		},
-		/**
-		 * A right-click menu at a marker: `items` are [label, action] pairs.
-		 * Nothing changes until an item is used.
-		 */
-		openMenu(marker, heading, items) {
+		/** a node's right-click menu; nothing changes until it is used */
+		openNodeMenu(node, marker) {
 			const box = document.createElement('div')
 			const title = document.createElement('div')
 			title.className = 'text-subtitle-2 mb-1'
-			title.textContent = heading
-			box.append(title)
-			for (const [label, action] of items) {
-				const btn = document.createElement('button')
-				btn.className = 'floorplan-menu-btn'
-				btn.textContent = label
-				btn.onclick = () => {
-					this.lmap.closePopup()
-					action()
-				}
-				box.append(btn)
+			title.textContent = labelOf(node)
+			const btn = document.createElement('button')
+			btn.className = 'floorplan-menu-btn'
+			btn.textContent = 'Remove from this map'
+			btn.onclick = () => {
+				this.lmap.closePopup()
+				this.$emit('unplace', this.keyOf(node))
 			}
+			box.append(title, btn)
 			L.popup({ offset: [0, -10] })
 				.setLatLng(marker.getLatLng())
 				.setContent(box)
 				.openOn(this.lmap)
-		},
-		openNodeMenu(node, marker) {
-			this.openMenu(marker, labelOf(node), [
-				[
-					'Remove from this map',
-					() => this.$emit('unplace', this.keyOf(node)),
-				],
-			])
 		},
 		drawSoon() {
 			cancelAnimationFrame(this.frame)
@@ -554,10 +540,7 @@ export default {
 			if (Array.isArray(v.center) && typeof v.zoom === 'number') {
 				this.lmap.setView(v.center, v.zoom, { animate: false })
 			} else {
-				this.lmap.fitBounds(this.canvasBounds(), {
-					padding: [20, 20],
-					animate: false,
-				})
+				this.fitToMap()
 			}
 			for (const [k] of LAYERS) {
 				if (v.layers?.[k] ?? true) {
