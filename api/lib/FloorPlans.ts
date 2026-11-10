@@ -135,6 +135,39 @@ function toPlacement(
 }
 
 /**
+ * Resize the canvas to `size`, the size of a new picture used as is. Nodes
+ * keep their spots relative to the old picture frame ('scale') or their
+ * distance from its top-left corner ('keep'). The background then covers
+ * the canvas, and the saved zoom and center are reset.
+ */
+function refitCanvas(
+	map: FloorPlanMap,
+	size: { w: number; h: number },
+	fit: 'scale' | 'keep',
+) {
+	const r = map.background?.imageRect ?? {
+		x: 0,
+		y: 0,
+		w: map.widthPx,
+		h: map.heightPx,
+	}
+	const [sx, sy] = fit === 'scale' ? [size.w / r.w, size.h / r.h] : [1, 1]
+	map.widthPx = size.w
+	map.heightPx = size.h
+	map.placements = map.placements.map((p) =>
+		toPlacement(map, {
+			deviceKey: p.deviceKey,
+			x: Math.round((p.x - r.x) * sx),
+			y: Math.round((p.y - r.y) * sy),
+		}),
+	)
+	if (map.background) {
+		map.background.imageRect = { x: 0, y: 0, w: size.w, h: size.h }
+	}
+	map.view = { ...map.view, center: null, zoom: null }
+}
+
+/**
  * Identify an image by its first bytes. Raster formats only: SVG is refused
  * because it can carry script and these images are served from our origin.
  */
@@ -565,22 +598,24 @@ export class FloorPlans {
 		return map
 	}
 
+	/**
+	 * Write a picture checked by setMapImage under a new name. No temp file:
+	 * the name is unused until maps.json points at it, and a failed update
+	 * deletes it.
+	 */
 	private async writeImage(
 		map: FloorPlanMap,
 		dark: boolean,
 		bytes: Buffer,
+		ext: string,
 		files: FileChanges,
 	) {
-		const kind = sniffImage(bytes)
-		if (!kind) throw Error('Only PNG, JPEG or WebP images are accepted')
-		if (bytes.length > MAX_IMAGE_BYTES) {
-			throw Error(`Image is larger than ${MAX_IMAGE_MB} MB`)
-		}
 		// a new name each time busts browser caches
 		const suffix = dark ? '-dark' : ''
-		const name = `${map.id}${suffix}-${generateId()}.${kind.ext}`
-		await writeAtomic(path.join(this.imagesDir, name), bytes)
+		const name = `${map.id}${suffix}-${generateId()}.${ext}`
+		await ensureDir(this.imagesDir)
 		files.added.push(name)
+		await writeFile(path.join(this.imagesDir, name), bytes)
 		return name
 	}
 
@@ -699,8 +734,10 @@ export class FloorPlans {
 		if (!IMAGE_FITS.includes(fit)) {
 			throw Error(`fit must be one of ${IMAGE_FITS.join(', ')}`)
 		}
-		if (!sniffImage(bytes)) {
-			throw Error('Only PNG, JPEG or WebP images are accepted')
+		const kind = sniffImage(bytes)
+		if (!kind) throw Error('Only PNG, JPEG or WebP images are accepted')
+		if (bytes.length > MAX_IMAGE_BYTES) {
+			throw Error(`Image is larger than ${MAX_IMAGE_MB} MB`)
 		}
 		const size =
 			imageSize(bytes) ??
@@ -715,35 +752,14 @@ export class FloorPlans {
 		}
 		return this.update(async (data, files) => {
 			const map = this.getMap(data, id)
-			const name = await this.writeImage(map, dark, bytes, files)
-			if (fit !== 'stretch') {
-				const r = map.background?.imageRect ?? {
-					x: 0,
-					y: 0,
-					w: map.widthPx,
-					h: map.heightPx,
-				}
-				const [sx, sy] =
-					fit === 'scale' ? [size.w / r.w, size.h / r.h] : [1, 1]
-				map.widthPx = size.w
-				map.heightPx = size.h
-				map.placements = map.placements.map((p) =>
-					toPlacement(map, {
-						deviceKey: p.deviceKey,
-						x: Math.round((p.x - r.x) * sx),
-						y: Math.round((p.y - r.y) * sy),
-					}),
-				)
-				if (map.background) {
-					map.background.imageRect = {
-						x: 0,
-						y: 0,
-						w: size.w,
-						h: size.h,
-					}
-				}
-				map.view = { ...map.view, center: null, zoom: null }
-			}
+			const name = await this.writeImage(
+				map,
+				dark,
+				bytes,
+				kind.ext,
+				files,
+			)
+			if (fit !== 'stretch') refitCanvas(map, size, fit)
 			if (map.background) {
 				const field = imageField(dark)
 				const old = map.background[field]
