@@ -559,12 +559,6 @@ export class FloorPlans {
 		}
 	}
 
-	/** Path of a map's image file, or null if it has none */
-	imagePath(map: FloorPlanMap, { dark = false } = {}): string | null {
-		const file = map.background?.[imageField(dark)]
-		return file ? path.join(this.imagesDir, file) : null
-	}
-
 	private getMap(data: FloorPlansData, id: string) {
 		const map = data.maps.find((m) => m.id === id)
 		if (!map) throw Error('No such map')
