@@ -258,6 +258,9 @@ export default {
 	created() {
 		// pictures that failed to load, drawn as the outline instead
 		this.brokenImages = new Set()
+		// a marker is being dragged, and a draw() waits for it to end
+		this.dragging = false
+		this.drawPending = false
 	},
 	mounted() {
 		const lmap = L.map(this.$refs.map, {
@@ -452,6 +455,12 @@ export default {
 		draw() {
 			const lmap = this.lmap
 			if (!lmap) return
+			// a redraw would destroy the marker being dragged and lose the
+			// move: it waits for the drop
+			if (this.dragging) {
+				this.drawPending = true
+				return
+			}
 			for (const g of Object.values(this.groups)) g.clearLayers()
 			this.drawBackground()
 			if (!this.fitted) this.applyView()
@@ -680,9 +689,17 @@ export default {
 					})
 					.addTo(this.groups.nodes)
 				if (this.editing) {
+					marker.on('dragstart', () => {
+						this.dragging = true
+					})
 					marker.on('dragend', () => {
+						this.dragging = false
 						const { lat, lng } = marker.getLatLng()
 						this.place(n, lng, this.map.heightPx - lat)
+						if (this.drawPending) {
+							this.drawPending = false
+							this.drawSoon()
+						}
 					})
 					marker.on('contextmenu', (e) => {
 						L.DomEvent.preventDefault(e.originalEvent)
