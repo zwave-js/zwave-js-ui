@@ -50,6 +50,7 @@ import {
 import * as utils from './lib/utils.ts'
 import backupManager from './lib/BackupManager.ts'
 import floorPlans, {
+	InputError,
 	MAX_IMAGE_BYTES,
 	MAX_IMAGE_MB,
 	STRETCH_TOLERANCE,
@@ -2209,7 +2210,9 @@ function floorPlansRoute(
 		try {
 			res.json({ success: true, data: await handler(req, res) })
 		} catch (error) {
-			logger.error(
+			// refused input is the caller's problem, keep error for storage faults
+			const level = error instanceof InputError ? 'warn' : 'error'
+			logger[level](
 				`Floorplans ${req.method} ${req.path}: ${error.message}`,
 			)
 			res.json({ success: false, message: error.message })
@@ -2281,11 +2284,14 @@ app.put(
 			await multerPromise(floorPlanImageUpload, req, res)
 		} catch (error) {
 			if (error.code === 'LIMIT_FILE_SIZE') {
-				throw Error(`Image is larger than ${MAX_IMAGE_MB} MB`)
+				throw new InputError(`Image is larger than ${MAX_IMAGE_MB} MB`)
+			}
+			if (error.name === 'MulterError') {
+				throw new InputError(error.message)
 			}
 			throw error
 		}
-		if (!req.file) throw Error('No file uploaded')
+		if (!req.file) throw new InputError('No file uploaded')
 		return floorPlans.setMapImage(req.params.id, {
 			bytes: req.file.buffer,
 			imgWidthPx: Number(req.body.imgWidthPx),

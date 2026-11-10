@@ -15,6 +15,9 @@ import { ensureDir, generateId } from './utils.ts'
 const logger = module('FloorPlans')
 
 export const VERSION = 1
+
+/** A request the floorplans refuse (bad input, unknown map), not a storage fault */
+export class InputError extends Error {}
 export const MAX_IMAGE_BYTES = 25 * 1024 * 1024
 export const MAX_IMAGE_MB = MAX_IMAGE_BYTES / 1024 / 1024
 export const MAX_DIMENSION = 20000
@@ -116,7 +119,7 @@ const cleanName = (name: unknown, fallback: string) =>
 
 function checkDeviceKey(key: unknown): asserts key is string {
 	if (typeof key !== 'string' || !DEVICE_KEY.test(key)) {
-		throw Error('deviceKey must look like zwave:<homeId>:<nodeId>')
+		throw new InputError('deviceKey must look like zwave:<homeId>:<nodeId>')
 	}
 }
 
@@ -253,7 +256,7 @@ export function imageSize(buf: Buffer): { w: number; h: number } | null {
 export function checkNodes(nodes: unknown): NodeFilter {
 	const n = nodes as NodeFilter
 	if (!n || !['include', 'exclude'].includes(n.start)) {
-		throw Error("nodes.start must be 'include' or 'exclude'")
+		throw new InputError("nodes.start must be 'include' or 'exclude'")
 	}
 	const ex = n.exceptions ?? []
 	if (
@@ -261,7 +264,7 @@ export function checkNodes(nodes: unknown): NodeFilter {
 		ex.length > MAX_NODE_LIST ||
 		!ex.every((k) => typeof k === 'string' && DEVICE_KEY.test(k))
 	) {
-		throw Error(
+		throw new InputError(
 			`nodes.exceptions must be a list of at most ${MAX_NODE_LIST} device keys`,
 		)
 	}
@@ -594,7 +597,7 @@ export class FloorPlans {
 
 	private getMap(data: FloorPlansData, id: string) {
 		const map = data.maps.find((m) => m.id === id)
-		if (!map) throw Error('No such map')
+		if (!map) throw new InputError('No such map')
 		return map
 	}
 
@@ -628,7 +631,9 @@ export class FloorPlans {
 		nodes = { start: 'include', exceptions: [] },
 	}: AddMapOptions = {}) {
 		if (!isDim(widthPx) || !isDim(heightPx)) {
-			throw Error(`widthPx and heightPx must each be ${DIM_RULE}`)
+			throw new InputError(
+				`widthPx and heightPx must each be ${DIM_RULE}`,
+			)
 		}
 		const checked = checkNodes(nodes)
 		return this.update((data) => {
@@ -655,10 +660,10 @@ export class FloorPlans {
 	async updateMap(id: string, changes: MapChanges = {}) {
 		const c = changes
 		if (c.widthPx !== undefined && !isDim(c.widthPx)) {
-			throw Error(`widthPx must be ${DIM_RULE}`)
+			throw new InputError(`widthPx must be ${DIM_RULE}`)
 		}
 		if (c.heightPx !== undefined && !isDim(c.heightPx)) {
-			throw Error(`heightPx must be ${DIM_RULE}`)
+			throw new InputError(`heightPx must be ${DIM_RULE}`)
 		}
 		const nodes = c.nodes !== undefined ? checkNodes(c.nodes) : undefined
 		const view = c.view !== undefined ? checkView(c.view) : undefined
@@ -732,21 +737,22 @@ export class FloorPlans {
 		},
 	) {
 		if (!IMAGE_FITS.includes(fit)) {
-			throw Error(`fit must be one of ${IMAGE_FITS.join(', ')}`)
+			throw new InputError(`fit must be one of ${IMAGE_FITS.join(', ')}`)
 		}
 		const kind = sniffImage(bytes)
-		if (!kind) throw Error('Only PNG, JPEG or WebP images are accepted')
+		if (!kind)
+			throw new InputError('Only PNG, JPEG or WebP images are accepted')
 		if (bytes.length > MAX_IMAGE_BYTES) {
-			throw Error(`Image is larger than ${MAX_IMAGE_MB} MB`)
+			throw new InputError(`Image is larger than ${MAX_IMAGE_MB} MB`)
 		}
 		const size =
 			imageSize(bytes) ??
 			(isDim(imgWidthPx) && isDim(imgHeightPx)
 				? { w: imgWidthPx, h: imgHeightPx }
 				: null)
-		if (!size) throw Error("Couldn't tell the image's size")
+		if (!size) throw new InputError("Couldn't tell the image's size")
 		if (!isDim(size.w) || !isDim(size.h)) {
-			throw Error(
+			throw new InputError(
 				`The image is ${size.w} x ${size.h} pixels, each side must be ${DIM_RULE}`,
 			)
 		}
@@ -808,12 +814,14 @@ export class FloorPlans {
 	 */
 	async setPlacements(mapId: string, items: Placement[]) {
 		if (!Array.isArray(items) || items.length > MAX_NODE_LIST) {
-			throw Error(`placements must be a list of at most ${MAX_NODE_LIST}`)
+			throw new InputError(
+				`placements must be a list of at most ${MAX_NODE_LIST}`,
+			)
 		}
 		for (const { deviceKey, x, y } of items) {
 			checkDeviceKey(deviceKey)
 			if (!isCoord(x) || !isCoord(y)) {
-				throw Error('x and y must be numbers')
+				throw new InputError('x and y must be numbers')
 			}
 		}
 		return this.update((data) => {
