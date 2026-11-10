@@ -69,7 +69,7 @@ Store:
 - **Enabled**: Enable/Disable scheduled backups of store
 - **Cron**: Cron expression to schedule the backup
 - **Max backup files**: Number of backups to keep in storage
-- **Floorplans**: Include floorplans (maps, background pictures and node placements) in the backup. On by default. Pictures are stored uncompressed, so each backup grows by their total size. The manual backup on the Store page asks each time
+- **Floorplans**: Include floorplans (maps, background pictures and node placements) in the backup. On by default. Pictures are stored uncompressed, so each backup grows by their total size. The manual backup on the Store page asks each time. Restoring a backup replaces all floorplans. If a restore is interrupted (e.g. a power cut), the floorplans from before it are kept in a `floorplans.old-<id>` folder next to `floorplans` in the store, and a warning is logged at startup; rename it back to `floorplans` if your maps are missing. Node placements are tied to the Z-Wave network's home ID, so after moving to a new network (not an NVM restore onto a replacement stick) old placements stay in the file without a node to show
 
 NVM:
 

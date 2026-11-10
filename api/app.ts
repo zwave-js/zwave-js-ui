@@ -259,6 +259,8 @@ export async function startServer(port: number | string, host?: string) {
 	// as the really first thing setup loggers so all logs will go to file if specified in settings
 	setupLogging(settings)
 
+	await floorPlans.warnLeftovers()
+
 	configureTrustProxy()
 
 	const httpsEnabled = process.env.HTTPS || settings?.gateway?.https

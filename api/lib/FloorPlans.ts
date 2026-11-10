@@ -5,7 +5,7 @@
 // pictures. Positions are canvas pixels: x right, y down, origin at the
 // canvas's top-left. Every image file belongs to exactly one map.
 
-import { cp, readFile, rename, rm, writeFile } from 'node:fs/promises'
+import { cp, readdir, readFile, rename, rm, writeFile } from 'node:fs/promises'
 import { existsSync } from 'node:fs'
 import path from 'node:path'
 import { floorPlansDir } from '../config/app.ts'
@@ -509,6 +509,31 @@ export class FloorPlans {
 				)
 			}
 		})
+	}
+
+	/**
+	 * Warn about folders an interrupted restore left next to the floorplans
+	 * folder: `.old-*` holds the floorplans from before the restore, and if
+	 * the floorplans folder itself is missing, they are the user's maps.
+	 */
+	async warnLeftovers() {
+		const base = path.basename(this.dir)
+		let names: string[]
+		try {
+			names = await readdir(path.dirname(this.dir))
+		} catch {
+			return
+		}
+		for (const name of names) {
+			if (
+				name.startsWith(`${base}.old-`) ||
+				name.startsWith(`${base}.restore-`)
+			) {
+				logger.warn(
+					`${path.join(path.dirname(this.dir), name)} was left by an interrupted floorplans restore. If your maps are missing, rename it to ${base}; otherwise it can be deleted.`,
+				)
+			}
+		}
 	}
 
 	/** Delete image files; a failure is logged, never thrown, since maps.json no longer uses them */
