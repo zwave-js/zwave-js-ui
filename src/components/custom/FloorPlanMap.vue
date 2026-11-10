@@ -230,6 +230,7 @@ export default {
 		'map.id'() {
 			clearTimeout(this.viewTimer)
 			this.viewTimer = null
+			this.saveAfterMove = false
 			this.fitted = false
 		},
 		// a picture that resizes the canvas resets the saved view on the
@@ -240,9 +241,14 @@ export default {
 		'map.heightPx'() {
 			this.fitted = false
 		},
-		// Done saves a view change still waiting to be saved
+		// Done saves a view change still waiting to be saved, or one still
+		// under way: a zoom reports its end (moveend) only after its animation
 		editing(now) {
-			if (!now && this.viewTimer) {
+			if (!now && this.moving) {
+				clearTimeout(this.viewTimer)
+				this.viewTimer = null
+				this.saveAfterMove = true
+			} else if (!now && this.viewTimer) {
 				clearTimeout(this.viewTimer)
 				this.saveView()
 			}
@@ -255,6 +261,9 @@ export default {
 		// a marker is being dragged, and a draw() waits for it to end
 		this.dragging = false
 		this.drawPending = false
+		// the map is panning or zooming, and Done came while it was
+		this.moving = false
+		this.saveAfterMove = false
 	},
 	mounted() {
 		const lmap = L.map(this.$refs.map, {
@@ -291,6 +300,16 @@ export default {
 		})
 		lmap.on('click', () => this.$emit('node-click', null))
 		// while editing, pans, zooms and layer changes are saved as the map's view
+		lmap.on('movestart', () => {
+			this.moving = true
+		})
+		lmap.on('moveend', () => {
+			this.moving = false
+			if (this.saveAfterMove) {
+				this.saveAfterMove = false
+				this.saveView()
+			}
+		})
 		lmap.on('moveend overlayadd overlayremove', () => this.saveViewSoon())
 		this.lmap = lmap
 		this.fitted = false
