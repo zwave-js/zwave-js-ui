@@ -77,6 +77,54 @@ describe('#FloorPlans', () => {
 		await expect(fp.load()).rejects.toThrow(fp.file)
 	})
 
+	it('drops map ids and clears image names that could leave the folder', async () => {
+		const fp = await fresh()
+		await mkdir(fp.dir, { recursive: true })
+		const bg = (image: unknown, darkImage: unknown = null) => ({
+			image,
+			darkImage,
+			imageRect: { x: 0, y: 0, w: 10, h: 10 },
+		})
+		const map = (id: unknown, background: unknown) => ({
+			id,
+			name: 'M',
+			widthPx: 10,
+			heightPx: 10,
+			background,
+			nodes: { start: 'include', exceptions: [] },
+			view: { center: null, zoom: null, layers: {} },
+			placements: [],
+		})
+		await writeFile(
+			fp.file,
+			JSON.stringify({
+				version: 1,
+				settings: { defaultMapId: '../x' },
+				maps: [
+					map('../x', null),
+					map('ok', bg('ok-1.png', '../../etc/passwd')),
+					map('svg', bg('a.svg')),
+					map('html', bg('a.html', 'b.webp')),
+				],
+			}),
+		)
+		const { settings, maps } = await fp.load()
+		expect(settings.defaultMapId).toBeNull()
+		expect(
+			maps.map((m) => [
+				m.id,
+				m.background?.image,
+				m.background?.darkImage,
+			]),
+		).toEqual([
+			['ok', 'ok-1.png', null],
+			['svg', undefined, undefined],
+			['html', null, 'b.webp'],
+		])
+		await writeFile(fp.file, JSON.stringify({ version: 0, maps: [] }))
+		await expect(fp.load()).rejects.toThrow('version 0')
+	})
+
 	it('creates, renames, filters, saves the view of and deletes maps', async () => {
 		const fp = await fresh()
 		const m = await fp.addMap({ name: 'Workshop' })

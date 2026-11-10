@@ -27,6 +27,9 @@ export const IMAGE_FITS = ['stretch', 'scale', 'keep'] as const
 export type ImageFit = (typeof IMAGE_FITS)[number]
 
 export const DEVICE_KEY = /^zwave:[0-9a-f]+:\d+$/
+/** Map ids and image file names end up in file paths: only the shapes the server writes */
+const MAP_ID = /^[\w-]+$/
+const IMAGE_NAME = /^[\w-]+\.(png|jpg|webp)$/
 
 export const DEFAULT_LAYERS = {
 	routes: true,
@@ -254,11 +257,56 @@ export function checkView(view: unknown): MapView {
 }
 
 /**
- * Bring data written by an older version up to the current format. Version 1
- * is the first, so there is nothing to do yet.
+ * Check data read from a maps.json (`source` names it in messages). Map ids
+ * and image names must have the shape the server writes, since they are
+ * used in file paths. With `strict` the first problem throws; otherwise a
+ * map with a bad id is dropped and a bad image name cleared, both logged.
  */
-function migrate(raw: FloorPlansData): FloorPlansData {
-	return { ...raw, version: VERSION }
+export function checkData(
+	raw: any,
+	source: string,
+	{ strict = false } = {},
+): FloorPlansData {
+	if (
+		!Number.isInteger(raw?.version) ||
+		raw.version < 1 ||
+		raw.version > VERSION
+	) {
+		throw Error(
+			`${source} is version ${raw?.version}, this release reads up to ${VERSION}`,
+		)
+	}
+	if (!Array.isArray(raw.maps)) throw Error(`${source} has no maps list`)
+	const problem = (msg: string) => {
+		if (strict) throw Error(`${source}: ${msg}`)
+		logger.warn(`${source}: ${msg}`)
+	}
+	raw.maps = raw.maps.filter((map: any) => {
+		if (typeof map?.id === 'string' && MAP_ID.test(map.id)) return true
+		problem(`map ${JSON.stringify(map?.id)} has an invalid id, dropped`)
+		return false
+	})
+	for (const map of raw.maps as FloorPlanMap[]) {
+		const bg = map.background
+		if (!bg) continue
+		for (const field of ['image', 'darkImage'] as const) {
+			const name = bg[field]
+			if (
+				name === null ||
+				(typeof name === 'string' && IMAGE_NAME.test(name))
+			)
+				continue
+			problem(
+				`map ${map.id} has an invalid ${field} ${JSON.stringify(name)}, cleared`,
+			)
+			bg[field] = null
+		}
+		if (!bg.image && !bg.darkImage) map.background = null
+	}
+	raw.settings ??= { defaultMapId: null }
+	const ids = new Set(raw.maps.map((m: FloorPlanMap) => m.id))
+	if (!ids.has(raw.settings.defaultMapId)) raw.settings.defaultMapId = null
+	return raw as FloorPlansData
 }
 
 /** Write a file atomically: temp file in the same dir, then rename over the target */
@@ -316,19 +364,14 @@ export class FloorPlans {
 	 * takes effect at once. An empty store has no maps.
 	 */
 	async load(): Promise<FloorPlansData> {
-		let raw: FloorPlansData
+		let raw: unknown
 		try {
 			raw = JSON.parse(await readFile(this.file, 'utf8'))
 		} catch (error) {
 			if (error.code === 'ENOENT') return empty()
 			throw Error(`Can't read ${this.file}: ${error.message}`)
 		}
-		if (!Number.isInteger(raw?.version) || raw.version > VERSION) {
-			throw Error(
-				`${this.file} is version ${raw?.version}, this release reads up to ${VERSION}`,
-			)
-		}
-		return raw.version < VERSION ? migrate(raw) : raw
+		return checkData(raw, this.file)
 	}
 
 	/** Run `fn` after every queued step, before any later one */
