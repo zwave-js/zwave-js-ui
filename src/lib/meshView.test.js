@@ -145,17 +145,17 @@ describe('meshView', () => {
 		// only route repeaters, not other hidden nodes
 		expect(Object.keys(g).map(Number)).toEqual([2, 3])
 		expect([g[2].approx, g[2].pos]).toEqual([false, [0, 100]])
-		expect(g[2].routes).toEqual([{ id: 59, kind: 'lwr' }])
+		expect(g[2].routes).toEqual([{ id: 59, kind: 'main' }])
 		// unplaced: midway between its route neighbors
 		expect([g[3].approx, g[3].pos, g[3].kind]).toEqual([
 			true,
 			[0, 250],
-			'lwr',
+			'main',
 		])
 		expect(v.links.map((l) => `${l.kind}:${l.a}-${l.b}`).sort()).toEqual([
-			'lwr:1-2',
-			'lwr:2-3',
-			'lwr:3-59',
+			'main:1-2',
+			'main:2-3',
+			'main:3-59',
 		])
 		expect(v.pos.has(75)).toBe(false)
 
@@ -183,7 +183,7 @@ describe('meshView', () => {
 			),
 		).toBe(false)
 
-		// NLWR-only repeaters are 'nlwr' ghosts
+		// repeaters on backup routes only are 'backup' ghosts
 		const extra = [
 			...NODES,
 			node(80, {
@@ -200,7 +200,7 @@ describe('meshView', () => {
 			]),
 		)
 		expect(v3.ghosts.map((x) => [x.id, x.kind, x.pos, x.routes])).toEqual([
-			[68, 'nlwr', [0, 100], [{ id: 80, kind: 'nlwr' }]],
+			[68, 'backup', [0, 100], [{ id: 80, kind: 'backup' }]],
 		])
 
 		// 68 has only a backup route: drawn as its route, marked backup-only;
@@ -216,7 +216,7 @@ describe('meshView', () => {
 			]),
 		)
 		const link = (a, b) =>
-			v7.links.find((l) => l.kind === 'lwr' && l.a === a && l.b === b)
+			v7.links.find((l) => l.kind === 'main' && l.a === a && l.b === b)
 		expect(link(1, 68).backupOnly).toEqual([68])
 		expect([link(1, 2).routes, link(1, 2).backupOnly]).toEqual([
 			[2, 81],
@@ -259,7 +259,7 @@ describe('meshView', () => {
 		const pos = new Map(NODES.map((n, i) => [n.id, [0, i * 10]]))
 		const link = (nodes, a, b) =>
 			mapView(nodes, all, pos).links.find(
-				(l) => l.kind === 'lwr' && l.a === a && l.b === b,
+				(l) => l.kind === 'main' && l.a === a && l.b === b,
 			)
 		// 2 → 3 is measured by no route (127 = not available)
 		expect(linkRssi(NODES, link(NODES, 2, 3))).toBeNull()

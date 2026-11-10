@@ -111,15 +111,16 @@ export function nlwrOf(node) {
 }
 
 /**
- * The routes a node is drawn with, as [kind, route, backupOnly]: LWR, and
- * NLWR, which is the main route (backupOnly) when there is no LWR
+ * The routes a node is drawn with, as [kind, route, backupOnly]: the LWR as
+ * the 'main' route and the NLWR as the 'backup' one. With no LWR the NLWR
+ * is drawn as the main route, and `backupOnly` says so.
  */
 function routesOf(node) {
 	const lwr = lwrOf(node)
 	const nlwr = nlwrOf(node)
 	const out = []
-	if (lwr) out.push(['lwr', lwr, false])
-	if (nlwr) out.push([lwr ? 'nlwr' : 'lwr', nlwr, !lwr])
+	if (lwr) out.push(['main', lwr, false])
+	if (nlwr) out.push([lwr ? 'backup' : 'main', nlwr, !lwr])
 	return out
 }
 
@@ -184,12 +185,12 @@ const linkKey = (kind, a, b) => `${kind}:${Math.min(a, b)}-${Math.max(a, b)}`
  *  - ghosts: nodes on a shown node's route that aren't drawn as nodes
  *    (hidden repeaters, or shown ones not placed yet). A ghost sits at its
  *    position on this map when it has one, else midway between its nearest
- *    positioned neighbors on the route (`approx`). Its kind is 'lwr' if any
- *    LWR-kind route uses it, else 'nlwr', so the backup routes layer hides it.
+ *    positioned neighbors on the route (`approx`). Its kind is 'main' if any
+ *    main route uses it, else 'backup', so the backup routes layer hides it.
  *    `routes` lists the { id, kind } routes it repeats for.
  * `shown`: Set of node ids. `positioned`: Map id → [y, x] of every node with
  * a position on this map. Returns { links, ghosts, pos }, links being
- * { kind: 'lwr'|'nlwr'|'failed'|'neighbor', a, b, rate, routes,
+ * { kind: 'main'|'backup'|'failed'|'neighbor', a, b, rate, routes,
  * backupOnly }, `backupOnly` listing the routes that are a backup route
  * drawn as the main one because their node has no main route. RSSI isn't
  * part of a link, so a signal change doesn't change what is drawn: see
@@ -213,9 +214,9 @@ export function mapView(nodes, shown, positioned) {
 			paths.push({ kind, n, route, path, backupOnly })
 		}
 	}
-	// LWR first, so a node on both kinds of route is an 'lwr' ghost
+	// main routes first, so a node on both kinds of route is a 'main' ghost
 	paths.sort(
-		(a, b) => (a.kind === 'lwr' ? 0 : 1) - (b.kind === 'lwr' ? 0 : 1),
+		(a, b) => (a.kind === 'main' ? 0 : 1) - (b.kind === 'main' ? 0 : 1),
 	)
 	for (const { kind, path } of paths) {
 		// exact ghosts: hidden nodes on the route with a position here
@@ -412,7 +413,7 @@ export function meshHealth(nodes) {
 			)
 		}
 		for (const [kind, route] of routesOf(n)) {
-			if (route.routeFailedBetween && kind === 'lwr') {
+			if (route.routeFailedBetween && kind === 'main') {
 				flag(
 					n.id,
 					'bad',
@@ -435,7 +436,7 @@ export function meshHealth(nodes) {
 				}
 				if (worst !== 'bad') worst = level
 			}
-			if (worst && kind === 'lwr') {
+			if (worst && kind === 'main') {
 				flag(n.id, worst, 'Weak signal on its route')
 			}
 		}

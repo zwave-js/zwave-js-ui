@@ -481,7 +481,7 @@ export default {
 				// route lines drawn, as 'a-b' with a < b
 				routeLinks: new Set(
 					view.links
-						.filter((l) => l.kind === 'lwr')
+						.filter((l) => l.kind === 'main')
 						.map(
 							(l) =>
 								`${Math.min(l.a, l.b)}-${Math.max(l.a, l.b)}`,
@@ -584,11 +584,11 @@ export default {
 						.bindTooltip(`${tip}<br>Failed ❌`, { sticky: true })
 						.addTo(this.groups.routes)
 				} else {
-					const lwr = l.kind === 'lwr'
+					const main = l.kind === 'main'
 					// a backup route standing in for a missing main route:
 					// as thick as a route, dashed like a backup route
 					const backupOnly =
-						lwr && l.backupOnly.length === l.routes.length
+						main && l.backupOnly.length === l.routes.length
 					// RSSI read when shown, so signal changes don't redraw
 					const detail = () =>
 						[
@@ -606,8 +606,8 @@ export default {
 						.join(', ')
 					L.polyline([a, b], {
 						color: rateColor(l.rate),
-						weight: lwr ? 4 : 1.5,
-						dashArray: backupOnly ? '10 8' : lwr ? null : '5 5',
+						weight: main ? 4 : 1.5,
+						dashArray: backupOnly ? '10 8' : main ? null : '5 5',
 						opacity: 0.85,
 					})
 						.bindTooltip(
@@ -616,7 +616,9 @@ export default {
 							{ sticky: true },
 						)
 						.addTo(
-							lwr ? this.groups.routes : this.groups.backupRoutes,
+							main
+								? this.groups.routes
+								: this.groups.backupRoutes,
 						)
 				}
 			}
@@ -722,7 +724,7 @@ export default {
 				const owners = g.routes
 					.map(
 						(r) =>
-							`${name(r.id)}'s ${r.kind === 'lwr' ? 'route' : 'backup route'}`,
+							`${name(r.id)}'s ${r.kind === 'main' ? 'route' : 'backup route'}`,
 					)
 					.join(', ')
 				L.marker(g.pos, {
@@ -739,7 +741,7 @@ export default {
 						{ direction: 'top', offset: [0, -8] },
 					)
 					.addTo(
-						g.kind === 'lwr'
+						g.kind === 'main'
 							? this.groups.routes
 							: this.groups.backupRoutes,
 					)
@@ -774,7 +776,7 @@ export default {
 				// only on a drawn route line: a hidden node's weak hop between
 				// two shown nodes has none
 				const link = `${Math.min(hop.a, hop.b)}-${Math.max(hop.a, hop.b)}`
-				if (hop.kind !== 'lwr' || !routeLinks.has(link)) continue
+				if (hop.kind !== 'main' || !routeLinks.has(link)) continue
 				const a = allPos.get(hop.a)
 				const b = allPos.get(hop.b)
 				if (!a || !b) continue
