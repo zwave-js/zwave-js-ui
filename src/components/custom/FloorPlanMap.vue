@@ -182,9 +182,11 @@ export default {
 			return this.nodes.filter((n) => !n.virtual)
 		},
 		placedKeys() {
-			return new Set(
-				this.map.placements.map((p) => p.deviceKey).filter(Boolean),
-			)
+			return new Set(this.map.placements.map((p) => p.deviceKey))
+		},
+		/** device keys whose shown state is the opposite of the map's rule */
+		exceptionKeys() {
+			return new Set(this.map.nodes.exceptions)
 		},
 		/** every node with whether it's shown and placed on this map */
 		entries() {
@@ -447,9 +449,8 @@ export default {
 			return deviceKey(this.homeHex, node.id)
 		},
 		isShown(node) {
-			const { start, exceptions } = this.map.nodes
-			const flipped = exceptions.includes(this.keyOf(node))
-			return start === 'include' ? !flipped : flipped
+			const flipped = this.exceptionKeys.has(this.keyOf(node))
+			return this.map.nodes.start === 'include' ? !flipped : flipped
 		},
 		/** canvas px (y down) → Leaflet [lat, lng] (y up) */
 		toLatLng(x, y) {
@@ -478,7 +479,7 @@ export default {
 			)
 			const positioned = new Map()
 			for (const p of this.map.placements) {
-				const n = p.deviceKey && byKey.get(p.deviceKey)
+				const n = byKey.get(p.deviceKey)
 				if (n) positioned.set(n.id, this.toLatLng(p.x, p.y))
 			}
 
