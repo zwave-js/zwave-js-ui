@@ -146,18 +146,25 @@ describe('floorplans API', () => {
 		).toEqual({ defaultMapId: id })
 
 		const placed = await api('PUT', `/maps/${id}/placements`, {
-			deviceKey: K(2),
-			x: 10,
-			y: 20,
+			placements: [{ deviceKey: K(2), x: 10, y: 20 }],
 		})
-		expect(placed.data).toEqual({ deviceKey: K(2), x: 10, y: 20 })
+		expect(placed.data).toEqual([{ deviceKey: K(2), x: 10, y: 20 }])
 		expect(
 			await api('PUT', `/maps/${id}/placements`, {
-				deviceKey: 'bogus',
+				placements: [{ deviceKey: 'bogus', x: 1, y: 1 }],
+			}),
+		).toMatchObject({ success: false, message: expect.any(String) })
+		// one body shape: a single placement on its own is refused
+		expect(
+			await api('PUT', `/maps/${id}/placements`, {
+				deviceKey: K(2),
 				x: 1,
 				y: 1,
 			}),
-		).toMatchObject({ success: false, message: expect.any(String) })
+		).toMatchObject({
+			success: false,
+			message: expect.stringMatching(/^placements must be a list/),
+		})
 
 		await api('DELETE', `/maps/${id}/placements/${K(2)}`)
 		expect((await api('GET', '')).data.maps[0].placements).toEqual([])
@@ -240,9 +247,7 @@ describe('floorplans API', () => {
 	it('passes the fit of a new picture through', async () => {
 		const { data: map } = await api('POST', '/maps', { name: 'Fit' })
 		await api('PUT', `/maps/${map.id}/placements`, {
-			deviceKey: 'zwave:cdfbb3c7:2',
-			x: 1500,
-			y: 1000,
+			placements: [{ deviceKey: 'zwave:cdfbb3c7:2', x: 1500, y: 1000 }],
 		})
 		const set = await upload(map.id, PNG1, { fit: 'scale' })
 		expect(set.data.map).toMatchObject({

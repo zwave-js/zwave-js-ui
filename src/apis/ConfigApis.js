@@ -313,14 +313,7 @@ export default {
 		})
 		return response.data
 	},
-	async setFloorPlanPlacement(id, placement) {
-		const response = await request.put(
-			`/floorplans/maps/${id}/placements`,
-			placement,
-		)
-		return response.data
-	},
-	/** several placements in one write */
+	/** place or move nodes in one write; replies with the stored placements */
 	async setFloorPlanPlacements(id, placements) {
 		const response = await request.put(
 			`/floorplans/maps/${id}/placements`,

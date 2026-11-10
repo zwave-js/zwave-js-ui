@@ -4,7 +4,12 @@ import * as fsp from 'node:fs/promises'
 import { mkdtemp, mkdir, readFile, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
-import { FloorPlans, imageSize, sniffImage } from '../../api/lib/FloorPlans.ts'
+import {
+	FloorPlans,
+	imageSize,
+	sniffImage,
+	type Placement,
+} from '../../api/lib/FloorPlans.ts'
 
 vi.mock('node:fs/promises', async (importOriginal) => {
 	const real: typeof fsp = await importOriginal()
@@ -32,6 +37,9 @@ const fresh = async () =>
 const K = (n: number) => `zwave:cdfbb3c7:${n}`
 const images = (fp: FloorPlans) =>
 	existsSync(fp.imagesDir) ? readdirSync(fp.imagesDir).sort() : []
+/** place one node, returning its stored placement */
+const place = async (fp: FloorPlans, id: string, p: Placement) =>
+	(await fp.setPlacements(id, [p]))[0]
 const mapOf = async (fp: FloorPlans, id: string) =>
 	(await fp.load()).maps.find((m) => m.id === id)
 
@@ -189,8 +197,8 @@ describe('#FloorPlans', () => {
 			widthPx: 1000,
 			heightPx: 1000,
 		})
-		await fp.setPlacement(a.id, { deviceKey: K(2), x: 10, y: 10 })
-		const moved = await fp.setPlacement(a.id, {
+		await place(fp, a.id, { deviceKey: K(2), x: 10, y: 10 })
+		const moved = await place(fp, a.id, {
 			deviceKey: K(2),
 			x: 5000,
 			y: -5,
@@ -198,15 +206,15 @@ describe('#FloorPlans', () => {
 		} as any)
 		// clamped, one per node per map, unknown fields dropped
 		expect(moved).toEqual({ deviceKey: K(2), x: 1000, y: 0 })
-		await fp.setPlacement(b.id, { deviceKey: K(2), x: 90, y: 90 })
+		await place(fp, b.id, { deviceKey: K(2), x: 90, y: 90 })
 		await fp.removePlacement(b.id, K(2))
 		expect((await mapOf(fp, a.id)).placements).toHaveLength(1)
 		expect((await mapOf(fp, b.id)).placements).toHaveLength(0)
 		await expect(
-			fp.setPlacement(a.id, { deviceKey: '../etc', x: 1, y: 1 }),
+			place(fp, a.id, { deviceKey: '../etc', x: 1, y: 1 }),
 		).rejects.toThrow('deviceKey')
 		await expect(
-			fp.setPlacement('nope', { deviceKey: K(2), x: 1, y: 1 }),
+			place(fp, 'nope', { deviceKey: K(2), x: 1, y: 1 }),
 		).rejects.toThrow('No such map')
 	})
 
@@ -249,7 +257,7 @@ describe('#FloorPlans', () => {
 		expect(first.startsWith(`${a.id}-`)).toBe(true)
 
 		await fp.updateMap(a.id, { widthPx: 3000, heightPx: 5100 })
-		await fp.setPlacement(a.id, { deviceKey: K(2), x: 2000, y: 3000 })
+		await place(fp, a.id, { deviceKey: K(2), x: 2000, y: 3000 })
 		const dark = await fp.setMapImage(a.id, {
 			bytes: PNG,
 			imgWidthPx: 1,
@@ -299,8 +307,8 @@ describe('#FloorPlans', () => {
 			const m = await fp.addMap({ name: 'House' })
 			const pic = { bytes: PNG, imgWidthPx: 1000, imgHeightPx: 500 }
 			await fp.setMapImage(m.id, pic)
-			await fp.setPlacement(m.id, { deviceKey: K(2), x: 500, y: 250 })
-			await fp.setPlacement(m.id, { deviceKey: K(3), x: 900, y: 100 })
+			await place(fp, m.id, { deviceKey: K(2), x: 500, y: 250 })
+			await place(fp, m.id, { deviceKey: K(3), x: 900, y: 100 })
 			await fp.updateMap(m.id, {
 				view: { center: [1, 2], zoom: 1, layers: {} },
 			})
@@ -559,7 +567,7 @@ describe('#FloorPlans', () => {
 		const m = await fp.addMap({ name: 'p', widthPx: 100, heightPx: 100 })
 		await Promise.all(
 			[2, 3, 4, 5, 6].map((id) =>
-				fp.setPlacement(m.id, { deviceKey: K(id), x: id, y: id }),
+				place(fp, m.id, { deviceKey: K(id), x: id, y: id }),
 			),
 		)
 		expect((await mapOf(fp, m.id)).placements).toHaveLength(5)
@@ -568,7 +576,7 @@ describe('#FloorPlans', () => {
 	it('places several nodes in one write, moving existing ones', async () => {
 		const fp = await fresh()
 		const m = await fp.addMap({ name: 'p', widthPx: 100, heightPx: 100 })
-		await fp.setPlacement(m.id, { deviceKey: K(2), x: 1, y: 1 })
+		await place(fp, m.id, { deviceKey: K(2), x: 1, y: 1 })
 		const out = await fp.setPlacements(m.id, [
 			{ deviceKey: K(2), x: 5, y: 5 },
 			{ deviceKey: K(3), x: 500, y: 6 },

@@ -469,7 +469,9 @@ export default {
 		},
 		onPlace(placement) {
 			return this.floorPlanCall('place the node', () =>
-				ConfigApis.setFloorPlanPlacement(this.currentMap.id, placement),
+				ConfigApis.setFloorPlanPlacements(this.currentMap.id, [
+					placement,
+				]),
 			)
 		},
 		onPlaceMany(placements) {

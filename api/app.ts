@@ -2308,17 +2308,14 @@ app.delete(
 	),
 )
 
-// body: { deviceKey, x, y }, or { placements: [{ deviceKey, x, y }] } in one write
+// body: { placements: [{ deviceKey, x, y }, ...] }, placed in one write
 app.put(
 	'/api/floorplans/maps/:id/placements',
 	apisLimiter,
 	isAuthenticated,
-	floorPlansRoute((req) => {
-		const body = req.body ?? {}
-		return body.placements !== undefined
-			? floorPlans.setPlacements(req.params.id, body.placements)
-			: floorPlans.setPlacement(req.params.id, body)
-	}),
+	floorPlansRoute((req) =>
+		floorPlans.setPlacements(req.params.id, req.body?.placements),
+	),
 )
 
 app.delete(

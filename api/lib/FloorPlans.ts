@@ -802,13 +802,10 @@ export class FloorPlans {
 
 	// ------------------------------------------------------------- placements
 
-	/** Place or move a node on a map; one placement per node per map */
-	async setPlacement(mapId: string, placement: Placement) {
-		const [result] = await this.setPlacements(mapId, [placement])
-		return result
-	}
-
-	/** Place or move several nodes in one write, e.g. "Place all" */
+	/**
+	 * Place or move nodes on a map in one write, e.g. a drag or "Place all".
+	 * One placement per node per map.
+	 */
 	async setPlacements(mapId: string, items: Placement[]) {
 		if (!Array.isArray(items) || items.length > MAX_NODE_LIST) {
 			throw Error(`placements must be a list of at most ${MAX_NODE_LIST}`)
