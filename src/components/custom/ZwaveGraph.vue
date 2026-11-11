@@ -929,6 +929,15 @@ export default {
 				selectedNodes = []
 			}
 
+			// no selection: go back to the filtered overview, not all nodes
+			if (
+				selectedNodes.length === 0 &&
+				(this.nodesFilter.length > 0 || this.locationsFilter.length > 0)
+			) {
+				selectedNodes = this.filteredNodes.map((n) => n.id)
+				this.network.setSelection({ nodes: selectedNodes })
+			}
+
 			this.selectedNodes = selectedNodes
 
 			const showAll = selectedNodes.length === 0
@@ -1037,8 +1046,9 @@ export default {
 		handleClick(params) {
 			if (params.event) {
 				params.event.preventDefault()
-				const nodeId = params.nodes[0]
-				if (nodeId) {
+				// hit test, params.nodes is the filtered set on a background click
+				const nodeId = this.network.getNodeAt(params.pointer.DOM)
+				if (nodeId !== undefined) {
 					const node = this.allNodes.find((n) => n.id === nodeId)
 					this.$emit('node-click', node)
 				} else {

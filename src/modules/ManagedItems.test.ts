@@ -136,6 +136,27 @@ describe('ManagedItems', () => {
 			const managedItems = getNewManagedTestItems()
 			expect(managedItems.getPropValues('name')).to.eql(['a', 'b', 'c'])
 		})
+		it('only returns values of items matching the other filters', () => {
+			const managedItems = getNewManagedTestItems()
+			managedItems.filters = { value: { values: ['Xyz'] } }
+			expect(managedItems.getPropValues('name')).to.eql(['a', 'b', 'c'])
+			managedItems.filters = { name: { values: ['a'] } }
+			expect(managedItems.getPropValues('id')).to.eql([1, 3, 6])
+			managedItems.filters = {
+				name: { values: ['a', 'b'] },
+				value: { values: ['Abc'] },
+			}
+			expect(managedItems.getPropValues('id')).to.eql([1, 3, 5])
+		})
+		it('ignores the filter on the property itself', () => {
+			const managedItems = getNewManagedTestItems()
+			managedItems.filters = {
+				name: { values: ['a'] },
+				value: { values: ['Abc'] },
+			}
+			expect(managedItems.getPropValues('name')).to.eql(['a', 'b'])
+			expect(managedItems.getPropValues('value')).to.eql(['Abc', 'Xyz'])
+		})
 	})
 	describe('#propValues', () => {
 		it('returns a sorted list of unique values for each property', () => {

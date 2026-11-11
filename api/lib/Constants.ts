@@ -165,10 +165,21 @@ export function meterType(ccSpecific: IMeterCCSpecific): any {
 						device_class: 'energy',
 					}
 					break
+				case 0x01: // kVAh (apparent energy)
+					// HA has no apparent energy device class, keep only the unit
+					cfg.props = {
+						state_class: 'total_increasing',
+					}
+					break
 				case 0x02: // W
 					cfg.props = {
 						state_class: 'measurement',
 						device_class: 'power',
+					}
+					break
+				case 0x03: // Pulse count (unitless)
+					cfg.props = {
+						state_class: 'total_increasing',
 					}
 					break
 				case 0x04: // V
@@ -210,9 +221,19 @@ export function meterType(ccSpecific: IMeterCCSpecific): any {
 			}
 			break
 		case 0x02: // gas
-			cfg.props = {
-				icon: 'mdi:thought-bubble',
-				device_class: 'gas',
+			switch (ccSpecific.scale) {
+				case 0x03: // Pulse count (unitless)
+					// HA rejects a unitless sensor with the gas device class
+					cfg.props = {
+						icon: 'mdi:thought-bubble',
+					}
+					break
+				default:
+					cfg.props = {
+						icon: 'mdi:thought-bubble',
+						device_class: 'gas',
+					}
+					break
 			}
 			break
 		case 0x03: // water

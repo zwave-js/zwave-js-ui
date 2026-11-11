@@ -163,7 +163,7 @@ export type GatewayValue = {
 	receiveFunction?: string
 	qos?: 0 | 1 | 2
 	retain?: boolean
-	ccConfigEnableDiscovery?: boolean
+	ccConfigEnableDiscovery?: boolean | null
 }
 
 export type ScheduledJob = {
@@ -188,6 +188,7 @@ export type GatewayConfig = {
 	hassDiscovery?: boolean
 	discoveryPrefix?: string
 	useLocationAsSuggestedArea?: boolean
+	ccConfigEnabledByDefault?: boolean
 	logEnabled?: boolean
 	logLevel?: LogLevel
 	logToFile?: boolean
@@ -752,12 +753,25 @@ export default class Gateway {
 				(this.config.manualDiscovery && !options.forceUpdate)
 
 			if (!skipDiscovery) {
-				this._mqtt.publish(
-					hassDevice.discoveryTopic,
-					options.deleteDevice ? '' : hassDevice.discovery_payload,
-					{ qos: 0, retain: this.config.retainedDiscovery || false },
-					this.config.discoveryPrefix,
-				)
+				const discoveryOptions = {
+					qos: 0 as const,
+					retain: this.config.retainedDiscovery || false,
+				}
+				if (options.deleteDevice) {
+					// always retained, to also clear configs retained by an earlier setting
+					this._mqtt.publishEmpty(
+						hassDevice.discoveryTopic,
+						{ ...discoveryOptions, retain: true },
+						this.config.discoveryPrefix,
+					)
+				} else {
+					this._mqtt.publish(
+						hassDevice.discoveryTopic,
+						hassDevice.discovery_payload,
+						discoveryOptions,
+						this.config.discoveryPrefix,
+					)
+				}
 			}
 
 			if (options.forceUpdate) {
@@ -1794,11 +1808,10 @@ export default class Gateway {
 							return
 					}
 
-					// by default configuration CC discovery entities are disabled
-					// them can be enabled by setting ccConfigEnableDiscovery to true
-					// on gateway values configuration
+					// per-value ccConfigEnableDiscovery overrides the global default
 					cfg.discovery_payload.enabled_by_default =
-						!!valueConf?.ccConfigEnableDiscovery
+						valueConf?.ccConfigEnableDiscovery ??
+						!!this.config.ccConfigEnabledByDefault
 
 					break
 				}
@@ -1929,7 +1942,7 @@ export default class Gateway {
 			)
 
 			for (const t of topics) {
-				this._mqtt.publish(t, '', { retain: true })
+				this._mqtt.publishEmpty(t, { retain: true })
 			}
 		}
 	}
@@ -2803,8 +2816,9 @@ export default class Gateway {
 			cfg.discovery_payload.state_topic = discoveredStateTopic
 			cfg.discovery_payload.command_topic = discoveredCommandTopic
 
+			// string compare, so the RAW payload ('true'/'false') works too
 			cfg.discovery_payload.state_value_template =
-				'{{ value_template.json }}'
+				'{{ "ON" if value_json.value | string | lower == "true" else "OFF" }}'
 			cfg.discovery_payload.on_command_type = 'last'
 		}
 
@@ -2819,10 +2833,27 @@ export default class Gateway {
 			cfg.discovery_payload.color_temp_command_topic =
 				cfg.discovery_payload.rgb_command_topic
 
-			cfg.discovery_payload.color_temp_command_template =
-				"{{ {'warmWhite': ((value - 245)|round(0)), 'coldWhite': (255 - (value - 245))|round(0)}|to_json }}"
-			cfg.discovery_payload.color_temp_value_template =
-				"{{ '%03d%03d' | format((value_json.value.warmWhite || 0), (value_json.value.coldWhite || 0)) }}"
+			// warmWhite = mireds - MIN_MIREDS, so the range maps onto 0-MAX_WHITE
+			const MIN_MIREDS = 245
+			const MAX_WHITE = 255
+			const MAX_MIREDS = MIN_MIREDS + MAX_WHITE
+
+			// HA runs the rgb and color_temp handlers of the shared topic in no
+			// fixed order, so each renders only for its own mode (empty = ignored)
+			const setColor = '{% set c = value_json.value %}'
+			const isRgbMode =
+				'(c.red | default(0, true)) + (c.green | default(0, true)) + (c.blue | default(0, true)) > 0'
+			const isColorTempMode = `not (${isRgbMode}) and (c.warmWhite | default(0, true)) + (c.coldWhite | default(0, true)) > 0`
+			cfg.discovery_payload.rgb_value_template = `${setColor}{% if ${isRgbMode} %}{{ c.red }},{{ c.green }},{{ c.blue }}{% endif %}`
+			cfg.discovery_payload.color_temp_value_template = `${setColor}{% if ${isColorTempMode} %}{{ (c.warmWhite | default(0, true)) + ${MIN_MIREDS} }}{% endif %}`
+
+			// modes are exclusive in HA, so setting one turns off the other's channels
+			cfg.discovery_payload.rgb_command_template =
+				"{{ {'red': red, 'green': green, 'blue': blue, 'warmWhite': 0, 'coldWhite': 0}|to_json }}"
+			// clamped because HA doesn't apply min/max_mireds to service calls
+			cfg.discovery_payload.color_temp_command_template = `{% set ww = [[(value - ${MIN_MIREDS}) | round(0) | int, 0] | max, ${MAX_WHITE}] | min %}{{ {'red': 0, 'green': 0, 'blue': 0, 'warmWhite': ww, 'coldWhite': ${MAX_WHITE} - ww}|to_json }}`
+			cfg.discovery_payload.min_mireds = MIN_MIREDS
+			cfg.discovery_payload.max_mireds = MAX_MIREDS
 		}
 		return cfg
 	}

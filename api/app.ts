@@ -11,6 +11,7 @@ import Gateway, { GatewayType } from './lib/Gateway.ts'
 import jsonStore from './lib/jsonStore.ts'
 import * as loggers from './lib/logger.ts'
 import { logContainer } from './lib/logger.ts'
+import { loadCertKey } from './lib/tlsCert.ts'
 import MqttClient from './lib/MqttClient.ts'
 import SocketManager from './lib/SocketManager.ts'
 import type { CallAPIResult, ZwaveConfig } from './lib/ZwaveClient.ts'
@@ -23,7 +24,10 @@ import rateLimit from 'express-rate-limit'
 import session from 'express-session'
 import type { Server as HttpServer } from 'node:http'
 import { createServer as createHttpServer } from 'node:http'
-import { createServer as createHttpsServer } from 'node:https'
+import {
+	createServer as createHttpsServer,
+	Server as HttpsServer,
+} from 'node:https'
 import jwt from 'jsonwebtoken'
 import path from 'node:path'
 import sessionStore from 'session-file-store'
@@ -67,7 +71,6 @@ import {
 	mkdtemp,
 	cp,
 } from 'node:fs/promises'
-import { generate } from 'selfsigned'
 import type { ZnifferConfig } from './lib/ZnifferManager.ts'
 import ZnifferManager from './lib/ZnifferManager.ts'
 import { getAllNamedScaleGroups, getAllSensors } from '@zwave-js/core'
@@ -81,8 +84,6 @@ import {
 	isTrustedSocket,
 	startTrustedListener,
 } from './lib/trustedListener.ts'
-
-const createCertificate = promisify(generate)
 
 declare module 'express-session' {
 	export interface SessionData {
@@ -258,7 +259,11 @@ export async function startServer(port: number | string, host?: string) {
 	if (httpsEnabled) {
 		if (!sslDisabled()) {
 			logger.info('HTTPS is enabled. Loading cert and keys')
-			const { cert, key } = await loadCertKey()
+			const { cert, key } = await loadCertKey(
+				storeDir,
+				process.env.SSL_CERTIFICATE,
+				process.env.SSL_KEY,
+			)
 
 			if (cert && key) {
 				server = createHttpsServer(
@@ -291,7 +296,7 @@ export async function startServer(port: number | string, host?: string) {
 			typeof addr === 'string' ? 'pipe ' + addr : 'port ' + addr?.port
 		logger.info(
 			`Listening on ${bind}${host ? 'host ' + host : ''} protocol ${
-				httpsEnabled ? 'HTTPS' : 'HTTP'
+				server instanceof HttpsServer ? 'HTTPS' : 'HTTP'
 			}`,
 		)
 	})
@@ -387,55 +392,6 @@ async function getSnippets() {
 async function getSafePath(req: Request | string, resolveReal = true) {
 	const reqPath = typeof req === 'string' ? req : req.query.path
 	return utils.resolveSafeStorePath(reqPath, storeDir, resolveReal)
-}
-
-async function loadCertKey(): Promise<{
-	cert: string
-	key: string
-}> {
-	const certFile =
-		process.env.SSL_CERTIFICATE || utils.joinPath(storeDir, 'cert.pem')
-	const keyFile = process.env.SSL_KEY || utils.joinPath(storeDir, 'key.pem')
-
-	let key: string
-	let cert: string
-
-	try {
-		cert = await readFile(certFile, 'utf8')
-		key = await readFile(keyFile, 'utf8')
-	} catch (error) {
-		// noop
-	}
-
-	if (!cert || !key) {
-		logger.info(
-			'Cert and key not found in store, generating fresh new ones...',
-		)
-
-		try {
-			const result = await createCertificate([], {
-				days: 99999,
-				keySize: 2048,
-			})
-
-			key = result.private
-			cert = result.cert
-
-			// restrict the private key (and cert) to the owner so a permissive
-			// umask can't leave the self-signed TLS key world/group-readable
-			await writeFile(utils.joinPath(storeDir, 'key.pem'), key, {
-				mode: 0o600,
-			})
-			await writeFile(utils.joinPath(storeDir, 'cert.pem'), cert, {
-				mode: 0o600,
-			})
-			logger.info('New cert and key created')
-		} catch (error) {
-			logger.error('Error creating cert and key for HTTPS', error)
-		}
-	}
-
-	return { cert, key }
 }
 
 function setupLogging(settings: { gateway: utils.DeepPartial<GatewayConfig> }) {
