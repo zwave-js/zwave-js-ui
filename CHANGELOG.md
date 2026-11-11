@@ -1,5 +1,77 @@
 # Changelog
 
+## [11.26.2](https://github.com/zwave-js/zwave-js-ui/compare/v11.26.1...v11.26.2) (2026-11-10)
+
+### ✨ Features
+
+* bump @zwave-js/server@3.12.0 ([#4897](https://github.com/zwave-js/zwave-js-ui/issues/4897)) ([180bb73](https://github.com/zwave-js/zwave-js-ui/commit/180bb73eefd2930eb0027ad3d503bf284bde5235))
+* bump zwave-js@15.32.3 ([#4896](https://github.com/zwave-js/zwave-js-ui/issues/4896)) ([c21ca8d](https://github.com/zwave-js/zwave-js-ui/commit/c21ca8d76bfaa32a277ba74763aee6de36b248f1))
+
+## [11.26.1](https://github.com/zwave-js/zwave-js-ui/compare/v11.26.0...v11.26.1) (2026-11-10)
+
+### ✨ Features
+
+* bump zwave-js@15.32.2 ([#4895](https://github.com/zwave-js/zwave-js-ui/issues/4895)) ([43c2a0a](https://github.com/zwave-js/zwave-js-ui/commit/43c2a0ace9fecee45a8242de1043261bb7709eae))
+
+## [11.26.0](https://github.com/zwave-js/zwave-js-ui/compare/v11.25.2...v11.26.0) (2026-11-09)
+
+### ✨ Features
+
+* bump zwave-js@15.32.0 ([#4889](https://github.com/zwave-js/zwave-js-ui/issues/4889)) ([8b463ad](https://github.com/zwave-js/zwave-js-ui/commit/8b463ad08a3be153c0fb3e8260e81b16a8f4204f))
+* bump zwave-js@15.32.1 ([#4890](https://github.com/zwave-js/zwave-js-ui/issues/4890)) ([806a1ff](https://github.com/zwave-js/zwave-js-ui/commit/806a1ff7c446ec795436a274f0b812eae288066a))
+
+### 🔧 Chores
+
+* **deps:** replace dependency @tsconfig/node22 with @tsconfig/node24 ([#4886](https://github.com/zwave-js/zwave-js-ui/issues/4886)) ([c38e0d2](https://github.com/zwave-js/zwave-js-ui/commit/c38e0d2cbbb826bf2bab2db596a3452e59ce0e8e))
+
+## [11.25.2](https://github.com/zwave-js/zwave-js-ui/compare/v11.25.1...v11.25.2) (2026-10-26)
+
+### 🐛 Bug Fixes
+
+* **https:** regenerate self-signed certs rejected by Node 24 ([#4881](https://github.com/zwave-js/zwave-js-ui/issues/4881)) ([474b72c](https://github.com/zwave-js/zwave-js-ui/commit/474b72cdaa3a77fd4ad7bdcf0f5bc9e349bd1802)), closes [#4757](https://github.com/zwave-js/zwave-js-ui/issues/4757) [#4879](https://github.com/zwave-js/zwave-js-ui/issues/4879)
+
+### 🔧 Chores
+
+* **deps:** update dependency multer to v2.5.0 ([#4884](https://github.com/zwave-js/zwave-js-ui/issues/4884)) ([332f2c1](https://github.com/zwave-js/zwave-js-ui/commit/332f2c1170ff5177aa560192e166cdcf5a50f1e5))
+
+## [11.25.1](https://github.com/zwave-js/zwave-js-ui/compare/v11.25.0...v11.25.1) (2026-10-23)
+
+### ✨ Features
+
+* bump zwave-js@15.31.2 ([#4878](https://github.com/zwave-js/zwave-js-ui/issues/4878)) ([ee8c95c](https://github.com/zwave-js/zwave-js-ui/commit/ee8c95c6bd1087feef7a869f896546e3d20cefe7))
+
+### 🐛 Bug Fixes
+
+* **docker:** bump Node to 24.22.1 ([#4882](https://github.com/zwave-js/zwave-js-ui/issues/4882)) ([abdac42](https://github.com/zwave-js/zwave-js-ui/commit/abdac42d2c6309a8c294c34db44fa5c62253c526))
+
+## [11.25.0](https://github.com/zwave-js/zwave-js-ui/compare/v11.24.3...v11.25.0) (2026-10-21)
+
+### ✨ Features
+
+* **discovery:** add option to enable Configuration CC entities by default ([#4843](https://github.com/zwave-js/zwave-js-ui/issues/4843)) ([e8ca0df](https://github.com/zwave-js/zwave-js-ui/commit/e8ca0df3026e577e80f4d4050acf906833b163f8)), closes [#4836](https://github.com/zwave-js/zwave-js-ui/issues/4836)
+* **ui:** limit column filter choices to values in the filtered rows ([#4866](https://github.com/zwave-js/zwave-js-ui/issues/4866)) ([1cef1e3](https://github.com/zwave-js/zwave-js-ui/commit/1cef1e3703fdc9328563094d9c9c70b3cc24574c)), closes [#3366](https://github.com/zwave-js/zwave-js-ui/issues/3366)
+* **ui:** show min, max and step in value hints ([#4865](https://github.com/zwave-js/zwave-js-ui/issues/4865)) ([53284f2](https://github.com/zwave-js/zwave-js-ui/commit/53284f215537df69e77087ba0eec522d9532ab39)), closes [#3980](https://github.com/zwave-js/zwave-js-ui/issues/3980)
+
+### 🐛 Bug Fixes
+
+* allow turning off boolean actuators on broadcast/multicast nodes ([#4751](https://github.com/zwave-js/zwave-js-ui/issues/4751)) ([118f648](https://github.com/zwave-js/zwave-js-ui/commit/118f64883ec3ce223ec683e225e4acef089c4cd1))
+* **docker:** ship Node 24, using Alpine's nodejs on 32-bit ARM ([#4757](https://github.com/zwave-js/zwave-js-ui/issues/4757)) ([3bea411](https://github.com/zwave-js/zwave-js-ui/commit/3bea41148be6ac35206f81b0518219a34b5ede9a)), closes [#4755](https://github.com/zwave-js/zwave-js-ui/issues/4755) [#4755](https://github.com/zwave-js/zwave-js-ui/issues/4755) [#4485](https://github.com/zwave-js/zwave-js-ui/issues/4485)
+* **driver:** don't let external presets wipe sibling driver options ([#4830](https://github.com/zwave-js/zwave-js-ui/issues/4830)) ([682318c](https://github.com/zwave-js/zwave-js-ui/commit/682318c0412928baeeafdefffb718e1314e70bda)), closes [#9306](https://github.com/zwave-js/zwave-js-ui/issues/9306) [home-assistant/core#182441](https://github.com/home-assistant/core/issues/182441)
+* **hass:** correct discovery for kVAh and pulse count electric meters ([#4863](https://github.com/zwave-js/zwave-js-ui/issues/4863)) ([8c31dd0](https://github.com/zwave-js/zwave-js-ui/commit/8c31dd0d3aec57a5872b05963b920566c072714d)), closes [#3956](https://github.com/zwave-js/zwave-js-ui/issues/3956)
+* **hass:** use circuit 4 state topic for PE653 circuit_4 ([#4864](https://github.com/zwave-js/zwave-js-ui/issues/4864)) ([ef8584d](https://github.com/zwave-js/zwave-js-ui/commit/ef8584d8ae3143421e7d69675a06bb601a832700)), closes [#4738](https://github.com/zwave-js/zwave-js-ui/issues/4738)
+* **hass:** valid color_temp_value_template for warm/cold white lights ([#4867](https://github.com/zwave-js/zwave-js-ui/issues/4867)) ([0e5f2a0](https://github.com/zwave-js/zwave-js-ui/commit/0e5f2a060be26d96cc755c95e3a8b090696e7ba2)), closes [#4852](https://github.com/zwave-js/zwave-js-ui/issues/4852)
+* **mqtt:** send empty payload to clear retained discovery and value topics ([#4869](https://github.com/zwave-js/zwave-js-ui/issues/4869)) ([f9a43cf](https://github.com/zwave-js/zwave-js-ui/commit/f9a43cfb11207cbe7d9351ecc70dc78e972b7db8)), closes [#4747](https://github.com/zwave-js/zwave-js-ui/issues/4747) [#4737](https://github.com/zwave-js/zwave-js-ui/issues/4737)
+* review fixes ([#4874](https://github.com/zwave-js/zwave-js-ui/issues/4874)) ([c523b15](https://github.com/zwave-js/zwave-js-ui/commit/c523b15b18d361e234539d46ab1d7fa7d5e9263b)), closes [#4864](https://github.com/zwave-js/zwave-js-ui/issues/4864) [#4863](https://github.com/zwave-js/zwave-js-ui/issues/4863) [#4867](https://github.com/zwave-js/zwave-js-ui/issues/4867) [#4867](https://github.com/zwave-js/zwave-js-ui/issues/4867) [#4869](https://github.com/zwave-js/zwave-js-ui/issues/4869) [#4843](https://github.com/zwave-js/zwave-js-ui/issues/4843) [#4830](https://github.com/zwave-js/zwave-js-ui/issues/4830) [#4868](https://github.com/zwave-js/zwave-js-ui/issues/4868) [#4866](https://github.com/zwave-js/zwave-js-ui/issues/4866) [#4865](https://github.com/zwave-js/zwave-js-ui/issues/4865) [#4757](https://github.com/zwave-js/zwave-js-ui/issues/4757) [#4751](https://github.com/zwave-js/zwave-js-ui/issues/4751) [#4828](https://github.com/zwave-js/zwave-js-ui/issues/4828) [#4861](https://github.com/zwave-js/zwave-js-ui/issues/4861) [#4867](https://github.com/zwave-js/zwave-js-ui/issues/4867) [#4867](https://github.com/zwave-js/zwave-js-ui/issues/4867) [#4866](https://github.com/zwave-js/zwave-js-ui/issues/4866) [#4865](https://github.com/zwave-js/zwave-js-ui/issues/4865) [#4868](https://github.com/zwave-js/zwave-js-ui/issues/4868) [#4843](https://github.com/zwave-js/zwave-js-ui/issues/4843)
+* **ui:** explain SmartStart name/location are shared with integrations ([#4861](https://github.com/zwave-js/zwave-js-ui/issues/4861)) ([0b0f76e](https://github.com/zwave-js/zwave-js-ui/commit/0b0f76e8faf39f18326f4569ce49345967129266)), closes [#4231](https://github.com/zwave-js/zwave-js-ui/issues/4231) [#4230](https://github.com/zwave-js/zwave-js-ui/issues/4230)
+* **ui:** improve firmware warning grammar ([#4828](https://github.com/zwave-js/zwave-js-ui/issues/4828)) ([cf4e783](https://github.com/zwave-js/zwave-js-ui/commit/cf4e7839c528c338d80963604963e5755c1e596f))
+* **ui:** keep network graph filters when clicking the background ([#4868](https://github.com/zwave-js/zwave-js-ui/issues/4868)) ([27ba3c7](https://github.com/zwave-js/zwave-js-ui/commit/27ba3c730cbe9c0cbbce8e15a6084ae9c942a79c)), closes [#4858](https://github.com/zwave-js/zwave-js-ui/issues/4858) [#4858](https://github.com/zwave-js/zwave-js-ui/issues/4858) [#3126](https://github.com/zwave-js/zwave-js-ui/issues/3126)
+* **ui:** scroll navigation tabs instead of clipping when labels are shown ([#4871](https://github.com/zwave-js/zwave-js-ui/issues/4871)) ([2011d75](https://github.com/zwave-js/zwave-js-ui/commit/2011d75613d5774398bd05d74a56701a5890e7a8)), closes [#4562](https://github.com/zwave-js/zwave-js-ui/issues/4562)
+* **ui:** wrap long option labels in value dropdowns ([#4870](https://github.com/zwave-js/zwave-js-ui/issues/4870)) ([831bb25](https://github.com/zwave-js/zwave-js-ui/commit/831bb25d298c259f68d2d19bd64156db18e522eb)), closes [#1919](https://github.com/zwave-js/zwave-js-ui/issues/1919)
+
+### 🔧 Chores
+
+* update gh-aw to v0.89.21 ([#4855](https://github.com/zwave-js/zwave-js-ui/issues/4855)) ([ebd5e6a](https://github.com/zwave-js/zwave-js-ui/commit/ebd5e6ab6d6a3f880acfcade05e7b8deb7808439))
+
 ## [11.24.3](https://github.com/zwave-js/zwave-js-ui/compare/v11.24.2...v11.24.3) (2026-10-09)
 
 ### ✨ Features

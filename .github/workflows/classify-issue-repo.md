@@ -10,7 +10,7 @@ on:
   roles: all
   steps:
   - name: Checkout repository
-    uses: actions/checkout@v7
+    uses: actions/checkout@v7.0.1
     with:
       persist-credentials: false
       sparse-checkout: .github
@@ -18,7 +18,7 @@ on:
     uses: zwave-js/bot-workflows/actions/setup-bot@v1
   - id: check
     name: Check whether this issue needs classification
-    uses: actions/github-script@v9
+    uses: actions/github-script@v9.0.0
     with:
       script: |
         const { excludedUsers } = require(`${process.env.BOT_SCRIPTS_DIR}/config.cjs`);
@@ -59,14 +59,14 @@ safe-outputs:
       runs-on: ubuntu-latest
       steps:
       - name: Checkout repository
-        uses: actions/checkout@v7
+        uses: actions/checkout@v7.0.1
         with:
           persist-credentials: false
           sparse-checkout: .github
       - name: Set up bot scripts
         uses: zwave-js/bot-workflows/actions/setup-bot@v1
       - name: Give feedback
-        uses: actions/github-script@v9
+        uses: actions/github-script@v9.0.0
         with:
           github-token: ${{ secrets.BOT_TOKEN }}
           script: |
@@ -77,7 +77,7 @@ engine:
   id: copilot
   max-turns: 5
 model: gpt-5.6-luna
-source: zwave-js/bot-workflows/workflows/classify-issue-repo.md@124f3a48e884febf74a2abbe457ad76b3c7e901d
+source: zwave-js/bot-workflows/workflows/classify-issue-repo.md@6e95c90f53efc77bd804027ec6d17b667740ee91
 timeout-minutes: 10
 ---
 # Issue Classification

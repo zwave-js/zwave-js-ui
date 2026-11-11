@@ -66,6 +66,19 @@ describe('#Constants', () => {
 				state_class: 'total_increasing',
 			})
 		})
+		it('gas m³ → gas', () => {
+			const result = mod.meterType({ meterType: 0x02, scale: 0x00 })
+			expect(result.props).to.deep.equal({
+				icon: 'mdi:thought-bubble',
+				device_class: 'gas',
+			})
+		})
+		it('gas Pulse count → no device class', () => {
+			const result = mod.meterType({ meterType: 0x02, scale: 0x03 })
+			expect(result.props).to.deep.equal({
+				icon: 'mdi:thought-bubble',
+			})
+		})
 		it('electric W → power', () => {
 			const result = mod.meterType({ meterType: 0x01, scale: 0x02 })
 			expect(result.props).to.deep.equal({

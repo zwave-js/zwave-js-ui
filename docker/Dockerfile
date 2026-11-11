@@ -3,7 +3,7 @@ ARG image=zwave-js-ui
 # Full image refs, one per ARG: Renovate rewrites the ARG line that holds the whole
 # ref, so a shared version fragment gets the digest of only one of the two images.
 # Keep the -alpine suffix here in sync with ALPINE_IMAGE.
-ARG NODE_IMAGE=node:24.22.0-alpine3.23
+ARG NODE_IMAGE=node:24.22.1-alpine3.23
 ARG ALPINE_IMAGE=alpine:3.23
 ARG BUILDPLATFORM
 

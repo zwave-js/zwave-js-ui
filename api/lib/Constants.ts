@@ -221,9 +221,19 @@ export function meterType(ccSpecific: IMeterCCSpecific): any {
 			}
 			break
 		case 0x02: // gas
-			cfg.props = {
-				icon: 'mdi:thought-bubble',
-				device_class: 'gas',
+			switch (ccSpecific.scale) {
+				case 0x03: // Pulse count (unitless)
+					// HA rejects a unitless sensor with the gas device class
+					cfg.props = {
+						icon: 'mdi:thought-bubble',
+					}
+					break
+				default:
+					cfg.props = {
+						icon: 'mdi:thought-bubble',
+						device_class: 'gas',
+					}
+					break
 			}
 			break
 		case 0x03: // water

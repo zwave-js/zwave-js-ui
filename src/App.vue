@@ -57,7 +57,7 @@
 					</v-toolbar-title>
 				</template>
 				<template v-else>
-					<v-tabs>
+					<v-tabs show-arrows>
 						<v-tab
 							v-for="item in pages"
 							:key="item.title"
