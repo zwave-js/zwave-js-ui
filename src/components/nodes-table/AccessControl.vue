@@ -869,7 +869,6 @@ import {
 	maskCredential,
 	nextFreeCredentialSlot,
 	nextFreeUserSlot,
-	escapeHtml,
 	setUserResultMessage,
 	setCredentialResultMessage,
 	assignCredentialResultMessage,
@@ -878,6 +877,7 @@ import {
 	isAdminCodeSuccess,
 	setAdminCodeResultMessage,
 } from '@/lib/accessControl.ts'
+import { escapeHtml } from '@/lib/utils.js'
 
 const ACCESS_CONTROL_EVENTS = new Set([
 	'user added',

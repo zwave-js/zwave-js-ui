@@ -78,6 +78,7 @@ const useBaseStore = defineStore('base', {
 			storeBackup: false,
 			storeCron: '0 0 * * *',
 			storeKeep: 7,
+			storeFloorPlans: true,
 			nvmBackup: false,
 			nvmBackupOnEvent: false,
 			nvmCron: '0 0 * * *',
