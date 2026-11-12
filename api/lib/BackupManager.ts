@@ -13,6 +13,7 @@ export interface BackupSettings {
 	storeBackup: boolean
 	storeCron: string
 	storeKeep: number
+	storeFloorPlans: boolean
 	nvmBackup: boolean
 	nvmBackupOnEvent: boolean
 	nvmCron: string
@@ -32,6 +33,7 @@ class BackupManager {
 			storeBackup: false,
 			storeCron: '0 0 * * *',
 			storeKeep: 7,
+			storeFloorPlans: true,
 			nvmBackup: false,
 			nvmBackupOnEvent: false,
 			nvmCron: '0 0 * * *',
@@ -137,7 +139,9 @@ class BackupManager {
 		logger.info('Backup STORE started')
 
 		try {
-			const backupFile = await jsonStore.backup()
+			const backupFile = await jsonStore.backup(undefined, {
+				floorPlans: this.config.storeFloorPlans,
+			})
 
 			logger.info(`Backup STORE created: ${backupFile}`)
 
