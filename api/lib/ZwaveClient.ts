@@ -5340,6 +5340,19 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			// 	},
 			// ] as FirmwareUpdateInfo[]
 
+			const filteredUpdates = this._filterFirmwareUpdates(result)
+			const stableUpdates = options?.includePrereleases
+				? filteredUpdates.filter((u) => u.channel !== 'beta')
+				: filteredUpdates
+			if (
+				!options?.includePrereleases ||
+				(stableUpdates.length === 0 &&
+					this._hasStoredFirmwareInfo(nodeId))
+			) {
+				this._updateNodeFirmwareInfo(nodeId, stableUpdates, Date.now())
+				await this.updateStoreNodes(false)
+			}
+
 			return result
 		}
 
@@ -5399,6 +5412,24 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 					}
 				}
 
+				// Clear stale firmware info for eligible nodes omitted from the result map
+				// (zwave-js omits devices unknown to or without an entry in the firmware service)
+				for (const [nodeId] of this._nodes) {
+					if (result.has(nodeId)) continue
+					if (!this._hasStoredFirmwareInfo(nodeId)) continue
+
+					const zwaveNode = this.getNode(nodeId)
+					if (
+						zwaveNode &&
+						typeof zwaveNode.manufacturerId === 'number' &&
+						typeof zwaveNode.productType === 'number' &&
+						typeof zwaveNode.productId === 'number' &&
+						typeof zwaveNode.firmwareVersion === 'string'
+					) {
+						this._updateNodeFirmwareInfo(nodeId, [], now)
+					}
+				}
+
 				// Save to nodes.json
 				await this.updateStoreNodes()
 			}
@@ -5449,6 +5480,21 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		logger.info(`Dismissed firmware update ${version} for node ${nodeId}`)
 
 		return true
+	}
+
+	/**
+	 * Check whether a node has cached firmware updates or dismissed versions
+	 */
+	private _hasStoredFirmwareInfo(nodeId: number): boolean {
+		const node = this._nodes.get(nodeId)
+		const storeNode = this.storeNodes[nodeId]
+
+		return (
+			(node?.availableFirmwareUpdates?.length ?? 0) > 0 ||
+			(storeNode?.availableFirmwareUpdates?.length ?? 0) > 0 ||
+			Object.keys(node?.firmwareUpdatesDismissed || {}).length > 0 ||
+			Object.keys(storeNode?.firmwareUpdatesDismissed || {}).length > 0
+		)
 	}
 
 	/**
