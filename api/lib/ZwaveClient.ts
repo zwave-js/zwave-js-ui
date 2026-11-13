@@ -7151,6 +7151,20 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			},
 		})
 
+		if (
+			result.success &&
+			this.driver?.controller?.ownNodeId !== undefined
+		) {
+			this._updateNodeFirmwareInfo(
+				this.driver.controller.ownNodeId,
+				[],
+				Date.now(),
+			)
+			this.updateStoreNodes(false).catch(() => {
+				/* ignore */
+			})
+		}
+
 		logger.info(
 			`Controller firmware update OTW finished ${
 				result.success ? 'successfully' : 'with error'
@@ -8641,6 +8655,13 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				this.emitNodeUpdate(node, {
 					firmwareUpdate: false,
 				} as any)
+			}
+
+			if (result.success) {
+				this._updateNodeFirmwareInfo(zwaveNode.id, [], Date.now())
+				this.updateStoreNodes(false).catch(() => {
+					/* ignore */
+				})
 			}
 
 			this.logNode(
