@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import ZwaveClient from '../../api/lib/ZwaveClient.ts'
+import jsonStore from '../../api/lib/jsonStore.ts'
 
 // `throttle` only touches `throttledFunctions`, so these tests skip the real
 // constructor. It reads the json stores and needs a socket server.
@@ -184,6 +185,442 @@ describe('#ZwaveClient', () => {
 
 			vi.advanceTimersByTime(1000)
 			expect(fn).toHaveBeenCalledTimes(1)
+		})
+	})
+
+	describe('#firmware updates', () => {
+		afterEach(() => {
+			vi.restoreAllMocks()
+		})
+
+		function createFirmwareClient(options?: {
+			disableAutomaticFirmwareUpdateChecks?: boolean
+			driverNodes?: Map<number, any>
+			getAllAvailableFirmwareUpdates?: () => Promise<Map<number, any[]>>
+			getAvailableFirmwareUpdates?: (
+				nodeId: number,
+				opts?: any,
+			) => Promise<any[]>
+		}) {
+			vi.spyOn(jsonStore, 'get').mockReturnValue([] as any)
+			const client = new ZwaveClient(
+				{
+					disableAutomaticFirmwareUpdateChecks:
+						options?.disableAutomaticFirmwareUpdateChecks ?? false,
+				} as any,
+				null as any,
+			)
+			client['storeNodes'] = {}
+			client['driverReady'] = true
+			client['_driver'] = {
+				controller: {
+					ownNodeId: 1,
+					nodes: options?.driverNodes ?? new Map(),
+					getAllAvailableFirmwareUpdates:
+						options?.getAllAvailableFirmwareUpdates ??
+						vi.fn().mockResolvedValue(new Map()),
+					getAvailableFirmwareUpdates:
+						options?.getAvailableFirmwareUpdates ??
+						vi.fn().mockResolvedValue([]),
+				},
+			} as any
+			client['emitNodeUpdate'] = vi.fn()
+			client['updateStoreNodes'] = vi.fn().mockResolvedValue(undefined)
+			client['logNode'] = vi.fn()
+			client['emit'] = vi.fn() as any
+			return client
+		}
+
+		const sampleUpdate = {
+			version: '2.0.0',
+			downgrade: false,
+			channel: 'stable',
+			normalizedVersion: '2.0.0',
+			changelog: 'Fix bugs',
+			files: [],
+			device: {
+				manufacturerId: 1,
+				productType: 2,
+				productId: 3,
+				firmwareVersion: '1.0.0',
+			},
+		}
+
+		it('checkAllNodesFirmwareUpdates clears stale updates for eligible nodes omitted from the bulk result map', async () => {
+			const driverNodes = new Map([
+				[
+					2,
+					{
+						id: 2,
+						manufacturerId: 1,
+						productType: 2,
+						productId: 3,
+						firmwareVersion: '2.0.0',
+					},
+				],
+				[
+					3,
+					{
+						id: 3,
+						manufacturerId: 1,
+						productType: 2,
+						productId: 4,
+						firmwareVersion: '1.0.0',
+					},
+				],
+				[
+					4,
+					{
+						id: 4,
+						manufacturerId: 1,
+						productType: 2,
+						productId: 5,
+						// firmwareVersion unknown -> not included in bulk check
+					},
+				],
+			])
+
+			const client = createFirmwareClient({
+				driverNodes,
+				getAllAvailableFirmwareUpdates: vi.fn().mockResolvedValue(
+					new Map([
+						[
+							3,
+							[
+								{
+									...sampleUpdate,
+									version: '3.0.0',
+								},
+							],
+						],
+					]),
+				),
+			})
+
+			client['_nodes'].set(2, {
+				id: 2,
+				availableFirmwareUpdates: [sampleUpdate],
+				firmwareUpdatesDismissed: { '2.0.0': true },
+				lastFirmwareUpdateCheck: 100,
+			} as any)
+			client['storeNodes'][2] = {
+				availableFirmwareUpdates: [sampleUpdate],
+				firmwareUpdatesDismissed: { '2.0.0': true },
+				lastFirmwareUpdateCheck: 100,
+			} as any
+
+			client['_nodes'].set(3, {
+				id: 3,
+				availableFirmwareUpdates: [],
+				firmwareUpdatesDismissed: {},
+				lastFirmwareUpdateCheck: 0,
+			} as any)
+
+			// Node 4 has no firmwareVersion yet (e.g. uninterviewed), so its cached info must not be wiped
+			client['_nodes'].set(4, {
+				id: 4,
+				availableFirmwareUpdates: [sampleUpdate],
+				firmwareUpdatesDismissed: {},
+				lastFirmwareUpdateCheck: 100,
+			} as any)
+			client['storeNodes'][4] = {
+				availableFirmwareUpdates: [sampleUpdate],
+				firmwareUpdatesDismissed: {},
+				lastFirmwareUpdateCheck: 100,
+			} as any
+
+			await client.checkAllNodesFirmwareUpdates()
+
+			expect(
+				client['_nodes'].get(2)?.availableFirmwareUpdates,
+			).to.deep.equal([])
+			expect(
+				client['storeNodes'][2].availableFirmwareUpdates,
+			).to.deep.equal([])
+			expect(
+				client['storeNodes'][2].firmwareUpdatesDismissed,
+			).to.deep.equal({})
+			expect(client['emitNodeUpdate']).toHaveBeenCalledWith(
+				client['_nodes'].get(2),
+				expect.objectContaining({
+					availableFirmwareUpdates: [],
+					firmwareUpdatesDismissed: {},
+				}),
+			)
+
+			expect(
+				client['_nodes'].get(3)?.availableFirmwareUpdates,
+			).toHaveLength(1)
+			expect(
+				client['_nodes'].get(4)?.availableFirmwareUpdates,
+			).to.deep.equal([sampleUpdate])
+			expect(client['updateStoreNodes']).toHaveBeenCalledTimes(1)
+		})
+
+		it('_onNodeFirmwareUpdateFinished clears availableFirmwareUpdates on success even without re-interview or when auto-checks are disabled', () => {
+			const client = createFirmwareClient({
+				disableAutomaticFirmwareUpdateChecks: true,
+			})
+			const node = {
+				id: 5,
+				firmwareUpdate: { progress: 100 },
+				availableFirmwareUpdates: [sampleUpdate],
+				firmwareUpdatesDismissed: { '2.0.0': true },
+				lastFirmwareUpdateCheck: 100,
+			} as any
+			client['_nodes'].set(5, node)
+			client['storeNodes'][5] = {
+				availableFirmwareUpdates: [sampleUpdate],
+				firmwareUpdatesDismissed: { '2.0.0': true },
+				lastFirmwareUpdateCheck: 100,
+			} as any
+
+			client['_onNodeFirmwareUpdateFinished'](
+				{ id: 5 } as any,
+				{
+					success: true,
+					status: 255,
+					reInterview: false,
+				} as any,
+			)
+
+			expect(node.firmwareUpdate).toBeUndefined()
+			expect(node.availableFirmwareUpdates).to.deep.equal([])
+			expect(
+				client['storeNodes'][5].availableFirmwareUpdates,
+			).to.deep.equal([])
+			expect(
+				client['storeNodes'][5].firmwareUpdatesDismissed,
+			).to.deep.equal({})
+			expect(client['updateStoreNodes']).toHaveBeenCalledWith(false)
+			expect(client['emitNodeUpdate']).toHaveBeenCalledWith(
+				node,
+				expect.objectContaining({
+					availableFirmwareUpdates: [],
+				}),
+			)
+		})
+
+		it('_onNodeFirmwareUpdateFinished keeps availableFirmwareUpdates when update fails', () => {
+			const client = createFirmwareClient()
+			const node = {
+				id: 6,
+				firmwareUpdate: { progress: 50 },
+				availableFirmwareUpdates: [sampleUpdate],
+				firmwareUpdatesDismissed: {},
+				lastFirmwareUpdateCheck: 100,
+			} as any
+			client['_nodes'].set(6, node)
+			client['storeNodes'][6] = {
+				availableFirmwareUpdates: [sampleUpdate],
+				firmwareUpdatesDismissed: {},
+				lastFirmwareUpdateCheck: 100,
+			} as any
+
+			client['_onNodeFirmwareUpdateFinished'](
+				{ id: 6 } as any,
+				{
+					success: false,
+					status: 0,
+					reInterview: false,
+				} as any,
+			)
+
+			expect(node.firmwareUpdate).toBeUndefined()
+			expect(node.availableFirmwareUpdates).to.deep.equal([sampleUpdate])
+			expect(
+				client['storeNodes'][6].availableFirmwareUpdates,
+			).to.deep.equal([sampleUpdate])
+		})
+
+		it('getAvailableFirmwareUpdates clears stale updates when stable check returns empty', async () => {
+			const client = createFirmwareClient({
+				getAvailableFirmwareUpdates: vi.fn().mockResolvedValue([]),
+			})
+			const node = {
+				id: 7,
+				availableFirmwareUpdates: [sampleUpdate],
+				firmwareUpdatesDismissed: {},
+				lastFirmwareUpdateCheck: 100,
+			} as any
+			client['_nodes'].set(7, node)
+			client['storeNodes'][7] = {
+				availableFirmwareUpdates: [sampleUpdate],
+				firmwareUpdatesDismissed: {},
+				lastFirmwareUpdateCheck: 100,
+			} as any
+
+			const result = await client.getAvailableFirmwareUpdates(7, {
+				includePrereleases: false,
+			})
+
+			expect(result).to.deep.equal([])
+			expect(node.availableFirmwareUpdates).to.deep.equal([])
+			expect(
+				client['storeNodes'][7].availableFirmwareUpdates,
+			).to.deep.equal([])
+			expect(client['updateStoreNodes']).toHaveBeenCalledWith(false)
+		})
+
+		it('getAvailableFirmwareUpdates does not store prereleases in availableFirmwareUpdates when includePrereleases is true', async () => {
+			const prereleaseUpdate = {
+				...sampleUpdate,
+				version: '2.1.0-beta.1',
+				channel: 'beta',
+			}
+			const client = createFirmwareClient({
+				getAvailableFirmwareUpdates: vi
+					.fn()
+					.mockResolvedValue([prereleaseUpdate]),
+			})
+			const node = {
+				id: 8,
+				availableFirmwareUpdates: [],
+				firmwareUpdatesDismissed: {},
+				lastFirmwareUpdateCheck: 100,
+			} as any
+			client['_nodes'].set(8, node)
+
+			const result = await client.getAvailableFirmwareUpdates(8, {
+				includePrereleases: true,
+			})
+
+			expect(result).to.deep.equal([prereleaseUpdate])
+			expect(node.availableFirmwareUpdates).to.deep.equal([])
+			expect(client['updateStoreNodes']).not.toHaveBeenCalled()
+		})
+
+		it('getAvailableFirmwareUpdates clears stale updates when includePrereleases is true and returns empty', async () => {
+			const client = createFirmwareClient({
+				getAvailableFirmwareUpdates: vi.fn().mockResolvedValue([]),
+			})
+			const node = {
+				id: 9,
+				availableFirmwareUpdates: [sampleUpdate],
+				firmwareUpdatesDismissed: {},
+				lastFirmwareUpdateCheck: 100,
+			} as any
+			client['_nodes'].set(9, node)
+			client['storeNodes'][9] = {
+				availableFirmwareUpdates: [sampleUpdate],
+				firmwareUpdatesDismissed: {},
+				lastFirmwareUpdateCheck: 100,
+			} as any
+
+			const result = await client.getAvailableFirmwareUpdates(9, {
+				includePrereleases: true,
+			})
+
+			expect(result).to.deep.equal([])
+			expect(node.availableFirmwareUpdates).to.deep.equal([])
+			expect(
+				client['storeNodes'][9].availableFirmwareUpdates,
+			).to.deep.equal([])
+			expect(client['updateStoreNodes']).toHaveBeenCalledWith(false)
+		})
+
+		it('getAvailableFirmwareUpdates clears stale stable updates when includePrereleases is true and only beta updates are returned', async () => {
+			const prereleaseUpdate = {
+				...sampleUpdate,
+				version: '2.1.0-beta.1',
+				channel: 'beta',
+			}
+			const client = createFirmwareClient({
+				getAvailableFirmwareUpdates: vi
+					.fn()
+					.mockResolvedValue([prereleaseUpdate]),
+			})
+			const node = {
+				id: 11,
+				availableFirmwareUpdates: [sampleUpdate],
+				firmwareUpdatesDismissed: { '2.0.0': true },
+				lastFirmwareUpdateCheck: 100,
+			} as any
+			client['_nodes'].set(11, node)
+			client['storeNodes'][11] = {
+				availableFirmwareUpdates: [sampleUpdate],
+				firmwareUpdatesDismissed: { '2.0.0': true },
+				lastFirmwareUpdateCheck: 100,
+			} as any
+
+			const result = await client.getAvailableFirmwareUpdates(11, {
+				includePrereleases: true,
+			})
+
+			expect(result).to.deep.equal([prereleaseUpdate])
+			expect(node.availableFirmwareUpdates).to.deep.equal([])
+			expect(node.firmwareUpdatesDismissed).to.deep.equal({})
+			expect(
+				client['storeNodes'][11].availableFirmwareUpdates,
+			).to.deep.equal([])
+			expect(client['updateStoreNodes']).toHaveBeenCalledWith(false)
+		})
+
+		it('_onOTWFirmwareUpdateFinished clears controller availableFirmwareUpdates only on success', () => {
+			const client = createFirmwareClient()
+			client['sendToSocket'] = vi.fn()
+			const controllerNode = {
+				id: 1,
+				availableFirmwareUpdates: [sampleUpdate],
+				firmwareUpdatesDismissed: { '2.0.0': true },
+				lastFirmwareUpdateCheck: 100,
+			} as any
+			client['_nodes'].set(1, controllerNode)
+			client['storeNodes'][1] = {
+				availableFirmwareUpdates: [sampleUpdate],
+				firmwareUpdatesDismissed: { '2.0.0': true },
+				lastFirmwareUpdateCheck: 100,
+			} as any
+
+			client['_onOTWFirmwareUpdateFinished']({
+				success: false,
+				status: 0,
+			} as any)
+			expect(controllerNode.availableFirmwareUpdates).to.deep.equal([
+				sampleUpdate,
+			])
+
+			client['_onOTWFirmwareUpdateFinished']({
+				success: true,
+				status: 255,
+			} as any)
+			expect(controllerNode.availableFirmwareUpdates).to.deep.equal([])
+			expect(
+				client['storeNodes'][1].availableFirmwareUpdates,
+			).to.deep.equal([])
+			expect(client['updateStoreNodes']).toHaveBeenCalledWith(false)
+		})
+
+		it('checkAllNodesFirmwareUpdates skips emitting for omitted nodes with no stale firmware info', async () => {
+			const driverNodes = new Map([
+				[
+					10,
+					{
+						id: 10,
+						manufacturerId: 1,
+						productType: 2,
+						productId: 3,
+						firmwareVersion: '1.0.0',
+					},
+				],
+			])
+			const client = createFirmwareClient({
+				driverNodes,
+				getAllAvailableFirmwareUpdates: vi
+					.fn()
+					.mockResolvedValue(new Map()),
+			})
+			client['_nodes'].set(10, {
+				id: 10,
+				availableFirmwareUpdates: [],
+				firmwareUpdatesDismissed: {},
+				lastFirmwareUpdateCheck: 0,
+			} as any)
+
+			await client.checkAllNodesFirmwareUpdates()
+
+			expect(client['emitNodeUpdate']).not.toHaveBeenCalled()
+			expect(client['storeNodes'][10]).toBeUndefined()
 		})
 	})
 })
