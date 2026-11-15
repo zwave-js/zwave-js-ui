@@ -149,6 +149,7 @@ function setup(options: {
 		payload: unknown
 		options: unknown
 		prefix: string | undefined
+		empty?: true
 	}> = []
 	const updates: Array<{
 		nodeId: number
@@ -185,8 +186,16 @@ function setup(options: {
 		getTopic: (topic, set) => `prefix/${topic}${set ? '/set' : ''}`,
 		getStatusTopic: () => 'prefix/_CLIENTS/ZWAVE_GATEWAY/status',
 		publish,
-		publishEmpty: (topic, publishOptions, prefix) =>
-			publish(topic, '', publishOptions, prefix),
+		// Marked apart from publish(topic, ''), which sends a JSON "" payload
+		publishEmpty: (topic, publishOptions, prefix) => {
+			published.push({
+				topic,
+				payload: '',
+				options: publishOptions,
+				prefix,
+				empty: true,
+			})
+		},
 	}
 	const zwave: HassZwavePort = {
 		homeHex: '0x12345678',
@@ -463,6 +472,7 @@ describe('DiscoveryGenerator', () => {
 				payload: '',
 				options: { qos: 0, retain: true },
 				prefix: 'homeassistant',
+				empty: true,
 			},
 		])
 		expect(updates[0]).toMatchObject({ nodeId: 2, deleteDevice: true })
@@ -1289,6 +1299,7 @@ describe('DiscoveryGenerator', () => {
 						payload: '',
 						options: { qos: 0, retain: true },
 						prefix: 'homeassistant',
+						empty: true,
 					},
 				])
 			},
