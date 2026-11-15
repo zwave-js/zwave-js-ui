@@ -107,7 +107,8 @@ async function main() {
 	const config = {
 		entryPoints: [useJsEntrypoint ? 'server/bin/www.js' : 'api/bin/www.ts'],
 		plugins: [nativeNodeModulesPlugin],
-		conditions: useJsEntrypoint ? [] : ['development'],
+		// Any custom list drops esbuild's default `module` condition, so keep it explicitly
+		conditions: useJsEntrypoint ? ['module'] : ['development', 'module'],
 		bundle: true,
 		platform: 'node',
 		target: 'node18',

@@ -21,7 +21,8 @@ const compat = new FlatCompat({
 	allConfig: js.configs.all,
 })
 
-const backendImportMessage = 'Imports targeting api/ must use #api/*'
+const backendImportMessage =
+	'Imports targeting api/ must use the extensionless #api/* subpath'
 const backendImportRules = (pattern) => {
 	const selectorPattern = pattern.replaceAll('/', '\\/')
 	const loaderMethod =
