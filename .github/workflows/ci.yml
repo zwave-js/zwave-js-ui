@@ -80,12 +80,7 @@ jobs:
         run: npm run coverage
 
       - name: Coveralls
-<<<<<<< b8699475b929694dc42a654d72674bb20cca44da
-        uses: coverallsapp/github-action@master
-        if: matrix['node-version'] == env.PRIMARY_NODE_VERSION
-=======
         uses: coverallsapp/github-action@v2
-        if: matrix['node-version'] == '20.x'
->>>>>>> 6098666744eb3d4de6c859b61168568bc61a4727
+        if: matrix['node-version'] == env.PRIMARY_NODE_VERSION
         with:
           github-token: ${{ secrets.github_token }}

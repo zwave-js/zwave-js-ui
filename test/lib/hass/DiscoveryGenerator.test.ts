@@ -6,6 +6,7 @@ import {
 	ThermostatSetpointType,
 } from 'zwave-js'
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
+import nunjucks from 'nunjucks'
 import type {
 	DiscoveryGenerator as DiscoveryGeneratorType,
 	DiscoveryGeneratorOptions,
@@ -16,6 +17,7 @@ import type {
 	HassMqttPort,
 	HassNode,
 	HassValue,
+	HassValueTopic,
 	HassZwavePort,
 } from '#api/hass/ports.ts'
 import type {
@@ -140,6 +142,7 @@ function setup(options: {
 	catalog?: HassDeviceCatalog
 	publishError?: unknown
 	withoutZwave?: boolean
+	valueConf?: HassValueTopic['valueConf']
 }) {
 	const published: Array<{
 		topic: string
@@ -161,21 +164,29 @@ function setup(options: {
 			[...devices],
 		]),
 	)
+	const publish: HassMqttPort['publish'] = (
+		topic,
+		payload,
+		publishOptions,
+		prefix,
+	) => {
+		if (options.publishError !== undefined) {
+			throw options.publishError
+		}
+		published.push({
+			topic,
+			payload,
+			options: publishOptions,
+			prefix,
+		})
+	}
 	const mqtt: HassMqttPort = {
 		disabled: options.disabled ?? false,
 		getTopic: (topic, set) => `prefix/${topic}${set ? '/set' : ''}`,
 		getStatusTopic: () => 'prefix/_CLIENTS/ZWAVE_GATEWAY/status',
-		publish: (topic, payload, publishOptions, prefix) => {
-			if (options.publishError !== undefined) {
-				throw options.publishError
-			}
-			published.push({
-				topic,
-				payload,
-				options: publishOptions,
-				prefix,
-			})
-		},
+		publish,
+		publishEmpty: (topic, publishOptions, prefix) =>
+			publish(topic, '', publishOptions, prefix),
 	}
 	const zwave: HassZwavePort = {
 		homeHex: '0x12345678',
@@ -231,6 +242,7 @@ function setup(options: {
 							targetTopic: hassValue.targetValue
 								? `node/${hassValue.targetValue}`
 								: undefined,
+							valueConf: options.valueConf,
 						}
 					: `node/${hassValue.id}`,
 		},
@@ -1204,5 +1216,304 @@ describe('DiscoveryGenerator', () => {
 		)
 		generator.discoverClimates(thermostat)
 		expect(catalog.get(thermostat.deviceId)).toEqual(firstProjection)
+	})
+
+	describe('Configuration CC enabled_by_default', () => {
+		const configKey = ccValueKey(CommandClasses.Configuration, 3)
+		const discover = (
+			config: DiscoveryGeneratorOptions['config'],
+			ccConfigEnableDiscovery?: boolean | null,
+		) => {
+			const hassNode = node({
+				values: {
+					[configKey]: value({
+						id: ccValueId(CommandClasses.Configuration, 3),
+						commandClass: CommandClasses.Configuration,
+						property: 3,
+						propertyName: 'LED mode',
+						type: 'number',
+						writeable: true,
+						min: 0,
+						max: 5,
+					}),
+				},
+			})
+			const { generator, published } = setup({
+				config,
+				valueConf: { ccConfigEnableDiscovery },
+			})
+			generator.discoverValue(hassNode, configKey)
+			return (published[0].payload as HassDevice['discovery_payload'])
+				.enabled_by_default
+		}
+
+		it('is disabled by default', () => {
+			expect(discover({})).toBe(false)
+		})
+
+		it('follows the global setting', () => {
+			expect(discover({ ccConfigEnabledByDefault: true })).toBe(true)
+		})
+
+		it('lets the per-value flag override the global setting', () => {
+			expect(discover({ ccConfigEnabledByDefault: true }, false)).toBe(
+				false,
+			)
+			expect(discover({}, true)).toBe(true)
+		})
+
+		it('follows the global setting when the per-value flag is unset', () => {
+			for (const unset of [undefined, null]) {
+				expect(
+					discover({ ccConfigEnabledByDefault: true }, unset),
+				).toBe(true)
+			}
+		})
+	})
+
+	describe('discovery deletes', () => {
+		it.each([true, false])(
+			'publish a retained empty payload when retainedDiscovery is %s',
+			(retainedDiscovery) => {
+				const { generator, published } = setup({
+					config: { retainedDiscovery },
+				})
+				generator.publishDiscovery(
+					device({ discoveryTopic: 'switch/dev/config' }),
+					2,
+					{ deleteDevice: true },
+				)
+				expect(published).toEqual([
+					{
+						topic: 'switch/dev/config',
+						payload: '',
+						options: { qos: 0, retain: true },
+						prefix: 'homeassistant',
+					},
+				])
+			},
+		)
+	})
+
+	describe('Window Covering', () => {
+		const coverValue = (
+			commandClass: CommandClasses,
+			property: string,
+			propertyKey = 13,
+		) =>
+			value({
+				id: ccValueId(commandClass, property, propertyKey),
+				commandClass,
+				property,
+				propertyKey,
+				type: 'number',
+			})
+
+		it('stops an ongoing Window Covering level change', async () => {
+			const cover = coverValue(
+				CommandClasses['Window Covering'],
+				'targetValue',
+			)
+			const { generator, writes } = setup({})
+			registerDiscovery(
+				generator,
+				cover,
+				device({
+					type: 'cover',
+					discovery_payload: { payload_stop: 'stop' },
+				}),
+			)
+
+			expect(generator.transformPayload('stop', cover)).toBe(
+				hassCommandHandled,
+			)
+			expect(generator.transformPayload('42', cover)).toBe('42')
+			await vi.waitFor(() =>
+				expect(writes).toEqual([
+					{
+						valueId: { ...cover, property: 'levelChangeUp' },
+						value: false,
+					},
+				]),
+			)
+		})
+
+		it('discovers a cover only for odd (positionable) parameters', () => {
+			const odd = coverValue(
+				CommandClasses['Window Covering'],
+				'currentValue',
+				13,
+			)
+			odd.isCurrentValue = true
+			odd.propertyKeyName = 'Outbound Left'
+			odd.targetValue = ccValueKey(
+				CommandClasses['Window Covering'],
+				'targetValue',
+				13,
+			)
+			const even = coverValue(
+				CommandClasses['Window Covering'],
+				'currentValue',
+				12,
+			)
+			even.isCurrentValue = true
+			const oddKey = getIdWithoutNode(odd)
+			const evenKey = getIdWithoutNode(even)
+			const hassNode = node({
+				values: { [oddKey]: odd, [evenKey]: even },
+			})
+			const { generator, published } = setup({})
+
+			generator.discoverValue(hassNode, evenKey)
+			expect(published).toHaveLength(0)
+
+			generator.discoverValue(hassNode, oddKey)
+			expect(published).toHaveLength(1)
+			const cover = Object.values(hassNode.hassDevices)[0]
+			expect(cover.type).toBe('cover')
+			expect(cover.object_id).toContain('outbound_left')
+			const setTopic = `prefix/node/${odd.targetValue}/set`
+			expect(cover.discovery_payload).toMatchObject({
+				command_topic: setTopic,
+				position_topic: `prefix/node/${odd.id}`,
+				set_position_topic: setTopic,
+			})
+		})
+	})
+
+	describe('RGB light templates', () => {
+		// nunjucks runs the Jinja syntax HA uses; add the Jinja2 min/max and HA to_json filters it lacks
+		const jinja = new nunjucks.Environment(null, { autoescape: false })
+			.addFilter('min', (a: number[]) => Math.min(...a))
+			.addFilter('max', (a: number[]) => Math.max(...a))
+			.addFilter('to_json', (v: unknown) => JSON.stringify(v))
+		// HA parses a JSON_TIME_VALUE payload into value_json
+		const renderState = (template: string, state: unknown) =>
+			jinja.renderString(template, {
+				value_json: { time: 1, value: state },
+			})
+
+		const discover = (extra: Record<string, HassValue>) => {
+			const currentColorKey = ccValueKey(
+				CommandClasses['Color Switch'],
+				'currentColor',
+			)
+			const hassNode = node({
+				values: {
+					[currentColorKey]: value({
+						id: ccValueId(
+							CommandClasses['Color Switch'],
+							'currentColor',
+						),
+						commandClass: CommandClasses['Color Switch'],
+						property: 'currentColor',
+						type: 'color',
+						targetValue: ccValueKey(
+							CommandClasses['Color Switch'],
+							'targetColor',
+						),
+					}),
+					...extra,
+				},
+			})
+			const { generator } = setup({})
+			generator.discoverValue(hassNode, currentColorKey)
+			const light = Object.values(hassNode.hassDevices).find(
+				(candidate) => candidate.type === 'light',
+			)
+			return light.discovery_payload
+		}
+
+		it('maps a Binary Switch state to ON/OFF', () => {
+			const payload = discover({
+				[BINARY_SWITCH_CURRENT_VALUE]: value({
+					targetValue: ccValueKey(
+						CommandClasses['Binary Switch'],
+						'targetValue',
+					),
+				}),
+			})
+			const template = payload.state_value_template as string
+
+			expect(renderState(template, true)).toBe('ON')
+			expect(renderState(template, false)).toBe('OFF')
+			// RAW mode rewrites value_json.value to the raw payload string
+			const raw = template.replace(/value_json\.value/g, 'value')
+			expect(jinja.renderString(raw, { value: 'true' })).toBe('ON')
+			expect(jinja.renderString(raw, { value: 'false' })).toBe('OFF')
+		})
+
+		describe('with white channels', () => {
+			// built in a hook: the generator module loads in the top-level beforeAll
+			let payload: HassDevice['discovery_payload']
+			beforeAll(() => {
+				payload = discover({
+					[ccValueKey(
+						CommandClasses['Color Switch'],
+						'currentColor',
+						0,
+					)]: value(),
+				})
+			})
+			const color = (rgb: number[], ww: number, cw: number) => ({
+				red: rgb[0],
+				green: rgb[1],
+				blue: rgb[2],
+				warmWhite: ww,
+				coldWhite: cw,
+			})
+			const states = (state: unknown) => [
+				renderState(payload.rgb_value_template as string, state),
+				renderState(payload.color_temp_value_template as string, state),
+			]
+			const colorTemp = (mireds: number) =>
+				JSON.parse(
+					jinja.renderString(
+						payload.color_temp_command_template as string,
+						{ value: mireds },
+					),
+				)
+
+			// HA ignores an empty render, so only one mode updates per message
+			it('renders only the template of the active mode', () => {
+				expect(states(color([255, 0, 0], 0, 0))).toEqual([
+					'255,0,0',
+					'',
+				])
+				expect(states(color([0, 0, 0], 127, 128))).toEqual(['', '372'])
+				expect(states(color([0, 255, 0], 100, 100))).toEqual([
+					'0,255,0',
+					'',
+				])
+				expect(states(color([0, 0, 0], 0, 0))).toEqual(['', ''])
+			})
+
+			it('turns off the other mode and clamps color temp commands', () => {
+				expect(colorTemp(372)).toEqual(color([0, 0, 0], 127, 128))
+				expect(colorTemp(153)).toEqual(color([0, 0, 0], 0, 255))
+				expect(colorTemp(600)).toEqual(color([0, 0, 0], 255, 0))
+				expect(
+					JSON.parse(
+						jinja.renderString(
+							payload.rgb_command_template as string,
+							{ red: 0, green: 0, blue: 255 },
+						),
+					),
+				).toEqual(color([0, 0, 255], 0, 0))
+			})
+
+			it('round-trips color temp commands through the state template', () => {
+				for (const mireds of [245, 372, 500]) {
+					expect(
+						renderState(
+							payload.color_temp_value_template as string,
+							colorTemp(mireds),
+						),
+					).toBe(String(mireds))
+				}
+				expect(payload.min_mireds).toBe(245)
+				expect(payload.max_mireds).toBe(500)
+			})
+		})
 	})
 })

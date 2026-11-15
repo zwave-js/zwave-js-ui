@@ -12,6 +12,7 @@ import * as utils from '../lib/utils.ts'
 import { getErrorMessage } from '../lib/errors.ts'
 import { AUTH_ERROR_CODE, RESPONSE_CODES } from '../lib/ResponseCodes.ts'
 import { isAuthEnabled } from '../runtime/AppRuntime.ts'
+import { isTrustedRequest } from '../lib/trustedListener.ts'
 
 const logger = loggers.module('App')
 
@@ -68,7 +69,7 @@ export async function isAuthenticated(
 	res: Response,
 	next: () => void,
 ): Promise<void> {
-	if (req?.session?.user || !isAuthEnabled()) {
+	if (isTrustedRequest(req) || req?.session?.user || !isAuthEnabled()) {
 		return next()
 	}
 
@@ -98,7 +99,10 @@ export function registerAuthRoutes(
 	{ apisLimiter, loginLimiter }: AuthRoutesDeps,
 ): void {
 	app.get('/api/auth-enabled', apisLimiter, function (req, res) {
-		res.json({ success: true, data: isAuthEnabled() })
+		res.json({
+			success: true,
+			data: isTrustedRequest(req) ? false : isAuthEnabled(),
+		})
 	})
 
 	app.post('/api/authenticate', loginLimiter, async function (req, res) {

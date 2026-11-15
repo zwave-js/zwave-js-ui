@@ -30,7 +30,7 @@ export type HassTopicNode = Pick<
 export interface HassValueConfiguration {
 	device_class?: string
 	icon?: string
-	ccConfigEnableDiscovery?: boolean
+	ccConfigEnableDiscovery?: boolean | null
 }
 
 export interface HassValueTopic {
@@ -50,7 +50,7 @@ export interface HassTopicPort {
 
 export type HassMqttPort = Pick<
 	MqttClient,
-	'disabled' | 'getTopic' | 'getStatusTopic' | 'publish'
+	'disabled' | 'getTopic' | 'getStatusTopic' | 'publish' | 'publishEmpty'
 >
 
 /**
@@ -83,6 +83,7 @@ export interface HassDiscoveryConfig {
 	entityTemplate?: string
 	ignoreLoc?: boolean
 	useLocationAsSuggestedArea?: boolean
+	ccConfigEnabledByDefault?: boolean
 }
 
 export interface HassDeviceRegistryPort {

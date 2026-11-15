@@ -539,7 +539,7 @@ describe('HTTP contract: store, upload, snippets', () => {
 			expect(res.status).toBe(200)
 			expect(res.body).toEqual({
 				success: false,
-				message: 'Unexpected field',
+				message: 'Unexpected file field',
 			})
 		})
 

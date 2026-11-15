@@ -14,7 +14,8 @@
  *  - HA online status is case-insensitive, keyed off the fixed literal
  *    homeassistant/status (never prefixed).
  *  - Broker reconnect and HA coming online both re-announce every device.
- *  - The retained-discovery delete payload shape is tracked in #4737.
+ *  - Deletes publish a zero-length payload, always retained so they also
+ *    clear configs retained by an earlier setting (#4737).
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { CommandClasses } from '@zwave-js/core'
@@ -167,7 +168,7 @@ describe('HASS discovery publish and delete over MQTT', () => {
 		expect(pub2.options).toEqual({ qos: 0, retain: true })
 	})
 
-	it('a delete request publishes to the device discovery topic with retain following config', async () => {
+	it('a delete request publishes a retained empty payload to the device discovery topic', async () => {
 		harness.resetPublishes()
 		const { device } = discoverSwitch('dev-delete')
 		harness.resetPublishes()
@@ -177,8 +178,9 @@ describe('HASS discovery publish and delete over MQTT', () => {
 		const pub =
 			harness.broker.published[harness.broker.published.length - 1]
 		expect(pub.topic).toBe('homeassistant/' + device.discoveryTopic)
-		// Default config leaves discovery unretained; the delete payload shape is tracked in #4737
-		expect(pub.options).toEqual({ qos: 0, retain: false })
+		expect(pub.payload).toBe('')
+		// Retained even though the default config leaves discovery unretained
+		expect(pub.options).toEqual({ qos: 0, retain: true })
 
 		await replaceHarness({ retainedDiscovery: true })
 		const { device: d2 } = discoverSwitch('dev-delete-retained', 4)
@@ -189,6 +191,7 @@ describe('HASS discovery publish and delete over MQTT', () => {
 		const pub2 =
 			harness.broker.published[harness.broker.published.length - 1]
 		expect(pub2.topic).toBe('homeassistant/' + d2.discoveryTopic)
+		expect(pub2.payload).toBe('')
 		expect(pub2.options).toEqual({ qos: 0, retain: true })
 	})
 
@@ -592,5 +595,37 @@ describe('inbound MQTT requests drive Z-Wave actions', () => {
 		await tick()
 
 		expect(harness.zwave.callApi).not.toHaveBeenCalled()
+	})
+})
+
+describe('removeNodeRetained', () => {
+	it('clears every value topic with a retained empty payload', () => {
+		const { node } = discoverSwitch('dev-retained')
+		addValue(
+			node,
+			buildValueId({
+				nodeId: 2,
+				commandClass: CommandClasses['Multilevel Switch'],
+				endpoint: 0,
+				property: 'currentValue',
+				propertyName: 'currentValue',
+				type: 'number',
+				value: 0,
+			}),
+		)
+		harness.zwave.nodes.set(node.id, node)
+		harness.resetPublishes()
+
+		harness.gw.removeNodeRetained(node.id)
+
+		const expected = Object.values(node.values).map((v) =>
+			harness.gw.valueTopic(node, v),
+		)
+		expect(harness.broker.published).toHaveLength(2)
+		for (const pub of harness.broker.published) {
+			expect(expected).toContain(pub.topic.replace(/^zwave\//, ''))
+			expect(pub.payload).toBe('')
+			expect(pub.options).toMatchObject({ retain: true })
+		}
 	})
 })
