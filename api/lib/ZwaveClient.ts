@@ -867,7 +867,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			}),
 			getHasUserCallbacks: () =>
 				this._inclusionCoordinator.hasUserCallbacks,
-			onHardReset: () => this.init(),
+			onHardReset: () => this._reinitAfterHardReset(),
 			logger,
 			serverLogger: LogManager.module('Z-Wave-Server'),
 		}
@@ -4878,12 +4878,16 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	async hardReset() {
 		if (this.driverReady) {
 			await this._driver.hardReset()
-			this.init()
-			// init() advances the coordinator generation, so installed callbacks are stale
-			this._inclusionCoordinator.reinstallUserCallbacks()
+			this._reinitAfterHardReset()
 		} else {
 			throw new DriverNotReadyError()
 		}
+	}
+
+	private _reinitAfterHardReset() {
+		this.init()
+		// init() advances the coordinator generation, so installed callbacks are stale
+		this._inclusionCoordinator.reinstallUserCallbacks()
 	}
 
 	softReset() {

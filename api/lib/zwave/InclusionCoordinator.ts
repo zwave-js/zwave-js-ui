@@ -286,9 +286,10 @@ export class InclusionCoordinator {
 			}
 
 			this._isReplacing = false
+			// Pass the strategy through so zwave-js rejects unknown values
 			return await this._beginInclusion(
 				currentDrv.controller,
-				undefined,
+				{ strategy },
 				gen,
 				commandToken,
 			)

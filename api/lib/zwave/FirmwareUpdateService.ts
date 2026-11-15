@@ -515,7 +515,11 @@ export class FirmwareUpdateService {
 		try {
 			await this.checkAllNodesFirmwareUpdates()
 		} catch (error) {
-			if (!(error instanceof FirmwareLifecycleCancelledError)) {
+			if (error instanceof FirmwareLifecycleCancelledError) {
+				this._logger.info(
+					'Scheduled firmware update check cancelled by a restart',
+				)
+			} else {
 				this._logger.warn(
 					`Scheduled firmware update check has failed: ${getErrorMessage(error)}`,
 				)
@@ -592,6 +596,9 @@ export class FirmwareUpdateService {
 			)
 		} catch (error) {
 			if (error instanceof FirmwareLifecycleCancelledError) {
+				this._logger.info(
+					`Firmware update check for node ${nodeId} cancelled by a restart`,
+				)
 				return
 			}
 			this._logger.error(

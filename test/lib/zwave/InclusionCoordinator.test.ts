@@ -210,6 +210,17 @@ describe('InclusionCoordinator', () => {
 			)
 		})
 
+		it('passes an unknown strategy through for zwave-js to reject', async () => {
+			const { coordinator, driver } = createCoordinator()
+			const drv = driver.getDriver()
+
+			await coordinator.startInclusion(7 as InclusionStrategy)
+
+			expect(drv.controller.beginInclusion).toHaveBeenCalledWith({
+				strategy: 7,
+			})
+		})
+
 		it('throws for SmartStart strategy', async () => {
 			const { coordinator } = createCoordinator()
 

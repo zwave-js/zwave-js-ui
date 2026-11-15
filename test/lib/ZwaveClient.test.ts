@@ -372,6 +372,35 @@ describe('#ZwaveClient', () => {
 			})
 		})
 
+		it.each([
+			['hardReset()', (client: ZwaveClient) => client.hardReset()],
+			[
+				'a zwave-js-server hard reset',
+				(client: ZwaveClient) => {
+					client['_reinitAfterHardReset']()
+					return Promise.resolve()
+				},
+			],
+		])('reinstalls user callbacks after %s', async (_name, reset) => {
+			const { client, coordinator } = createWiredClient()
+			const init = vi.fn()
+			const reinstallUserCallbacks = vi.fn()
+			Object.assign(coordinator, { reinstallUserCallbacks })
+			Object.assign(client, {
+				init,
+				_driver: { hardReset: vi.fn().mockResolvedValue(undefined) },
+			})
+			Object.defineProperty(client, 'driverReady', { value: true })
+
+			await reset(client)
+
+			expect(init).toHaveBeenCalledTimes(1)
+			expect(reinstallUserCallbacks).toHaveBeenCalledTimes(1)
+			expect(init.mock.invocationCallOrder[0]).toBeLessThan(
+				reinstallUserCallbacks.mock.invocationCallOrder[0],
+			)
+		})
+
 		it('completes the replacement when the new node is added', async () => {
 			const { client, coordinator } = createWiredClient()
 			Object.assign(client, {

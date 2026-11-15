@@ -1161,7 +1161,7 @@ describe('FirmwareUpdateService', () => {
 
 			await checkPromise
 
-			await vi.advanceTimersByTimeAsync(100 * 60 * 60 * 1000)
+			expect(vi.getTimerCount()).toBe(0)
 
 			vi.useRealTimers()
 		})
@@ -1195,6 +1195,7 @@ describe('FirmwareUpdateService', () => {
 			await schedulePromise
 
 			expect(nodes.updateStoreNodes).not.toHaveBeenCalled()
+			expect(vi.getTimerCount()).toBe(0)
 
 			vi.useRealTimers()
 		})
