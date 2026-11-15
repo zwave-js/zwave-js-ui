@@ -299,8 +299,11 @@ export default {
 				return res.data
 			} catch (error) {
 				this.showSnackbar(`Couldn't ${what}: ${error.message}`, 'error')
-				// show the stored state again, e.g. a dragged node snaps back
-				await this.loadFloorPlans()
+				// show the stored state again, e.g. a dragged node snaps back;
+				// queued too, so it can't undo a write made after this one
+				const reload = this.writes.then(() => this.loadFloorPlans())
+				this.writes = reload.catch(() => {})
+				await reload
 				return undefined
 			}
 		},
@@ -549,10 +552,12 @@ export default {
 			const id = this.currentMap.id
 			// shown at once, so a second toggle before the reply builds on this one
 			this.changeMap(id, () => ({ nodes }))
+			// the reply too: an earlier whole-map reply (an upload) may have put
+			// back the list from before this change
 			return this.floorPlanCall(
 				'change the node list',
 				() => ConfigApis.updateFloorPlanMap(id, { nodes }),
-				() => {},
+				(saved) => this.changeMap(id, () => ({ nodes: saved.nodes })),
 			)
 		},
 		/**
