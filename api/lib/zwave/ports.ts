@@ -472,12 +472,6 @@ export type FirmwarePersistenceRestore = (
 	nodeIds?: readonly number[],
 ) => Promise<void>
 
-export interface FirmwareSocketPort {
-	sendToSocket(event: string, data: unknown): void
-	throttle(key: string, fn: () => void, wait: number): void
-	clearThrottle(key: string): void
-}
-
 export interface FirmwareConfigPort {
 	disableAutomaticFirmwareUpdateChecks: boolean
 }

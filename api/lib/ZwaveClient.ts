@@ -1296,13 +1296,6 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				changedProps: utils.DeepPartial<ZUINode>,
 			) => this.emitNodeUpdate(node, changedProps),
 		}
-		const firmwareSocketPort = {
-			sendToSocket: (event: string, data: unknown) =>
-				this.sendToSocket(event, data),
-			throttle: (key: string, fn: () => void, wait: number) =>
-				this.throttle(key, fn, wait),
-			clearThrottle: (key: string) => this.clearThrottle(key),
-		}
 		const getClientCfg = () => this.cfg
 		const firmwareConfigPort = {
 			get disableAutomaticFirmwareUpdateChecks() {
@@ -1336,7 +1329,6 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			this._firmwareUpdateService = new FirmwareUpdateService(
 				firmwareDriverPort,
 				firmwareNodeStorePort,
-				firmwareSocketPort,
 				firmwareConfigPort,
 				firmwareBackupPort,
 				firmwareExtractionPort,
@@ -1663,10 +1655,6 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 	removeUserCallbacks() {
 		this._inclusionCoordinator.removeUserCallbacks()
-	}
-
-	get hasUserCallbacks(): boolean {
-		return this._inclusionCoordinator.hasUserCallbacks
 	}
 
 	/**
@@ -4889,9 +4877,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 	async hardReset() {
 		if (this.driverReady) {
-			// Reject leaves lifecycle untouched so public APIs settle normally
 			await this._driver.hardReset()
 			this.init()
+			// init() advances the coordinator generation, so installed callbacks are stale
 			this._inclusionCoordinator.reinstallUserCallbacks()
 		} else {
 			throw new DriverNotReadyError()
@@ -5552,7 +5540,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	private _onInclusionStopped() {
 		const message = 'Inclusion stopped'
 
-		this._inclusionCoordinator.onInclusionStopped()
+		// Keep replacement ownership: zwave-js emits this before removing the old node
 		this._updateControllerStatus(message)
 		this.emit('event', EventSource.CONTROLLER, 'inclusion stopped')
 	}
@@ -5626,7 +5614,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	private async _onNodeAdded(zwaveNode: ZWaveNode, result: InclusionResult) {
 		let node: ZUINode
 		// node made it past `node found` — no longer a ghost candidate
-		this._inclusionCoordinator.onNodeAdded(zwaveNode.id)
+		this._inclusionCoordinator.clearPendingNode(zwaveNode.id)
 		// Complete replacement here because node removal must preserve metadata first
 		this._inclusionCoordinator.onReplacementComplete()
 		// the driver is ready so this node has been added on fly
@@ -6942,7 +6930,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	private _removeNode(nodeid: number) {
 		// don't use splice here, nodeid equals to the index in the array
 		const node = this._nodes.get(nodeid)
-		this._inclusionCoordinator.onNodeAdded(nodeid)
+		this._inclusionCoordinator.clearPendingNode(nodeid)
 		if (node) {
 			this._nodes.delete(nodeid)
 
@@ -6954,7 +6942,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			this.sendToSocket(socketEvents.nodeRemoved, node)
 		}
 
-		if (!this._inclusionCoordinator.isReplacing) {
+		if (
+			!this._inclusionCoordinator.isReplacing &&
+			this.storeNodes[nodeid]
+		) {
 			delete this.storeNodes[nodeid]
 			void this.updateStoreNodes(false)
 		}

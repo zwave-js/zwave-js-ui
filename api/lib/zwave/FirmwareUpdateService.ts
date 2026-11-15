@@ -7,7 +7,6 @@ import type {
 	FirmwareFileFormat,
 	FirmwareNodeStorePort,
 	FirmwarePersistenceRestore,
-	FirmwareSocketPort,
 	FirmwareUpdateInfo,
 	FirmwareUpdateNodeState,
 	FirmwareUpdateResult,
@@ -29,7 +28,6 @@ export class FirmwareLifecycleCancelledError extends Error {
 export class FirmwareUpdateService {
 	private readonly _driver: FirmwareDriverPort
 	private readonly _nodes: FirmwareNodeStorePort
-	private readonly _socket: FirmwareSocketPort
 	private readonly _config: FirmwareConfigPort
 	private readonly _backup: FirmwareBackupPort
 	private readonly _extraction: FirmwareExtractionPort
@@ -49,7 +47,6 @@ export class FirmwareUpdateService {
 	constructor(
 		driver: FirmwareDriverPort,
 		nodes: FirmwareNodeStorePort,
-		socket: FirmwareSocketPort,
 		config: FirmwareConfigPort,
 		backup: FirmwareBackupPort,
 		extraction: FirmwareExtractionPort,
@@ -58,7 +55,6 @@ export class FirmwareUpdateService {
 	) {
 		this._driver = driver
 		this._nodes = nodes
-		this._socket = socket
 		this._config = config
 		this._backup = backup
 		this._extraction = extraction
@@ -504,73 +500,6 @@ export class FirmwareUpdateService {
 		}
 	}
 
-	onNodeFirmwareUpdateProgress(nodeId: number, progress: unknown): void {
-		const node = this._nodes.getNode(nodeId)
-		if (node) {
-			node.firmwareUpdate = progress
-			this._socket.throttle(
-				'_onNodeFirmwareUpdateProgress_' + node.id,
-				() => {
-					this._nodes.emitNodeUpdate(node, {
-						firmwareUpdate: progress,
-					})
-				},
-				250,
-			)
-		}
-	}
-
-	onNodeFirmwareUpdateFinished(nodeId: number): void {
-		const node = this._nodes.getNode(nodeId)
-		if (node) {
-			node.firmwareUpdate = undefined
-
-			this._socket.clearThrottle(
-				'_onNodeFirmwareUpdateProgress_' + node.id,
-			)
-
-			this._nodes.emitNodeUpdate(node, {
-				firmwareUpdate: false,
-			})
-		}
-	}
-
-	onOTWFirmwareUpdateProgress(
-		progress: unknown,
-		otwSocketEvent: string,
-	): void {
-		this._socket.throttle(
-			'_onOTWFirmwareUpdateProgress',
-			() => {
-				this._socket.sendToSocket(otwSocketEvent, {
-					progress,
-				})
-			},
-			250,
-		)
-	}
-
-	onOTWFirmwareUpdateFinished(
-		result: { success: boolean; status: number },
-		statusName: string,
-		otwSocketEvent: string,
-	): void {
-		this._socket.clearThrottle('_onOTWFirmwareUpdateProgress')
-
-		this._socket.sendToSocket(otwSocketEvent, {
-			result: {
-				success: result.success,
-				status: statusName,
-			},
-		})
-
-		this._logger.info(
-			`Controller firmware update OTW finished ${
-				result.success ? 'successfully' : 'with error'
-			}.\n   Status: ${statusName}. Result: ${JSON.stringify(result)}.`,
-		)
-	}
-
 	async scheduledFirmwareUpdateCheck(): Promise<void> {
 		if (this._disposed) {
 			return
@@ -586,9 +515,11 @@ export class FirmwareUpdateService {
 		try {
 			await this.checkAllNodesFirmwareUpdates()
 		} catch (error) {
-			this._logger.warn(
-				`Scheduled firmware update check has failed: ${getErrorMessage(error)}`,
-			)
+			if (!(error instanceof FirmwareLifecycleCancelledError)) {
+				this._logger.warn(
+					`Scheduled firmware update check has failed: ${getErrorMessage(error)}`,
+				)
+			}
 		}
 
 		// Skip rescheduling after reset to prevent duplicate loops
@@ -607,8 +538,10 @@ export class FirmwareUpdateService {
 		)
 
 		this._firmwareUpdateCheckTimeout = setTimeout(() => {
-			this.scheduledFirmwareUpdateCheck().catch(() => {
-				// Prevent unexpected timer callback failures from surfacing as unhandled rejections
+			this.scheduledFirmwareUpdateCheck().catch((error) => {
+				this._logger.error(
+					`Scheduled firmware update check crashed: ${getErrorMessage(error)}`,
+				)
 			})
 		}, waitMillis)
 	}

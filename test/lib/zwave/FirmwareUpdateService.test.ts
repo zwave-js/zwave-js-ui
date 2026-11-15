@@ -20,7 +20,6 @@ import type {
 	FirmwareDriverPort,
 	FirmwareExtractionPort,
 	FirmwareNodeStorePort,
-	FirmwareSocketPort,
 	FirmwareUpdateInfo,
 	FirmwareUpdateResult,
 	FirmwareUpdateNodeState,
@@ -123,18 +122,6 @@ function createNodeStorePort(): FirmwareNodeStorePort & {
 	}
 }
 
-function createSocketPort(): FirmwareSocketPort & {
-	sendToSocket: MockInstance<FirmwareSocketPort['sendToSocket']>
-	throttle: MockInstance<FirmwareSocketPort['throttle']>
-	clearThrottle: MockInstance<FirmwareSocketPort['clearThrottle']>
-} {
-	return {
-		sendToSocket: vi.fn(),
-		throttle: vi.fn((key: string, fn: () => void) => fn()),
-		clearThrottle: vi.fn(),
-	}
-}
-
 function createConfigPort(disabled = false): FirmwareConfigPort {
 	return { disableAutomaticFirmwareUpdateChecks: disabled }
 }
@@ -161,7 +148,6 @@ function createService(
 	overrides: {
 		driver?: FirmwareDriverPort
 		nodes?: ReturnType<typeof createNodeStorePort>
-		socket?: ReturnType<typeof createSocketPort>
 		config?: FirmwareConfigPort
 		backup?: FirmwareBackupPort
 		extraction?: FirmwareExtractionPort
@@ -170,7 +156,6 @@ function createService(
 ) {
 	const driver = overrides.driver ?? createDriverPort()
 	const nodes = overrides.nodes ?? createNodeStorePort()
-	const socket = overrides.socket ?? createSocketPort()
 	const config = overrides.config ?? createConfigPort()
 	const backup = overrides.backup ?? createBackupPort()
 	const extraction = overrides.extraction ?? createExtractionPort()
@@ -179,7 +164,6 @@ function createService(
 	const service = new FirmwareUpdateService(
 		driver,
 		nodes,
-		socket,
 		config,
 		backup,
 		extraction,
@@ -190,7 +174,6 @@ function createService(
 		service,
 		driver,
 		nodes,
-		socket,
 		config,
 		backup,
 		extraction,
@@ -255,6 +238,18 @@ describe('FirmwareUpdateService', () => {
 
 			const result = await service.getAllAvailableFirmwareUpdates()
 			expect(result).toEqual(map)
+		})
+
+		it('throws when driver not ready', async () => {
+			const driver: FirmwareDriverPort = {
+				isDriverReady: () => false,
+				getDriver: () => null,
+			}
+			const { service } = createService({ driver })
+
+			await expect(
+				service.getAllAvailableFirmwareUpdates(),
+			).rejects.toThrow('Driver is not ready')
 		})
 	})
 
@@ -703,78 +698,6 @@ describe('FirmwareUpdateService', () => {
 		})
 	})
 
-	describe('onNodeFirmwareUpdateProgress', () => {
-		it('updates node state and throttles emit', () => {
-			const nodes = createNodeStorePort()
-			nodes._nodes.set(5, { id: 5 })
-			const socket = createSocketPort()
-			const { service } = createService({ nodes, socket })
-
-			service.onNodeFirmwareUpdateProgress(5, { progress: 42 })
-			expect(nodes._nodes.get(5)?.firmwareUpdate).toEqual({
-				progress: 42,
-			})
-			expect(socket.throttle).toHaveBeenCalled()
-		})
-	})
-
-	describe('onNodeFirmwareUpdateFinished', () => {
-		it('clears node state and throttle', () => {
-			const nodes = createNodeStorePort()
-			nodes._nodes.set(5, { id: 5, firmwareUpdate: { progress: 100 } })
-			const socket = createSocketPort()
-			const { service } = createService({ nodes, socket })
-
-			service.onNodeFirmwareUpdateFinished(5)
-			expect(nodes._nodes.get(5)?.firmwareUpdate).toBeUndefined()
-			expect(socket.clearThrottle).toHaveBeenCalledWith(
-				'_onNodeFirmwareUpdateProgress_5',
-			)
-		})
-	})
-
-	describe('onOTWFirmwareUpdateProgress', () => {
-		it('throttles socket emission', () => {
-			const socket = createSocketPort()
-			const { service } = createService({ socket })
-
-			service.onOTWFirmwareUpdateProgress(
-				{ sentFragments: 5, totalFragments: 10 },
-				'OTW_FIRMWARE_UPDATE',
-			)
-			expect(socket.throttle).toHaveBeenCalled()
-		})
-	})
-
-	describe('onOTWFirmwareUpdateFinished', () => {
-		it('sends result and clears throttle', () => {
-			const socket = createSocketPort()
-			const logger = createServiceLogger()
-			const { service } = createService({ socket, logger })
-
-			service.onOTWFirmwareUpdateFinished(
-				{
-					success: true,
-					status: OTWFirmwareUpdateStatus.OK,
-				},
-				'OK',
-				'OTW_FIRMWARE_UPDATE',
-			)
-			expect(socket.clearThrottle).toHaveBeenCalledWith(
-				'_onOTWFirmwareUpdateProgress',
-			)
-			expect(socket.sendToSocket).toHaveBeenCalledWith(
-				'OTW_FIRMWARE_UPDATE',
-				expect.objectContaining({
-					result: { success: true, status: 'OK' },
-				}),
-			)
-			expect(logger.info).toHaveBeenCalledWith(
-				expect.stringContaining('successfully'),
-			)
-		})
-	})
-
 	describe('scheduledFirmwareUpdateCheck', () => {
 		beforeEach(() => {
 			vi.useFakeTimers()
@@ -926,28 +849,6 @@ describe('FirmwareUpdateService', () => {
 		})
 	})
 
-	describe('progress for unknown nodes', () => {
-		it('does nothing for unknown node', () => {
-			const nodes = createNodeStorePort()
-			const socket = createSocketPort()
-			const { service } = createService({ nodes, socket })
-
-			service.onNodeFirmwareUpdateProgress(99, { progress: 42 })
-			expect(socket.throttle).not.toHaveBeenCalled()
-		})
-	})
-
-	describe('completion for unknown nodes', () => {
-		it('does nothing for unknown node', () => {
-			const nodes = createNodeStorePort()
-			const socket = createSocketPort()
-			const { service } = createService({ nodes, socket })
-
-			service.onNodeFirmwareUpdateFinished(99)
-			expect(socket.clearThrottle).not.toHaveBeenCalled()
-		})
-	})
-
 	describe('node checks without a ready driver', () => {
 		it('returns early when driver not ready', async () => {
 			const driver = createDriverPort({
@@ -1049,33 +950,6 @@ describe('FirmwareUpdateService', () => {
 		})
 	})
 
-	describe('failed OTW updates', () => {
-		it('logs error status on failure', () => {
-			const socket = createSocketPort()
-			const logger = createServiceLogger()
-			const { service } = createService({ socket, logger })
-
-			service.onOTWFirmwareUpdateFinished(
-				{
-					success: false,
-					status: OTWFirmwareUpdateStatus.Error_RetryLimitReached,
-				},
-				'Error_Timeout',
-				'OTW_FIRMWARE_UPDATE',
-			)
-
-			expect(logger.info).toHaveBeenCalledWith(
-				expect.stringContaining('with error'),
-			)
-			expect(socket.sendToSocket).toHaveBeenCalledWith(
-				'OTW_FIRMWARE_UPDATE',
-				expect.objectContaining({
-					result: { success: false, status: 'Error_Timeout' },
-				}),
-			)
-		})
-	})
-
 	describe('scheduled check failures', () => {
 		it('catches error and schedules next check', async () => {
 			vi.useFakeTimers()
@@ -1105,19 +979,36 @@ describe('FirmwareUpdateService', () => {
 			service.clearScheduledCheck()
 			vi.useRealTimers()
 		})
-	})
 
-	describe('getAllAvailableFirmwareUpdates', () => {
-		it('throws when driver not ready', async () => {
-			const driver: FirmwareDriverPort = {
-				isDriverReady: () => false,
-				getDriver: () => null,
-			}
-			const { service } = createService({ driver })
+		it('does not warn when a reset cancels the check', async () => {
+			const checkStarted = createDeferred<void>()
+			const checkBarrier = createDeferred<Map<number, never[]>>()
+			const driver = createDriverPort({
+				getDriver: () => ({
+					controller: {
+						getAvailableFirmwareUpdates: vi.fn(),
+						getAllAvailableFirmwareUpdates: vi.fn(() => {
+							checkStarted.resolve()
+							return checkBarrier.promise
+						}),
+						firmwareUpdateOTA: vi.fn(),
+						nodes: { get: vi.fn() },
+					},
+					firmwareUpdateOTW: vi.fn(),
+				}),
+			})
+			const logger = createServiceLogger()
+			const { service } = createService({ driver, logger })
 
-			await expect(
-				service.getAllAvailableFirmwareUpdates(),
-			).rejects.toThrow('Driver is not ready')
+			const check = service.scheduledFirmwareUpdateCheck()
+			await checkStarted.promise
+			service.resetGeneration()
+			checkBarrier.resolve(new Map())
+			await check
+
+			expect(logger.warn).not.toHaveBeenCalledWith(
+				expect.stringContaining('has failed'),
+			)
 		})
 	})
 
@@ -1186,7 +1077,6 @@ describe('FirmwareUpdateService', () => {
 			const service = new FirmwareUpdateService(
 				driver,
 				createNodeStorePort(),
-				createSocketPort(),
 				createConfigPort(),
 				backup,
 				extraction,

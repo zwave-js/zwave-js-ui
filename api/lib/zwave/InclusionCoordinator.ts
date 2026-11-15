@@ -12,12 +12,15 @@ import type {
 	QRProvisioningInformation,
 	ServiceLogger,
 } from './ports.ts'
+import { getErrorMessage } from '../errors.ts'
 import { InclusionStrategy, QRCodeVersion } from './ports.ts'
 import type { JoinNetworkResult } from './ports.ts'
 
 export class InclusionLifecycleCancelledError extends Error {
 	constructor(operation: string) {
-		super(`Driver was closed during ${operation} setup`)
+		super(
+			`Setup of ${operation} was cancelled (stopped, superseded or driver restarted)`,
+		)
 		this.name = 'InclusionLifecycleCancelledError'
 	}
 }
@@ -106,19 +109,11 @@ export class InclusionCoordinator {
 		return this._isReplacing
 	}
 
-	get tmpNode(): { name?: string; loc?: string } | undefined {
-		return this._tmpNode
-	}
-
 	takeTmpNode(): { name?: string; loc?: string } | undefined {
 		// Consume metadata once so later inclusions cannot inherit it
 		const tmp = this._tmpNode
 		this._tmpNode = undefined
 		return tmp
-	}
-
-	get pendingInclusionNodeIds(): Set<number> {
-		return this._pendingInclusionNodeIds
 	}
 
 	get hasUserCallbacks(): boolean {
@@ -192,11 +187,6 @@ export class InclusionCoordinator {
 		}
 
 		try {
-			if (this._commandsTimeout) {
-				clearTimeout(this._commandsTimeout)
-				this._commandsTimeout = null
-			}
-
 			if (options?.name || options?.location) {
 				this._tmpNode = {
 					name: options.name || '',
@@ -206,18 +196,8 @@ export class InclusionCoordinator {
 				this._tmpNode = undefined
 			}
 
-			this._commandsTimeout = setTimeout(
-				() => {
-					if (this._commandToken !== commandToken) {
-						return
-					}
-					this.stopInclusion().catch((e) => {
-						this._logger.error(
-							`Failed to stop inclusion on timeout: ${String(e)}`,
-						)
-					})
-				},
-				(this._config.commandsTimeout || 0) * 1000 || 30000,
+			this._armCommandsTimeout(commandToken, 'inclusion', () =>
+				this.stopInclusion(),
 			)
 
 			if (
@@ -345,23 +325,8 @@ export class InclusionCoordinator {
 			throw new Error('Driver is not ready')
 		}
 
-		if (this._commandsTimeout) {
-			clearTimeout(this._commandsTimeout)
-			this._commandsTimeout = null
-		}
-
-		this._commandsTimeout = setTimeout(
-			() => {
-				if (this._commandToken !== commandToken) {
-					return
-				}
-				this.stopExclusion().catch((e) => {
-					this._logger.error(
-						`Failed to stop exclusion on timeout: ${String(e)}`,
-					)
-				})
-			},
-			(this._config.commandsTimeout || 0) * 1000 || 30000,
+		this._armCommandsTimeout(commandToken, 'exclusion', () =>
+			this.stopExclusion(),
 		)
 
 		try {
@@ -384,10 +349,7 @@ export class InclusionCoordinator {
 
 		this._setupToken++
 		this._commandToken++
-		if (this._commandsTimeout) {
-			clearTimeout(this._commandsTimeout)
-			this._commandsTimeout = null
-		}
+		this.clearCommandsTimeout()
 		return drv.controller.stopExclusion()
 	}
 
@@ -400,10 +362,7 @@ export class InclusionCoordinator {
 		this._setupToken++
 		this._commandToken++
 		this._isReplacing = false
-		if (this._commandsTimeout) {
-			clearTimeout(this._commandsTimeout)
-			this._commandsTimeout = null
-		}
+		this.clearCommandsTimeout()
 		return drv.controller.stopInclusion()
 	}
 
@@ -438,23 +397,8 @@ export class InclusionCoordinator {
 				throw new Error('Driver is not ready')
 			}
 
-			if (this._commandsTimeout) {
-				clearTimeout(this._commandsTimeout)
-				this._commandsTimeout = null
-			}
-
-			this._commandsTimeout = setTimeout(
-				() => {
-					if (this._commandToken !== commandToken) {
-						return
-					}
-					this.stopInclusion().catch((e) => {
-						this._logger.error(
-							`Failed to stop inclusion on timeout: ${String(e)}`,
-						)
-					})
-				},
-				(this._config.commandsTimeout || 0) * 1000 || 30000,
+			this._armCommandsTimeout(commandToken, 'inclusion', () =>
+				this.stopInclusion(),
 			)
 
 			this._isReplacing = true
@@ -531,23 +475,8 @@ export class InclusionCoordinator {
 		this._setupToken++
 		const commandToken = ++this._commandToken
 
-		if (this._commandsTimeout) {
-			clearTimeout(this._commandsTimeout)
-			this._commandsTimeout = null
-		}
-
-		this._commandsTimeout = setTimeout(
-			() => {
-				if (this._commandToken !== commandToken) {
-					return
-				}
-				this.stopLearnMode().catch((e) => {
-					this._logger.error(
-						`Failed to stop learn mode on timeout: ${String(e)}`,
-					)
-				})
-			},
-			(this._config.commandsTimeout || 0) * 1000 || 30000,
+		this._armCommandsTimeout(commandToken, 'learn mode', () =>
+			this.stopLearnMode(),
 		)
 
 		const joinNetworkOptions = {
@@ -575,10 +504,7 @@ export class InclusionCoordinator {
 
 		this._setupToken++
 		this._commandToken++
-		if (this._commandsTimeout) {
-			clearTimeout(this._commandsTimeout)
-			this._commandsTimeout = null
-		}
+		this.clearCommandsTimeout()
 		return drv.controller.stopJoiningNetwork()
 	}
 
@@ -669,10 +595,6 @@ export class InclusionCoordinator {
 		}
 	}
 
-	onInclusionStopped(): void {
-		// Keep replacement ownership because zwave-js emits this before removing the old node
-	}
-
 	onInclusionFailed(removeNode: (nodeId: number) => void): void {
 		this._isReplacing = false
 		this._tmpNode = undefined
@@ -688,7 +610,7 @@ export class InclusionCoordinator {
 		this._pendingInclusionNodeIds.add(nodeId)
 	}
 
-	onNodeAdded(nodeId: number): void {
+	clearPendingNode(nodeId: number): void {
 		// Retain replacement state because old-node cleanup also reaches this path
 		this._pendingInclusionNodeIds.delete(nodeId)
 	}
@@ -710,6 +632,27 @@ export class InclusionCoordinator {
 			clearTimeout(this._commandsTimeout)
 			this._commandsTimeout = null
 		}
+	}
+
+	private _armCommandsTimeout(
+		commandToken: number,
+		operation: string,
+		stop: () => Promise<boolean>,
+	): void {
+		this.clearCommandsTimeout()
+		this._commandsTimeout = setTimeout(
+			() => {
+				if (this._commandToken !== commandToken) {
+					return
+				}
+				stop().catch((e) => {
+					this._logger.error(
+						`Failed to stop ${operation} on timeout: ${getErrorMessage(e)}`,
+					)
+				})
+			},
+			(this._config.commandsTimeout || 0) * 1000 || 30000,
+		)
 	}
 
 	reset(): void {

@@ -521,8 +521,6 @@ describe('InclusionCoordinator', () => {
 				InclusionStrategy.Insecure,
 				{},
 			)
-			coordinator.onInclusionStopped()
-
 			expect(coordinator.isReplacing).toBe(true)
 
 			coordinator.onReplacementComplete()
@@ -859,6 +857,57 @@ describe('InclusionCoordinator', () => {
 
 			expect(removed).toContain(10)
 			expect(removed).toContain(11)
+		})
+	})
+
+	describe('pending node and metadata lifecycle', () => {
+		it('drops a node from the ghost list once it is added', () => {
+			const { coordinator } = createCoordinator()
+			coordinator.onNodeFound(10)
+			coordinator.onNodeFound(11)
+			coordinator.clearPendingNode(10)
+
+			const removed: number[] = []
+			coordinator.onInclusionFailed((nodeId) => removed.push(nodeId))
+
+			expect(removed).toEqual([11])
+		})
+
+		it('hands the inclusion name and location out once', async () => {
+			const { coordinator } = createCoordinator()
+
+			await coordinator.startInclusion(InclusionStrategy.Insecure, {
+				name: 'Lamp',
+				location: 'Kitchen',
+			})
+
+			expect(coordinator.takeTmpNode()).toEqual({
+				name: 'Lamp',
+				loc: 'Kitchen',
+			})
+			expect(coordinator.takeTmpNode()).toBeUndefined()
+		})
+
+		it('clears the inclusion name and location on reset', async () => {
+			const { coordinator } = createCoordinator()
+
+			await coordinator.startInclusion(InclusionStrategy.Insecure, {
+				name: 'Lamp',
+			})
+			coordinator.reset()
+
+			expect(coordinator.takeTmpNode()).toBeUndefined()
+		})
+
+		it('syncs inclusion state from the driver', () => {
+			const driver = createDriverPort({
+				inclusionState: InclusionState.Including,
+			})
+			const { coordinator } = createCoordinator({ driver })
+
+			coordinator.syncFromDriver()
+
+			expect(coordinator.inclusionState).toBe(InclusionState.Including)
 		})
 	})
 
