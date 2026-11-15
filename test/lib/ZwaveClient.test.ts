@@ -292,4 +292,150 @@ describe('#ZwaveClient', () => {
 			expect(fn).toHaveBeenCalledWith(2, { fromCache: true })
 		})
 	})
+
+	describe('inclusion coordinator wiring', () => {
+		function createWiredClient(
+			options: {
+				isReplacing?: boolean
+				tmpNode?: { name?: string; loc?: string }
+			} = {},
+		) {
+			const client = Object.create(ZwaveClient.prototype) as ZwaveClient
+			const coordinator = {
+				isReplacing: options.isReplacing ?? false,
+				clearPendingNode: vi.fn(),
+				onReplacementComplete: vi.fn(),
+				takeTmpNode: vi.fn(() => options.tmpNode),
+			}
+			const updateStoreNodes = vi.fn().mockResolvedValue(undefined)
+			Object.assign(client, {
+				_inclusionCoordinator: coordinator,
+				_nodes: new Map(),
+				storeNodes: {},
+				_driver: {
+					controller: {
+						getPrioritySUCReturnRouteCached: vi.fn(),
+						getCustomSUCReturnRoutesCached: vi.fn(),
+					},
+				},
+				updateStoreNodes,
+				sendToSocket: vi.fn(),
+				emit: vi.fn(),
+			})
+			return { client, coordinator, updateStoreNodes }
+		}
+
+		it('keeps the stored node while a replacement is in progress', () => {
+			const { client, coordinator, updateStoreNodes } = createWiredClient(
+				{ isReplacing: true },
+			)
+			client['storeNodes'][5] = { name: 'Lamp' }
+
+			client['_removeNode'](5)
+
+			expect(coordinator.clearPendingNode).toHaveBeenCalledWith(5)
+			expect(client['storeNodes'][5]).toEqual({ name: 'Lamp' })
+			expect(updateStoreNodes).not.toHaveBeenCalled()
+		})
+
+		it('drops the stored node when no replacement is running', () => {
+			const { client, updateStoreNodes } = createWiredClient()
+			client['storeNodes'][5] = { name: 'Lamp' }
+
+			client['_removeNode'](5)
+
+			expect(client['storeNodes'][5]).toBeUndefined()
+			expect(updateStoreNodes).toHaveBeenCalledWith(false)
+		})
+
+		it('skips the store write for a node that was never stored', () => {
+			const { client, updateStoreNodes } = createWiredClient()
+
+			client['_removeNode'](5)
+
+			expect(updateStoreNodes).not.toHaveBeenCalled()
+		})
+
+		it('applies the inclusion name and location to the new node', () => {
+			const { client, coordinator } = createWiredClient({
+				tmpNode: { name: 'Lamp', loc: 'Kitchen' },
+			})
+
+			const node = client['_createNode'](5)
+
+			expect(coordinator.takeTmpNode).toHaveBeenCalledTimes(1)
+			expect(node.name).toBe('Lamp')
+			expect(node.loc).toBe('Kitchen')
+			expect(client['storeNodes'][5]).toEqual({
+				name: 'Lamp',
+				loc: 'Kitchen',
+			})
+		})
+
+		it.each([
+			['hardReset()', (client: ZwaveClient) => client.hardReset()],
+			[
+				'a zwave-js-server hard reset',
+				(client: ZwaveClient) => {
+					client['_reinitAfterHardReset']()
+					return Promise.resolve()
+				},
+			],
+		])('reinstalls user callbacks after %s', async (_name, reset) => {
+			const { client, coordinator } = createWiredClient()
+			const init = vi.fn()
+			const reinstallUserCallbacks = vi.fn()
+			Object.assign(coordinator, { reinstallUserCallbacks })
+			Object.assign(client, {
+				init,
+				_driver: { hardReset: vi.fn().mockResolvedValue(undefined) },
+			})
+			Object.defineProperty(client, 'driverReady', { value: true })
+
+			await reset(client)
+
+			expect(init).toHaveBeenCalledTimes(1)
+			expect(reinstallUserCallbacks).toHaveBeenCalledTimes(1)
+			expect(init.mock.invocationCallOrder[0]).toBeLessThan(
+				reinstallUserCallbacks.mock.invocationCallOrder[0],
+			)
+		})
+
+		it('resets both lifecycle services on close', async () => {
+			const { client, coordinator } = createWiredClient()
+			const reset = vi.fn()
+			const resetGeneration = vi.fn()
+			Object.assign(coordinator, { reset })
+			Object.assign(client, {
+				_firmwareUpdateService: { resetGeneration },
+				_serverManager: {
+					destroy: vi.fn().mockResolvedValue(undefined),
+				},
+				_driver: null,
+				throttledFunctions: new Map(),
+			})
+
+			await client.close(true)
+
+			expect(reset).toHaveBeenCalledTimes(1)
+			expect(resetGeneration).toHaveBeenCalledTimes(1)
+		})
+
+		it('completes the replacement when the new node is added', async () => {
+			const { client, coordinator } = createWiredClient()
+			Object.assign(client, {
+				_driverReady: false,
+				logNode: vi.fn(),
+				zwaveNodeToJSON: vi.fn(),
+			})
+
+			await client['_onNodeAdded'](
+				{ id: 5 } as never,
+				{ lowSecurity: false } as never,
+			)
+
+			expect(coordinator.clearPendingNode).toHaveBeenCalledWith(5)
+			expect(coordinator.onReplacementComplete).toHaveBeenCalledTimes(1)
+		})
+	})
 })
