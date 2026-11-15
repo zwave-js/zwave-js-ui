@@ -665,6 +665,39 @@
 									</div>
 								</v-card-text>
 
+								<v-card-text
+									v-if="s.key == 'smartStartProtocol'"
+								>
+									<p>
+										This device supports both Z-Wave and
+										Z-Wave Long Range. Choose the protocol
+										to include it with.
+									</p>
+									<v-radio-group v-model="s.values.protocol">
+										<v-radio
+											v-for="p in protocolsItems"
+											:key="p.value"
+											:label="p.title"
+											:value="p.value"
+										></v-radio>
+									</v-radio-group>
+									<v-card-actions>
+										<v-btn
+											v-if="!loading"
+											variant="flat"
+											color="primary"
+											:disabled="
+												s.values.protocol === null
+											"
+											@click.stop="nextStep"
+											class="next-btn"
+											@keypress.enter="nextStep"
+										>
+											Next
+										</v-btn>
+									</v-card-actions>
+								</v-card-text>
+
 								<v-card-text v-if="s.key == 'done'">
 									<v-col
 										class="d-flex flex-column align-center"
@@ -714,7 +747,7 @@
 <script>
 import { defineAsyncComponent } from 'vue'
 import { mapState } from 'pinia'
-import { tryParseDSKFromQRCodeString } from '@zwave-js/core'
+import { tryParseDSKFromQRCodeString, Protocols } from '@zwave-js/core'
 
 import {
 	parseSecurityClasses,
@@ -722,6 +755,7 @@ import {
 	copy,
 	validTopic,
 } from '../../lib/utils.js'
+import { protocolsItems } from '../../lib/items.js'
 import useBaseStore from '../../stores/base.js'
 import { InclusionStrategy, SecurityBootstrapFailure } from 'zwave-js'
 import InstancesMixin from '../../mixins/InstancesMixin.js'
@@ -744,6 +778,7 @@ export default {
 			loading: false,
 			validNaming: true,
 			InclusionStrategy,
+			protocolsItems,
 			availableSteps: {
 				action: {
 					key: 'action',
@@ -801,6 +836,13 @@ export default {
 						replaceId: null, //default
 					},
 				},
+				smartStartProtocol: {
+					key: 'smartStartProtocol',
+					title: 'Select protocol',
+					values: {
+						protocol: null,
+					},
+				},
 				done: {
 					key: 'done',
 					success: false,
@@ -818,6 +860,7 @@ export default {
 			nodeFound: null,
 			currentAction: null,
 			nodeProps: {},
+			smartStartProvisioning: null,
 			stopped: false,
 			aborted: false,
 			nvmProgress: 0,
@@ -831,6 +874,7 @@ export default {
 			'nodes',
 			'mqtt',
 			'backup',
+			'controllerNode',
 		]),
 		timeoutMs() {
 			return this.zwave.commandsTimeout * 1000 + 800 // add small buffer
@@ -1078,19 +1122,20 @@ export default {
 				} else if (provisioning.version === 1) {
 					// smart start
 					if (!replaceStep) {
-						const response = await this.app.apiRequest(
-							'provisionSmartStartNode',
-							[provisioning],
-						)
-
-						if (response.success) {
-							this.alert = null
-							this.aborted = false
-							const doneStep = copy(this.availableSteps.done)
-							doneStep.text = `Node added to provisioning list`
-							doneStep.success = true
-							this.pushStep(doneStep)
-							this.loading = true
+						if (
+							this.controllerNode?.supportsLongRange &&
+							provisioning.supportedProtocols?.includes(
+								Protocols.ZWaveLongRange,
+							)
+						) {
+							this.smartStartProvisioning = provisioning
+							this.pushStep('smartStartProtocol')
+						} else {
+							// without a protocol the backend adds LR-capable entries as inactive
+							await this.provisionSmartStart({
+								...provisioning,
+								protocol: Protocols.ZWave,
+							})
 						}
 					} else {
 						// it's a smart start code btw in replace we cannot use it as smart start
@@ -1101,6 +1146,26 @@ export default {
 						])
 					}
 				}
+			}
+		},
+		async provisionSmartStart(provisioning) {
+			this.loading = true
+			const response = await this.app.apiRequest(
+				'provisionSmartStartNode',
+				[provisioning],
+			)
+
+			if (response.success) {
+				this.alert = null
+				this.aborted = false
+				const doneStep = copy(this.availableSteps.done)
+				doneStep.text =
+					'Node added to provisioning list. Power on the device to include it.'
+				doneStep.success = true
+				this.pushStep(doneStep)
+				// keep loading until onNodeAdded shows the inclusion result
+			} else {
+				this.loading = false
 			}
 		},
 		changeStep(index) {
@@ -1249,6 +1314,11 @@ export default {
 				const pin = s.values.pin
 				this.loading = true
 				await this.app.apiRequest('validateDSK', [pin])
+			} else if (s.key === 'smartStartProtocol') {
+				await this.provisionSmartStart({
+					...this.smartStartProvisioning,
+					protocol: s.values.protocol,
+				})
 			} else if (s.key === 'replaceFailed') {
 				// Validation should have been done in submitReplaceFailed
 				this.currentAction = 'Inclusion'
@@ -1290,6 +1360,7 @@ export default {
 
 			this.loading = false
 			this.nodeProps = {}
+			this.smartStartProvisioning = null
 			this.alert = null
 			this.nodeFound = null
 			this.aborted = false

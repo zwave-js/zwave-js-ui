@@ -7728,6 +7728,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		// disable it so user can choose the protocol to use
 		if (
 			isNew &&
+			entry.protocol == null &&
 			entry.supportedProtocols?.includes(Protocols.ZWaveLongRange)
 		) {
 			entry.status = ProvisioningEntryStatus.Inactive
