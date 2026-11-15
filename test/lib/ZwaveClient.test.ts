@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import ZwaveClient from '../../api/lib/ZwaveClient.ts'
+import { DriverLifecycle } from '../../api/lib/zwave/DriverLifecycle.ts'
 
 // `throttle` only touches `throttledFunctions`, so these tests skip the real
 // constructor. It reads the json stores and needs a socket server.
@@ -414,6 +415,11 @@ describe('#ZwaveClient', () => {
 				_driver: null,
 				throttledFunctions: new Map(),
 			})
+			// close() runs through the lifecycle, wired to the client's own host
+			client['_driverLifecycle'] = new DriverLifecycle(
+				client['_buildDriverLifecycleHost'](),
+				client['_serverManager'],
+			)
 
 			await client.close(true)
 
