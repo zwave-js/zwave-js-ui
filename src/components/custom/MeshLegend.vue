@@ -138,7 +138,7 @@
 									cy="7"
 									r="4.5"
 									:fill="ghost.fill"
-									:stroke="ghost.stroke"
+									:stroke="ghostStroke"
 								/>
 							</svg>
 							Hidden repeater
@@ -150,7 +150,7 @@
 									cy="7"
 									r="4.5"
 									fill="none"
-									:stroke="ghost.stroke"
+									:stroke="ghostStroke"
 									stroke-dasharray="2 2"
 								/>
 							</svg>
@@ -197,8 +197,12 @@ import {
 	rateColor,
 } from '@/lib/meshView.js'
 
-// a sample for each line the map draws, in the map's styles
+// a sample for each line the map draws, in the map's colors and dashes;
+// a short sample of a faint line on the card would be hard to make out,
+// so the thin and see-through ones are drawn a bit bolder
 const ROUTE_SAMPLE = rateColor(ProtocolDataRate.ZWave_100k)
+const SAMPLE_MIN_WEIGHT = 2
+const SAMPLE_MIN_OPACITY = 0.85
 const LINES = [
 	['main', 'Route (last working)'],
 	['backup', 'Backup route'],
@@ -212,10 +216,10 @@ const LINES = [
 		label,
 		{
 			stroke: s.color ?? ROUTE_SAMPLE,
-			'stroke-width': s.weight,
+			'stroke-width': Math.max(s.weight, SAMPLE_MIN_WEIGHT),
 			'stroke-dasharray': s.dashArray,
 			'stroke-linecap': s.lineCap,
-			opacity: s.opacity,
+			opacity: Math.max(s.opacity ?? 1, SAMPLE_MIN_OPACITY),
 		},
 	]
 })
@@ -255,6 +259,12 @@ export default {
 		}
 	},
 	computed: {
+		// as the map draws it in this theme
+		ghostStroke() {
+			return this.$vuetify.theme.current.dark
+				? GHOST_COLORS.strokeDark
+				: GHOST_COLORS.stroke
+		},
 		// the graph colors a route of unknown speed grey
 		rates() {
 			return this.mode === 'graph'

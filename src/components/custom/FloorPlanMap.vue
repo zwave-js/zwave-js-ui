@@ -158,7 +158,9 @@ export default {
 				'--floorplan-warn': HEALTH_COLORS.warn,
 				'--floorplan-bad': HEALTH_COLORS.bad,
 				'--floorplan-ghost-fill': GHOST_COLORS.fill,
-				'--floorplan-ghost-stroke': GHOST_COLORS.stroke,
+				'--floorplan-ghost-stroke': this.dark
+					? GHOST_COLORS.strokeDark
+					: GHOST_COLORS.stroke,
 			}
 		},
 		/** broadcast and multicast nodes aren't part of the mesh, as in the graph */
@@ -884,7 +886,8 @@ export default {
 	position: absolute;
 	top: 12px;
 	left: 56px;
-	bottom: 12px;
+	/* as tall as its list, so a short one doesn't hide the map */
+	max-height: calc(100% - 24px);
 	width: 260px;
 	overflow-y: auto;
 	z-index: 500;
@@ -976,5 +979,69 @@ export default {
 
 .leaflet-tooltip .muted {
 	opacity: 0.7;
+}
+
+/* Leaflet's controls and tooltips in the app's theme, not always white */
+.floor-plan .leaflet-container {
+	font-family: inherit;
+}
+
+.floor-plan .leaflet-bar a,
+.floor-plan .leaflet-control-layers,
+.floor-plan .leaflet-tooltip {
+	color: rgb(var(--v-theme-on-surface));
+	background-color: rgb(var(--v-theme-surface));
+	border-color: rgba(var(--v-border-color), var(--v-border-opacity));
+}
+
+.floor-plan .leaflet-bar {
+	border-color: rgba(var(--v-border-color), var(--v-border-opacity));
+}
+
+.floor-plan .leaflet-bar a:hover {
+	background-color: rgba(var(--v-theme-on-surface), 0.08);
+}
+
+.floor-plan .leaflet-bar a.leaflet-disabled {
+	color: rgba(var(--v-theme-on-surface), 0.38);
+}
+
+/* the app's icon in the theme's text color, in place of Leaflet's dark png */
+.floor-plan .leaflet-control-layers .leaflet-control-layers-toggle {
+	position: relative;
+	background-image: none;
+}
+
+.floor-plan .leaflet-control-layers-toggle::before {
+	content: 'layers';
+	position: absolute;
+	inset: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-family: 'Material Icons';
+	font-size: 24px;
+	font-feature-settings: 'liga';
+	color: rgb(var(--v-theme-on-surface));
+}
+
+.floor-plan .leaflet-control-layers-selector {
+	accent-color: rgb(var(--v-theme-primary));
+}
+
+.floor-plan .leaflet-tooltip-top::before {
+	border-top-color: rgb(var(--v-theme-surface));
+}
+
+.floor-plan .leaflet-tooltip-bottom::before {
+	border-bottom-color: rgb(var(--v-theme-surface));
+}
+
+.floor-plan .leaflet-tooltip-left::before {
+	border-left-color: rgb(var(--v-theme-surface));
+}
+
+.floor-plan .leaflet-tooltip-right::before {
+	border-right-color: rgb(var(--v-theme-surface));
 }
 </style>

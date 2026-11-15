@@ -82,7 +82,9 @@ export const LINE_STYLES = {
 	// route, dashed like a backup route
 	backupOnly: { weight: 4, dashArray: '10 8', opacity: 0.85 },
 	neighbor: { color: NEIGHBOR_COLOR, weight: 1, opacity: 0.45 },
-	failed: { color: DEAD_COLOR, weight: 1.5, dashArray: '2 4' },
+	// the problem red, not the dead-node one: that dark red vanishes on a
+	// dark picture or theme
+	failed: { color: HEALTH_COLORS.bad, weight: 2, dashArray: '2 4' },
 	oneWay: {
 		color: HEALTH_COLORS.warn,
 		weight: 2,
@@ -92,7 +94,12 @@ export const LINE_STYLES = {
 }
 
 /** Repeaters drawn on a route but not as nodes (ghosts) */
-export const GHOST_COLORS = { fill: '#9e9e9e', stroke: '#616161' }
+export const GHOST_COLORS = {
+	fill: '#9e9e9e',
+	stroke: '#616161',
+	// the outline-only ghost vanishes on a dark surface with the light stroke
+	strokeDark: '#bdbdbd',
+}
 
 /**
  * SVG points of a regular polygon with `count` corners around (cx, cy),
