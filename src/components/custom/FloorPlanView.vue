@@ -250,6 +250,8 @@ export default {
 		this.loadCount = 0
 		// the write calls in flight, see floorPlanCall
 		this.writes = Promise.resolve()
+		// the newest node-list change, see onSetNodes
+		this.nodesChange = 0
 	},
 	mounted() {
 		this.loadFloorPlans()
@@ -427,7 +429,8 @@ export default {
 				? await this.askImageFit(map, size, dark)
 				: 'stretch'
 			if (!fit) return
-			// a new shape can resize the canvas and move nodes: take the whole map
+			// a new shape can resize the canvas and move nodes: take the whole
+			// map, but not its node list, which a later toggle may have changed
 			await this.floorPlanCall(
 				'upload the picture',
 				() =>
@@ -436,7 +439,11 @@ export default {
 						size,
 						fit,
 					}),
-				this.putMap,
+				(saved) =>
+					this.changeMap(saved.id, (cur) => ({
+						...saved,
+						nodes: cur.nodes,
+					})),
 			)
 		},
 		/**
@@ -550,14 +557,19 @@ export default {
 		},
 		onSetNodes(nodes) {
 			const id = this.currentMap.id
-			// shown at once, so a second toggle before the reply builds on this one
+			// shown at once, so a second toggle before the reply builds on this
+			// one; only the newest change's reply is applied, an older one would
+			// undo the toggles made after it
 			this.changeMap(id, () => ({ nodes }))
-			// the reply too: an earlier whole-map reply (an upload) may have put
-			// back the list from before this change
+			const change = ++this.nodesChange
 			return this.floorPlanCall(
 				'change the node list',
 				() => ConfigApis.updateFloorPlanMap(id, { nodes }),
-				(saved) => this.changeMap(id, () => ({ nodes: saved.nodes })),
+				(saved) => {
+					if (change === this.nodesChange) {
+						this.changeMap(id, () => ({ nodes: saved.nodes }))
+					}
+				},
 			)
 		},
 		/**

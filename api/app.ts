@@ -2108,7 +2108,11 @@ app.post(
 						verbatimSymlinks: true,
 						filter: (src) => src !== stagedFloorPlans,
 					})
-					if (hasFloorPlans) {
+					if (!hasFloorPlans) {
+						logger.info(
+							'The restored backup has no floorplans, the current ones are kept',
+						)
+					} else {
 						try {
 							await floorPlans.restoreFrom(stagedFloorPlans)
 						} catch (error) {

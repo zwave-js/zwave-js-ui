@@ -1,5 +1,5 @@
 <template>
-	<div class="mesh-legend">
+	<div :class="['mesh-legend', { 'mesh-legend--below': below }]">
 		<v-card v-if="open" density="compact" class="mesh-legend-card">
 			<v-card-title class="d-flex align-center text-subtitle-1 py-1">
 				Legend
@@ -76,8 +76,26 @@
 							</svg>
 							{{ label }}
 						</div>
+						<div v-if="mode === 'graph'" class="mesh-legend-row">
+							<svg width="40" height="14">
+								<line
+									x1="1"
+									y1="7"
+									x2="39"
+									y2="7"
+									:stroke="routeSample"
+									stroke-width="4"
+								/>
+								<polygon
+									:points="priorityStar"
+									fill="#ffc901"
+									stroke="#000"
+								/>
+							</svg>
+							Priority route
+						</div>
 					</div>
-					<div>
+					<div v-if="mode === 'map'">
 						<div class="mesh-legend-head">Marks</div>
 						<div class="mesh-legend-row">
 							<svg width="22" height="18">
@@ -151,7 +169,7 @@
 				</div>
 			</v-card-text>
 		</v-card>
-		<!-- stays put under the card, so it closes it again -->
+		<!-- stays put next to the card, so it closes it again -->
 		<v-btn
 			size="small"
 			variant="elevated"
@@ -173,7 +191,9 @@ import {
 	HOP_LEGEND,
 	LINE_STYLES,
 	RATE_LEGEND,
+	UNKNOWN_COLOR,
 	nodeShapeSvg,
+	polygon,
 	rateColor,
 } from '@/lib/meshView.js'
 
@@ -207,19 +227,45 @@ const SHAPES = [
 	['Battery', nodeShapeSvg('battery', UNSHADED)],
 ]
 
+// the graph draws only the two route lines, plus priority routes
+const GRAPH_LINES = new Set(['Route (last working)', 'Backup route'])
+
 export default {
 	name: 'MeshLegend',
+	props: {
+		/** which view it explains: 'graph' or 'map' (the floorplan) */
+		mode: {
+			type: String,
+			default: 'map',
+			validator: (v) => ['graph', 'map'].includes(v),
+		},
+		/** open the card below the button, for a legend at the top of a view */
+		below: Boolean,
+	},
 	data() {
 		return {
 			open: false,
 			hops: HOP_LEGEND,
-			rates: RATE_LEGEND,
 			health: HEALTH_COLORS,
 			battery: BATTERY_LOW,
 			ghost: GHOST_COLORS,
-			lines: LINES,
 			shapes: SHAPES,
+			routeSample: ROUTE_SAMPLE,
+			priorityStar: polygon(20, 7, 6.5, 5, 2.7),
 		}
+	},
+	computed: {
+		// the graph colors a route of unknown speed grey
+		rates() {
+			return this.mode === 'graph'
+				? [...RATE_LEGEND, ['Unknown', UNKNOWN_COLOR]]
+				: RATE_LEGEND
+		},
+		lines() {
+			return this.mode === 'graph'
+				? LINES.filter(([label]) => GRAPH_LINES.has(label))
+				: LINES
+		},
 	},
 }
 </script>
@@ -230,6 +276,10 @@ export default {
 	flex-direction: column;
 	align-items: flex-start;
 	gap: 6px;
+}
+
+.mesh-legend--below {
+	flex-direction: column-reverse;
 }
 
 .mesh-legend-card {

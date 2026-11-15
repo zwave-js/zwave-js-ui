@@ -797,6 +797,8 @@ export class FloorPlans {
 				if (!map.placements.length) {
 					map.widthPx = size.w
 					map.heightPx = size.h
+					// a zoom and center saved for the old canvas would be off
+					map.view = { ...map.view, center: null, zoom: null }
 				}
 				map.background = {
 					image: dark ? null : name,

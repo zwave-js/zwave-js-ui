@@ -282,6 +282,16 @@ describe('#FloorPlans', () => {
 		)
 	})
 
+	it('drops a view saved for the old canvas when the first picture resizes it', async () => {
+		const fp = await fresh()
+		const m = await fp.addMap({ name: 'House' })
+		await fp.updateMap(m.id, {
+			view: { center: [500, 1500], zoom: -1, layers: {} as any },
+		})
+		const set = await fp.setMapImage(m.id, { bytes: PNG1 })
+		expect([set.view.center, set.view.zoom]).toEqual([null, null])
+	})
+
 	it('sizes, replaces and unsets backgrounds', async () => {
 		const fp = await fresh()
 		const a = await fp.addMap({ name: 'House' })

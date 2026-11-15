@@ -6,48 +6,6 @@
 				<v-expansion-panel-text>
 					<v-row>
 						<v-col>
-							<v-list-subheader>Legend</v-list-subheader>
-							<v-list density="compact">
-								<v-list-item
-									v-for="(item, i) in legends"
-									:key="i"
-								>
-									<template #prepend>
-										<v-icon :color="item.color">{{
-											item.icon || 'turned_in'
-										}}</v-icon>
-									</template>
-
-									<v-list-item-title
-										:style="{ color: item.textColor }"
-									>
-										{{ item.text }}</v-list-item-title
-									>
-								</v-list-item>
-							</v-list>
-						</v-col>
-						<v-col>
-							<v-list-subheader>Edges</v-list-subheader>
-							<v-list density="compact">
-								<v-list-item
-									v-for="(item, i) in edgesLegend"
-									:key="i"
-								>
-									<template #prepend>
-										<v-icon :color="item.color">{{
-											item.icon || 'turned_in'
-										}}</v-icon>
-									</template>
-
-									<v-list-item-title
-										:style="{ color: item.textColor }"
-									>
-										{{ item.text }}
-									</v-list-item-title>
-								</v-list-item>
-							</v-list>
-						</v-col>
-						<v-col>
 							<v-list-subheader>Filters</v-list-subheader>
 
 							<v-autocomplete
@@ -145,12 +103,14 @@
 				></v-progress-circular>
 			</v-col>
 			<v-col
-				class="fill-height"
+				class="fill-height graph-canvas"
 				:style="{ opacity: loading ? 0 : '' }"
 				cols="12"
 				ref="container"
 				v-resize="onResize"
 			>
+				<!-- top left: vis-network's buttons take the bottom corners -->
+				<mesh-legend mode="graph" below class="graph-legend" />
 				<div
 					:style="{
 						height: containerHeight + 'px',
@@ -227,6 +187,17 @@
 </template>
 
 <style>
+.graph-canvas {
+	position: relative;
+}
+
+.graph-legend {
+	position: absolute;
+	top: 12px;
+	left: 12px;
+	z-index: 1;
+}
+
 /* vis-network ships its nav icons as PNGs with a 60%-white disc baked in, which
    composites to gray on a dark canvas. Mask the shape instead so the glyph takes
    the theme's foreground colour. */
@@ -283,11 +254,10 @@ import 'vis-network/styles/vis-network.css'
 // import fakeNodes from '@/assets/testNodes.json'
 import { ProtocolDataRate, RouteKind } from '@zwave-js/core'
 import { uuid, arraysEqual } from '../../lib/utils'
+import MeshLegend from './MeshLegend.vue'
 import {
 	CONTROLLER_COLOR,
 	DEAD_COLOR,
-	HOP_LEGEND,
-	RATE_LEGEND,
 	UNKNOWN_COLOR,
 	hopColor,
 	labelOf,
@@ -304,6 +274,7 @@ const ReturnRouteKind = {
 }
 
 export default {
+	components: { MeshLegend },
 	props: {
 		nodes: {
 			type: [Array],
@@ -385,32 +356,6 @@ export default {
 			updateTimeout: null,
 			loading: false,
 			priorityEdges: {}, // keeps track of the edges that should be shown in overview
-			legends: HOP_LEGEND.map(([text, color]) => ({
-				color,
-				textColor: color,
-				text,
-			})),
-			edgesLegend: [
-				{
-					icon: 'star',
-					textColor: '',
-					color: '#F1C40F',
-					text: 'Priority route',
-				},
-				{
-					icon: 'minimize',
-					textColor: '',
-					text: 'Last working route',
-				},
-				{
-					icon: 'more_horiz',
-					textColor: '',
-					text: 'Next to last working route',
-				},
-				...[...RATE_LEGEND, ['Unknown', UNKNOWN_COLOR]].map(
-					([text, color]) => ({ color, textColor: color, text }),
-				),
-			],
 		}
 	},
 	watch: {
