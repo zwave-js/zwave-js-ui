@@ -133,7 +133,18 @@ describe('Socket contract: inbound ACK APIs', () => {
 			const gateway = createFakeGateway({ zwave: undefined })
 			const harness = await getHarness({ gateway })
 			const zwave = new ZWaveClient({}, harness.io)
-			await zwave._setScenes([{ sceneid: 1, label: 'Party', values: [] }])
+			const sceneValue = {
+				id: '2-37-0-targetValue',
+				nodeId: 2,
+				commandClass: 37,
+				endpoint: 0,
+				property: 'targetValue',
+				value: true,
+				timeout: 0,
+			}
+			await zwave._setScenes([
+				{ sceneid: 1, label: 'Party', values: [sceneValue] },
+			] as never)
 			zwave['_driver'] = {} as unknown as Driver
 			zwave.driverReady = true
 			// gw, held by the already-running app, is this same gateway object, so mutating it
@@ -150,7 +161,7 @@ describe('Socket contract: inbound ACK APIs', () => {
 			expect(result).toStrictEqual({
 				success: true,
 				message: 'Success zwave api call',
-				result: [],
+				result: [sceneValue],
 				args: [1],
 				api: '_sceneGetValues',
 			})

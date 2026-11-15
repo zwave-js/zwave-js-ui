@@ -401,7 +401,7 @@ describe('SceneService', () => {
 			])
 		})
 
-		it('logs the error message when writeValue rejects', async () => {
+		it('logs the scene, value and error message when writeValue rejects', async () => {
 			const value = makeValueId({ value: 1, timeout: 0 })
 			const { service, writer, logger } = createService([
 				{ sceneid: 1, label: 'A', values: [value] },
@@ -414,7 +414,9 @@ describe('SceneService', () => {
 			await Promise.resolve()
 			await Promise.resolve()
 
-			expect(logger.errors).toContain('boom')
+			expect(logger.errors).toContain(
+				`Error writing value ${value.id} of scene 1: boom`,
+			)
 		})
 	})
 })

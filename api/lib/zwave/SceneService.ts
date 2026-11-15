@@ -155,7 +155,9 @@ export class SceneService<V extends ZUISceneValueRef = ZUISceneValueRef> {
 					this._writer
 						.writeValue(valueId, valueId.value)
 						.catch((error: unknown) =>
-							this._logger.error(getErrorMessage(error)),
+							this._logger.error(
+								`Error writing value ${valueId.id} of scene ${sceneId}: ${getErrorMessage(error)}`,
+							),
 						)
 				},
 				timeout ? timeout * 1000 : 0,
