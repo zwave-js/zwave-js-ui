@@ -2058,9 +2058,10 @@ app.get(
 				includeFloorPlans: backupManager.storeFloorPlans,
 			})
 		} catch (error) {
-			res.status(500).send({
-				error: error.message,
-			})
+			logger.error(`Store backup failed: ${error.message}`)
+			// once the zip is streaming, a status can't be sent any more
+			if (res.headersSent) res.destroy()
+			else res.status(500).send({ error: error.message })
 		}
 	},
 )

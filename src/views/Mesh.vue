@@ -159,6 +159,13 @@ export default {
 		mode() {
 			this.nodeClick(null)
 		},
+		// the floorplan has no node-removed event: close the panel of a removed node
+		'nodes.length'() {
+			const id = this.selectedNode?.id
+			if (id !== undefined && !this.nodes.some((n) => n.id === id)) {
+				this.nodeClick(null)
+			}
+		},
 		showProperties(v) {
 			// Return to overview map when closing the node properties dialog
 			// using the X in the top right corner
@@ -174,11 +181,7 @@ export default {
 		pickedMode() {
 			return settings.load('meshMode')
 		},
-		/**
-		 * A click on Graph or Floorplan is the user's pick, stored even when
-		 * that mode is already shown, so a default map still loading doesn't
-		 * override it. Opening the default map isn't a pick and isn't stored.
-		 */
+		/** stored even when already shown, so a default map still loading can't override it */
 		pickMode(mode) {
 			settings.store('meshMode', mode)
 		},

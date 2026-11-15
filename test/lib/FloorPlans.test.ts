@@ -10,6 +10,7 @@ import {
 	sniffImage,
 	type Placement,
 } from '../../api/lib/FloorPlans.ts'
+import { module } from '../../api/lib/logger.ts'
 
 vi.mock('node:fs/promises', async (importOriginal) => {
 	const real: typeof fsp = await importOriginal()
@@ -414,7 +415,7 @@ describe('#FloorPlans', () => {
 		const set = await fp.setMapImage(m.id, { bytes: PNG1 })
 		const old = set.background.image
 
-		// the image write renames first, then maps.json: fail the second
+		// the image is written in place, then maps.json renamed over: fail that
 		const real = vi.mocked(fsp.rename).getMockImplementation()
 		vi.mocked(fsp.rename).mockImplementation(async (from, to) => {
 			if (String(to) === fp.file) throw Error('ENOSPC')
@@ -535,6 +536,63 @@ describe('#FloorPlans', () => {
 		expect((await fp.load()).maps.map((x) => x.name)).toEqual(['Now'])
 		expect(images(fp)).toEqual([set.background.image])
 		expect(leftovers(fp)).toEqual([])
+	})
+
+	it('keeps the original error when putting the floorplans back fails too', async () => {
+		const fp = await fresh()
+		await fp.addMap({ name: 'Now' })
+		const backup = await fresh()
+		await backup.addMap({ name: 'Then' })
+		const logger = module('FloorPlans')
+		const error = vi.spyOn(logger, 'error').mockReturnValue(logger)
+		const real = vi.mocked(fsp.rename).getMockImplementation()
+		vi.mocked(fsp.rename).mockImplementation(async (from, to) => {
+			if (String(to) === fp.dir) throw Error(`EIO ${from}`)
+			return real(from, to)
+		})
+		try {
+			await expect(fp.restoreFrom(backup.dir)).rejects.toThrow(
+				/EIO .*\.restore-/,
+			)
+			// the maps are kept in the .old- folder, which the log names
+			const old = leftovers(fp)
+			expect(old).toEqual([expect.stringMatching(/\.old-/)])
+			expect(error).toHaveBeenCalledWith(expect.stringContaining(old[0]))
+		} finally {
+			vi.mocked(fsp.rename).mockImplementation(real)
+			error.mockRestore()
+		}
+	})
+
+	it('warns about folders an interrupted restore left behind', async () => {
+		const parent = await mkdtemp(path.join(tmpdir(), 'floorplans-parent-'))
+		const fp = new FloorPlans(path.join(parent, 'floorplans'))
+		await mkdir(path.join(parent, 'floorplans.old-a'))
+		await mkdir(path.join(parent, 'floorplans.restore-b'))
+		const logger = module('FloorPlans')
+		const warn = vi.spyOn(logger, 'warn').mockReturnValue(logger)
+		const error = vi.spyOn(logger, 'error').mockReturnValue(logger)
+		try {
+			// floorplans folder missing: the old one holds the user's maps
+			await fp.warnLeftovers()
+			expect(error).toHaveBeenCalledOnce()
+			expect(error.mock.calls[0][0]).toMatch(
+				/old-a.*Rename it to floorplans/,
+			)
+			expect(warn.mock.calls.map((c) => c[0])).toEqual([
+				expect.stringMatching(/restore-b.*can be deleted/),
+			])
+			// with the folder there, both are only clutter
+			warn.mockClear()
+			error.mockClear()
+			await mkdir(fp.dir)
+			await fp.warnLeftovers()
+			expect(error).not.toHaveBeenCalled()
+			expect(warn).toHaveBeenCalledTimes(2)
+		} finally {
+			warn.mockRestore()
+			error.mockRestore()
+		}
 	})
 
 	it('refuses a restored maps.json it cannot use, keeping the current one', async () => {

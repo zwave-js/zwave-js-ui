@@ -497,7 +497,7 @@ export default {
 		/** the map reports each picture that won't load once */
 		onImageError() {
 			this.showSnackbar(
-				"This map's background picture couldn't be loaded. Upload it again from the Background menu.",
+				"This map's background picture couldn't be loaded. Reload the page, and if it's still missing, upload it again from the Background menu.",
 				'error',
 			)
 		},
@@ -537,10 +537,12 @@ export default {
 		},
 		onSetNodes(nodes) {
 			const id = this.currentMap.id
+			// shown at once, so a second toggle before the reply builds on this one
+			this.changeMap(id, () => ({ nodes }))
 			return this.floorPlanCall(
 				'change the node list',
 				() => ConfigApis.updateFloorPlanMap(id, { nodes }),
-				(saved) => this.changeMap(id, () => ({ nodes: saved.nodes })),
+				() => {},
 			)
 		},
 		/**
@@ -548,11 +550,15 @@ export default {
 		 * stored in place without a new map copy, which would redraw.
 		 */
 		onViewChange(view) {
-			const map = this.currentMap
+			const id = this.currentMap.id
 			return this.floorPlanCall(
 				"save the map's view",
-				() => ConfigApis.updateFloorPlanMap(map.id, { view }),
-				(saved) => (map.view = saved.view),
+				() => ConfigApis.updateFloorPlanMap(id, { view }),
+				(saved) => {
+					// by id: another reply may have replaced the map meanwhile
+					const map = this.floorPlans.maps.find((m) => m.id === id)
+					if (map) map.view = saved.view
+				},
 			)
 		},
 	},

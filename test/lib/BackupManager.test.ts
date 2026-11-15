@@ -36,10 +36,6 @@ describe('#BackupManager', () => {
 		},
 	)
 
-	it('includes floorplans by default', () => {
-		expect(backupManager.default.storeFloorPlans).toBe(true)
-	})
-
 	it.each([
 		['settings saved before the option existed', {}, true],
 		['the option turned off', { storeFloorPlans: false }, false],
@@ -51,8 +47,10 @@ describe('#BackupManager', () => {
 		const backup = vi
 			.spyOn(jsonStore, 'backup')
 			.mockResolvedValue('store-backup_test.zip')
+		// the spy is shared with the cases above: only this call counts
+		backup.mockClear()
 		backupManager.init({} as any)
 		await backupManager.backupStore()
-		expect(backup).toHaveBeenCalledWith({ includeFloorPlans })
+		expect(backup).toHaveBeenCalledExactlyOnceWith({ includeFloorPlans })
 	})
 })

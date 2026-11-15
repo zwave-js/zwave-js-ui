@@ -9,7 +9,7 @@ import { cp, readdir, readFile, rename, rm, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { floorPlansDir } from '../config/app.ts'
 import { module } from './logger.ts'
-import { ensureDir, generateId, pathExists } from './utils.ts'
+import { ensureDir, generateId, isRecord, pathExists } from './utils.ts'
 
 const logger = module('FloorPlans')
 
@@ -314,18 +314,16 @@ export function checkView(view: unknown): MapView {
 	return out
 }
 
-const isObject = (v: unknown) => typeof v === 'object' && v !== null
-
 /** The first field of a stored map with the wrong type, or null if none */
 function badMapField(map: any): string | null {
 	if (typeof map?.id !== 'string' || !MAP_ID.test(map.id)) return 'id'
 	if (typeof map.name !== 'string') return 'name'
 	if (!isDim(map.widthPx) || !isDim(map.heightPx)) return 'size'
 	if (!Array.isArray(map.placements)) return 'placements'
-	if (!isObject(map.nodes)) return 'nodes'
-	if (!isObject(map.view)) return 'view'
+	if (!isRecord(map.nodes)) return 'nodes'
+	if (!isRecord(map.view)) return 'view'
 	const bg = map.background
-	if (bg !== null && !(isObject(bg) && isObject(bg.imageRect))) {
+	if (bg !== null && !(isRecord(bg) && isRecord(bg.imageRect))) {
 		return 'background'
 	}
 	return null
@@ -368,7 +366,7 @@ export function checkData(
 		if (!field) return true
 		problem(
 			`map ${JSON.stringify(map?.id)} has an invalid ${field}`,
-			'dropped',
+			'dropped (the next map edit removes it from the file)',
 		)
 		return false
 	})
@@ -709,8 +707,7 @@ export class FloorPlans {
 	 * canvas keeps them and the background's frame; shrinking it pulls nodes
 	 * that would fall outside back onto the edge.
 	 */
-	async updateMap(id: string, changes: MapChanges = {}) {
-		const c = changes
+	async updateMap(id: string, c: MapChanges = {}) {
 		if (c.widthPx !== undefined && !isDim(c.widthPx)) {
 			throw new InputError(`widthPx must be ${DIM_RULE}`)
 		}
