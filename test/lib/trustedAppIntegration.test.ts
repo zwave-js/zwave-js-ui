@@ -113,6 +113,7 @@ describe('trusted listener app integration', () => {
 
 	it('bypasses socket.io authentication only on the trusted listener', async () => {
 		instance.attachSocket(mainServer)
+		// Same as socketManager.attachServer in startServer; the manager isn't exposed
 		instance.io.attach(trustedServer)
 
 		const connect = (url: string) =>
