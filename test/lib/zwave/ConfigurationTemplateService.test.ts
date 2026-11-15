@@ -790,6 +790,32 @@ describe('ConfigurationTemplateService', () => {
 			expect(result.failed).toBe(1)
 			expect(result.errors[0]).toContain('Timeout')
 		})
+
+		it('falls back to the status name when the failure message is empty', async () => {
+			const template = makeTemplate({
+				values: [{ property: 1, endpoint: 0, value: 5 }],
+			})
+			const nodes = new Map([[2, makeNode()]])
+			const nodeStore = createNodeStorePort(nodes)
+			vi.mocked(nodeStore.writeValue).mockResolvedValue({
+				status: SetValueStatus.NoDeviceSupport,
+				message: '',
+			})
+
+			const svc = new ConfigurationTemplateService(
+				createDriverPort(),
+				nodeStore,
+				createPersistencePort(),
+				createUtilsPort(),
+				createLogger(),
+				[template],
+				createConfigManagerPort(),
+			)
+
+			const result = await svc.applyConfigurationTemplate('tmpl-1', 2)
+
+			expect(result.errors).toEqual(['Parameter 1: NoDeviceSupport'])
+		})
 	})
 
 	describe('importing template collections', () => {

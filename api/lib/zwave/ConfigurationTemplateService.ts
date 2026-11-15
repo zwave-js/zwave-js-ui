@@ -127,7 +127,7 @@ export class ConfigurationTemplateService {
 		name: string,
 		autoApply = false,
 		values?: ZUIConfigurationTemplateValue[],
-		firmwareRange?: { min?: string; max?: string },
+		firmwareRange?: ZUIConfigurationTemplate['firmwareRange'],
 	): Promise<ZUIConfigurationTemplate> {
 		const node = this._nodes.getNode(nodeId)
 
@@ -216,7 +216,7 @@ export class ConfigurationTemplateService {
 		updates: {
 			name?: string
 			autoApply?: boolean
-			firmwareRange?: { min?: string; max?: string }
+			firmwareRange?: ZUIConfigurationTemplate['firmwareRange']
 			values?: ZUIConfigurationTemplateValue[]
 		},
 	): Promise<ZUIConfigurationTemplate> {
@@ -345,7 +345,7 @@ export class ConfigurationTemplateService {
 				if (setValueFailed(result)) {
 					results.failed++
 					results.errors.push(
-						`Parameter ${tv.property}: ${result.message ?? getEnumMemberName(SetValueStatus, result.status)}`,
+						`Parameter ${tv.property}: ${result.message || getEnumMemberName(SetValueStatus, result.status)}`,
 					)
 
 					if (
@@ -495,7 +495,7 @@ export class ConfigurationTemplateService {
 
 	static _generateContentHash(
 		values: ZUIConfigurationTemplateValue[],
-		firmwareRange?: { min?: string; max?: string },
+		firmwareRange?: ZUIConfigurationTemplate['firmwareRange'],
 	): string {
 		const normalized = values.map((v) => ({
 			property: v.property,

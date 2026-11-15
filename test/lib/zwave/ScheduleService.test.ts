@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { ScheduleService } from '#api/lib/zwave/ScheduleService.ts'
+import { deepEqual } from '#api/lib/utils.ts'
 import { SupervisionStatus } from '@zwave-js/core'
 import {
 	ScheduleEntryLockScheduleKind,
@@ -78,7 +79,7 @@ function createNodeStorePort(
 
 function createUtilsPort(): ScheduleUtilsPort {
 	return {
-		deepEqual: (a, b) => JSON.stringify(a) === JSON.stringify(b),
+		deepEqual,
 	}
 }
 
@@ -495,6 +496,29 @@ describe('ScheduleService', () => {
 			expect(node?.userCodes?.enabled).toContain(1)
 		})
 
+		it('leaves user codes untouched when the device rejects the change', async () => {
+			const zwaveNode = createFakeZwaveNode(true)
+			zwaveNode.commandClasses[
+				'Schedule Entry Lock'
+			].setEnabled.mockResolvedValue({ status: SupervisionStatus.Fail })
+
+			const nodeStore = createNodeStorePort({
+				id: 2,
+				userCodes: { total: 1, available: [1], enabled: [] },
+			})
+			const svc = new ScheduleService(
+				createDriverPort(zwaveNode),
+				nodeStore,
+				createUtilsPort(),
+			)
+
+			const result = await svc.setEnabledSchedule(2, true, 1)
+
+			expect(result).toEqual({ status: SupervisionStatus.Fail })
+			expect(nodeStore.getNode(2)?.userCodes?.enabled).toEqual([])
+			expect(nodeStore.emitCalls).toEqual([])
+		})
+
 		it('disables a user and emits update', async () => {
 			const zwaveNode = createFakeZwaveNode(true)
 			zwaveNode.commandClasses[
@@ -781,6 +805,9 @@ describe('ScheduleService', () => {
 			} as ScheduleEntryLockSlotId & ScheduleEntryLockWeekDaySchedule)
 
 			expect(result?.status).toBe(SupervisionStatus.Fail)
+			expect(nodeStore.getNode(2)?.schedule?.weekly.slots).toEqual([])
+			expect(nodeStore.getNode(2)?.userCodes?.enabled).toEqual([])
+			expect(nodeStore.emitCalls).toEqual([])
 		})
 	})
 

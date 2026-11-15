@@ -186,4 +186,110 @@ describe('#ZwaveClient', () => {
 			expect(fn).toHaveBeenCalledTimes(1)
 		})
 	})
+
+	// The schedule and template methods are thin facades; pin each binding so
+	// a swapped argument or a wrong target method fails here.
+	describe('service facades', () => {
+		const range = { min: '1.0' }
+		const slot = { userId: 1, slotId: 1, startHour: 1 }
+		const cases: [string, string, string, unknown[]][] = [
+			[
+				'_scheduleService',
+				'getSchedules',
+				'getSchedules',
+				[2, { fromCache: false }],
+			],
+			['_scheduleService', 'cancelGetSchedule', 'cancelGetSchedule', []],
+			[
+				'_scheduleService',
+				'setSchedule',
+				'setSchedule',
+				[2, 'daily', slot],
+			],
+			[
+				'_scheduleService',
+				'setEnabledSchedule',
+				'setEnabledSchedule',
+				[2, true, 3],
+			],
+			[
+				'_configTemplateService',
+				'getConfigurationTemplates',
+				'getConfigurationTemplates',
+				[],
+			],
+			[
+				'_configTemplateService',
+				'getDeviceConfigurationParams',
+				'getDeviceConfigurationParams',
+				['1-2-3'],
+			],
+			[
+				'_configTemplateService',
+				'createConfigurationTemplate',
+				'createConfigurationTemplate',
+				[2, 'T', true, [], range],
+			],
+			[
+				'_configTemplateService',
+				'updateConfigurationTemplate',
+				'updateConfigurationTemplate',
+				['id', { name: 'N' }],
+			],
+			[
+				'_configTemplateService',
+				'deleteConfigurationTemplate',
+				'deleteConfigurationTemplate',
+				['id'],
+			],
+			[
+				'_configTemplateService',
+				'applyConfigurationTemplate',
+				'applyConfigurationTemplate',
+				['id', 2, true],
+			],
+			[
+				'_configTemplateService',
+				'importConfigurationTemplates',
+				'importConfigurationTemplates',
+				[[]],
+			],
+			[
+				'_configTemplateService',
+				'_checkConfigurationTemplates',
+				'checkConfigurationTemplates',
+				[{ id: 2 }, { id: 2 }],
+			],
+		]
+
+		const voidTargets = new Set([
+			'cancelGetSchedule',
+			'checkConfigurationTemplates',
+		])
+
+		it.each(cases)(
+			'%s.%s forwards %s',
+			async (service, facade, target, args) => {
+				const client = Object.create(ZwaveClient.prototype)
+				const result = Symbol('result')
+				const fn = vi.fn(() => result)
+				client[service] = { [target]: fn }
+
+				expect(await client[facade](...args)).toBe(
+					voidTargets.has(target) ? undefined : result,
+				)
+				expect(fn).toHaveBeenCalledExactlyOnceWith(...args)
+			},
+		)
+
+		it('getSchedules defaults to reading from cache', async () => {
+			const client = Object.create(ZwaveClient.prototype)
+			const fn = vi.fn()
+			client._scheduleService = { getSchedules: fn }
+
+			await client.getSchedules(2)
+
+			expect(fn).toHaveBeenCalledWith(2, { fromCache: true })
+		})
+	})
 })

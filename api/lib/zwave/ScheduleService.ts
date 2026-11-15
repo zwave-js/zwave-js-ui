@@ -17,7 +17,6 @@ import type { SupervisionResult } from '@zwave-js/core'
 
 import {
 	ZUIScheduleEntryLockMode,
-	type ZUIScheduleEntryLockMode as ZUIScheduleEntryLockModeType,
 	type ZUISchedule,
 	type ZUISlot,
 	type ScheduleDriverPort,
@@ -90,7 +89,7 @@ export class ScheduleService {
 
 	async getSchedules(
 		nodeId: number,
-		opts: { mode?: ZUIScheduleEntryLockModeType; fromCache: boolean } = {
+		opts: { mode?: ZUIScheduleEntryLockMode; fromCache: boolean } = {
 			fromCache: true,
 		},
 	): Promise<ZUISchedule | undefined> {
