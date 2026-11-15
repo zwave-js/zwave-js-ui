@@ -12,14 +12,12 @@ import { requireDefined } from './testUtils.ts'
 const testStoreDir = await mkdtemp(join(tmpdir(), 'zui-trusted-app-'))
 process.env.STORE_DIR = testStoreDir
 
-const { default: jsonStore } = await import('../../api/lib/jsonStore.ts')
-const { default: storeConfig } = await import('../../api/config/store.ts')
-const { createApp } = await import('../../api/app.ts')
+const { default: jsonStore } = await import('#api/lib/jsonStore')
+const { default: storeConfig } = await import('#api/config/store')
+const { createApp } = await import('#api/app')
 const { createFakeGateway } = await import('./socket/fakes.ts')
-const { parseCidr } = await import('../../api/lib/ipUtils.ts')
-const { startTrustedListener } = await import(
-	'../../api/lib/trustedListener.ts'
-)
+const { parseCidr } = await import('#api/lib/ipUtils')
+const { startTrustedListener } = await import('#api/lib/trustedListener')
 
 function serverPort(server: HttpServer): number {
 	return (server.address() as AddressInfo).port

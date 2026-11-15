@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
-import MqttClient from '../../api/lib/MqttClient.ts'
+import MqttClient from '#api/lib/MqttClient'
 
 describe('#MqttClient', () => {
 	const setup = () => {

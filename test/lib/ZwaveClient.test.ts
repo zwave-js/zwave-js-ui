@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
-import ZwaveClient from '../../api/lib/ZwaveClient.ts'
-import { DriverLifecycle } from '../../api/lib/zwave/DriverLifecycle.ts'
-import { NodeRegistry } from '../../api/lib/zwave/NodeRegistry.ts'
+import ZwaveClient from '#api/lib/ZwaveClient'
+import { DriverLifecycle } from '#api/lib/zwave/DriverLifecycle'
+import { NodeRegistry } from '#api/lib/zwave/NodeRegistry'
 
 // `throttle` only touches `throttledFunctions`, so these tests skip the real
 // constructor. It reads the json stores and needs a socket server.

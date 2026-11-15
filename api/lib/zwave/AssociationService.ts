@@ -5,13 +5,13 @@ import {
 } from 'zwave-js'
 import { CommandClasses } from '@zwave-js/core'
 import { getEnumMemberName } from 'zwave-js/Utils'
-import { getErrorMessage } from '../errors.ts'
+import { getErrorMessage } from '#api/lib/errors'
 import type {
 	AssociationDriverPort,
 	AssociationEntry,
 	AssociationLogPort,
 	AssociationNodeStorePort,
-} from './ports.ts'
+} from '#api/lib/zwave/ports'
 
 export class AssociationService {
 	private readonly _driver: AssociationDriverPort

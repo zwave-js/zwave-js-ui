@@ -7,11 +7,11 @@ import {
 import { RFRegion } from 'zwave-js'
 import { describe, expect, it, vi } from 'vitest'
 
-import type { ZUINode, ZUIValueId } from '#api/lib/ZwaveClient.ts'
+import type { ZUINode, ZUIValueId } from '#api/lib/ZwaveClient'
 import {
 	NodeProjector,
 	type PhysicalNodeProjectionPort,
-} from '#api/lib/zwave/NodeProjector.ts'
+} from '#api/lib/zwave/NodeProjector'
 import {
 	createValue,
 	createVirtualValue,

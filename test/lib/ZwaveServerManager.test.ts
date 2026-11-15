@@ -15,7 +15,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import ZwaveServerManager, {
 	type ZwaveServerConfig,
 	type ZwaveServerHost,
-} from '#api/lib/ZwaveServerManager.ts'
+} from '#api/lib/ZwaveServerManager'
 import { makeHassLogger, tick } from './hass/fixtures.ts'
 
 const hoisted = vi.hoisted(() => ({

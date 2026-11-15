@@ -3,8 +3,10 @@ import {
 	it,
 	expect,
 	vi,
+	beforeAll,
 	beforeEach,
 	afterEach,
+	afterAll,
 	type Mock,
 } from 'vitest'
 import { EventEmitter } from 'node:events'
@@ -21,22 +23,30 @@ import type { Driver, PartialZWaveOptions } from 'zwave-js'
 import type { JSONTransport } from '@zwave-js/log-transport-json'
 import Transport from 'winston-transport'
 
-import {
-	DriverLifecycle,
-	type DriverLifecycleHost,
-	type DriverLifecycleDeps,
-} from '#api/lib/zwave/DriverLifecycle.ts'
-import type ZwaveServerManager from '#api/lib/ZwaveServerManager.ts'
 import type {
-	ZwaveConfig,
-	InclusionUserCallbacks,
-} from '#api/lib/zwave/ports.ts'
-import { ZwaveClientStatus } from '#api/lib/zwave/ports.ts'
+	DriverLifecycle as DriverLifecycleClass,
+	DriverLifecycleHost,
+	DriverLifecycleDeps,
+} from '#api/lib/zwave/DriverLifecycle'
+import type ZwaveServerManager from '#api/lib/ZwaveServerManager'
+import type { ZwaveConfig, InclusionUserCallbacks } from '#api/lib/zwave/ports'
+import { ZwaveClientStatus } from '#api/lib/zwave/ports'
 import {
 	createDeferred,
 	requireDefined,
 	type Deferred,
 } from './serviceTestSupport.ts'
+import { cleanupTestEnv, ensureTestEnv } from '../shared/env.ts'
+
+let DriverLifecycle: typeof DriverLifecycleClass
+
+beforeAll(async () => {
+	ensureTestEnv()
+	const lifecycleModule = await import('#api/lib/zwave/DriverLifecycle')
+	DriverLifecycle = lifecycleModule.DriverLifecycle
+})
+
+afterAll(cleanupTestEnv)
 
 type StartBehavior = 'resolve' | 'reject' | 'hang' | 'deferred'
 type DestroyBehavior = 'resolve' | 'reject' | 'deferred'
@@ -223,7 +233,7 @@ interface HarnessState {
 
 function createHarness(
 	cfgOverrides: Partial<ZwaveConfig> = {},
-	Lifecycle: typeof DriverLifecycle = DriverLifecycle,
+	Lifecycle: typeof DriverLifecycleClass = DriverLifecycle,
 ) {
 	const world = createWorld()
 
@@ -840,7 +850,7 @@ describe('DriverLifecycle — connect happy path', () => {
 		vi.resetModules()
 		try {
 			const { DriverLifecycle: FreshLifecycle } = await import(
-				'#api/lib/zwave/DriverLifecycle.ts'
+				'#api/lib/zwave/DriverLifecycle'
 			)
 			const { lifecycle, world } = createHarness(
 				{ serverEnabled: false },

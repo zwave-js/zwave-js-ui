@@ -22,7 +22,7 @@ import {
 	type ScheduleUtilsPort,
 	type ScheduleNodeState,
 	type ScheduleZWaveNodeHandle,
-} from './ports.ts'
+} from '#api/lib/zwave/ports'
 
 type AnySchedule =
 	| ScheduleEntryLockDailyRepeatingSchedule

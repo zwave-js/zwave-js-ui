@@ -124,61 +124,64 @@ import type {
 	AssignCredentialResult,
 } from 'zwave-js'
 import { getEnumMemberName, parseQRCodeString } from 'zwave-js/Utils'
-import { nvmBackupsDir } from '../config/app.ts'
+import { nvmBackupsDir } from '#api/config/app'
 import type {
 	Group,
 	NodesStoreFile,
 	NodesStoreRecord,
 	NodesStoreRecordByHome,
-} from '../config/store.ts'
-import store from '../config/store.ts'
-import jsonStore from './jsonStore.ts'
-import * as LogManager from './logger.ts'
-import * as utils from './utils.ts'
-import { getErrorMessage } from './errors.ts'
+} from '#api/config/store'
+import store from '#api/config/store'
+import jsonStore from '#api/lib/jsonStore'
+import * as LogManager from '#api/lib/logger'
+import * as utils from '#api/lib/utils'
+import { getErrorMessage } from '#api/lib/errors'
 
 import { serverVersion } from '@zwave-js/server'
 import ZwaveServerManager, {
 	type ZwaveServerHost,
-} from './ZwaveServerManager.ts'
+} from '#api/lib/ZwaveServerManager'
 import type { Server as SocketServer } from 'socket.io'
-import { TypedEventEmitter } from './EventEmitter.ts'
-import type { GatewayValue } from './Gateway.ts'
+import { TypedEventEmitter } from '#api/lib/EventEmitter'
+import type { GatewayValue } from '#api/lib/Gateway'
 
 import type { DeviceConfig } from '@zwave-js/config'
 import { ConfigManager } from '@zwave-js/config'
 import { createHash } from 'node:crypto'
 import { writeFile } from 'node:fs/promises'
-import backupManager, { NVM_BACKUP_PREFIX } from './BackupManager.ts'
-import { socketEvents } from './SocketEvents.ts'
+import backupManager, { NVM_BACKUP_PREFIX } from '#api/lib/BackupManager'
+import { socketEvents } from '#api/lib/SocketEvents'
 import { isUint8Array } from 'node:util/types'
 import {
 	coerce as semverCoerce,
 	gte as semverGte,
 	lte as semverLte,
 } from 'semver'
-import { regionSupportsAutoPowerlevel } from './shared.ts'
-import { deviceConfigPriorityDir } from './Constants.ts'
+import { regionSupportsAutoPowerlevel } from '#api/lib/shared'
+import { deviceConfigPriorityDir } from '#api/lib/Constants'
 import { createRequire } from 'node:module'
-import { HassDeviceStore } from '../hass/DeviceStore.ts'
+import { HassDeviceStore } from '#api/hass/DeviceStore'
 import type {
 	HassDevice,
 	HassDeviceMap,
 	StoreHassDevicesResult,
-} from '../hass/types.ts'
-import { ScheduleService } from './zwave/ScheduleService.ts'
-import { ConfigurationTemplateService } from './zwave/ConfigurationTemplateService.ts'
-import { SceneService } from './zwave/SceneService.ts'
-import { GroupService, GroupServiceGeneration } from './zwave/GroupService.ts'
-import { AssociationService } from './zwave/AssociationService.ts'
-import { FirmwareUpdateService } from './zwave/FirmwareUpdateService.ts'
-import { InclusionCoordinator } from './zwave/InclusionCoordinator.ts'
-import { DriverLifecycle } from './zwave/DriverLifecycle.ts'
-import type { DriverLifecycleHost } from './zwave/DriverLifecycle.ts'
-import { NodeProjector } from './zwave/NodeProjector.ts'
-import { NodeRegistry } from './zwave/NodeRegistry.ts'
-import type { NodeRegistryHost } from './zwave/NodeRegistry.ts'
-import { SocketEventAdapter } from './zwave/SocketEventAdapter.ts'
+} from '#api/hass/types'
+import { ScheduleService } from '#api/lib/zwave/ScheduleService'
+import { ConfigurationTemplateService } from '#api/lib/zwave/ConfigurationTemplateService'
+import { SceneService } from '#api/lib/zwave/SceneService'
+import {
+	GroupService,
+	GroupServiceGeneration,
+} from '#api/lib/zwave/GroupService'
+import { AssociationService } from '#api/lib/zwave/AssociationService'
+import { FirmwareUpdateService } from '#api/lib/zwave/FirmwareUpdateService'
+import { InclusionCoordinator } from '#api/lib/zwave/InclusionCoordinator'
+import { DriverLifecycle } from '#api/lib/zwave/DriverLifecycle'
+import type { DriverLifecycleHost } from '#api/lib/zwave/DriverLifecycle'
+import { NodeProjector } from '#api/lib/zwave/NodeProjector'
+import { NodeRegistry } from '#api/lib/zwave/NodeRegistry'
+import type { NodeRegistryHost } from '#api/lib/zwave/NodeRegistry'
+import { SocketEventAdapter } from '#api/lib/zwave/SocketEventAdapter'
 import {
 	ZwaveClientStatus,
 	ZUIScheduleEntryLockMode,
@@ -189,13 +192,13 @@ import {
 	type ZUISlot,
 	type ZwaveConfig,
 	type SensorTypeScale,
-} from './zwave/ports.ts'
+} from '#api/lib/zwave/ports'
 
 // Re-export to preserve the public type surface for existing ZwaveClient importers
 export { ZwaveClientStatus }
 export type { ZwaveConfig, SensorTypeScale }
 
-export type { HassDevice } from '../hass/types.ts'
+export type { HassDevice } from '#api/hass/types'
 export { ZUIScheduleEntryLockMode }
 export type {
 	ZUIConfigurationTemplate,

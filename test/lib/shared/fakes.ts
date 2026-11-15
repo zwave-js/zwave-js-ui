@@ -7,8 +7,8 @@ import type {
 	MqttClientPort,
 	ZnifferPort,
 	ZwaveClientPort,
-} from '#api/runtime/ports.ts'
-import type { StoreHassDevicesResult } from '#api/hass/types.ts'
+} from '#api/runtime/ports'
+import type { StoreHassDevicesResult } from '#api/hass/types'
 
 export interface FakeZwaveClient extends ZwaveClientPort {
 	devices: ZwaveClientPort['devices']

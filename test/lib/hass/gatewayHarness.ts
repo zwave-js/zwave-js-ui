@@ -1,10 +1,10 @@
-import type { GatewayFactory as GatewayFactoryType } from '#api/runtime/GatewayFactory.ts'
-import type { HassDeviceCatalog } from '#api/hass/types.ts'
-import type GatewayType from '#api/lib/Gateway.ts'
-import type { GatewayConfig } from '#api/lib/Gateway.ts'
-import type MqttClientType from '#api/lib/MqttClient.ts'
-import type { MqttConfig } from '#api/lib/MqttClient.ts'
-import type { HassDevice, ZUINode } from '#api/lib/ZwaveClient.ts'
+import type { GatewayFactory as GatewayFactoryType } from '#api/runtime/GatewayFactory'
+import type { HassDeviceCatalog } from '#api/hass/types'
+import type GatewayType from '#api/lib/Gateway'
+import type { GatewayConfig } from '#api/lib/Gateway'
+import type MqttClientType from '#api/lib/MqttClient'
+import type { MqttConfig } from '#api/lib/MqttClient'
+import type { HassDevice, ZUINode } from '#api/lib/ZwaveClient'
 import type { IClientPublishOptions } from 'mqtt'
 import { ensureTestEnv, cleanupTestEnv } from './env.ts'
 import { latestBroker, resetMqttBrokers, type FakeBroker } from './mqttMock.ts'
@@ -49,9 +49,9 @@ export async function createGatewayHarness(
 
 	const [{ GatewayFactory }, { GatewayType }, { default: MqttClient }] =
 		await Promise.all([
-			import('#api/runtime/GatewayFactory.ts'),
-			import('#api/lib/Gateway.ts'),
-			import('#api/lib/MqttClient.ts'),
+			import('#api/runtime/GatewayFactory'),
+			import('#api/lib/Gateway'),
+			import('#api/lib/MqttClient'),
 		])
 
 	const mqtt = new MqttClient(defaultMqttConfig(options.mqttConfig))

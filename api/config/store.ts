@@ -1,17 +1,17 @@
 // config/store.js
 
-import type { GatewayConfig } from '../lib/Gateway.ts'
-import type { MqttConfig } from '../lib/MqttClient.ts'
-import type { ZnifferConfig } from '../lib/ZnifferManager.ts'
+import type { GatewayConfig } from '#api/lib/Gateway'
+import type { MqttConfig } from '#api/lib/MqttClient'
+import type { ZnifferConfig } from '#api/lib/ZnifferManager'
 import type {
 	ZUIConfigurationTemplate,
 	ZUIScene,
 	ZUINode,
 	ZwaveConfig,
-} from '../lib/ZwaveClient.ts'
-import type { BackupSettings } from '../lib/BackupManager.ts'
-import type { DeepPartial } from '../lib/utils.ts'
-import { deviceConfigPriorityDir } from '../lib/Constants.ts'
+} from '#api/lib/ZwaveClient'
+import type { BackupSettings } from '#api/lib/BackupManager'
+import type { DeepPartial } from '#api/lib/utils'
+import { deviceConfigPriorityDir } from '#api/lib/Constants'
 
 export type StoreKeys =
 	| 'settings'

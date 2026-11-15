@@ -2,9 +2,9 @@ import { chmod, readFile, rename, writeFile } from 'node:fs/promises'
 import { createSecureContext } from 'node:tls'
 import { promisify } from 'node:util'
 import { generate } from 'selfsigned'
-import { getErrorMessage } from './errors.ts'
-import { module } from './logger.ts'
-import { joinPath } from './utils.ts'
+import { getErrorMessage } from '#api/lib/errors'
+import { module } from '#api/lib/logger'
+import { joinPath } from '#api/lib/utils'
 
 const logger = module('App')
 

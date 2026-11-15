@@ -7,6 +7,7 @@ import vue from 'eslint-plugin-vue'
 import vuetify from 'eslint-plugin-vuetify'
 import importPlugin from 'eslint-plugin-import'
 import unicorn from 'eslint-plugin-unicorn'
+import tsParser from '@typescript-eslint/parser'
 import js from '@eslint/js'
 
 import { FlatCompat } from '@eslint/eslintrc'
@@ -20,8 +21,50 @@ const compat = new FlatCompat({
 	allConfig: js.configs.all,
 })
 
+const backendImportMessage = 'Imports targeting api/ must use #api/*'
+const backendImportRules = (pattern) => {
+	const selectorPattern = pattern.replaceAll('/', '\\/')
+	const loaderMethod =
+		'/^(?:createMockFromModule|deepUnmock|doMock|doUnmock|dontMock|importActual|importMock|mock|requireActual|requireMock|resolve|setMock|unmock|unstable_mockModule|unstable_unmockModule)$/'
+	const restrictions = [
+		`ImportExpression[source.value=/${selectorPattern}/]`,
+		`ImportExpression[source.expressions.length=0][source.quasis.0.value.raw=/${selectorPattern}/]`,
+		`TSImportType[argument.literal.value=/${selectorPattern}/]`,
+		`TSImportType[argument.literal.expressions.length=0][argument.literal.quasis.0.value.raw=/${selectorPattern}/]`,
+		`CallExpression[callee.name='require'][arguments.0.value=/${selectorPattern}/]`,
+		`CallExpression[callee.name='require'][arguments.0.expressions.length=0][arguments.0.quasis.0.value.raw=/${selectorPattern}/]`,
+		`CallExpression[callee.object.name=/^(?:jest|require|vi)$/][callee.property.name=${loaderMethod}][arguments.0.value=/${selectorPattern}/]`,
+		`CallExpression[callee.object.name=/^(?:jest|require|vi)$/][callee.property.name=${loaderMethod}][arguments.0.expressions.length=0][arguments.0.quasis.0.value.raw=/${selectorPattern}/]`,
+		`CallExpression[callee.object.type='MetaProperty'][callee.object.meta.name='import'][callee.object.property.name='meta'][callee.property.name='resolve'][arguments.0.value=/${selectorPattern}/]`,
+		`CallExpression[callee.object.type='MetaProperty'][callee.object.meta.name='import'][callee.object.property.name='meta'][callee.property.name='resolve'][arguments.0.expressions.length=0][arguments.0.quasis.0.value.raw=/${selectorPattern}/]`,
+	]
+
+	return {
+		'no-restricted-imports': [
+			'error',
+			{
+				patterns: [
+					{
+						regex: pattern,
+						message: backendImportMessage,
+					},
+				],
+			},
+		],
+		'no-restricted-syntax': [
+			'error',
+			...restrictions.map((selector) => ({
+				selector,
+				message: backendImportMessage,
+			})),
+		],
+	}
+}
+
 export default defineConfig([
 	{
+		ignores: ['.github/**'],
+
 		languageOptions: {
 			globals: {
 				...globals.browser,
@@ -58,6 +101,7 @@ export default defineConfig([
 	},
 	{
 		files: ['**/*.ts', '**/*.tsx'],
+		ignores: ['.github/**'],
 
 		languageOptions: {
 			ecmaVersion: 12,
@@ -111,12 +155,68 @@ export default defineConfig([
 				'always',
 				{
 					ignorePackages: true,
+					pathGroupOverrides: [
+						{
+							pattern: '#api/**',
+							action: 'ignore',
+						},
+					],
 				},
 			],
 
 			// Enforce node: protocol for Node.js built-in modules
 			'unicorn/prefer-node-protocol': 'error',
 		},
+	},
+	{
+		files: ['**/*.{cts,mts}'],
+		languageOptions: {
+			parser: tsParser,
+		},
+	},
+	{
+		files: ['**/*.jsx'],
+		languageOptions: {
+			parserOptions: {
+				ecmaFeatures: {
+					jsx: true,
+				},
+			},
+		},
+	},
+	{
+		files: ['.github/bot-scripts/**/*.test.cjs'],
+		languageOptions: {
+			sourceType: 'module',
+		},
+	},
+	{
+		files: ['**/*.{cjs,cts,js,jsx,mjs,mts,ts,tsx,vue}'],
+		ignores: ['.github/**/*.d.ts', 'api/**', 'src/**'],
+		rules: backendImportRules(
+			String.raw`^(?:@api/|@server/|#api/.+\.[cm]?[jt]sx?$|(?:\.\.?/)+(?:[^/]+/)*api(?:/(?!\.\.(?:/|$))|$))`,
+		),
+	},
+	{
+		files: ['.github/**/*.d.{cts,mts,ts}'],
+		languageOptions: {
+			parser: tsParser,
+		},
+		rules: backendImportRules(
+			String.raw`^(?:@api/|@server/|#api/.+\.[cm]?[jt]sx?$|(?:\.\.?/)+(?:[^/]+/)*api(?:/(?!\.\.(?:/|$))|$))`,
+		),
+	},
+	{
+		files: ['src/**/*.{cjs,cts,js,jsx,mjs,mts,ts,tsx,vue}'],
+		rules: backendImportRules(
+			String.raw`^(?:@api/|#api/.+\.[cm]?[jt]sx?$|(?:\.\.?/)+(?:[^/]+/)*api(?:/(?!\.\.(?:/|$))|$))`,
+		),
+	},
+	{
+		files: ['api/**/*.{cjs,cts,js,jsx,mjs,mts,ts,tsx}'],
+		rules: backendImportRules(
+			String.raw`^(?:@api/|@server/|#api/.+\.[cm]?[jt]sx?$|\.\.?/)`,
+		),
 	},
 	globalIgnores([
 		'build/',
@@ -126,6 +226,5 @@ export default defineConfig([
 		'snippets/',
 		'store/',
 		'dev-dist/',
-		'.github/',
 	]),
 ])

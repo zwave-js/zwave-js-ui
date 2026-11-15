@@ -1,8 +1,8 @@
 import { ZwavejsServer } from '@zwave-js/server'
 import type { Driver } from 'zwave-js'
-import type { ZwaveConfig } from './ZwaveClient.ts'
-import type { ModuleLogger } from './logger.ts'
-import { SingleFlight } from './utils.ts'
+import type { ZwaveConfig } from '#api/lib/ZwaveClient'
+import type { ModuleLogger } from '#api/lib/logger'
+import { SingleFlight } from '#api/lib/utils'
 
 const DEFAULT_SERVER_PORT = 3000
 

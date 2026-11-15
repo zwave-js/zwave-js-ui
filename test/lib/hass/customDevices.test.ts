@@ -1,7 +1,7 @@
 import { afterAll, afterEach, beforeAll, expect, it, vi } from 'vitest'
 import { rmSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
-import type { HassDevice } from '#api/hass/types.ts'
+import type { HassDevice } from '#api/hass/types'
 import { buildNode } from './fixtures.ts'
 import {
 	cleanupGatewayHarnessEnv,

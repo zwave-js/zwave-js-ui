@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest'
 import { AssociationCheckResult, type AssociationAddress } from 'zwave-js'
 import { ObjectKeyMap } from '@zwave-js/shared'
-import { AssociationService } from '../../../api/lib/zwave/AssociationService.ts'
+import { AssociationService } from '#api/lib/zwave/AssociationService'
 import type {
 	AssociationControllerHandle,
 	AssociationDriverHandle,
@@ -10,7 +10,7 @@ import type {
 	AssociationLogPort,
 	AssociationNodeState,
 	AssociationZWaveNodeHandle,
-} from '../../../api/lib/zwave/ports.ts'
+} from '#api/lib/zwave/ports'
 import { createDeferred } from '../testUtils.ts'
 
 function makeZWaveNode(

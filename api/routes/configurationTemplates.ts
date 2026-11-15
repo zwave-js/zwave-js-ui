@@ -1,8 +1,8 @@
 import type express from 'express'
 import type { RateLimitRequestHandler } from 'express-rate-limit'
-import { getErrorMessage } from '../lib/errors.ts'
-import type { AppRuntime } from '../runtime/AppRuntime.ts'
-import { isAuthenticated } from './auth.ts'
+import { getErrorMessage } from '#api/lib/errors'
+import type { AppRuntime } from '#api/runtime/AppRuntime'
+import { isAuthenticated } from '#api/routes/auth'
 
 export interface ConfigurationTemplatesRoutesDeps {
 	apisLimiter: RateLimitRequestHandler

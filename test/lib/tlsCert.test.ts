@@ -4,7 +4,7 @@ import { join } from 'node:path'
 import { promisify } from 'node:util'
 import { generate } from 'selfsigned'
 import { afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest'
-import { getTlsRejectionReason, loadCertKey } from '../../api/lib/tlsCert.ts'
+import { getTlsRejectionReason, loadCertKey } from '#api/lib/tlsCert'
 import { requireDefined } from './testUtils.ts'
 
 const createCertificate = promisify(generate)

@@ -9,14 +9,14 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { io as ioClient } from 'socket.io-client'
 import { afterEach, describe, expect, it } from 'vitest'
-import { parseCidr } from '../../api/lib/ipUtils.ts'
-import SocketManager from '../../api/lib/SocketManager.ts'
+import { parseCidr } from '#api/lib/ipUtils'
+import SocketManager from '#api/lib/SocketManager'
 import {
 	isTrustedRequest,
 	isTrustedSocket,
 	startTrustedListener,
 	type TrustedListenerConfig,
-} from '../../api/lib/trustedListener.ts'
+} from '#api/lib/trustedListener'
 import { requireDefined } from './testUtils.ts'
 
 function probeApp() {

@@ -1,4 +1,4 @@
-import { getErrorMessage } from '../errors.ts'
+import { getErrorMessage } from '#api/lib/errors'
 import type {
 	FirmwareBackupPort,
 	FirmwareConfigPort,
@@ -14,7 +14,7 @@ import type {
 	OTWFirmwareUpdateResult,
 	ServiceLogger,
 	StagedFirmwareNodeUpdate,
-} from './ports.ts'
+} from '#api/lib/zwave/ports'
 
 export class FirmwareLifecycleCancelledError extends Error {
 	constructor(operation: string) {
