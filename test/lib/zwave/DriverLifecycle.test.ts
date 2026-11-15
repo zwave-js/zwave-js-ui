@@ -457,6 +457,39 @@ describe('DriverLifecycle — extra log transports', () => {
 		})
 	})
 
+	it('handles a ready rejection that follows a failed runtime log update', async () => {
+		const { lifecycle, host, world, state } = createHarness({
+			serverEnabled: false,
+		})
+		await lifecycle.connect()
+		const driver = world.drivers[0]
+		state.driverReadyRaw = false
+		lifecycle.addExtraLogTransport(new Transport({}), 'debug')
+		driver.updateLogConfig.mockImplementationOnce(() => {
+			throw new Error('log update failed')
+		})
+		const ready = createDeferred<void>()
+		// A plain function, since a vi.fn tracks returned promises and so marks them handled
+		host.onDriverReady = (() => {
+			state.driverReadyRaw = true
+			return ready.promise
+		}) as typeof host.onDriverReady
+		const unhandled = vi.fn()
+		process.on('unhandledRejection', unhandled)
+		try {
+			driver.emit('driver ready')
+			expect(host.onDriverError).toHaveBeenCalledOnce()
+
+			ready.reject(new Error('ready initialization failed'))
+			await new Promise((resolve) => setImmediate(resolve))
+
+			expect(unhandled).not.toHaveBeenCalled()
+			expect(host.onDriverError).toHaveBeenCalledOnce()
+		} finally {
+			process.off('unhandledRejection', unhandled)
+		}
+	})
+
 	// A configured level is persisted as an npm numeric rank, so the baseline
 	// has to survive the number→name round trip and be re-sent when the last
 	// verbose extra is dropped — updateLogConfig merges partial updates, so a

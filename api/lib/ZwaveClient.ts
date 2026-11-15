@@ -26,12 +26,6 @@ import {
 	tryUnzipFirmwareFile,
 	extractFirmware,
 } from '@zwave-js/core'
-import { createDefaultTransportFormat } from '@zwave-js/core/bindings/log/node'
-import {
-	applyExternalDriverSettings,
-	getExternalDriverPresets,
-} from './externalSettings.ts'
-import { JSONTransport } from '@zwave-js/log-transport-json'
 import type {
 	AssociationAddress,
 	OTWFirmwareUpdateProgress,
@@ -88,7 +82,6 @@ import type {
 	ZWavePlusNodeType,
 	ZWavePlusRoleType,
 	FirmwareUpdateInfo,
-	PartialZWaveOptions,
 	InclusionUserCallbacks,
 	InclusionState,
 	LinkReliabilityCheckResult,
@@ -138,7 +131,7 @@ import type {
 	AssignCredentialResult,
 } from 'zwave-js'
 import { getEnumMemberName, parseQRCodeString } from 'zwave-js/Utils'
-import { configDbDir, logsDir, nvmBackupsDir, storeDir } from '../config/app.ts'
+import { nvmBackupsDir } from '../config/app.ts'
 import type {
 	Group,
 	NodesStoreFile,
@@ -171,7 +164,6 @@ import {
 	gte as semverGte,
 	lte as semverLte,
 } from 'semver'
-import { PkgFsBindings } from './PkgFsBindings.ts'
 import { regionSupportsAutoPowerlevel } from './shared.ts'
 import { deviceConfigPriorityDir } from './Constants.ts'
 import { createRequire } from 'node:module'
@@ -225,9 +217,6 @@ export const configManager = new ConfigManager({
 const logger = LogManager.module('Z-Wave')
 
 const NEIGHBORS_LOCK_REFRESH = 60 * 1000
-
-// Ordered from least verbose to most verbose (matching winston/npm log levels)
-const LOG_LEVEL_ORDER = ['error', 'warn', 'info', 'verbose', 'debug', 'silly']
 
 function validateMethods<T extends readonly (keyof ZwaveClient)[]>(
 	methods: T,
@@ -1351,14 +1340,11 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			)
 		}
 
-		if (this._driverLifecycle) {
-			// Reuse the existing lifecycle across restarts so its generation and log transports persist
-		} else {
-			this._driverLifecycle = new DriverLifecycle(
-				this._buildDriverLifecycleHost(),
-				this._serverManager,
-			)
-		}
+		// Reuse the existing lifecycle across restarts so its generation and log transports persist
+		this._driverLifecycle ??= new DriverLifecycle(
+			this._buildDriverLifecycleHost(),
+			this._serverManager,
+		)
 
 		this._devices = {}
 		this.driverInfo = {}

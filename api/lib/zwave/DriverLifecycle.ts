@@ -760,12 +760,12 @@ export class DriverLifecycle {
 		let ready: Promise<void>
 		try {
 			ready = this.host.onDriverReady(generation, readyEpoch)
-			this.applyRuntimeLogConfig()
 		} catch (error) {
 			this.handleDriverReadyFailure(generation, readyEpoch, error)
 			return
 		}
 
+		// Attach handlers before anything else can throw, so a later rejection is never unhandled
 		void ready
 			.then(() => {
 				this.completeDriverReady(generation, readyEpoch)
@@ -773,6 +773,12 @@ export class DriverLifecycle {
 			.catch((error: unknown) => {
 				this.handleDriverReadyFailure(generation, readyEpoch, error)
 			})
+
+		try {
+			this.applyRuntimeLogConfig()
+		} catch (error) {
+			this.handleDriverReadyFailure(generation, readyEpoch, error)
+		}
 	}
 
 	private completeDriverReady(generation: number, readyEpoch: number): void {
