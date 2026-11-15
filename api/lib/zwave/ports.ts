@@ -7,6 +7,8 @@ import type {
 	SetValueResult,
 	ZWaveNode,
 	Driver,
+	VirtualValueID,
+	ZWaveController,
 } from 'zwave-js'
 import type { SupervisionResult } from '@zwave-js/core'
 import type { ConfigManager } from '@zwave-js/config'
@@ -163,4 +165,203 @@ export type TemplateConfigManagerPort = Pick<
 
 export interface TemplateUtilsPort {
 	generateId(): string
+}
+
+/**
+ * Structurally compatible with `ZUIValueIdScene` from ZwaveClient (which has more optional display fields) without importing it, avoiding a circular import
+ */
+export interface ZUISceneValueRef {
+	id: string
+	nodeId: number
+	commandClass: number
+	endpoint?: number
+	property: string | number
+	propertyKey?: string | number | null
+	value?: unknown
+	timeout?: number
+}
+
+export interface ZUISceneRecord<V extends ZUISceneValueRef = ZUISceneValueRef> {
+	sceneid: number
+	label: string
+	values: V[]
+}
+
+export interface SceneNodeState {
+	id: number
+	values?: Record<string, unknown>
+}
+
+export interface ScenePersistencePort<
+	V extends ZUISceneValueRef = ZUISceneValueRef,
+> {
+	get(): ZUISceneRecord<V>[]
+	put(data: ZUISceneRecord<V>[]): Promise<ZUISceneRecord<V>[]>
+}
+
+export interface SceneNodeStorePort {
+	getNode(nodeId: number): SceneNodeState | undefined
+}
+
+export interface SceneUtilsPort {
+	getValueId(v: {
+		commandClass: number
+		endpoint?: number
+		property: string | number
+		propertyKey?: string | number | null
+	}): string
+}
+
+export interface SceneWritePort<V extends ZUISceneValueRef = ZUISceneValueRef> {
+	writeValue(valueId: V, value: unknown): Promise<unknown>
+}
+
+/** Structurally compatible with `Group` from `api/config/store.ts` */
+export interface ZUIGroup {
+	id: number
+	name: string
+	nodeIds: number[]
+}
+
+export interface GroupValueEntry {
+	value?: unknown
+}
+
+export interface GroupZUINode {
+	id: number
+	name?: string
+	values?: Record<string, GroupValueEntry>
+}
+
+export type GroupVirtualValueId = Pick<
+	VirtualValueID,
+	'commandClass' | 'endpoint' | 'property' | 'propertyKey'
+>
+
+export interface GroupVirtualNodeHandle {
+	getDefinedValueIDs(): GroupVirtualValueId[]
+}
+
+export interface GroupDriverPort {
+	isDriverReady(): boolean
+	getOwnNodeId(): number | undefined
+	/** True when the driver has no node list to check yet (permissive) or the id is a known physical node */
+	hasPhysicalNode(nodeId: number): boolean
+	getMulticastGroup(nodeIds: number[]): GroupVirtualNodeHandle
+}
+
+/** Shared with ZwaveClient's broadcast (standard + LR) virtual-node instances, not just multicast groups */
+export interface GroupVirtualNodeRegistryPort {
+	has(id: number): boolean
+	get(id: number): GroupVirtualNodeHandle | undefined
+	set(id: number, node: GroupVirtualNodeHandle): void
+	delete(id: number): boolean
+}
+
+export interface GroupZUINodeStorePort {
+	get(id: number): GroupZUINode | undefined
+	set(id: number, node: GroupZUINode): void
+	delete(id: number): boolean
+}
+
+export interface GroupSocketPort {
+	sendToSocket(event: string, data: unknown): void
+	emitNodeUpdate(
+		node: GroupZUINode,
+		changedProps: DeepPartial<GroupZUINode>,
+	): void
+	emitValueChanged(
+		valueId: GroupValueEntry,
+		node: GroupZUINode,
+		changed: boolean,
+	): void
+}
+
+/** Kept on ZwaveClient rather than moved here because the broadcast-node lifecycle also depends on these same helpers */
+export interface GroupUtilsPort {
+	deepEqual(a: unknown, b: unknown): boolean
+	getValueId(v: {
+		commandClass: number
+		endpoint?: number
+		property: string | number
+		propertyKey?: string | number | null
+	}): string
+	buildVirtualValueId(
+		nodeId: number,
+		zwaveValue: GroupVirtualValueId,
+		value: unknown,
+	): GroupValueEntry | null
+	newVirtualZUINode(
+		nodeId: number,
+		name: string,
+		kind: 'multicast' | 'broadcast' | 'broadcastLR',
+	): GroupZUINode
+	throttle(key: string, fn: () => void, wait: number): void
+}
+
+export interface GroupPersistencePort {
+	get(): ZUIGroup[]
+	put(data: ZUIGroup[]): Promise<unknown>
+}
+
+export interface AssociationGroupState {
+	title: string
+	endpoint: number
+	value: number
+	maxNodes: number
+	isLifeline: boolean
+	multiChannel: boolean
+}
+
+export interface AssociationNodeState {
+	id: number
+	groups?: AssociationGroupState[]
+}
+
+/** Structurally compatible with `ZUIGroupAssociation` from ZwaveClient */
+export interface AssociationEntry {
+	groupId: number
+	nodeId: number
+	endpoint?: number
+	targetEndpoint?: number
+}
+
+export type AssociationControllerHandle = Pick<
+	ZWaveController,
+	| 'getAllAssociationGroups'
+	| 'getAllAssociations'
+	| 'checkAssociation'
+	| 'addAssociations'
+	| 'removeAssociations'
+	| 'removeNodeFromAllAssociations'
+>
+
+export interface AssociationDriverHandle {
+	controller: AssociationControllerHandle
+}
+
+export interface AssociationDriverPort {
+	getDriver(): AssociationDriverHandle | null
+}
+
+export type AssociationZWaveNodeHandle = Pick<ZWaveNode, 'refreshCCValues'>
+
+export interface AssociationNodeStorePort {
+	/** Undefined only when the nodeId was never included or has since been removed from the controller */
+	getZWaveNode(nodeId: number): AssociationZWaveNodeHandle | undefined
+	/** ZUINode registry lookup, used to store the projected groups list */
+	getZUINode(nodeId: number): AssociationNodeState | undefined
+	emitNodeUpdate(
+		node: AssociationNodeState,
+		changedProps: DeepPartial<AssociationNodeState>,
+	): void
+}
+
+export interface AssociationLogPort {
+	logNode(
+		nodeId: number,
+		level: string,
+		message: string,
+		...args: unknown[]
+	): void
 }
