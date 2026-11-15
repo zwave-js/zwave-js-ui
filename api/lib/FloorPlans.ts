@@ -6,11 +6,10 @@
 // canvas's top-left. Every image file belongs to exactly one map.
 
 import { cp, readdir, readFile, rename, rm, writeFile } from 'node:fs/promises'
-import { existsSync } from 'node:fs'
 import path from 'node:path'
 import { floorPlansDir } from '../config/app.ts'
 import { module } from './logger.ts'
-import { ensureDir, generateId } from './utils.ts'
+import { ensureDir, generateId, pathExists } from './utils.ts'
 
 const logger = module('FloorPlans')
 
@@ -22,9 +21,12 @@ export const MAX_IMAGE_BYTES = 25 * 1024 * 1024
 export const MAX_IMAGE_MB = MAX_IMAGE_BYTES / 1024 / 1024
 export const MAX_DIMENSION = 20000
 export const MAX_NAME_LENGTH = 100
+/** Canvas size of a new map, until a picture gives it one */
+const DEFAULT_WIDTH = 3000
+const DEFAULT_HEIGHT = 2000
 /** Upper bound for node lists: filter exceptions and bulk placements */
 export const MAX_NODE_LIST = 5000
-/** How far (as a ratio) a picture's aspect may differ from its frame before it counts as stretched */
+/** How far (as a ratio) a picture's aspect may differ from its frame before the UI asks how to fit it */
 export const STRETCH_TOLERANCE = 0.02
 /** What a new background picture of another shape does to the map, see setMapImage */
 export const IMAGE_FITS = ['stretch', 'scale', 'keep'] as const
@@ -203,7 +205,24 @@ export function sniffImage(buf: Buffer): { ext: string; type: string } | null {
 	return null
 }
 
-/** Pixel size read from a PNG, JPEG or WebP header, or null if it can't be read */
+/** The EXIF Orientation (1-8) in an APP1 segment whose data starts at `at`, or null */
+function exifOrientation(buf: Buffer, at: number): number | null {
+	if (buf.toString('ascii', at, at + 6) !== 'Exif\0\0') return null
+	const tiff = at + 6
+	const le = buf.toString('ascii', tiff, tiff + 2) === 'II'
+	const u16 = (o: number) => (le ? buf.readUInt16LE(o) : buf.readUInt16BE(o))
+	const u32 = (o: number) => (le ? buf.readUInt32LE(o) : buf.readUInt32BE(o))
+	const ifd = tiff + u32(tiff + 4)
+	for (let n = u16(ifd), e = ifd + 2; n > 0; n--, e += 12) {
+		if (u16(e) === 0x0112) return u16(e + 8)
+	}
+	return null
+}
+
+/**
+ * Pixel size read from a PNG, JPEG or WebP header, or null if it can't be
+ * read. For a JPEG it is the size as shown: browsers apply the EXIF rotation.
+ */
 export function imageSize(buf: Buffer): { w: number; h: number } | null {
 	try {
 		const kind = sniffImage(buf)?.ext
@@ -211,19 +230,21 @@ export function imageSize(buf: Buffer): { w: number; h: number } | null {
 			return { w: buf.readUInt32BE(16), h: buf.readUInt32BE(20) }
 		}
 		if (kind === 'jpg') {
+			let orientation: number | null = null
 			for (let i = 2; i + 9 < buf.length; ) {
 				if (buf[i] !== 0xff) return null
 				const marker = buf[i + 1]
+				if (marker === 0xe1) orientation ??= exifOrientation(buf, i + 4)
 				// SOFn markers carry the frame size (C4, C8 and CC are not SOF)
 				if (
 					marker >= 0xc0 &&
 					marker <= 0xcf &&
 					![0xc4, 0xc8, 0xcc].includes(marker)
 				) {
-					return {
-						w: buf.readUInt16BE(i + 7),
-						h: buf.readUInt16BE(i + 5),
-					}
+					const w = buf.readUInt16BE(i + 7)
+					const h = buf.readUInt16BE(i + 5)
+					// 5-8 turn the picture a quarter
+					return orientation >= 5 ? { w: h, h: w } : { w, h }
 				}
 				i += 2 + buf.readUInt16BE(i + 2)
 			}
@@ -293,11 +314,31 @@ export function checkView(view: unknown): MapView {
 	return out
 }
 
+const isObject = (v: unknown) => typeof v === 'object' && v !== null
+
+/** The first field of a stored map with the wrong type, or null if none */
+function badMapField(map: any): string | null {
+	if (typeof map?.id !== 'string' || !MAP_ID.test(map.id)) return 'id'
+	if (typeof map.name !== 'string') return 'name'
+	if (!isDim(map.widthPx) || !isDim(map.heightPx)) return 'size'
+	if (!Array.isArray(map.placements)) return 'placements'
+	if (!isObject(map.nodes)) return 'nodes'
+	if (!isObject(map.view)) return 'view'
+	const bg = map.background
+	if (bg !== null && !(isObject(bg) && isObject(bg.imageRect))) {
+		return 'background'
+	}
+	return null
+}
+
+/** Problems already logged, so a bad maps.json warns once, not on every read */
+const warned = new Set<string>()
+
 /**
  * Check data read from a maps.json (`source` names it in messages). Map ids
  * and image names must have the shape the server writes, since they are
  * used in file paths. With `strict` the first problem throws; otherwise a
- * map with a bad id is dropped and a bad image name cleared, both logged.
+ * map with a bad field is dropped and a bad image name cleared, both logged.
  */
 export function checkData(
 	raw: any,
@@ -314,13 +355,21 @@ export function checkData(
 		)
 	}
 	if (!Array.isArray(raw.maps)) throw Error(`${source} has no maps list`)
-	const problem = (msg: string) => {
+	// `fix` says what lenient mode does about it; strict mode changes nothing
+	const problem = (msg: string, fix: string) => {
 		if (strict) throw Error(`${source}: ${msg}`)
-		logger.warn(`${source}: ${msg}`)
+		const line = `${source}: ${msg}, ${fix}`
+		if (warned.has(line)) return
+		warned.add(line)
+		logger.warn(line)
 	}
 	raw.maps = raw.maps.filter((map: any) => {
-		if (typeof map?.id === 'string' && MAP_ID.test(map.id)) return true
-		problem(`map ${JSON.stringify(map?.id)} has an invalid id, dropped`)
+		const field = badMapField(map)
+		if (!field) return true
+		problem(
+			`map ${JSON.stringify(map?.id)} has an invalid ${field}`,
+			'dropped',
+		)
 		return false
 	})
 	for (const map of raw.maps as FloorPlanMap[]) {
@@ -334,7 +383,8 @@ export function checkData(
 			)
 				continue
 			problem(
-				`map ${map.id} has an invalid ${field} ${JSON.stringify(name)}, cleared`,
+				`map ${map.id} has an invalid ${field} ${JSON.stringify(name)}`,
+				'cleared',
 			)
 			bg[field] = null
 		}
@@ -445,32 +495,14 @@ export class FloorPlans {
 		})
 	}
 
-	/**
-	 * Run `fn` with the files a store backup needs: maps.json and every
-	 * image a map uses, as `name` (relative to the floorplans folder) and
-	 * `file` (full path), for `fn` to stream into the zip. The write queue
-	 * waits until `fn` is done, so the images match maps.json and none is
-	 * deleted halfway. Unused and in-flight files are left out. A missing
-	 * image is logged and skipped, and an unreadable maps.json is still
-	 * backed up as it is. If even listing them fails, that is logged and
-	 * `fn` gets none, so the rest of the backup still happens.
-	 */
+	/** Run `fn` with maps.json and the pictures maps use, holding writes so they stay in step */
 	withBackupFiles<T>(fn: (files: BackupFile[]) => Promise<T>): Promise<T> {
-		return this.enqueue(async () => {
-			let files: BackupFile[] = []
-			try {
-				files = await this.listBackupFiles()
-			} catch (error) {
-				logger.error(
-					`Floorplans left out of the backup: ${error.message}`,
-				)
-			}
-			return fn(files)
-		})
+		return this.enqueue(async () => fn(await this.listBackupFiles()))
 	}
 
+	/** A missing picture is skipped and an unreadable maps.json backed up as it is */
 	private async listBackupFiles(): Promise<BackupFile[]> {
-		if (!existsSync(this.file)) return []
+		if (!(await pathExists(this.file))) return []
 		const out = [{ name: 'maps.json', file: this.file }]
 		let maps: FloorPlanMap[] = []
 		try {
@@ -484,11 +516,13 @@ export class FloorPlans {
 			for (const name of [m.background?.image, m.background?.darkImage]) {
 				if (!name) continue
 				const file = path.join(this.imagesDir, name)
-				if (existsSync(file)) out.push({ name: `images/${name}`, file })
-				else
+				if (await pathExists(file)) {
+					out.push({ name: `images/${name}`, file })
+				} else {
 					logger.warn(
 						`Floorplan image ${name} is missing, left out of the backup`,
 					)
+				}
 			}
 		}
 		return out
@@ -519,7 +553,10 @@ export class FloorPlans {
 				m.background?.image,
 				m.background?.darkImage,
 			])) {
-				if (name && !existsSync(path.join(dir, 'images', name))) {
+				if (
+					name &&
+					!(await pathExists(path.join(dir, 'images', name)))
+				) {
 					logger.warn(
 						`Restored floorplans are missing picture ${name}`,
 					)
@@ -542,9 +579,17 @@ export class FloorPlans {
 				}
 				await rename(incoming, this.dir)
 			} catch (error) {
-				// put the current floorplans back
-				if (moved) await rename(old, this.dir)
-				await rm(incoming, { recursive: true, force: true })
+				// put the current floorplans back, keeping `error` as the reason
+				if (moved) {
+					await rename(old, this.dir).catch((e) =>
+						logger.error(
+							`Can't put the current floorplans back, they are in ${old}: ${e.message}`,
+						),
+					)
+				}
+				await rm(incoming, { recursive: true, force: true }).catch(
+					() => {},
+				)
 				throw error
 			}
 			logger.info('Floorplans restored from backup')
@@ -572,13 +617,20 @@ export class FloorPlans {
 		} catch {
 			return
 		}
+		// the first map edit creates a new folder, after which a rename back fails
+		const missing = !(await pathExists(this.dir))
 		for (const name of names) {
-			if (
+			const where = path.join(path.dirname(this.dir), name)
+			if (missing && name.startsWith(`${base}.old-`)) {
+				logger.error(
+					`The floorplans folder is missing and ${where} holds the maps from before an interrupted restore. Rename it to ${base} before editing any map.`,
+				)
+			} else if (
 				name.startsWith(`${base}.old-`) ||
 				name.startsWith(`${base}.restore-`)
 			) {
 				logger.warn(
-					`${path.join(path.dirname(this.dir), name)} was left by an interrupted floorplans restore. If your maps are missing, rename it to ${base}; otherwise it can be deleted.`,
+					`${where} was left by an interrupted floorplans restore and can be deleted.`,
 				)
 			}
 		}
@@ -626,8 +678,8 @@ export class FloorPlans {
 
 	async addMap({
 		name,
-		widthPx = 3000,
-		heightPx = 2000,
+		widthPx = DEFAULT_WIDTH,
+		heightPx = DEFAULT_HEIGHT,
 		nodes = { start: 'include', exceptions: [] },
 	}: AddMapOptions = {}) {
 		if (!isDim(widthPx) || !isDim(heightPx)) {
@@ -717,8 +769,7 @@ export class FloorPlans {
 	 * their distance from its top-left corner ('keep'). Using it as is resets
 	 * the saved zoom and center, and stretches the other theme's picture.
 	 * `imgWidthPx`/`imgHeightPx` (decoded by the browser) are used only when
-	 * the header can't be read. `stretched` is set when the picture's aspect
-	 * differs from its frame by more than STRETCH_TOLERANCE.
+	 * the header can't be read.
 	 */
 	async setMapImage(
 		id: string,
@@ -782,10 +833,7 @@ export class FloorPlans {
 					imageRect: { x: 0, y: 0, w: map.widthPx, h: map.heightPx },
 				}
 			}
-			const r = map.background.imageRect
-			const stretched =
-				Math.abs(size.w / size.h / (r.w / r.h) - 1) > STRETCH_TOLERANCE
-			return { map, stretched }
+			return map
 		})
 	}
 

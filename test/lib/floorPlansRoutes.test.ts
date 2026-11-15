@@ -1,12 +1,12 @@
 import { existsSync } from 'node:fs'
-import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
+import { mkdtemp, readdir, readFile, rm, writeFile } from 'node:fs/promises'
 import type { Server as HttpServer } from 'node:http'
 import { createServer } from 'node:http'
 import type { AddressInfo } from 'node:net'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import archiver from 'archiver'
-import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
 
 // Set before the app config module loads
 const testStoreDir = await mkdtemp(join(tmpdir(), 'zui-floorplans-'))
@@ -15,6 +15,9 @@ process.env.STORE_DIR = testStoreDir
 const { default: jsonStore } = await import('../../api/lib/jsonStore.ts')
 const { default: storeConfig } = await import('../../api/config/store.ts')
 const { default: app } = await import('../../api/app.ts')
+const { default: backupManager } = await import(
+	'../../api/lib/BackupManager.ts'
+)
 const { default: floorPlans, MAX_IMAGE_BYTES } = await import(
 	'../../api/lib/FloorPlans.ts'
 )
@@ -98,8 +101,8 @@ describe('floorplans API', () => {
 	})
 
 	// the history fallback takes requests without application/json, like the UI's axios
-	const backup = async (query = '') => {
-		const res = await fetch(`${url}/api/store/backup${query}`, {
+	const backup = async () => {
+		const res = await fetch(`${url}/api/store/backup`, {
 			headers: { Accept: 'application/json, text/plain, */*' },
 		})
 		expect(res.status).toBe(200)
@@ -197,7 +200,7 @@ describe('floorplans API', () => {
 		const { data: map } = await api('POST', '/maps', { name: 'Shop' })
 		const set = await upload(map.id, PNG1)
 		expect(set.success).toBe(true)
-		const file = set.data.map.background.image
+		const file = set.data.background.image
 		expect(file).toMatch(/\.png$/)
 
 		// served like a browser asks for images: */* must not hit the SPA
@@ -220,7 +223,7 @@ describe('floorplans API', () => {
 
 		// referenced but missing on disk: JSON 404, not the HTML error page
 		const { data: other } = await api('POST', '/maps', { name: 'Shed' })
-		const lost = (await upload(other.id, PNG1)).data.map.background.image
+		const lost = (await upload(other.id, PNG1)).data.background.image
 		await rm(join(floorPlans.imagesDir, lost))
 		const missing = await fetch(`${url}/api/floorplans/images/${lost}`)
 		expect(missing.status).toBe(404)
@@ -231,7 +234,7 @@ describe('floorplans API', () => {
 		await api('DELETE', `/maps/${other.id}`)
 
 		const dark = await upload(map.id, PNG1, { dark: true })
-		expect(dark.data.map.background.darkImage).toMatch(/-dark-.*\.png$/)
+		expect(dark.data.background.darkImage).toMatch(/-dark-.*\.png$/)
 		const noDark = await api('DELETE', `/maps/${map.id}/image?dark=true`)
 		expect(noDark.data.background).toMatchObject({
 			image: file,
@@ -250,7 +253,7 @@ describe('floorplans API', () => {
 			placements: [{ deviceKey: 'zwave:cdfbb3c7:2', x: 1500, y: 1000 }],
 		})
 		const set = await upload(map.id, PNG1, { fit: 'scale' })
-		expect(set.data.map).toMatchObject({
+		expect(set.data).toMatchObject({
 			widthPx: 1,
 			heightPx: 1,
 			placements: [{ x: 1, y: 1 }],
@@ -285,9 +288,25 @@ describe('floorplans API', () => {
 		).toBeNull()
 	})
 
-	it('backs up floorplans unless asked not to, and restores them', async () => {
+	/** A backup made with the Floorplans setting off */
+	const backupWithoutFloorPlans = async () => {
+		const setting = vi
+			.spyOn(backupManager, 'storeFloorPlans', 'get')
+			.mockReturnValue(false)
+		try {
+			return await backup()
+		} finally {
+			setting.mockRestore()
+		}
+	}
+
+	/** What a restore left next to the floorplans folder */
+	const restoreLeftovers = async () =>
+		(await readdir(testStoreDir)).filter((n) => /\.(restore|old)-/.test(n))
+
+	it('backs up floorplans unless the setting is off, and restores them', async () => {
 		const { data: map } = await api('POST', '/maps', { name: 'Backed up' })
-		const file = (await upload(map.id, PNG1)).data.map.background.image
+		const file = (await upload(map.id, PNG1)).data.background.image
 		await writeFile(join(floorPlans.imagesDir, 'stray.png'), PNG1)
 
 		const zip = await backup()
@@ -297,7 +316,7 @@ describe('floorplans API', () => {
 		expect(methods[`floorplans/images/${file}`]).toBe(0)
 		expect(methods['floorplans/images/stray.png']).toBeUndefined()
 
-		const without = zipMethods(await backup('?floorPlans=false'))
+		const without = zipMethods(await backupWithoutFloorPlans())
 		expect(Object.keys(without)).toContain('settings.json')
 		expect(
 			Object.keys(without).some((n) => n.startsWith('floorplans/')),
@@ -311,6 +330,7 @@ describe('floorplans API', () => {
 		expect(data.maps.map((m) => m.name)).toContain('Backed up')
 		expect(data.maps.map((m) => m.name)).not.toContain('After the backup')
 		expect(existsSync(join(floorPlans.imagesDir, 'stray.png'))).toBe(false)
+		expect(await restoreLeftovers()).toEqual([])
 		const img = await fetch(`${url}/api/floorplans/images/${file}`)
 		expect(img.status).toBe(200)
 		expect(Buffer.from(await img.arrayBuffer())).toEqual(
@@ -336,6 +356,16 @@ describe('floorplans API', () => {
 		expect(existsSync(join(testStoreDir, 'marker.jsonl'))).toBe(true)
 		const { data } = await api('GET', '')
 		expect(data.maps.map((m) => m.name)).toContain('Kept')
+		expect(await restoreLeftovers()).toEqual([])
+		await api('DELETE', `/maps/${map.id}`)
+	})
+
+	it('keeps the current floorplans when the backup has none', async () => {
+		const zip = await backupWithoutFloorPlans()
+		const { data: map } = await api('POST', '/maps', { name: 'Newer' })
+		expect(await restore(zip)).toEqual({ success: true })
+		const { data } = await api('GET', '')
+		expect(data.maps.map((m) => m.name)).toContain('Newer')
 		await api('DELETE', `/maps/${map.id}`)
 	})
 

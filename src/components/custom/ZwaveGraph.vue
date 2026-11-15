@@ -281,12 +281,7 @@ import { Network } from 'vis-network'
 import 'vis-network/styles/vis-network.css'
 // when need to test this, just uncomment this line and find replace `this.nodes` with `testNodes`
 // import fakeNodes from '@/assets/testNodes.json'
-import {
-	ProtocolDataRate,
-	rssiToString,
-	isRssiError,
-	RouteKind,
-} from '@zwave-js/core'
+import { ProtocolDataRate, RouteKind } from '@zwave-js/core'
 import { uuid, arraysEqual } from '../../lib/utils'
 import {
 	CONTROLLER_COLOR,
@@ -295,8 +290,10 @@ import {
 	RATE_LEGEND,
 	UNKNOWN_COLOR,
 	hopColor,
-	nodeName,
+	labelOf,
 	rateColor,
+	rssiLabel,
+	toRssi,
 } from '../../lib/meshView.js'
 import useBaseStore from '../../stores/base.js'
 import { mapState } from 'pinia'
@@ -1071,11 +1068,8 @@ export default {
 
 				const edgeRssi = i === 0 ? rssi : repeaterRSSI?.[i - 1]
 
-				let label = ''
-
-				if (edgeRssi && !isRssiError(edgeRssi)) {
-					label = rssiToString(edgeRssi)
-				}
+				// as the floorplan labels its lines
+				const label = rssiLabel(toRssi(edgeRssi))
 
 				const edgeId = this.getEdgeId({ from, to })
 
@@ -1206,7 +1200,7 @@ export default {
 				id: id,
 				hidden: false,
 				// same as the floorplan map, so a node has one label
-				label: nodeName(node),
+				label: labelOf(node),
 				neighbors: node.neighbors,
 				battery_level: batlev,
 				group: node.loc,
@@ -1229,13 +1223,11 @@ export default {
 			}
 
 			if (node.failed) {
-				entity.label = 'FAILED: ' + entity.label
 				entity.group = 'Failed'
 				entity.color = DEAD_COLOR
 			}
 
 			if (!node.available) {
-				entity.label = 'DEAD: ' + entity.label
 				entity.group = 'Dead'
 				entity.color = DEAD_COLOR
 			}

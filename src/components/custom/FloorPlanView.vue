@@ -337,10 +337,11 @@ export default {
 				],
 			})
 			if (!name || name === map.name) return
+			// only the changed field: a whole map reply could undo a newer write
 			await this.floorPlanCall(
 				'rename the map',
 				() => ConfigApis.updateFloorPlanMap(map.id, { name }),
-				this.putMap,
+				(saved) => this.changeMap(map.id, () => ({ name: saved.name })),
 			)
 		},
 		toggleDefaultMap() {
@@ -404,7 +405,7 @@ export default {
 			let size = null
 			try {
 				const bitmap = await createImageBitmap(file)
-				size = { width: bitmap.width, height: bitmap.height }
+				size = { w: bitmap.width, h: bitmap.height }
 				bitmap.close()
 			} catch {
 				// not decodable here, the server decides
@@ -413,7 +414,8 @@ export default {
 				? await this.askImageFit(map, size, dark)
 				: 'stretch'
 			if (!fit) return
-			const res = await this.floorPlanCall(
+			// a new shape can resize the canvas and move nodes: take the whole map
+			await this.floorPlanCall(
 				'upload the picture',
 				() =>
 					ConfigApis.setFloorPlanImage(map.id, file, {
@@ -421,15 +423,8 @@ export default {
 						size,
 						fit,
 					}),
-				(data) => this.putMap(data.map),
+				this.putMap,
 			)
-			// with a known size, stretching was asked for in askImageFit
-			if (res?.stretched && !size) {
-				this.showSnackbar(
-					"The picture's shape differs from the map's frame, so it's stretched to fit",
-					'warning',
-				)
-			}
 		},
 		/**
 		 * How a new picture of `size` fits `map`: 'stretch', 'scale' or 'keep'
@@ -440,14 +435,14 @@ export default {
 		async askImageFit(map, size, dark) {
 			const bg = map.background
 			const frame = bg?.imageRect ?? { w: map.widthPx, h: map.heightPx }
-			const aspect = size.width / size.height / (frame.w / frame.h)
+			const aspect = size.w / size.h / (frame.w / frame.h)
 			const tolerance = this.limits?.stretchTolerance ?? 0
 			if (Math.abs(aspect - 1) <= tolerance) return 'stretch'
 			const other = dark ? bg?.image : bg?.darkImage
 			if (!map.placements.length && !other) return 'scale'
 			const { fit } = await this.app.confirm(
 				'The picture has a different shape',
-				`It's ${size.width} × ${size.height} px, the map is ${Math.round(frame.w)} × ${Math.round(frame.h)}.` +
+				`It's ${size.w} × ${size.h} px, the map is ${Math.round(frame.w)} × ${Math.round(frame.h)}.` +
 					(other
 						? ` Using it as is also stretches the ${dark ? 'light' : 'dark'} theme picture to its shape.`
 						: ''),
@@ -493,7 +488,10 @@ export default {
 			await this.floorPlanCall(
 				'remove the picture',
 				() => ConfigApis.removeFloorPlanImage(map.id, { dark }),
-				this.putMap,
+				(saved) =>
+					this.changeMap(map.id, () => ({
+						background: saved.background,
+					})),
 			)
 		},
 		/** the map reports each picture that won't load once */
@@ -538,13 +536,11 @@ export default {
 			)
 		},
 		onSetNodes(nodes) {
+			const id = this.currentMap.id
 			return this.floorPlanCall(
 				'change the node list',
-				() =>
-					ConfigApis.updateFloorPlanMap(this.currentMap.id, {
-						nodes,
-					}),
-				this.putMap,
+				() => ConfigApis.updateFloorPlanMap(id, { nodes }),
+				(saved) => this.changeMap(id, () => ({ nodes: saved.nodes })),
 			)
 		},
 		/**

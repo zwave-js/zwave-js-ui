@@ -156,12 +156,8 @@ export default {
 	downloadZip(files) {
 		return request.post('/store-multi', { files }, { responseType: 'blob' })
 	},
-	backupStore(floorPlans = true) {
-		// sent only to leave floorplans out: the server includes them unless told not to
-		return request.get('/store/backup', {
-			responseType: 'blob',
-			params: floorPlans ? {} : { floorPlans: false },
-		})
+	backupStore() {
+		return request.get('/store/backup', { responseType: 'blob' })
 	},
 	async deleteMultiple(files) {
 		const response = await request.put('/store-multi', { files })
@@ -287,8 +283,8 @@ export default {
 	},
 	/**
 	 * Set the map's light theme picture, or with `dark` its dark theme one.
-	 * `size` is the browser-decoded { width, height }, used if the server
-	 * can't read it.
+	 * `size` is the browser-decoded { w, h }, used if the server can't read
+	 * it.
 	 */
 	async setFloorPlanImage(
 		id,
@@ -300,8 +296,8 @@ export default {
 		if (dark) form.append('dark', 'true')
 		form.append('fit', fit)
 		if (size) {
-			form.append('imgWidthPx', size.width)
-			form.append('imgHeightPx', size.height)
+			form.append('imgWidthPx', size.w)
+			form.append('imgHeightPx', size.h)
 		}
 		const response = await request.put(`/floorplans/maps/${id}/image`, form)
 		return response.data

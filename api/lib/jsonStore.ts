@@ -66,8 +66,12 @@ export class StorageHelper {
 		await ensureDir(storeBackupsDir)
 		const zip = (floorPlanFiles: BackupFile[]) =>
 			this.writeZip(backupFile, floorPlanFiles, res)
+		if (!includeFloorPlans) {
+			logger.info('Floorplans left out of the store backup (setting off)')
+			return zip([])
+		}
 		// the floorplans can't change while their files are being zipped
-		return includeFloorPlans ? floorPlans.withBackupFiles(zip) : zip([])
+		return floorPlans.withBackupFiles(zip)
 	}
 
 	private writeZip(

@@ -68,7 +68,7 @@ export const HEALTH = {
 export const HEALTH_COLORS = { warn: '#ff9800', bad: '#e53935' }
 
 // battery tags turn amber / red at or below these percentages
-export const BATTERY_LOW = { warn: 30, bad: 15 }
+export const BATTERY_LOW = { warn: 30, bad: 10 }
 
 /**
  * How the floorplan map draws each kind of line, as Leaflet path options.
@@ -157,11 +157,19 @@ export function deviceKey(homeHex, nodeId) {
 	return `zwave:${(homeHex || '').replace(/^0x/, '')}:${nodeId}`
 }
 
-/** 'failed' takes precedence over 'dead', as in the graph */
+/** 'failed' takes precedence over 'dead' */
 export function statusOf(node) {
 	if (node.failed) return 'failed'
 	if (!node.available) return 'dead'
 	return 'ok'
+}
+
+/** A node's label with its status in front, e.g. "DEAD: Kitchen" */
+export function labelOf(node) {
+	const status = statusOf(node)
+	if (status === 'failed') return `FAILED: ${nodeName(node)}`
+	if (status === 'dead') return `DEAD: ${nodeName(node)}`
+	return nodeName(node)
 }
 
 export function lwrOf(node) {
@@ -237,33 +245,21 @@ export function routeSegments(node, route, controllerId) {
 	return segs
 }
 
-const linkKey = (kind, a, b) => `${kind}:${Math.min(a, b)}-${Math.max(a, b)}`
+/** The key of the line of `kind` between nodes a and b, either way round */
+export const linkKey = (kind, a, b) =>
+	`${kind}:${Math.min(a, b)}-${Math.max(a, b)}`
 
 /**
- * What a floorplan map draws, given which nodes are shown and where nodes
- * sit on it.
- *  - routes of shown nodes placed on this map, plus their failed hops
- *  - neighbor lines only between shown, positioned nodes
- *  - ghosts: nodes on a shown node's route that aren't drawn as nodes
- *    (hidden repeaters, or shown ones not placed yet). A ghost sits at its
- *    position on this map when it has one, else midway between its nearest
- *    positioned neighbors on the route (`approx`). Its kind is 'main' if any
- *    main route uses it, else 'backup', so the backup routes layer hides it.
- *    `routes` lists the { id, kind } routes it repeats for.
- * `shown`: Set of node ids. `positioned`: Map id → [y, x] of every node with
- * a position on this map. Returns { links, ghosts, pos }, links being
- * { kind: 'main'|'backup'|'failed'|'neighbor', a, b, rate, routes,
- * backupOnly }, `backupOnly` listing the routes that are a backup route
- * drawn as the main one because their node has no main route. RSSI isn't
- * part of a link, so a signal change doesn't change what is drawn: see
- * linkRssi.
+ * What a floorplan map draws: { links, ghosts, pos }, see buildLinks and
+ * placeGhosts. `shown`: Set of node ids. `positioned`: Map id → [y, x] of
+ * every node with a position on this map.
  */
 export function mapView(nodes, shown, positioned) {
 	const cid = controllerIdOf(nodes)
-	const pos = new Map()
-	for (const [id, p] of positioned) if (shown.has(id)) pos.set(id, p)
-	const paths = routePaths(nodes, pos, cid)
-	const ghosts = placeGhosts(paths, shown, positioned, pos)
+	const drawn = new Map()
+	for (const [id, p] of positioned) if (shown.has(id)) drawn.set(id, p)
+	const paths = routePaths(nodes, drawn, cid)
+	const { ghosts, pos } = placeGhosts(paths, shown, positioned, drawn)
 	const links = buildLinks(nodes, paths, shown, ghosts, pos, cid)
 	return { links, ghosts: [...ghosts.values()], pos }
 }
@@ -293,10 +289,16 @@ function routePaths(nodes, pos, cid) {
 }
 
 /**
- * The ghosts on `paths` (see mapView), as a Map id → ghost. Each ghost's
- * spot is added to `pos`.
+ * Ghosts: nodes on a shown node's route that aren't drawn as nodes (hidden
+ * repeaters, or shown ones not placed yet). A ghost sits at its position on
+ * this map when it has one, else midway between its nearest positioned
+ * neighbors on the route (`approx`). Its kind is 'main' if any main route
+ * uses it, else 'backup', so the backup routes layer hides it. `routes`
+ * lists the { id, kind } routes it repeats for. Returns { ghosts: Map id →
+ * ghost, pos: `drawn` plus the ghosts' spots }.
  */
-function placeGhosts(paths, shown, positioned, pos) {
+function placeGhosts(paths, shown, positioned, drawn) {
+	const pos = new Map(drawn)
 	const ghosts = new Map()
 	const addGhost = (id, kind, p, approx) => {
 		pos.set(id, p)
@@ -331,7 +333,7 @@ function placeGhosts(paths, shown, positioned, pos) {
 			}
 		}
 	}
-	return ghosts
+	return { ghosts, pos }
 }
 
 /**
@@ -350,7 +352,15 @@ function between(path, i, pos) {
 	return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t]
 }
 
-/** The lines mapView draws: route hops, failed hops and neighbor lines */
+/**
+ * The lines mapView draws: route hops of shown nodes placed on this map,
+ * their failed hops, and neighbor lines between shown, positioned nodes.
+ * Each is { kind: 'main'|'backup'|'failed'|'neighbor', a, b, rate, routes,
+ * backupOnly }, `backupOnly` listing the routes that are a backup route
+ * drawn as the main one because their node has no main route. RSSI isn't
+ * part of a link, so a signal change doesn't change what is drawn: see
+ * linkRssi.
+ */
 function buildLinks(nodes, paths, shown, ghosts, pos, cid) {
 	const links = new Map()
 	const add = (kind, a, b, extra = {}) => {
@@ -371,8 +381,10 @@ function buildLinks(nodes, paths, shown, ghosts, pos, cid) {
 		}
 		links.set(key, l)
 	}
-	for (const { kind, n, route, backupOnly } of paths) {
-		for (const s of routeSegments(n, route, cid)) {
+	for (const { kind, n, route, path, backupOnly } of paths) {
+		// along `path`, which bridges repeaters no longer in the mesh
+		const repeaters = path.filter((id) => id !== cid && id !== n.id)
+		for (const s of routeSegments(n, { ...route, repeaters }, cid)) {
 			add(kind, s.from, s.to, {
 				rate: s.rate,
 				route: n.id,
@@ -449,6 +461,21 @@ function hopLevel(rssi) {
 	return !isRssiError(rssi) && rssi <= HEALTH.weakRssi ? 'warn' : null
 }
 
+/** The worst hop level on a route, or null, adding its weak hops to `hops` */
+function weakHops(n, kind, route, cid, hops) {
+	let worst = null
+	for (const s of routeSegments(n, route, cid)) {
+		const level = hopLevel(s.rssi)
+		if (!level) continue
+		const key = linkKey(kind, s.from, s.to)
+		if (!hops.has(key) || level === 'bad') {
+			hops.set(key, { a: s.from, b: s.to, kind, level, rssi: s.rssi })
+		}
+		if (worst !== 'bad') worst = level
+	}
+	return worst
+}
+
 /**
  * Mesh-health flags:
  *  nodes: Map id → { level: 'warn'|'bad', reasons: [text] }
@@ -506,22 +533,7 @@ export function meshHealth(nodes) {
 					`Failed hop ${route.routeFailedBetween.join(' → ')}`,
 				)
 			}
-			let worst = null
-			for (const s of routeSegments(n, route, cid)) {
-				const level = hopLevel(s.rssi)
-				if (!level) continue
-				const key = linkKey(kind, s.from, s.to)
-				if (!hops.has(key) || level === 'bad') {
-					hops.set(key, {
-						a: s.from,
-						b: s.to,
-						kind,
-						level,
-						rssi: s.rssi,
-					})
-				}
-				if (worst !== 'bad') worst = level
-			}
+			const worst = weakHops(n, kind, route, cid, hops)
 			if (worst && kind === 'main') {
 				flag(n.id, worst, 'Weak signal on its route')
 			}

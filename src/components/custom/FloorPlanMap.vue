@@ -94,6 +94,8 @@ import {
 	drawnShapeKey,
 	gridPlacements,
 	hopsOf,
+	labelOf,
+	linkKey,
 	linkRssi,
 	lwrOf,
 	mapView,
@@ -120,13 +122,6 @@ const LAYERS = [
 ]
 
 const esc = (s) => escapeHtml(String(s ?? ''))
-
-function labelOf(n) {
-	const status = statusOf(n)
-	if (status === 'failed') return `FAILED: ${nodeName(n)}`
-	if (status === 'dead') return `DEAD: ${nodeName(n)}`
-	return nodeName(n)
-}
 
 export default {
 	name: 'FloorPlanMap',
@@ -339,8 +334,10 @@ export default {
 			const id = Number(event.dataTransfer.getData('text/plain'))
 			const node = this.physicalNodes.find((n) => n.id === id)
 			if (!node) return
-			const { lat, lng } = this.lmap.mouseEventToLatLng(event)
-			this.place(node, lng, this.map.heightPx - lat)
+			this.place(
+				node,
+				...this.toCanvas(this.lmap.mouseEventToLatLng(event)),
+			)
 		},
 		/** every shown node not placed yet, in a grid along the bottom */
 		placeAll() {
@@ -450,6 +447,10 @@ export default {
 		toLatLng(x, y) {
 			return [this.map.heightPx - y, x]
 		},
+		/** the inverse of toLatLng: Leaflet { lat, lng } → canvas [x, y] */
+		toCanvas({ lat, lng }) {
+			return [lng, this.map.heightPx - lat]
+		},
 		draw() {
 			const lmap = this.lmap
 			if (!lmap) return
@@ -489,14 +490,11 @@ export default {
 			this.drawn = {
 				nodePos,
 				allPos: view.pos,
-				// route lines drawn, as 'a-b' with a < b
+				// main route lines drawn, by linkKey
 				routeLinks: new Set(
 					view.links
 						.filter((l) => l.kind === 'main')
-						.map(
-							(l) =>
-								`${Math.min(l.a, l.b)}-${Math.max(l.a, l.b)}`,
-						),
+						.map((l) => linkKey(l.kind, l.a, l.b)),
 				),
 			}
 			this.drawHealth()
@@ -589,45 +587,41 @@ export default {
 						.bindTooltip(`${tip}<br>Failed ❌`, { sticky: true })
 						.addTo(this.groups.routes)
 				} else {
-					const main = l.kind === 'main'
-					const backupOnly =
-						main && l.backupOnly.length === l.routes.length
-					// RSSI read when shown, so signal changes don't redraw
-					const detail = () =>
-						[
-							rssiLabel(linkRssi(this.physicalNodes, l)),
-							l.rate ? protocolDataRateToString(l.rate) : '',
-						]
-							.filter(Boolean)
-							.join(' · ')
-					const owners = l.routes
-						.map((id) =>
-							l.backupOnly.includes(id)
-								? `${name(id)} (backup route, no main route known)`
-								: name(id),
-						)
-						.join(', ')
-					const style = backupOnly
-						? 'backupOnly'
-						: main
-							? 'main'
-							: 'backup'
-					L.polyline([a, b], {
-						...LINE_STYLES[style],
-						color: rateColor(l.rate),
-					})
-						.bindTooltip(
-							() =>
-								`${tip}<br>${detail()}<br><span class="muted">route of ${owners}</span>`,
-							{ sticky: true },
-						)
-						.addTo(
-							main
-								? this.groups.routes
-								: this.groups.backupRoutes,
-						)
+					this.drawRouteLine(l, a, b, tip, name)
 				}
 			}
+		},
+		/** a main or backup route line, its tooltip naming the routes it carries */
+		drawRouteLine(l, a, b, tip, name) {
+			const main = l.kind === 'main'
+			const backupOnly = main && l.backupOnly.length === l.routes.length
+			// RSSI read when shown, so signal changes don't redraw
+			const detail = () =>
+				[
+					rssiLabel(linkRssi(this.physicalNodes, l)),
+					l.rate ? protocolDataRateToString(l.rate) : '',
+				]
+					.filter(Boolean)
+					.join(' · ')
+			const owners = l.routes
+				.map((id) =>
+					l.backupOnly.includes(id)
+						? `${name(id)} (backup route, no main route known)`
+						: name(id),
+				)
+				.join(', ')
+			let style = main ? 'main' : 'backup'
+			if (backupOnly) style = 'backupOnly'
+			L.polyline([a, b], {
+				...LINE_STYLES[style],
+				color: rateColor(l.rate),
+			})
+				.bindTooltip(
+					() =>
+						`${tip}<br>${detail()}<br><span class="muted">route of ${owners}</span>`,
+					{ sticky: true },
+				)
+				.addTo(main ? this.groups.routes : this.groups.backupRoutes)
 		},
 		nodeIcon(n) {
 			const stroke = statusOf(n) === 'ok' ? '#222' : '#fff'
@@ -689,8 +683,7 @@ export default {
 					})
 					marker.on('dragend', () => {
 						this.dragging = false
-						const { lat, lng } = marker.getLatLng()
-						this.place(n, lng, this.map.heightPx - lat)
+						this.place(n, ...this.toCanvas(marker.getLatLng()))
 						if (this.drawPending) {
 							this.drawPending = false
 							this.drawSoon()
@@ -755,7 +748,13 @@ export default {
 			this.groups.health.clearLayers()
 			const h = this.health
 			const name = this.nameById()
-			for (const [id, f] of h.nodes) {
+			this.drawNodeFlags(h.nodes, nodePos)
+			this.drawWeakHops(h.hops, allPos, routeLinks, name)
+			this.drawOneWay(h.oneWay, nodePos, name)
+		},
+		/** a ring around each node with a health flag */
+		drawNodeFlags(flags, nodePos) {
+			for (const [id, f] of flags) {
 				const p = nodePos.get(id)
 				if (!p) continue
 				L.circleMarker(p, {
@@ -770,11 +769,13 @@ export default {
 					})
 					.addTo(this.groups.health)
 			}
-			for (const hop of h.hops) {
+		},
+		/** a "!" halfway along each weak hop of a drawn main route line */
+		drawWeakHops(hops, allPos, routeLinks, name) {
+			for (const hop of hops) {
 				// only on a drawn route line: a hidden node's weak hop between
 				// two shown nodes has none
-				const link = `${Math.min(hop.a, hop.b)}-${Math.max(hop.a, hop.b)}`
-				if (hop.kind !== 'main' || !routeLinks.has(link)) continue
+				if (!routeLinks.has(linkKey(hop.kind, hop.a, hop.b))) continue
 				const a = allPos.get(hop.a)
 				const b = allPos.get(hop.b)
 				if (!a || !b) continue
@@ -802,7 +803,10 @@ export default {
 					)
 					.addTo(this.groups.health)
 			}
-			for (const w of h.oneWay) {
+		},
+		/** a line for each one-way neighbor entry */
+		drawOneWay(oneWay, nodePos, name) {
+			for (const w of oneWay) {
 				const a = nodePos.get(w.from)
 				const b = nodePos.get(w.to)
 				if (!a || !b) continue

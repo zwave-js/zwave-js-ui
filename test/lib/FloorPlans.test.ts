@@ -57,6 +57,18 @@ describe('#FloorPlans', () => {
 			0x03, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 		])
 		expect(imageSize(jpg)).toEqual({ w: 40, h: 30 })
+		// a phone photo: EXIF Orientation 6 (turned a quarter) before the SOF
+		const exif = (orientation: number) =>
+			Buffer.concat([
+				Buffer.from('ffd8ffe10022', 'hex'),
+				Buffer.from('Exif\0\0'),
+				Buffer.from('4d4d002a000000080001011200030000000100', 'hex'),
+				Buffer.from([orientation]),
+				Buffer.alloc(6),
+				jpg.subarray(2),
+			])
+		expect(imageSize(exif(6))).toEqual({ w: 30, h: 40 })
+		expect(imageSize(exif(3))).toEqual({ w: 40, h: 30 })
 	})
 
 	it('starts empty, with the graph as the default view', async () => {
@@ -113,6 +125,9 @@ describe('#FloorPlans', () => {
 					map('ok', bg('ok-1.png', '../../etc/passwd')),
 					map('svg', bg('a.svg')),
 					map('html', bg('a.html', 'b.webp')),
+					// wrong field types would break every read: dropped
+					{ ...map('text-bg', null), background: 'x' },
+					{ ...map('no-view', null), view: undefined },
 				],
 			}),
 		)
@@ -250,10 +265,9 @@ describe('#FloorPlans', () => {
 		const a = await fp.addMap({ name: 'House' })
 		const set = await fp.setMapImage(a.id, { bytes: PNG1 })
 		// canvas takes the image size when nothing is placed yet
-		expect([set.map.widthPx, set.map.heightPx]).toEqual([1, 1])
-		expect(set.map.background.imageRect).toEqual({ x: 0, y: 0, w: 1, h: 1 })
-		expect(set.stretched).toBe(false)
-		const first = set.map.background.image
+		expect([set.widthPx, set.heightPx]).toEqual([1, 1])
+		expect(set.background.imageRect).toEqual({ x: 0, y: 0, w: 1, h: 1 })
+		const first = set.background.image
 		expect(first.startsWith(`${a.id}-`)).toBe(true)
 
 		await fp.updateMap(a.id, { widthPx: 3000, heightPx: 5100 })
@@ -264,16 +278,14 @@ describe('#FloorPlans', () => {
 			imgHeightPx: 1,
 			dark: true,
 		})
-		expect(dark.map.background.image).toBe(first)
-		expect(dark.map.background.darkImage.startsWith(`${a.id}-dark-`)).toBe(
-			true,
-		)
+		expect(dark.background.image).toBe(first)
+		expect(dark.background.darkImage.startsWith(`${a.id}-dark-`)).toBe(true)
 
 		const replaced = await fp.setMapImage(a.id, { bytes: PNG1 })
-		expect(replaced.map.background.image).not.toBe(first)
+		expect(replaced.background.image).not.toBe(first)
 		expect(existsSync(path.join(fp.imagesDir, first))).toBe(false)
 		// the frame stays where it was
-		expect(replaced.map.background.imageRect).toEqual({
+		expect(replaced.background.imageRect).toEqual({
 			x: 0,
 			y: 0,
 			w: 1,
@@ -283,7 +295,7 @@ describe('#FloorPlans', () => {
 
 		await fp.removeMapImage(a.id, { dark: true })
 		expect((await mapOf(fp, a.id)).background.darkImage).toBeNull()
-		expect(images(fp)).toEqual([replaced.map.background.image])
+		expect(images(fp)).toEqual([replaced.background.image])
 
 		// the background goes with its last picture
 		await fp.removeMapImage(a.id)
@@ -319,43 +331,38 @@ describe('#FloorPlans', () => {
 			map.placements.map((p) => [p.x, p.y])
 
 		const stretched = await fp.setMapImage(await setup(), tall)
-		expect(stretched.stretched).toBe(true)
-		expect([stretched.map.widthPx, stretched.map.heightPx]).toEqual([
-			1000, 500,
-		])
-		expect(at(stretched.map)).toEqual([
+		expect([stretched.widthPx, stretched.heightPx]).toEqual([1000, 500])
+		expect(at(stretched)).toEqual([
 			[500, 250],
 			[900, 100],
 		])
-		expect(stretched.map.view.zoom).toBe(1)
+		expect(stretched.view.zoom).toBe(1)
 
 		const scaled = await fp.setMapImage(await setup(), {
 			...tall,
 			fit: 'scale',
 		})
-		expect(scaled.stretched).toBe(false)
-		expect([scaled.map.widthPx, scaled.map.heightPx]).toEqual([400, 800])
-		expect(scaled.map.background.imageRect).toEqual({
+		expect([scaled.widthPx, scaled.heightPx]).toEqual([400, 800])
+		expect(scaled.background.imageRect).toEqual({
 			x: 0,
 			y: 0,
 			w: 400,
 			h: 800,
 		})
-		expect(at(scaled.map)).toEqual([
+		expect(at(scaled)).toEqual([
 			[200, 400],
 			[360, 160],
 		])
 		// the old zoom and center don't fit the new canvas; layers stay
-		expect(scaled.map.view.center).toBeNull()
-		expect(scaled.map.view.zoom).toBeNull()
+		expect(scaled.view.center).toBeNull()
+		expect(scaled.view.zoom).toBeNull()
 
 		const kept = await fp.setMapImage(await setup(), {
 			...tall,
 			fit: 'keep',
 		})
-		expect(kept.stretched).toBe(false)
 		// pulled onto the new edge when outside it
-		expect(at(kept.map)).toEqual([
+		expect(at(kept)).toEqual([
 			[400, 250],
 			[400, 100],
 		])
@@ -371,15 +378,15 @@ describe('#FloorPlans', () => {
 		const fp = await fresh()
 		const m = await fp.addMap({ name: 'House' })
 		const set = await fp.setMapImage(m.id, { bytes: PNG1, dark: true })
-		expect(set.map.background).toEqual({
+		expect(set.background).toEqual({
 			image: null,
 			darkImage: expect.stringMatching(new RegExp(`^${m.id}-dark-`)),
 			imageRect: { x: 0, y: 0, w: 1, h: 1 },
 		})
-		expect([set.map.widthPx, set.map.heightPx]).toEqual([1, 1])
+		expect([set.widthPx, set.heightPx]).toEqual([1, 1])
 
 		const both = await fp.setMapImage(m.id, { bytes: PNG1 })
-		expect(both.map.background.image).toBeTruthy()
+		expect(both.background.image).toBeTruthy()
 		// removing one picture keeps the other
 		await fp.removeMapImage(m.id)
 		const left = (await mapOf(fp, m.id)).background
@@ -398,14 +405,14 @@ describe('#FloorPlans', () => {
 		await fp.setMapImage(a.id, { bytes: PNG1, dark: true })
 		const kept = await fp.setMapImage(b.id, { bytes: PNG1 })
 		await fp.deleteMap(a.id)
-		expect(images(fp)).toEqual([kept.map.background.image])
+		expect(images(fp)).toEqual([kept.background.image])
 	})
 
 	it('keeps the old picture and drops the new one when maps.json cannot be written', async () => {
 		const fp = await fresh()
 		const m = await fp.addMap({ name: 'House' })
 		const set = await fp.setMapImage(m.id, { bytes: PNG1 })
-		const old = set.map.background.image
+		const old = set.background.image
 
 		// the image write renames first, then maps.json: fail the second
 		const real = vi.mocked(fsp.rename).getMockImplementation()
@@ -437,8 +444,8 @@ describe('#FloorPlans', () => {
 		expect(files.map((f) => f.name).sort()).toEqual(
 			[
 				'maps.json',
-				`images/${set.map.background.image}`,
-				`images/${dark.map.background.darkImage}`,
+				`images/${set.background.image}`,
+				`images/${dark.background.darkImage}`,
 			].sort(),
 		)
 		for (const { name, file } of files) {
@@ -446,7 +453,7 @@ describe('#FloorPlans', () => {
 		}
 
 		// a missing picture is skipped, a broken maps.json still backed up
-		await fsp.rm(path.join(fp.imagesDir, set.map.background.image))
+		await fsp.rm(path.join(fp.imagesDir, set.background.image))
 		expect(await list()).toHaveLength(2)
 		await writeFile(fp.file, '{ nope')
 		expect(await list()).toEqual([{ name: 'maps.json', file: fp.file }])
@@ -467,7 +474,7 @@ describe('#FloorPlans', () => {
 			.removeMapImage(m.id)
 			.then(() => order.push('image removed'))
 		await new Promise((r) => setTimeout(r, 20))
-		expect(images(fp)).toEqual([set.map.background.image])
+		expect(images(fp)).toEqual([set.background.image])
 		release()
 		await Promise.all([backup, remove])
 		expect(order).toEqual(['backup start', 'backup end', 'image removed'])
@@ -485,7 +492,7 @@ describe('#FloorPlans', () => {
 
 		await fp.restoreFrom(backup.dir)
 		expect((await fp.load()).maps.map((x) => x.name)).toEqual(['Then'])
-		expect(images(fp)).toEqual([set.map.background.image])
+		expect(images(fp)).toEqual([set.background.image])
 		// nothing left next to the folder
 		expect(
 			readdirSync(path.dirname(fp.dir)).filter((n) =>
@@ -526,7 +533,7 @@ describe('#FloorPlans', () => {
 			vi.mocked(fsp.rename).mockImplementation(real)
 		}
 		expect((await fp.load()).maps.map((x) => x.name)).toEqual(['Now'])
-		expect(images(fp)).toEqual([set.map.background.image])
+		expect(images(fp)).toEqual([set.background.image])
 		expect(leftovers(fp)).toEqual([])
 	})
 
@@ -542,6 +549,35 @@ describe('#FloorPlans', () => {
 				JSON.stringify({ version: 1, maps: [{ id: '../x' }] }),
 				'invalid id',
 			],
+			[
+				JSON.stringify({
+					version: 1,
+					maps: [
+						{
+							id: 'a',
+							name: 'A',
+							widthPx: 10,
+							heightPx: 10,
+							background: {
+								image: '../x.png',
+								darkImage: null,
+								imageRect: { x: 0, y: 0, w: 10, h: 10 },
+							},
+							nodes: { start: 'include', exceptions: [] },
+							view: {},
+							placements: [],
+						},
+					],
+				}),
+				'invalid image "../x.png"',
+			],
+			[
+				JSON.stringify({
+					version: 1,
+					maps: [{ id: 'a', background: 'x' }],
+				}),
+				'invalid name',
+			],
 		]) {
 			await writeFile(backup.file, content)
 			await expect(fp.restoreFrom(backup.dir)).rejects.toThrow(error)
@@ -555,10 +591,10 @@ describe('#FloorPlans', () => {
 		const backup = await fresh()
 		const b = await backup.addMap({ name: 'Then' })
 		const set = await backup.setMapImage(b.id, { bytes: PNG1 })
-		await fsp.rm(path.join(backup.imagesDir, set.map.background.image))
+		await fsp.rm(path.join(backup.imagesDir, set.background.image))
 		await fp.restoreFrom(backup.dir)
 		expect((await mapOf(fp, b.id)).background.image).toBe(
-			set.map.background.image,
+			set.background.image,
 		)
 	})
 

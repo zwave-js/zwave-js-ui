@@ -45,6 +45,11 @@ class BackupManager {
 		return this.config.nvmBackupOnEvent
 	}
 
+	/** Whether store backups, scheduled or manual, include the floorplans */
+	get storeFloorPlans() {
+		return this.config?.storeFloorPlans ?? this.default.storeFloorPlans
+	}
+
 	nextRun(job: Cron) {
 		if (job?.nextRun()) {
 			return job.nextRun().toLocaleString()
@@ -140,7 +145,7 @@ class BackupManager {
 
 		try {
 			const backupFile = await jsonStore.backup({
-				includeFloorPlans: this.config.storeFloorPlans,
+				includeFloorPlans: this.storeFloorPlans,
 			})
 
 			logger.info(`Backup STORE created: ${backupFile}`)

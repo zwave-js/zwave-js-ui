@@ -255,6 +255,19 @@ describe('meshView', () => {
 			]),
 		)
 		expect(v5.links.some((l) => l.kind === 'failed')).toBe(true)
+
+		// a stale route through a removed repeater bridges over it
+		const v8 = mapView(
+			[NODES[0], node(9, { lwr: route([40], -70, [-71], 3) })],
+			new Set([1, 9]),
+			new Map([
+				[1, [0, 0]],
+				[9, [0, 100]],
+			]),
+		)
+		expect(v8.links.map((l) => [l.kind, l.a, l.b])).toEqual([
+			['main', 1, 9],
+		])
 	})
 
 	it('reads link RSSI from the current statistics, keeping it out of the drawing', () => {
@@ -349,7 +362,7 @@ describe('meshView', () => {
 	})
 
 	it('battery tag levels and report ages', () => {
-		expect([90, 30, 16, 15, 0, null].map(batteryLevelClass)).toEqual([
+		expect([90, 30, 11, 10, 0, null].map(batteryLevelClass)).toEqual([
 			'ok',
 			'warn',
 			'warn',

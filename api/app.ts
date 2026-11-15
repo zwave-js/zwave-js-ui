@@ -16,7 +16,7 @@ import MqttClient from './lib/MqttClient.ts'
 import SocketManager from './lib/SocketManager.ts'
 import type { CallAPIResult, ZwaveConfig } from './lib/ZwaveClient.ts'
 import ZWaveClient from './lib/ZwaveClient.ts'
-import multer, { diskStorage, memoryStorage } from 'multer'
+import multer, { diskStorage } from 'multer'
 import extract from 'extract-zip'
 import { serverVersion } from '@zwave-js/server'
 import archiver from 'archiver'
@@ -53,12 +53,8 @@ import {
 } from './lib/SocketEvents.ts'
 import * as utils from './lib/utils.ts'
 import backupManager from './lib/BackupManager.ts'
-import floorPlans, {
-	InputError,
-	MAX_IMAGE_BYTES,
-	MAX_IMAGE_MB,
-	STRETCH_TOLERANCE,
-} from './lib/FloorPlans.ts'
+import floorPlans from './lib/FloorPlans.ts'
+import floorPlansRouter from './routes/floorPlans.ts'
 import {
 	getExternallyManagedPaths,
 	loadExternalSettings,
@@ -126,13 +122,6 @@ const Storage = diskStorage({
 const multerUpload = multer({
 	storage: Storage,
 }).array('upload', 1) // Field name and max count
-
-// floorplan background images are kept in memory: they are sniffed and size
-// checked before anything is written to the store
-const floorPlanImageUpload = multer({
-	storage: memoryStorage(),
-	limits: { fileSize: MAX_IMAGE_BYTES, files: 1 },
-}).single('upload')
 
 const FileStore = sessionStore(session)
 const app = express()
@@ -2066,7 +2055,7 @@ app.get(
 		try {
 			await jsonStore.backup({
 				res,
-				includeFloorPlans: req.query.floorPlans !== 'false',
+				includeFloorPlans: backupManager.storeFloorPlans,
 			})
 		} catch (error) {
 			res.status(500).send({
@@ -2156,178 +2145,7 @@ app.post(
 	},
 )
 
-// -------- Floorplans API --------
-
-/** Run a floorplans handler and reply with the usual `{ success, data }` shape */
-function floorPlansRoute(
-	handler: (req: Request, res: Response) => Promise<unknown>,
-) {
-	return async function (req: Request, res: Response) {
-		try {
-			res.json({ success: true, data: await handler(req, res) })
-		} catch (error) {
-			// refused input is the caller's problem, keep error for storage faults
-			const level = error instanceof InputError ? 'warn' : 'error'
-			logger[level](
-				`Floorplans ${req.method} ${req.path}: ${error.message}`,
-			)
-			res.json({ success: false, message: error.message })
-		}
-	}
-}
-
-// the floorplans as `data` (the shape of maps.json), and next to it the
-// limits the UI checks before uploading
-app.get(
-	'/api/floorplans',
-	apisLimiter,
-	isAuthenticated,
-	async function (req, res) {
-		try {
-			res.json({
-				success: true,
-				data: await floorPlans.load(),
-				limits: {
-					maxImageBytes: MAX_IMAGE_BYTES,
-					maxImageMb: MAX_IMAGE_MB,
-					stretchTolerance: STRETCH_TOLERANCE,
-				},
-			})
-		} catch (error) {
-			logger.error(`Floorplans GET /api/floorplans: ${error.message}`)
-			res.json({ success: false, message: error.message })
-		}
-	},
-)
-
-app.patch(
-	'/api/floorplans/settings',
-	apisLimiter,
-	isAuthenticated,
-	floorPlansRoute((req) => floorPlans.updateSettings(req.body ?? {})),
-)
-
-app.post(
-	'/api/floorplans/maps',
-	apisLimiter,
-	isAuthenticated,
-	floorPlansRoute((req) => floorPlans.addMap(req.body ?? {})),
-)
-
-app.patch(
-	'/api/floorplans/maps/:id',
-	apisLimiter,
-	isAuthenticated,
-	floorPlansRoute((req) => floorPlans.updateMap(req.params.id, req.body)),
-)
-
-app.delete(
-	'/api/floorplans/maps/:id',
-	apisLimiter,
-	isAuthenticated,
-	floorPlansRoute((req) => floorPlans.deleteMap(req.params.id)),
-)
-
-// multipart: `upload` file, `dark=true` for the dark theme picture, `fit`
-// (see FloorPlans.setMapImage), and the browser-decoded
-// `imgWidthPx`/`imgHeightPx`, used if the header can't be read
-app.put(
-	'/api/floorplans/maps/:id/image',
-	apisLimiter,
-	isAuthenticated,
-	floorPlansRoute(async (req, res) => {
-		try {
-			await multerPromise(floorPlanImageUpload, req, res)
-		} catch (error) {
-			if (error.code === 'LIMIT_FILE_SIZE') {
-				throw new InputError(`Image is larger than ${MAX_IMAGE_MB} MB`)
-			}
-			if (error.name === 'MulterError') {
-				throw new InputError(error.message)
-			}
-			throw error
-		}
-		if (!req.file) throw new InputError('No file uploaded')
-		return floorPlans.setMapImage(req.params.id, {
-			bytes: req.file.buffer,
-			imgWidthPx: Number(req.body.imgWidthPx),
-			imgHeightPx: Number(req.body.imgHeightPx),
-			dark: req.body.dark === 'true',
-			fit: req.body.fit || undefined,
-		})
-	}),
-)
-
-// ?dark=true removes the dark theme picture, otherwise the light one
-app.delete(
-	'/api/floorplans/maps/:id/image',
-	apisLimiter,
-	isAuthenticated,
-	floorPlansRoute((req) =>
-		floorPlans.removeMapImage(req.params.id, {
-			dark: req.query.dark === 'true',
-		}),
-	),
-)
-
-// body: { placements: [{ deviceKey, x, y }, ...] }, placed in one write
-app.put(
-	'/api/floorplans/maps/:id/placements',
-	apisLimiter,
-	isAuthenticated,
-	floorPlansRoute((req) =>
-		floorPlans.setPlacements(req.params.id, req.body?.placements),
-	),
-)
-
-app.delete(
-	'/api/floorplans/maps/:id/placements/:deviceKey',
-	apisLimiter,
-	isAuthenticated,
-	floorPlansRoute((req) =>
-		floorPlans.removePlacement(req.params.id, req.params.deviceKey),
-	),
-)
-
-// Background image file. Served by file name: the dot keeps the history
-// fallback from rewriting browser image requests (Accept: */*), and a
-// replaced image always gets a new name, so it can be cached. Only files a
-// map references are served.
-
-app.get(
-	'/api/floorplans/images/:file',
-	apisLimiter,
-	isAuthenticated,
-	async function (req, res) {
-		const notFound = () =>
-			res.status(404).json({ success: false, message: 'No such image' })
-		try {
-			const { maps } = await floorPlans.load()
-			const file = req.params.file
-			const owned = maps.some(
-				(m) =>
-					m.background?.image === file ||
-					m.background?.darkImage === file,
-			)
-			if (!owned) return notFound()
-			res.set({
-				'Cache-Control': 'private, max-age=31536000, immutable',
-				'X-Content-Type-Options': 'nosniff',
-			})
-			// referenced but missing on disk only if someone deleted it: the
-			// UI doesn't ask for it again until the page is reloaded
-			res.sendFile(file, { root: floorPlans.imagesDir }, (err) => {
-				if (err && !res.headersSent) {
-					logger.warn(`Floorplan image ${file}: ${err.message}`)
-					notFound()
-				}
-			})
-		} catch (error) {
-			logger.error(`Floorplan image ${req.params.file}: ${error.message}`)
-			res.status(500).json({ success: false, message: error.message })
-		}
-	},
-)
+app.use('/api/floorplans', floorPlansRouter(isAuthenticated))
 
 app.get(
 	'/api/snippet',
