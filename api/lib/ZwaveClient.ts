@@ -1096,11 +1096,11 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		this._virtualNodes = new Map()
 		this._socketEventAdapter = new SocketEventAdapter(
 			{
-				getSocket: () => this.requireSocket(),
+				getSocket: () => this.socket ?? null,
 				getGeneration: () => this._nodeGeneration,
 				isCurrent: (generation, socket) =>
 					this._isCurrentNodeGeneration(generation) &&
-					socket === this.requireSocket() &&
+					socket === this.socket &&
 					!!this._nodeRegistry,
 			},
 			logger,

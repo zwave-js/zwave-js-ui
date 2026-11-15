@@ -137,14 +137,6 @@ type GatewayTopicNode = Omit<HassTopicNode, 'values'> & {
 	values?: Record<string, ZUIValueId>
 }
 
-interface GatewayMqttPublishPort {
-	publish(
-		topic: string | null,
-		data: unknown,
-		options: IClientPublishOptions | null,
-	): unknown
-}
-
 interface GatewayZwaveApiPort {
 	callApi(
 		apiName: string,
@@ -318,22 +310,6 @@ export default class Gateway<
 		return zwave
 	}
 
-	private get gatewayMqtt(): GatewayMqttPublishPort {
-		const mqtt = this.requireMqtt()
-		return {
-			publish: (topic, data, options) =>
-				Reflect.apply(mqtt.publish.bind(mqtt), mqtt, [
-					topic,
-					data,
-					options,
-				]),
-		}
-	}
-
-	private get gatewayZwaveApi(): GatewayZwaveApiPort {
-		return this.requireZwave()
-	}
-
 	async start(): Promise<void> {
 		this._mqttDiscovery.start(this._mqtt, this.mqttEnabled)
 		// gateway configuration
@@ -383,14 +359,9 @@ export default class Gateway<
 						this.runJob.bind(this, jobConfig),
 					)
 
-					if (job?.nextRun()) {
+					const nextRun = job?.nextRun()
+					if (nextRun) {
 						this.jobs.set(jobConfig.name, job)
-						const nextRun = job.nextRun()
-						if (nextRun === null) {
-							throw new TypeError(
-								"Cannot read properties of null (reading 'toISOString')",
-							)
-						}
 						logger.info(
 							`Scheduled job "${jobConfig.name}" will run at ${nextRun.toISOString()}`,
 						)
@@ -419,13 +390,8 @@ export default class Gateway<
 
 		const job = this.jobs.get(jobConfig.name)
 
-		if (job?.nextRun()) {
-			const nextRun = job.nextRun()
-			if (nextRun === null) {
-				throw new TypeError(
-					"Cannot read properties of null (reading 'toISOString')",
-				)
-			}
+		const nextRun = job?.nextRun()
+		if (nextRun) {
 			logger.info(
 				`Next scheduled job "${jobConfig.name}" will run at ${nextRun.toISOString()}`,
 			)
@@ -1048,9 +1014,9 @@ export default class Gateway<
 			}
 		}
 
-		let mqttOptions: IClientPublishOptions | null = valueId.stateless
+		let mqttOptions: IClientPublishOptions | undefined = valueId.stateless
 			? { retain: false }
-			: null
+			: undefined
 
 		if (valueConf) {
 			mqttOptions = mqttOptions || {}
@@ -1072,7 +1038,7 @@ export default class Gateway<
 				`Skipping send of stateless value ${valueId.id}: it's from cache`,
 			)
 		} else {
-			this.gatewayMqtt.publish(topic, data, mqttOptions)
+			this.requireMqtt().publish(topic, data, mqttOptions)
 		}
 	}
 
@@ -1095,7 +1061,8 @@ export default class Gateway<
 			data = { time: Date.now(), value: data }
 		}
 
-		this.gatewayMqtt.publish(topic, data, { retain: false })
+		// A missing topic publishes to "<prefix>/null", as before strict mode
+		this.requireMqtt().publish(topic as string, data, { retain: false })
 	}
 
 	private _onNodeInited(node: ZUINode): void {
@@ -1243,7 +1210,7 @@ export default class Gateway<
 			let result: CallAPIResult<AllowedApis> & { origin?: any }
 
 			if (Array.isArray(args)) {
-				result = await this.gatewayZwaveApi.callApi(apiName, ...args)
+				result = await zwave.callApi(apiName, ...args)
 				result.origin = payload
 			} else {
 				result = {
