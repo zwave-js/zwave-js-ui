@@ -1,5 +1,8 @@
-import { describe, it, expect, vi } from 'vitest'
+import { beforeAll, describe, it, expect, vi } from 'vitest'
 import { loadAppModule, loadJsonStore } from '../shared/harness.ts'
+
+// cold-importing api/app.ts takes seconds; keep it out of the first test's timeout
+beforeAll(() => loadAppModule(), 30_000)
 
 describe('AppInstance: fatal-error labeling', () => {
 	it('labels each installed fatal-event handler from the event that fired', async () => {
