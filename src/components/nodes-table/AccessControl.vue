@@ -116,6 +116,70 @@
 												`User ${user.userId}`
 											}}
 										</span>
+										<v-text-field
+											v-if="
+												editingLocalNameUserId ===
+												user.userId
+											"
+											v-model="localNameDraft"
+											density="compact"
+											variant="outlined"
+											hide-details
+											single-line
+											label="Local name"
+											autofocus
+											style="max-width: 160px"
+											class="mr-2 local-name-field"
+											:disabled="savingLocalName"
+											@click.stop
+											@keyup.enter.stop="
+												saveLocalName(user)
+											"
+											@keyup.esc.stop="
+												cancelEditLocalName
+											"
+										/>
+										<template
+											v-if="
+												editingLocalNameUserId ===
+												user.userId
+											"
+										>
+											<v-btn
+												icon="check"
+												size="x-small"
+												variant="text"
+												density="comfortable"
+												class="mr-1"
+												:loading="savingLocalName"
+												@click.stop="
+													saveLocalName(user)
+												"
+											/>
+											<v-btn
+												icon="close"
+												size="x-small"
+												variant="text"
+												density="comfortable"
+												class="mr-2"
+												:disabled="savingLocalName"
+												@click.stop="
+													cancelEditLocalName
+												"
+											/>
+										</template>
+										<v-chip
+											v-else-if="user.localName"
+											size="x-small"
+											variant="tonal"
+											prepend-icon="badge"
+											class="mr-2"
+											@click.stop="
+												startEditLocalName(user)
+											"
+										>
+											{{ user.localName }}
+										</v-chip>
 										<v-chip
 											v-if="
 												user.credentialRule &&
@@ -179,6 +243,18 @@
 										>
 											<v-list-item-title>
 												Edit user
+											</v-list-item-title>
+										</v-list-item>
+										<v-list-item
+											prepend-icon="badge"
+											@click="startEditLocalName(user)"
+										>
+											<v-list-item-title>
+												{{
+													user.localName
+														? 'Edit local name'
+														: 'Set local name'
+												}}
 											</v-list-item-title>
 										</v-list-item>
 										<v-list-item
@@ -938,6 +1014,9 @@ export default {
 			deletingAllUsers: false,
 			deletingCredentials: false,
 			revealedCredentials: new Set(),
+			editingLocalNameUserId: null,
+			localNameDraft: '',
+			savingLocalName: false,
 			userDialog: {
 				show: false,
 				initial: null,
@@ -1736,6 +1815,35 @@ export default {
 				}
 			} finally {
 				this.deletingCredentials = false
+			}
+		},
+		startEditLocalName(user) {
+			this.editingLocalNameUserId = user.userId
+			this.localNameDraft = user.localName || ''
+		},
+		cancelEditLocalName() {
+			this.editingLocalNameUserId = null
+			this.localNameDraft = ''
+		},
+		async saveLocalName(user) {
+			if (!this.currentEndpoint || this.savingLocalName) return
+			this.savingLocalName = true
+			try {
+				const res = await this.app.apiRequest(
+					'accessControlSetUserLocalName',
+					[
+						this.node.id,
+						this.currentEndpoint.endpointIndex,
+						user.userId,
+						this.localNameDraft.trim(),
+					],
+					{ infoSnack: false, errorSnack: true },
+				)
+				if (!res.success) return
+				this.editingLocalNameUserId = null
+				this.localNameDraft = ''
+			} finally {
+				this.savingLocalName = false
 			}
 		},
 		startAdminPinEdit() {
