@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import ZwaveClient from '../../api/lib/ZwaveClient.ts'
 import { DriverLifecycle } from '../../api/lib/zwave/DriverLifecycle.ts'
+import { NodeRegistry } from '../../api/lib/zwave/NodeRegistry.ts'
 
 // `throttle` only touches `throttledFunctions`, so these tests skip the real
 // constructor. It reads the json stores and needs a socket server.
@@ -308,21 +309,33 @@ describe('#ZwaveClient', () => {
 				onReplacementComplete: vi.fn(),
 				takeTmpNode: vi.fn(() => options.tmpNode),
 			}
+			// The store write the registry routes back into the client
 			const updateStoreNodes = vi.fn().mockResolvedValue(undefined)
 			Object.assign(client, {
 				_inclusionCoordinator: coordinator,
-				_nodes: new Map(),
-				storeNodes: {},
+				_nodeGeneration: 0,
+				driverInfo: { name: '0xabcdef01' },
 				_driver: {
 					controller: {
 						getPrioritySUCReturnRouteCached: vi.fn(),
 						getCustomSUCReturnRoutesCached: vi.fn(),
 					},
 				},
-				updateStoreNodes,
+				_updateStoreNodesSnapshot: updateStoreNodes,
 				sendToSocket: vi.fn(),
 				emit: vi.fn(),
 			})
+			// Wire a real registry through the client's own host so the
+			// coordinator calls below go through production wiring
+			client['_nodeRegistry'] = new NodeRegistry(
+				client['_buildNodeRegistryHost'](),
+				{
+					debug: vi.fn(),
+					info: vi.fn(),
+					warn: vi.fn(),
+					error: vi.fn(),
+				},
+			)
 			return { client, coordinator, updateStoreNodes }
 		}
 
@@ -346,7 +359,9 @@ describe('#ZwaveClient', () => {
 			client['_removeNode'](5)
 
 			expect(client['storeNodes'][5]).toBeUndefined()
-			expect(updateStoreNodes).toHaveBeenCalledWith(false)
+			expect(updateStoreNodes).toHaveBeenCalledOnce()
+			// throwError is false
+			expect(updateStoreNodes.mock.calls[0][1]).toBe(false)
 		})
 
 		it('skips the store write for a node that was never stored', () => {
