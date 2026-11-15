@@ -401,6 +401,26 @@ describe('#ZwaveClient', () => {
 			)
 		})
 
+		it('resets both lifecycle services on close', async () => {
+			const { client, coordinator } = createWiredClient()
+			const reset = vi.fn()
+			const resetGeneration = vi.fn()
+			Object.assign(coordinator, { reset })
+			Object.assign(client, {
+				_firmwareUpdateService: { resetGeneration },
+				_serverManager: {
+					destroy: vi.fn().mockResolvedValue(undefined),
+				},
+				_driver: null,
+				throttledFunctions: new Map(),
+			})
+
+			await client.close(true)
+
+			expect(reset).toHaveBeenCalledTimes(1)
+			expect(resetGeneration).toHaveBeenCalledTimes(1)
+		})
+
 		it('completes the replacement when the new node is added', async () => {
 			const { client, coordinator } = createWiredClient()
 			Object.assign(client, {
