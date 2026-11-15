@@ -190,6 +190,18 @@ import { escapeHtml } from '@/lib/utils.js'
 
 const settings = new Settings(localStorage)
 
+/** A picture's size as shown (EXIF rotation applied), without decoding all of it */
+function pictureSize(file) {
+	const url = URL.createObjectURL(file)
+	const img = new Image()
+	return new Promise((resolve, reject) => {
+		img.onload = () =>
+			resolve({ w: img.naturalWidth, h: img.naturalHeight })
+		img.onerror = reject
+		img.src = url
+	}).finally(() => URL.revokeObjectURL(url))
+}
+
 export default {
 	name: 'FloorPlanView',
 	mixins: [InstancesMixin],
@@ -236,6 +248,8 @@ export default {
 	created() {
 		// only the newest load may update the page, see loadFloorPlans
 		this.loadCount = 0
+		// the write calls in flight, see floorPlanCall
+		this.writes = Promise.resolve()
 	},
 	mounted() {
 		this.loadFloorPlans()
@@ -273,10 +287,13 @@ export default {
 		/**
 		 * Run a floorplan API call and `apply` its reply to the local copy,
 		 * so a write costs one request. Only a failure reloads everything.
+		 * Calls run one at a time, so the server gets them in the order made.
 		 */
 		async floorPlanCall(what, call, apply) {
+			const run = this.writes.then(call)
+			this.writes = run.catch(() => {})
 			try {
-				const res = await call()
+				const res = await run
 				if (!res.success) throw Error(res.message)
 				apply(res.data)
 				return res.data
@@ -402,14 +419,7 @@ export default {
 				return
 			}
 			// the server reads the size from the header; this is the fallback
-			let size = null
-			try {
-				const bitmap = await createImageBitmap(file)
-				size = { w: bitmap.width, h: bitmap.height }
-				bitmap.close()
-			} catch {
-				// not decodable here, the server decides
-			}
+			const size = await pictureSize(file).catch(() => null)
 			const fit = size
 				? await this.askImageFit(map, size, dark)
 				: 'stretch'

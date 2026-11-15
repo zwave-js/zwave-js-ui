@@ -50,11 +50,10 @@ export default function floorPlansRouter(
 			try {
 				res.json({ success: true, data: await handler(req, res) })
 			} catch (error) {
-				// refused input is the caller's problem, keep error for storage faults
-				const level = error instanceof InputError ? 'warn' : 'error'
-				logger[level](
-					`Floorplans ${req.method} ${req.path}: ${error.message}`,
-				)
+				const msg = `Floorplans ${req.method} ${req.path}: ${error.message}`
+				// refused input is the caller's problem; a storage fault keeps its stack
+				if (error instanceof InputError) logger.warn(msg)
+				else logger.error(msg, error)
 				res.json({ success: false, message: error.message })
 			}
 		}
@@ -74,7 +73,10 @@ export default function floorPlansRouter(
 				},
 			})
 		} catch (error) {
-			logger.error(`Floorplans GET /api/floorplans: ${error.message}`)
+			logger.error(
+				`Floorplans GET /api/floorplans: ${error.message}`,
+				error,
+			)
 			res.json({ success: false, message: error.message })
 		}
 	})
@@ -184,7 +186,10 @@ export default function floorPlansRouter(
 				}
 			})
 		} catch (error) {
-			logger.error(`Floorplan image ${req.params.file}: ${error.message}`)
+			logger.error(
+				`Floorplan image ${req.params.file}: ${error.message}`,
+				error,
+			)
 			res.status(500).json({ success: false, message: error.message })
 		}
 	})

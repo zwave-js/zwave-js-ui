@@ -2058,7 +2058,7 @@ app.get(
 				includeFloorPlans: backupManager.storeFloorPlans,
 			})
 		} catch (error) {
-			logger.error(`Store backup failed: ${error.message}`)
+			logger.error(`Store backup failed: ${error.message}`, error)
 			// once the zip is streaming, a status can't be sent any more
 			if (res.headersSent) res.destroy()
 			else res.status(500).send({ error: error.message })
@@ -2114,6 +2114,7 @@ app.post(
 						} catch (error) {
 							logger.error(
 								`Store restored without its floorplans: ${error.message}`,
+								error,
 							)
 							warning = `Store restored, but the floorplans were not (the current ones are kept): ${error.message}`
 						}
@@ -2136,6 +2137,7 @@ app.post(
 		} catch (err) {
 			logger.error(
 				`Store ${isRestore ? 'restore' : 'upload'} failed: ${err.message}`,
+				err,
 			)
 			res.json({ success: false, message: err.message })
 		}

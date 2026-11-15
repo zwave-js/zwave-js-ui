@@ -360,6 +360,33 @@ describe('floorplans API', () => {
 		await api('DELETE', `/maps/${map.id}`)
 	})
 
+	it('answers a failed backup without taking the server down', async () => {
+		const files = vi.spyOn(floorPlans, 'withBackupFiles')
+		try {
+			// before anything is sent: a 500
+			files.mockRejectedValueOnce(Error('early'))
+			const res = await fetch(`${url}/api/store/backup`, {
+				headers: { Accept: 'application/json, text/plain, */*' },
+			})
+			expect(res.status).toBe(500)
+			expect(await res.json()).toEqual({ error: 'early' })
+			// after the zip went out: no status to set, the server carries on
+			files.mockImplementationOnce(async (fn) => {
+				await fn([])
+				throw Error('late')
+			})
+			await fetch(`${url}/api/store/backup`, {
+				headers: { Accept: 'application/json, text/plain, */*' },
+			})
+				// the response is cut off
+				.then((r) => r.arrayBuffer())
+				.catch(() => null)
+			expect((await api('GET', '')).success).toBe(true)
+		} finally {
+			files.mockRestore()
+		}
+	})
+
 	it('keeps the current floorplans when the backup has none', async () => {
 		const zip = await backupWithoutFloorPlans()
 		const { data: map } = await api('POST', '/maps', { name: 'Newer' })

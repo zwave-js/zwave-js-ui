@@ -269,12 +269,12 @@ export function mapView(nodes, shown, positioned) {
  * spot here, as { kind, n, route, path, backupOnly }, `path` running
  * controller → repeaters → node over nodes that exist
  */
-function routePaths(nodes, pos, cid) {
+function routePaths(nodes, drawn, cid) {
 	const ids = new Set(nodes.map((n) => n.id))
 	const paths = []
 	for (const n of nodes) {
 		// a route is drawn once its node has a spot here, not before
-		if (!pos.has(n.id)) continue
+		if (!drawn.has(n.id)) continue
 		for (const [kind, route, backupOnly] of routesOf(n)) {
 			const path = [cid, ...(route.repeaters ?? []), n.id].filter((id) =>
 				ids.has(id),
@@ -461,6 +461,15 @@ function hopLevel(rssi) {
 	return !isRssiError(rssi) && rssi <= HEALTH.weakRssi ? 'warn' : null
 }
 
+/** Flag a node with no or few neighbors */
+function flagNeighborCount(n, flag) {
+	const count = n.neighbors?.length ?? 0
+	if (count === 0) flag(n.id, 'bad', 'Isolated, no neighbors')
+	else if (count < HEALTH.fewNeighbors) {
+		flag(n.id, 'warn', `Only ${count} neighbor${count === 1 ? '' : 's'}`)
+	}
+}
+
 /** The worst hop level on a route, or null, adding its weak hops to `hops` */
 function weakHops(n, kind, route, cid, hops) {
 	let worst = null
@@ -505,17 +514,7 @@ export function meshHealth(nodes) {
 	for (const n of nodes) {
 		if (n.isControllerNode) continue
 		const ok = statusOf(n) === 'ok'
-		if (tablesKnown && ok) {
-			const count = n.neighbors?.length ?? 0
-			if (count === 0) flag(n.id, 'bad', 'Isolated, no neighbors')
-			else if (count < HEALTH.fewNeighbors) {
-				flag(
-					n.id,
-					'warn',
-					`Only ${count} neighbor${count === 1 ? '' : 's'}`,
-				)
-			}
-		}
+		if (tablesKnown && ok) flagNeighborCount(n, flag)
 		if (!lwrOf(n) && !nlwrOf(n)) {
 			if (ok) flag(n.id, 'warn', 'No route statistics yet')
 		} else if (!lwrOf(n)) {

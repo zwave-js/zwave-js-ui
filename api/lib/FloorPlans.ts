@@ -428,15 +428,16 @@ export interface AddMapOptions {
 	name?: string
 	widthPx?: number
 	heightPx?: number
-	nodes?: NodeFilter
 }
 
+/**
+ * Fields PATCH /maps/:id changes. `nodes` and `view` are replaced whole,
+ * not merged with the stored ones.
+ */
 export interface MapChanges {
 	name?: string
 	nodes?: NodeFilter
 	view?: MapView
-	widthPx?: number
-	heightPx?: number
 }
 
 export class FloorPlans {
@@ -498,68 +499,62 @@ export class FloorPlans {
 		return this.enqueue(async () => fn(await this.listBackupFiles()))
 	}
 
-	/** A missing picture is skipped and an unreadable maps.json backed up as it is */
+	/** A missing picture is skipped; an unreadable maps.json is backed up as it is, with every picture */
 	private async listBackupFiles(): Promise<BackupFile[]> {
 		if (!(await pathExists(this.file))) return []
 		const out = [{ name: 'maps.json', file: this.file }]
-		let maps: FloorPlanMap[] = []
+		let names: string[]
 		try {
-			maps = (await this.load()).maps
+			names = (await this.load()).maps.flatMap((m) => [
+				m.background?.image,
+				m.background?.darkImage,
+			])
 		} catch (error) {
+			// e.g. a newer maps.json after a downgrade: keep every picture
 			logger.error(
-				`Backing up floorplans without images: ${error.message}`,
+				`Backing up all floorplan pictures, maps.json can't be used: ${error.message}`,
+			)
+			names = (await readdir(this.imagesDir).catch(() => [])).filter(
+				(n) => IMAGE_NAME.test(n),
 			)
 		}
-		for (const m of maps) {
-			for (const name of [m.background?.image, m.background?.darkImage]) {
-				if (!name) continue
-				const file = path.join(this.imagesDir, name)
-				if (await pathExists(file)) {
-					out.push({ name: `images/${name}`, file })
-				} else {
-					logger.warn(
-						`Floorplan image ${name} is missing, left out of the backup`,
-					)
-				}
+		for (const name of names) {
+			if (!name) continue
+			const file = path.join(this.imagesDir, name)
+			if (await pathExists(file)) {
+				out.push({ name: `images/${name}`, file })
+			} else {
+				logger.warn(
+					`Floorplan image ${name} is missing, left out of the backup`,
+				)
 			}
 		}
 		return out
 	}
 
+	/** Throw unless the maps.json in a restored folder is one this release can use */
+	private async checkRestored(dir: string) {
+		let raw: unknown
+		try {
+			raw = JSON.parse(
+				await readFile(path.join(dir, 'maps.json'), 'utf8'),
+			)
+		} catch (error) {
+			throw Error(
+				`The backup's floorplans/maps.json can't be read: ${error.message}`,
+			)
+		}
+		checkData(raw, "The backup's floorplans/maps.json", { strict: true })
+	}
+
 	/**
 	 * Replace the floorplans folder with a restored one. Replacing instead
-	 * of merging keeps pictures the backup doesn't use from piling up.
-	 * The restored maps.json is checked first: one this release can't use
-	 * is refused and the current floorplans stay. A picture it names that
-	 * isn't in the backup is only logged, the map shows without it.
+	 * of merging keeps pictures the backup doesn't use from piling up. One
+	 * this release can't use is refused and the current floorplans stay.
 	 */
 	restoreFrom(dir: string) {
 		return this.enqueue(async () => {
-			const file = path.join(dir, 'maps.json')
-			let raw: unknown
-			try {
-				raw = JSON.parse(await readFile(file, 'utf8'))
-			} catch (error) {
-				throw Error(
-					`The backup's floorplans/maps.json can't be read: ${error.message}`,
-				)
-			}
-			const data = checkData(raw, "The backup's floorplans/maps.json", {
-				strict: true,
-			})
-			for (const name of data.maps.flatMap((m) => [
-				m.background?.image,
-				m.background?.darkImage,
-			])) {
-				if (
-					name &&
-					!(await pathExists(path.join(dir, 'images', name)))
-				) {
-					logger.warn(
-						`Restored floorplans are missing picture ${name}`,
-					)
-				}
-			}
+			await this.checkRestored(dir)
 			const id = generateId()
 			const incoming = `${this.dir}.restore-${id}`
 			const old = `${this.dir}.old-${id}`
@@ -678,14 +673,12 @@ export class FloorPlans {
 		name,
 		widthPx = DEFAULT_WIDTH,
 		heightPx = DEFAULT_HEIGHT,
-		nodes = { start: 'include', exceptions: [] },
 	}: AddMapOptions = {}) {
 		if (!isDim(widthPx) || !isDim(heightPx)) {
 			throw new InputError(
 				`widthPx and heightPx must each be ${DIM_RULE}`,
 			)
 		}
-		const checked = checkNodes(nodes)
 		return this.update((data) => {
 			const map: FloorPlanMap = {
 				id: generateId(),
@@ -693,7 +686,7 @@ export class FloorPlans {
 				widthPx,
 				heightPx,
 				background: null,
-				nodes: checked,
+				nodes: { start: 'include', exceptions: [] },
 				view: checkView(null),
 				placements: [],
 			}
@@ -702,18 +695,8 @@ export class FloorPlans {
 		})
 	}
 
-	/**
-	 * Change a map. Positions are measured from the top-left, so growing the
-	 * canvas keeps them and the background's frame; shrinking it pulls nodes
-	 * that would fall outside back onto the edge.
-	 */
+	/** Rename a map, or change its node list or saved view */
 	async updateMap(id: string, c: MapChanges = {}) {
-		if (c.widthPx !== undefined && !isDim(c.widthPx)) {
-			throw new InputError(`widthPx must be ${DIM_RULE}`)
-		}
-		if (c.heightPx !== undefined && !isDim(c.heightPx)) {
-			throw new InputError(`heightPx must be ${DIM_RULE}`)
-		}
 		const nodes = c.nodes !== undefined ? checkNodes(c.nodes) : undefined
 		const view = c.view !== undefined ? checkView(c.view) : undefined
 		return this.update((data) => {
@@ -721,9 +704,6 @@ export class FloorPlans {
 			if (c.name !== undefined) map.name = cleanName(c.name, map.name)
 			if (nodes) map.nodes = nodes
 			if (view) map.view = view
-			if (c.widthPx !== undefined) map.widthPx = c.widthPx
-			if (c.heightPx !== undefined) map.heightPx = c.heightPx
-			map.placements = map.placements.map((p) => toPlacement(map, p))
 			return map
 		})
 	}
@@ -759,12 +739,9 @@ export class FloorPlans {
 	 * Set or replace a map's light theme picture, or with `dark` its dark
 	 * theme one, keeping its placements. The first picture of either kind
 	 * covers the whole canvas, and if nothing is placed yet the canvas takes
-	 * its size so it isn't stretched.
-	 * `fit` says what a picture of another shape does to the map: 'stretch'
-	 * it over the current frame, or use it as is, the canvas taking its size
-	 * and nodes keeping their spots relative to the old frame ('scale') or
-	 * their distance from its top-left corner ('keep'). Using it as is resets
-	 * the saved zoom and center, and stretches the other theme's picture.
+	 * its size so it isn't stretched. `fit` 'stretch' keeps the current
+	 * frame; 'scale' and 'keep' use the picture as is, see refitCanvas (the
+	 * other theme's picture is then stretched to it).
 	 * `imgWidthPx`/`imgHeightPx` (decoded by the browser) are used only when
 	 * the header can't be read.
 	 */
@@ -790,9 +767,6 @@ export class FloorPlans {
 		const kind = sniffImage(bytes)
 		if (!kind)
 			throw new InputError('Only PNG, JPEG or WebP images are accepted')
-		if (bytes.length > MAX_IMAGE_BYTES) {
-			throw new InputError(`Image is larger than ${MAX_IMAGE_MB} MB`)
-		}
 		const size =
 			imageSize(bytes) ??
 			(isDim(imgWidthPx) && isDim(imgHeightPx)

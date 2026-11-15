@@ -70,6 +70,44 @@ describe('#FloorPlans', () => {
 			])
 		expect(imageSize(exif(6))).toEqual({ w: 30, h: 40 })
 		expect(imageSize(exif(3))).toEqual({ w: 40, h: 30 })
+		// the same with a little-endian (II) TIFF header, Orientation 8
+		const exifLE = Buffer.concat([
+			Buffer.from('ffd8ffe10022', 'hex'),
+			Buffer.from('Exif\0\0'),
+			Buffer.from(
+				'49492a000800000001001201030001000000080000000000',
+				'hex',
+			),
+			Buffer.alloc(2),
+			jpg.subarray(2),
+		])
+		expect(imageSize(exifLE)).toEqual({ w: 30, h: 40 })
+		// WebP: lossy (VP8), lossless (VP8L) and extended (VP8X), 40x30
+		const webp = (chunk: string, data: Buffer) =>
+			Buffer.concat([
+				Buffer.from('RIFF\0\0\0\0WEBP'),
+				Buffer.from(chunk),
+				Buffer.alloc(4),
+				data,
+			])
+		const vp8 = Buffer.alloc(14)
+		vp8.writeUInt16LE(40, 6)
+		vp8.writeUInt16LE(30, 8)
+		const vp8l = Buffer.alloc(10)
+		vp8l.writeUInt32LE((40 - 1) | ((30 - 1) << 14), 1)
+		const vp8x = Buffer.alloc(14)
+		vp8x.writeUIntLE(40 - 1, 4, 3)
+		vp8x.writeUIntLE(30 - 1, 7, 3)
+		for (const [chunk, data] of [
+			['VP8 ', vp8],
+			['VP8L', vp8l],
+			['VP8X', vp8x],
+		] as const) {
+			expect(imageSize(webp(chunk, data)), chunk).toEqual({
+				w: 40,
+				h: 30,
+			})
+		}
 	})
 
 	it('starts empty, with the graph as the default view', async () => {
@@ -186,9 +224,6 @@ describe('#FloorPlans', () => {
 		await expect(
 			fp.updateMap(m.id, { nodes: { start: 'some' } as any }),
 		).rejects.toThrow('nodes.start')
-		await expect(fp.updateMap(m.id, { widthPx: 0 })).rejects.toThrow(
-			'1-20000',
-		)
 
 		await fp.updateSettings({ defaultMapId: m.id })
 		await expect(
@@ -234,20 +269,6 @@ describe('#FloorPlans', () => {
 		).rejects.toThrow('No such map')
 	})
 
-	it('pulls nodes back onto the canvas when it shrinks', async () => {
-		const fp = await fresh()
-		const m = await fp.addMap({ name: 'p', widthPx: 1000, heightPx: 800 })
-		await fp.setPlacements(m.id, [
-			{ deviceKey: K(2), x: 900, y: 700 },
-			{ deviceKey: K(3), x: 100, y: 100 },
-		])
-		const r = await fp.updateMap(m.id, { widthPx: 500, heightPx: 400 })
-		expect(r.placements).toEqual([
-			{ deviceKey: K(2), x: 500, y: 400 },
-			{ deviceKey: K(3), x: 100, y: 100 },
-		])
-	})
-
 	it('says why a picture of unknown or too large a size is refused', async () => {
 		const fp = await fresh()
 		const m = await fp.addMap({ name: 'House' })
@@ -271,7 +292,10 @@ describe('#FloorPlans', () => {
 		const first = set.background.image
 		expect(first.startsWith(`${a.id}-`)).toBe(true)
 
-		await fp.updateMap(a.id, { widthPx: 3000, heightPx: 5100 })
+		// a canvas larger than the picture's frame
+		const data = await fp.load()
+		Object.assign(data.maps[0], { widthPx: 3000, heightPx: 5100 })
+		await writeFile(fp.file, JSON.stringify(data))
 		await place(fp, a.id, { deviceKey: K(2), x: 2000, y: 3000 })
 		const dark = await fp.setMapImage(a.id, {
 			bytes: PNG,
@@ -453,11 +477,18 @@ describe('#FloorPlans', () => {
 			expect(file).toBe(path.join(fp.dir, name))
 		}
 
-		// a missing picture is skipped, a broken maps.json still backed up
+		// a missing picture is skipped; a broken maps.json is still backed
+		// up, with every picture the folder has
 		await fsp.rm(path.join(fp.imagesDir, set.background.image))
 		expect(await list()).toHaveLength(2)
 		await writeFile(fp.file, '{ nope')
-		expect(await list()).toEqual([{ name: 'maps.json', file: fp.file }])
+		expect((await list()).map((f) => f.name).sort()).toEqual(
+			[
+				'maps.json',
+				`images/${dark.background.darkImage}`,
+				'images/stray.png',
+			].sort(),
+		)
 	})
 
 	it('holds floorplan writes until the backup has its files', async () => {

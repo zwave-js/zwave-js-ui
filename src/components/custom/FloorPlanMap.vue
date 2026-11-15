@@ -223,25 +223,22 @@ export default {
 		},
 		// a pending view save belongs to the map it was made on
 		'map.id'() {
-			clearTimeout(this.viewTimer)
-			this.viewTimer = null
-			this.saveAfterMove = false
-			this.fitted = false
+			this.dropPendingViewSave()
+			this.viewApplied = false
 		},
 		// a picture that resizes the canvas resets the saved view on the
 		// server, so frame the new canvas
 		'map.widthPx'() {
-			this.fitted = false
+			this.viewApplied = false
 		},
 		'map.heightPx'() {
-			this.fitted = false
+			this.viewApplied = false
 		},
 		// Done saves a view change still waiting to be saved, or one still
 		// under way: a zoom reports its end (moveend) only after its animation
 		editing(now) {
 			if (!now && this.moving) {
-				clearTimeout(this.viewTimer)
-				this.viewTimer = null
+				this.dropPendingViewSave()
 				this.saveAfterMove = true
 			} else if (!now && this.viewTimer) {
 				clearTimeout(this.viewTimer)
@@ -256,9 +253,17 @@ export default {
 		// a marker is being dragged, and a draw() waits for it to end
 		this.dragging = false
 		this.drawPending = false
-		// the map is panning or zooming, and Done came while it was
+		// saving the view while editing: the map's saved view has been shown
+		// (else draw() shows it), a save is waiting to be sent, the view is
+		// being set from the map so its moves aren't saves, the map is
+		// panning or zooming, and Done came while it was
+		this.viewApplied = false
+		this.viewTimer = null
+		this.applyingView = false
 		this.moving = false
 		this.saveAfterMove = false
+		// what the background was last drawn from, see drawBackground
+		this.backgroundKey = null
 	},
 	mounted() {
 		const lmap = L.map(this.$refs.map, {
@@ -307,7 +312,6 @@ export default {
 		})
 		lmap.on('moveend overlayadd overlayremove', () => this.saveViewSoon())
 		this.lmap = lmap
-		this.fitted = false
 		// the container also changes size without a window resize, e.g. when
 		// the nav drawer opens
 		this.resizer = new ResizeObserver(() => this.lmap?.invalidateSize())
@@ -378,6 +382,11 @@ export default {
 				start,
 				exceptions: flip ? [...rest, key] : rest,
 			})
+		},
+		dropPendingViewSave() {
+			clearTimeout(this.viewTimer)
+			this.viewTimer = null
+			this.saveAfterMove = false
 		},
 		saveViewSoon() {
 			if (!this.editing || this.applyingView) return
@@ -460,9 +469,11 @@ export default {
 				this.drawPending = true
 				return
 			}
-			for (const g of Object.values(this.groups)) g.clearLayers()
+			for (const [k, g] of Object.entries(this.groups)) {
+				if (k !== 'background') g.clearLayers()
+			}
 			this.drawBackground()
-			if (!this.fitted) this.applyView()
+			if (!this.viewApplied) this.applyView()
 
 			const byKey = new Map(
 				this.physicalNodes.map((n) => [this.keyOf(n), n]),
@@ -487,7 +498,7 @@ export default {
 			this.drawGhosts(view.ghosts)
 			this.drawNodes(nodePos)
 			// kept for the health layer, which also redraws on its own
-			this.drawn = {
+			this.lastDraw = {
 				nodePos,
 				allPos: view.pos,
 				// main route lines drawn, by linkKey
@@ -500,14 +511,20 @@ export default {
 			this.drawHealth()
 			this.drawBattery(nodePos)
 		},
+		/** rebuilt only when it changes: a big picture would flash on every redraw */
 		drawBackground() {
 			const { widthPx: w, heightPx: h, background: bg } = this.map
 			// the theme's picture, else the other one
-			const file = this.dark
+			let file = this.dark
 				? (bg?.darkImage ?? bg?.image)
 				: (bg?.image ?? bg?.darkImage)
 			// a picture that failed to load isn't asked for again until reload
-			if (file && !this.brokenImages.has(file)) {
+			if (this.brokenImages.has(file)) file = null
+			const key = JSON.stringify([file, bg?.imageRect, w, h])
+			if (key === this.backgroundKey) return
+			this.backgroundKey = key
+			this.groups.background.clearLayers()
+			if (file) {
 				// imageRect: where the picture sits on the canvas, in canvas px
 				const r = bg.imageRect
 				L.imageOverlay(
@@ -525,20 +542,14 @@ export default {
 					})
 					.addTo(this.groups.background)
 			} else {
-				L.rectangle(
-					[
-						[0, 0],
-						[h, w],
-					],
-					{
-						color: NEIGHBOR_COLOR,
-						weight: 1,
-						dashArray: '4 4',
-						fill: false,
-						interactive: false,
-						pane: 'floorplan-background',
-					},
-				).addTo(this.groups.background)
+				L.rectangle(this.canvasBounds(), {
+					color: NEIGHBOR_COLOR,
+					weight: 1,
+					dashArray: '4 4',
+					fill: false,
+					interactive: false,
+					pane: 'floorplan-background',
+				}).addTo(this.groups.background)
 			}
 		},
 		/** a newly opened map: its saved view (zoom, center, layers), else fit it */
@@ -561,7 +572,7 @@ export default {
 					'show-names',
 					this.lmap.hasLayer(this.groups.names),
 				)
-			this.fitted = true
+			this.viewApplied = true
 			// moveend fires after this returns, so let it pass first
 			setTimeout(() => {
 				this.applyingView = false
@@ -743,8 +754,8 @@ export default {
 		 * neighbor lines, at the spots of the last draw()
 		 */
 		drawHealth() {
-			if (!this.drawn) return
-			const { nodePos, allPos, routeLinks } = this.drawn
+			if (!this.lastDraw) return
+			const { nodePos, allPos, routeLinks } = this.lastDraw
 			this.groups.health.clearLayers()
 			const h = this.health
 			const name = this.nameById()
