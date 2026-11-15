@@ -89,6 +89,12 @@ export class StorageHelper {
 			archive.on('error', (err) => {
 				reject(err)
 			})
+			// a full or failing disk: without this the zip never ends, and the
+			// floorplans stay locked for writes (see withBackupFiles)
+			fileStream.on('error', (err) => {
+				archive.abort()
+				reject(err)
+			})
 
 			// on stream closed we can end the request
 			archive.on('end', () => {
