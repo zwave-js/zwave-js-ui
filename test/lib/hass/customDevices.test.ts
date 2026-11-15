@@ -76,3 +76,46 @@ it('discovers devices from custom files', async () => {
 		object_id: 'injected',
 	})
 })
+
+it('observes root custom-device registry edits after the gateway is built (live reload)', async () => {
+	const deviceId = 'live-reload-device'
+	const filename = join(storeDir, 'customDevices.json')
+	const before: HassDevice = {
+		type: 'sensor',
+		object_id: 'before',
+		discovery_payload: {},
+		values: [],
+	}
+	const after: HassDevice = {
+		type: 'sensor',
+		object_id: 'after',
+		discovery_payload: {},
+		values: [],
+	}
+	writeFileSync(filename, JSON.stringify({ [deviceId]: [before] }))
+
+	// GatewayFactory hands the started ROOT registry to the Gateway, which
+	// forks it once inside the discovery manager. That single fork subscribes
+	// directly to the watched root, so a live edit to customDevices.json after
+	// create() must reach the gateway's discovery catalog. Forking the root a
+	// second time in GatewayFactory would break this: the manager's fork would
+	// then subscribe to a fork that copies the root's projection but never
+	// re-emits, so this reload would never be observed.
+	harness = await createGatewayHarness()
+	const node = buildNode({ id: 11, deviceId, hassDevices: {} })
+	harness.zwave.nodes.set(node.id, node)
+
+	harness.gw.rediscoverNode(node.id)
+	expect(node.hassDevices.sensor_before).toMatchObject({
+		object_id: 'before',
+	})
+
+	writeFileSync(filename, JSON.stringify({ [deviceId]: [after] }))
+
+	await vi.waitFor(() => {
+		harness.gw.rediscoverNode(node.id)
+		expect(node.hassDevices.sensor_after).toMatchObject({
+			object_id: 'after',
+		})
+	})
+})

@@ -16,6 +16,7 @@ import { getExternallyManagedPaths } from '../lib/externalSettings.ts'
 import { getErrorMessage } from '../lib/errors.ts'
 import debugManager from '../lib/DebugManager.ts'
 import type { AppRuntime } from '../runtime/AppRuntime.ts'
+import { GatewayStartCancelledError } from '../runtime/AppRuntime.ts'
 import { isAuthenticated } from './auth.ts'
 
 const logger = loggers.module('App')
@@ -323,20 +324,36 @@ export function registerSettingsRoutes(
 		apisLimiter,
 		isAuthenticated,
 		async function (req, res) {
+			// Tracks whether the old gateway has already been torn down, so the
+			// catch can distinguish "restart failed, app unchanged" (threw before
+			// teardown) from "restart failed after teardown, app now has no
+			// working gateway"
+			let gatewayTornDown = false
+			// Only the request that set the restart marker clears it, so a request
+			// rejected by `assertNotRestarting()` never clears another restart's
+			// marker
+			let ownsRestarting = false
 			try {
 				runtime.assertNotRestarting()
 
 				const settings = jsonStore.get(store.settings)
 
 				runtime.setRestarting(true)
+				ownsRestarting = true
 
 				if (debugManager.isSessionActive()) {
 					await debugManager.cancelSession()
 					runtime.setOwnsDebugSession(false)
 				}
 
-				await runtime.ensureGateway().close()
-				await runtime.destroyPlugins()
+				// Teardown closes the gateway before it can reject, so a rejection
+				// past this point still leaves the app without a working gateway.
+				// Derive the flag from the gateway being present, so a missing one
+				// (rejected below by `requireGateway`) stays "unchanged"
+				gatewayTornDown = runtime.gateway !== undefined
+				// `/api/restart` requires a running gateway to close before it
+				// restarts, so a missing one is surfaced as a caller error
+				await runtime.teardownGateway({ requireGateway: true })
 				if (settings.gateway) {
 					runtime.setupLogging({ gateway: settings.gateway })
 				}
@@ -353,9 +370,34 @@ export function registerSettingsRoutes(
 					message: 'Gateway restarted successfully',
 				})
 			} catch (error) {
-				runtime.setRestarting(false)
+				// A concurrent shutdown aborted the start, so the restart was
+				// cancelled rather than failed. Report that distinctly and don't
+				// log it as an app-down error
+				if (error instanceof GatewayStartCancelledError) {
+					res.json({
+						success: false,
+						message:
+							'Gateway restart was cancelled by a concurrent shutdown',
+					})
+					return
+				}
+				// Once the old gateway is torn down, a failure here leaves the app
+				// running with no working gateway rather than merely unchanged;
+				// say so distinctly so an operator knows the app is down, not just
+				// that the restart request failed
+				if (gatewayTornDown) {
+					logger.error(
+						'Gateway restart failed after tearing the old gateway down: the app is now running without a working gateway. Fix the error and restart again.',
+					)
+				}
 				logger.error(error)
 				res.json({ success: false, message: getErrorMessage(error) })
+			} finally {
+				// Single owner of the restart marker: clear it only when this
+				// request set it
+				if (ownsRestarting) {
+					runtime.setRestarting(false)
+				}
 			}
 		},
 	)

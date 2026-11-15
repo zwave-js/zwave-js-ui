@@ -338,6 +338,37 @@ export function allSettled(promises: Promise<any>[]): Promise<any> {
 	return Promise.all(wrappedPromises)
 }
 
+/** Wraps `fn` so it runs at most once; later calls are no-ops */
+export function once(fn: () => void): () => void {
+	let called = false
+	return (): void => {
+		if (called) return
+		called = true
+		fn()
+	}
+}
+
+/**
+ * Deduplicates concurrent runs of an idempotent async teardown: while one is in
+ * flight {@link run} hands back the shared promise, and the slot is released once
+ * it settles either way, so a later call starts fresh and can retry.
+ */
+export class SingleFlight {
+	private inFlight: Promise<void> | undefined
+
+	run(op: () => Promise<void>): Promise<void> {
+		const existing = this.inFlight
+		if (existing) return existing
+		const p = (async () => op())().finally(() => {
+			// Release only if still current; a fresh run cannot have replaced it
+			// because a new run only starts once this slot is cleared
+			if (this.inFlight === p) this.inFlight = undefined
+		})
+		this.inFlight = p
+		return p
+	}
+}
+
 /** Parses a string to json with buffer decode support */
 export function parseJSON(str: string): any {
 	return JSON.parse(str, (k, v) => {

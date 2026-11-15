@@ -9,6 +9,7 @@ import type {
 import { connect } from 'mqtt'
 import {
 	allSettled,
+	once,
 	parseJSON,
 	sanitizeTopic,
 	pkgJson,
@@ -55,10 +56,31 @@ export interface MqttClientEventCallbacks {
 	apiCall: (topic: string, apiName: string, payload: any) => void
 	connect: () => void
 	brokerStatus: (online: boolean) => void
+	/**
+	 * Plugin-facing event carrying the parsed online/offline boolean of every Home
+	 * Assistant birth/will message. `MqttDiscoveryManager` owns the broker
+	 * subscription and emits this, so it fires once per status message.
+	 */
 	hassStatus: (online: boolean) => void
 }
 
 export type MqttClientEvents = Extract<keyof MqttClientEventCallbacks, string>
+
+/**
+ * A listener for a scoped exact-topic subscription; receives the raw string
+ * payload, or `undefined` when the payload was not decodable text.
+ */
+export type MqttExactListener = (payload: string | undefined) => void
+
+/**
+ * Handle returned by {@link default.subscribeExact}. Disposing removes the one
+ * listener it registered and, when it was the topic's last listener,
+ * unsubscribes that exact topic from the broker. Idempotent and safe after the
+ * client has closed.
+ */
+export interface MqttSubscription {
+	dispose(): void
+}
 
 class MqttClient extends TypedEventEmitter<MqttClientEventCallbacks> {
 	// Assigned synchronously at the top of _init(), which the constructor always invokes before any other method can observe `this`
@@ -73,6 +95,16 @@ class MqttClient extends TypedEventEmitter<MqttClientEventCallbacks> {
 	private error?: string
 	private closed = false
 	private retrySubTimeout: NodeJS.Timeout | null = null
+	// Scoped exact-topic subscriptions (e.g. `homeassistant/status`) owned by a
+	// subsystem for its own lifecycle: an owner registers a listener via
+	// `subscribeExact` and disposes it when it stops. Resubscribed on every
+	// `_onConnect` and dispatched in `_onMessageReceived` before prefix handling
+	private exactSubscriptions = new Map<string, Set<MqttExactListener>>()
+	// Scoped exact topics whose subscribe failed transiently while connected,
+	// retried together on `exactRetryTimeout` so a broker hiccup recovers without
+	// waiting for the next reconnect
+	private exactToRetry = new Set<string>()
+	private exactRetryTimeout: NodeJS.Timeout | null = null
 	private _closeTimeout: NodeJS.Timeout | null = null
 	private storeManager: Manager | null = null
 
@@ -85,8 +117,6 @@ class MqttClient extends TypedEventEmitter<MqttClientEventCallbacks> {
 	private static NAME_PREFIX = 'ZWAVE_GATEWAY-'
 
 	private static ACTIONS: string[] = ['broadcast', 'api', 'multicast']
-
-	private static HASS_WILL = 'homeassistant/status'
 
 	private static STATUS_TOPIC = 'status'
 	private static VERSION_TOPIC = 'version'
@@ -138,6 +168,24 @@ class MqttClient extends TypedEventEmitter<MqttClientEventCallbacks> {
 				return
 			}
 			this.closed = true
+
+			// Unsubscribe the scoped exact topics from the broker while still
+			// connected so a `clean: false` session is not left with a lingering
+			// server-side subscription that would redeliver on the next connect,
+			// then clear the map so a closed client can never re-subscribe.
+			// Reuse `unsubscribeBroker` so both teardown paths log identically
+			for (const topic of this.exactSubscriptions.keys()) {
+				this.unsubscribeBroker(topic)
+			}
+			this.exactSubscriptions.clear()
+
+			// Drop any pending scoped-topic retry, since a closed client can
+			// never re-subscribe
+			this.exactToRetry.clear()
+			if (this.exactRetryTimeout) {
+				clearTimeout(this.exactRetryTimeout)
+				this.exactRetryTimeout = null
+			}
 
 			if (this.retrySubTimeout) {
 				clearTimeout(this.retrySubTimeout)
@@ -234,6 +282,48 @@ class MqttClient extends TypedEventEmitter<MqttClientEventCallbacks> {
 	}
 
 	/**
+	 * The single broker `subscribe` primitive behind both the prefixed write-tag
+	 * path ({@link subscribe}) and the scoped exact-topic path
+	 * ({@link subscribeExactTopic}), so one client interprets the grant and logs
+	 * in one place. Resolves `'subscribed'`, or `'denied'` for a final
+	 * `qos === 128` permission error that a retry cannot fix. Rejects with the
+	 * broker's original error on a transient failure worth retrying, and never
+	 * requeues, so each caller owns its own retry disposition.
+	 */
+	private subscribeToBroker(
+		topic: string,
+		qos: IClientSubscribeOptions['qos'],
+	): Promise<'subscribed' | 'denied'> {
+		return new Promise((resolve, reject) => {
+			if (!this.client?.connected) {
+				reject(Error('Client not connected'))
+				return
+			}
+			logger.log('debug', `Subscribing to ${topic} with options %o`, {
+				qos,
+			})
+			this.client.subscribe(topic, { qos }, (err, granted) => {
+				if (err) {
+					logger.error(`Error subscribing to ${topic}`, err)
+					reject(err)
+					return
+				}
+				// mqtt.js reports a denial as `qos === 128` with no `err`, and a
+				// retry cannot fix a permission error, so it counts as settled
+				if ((granted ?? []).some((res) => res.qos === 128)) {
+					logger.error(
+						`Error subscribing to ${topic}, client doesn't have permission to subscribe to it`,
+					)
+					resolve('denied')
+					return
+				}
+				logger.info(`Subscribed to ${topic}`)
+				resolve('subscribed')
+			})
+		})
+	}
+
+	/**
 	 * Method used to subscribe tags for write requests
 	 */
 	subscribe(
@@ -243,50 +333,178 @@ class MqttClient extends TypedEventEmitter<MqttClientEventCallbacks> {
 			addPrefix: true,
 		},
 	): Promise<void> {
-		return new Promise((resolve, reject) => {
-			const subOptions: IClientSubscribeOptions = {
-				qos: options.qos,
+		const fullTopic = options.addPrefix
+			? this.config.prefix + '/' + topic + '/set'
+			: topic
+
+		// in case of retry, don't add the prefix again
+		const retryOptions = { ...options, addPrefix: false }
+
+		if (!this.client?.connected) {
+			logger.debug(
+				`Client not connected yet, subscribing to ${fullTopic} later...`,
+			)
+			this.toSubscribe.set(fullTopic, retryOptions)
+			return Promise.reject(Error('Client not connected'))
+		}
+
+		return this.subscribeToBroker(fullTopic, options.qos).then(
+			() => {
+				// `subscribed` or a final `denied` both settle, so stop retrying
+				this.toSubscribe.delete(fullTopic)
+			},
+			(error) => {
+				// Keep a transient broker error queued so the next connect
+				// retries, and surface the broker's original cause to the caller
+				this.toSubscribe.set(fullTopic, retryOptions)
+				throw error
+			},
+		)
+	}
+
+	/**
+	 * Register a scoped subscription to an exact broker topic (never prefixed),
+	 * delivering that topic's raw payload to `listener`. Returns an idempotent
+	 * {@link MqttSubscription} disposer.
+	 *
+	 * Scoped subscriptions are owned by a caller for its own lifecycle (e.g. the
+	 * discovery subsystem subscribes `homeassistant/status` only while started)
+	 * and are reconnect-safe: `_onConnect` resubscribes every registered topic.
+	 * Disposing removes this listener and, when it was the topic's last,
+	 * unsubscribes the topic. Interpreting the payload is the caller's concern.
+	 *
+	 * The topic is an exact broker filter, so an MQTT wildcard (`+`/`#`) is
+	 * rejected: dispatch is an exact-key `Map.get(topic)` a wildcard could never
+	 * match, and a wildcard would widen the broker subscription past the single
+	 * topic the caller named. Calling after {@link close} is likewise rejected,
+	 * since the closed client can never (re)subscribe it.
+	 */
+	subscribeExact(
+		topic: string,
+		listener: MqttExactListener,
+	): MqttSubscription {
+		if (topic.includes('+') || topic.includes('#')) {
+			throw Error(
+				`subscribeExact requires an exact topic, got wildcard "${topic}"`,
+			)
+		}
+		if (this.closed) {
+			throw Error(`Cannot subscribe to ${topic} on a closed MQTT client`)
+		}
+
+		// `dispose()` removes the key once its last listener goes, so a present
+		// key always has listeners and only a missing one needs a subscribe
+		let listeners = this.exactSubscriptions.get(topic)
+		const firstForTopic = !listeners
+		if (!listeners) {
+			listeners = new Set()
+			this.exactSubscriptions.set(topic, listeners)
+		}
+		listeners.add(listener)
+
+		// Subscribe now when already connected; otherwise `_onConnect` does it
+		if (firstForTopic && this.client?.connected) {
+			void this.subscribeExactTopic(topic)
+		}
+
+		return {
+			dispose: once((): void => {
+				const set = this.exactSubscriptions.get(topic)
+				if (!set) return
+				set.delete(listener)
+				if (set.size === 0) {
+					this.exactSubscriptions.delete(topic)
+					this.unsubscribeBroker(topic)
+				}
+			}),
+		}
+	}
+
+	/**
+	 * Resubscribe a single scoped exact broker topic through the shared
+	 * {@link subscribeToBroker} primitive, honoring desired state. Returns a
+	 * promise that resolves once the subscribe settles, so `_onConnect` can await
+	 * it before signalling the broker is online.
+	 *
+	 * An exact topic's desired state lives only in `exactSubscriptions`; this
+	 * helper never touches `toSubscribe`. Its broker callback rechecks that state,
+	 * so a subscribe completing after the owner disposed the topic (or the client
+	 * closed) neither retries it nor leaves it subscribed. A still-desired topic
+	 * that failed transiently retries on the shared 5s timer; a `qos === 128`
+	 * denial is final and never retried.
+	 */
+	private subscribeExactTopic(topic: string): Promise<void> {
+		if (!this.client?.connected) return Promise.resolve()
+
+		return this.subscribeToBroker(topic, 1).then(
+			() => {
+				// `subscribed` or a final `denied`: settled. Dispose or close may
+				// have raced ahead, so unsubscribe a topic nothing wants anymore
+				if (
+					!this.isExactTopicDesired(topic) &&
+					this.client?.connected
+				) {
+					this.client.unsubscribe(topic, () => {
+						/* best-effort */
+					})
+				}
+			},
+			() => {
+				// A transient broker error left it unsubscribed. Retry while it
+				// stays desired and connected, since it stays in
+				// `exactSubscriptions`; a `denied` settles above and is not retried
+				if (this.isExactTopicDesired(topic) && this.client?.connected) {
+					this.scheduleExactRetry(topic)
+				}
+			},
+		)
+	}
+
+	/** A scoped exact topic is desired while it stays registered and the client is open */
+	private isExactTopicDesired(topic: string): boolean {
+		return !this.closed && this.exactSubscriptions.has(topic)
+	}
+
+	/**
+	 * Queue a scoped exact topic for a retry on the shared 5s timer, so a
+	 * transient broker error recovers without waiting for the next reconnect.
+	 */
+	private scheduleExactRetry(topic: string): void {
+		this.exactToRetry.add(topic)
+		if (this.exactRetryTimeout) return
+		this.exactRetryTimeout = setTimeout(
+			() => this.retryExactSubscribe(),
+			5000,
+		)
+	}
+
+	private retryExactSubscribe(): void {
+		this.exactRetryTimeout = null
+		const topics = [...this.exactToRetry]
+		this.exactToRetry.clear()
+		for (const topic of topics) {
+			// subscribeExactTopic rechecks desired state and re-arms the timer on
+			// another transient failure
+			if (this.isExactTopicDesired(topic)) {
+				void this.subscribeExactTopic(topic)
 			}
+		}
+	}
 
-			topic = options.addPrefix
-				? this.config.prefix + '/' + topic + '/set'
-				: topic
-
-			options.addPrefix = false // in case of retry, don't add again the prefix
-
-			if (this.client && this.client.connected) {
-				logger.log(
-					'debug',
-					`Subscribing to ${topic} with options %o`,
-					subOptions,
-				)
-				this.client.subscribe(topic, subOptions, (err, granted) => {
-					if (err) {
-						logger.error(`Error subscribing to ${topic}`, err)
-						this.toSubscribe.set(topic, options)
-						reject(err)
-					} else {
-						for (const res of granted ?? []) {
-							if (res.qos === 128) {
-								logger.error(
-									`Error subscribing to ${topic}, client doesn't have permission to subscribe to it`,
-								)
-							} else {
-								logger.info(`Subscribed to ${topic}`)
-							}
-							this.toSubscribe.delete(topic)
-						}
-						resolve()
-					}
-				})
-			} else {
-				logger.debug(
-					`Client not connected yet, subscribing to ${topic} later...`,
-				)
-				this.toSubscribe.set(topic, options)
-				reject(Error('Client not connected'))
-			}
-		})
+	/**
+	 * Best-effort unsubscribe of an exact broker topic. Safe when disconnected or
+	 * closed, since the topic is already gone from `exactSubscriptions`.
+	 */
+	private unsubscribeBroker(topic: string): void {
+		if (this.client?.connected) {
+			this.client.unsubscribe(topic, (err?: Error) => {
+				if (err) {
+					logger.error(`Error unsubscribing from ${topic}`, err)
+				} else {
+					logger.info(`Unsubscribed from ${topic}`)
+				}
+			})
+		}
 	}
 
 	/**
@@ -431,9 +649,13 @@ class MqttClient extends TypedEventEmitter<MqttClientEventCallbacks> {
 
 		const subscribePromises: Promise<void>[] = []
 
-		subscribePromises.push(
-			this.subscribe(MqttClient.HASS_WILL, { addPrefix: false, qos: 1 }),
-		)
+		// Resubscribe every scoped exact topic registered via `subscribeExact`
+		// so those subscriptions survive reconnects; join them into the settle
+		// below so a birth message published right after CONNACK is not missed.
+		// The helper bypasses `toSubscribe` so a disposed topic is never requeued
+		for (const topic of this.exactSubscriptions.keys()) {
+			subscribePromises.push(this.subscribeExactTopic(topic))
+		}
 
 		// subscribe to actions
 		for (let i = 0; i < MqttClient.ACTIONS.length; i++) {
@@ -486,6 +708,13 @@ class MqttClient extends TypedEventEmitter<MqttClientEventCallbacks> {
 			clearTimeout(this.retrySubTimeout)
 			this.retrySubTimeout = null
 		}
+		// The next `_onConnect` resubscribes every exact topic, so any pending
+		// scoped-topic retry is redundant once the link drops
+		this.exactToRetry.clear()
+		if (this.exactRetryTimeout) {
+			clearTimeout(this.exactRetryTimeout)
+			this.exactRetryTimeout = null
+		}
 		logger.info('MQTT client offline')
 		this.emit('brokerStatus', false)
 	}
@@ -508,11 +737,14 @@ class MqttClient extends TypedEventEmitter<MqttClientEventCallbacks> {
 
 		logger.log('info', `Message received on ${topic}: %o`, parsed)
 
-		if (topic === MqttClient.HASS_WILL) {
-			if (typeof parsed === 'string') {
-				this.emit('hassStatus', parsed.toLowerCase() === 'online')
-			} else {
-				logger.error('Invalid payload sent to Hass Will topic')
+		// Deliver scoped exact-topic messages to their listeners before prefix
+		// handling; the raw text is handed over for the owning subsystem to
+		// interpret
+		const exactListeners = this.exactSubscriptions.get(topic)
+		if (exactListeners && exactListeners.size > 0) {
+			const text = typeof parsed === 'string' ? parsed : undefined
+			for (const listener of exactListeners) {
+				listener(text)
 			}
 			return
 		}

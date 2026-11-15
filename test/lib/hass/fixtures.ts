@@ -8,15 +8,91 @@
  * `zwave-js` graph. Every builder returns a fresh object.
  */
 import { vi } from 'vitest'
+import type { Mock } from 'vitest'
 import { EventEmitter } from 'node:events'
+import { SetValueStatus } from 'zwave-js'
 import type { StoreHassDevicesResult } from '#api/hass/types.ts'
 import type { MqttConfig } from '#api/lib/MqttClient.ts'
+import type {
+	HassMqttPort,
+	HassNodeUpdatePort,
+	HassTopicPort,
+	HassZwavePort,
+} from '#api/hass/ports.ts'
 import type {
 	HassDevice,
 	ZUINode,
 	ZUIValueId,
 	ZUIValueIdState,
 } from '#api/lib/ZwaveClient.ts'
+
+/**
+ * The shared mock `HassLogger` shape (methods declared as function-valued
+ * properties so tests can reference `logger.info` for assertions without the
+ * unbound-method lint firing). Used by every hass-manager suite.
+ */
+export interface MockHassLogger {
+	debug: Mock
+	info: Mock
+	warn: Mock
+	error: Mock
+	log: Mock
+}
+
+/** A fresh mock `HassLogger` with every method spied. */
+export function makeHassLogger(): MockHassLogger {
+	return {
+		debug: vi.fn(),
+		info: vi.fn(),
+		warn: vi.fn(),
+		error: vi.fn(),
+		log: vi.fn(),
+	}
+}
+
+/** Resolve after the current macrotask, so a real broker round-trip settles. */
+export function tick(): Promise<void> {
+	return new Promise<void>((resolve) => setImmediate(resolve))
+}
+
+/** A minimal `HassMqttPort` (enabled, echoes topics) for discovery tests. */
+export function makeMqttPort(): HassMqttPort {
+	return {
+		disabled: false,
+		getTopic: (topic: string) => topic,
+		getStatusTopic: () => 'status',
+		publish: vi.fn(),
+	}
+}
+
+/** A minimal `HassZwavePort` with an empty node map and stubbed writes. */
+export function makeZwavePort(): HassZwavePort {
+	return {
+		homeHex: '0xdeadbeef',
+		nodes: new Map(),
+		updateDevice: vi.fn(),
+		writeValue: vi.fn<HassZwavePort['writeValue']>(() =>
+			Promise.resolve({
+				status: SetValueStatus.Success,
+			}),
+		),
+	}
+}
+
+/** A minimal `HassNodeUpdatePort` recording node-update emissions. */
+export function makeNodeUpdatePort(): HassNodeUpdatePort {
+	return {
+		emitNodeUpdate: vi.fn(),
+	}
+}
+
+/** A minimal `HassTopicPort` returning fixed node/value topics. */
+export function makeTopicPort(): HassTopicPort {
+	return {
+		nodeTopic: () => 'node',
+		valueTopic: () => 'value',
+	}
+}
 
 /**
  * A complete `MqttConfig` that stays local with `store: false` (so
