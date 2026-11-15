@@ -202,5 +202,22 @@ describe('ZwaveClient scene/group/association service wiring', () => {
 			])
 			expect(controller.getAllAssociations).toHaveBeenCalledWith(2)
 		})
+
+		it('removes every association through the live driver', async () => {
+			const client = createClient()
+			const controller = attachReadyDriver(client)
+			const source = { nodeId: 2, endpoint: 0 }
+			controller.getAllAssociations.mockReturnValue(
+				new Map([[source, new Map([[1, [{ nodeId: 1 }]]])]]),
+			)
+
+			await client.removeAllAssociations(2)
+
+			expect(controller.removeAssociations).toHaveBeenCalledWith(
+				source,
+				1,
+				[{ nodeId: 1 }],
+			)
+		})
 	})
 })
