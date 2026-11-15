@@ -19,6 +19,15 @@
 					>Floorplan</v-btn
 				>
 			</v-btn-toggle>
+			<v-btn
+				variant="outlined"
+				prepend-icon="cell_tower"
+				:loading="refreshingNeighbors"
+				:disabled="refreshingNeighbors"
+				v-tooltip:bottom="'Read every node\'s neighbor table'"
+				@click="refreshNeighbors"
+				>Refresh neighbors</v-btn
+			>
 		</div>
 		<div class="mesh-body">
 			<zwave-graph
@@ -129,6 +138,7 @@ export default {
 			showProperties: false,
 			// 'graph' or 'map', remembered per browser once picked
 			mode: this.pickedMode() ?? 'graph',
+			refreshingNeighbors: false,
 		}
 	},
 	async mounted() {
@@ -171,6 +181,32 @@ export default {
 		 */
 		pickMode(mode) {
 			settings.store('meshMode', mode)
+		},
+		async refreshNeighbors() {
+			const ok = await this.app.confirm(
+				'Refresh neighbors',
+				"Reads every node's neighbor table from the controller. The radio is off while this runs (a few seconds on most networks), and it can be done once a minute.",
+				'info',
+				{ confirmText: 'Refresh', width: 450 },
+			)
+			if (!ok) return
+			this.refreshingNeighbors = true
+			try {
+				const res = await this.app.apiRequest('refreshNeighbors', [], {
+					infoSnack: false,
+					errorSnack: true,
+				})
+				if (res.success) {
+					this.setNeighbors(res.result)
+					const n = Object.keys(res.result).length
+					this.showSnackbar(
+						`Neighbor tables refreshed for ${n} node${n === 1 ? '' : 's'}`,
+						'success',
+					)
+				}
+			} finally {
+				this.refreshingNeighbors = false
+			}
 		},
 		setInitialPosition(element) {
 			const windowHeight = window.innerHeight
