@@ -9,3 +9,12 @@ offerLintFix:
 
 # Check whether the resulting squash-commit will be semantic
 semanticSquash: true
+
+# Bump zwave-js when a new version is released
+onRelease:
+  - repo: zwave-js/zwave-js
+    workflow: update-dep.yml
+    ref: master
+    inputs:
+      dep: zwave-js
+      version: '{version}'

@@ -63,7 +63,7 @@ export type GatewayValue = {
 	receiveFunction?: string
 	qos?: 0 | 1 | 2
 	retain?: boolean
-	ccConfigEnableDiscovery?: boolean
+	ccConfigEnableDiscovery?: boolean | null
 }
 
 export type ScheduledJob = {
@@ -88,6 +88,7 @@ export type GatewayConfig = {
 	hassDiscovery?: boolean
 	discoveryPrefix?: string
 	useLocationAsSuggestedArea?: boolean
+	ccConfigEnabledByDefault?: boolean
 	logEnabled?: boolean
 	logLevel?: LogLevel
 	logToFile?: boolean
@@ -146,6 +147,7 @@ export type GatewayMqtt = Pick<
 	| 'off'
 	| 'on'
 	| 'publish'
+	| 'publishEmpty'
 	| 'subscribe'
 	| 'subscribeExact'
 > & {
@@ -750,7 +752,7 @@ export default class Gateway<
 			(value) => this.valueTopic(node, value) as string,
 		)
 		for (const topic of topics) {
-			this._mqtt.publish(topic, '', { retain: true })
+			this._mqtt.publishEmpty(topic, { retain: true })
 		}
 	}
 

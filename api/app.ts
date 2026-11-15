@@ -14,13 +14,16 @@ import rateLimit, { MemoryStore } from 'express-rate-limit'
 import session from 'express-session'
 import type { Server as HttpServer } from 'node:http'
 import { createServer as createHttpServer } from 'node:http'
-import { createServer as createHttpsServer } from 'node:https'
+import {
+	createServer as createHttpsServer,
+	Server as HttpsServer,
+} from 'node:https'
 import jwt from 'jsonwebtoken'
 import type { VerifyErrors } from 'jsonwebtoken'
 import path from 'node:path'
 import sessionStore from 'session-file-store'
 import type { Server as SocketIOServer, Socket } from 'socket.io'
-import { inspect, promisify } from 'node:util'
+import { inspect } from 'node:util'
 import {
 	defaultPsw,
 	defaultUser,
@@ -34,8 +37,12 @@ import {
 	loadExternalSettings,
 	mergeExternalSettings,
 } from './lib/externalSettings.ts'
-import { readFile, writeFile } from 'node:fs/promises'
-import { generate } from 'selfsigned'
+import { loadCertKey } from './lib/tlsCert.ts'
+import {
+	isTrustedRequest,
+	isTrustedSocket,
+	startTrustedListener,
+} from './lib/trustedListener.ts'
 import { Driver } from 'zwave-js'
 import debugManager from './lib/DebugManager.ts'
 import { AppRuntime, isAuthEnabled } from './runtime/AppRuntime.ts'
@@ -50,7 +57,6 @@ import { registerStoreRoutes } from './routes/store.ts'
 import { registerDebugRoutes } from './routes/debug.ts'
 import { registerSocketApi } from './socket/registerSocketApi.ts'
 
-const createCertificate = promisify(generate)
 const FileStore = sessionStore(session)
 
 export interface AppInstance {
@@ -100,10 +106,15 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 	const loginLimiterStore = new MemoryStore()
 	const apisLimiterStore = new MemoryStore()
 
+	// The trusted listener skips rate limiting: the host application is trusted,
+	// and over a unix socket req.ip is undefined which express-rate-limit rejects
+	const skipTrusted = (req: Request) => isTrustedRequest(req)
+
 	const storeLimiter = rateLimit({
 		windowMs: 15 * 60 * 1000, // 15 minutes
 		max: 100,
 		store: storeLimiterStore,
+		skip: skipTrusted,
 		handler: function (req, res) {
 			res.json({
 				success: false,
@@ -117,6 +128,7 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 		windowMs: 60 * 60 * 1000, // keep in memory for 1 hour
 		max: 5, // start blocking after 5 requests
 		store: loginLimiterStore,
+		skip: skipTrusted,
 		handler: function (req, res) {
 			res.json({ success: false, message: 'Max requests limit reached' })
 		},
@@ -126,6 +138,7 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 		windowMs: 60 * 60 * 1000, // keep in memory for 1 hour
 		max: 500, // start blocking after 500 requests
 		store: apisLimiterStore,
+		skip: skipTrusted,
 		handler: function (req, res) {
 			res.json({ success: false, message: 'Max requests limit reached' })
 		},
@@ -174,7 +187,9 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 		socket: Socket & { user?: JwtUserPayload },
 		next: (err?: Error) => void,
 	) {
-		if (!isAuthEnabled()) {
+		if (isTrustedSocket(socket.request?.socket)) {
+			next()
+		} else if (!isAuthEnabled()) {
 			next()
 		} else if (
 			socket.handshake.auth?.token ||
@@ -198,6 +213,8 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 			next(new Error('Authentication error'))
 		}
 	}
+
+	let trustedServer: HttpServer | undefined // the trusted (host API) listener
 
 	let logStreamInterceptor: ((chunk: Buffer | string) => void) | undefined
 
@@ -254,7 +271,11 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 			if (httpsEnabled) {
 				if (!sslDisabled()) {
 					logger.info('HTTPS is enabled. Loading cert and keys')
-					const { cert, key } = await loadCertKey()
+					const { cert, key } = await loadCertKey(
+						storeDir,
+						process.env.SSL_CERTIFICATE,
+						process.env.SSL_KEY,
+					)
 
 					if (cert && key) {
 						server = createHttpsServer(
@@ -290,7 +311,7 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 						: 'port ' + addr?.port
 				logger.info(
 					`Listening on ${bind}${host ? 'host ' + host : ''} protocol ${
-						httpsEnabled ? 'HTTPS' : 'HTTP'
+						server instanceof HttpsServer ? 'HTTPS' : 'HTTP'
 					}`,
 				)
 			})
@@ -329,6 +350,10 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 				await jsonStore.put(store.users, users)
 			}
 
+			trustedServer = await startTrustedListener(app)
+			if (trustedServer) {
+				socketManager.attachServer(trustedServer)
+			}
 			await runtime.loadSnippets()
 			runtime.startZniffer(settings.zniffer)
 			await debugManager.init() // Clean up any old debug temp files
@@ -346,56 +371,6 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 			}
 			throw error
 		}
-	}
-
-	async function loadCertKey(): Promise<{
-		cert: string
-		key: string
-	}> {
-		const certFile =
-			process.env.SSL_CERTIFICATE || utils.joinPath(storeDir, 'cert.pem')
-		const keyFile =
-			process.env.SSL_KEY || utils.joinPath(storeDir, 'key.pem')
-
-		let key: string
-		let cert: string
-
-		try {
-			cert = await readFile(certFile, 'utf8')
-			key = await readFile(keyFile, 'utf8')
-		} catch (error) {
-			// noop
-		}
-
-		if (!cert || !key) {
-			logger.info(
-				'Cert and key not found in store, generating fresh new ones...',
-			)
-
-			try {
-				const result = await createCertificate([], {
-					days: 99999,
-					keySize: 2048,
-				})
-
-				key = result.private
-				cert = result.cert
-
-				// restrict the private key (and cert) to the owner so a permissive
-				// umask can't leave the self-signed TLS key world/group-readable
-				await writeFile(utils.joinPath(storeDir, 'key.pem'), key, {
-					mode: 0o600,
-				})
-				await writeFile(utils.joinPath(storeDir, 'cert.pem'), cert, {
-					mode: 0o600,
-				})
-				logger.info('New cert and key created')
-			} catch (error) {
-				logger.error('Error creating cert and key for HTTPS', error)
-			}
-		}
-
-		return { cert, key }
 	}
 
 	function setupInterceptor(server: HttpServer) {
@@ -598,6 +573,12 @@ export function createApp(options: CreateAppOptions = {}): AppInstance {
 		}
 
 		try {
+			if (trustedServer) {
+				// Await the close so a unix socket file is unlinked before exit
+				const server = trustedServer
+				trustedServer = undefined
+				await new Promise((resolve) => server.close(resolve))
+			}
 			await runtime.shutdown()
 		} finally {
 			storeLimiterStore.shutdown()

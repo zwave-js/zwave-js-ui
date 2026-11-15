@@ -2132,6 +2132,19 @@
 										v-if="newGateway.hassDiscovery"
 									>
 										<v-switch
+											label="Enable Configuration CC entities"
+											hint="Enable Configuration CC entities by default. Home Assistant applies this only to newly added entities. Can be overridden per value in Gateway values"
+											v-model="
+												newGateway.ccConfigEnabledByDefault
+											"
+											persistent-hint
+										></v-switch>
+									</v-col>
+									<v-col
+										cols="6"
+										v-if="newGateway.hassDiscovery"
+									>
+										<v-switch
 											label="Manual discovery"
 											hint="Don't automatically send the discovery payloads when a device is discovered"
 											v-model="newGateway.manualDiscovery"

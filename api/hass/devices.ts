@@ -318,8 +318,8 @@ const devices: { [deviceId: string]: HassDevice[] } = {
 		{
 			type: 'climate',
 			object_id: 'spa_thermostat',
-			values: ['49-0-Air temperature', '67-0-Furnace'],
-			default_setpoint: '67-0-Furnace',
+			values: ['49-0-Air temperature', '67-0-setpoint-7'],
+			default_setpoint: '67-0-setpoint-7',
 			discovery_payload: {
 				min_temp: 40,
 				max_temp: 104,
@@ -374,7 +374,7 @@ const devices: { [deviceId: string]: HassDevice[] } = {
 			discovery_payload: {
 				payload_off: false,
 				payload_on: true,
-				state_topic: '37-1-currentValue',
+				state_topic: '37-4-currentValue',
 				command_topic: '37-4-targetValue',
 				value_template: '{{ value_json.value }}',
 			},

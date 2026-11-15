@@ -215,13 +215,14 @@
 				:return-object="false"
 				:item-title="itemText"
 				item-value="value"
+				:list-props="{ class: 'valueid-list' }"
 				:suffix="modelValue.unit"
 				:append-icon="!disable_send ? 'send' : null"
 				v-model="modelValue.newValue"
 				@click:append="updateValue(modelValue)"
 			>
 				<template #selection="{ item }">
-					<span>
+					<span class="valueid-selection">
 						{{ itemText(selectedItem || item) }}
 					</span>
 				</template>
@@ -248,6 +249,7 @@
 				:suffix="modelValue.unit"
 				:item-title="itemText"
 				item-value="value"
+				:list-props="{ class: 'valueid-list' }"
 				:type="modelValue.type === 'number' ? 'number' : 'text'"
 				:return-object="false"
 				:append-icon="
@@ -273,7 +275,8 @@
 				v-else-if="
 					modelValue.type === 'boolean' &&
 					((modelValue.writeable && modelValue.readable) ||
-						(modelValue.states && modelValue.states.length === 2))
+						(modelValue.states && modelValue.states.length === 2) ||
+						(node?.virtual && !isPureButton))
 				"
 			>
 				<v-btn-group class="mt-4 my-2" rounded="xl">
@@ -377,6 +380,13 @@
 	white-space: unset;
 }
 
+/* keep the field one line high, the full label is in the open list */
+.valueid-selection {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
 .readonly {
 	font-size: x-large !important;
 	font-weight: bold !important;
@@ -388,8 +398,16 @@
 }
 </style>
 
+<style>
+/* dropdown menus are teleported outside this component, so scoped styles can't reach them */
+.valueid-list .v-list-item-title {
+	white-space: normal;
+}
+</style>
+
 <script>
 import { manager, instances } from '../lib/instanceManager'
+import { getValueHint } from '../lib/utils.js'
 import useBaseStore from '../stores/base.js'
 
 export default {
@@ -421,6 +439,11 @@ export default {
 		}
 	},
 	computed: {
+		// zwave-js marks fire-once buttons (Identify, Reset...) with a single `true` state
+		isPureButton() {
+			const states = this.modelValue.states
+			return states?.length === 1 && states[0].value === true
+		},
 		trueLabel() {
 			return this.modelValue.type === 'boolean' &&
 				this.modelValue.states?.length > 0
@@ -528,19 +551,7 @@ export default {
 			return '[' + this.modelValue.id + '] ' + this.modelValue.label
 		},
 		help() {
-			return `${this.modelValue.description ? `${this.modelValue.description} ` : ''}${
-				this.modelValue.default !== undefined && !this.modelValue.list
-					? `(Default: ${this.modelValue.default}${
-							this.modelValue.max !== undefined
-								? `, max: ${this.modelValue.max}`
-								: ''
-						}${
-							this.modelValue.min !== undefined
-								? `, min: ${this.modelValue.min}`
-								: ''
-						})`
-					: ''
-			}`
+			return getValueHint(this.modelValue)
 		},
 		color: {
 			get: function () {

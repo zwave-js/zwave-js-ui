@@ -13,11 +13,11 @@ async function main(param) {
 	};
 
 	// Get PR info
-	const { data: pull } = await github.pulls.get({
+	const { data: pull } = await github.rest.pulls.get({
 		...options,
 		pull_number: context.issue.number,
 	});
-	const { data: checks } = await github.checks.listForRef({
+	const { data: checks } = await github.rest.checks.listForRef({
 		...options,
 		ref: pull.head.sha,
 	});
@@ -27,13 +27,13 @@ async function main(param) {
 	);
 	if (!lintCheck) return undefined;
 
-	const { data: job } = await github.actions.getJobForWorkflowRun({
+	const { data: job } = await github.rest.actions.getJobForWorkflowRun({
 		...options,
 		job_id: lintCheck.id,
 	});
 	const {
 		data: { artifacts },
-	} = await github.actions.listWorkflowRunArtifacts({
+	} = await github.rest.actions.listWorkflowRunArtifacts({
 		...options,
 		// @ts-expect-error for some reason job is `never`
 		run_id: job.run_id,
@@ -41,7 +41,7 @@ async function main(param) {
 
 	if (!artifacts.length) return undefined;
 
-	const { url } = await github.actions.downloadArtifact({
+	const { url } = await github.rest.actions.downloadArtifact({
 		...options,
 		artifact_id: artifacts[0].id,
 		archive_format: "zip",

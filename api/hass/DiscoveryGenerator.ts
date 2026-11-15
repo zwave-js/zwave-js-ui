@@ -231,15 +231,25 @@ export class DiscoveryGenerator {
 						'HASS discovery device has no discovery topic',
 					)
 				}
-				this.mqtt.publish(
-					hassDevice.discoveryTopic,
-					options.deleteDevice ? '' : hassDevice.discovery_payload,
-					{
-						qos: 0,
-						retain: this.config.retainedDiscovery || false,
-					},
-					this.config.discoveryPrefix,
-				)
+				const discoveryOptions = {
+					qos: 0 as const,
+					retain: this.config.retainedDiscovery || false,
+				}
+				if (options.deleteDevice) {
+					// always retained, to also clear configs retained by an earlier setting
+					this.mqtt.publishEmpty(
+						hassDevice.discoveryTopic,
+						{ ...discoveryOptions, retain: true },
+						this.config.discoveryPrefix,
+					)
+				} else {
+					this.mqtt.publish(
+						hassDevice.discoveryTopic,
+						hassDevice.discovery_payload,
+						discoveryOptions,
+						this.config.discoveryPrefix,
+					)
+				}
 			}
 
 			if (options.forceUpdate) {
@@ -713,6 +723,26 @@ export class DiscoveryGenerator {
 					config = utils.copy(hassCfg.barrier_state)
 					config.discovery_payload.position_topic = getTopic
 					break
+				case CommandClasses['Window Covering']:
+					// Values are duplicated for each supported parameter
+					// (propertyKey). Only odd parameters support positioning,
+					// even ones can just be moved with levelChangeUp/Down
+					if (
+						valueId.isCurrentValue &&
+						typeof valueId.propertyKey === 'number' &&
+						valueId.propertyKey % 2 !== 0
+					) {
+						config = utils.copy(hassCfg.cover_position)
+						config.discovery_payload.command_topic = setTopic
+						config.discovery_payload.position_topic = getTopic
+						config.discovery_payload.set_position_topic = setTopic
+						// a node can expose more than one cover, one per parameter
+						config.object_id = utils.joinProps(
+							config.object_id,
+							valueId.propertyKeyName || valueId.propertyKey,
+						)
+					} else return
+					break
 				case CommandClasses['Multilevel Switch']:
 				case CommandClasses['Multilevel Toggle Switch']: {
 					if (!valueId.isCurrentValue || !deviceClass) return
@@ -1093,8 +1123,10 @@ export class DiscoveryGenerator {
 						valueId.property,
 						valueId.propertyKey ?? '',
 					)
+					// per-value ccConfigEnableDiscovery overrides the global default
 					config.discovery_payload.enabled_by_default =
-						!!valueConf?.ccConfigEnableDiscovery
+						valueConf?.ccConfigEnableDiscovery ??
+						!!this.config.ccConfigEnabledByDefault
 					break
 				}
 				default:
@@ -1189,8 +1221,14 @@ export class DiscoveryGenerator {
 			valueId.property === 'targetValue' &&
 			payload === (hassDevice.discovery_payload.payload_stop ?? 'STOP')
 		) {
+			// the value used to stop an ongoing level change
+			// depends on the command class
+			const stopProperty =
+				valueId.commandClass === CommandClasses['Window Covering']
+					? 'levelChangeUp'
+					: 'Up'
 			this.zwave
-				.writeValue({ ...valueId, property: 'Up' }, false)
+				.writeValue({ ...valueId, property: stopProperty }, false)
 				.catch(() => {})
 			return HASS_COMMAND_HANDLED
 		}
@@ -1520,8 +1558,9 @@ export class DiscoveryGenerator {
 			supportedColors.push('onoff')
 			config.discovery_payload.state_topic = discoveredStateTopic
 			config.discovery_payload.command_topic = discoveredCommandTopic
+			// string compare, so the RAW payload ('true'/'false') works too
 			config.discovery_payload.state_value_template =
-				'{{ value_template.json }}'
+				'{{ "ON" if value_json.value | string | lower == "true" else "OFF" }}'
 			config.discovery_payload.on_command_type = 'last'
 		}
 
@@ -1535,10 +1574,28 @@ export class DiscoveryGenerator {
 				config.discovery_payload.rgb_state_topic
 			config.discovery_payload.color_temp_command_topic =
 				config.discovery_payload.rgb_command_topic
-			config.discovery_payload.color_temp_command_template =
-				"{{ {'warmWhite': ((value - 245)|round(0)), 'coldWhite': (255 - (value - 245))|round(0)}|to_json }}"
-			config.discovery_payload.color_temp_value_template =
-				"{{ '%03d%03d' | format((value_json.value.warmWhite || 0), (value_json.value.coldWhite || 0)) }}"
+
+			// warmWhite = mireds - MIN_MIREDS, so the range maps onto 0-MAX_WHITE
+			const MIN_MIREDS = 245
+			const MAX_WHITE = 255
+			const MAX_MIREDS = MIN_MIREDS + MAX_WHITE
+
+			// HA runs the rgb and color_temp handlers of the shared topic in no
+			// fixed order, so each renders only for its own mode (empty = ignored)
+			const setColor = '{% set c = value_json.value %}'
+			const isRgbMode =
+				'(c.red | default(0, true)) + (c.green | default(0, true)) + (c.blue | default(0, true)) > 0'
+			const isColorTempMode = `not (${isRgbMode}) and (c.warmWhite | default(0, true)) + (c.coldWhite | default(0, true)) > 0`
+			config.discovery_payload.rgb_value_template = `${setColor}{% if ${isRgbMode} %}{{ c.red }},{{ c.green }},{{ c.blue }}{% endif %}`
+			config.discovery_payload.color_temp_value_template = `${setColor}{% if ${isColorTempMode} %}{{ (c.warmWhite | default(0, true)) + ${MIN_MIREDS} }}{% endif %}`
+
+			// modes are exclusive in HA, so setting one turns off the other's channels
+			config.discovery_payload.rgb_command_template =
+				"{{ {'red': red, 'green': green, 'blue': blue, 'warmWhite': 0, 'coldWhite': 0}|to_json }}"
+			// clamped because HA doesn't apply min/max_mireds to service calls
+			config.discovery_payload.color_temp_command_template = `{% set ww = [[(value - ${MIN_MIREDS}) | round(0) | int, 0] | max, ${MAX_WHITE}] | min %}{{ {'red': 0, 'green': 0, 'blue': 0, 'warmWhite': ww, 'coldWhite': ${MAX_WHITE} - ww}|to_json }}`
+			config.discovery_payload.min_mireds = MIN_MIREDS
+			config.discovery_payload.max_mireds = MAX_MIREDS
 		}
 		return config
 	}

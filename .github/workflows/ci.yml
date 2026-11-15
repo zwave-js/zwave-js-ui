@@ -63,7 +63,7 @@ jobs:
           failure() &&
           github.event_name == 'pull_request' &&
           steps.lint.outputs.changed == 'true'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: lint-fix
           path: fix.patch
@@ -80,7 +80,7 @@ jobs:
         run: npm run coverage
 
       - name: Coveralls
-        uses: coverallsapp/github-action@master
+        uses: coverallsapp/github-action@v2
         if: matrix['node-version'] == env.PRIMARY_NODE_VERSION
         with:
           github-token: ${{ secrets.github_token }}
