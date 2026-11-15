@@ -5270,6 +5270,11 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		}
 	}
 
+	/**
+	 * Fetch available firmware updates for a node and sync its cached stable
+	 * updates (also persists `nodes.json` and emits `nodeUpdated`, even when
+	 * automatic firmware update checks are disabled).
+	 */
 	async getAvailableFirmwareUpdates(
 		nodeId: number,
 		options?: GetFirmwareUpdatesOptions,
@@ -5340,6 +5345,11 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			// 	},
 			// ] as FirmwareUpdateInfo[]
 
+			await this._storeNodeFirmwareUpdates(nodeId, result, {
+				onlyStable: options?.includePrereleases,
+				throwError: false,
+			})
+
 			return result
 		}
 
@@ -5377,6 +5387,14 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		logger.info('Starting bulk firmware update check for all nodes')
 
 		try {
+			const initialFirmwareVersions = new Map<
+				number,
+				string | undefined
+			>()
+			for (const [nodeId, zwaveNode] of this._driver.controller.nodes) {
+				initialFirmwareVersions.set(nodeId, zwaveNode.firmwareVersion)
+			}
+
 			const result =
 				await this._driver.controller.getAllAvailableFirmwareUpdates(
 					options,
@@ -5384,9 +5402,15 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 			if (result) {
 				const now = Date.now()
+				const hasVersionChanged = (nodeId: number) =>
+					initialFirmwareVersions.has(nodeId) &&
+					this.getNode(nodeId)?.firmwareVersion !==
+						initialFirmwareVersions.get(nodeId)
 
 				// Process results for each node
 				for (const [nodeId, nodeUpdates] of result) {
+					if (hasVersionChanged(nodeId)) continue
+
 					const filteredUpdates =
 						this._filterFirmwareUpdates(nodeUpdates)
 
@@ -5396,6 +5420,26 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 						logger.info(
 							`Found ${filteredUpdates.length} firmware update(s) for node ${nodeId}`,
 						)
+					}
+				}
+
+				// zwave-js omits nodes without an entry in the firmware service from the bulk result
+				for (const [nodeId, node] of this._nodes) {
+					if (result.has(nodeId) || hasVersionChanged(nodeId)) {
+						continue
+					}
+
+					const hasStoredUpdates =
+						(node.availableFirmwareUpdates?.length ?? 0) > 0
+					const hasDismissedUpdates =
+						Object.keys(node.firmwareUpdatesDismissed ?? {})
+							.length > 0
+					if (!hasStoredUpdates && !hasDismissedUpdates) {
+						continue
+					}
+
+					if (this._hasFirmwareFingerprint(this.getNode(nodeId))) {
+						this._updateNodeFirmwareInfo(nodeId, [], now)
 					}
 				}
 
@@ -5449,6 +5493,64 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		logger.info(`Dismissed firmware update ${version} for node ${nodeId}`)
 
 		return true
+	}
+
+	/**
+	 * Mirror zwave-js `Controller.getAllAvailableFirmwareUpdates` eligibility
+	 * filter so uninterviewed nodes missing a fingerprint do not lose cached info.
+	 */
+	private _hasFirmwareFingerprint(zwaveNode: ZWaveNode | undefined): boolean {
+		return (
+			!!zwaveNode &&
+			typeof zwaveNode.manufacturerId === 'number' &&
+			typeof zwaveNode.productType === 'number' &&
+			typeof zwaveNode.productId === 'number' &&
+			typeof zwaveNode.firmwareVersion === 'string'
+		)
+	}
+
+	/**
+	 * Filter firmware updates, update node/store state, and persist `nodes.json`
+	 */
+	private async _storeNodeFirmwareUpdates(
+		nodeId: number,
+		updates: FirmwareUpdateInfo[] | null,
+		{
+			onlyStable = false,
+			throwError = true,
+		}: { onlyStable?: boolean; throwError?: boolean } = {},
+	): Promise<FirmwareUpdateInfo[]> {
+		let filteredUpdates = this._filterFirmwareUpdates(updates)
+		if (onlyStable) {
+			filteredUpdates = filteredUpdates.filter(
+				(u) => u.channel === 'stable',
+			)
+		}
+
+		this._updateNodeFirmwareInfo(nodeId, filteredUpdates, Date.now())
+		await this.updateStoreNodes(throwError)
+
+		return filteredUpdates
+	}
+
+	/**
+	 * Clear cached available updates after a firmware update succeeds without
+	 * modifying `firmwareUpdatesDismissed` or `lastFirmwareUpdateCheck`
+	 */
+	private _clearNodeAvailableFirmwareUpdates(nodeId: number) {
+		if (this.storeNodes[nodeId]) {
+			this.storeNodes[nodeId].availableFirmwareUpdates = []
+		}
+
+		const node = this._nodes.get(nodeId)
+		if (node) {
+			node.availableFirmwareUpdates = []
+			this.emitNodeUpdate(node, {
+				availableFirmwareUpdates: node.availableFirmwareUpdates,
+			})
+		}
+
+		void this.updateStoreNodes(false)
 	}
 
 	/**
@@ -5543,13 +5645,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 					nodeId,
 				)
 
-			const filteredUpdates = this._filterFirmwareUpdates(updates)
-			const timestamp = Date.now()
-
-			this._updateNodeFirmwareInfo(nodeId, filteredUpdates, timestamp)
-
-			// Save to nodes.json
-			await this.updateStoreNodes()
+			const filteredUpdates = await this._storeNodeFirmwareUpdates(
+				nodeId,
+				updates,
+			)
 
 			logger.info(
 				`Checked firmware updates for node ${nodeId} after update completion. Found ${filteredUpdates.length} update(s)`,
@@ -7105,6 +7204,15 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			},
 		})
 
+		if (
+			result.success &&
+			this.driver?.controller?.ownNodeId !== undefined
+		) {
+			this._clearNodeAvailableFirmwareUpdates(
+				this.driver.controller.ownNodeId,
+			)
+		}
+
 		logger.info(
 			`Controller firmware update OTW finished ${
 				result.success ? 'successfully' : 'with error'
@@ -8595,6 +8703,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				this.emitNodeUpdate(node, {
 					firmwareUpdate: false,
 				} as any)
+			}
+
+			if (result.success) {
+				this._clearNodeAvailableFirmwareUpdates(zwaveNode.id)
 			}
 
 			this.logNode(
