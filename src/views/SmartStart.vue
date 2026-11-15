@@ -496,7 +496,7 @@ export default {
 					label: 'Name',
 					required: true,
 					key: 'name',
-					hint: 'The node name',
+					hint: 'The node name. Applied after inclusion and shared with Home Assistant and other integrations',
 					default: existingItem ? existingItem.name : '',
 				},
 				{
@@ -504,7 +504,7 @@ export default {
 					label: 'Location',
 					required: true,
 					key: 'location',
-					hint: 'The node location',
+					hint: 'The node location. Applied after inclusion and shared with Home Assistant and other integrations',
 					default: existingItem ? existingItem.location : '',
 				},
 			]

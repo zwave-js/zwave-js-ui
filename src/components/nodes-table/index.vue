@@ -152,7 +152,7 @@
 					v-model="managedNodes.filters[column.key]"
 					v-model:group-by="managedNodes.groupBy"
 					:column="column"
-					:items="managedNodes.propValues[column.key]"
+					:items="columnChoices[column.key]"
 					@update:filter="
 						managedNodes.setPropFilter(column.key, $event)
 					"
@@ -308,6 +308,13 @@
 					:value="getProtocolIcon(true)"
 				/>
 			</div>
+			<div v-else></div>
+		</template>
+		<template #[`item.lwrSpeed`]="{ item }">
+			<rich-value
+				v-if="!item.isControllerNode && !item.virtual"
+				:value="richValue(item, 'lwrSpeed')"
+			/>
 			<div v-else></div>
 		</template>
 		<template #[`item.failed`]="{ item }">

@@ -63,7 +63,7 @@ export type GatewayValue = {
 	receiveFunction?: string
 	qos?: 0 | 1 | 2
 	retain?: boolean
-	ccConfigEnableDiscovery?: boolean
+	ccConfigEnableDiscovery?: boolean | null
 }
 
 export type ScheduledJob = {
@@ -88,6 +88,7 @@ export type GatewayConfig = {
 	hassDiscovery?: boolean
 	discoveryPrefix?: string
 	useLocationAsSuggestedArea?: boolean
+	ccConfigEnabledByDefault?: boolean
 	logEnabled?: boolean
 	logLevel?: LogLevel
 	logToFile?: boolean
@@ -382,9 +383,62 @@ export default class Gateway<
 				payload = valueId.value > 0 ? 0 : 0xff
 			}
 
+<<<<<<< b8699475b929694dc42a654d72674bb20cca44da
 			payload = this.discoveryGenerator.transformPayload(payload, valueId)
 			if (payload === HASS_COMMAND_HANDLED) {
 				return { handled: true, value: null }
+=======
+			const hassDevice = this.discovered[valueId.id]
+
+			// Hass payload parsing
+			if (hassDevice) {
+				// map modes coming from hass
+				if (valueId.list && isNaN(parseInt(payload))) {
+					// for thermostat_fan_mode command class use the fan_mode_map
+					if (
+						valueId.commandClass ===
+							CommandClasses['Thermostat Fan Mode'] &&
+						hassDevice.fan_mode_map
+					) {
+						payload = hassDevice.fan_mode_map[payload]
+					} else if (
+						valueId.commandClass ===
+							CommandClasses['Thermostat Mode'] &&
+						hassDevice.mode_map
+					) {
+						// for other command classes use the mode_map
+						payload = hassDevice.mode_map[payload]
+					}
+				} else if (
+					hassDevice.type === 'cover' &&
+					valueId.property === 'targetValue'
+				) {
+					// ref issue https://github.com/zwave-js/zwave-js-ui/issues/3862
+					if (
+						payload ===
+						(hassDevice.discovery_payload.payload_stop ?? 'STOP')
+					) {
+						// the value used to stop an ongoing level change
+						// depends on the command class
+						const stopProperty =
+							valueId.commandClass ===
+							CommandClasses['Window Covering']
+								? 'levelChangeUp'
+								: 'Up'
+
+						this._zwave
+							.writeValue(
+								{
+									...valueId,
+									property: stopProperty,
+								},
+								false,
+							)
+							.catch(() => {})
+						return null
+					}
+				}
+>>>>>>> 6098666744eb3d4de6c859b61168568bc61a4727
 			}
 
 			if (valueConf) {
@@ -693,7 +747,84 @@ export default class Gateway<
 		nodeId: number,
 		options: { deleteDevice?: boolean; forceUpdate?: boolean } = {},
 	): void {
+<<<<<<< b8699475b929694dc42a654d72674bb20cca44da
 		this.discoveryGenerator.publishDiscovery(hassDevice, nodeId, options)
+=======
+		try {
+			if (!this.mqttEnabled || !this.config.hassDiscovery) {
+				logger.debug(
+					'Enable MQTT gateway and hass discovery to use this function',
+				)
+				return
+			}
+
+			logger.log(
+				'debug',
+				`${
+					options.deleteDevice ? 'Removing' : 'Publishing'
+				} discovery: %o`,
+				hassDevice,
+			)
+
+			this.setDiscovery(nodeId, hassDevice, options.deleteDevice)
+
+			if (this.config.payloadType === PAYLOAD_TYPE.RAW) {
+				const p = hassDevice.discovery_payload
+				const template =
+					'value' +
+					(utils.hasProperty(p, 'payload_on') &&
+					utils.hasProperty(p, 'payload_off')
+						? " == 'true'"
+						: '')
+
+				for (const k in p) {
+					if (typeof p[k] === 'string') {
+						p[k] = p[k].replace(/value_json\.value/g, template)
+					}
+				}
+			}
+
+			const skipDiscovery =
+				hassDevice.ignoreDiscovery ||
+				(this.config.manualDiscovery && !options.forceUpdate)
+
+			if (!skipDiscovery) {
+				const discoveryOptions = {
+					qos: 0 as const,
+					retain: this.config.retainedDiscovery || false,
+				}
+				if (options.deleteDevice) {
+					// always retained, to also clear configs retained by an earlier setting
+					this._mqtt.publishEmpty(
+						hassDevice.discoveryTopic,
+						{ ...discoveryOptions, retain: true },
+						this.config.discoveryPrefix,
+					)
+				} else {
+					this._mqtt.publish(
+						hassDevice.discoveryTopic,
+						hassDevice.discovery_payload,
+						discoveryOptions,
+						this.config.discoveryPrefix,
+					)
+				}
+			}
+
+			if (options.forceUpdate) {
+				this._zwave.updateDevice(
+					hassDevice,
+					nodeId,
+					options.deleteDevice,
+				)
+			}
+		} catch (error) {
+			logger.log(
+				'error',
+				`Error while publishing discovery for node ${nodeId}: ${error.message}. Hass device: %o`,
+				hassDevice,
+			)
+		}
+>>>>>>> 6098666744eb3d4de6c859b61168568bc61a4727
 	}
 
 	setDiscovery(
@@ -718,9 +849,668 @@ export default class Gateway<
 		this.discoveryGenerator.discoverClimates(node)
 	}
 
+<<<<<<< b8699475b929694dc42a654d72674bb20cca44da
 	discoverValue(node: ZUINode, valueIdKey: string): void {
 		ensureHassNode(node)
 		this.discoveryGenerator.discoverValue(node, valueIdKey)
+=======
+	/**
+	 * Try to guess the best way to discover this valueId in Hass
+	 */
+	discoverValue(node: ZUINode, vId: string): void {
+		if (!this.mqttEnabled || !this.config.hassDiscovery) {
+			logger.debug(
+				'Enable MQTT gateway and hass discovery to use this function',
+			)
+			return
+		}
+
+		// Virtual nodes don't have deviceClass/endpoints needed for discovery
+		if (node.virtual) return
+
+		const valueId = node.values[vId]
+
+		// if the node is not ready means we don't have all values added yet so we are not sure to discover this value properly
+		if (!valueId || this.discovered[valueId.id] || !node.ready) return
+
+		try {
+			const result = this.valueTopic(node, valueId, true) as ValueIdTopic
+
+			if (!result || !result.topic) return
+
+			const valueConf = result.valueConf
+
+			const getTopic = this._mqtt.getTopic(result.topic)
+			const setTopic = result.targetTopic
+				? this._mqtt.getTopic(result.targetTopic, true)
+				: null
+
+			const nodeName = this._getNodeName(node, this.config.ignoreLoc)
+
+			let cfg: HassDevice
+
+			const cmdClass = valueId.commandClass
+
+			const deviceClass =
+				node.endpoints[valueId.endpoint]?.deviceClass ??
+				node.deviceClass
+
+			switch (cmdClass) {
+				case CommandClasses['Binary Switch']:
+				case CommandClasses['All Switch']:
+				case CommandClasses['Binary Toggle Switch']:
+					if (valueId.isCurrentValue) {
+						cfg = utils.copy(hassCfg.switch)
+					} else return
+					break
+				case CommandClasses['Barrier Operator']:
+					if (valueId.isCurrentValue) {
+						cfg = utils.copy(hassCfg.barrier_state)
+						cfg.discovery_payload.position_topic = getTopic
+					} else return
+					break
+				case CommandClasses['Window Covering']:
+					// Values are duplicated for each supported parameter
+					// (propertyKey). Only odd parameters support positioning,
+					// even ones can just be moved with levelChangeUp/Down
+					if (
+						valueId.isCurrentValue &&
+						typeof valueId.propertyKey === 'number' &&
+						valueId.propertyKey % 2 !== 0
+					) {
+						cfg = utils.copy(hassCfg.cover_position)
+						cfg.discovery_payload.command_topic = setTopic
+						cfg.discovery_payload.position_topic = getTopic
+						cfg.discovery_payload.set_position_topic = setTopic
+						// a node can expose more than one cover, one per parameter
+						cfg.object_id = utils.joinProps(
+							cfg.object_id,
+							valueId.propertyKeyName || valueId.propertyKey,
+						)
+					} else return
+					break
+				case CommandClasses['Multilevel Switch']:
+				case CommandClasses['Multilevel Toggle Switch']:
+					if (valueId.isCurrentValue) {
+						const specificDeviceClass =
+							Constants.specificDeviceClass(
+								deviceClass.generic,
+								deviceClass.specific,
+							)
+						// Use a cover_position configuration if ...
+						if (
+							[
+								'specific_type_class_a_motor_control',
+								'specific_type_class_b_motor_control',
+								'specific_type_class_c_motor_control',
+								'specific_type_class_motor_multiposition',
+								'specific_type_motor_multiposition',
+							].includes(specificDeviceClass) ||
+							node.deviceId === '615-0-258' // Issue #3088
+						) {
+							cfg = utils.copy(hassCfg.cover_position)
+							cfg.discovery_payload.command_topic = setTopic
+							cfg.discovery_payload.position_topic = getTopic
+							cfg.discovery_payload.set_position_topic =
+								cfg.discovery_payload.command_topic
+							cfg.discovery_payload.position_template =
+								'{{ value_json.value | round(0) }}'
+							cfg.discovery_payload.position_open = 99
+							cfg.discovery_payload.position_closed = 0
+							cfg.discovery_payload.payload_open = 99
+							cfg.discovery_payload.payload_close = 0
+						} else {
+							cfg = utils.copy(hassCfg.light_dimmer)
+							cfg.discovery_payload.supported_color_modes = [
+								'brightness',
+							] as ColorMode[]
+							cfg.discovery_payload.brightness_state_topic =
+								getTopic
+							cfg.discovery_payload.brightness_command_topic =
+								setTopic
+						}
+					} else return
+					break
+				case CommandClasses['Door Lock']:
+					if (valueId.isCurrentValue) {
+						// lock state
+						cfg = utils.copy(hassCfg.lock)
+					} else {
+						return
+					}
+					break
+				case CommandClasses['Sound Switch']:
+					// https://github.com/zwave-js/node-zwave-js/blob/master/packages/zwave-js/src/lib/commandclass/SoundSwitchCC.ts
+					if (valueId.property === 'volume') {
+						// volume control
+						cfg = utils.copy(hassCfg.volume_dimmer)
+						cfg.discovery_payload.brightness_state_topic = getTopic
+						cfg.discovery_payload.command_topic = getTopic + '/set'
+						cfg.discovery_payload.brightness_command_topic =
+							cfg.discovery_payload.command_topic
+					} else {
+						return
+					}
+					break
+				case CommandClasses['Color Switch']:
+					if (
+						valueId.property === 'currentColor' &&
+						valueId.propertyKey === undefined
+					) {
+						cfg = this._addRgbColorSwitch(node, valueId)
+					} else return
+					break
+				case CommandClasses['Central Scene']:
+				case CommandClasses['Scene Activation']:
+					cfg = utils.copy(hassCfg.central_scene)
+
+					// Combile unique Object id, by using all possible scenarios
+					cfg.object_id = utils.joinProps(
+						cfg.object_id,
+						valueId.property,
+						valueId.propertyKey,
+					)
+					if (valueId.value?.unit) {
+						cfg.discovery_payload.value_template =
+							"{{ value_json.value.value | default('') }}"
+					}
+					break
+				case CommandClasses['Binary Sensor']: {
+					// https://github.com/zwave-js/node-zwave-js/blob/master/packages/zwave-js/src/lib/commandclass/BinarySensorCC.ts#L41
+					// change the sensorTypeName to use directly valueId.property, as the old way was returning a number
+					// add a comment which shows the old way of achieving this value. This change fixes the Binary Sensor
+					// discovery
+					let sensorTypeName = valueId.property.toString()
+
+					if (sensorTypeName) {
+						sensorTypeName = utils.sanitizeTopic(
+							sensorTypeName.toLocaleLowerCase(),
+							true,
+						)
+					}
+
+					// TODO: Implement all BinarySensorTypes
+					// Use default Binary sensor, and replace based on sensorTypeName
+					// till now only one type is using the reverse on/off values as states
+					switch (sensorTypeName) {
+						// normal
+						case 'presence':
+						case 'smoke':
+						case 'gas':
+							cfg = this._getBinarySensorConfig(sensorTypeName)
+							break
+						// reverse
+						case 'lock':
+							cfg = this._getBinarySensorConfig(
+								sensorTypeName,
+								true,
+							)
+							break
+						// moisture - normal
+						case 'contact':
+						case 'water':
+							cfg = this._getBinarySensorConfig(
+								Constants.deviceClass.sensor_binary.MOISTURE,
+							)
+							break
+						// safety - normal
+						case 'co':
+						case 'co2':
+						case 'tamper':
+							cfg = this._getBinarySensorConfig(
+								Constants.deviceClass.sensor_binary.SAFETY,
+							)
+							break
+						// problem - normal
+						case 'alarm':
+							cfg = this._getBinarySensorConfig(
+								Constants.deviceClass.sensor_binary.PROBLEM,
+							)
+							break
+						// connectivity - normal
+						case 'router':
+							cfg = this._getBinarySensorConfig(
+								Constants.deviceClass.sensor_binary
+									.CONNECTIVITY,
+							)
+							break
+						// battery - normal
+						case 'battery_low':
+							cfg = this._getBinarySensorConfig(
+								Constants.deviceClass.sensor_binary.BATTERY,
+							)
+							break
+						default:
+							// in the end build the basic cfg if all fails
+							cfg = utils.copy(hassCfg.binary_sensor)
+					}
+					cfg.object_id = sensorTypeName
+
+					if (valueConf) {
+						if (valueConf.device_class) {
+							cfg.discovery_payload.device_class =
+								valueConf.device_class
+							cfg.object_id = valueConf.device_class
+						}
+						// binary sensors doesn't support icons
+					}
+
+					break
+				}
+				case CommandClasses['Alarm Sensor']:
+					// https://github.com/zwave-js/node-zwave-js/blob/master/packages/zwave-js/src/lib/commandclass/AlarmSensorCC.ts#L40
+					if (valueId.property === 'state') {
+						cfg = this._getBinarySensorConfig(
+							Constants.deviceClass.sensor_binary.PROBLEM,
+						)
+						cfg.object_id += AlarmSensorType[valueId.propertyKey]
+							? '_' + AlarmSensorType[valueId.propertyKey]
+							: ''
+					} else {
+						return
+					}
+					break
+				case CommandClasses.Basic:
+				case CommandClasses.Notification:
+					// only support basic events
+					if (
+						cmdClass === CommandClasses.Basic &&
+						valueId.property !== 'event'
+					) {
+						return
+					}
+
+					// Try to define Binary sensor
+					if (valueId.states?.length === 2) {
+						let off = 0 // set default off to 0.
+						let discoveredObjectId = valueId.propertyKey
+						switch (valueId.propertyKeyName) {
+							case 'Access Control':
+								cfg = this._getBinarySensorConfig(
+									Constants.deviceClass.sensor_binary.LOCK,
+								)
+								off = 23 // Closed state
+								break
+							case 'Cover status':
+								cfg = this._getBinarySensorConfig(
+									Constants.deviceClass.sensor_binary.OPENING,
+								)
+								break
+							case 'Door state (simple)':
+								cfg = this._getBinarySensorConfig(
+									Constants.deviceClass.sensor_binary.DOOR,
+								)
+								off = 1 // Door closed on payload 1
+								break
+							case 'Alarm status':
+							case 'Dust in device status':
+							case 'Load error status':
+							case 'Over-current status':
+							case 'Over-load status':
+							case 'Hardware status':
+								cfg = this._getBinarySensorConfig(
+									Constants.deviceClass.sensor_binary.PROBLEM,
+								)
+								break
+							case 'Heat sensor status':
+								cfg = this._getBinarySensorConfig(
+									Constants.deviceClass.sensor_binary.HEAT,
+								)
+								break
+							case 'Motion sensor status':
+								cfg = this._getBinarySensorConfig(
+									Constants.deviceClass.sensor_binary.MOTION,
+								)
+								break
+							case 'Water Alarm':
+								cfg = this._getBinarySensorConfig(
+									Constants.deviceClass.sensor_binary
+										.MOISTURE,
+								)
+								break
+							// sensor status has multiple Properties. therefore is good to work
+							// on property basis... user friendly
+							case 'Sensor status':
+								switch (valueId.propertyName) {
+									case 'Smoke Alarm':
+										cfg = this._getBinarySensorConfig(
+											Constants.deviceClass.sensor_binary
+												.SMOKE,
+										)
+										break
+									case 'Water Alarm':
+										cfg = this._getBinarySensorConfig(
+											Constants.deviceClass.sensor_binary
+												.MOISTURE,
+										)
+										break
+									default:
+								}
+								discoveredObjectId = valueId.propertyName
+								break
+							default:
+						}
+						// cfg not there?
+						cfg = cfg || utils.copy(hassCfg.binary_sensor)
+						// correct payload from true/false to numeric values
+						this._setBinaryPayloadFromSensor(cfg, valueId, off)
+						// finally update object_id
+						cfg.object_id = discoveredObjectId.toString()
+					} else if (valueId.states?.length > 2) {
+						// https://github.com/zwave-js/node-zwave-js/blob/master/packages/zwave-js/src/lib/commandclass/NotificationCC.ts
+						// https://github.com/zwave-js/node-zwave-js/blob/master/packages/config/config/notifications.json
+						cfg = utils.copy(hassCfg.sensor_generic)
+						cfg.object_id = utils.joinProps(
+							'notification',
+							valueId.property,
+							valueId.propertyKey,
+						)
+						// TODO: Improve the icons for different propertyKeys!
+						switch (valueId.propertyKey) {
+							case 'Motion sensor status':
+								cfg.discovery_payload.icon = 'mdi:motion-sensor'
+								break
+							default:
+								cfg.discovery_payload.icon = 'mdi:alarm-light'
+						}
+						cfg.discovery_payload.value_template =
+							this._getMappedStateTemplate(
+								valueId.states,
+								valueId.default,
+							)
+					} else {
+						return
+					}
+					break
+				case CommandClasses['Multilevel Sensor']:
+				case CommandClasses.Meter:
+				case CommandClasses['Pulse Meter']:
+				case CommandClasses.Time:
+				case CommandClasses['Energy Production']:
+				case CommandClasses.Battery: {
+					let sensor = null
+					// set it as been sensor (ex not Binary)
+					let isSensor = true
+
+					// https://github.com/zwave-js/node-zwave-js/blob/master/packages/zwave-js/src/lib/commandclass/MultilevelSensorCC.ts
+					if (cmdClass === CommandClasses['Multilevel Sensor']) {
+						// https://github.com/zwave-js/node-zwave-js/blob/master/packages/config/config/sensorTypes.json
+						// In some cases Multilevel Sensors offer Reset option or DeltaTime sensors, but do not include ccSpecific
+						// information. With this change, we target only the sensors and not the additional Properties.
+						if (valueId.ccSpecific) {
+							sensor = Constants.sensorType(
+								valueId.ccSpecific.sensorType,
+							)
+						} else {
+							return
+						}
+					} else if (cmdClass === CommandClasses.Meter) {
+						// https://github.com/zwave-js/node-zwave-js/blob/master/packages/zwave-js/src/lib/commandclass/MeterCC.ts
+						// https://github.com/zwave-js/node-zwave-js/blob/master/packages/config/config/meters.json
+						// In some cases Metering devices offer Reset option or DeltaTime sensors, but do not include ccSpecific
+						// information. With this change, we target only the sensors and not the additional Properties.
+						if (valueId.ccSpecific) {
+							sensor = Constants.meterType(
+								valueId.ccSpecific as IMeterCCSpecific,
+							)
+
+							sensor.objectId += '_' + valueId.property
+						} else {
+							return
+						}
+					} else if (cmdClass === CommandClasses['Pulse Meter']) {
+						sensor = {
+							sensor: 'pulse',
+							objectId: 'meter',
+							props: {},
+						}
+					} else if (cmdClass === CommandClasses.Time) {
+						if (valueId.isCurrentValue) {
+							sensor = {
+								sensor: 'date',
+								objectId: 'current',
+								props: {
+									device_class:
+										Constants.deviceClass.sensor.TIMESTAMP,
+								},
+							}
+						} else return
+					} else if (
+						cmdClass === CommandClasses['Energy Production']
+					) {
+						// TODO: class not yet supported by zwavejs
+						logger.warn(
+							'Energy Production CC not supported so value cannot be discovered',
+						)
+						// sensor = Constants.productionType(valueId.property)
+						return
+					} else if (cmdClass === CommandClasses.Battery) {
+						// https://github.com/zwave-js/node-zwave-js/blob/master/packages/zwave-js/src/lib/commandclass/BatteryCC.ts#L258
+						if (valueId.property === 'level') {
+							sensor = {
+								sensor: 'battery',
+								objectId: 'level',
+								props: {
+									device_class:
+										Constants.deviceClass.sensor.BATTERY,
+									unit_of_measurement: '%', // this is set if Driver doesn't offer unit of measurement
+								},
+							}
+						} else if (valueId.property === 'isLow') {
+							sensor = {
+								sensor: 'battery',
+								objectId: 'isLow',
+								props: {
+									device_class:
+										Constants.deviceClass.sensor.BATTERY,
+								},
+							}
+
+							// use battery_low binary sensor
+							cfg = this._getBinarySensorConfig(
+								Constants.deviceClass.sensor_binary.BATTERY,
+							)
+							// support the case a binary sensor is served under multilevel sensor CC
+							isSensor = false
+						} else return
+					}
+
+					// check if is a sensor
+					if (isSensor) {
+						cfg = utils.copy(hassCfg.sensor_generic)
+					}
+
+					cfg.object_id = utils.joinProps(
+						sensor.sensor,
+						sensor.objectId,
+					)
+
+					let unit = null
+					// https://github.com/zwave-js/node-zwave-js/blob/master/packages/config/config/scales.json
+					if (valueId.unit) {
+						unit = valueId.unit
+					} else if (valueId.value?.unit) {
+						unit = valueId.value.unit
+					}
+
+					if (unit) {
+						// Home Assistant requires time units to be abbreviated
+						// https://github.com/home-assistant/core/blob/d7ac4bd65379e11461c7ce0893d3533d8d8b8cbf/homeassistant/const.py#L408
+						if (unit === 'seconds') {
+							unit = 's'
+						} else if (unit === 'minutes') {
+							unit = 'min'
+						} else if (unit === 'hours') {
+							unit = 'h'
+						} else if (unit === 'kVar') {
+							// HA reactive_power device class requires lowercase unit
+							unit = 'kvar'
+						} else if (unit === 'kVarh') {
+							// Normalize reactive energy unit to lowercase
+							unit = 'kvarh'
+						}
+						cfg.discovery_payload.unit_of_measurement = unit
+					}
+
+					Object.assign(cfg.discovery_payload, sensor.props || {})
+
+					// check if there is a custom value configuration for this valueID
+					if (valueConf) {
+						if (valueConf.device_class) {
+							cfg.discovery_payload.device_class =
+								valueConf.device_class
+							cfg.object_id = valueConf.device_class
+						}
+						if (valueConf.icon)
+							cfg.discovery_payload.icon = valueConf.icon
+					}
+					break
+				}
+				case CommandClasses.Configuration: {
+					if (
+						!valueId.writeable ||
+						process.env.DISCOVERY_DISABLE_CC_CONFIGURATION ===
+							'true'
+					) {
+						return
+					}
+					let type = valueId.type
+					if (
+						type === 'number' &&
+						valueId.min === 0 &&
+						valueId.max === 1
+					) {
+						type = 'boolean'
+					}
+					switch (type) {
+						case 'boolean':
+							cfg = utils.copy(hassCfg.config_switch)
+
+							// Combine unique Object id, by using all possible scenarios
+							cfg.object_id = utils.joinProps(
+								cfg.object_id,
+								valueId.property,
+								valueId.propertyKey,
+							)
+							break
+						case 'number':
+							cfg = utils.copy(hassCfg.config_number)
+
+							// Combine unique Object id, by using all possible scenarios
+							cfg.object_id = utils.joinProps(
+								cfg.object_id,
+								valueId.property,
+								valueId.propertyKey,
+							)
+							if (valueId.min !== 1) {
+								cfg.discovery_payload.min = valueId.min
+							}
+							if (valueId.max !== 100) {
+								cfg.discovery_payload.max = valueId.max
+							}
+
+							break
+						default:
+							return
+					}
+
+					// per-value ccConfigEnableDiscovery overrides the global default
+					cfg.discovery_payload.enabled_by_default =
+						valueConf?.ccConfigEnableDiscovery ??
+						!!this.config.ccConfigEnabledByDefault
+
+					break
+				}
+				default:
+					return
+			}
+
+			const payload = cfg.discovery_payload
+
+			if (
+				!utils.hasProperty(payload, 'state_topic') ||
+				payload.state_topic === true
+			) {
+				payload.state_topic = getTopic
+			} else if (payload.state_topic === false) {
+				delete payload.state_topic
+			}
+
+			if (payload.command_topic === true) {
+				payload.command_topic = setTopic || getTopic + '/set'
+			}
+
+			this.setDiscoveryAvailability(node, payload)
+
+			if (
+				['binary_sensor', 'sensor', 'lock', 'climate', 'fan'].includes(
+					cfg.type,
+				)
+			) {
+				payload.json_attributes_topic = payload.state_topic
+			}
+
+			// Set device information using node info
+			payload.device = this._deviceInfo(node, nodeName)
+
+			// multi instance devices would have same object_id
+			if (valueId.endpoint) cfg.object_id += '_' + valueId.endpoint
+
+			// remove chars that are not allowed in object ids
+			cfg.object_id = utils
+				.sanitizeTopic(cfg.object_id, true)
+				.toLocaleLowerCase()
+
+			// Check if another value already exists and add the index to object_id to make it unique
+			if (node.hassDevices[cfg.type + '_' + cfg.object_id]) {
+				cfg.object_id += '_' + valueId.endpoint
+			}
+
+			// Set a friendly name for this component
+			payload.name = this._getEntityName(
+				node,
+				valueId,
+				cfg,
+				this.config.entityTemplate,
+				this.config.ignoreLoc,
+			)
+
+			// Set a unique id for the component
+			payload.unique_id =
+				UID_DISCOVERY_PREFIX +
+				this._zwave.homeHex +
+				'_' +
+				utils.sanitizeTopic(valueId.id, true)
+
+			const discoveryTopic = this._getDiscoveryTopic(cfg, nodeName)
+
+			cfg.discoveryTopic = discoveryTopic
+			cfg.values = cfg.values || []
+
+			if (!cfg.values.includes(vId)) {
+				cfg.values.push(vId)
+			}
+
+			if (valueId.targetValue) {
+				cfg.values.push(valueId.targetValue)
+			}
+
+			// This configuration is not stored in nodes.json
+			cfg.persistent = false
+
+			// skip discovery flag, default to false
+			cfg.ignoreDiscovery = false
+
+			node.hassDevices[cfg.type + '_' + cfg.object_id] = cfg
+
+			this.publishDiscovery(cfg, node.id)
+		} catch (error) {
+			logger.error(
+				`Error while discovering value ${valueId.id} of node ${node.id}: ${error.message}`,
+				error,
+			)
+		}
+>>>>>>> 6098666744eb3d4de6c859b61168568bc61a4727
 	}
 
 	updateNodeTopics(nodeId: number): void {
@@ -745,12 +1535,23 @@ export default class Gateway<
 		}
 
 		const node = this._zwave.nodes.get(nodeId)
+<<<<<<< b8699475b929694dc42a654d72674bb20cca44da
 		if (!node) return
 		const topics = Object.values(node.values).map(
 			(value) => this.valueTopic(node, value) as string,
 		)
 		for (const topic of topics) {
 			this._mqtt.publish(topic, '', { retain: true })
+=======
+		if (node) {
+			const topics = Object.keys(node.values).map(
+				(v) => this.valueTopic(node, node.values[v]) as string,
+			)
+
+			for (const t of topics) {
+				this._mqtt.publishEmpty(t, { retain: true })
+			}
+>>>>>>> 6098666744eb3d4de6c859b61168568bc61a4727
 		}
 	}
 
@@ -1238,4 +2039,393 @@ export default class Gateway<
 
 		return result
 	}
+<<<<<<< b8699475b929694dc42a654d72674bb20cca44da
+=======
+
+	/**
+	 * Get node name from node object
+	 */
+	private _getNodeName(node: ZUINode, ignoreLoc: boolean): string {
+		return (
+			(!ignoreLoc && node.loc ? node.loc + '-' : '') +
+			(node.name ? node.name : NODE_PREFIX + node.id)
+		)
+	}
+
+	/**
+	 *  Return re-arranged based on critical CCs
+	 */
+
+	private _getPriorityCCFirst(values: {
+		[key: string]: ZUIValueId
+	}): string[] {
+		const priorityCC = [CommandClasses['Color Switch']]
+		const prioritizedValueIds = []
+
+		for (const id in values) {
+			if (priorityCC.includes(values[id].commandClass)) {
+				prioritizedValueIds.unshift(id)
+			} else {
+				prioritizedValueIds.push(id)
+			}
+		}
+		return prioritizedValueIds
+	}
+
+	/**
+	 * Returns the value id without the node prefix
+	 */
+	private _getIdWithoutNode(valueId: ZUIValueId): string {
+		return valueId.id.replace(valueId.nodeId + '-', '')
+	}
+
+	/**
+	 * Get the device Object to send in discovery payload
+	 */
+	private _deviceInfo(node: ZUINode, nodeName: string): DeviceInfo {
+		const deviceInfo: DeviceInfo = {
+			identifiers: [
+				UID_DISCOVERY_PREFIX + this._zwave.homeHex + '_node' + node.id,
+			],
+			manufacturer: node.manufacturer || 'Z-Wave JS',
+			model:
+				node.productDescription && node.productLabel
+					? node.productDescription + ' (' + node.productLabel + ')'
+					: node.name || 'Virtual Node',
+			name: nodeName,
+			sw_version: node.firmwareVersion || utils.getVersion(),
+		}
+
+		const suggestedArea = node.loc?.trim()
+		if (this.config.useLocationAsSuggestedArea && suggestedArea) {
+			deviceInfo.suggested_area = suggestedArea
+		}
+
+		return deviceInfo
+	}
+
+	private setDiscoveryAvailability(
+		node: ZUINode,
+		payload: { [key: string]: any },
+	) {
+		// Set availability config using node status topic, client status topic
+		// (which is the LWT), and driver status topic
+		payload.availability = [
+			{
+				payload_available: 'true',
+				payload_not_available: 'false',
+				topic: this.mqtt.getTopic(this.nodeTopic(node)) + '/status',
+			},
+			{
+				topic: this.mqtt.getStatusTopic(),
+				value_template:
+					"{{'online' if value_json.value else 'offline'}}",
+			},
+			{
+				payload_available: 'true',
+				payload_not_available: 'false',
+				topic: this.mqtt.getTopic('driver/status'),
+			},
+		]
+		if (this.config.payloadType !== PAYLOAD_TYPE.RAW) {
+			payload.availability[0].value_template =
+				"{{'true' if value_json.value else 'false'}}"
+		}
+		payload.availability_mode = 'all'
+	}
+
+	/**
+	 * Get the Hass discovery topic for the specific node and hassDevice
+	 */
+	private _getDiscoveryTopic(
+		hassDevice: HassDevice,
+		nodeName: string,
+	): string {
+		return `${hassDevice.type}/${utils.sanitizeTopic(nodeName, true)}/${
+			hassDevice.object_id
+		}/config`
+	}
+
+	/**
+	 * Generate the template string to use for value templates.
+	 * Note that the keys need to be numeric.
+	 */
+	private _getMappedValuesTemplate(
+		valueMap: { [x: string]: any },
+		defaultValue: string,
+	): string {
+		const map = []
+		// JSON.stringify converts props to strings and this breaks the template
+		// Error: "0": "off", Working: 0: "off"
+		for (const key in valueMap) {
+			map.push(`${key}: "${valueMap[key]}"`)
+		}
+
+		return `{{ {${map.join(
+			', ',
+		)}}[value_json.value] | default('${defaultValue}') }}`
+	}
+
+	/**
+	 * Generate the template string to use for value templates
+	 * by inverting the value map
+	 */
+	private _getMappedValuesInverseTemplate(
+		valueMap: { [x: string]: number },
+		defaultValue: string,
+	): string {
+		const map = []
+		// JSON.stringify converts props to strings and this breaks the template
+		// Error: "0": "off" Working: 0: "off"
+		for (const key in valueMap) {
+			map.push(`${valueMap[key]}: "${key}"`)
+		}
+
+		return `{{ {${map.join(
+			', ',
+		)}}[value_json.value] | default('${defaultValue}') }}`
+	}
+
+	/**
+	 * Calculate the correct template string to use for templates with state
+	 * list based on gateway settings and mapped mode values
+	 */
+	private _getMappedStateTemplate(
+		states: ZUIValueIdState[],
+		defaultValueKey: string | number,
+	): string {
+		const map = []
+		let defaultValue = 'value_json.value'
+		for (const s of states) {
+			map.push(
+				`${
+					typeof s.value === 'number' ? s.value : '"' + s.value + '"'
+				}: "${s.text}"`,
+			)
+			if (s.value === defaultValueKey) {
+				defaultValue = `'${s.text}'`
+			}
+		}
+
+		return `{{ {${map.join(
+			',',
+		)}}[value_json.value] | default(${defaultValue}) }}`
+	}
+
+	/**
+	 * Generates payload for Binary use from a state object
+	 */
+	private _setBinaryPayloadFromSensor(
+		cfg: HassDevice,
+		valueId: ZUIValueId,
+		offStateValue = 0,
+	): HassDevice {
+		const stateKeys = valueId.states.map((s) => s.value)
+		// Set on/off state from keys
+		if (stateKeys[0] === offStateValue) {
+			cfg.discovery_payload.payload_off = stateKeys[0]
+			cfg.discovery_payload.payload_on = stateKeys[1]
+		} else {
+			cfg.discovery_payload.payload_off = stateKeys[1]
+			cfg.discovery_payload.payload_on = stateKeys[0]
+		}
+		return cfg
+	}
+
+	/**
+	 * Create a binary sensor configuration with a specific device class
+	 */
+	private _getBinarySensorConfig(
+		devClass: string,
+		reversePayload = false,
+	): HassDevice {
+		const cfg = utils.copy(hassCfg.binary_sensor)
+		cfg.discovery_payload.device_class = devClass
+		if (reversePayload) {
+			cfg.discovery_payload.payload_on = false
+			cfg.discovery_payload.payload_off = true
+		}
+		return cfg
+	}
+
+	/**
+	 * Retrieves the value of a property from the node valueId
+	 */
+	private _setDiscoveryValue(
+		payload: any,
+		prop: string,
+		node: ZUINode,
+	): void {
+		if (typeof payload[prop] === 'string') {
+			const valueId = node.values[payload[prop]]
+			if (valueId && valueId.value != null) {
+				payload[prop] = valueId.value
+			}
+		}
+	}
+
+	/**
+	 * Check if this node supports rgb and if so add it to discovery configuration
+	 */
+	private _addRgbColorSwitch(
+		node: ZUINode,
+		currentColorValue: ZUIValueId,
+	): HassDevice {
+		const cfg = utils.copy(hassCfg.light_rgb_dimmer)
+
+		const currentColorTopics = this.valueTopic(
+			node,
+			currentColorValue,
+			true,
+		) as ValueIdTopic
+
+		const endpoint = currentColorValue.endpoint
+
+		const supportedColors: ColorMode[] = []
+
+		cfg.discovery_payload.supported_color_modes = supportedColors
+
+		supportedColors.push('rgb')
+
+		// current color values are automatically added later in discoverValue function
+		cfg.values = []
+
+		cfg.discovery_payload.rgb_state_topic = this._mqtt.getTopic(
+			currentColorTopics.topic,
+		)
+		cfg.discovery_payload.rgb_command_topic = this._mqtt.getTopic(
+			currentColorTopics.targetTopic,
+			true,
+		)
+
+		// The following part of code, checks if ML or Binary works. If one exists the other
+		let brightnessValue: string
+		let switchValue: string
+		if (node.values[`38-${endpoint}-currentValue`]) {
+			brightnessValue = `38-${endpoint}-currentValue`
+			// Next if is about Fibaro like RGBW which use the endpoint 1 as multilevel
+		} else if (endpoint === 0 && node.values['38-1-currentValue']) {
+			brightnessValue = '38-1-currentValue'
+		} else if (node.values[`37-${endpoint}-currentValue`]) {
+			switchValue = `37-${endpoint}-currentValue`
+		}
+
+		/*
+			Find the control switch of the device Brightness or Binary
+			If multilevel is not there use binary
+			Some devices use also endpoint + 1 as on/off/brightness... try to guess that too!
+		*/
+		let discoveredStateTopic: string
+		let discoveredCommandTopic: string
+
+		if (brightnessValue || switchValue) {
+			const vID = brightnessValue || switchValue
+
+			const valueIdState = node.values[vID]
+			const topics = this.valueTopic(
+				node,
+				valueIdState,
+				true,
+			) as ValueIdTopic
+
+			if (!topics) {
+				throw Error(`Can't find topics for ${vID}`)
+			}
+
+			cfg.values.push(vID, valueIdState.targetValue)
+
+			discoveredStateTopic = this._mqtt.getTopic(topics.topic)
+			discoveredCommandTopic = this._mqtt.getTopic(
+				topics.targetTopic,
+				true,
+			)
+		}
+
+		if (brightnessValue) {
+			supportedColors.push('brightness')
+			cfg.discovery_payload.brightness_state_topic = discoveredStateTopic
+			cfg.discovery_payload.brightness_command_topic =
+				discoveredCommandTopic
+			cfg.discovery_payload.state_topic = discoveredStateTopic
+			cfg.discovery_payload.command_topic = discoveredCommandTopic
+		} else if (switchValue) {
+			supportedColors.push('onoff')
+			cfg.discovery_payload.state_topic = discoveredStateTopic
+			cfg.discovery_payload.command_topic = discoveredCommandTopic
+
+			// string compare, so the RAW payload ('true'/'false') works too
+			cfg.discovery_payload.state_value_template =
+				'{{ "ON" if value_json.value | string | lower == "true" else "OFF" }}'
+			cfg.discovery_payload.on_command_type = 'last'
+		}
+
+		const whiteValue = node.values[`51-${endpoint}-currentColor-0`]
+
+		// if whitevalue exists, use currentColor value to get/set white
+		if (whiteValue && currentColorValue) {
+			supportedColors.push('white')
+			// still use currentColor but change the template
+			cfg.discovery_payload.color_temp_state_topic =
+				cfg.discovery_payload.rgb_state_topic
+			cfg.discovery_payload.color_temp_command_topic =
+				cfg.discovery_payload.rgb_command_topic
+
+			// warmWhite = mireds - MIN_MIREDS, so the range maps onto 0-MAX_WHITE
+			const MIN_MIREDS = 245
+			const MAX_WHITE = 255
+			const MAX_MIREDS = MIN_MIREDS + MAX_WHITE
+
+			// HA runs the rgb and color_temp handlers of the shared topic in no
+			// fixed order, so each renders only for its own mode (empty = ignored)
+			const setColor = '{% set c = value_json.value %}'
+			const isRgbMode =
+				'(c.red | default(0, true)) + (c.green | default(0, true)) + (c.blue | default(0, true)) > 0'
+			const isColorTempMode = `not (${isRgbMode}) and (c.warmWhite | default(0, true)) + (c.coldWhite | default(0, true)) > 0`
+			cfg.discovery_payload.rgb_value_template = `${setColor}{% if ${isRgbMode} %}{{ c.red }},{{ c.green }},{{ c.blue }}{% endif %}`
+			cfg.discovery_payload.color_temp_value_template = `${setColor}{% if ${isColorTempMode} %}{{ (c.warmWhite | default(0, true)) + ${MIN_MIREDS} }}{% endif %}`
+
+			// modes are exclusive in HA, so setting one turns off the other's channels
+			cfg.discovery_payload.rgb_command_template =
+				"{{ {'red': red, 'green': green, 'blue': blue, 'warmWhite': 0, 'coldWhite': 0}|to_json }}"
+			// clamped because HA doesn't apply min/max_mireds to service calls
+			cfg.discovery_payload.color_temp_command_template = `{% set ww = [[(value - ${MIN_MIREDS}) | round(0) | int, 0] | max, ${MAX_WHITE}] | min %}{{ {'red': 0, 'green': 0, 'blue': 0, 'warmWhite': ww, 'coldWhite': ${MAX_WHITE} - ww}|to_json }}`
+			cfg.discovery_payload.min_mireds = MIN_MIREDS
+			cfg.discovery_payload.max_mireds = MAX_MIREDS
+		}
+		return cfg
+	}
+
+	private _getEntityName(
+		node: ZUINode,
+		valueId: ZUIValueId,
+		cfg: HassDevice,
+		entityTemplate: string,
+		ignoreLoc: boolean,
+	): string {
+		entityTemplate = entityTemplate || '%ln_%o'
+		// when getting the entity name of a device use node props
+		let propertyKey: string = cfg.type
+		let propertyName: string = cfg.type
+		let property: string = cfg.type
+		let label: string = cfg.object_id
+
+		if (valueId) {
+			property = valueId.property?.toString()
+			propertyKey = valueId.propertyKey?.toString()
+			propertyName = valueId.propertyName?.toString()
+			label = valueId.label
+		}
+
+		return entityTemplate
+			.replace(/%nid/g, NODE_PREFIX + node.id)
+			.replace(/%ln/g, this._getNodeName(node, ignoreLoc))
+			.replace(/%loc/g, node.loc || '')
+			.replace(/%pk/g, propertyKey)
+			.replace(/%pn/g, propertyName)
+			.replace(/%p/g, property)
+			.replace(/%o/g, cfg.object_id)
+			.replace(/%n/g, node.name || NODE_PREFIX + node.id)
+			.replace(/%l/g, label)
+	}
+>>>>>>> 6098666744eb3d4de6c859b61168568bc61a4727
 }

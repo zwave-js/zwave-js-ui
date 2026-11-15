@@ -2,15 +2,25 @@ import type winston from 'winston'
 import { transports } from 'winston'
 import { customFormat, logContainer } from './logger.ts'
 import archiver from 'archiver'
+<<<<<<< b8699475b929694dc42a654d72674bb20cca44da
 import type { ZwaveClientPort } from '../runtime/ports.ts'
 import { joinPath, pathExists } from './utils.ts'
+=======
+import type ZWaveClient from './ZwaveClient.ts'
+import { joinPath, pathExists, getVersion } from './utils.ts'
+>>>>>>> 6098666744eb3d4de6c859b61168568bc61a4727
 import { storeDir } from '../config/app.ts'
 import { rm, mkdir } from 'node:fs/promises'
 import { createWriteStream } from 'node:fs'
 import { setTimeout } from 'node:timers/promises'
 import { createDefaultTransportFormat } from '@zwave-js/core/bindings/log/node'
 import { JSONTransport } from '@zwave-js/log-transport-json'
+<<<<<<< b8699475b929694dc42a654d72674bb20cca44da
 import { getErrorMessage } from './errors.ts'
+=======
+import { libVersion } from 'zwave-js'
+import os from 'node:os'
+>>>>>>> 6098666744eb3d4de6c859b61168568bc61a4727
 
 const debugTempDir = joinPath(storeDir, '.debug-temp')
 
@@ -189,6 +199,10 @@ class DebugManager {
 			endTime: new Date().toISOString(),
 			duration: new Date().getTime() - session.startTime.getTime() + 'ms',
 			nodesIncluded: nodeIds,
+			os: os.platform(),
+			nodeVersion: process.version.replace(/^v/, ''),
+			driverVersion: libVersion,
+			zuiVersion: getVersion(),
 		}
 		archive.append(JSON.stringify(metadata, null, 2), {
 			name: 'session-metadata.json',
