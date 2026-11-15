@@ -22,7 +22,7 @@ When working locally, make sure to hard-reset your local branch to include the c
 		return;
 	}
 
-	await github.issues.createComment({
+	await github.rest.issues.createComment({
 		...options,
 		issue_number: context.payload.issue.number,
 		body: feedbackText,

@@ -1,0 +1,95 @@
+name: 'Z-Wave Bot: react to Issues/Discussions'
+
+on:
+  issues:
+    types: [opened, edited]
+  discussion:
+    types: [created, edited]
+
+# Serialize runs for the same issue/discussion so an "edited" event
+# firing while an "opened" run is still in flight can't race it (e.g.
+# duplicate answers, or an edit's answer landing before the original
+# post's). Never cancel a run in progress - a cancelled bot reply job
+# could leave a half-posted comment or a missed suppression update.
+concurrency:
+  group: zwave-js-bot-post-${{ github.event_name }}-${{ github.event.issue.number || github.event.discussion.number }}
+  cancel-in-progress: false
+
+jobs:
+  # Collapse the bot comments a transferred issue inherited from the repo
+  # it came from, they are about the wrong repository now
+  hide-transferred-comments:
+    runs-on: [ubuntu-latest]
+    if: github.event_name == 'issues' && github.event.action == 'opened'
+
+    steps:
+    - name: Checkout master branch
+      uses: actions/checkout@v7
+
+    - name: Hide inherited bot comments
+      uses: actions/github-script@v9
+      with:
+        github-token: ${{secrets.BOT_TOKEN}}
+        script: |
+          const bot = require(`${process.env.GITHUB_WORKSPACE}/.github/bot-scripts/index.cjs`);
+          await bot.hideTransferredComments({github, context});
+
+  # Add the new post to the posts index, so it can be suggested as a
+  # related post before the next nightly rebuild. Discussions outside
+  # the Q&A category are ignored by updatePostsIndex.cjs itself.
+  # Edits are reconciled by the nightly rebuild instead, so repeated
+  # edits cannot burn compute and cache storage.
+  update-posts-index:
+    runs-on: [ubuntu-latest]
+    timeout-minutes: 10
+    permissions:
+      actions: read
+      contents: read
+    if: github.event.action == 'opened' || github.event.action == 'created'
+
+    steps:
+    - name: Checkout master branch
+      uses: actions/checkout@v7
+
+    # Restoring from the artifact and re-saving the cache below is also how an
+    # evicted cache entry heals itself between two nightly rebuilds
+    - name: Restore posts index
+      id: posts-index
+      uses: zwave-js/bot-workflows/actions/restore-bot-index@v1
+      with:
+        index: posts
+        github-token: ${{ github.token }}
+
+    - name: Warn if no posts index is available
+      # Only a warning: this append is best effort, the 04:30 rebuild picks the
+      # post up either way. answer-from-docs is where an outage is worth a red
+      # run - failing here too would just paint every community post red for
+      # something that self-corrects.
+      if: steps.posts-index.outputs.found != 'true'
+      run: |
+        echo "::warning::The posts index could not be restored, from cache or from artifacts - this post will only be indexed by the next nightly rebuild"
+
+    # Installs the shared bot-scripts dependencies (including the local
+    # embedding model cache) and exports BOT_SCRIPTS_DIR
+    - name: Setup bot scripts
+      if: steps.posts-index.outputs.found == 'true'
+      uses: zwave-js/bot-workflows/actions/setup-bot@v1
+
+    - name: Add post to index
+      id: update
+      if: steps.posts-index.outputs.found == 'true'
+      uses: actions/github-script@v9
+      env:
+        POSTS_INDEX_PATH: .posts-index/index.json
+      with:
+        script: |
+          const bot = require(`${process.env.BOT_SCRIPTS_DIR}/index.cjs`);
+          return bot.updatePostsIndex({github, context});
+
+    # Save under the same version-derived prefix the producers use
+    - name: Save posts index
+      if: steps.update.outputs.result == 'true'
+      uses: actions/cache/save@v6
+      with:
+        path: .posts-index
+        key: ${{ steps.posts-index.outputs.prefix }}${{ github.run_id }}

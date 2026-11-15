@@ -11,6 +11,7 @@ import Gateway, { GatewayType } from './lib/Gateway.ts'
 import jsonStore from './lib/jsonStore.ts'
 import * as loggers from './lib/logger.ts'
 import { logContainer } from './lib/logger.ts'
+import { loadCertKey } from './lib/tlsCert.ts'
 import MqttClient from './lib/MqttClient.ts'
 import SocketManager from './lib/SocketManager.ts'
 import type { CallAPIResult, ZwaveConfig } from './lib/ZwaveClient.ts'
@@ -23,7 +24,10 @@ import rateLimit from 'express-rate-limit'
 import session from 'express-session'
 import type { Server as HttpServer } from 'node:http'
 import { createServer as createHttpServer } from 'node:http'
-import { createServer as createHttpsServer } from 'node:https'
+import {
+	createServer as createHttpsServer,
+	Server as HttpsServer,
+} from 'node:https'
 import jwt from 'jsonwebtoken'
 import path from 'node:path'
 import sessionStore from 'session-file-store'
@@ -67,7 +71,6 @@ import {
 	mkdtemp,
 	cp,
 } from 'node:fs/promises'
-import { generate } from 'selfsigned'
 import type { ZnifferConfig } from './lib/ZnifferManager.ts'
 import ZnifferManager from './lib/ZnifferManager.ts'
 import { getAllNamedScaleGroups, getAllSensors } from '@zwave-js/core'
@@ -76,8 +79,11 @@ import {
 	getImportedNodeLocation,
 	normalizeImportedNodesConfig,
 } from './lib/importConfig.ts'
-
-const createCertificate = promisify(generate)
+import {
+	isTrustedRequest,
+	isTrustedSocket,
+	startTrustedListener,
+} from './lib/trustedListener.ts'
 
 declare module 'express-session' {
 	export interface SessionData {
@@ -121,9 +127,14 @@ const logger = loggers.module('App')
 
 const verifyJWT = promisify(jwt.verify.bind(jwt))
 
+// The trusted listener skips rate limiting: the host application is trusted,
+// and over a unix socket req.ip is undefined which express-rate-limit rejects
+const skipTrusted = (req: Request) => isTrustedRequest(req)
+
 const storeLimiter = rateLimit({
 	windowMs: 15 * 60 * 1000, // 15 minutes
 	max: 100,
+	skip: skipTrusted,
 	handler: function (req, res) {
 		res.json({
 			success: false,
@@ -136,6 +147,7 @@ const storeLimiter = rateLimit({
 const loginLimiter = rateLimit({
 	windowMs: 60 * 60 * 1000, // keep in memory for 1 hour
 	max: 5, // start blocking after 5 requests
+	skip: skipTrusted,
 	handler: function (req, res) {
 		res.json({ success: false, message: 'Max requests limit reached' })
 	},
@@ -144,6 +156,7 @@ const loginLimiter = rateLimit({
 const apisLimiter = rateLimit({
 	windowMs: 60 * 60 * 1000, // keep in memory for 1 hour
 	max: 500, // start blocking after 500 requests
+	skip: skipTrusted,
 	handler: function (req, res) {
 		res.json({ success: false, message: 'Max requests limit reached' })
 	},
@@ -188,13 +201,15 @@ const RESPONSE_CODES = {
 } as const
 type RESPONSE_CODES = (typeof RESPONSE_CODES)[keyof typeof RESPONSE_CODES]
 
-const socketManager = new SocketManager()
+export const socketManager = new SocketManager()
 
 socketManager.authMiddleware = function (
 	socket: Socket & { user?: User },
 	next: (err?) => void,
 ) {
-	if (!isAuthEnabled()) {
+	if (isTrustedSocket(socket.request?.socket)) {
+		next()
+	} else if (!isAuthEnabled()) {
 		next()
 	} else if (socket.handshake.auth?.token || socket.handshake.query?.token) {
 		const token = (socket.handshake.auth?.token ||
@@ -211,6 +226,7 @@ socketManager.authMiddleware = function (
 
 let gw: Gateway // the gateway instance
 let zniffer: ZnifferManager // the zniffer instance
+let trustedServer: HttpServer | undefined // the trusted (host API) listener
 const plugins: CustomPlugin[] = []
 let pluginsRouter: Router
 
@@ -243,7 +259,11 @@ export async function startServer(port: number | string, host?: string) {
 	if (httpsEnabled) {
 		if (!sslDisabled()) {
 			logger.info('HTTPS is enabled. Loading cert and keys')
-			const { cert, key } = await loadCertKey()
+			const { cert, key } = await loadCertKey(
+				storeDir,
+				process.env.SSL_CERTIFICATE,
+				process.env.SSL_KEY,
+			)
 
 			if (cert && key) {
 				server = createHttpsServer(
@@ -276,7 +296,7 @@ export async function startServer(port: number | string, host?: string) {
 			typeof addr === 'string' ? 'pipe ' + addr : 'port ' + addr?.port
 		logger.info(
 			`Listening on ${bind}${host ? 'host ' + host : ''} protocol ${
-				httpsEnabled ? 'HTTPS' : 'HTTP'
+				server instanceof HttpsServer ? 'HTTPS' : 'HTTP'
 			}`,
 		)
 	})
@@ -315,6 +335,10 @@ export async function startServer(port: number | string, host?: string) {
 	}
 
 	setupSocket(server)
+	trustedServer = await startTrustedListener(app)
+	if (trustedServer) {
+		socketManager.attachServer(trustedServer)
+	}
 	setupInterceptor()
 	await loadSnippets()
 	startZniffer(settings.zniffer)
@@ -368,55 +392,6 @@ async function getSnippets() {
 async function getSafePath(req: Request | string, resolveReal = true) {
 	const reqPath = typeof req === 'string' ? req : req.query.path
 	return utils.resolveSafeStorePath(reqPath, storeDir, resolveReal)
-}
-
-async function loadCertKey(): Promise<{
-	cert: string
-	key: string
-}> {
-	const certFile =
-		process.env.SSL_CERTIFICATE || utils.joinPath(storeDir, 'cert.pem')
-	const keyFile = process.env.SSL_KEY || utils.joinPath(storeDir, 'key.pem')
-
-	let key: string
-	let cert: string
-
-	try {
-		cert = await readFile(certFile, 'utf8')
-		key = await readFile(keyFile, 'utf8')
-	} catch (error) {
-		// noop
-	}
-
-	if (!cert || !key) {
-		logger.info(
-			'Cert and key not found in store, generating fresh new ones...',
-		)
-
-		try {
-			const result = await createCertificate([], {
-				days: 99999,
-				keySize: 2048,
-			})
-
-			key = result.private
-			cert = result.cert
-
-			// restrict the private key (and cert) to the owner so a permissive
-			// umask can't leave the self-signed TLS key world/group-readable
-			await writeFile(utils.joinPath(storeDir, 'key.pem'), key, {
-				mode: 0o600,
-			})
-			await writeFile(utils.joinPath(storeDir, 'cert.pem'), cert, {
-				mode: 0o600,
-			})
-			logger.info('New cert and key created')
-		} catch (error) {
-			logger.error('Error creating cert and key for HTTPS', error)
-		}
-	}
-
-	return { cert, key }
 }
 
 function setupLogging(settings: { gateway: utils.DeepPartial<GatewayConfig> }) {
@@ -926,7 +901,7 @@ async function parseJWT(req: Request) {
 // middleware to check if user is authenticated
 async function isAuthenticated(req: Request, res: Response, next: () => void) {
 	// if user is authenticated in the session, carry on
-	if (req?.session?.user || !isAuthEnabled()) {
+	if (isTrustedRequest(req) || req?.session?.user || !isAuthEnabled()) {
 		return next()
 	}
 
@@ -948,7 +923,10 @@ async function isAuthenticated(req: Request, res: Response, next: () => void) {
 
 // logout the user
 app.get('/api/auth-enabled', apisLimiter, function (req, res) {
-	res.json({ success: true, data: isAuthEnabled() })
+	res.json({
+		success: true,
+		data: isTrustedRequest(req) ? false : isAuthEnabled(),
+	})
 })
 
 // api to authenticate user
@@ -1499,6 +1477,12 @@ app.post(
 				throw Error(
 					'Gateway is restarting, wait a moment before doing another request',
 				)
+			}
+			// Reject changes when the statistics opt-in belongs to the managing application
+			if (
+				getExternallyManagedPaths().includes('zwave.enableStatistics')
+			) {
+				throw Error('Statistics are managed externally')
 			}
 			const { enableStatistics } = req.body
 
@@ -2281,6 +2265,11 @@ process.removeAllListeners('SIGINT')
 async function gracefuShutdown() {
 	logger.warn('Shutdown detected: closing clients...')
 	try {
+		if (trustedServer) {
+			// Await the close so a unix socket file is unlinked before exit
+			const server = trustedServer
+			await new Promise((resolve) => server.close(resolve))
+		}
 		if (gw) await gw.close()
 		await destroyPlugins()
 	} catch (error) {

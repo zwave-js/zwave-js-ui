@@ -1,0 +1,30 @@
+name: Build docs embeddings index
+
+# Builds and caches a semantic search index over the documentation,
+# used by the bot to answer questions in issues and discussions.
+# The heavy lifting lives in zwave-js/bot-workflows; this caller owns
+# the schedule and push filter.
+
+on:
+  schedule:
+    # Nightly, keeps the cache alive and picks up any missed changes
+    - cron: '30 3 * * *'
+  push:
+    branches: [master]
+    paths:
+      - 'docs/**/*.md'
+      - '.github/workflows/docs-embeddings.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  docs-embeddings:
+    permissions:
+      contents: read
+      issues: write
+      discussions: read
+    uses: zwave-js/bot-workflows/.github/workflows/docs-embeddings.yml@v1
+    with:
+      docs-path: docs

@@ -1,0 +1,34 @@
+[
+	{
+		"question": "Moving Z-Wave JS UI to new hardware\n\nI'm about to move my Z-Wave JS UI docker setup from an old machine to a new server and want to keep my Z-Stick and all my configuration. The docs don't mention how to migrate to a different computer, just replacing the controller on the same machine. Can I just copy the store folder over and plug in the stick on the new machine?",
+		"expectedPosts": [{ "type": "discussion", "number": 4653 }]
+	},
+	{
+		"question": "Custom device config file is ignored\n\nI copied the standard device config for my device into the store's config folder and changed a default parameter value, but Z-Wave JS UI keeps using the bundled config instead of my override. Am I missing something?",
+		"expectedPosts": [{ "type": "discussion", "number": 4350 }]
+	},
+	{
+		"question": "Reconnect Z-Wave JS after controller power cycle\n\nMy serial-over-network controller gets power cycled sometimes and the driver doesn't reconnect automatically afterwards. I currently have to restart the whole container. Is there a way to trigger a soft reset remotely, e.g. over the websocket API from Home Assistant?",
+		"expectedPosts": [{ "type": "discussion", "number": 4660 }]
+	},
+	{
+		"question": "No neighbors shown in the network graph\n\nWhen I open the Network Graph tab none of my devices show any neighbor connections to each other or the controller, even though the mesh seems to work fine otherwise. Is this expected?",
+		"expectedPosts": [{ "type": "discussion", "number": 4409 }]
+	},
+	{
+		"question": "ValidationError about X-Forwarded-For and trust proxy on startup\n\nEvery time the driver starts I get a validation error saying the X-Forwarded-For header is set but Express's trust proxy setting is false. Is there a setting to enable trust proxy?",
+		"expectedPosts": [{ "type": "issue", "number": 4535 }]
+	},
+	{
+		"question": "Configure Long Range security keys through docker environment variables\n\nI can set my regular S0/S2 network keys via environment variables when deploying with docker, but there doesn't seem to be an equivalent for the new Long Range security keys. Is that supported?",
+		"expectedPosts": [{ "type": "issue", "number": 3719 }]
+	},
+	{
+		"question": "My plugin stopped loading after upgrading\n\nI've had a custom plugin running for a long time and after updating Z-Wave JS UI it no longer loads at startup. Did something change in how plugins are loaded?",
+		"expectedPosts": [{ "type": "issue", "number": 4427 }]
+	},
+	{
+		"question": "Plugins with their own UI tab\n\nWould it be possible for a plugin to add its own tab/page in the Z-Wave JS UI web interface, instead of only running headless in the backend?",
+		"expectedPosts": [{ "type": "issue", "number": 3888 }]
+	}
+]

@@ -1,0 +1,30 @@
+name: Bot index self-check
+
+# Test the *restore* path of the index pipeline without relying on a user to
+# open a discussion or issue. The check itself lives in zwave-js/bot-workflows;
+# this caller owns the schedule and concurrency group.
+
+on:
+  schedule:
+    # After both nightly rebuilds (03:30 docs, 04:30 posts)
+    - cron: '0 8 * * *'
+  workflow_dispatch:
+
+# The tracking issue is found by title, so two overlapping runs could both miss
+# it and open duplicates
+concurrency:
+  group: bot-index-selfcheck
+  cancel-in-progress: false
+
+permissions:
+  actions: read
+  contents: read
+  issues: write
+
+jobs:
+  selfcheck:
+    permissions:
+      actions: read
+      contents: read
+      issues: write
+    uses: zwave-js/bot-workflows/.github/workflows/bot-index-selfcheck.yml@v1

@@ -488,7 +488,11 @@ import { validTopic } from '../../lib/utils'
 import { maxLRPowerLevels } from '../../lib/items'
 import useBaseStore from '../../stores/base.js'
 import InstancesMixin from '../../mixins/InstancesMixin.js'
-import { isUnsupervisedOrSucceeded, ConfigValueFormat } from '@zwave-js/core'
+import {
+	CommandClasses,
+	ConfigValueFormat,
+	isUnsupervisedOrSucceeded,
+} from '@zwave-js/core'
 import { regionSupportsAutoPowerlevel } from '@server/lib/shared'
 
 export default {
@@ -548,12 +552,24 @@ export default {
 			// Hide warnings when auto mode is enabled for supported regions
 			return !this.isAutoPowerLevelEnabled
 		},
+		hasAccessControl() {
+			return this.node.accessControl?.supported
+		},
 		commandGroups() {
 			if (this.node) {
 				const groups = {}
 				let addConfiguration = true
 
 				for (const v of this.node.values) {
+					// User codes are managed in the Access Control tab. Hide them from the value list to avoid confusion.
+					if (
+						this.hasAccessControl &&
+						v.commandClass === CommandClasses['User Code'] &&
+						['userCode', 'userIdStatus'].includes(v.property)
+					) {
+						continue
+					}
+
 					const className =
 						v.commandClassName + ' v' + v.commandClassVersion
 					if (!groups[className]) {

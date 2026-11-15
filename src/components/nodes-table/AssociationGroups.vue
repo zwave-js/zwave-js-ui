@@ -45,7 +45,7 @@
 						>
 					</div>
 				</template>
-				<template #[`item.groupId`]="{ item }">
+				<template #[`item.groupName`]="{ item }">
 					{{
 						node.groups.find(
 							(g) =>
@@ -119,7 +119,8 @@ export default {
 			dialogAssociation: false,
 			headers: [
 				{ title: 'Endpoint', key: 'endpoint' },
-				{ title: 'Group', key: 'groupId' },
+				{ title: 'Group', key: 'groupName' },
+				{ title: 'Group ID', key: 'groupId' },
 				{ title: 'Node', key: 'nodeId' },
 				{ title: 'Target Endpoint', key: 'targetEndpoint' },
 				{ title: 'Actions', key: 'actions', sortable: false },

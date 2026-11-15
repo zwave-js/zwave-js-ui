@@ -24,7 +24,11 @@ export default defineConfig({
 	},
 	test: {
 		environment: 'node',
-		include: ['src/**/*.test.{js,ts}', 'test/**/*.test.ts'],
+		include: [
+			'src/**/*.test.{js,ts}',
+			'test/**/*.test.ts',
+			'.github/bot-scripts/**/*.test.cjs',
+		],
 		coverage: {
 			provider: 'v8',
 			// Report every file matched by `include`, not just those imported by

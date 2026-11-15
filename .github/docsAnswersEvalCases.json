@@ -1,0 +1,74 @@
+[
+	{
+		"question": "Running behind a reverse proxy with a subpath\n\nI want to serve Z-Wave JS UI under a subpath like /zwave/ behind nginx. Is there a way to configure this without rebuilding the frontend?",
+		"expectedFiles": ["usage/reverse-proxy.md"]
+	},
+	{
+		"question": "Setting Z-Wave network keys via environment variables\n\nWhen deploying with Docker, which environment variables do I use to configure the S0 and S2 security keys instead of typing them in the UI?",
+		"expectedFiles": ["guide/env-vars.md"]
+	},
+	{
+		"question": "Writing a custom plugin\n\nHow do I create a plugin package for Z-Wave JS UI? What does the constructor receive and how is it loaded?",
+		"expectedFiles": ["guide/plugins.md"]
+	},
+	{
+		"question": "What is the Zniffer feature for?\n\nI've heard about a Zniffer tool in Z-Wave JS UI. What does it do and what hardware do I need to use it?",
+		"expectedFiles": ["usage/zniffer.md"]
+	},
+	{
+		"question": "Legacy device values never update\n\nMy older Z-Wave device doesn't report value changes on its own. Is there a way to have Z-Wave JS UI poll it periodically?",
+		"expectedFiles": ["device-support/polling.md"]
+	},
+	{
+		"question": "Device shows up as \"Unknown\" in the UI\n\nI just included a new Z-Wave device and it's listed as an unknown device. What does that mean and how do I fix it?",
+		"expectedFiles": ["device-support/supported-unknown-devices.md"]
+	},
+	{
+		"question": "Understanding the Network Graph healthcheck\n\nWhat does the Network Graph tab show me about connectivity between my nodes and the controller?",
+		"expectedFiles": ["usage/nodes_healthcheck.md"]
+	},
+	{
+		"question": "Migrating from Zwave2Mqtt\n\nI'm currently on Zwave2Mqtt and want to switch to Z-Wave JS UI. Can I reuse my existing settings.json and what changes are breaking?",
+		"expectedFiles": ["guide/migrating.md"]
+	},
+	{
+		"question": "How does the device config database get updated?\n\nDoes Z-Wave JS UI automatically update its internal device configuration database, or do I need to rebuild the docker container to get new device configs?",
+		"expectedFiles": ["usage/config-updates.md"]
+	},
+	{
+		"question": "Writing a custom driver function\n\nI'd like to write my own async JS function that runs with access to the zwave client instance. Where do I configure this and what's available in the function context?",
+		"expectedFiles": ["usage/driver_function.md"]
+	},
+	{
+		"question": "Sending a command to multiple nodes at once\n\nHow can I turn on several lights simultaneously instead of sending individual commands to each node? Is there a broadcast or multicast option?",
+		"expectedFiles": ["usage/groups.md"]
+	},
+	{
+		"question": "Connecting an external script to Z-Wave JS UI in real time\n\nI want to write a script that receives live node value updates from Z-Wave JS UI without polling the REST API. Is there a Socket.IO endpoint I can connect to?",
+		"expectedFiles": ["guide/socket-api.md"]
+	},
+	{
+		"question": "Overriding a device configuration file\n\nI want to tweak the configuration file for my Fibaro device without waiting for an upstream update. Where do I put my custom config file so Z-Wave JS UI picks it up?",
+		"expectedFiles": ["device-support/custom-device-files.md"]
+	},
+	{
+		"question": "MQTT topic naming for events\n\nWhat does the mqtt_name wildcard in MQTT topics refer to, and where do Z-Wave driver/node/controller events get published?",
+		"expectedFiles": ["guide/mqtt.md"]
+	},
+	{
+		"question": "Which Docker architectures are supported?\n\nI'm running Z-Wave JS UI on a Raspberry Pi. Which CPU architectures does the official docker image support?",
+		"expectedFiles": ["getting-started/docker.md"]
+	},
+	{
+		"question": "How do I generate debug logs for troubleshooting?\n\nA maintainer asked me for logs. Where do I enable the Z-Wave JS and Z-Wave JS UI loggers and which one is actually useful for network issues?",
+		"expectedFiles": ["troubleshooting/generating-logs.md"]
+	},
+	{
+		"question": "Is there a health check endpoint I can use for monitoring?\n\nI want my container orchestrator to check if the MQTT and Z-Wave clients are connected. Is there an HTTP endpoint for that?",
+		"expectedFiles": ["guide/healthcheck.md"]
+	},
+	{
+		"question": "exec format error when starting the docker container\n\nAfter starting my container I get \"exec user process caused: exec format error\". What's wrong and how do I fix it?",
+		"expectedFiles": ["troubleshooting/improper-arch.md"]
+	}
+]

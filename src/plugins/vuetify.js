@@ -10,7 +10,7 @@
 import { createVuetify } from 'vuetify'
 import 'vuetify/styles'
 import { aliases, md } from 'vuetify/iconsets/md'
-import 'material-design-icons-iconfont/dist/material-design-icons.css'
+import '@/assets/css/material-icons.css'
 
 // Palette is shared with the V0 theme plugin via src/plugins/palette.ts.
 // Both `light` and `dark` keys must exist or Vuetify throws when a

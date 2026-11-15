@@ -294,6 +294,27 @@ class MqttClient extends TypedEventEmitter<MqttClientEventCallbacks> {
 		options?: IClientPublishOptions,
 		prefix?: string,
 	) {
+		this._publish(topic, stringifyJSON(data), options, prefix)
+	}
+
+	/**
+	 * Publish a zero-length payload: it deletes a retained message and is
+	 * the removal signal for Home Assistant MQTT discovery
+	 */
+	publishEmpty(
+		topic: string,
+		options?: IClientPublishOptions,
+		prefix?: string,
+	) {
+		this._publish(topic, '', options, prefix)
+	}
+
+	private _publish(
+		topic: string,
+		payload: string,
+		options?: IClientPublishOptions,
+		prefix?: string,
+	) {
 		if (this.client) {
 			const settingOptions = {
 				qos: this.config.qos,
@@ -307,24 +328,19 @@ class MqttClient extends TypedEventEmitter<MqttClientEventCallbacks> {
 
 			logger.log(
 				'debug',
-				'Publishing to %s: %o with options %o',
+				'Publishing to %s: %s with options %o',
 				topic,
-				data,
+				payload,
 				options,
 			)
 
-			this.client.publish(
-				topic,
-				stringifyJSON(data),
-				options,
-				function (err) {
-					if (err) {
-						logger.error(
-							`Error while publishing a value ${err.message}`,
-						)
-					}
-				},
-			)
+			this.client.publish(topic, payload, options, function (err) {
+				if (err) {
+					logger.error(
+						`Error while publishing a value ${err.message}`,
+					)
+				}
+			})
 		} // end if client
 	}
 

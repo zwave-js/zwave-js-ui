@@ -12,6 +12,8 @@ Supported architectures are:
 - `armv7` (Ex. Raspberry PI)
 - `arm64` (Ex. OrangePI NanoPI)
 
+> [!NOTE] Node.js no longer ships official 32-bit ARM builds, so the `armv6` and `armv7` images use the Node.js package from Alpine Linux. Same major version as the other archs, but the patch version can differ.
+
 > [!NOTE] If you get the error `standard_init_linux.go:207: exec user process caused "exec format error"`, you most likely installed the wrong package intended for a [different architecture](https://github.com/zwave-js/zwave-js-ui/tree/master/docs/troubleshooting/improper-arch.md).
 
 ## Available Tags

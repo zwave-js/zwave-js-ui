@@ -62,7 +62,7 @@
 					</v-toolbar-title>
 				</template>
 				<template v-else>
-					<v-tabs>
+					<v-tabs show-arrows>
 						<v-tab
 							v-for="item in pages"
 							:key="item.title"
@@ -449,6 +449,7 @@ export default {
 			'znifferState',
 			'inited',
 			'nodes',
+			'isSettingManagedExternally',
 		]),
 		...mapState(useBaseStore, {
 			darkMode: (store) => store.uiState.darkMode,
@@ -1324,9 +1325,13 @@ export default {
 					}
 
 					if (
-						!data.settings ||
-						!data.settings.zwave ||
-						data.settings.zwave.enableStatistics === undefined
+						(!data.settings ||
+							!data.settings.zwave ||
+							data.settings.zwave.enableStatistics ===
+								undefined) &&
+						!this.isSettingManagedExternally(
+							'zwave.enableStatistics',
+						)
 					) {
 						const result = await this.confirm(
 							'Usage statistics',

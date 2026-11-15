@@ -89,3 +89,8 @@ typings/
 fakeNodes.json
 
 /build/
+
+# Bot docs/posts embeddings indices and feedback cache (see .github/bot-scripts)
+.docs-index/
+.posts-index/
+.docs-feedback/

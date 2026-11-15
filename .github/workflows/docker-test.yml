@@ -14,14 +14,15 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        platforms: [linux/amd64, linux/arm64, linux/arm/v7]
+        # Same set docker-release.yml publishes
+        platform: [linux/amd64, linux/arm64, linux/arm/v7, linux/arm/v6]
     steps:
       - uses: actions/checkout@v5
 
-      - uses: docker/setup-buildx-action@v3
-      - uses: docker/setup-qemu-action@v3
+      - uses: docker/setup-buildx-action@v4
+      - uses: docker/setup-qemu-action@v4
 
-      - uses: actions/github-script@v6
+      - uses: actions/github-script@v9
         id: ref-sanitized
         with:
           script: |
@@ -30,7 +31,7 @@ jobs:
 
       - name: Create Docker Meta
         id: docker_meta
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6
         with:
           images: zwavejs/zwavejs2mqtt,zwavejs/zwave-js-ui,ghcr.io/zwave-js/zwave-js-ui
           tags: |
@@ -45,12 +46,27 @@ jobs:
             maintainer=robertsLando
 
       - name: Buildx build
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         timeout-minutes: 120
         with:
           platforms: ${{ matrix.platform }}
           file: docker/Dockerfile
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          # Read-only on purpose: a cache saved on a PR ref is readable only by
+          # that same PR, so `cache-to` wrote ~1 GB per PR that nothing else
+          # could ever reuse, while evicting the shared caches (the bot's
+          # docs/posts embeddings indexes among them). Reading the release scope
+          # instead also gives a new PR a warm cache from master.
+          #
+          # The trade: pushes within one PR no longer warm each other, so a PR
+          # that invalidates an early layer rebuilds it on every push. Do not
+          # "fix" that by re-adding `cache-to` - it is what filled the cache.
+          # docker-release.yml owns this scope; keep the names in sync.
+          cache-from: type=gha,scope=zwave-js-ui
           push: false
+          load: true
           tags: ${{ steps.docker_meta.outputs.tags }}
+
+      - name: Smoke test
+        run: |
+          docker run --rm --platform ${{ matrix.platform }} zwavejs/zwave-js-ui:test \
+            node -e "require('@serialport/bindings-cpp'); console.log(process.version, process.arch)"
