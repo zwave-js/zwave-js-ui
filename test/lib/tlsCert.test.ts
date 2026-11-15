@@ -5,6 +5,7 @@ import { promisify } from 'node:util'
 import { generate } from 'selfsigned'
 import { afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import { getTlsRejectionReason, loadCertKey } from '../../api/lib/tlsCert.ts'
+import { requireDefined } from './testUtils.ts'
 
 const createCertificate = promisify(generate)
 
@@ -80,9 +81,12 @@ describe('#tlsCert', () => {
 		it('generates and saves a pair when the store has none', async () => {
 			const pair = await loadCertKey(dir)
 
-			expect(getTlsRejectionReason(pair.cert, pair.key)).to.equal(
-				undefined,
-			)
+			expect(
+				getTlsRejectionReason(
+					requireDefined(pair.cert),
+					requireDefined(pair.key),
+				),
+			).to.equal(undefined)
 			expect(await readFile(storeCert, 'utf8')).to.equal(pair.cert)
 			expect(await readFile(storeKey, 'utf8')).to.equal(pair.key)
 			expect(await fileMode(storeKey)).to.equal(0o600)
@@ -107,9 +111,12 @@ describe('#tlsCert', () => {
 
 				const pair = await loadCertKey(dir)
 
-				expect(getTlsRejectionReason(pair.cert, pair.key)).to.equal(
-					undefined,
-				)
+				expect(
+					getTlsRejectionReason(
+						requireDefined(pair.cert),
+						requireDefined(pair.key),
+					),
+				).to.equal(undefined)
 				expect(await readFile(`${storeKey}.bak`, 'utf8')).to.equal(
 					weak.private,
 				)
@@ -122,9 +129,12 @@ describe('#tlsCert', () => {
 
 			const pair = await loadCertKey(dir)
 
-			expect(getTlsRejectionReason(pair.cert, pair.key)).to.equal(
-				undefined,
-			)
+			expect(
+				getTlsRejectionReason(
+					requireDefined(pair.cert),
+					requireDefined(pair.key),
+				),
+			).to.equal(undefined)
 			expect(await readFile(`${storeCert}.bak`, 'utf8')).to.equal(
 				valid.cert,
 			)
@@ -138,9 +148,12 @@ describe('#tlsCert', () => {
 		it('still serves a new pair when the store is not writable', async () => {
 			const pair = await loadCertKey(join(dir, 'missing'))
 
-			expect(getTlsRejectionReason(pair.cert, pair.key)).to.equal(
-				undefined,
-			)
+			expect(
+				getTlsRejectionReason(
+					requireDefined(pair.cert),
+					requireDefined(pair.key),
+				),
+			).to.equal(undefined)
 		})
 
 		it('returns an accepted custom pair without touching the store', async () => {

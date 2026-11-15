@@ -17,6 +17,7 @@ import type { Driver } from 'zwave-js'
 import type ZwaveClientType from '#api/lib/ZwaveClient.ts'
 import { cleanupTestEnv } from '../shared/env.ts'
 import { loadJsonStore } from '../shared/harness.ts'
+import { socketEvents } from '#api/lib/SocketEvents.ts'
 
 type JsonStoreContext = Awaited<ReturnType<typeof loadJsonStore>>
 
@@ -73,6 +74,14 @@ function attachReadyDriver(client: ZwaveClientType): FakeController {
 }
 
 describe('ZwaveClient scene/group/association service wiring', () => {
+	it('skips socket events when no Socket.IO server is attached', () => {
+		const client = new ZwaveClient({}, undefined)
+
+		expect(() =>
+			client['sendToSocket'](socketEvents.nodeUpdated, {}),
+		).not.toThrow()
+	})
+
 	describe('scenes', () => {
 		it('persists created and removed scenes through jsonStore', async () => {
 			const client = createClient()

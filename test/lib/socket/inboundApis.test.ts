@@ -487,11 +487,10 @@ describe('Socket contract: inbound ACK APIs', () => {
 				})
 				expect(error).toHaveBeenCalledWith(
 					'Error while calling HASS api',
-					expect.any(Error),
+					expect.objectContaining({
+						message: 'Unknown HASS api notARealActionFORGED',
+					}),
 				)
-				expect(error.mock.calls[0][1]).toMatchObject({
-					message: 'Unknown HASS api notARealActionFORGED',
-				})
 			} finally {
 				error.mockRestore()
 			}
@@ -555,9 +554,12 @@ describe('Socket contract: inbound ACK APIs', () => {
 				expect(info).toHaveBeenCalledWith(
 					'Zniffer api call: getFramesFORGED',
 				)
-				expect(error.mock.calls[0][1]).toMatchObject({
-					message: 'Unknown ZNIFFER api getFramesFORGED',
-				})
+				expect(error).toHaveBeenCalledWith(
+					'Error while calling ZNIFFER api',
+					expect.objectContaining({
+						message: 'Unknown ZNIFFER api getFramesFORGED',
+					}),
+				)
 			} finally {
 				info.mockRestore()
 				error.mockRestore()

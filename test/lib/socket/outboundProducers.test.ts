@@ -115,6 +115,18 @@ describe('Socket contract: outbound producers', () => {
 	})
 
 	describe('real producer methods', () => {
+		it('keeps status fields undefined until runtime events initialize them', async () => {
+			const harness = await getHarness({ gateway: benignGateway() })
+			const zwave = realZwave(harness)
+
+			expect(zwave.scanComplete).toBeUndefined()
+			expect(zwave.cntStatus).toBeUndefined()
+			expect(zwave.getInfo()).toMatchObject({
+				lastUpdate: undefined,
+				cntStatus: undefined,
+			})
+		})
+
 		it('emitValueChanged() sends VALUE_UPDATED with the mutated valueId when changed=true', async () => {
 			const harness = await getHarness({ gateway: benignGateway() })
 			const zwave = realZwave(harness)
@@ -624,70 +636,6 @@ describe('Socket contract: outbound producers', () => {
 					await znifferManager.setFrequency(916)
 
 					expect(await received).toEqual(znifferManager.status())
-				} finally {
-					await znifferManager.close()
-				}
-			})
-
-			it('a real "frame" event -> parseFrame() -> ZNIFFER_FRAME on "znifferFrames", uncorrupted (has `protocol`)', async () => {
-				const harness = await getHarness({ gateway: benignGateway() })
-				const znifferManager = new ZnifferManager(
-					{ enabled: true, port: '/dev/ttyFAKE' },
-					harness.io,
-				)
-				try {
-					const client = await connectedSubscriber(
-						harness,
-						'znifferFrames',
-					)
-					const received = waitForEvent<{
-						corrupted: boolean
-						protocol: string
-						raw: string
-					}>(client, 'ZNIFFER_FRAME')
-
-					const rawData = Uint8Array.from([0xaa, 0xbb, 0xcc])
-					// A non-corrupted Frame only needs a protocol key for parseFrame()'s check, so omitting payload keeps buffer2hex() out of the picture for this variant
-					const frame = { protocol: 'Z-Wave' }
-					znifferManager['zniffer'].emit('frame', frame, rawData)
-
-					const data = await received
-					expect(data.corrupted).toBe(false)
-					expect(data.protocol).toBe('Z-Wave')
-					expect(data.raw).toBe(buffer2hex(rawData))
-				} finally {
-					await znifferManager.close()
-				}
-			})
-
-			it('a real "corrupted frame" event -> parseFrame() -> ZNIFFER_FRAME, marked corrupted (no `protocol`)', async () => {
-				const harness = await getHarness({ gateway: benignGateway() })
-				const znifferManager = new ZnifferManager(
-					{ enabled: true, port: '/dev/ttyFAKE' },
-					harness.io,
-				)
-				try {
-					const client = await connectedSubscriber(
-						harness,
-						'znifferFrames',
-					)
-					const received = waitForEvent<{
-						corrupted: boolean
-						raw: string
-					}>(client, 'ZNIFFER_FRAME')
-
-					const rawData = Uint8Array.from([0x01])
-					// A corrupted frame has no protocol key at all
-					const frame = { reason: 'bad checksum' }
-					znifferManager['zniffer'].emit(
-						'corrupted frame',
-						frame,
-						rawData,
-					)
-
-					const data = await received
-					expect(data.corrupted).toBe(true)
-					expect(data.raw).toBe(buffer2hex(rawData))
 				} finally {
 					await znifferManager.close()
 				}

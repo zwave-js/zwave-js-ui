@@ -17,6 +17,7 @@ import {
 	startTrustedListener,
 	type TrustedListenerConfig,
 } from '../../api/lib/trustedListener.ts'
+import { requireDefined } from './testUtils.ts'
 
 function probeApp() {
 	const app = express()
@@ -31,7 +32,7 @@ function tcpConfig(allowedCidr: string): TrustedListenerConfig {
 		kind: 'tcp',
 		host: '127.0.0.1',
 		port: 0,
-		allowedIps: [parseCidr(allowedCidr)],
+		allowedIps: [requireDefined(parseCidr(allowedCidr))],
 	}
 }
 
@@ -59,9 +60,8 @@ describe('startTrustedListener', () => {
 	})
 
 	it('marks allowlisted TCP connections as trusted', async () => {
-		const server = await startTrustedListener(
-			probeApp(),
-			tcpConfig('127.0.0.0/8'),
+		const server = requireDefined(
+			await startTrustedListener(probeApp(), tcpConfig('127.0.0.0/8')),
 		)
 		servers.push(server)
 
@@ -70,9 +70,8 @@ describe('startTrustedListener', () => {
 	})
 
 	it('destroys connections from non-allowlisted peers, ignoring X-Forwarded-For', async () => {
-		const server = await startTrustedListener(
-			probeApp(),
-			tcpConfig('10.0.0.0/8'),
+		const server = requireDefined(
+			await startTrustedListener(probeApp(), tcpConfig('10.0.0.0/8')),
 		)
 		servers.push(server)
 
@@ -104,10 +103,12 @@ describe('startTrustedListener', () => {
 		})
 		expect(existsSync(socketPath)).toBe(true)
 
-		const server = await startTrustedListener(probeApp(), {
-			kind: 'unix',
-			path: socketPath,
-		})
+		const server = requireDefined(
+			await startTrustedListener(probeApp(), {
+				kind: 'unix',
+				path: socketPath,
+			}),
+		)
 
 		const body = await new Promise<string>((resolve, reject) => {
 			request({ socketPath, path: '/probe' }, (res) => {
@@ -152,9 +153,8 @@ describe('startTrustedListener', () => {
 			mainServer.listen(0, '127.0.0.1', resolve),
 		)
 
-		const trustedServer = await startTrustedListener(
-			app,
-			tcpConfig('127.0.0.0/8'),
+		const trustedServer = requireDefined(
+			await startTrustedListener(app, tcpConfig('127.0.0.0/8')),
 		)
 		servers.push(trustedServer)
 
@@ -174,7 +174,7 @@ describe('startTrustedListener', () => {
 		cleanups.push(
 			() =>
 				new Promise<void>((resolve) =>
-					socketManager.io.close(() => resolve()),
+					requireDefined(socketManager.io).close(() => resolve()),
 				),
 		)
 

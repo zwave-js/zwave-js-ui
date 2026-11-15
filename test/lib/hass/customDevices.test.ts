@@ -10,6 +10,7 @@ import {
 } from './gatewayHarness.ts'
 import { ensureTestEnv } from './env.ts'
 import { mqttMockFactory } from './mqttMock.ts'
+import { requireDefined } from './fixtures.ts'
 
 vi.mock('mqtt', () => mqttMockFactory())
 
@@ -69,10 +70,16 @@ it('discovers devices from custom files', async () => {
 	harness.gw.rediscoverNode(customNode.id)
 	harness.gw.rediscoverNode(injectedNode.id)
 
-	expect(customNode.hassDevices.sensor_from_file).toMatchObject({
+	expect(
+		requireDefined(customNode.hassDevices, 'expected file-backed discovery')
+			.sensor_from_file,
+	).toMatchObject({
 		object_id: 'from_file',
 	})
-	expect(injectedNode.hassDevices.sensor_injected).toMatchObject({
+	expect(
+		requireDefined(injectedNode.hassDevices, 'expected injected discovery')
+			.sensor_injected,
+	).toMatchObject({
 		object_id: 'injected',
 	})
 })
@@ -101,20 +108,21 @@ it('observes root custom-device registry edits after the gateway is built (live 
 	// second time in GatewayFactory would break this: the manager's fork would
 	// then subscribe to a fork that copies the root's projection but never
 	// re-emits, so this reload would never be observed.
-	harness = await createGatewayHarness()
+	const gatewayHarness = await createGatewayHarness()
+	harness = gatewayHarness
 	const node = buildNode({ id: 11, deviceId, hassDevices: {} })
-	harness.zwave.nodes.set(node.id, node)
+	gatewayHarness.zwave.nodes.set(node.id, node)
 
-	harness.gw.rediscoverNode(node.id)
-	expect(node.hassDevices.sensor_before).toMatchObject({
+	gatewayHarness.gw.rediscoverNode(node.id)
+	expect(requireDefined(node.hassDevices).sensor_before).toMatchObject({
 		object_id: 'before',
 	})
 
 	writeFileSync(filename, JSON.stringify({ [deviceId]: [after] }))
 
 	await vi.waitFor(() => {
-		harness.gw.rediscoverNode(node.id)
-		expect(node.hassDevices.sensor_after).toMatchObject({
+		gatewayHarness.gw.rediscoverNode(node.id)
+		expect(requireDefined(node.hassDevices).sensor_after).toMatchObject({
 			object_id: 'after',
 		})
 	})

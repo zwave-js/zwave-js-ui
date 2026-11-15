@@ -17,7 +17,7 @@ import {
 	CONTROLLER_LOGLEVEL,
 } from '@zwave-js/core'
 import { RFRegion, driverPresets } from 'zwave-js'
-import type { Driver, ZWaveOptions, PartialZWaveOptions } from 'zwave-js'
+import type { Driver, PartialZWaveOptions } from 'zwave-js'
 import type { JSONTransport } from '@zwave-js/log-transport-json'
 import Transport from 'winston-transport'
 
@@ -32,7 +32,11 @@ import type {
 	InclusionUserCallbacks,
 } from '#api/lib/zwave/ports.ts'
 import { ZwaveClientStatus } from '#api/lib/zwave/ports.ts'
-import { createDeferred, type Deferred } from './serviceTestSupport.ts'
+import {
+	createDeferred,
+	requireDefined,
+	type Deferred,
+} from './serviceTestSupport.ts'
 
 type StartBehavior = 'resolve' | 'reject' | 'hang' | 'deferred'
 type DestroyBehavior = 'resolve' | 'reject' | 'deferred'
@@ -201,10 +205,8 @@ function makeDeps(world: World): DriverLifecycleDeps {
 	}
 }
 
-// The base types `cfg.options` as the full ZWaveOptions, but production only ever
-// Object.assigns partial user overrides, so adapt partial fixtures in one place
-function zwaveOpts(partial: Partial<ZWaveOptions>): ZWaveOptions {
-	return partial as ZWaveOptions
+function zwaveOpts(partial: PartialZWaveOptions): PartialZWaveOptions {
+	return partial
 }
 
 interface HarnessState {
@@ -1691,8 +1693,10 @@ describe('DriverLifecycle — driver options', () => {
 		})
 		await lifecycle.connect()
 
-		const driverStorage = world.drivers[0].options.storage
-		expect(driverStorage).toBeDefined()
+		const driverStorage = requireDefined(
+			world.drivers[0].options.storage,
+			'expected driver storage options',
+		)
 		driverStorage.cacheDir = '/external/cache'
 		driverStorage.throttle = 'fast'
 

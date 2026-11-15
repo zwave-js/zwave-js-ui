@@ -26,7 +26,8 @@ import type {
 	OTWFirmwareUpdateResult,
 	StagedFirmwareNodeUpdate,
 } from '#api/lib/zwave/ports.ts'
-import { createDeferred, createServiceLogger } from './serviceTestSupport.ts'
+import { createServiceLogger } from './serviceTestSupport.ts'
+import { createDeferred, requireDefined } from '../testUtils.ts'
 
 const successfulFirmwareUpdate: FirmwareUpdateResult = {
 	success: true,
@@ -105,10 +106,11 @@ function createNodeStorePort(): FirmwareNodeStorePort & {
 		getNode: (nodeId: number) => nodes.get(nodeId),
 		getStoreNode: (nodeId: number) => store.get(nodeId),
 		ensureStoreNode: (nodeId: number) => {
-			if (!store.has(nodeId)) {
-				store.set(nodeId, {})
-			}
-			return store.get(nodeId)
+			const current = store.get(nodeId)
+			if (current) return current
+			const created: Partial<FirmwareUpdateNodeState> = {}
+			store.set(nodeId, created)
+			return created
 		},
 		updateStoreNodes: vi.fn().mockResolvedValue(undefined),
 		persistStagedNodeUpdates: vi
@@ -366,7 +368,7 @@ describe('FirmwareUpdateService', () => {
 				lastFirmwareUpdateCheck: 10,
 				firmwareUpdatesDismissed: {},
 			})
-			nodes.updateStoreNodes.mockImplementation(async () => {
+			vi.mocked(nodes.updateStoreNodes).mockImplementation(async () => {
 				persistenceStarted.resolve()
 				await persistenceBarrier.promise
 			})
@@ -2080,7 +2082,10 @@ describe('FirmwareUpdateService', () => {
 				FirmwareLifecycleCancelledError,
 			)
 
-			const liveNode = nodes._nodes.get(7)
+			const liveNode = requireDefined(
+				nodes._nodes.get(7),
+				'expected node 7 to remain registered',
+			)
 			expect(liveNode.availableFirmwareUpdates).toEqual([])
 			expect(liveNode.lastFirmwareUpdateCheck).toBe(0)
 			expect(persisted?.availableFirmwareUpdates).toEqual([])
@@ -2144,7 +2149,10 @@ describe('FirmwareUpdateService', () => {
 
 			await checkPromise
 
-			const liveNode = nodes._nodes.get(5)
+			const liveNode = requireDefined(
+				nodes._nodes.get(5),
+				'expected node 5 to remain registered',
+			)
 			expect(liveNode.availableFirmwareUpdates).toEqual([])
 			expect(liveNode.lastFirmwareUpdateCheck).toBe(0)
 			expect(persisted?.availableFirmwareUpdates).toEqual([])
@@ -2308,12 +2316,14 @@ describe('FirmwareUpdateService', () => {
 				availableFirmwareUpdates: [update],
 				firmwareUpdatesDismissed: {},
 			})
-			nodes.updateStoreNodes.mockImplementation(async ([nodeId]) => {
-				if (nodeId === 8) {
-					blockerStarted.resolve()
-					await blockerBarrier.promise
-				}
-			})
+			vi.mocked(nodes.updateStoreNodes).mockImplementation(
+				async (nodeIds) => {
+					if (nodeIds?.[0] === 8) {
+						blockerStarted.resolve()
+						await blockerBarrier.promise
+					}
+				},
+			)
 			let persistedDismissals: Record<string, boolean> | undefined
 			nodes.persistStagedNodeUpdates.mockImplementation(
 				([projection]) => {
@@ -2380,7 +2390,10 @@ describe('FirmwareUpdateService', () => {
 				]),
 			)
 
-			const liveNode = nodes._nodes.get(3)
+			const liveNode = requireDefined(
+				nodes._nodes.get(3),
+				'expected node 3 to remain registered',
+			)
 			expect(liveNode.availableFirmwareUpdates).toEqual(updates)
 			expect(liveNode.lastFirmwareUpdateCheck).toBe(checkTime)
 
@@ -2421,7 +2434,10 @@ describe('FirmwareUpdateService', () => {
 
 			expect(nodes.persistStagedNodeUpdates).toHaveBeenCalled()
 
-			const liveNode = nodes._nodes.get(9)
+			const liveNode = requireDefined(
+				nodes._nodes.get(9),
+				'expected node 9 to remain registered',
+			)
 			expect(liveNode.availableFirmwareUpdates).toEqual(updates)
 
 			expect(nodes.emitNodeUpdate).toHaveBeenCalledWith(

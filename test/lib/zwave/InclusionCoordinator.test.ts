@@ -25,7 +25,8 @@ import type {
 	InclusionServerManagerPort,
 	InclusionSocketPort,
 } from '#api/lib/zwave/ports.ts'
-import { createDeferred, createServiceLogger } from './serviceTestSupport.ts'
+import { createServiceLogger } from './serviceTestSupport.ts'
+import { createDeferred } from '../testUtils.ts'
 
 function createDriverPort(
 	overrides: Partial<
@@ -172,10 +173,22 @@ function createCoordinator(
 		nvmEventSetter,
 		socketEvents,
 	)
+	const inspectionDriver = {
+		...driver,
+		getDriver() {
+			const current = driver.getDriver()
+			if (!current) {
+				throw new Error(
+					'Expected the inclusion driver fixture to be ready',
+				)
+			}
+			return current
+		},
+	}
 
 	return {
 		coordinator,
-		driver,
+		driver: inspectionDriver,
 		socket,
 		controllerEvent,
 		backup,

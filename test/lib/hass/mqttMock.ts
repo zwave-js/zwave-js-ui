@@ -57,11 +57,8 @@ export interface FakeBroker extends EventEmitter {
 	/** Queued deferred subscribe callbacks awaiting `flushSubscribes`. */
 	pendingSubscribes: Array<{
 		topic: string
-		options: Record<string, any> | undefined
-		cb?: (
-			err: Error | null,
-			granted: { topic: string; qos: number }[],
-		) => void
+		options: IClientSubscribeOptions | undefined
+		cb: Parameters<FakeBroker['subscribe']>[2]
 	}>
 	/**
 	 * Exact topics the broker denies: `subscribe` grants them `qos === 128`
@@ -118,6 +115,14 @@ export interface FakeBroker extends EventEmitter {
 	triggerOffline(): void
 	/** Fire `'reconnect'` (real client between an offline and a re-connect). */
 	triggerReconnect(): void
+}
+
+type ErrorCallback = (err?: Error) => void
+
+function isErrorCallback(
+	value: Parameters<FakeBroker['publish']>[2],
+): value is ErrorCallback {
+	return typeof value === 'function'
 }
 
 /**
@@ -178,8 +183,10 @@ export function createFakeBroker(): FakeBroker {
 	const grantedQos = (
 		topic: string,
 		options: Record<string, any> | undefined,
-	) =>
-		broker.denySubscribe.has(topic) ? 128 : ((options?.qos as number) ?? 0)
+	): ISubscriptionGrant['qos'] =>
+		broker.denySubscribe.has(topic)
+			? 128
+			: ((options?.qos as ISubscriptionGrant['qos'] | undefined) ?? 0)
 
 	broker.publish = (topic, payload, options, cb) => {
 		// Mirror `mqtt`'s `publish(topic, payload, cb)` overload where the 3rd
@@ -188,7 +195,7 @@ export function createFakeBroker(): FakeBroker {
 		// `'connect'`; only inbound `deliver()` is connection/subscription gated.
 		let opts: IClientPublishOptions | undefined
 		let callback: ((err?: Error) => void) | undefined
-		if (typeof options === 'function') {
+		if (isErrorCallback(options)) {
 			callback = options
 		} else {
 			opts = options
@@ -240,7 +247,7 @@ export function createFakeBroker(): FakeBroker {
 		broker.subscribed = broker.subscribed.filter(
 			(s) => !topics.includes(s.topic),
 		)
-		const callback = typeof options === 'function' ? options : cb
+		const callback = isErrorCallback(options) ? options : cb
 		callback?.()
 		return broker
 	}

@@ -330,7 +330,6 @@ describe('#ZwaveClient', () => {
 			client['_nodeRegistry'] = new NodeRegistry(
 				client['_buildNodeRegistryHost'](),
 				{
-					debug: vi.fn(),
 					info: vi.fn(),
 					warn: vi.fn(),
 					error: vi.fn(),

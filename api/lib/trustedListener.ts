@@ -137,7 +137,8 @@ function logRejection(remote: string) {
 	lastRejectionLogAt.delete(remote)
 	lastRejectionLogAt.set(remote, now)
 	if (lastRejectionLogAt.size > REJECTION_LOG_MAX_TRACKED) {
-		lastRejectionLogAt.delete(lastRejectionLogAt.keys().next().value)
+		const oldest = lastRejectionLogAt.keys().next().value
+		if (oldest !== undefined) lastRejectionLogAt.delete(oldest)
 	}
 	logger.warn(`Trusted listener: rejected connection from ${remote}`)
 }
