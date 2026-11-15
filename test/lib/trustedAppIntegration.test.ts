@@ -13,7 +13,8 @@ process.env.STORE_DIR = testStoreDir
 
 const { default: jsonStore } = await import('../../api/lib/jsonStore.ts')
 const { default: storeConfig } = await import('../../api/config/store.ts')
-const { default: app, socketManager } = await import('../../api/app.ts')
+const { createApp } = await import('../../api/app.ts')
+const { createFakeGateway } = await import('./socket/fakes.ts')
 const { parseCidr } = await import('../../api/lib/ipUtils.ts')
 const { startTrustedListener } = await import(
 	'../../api/lib/trustedListener.ts'
@@ -32,6 +33,9 @@ function getJson(url: string): Promise<any> {
 }
 
 describe('trusted listener app integration', () => {
+	// The socket API needs a gateway on connect; no driver runs here
+	const instance = createApp({ test: { gateway: createFakeGateway() } })
+	const app = instance.app
 	let mainServer: HttpServer
 	let trustedServer: HttpServer
 	let mainUrl: string
@@ -61,6 +65,7 @@ describe('trusted listener app integration', () => {
 	})
 
 	afterAll(async () => {
+		await instance.close()
 		for (const server of [mainServer, trustedServer]) {
 			await new Promise((resolve) => server?.close(resolve))
 		}
@@ -107,8 +112,9 @@ describe('trusted listener app integration', () => {
 	})
 
 	it('bypasses socket.io authentication only on the trusted listener', async () => {
-		socketManager.bindServer(mainServer)
-		socketManager.attachServer(trustedServer)
+		instance.attachSocket(mainServer)
+		// Same as socketManager.attachServer in startServer; the manager isn't exposed
+		instance.io.attach(trustedServer)
 
 		const connect = (url: string) =>
 			new Promise<string>((resolve) => {
@@ -128,9 +134,5 @@ describe('trusted listener app integration', () => {
 
 		expect(await connect(trustedUrl)).toBe('connected')
 		expect(await connect(mainUrl)).toBe('Authentication error')
-
-		await new Promise<void>((resolve) =>
-			socketManager.io.close(() => resolve()),
-		)
 	})
 })

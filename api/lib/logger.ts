@@ -18,7 +18,8 @@ export const defaultLogFile = 'z-ui_%DATE%.log'
 
 export const disableColors = process.env.NO_LOG_COLORS === 'true'
 
-let transportsList: winston.transport[] = null
+const transportGenerations = new Map<string, winston.transport[]>()
+let activeConfig: DeepPartial<GatewayConfig> | undefined
 
 // ensure store and logs directories exist
 ensureDirSync(storeDir)
@@ -46,6 +47,9 @@ interface LoggerConfig {
 	logToFile: boolean
 	filePath: string
 }
+
+// Narrows filename to required, since setupCleanJob's only caller always builds it from LoggerConfig.filePath
+type CleanJobSettings = DailyRotateFileTransportOptions & { filename: string }
 
 /**
  * Generate logger configuration starting from settings.gateway
@@ -106,15 +110,20 @@ export const logStream = new PassThrough()
  * Create the base transports based on settings provided
  */
 export function customTransports(config: LoggerConfig): winston.transport[] {
-	// setup transports only once (see issue #2937)
-	if (transportsList) {
-		return transportsList
+	const wantsFileTransport = Boolean(config.enabled && config.logToFile)
+	const key = `${config.enabled}:${wantsFileTransport}`
+
+	// Share matching transports within a configuration generation because duplicate rotation handles conflict (#2937)
+	const existingTransports = transportGenerations.get(key)
+	if (existingTransports) {
+		return existingTransports
 	}
 
-	transportsList = []
+	const nextTransports: winston.transport[] = []
+	transportGenerations.set(key, nextTransports)
 
 	if (process.env.ZUI_NO_CONSOLE !== 'true') {
-		transportsList.push(
+		nextTransports.push(
 			new transports.Console({
 				format: customFormat(),
 				level: config.level,
@@ -129,9 +138,9 @@ export function customTransports(config: LoggerConfig): winston.transport[] {
 		stream: logStream,
 	})
 
-	transportsList.push(streamTransport)
+	nextTransports.push(streamTransport)
 
-	if (config.enabled && config.logToFile) {
+	if (wantsFileTransport) {
 		let fileTransport: winston.transport
 
 		if (process.env.DISABLE_LOG_ROTATION === 'true') {
@@ -141,7 +150,7 @@ export function customTransports(config: LoggerConfig): winston.transport[] {
 				level: config.level,
 			})
 		} else {
-			const options: DailyRotateFileTransportOptions = {
+			const options: CleanJobSettings = {
 				filename: config.filePath,
 				auditFile: joinPath(logsDir, 'zui-logs.audit.json'),
 				datePattern: 'YYYY-MM-DD',
@@ -160,19 +169,19 @@ export function customTransports(config: LoggerConfig): winston.transport[] {
 			setupCleanJob(options)
 		}
 
-		transportsList.push(fileTransport)
+		nextTransports.push(fileTransport)
 	}
 
 	// giving that we re-use transports, each module will subscribe to events
 	// increeasing the default limit of 100 prevents warnings
-	transportsList.forEach((t) => {
+	nextTransports.forEach((t) => {
 		t.setMaxListeners(100)
 		if (t !== streamTransport) {
 			t.silent = config.enabled === false
 		}
 	})
 
-	return transportsList
+	return nextTransports
 }
 
 /**
@@ -210,31 +219,33 @@ const logContainer = new winston.Container()
  * Create a new logger for a specific module
  */
 export function module(module: string): ModuleLogger {
-	return setupLogger(logContainer, module)
+	return setupLogger(logContainer, module, activeConfig)
 }
 
 /**
  * Setup all loggers starting from config
  */
 export function setupAll(config: DeepPartial<GatewayConfig>) {
+	activeConfig = config
 	stopCleanJob()
 
-	transportsList.forEach((t) => {
-		if (typeof t.close === 'function') {
-			t.close()
-		}
+	transportGenerations.forEach((generation) => {
+		generation.forEach((transport) => {
+			if (typeof transport.close === 'function') {
+				transport.close()
+			}
+		})
 	})
+	transportGenerations.clear()
 
-	transportsList = null
-
-	logContainer.loggers.forEach((logger: ModuleLogger) => {
-		logger.setup(config)
+	logContainer.loggers.forEach((logger: winston.Logger) => {
+		;(logger as ModuleLogger).setup(config)
 	})
 }
 
-let cleanJob: NodeJS.Timeout
+let cleanJob: NodeJS.Timeout | undefined
 
-export function setupCleanJob(settings: DailyRotateFileTransportOptions) {
+export function setupCleanJob(settings: CleanJobSettings) {
 	if (cleanJob) {
 		return
 	}

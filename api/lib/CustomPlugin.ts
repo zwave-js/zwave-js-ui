@@ -4,8 +4,8 @@ import type { ModuleLogger } from './logger.ts'
 import type ZwaveClient from './ZwaveClient.ts'
 
 export interface PluginContext {
-	zwave: ZwaveClient
-	mqtt: MqttClient
+	zwave?: ZwaveClient
+	mqtt?: MqttClient
 	app: Router
 	logger: ModuleLogger
 }

@@ -86,4 +86,9 @@ function resolveSessionSecret(): string {
 export const sessionSecret: string = resolveSessionSecret()
 export const base: string = process.env.BASE_PATH || '/'
 export const port: string | number = process.env.PORT || 8091
-export const host: string = process.env.HOST // by default undefined, so it will listen on all interfaces both ipv4 and ipv6
+export const host: string | undefined = process.env.HOST // by default undefined, so it will listen on all interfaces both ipv4 and ipv6
+
+// Reads process.env fresh on every call, unlike the constants above, since tests toggle this between cases
+export function sslDisabled(): boolean {
+	return process.env.FORCE_DISABLE_SSL === 'true'
+}

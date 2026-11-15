@@ -475,7 +475,7 @@ export function sensorType(index: number): ISensorType {
 // Only the command classes whose legacy (OpenZWave) name differs from the
 // zwave-js one. Renaming these would break existing MQTT topics, so they win
 // over `getCCName()`. Every other CC is resolved by `commandClass()` below.
-const _commandClassMap = {
+const _commandClassMap: Record<number, string> = {
 	0x23: 'zip_services',
 	0x24: 'zip_server',
 	0x25: 'switch_binary',

@@ -144,13 +144,21 @@ import type {
 } from 'zwave-js'
 import { getEnumMemberName, parseQRCodeString } from 'zwave-js/Utils'
 import { configDbDir, logsDir, nvmBackupsDir, storeDir } from '../config/app.ts'
-import type { Group } from '../config/store.ts'
+import type {
+	Group,
+	NodesStoreFile,
+	NodesStoreRecord,
+	NodesStoreRecordByHome,
+} from '../config/store.ts'
 import store from '../config/store.ts'
 import jsonStore from './jsonStore.ts'
 import * as LogManager from './logger.ts'
 import * as utils from './utils.ts'
 
-import { serverVersion, ZwavejsServer } from '@zwave-js/server'
+import { serverVersion } from '@zwave-js/server'
+import ZwaveServerManager, {
+	type ZwaveServerHost,
+} from './ZwaveServerManager.ts'
 import type { Server as SocketServer } from 'socket.io'
 import { TypedEventEmitter } from './EventEmitter.ts'
 import type { GatewayValue } from './Gateway.ts'
@@ -171,6 +179,14 @@ import { PkgFsBindings } from './PkgFsBindings.ts'
 import { regionSupportsAutoPowerlevel } from './shared.ts'
 import { deviceConfigPriorityDir } from './Constants.ts'
 import { createRequire } from 'node:module'
+import { HassDeviceStore } from '../hass/DeviceStore.ts'
+import type {
+	HassDevice,
+	HassDeviceMap,
+	StoreHassDevicesResult,
+} from '../hass/types.ts'
+
+export type { HassDevice } from '../hass/types.ts'
 
 export const configManager = new ConfigManager({
 	deviceConfigPriorityDir,
@@ -441,7 +457,7 @@ export type ZUIValueId = {
 	label?: string
 	default: any
 	stateless: boolean
-	ccSpecific: Record<string, any>
+	ccSpecific?: Record<string, unknown>
 	min?: number
 	max?: number
 	step?: number
@@ -524,31 +540,6 @@ export type CallAPIResult<T extends AllowedApis> =
 			message: string
 			args?: Parameters<ZwaveClient[T]>
 	  }
-
-export type HassDevice = {
-	type:
-		| 'sensor'
-		| 'light'
-		| 'binary_sensor'
-		| 'cover'
-		| 'climate'
-		| 'lock'
-		| 'switch'
-		| 'fan'
-		| 'number'
-	object_id: string
-	discovery_payload: { [key: string]: any }
-	discoveryTopic?: string
-	values?: string[]
-	action_map?: { [key: number]: string }
-	setpoint_topic?: { [key: number]: string }
-	default_setpoint?: string
-	persistent?: boolean
-	ignoreDiscovery?: boolean
-	fan_mode_map?: { [key: string]: number }
-	mode_map?: { [key: string]: number }
-	id?: string
-}
 
 export class DriverNotReadyError extends Error {
 	public constructor() {
@@ -917,7 +908,27 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 	private _driver: Driver
 
-	private server: ZwavejsServer
+	private readonly _serverManager: ZwaveServerManager
+
+	private buildServerHost(): ZwaveServerHost {
+		return {
+			getDriver: () => this._driver,
+			// Project only the four server fields, so the manager never sees
+			// `networkKey`/`securityKeys`/`securityKeysLongRange`
+			getConfig: () => ({
+				serverEnabled: this.cfg.serverEnabled,
+				serverPort: this.cfg.serverPort,
+				serverHost: this.cfg.serverHost,
+				serverServiceDiscoveryDisabled:
+					this.cfg.serverServiceDiscoveryDisabled,
+			}),
+			getHasUserCallbacks: () => this.hasUserCallbacks,
+			onHardReset: () => this.init(),
+			logger,
+			serverLogger: LogManager.module('Z-Wave-Server'),
+		}
+	}
+
 	private statelessTimeouts: Record<string, NodeJS.Timeout>
 	private commandsTimeout: NodeJS.Timeout
 	private healTimeout: NodeJS.Timeout
@@ -940,6 +951,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 	// Foreach valueId, we store a callback function to be called when the value changes
 	private valuesObservers: Record<string, ValueIdObserver> = {}
+	private hassDeviceStore: HassDeviceStore
 
 	private _grantResolve: (grant: InclusionGrant | false) => void | null
 	private _dskResolve: (dsk: string | false) => void | null
@@ -1001,6 +1013,26 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		this.cfg = config
 		this.socket = socket
+		// The host port resolves the driver and config on demand, so the manager
+		// is safe to build before `connect()` creates the driver
+		this._serverManager = new ZwaveServerManager(this.buildServerHost())
+		this.hassDeviceStore = new HassDeviceStore({
+			hasNode: (nodeId) => this._nodes.has(nodeId),
+			getNodeDevices: (nodeId) => this._nodes.get(nodeId)?.hassDevices,
+			setNodeDevices: (nodeId, devices) => {
+				const node = this._nodes.get(nodeId)
+				if (node) node.hassDevices = devices
+			},
+			getStoredNode: (nodeId) => this.storeNodes[nodeId],
+			setStoredNode: (nodeId, node) => {
+				this.storeNodes[nodeId] = node
+			},
+			emitNodeUpdate: (nodeId, devices) => {
+				const node = this._nodes.get(nodeId)
+				if (node) this.emitNodeUpdate(node, { hassDevices: devices })
+			},
+			updateStoreNodes: () => this.updateStoreNodes(),
+		})
 
 		this.init()
 	}
@@ -1311,9 +1343,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		})
 
 		// when no user is connected, give back the control to HA server
-		if (this.server?.['sockets'] !== undefined) {
-			this.server.setInclusionUserCallbacks()
-		}
+		this._serverManager.handInclusionControlBack()
 	}
 
 	/**
@@ -1377,41 +1407,14 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 *
 	 */
 	updateDevice(hassDevice: HassDevice, nodeId: number, deleteDevice = false) {
-		const node = this._nodes.get(nodeId)
-
-		// check for existing node and node hassdevice with given id
-		if (node && hassDevice.id && node.hassDevices?.[hassDevice.id]) {
-			if (deleteDevice) {
-				delete node.hassDevices[hassDevice.id]
-			} else {
-				const id = hassDevice.id
-				delete hassDevice.id
-				node.hassDevices[id] = hassDevice
-			}
-
-			this.emitNodeUpdate(node, {
-				hassDevices: node.hassDevices,
-			})
-		}
+		this.hassDeviceStore.updateDevice(hassDevice, nodeId, deleteDevice)
 	}
 
 	/**
 	 * Used to Add a new hass device to a specific node
 	 */
 	addDevice(hassDevice: HassDevice, nodeId: number) {
-		const node = this._nodes.get(nodeId)
-
-		// check for existing node and node hassdevice with given id
-		if (node && hassDevice.id) {
-			delete hassDevice.id
-			const id = hassDevice.type + '_' + hassDevice.object_id
-			hassDevice.persistent = false
-			node.hassDevices[id] = hassDevice
-
-			this.emitNodeUpdate(node, {
-				hassDevices: node.hassDevices,
-			})
-		}
+		this.hassDeviceStore.addDevice(hassDevice, nodeId)
 	}
 
 	/**
@@ -1419,30 +1422,11 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 *
 	 */
 	async storeDevices(
-		devices: { [key: string]: HassDevice },
+		devices: HassDeviceMap,
 		nodeId: number,
-		remove: any,
-	) {
-		const node = this._nodes.get(nodeId)
-
-		if (node) {
-			for (const id in devices) {
-				devices[id].persistent = !remove
-			}
-
-			if (remove) {
-				delete this.storeNodes[nodeId].hassDevices
-			} else {
-				this.storeNodes[nodeId].hassDevices = devices
-			}
-
-			node.hassDevices = utils.copy(devices)
-			await this.updateStoreNodes()
-
-			this.emitNodeUpdate(node, {
-				hassDevices: node.hassDevices,
-			})
-		}
+		remove: unknown,
+	): Promise<StoreHassDevicesResult> {
+		return this.hassDeviceStore.storeDevices(devices, nodeId, remove)
 	}
 
 	/**
@@ -1452,6 +1436,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		this.status = ZwaveClientStatus.CLOSED
 		this.closed = true
 		this.driverReady = false
+
+		logger.info('Closing client...')
 
 		if (this.commandsTimeout) {
 			clearTimeout(this.commandsTimeout)
@@ -1497,12 +1483,14 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			this.throttledFunctions.delete(key)
 		}
 
-		if (this.server) {
-			await this.server.destroy()
-			this.server = null
-		}
+		// Destroy the server before the driver, so its listening port is released
+		// before the driver it wraps goes away
+		await this._serverManager.destroy()
 
 		if (this._driver) {
+			// Logged because this and the server destroy are the two most
+			// hang-prone awaits in shutdown
+			logger.info('Destroying driver...')
 			await this._driver.destroy()
 			this._driver = null
 		}
@@ -3216,25 +3204,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				return
 			}
 
-			if (this.cfg.serverEnabled) {
-				this.server = new ZwavejsServer(this._driver, {
-					port: this.cfg.serverPort || 3000,
-					host: this.cfg.serverHost,
-					logger: LogManager.module('Z-Wave-Server'),
-					enableDNSServiceDiscovery:
-						!this.cfg.serverServiceDiscoveryDisabled,
-				})
-
-				this.server.on('error', () => {
-					// this is already logged by the server but we need this to prevent
-					// unhandled exceptions
-				})
-
-				this.server.on('hard reset', () => {
-					logger.info('Hard reset requested by ZwaveJS Server')
-					this.init()
-				})
-			}
+			// The `serverEnabled` gate lives in the manager's `create()`, so
+			// call unconditionally and let it decide whether a server is built
+			this._serverManager.create()
 
 			if (this.cfg.enableStatistics) {
 				this.enableStatistics()
@@ -3412,13 +3384,13 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			throw new Error('HomeHex not set')
 		}
 
-		let nodes = jsonStore.get(store.nodes)
+		let nodes: NodesStoreFile = jsonStore.get(store.nodes)
 
 		// back compatibility fixes
 
 		// convert store nodes from array to object
 		if (Array.isArray(nodes)) {
-			const storeNodes = {}
+			const storeNodes: NodesStoreRecord = {}
 
 			for (let i = 0; i < nodes.length; i++) {
 				if (nodes[i]) {
@@ -3433,12 +3405,14 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		// ensure store nodes are stored using homeHex
 		if (keys.length > 0 && !keys[0].startsWith('0x')) {
-			this.storeNodes = nodes
+			const legacyFlatNodes = nodes as NodesStoreRecord
+			this.storeNodes = legacyFlatNodes
 			await jsonStore.put(store.nodes, {
-				[this.homeHex]: nodes,
+				[this.homeHex]: legacyFlatNodes,
 			})
 		} else {
-			this.storeNodes = nodes[this.homeHex] || {}
+			this.storeNodes =
+				(nodes as NodesStoreRecordByHome)[this.homeHex] || {}
 		}
 	}
 
@@ -3449,7 +3423,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				return
 			}
 
-			const nodes = jsonStore.get(store.nodes)
+			// Assumes store.nodes is keyed by home ID, which is true once getStoreNodes has migrated any legacy on-disk shape
+			const nodes = jsonStore.get(store.nodes) as NodesStoreRecordByHome
 
 			// remove empty objects keys
 			nodes[this.homeHex] = Object.keys(this.storeNodes).reduce(
@@ -3459,7 +3434,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 					}
 					return acc
 				},
-				{},
+				{} as NodesStoreRecord,
 			)
 
 			logger.debug('Updating store nodes.json')
@@ -7036,21 +7011,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		this._error = undefined
 
 		// start server only when driver is ready. Fixes #602
-		if (this.cfg.serverEnabled && this.server) {
-			// fix prevent to start server when already inited
-			if (!this.server['server']) {
-				this.server
-					.start(!this.hasUserCallbacks)
-					.then(() => {
-						logger.info('Z-Wave server started')
-					})
-					.catch((error) => {
-						logger.error(
-							`Failed to start zwave-js server: ${error.message}`,
-						)
-					})
-			}
-		}
+		this._serverManager.startIfNeeded()
 
 		logger.info(`Scanning network with homeid: ${homeHex}`)
 

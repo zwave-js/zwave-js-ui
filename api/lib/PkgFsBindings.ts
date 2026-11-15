@@ -27,7 +27,10 @@ export class PkgFsBindings implements FileSystem {
 		}
 		return nodeFs.readFile(filePath)
 	}
-	writeFile(filePath: string, data: Uint8Array<ArrayBuffer>): Promise<void> {
+	async writeFile(
+		filePath: string,
+		data: Uint8Array<ArrayBuffer>,
+	): Promise<void> {
 		filePath = path.normalize(filePath)
 		if (filePath.startsWith(CONFIG_PATH)) {
 			// The pkg assets are readonly
@@ -35,7 +38,7 @@ export class PkgFsBindings implements FileSystem {
 		}
 		return nodeFs.writeFile(filePath, data)
 	}
-	copyFile(source: string, dest: string): Promise<void> {
+	async copyFile(source: string, dest: string): Promise<void> {
 		source = path.normalize(source)
 		dest = path.normalize(dest)
 		if (dest.startsWith(CONFIG_PATH)) {
@@ -80,7 +83,7 @@ export class PkgFsBindings implements FileSystem {
 		}
 		return nodeFs.stat(filePath)
 	}
-	ensureDir(dirPath: string): Promise<void> {
+	async ensureDir(dirPath: string): Promise<void> {
 		dirPath = path.normalize(dirPath)
 		if (dirPath.startsWith(CONFIG_PATH)) {
 			// The pkg assets are readonly
@@ -88,7 +91,7 @@ export class PkgFsBindings implements FileSystem {
 		}
 		return nodeFs.ensureDir(dirPath)
 	}
-	deleteDir(dirPath: string): Promise<void> {
+	async deleteDir(dirPath: string): Promise<void> {
 		dirPath = path.normalize(dirPath)
 		if (dirPath.startsWith(CONFIG_PATH)) {
 			// The pkg assets are readonly

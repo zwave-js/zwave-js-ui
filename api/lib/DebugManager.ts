@@ -2,7 +2,7 @@ import type winston from 'winston'
 import { transports } from 'winston'
 import { customFormat, logContainer } from './logger.ts'
 import archiver from 'archiver'
-import type ZWaveClient from './ZwaveClient.ts'
+import type { ZwaveClientPort } from '../runtime/ports.ts'
 import { joinPath, pathExists, getVersion } from './utils.ts'
 import { storeDir } from '../config/app.ts'
 import { rm, mkdir } from 'node:fs/promises'
@@ -10,6 +10,7 @@ import { createWriteStream } from 'node:fs'
 import { setTimeout } from 'node:timers/promises'
 import { createDefaultTransportFormat } from '@zwave-js/core/bindings/log/node'
 import { JSONTransport } from '@zwave-js/log-transport-json'
+import { getErrorMessage } from './errors.ts'
 import { libVersion } from 'zwave-js'
 import os from 'node:os'
 
@@ -21,9 +22,9 @@ export interface DebugSession {
 	driverLogFilePath: string
 	transport: winston.transport
 	originalLogLevel: string
-	driverDebugTransport?: any
+	driverDebugTransport?: JSONTransport
 	driverLogStream?: NodeJS.WritableStream
-	zwaveClient: ZWaveClient
+	zwaveClient: ZwaveClientPort
 }
 
 class DebugManager {
@@ -50,7 +51,7 @@ class DebugManager {
 	 * Start a debug capture session
 	 */
 	async startSession(
-		zwaveClient: ZWaveClient,
+		zwaveClient: ZwaveClientPort,
 		originalLogLevel: string,
 		restartDriver = false,
 	): Promise<void> {
@@ -74,6 +75,8 @@ class DebugManager {
 			format: customFormat(true),
 			level: 'debug',
 		})
+		// The capture transport is shared by every existing module logger.
+		transport.setMaxListeners(logContainer.loggers.size + 1)
 
 		// Add transport to all existing loggers
 		logContainer.loggers.forEach((logger: winston.Logger) => {
@@ -83,7 +86,7 @@ class DebugManager {
 		})
 
 		// Set up driver debug transport that persists across restarts
-		let driverDebugTransport: any = undefined
+		let driverDebugTransport: JSONTransport | undefined = undefined
 		let driverLogStream: NodeJS.WritableStream | undefined = undefined
 
 		const debugTransport = new JSONTransport()
@@ -125,6 +128,9 @@ class DebugManager {
 		cleanup: () => Promise<void>
 	}> {
 		const session = this.session
+		if (!session) {
+			throw new Error('No active debug session')
+		}
 
 		await this.restoreSession(session)
 
@@ -171,7 +177,7 @@ class DebugManager {
 			} catch (error) {
 				// Log error but continue with other nodes
 				archive.append(
-					`Error dumping node ${nodeId}: ${error.message}`,
+					`Error dumping node ${nodeId}: ${getErrorMessage(error)}`,
 					{
 						name: `node-${nodeId}-error.txt`,
 					},
@@ -213,6 +219,10 @@ class DebugManager {
 	 */
 	async cancelSession(): Promise<void> {
 		const session = this.session
+		if (!session) {
+			throw new Error('No active debug session')
+		}
+
 		await this.restoreSession(session)
 
 		// Clean up temp files
@@ -239,11 +249,12 @@ class DebugManager {
 			session.transport.end()
 		})
 
-		// Restore original driver log level
-		await this.restoreDriverLogLevel(session)
-
-		// Clear session
-		this.session = null
+		try {
+			await this.restoreDriverLogLevel(session)
+		} finally {
+			// Winston's finish event is one-shot, so an ended session cannot be retried.
+			this.session = null
+		}
 	}
 
 	/**
@@ -251,29 +262,25 @@ class DebugManager {
 	 */
 	private async restoreDriverLogLevel(session: DebugSession): Promise<void> {
 		if (session.driverDebugTransport) {
-			// Remove extra transport (works even if driver was restarted)
-			session.zwaveClient.removeExtraLogTransport(
-				session.driverDebugTransport,
-			)
+			try {
+				session.zwaveClient.removeExtraLogTransport(
+					session.driverDebugTransport,
+				)
+				if (session.zwaveClient.driverReady) {
+					session.zwaveClient.driver.updateLogConfig({
+						level: session.originalLogLevel,
+					})
+				}
+			} finally {
+				session.driverDebugTransport.stream?.destroy()
 
-			// Restore original log level if driver is still running
-			if (session.zwaveClient.driverReady) {
-				session.zwaveClient.driver.updateLogConfig({
-					level: session.originalLogLevel as any,
-				})
-			}
-
-			// Clean up debug transport
-			if (session.driverDebugTransport.stream) {
-				session.driverDebugTransport.stream.destroy()
-			}
-
-			// Close driver log stream properly
-			if (session.driverLogStream) {
-				await new Promise<void>((resolve, reject) => {
-					session.driverLogStream.end(() => resolve())
-					session.driverLogStream.on('error', reject)
-				})
+				const { driverLogStream } = session
+				if (driverLogStream) {
+					await new Promise<void>((resolve, reject) => {
+						driverLogStream.end(() => resolve())
+						driverLogStream.on('error', reject)
+					})
+				}
 			}
 		}
 	}

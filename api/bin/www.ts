@@ -7,11 +7,16 @@
 import jsonStore from '../lib/jsonStore.ts'
 import store from '../config/store.ts'
 import * as conf from '../config/app.ts'
-import app, { startServer } from '../app.ts'
+import { createApp } from '../app.ts'
 
 console.log(
 	`  ______  __          __                      _  _____     _    _ _____ \n |___  /  \\ \\        / /                     | |/ ____|   | |  | |_   _|\n    / /____\\ \\  /\\  / /_ ___   _____         | | (___     | |  | | | |  \n   / /______\\ \\/  \\/ / _\' \\ \\ / / _ \\    _   | |\\___ \\    | |  | | | |  \n  / /__      \\  /\\  / (_| |\\ V /  __/   | |__| |____) |   | |__| |_| |_ \n /_____|      \\/  \\/ \\__,_| \\_/ \\___|    \\____/|_____/     \\____/|_____|\n`,
 )
+
+const { app, startServer, installProcessHandlers } = createApp()
+
+// Install handlers before store I/O because Node runs as PID 1 in containers
+installProcessHandlers()
 
 // jsonstore is a singleton instance that handles the json configuration files
 // used in the application. Init it before anything else than start app.

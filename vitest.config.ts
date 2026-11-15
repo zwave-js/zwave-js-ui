@@ -20,6 +20,11 @@ export default defineConfig({
 				find: /^@server\/(.+)/,
 				replacement: `${path.resolve(__dirname, 'server')}/$1`,
 			},
+			{
+				// Keep source-only test imports out of the published package map
+				find: /^#api\/(.+)/,
+				replacement: `${path.resolve(__dirname, 'api')}/$1`,
+			},
 		],
 	},
 	test: {
@@ -29,6 +34,10 @@ export default defineConfig({
 			'test/**/*.test.ts',
 			'.github/bot-scripts/**/*.test.cjs',
 		],
+		sequence: {
+			// Run suite cleanup before shared harness teardown because cleanup may still access the active instance
+			hooks: 'stack',
+		},
 		coverage: {
 			provider: 'v8',
 			// Report every file matched by `include`, not just those imported by
@@ -37,7 +46,7 @@ export default defineConfig({
 			all: true,
 			reporter: ['text', 'lcov'],
 			reportsDirectory: './coverage',
-			include: ['api/**', 'src/**'],
+			include: ['api/**/*.{js,ts}', 'src/**/*.{js,ts}'],
 			exclude: ['**/*.test.*', 'test/**'],
 		},
 	},
