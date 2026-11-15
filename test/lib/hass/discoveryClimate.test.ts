@@ -17,13 +17,18 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { CommandClasses } from '@zwave-js/core'
 import { mqttMockFactory } from './mqttMock.ts'
-import { useGatewayHarness, type GatewayHarness } from './gatewayHarness.ts'
+import {
+	useGatewayHarness,
+	type GatewayHarness,
+	type PublishedDiscovery,
+} from './gatewayHarness.ts'
 import { buildNode, buildValueId, addValue, state } from './fixtures.ts'
 import type {
+	HassDevice,
 	ZUINode,
 	ZUIValueIdState,
-	HassDevice,
 } from '#api/lib/ZwaveClient.ts'
+import { requireDefined } from '../testUtils.ts'
 
 vi.mock('mqtt', () => mqttMockFactory())
 
@@ -144,13 +149,24 @@ function initNode(node: ZUINode): void {
 	harness.zwave.emit('nodeInited', node)
 }
 
-function climatePacket(nodeName = 'Thermostat') {
-	return harness
-		.publishedDiscoveries()
-		.find(
-			(p) =>
-				p.topic === `homeassistant/climate/${nodeName}/climate/config`,
-		)
+function requireHassDevice(node: ZUINode, key: string): HassDevice {
+	return requireDefined(
+		node.hassDevices?.[key],
+		`Expected HASS device ${key}`,
+	)
+}
+
+function climatePacket(nodeName = 'Thermostat'): PublishedDiscovery {
+	return requireDefined(
+		harness
+			.publishedDiscoveries()
+			.find(
+				(p) =>
+					p.topic ===
+					`homeassistant/climate/${nodeName}/climate/config`,
+			),
+		`Expected climate discovery packet for ${nodeName}`,
+	)
 }
 
 describe('climate thermostat discovery', () => {
@@ -159,7 +175,7 @@ describe('climate thermostat discovery', () => {
 		const node = buildThermostatNode({ deviceId: 'test-climate-full' })
 		initNode(node)
 
-		const climate = node.hassDevices['climate_climate']
+		const climate = requireHassDevice(node, 'climate_climate')
 		expect(climate).toBeDefined()
 		expect(climate.type).toBe('climate')
 		expect(climate.object_id).toBe('climate')
@@ -272,7 +288,7 @@ describe('climate thermostat discovery', () => {
 		})
 		initNode(node)
 
-		const climate = node.hassDevices['climate_climate']
+		const climate = requireHassDevice(node, 'climate_climate')
 		expect(climate).toBeDefined()
 		// no mode CC -> modes + mode_state_template deleted, default_setpoint set
 		expect(climate.default_setpoint).toBe('67-0-setpoint-1')
@@ -363,7 +379,7 @@ describe('generic composite device discovery', () => {
 
 		harness.gw.discoverDevice(node, composite)
 
-		const stored = node.hassDevices['sensor_composite']
+		const stored = requireHassDevice(node, 'sensor_composite')
 		expect(stored).toBeDefined()
 		const p = stored.discovery_payload
 		const base =

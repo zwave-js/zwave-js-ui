@@ -1,10 +1,12 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, type Mock } from 'vitest'
 import { ScheduleService } from '#api/lib/zwave/ScheduleService.ts'
 import { deepEqual } from '#api/lib/utils.ts'
 import { SupervisionStatus } from '@zwave-js/core'
 import {
 	ScheduleEntryLockScheduleKind,
 	ScheduleEntryLockWeekday,
+	ScheduleEntryLockCC,
+	UserCodeCC,
 	UserIDStatus,
 } from 'zwave-js'
 import type {
@@ -15,49 +17,89 @@ import type {
 } from 'zwave-js'
 import type {
 	ScheduleDriverPort,
+	ScheduleDriverHandle,
 	ScheduleNodeStorePort,
 	ScheduleUtilsPort,
 	ScheduleNodeState,
+	ScheduleZWaveNodeHandle,
 } from '#api/lib/zwave/ports.ts'
 
-function createFakeEndpoint() {
-	return { id: 0 }
+type ScheduleEntryLockApi =
+	ScheduleZWaveNodeHandle['commandClasses']['Schedule Entry Lock']
+
+interface FakeScheduleEntryLockApi {
+	isSupported: Mock<ScheduleEntryLockApi['isSupported']>
+	getWeekDaySchedule: Mock<ScheduleEntryLockApi['getWeekDaySchedule']>
+	getYearDaySchedule: Mock<ScheduleEntryLockApi['getYearDaySchedule']>
+	getDailyRepeatingSchedule: Mock<
+		ScheduleEntryLockApi['getDailyRepeatingSchedule']
+	>
+	setWeekDaySchedule: Mock<ScheduleEntryLockApi['setWeekDaySchedule']>
+	setYearDaySchedule: Mock<ScheduleEntryLockApi['setYearDaySchedule']>
+	setDailyRepeatingSchedule: Mock<
+		ScheduleEntryLockApi['setDailyRepeatingSchedule']
+	>
+	setEnabled: Mock<ScheduleEntryLockApi['setEnabled']>
 }
 
-function createFakeZwaveNode(supported = true) {
+interface FakeScheduleZWaveNode extends ScheduleZWaveNodeHandle {
+	id: number
+	getEndpoint: Mock<ScheduleZWaveNodeHandle['getEndpoint']>
+	commandClasses: {
+		'Schedule Entry Lock': FakeScheduleEntryLockApi
+	}
+}
+
+function createFakeEndpoint() {
+	return { virtual: false as const, nodeId: 2, index: 0 }
+}
+
+function createFakeZwaveNode(supported = true): FakeScheduleZWaveNode {
 	return {
 		id: 2,
-		getEndpoint: vi.fn(() => createFakeEndpoint()),
+		getEndpoint: vi.fn<ScheduleZWaveNodeHandle['getEndpoint']>(() =>
+			createFakeEndpoint(),
+		),
 		commandClasses: {
 			'Schedule Entry Lock': {
-				isSupported: vi.fn(() => supported),
-				getWeekDaySchedule: vi.fn(),
-				getYearDaySchedule: vi.fn(),
-				getDailyRepeatingSchedule: vi.fn(),
-				setWeekDaySchedule: vi.fn(),
-				setYearDaySchedule: vi.fn(),
-				setDailyRepeatingSchedule: vi.fn(),
-				setEnabled: vi.fn(),
+				isSupported: vi.fn<ScheduleEntryLockApi['isSupported']>(
+					() => supported,
+				),
+				getWeekDaySchedule:
+					vi.fn<ScheduleEntryLockApi['getWeekDaySchedule']>(),
+				getYearDaySchedule:
+					vi.fn<ScheduleEntryLockApi['getYearDaySchedule']>(),
+				getDailyRepeatingSchedule:
+					vi.fn<ScheduleEntryLockApi['getDailyRepeatingSchedule']>(),
+				setWeekDaySchedule:
+					vi.fn<ScheduleEntryLockApi['setWeekDaySchedule']>(),
+				setYearDaySchedule:
+					vi.fn<ScheduleEntryLockApi['setYearDaySchedule']>(),
+				setDailyRepeatingSchedule:
+					vi.fn<ScheduleEntryLockApi['setDailyRepeatingSchedule']>(),
+				setEnabled: vi.fn<ScheduleEntryLockApi['setEnabled']>(),
 			},
 		},
 	}
 }
 
 function createDriverPort(
-	zwaveNode?: ReturnType<typeof createFakeZwaveNode>,
+	zwaveNode?: FakeScheduleZWaveNode | null,
 ): ScheduleDriverPort {
-	const node = zwaveNode ?? createFakeZwaveNode()
+	const node = zwaveNode === undefined ? createFakeZwaveNode() : zwaveNode
+	const driver: ScheduleDriverHandle = {
+		getValueDB: vi.fn<ScheduleDriverHandle['getValueDB']>(),
+		tryGetValueDB: vi.fn<ScheduleDriverHandle['tryGetValueDB']>(),
+		controller: {
+			nodes: {
+				get: vi.fn((id: number) =>
+					node && id === node.id ? node : undefined,
+				),
+			},
+		},
+	}
 	return {
-		getDriver: () =>
-			({
-				controller: {
-					nodes: {
-						get: vi.fn((id: number) =>
-							id === node.id ? node : undefined,
-						),
-					},
-				},
-			}) as ReturnType<ScheduleDriverPort['getDriver']>,
+		getDriver: () => driver,
 	}
 }
 
@@ -83,7 +125,7 @@ function createUtilsPort(): ScheduleUtilsPort {
 	}
 }
 
-async function stubCCStatics(
+function stubCCStatics(
 	overrides: Partial<{
 		supportedUsers: number | undefined
 		numWeekDaySlots: number
@@ -92,7 +134,10 @@ async function stubCCStatics(
 		userIdStatuses: Record<number, number | undefined>
 		scheduleEnabled: Record<number, boolean>
 		scheduleKind: Record<number, number | undefined>
-		cachedSchedules: Record<string, unknown>
+		cachedSchedules: Record<
+			string,
+			ReturnType<typeof ScheduleEntryLockCC.getScheduleCached>
+		>
 	}> = {},
 ) {
 	const supportedUsers =
@@ -106,8 +151,6 @@ async function stubCCStatics(
 		scheduleKind = {},
 		cachedSchedules = {},
 	} = overrides
-
-	const { UserCodeCC, ScheduleEntryLockCC } = await import('zwave-js')
 
 	vi.spyOn(UserCodeCC, 'getSupportedUsersCached').mockReturnValue(
 		supportedUsers,
@@ -203,7 +246,7 @@ describe('ScheduleService', () => {
 				createUtilsPort(),
 			)
 
-			await stubCCStatics({ supportedUsers: 0 })
+			stubCCStatics({ supportedUsers: 0 })
 
 			const p1 = svc.getSchedules(2)
 
@@ -226,7 +269,7 @@ describe('ScheduleService', () => {
 				nodeStore,
 				createUtilsPort(),
 			)
-			await stubCCStatics({ supportedUsers: 0 })
+			stubCCStatics({ supportedUsers: 0 })
 
 			const result = await svc.getSchedules(2)
 			expect(result).toBeUndefined()
@@ -242,7 +285,7 @@ describe('ScheduleService', () => {
 				createUtilsPort(),
 			)
 
-			await stubCCStatics({
+			stubCCStatics({
 				supportedUsers: 1,
 				numWeekDaySlots: 1,
 				numYearDaySlots: 1,
@@ -278,7 +321,7 @@ describe('ScheduleService', () => {
 			const getDriverImpl = driverPort.getDriver.bind(driverPort)
 			driverPort.getDriver = () => null
 
-			await stubCCStatics({ supportedUsers: 0 })
+			stubCCStatics({ supportedUsers: 0 })
 
 			await expect(svc.getSchedules(2)).rejects.toThrow()
 
@@ -457,14 +500,7 @@ describe('ScheduleService', () => {
 
 	describe('enabling schedules', () => {
 		it('throws when node not found', async () => {
-			const driverPort: ScheduleDriverPort = {
-				getDriver: () =>
-					({
-						controller: {
-							nodes: { get: () => undefined },
-						},
-					}) as ReturnType<ScheduleDriverPort['getDriver']>,
-			}
+			const driverPort = createDriverPort(null)
 			const svc = new ScheduleService(
 				driverPort,
 				createNodeStorePort(),
@@ -598,7 +634,7 @@ describe('ScheduleService', () => {
 				createUtilsPort(),
 			)
 
-			await stubCCStatics({
+			stubCCStatics({
 				supportedUsers: 1,
 				numWeekDaySlots: 1,
 				numYearDaySlots: 0,
@@ -653,7 +689,7 @@ describe('ScheduleService', () => {
 				createUtilsPort(),
 			)
 
-			await stubCCStatics({
+			stubCCStatics({
 				supportedUsers: 1,
 				numWeekDaySlots: 1,
 				numYearDaySlots: 0,
@@ -707,7 +743,7 @@ describe('ScheduleService', () => {
 				createUtilsPort(),
 			)
 
-			await stubCCStatics({
+			stubCCStatics({
 				supportedUsers: 1,
 				numWeekDaySlots: 1,
 				numYearDaySlots: 0,
@@ -822,7 +858,7 @@ describe('ScheduleService', () => {
 				createUtilsPort(),
 			)
 
-			await stubCCStatics({
+			stubCCStatics({
 				supportedUsers: 1,
 				numWeekDaySlots: 2,
 				numYearDaySlots: 0,
@@ -846,7 +882,7 @@ describe('ScheduleService', () => {
 			})
 			expect(result).toBeUndefined()
 
-			await stubCCStatics({ supportedUsers: 0 })
+			stubCCStatics({ supportedUsers: 0 })
 			const result2 = await svc.getSchedules(2, { fromCache: true })
 			expect(result2).toBeDefined()
 		})
@@ -863,7 +899,7 @@ describe('ScheduleService', () => {
 				createUtilsPort(),
 			)
 
-			await stubCCStatics({
+			stubCCStatics({
 				supportedUsers: undefined,
 				numWeekDaySlots: 3,
 				numYearDaySlots: 2,
@@ -904,7 +940,7 @@ describe('ScheduleService', () => {
 				createUtilsPort(),
 			)
 
-			await stubCCStatics({
+			stubCCStatics({
 				supportedUsers: 1,
 				numWeekDaySlots: 1,
 				numYearDaySlots: 1,

@@ -16,7 +16,14 @@ import {
 	cleanupGatewayHarnessEnv,
 	createGatewayHarness,
 } from './gatewayHarness.ts'
-import { addValue, buildNode, buildValueId, valueMapKey } from './fixtures.ts'
+import {
+	addValue,
+	buildNode,
+	buildValueId,
+	createFakeGatewayZwave,
+	requireDefined,
+	valueMapKey,
+} from './fixtures.ts'
 import { ensureTestEnv } from './env.ts'
 import { mqttMockFactory } from './mqttMock.ts'
 
@@ -102,14 +109,58 @@ describe('Gateway Home Assistant behavior', () => {
 		second.gw.rediscoverNode(sibling.id)
 
 		expect(
-			Object.values(thermostat.hassDevices).map(({ type }) => type),
+			Object.values(
+				requireDefined(
+					thermostat.hassDevices,
+					'expected thermostat discoveries',
+				),
+			).map(({ type }) => type),
 		).toEqual(expect.arrayContaining(['sensor', 'climate']))
 		expect(
-			Object.values(sibling.hassDevices).map(({ type }) => type),
+			Object.values(
+				requireDefined(
+					sibling.hassDevices,
+					'expected sibling discoveries',
+				),
+			).map(({ type }) => type),
 		).toEqual(['sensor'])
-		expect(sibling.hassDevices.sensor_configured).toMatchObject({
+		expect(
+			requireDefined(sibling.hassDevices, 'expected sibling discoveries')
+				.sensor_configured,
+		).toMatchObject({
 			object_id: 'configured',
 		})
+	})
+
+	it('skips node discovery when MQTT is not configured', async () => {
+		const [{ GatewayFactory }, { GatewayType }] = await Promise.all([
+			import('#api/runtime/GatewayFactory.ts'),
+			import('#api/lib/Gateway.ts'),
+		])
+		const factory = new GatewayFactory({
+			storeDir,
+			logger: {
+				error: vi.fn(),
+				info: vi.fn(),
+			},
+			devices: {},
+		})
+		factories.push(factory)
+		const zwave = createFakeGatewayZwave()
+		const gateway = factory.create(
+			{ type: GatewayType.NAMED, hassDiscovery: true },
+			zwave,
+			undefined,
+		)
+		await gateway.start()
+
+		try {
+			expect(() =>
+				zwave.emit('nodeInited', buildNode({ id: 7 })),
+			).not.toThrow()
+		} finally {
+			await gateway.close()
+		}
 	})
 
 	it('stops a cover after its target value leaves the node', async () => {
@@ -135,11 +186,13 @@ describe('Gateway Home Assistant behavior', () => {
 		harness.zwave.nodes.set(node.id, node)
 		harness.gw.discoverValue(node, cachedKey)
 		expect(
-			Object.values(node.hassDevices).some(
-				({ type }) => type === 'cover',
-			),
+			Object.values(
+				requireDefined(node.hassDevices, 'expected cover discoveries'),
+			).some(({ type }) => type === 'cover'),
 		).toBe(true)
-		delete node.values[valueMapKey(target)]
+		delete requireDefined(node.values, 'expected node values')[
+			valueMapKey(target)
+		]
 
 		expect(
 			harness.gw.parsePayload(BarrierState.Stopped, target, undefined),

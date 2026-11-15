@@ -50,7 +50,7 @@ export interface ManagedService {
 }
 
 export interface AppRuntimeDeps {
-	getSocketServer(): SocketServer
+	getSocketServer(): SocketServer | undefined
 	gateway?: GatewayPort
 	zniffer?: ZnifferPort
 	restarting?: boolean

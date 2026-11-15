@@ -136,10 +136,11 @@ describe('CustomDeviceRegistry', () => {
 		class RecordingWatcher implements CustomDeviceWatcher {
 			public readonly close = vi.fn()
 			private errorListener: ((error: Error) => void) | undefined
+			private readonly listener: fs.WatchListener<string>
 
-			public constructor(
-				private readonly listener: fs.WatchListener<string>,
-			) {}
+			public constructor(listener: fs.WatchListener<string>) {
+				this.listener = listener
+			}
 
 			public on(_event: 'error', listener: (error: Error) => void): this {
 				this.errorListener = listener

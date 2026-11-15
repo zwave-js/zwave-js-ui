@@ -145,7 +145,10 @@ describe('#utils', () => {
 
 		afterEach(async () => {
 			while (tmpDirs.length) {
-				await rm(tmpDirs.pop(), { recursive: true, force: true })
+				const dir = tmpDirs.pop()
+				if (dir !== undefined) {
+					await rm(dir, { recursive: true, force: true })
+				}
 			}
 		})
 
@@ -303,6 +306,13 @@ describe('#utils', () => {
 	})
 
 	describe('#isValidOperation()', () => {
+		function callStringPredicateWithUnknown(
+			predicate: (value: string) => boolean,
+			value: unknown,
+		): boolean {
+			return Reflect.apply(predicate, undefined, [value])
+		}
+
 		it('accepts a single operator and number', () => {
 			expect(isValidOperation('/10')).to.equal(true)
 			expect(isValidOperation('*100')).to.equal(true)
@@ -316,7 +326,9 @@ describe('#utils', () => {
 		})
 		it('rejects empty, non-string and malformed operations', () => {
 			expect(isValidOperation('')).to.equal(false)
-			expect(isValidOperation(undefined)).to.equal(false)
+			expect(
+				callStringPredicateWithUnknown(isValidOperation, undefined),
+			).to.equal(false)
 			expect(isValidOperation('10')).to.equal(false)
 			expect(isValidOperation('/')).to.equal(false)
 		})

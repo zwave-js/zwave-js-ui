@@ -582,7 +582,7 @@ export class InclusionCoordinator {
 
 	onInclusionStateChanged(
 		state: InclusionState,
-		cntStatus: string,
+		cntStatus: string | undefined,
 		error: string | undefined,
 	): void {
 		if (state !== this._inclusionState) {

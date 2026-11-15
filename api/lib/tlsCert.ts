@@ -2,6 +2,7 @@ import { chmod, readFile, rename, writeFile } from 'node:fs/promises'
 import { createSecureContext } from 'node:tls'
 import { promisify } from 'node:util'
 import { generate } from 'selfsigned'
+import { getErrorMessage } from './errors.ts'
 import { module } from './logger.ts'
 import { joinPath } from './utils.ts'
 
@@ -22,7 +23,7 @@ export function getTlsRejectionReason(
 		createSecureContext({ cert, key })
 		return undefined
 	} catch (error) {
-		return error.message
+		return getErrorMessage(error)
 	}
 }
 
@@ -37,8 +38,8 @@ export async function loadCertKey(
 	customCertFile?: string,
 	customKeyFile?: string,
 ): Promise<{
-	cert: string
-	key: string
+	cert: string | undefined
+	key: string | undefined
 }> {
 	if (Boolean(customCertFile) !== Boolean(customKeyFile)) {
 		throw new Error('Set both SSL_CERTIFICATE and SSL_KEY, or neither')
@@ -50,8 +51,8 @@ export async function loadCertKey(
 	const certFile = customCertFile || storeCertFile
 	const keyFile = customKeyFile || storeKeyFile
 
-	let key: string
-	let cert: string
+	let key: string | undefined
+	let cert: string | undefined
 
 	try {
 		cert = await readFile(certFile, 'utf8')
@@ -60,7 +61,7 @@ export async function loadCertKey(
 		if (customPaths) {
 			// fail closed: never swap the operator's cert or serve plain HTTP instead
 			throw new Error(
-				`Cannot read cert ${certFile} and key ${keyFile}: ${error.message}`,
+				`Cannot read cert ${certFile} and key ${keyFile}: ${getErrorMessage(error)}`,
 			)
 		}
 	}

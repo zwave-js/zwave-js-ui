@@ -88,6 +88,9 @@ export function barrier(
 	harness: SocketHarness,
 	client: ClientSocket,
 ): Promise<void> {
+	if (!client.id) {
+		throw new Error('Cannot create a barrier for a disconnected client')
+	}
 	const arrived = waitForEvent(client, '__TEST_BARRIER__')
 	harness.io.to(client.id).emit('__TEST_BARRIER__')
 	return arrived.then(() => undefined)

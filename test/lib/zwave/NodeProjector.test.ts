@@ -42,7 +42,22 @@ describe('NodeProjector', () => {
 				{
 					name: 'Kitchen',
 					loc: 'Downstairs',
-					availableFirmwareUpdates: [{ version: '2.0' }],
+					availableFirmwareUpdates: [
+						{
+							version: '2.0',
+							normalizedVersion: '2.0',
+							changelog: '',
+							channel: 'stable',
+							files: [],
+							downgrade: false,
+							device: {
+								manufacturerId: 1,
+								productType: 2,
+								productId: 3,
+								firmwareVersion: '1.0',
+							},
+						},
+					],
 					firmwareUpdatesDismissed: { '2.0': true },
 					lastFirmwareUpdateCheck: 12,
 					appliedTemplateContentHashes: ['hash'],
@@ -91,8 +106,8 @@ describe('NodeProjector', () => {
 				createVirtualValue(
 					{
 						type: 'string',
-						readable: undefined,
-						writeable: undefined,
+						readable: false,
+						writeable: true,
 						minLength: 1,
 						maxLength: 10,
 					},
@@ -187,7 +202,7 @@ describe('NodeProjector', () => {
 			list: false,
 		})
 		NodeProjector.applyValueMetadata(booleanValue, {
-			type: 'object',
+			type: 'any',
 			readable: true,
 			writeable: true,
 		})
@@ -343,7 +358,13 @@ describe('NodeProjector', () => {
 			2: {
 				name: 'Kitchen',
 				loc: 'Downstairs',
-				hassDevices: { light: { type: 'light' } },
+				hassDevices: {
+					light: {
+						type: 'light',
+						object_id: 'kitchen_light',
+						discovery_payload: {},
+					},
+				},
 			},
 		}
 		const driver = {

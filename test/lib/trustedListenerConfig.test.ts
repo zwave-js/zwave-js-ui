@@ -5,6 +5,9 @@ import {
 	parseTrustedListenerConfig,
 	resolveListenAddress,
 } from '../../api/lib/trustedListener.ts'
+import { requireDefined } from './testUtils.ts'
+
+const cidr = (raw: string) => requireDefined(parseCidr(raw))
 
 describe('parseTrustedListenerConfig', () => {
 	it('returns undefined when TRUSTED_API_LISTEN is unset or empty', () => {
@@ -41,11 +44,12 @@ describe('parseTrustedListenerConfig', () => {
 	})
 
 	it('parses a cidr:port host as a network to resolve at bind time', () => {
-		const config = parseTrustedListenerConfig({
-			TRUSTED_API_LISTEN: '172.30.32.0/23:8092',
-			TRUSTED_API_ALLOWED_IPS: '172.30.32.2',
-		})
-		expect(config).toBeDefined()
+		const config = requireDefined(
+			parseTrustedListenerConfig({
+				TRUSTED_API_LISTEN: '172.30.32.0/23:8092',
+				TRUSTED_API_ALLOWED_IPS: '172.30.32.2',
+			}),
+		)
 		expect(config.kind).toBe('tcp')
 		if (config.kind === 'tcp') {
 			expect(config.host).toEqual(parseCidr('172.30.32.0/23'))
@@ -53,11 +57,12 @@ describe('parseTrustedListenerConfig', () => {
 	})
 
 	it('parses allowlist entries as IPs and CIDRs', () => {
-		const config = parseTrustedListenerConfig({
-			TRUSTED_API_LISTEN: '127.0.0.1:8092',
-			TRUSTED_API_ALLOWED_IPS: ' 172.30.32.2, 10.0.0.0/8 ',
-		})
-		expect(config).toBeDefined()
+		const config = requireDefined(
+			parseTrustedListenerConfig({
+				TRUSTED_API_LISTEN: '127.0.0.1:8092',
+				TRUSTED_API_ALLOWED_IPS: ' 172.30.32.2, 10.0.0.0/8 ',
+			}),
+		)
 		if (config.kind === 'tcp') {
 			expect(config.allowedIps).toEqual([
 				{ addr: parseIp('172.30.32.2'), prefix: 32 },
@@ -121,9 +126,9 @@ describe('parseTrustedListenerConfig', () => {
 
 describe('isAllowedAddress', () => {
 	const allowed = [
-		parseCidr('172.30.32.0/23'),
-		parseCidr('127.0.0.1/32'),
-		parseCidr('fd00::/8'),
+		cidr('172.30.32.0/23'),
+		cidr('127.0.0.1/32'),
+		cidr('fd00::/8'),
 	]
 
 	it('matches exact IPs and CIDR ranges', () => {
@@ -157,14 +162,14 @@ describe('resolveListenAddress', () => {
 	} as any
 
 	it('resolves the local address inside the network', () => {
-		expect(
-			resolveListenAddress(parseCidr('172.30.32.0/23'), interfaces),
-		).toBe('172.30.33.7')
+		expect(resolveListenAddress(cidr('172.30.32.0/23'), interfaces)).toBe(
+			'172.30.33.7',
+		)
 	})
 
 	it('throws when no local address matches', () => {
 		expect(() =>
-			resolveListenAddress(parseCidr('10.0.0.0/8'), interfaces),
+			resolveListenAddress(cidr('10.0.0.0/8'), interfaces),
 		).toThrow(/no local address/)
 	})
 
@@ -174,7 +179,7 @@ describe('resolveListenAddress', () => {
 			eth1: [{ address: '172.30.33.8' }],
 		} as any
 		expect(() =>
-			resolveListenAddress(parseCidr('172.30.32.0/23'), multi),
+			resolveListenAddress(cidr('172.30.32.0/23'), multi),
 		).toThrow(/multiple local addresses/)
 	})
 })

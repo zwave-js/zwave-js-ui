@@ -58,10 +58,7 @@ export function getErrorMessage(value: unknown): string {
 	}
 
 	// String() invokes Symbol.toPrimitive/toString/valueOf, any of which can throw on a hostile value
-	const coerced = tryOrUndefined(() =>
-		// eslint-disable-next-line @typescript-eslint/no-base-to-string -- intentional best-effort fallback for values with no useful string form
-		String(value),
-	)
+	const coerced = tryOrUndefined(() => String(value))
 	if (typeof coerced === 'string') {
 		return coerced
 	}

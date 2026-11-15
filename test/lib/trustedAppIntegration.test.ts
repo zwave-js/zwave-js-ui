@@ -6,6 +6,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { io as ioClient } from 'socket.io-client'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import { requireDefined } from './testUtils.ts'
 
 // Set before the app config module loads
 const testStoreDir = await mkdtemp(join(tmpdir(), 'zui-trusted-app-'))
@@ -57,7 +58,7 @@ describe('trusted listener app integration', () => {
 			kind: 'tcp',
 			host: '127.0.0.1',
 			port: 0,
-			allowedIps: [parseCidr('127.0.0.0/8')],
+			allowedIps: [requireDefined(parseCidr('127.0.0.0/8'))],
 		}))!
 
 		mainUrl = `http://127.0.0.1:${serverPort(mainServer)}`
@@ -100,11 +101,11 @@ describe('trusted listener app integration', () => {
 		}
 
 		// The login limiter blocks after 5 requests per client
-		let untrusted: { message: string }
+		let untrusted: { message: string } | undefined
 		for (let i = 0; i < 6; i++) {
 			untrusted = await authenticate(mainUrl)
 		}
-		expect(untrusted.message).toBe('Max requests limit reached')
+		expect(untrusted?.message).toBe('Max requests limit reached')
 
 		// The same (exhausted) client IP must still pass on the trusted listener
 		const trusted = await authenticate(trustedUrl)
