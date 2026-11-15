@@ -1,4 +1,4 @@
-import { joinPath } from '../lib/utils.ts'
+import { joinPath } from '#api/lib/utils'
 import { config } from 'dotenv'
 import { randomBytes } from 'node:crypto'
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'

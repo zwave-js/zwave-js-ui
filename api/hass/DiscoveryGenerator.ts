@@ -1,10 +1,10 @@
 import { CommandClasses } from '@zwave-js/core'
 import { AlarmSensorType, ThermostatSetpointType } from 'zwave-js'
-import hassCfg, { type ColorMode } from './configurations.ts'
-import * as Constants from '../lib/Constants.ts'
-import { getErrorMessage } from '../lib/errors.ts'
-import { getIdWithoutNode, PayloadType } from '../lib/shared.ts'
-import * as utils from '../lib/utils.ts'
+import hassCfg, { type ColorMode } from '#api/hass/configurations'
+import * as Constants from '#api/lib/Constants'
+import { getErrorMessage } from '#api/lib/errors'
+import { getIdWithoutNode, PayloadType } from '#api/lib/shared'
+import * as utils from '#api/lib/utils'
 import type {
 	HassDeviceRegistryPort,
 	HassDiscoveryConfig,
@@ -17,14 +17,14 @@ import type {
 	HassValueState,
 	HassValueTopic,
 	HassZwavePort,
-} from './ports.ts'
-import { ensureHassNode } from './ports.ts'
+} from '#api/hass/ports'
+import { ensureHassNode } from '#api/hass/ports'
 import {
 	HASS_NODE_PREFIX,
 	type HassDevice,
 	type HassDiscoveryPayload,
 	type PublishDiscoveryOptions,
-} from './types.ts'
+} from '#api/hass/types'
 
 const UID_DISCOVERY_PREFIX = process.env.UID_DISCOVERY_PREFIX || 'zwavejs2mqtt_'
 const GENERIC_DEVICE_CLASS_THERMOSTAT = 0x08

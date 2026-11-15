@@ -1,6 +1,6 @@
 import { NODE_ID_BROADCAST, NODE_ID_BROADCAST_LR } from '@zwave-js/core'
-import { getErrorMessage } from '../errors.ts'
-import { socketEvents } from '../SocketEvents.ts'
+import { getErrorMessage } from '#api/lib/errors'
+import { socketEvents } from '#api/lib/SocketEvents'
 import type {
 	GroupDriverPort,
 	GroupVirtualNodeRegistryPort,
@@ -10,7 +10,7 @@ import type {
 	GroupPersistencePort,
 	ServiceLogger,
 	ZUIGroup,
-} from './ports.ts'
+} from '#api/lib/zwave/ports'
 
 /** Maximum length of a multicast group name, kept short to avoid bloating MQTT topics */
 const GROUP_NAME_MAX_LENGTH = 64

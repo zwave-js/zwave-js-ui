@@ -14,22 +14,22 @@ import { createDefaultTransportFormat } from '@zwave-js/core/bindings/log/node'
 import { JSONTransport } from '@zwave-js/log-transport-json'
 import type Transport from 'winston-transport'
 
-import * as LogManager from '../logger.ts'
-import * as utils from '../utils.ts'
-import { getErrorMessage } from '../errors.ts'
+import * as LogManager from '#api/lib/logger'
+import * as utils from '#api/lib/utils'
+import { getErrorMessage } from '#api/lib/errors'
 import {
 	applyExternalDriverSettings,
 	getExternalDriverPresets,
-} from '../externalSettings.ts'
-import { configDbDir, logsDir, storeDir } from '../../config/app.ts'
-import { PkgFsBindings } from '../PkgFsBindings.ts'
-import { deviceConfigPriorityDir } from '../Constants.ts'
-import type ZwaveServerManager from '../ZwaveServerManager.ts'
+} from '#api/lib/externalSettings'
+import { configDbDir, logsDir, storeDir } from '#api/config/app'
+import { PkgFsBindings } from '#api/lib/PkgFsBindings'
+import { deviceConfigPriorityDir } from '#api/lib/Constants'
+import type ZwaveServerManager from '#api/lib/ZwaveServerManager'
 import {
 	ZwaveClientStatus,
 	type ZwaveConfig,
 	type InclusionUserCallbacks,
-} from './ports.ts'
+} from '#api/lib/zwave/ports'
 
 const logger = LogManager.module('Z-Wave')
 

@@ -1,4 +1,4 @@
-import { DiscoveryGenerator } from './DiscoveryGenerator.ts'
+import { DiscoveryGenerator } from '#api/hass/DiscoveryGenerator'
 import type {
 	HassDiscoveryConfig,
 	HassDeviceRegistryLifecyclePort,
@@ -9,11 +9,11 @@ import type {
 	HassStatusSource,
 	HassTopicPort,
 	HassZwavePort,
-} from './ports.ts'
+} from '#api/hass/ports'
 
 // Re-exported so the discovery subsystem's status-source shape stays reachable
 // from the manager that consumes it, while it is declared with the sibling ports
-export type { HassStatusSource } from './ports.ts'
+export type { HassStatusSource } from '#api/hass/ports'
 
 /**
  * The fixed Home Assistant birth/will topic. Home Assistant publishes `online`

@@ -28,6 +28,7 @@ boundaries:
     - Store configuration in api/config/
     - Place utilities in api/lib/
     - Check api/lib/utils.ts for existing utility functions before writing new ones
+    - Import every api/ module through the extensionless #api/* package subpath
     - Follow conventional commit format
     - Run tests before committing
   never:
@@ -172,7 +173,7 @@ export async function retryOperation<T>(
 
 ```typescript
 // Always use environment variables or config files
-import { getConfig } from './config/store'
+import { getConfig } from '#api/config/store'
 
 // Good
 const port = process.env.PORT || config.port || 8091
@@ -192,7 +193,7 @@ const port = 8091
 ```typescript
 // test/lib/utils.test.ts
 import { describe, it, expect } from 'vitest'
-import { retryOperation } from '../../api/lib/utils.ts'
+import { retryOperation } from '#api/lib/utils'
 
 describe('retryOperation', () => {
   it('should retry failed operations', async () => {

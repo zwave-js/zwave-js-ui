@@ -14,10 +14,10 @@ import {
 } from 'vitest'
 import { Server as SocketServer } from 'socket.io'
 import type { Driver } from 'zwave-js'
-import type ZwaveClientType from '#api/lib/ZwaveClient.ts'
+import type ZwaveClientType from '#api/lib/ZwaveClient'
 import { cleanupTestEnv } from '../shared/env.ts'
 import { loadJsonStore } from '../shared/harness.ts'
-import { socketEvents } from '#api/lib/SocketEvents.ts'
+import { socketEvents } from '#api/lib/SocketEvents'
 
 type JsonStoreContext = Awaited<ReturnType<typeof loadJsonStore>>
 
@@ -28,7 +28,7 @@ let socket: SocketServer
 
 beforeAll(async () => {
 	;({ jsonStore, store } = await loadJsonStore())
-	;({ default: ZwaveClient } = await import('#api/lib/ZwaveClient.ts'))
+	;({ default: ZwaveClient } = await import('#api/lib/ZwaveClient'))
 	await jsonStore.init(structuredClone(store))
 	socket = new SocketServer()
 })

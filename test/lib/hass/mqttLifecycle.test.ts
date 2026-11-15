@@ -32,8 +32,8 @@ import {
 	requireDefined,
 	tick,
 } from './fixtures.ts'
-import type { HassDevice, ZUINode } from '#api/lib/ZwaveClient.ts'
-import type { GatewayConfig } from '#api/lib/Gateway.ts'
+import type { HassDevice, ZUINode } from '#api/lib/ZwaveClient'
+import type { GatewayConfig } from '#api/lib/Gateway'
 
 vi.mock('mqtt', () => mqttMockFactory())
 

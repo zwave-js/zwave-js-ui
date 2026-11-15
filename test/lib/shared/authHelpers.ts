@@ -2,9 +2,9 @@
 // works with either harness without importing either transport's own harness type.
 import jwt from 'jsonwebtoken'
 import { TEST_SESSION_SECRET } from './env.ts'
-import { hashPsw } from '#api/lib/utils.ts'
-import type { StorageHelper } from '#api/lib/jsonStore.ts'
-import type storeConfig from '#api/config/store.ts'
+import { hashPsw } from '#api/lib/utils'
+import type { StorageHelper } from '#api/lib/jsonStore'
+import type storeConfig from '#api/config/store'
 
 export interface JsonStoreLike {
 	jsonStore: Pick<StorageHelper, 'get' | 'put'>

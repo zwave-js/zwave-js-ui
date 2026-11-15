@@ -4,6 +4,7 @@
     // Module settings for ESM output
     "module": "esnext",
     "moduleResolution": "bundler",
+    "customConditions": ["development"],
     "target": "esnext",
 
     // Necessary to support yarn portals with the node-modules linker, used by yarn link (berry)
@@ -14,6 +15,7 @@
     "rewriteRelativeImportExtensions": true,
     
     // Output directory
+    "rootDir": "api",
     "outDir": "server",
 
     // Forbid TS constructs that Node's --experimental-strip-types can't handle

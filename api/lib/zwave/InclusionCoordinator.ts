@@ -11,10 +11,10 @@ import type {
 	PlannedProvisioningEntry,
 	QRProvisioningInformation,
 	ServiceLogger,
-} from './ports.ts'
-import { getErrorMessage } from '../errors.ts'
-import { InclusionStrategy, QRCodeVersion } from './ports.ts'
-import type { JoinNetworkResult } from './ports.ts'
+} from '#api/lib/zwave/ports'
+import { getErrorMessage } from '#api/lib/errors'
+import { InclusionStrategy, QRCodeVersion } from '#api/lib/zwave/ports'
+import type { JoinNetworkResult } from '#api/lib/zwave/ports'
 
 export class InclusionLifecycleCancelledError extends Error {
 	constructor(operation: string) {

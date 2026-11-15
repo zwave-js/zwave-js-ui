@@ -13,7 +13,7 @@ let storeDir: string | undefined
 
 // Mocking the whole config module replaces its dotenv.config('./.env.app') call, so isolation
 // doesn't depend on mirroring every process.env.* name the app reads
-vi.mock('#api/config/app.ts', () => ({
+vi.mock('#api/config/app', () => ({
 	title: 'Z-Wave JS UI',
 	get storeDir() {
 		return getTestStoreDir()

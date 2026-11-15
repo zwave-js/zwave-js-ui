@@ -10,8 +10,8 @@ import {
 	parseIp,
 	unwrapMappedIp,
 	type ParsedCidr,
-} from './ipUtils.ts'
-import { module } from './logger.ts'
+} from '#api/lib/ipUtils'
+import { module } from '#api/lib/logger'
 
 const logger = module('TrustedListener')
 

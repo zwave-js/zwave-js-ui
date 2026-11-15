@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, type Mock } from 'vitest'
-import { ScheduleService } from '#api/lib/zwave/ScheduleService.ts'
-import { deepEqual } from '#api/lib/utils.ts'
+import { ScheduleService } from '#api/lib/zwave/ScheduleService'
+import { deepEqual } from '#api/lib/utils'
 import { SupervisionStatus } from '@zwave-js/core'
 import {
 	ScheduleEntryLockScheduleKind,
@@ -22,7 +22,7 @@ import type {
 	ScheduleUtilsPort,
 	ScheduleNodeState,
 	ScheduleZWaveNodeHandle,
-} from '#api/lib/zwave/ports.ts'
+} from '#api/lib/zwave/ports'
 
 type ScheduleEntryLockApi =
 	ScheduleZWaveNodeHandle['commandClasses']['Schedule Entry Lock']

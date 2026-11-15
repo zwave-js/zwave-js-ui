@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { CommandClasses } from '@zwave-js/core'
-import { SceneService } from '../../../api/lib/zwave/SceneService.ts'
+import { SceneService } from '#api/lib/zwave/SceneService'
 import type {
 	ScenePersistencePort,
 	SceneNodeStorePort,
@@ -9,7 +9,7 @@ import type {
 	ServiceLogger,
 	ZUISceneValueRef,
 	ZUISceneRecord,
-} from '../../../api/lib/zwave/ports.ts'
+} from '#api/lib/zwave/ports'
 
 interface TestValueRef extends ZUISceneValueRef {
 	id: string

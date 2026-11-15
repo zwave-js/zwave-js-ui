@@ -17,13 +17,13 @@ import {
 	mkdtemp,
 	cp,
 } from 'node:fs/promises'
-import jsonStore from '../lib/jsonStore.ts'
-import * as loggers from '../lib/logger.ts'
-import * as utils from '../lib/utils.ts'
-import { getErrorMessage } from '../lib/errors.ts'
-import { storeDir, tmpDir } from '../config/app.ts'
-import type { AppRuntime } from '../runtime/AppRuntime.ts'
-import { isAuthenticated } from './auth.ts'
+import jsonStore from '#api/lib/jsonStore'
+import * as loggers from '#api/lib/logger'
+import * as utils from '#api/lib/utils'
+import { getErrorMessage } from '#api/lib/errors'
+import { storeDir, tmpDir } from '#api/config/app'
+import type { AppRuntime } from '#api/runtime/AppRuntime'
+import { isAuthenticated } from '#api/routes/auth'
 
 const logger = loggers.module('App')
 

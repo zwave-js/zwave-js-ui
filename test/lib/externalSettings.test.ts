@@ -29,7 +29,7 @@ describe('#externalSettings', () => {
 			const safeModeBefore = JSON.stringify(driverPresets.SAFE_MODE)
 
 			const { getExternalDriverPresets } = await import(
-				'../../api/lib/externalSettings.ts'
+				'#api/lib/externalSettings'
 			)
 			const driver = new Driver(
 				'/dev/null',

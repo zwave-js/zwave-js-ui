@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import { parseCidr, parseIp } from '../../api/lib/ipUtils.ts'
+import { parseCidr, parseIp } from '#api/lib/ipUtils'
 import {
 	isAllowedAddress,
 	parseTrustedListenerConfig,
 	resolveListenAddress,
-} from '../../api/lib/trustedListener.ts'
+} from '#api/lib/trustedListener'
 import { requireDefined } from './testUtils.ts'
 
 const cidr = (raw: string) => requireDefined(parseCidr(raw))

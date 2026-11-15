@@ -83,6 +83,8 @@ This will spawn a fake Z-Wave stick using `server_config.js` configuration. By d
 - Use TypeScript for all backend code.
 - Organize utilities in `/api/lib`.
 - Store configuration in `/api/config`.
+- Import every module under `/api` through the extensionless `#api/*` package subpath.
+- Use `#api/*` from backend tests and helpers instead of deep-relative or test-only aliases.
 - Use Socket.IO for real-time communication.
 - Prefer async/await for asynchronous code.
 - Use environment variables for configuration.

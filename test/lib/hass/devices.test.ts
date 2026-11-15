@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 
-import devices from '../../../api/hass/devices.ts'
+import devices from '#api/hass/devices'
 
 const VALUE_ID_TOPIC = /^\d+-\d+-/
 const SETPOINT_VALUE_ID = /^67-\d+-setpoint-\d+$/
