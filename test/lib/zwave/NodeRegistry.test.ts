@@ -957,5 +957,17 @@ describe('NodeRegistry access control', () => {
 		expect(harness.host.refreshAccessControlState).toHaveBeenCalledWith(
 			harness.zwaveNode,
 		)
+		// The queued node event is sent before the refreshed state
+		const nodeEventCall = vi
+			.mocked(harness.host.sendToSocket)
+			.mock.calls.findIndex(([event]) => event === socketEvents.nodeEvent)
+		expect(
+			vi.mocked(harness.host.sendToSocket).mock.invocationCallOrder[
+				nodeEventCall
+			],
+		).toBeLessThan(
+			vi.mocked(harness.host.refreshAccessControlState).mock
+				.invocationCallOrder[0],
+		)
 	})
 })

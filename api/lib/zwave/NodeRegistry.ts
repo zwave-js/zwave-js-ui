@@ -1559,12 +1559,6 @@ export class NodeRegistry {
 			'credential modified',
 			'credential deleted',
 		] as const
-		const refreshAccessControl = () =>
-			guard(() => this.host.refreshAccessControlState(zwaveNode))
-		for (const event of accessControlEvents) {
-			zwaveNode.on(event, refreshAccessControl)
-			cleanup.push(() => zwaveNode.off(event, refreshAccessControl))
-		}
 
 		const queueEvents: ZwaveNodeEvents[] = [
 			'ready',
@@ -1601,6 +1595,13 @@ export class NodeRegistry {
 				})
 			zwaveNode.on(event, listener)
 			cleanup.push(() => zwaveNode.off(event, listener))
+		}
+		// Registered after the queue listeners so the node event reaches sockets before the state update
+		const refreshAccessControl = () =>
+			guard(() => this.host.refreshAccessControlState(zwaveNode))
+		for (const event of accessControlEvents) {
+			zwaveNode.on(event, refreshAccessControl)
+			cleanup.push(() => zwaveNode.off(event, refreshAccessControl))
 		}
 		this.listenerCleanup.set(zwaveNode, cleanup)
 	}
