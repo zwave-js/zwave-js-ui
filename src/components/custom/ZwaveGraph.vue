@@ -178,6 +178,16 @@
 									}}</span>
 								</template>
 							</v-list-item>
+							<v-list-item v-if="hoverHealth" density="compact">
+								Health
+								<template #append>
+									<span
+										class="align-end font-weight-bold"
+										:style="{ color: hoverHealth.color }"
+										>{{ hoverHealth.text }}</span
+									>
+								</template>
+							</v-list-item>
 						</v-list>
 					</v-card>
 				</v-menu>
@@ -258,15 +268,21 @@ import MeshLegend from './MeshLegend.vue'
 import {
 	CONTROLLER_COLOR,
 	DEAD_COLOR,
+	HEALTH_COLORS,
 	UNKNOWN_COLOR,
 	hopColor,
 	labelOf,
+	linkKey,
+	meshHealth,
 	rateColor,
 	rssiLabel,
 	toRssi,
 } from '../../lib/meshView.js'
 import useBaseStore from '../../stores/base.js'
 import { mapState } from 'pinia'
+
+// vis-network's own edge label color
+const EDGE_FONT_COLOR = '#343434'
 
 const ReturnRouteKind = {
 	PRIORITY: 20,
@@ -332,6 +348,20 @@ export default {
 		allNodes() {
 			return this.nodes.filter((node) => !node.virtual) // replace this with `fakeNodes` when testing
 		},
+		// the same marks as the floorplan map
+		health() {
+			return meshHealth(this.allNodes)
+		},
+		hoverHealth() {
+			const flag =
+				this.hoverNode && this.health.nodes.get(this.hoverNode.id)
+			return flag
+				? {
+						text: flag.reasons.join(', '),
+						color: HEALTH_COLORS[flag.level],
+					}
+				: null
+		},
 	},
 	network: null, // do not make this reactive, see https://github.com/visjs/vis-network/issues/173#issuecomment-541435420
 	unsubscribeUpdate: null, // pinia update action unsubscribe function
@@ -359,6 +389,9 @@ export default {
 		}
 	},
 	watch: {
+		health() {
+			this.applyHealth()
+		},
 		filteredNodes(val, oldVal) {
 			if (!arraysEqual(val, oldVal)) {
 				this.selectedNodes = val.map((n) => n.id)
@@ -494,6 +527,7 @@ export default {
 				const allOtherEdges = {} // edgeId => [edge, ...]
 
 				edges.forEach((e) => {
+					if (e.oneWay) return
 					if (e.routeOf === node.id) {
 						const key = `${e.from}-${e.to}-${e.routeKind}`
 						if (!oldEdgesByKey[key]) {
@@ -583,6 +617,7 @@ export default {
 				edges.update(edgesToUpdate)
 				edges.add(edgesToAdd)
 				nodes.update(result.node)
+				this.applyHealth()
 
 				// node has no routes yet, request them (once per node)
 				const hadNoEdges = Object.keys(oldEdgesByKey).length === 0
@@ -633,6 +668,7 @@ export default {
 				const result = this.parseNode(node)
 				this.priorityEdges = saved
 				nodes.update(result.node)
+				this.applyHealth()
 				return
 			}
 
@@ -640,6 +676,7 @@ export default {
 			const result = this.parseNode(node)
 			nodes.add(result.node)
 			edges.add(result.edges)
+			this.applyHealth()
 
 			// notify parent to fetch routes for this node so edges can be rendered
 			this._routesFetchedFor.add(node.id)
@@ -774,6 +811,7 @@ export default {
 			}
 
 			this.network = new Network(container, data, options)
+			this.applyHealth()
 
 			// event handlers
 			// https://visjs.github.io/vis-network/docs/network/#Events
@@ -825,6 +863,12 @@ export default {
 
 			// DataSet: https://visjs.github.io/vis-data/data/dataset.html
 			edges.forEach((e) => {
+				if (e.oneWay) {
+					const hidden = this.oneWayHidden(e, selectedNodes)
+					if (hidden !== e.hidden)
+						edgesToUpdate.push({ id: e.id, hidden })
+					return
+				}
 				const edgeId = this.getEdgeId(e)
 				const shouldBeHidden =
 					(showAll && this.priorityEdges[edgeId]?.id !== e.id) ||
@@ -847,7 +891,8 @@ export default {
 					}
 				}
 
-				const fontSize = showAll ? 0 : 12
+				// weak hops keep their label in the overview, as the map's "!"
+				const fontSize = showAll && !e.weak ? 0 : 12
 
 				if (shouldBeHidden !== e.hidden || fontSize !== e.font.size) {
 					edgesToUpdate.push({
@@ -887,6 +932,102 @@ export default {
 
 			if (!skipFit) {
 				this.network.fit()
+			}
+		},
+		/**
+		 * The floorplan map's health marks: a colored border on flagged
+		 * nodes, "!" on weak route hops, dotted one-way neighbor lines
+		 */
+		applyHealth() {
+			if (!this.network) return
+			const { nodes, edges } = this.network.body.data
+			const h = this.health
+			nodes.update(
+				nodes.map((n) => ({
+					id: n.id,
+					...this.healthLook(h.nodes.get(n.id), n.baseColor),
+				})),
+			)
+			const showAll = this.selectedNodes.length === 0
+			const weak = new Map(
+				h.hops.map((x) => [linkKey(x.kind, x.a, x.b), x.level]),
+			)
+			const edgesToUpdate = []
+			const oneWayIds = []
+			edges.forEach((e) => {
+				if (e.oneWay) {
+					oneWayIds.push(e.id)
+					return
+				}
+				if (!e.healthKind) return
+				const level =
+					weak.get(linkKey(e.healthKind, e.from, e.to)) ?? null
+				if (level === e.weak) return
+				edgesToUpdate.push({
+					id: e.id,
+					weak: level,
+					label: level ? `! ${e.baseLabel}` : e.baseLabel,
+					font: {
+						size: showAll && !level ? 0 : 12,
+						color: level ? HEALTH_COLORS[level] : EDGE_FONT_COLOR,
+					},
+				})
+			})
+			edges.update(edgesToUpdate)
+			const wanted = new Map(
+				h.oneWay.map((w) => [`oneway-${w.from}-${w.to}`, w]),
+			)
+			edges.remove(oneWayIds.filter((id) => !wanted.has(id)))
+			const have = new Set(oneWayIds)
+			const byId = new Map(this.allNodes.map((n) => [n.id, n]))
+			const name = (id) => labelOf(byId.get(id))
+			edges.add(
+				[...wanted]
+					.filter(([id]) => !have.has(id))
+					.map(([id, w]) => {
+						const edge = {
+							id,
+							from: w.from,
+							to: w.to,
+							oneWay: true,
+							color: HEALTH_COLORS.warn,
+							width: 2,
+							dashes: [2, 6],
+							// a mark, not a link: leaves the layout alone
+							physics: false,
+							font: { size: 0 },
+							title: `One-way: ${name(w.from)} lists ${name(w.to)} as a neighbor, but not the other way round`,
+						}
+						edge.hidden = this.oneWayHidden(
+							edge,
+							this.selectedNodes,
+						)
+						return edge
+					}),
+			)
+		},
+		/** a one-way line shows in the overview, or when it touches a selected node */
+		oneWayHidden(edge, selectedNodes) {
+			return (
+				selectedNodes.length > 0 &&
+				!selectedNodes.includes(edge.from) &&
+				!selectedNodes.includes(edge.to)
+			)
+		},
+		/** node color options for a health flag: its level as a thick border */
+		healthLook(flag, background) {
+			if (!flag) {
+				return {
+					color: background,
+					borderWidth: 2,
+					borderWidthSelected: 2,
+				}
+			}
+			const c = { background, border: HEALTH_COLORS[flag.level] }
+			return {
+				color: { ...c, highlight: c, hover: c },
+				borderWidth: 4,
+				borderWidthSelected: 4,
 			}
 		},
 		handleDragStart() {
@@ -1001,6 +1142,17 @@ export default {
 				edges.push(edge)
 			}
 
+			// the route's kind in meshHealth: an NLWR shown in place of a
+			// missing LWR is the main route there
+			const healthKind =
+				routeKind === RouteKind.LWR
+					? 'main'
+					: routeKind === RouteKind.NLWR
+						? forceShow
+							? 'main'
+							: 'backup'
+						: null
+
 			const sourceNodeId = isReturn ? node.id : controllerId
 			const destinationNodeId = isReturn ? controllerId : node.id
 
@@ -1080,9 +1232,14 @@ export default {
 					width,
 					layer: i + 1,
 					label,
+					baseLabel: label,
+					// set by applyHealth
+					weak: null,
+					healthKind,
 					font: {
 						align: 'top',
 						size: 0,
+						color: EDGE_FONT_COLOR,
 						vadjust: routeKind === RouteKind.Application ? -5 : 0,
 					}, //  multi: 'html'
 					// arrows: 'to from',
@@ -1230,6 +1387,9 @@ export default {
 					)
 				}
 			}
+
+			// before applyHealth adds a border
+			entity.baseColor = entity.color
 
 			return { node: entity, edges }
 		},

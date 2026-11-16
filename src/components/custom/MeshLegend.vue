@@ -95,7 +95,7 @@
 							Priority route
 						</div>
 					</div>
-					<div v-if="mode === 'map'">
+					<div>
 						<div class="mesh-legend-head">Marks</div>
 						<div class="mesh-legend-row">
 							<svg width="22" height="18">
@@ -131,40 +131,43 @@
 							>
 							Weak hop (red: very weak)
 						</div>
-						<div class="mesh-legend-row">
-							<svg width="22" height="14">
-								<circle
-									cx="11"
-									cy="7"
-									r="4.5"
-									:fill="ghost.fill"
-									:stroke="ghostStroke"
-								/>
-							</svg>
-							Hidden repeater
-						</div>
-						<div class="mesh-legend-row">
-							<svg width="22" height="14">
-								<circle
-									cx="11"
-									cy="7"
-									r="4.5"
-									fill="none"
-									:stroke="ghostStroke"
-									stroke-dasharray="2 2"
-								/>
-							</svg>
-							Repeater, rough spot
-						</div>
-						<div class="mesh-legend-row">
-							<span
-								class="mesh-legend-batt"
-								:style="{ background: health.warn }"
-								>23%</span
-							>
-							Battery (amber ≤ {{ battery.warn }}%, red ≤
-							{{ battery.bad }}%)
-						</div>
+						<!-- the graph has no ghosts or battery tags -->
+						<template v-if="mode === 'map'">
+							<div class="mesh-legend-row">
+								<svg width="22" height="14">
+									<circle
+										cx="11"
+										cy="7"
+										r="4.5"
+										:fill="ghost.fill"
+										:stroke="ghostStroke"
+									/>
+								</svg>
+								Hidden repeater
+							</div>
+							<div class="mesh-legend-row">
+								<svg width="22" height="14">
+									<circle
+										cx="11"
+										cy="7"
+										r="4.5"
+										fill="none"
+										:stroke="ghostStroke"
+										stroke-dasharray="2 2"
+									/>
+								</svg>
+								Repeater, rough spot
+							</div>
+							<div class="mesh-legend-row">
+								<span
+									class="mesh-legend-batt"
+									:style="{ background: health.warn }"
+									>23%</span
+								>
+								Battery (amber ≤ {{ battery.warn }}%, red ≤
+								{{ battery.bad }}%)
+							</div>
+						</template>
 					</div>
 				</div>
 			</v-card-text>
@@ -231,8 +234,13 @@ const SHAPES = [
 	['Battery', nodeShapeSvg('battery', UNSHADED)],
 ]
 
-// the graph draws only the two route lines, plus priority routes
-const GRAPH_LINES = new Set(['Route (last working)', 'Backup route'])
+// the graph draws only the two route lines and one-way neighbors, plus
+// priority routes
+const GRAPH_LINES = new Set([
+	'Route (last working)',
+	'Backup route',
+	'One-way neighbor',
+])
 
 export default {
 	name: 'MeshLegend',
