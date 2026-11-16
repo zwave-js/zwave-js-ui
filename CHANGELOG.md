@@ -1,5 +1,16 @@
 # Changelog
 
+## [11.27.0](https://github.com/zwave-js/zwave-js-ui/compare/v11.26.2...v11.27.0) (2026-11-16)
+
+### ✨ Features
+
+* **ui:** floorplan mode for the network graph ([#4877](https://github.com/zwave-js/zwave-js-ui/issues/4877)) ([08bbb54](https://github.com/zwave-js/zwave-js-ui/commit/08bbb54be60dd307439c3f41bcc1047e7d2f6adf)), closes [#4858](https://github.com/zwave-js/zwave-js-ui/issues/4858) [#4860](https://github.com/zwave-js/zwave-js-ui/issues/4860) [#4854](https://github.com/zwave-js/zwave-js-ui/issues/4854) [#4393](https://github.com/zwave-js/zwave-js-ui/issues/4393) [#4854](https://github.com/zwave-js/zwave-js-ui/issues/4854) [#4858](https://github.com/zwave-js/zwave-js-ui/issues/4858) [#4858](https://github.com/zwave-js/zwave-js-ui/issues/4858) [#4860](https://github.com/zwave-js/zwave-js-ui/issues/4860) [#4854](https://github.com/zwave-js/zwave-js-ui/issues/4854) [4722/#4747](https://github.com/4722/zwave-js-ui/issues/4747) [#4390](https://github.com/zwave-js/zwave-js-ui/issues/4390)
+* **ui:** refresh all neighbors from the mesh page ([#4860](https://github.com/zwave-js/zwave-js-ui/issues/4860)) ([6098666](https://github.com/zwave-js/zwave-js-ui/commit/6098666744eb3d4de6c859b61168568bc61a4727)), closes [#4858](https://github.com/zwave-js/zwave-js-ui/issues/4858) [#4372](https://github.com/zwave-js/zwave-js-ui/issues/4372) [#4858](https://github.com/zwave-js/zwave-js-ui/issues/4858)
+
+### 🐛 Bug Fixes
+
+* **api:** clear stale firmware updates after update and bulk check ([#4899](https://github.com/zwave-js/zwave-js-ui/issues/4899)) ([41aeb3c](https://github.com/zwave-js/zwave-js-ui/commit/41aeb3c2b1c83e06d7d01328173bc397764904c7)), closes [#4891](https://github.com/zwave-js/zwave-js-ui/issues/4891)
+
 ## [11.26.2](https://github.com/zwave-js/zwave-js-ui/compare/v11.26.1...v11.26.2) (2026-11-10)
 
 ### ✨ Features
