@@ -267,14 +267,17 @@ export default {
 		// a marker is being dragged, and a draw() waits for it to end
 		this.dragging = false
 		this.drawPending = false
-		// saving the view while editing: the map's saved view has been shown
-		// (else draw() shows it), a save is waiting to be sent, the view is
-		// being set from the map so its moves aren't saves, the map is
-		// panning or zooming, and Done came while it was (the tray width then)
+		// While editing, pans, zooms and layer changes are saved as the view:
+		// the map's saved view has been shown; until then draw() shows it
 		this.viewApplied = false
+		// a debounced save waiting to be sent, see saveViewSoon
 		this.viewTimer = null
+		// applyView is moving the map, so those moves aren't saves
 		this.applyingView = false
+		// a pan or zoom is under way (movestart to moveend)
 		this.moving = false
+		// Done came while it was: the tray's width then, to save with once
+		// moveend fires (null when no save waits)
 		this.saveAfterMove = null
 		// what the background was last drawn from, see drawBackground
 		this.backgroundKey = null
