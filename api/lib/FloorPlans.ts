@@ -634,10 +634,7 @@ export class FloorPlans {
 			await this.restoreFrom(dir)
 			return null
 		} catch (error) {
-			logger.error(
-				`Store restored without its floorplans: ${error.message}`,
-				error,
-			)
+			logger.error('Store restored without its floorplans:', error)
 			return `Store restored, but the floorplans were not (the current ones are kept): ${error.message}`
 		}
 	}
