@@ -2074,7 +2074,7 @@ app.post(
 		let file: any
 		let isRestore = false
 		// set when the store was restored but its floorplans were not
-		let warning: string | undefined
+		let warning: string | null = null
 		try {
 			// read files from request
 			await multerPromise(multerUpload, req, res)
@@ -2098,31 +2098,14 @@ app.post(
 					// rest of the store is in, so a failed copy leaves them as
 					// they were
 					const stagedFloorPlans = path.join(stageDir, 'floorplans')
-					const hasFloorPlans = await stat(stagedFloorPlans).then(
-						(s) => s.isDirectory(),
-						() => false,
-					)
 					await cp(stageDir, storeDir, {
 						recursive: true,
 						// keep in-store links (e.g. *_current.log) as links, don't copy their targets
 						verbatimSymlinks: true,
 						filter: (src) => src !== stagedFloorPlans,
 					})
-					if (!hasFloorPlans) {
-						logger.info(
-							'The restored backup has no floorplans, the current ones are kept',
-						)
-					} else {
-						try {
-							await floorPlans.restoreFrom(stagedFloorPlans)
-						} catch (error) {
-							logger.error(
-								`Store restored without its floorplans: ${error.message}`,
-								error,
-							)
-							warning = `Store restored, but the floorplans were not (the current ones are kept): ${error.message}`
-						}
-					}
+					warning =
+						await floorPlans.restoreFromBackup(stagedFloorPlans)
 				} finally {
 					await rm(stageDir, { recursive: true, force: true })
 				}

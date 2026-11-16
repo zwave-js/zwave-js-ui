@@ -5,7 +5,15 @@
 // pictures. Positions are canvas pixels: x right, y down, origin at the
 // canvas's top-left. Every image file belongs to exactly one map.
 
-import { cp, readdir, readFile, rename, rm, writeFile } from 'node:fs/promises'
+import {
+	cp,
+	readdir,
+	readFile,
+	rename,
+	rm,
+	stat,
+	writeFile,
+} from 'node:fs/promises'
 import path from 'node:path'
 import { floorPlansDir } from '../config/app.ts'
 import { module } from './logger.ts'
@@ -404,6 +412,12 @@ export function checkData(
 	return raw as FloorPlansData
 }
 
+const isDir = (dir: string) =>
+	stat(dir).then(
+		(s) => s.isDirectory(),
+		() => false,
+	)
+
 /** Write a file atomically: temp file in the same dir, then rename over the target */
 async function writeAtomic(file: string, data: string | Buffer) {
 	await ensureDir(path.dirname(file))
@@ -568,12 +582,14 @@ export class FloorPlans {
 					recursive: true,
 					verbatimSymlinks: true,
 				})
-				try {
-					await rename(this.dir, old)
-					moved = true
-				} catch (error) {
-					if (error.code !== 'ENOENT') throw error
-				}
+				// no current folder (no maps yet) is fine
+				moved = await rename(this.dir, old).then(
+					() => true,
+					(error) => {
+						if (error.code === 'ENOENT') return false
+						throw error
+					},
+				)
 				await rename(incoming, this.dir)
 			} catch (error) {
 				// put the current floorplans back, keeping `error` as the reason
@@ -599,6 +615,31 @@ export class FloorPlans {
 				)
 			}
 		})
+	}
+
+	/**
+	 * The floorplans part of a store restore, `dir` being the backup's
+	 * floorplans folder. A backup without one keeps the current maps. A
+	 * failure is logged and returned as a warning for the user, since the
+	 * rest of the store is already restored.
+	 */
+	async restoreFromBackup(dir: string): Promise<string | null> {
+		if (!(await isDir(dir))) {
+			logger.info(
+				'The restored backup has no floorplans, the current ones are kept',
+			)
+			return null
+		}
+		try {
+			await this.restoreFrom(dir)
+			return null
+		} catch (error) {
+			logger.error(
+				`Store restored without its floorplans: ${error.message}`,
+				error,
+			)
+			return `Store restored, but the floorplans were not (the current ones are kept): ${error.message}`
+		}
 	}
 
 	/**
