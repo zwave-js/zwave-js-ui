@@ -247,11 +247,13 @@ export default {
 			this.viewApplied = false
 		},
 		// Done saves a view change still waiting to be saved, or one still
-		// under way: a zoom reports its end (moveend) only after its animation
+		// under way: a zoom reports its end (moveend) only after its animation,
+		// when the tray is gone, so its width is taken now (the DOM isn't
+		// updated yet)
 		editing(now) {
 			if (!now && this.moving) {
 				this.dropPendingViewSave()
-				this.saveAfterMove = true
+				this.saveAfterMove = this.trayInset()
 			} else if (!now && this.viewTimer) {
 				clearTimeout(this.viewTimer)
 				this.saveView()
@@ -268,12 +270,12 @@ export default {
 		// saving the view while editing: the map's saved view has been shown
 		// (else draw() shows it), a save is waiting to be sent, the view is
 		// being set from the map so its moves aren't saves, the map is
-		// panning or zooming, and Done came while it was
+		// panning or zooming, and Done came while it was (the tray width then)
 		this.viewApplied = false
 		this.viewTimer = null
 		this.applyingView = false
 		this.moving = false
-		this.saveAfterMove = false
+		this.saveAfterMove = null
 		// what the background was last drawn from, see drawBackground
 		this.backgroundKey = null
 	},
@@ -320,9 +322,10 @@ export default {
 		})
 		lmap.on('moveend', () => {
 			this.moving = false
-			if (this.saveAfterMove) {
-				this.saveAfterMove = false
-				this.saveView()
+			if (this.saveAfterMove !== null) {
+				const inset = this.saveAfterMove
+				this.saveAfterMove = null
+				this.saveView(inset)
 			}
 		})
 		lmap.on('moveend overlayadd overlayremove', () => this.saveViewSoon())
@@ -401,17 +404,20 @@ export default {
 		dropPendingViewSave() {
 			clearTimeout(this.viewTimer)
 			this.viewTimer = null
-			this.saveAfterMove = false
+			this.saveAfterMove = null
 		},
 		saveViewSoon() {
 			if (!this.editing || this.applyingView) return
 			clearTimeout(this.viewTimer)
 			this.viewTimer = setTimeout(() => this.saveView(), 800)
 		},
-		saveView() {
+		// the saved center is the middle of the part beside the tray, the part
+		// the view was framed in, so the view opens the same without the tray
+		saveView(inset = this.trayInset()) {
 			this.viewTimer = null
 			if (!this.lmap) return
-			const c = this.lmap.getCenter()
+			const { x, y } = this.lmap.getSize()
+			const c = this.lmap.containerPointToLatLng([(inset + x) / 2, y / 2])
 			const layers = Object.fromEntries(
 				LAYERS.map(([k]) => [k, this.lmap.hasLayer(this.groups[k])]),
 			)
@@ -428,15 +434,17 @@ export default {
 				[this.map.heightPx, this.map.widthPx],
 			]
 		},
+		/** how far the node tray, shown while editing, covers the map's left side */
+		trayInset() {
+			const tray = this.$refs.tray?.$el
+			return tray ? tray.offsetLeft + tray.offsetWidth : 0
+		},
 		/** show the whole map; while editing, that becomes its saved view */
 		fitToMap() {
 			// no animation: moveend, and with it the view save, comes at once,
 			// so a Done right after doesn't miss it
-			// while editing, the node tray covers the map's left side
-			const tray = this.$refs.tray?.$el
-			const left = tray ? tray.offsetLeft + tray.offsetWidth + 20 : 20
 			this.lmap?.fitBounds(this.canvasBounds(), {
-				paddingTopLeft: [left, 20],
+				paddingTopLeft: [this.trayInset() + 20, 20],
 				paddingBottomRight: [20, 20],
 				animate: false,
 			})
@@ -609,7 +617,14 @@ export default {
 			this.applyingView = true
 			const v = this.map.view ?? {}
 			if (Array.isArray(v.center) && typeof v.zoom === 'number') {
-				this.lmap.setView(v.center, v.zoom, { animate: false })
+				// the saved center goes in the middle of the part beside the tray
+				const center = this.lmap.unproject(
+					this.lmap
+						.project(v.center, v.zoom)
+						.subtract([this.trayInset() / 2, 0]),
+					v.zoom,
+				)
+				this.lmap.setView(center, v.zoom, { animate: false })
 			} else {
 				this.fitToMap()
 			}

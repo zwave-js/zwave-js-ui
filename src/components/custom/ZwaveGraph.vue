@@ -947,42 +947,47 @@ export default {
 					...this.healthLook(n.id, n.baseColor),
 				})),
 			)
-			this.syncOneWay()
+			// a new line's far node must show, or vis drops the line, and a
+			// dropped line's far node hides again: both decided by the selection
+			if (this.syncOneWay() && this.selectedNodes.length > 0) {
+				this.handleSelectNode({ nodes: this.selectedNodes }, true)
+			}
 		},
-		/** one dotted edge per one-way neighbor entry, kept out of the layout */
+		/**
+		 * One dotted edge per one-way neighbor entry, kept out of the layout.
+		 * Returns whether any edge was added or removed.
+		 */
 		syncOneWay() {
 			const { edges } = this.network.body.data
 			const wanted = new Map(
 				this.health.oneWay.map((w) => [`oneway-${w.from}-${w.to}`, w]),
 			)
 			const have = edges.getIds({ filter: (e) => e.oneWay })
-			edges.remove(have.filter((id) => !wanted.has(id)))
+			const gone = have.filter((id) => !wanted.has(id))
+			edges.remove(gone)
 			const byId = new Map(this.allNodes.map((n) => [n.id, n]))
 			const name = (id) => labelOf(byId.get(id))
 			const style = LINE_STYLES.oneWay
-			edges.add(
-				[...wanted]
-					.filter(([id]) => !have.includes(id))
-					.map(([id, w]) => {
-						const edge = {
-							id,
-							from: w.from,
-							to: w.to,
-							oneWay: true,
-							color: style.color,
-							width: style.weight,
-							dashes: style.dashArray.split(' ').map(Number),
-							physics: false,
-							font: { size: 0 },
-							title: `One-way: ${name(w.from)} lists ${name(w.to)} as a neighbor, but not the other way round`,
-						}
-						edge.hidden = this.oneWayHidden(
-							edge,
-							this.selectedNodes,
-						)
-						return edge
-					}),
-			)
+			const added = [...wanted]
+				.filter(([id]) => !have.includes(id))
+				.map(([id, w]) => {
+					const edge = {
+						id,
+						from: w.from,
+						to: w.to,
+						oneWay: true,
+						color: style.color,
+						width: style.weight,
+						dashes: style.dashArray.split(' ').map(Number),
+						physics: false,
+						font: { size: 0 },
+						title: `One-way: ${name(w.from)} lists ${name(w.to)} as a neighbor, but not the other way round`,
+					}
+					edge.hidden = this.oneWayHidden(edge, this.selectedNodes)
+					return edge
+				})
+			edges.add(added)
+			return gone.length > 0 || added.length > 0
 		},
 		/** a one-way line shows in the overview, or when it touches a selected node */
 		oneWayHidden(edge, selectedNodes) {
@@ -995,7 +1000,7 @@ export default {
 		/** node color options for its health flag: the level as a thick border */
 		healthLook(id, background) {
 			const flag = this.health.nodes.get(id)
-			// selected nodes keep vis-network's doubled border
+			// selected nodes get a thicker border
 			if (!flag) {
 				return {
 					color: background,
@@ -1134,14 +1139,15 @@ export default {
 
 				const edgeRssi = i === 0 ? rssi : repeaterRSSI?.[i - 1]
 
-				// as the floorplan labels its lines
 				const hopRssi = toRssi(edgeRssi)
-				// judged on this route's own reading, as meshHealth does; return
-				// and application routes carry no reading
+				// judged on this route's own reading with the floorplan's
+				// hopLevel (meshHealth keeps a link's worst); return and
+				// application routes carry no reading
 				const weakLevel =
 					routeKind === RouteKind.LWR || routeKind === RouteKind.NLWR
 						? hopLevel(hopRssi)
 						: null
+				// as the floorplan labels its lines
 				const label = (weakLevel ? '! ' : '') + rssiLabel(hopRssi)
 
 				const edgeId = this.getEdgeId({ from, to })
