@@ -314,6 +314,16 @@ export function checkView(view: unknown): MapView {
 	return out
 }
 
+/** A picture frame: finite position, positive size */
+const isRect = (r: unknown): r is Rect =>
+	isRecord(r) &&
+	isCoord(r.x) &&
+	isCoord(r.y) &&
+	isCoord(r.w) &&
+	isCoord(r.h) &&
+	r.w > 0 &&
+	r.h > 0
+
 /** The first field of a stored map with the wrong type, or null if none */
 function badMapField(map: any): string | null {
 	if (typeof map?.id !== 'string' || !MAP_ID.test(map.id)) return 'id'
@@ -323,7 +333,7 @@ function badMapField(map: any): string | null {
 	if (!isRecord(map.nodes)) return 'nodes'
 	if (!isRecord(map.view)) return 'view'
 	const bg = map.background
-	if (bg !== null && !(isRecord(bg) && isRecord(bg.imageRect))) {
+	if (bg !== null && !(isRecord(bg) && isRect(bg.imageRect))) {
 		return 'background'
 	}
 	return null

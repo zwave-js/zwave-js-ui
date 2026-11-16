@@ -167,6 +167,19 @@ describe('#FloorPlans', () => {
 					// wrong field types would break every read: dropped
 					{ ...map('text-bg', null), background: 'x' },
 					{ ...map('no-view', null), view: undefined },
+					// a frame with no size, or a size that isn't a number
+					map('flat', {
+						...bg('a.png'),
+						imageRect: { x: 0, y: 0, w: 0, h: 10 },
+					}),
+					map('text-rect', {
+						...bg('a.png'),
+						imageRect: { x: 0, y: 0, w: '10', h: 10 },
+					}),
+					map('no-rect', {
+						...bg('a.png'),
+						imageRect: { x: 0, y: 0 },
+					}),
 				],
 			}),
 		)
@@ -676,6 +689,28 @@ describe('#FloorPlans', () => {
 					maps: [{ id: 'a', background: 'x' }],
 				}),
 				'invalid name',
+			],
+			[
+				JSON.stringify({
+					version: 1,
+					maps: [
+						{
+							id: 'a',
+							name: 'A',
+							widthPx: 10,
+							heightPx: 10,
+							background: {
+								image: 'a.png',
+								darkImage: null,
+								imageRect: { x: 0, y: 0, w: -1, h: 10 },
+							},
+							nodes: { start: 'include', exceptions: [] },
+							view: {},
+							placements: [],
+						},
+					],
+				}),
+				'invalid background',
 			],
 		]) {
 			await writeFile(backup.file, content)
