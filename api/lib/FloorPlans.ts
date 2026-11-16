@@ -804,12 +804,8 @@ export class FloorPlans {
 				if (old) files.removed.push(old)
 				map.background[field] = name
 			} else {
-				if (!map.placements.length) {
-					map.widthPx = size.w
-					map.heightPx = size.h
-					// a zoom and center saved for the old canvas would be off
-					map.view = { ...map.view, center: null, zoom: null }
-				}
+				// nothing placed yet: the canvas takes the picture's size
+				if (!map.placements.length) refitCanvas(map, size, 'keep')
 				map.background = {
 					image: dark ? null : name,
 					darkImage: dark ? name : null,
