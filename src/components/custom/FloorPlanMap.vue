@@ -64,8 +64,11 @@
 		</v-card>
 		<div class="floor-plan-bottom-left">
 			<mesh-legend />
+			<v-chip v-if="!homeHex" size="small" prepend-icon="hourglass_empty">
+				Waiting for the controller to report its home ID
+			</v-chip>
 			<v-chip
-				v-if="unplacedCount && !editing"
+				v-else-if="unplacedCount && !editing"
 				size="small"
 				prepend-icon="info"
 			>
@@ -185,7 +188,9 @@ export default {
 		health() {
 			return meshHealth(this.physicalNodes)
 		},
+		/** none before the home ID is known: no stored placement matches yet */
 		unplacedCount() {
+			if (!this.homeHex) return 0
 			return this.entries.filter((e) => e.shown && !e.placed).length
 		},
 		/**

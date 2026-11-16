@@ -138,13 +138,23 @@
 						</v-list-item>
 					</v-list>
 				</v-menu>
-				<v-btn
-					:variant="editing ? 'flat' : 'outlined'"
-					color="primary"
-					:prepend-icon="editing ? 'done' : 'edit'"
-					@click="editing = !editing"
-					>{{ editing ? 'Done' : 'Edit' }}</v-btn
+				<!-- placements are stored under the home ID: none to edit before it's known -->
+				<span
+					v-tooltip:bottom="
+						appInfo.homeHex
+							? undefined
+							: 'Waiting for the controller to report its home ID'
+					"
 				>
+					<v-btn
+						:variant="editing ? 'flat' : 'outlined'"
+						color="primary"
+						:prepend-icon="editing ? 'done' : 'edit'"
+						:disabled="!appInfo.homeHex"
+						@click="editing = !editing"
+						>{{ editing ? 'Done' : 'Edit' }}</v-btn
+					>
+				</span>
 			</template>
 		</Teleport>
 
@@ -243,6 +253,9 @@ export default {
 	watch: {
 		'currentMap.id'() {
 			this.editing = false
+		},
+		'appInfo.homeHex'(hex) {
+			if (!hex) this.editing = false
 		},
 	},
 	created() {
