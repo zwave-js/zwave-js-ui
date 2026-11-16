@@ -1,0 +1,1130 @@
+<template>
+	<div class="floor-plan" ref="container" :style="cssVars">
+		<div
+			class="floor-plan-map"
+			ref="map"
+			@dragover.prevent
+			@drop.prevent="onDrop"
+		></div>
+		<v-card
+			v-if="editing"
+			ref="tray"
+			class="floor-plan-tray"
+			density="compact"
+		>
+			<v-card-subtitle class="pt-2"> Nodes on this map </v-card-subtitle>
+			<v-card-text class="pa-1 text-caption">
+				Drag a node with
+				<v-icon size="x-small">open_with</v-icon> onto the map. Drag
+				placed nodes to move them, right-click to remove one.
+			</v-card-text>
+			<div v-if="unplacedCount" class="px-2 pb-2">
+				<v-btn
+					size="small"
+					variant="tonal"
+					prepend-icon="grid_view"
+					block
+					v-tooltip="
+						'In a grid along the bottom, the controller in the middle'
+					"
+					@click="placeAll"
+					>Place all {{ unplacedCount }}</v-btn
+				>
+			</div>
+			<v-list density="compact" class="py-0">
+				<v-list-item
+					v-for="e in entries"
+					:key="e.node.id"
+					:draggable="e.shown && !e.placed"
+					@dragstart="onDragStart($event, e.node)"
+					:class="{ 'floor-plan-draggable': e.shown && !e.placed }"
+				>
+					<template #prepend>
+						<v-checkbox-btn
+							:model-value="e.shown"
+							density="compact"
+							@update:model-value="setShown(e.node, $event)"
+						></v-checkbox-btn>
+					</template>
+					<v-list-item-title class="text-body-2">
+						{{ labelOf(e.node) }}
+					</v-list-item-title>
+					<template #append>
+						<v-icon
+							v-if="e.shown && !e.placed"
+							size="small"
+							v-tooltip="'Drag onto the map'"
+							>open_with</v-icon
+						>
+						<v-icon
+							v-else-if="e.placed"
+							size="small"
+							color="success"
+							v-tooltip="'Placed on this map'"
+							>place</v-icon
+						>
+					</template>
+				</v-list-item>
+			</v-list>
+		</v-card>
+		<div class="floor-plan-bottom-left">
+			<mesh-legend />
+			<v-chip v-if="!homeHex" size="small" prepend-icon="hourglass_empty">
+				Waiting for the controller to report its home ID
+			</v-chip>
+			<v-chip
+				v-else-if="unplacedCount && !editing"
+				size="small"
+				prepend-icon="info"
+			>
+				{{ plural(unplacedCount, 'shown node') }} not placed on this map
+				yet, use Edit to place them
+			</v-chip>
+		</div>
+	</div>
+</template>
+
+<script>
+import L from 'leaflet'
+import 'leaflet/dist/leaflet.css'
+import { protocolDataRateToString } from '@zwave-js/core'
+import ConfigApis from '@/apis/ConfigApis.js'
+import MeshLegend from '@/components/custom/MeshLegend.vue'
+import { escapeHtml, plural } from '@/lib/utils.js'
+import {
+	GHOST_COLORS,
+	HEALTH_COLORS,
+	LINE_STYLES,
+	NEIGHBOR_COLOR,
+	agoLabel,
+	batteryLevelClass,
+	deviceKey,
+	drawnShapeKey,
+	gridPlacements,
+	hopsOf,
+	labelOf,
+	linkKey,
+	linkRssi,
+	lwrOf,
+	mapView,
+	meshHealth,
+	nlwrOf,
+	nodeColor,
+	nodeName,
+	nodeShapeSvg,
+	nodeShapeType,
+	rateColor,
+	rssiLabel,
+	statusOf,
+} from '@/lib/meshView.js'
+
+// map view layers saved with each map, with their labels
+const LAYERS = [
+	['routes', 'Routes (last working)'],
+	['backupRoutes', 'Backup routes (next-to-last)'],
+	['neighbors', 'Neighbors (when known)'],
+	['nodes', 'Nodes'],
+	['names', 'Node names'],
+	['health', 'Mesh health'],
+	['battery', 'Battery level'],
+]
+
+const esc = (s) => escapeHtml(String(s ?? ''))
+
+export default {
+	name: 'FloorPlanMap',
+	components: { MeshLegend },
+	props: {
+		/** the floorplan map to show */
+		map: { type: Object, required: true },
+		/** store nodes */
+		nodes: { type: Array, default: () => [] },
+		homeHex: { type: String, default: '' },
+		dark: Boolean,
+		/** edit mode: node list, placing and moving nodes, saving the view */
+		editing: Boolean,
+	},
+	emits: [
+		'node-click',
+		// { deviceKey, x, y } in canvas px
+		'place',
+		// [{ deviceKey, x, y }]
+		'place-many',
+		// deviceKey
+		'unplace',
+		// { start, exceptions }
+		'set-nodes',
+		// { center, zoom, layers }
+		'view-change',
+		// a background picture that couldn't be loaded: its file name
+		'image-error',
+	],
+	computed: {
+		/** colors the CSS uses, from meshView.js */
+		cssVars() {
+			return {
+				'--floorplan-warn': HEALTH_COLORS.warn,
+				'--floorplan-bad': HEALTH_COLORS.bad,
+				'--floorplan-ghost-fill': GHOST_COLORS.fill,
+				'--floorplan-ghost-stroke': this.dark
+					? GHOST_COLORS.strokeDark
+					: GHOST_COLORS.stroke,
+			}
+		},
+		/** broadcast and multicast nodes aren't part of the mesh, as in the graph */
+		physicalNodes() {
+			return this.nodes.filter((n) => !n.virtual)
+		},
+		placedKeys() {
+			return new Set(this.map.placements.map((p) => p.deviceKey))
+		},
+		/** device keys whose shown state is the opposite of the map's rule */
+		exceptionKeys() {
+			return new Set(this.map.nodes.exceptions)
+		},
+		/** every node with whether it's shown and placed on this map */
+		entries() {
+			return this.physicalNodes.map((node) => ({
+				node,
+				shown: this.isShown(node),
+				placed: this.placedKeys.has(this.keyOf(node)),
+			}))
+		},
+		health() {
+			return meshHealth(this.physicalNodes)
+		},
+		/** none before the home ID is known: no stored placement matches yet */
+		unplacedCount() {
+			if (!this.homeHex) return 0
+			return this.entries.filter((e) => e.shown && !e.placed).length
+		},
+		/**
+		 * What the nodes' drawing depends on, so value updates don't redraw
+		 * the map. RSSI and times like lastActive are left out: tooltips read
+		 * them when shown, and the health layer redraws on its own.
+		 */
+		nodesKey() {
+			return this.physicalNodes.map(drawnShapeKey).join('\n')
+		},
+		/** what the health layer shows, without RSSI values (read by tooltips) */
+		healthKey() {
+			const h = this.health
+			return JSON.stringify([
+				[...h.nodes],
+				h.hops.map(({ a, b, kind, level }) => [a, b, kind, level]),
+				h.oneWay,
+			])
+		},
+	},
+	watch: {
+		// the map itself is replaced, not changed in place, when it changes
+		map() {
+			this.drawSoon()
+		},
+		nodesKey() {
+			this.drawSoon()
+		},
+		homeHex() {
+			this.drawSoon()
+		},
+		dark() {
+			this.drawSoon()
+		},
+		healthKey() {
+			this.drawHealth()
+		},
+		// a pending view save belongs to the map it was made on
+		'map.id'() {
+			this.dropPendingViewSave()
+			this.viewApplied = false
+		},
+		// a picture that resizes the canvas resets the saved view on the
+		// server, so frame the new canvas
+		'map.widthPx'() {
+			this.viewApplied = false
+		},
+		'map.heightPx'() {
+			this.viewApplied = false
+		},
+		// Done saves a view change still waiting to be saved, or one still
+		// under way: a zoom reports its end (moveend) only after its animation,
+		// when the tray is gone, so its width is taken now (the DOM isn't
+		// updated yet)
+		editing(now) {
+			if (!now && this.moving) {
+				this.dropPendingViewSave()
+				this.saveAfterMove = this.trayInset()
+			} else if (!now && this.viewTimer) {
+				clearTimeout(this.viewTimer)
+				this.saveView()
+			}
+			this.drawSoon()
+		},
+	},
+	created() {
+		// pictures that failed to load, drawn as the outline instead
+		this.brokenImages = new Set()
+		// a marker is being dragged, and a draw() waits for it to end
+		this.dragging = false
+		this.drawPending = false
+		// saving the view while editing: the map's saved view has been shown
+		// (else draw() shows it), a save is waiting to be sent, the view is
+		// being set from the map so its moves aren't saves, the map is
+		// panning or zooming, and Done came while it was (the tray width then)
+		this.viewApplied = false
+		this.viewTimer = null
+		this.applyingView = false
+		this.moving = false
+		this.saveAfterMove = null
+		// what the background was last drawn from, see drawBackground
+		this.backgroundKey = null
+	},
+	mounted() {
+		const lmap = L.map(this.$refs.map, {
+			crs: L.CRS.Simple,
+			minZoom: -5,
+			maxZoom: 3,
+			// finer than Leaflet's defaults: a floorplan needs small steps
+			zoomSnap: 0.1,
+			zoomDelta: 0.5,
+			wheelPxPerZoomLevel: 120,
+			attributionControl: false,
+		})
+		// backgrounds get their own pane, always under the route lines
+		lmap.createPane('floorplan-background').style.zIndex = 300
+		this.groups = Object.fromEntries(
+			[...LAYERS.map(([k]) => k), 'background'].map((k) => [
+				k,
+				L.layerGroup(),
+			]),
+		)
+		this.groups.background.addTo(lmap)
+		const overlays = Object.fromEntries(
+			LAYERS.map(([k, label]) => [label, this.groups[k]]),
+		)
+		L.control.layers(null, overlays, { position: 'topright' }).addTo(lmap)
+		// the names layer draws nothing itself, it shows the node labels
+		lmap.on('overlayadd overlayremove', (e) => {
+			if (e.layer === this.groups.names) {
+				lmap.getContainer().classList.toggle(
+					'show-names',
+					e.type === 'overlayadd',
+				)
+			}
+			this.declutterLabels()
+		})
+		// zooming changes how far apart the labels are
+		lmap.on('zoomend', () => this.declutterLabels())
+		lmap.on('click', () => this.$emit('node-click', null))
+		// while editing, pans, zooms and layer changes are saved as the map's view
+		lmap.on('movestart', () => {
+			this.moving = true
+		})
+		lmap.on('moveend', () => {
+			this.moving = false
+			if (this.saveAfterMove !== null) {
+				const inset = this.saveAfterMove
+				this.saveAfterMove = null
+				this.saveView(inset)
+			}
+		})
+		lmap.on('moveend overlayadd overlayremove', () => this.saveViewSoon())
+		this.lmap = lmap
+		// the container also changes size without a window resize, e.g. when
+		// the nav drawer opens
+		this.resizer = new ResizeObserver(() => this.lmap?.invalidateSize())
+		this.resizer.observe(this.$refs.container)
+		this.draw()
+	},
+	beforeUnmount() {
+		this.resizer?.disconnect()
+		cancelAnimationFrame(this.frame)
+		clearTimeout(this.viewTimer)
+		this.lmap?.remove()
+		this.lmap = null
+	},
+	methods: {
+		labelOf,
+		plural,
+		onDragStart(event, node) {
+			event.dataTransfer.setData('text/plain', String(node.id))
+			event.dataTransfer.effectAllowed = 'move'
+		},
+		/** a node dropped from the tray onto the map */
+		onDrop(event) {
+			if (!this.editing || !this.lmap) return
+			const id = Number(event.dataTransfer.getData('text/plain'))
+			const node = this.physicalNodes.find((n) => n.id === id)
+			if (!node) return
+			this.place(
+				node,
+				...this.toCanvas(this.lmap.mouseEventToLatLng(event)),
+			)
+		},
+		/** every shown node not placed yet, in a grid along the bottom */
+		placeAll() {
+			const todo = this.entries
+				.filter((e) => e.shown && !e.placed)
+				.map((e) => e.node)
+			const occupied = this.map.placements.map((p) => [p.x, p.y])
+			const byId = new Map(todo.map((n) => [n.id, n]))
+			const spots = gridPlacements(
+				todo,
+				occupied,
+				this.map.widthPx,
+				this.map.heightPx,
+			)
+			this.$emit(
+				'place-many',
+				spots.map(({ id, x, y }) => ({
+					deviceKey: this.keyOf(byId.get(id)),
+					x,
+					y,
+				})),
+			)
+		},
+		place(node, x, y) {
+			this.$emit('place', {
+				deviceKey: this.keyOf(node),
+				x: Math.round(x),
+				y: Math.round(y),
+			})
+		},
+		setShown(node, shown) {
+			const key = this.keyOf(node)
+			const { start, exceptions } = this.map.nodes
+			// an exception flips the map's starting rule for that node
+			const flip = start === 'include' ? !shown : shown
+			const rest = exceptions.filter((k) => k !== key)
+			this.$emit('set-nodes', {
+				start,
+				exceptions: flip ? [...rest, key] : rest,
+			})
+		},
+		dropPendingViewSave() {
+			clearTimeout(this.viewTimer)
+			this.viewTimer = null
+			this.saveAfterMove = null
+		},
+		saveViewSoon() {
+			if (!this.editing || this.applyingView) return
+			clearTimeout(this.viewTimer)
+			this.viewTimer = setTimeout(() => this.saveView(), 800)
+		},
+		// the saved center is the middle of the part beside the tray, the part
+		// the view was framed in, so the view opens the same without the tray
+		saveView(inset = this.trayInset()) {
+			this.viewTimer = null
+			if (!this.lmap) return
+			const { x, y } = this.lmap.getSize()
+			const c = this.lmap.containerPointToLatLng([(inset + x) / 2, y / 2])
+			const layers = Object.fromEntries(
+				LAYERS.map(([k]) => [k, this.lmap.hasLayer(this.groups[k])]),
+			)
+			this.$emit('view-change', {
+				center: [c.lat, c.lng],
+				zoom: this.lmap.getZoom(),
+				layers,
+			})
+		},
+		/** the whole canvas: the picture, or the outline without one */
+		canvasBounds() {
+			return [
+				[0, 0],
+				[this.map.heightPx, this.map.widthPx],
+			]
+		},
+		/** how far the node tray, shown while editing, covers the map's left side */
+		trayInset() {
+			const tray = this.$refs.tray?.$el
+			return tray ? tray.offsetLeft + tray.offsetWidth : 0
+		},
+		/** show the whole map; while editing, that becomes its saved view */
+		fitToMap() {
+			// no animation: moveend, and with it the view save, comes at once,
+			// so a Done right after doesn't miss it
+			this.lmap?.fitBounds(this.canvasBounds(), {
+				paddingTopLeft: [this.trayInset() + 20, 20],
+				paddingBottomRight: [20, 20],
+				animate: false,
+			})
+		},
+		/** a node's right-click menu; nothing changes until it is used */
+		openNodeMenu(node, marker) {
+			const box = document.createElement('div')
+			const title = document.createElement('div')
+			title.className = 'text-subtitle-2 mb-1'
+			title.textContent = labelOf(node)
+			const btn = document.createElement('button')
+			btn.className = 'floorplan-menu-btn'
+			btn.textContent = 'Remove from this map'
+			btn.onclick = () => {
+				this.lmap.closePopup()
+				this.$emit('unplace', this.keyOf(node))
+			}
+			box.append(title, btn)
+			L.popup({ offset: [0, -10] })
+				.setLatLng(marker.getLatLng())
+				.setContent(box)
+				.openOn(this.lmap)
+		},
+		drawSoon() {
+			cancelAnimationFrame(this.frame)
+			this.frame = requestAnimationFrame(() => this.draw())
+		},
+		keyOf(node) {
+			return deviceKey(this.homeHex, node.id)
+		},
+		isShown(node) {
+			const flipped = this.exceptionKeys.has(this.keyOf(node))
+			return this.map.nodes.start === 'include' ? !flipped : flipped
+		},
+		/** canvas px (y down) → Leaflet [lat, lng] (y up) */
+		toLatLng(x, y) {
+			return [this.map.heightPx - y, x]
+		},
+		/** the inverse of toLatLng: Leaflet { lat, lng } → canvas [x, y] */
+		toCanvas({ lat, lng }) {
+			return [lng, this.map.heightPx - lat]
+		},
+		draw() {
+			const lmap = this.lmap
+			if (!lmap) return
+			// a redraw would destroy the marker being dragged and lose the
+			// move: it waits for the drop
+			if (this.dragging) {
+				this.drawPending = true
+				return
+			}
+			for (const [k, g] of Object.entries(this.groups)) {
+				if (k !== 'background') g.clearLayers()
+			}
+			this.drawBackground()
+			if (!this.viewApplied) this.applyView()
+
+			const byKey = new Map(
+				this.physicalNodes.map((n) => [this.keyOf(n), n]),
+			)
+			const shown = new Set(
+				this.physicalNodes
+					.filter((n) => this.isShown(n))
+					.map((n) => n.id),
+			)
+			const positioned = new Map()
+			for (const p of this.map.placements) {
+				const n = byKey.get(p.deviceKey)
+				if (n) positioned.set(n.id, this.toLatLng(p.x, p.y))
+			}
+
+			const view = mapView(this.physicalNodes, shown, positioned)
+			const ghostIds = new Set(view.ghosts.map((g) => g.id))
+			const nodePos = new Map(
+				[...view.pos].filter(([id]) => !ghostIds.has(id)),
+			)
+			this.drawLinks(view.links, view.pos)
+			this.drawGhosts(view.ghosts)
+			this.drawNodes(nodePos)
+			// kept for the health layer, which also redraws on its own
+			this.lastDraw = {
+				nodePos,
+				allPos: view.pos,
+				// main route lines drawn, by linkKey
+				routeLinks: new Set(
+					view.links
+						.filter((l) => l.kind === 'main')
+						.map((l) => linkKey(l.kind, l.a, l.b)),
+				),
+			}
+			this.drawHealth()
+			this.drawBattery(nodePos)
+			this.declutterLabels()
+		},
+		/**
+		 * Hides each name label that would overlap one already shown: the
+		 * controller's first, then nodes, then ghosts. The tooltip still names
+		 * a node whose label is hidden.
+		 */
+		declutterLabels() {
+			const el = this.lmap?.getContainer()
+			if (!el?.classList.contains('show-names')) return
+			const labels = [
+				'.floorplan-node.controller .lbl',
+				'.floorplan-node:not(.controller, .floorplan-ghost) .lbl',
+				'.floorplan-ghost .lbl',
+			].flatMap((q) => [...el.querySelectorAll(q)])
+			// all reads before any write: one layout, not one per label
+			for (const l of labels) l.classList.remove('lbl-hidden')
+			const rects = labels.map((l) => l.getBoundingClientRect())
+			const kept = []
+			const hide = []
+			rects.forEach((r, i) => {
+				const hit = kept.some(
+					(k) =>
+						r.left < k.right &&
+						r.right > k.left &&
+						r.top < k.bottom &&
+						r.bottom > k.top,
+				)
+				if (hit) hide.push(labels[i])
+				else kept.push(r)
+			})
+			for (const l of hide) l.classList.add('lbl-hidden')
+		},
+		/** rebuilt only when it changes: a big picture would flash on every redraw */
+		drawBackground() {
+			const { widthPx: w, heightPx: h, background: bg } = this.map
+			// the theme's picture, else the other one; one that failed to load
+			// isn't asked for again until reload
+			const order = this.dark
+				? [bg?.darkImage, bg?.image]
+				: [bg?.image, bg?.darkImage]
+			const file =
+				order.find((f) => f && !this.brokenImages.has(f)) ?? null
+			const key = JSON.stringify([file, bg?.imageRect, w, h])
+			if (key === this.backgroundKey) return
+			this.backgroundKey = key
+			this.groups.background.clearLayers()
+			if (file) {
+				// imageRect: where the picture sits on the canvas, in canvas px
+				const r = bg.imageRect
+				L.imageOverlay(
+					ConfigApis.floorPlanImageUrl(file),
+					[
+						this.toLatLng(r.x, r.y + r.h),
+						this.toLatLng(r.x + r.w, r.y),
+					],
+					{ pane: 'floorplan-background' },
+				)
+					.on('error', () => {
+						this.brokenImages.add(file)
+						this.$emit('image-error', file)
+						this.drawSoon()
+					})
+					.addTo(this.groups.background)
+			} else {
+				L.rectangle(this.canvasBounds(), {
+					color: NEIGHBOR_COLOR,
+					weight: 1,
+					dashArray: '4 4',
+					fill: false,
+					interactive: false,
+					pane: 'floorplan-background',
+				}).addTo(this.groups.background)
+			}
+		},
+		/** a newly opened map: its saved view (zoom, center, layers), else fit it */
+		applyView() {
+			this.applyingView = true
+			const v = this.map.view ?? {}
+			if (Array.isArray(v.center) && typeof v.zoom === 'number') {
+				// the saved center goes in the middle of the part beside the tray
+				const center = this.lmap.unproject(
+					this.lmap
+						.project(v.center, v.zoom)
+						.subtract([this.trayInset() / 2, 0]),
+					v.zoom,
+				)
+				this.lmap.setView(center, v.zoom, { animate: false })
+			} else {
+				this.fitToMap()
+			}
+			for (const [k] of LAYERS) {
+				if (v.layers?.[k] ?? true) {
+					this.groups[k].addTo(this.lmap)
+				} else this.lmap.removeLayer(this.groups[k])
+			}
+			this.lmap
+				.getContainer()
+				.classList.toggle(
+					'show-names',
+					this.lmap.hasLayer(this.groups.names),
+				)
+			this.viewApplied = true
+			// moveend fires after this returns, so let it pass first
+			setTimeout(() => {
+				this.applyingView = false
+			}, 0)
+		},
+		nameById() {
+			const byId = new Map(this.physicalNodes.map((n) => [n.id, n]))
+			return (id) => esc(nodeName(byId.get(id) ?? { id }))
+		},
+		drawLinks(links, pos) {
+			const name = this.nameById()
+			for (const l of links) {
+				const a = pos.get(l.a)
+				const b = pos.get(l.b)
+				const tip = `${name(l.a)} ↔ ${name(l.b)}`
+				if (l.kind === 'neighbor') {
+					L.polyline([a, b], {
+						...LINE_STYLES.neighbor,
+						interactive: false,
+					}).addTo(this.groups.neighbors)
+				} else if (l.kind === 'failed') {
+					L.polyline([a, b], LINE_STYLES.failed)
+						.bindTooltip(`${tip}<br>Failed ❌`, { sticky: true })
+						.addTo(this.groups.routes)
+				} else {
+					this.drawRouteLine(l, a, b, tip, name)
+				}
+			}
+		},
+		/** a main or backup route line, its tooltip naming the routes it carries */
+		drawRouteLine(l, a, b, tip, name) {
+			const main = l.kind === 'main'
+			const backupOnly = main && l.backupOnly.length === l.routes.length
+			// RSSI read when shown, so signal changes don't redraw
+			const detail = () =>
+				[
+					rssiLabel(linkRssi(this.physicalNodes, l)),
+					l.rate ? protocolDataRateToString(l.rate) : '',
+				]
+					.filter(Boolean)
+					.join(' · ')
+			const owners = l.routes
+				.map((id) =>
+					l.backupOnly.includes(id)
+						? `${name(id)} (backup route, no main route known)`
+						: name(id),
+				)
+				.join(', ')
+			let style = main ? 'main' : 'backup'
+			if (backupOnly) style = 'backupOnly'
+			L.polyline([a, b], {
+				...LINE_STYLES[style],
+				color: rateColor(l.rate),
+			})
+				.bindTooltip(
+					() =>
+						`${tip}<br>${detail()}<br><span class="muted">route of ${owners}</span>`,
+					{ sticky: true },
+				)
+				.addTo(main ? this.groups.routes : this.groups.backupRoutes)
+		},
+		nodeIcon(n) {
+			const stroke = statusOf(n) === 'ok' ? '#222' : '#fff'
+			const shape = nodeShapeSvg(nodeShapeType(n), nodeColor(n), stroke)
+			return L.divIcon({
+				className: `floorplan-node${n.isControllerNode ? ' controller' : ''}`,
+				iconSize: [24, 24],
+				iconAnchor: [12, 12],
+				html: `<svg width="24" height="24" viewBox="0 0 24 24">${shape}</svg><span class="lbl">${esc(labelOf(n))}</span>`,
+			})
+		},
+		nodeTooltip(n) {
+			const lines = [`<b>${esc(labelOf(n))}</b> (node ${n.id})`]
+			if (n.loc) lines.push(esc(n.loc))
+			const route = lwrOf(n) ?? nlwrOf(n)
+			if (route) {
+				const hops = hopsOf(n)
+				const via = route.repeaters?.length
+					? ` via ${route.repeaters.join(' → ')}`
+					: ' (direct)'
+				lines.push(
+					`${plural(hops, 'hop')}${via}${lwrOf(n) ? '' : ', backup route only'}`,
+				)
+			} else if (!n.isControllerNode) {
+				lines.push('No route statistics')
+			}
+			if (n.minBatteryLevel != null) {
+				lines.push(
+					`Battery ${n.minBatteryLevel}% · last heard from ${agoLabel(n.lastActive)}`,
+				)
+			}
+			if (n.neighbors?.length) {
+				lines.push(`Neighbors: ${n.neighbors.join(', ')}`)
+			}
+			return lines.join('<br>')
+		},
+		/**
+		 * The store's node object for `n` now: a reconnect replaces them all
+		 * without changing what is drawn, so markers look theirs up when used
+		 */
+		current(n) {
+			return this.nodes.find((x) => x.id === n.id) ?? n
+		},
+		drawNodes(pos) {
+			for (const n of this.physicalNodes) {
+				const p = pos.get(n.id)
+				if (!p) continue
+				const marker = L.marker(p, {
+					icon: this.nodeIcon(n),
+					keyboard: false,
+					draggable: this.editing,
+				})
+					// a function, so times are current when it opens
+					.bindTooltip(() => this.nodeTooltip(this.current(n)), {
+						direction: 'top',
+						offset: [0, -14],
+					})
+					.on('click', (e) => {
+						L.DomEvent.stopPropagation(e)
+						this.$emit('node-click', this.current(n))
+					})
+					.addTo(this.groups.nodes)
+				if (this.editing) {
+					marker.on('dragstart', () => {
+						this.dragging = true
+					})
+					marker.on('dragend', () => {
+						this.dragging = false
+						this.place(
+							this.current(n),
+							...this.toCanvas(marker.getLatLng()),
+						)
+						if (this.drawPending) {
+							this.drawPending = false
+							this.drawSoon()
+						}
+					})
+					marker.on('contextmenu', (e) => {
+						L.DomEvent.preventDefault(e.originalEvent)
+						this.openNodeMenu(this.current(n), marker)
+					})
+				}
+			}
+		},
+		/**
+		 * Nodes on a shown node's route that aren't drawn as nodes here:
+		 * small grey dots, dashed when the spot is approximate
+		 */
+		drawGhosts(ghosts) {
+			const byId = new Map(this.physicalNodes.map((n) => [n.id, n]))
+			const name = this.nameById()
+			for (const g of ghosts) {
+				const n = byId.get(g.id)
+				const label = n ? labelOf(n) : nodeName({ id: g.id })
+				const why = g.shown
+					? 'Not placed on this map yet'
+					: 'Hidden on this map'
+				const where = g.approx
+					? 'drawn midway between its route neighbors'
+					: 'shown at its spot on this map'
+				const owners = g.routes
+					.map(
+						(r) =>
+							`${name(r.id)}'s ${r.kind === 'main' ? 'route' : 'backup route'}`,
+					)
+					.join(', ')
+				L.marker(g.pos, {
+					keyboard: false,
+					icon: L.divIcon({
+						className: `floorplan-node floorplan-ghost${g.approx ? ' approx' : ''}`,
+						iconSize: [12, 12],
+						iconAnchor: [6, 6],
+						html: `<svg width="12" height="12" viewBox="0 0 12 12"><circle cx="6" cy="6" r="4.5"/></svg><span class="lbl">${esc(label)}</span>`,
+					}),
+				})
+					.bindTooltip(
+						`<b>${esc(label)}</b> (node ${g.id})<br>${why}. It repeats for ${owners}, so it's ${where}.`,
+						{ direction: 'top', offset: [0, -8] },
+					)
+					.addTo(
+						g.kind === 'main'
+							? this.groups.routes
+							: this.groups.backupRoutes,
+					)
+			}
+		},
+		/**
+		 * A ring around flagged nodes, "!" on weak hops, dotted one-way
+		 * neighbor lines, at the spots of the last draw()
+		 */
+		drawHealth() {
+			if (!this.lastDraw) return
+			const { nodePos, allPos, routeLinks } = this.lastDraw
+			this.groups.health.clearLayers()
+			const h = this.health
+			const name = this.nameById()
+			this.drawNodeFlags(h.nodes, nodePos)
+			this.drawWeakHops(h.hops, allPos, routeLinks, name)
+			this.drawOneWay(h.oneWay, nodePos, name)
+		},
+		/** a ring around each node with a health flag */
+		drawNodeFlags(flags, nodePos) {
+			for (const [id, f] of flags) {
+				const p = nodePos.get(id)
+				if (!p) continue
+				L.circleMarker(p, {
+					radius: 17,
+					color: HEALTH_COLORS[f.level],
+					weight: 3,
+					fill: false,
+				})
+					.bindTooltip(f.reasons.map(esc).join('<br>'), {
+						direction: 'top',
+						offset: [0, -14],
+					})
+					.addTo(this.groups.health)
+			}
+		},
+		/** a "!" halfway along each weak hop of a drawn main route line */
+		drawWeakHops(hops, allPos, routeLinks, name) {
+			for (const hop of hops) {
+				// only on a drawn route line: a hidden node's weak hop between
+				// two shown nodes has none
+				if (!routeLinks.has(linkKey(hop.kind, hop.a, hop.b))) continue
+				const a = allPos.get(hop.a)
+				const b = allPos.get(hop.b)
+				if (!a || !b) continue
+				L.marker([(a[0] + b[0]) / 2, (a[1] + b[1]) / 2], {
+					keyboard: false,
+					icon: L.divIcon({
+						className: `floorplan-hopwarn ${hop.level}`,
+						iconSize: [16, 16],
+						iconAnchor: [8, 8],
+						html: '!',
+					}),
+				})
+					// the current reading, not the one when this was drawn
+					.bindTooltip(
+						() => {
+							const now = this.health.hops.find(
+								(x) =>
+									x.a === hop.a &&
+									x.b === hop.b &&
+									x.kind === hop.kind,
+							)
+							return `${hop.level === 'bad' ? 'Very weak' : 'Weak'} hop ${name(hop.a)} ↔ ${name(hop.b)}: ${esc(rssiLabel((now ?? hop).rssi))}`
+						},
+						{ direction: 'top' },
+					)
+					.addTo(this.groups.health)
+			}
+		},
+		/** a line for each one-way neighbor entry */
+		drawOneWay(oneWay, nodePos, name) {
+			for (const w of oneWay) {
+				const a = nodePos.get(w.from)
+				const b = nodePos.get(w.to)
+				if (!a || !b) continue
+				L.polyline([a, b], LINE_STYLES.oneWay)
+					.bindTooltip(
+						`One-way: ${name(w.from)} lists ${name(w.to)} as a neighbor, but not the other way round`,
+						{ sticky: true },
+					)
+					.addTo(this.groups.health)
+			}
+		},
+		drawBattery(nodePos) {
+			for (const n of this.physicalNodes) {
+				const p = nodePos.get(n.id)
+				const level = n.minBatteryLevel
+				if (!p || level == null) continue
+				L.marker(p, {
+					keyboard: false,
+					icon: L.divIcon({
+						className: `floorplan-batt ${batteryLevelClass(level)}`,
+						iconSize: null,
+						iconAnchor: [-14, 8],
+						html: `${level}%`,
+					}),
+				})
+					.bindTooltip(
+						() =>
+							`${esc(nodeName(n))}: battery ${level}%, last heard from ${agoLabel(this.current(n).lastActive)}`,
+						{ direction: 'top' },
+					)
+					.addTo(this.groups.battery)
+			}
+		},
+	},
+}
+</script>
+
+<style>
+.floor-plan {
+	position: relative;
+	height: 100%;
+	min-height: 300px;
+	/* keep Leaflet's pane z-indexes (400-1000) inside the map, so the node
+	   panel and dialogs above it aren't covered */
+	isolation: isolate;
+}
+
+.floor-plan-map {
+	height: 100%;
+	background: rgb(var(--v-theme-surface));
+}
+
+.floor-plan-bottom-left {
+	position: absolute;
+	left: 12px;
+	bottom: 12px;
+	z-index: 500;
+	display: flex;
+	align-items: flex-end;
+	gap: 8px;
+}
+
+.floor-plan-tray {
+	position: absolute;
+	top: 12px;
+	left: 56px;
+	/* as tall as its list, so a short one doesn't hide the map; stops
+	   above the Legend button */
+	max-height: calc(100% - 64px);
+	width: 260px;
+	overflow-y: auto;
+	z-index: 500;
+}
+
+.floor-plan-draggable {
+	cursor: grab;
+}
+
+.floorplan-menu-btn {
+	display: block;
+	width: 100%;
+	padding: 4px 8px;
+	border-radius: 4px;
+	text-align: left;
+}
+
+.floorplan-menu-btn:hover {
+	background: rgba(128, 128, 128, 0.2);
+}
+
+.floorplan-node {
+	overflow: visible;
+}
+
+.floorplan-node .lbl {
+	display: none;
+	position: absolute;
+	top: 100%;
+	left: 50%;
+	transform: translateX(-50%);
+	white-space: nowrap;
+	font-size: 11px;
+	max-width: 160px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	padding: 0 3px;
+	border-radius: 3px;
+	color: rgb(var(--v-theme-on-surface));
+	background: rgba(var(--v-theme-surface), 0.75);
+	pointer-events: none;
+}
+
+.show-names .floorplan-node .lbl {
+	display: block;
+}
+
+.show-names .floorplan-node .lbl.lbl-hidden {
+	display: none;
+}
+
+.floorplan-ghost circle {
+	fill: var(--floorplan-ghost-fill);
+	stroke: var(--floorplan-ghost-stroke);
+	stroke-width: 1;
+}
+
+.floorplan-ghost.approx circle {
+	fill: none;
+	stroke-dasharray: 2 2;
+}
+
+.floorplan-hopwarn {
+	border-radius: 50%;
+	color: #fff;
+	font-weight: bold;
+	font-size: 12px;
+	line-height: 16px;
+	text-align: center;
+}
+
+.floorplan-hopwarn.warn {
+	background: var(--floorplan-warn);
+}
+
+.floorplan-hopwarn.bad {
+	background: var(--floorplan-bad);
+}
+
+.floorplan-batt {
+	white-space: nowrap;
+	font-size: 10px;
+	padding: 0 3px;
+	border-radius: 3px;
+	color: #fff;
+	background: #616161;
+}
+
+.floorplan-batt.warn {
+	background: var(--floorplan-warn);
+}
+
+.floorplan-batt.bad {
+	background: var(--floorplan-bad);
+}
+
+.leaflet-tooltip .muted {
+	opacity: 0.7;
+}
+
+/* Leaflet's controls and tooltips in the app's theme, not always white */
+.floor-plan .leaflet-container {
+	font-family: inherit;
+}
+
+.floor-plan .leaflet-bar a,
+.floor-plan .leaflet-control-layers,
+.floor-plan .leaflet-tooltip {
+	color: rgb(var(--v-theme-on-surface));
+	background-color: rgb(var(--v-theme-surface));
+	border-color: rgba(var(--v-border-color), var(--v-border-opacity));
+}
+
+.floor-plan .leaflet-bar {
+	border-color: rgba(var(--v-border-color), var(--v-border-opacity));
+}
+
+.floor-plan .leaflet-bar a:hover {
+	background-color: rgba(var(--v-theme-on-surface), 0.08);
+}
+
+.floor-plan .leaflet-bar a.leaflet-disabled {
+	color: rgba(var(--v-theme-on-surface), 0.38);
+}
+
+/* the app's icon in the theme's text color, in place of Leaflet's dark png */
+.floor-plan .leaflet-control-layers .leaflet-control-layers-toggle {
+	position: relative;
+	background-image: none;
+}
+
+.floor-plan .leaflet-control-layers-toggle::before {
+	content: 'layers';
+	position: absolute;
+	inset: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-family: 'Material Icons';
+	font-size: 24px;
+	font-feature-settings: 'liga';
+	color: rgb(var(--v-theme-on-surface));
+}
+
+.floor-plan .leaflet-control-layers-selector {
+	accent-color: rgb(var(--v-theme-primary));
+}
+
+.floor-plan .leaflet-tooltip-top::before {
+	border-top-color: rgb(var(--v-theme-surface));
+}
+
+.floor-plan .leaflet-tooltip-bottom::before {
+	border-bottom-color: rgb(var(--v-theme-surface));
+}
+
+.floor-plan .leaflet-tooltip-left::before {
+	border-left-color: rgb(var(--v-theme-surface));
+}
+
+.floor-plan .leaflet-tooltip-right::before {
+	border-right-color: rgb(var(--v-theme-surface));
+}
+</style>

@@ -6,10 +6,10 @@ import type {
 	UserCredentialAdminCodeOperationResult,
 	UserCredentialLearnStatus,
 } from './accessControl.ts'
+import { escapeHtml } from './utils.js'
 import {
 	UserCredentialType,
 	assignCredentialResultMessage,
-	escapeHtml,
 	formatHex,
 	isBinary,
 	isDirectEntry,

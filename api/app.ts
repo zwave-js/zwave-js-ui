@@ -53,6 +53,8 @@ import {
 } from './lib/SocketEvents.ts'
 import * as utils from './lib/utils.ts'
 import backupManager from './lib/BackupManager.ts'
+import floorPlans from './lib/FloorPlans.ts'
+import floorPlansRouter from './routes/floorPlans.ts'
 import {
 	getExternallyManagedPaths,
 	loadExternalSettings,
@@ -251,6 +253,8 @@ export async function startServer(port: number | string, host?: string) {
 
 	// as the really first thing setup loggers so all logs will go to file if specified in settings
 	setupLogging(settings)
+
+	await floorPlans.warnLeftovers()
 
 	configureTrustProxy()
 
@@ -2049,11 +2053,15 @@ app.get(
 	isAuthenticated,
 	async function (req, res) {
 		try {
-			await jsonStore.backup(res)
-		} catch (error) {
-			res.status(500).send({
-				error: error.message,
+			await jsonStore.backup({
+				res,
+				includeFloorPlans: backupManager.storeFloorPlans,
 			})
+		} catch (error) {
+			logger.error(`Store backup failed: ${error.message}`, error)
+			// once the zip is streaming, a status can't be sent any more
+			if (res.headersSent) res.destroy()
+			else res.status(500).send({ error: error.message })
 		}
 	},
 )
@@ -2065,6 +2073,8 @@ app.post(
 	async function (req, res) {
 		let file: any
 		let isRestore = false
+		// set when the store was restored but its floorplans were not
+		let warning: string | undefined
 		try {
 			// read files from request
 			await multerPromise(multerUpload, req, res)
@@ -2084,11 +2094,35 @@ app.post(
 				try {
 					await extract(file.path, { dir: stageDir })
 					await utils.assertNoEscapingSymlinks(stageDir, stageDir)
+					// floorplans are replaced, not merged, and only once the
+					// rest of the store is in, so a failed copy leaves them as
+					// they were
+					const stagedFloorPlans = path.join(stageDir, 'floorplans')
+					const hasFloorPlans = await stat(stagedFloorPlans).then(
+						(s) => s.isDirectory(),
+						() => false,
+					)
 					await cp(stageDir, storeDir, {
 						recursive: true,
 						// keep in-store links (e.g. *_current.log) as links, don't copy their targets
 						verbatimSymlinks: true,
+						filter: (src) => src !== stagedFloorPlans,
 					})
+					if (!hasFloorPlans) {
+						logger.info(
+							'The restored backup has no floorplans, the current ones are kept',
+						)
+					} else {
+						try {
+							await floorPlans.restoreFrom(stagedFloorPlans)
+						} catch (error) {
+							logger.error(
+								`Store restored without its floorplans: ${error.message}`,
+								error,
+							)
+							warning = `Store restored, but the floorplans were not (the current ones are kept): ${error.message}`
+						}
+					}
 				} finally {
 					await rm(stageDir, { recursive: true, force: true })
 				}
@@ -2099,8 +2133,16 @@ app.post(
 				await rename(file.path, destinationPath)
 			}
 
-			res.json({ success: true })
+			res.json(
+				warning
+					? { success: true, message: warning }
+					: { success: true },
+			)
 		} catch (err) {
+			logger.error(
+				`Store ${isRestore ? 'restore' : 'upload'} failed: ${err.message}`,
+				err,
+			)
 			res.json({ success: false, message: err.message })
 		}
 
@@ -2109,6 +2151,8 @@ app.post(
 		}
 	},
 )
+
+app.use('/api/floorplans', floorPlansRouter(isAuthenticated))
 
 app.get(
 	'/api/snippet',

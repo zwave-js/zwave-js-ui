@@ -6,48 +6,6 @@
 				<v-expansion-panel-text>
 					<v-row>
 						<v-col>
-							<v-list-subheader>Legend</v-list-subheader>
-							<v-list density="compact">
-								<v-list-item
-									v-for="(item, i) in legends"
-									:key="i"
-								>
-									<template #prepend>
-										<v-icon :color="item.color">{{
-											item.icon || 'turned_in'
-										}}</v-icon>
-									</template>
-
-									<v-list-item-title
-										:style="{ color: item.textColor }"
-									>
-										{{ item.text }}</v-list-item-title
-									>
-								</v-list-item>
-							</v-list>
-						</v-col>
-						<v-col>
-							<v-list-subheader>Edges</v-list-subheader>
-							<v-list density="compact">
-								<v-list-item
-									v-for="(item, i) in edgesLegend"
-									:key="i"
-								>
-									<template #prepend>
-										<v-icon :color="item.color">{{
-											item.icon || 'turned_in'
-										}}</v-icon>
-									</template>
-
-									<v-list-item-title
-										:style="{ color: item.textColor }"
-									>
-										{{ item.text }}
-									</v-list-item-title>
-								</v-list-item>
-							</v-list>
-						</v-col>
-						<v-col>
 							<v-list-subheader>Filters</v-list-subheader>
 
 							<v-autocomplete
@@ -145,12 +103,14 @@
 				></v-progress-circular>
 			</v-col>
 			<v-col
-				class="fill-height"
+				class="fill-height graph-canvas"
 				:style="{ opacity: loading ? 0 : '' }"
 				cols="12"
 				ref="container"
 				v-resize="onResize"
 			>
+				<!-- top left: vis-network's buttons take the bottom corners -->
+				<mesh-legend mode="graph" below class="graph-legend" />
 				<div
 					:style="{
 						height: containerHeight + 'px',
@@ -218,6 +178,16 @@
 									}}</span>
 								</template>
 							</v-list-item>
+							<v-list-item v-if="hoverHealth" density="compact">
+								Health
+								<template #append>
+									<span
+										class="align-end font-weight-bold"
+										:style="{ color: hoverHealth.color }"
+										>{{ hoverHealth.text }}</span
+									>
+								</template>
+							</v-list-item>
 						</v-list>
 					</v-card>
 				</v-menu>
@@ -227,6 +197,17 @@
 </template>
 
 <style>
+.graph-canvas {
+	position: relative;
+}
+
+.graph-legend {
+	position: absolute;
+	top: 12px;
+	left: 12px;
+	z-index: 1;
+}
+
 /* vis-network ships its nav icons as PNGs with a 60%-white disc baked in, which
    composites to gray on a dark canvas. Mask the shape instead so the glyph takes
    the theme's foreground colour. */
@@ -281,16 +262,28 @@ import { Network } from 'vis-network'
 import 'vis-network/styles/vis-network.css'
 // when need to test this, just uncomment this line and find replace `this.nodes` with `testNodes`
 // import fakeNodes from '@/assets/testNodes.json'
-import {
-	ProtocolDataRate,
-	protocolDataRateToString,
-	rssiToString,
-	isRssiError,
-	RouteKind,
-} from '@zwave-js/core'
+import { ProtocolDataRate, RouteKind } from '@zwave-js/core'
 import { uuid, arraysEqual } from '../../lib/utils'
+import MeshLegend from './MeshLegend.vue'
+import {
+	CONTROLLER_COLOR,
+	DEAD_COLOR,
+	HEALTH_COLORS,
+	LINE_STYLES,
+	UNKNOWN_COLOR,
+	hopColor,
+	hopLevel,
+	labelOf,
+	meshHealth,
+	rateColor,
+	rssiLabel,
+	toRssi,
+} from '../../lib/meshView.js'
 import useBaseStore from '../../stores/base.js'
 import { mapState } from 'pinia'
+
+// vis-network's own edge label color
+const EDGE_FONT_COLOR = '#343434'
 
 const ReturnRouteKind = {
 	PRIORITY: 20,
@@ -298,6 +291,7 @@ const ReturnRouteKind = {
 }
 
 export default {
+	components: { MeshLegend },
 	props: {
 		nodes: {
 			type: [Array],
@@ -355,6 +349,20 @@ export default {
 		allNodes() {
 			return this.nodes.filter((node) => !node.virtual) // replace this with `fakeNodes` when testing
 		},
+		// the same marks as the floorplan map
+		health() {
+			return meshHealth(this.allNodes)
+		},
+		hoverHealth() {
+			const flag =
+				this.hoverNode && this.health.nodes.get(this.hoverNode.id)
+			return flag
+				? {
+						text: flag.reasons.join(', '),
+						color: HEALTH_COLORS[flag.level],
+					}
+				: null
+		},
 	},
 	network: null, // do not make this reactive, see https://github.com/visjs/vis-network/issues/173#issuecomment-541435420
 	unsubscribeUpdate: null, // pinia update action unsubscribe function
@@ -379,91 +387,12 @@ export default {
 			updateTimeout: null,
 			loading: false,
 			priorityEdges: {}, // keeps track of the edges that should be shown in overview
-			legends: [
-				{
-					color: '#7e57c2',
-					textColor: '#7e57c2',
-					text: 'Controller',
-				},
-				{
-					color: '#00BCD4',
-					textColor: '#00BCD4',
-					text: '1 hop',
-				},
-				{
-					color: '#2DCC70',
-					textColor: '#2DCC70',
-					text: '2 hops',
-				},
-				{
-					color: '#F1C40F',
-					textColor: '#F1C40F',
-					text: '3 hops',
-				},
-				{
-					color: '#E77E23',
-					textColor: '#E77E23',
-					text: '4 hops',
-				},
-				{
-					color: '#8b0000',
-					textColor: '#8b0000',
-					text: 'Failed Node',
-				},
-				{
-					color: '#666666',
-					textColor: '#666666',
-					text: 'Unknown',
-				},
-			],
-			edgesLegend: [
-				{
-					icon: 'star',
-					textColor: '',
-					color: '#F1C40F',
-					text: 'Priority route',
-				},
-				{
-					icon: 'minimize',
-					textColor: '',
-					text: 'Last working route',
-				},
-				{
-					icon: 'more_horiz',
-					textColor: '',
-					text: 'Next to last working route',
-				},
-				{
-					color: '#8b0000',
-					textColor: '#8b0000',
-					text: protocolDataRateToString(ProtocolDataRate.ZWave_9k6),
-				},
-				{
-					color: '#F1C40F',
-					textColor: '#F1C40F',
-					text: protocolDataRateToString(ProtocolDataRate.ZWave_40k),
-				},
-				{
-					color: '#2DCC70',
-					textColor: '#2DCC70',
-					text: protocolDataRateToString(ProtocolDataRate.ZWave_100k),
-				},
-				{
-					color: '#3F51B5',
-					textColor: '#3F51B5',
-					text: protocolDataRateToString(
-						ProtocolDataRate.LongRange_100k,
-					),
-				},
-				{
-					color: '#666666',
-					textColor: '#666666',
-					text: 'Unknown',
-				},
-			],
 		}
 	},
 	watch: {
+		health() {
+			this.applyHealth()
+		},
 		filteredNodes(val, oldVal) {
 			if (!arraysEqual(val, oldVal)) {
 				this.selectedNodes = val.map((n) => n.id)
@@ -599,6 +528,7 @@ export default {
 				const allOtherEdges = {} // edgeId => [edge, ...]
 
 				edges.forEach((e) => {
+					if (e.oneWay) return
 					if (e.routeOf === node.id) {
 						const key = `${e.from}-${e.to}-${e.routeKind}`
 						if (!oldEdgesByKey[key]) {
@@ -792,20 +722,6 @@ export default {
 		getEdgeId(edge) {
 			return `${edge.from}-${edge.to}`
 		},
-		getDataRateColor(dataRate) {
-			switch (dataRate) {
-				case ProtocolDataRate.ZWave_9k6:
-					return '#8b0000'
-				case ProtocolDataRate.ZWave_40k:
-					return '#F1C40F'
-				case ProtocolDataRate.ZWave_100k:
-					return '#2DCC70'
-				case ProtocolDataRate.LongRange_100k:
-					return '#3F51B5'
-				default:
-					return '#666666'
-			}
-		},
 		clearSelection() {
 			if (this.network && !this.loading) {
 				this.network.unselectAll()
@@ -893,6 +809,7 @@ export default {
 			}
 
 			this.network = new Network(container, data, options)
+			this.applyHealth()
 
 			// event handlers
 			// https://visjs.github.io/vis-network/docs/network/#Events
@@ -944,6 +861,14 @@ export default {
 
 			// DataSet: https://visjs.github.io/vis-data/data/dataset.html
 			edges.forEach((e) => {
+				if (e.oneWay) {
+					const hidden = this.oneWayHidden(e, selectedNodes)
+					if (hidden !== e.hidden)
+						edgesToUpdate.push({ id: e.id, hidden })
+					// its neighbor shows too, or vis drops the line
+					if (!hidden) repeaters.push(e.from, e.to)
+					return
+				}
 				const edgeId = this.getEdgeId(e)
 				const shouldBeHidden =
 					(showAll && this.priorityEdges[edgeId]?.id !== e.id) ||
@@ -966,7 +891,8 @@ export default {
 					}
 				}
 
-				const fontSize = showAll ? 0 : 12
+				// weak hops keep their label in the overview, as the map's "!"
+				const fontSize = showAll && !e.weakLevel ? 0 : 12
 
 				if (shouldBeHidden !== e.hidden || fontSize !== e.font.size) {
 					edgesToUpdate.push({
@@ -1006,6 +932,87 @@ export default {
 
 			if (!skipFit) {
 				this.network.fit()
+			}
+		},
+		/**
+		 * Redraws what meshHealth judges across nodes: node borders and
+		 * one-way lines. Weak hops are judged per edge in parseRouteStats.
+		 */
+		applyHealth() {
+			if (!this.network) return
+			const { nodes } = this.network.body.data
+			nodes.update(
+				nodes.map((n) => ({
+					id: n.id,
+					...this.healthLook(n.id, n.baseColor),
+				})),
+			)
+			// a new line's far node must show, or vis drops the line, and a
+			// dropped line's far node hides again: both decided by the selection
+			if (this.syncOneWay() && this.selectedNodes.length > 0) {
+				this.handleSelectNode({ nodes: this.selectedNodes }, true)
+			}
+		},
+		/**
+		 * One dotted edge per one-way neighbor entry, kept out of the layout.
+		 * Returns whether any edge was added or removed.
+		 */
+		syncOneWay() {
+			const { edges } = this.network.body.data
+			const wanted = new Map(
+				this.health.oneWay.map((w) => [`oneway-${w.from}-${w.to}`, w]),
+			)
+			const have = edges.getIds({ filter: (e) => e.oneWay })
+			const gone = have.filter((id) => !wanted.has(id))
+			edges.remove(gone)
+			const byId = new Map(this.allNodes.map((n) => [n.id, n]))
+			const name = (id) => labelOf(byId.get(id))
+			const style = LINE_STYLES.oneWay
+			const added = [...wanted]
+				.filter(([id]) => !have.includes(id))
+				.map(([id, w]) => {
+					const edge = {
+						id,
+						from: w.from,
+						to: w.to,
+						oneWay: true,
+						color: style.color,
+						width: style.weight,
+						dashes: style.dashArray.split(' ').map(Number),
+						physics: false,
+						font: { size: 0 },
+						title: `One-way: ${name(w.from)} lists ${name(w.to)} as a neighbor, but not the other way round`,
+					}
+					edge.hidden = this.oneWayHidden(edge, this.selectedNodes)
+					return edge
+				})
+			edges.add(added)
+			return gone.length > 0 || added.length > 0
+		},
+		/** a one-way line shows in the overview, or when it touches a selected node */
+		oneWayHidden(edge, selectedNodes) {
+			return (
+				selectedNodes.length > 0 &&
+				!selectedNodes.includes(edge.from) &&
+				!selectedNodes.includes(edge.to)
+			)
+		},
+		/** node color options for its health flag: the level as a thick border */
+		healthLook(id, background) {
+			const flag = this.health.nodes.get(id)
+			// selected nodes get a thicker border
+			if (!flag) {
+				return {
+					color: background,
+					borderWidth: 2,
+					borderWidthSelected: 4,
+				}
+			}
+			const c = { background, border: HEALTH_COLORS[flag.level] }
+			return {
+				color: { ...c, highlight: c, hover: c },
+				borderWidth: 4,
+				borderWidthSelected: 7,
 			}
 		},
 		handleDragStart() {
@@ -1077,9 +1084,13 @@ export default {
 			forceShow = false,
 		) {
 			if (!route) {
-				if (routeKind !== RouteKind.NLWR) {
-					// unknown route
-					node.color = this.legends[6].color
+				// unknown route; dead and failed nodes keep their color
+				if (
+					routeKind !== RouteKind.NLWR &&
+					!node.failed &&
+					node.available
+				) {
+					node.color = UNKNOWN_COLOR
 				}
 				return
 			}
@@ -1103,7 +1114,7 @@ export default {
 					id: uuid(),
 					from: routeFailedBetween[0],
 					to: routeFailedBetween[1],
-					color: this.getDataRateColor(ProtocolDataRate.ZWave_9k6),
+					color: rateColor(ProtocolDataRate.ZWave_9k6),
 					width: 1,
 					label: 'Failed ❌',
 					font: { align: 'top', size: 0 },
@@ -1128,11 +1139,16 @@ export default {
 
 				const edgeRssi = i === 0 ? rssi : repeaterRSSI?.[i - 1]
 
-				let label = ''
-
-				if (edgeRssi && !isRssiError(edgeRssi)) {
-					label = rssiToString(edgeRssi)
-				}
+				const hopRssi = toRssi(edgeRssi)
+				// judged on this route's own reading with the floorplan's
+				// hopLevel (meshHealth keeps a link's worst); return and
+				// application routes carry no reading
+				const weakLevel =
+					routeKind === RouteKind.LWR || routeKind === RouteKind.NLWR
+						? hopLevel(hopRssi)
+						: null
+				// as the floorplan labels its lines
+				const label = (weakLevel ? '! ' : '') + rssiLabel(hopRssi)
 
 				const edgeId = this.getEdgeId({ from, to })
 
@@ -1194,13 +1210,17 @@ export default {
 					id: uuid(),
 					from,
 					to,
-					color: this.getDataRateColor(protocolDataRate),
+					color: rateColor(protocolDataRate),
 					width,
 					layer: i + 1,
 					label,
+					weakLevel,
 					font: {
 						align: 'top',
-						size: 0,
+						size: weakLevel && showInOverview ? 12 : 0,
+						color: weakLevel
+							? HEALTH_COLORS[weakLevel]
+							: EDGE_FONT_COLOR,
 						vadjust: routeKind === RouteKind.Application ? -5 : 0,
 					}, //  multi: 'html'
 					// arrows: 'to from',
@@ -1217,7 +1237,7 @@ export default {
 
 				if (showInOverview) {
 					if (!node.failed && node.available) {
-						node.color = this.legends[repeaters.length + 1].color
+						node.color = hopColor(repeaters.length + 1)
 					}
 
 					// only draw the edge with higher data rate
@@ -1257,14 +1277,13 @@ export default {
 
 			let batlev = node.minBatteryLevel
 
-			const nodeName = node.name || 'NodeID ' + node.id
-
 			// create node
 			// https://visjs.github.io/vis-network/docs/network/nodes.html
 			const entity = {
 				id: id,
 				hidden: false,
-				label: nodeName,
+				// same as the floorplan map, so a node has one label
+				label: labelOf(node),
 				neighbors: node.neighbors,
 				battery_level: batlev,
 				group: node.loc,
@@ -1279,7 +1298,7 @@ export default {
 			if (id === hubNode) {
 				entity.shape = 'star'
 				entity.isControllerNode = true
-				entity.color = this.legends[0].color
+				entity.color = CONTROLLER_COLOR
 			} else if (node.isListening) {
 				entity.shape = 'hexagon'
 			} else {
@@ -1287,15 +1306,13 @@ export default {
 			}
 
 			if (node.failed) {
-				entity.label = 'FAILED: ' + entity.label
 				entity.group = 'Failed'
-				entity.color = this.legends[5].color
+				entity.color = DEAD_COLOR
 			}
 
 			if (!node.available) {
-				entity.label = 'DEAD: ' + entity.label
 				entity.group = 'Dead'
-				entity.color = this.legends[5].color
+				entity.color = DEAD_COLOR
 			}
 
 			if (hubNode === id) {
@@ -1351,6 +1368,10 @@ export default {
 					)
 				}
 			}
+
+			// applyHealth redraws the border from it when health changes
+			entity.baseColor = entity.color
+			Object.assign(entity, this.healthLook(id, entity.color))
 
 			return { node: entity, edges }
 		},
