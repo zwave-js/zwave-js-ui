@@ -7,6 +7,7 @@ import {
 	mapView,
 	meshHealth,
 	nodeColor,
+	labelOf,
 	nodeName,
 	nodeShapeSvg,
 	nodeShapeType,
@@ -101,6 +102,21 @@ describe('meshView', () => {
 		expect(statusOf(node(9, { failed: true, available: false }))).toBe(
 			'failed',
 		)
+	})
+
+	it('puts one status in front of a label, failed first', () => {
+		const n = (extra) => ({
+			id: 5,
+			name: 'Kitchen',
+			available: true,
+			...extra,
+		})
+		expect(labelOf(n())).toBe('Kitchen')
+		expect(labelOf(n({ available: false }))).toBe('DEAD: Kitchen')
+		expect(labelOf(n({ failed: true, available: false }))).toBe(
+			'FAILED: Kitchen',
+		)
+		expect(labelOf({ id: 7, available: false })).toBe('DEAD: NodeID 7')
 	})
 
 	it('maps RSSI error codes and labels hops controller → repeaters → node', () => {

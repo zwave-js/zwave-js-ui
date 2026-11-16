@@ -200,6 +200,31 @@ describe('#FloorPlans', () => {
 		await expect(fp.load()).rejects.toThrow('version 0')
 	})
 
+	it('warns about a bad map once, not on every read', async () => {
+		const fp = await fresh()
+		await mkdir(fp.dir, { recursive: true })
+		await writeFile(
+			fp.file,
+			JSON.stringify({
+				version: 1,
+				maps: [{ id: 'warn-once', name: 'M', widthPx: 0 }],
+			}),
+		)
+		const logger = module('FloorPlans')
+		const warn = vi.spyOn(logger, 'warn').mockReturnValue(logger)
+		try {
+			await fp.load()
+			await fp.load()
+			const lines = warn.mock.calls.filter(
+				([line]) =>
+					typeof line === 'string' && line.includes('"warn-once"'),
+			)
+			expect(lines).toHaveLength(1)
+		} finally {
+			warn.mockRestore()
+		}
+	})
+
 	it('creates, renames, filters, saves the view of and deletes maps', async () => {
 		const fp = await fresh()
 		const m = await fp.addMap({ name: 'Workshop' })
