@@ -269,10 +269,11 @@ import {
 	CONTROLLER_COLOR,
 	DEAD_COLOR,
 	HEALTH_COLORS,
+	LINE_STYLES,
 	UNKNOWN_COLOR,
 	hopColor,
+	hopLevel,
 	labelOf,
-	linkKey,
 	meshHealth,
 	rateColor,
 	rssiLabel,
@@ -617,7 +618,6 @@ export default {
 				edges.update(edgesToUpdate)
 				edges.add(edgesToAdd)
 				nodes.update(result.node)
-				this.applyHealth()
 
 				// node has no routes yet, request them (once per node)
 				const hadNoEdges = Object.keys(oldEdgesByKey).length === 0
@@ -668,7 +668,6 @@ export default {
 				const result = this.parseNode(node)
 				this.priorityEdges = saved
 				nodes.update(result.node)
-				this.applyHealth()
 				return
 			}
 
@@ -676,7 +675,6 @@ export default {
 			const result = this.parseNode(node)
 			nodes.add(result.node)
 			edges.add(result.edges)
-			this.applyHealth()
 
 			// notify parent to fetch routes for this node so edges can be rendered
 			this._routesFetchedFor.add(node.id)
@@ -867,6 +865,8 @@ export default {
 					const hidden = this.oneWayHidden(e, selectedNodes)
 					if (hidden !== e.hidden)
 						edgesToUpdate.push({ id: e.id, hidden })
+					// its neighbor shows too, or vis drops the line
+					if (!hidden) repeaters.push(e.from, e.to)
 					return
 				}
 				const edgeId = this.getEdgeId(e)
@@ -892,7 +892,7 @@ export default {
 				}
 
 				// weak hops keep their label in the overview, as the map's "!"
-				const fontSize = showAll && !e.weak ? 0 : 12
+				const fontSize = showAll && !e.weakLevel ? 0 : 12
 
 				if (shouldBeHidden !== e.hidden || fontSize !== e.font.size) {
 					edgesToUpdate.push({
@@ -935,65 +935,43 @@ export default {
 			}
 		},
 		/**
-		 * The floorplan map's health marks: a colored border on flagged
-		 * nodes, "!" on weak route hops, dotted one-way neighbor lines
+		 * Redraws what meshHealth judges across nodes: node borders and
+		 * one-way lines. Weak hops are judged per edge in parseRouteStats.
 		 */
 		applyHealth() {
 			if (!this.network) return
-			const { nodes, edges } = this.network.body.data
-			const h = this.health
+			const { nodes } = this.network.body.data
 			nodes.update(
 				nodes.map((n) => ({
 					id: n.id,
-					...this.healthLook(h.nodes.get(n.id), n.baseColor),
+					...this.healthLook(n.id, n.baseColor),
 				})),
 			)
-			const showAll = this.selectedNodes.length === 0
-			const weak = new Map(
-				h.hops.map((x) => [linkKey(x.kind, x.a, x.b), x.level]),
-			)
-			const edgesToUpdate = []
-			const oneWayIds = []
-			edges.forEach((e) => {
-				if (e.oneWay) {
-					oneWayIds.push(e.id)
-					return
-				}
-				if (!e.healthKind) return
-				const level =
-					weak.get(linkKey(e.healthKind, e.from, e.to)) ?? null
-				if (level === e.weak) return
-				edgesToUpdate.push({
-					id: e.id,
-					weak: level,
-					label: level ? `! ${e.baseLabel}` : e.baseLabel,
-					font: {
-						size: showAll && !level ? 0 : 12,
-						color: level ? HEALTH_COLORS[level] : EDGE_FONT_COLOR,
-					},
-				})
-			})
-			edges.update(edgesToUpdate)
+			this.syncOneWay()
+		},
+		/** one dotted edge per one-way neighbor entry, kept out of the layout */
+		syncOneWay() {
+			const { edges } = this.network.body.data
 			const wanted = new Map(
-				h.oneWay.map((w) => [`oneway-${w.from}-${w.to}`, w]),
+				this.health.oneWay.map((w) => [`oneway-${w.from}-${w.to}`, w]),
 			)
-			edges.remove(oneWayIds.filter((id) => !wanted.has(id)))
-			const have = new Set(oneWayIds)
+			const have = edges.getIds({ filter: (e) => e.oneWay })
+			edges.remove(have.filter((id) => !wanted.has(id)))
 			const byId = new Map(this.allNodes.map((n) => [n.id, n]))
 			const name = (id) => labelOf(byId.get(id))
+			const style = LINE_STYLES.oneWay
 			edges.add(
 				[...wanted]
-					.filter(([id]) => !have.has(id))
+					.filter(([id]) => !have.includes(id))
 					.map(([id, w]) => {
 						const edge = {
 							id,
 							from: w.from,
 							to: w.to,
 							oneWay: true,
-							color: HEALTH_COLORS.warn,
-							width: 2,
-							dashes: [2, 6],
-							// a mark, not a link: leaves the layout alone
+							color: style.color,
+							width: style.weight,
+							dashes: style.dashArray.split(' ').map(Number),
 							physics: false,
 							font: { size: 0 },
 							title: `One-way: ${name(w.from)} lists ${name(w.to)} as a neighbor, but not the other way round`,
@@ -1014,20 +992,22 @@ export default {
 				!selectedNodes.includes(edge.to)
 			)
 		},
-		/** node color options for a health flag: its level as a thick border */
-		healthLook(flag, background) {
+		/** node color options for its health flag: the level as a thick border */
+		healthLook(id, background) {
+			const flag = this.health.nodes.get(id)
+			// selected nodes keep vis-network's doubled border
 			if (!flag) {
 				return {
 					color: background,
 					borderWidth: 2,
-					borderWidthSelected: 2,
+					borderWidthSelected: 4,
 				}
 			}
 			const c = { background, border: HEALTH_COLORS[flag.level] }
 			return {
 				color: { ...c, highlight: c, hover: c },
 				borderWidth: 4,
-				borderWidthSelected: 4,
+				borderWidthSelected: 7,
 			}
 		},
 		handleDragStart() {
@@ -1142,17 +1122,6 @@ export default {
 				edges.push(edge)
 			}
 
-			// the route's kind in meshHealth: an NLWR shown in place of a
-			// missing LWR is the main route there
-			const healthKind =
-				routeKind === RouteKind.LWR
-					? 'main'
-					: routeKind === RouteKind.NLWR
-						? forceShow
-							? 'main'
-							: 'backup'
-						: null
-
 			const sourceNodeId = isReturn ? node.id : controllerId
 			const destinationNodeId = isReturn ? controllerId : node.id
 
@@ -1166,7 +1135,14 @@ export default {
 				const edgeRssi = i === 0 ? rssi : repeaterRSSI?.[i - 1]
 
 				// as the floorplan labels its lines
-				const label = rssiLabel(toRssi(edgeRssi))
+				const hopRssi = toRssi(edgeRssi)
+				// judged on this route's own reading, as meshHealth does; return
+				// and application routes carry no reading
+				const weakLevel =
+					routeKind === RouteKind.LWR || routeKind === RouteKind.NLWR
+						? hopLevel(hopRssi)
+						: null
+				const label = (weakLevel ? '! ' : '') + rssiLabel(hopRssi)
 
 				const edgeId = this.getEdgeId({ from, to })
 
@@ -1232,14 +1208,13 @@ export default {
 					width,
 					layer: i + 1,
 					label,
-					baseLabel: label,
-					// set by applyHealth
-					weak: null,
-					healthKind,
+					weakLevel,
 					font: {
 						align: 'top',
-						size: 0,
-						color: EDGE_FONT_COLOR,
+						size: weakLevel && showInOverview ? 12 : 0,
+						color: weakLevel
+							? HEALTH_COLORS[weakLevel]
+							: EDGE_FONT_COLOR,
 						vadjust: routeKind === RouteKind.Application ? -5 : 0,
 					}, //  multi: 'html'
 					// arrows: 'to from',
@@ -1388,8 +1363,9 @@ export default {
 				}
 			}
 
-			// before applyHealth adds a border
+			// applyHealth redraws the border from it when health changes
 			entity.baseColor = entity.color
+			Object.assign(entity, this.healthLook(id, entity.color))
 
 			return { node: entity, edges }
 		},

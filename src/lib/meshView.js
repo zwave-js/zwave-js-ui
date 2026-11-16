@@ -460,7 +460,7 @@ export function drawnShapeKey(n) {
 	])
 }
 
-function hopLevel(rssi) {
+export function hopLevel(rssi) {
 	if (rssi == null || rssi === RssiError.ReceiverSaturated) return null
 	if (rssi === RssiError.NoSignalDetected || rssi <= HEALTH.veryWeakRssi) {
 		return 'bad'

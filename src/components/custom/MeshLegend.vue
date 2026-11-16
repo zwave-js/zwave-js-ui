@@ -108,7 +108,11 @@
 									stroke-width="2.5"
 								/>
 							</svg>
-							Health warning
+							{{
+								mode === 'graph'
+									? 'Health warning (border)'
+									: 'Health warning'
+							}}
 						</div>
 						<div class="mesh-legend-row">
 							<svg width="22" height="18">
@@ -121,7 +125,11 @@
 									stroke-width="2.5"
 								/>
 							</svg>
-							Health problem
+							{{
+								mode === 'graph'
+									? 'Health problem (border)'
+									: 'Health problem'
+							}}
 						</div>
 						<div class="mesh-legend-row">
 							<span
@@ -129,7 +137,11 @@
 								:style="{ background: health.warn }"
 								>!</span
 							>
-							Weak hop (red: very weak)
+							{{
+								mode === 'graph'
+									? 'Weak hop: "!" on its label (red: very weak)'
+									: 'Weak hop (red: very weak)'
+							}}
 						</div>
 						<!-- the graph has no ghosts or battery tags -->
 						<template v-if="mode === 'map'">

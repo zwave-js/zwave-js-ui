@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest'
+import { RssiError } from '@zwave-js/core'
 import {
 	agoLabel,
 	batteryLevelClass,
@@ -16,6 +17,7 @@ import {
 	deviceKey,
 	drawnShapeKey,
 	hopColor,
+	hopLevel,
 	linkRssi,
 	HOP_LEGEND,
 	rssiLabel,
@@ -413,5 +415,20 @@ describe('meshView', () => {
 			1000,
 		)
 		expect(withHub).toEqual([{ id: 1, x: 800, y: 500 }, ...out])
+	})
+})
+
+describe('hopLevel', () => {
+	it('rates a hop at the edges of the weak and very weak bands', () => {
+		expect(hopLevel(-84)).toBe(null)
+		expect(hopLevel(-85)).toBe('warn')
+		expect(hopLevel(-94)).toBe('warn')
+		expect(hopLevel(-95)).toBe('bad')
+		expect(hopLevel(null)).toBe(null)
+	})
+
+	it('rates no signal as very weak and a saturated receiver as fine', () => {
+		expect(hopLevel(RssiError.NoSignalDetected)).toBe('bad')
+		expect(hopLevel(RssiError.ReceiverSaturated)).toBe(null)
 	})
 })
