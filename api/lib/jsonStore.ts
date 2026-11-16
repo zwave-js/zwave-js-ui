@@ -96,10 +96,8 @@ export class StorageHelper {
 				reject(err)
 			})
 
-			// on stream closed we can end the request
-			archive.on('end', () => {
-				resolve(backupFile)
-			})
+			// done once the file is on disk: a late write error rejects first
+			fileStream.on('close', () => resolve(backupFile))
 
 			if (res) {
 				res.set({

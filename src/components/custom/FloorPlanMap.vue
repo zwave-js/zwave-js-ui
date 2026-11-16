@@ -671,6 +671,13 @@ export default {
 			}
 			return lines.join('<br>')
 		},
+		/**
+		 * The store's node object for `n` now: a reconnect replaces them all
+		 * without changing what is drawn, so markers look theirs up when used
+		 */
+		current(n) {
+			return this.nodes.find((x) => x.id === n.id) ?? n
+		},
 		drawNodes(pos) {
 			for (const n of this.physicalNodes) {
 				const p = pos.get(n.id)
@@ -681,13 +688,13 @@ export default {
 					draggable: this.editing,
 				})
 					// a function, so times are current when it opens
-					.bindTooltip(() => this.nodeTooltip(n), {
+					.bindTooltip(() => this.nodeTooltip(this.current(n)), {
 						direction: 'top',
 						offset: [0, -14],
 					})
 					.on('click', (e) => {
 						L.DomEvent.stopPropagation(e)
-						this.$emit('node-click', n)
+						this.$emit('node-click', this.current(n))
 					})
 					.addTo(this.groups.nodes)
 				if (this.editing) {
@@ -696,7 +703,10 @@ export default {
 					})
 					marker.on('dragend', () => {
 						this.dragging = false
-						this.place(n, ...this.toCanvas(marker.getLatLng()))
+						this.place(
+							this.current(n),
+							...this.toCanvas(marker.getLatLng()),
+						)
 						if (this.drawPending) {
 							this.drawPending = false
 							this.drawSoon()
@@ -704,7 +714,7 @@ export default {
 					})
 					marker.on('contextmenu', (e) => {
 						L.DomEvent.preventDefault(e.originalEvent)
-						this.openNodeMenu(n, marker)
+						this.openNodeMenu(this.current(n), marker)
 					})
 				}
 			}
@@ -847,7 +857,7 @@ export default {
 				})
 					.bindTooltip(
 						() =>
-							`${esc(nodeName(n))}: battery ${level}%, last heard from ${agoLabel(n.lastActive)}`,
+							`${esc(nodeName(n))}: battery ${level}%, last heard from ${agoLabel(this.current(n).lastActive)}`,
 						{ direction: 'top' },
 					)
 					.addTo(this.groups.battery)

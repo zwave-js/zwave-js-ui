@@ -46,4 +46,25 @@ describe('#jsonStore backup', () => {
 			name: 'After',
 		})
 	})
+
+	it('fails when the disk error comes as the file is flushed', async () => {
+		vi.mocked(fs.createWriteStream).mockImplementationOnce(
+			() =>
+				new Writable({
+					write(chunk, encoding, done) {
+						done()
+					},
+					final(done) {
+						done(
+							Object.assign(Error('EIO: i/o error'), {
+								code: 'EIO',
+							}),
+						)
+					},
+				}) as fs.WriteStream,
+		)
+		await expect(
+			jsonStore.backup({ includeFloorPlans: true }),
+		).rejects.toThrow('EIO')
+	})
 })
