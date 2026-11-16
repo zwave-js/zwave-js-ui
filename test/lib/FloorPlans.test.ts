@@ -251,16 +251,8 @@ describe('#FloorPlans', () => {
 
 	it('keeps positions per map', async () => {
 		const fp = await fresh()
-		const a = await fp.addMap({
-			name: 'House',
-			widthPx: 1000,
-			heightPx: 1000,
-		})
-		const b = await fp.addMap({
-			name: 'Shop',
-			widthPx: 1000,
-			heightPx: 1000,
-		})
+		const a = await fp.addMap({ name: 'House' })
+		const b = await fp.addMap({ name: 'Shop' })
 		await place(fp, a.id, { deviceKey: K(2), x: 10, y: 10 })
 		const moved = await place(fp, a.id, {
 			deviceKey: K(2),
@@ -269,7 +261,7 @@ describe('#FloorPlans', () => {
 			evil: 'x',
 		} as any)
 		// clamped, one per node per map, unknown fields dropped
-		expect(moved).toEqual({ deviceKey: K(2), x: 1000, y: 0 })
+		expect(moved).toEqual({ deviceKey: K(2), x: 3000, y: 0 })
 		await place(fp, b.id, { deviceKey: K(2), x: 90, y: 90 })
 		await fp.removePlacement(b.id, K(2))
 		expect((await mapOf(fp, a.id)).placements).toHaveLength(1)
@@ -734,7 +726,7 @@ describe('#FloorPlans', () => {
 
 	it('keeps all concurrent placements', async () => {
 		const fp = await fresh()
-		const m = await fp.addMap({ name: 'p', widthPx: 100, heightPx: 100 })
+		const m = await fp.addMap({ name: 'p' })
 		await Promise.all(
 			[2, 3, 4, 5, 6].map((id) =>
 				place(fp, m.id, { deviceKey: K(id), x: id, y: id }),
@@ -745,15 +737,15 @@ describe('#FloorPlans', () => {
 
 	it('places several nodes in one write, moving existing ones', async () => {
 		const fp = await fresh()
-		const m = await fp.addMap({ name: 'p', widthPx: 100, heightPx: 100 })
+		const m = await fp.addMap({ name: 'p' })
 		await place(fp, m.id, { deviceKey: K(2), x: 1, y: 1 })
 		const out = await fp.setPlacements(m.id, [
 			{ deviceKey: K(2), x: 5, y: 5 },
-			{ deviceKey: K(3), x: 500, y: 6 },
+			{ deviceKey: K(3), x: 5000, y: 6 },
 		])
 		expect(out).toEqual([
 			{ deviceKey: K(2), x: 5, y: 5 },
-			{ deviceKey: K(3), x: 100, y: 6 },
+			{ deviceKey: K(3), x: 3000, y: 6 },
 		])
 		expect((await mapOf(fp, m.id)).placements).toHaveLength(2)
 		// all or nothing

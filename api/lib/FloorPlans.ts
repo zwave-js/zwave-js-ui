@@ -434,12 +434,6 @@ export interface BackupFile {
 	file: string
 }
 
-export interface AddMapOptions {
-	name?: string
-	widthPx?: number
-	heightPx?: number
-}
-
 /**
  * Fields PATCH /maps/:id changes. `nodes` and `view` are replaced whole,
  * not merged with the stored ones.
@@ -679,22 +673,14 @@ export class FloorPlans {
 
 	// ------------------------------------------------------------- maps
 
-	async addMap({
-		name,
-		widthPx = DEFAULT_WIDTH,
-		heightPx = DEFAULT_HEIGHT,
-	}: AddMapOptions = {}) {
-		if (!isDim(widthPx) || !isDim(heightPx)) {
-			throw new InputError(
-				`widthPx and heightPx must each be ${DIM_RULE}`,
-			)
-		}
+	/** A new empty map, on a canvas of the default size */
+	async addMap({ name }: { name?: string } = {}) {
 		return this.update((data) => {
 			const map: FloorPlanMap = {
 				id: generateId(),
 				name: cleanName(name, 'Map'),
-				widthPx,
-				heightPx,
+				widthPx: DEFAULT_WIDTH,
+				heightPx: DEFAULT_HEIGHT,
 				background: null,
 				nodes: { start: 'include', exceptions: [] },
 				view: checkView(null),
