@@ -139,12 +139,12 @@
 					</v-list>
 				</v-menu>
 				<!-- placements are stored under the home ID: none to edit before it's known -->
+				<!-- disabled, not an undefined text: that shows the button's own text -->
 				<span
-					v-tooltip:bottom="
-						appInfo.homeHex
-							? undefined
-							: 'Waiting for the controller to report its home ID'
-					"
+					v-tooltip:bottom="{
+						text: 'Waiting for the controller to report its home ID',
+						disabled: !!appInfo.homeHex,
+					}"
 				>
 					<v-btn
 						:variant="editing ? 'flat' : 'outlined'"

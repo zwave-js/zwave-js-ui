@@ -6,7 +6,12 @@
 			@dragover.prevent
 			@drop.prevent="onDrop"
 		></div>
-		<v-card v-if="editing" class="floor-plan-tray" density="compact">
+		<v-card
+			v-if="editing"
+			ref="tray"
+			class="floor-plan-tray"
+			density="compact"
+		>
 			<v-card-subtitle class="pt-2"> Nodes on this map </v-card-subtitle>
 			<v-card-text class="pa-1 text-caption">
 				Drag a node with
@@ -304,7 +309,10 @@ export default {
 					e.type === 'overlayadd',
 				)
 			}
+			this.declutterLabels()
 		})
+		// zooming changes how far apart the labels are
+		lmap.on('zoomend', () => this.declutterLabels())
 		lmap.on('click', () => this.$emit('node-click', null))
 		// while editing, pans, zooms and layer changes are saved as the map's view
 		lmap.on('movestart', () => {
@@ -424,8 +432,12 @@ export default {
 		fitToMap() {
 			// no animation: moveend, and with it the view save, comes at once,
 			// so a Done right after doesn't miss it
+			// while editing, the node tray covers the map's left side
+			const tray = this.$refs.tray?.$el
+			const left = tray ? tray.offsetLeft + tray.offsetWidth + 20 : 20
 			this.lmap?.fitBounds(this.canvasBounds(), {
-				padding: [20, 20],
+				paddingTopLeft: [left, 20],
+				paddingBottomRight: [20, 20],
 				animate: false,
 			})
 		},
@@ -517,16 +529,49 @@ export default {
 			}
 			this.drawHealth()
 			this.drawBattery(nodePos)
+			this.declutterLabels()
+		},
+		/**
+		 * Hides each name label that would overlap one already shown: the
+		 * controller's first, then nodes, then ghosts. The tooltip still names
+		 * a node whose label is hidden.
+		 */
+		declutterLabels() {
+			const el = this.lmap?.getContainer()
+			if (!el?.classList.contains('show-names')) return
+			const labels = [
+				'.floorplan-node.controller .lbl',
+				'.floorplan-node:not(.controller, .floorplan-ghost) .lbl',
+				'.floorplan-ghost .lbl',
+			].flatMap((q) => [...el.querySelectorAll(q)])
+			// all reads before any write: one layout, not one per label
+			for (const l of labels) l.classList.remove('lbl-hidden')
+			const rects = labels.map((l) => l.getBoundingClientRect())
+			const kept = []
+			const hide = []
+			rects.forEach((r, i) => {
+				const hit = kept.some(
+					(k) =>
+						r.left < k.right &&
+						r.right > k.left &&
+						r.top < k.bottom &&
+						r.bottom > k.top,
+				)
+				if (hit) hide.push(labels[i])
+				else kept.push(r)
+			})
+			for (const l of hide) l.classList.add('lbl-hidden')
 		},
 		/** rebuilt only when it changes: a big picture would flash on every redraw */
 		drawBackground() {
 			const { widthPx: w, heightPx: h, background: bg } = this.map
-			// the theme's picture, else the other one
-			let file = this.dark
-				? (bg?.darkImage ?? bg?.image)
-				: (bg?.image ?? bg?.darkImage)
-			// a picture that failed to load isn't asked for again until reload
-			if (this.brokenImages.has(file)) file = null
+			// the theme's picture, else the other one; one that failed to load
+			// isn't asked for again until reload
+			const order = this.dark
+				? [bg?.darkImage, bg?.image]
+				: [bg?.image, bg?.darkImage]
+			const file =
+				order.find((f) => f && !this.brokenImages.has(f)) ?? null
 			const key = JSON.stringify([file, bg?.imageRect, w, h])
 			if (key === this.backgroundKey) return
 			this.backgroundKey = key
@@ -645,7 +690,7 @@ export default {
 			const stroke = statusOf(n) === 'ok' ? '#222' : '#fff'
 			const shape = nodeShapeSvg(nodeShapeType(n), nodeColor(n), stroke)
 			return L.divIcon({
-				className: 'floorplan-node',
+				className: `floorplan-node${n.isControllerNode ? ' controller' : ''}`,
 				iconSize: [24, 24],
 				iconAnchor: [12, 12],
 				html: `<svg width="24" height="24" viewBox="0 0 24 24">${shape}</svg><span class="lbl">${esc(labelOf(n))}</span>`,
@@ -901,8 +946,9 @@ export default {
 	position: absolute;
 	top: 12px;
 	left: 56px;
-	/* as tall as its list, so a short one doesn't hide the map */
-	max-height: calc(100% - 24px);
+	/* as tall as its list, so a short one doesn't hide the map; stops
+	   above the Legend button */
+	max-height: calc(100% - 64px);
 	width: 260px;
 	overflow-y: auto;
 	z-index: 500;
@@ -936,6 +982,9 @@ export default {
 	transform: translateX(-50%);
 	white-space: nowrap;
 	font-size: 11px;
+	max-width: 160px;
+	overflow: hidden;
+	text-overflow: ellipsis;
 	padding: 0 3px;
 	border-radius: 3px;
 	color: rgb(var(--v-theme-on-surface));
@@ -945,6 +994,10 @@ export default {
 
 .show-names .floorplan-node .lbl {
 	display: block;
+}
+
+.show-names .floorplan-node .lbl.lbl-hidden {
+	display: none;
 }
 
 .floorplan-ghost circle {
