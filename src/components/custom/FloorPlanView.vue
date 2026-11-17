@@ -438,9 +438,7 @@ export default {
 			}
 			// the server reads the size from the header; this is the fallback
 			const size = await pictureSize(file).catch(() => null)
-			const fit = size
-				? await this.askImageFit(map, size, dark)
-				: 'stretch'
+			const fit = await this.askImageFit(map, size, dark)
 			if (!fit) return
 			// a new shape can resize the canvas and move nodes: take the whole
 			// map, but not its node list, which a later toggle may have changed
@@ -464,18 +462,26 @@ export default {
 		 * (see the server's setMapImage), or null when cancelled. Only asked
 		 * when its shape differs from the map's frame and something on the map
 		 * (placed nodes, the other theme's picture) depends on that frame.
+		 * A null `size` (the browser couldn't decode it) may differ, so it asks.
 		 */
 		async askImageFit(map, size, dark) {
 			const bg = map.background
 			const frame = bg?.imageRect ?? { w: map.widthPx, h: map.heightPx }
-			const aspect = size.w / size.h / (frame.w / frame.h)
-			const tolerance = this.limits?.stretchTolerance ?? 0
-			if (Math.abs(aspect - 1) <= tolerance) return 'stretch'
+			const mapSize = `${Math.round(frame.w)} × ${Math.round(frame.h)}`
+			if (size) {
+				const aspect = size.w / size.h / (frame.w / frame.h)
+				const tolerance = this.limits?.stretchTolerance ?? 0
+				if (Math.abs(aspect - 1) <= tolerance) return 'stretch'
+			}
 			const other = dark ? bg?.image : bg?.darkImage
 			if (!map.placements.length && !other) return 'scale'
 			const { fit } = await this.app.confirm(
-				'The picture has a different shape',
-				`It's ${size.w} × ${size.h} px, the map is ${Math.round(frame.w)} × ${Math.round(frame.h)}.` +
+				size
+					? 'The picture has a different shape'
+					: 'The picture may have a different shape',
+				(size
+					? `It's ${size.w} × ${size.h} px, the map is ${mapSize}.`
+					: `The browser couldn't read its size, the map is ${mapSize}.`) +
 					(other
 						? ` Using it as is also stretches the ${dark ? 'light' : 'dark'} theme picture to its shape.`
 						: ''),
