@@ -558,11 +558,18 @@ export class FloorPlans {
 				await readFile(path.join(dir, 'maps.json'), 'utf8'),
 			)
 		} catch (error) {
-			throw Error(
+			throw new InputError(
 				`The backup's floorplans/maps.json can't be read: ${error.message}`,
 			)
 		}
-		checkData(raw, "The backup's floorplans/maps.json", { strict: true })
+		try {
+			checkData(raw, "The backup's floorplans/maps.json", {
+				strict: true,
+			})
+		} catch (error) {
+			// a bad backup, not a server fault
+			throw new InputError(error.message)
+		}
 	}
 
 	/**
@@ -634,7 +641,14 @@ export class FloorPlans {
 			await this.restoreFrom(dir)
 			return null
 		} catch (error) {
-			logger.error('Store restored without its floorplans:', error)
+			// a refused backup needs no stack, a failed copy or move keeps it
+			if (error instanceof InputError) {
+				logger.warn(
+					`Store restored without its floorplans: ${error.message}`,
+				)
+			} else {
+				logger.error('Store restored without its floorplans:', error)
+			}
 			return `Store restored, but the floorplans were not (the current ones are kept): ${error.message}`
 		}
 	}

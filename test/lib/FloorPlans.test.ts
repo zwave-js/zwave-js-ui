@@ -737,6 +737,30 @@ describe('#FloorPlans', () => {
 		}
 	})
 
+	it('logs a refused backup as one warning line, without a stack', async () => {
+		const fp = await fresh()
+		const backup = await fresh()
+		await mkdir(backup.dir, { recursive: true })
+		await writeFile(backup.file, JSON.stringify({ version: 99, maps: [] }))
+		const logger = module('FloorPlans')
+		const warn = vi.spyOn(logger, 'warn').mockReturnValue(logger)
+		const error = vi.spyOn(logger, 'error').mockReturnValue(logger)
+		try {
+			expect(await fp.restoreFromBackup(backup.dir)).toMatch(
+				/^Store restored, but the floorplans were not .*version 99/,
+			)
+			expect(warn).toHaveBeenCalledWith(
+				expect.stringMatching(
+					/^Store restored without its floorplans: .*version 99/,
+				),
+			)
+			expect(error).not.toHaveBeenCalled()
+		} finally {
+			warn.mockRestore()
+			error.mockRestore()
+		}
+	})
+
 	it('restores maps whose picture is missing from the backup', async () => {
 		const fp = await fresh()
 		const backup = await fresh()
