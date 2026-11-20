@@ -77,7 +77,7 @@ engine:
   id: copilot
   max-turns: 5
 model: gpt-5.6-luna
-source: zwave-js/bot-workflows/workflows/classify-issue-repo.md@6e95c90f53efc77bd804027ec6d17b667740ee91
+source: zwave-js/bot-workflows/workflows/classify-issue-repo.md@7c71282e0ee344aab53c832d6ec228058e828efa
 timeout-minutes: 10
 ---
 # Issue Classification
