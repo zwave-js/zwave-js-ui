@@ -5,7 +5,15 @@
 // pictures. Positions are canvas pixels: x right, y down, origin at the
 // canvas's top-left. Every image file belongs to exactly one map.
 
-import { cp, readdir, readFile, rename, rm, writeFile } from 'node:fs/promises'
+import {
+	cp,
+	readdir,
+	readFile,
+	rename,
+	rm,
+	stat,
+	writeFile,
+} from 'node:fs/promises'
 import path from 'node:path'
 import { floorPlansDir } from '../config/app.ts'
 import { module } from './logger.ts'
@@ -314,6 +322,16 @@ export function checkView(view: unknown): MapView {
 	return out
 }
 
+/** A picture frame: finite position, positive size */
+const isRect = (r: unknown): r is Rect =>
+	isRecord(r) &&
+	isCoord(r.x) &&
+	isCoord(r.y) &&
+	isCoord(r.w) &&
+	isCoord(r.h) &&
+	r.w > 0 &&
+	r.h > 0
+
 /** The first field of a stored map with the wrong type, or null if none */
 function badMapField(map: any): string | null {
 	if (typeof map?.id !== 'string' || !MAP_ID.test(map.id)) return 'id'
@@ -323,7 +341,7 @@ function badMapField(map: any): string | null {
 	if (!isRecord(map.nodes)) return 'nodes'
 	if (!isRecord(map.view)) return 'view'
 	const bg = map.background
-	if (bg !== null && !(isRecord(bg) && isRecord(bg.imageRect))) {
+	if (bg !== null && !(isRecord(bg) && isRect(bg.imageRect))) {
 		return 'background'
 	}
 	return null
@@ -394,6 +412,12 @@ export function checkData(
 	return raw as FloorPlansData
 }
 
+const isDir = (dir: string) =>
+	stat(dir).then(
+		(s) => s.isDirectory(),
+		() => false,
+	)
+
 /** Write a file atomically: temp file in the same dir, then rename over the target */
 async function writeAtomic(file: string, data: string | Buffer) {
 	await ensureDir(path.dirname(file))
@@ -422,12 +446,6 @@ export interface BackupFile {
 	/** Path inside the floorplans folder, e.g. images/<name> */
 	name: string
 	file: string
-}
-
-export interface AddMapOptions {
-	name?: string
-	widthPx?: number
-	heightPx?: number
 }
 
 /**
@@ -540,11 +558,18 @@ export class FloorPlans {
 				await readFile(path.join(dir, 'maps.json'), 'utf8'),
 			)
 		} catch (error) {
-			throw Error(
+			throw new InputError(
 				`The backup's floorplans/maps.json can't be read: ${error.message}`,
 			)
 		}
-		checkData(raw, "The backup's floorplans/maps.json", { strict: true })
+		try {
+			checkData(raw, "The backup's floorplans/maps.json", {
+				strict: true,
+			})
+		} catch (error) {
+			// a bad backup, not a server fault
+			throw new InputError(error.message)
+		}
 	}
 
 	/**
@@ -564,12 +589,14 @@ export class FloorPlans {
 					recursive: true,
 					verbatimSymlinks: true,
 				})
-				try {
-					await rename(this.dir, old)
-					moved = true
-				} catch (error) {
-					if (error.code !== 'ENOENT') throw error
-				}
+				// no current folder (no maps yet) is fine
+				moved = await rename(this.dir, old).then(
+					() => true,
+					(error) => {
+						if (error.code === 'ENOENT') return false
+						throw error
+					},
+				)
 				await rename(incoming, this.dir)
 			} catch (error) {
 				// put the current floorplans back, keeping `error` as the reason
@@ -595,6 +622,35 @@ export class FloorPlans {
 				)
 			}
 		})
+	}
+
+	/**
+	 * The floorplans part of a store restore, `dir` being the backup's
+	 * floorplans folder. A backup without one keeps the current maps. A
+	 * failure is logged and returned as a warning for the user, since the
+	 * rest of the store is already restored.
+	 */
+	async restoreFromBackup(dir: string): Promise<string | null> {
+		if (!(await isDir(dir))) {
+			logger.info(
+				'The restored backup has no floorplans, the current ones are kept',
+			)
+			return null
+		}
+		try {
+			await this.restoreFrom(dir)
+			return null
+		} catch (error) {
+			// a refused backup needs no stack, a failed copy or move keeps it
+			if (error instanceof InputError) {
+				logger.warn(
+					`Store restored without its floorplans: ${error.message}`,
+				)
+			} else {
+				logger.error('Store restored without its floorplans:', error)
+			}
+			return `Store restored, but the floorplans were not (the current ones are kept): ${error.message}`
+		}
 	}
 
 	/**
@@ -669,22 +725,14 @@ export class FloorPlans {
 
 	// ------------------------------------------------------------- maps
 
-	async addMap({
-		name,
-		widthPx = DEFAULT_WIDTH,
-		heightPx = DEFAULT_HEIGHT,
-	}: AddMapOptions = {}) {
-		if (!isDim(widthPx) || !isDim(heightPx)) {
-			throw new InputError(
-				`widthPx and heightPx must each be ${DIM_RULE}`,
-			)
-		}
+	/** A new empty map, on a canvas of the default size */
+	async addMap({ name }: { name?: string } = {}) {
 		return this.update((data) => {
 			const map: FloorPlanMap = {
 				id: generateId(),
 				name: cleanName(name, 'Map'),
-				widthPx,
-				heightPx,
+				widthPx: DEFAULT_WIDTH,
+				heightPx: DEFAULT_HEIGHT,
 				background: null,
 				nodes: { start: 'include', exceptions: [] },
 				view: checkView(null),
@@ -794,12 +842,8 @@ export class FloorPlans {
 				if (old) files.removed.push(old)
 				map.background[field] = name
 			} else {
-				if (!map.placements.length) {
-					map.widthPx = size.w
-					map.heightPx = size.h
-					// a zoom and center saved for the old canvas would be off
-					map.view = { ...map.view, center: null, zoom: null }
-				}
+				// nothing placed yet: the canvas takes the picture's size
+				if (!map.placements.length) refitCanvas(map, size, 'keep')
 				map.background = {
 					image: dark ? null : name,
 					darkImage: dark ? name : null,

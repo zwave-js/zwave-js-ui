@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { getValueHint } from './utils.js'
+import { getValueHint, plural } from './utils.js'
 
 describe('#getValueHint()', () => {
 	it.each([
@@ -19,5 +19,17 @@ describe('#getValueHint()', () => {
 		],
 	])('%o -> %s', (valueId, hint) => {
 		expect(getValueHint(valueId)).to.equal(hint)
+	})
+})
+
+describe('#plural()', () => {
+	it.each([
+		[0, 'node', undefined, '0 nodes'],
+		[1, 'node', undefined, '1 node'],
+		[2, 'node', undefined, '2 nodes'],
+		[1, 'battery', 'batteries', '1 battery'],
+		[3, 'battery', 'batteries', '3 batteries'],
+	])('%i %s -> %s', (count, word, many, out) => {
+		expect(plural(count, word, many)).toBe(out)
 	})
 })

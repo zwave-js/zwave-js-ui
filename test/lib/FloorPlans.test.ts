@@ -167,6 +167,19 @@ describe('#FloorPlans', () => {
 					// wrong field types would break every read: dropped
 					{ ...map('text-bg', null), background: 'x' },
 					{ ...map('no-view', null), view: undefined },
+					// a frame with no size, or a size that isn't a number
+					map('flat', {
+						...bg('a.png'),
+						imageRect: { x: 0, y: 0, w: 0, h: 10 },
+					}),
+					map('text-rect', {
+						...bg('a.png'),
+						imageRect: { x: 0, y: 0, w: '10', h: 10 },
+					}),
+					map('no-rect', {
+						...bg('a.png'),
+						imageRect: { x: 0, y: 0 },
+					}),
 				],
 			}),
 		)
@@ -185,6 +198,31 @@ describe('#FloorPlans', () => {
 		])
 		await writeFile(fp.file, JSON.stringify({ version: 0, maps: [] }))
 		await expect(fp.load()).rejects.toThrow('version 0')
+	})
+
+	it('warns about a bad map once, not on every read', async () => {
+		const fp = await fresh()
+		await mkdir(fp.dir, { recursive: true })
+		await writeFile(
+			fp.file,
+			JSON.stringify({
+				version: 1,
+				maps: [{ id: 'warn-once', name: 'M', widthPx: 0 }],
+			}),
+		)
+		const logger = module('FloorPlans')
+		const warn = vi.spyOn(logger, 'warn').mockReturnValue(logger)
+		try {
+			await fp.load()
+			await fp.load()
+			const lines = warn.mock.calls.filter(
+				([line]) =>
+					typeof line === 'string' && line.includes('"warn-once"'),
+			)
+			expect(lines).toHaveLength(1)
+		} finally {
+			warn.mockRestore()
+		}
 	})
 
 	it('creates, renames, filters, saves the view of and deletes maps', async () => {
@@ -238,16 +276,8 @@ describe('#FloorPlans', () => {
 
 	it('keeps positions per map', async () => {
 		const fp = await fresh()
-		const a = await fp.addMap({
-			name: 'House',
-			widthPx: 1000,
-			heightPx: 1000,
-		})
-		const b = await fp.addMap({
-			name: 'Shop',
-			widthPx: 1000,
-			heightPx: 1000,
-		})
+		const a = await fp.addMap({ name: 'House' })
+		const b = await fp.addMap({ name: 'Shop' })
 		await place(fp, a.id, { deviceKey: K(2), x: 10, y: 10 })
 		const moved = await place(fp, a.id, {
 			deviceKey: K(2),
@@ -256,7 +286,7 @@ describe('#FloorPlans', () => {
 			evil: 'x',
 		} as any)
 		// clamped, one per node per map, unknown fields dropped
-		expect(moved).toEqual({ deviceKey: K(2), x: 1000, y: 0 })
+		expect(moved).toEqual({ deviceKey: K(2), x: 3000, y: 0 })
 		await place(fp, b.id, { deviceKey: K(2), x: 90, y: 90 })
 		await fp.removePlacement(b.id, K(2))
 		expect((await mapOf(fp, a.id)).placements).toHaveLength(1)
@@ -677,11 +707,57 @@ describe('#FloorPlans', () => {
 				}),
 				'invalid name',
 			],
+			[
+				JSON.stringify({
+					version: 1,
+					maps: [
+						{
+							id: 'a',
+							name: 'A',
+							widthPx: 10,
+							heightPx: 10,
+							background: {
+								image: 'a.png',
+								darkImage: null,
+								imageRect: { x: 0, y: 0, w: -1, h: 10 },
+							},
+							nodes: { start: 'include', exceptions: [] },
+							view: {},
+							placements: [],
+						},
+					],
+				}),
+				'invalid background',
+			],
 		]) {
 			await writeFile(backup.file, content)
 			await expect(fp.restoreFrom(backup.dir)).rejects.toThrow(error)
 			expect((await fp.load()).maps.map((x) => x.name)).toEqual(['Now'])
 			expect(leftovers(fp)).toEqual([])
+		}
+	})
+
+	it('logs a refused backup as one warning line, without a stack', async () => {
+		const fp = await fresh()
+		const backup = await fresh()
+		await mkdir(backup.dir, { recursive: true })
+		await writeFile(backup.file, JSON.stringify({ version: 99, maps: [] }))
+		const logger = module('FloorPlans')
+		const warn = vi.spyOn(logger, 'warn').mockReturnValue(logger)
+		const error = vi.spyOn(logger, 'error').mockReturnValue(logger)
+		try {
+			expect(await fp.restoreFromBackup(backup.dir)).toMatch(
+				/^Store restored, but the floorplans were not .*version 99/,
+			)
+			expect(warn).toHaveBeenCalledWith(
+				expect.stringMatching(
+					/^Store restored without its floorplans: .*version 99/,
+				),
+			)
+			expect(error).not.toHaveBeenCalled()
+		} finally {
+			warn.mockRestore()
+			error.mockRestore()
 		}
 	})
 
@@ -699,7 +775,7 @@ describe('#FloorPlans', () => {
 
 	it('keeps all concurrent placements', async () => {
 		const fp = await fresh()
-		const m = await fp.addMap({ name: 'p', widthPx: 100, heightPx: 100 })
+		const m = await fp.addMap({ name: 'p' })
 		await Promise.all(
 			[2, 3, 4, 5, 6].map((id) =>
 				place(fp, m.id, { deviceKey: K(id), x: id, y: id }),
@@ -710,15 +786,15 @@ describe('#FloorPlans', () => {
 
 	it('places several nodes in one write, moving existing ones', async () => {
 		const fp = await fresh()
-		const m = await fp.addMap({ name: 'p', widthPx: 100, heightPx: 100 })
+		const m = await fp.addMap({ name: 'p' })
 		await place(fp, m.id, { deviceKey: K(2), x: 1, y: 1 })
 		const out = await fp.setPlacements(m.id, [
 			{ deviceKey: K(2), x: 5, y: 5 },
-			{ deviceKey: K(3), x: 500, y: 6 },
+			{ deviceKey: K(3), x: 5000, y: 6 },
 		])
 		expect(out).toEqual([
 			{ deviceKey: K(2), x: 5, y: 5 },
-			{ deviceKey: K(3), x: 100, y: 6 },
+			{ deviceKey: K(3), x: 3000, y: 6 },
 		])
 		expect((await mapOf(fp, m.id)).placements).toHaveLength(2)
 		// all or nothing

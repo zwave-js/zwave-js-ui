@@ -284,6 +284,8 @@ import { mapState } from 'pinia'
 
 // vis-network's own edge label color
 const EDGE_FONT_COLOR = '#343434'
+// black reads on both health colors (about 10:1 on amber, 5:1 on red)
+const WEAK_LABEL_TEXT = '#000000'
 
 const ReturnRouteKind = {
 	PRIORITY: 20,
@@ -1218,10 +1220,17 @@ export default {
 					font: {
 						align: 'top',
 						size: weakLevel && showInOverview ? 12 : 0,
-						color: weakLevel
-							? HEALTH_COLORS[weakLevel]
-							: EDGE_FONT_COLOR,
 						vadjust: routeKind === RouteKind.Application ? -5 : 0,
+						// a weak hop's label is a chip in its health color: colored
+						// text is unreadable on white, and vis's white halo
+						// swamps it on dark
+						...(weakLevel
+							? {
+									color: WEAK_LABEL_TEXT,
+									background: HEALTH_COLORS[weakLevel],
+									strokeWidth: 0,
+								}
+							: { color: EDGE_FONT_COLOR }),
 					}, //  multi: 'html'
 					// arrows: 'to from',
 					dashes,
