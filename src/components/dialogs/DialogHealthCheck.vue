@@ -150,107 +150,195 @@
 
 						<template #[`item.minPowerlevel`]="{ item }">
 							<strong
+								v-if="item.failedPingsController > 0"
+								class="text-error"
+								v-tooltip:bottom="noErrorFreePowerlevelHint"
+								>none</strong
+							>
+							<strong
+								v-else-if="item.minPowerlevel !== undefined"
 								:class="getPowerLevelColor(item.minPowerlevel)"
-								v-if="item.minPowerlevel !== undefined"
 								>{{ getPowerLevel(item.minPowerlevel) }}</strong
+							>
+							<em
+								v-else-if="item.rating !== undefined"
+								class="text-medium-emphasis"
+								v-tooltip:bottom="
+									noPowerlevelHint(activeNode.id)
+								"
+								>not measured</em
 							>
 						</template>
 
 						<template #[`item.failedPingsNode`]="{ item }">
-							<p
-								class="mb-0"
-								v-if="item.failedPingsNode !== undefined"
-							>
-								{{ resultsTargetNode }} → {{ activeNode.id }}:
-								<strong
-									:class="
-										getFailedPingsColor(
-											item.failedPingsNode,
-										)
-									"
-									>{{ item.failedPingsNode }}/10</strong
-								>
-							</p>
-							<p
-								class="mb-0"
-								v-if="item.failedPingsController !== undefined"
-							>
-								{{ resultsTargetNode }} ← {{ activeNode.id }}:
-								<strong
-									:class="
-										getFailedPingsColor(
-											item.failedPingsController,
-										)
-									"
-									>{{ item.failedPingsController }}/10</strong
-								>
-							</p>
+							<template v-if="item.rating !== undefined">
+								<p class="mb-0">
+									{{ resultsTargetNode }} →
+									{{ activeNode.id }}:
+									<strong
+										:class="
+											getFailedPingsColor(
+												item.failedPingsNode,
+											)
+										"
+										>{{ item.failedPingsNode }}/10</strong
+									>
+								</p>
+								<p class="mb-0">
+									{{ resultsTargetNode }} ←
+									{{ activeNode.id }}:
+									<strong
+										v-if="
+											failedPingsToController(item) !==
+											undefined
+										"
+										:class="
+											getFailedPingsColor(
+												failedPingsToController(item),
+											)
+										"
+										>{{
+											failedPingsToController(item)
+										}}/10</strong
+									>
+									<em
+										v-else
+										class="text-medium-emphasis"
+										v-tooltip:bottom="
+											noPowerlevelHint(activeNode.id)
+										"
+										>not measured</em
+									>
+								</p>
+							</template>
 						</template>
 
 						<template #[`item.failedPingsToSource`]="{ item }">
-							<p
-								class="mb-0"
-								v-if="item.failedPingsToSource !== undefined"
-							>
-								{{ resultsTargetNode }} → {{ activeNode.id }}:
-								<strong
-									:class="
-										getFailedPingsColor(
-											item.failedPingsToSource,
-										)
-									"
-									>{{ item.failedPingsToSource }}/10</strong
-								>
-							</p>
-							<p
-								class="mb-0"
-								v-if="item.failedPingsToTarget !== undefined"
-							>
-								{{ resultsTargetNode }} ← {{ activeNode.id }}:
-								<strong
-									:class="
-										getFailedPingsColor(
-											item.failedPingsToTarget,
-										)
-									"
-									>{{ item.failedPingsToTarget }}/10</strong
-								>
-							</p>
+							<template v-if="item.rating !== undefined">
+								<p class="mb-0">
+									{{ resultsTargetNode }} →
+									{{ activeNode.id }}:
+									<strong
+										v-if="
+											item.failedPingsToSource !==
+											undefined
+										"
+										:class="
+											getFailedPingsColor(
+												item.failedPingsToSource,
+											)
+										"
+										>{{
+											item.failedPingsToSource
+										}}/10</strong
+									>
+									<em
+										v-else
+										class="text-medium-emphasis"
+										v-tooltip:bottom="targetPowerlevelHint"
+										>not measured</em
+									>
+								</p>
+								<p class="mb-0">
+									{{ resultsTargetNode }} ←
+									{{ activeNode.id }}:
+									<strong
+										v-if="
+											item.failedPingsToTarget !==
+											undefined
+										"
+										:class="
+											getFailedPingsColor(
+												item.failedPingsToTarget,
+											)
+										"
+										>{{
+											item.failedPingsToTarget
+										}}/10</strong
+									>
+									<em
+										v-else
+										class="text-medium-emphasis"
+										v-tooltip:bottom="
+											noPowerlevelHint(activeNode.id)
+										"
+										>not measured</em
+									>
+								</p>
+							</template>
 						</template>
 
 						<template #[`item.minPowerlevelSource`]="{ item }">
-							<p
-								class="mb-0"
-								v-if="item.minPowerlevelSource !== undefined"
-							>
-								Node {{ activeNode.id }}:
-								<strong
-									:class="
-										getPowerLevelColor(
-											item.minPowerlevelSource,
-										)
-									"
-									>{{
-										getPowerLevel(item.minPowerlevelSource)
-									}}</strong
-								>
-							</p>
-							<p
-								class="mb-0"
-								v-if="item.minPowerlevelTarget !== undefined"
-							>
-								Node {{ resultsTargetNode }}:
-								<strong
-									:class="
-										getPowerLevelColor(
-											item.minPowerlevelTarget,
-										)
-									"
-									>{{
-										getPowerLevel(item.minPowerlevelTarget)
-									}}</strong
-								>
-							</p>
+							<template v-if="item.rating !== undefined">
+								<p class="mb-0">
+									Node {{ activeNode.id }}:
+									<strong
+										v-if="item.failedPingsToTarget > 0"
+										class="text-error"
+										v-tooltip:bottom="
+											noErrorFreePowerlevelHint
+										"
+										>none</strong
+									>
+									<strong
+										v-else-if="
+											item.minPowerlevelSource !==
+											undefined
+										"
+										:class="
+											getPowerLevelColor(
+												item.minPowerlevelSource,
+											)
+										"
+										>{{
+											getPowerLevel(
+												item.minPowerlevelSource,
+											)
+										}}</strong
+									>
+									<em
+										v-else
+										class="text-medium-emphasis"
+										v-tooltip:bottom="
+											noPowerlevelHint(activeNode.id)
+										"
+										>not measured</em
+									>
+								</p>
+								<p class="mb-0">
+									Node {{ resultsTargetNode }}:
+									<strong
+										v-if="item.failedPingsToSource > 0"
+										class="text-error"
+										v-tooltip:bottom="
+											noErrorFreePowerlevelHint
+										"
+										>none</strong
+									>
+									<strong
+										v-else-if="
+											item.minPowerlevelTarget !==
+											undefined
+										"
+										:class="
+											getPowerLevelColor(
+												item.minPowerlevelTarget,
+											)
+										"
+										>{{
+											getPowerLevel(
+												item.minPowerlevelTarget,
+											)
+										}}</strong
+									>
+									<em
+										v-else
+										class="text-medium-emphasis"
+										v-tooltip:bottom="targetPowerlevelHint"
+										>not measured</em
+									>
+								</p>
+							</template>
 						</template>
 					</v-data-table>
 				</v-container>
@@ -313,6 +401,15 @@ export default {
 		},
 		isLR() {
 			return this.activeNode?.protocol === Protocols.ZWaveLongRange
+		},
+		noErrorFreePowerlevelHint() {
+			return 'Pings kept failing even at normal power, so there is no power level without errors'
+		},
+		targetPowerlevelHint() {
+			// the target side is skipped when the source node sleeps, see zwave-js checkRouteHealth
+			return this.activeNode?.canSleep
+				? `Node ${this.activeNode.id} is a sleeping node, so this can't be measured`
+				: this.noPowerlevelHint(this.resultsTargetNode)
 		},
 		filteredNodes() {
 			if (this.isLR) {
@@ -401,6 +498,15 @@ export default {
 			} else {
 				return 'text-error'
 			}
+		},
+		noPowerlevelHint(nodeId) {
+			return `Node ${nodeId} doesn't support Powerlevel CC, so this can't be measured`
+		},
+		// only reported when the node supports Powerlevel CC; a min. power level
+		// was found means every ping at that level was ACKed, i.e. none failed
+		failedPingsToController(item) {
+			if (item.minPowerlevel === undefined) return undefined
+			return item.failedPingsController ?? 0
 		},
 		getRatingColor(rating) {
 			if (rating === undefined) {
