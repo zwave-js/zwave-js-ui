@@ -96,14 +96,14 @@
 					color="success"
 					class="mr-2"
 					@click="editItem(item)"
-					v-tooltip:bottom="'Edit'"
+					v-zw-tooltip:bottom="'Edit'"
 					>edit</v-icon
 				>
 				<v-icon
 					size="small"
 					color="error"
 					@click="deleteItem(item)"
-					v-tooltip:bottom="'Delete'"
+					v-zw-tooltip:bottom="'Delete'"
 					>delete</v-icon
 				>
 			</template>

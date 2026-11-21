@@ -1,0 +1,320 @@
+// Shared type contract for the dashboard: the `Device` shape plus the
+// value and action types its components render and emit.
+
+import type { Component } from 'vue'
+import type { ValueID } from '@zwave-js/core'
+
+// ── Primary value ──────────────────────────────────────────────
+
+export type PrimaryValueType =
+	| 'toggle'
+	| 'dim'
+	| 'lock'
+	| 'reading'
+	| 'state'
+	| 'thermostat'
+
+// On/off device — switch, outlet, or binary light.
+export interface PrimaryValueToggle {
+	type: 'toggle'
+	label?: string
+	on: boolean
+	watts?: number | null
+	target: ValueID
+}
+
+// Variable level (0–100%) — dimmable light or shade position.
+export interface PrimaryValueDim {
+	type: 'dim'
+	label?: string
+	level: number
+	target: ValueID
+}
+
+// Door lock secured/unsecured state.
+export interface PrimaryValueLock {
+	type: 'lock'
+	label?: string
+	locked: boolean
+	target: ValueID
+}
+
+// Read-only sensor measurement (value + unit), e.g. temperature.
+export interface PrimaryValueReading {
+	type: 'reading'
+	value: number | string
+	unit: string
+}
+
+// Discrete sensor state with display labels/colours, e.g. motion clear/detected.
+export interface PrimaryValueState {
+	type: 'state'
+	value: string
+	stateIdx: number
+	states: string[]
+	colors: string[]
+}
+
+// Thermostat — current temperature, setpoint, and mode.
+export interface PrimaryValueThermostat {
+	type: 'thermostat'
+	value: number
+	unit: string
+	setpoint: number
+	mode: string
+	setpointTarget?: ValueID
+	modeTarget?: ValueID
+}
+
+export type PrimaryValue =
+	| PrimaryValueToggle
+	| PrimaryValueDim
+	| PrimaryValueLock
+	| PrimaryValueReading
+	| PrimaryValueState
+	| PrimaryValueThermostat
+
+export interface PrimaryValueByType {
+	toggle: PrimaryValueToggle
+	dim: PrimaryValueDim
+	lock: PrimaryValueLock
+	reading: PrimaryValueReading
+	state: PrimaryValueState
+	thermostat: PrimaryValueThermostat
+}
+
+// ── Power / status / archetype ─────────────────────────────────
+
+export type PowerType = 'mains' | 'battery' | 'usb'
+
+export interface PowerInfo {
+	type: PowerType
+	battery?: number | null
+}
+
+export type DeviceStatus = 'alive' | 'awake' | 'asleep' | 'dead'
+
+// Archetype kinds; the catalogue lives in `archetypes.ts`.
+export type ArchetypeKind =
+	| 'controller'
+	| 'light'
+	| 'switch'
+	| 'outlet'
+	| 'shade'
+	| 'lock'
+	| 'motion'
+	| 'contact'
+	| 'smoke'
+	| 'water'
+	| 'climate'
+	| 'sensor'
+	| 'button'
+	| 'remote'
+	| 'unknown'
+
+export interface Archetype {
+	kind: ArchetypeKind
+	label: string
+	// Lucide icon component, rendered via `<component :is>`.
+	icon: Component
+	power: PowerType
+}
+
+// ── Activity ──────────────────────────────────────────────────
+
+export type ActivityType = 'ota' | 'rebuild' | 'interview'
+
+export interface Activity {
+	type: ActivityType
+	label: string
+	/** 0–100 integer percentage. Optional for indeterminate operations. */
+	progress?: number
+}
+
+// ── Security ──────────────────────────────────────────────────
+
+// Canonical zwave-js `SecurityClass` member names (see @zwave-js/core).
+export type SecurityKey =
+	| 'S0_Legacy'
+	| 'S2_Unauthenticated'
+	| 'S2_Authenticated'
+	| 'S2_AccessControl'
+
+// ── Comm stats (controller) ───────────────────────────────────
+
+export interface CommStats {
+	can: number
+	nak: number
+	timeoutACK: number
+	timeoutResponse: number
+	timeoutCallback: number
+	messagesTX: number
+	messagesRX: number
+	messagesDroppedTX: number
+	messagesDroppedRX: number
+}
+
+// ── Firmware updates ─────────────────────────────────────────
+
+export interface FirmwareUpdateInfo {
+	version: string
+	channel?: 'stable' | 'prerelease'
+	changelog: string
+	date?: string
+	downgrade: boolean
+	normalizedVersion?: string
+	files?: { target: number; url: string; integrity: string }[]
+	device?: Record<string, unknown>
+}
+
+// ── Device ────────────────────────────────────────────────────
+
+export interface Device {
+	nodeId: number
+	isController: boolean
+	name: string
+	location: string
+	manufacturer?: string
+	product?: string
+	productCode?: string
+	archetype: Archetype
+	power: PowerInfo
+	status: DeviceStatus
+	interviewState: 'complete' | 'interview'
+	security?: SecurityKey | 'none'
+	securityKeys: SecurityKey[]
+	firmware?: { node?: string; sdk?: string }
+	protocol?: string
+	lastSeen: string
+	// Raw last-active epoch (ms) backing the `lastSeen` label, kept for sorting.
+	lastSeenTs?: number
+	primaryValue: PrimaryValue | null
+	activity: Activity[]
+	health?: 'ok' | 'weak' | 'unknown'
+	hasUpdate?: boolean
+	availableFirmwareUpdates?: FirmwareUpdateInfo[]
+	txPower?: number
+	commStats?: CommStats
+}
+
+// ── Action contract ───────────────────────────────────────────
+
+export type DeviceAction =
+	| { type: 'toggle'; on: boolean; valueId: ValueID }
+	| { type: 'dim'; level: number; valueId: ValueID }
+	| { type: 'lock'; locked: boolean; valueId: ValueID }
+	| { type: 'thermostat-setpoint'; setpoint: number; valueId: ValueID }
+	| { type: 'thermostat-mode'; mode: string; valueId: ValueID }
+	// Generic value-pane interactions: write any value, re-read a single
+	// value, or re-read every value of a command class.
+	| { type: 'set-value'; valueId: ValueID; value: unknown }
+	| { type: 'poll-value'; valueId: ValueID }
+	| { type: 'refresh-cc'; commandClass: number }
+	| { type: 'ping' }
+	| { type: 'interview' }
+	| { type: 'refresh' }
+	| { type: 'rebuild' }
+	| { type: 'remove' }
+	| { type: 'export' }
+	| { type: 'export-ui' }
+	| { type: 'clear' }
+	| { type: 'heal' }
+	| { type: 'backup-nvm' }
+	| { type: 'restore-nvm' }
+	| { type: 'reset-stats' }
+	| { type: 'export-json' }
+	| { type: 'update-topics' }
+	| { type: 'hard-reset' }
+	| { type: 'restart-driver' }
+	| { type: 'include' }
+	| { type: 'replace-failed' }
+	| { type: 'exclude' }
+	| { type: 'clear-associations' }
+	| { type: 'remove-all-associations' }
+	| { type: 'check-firmware-updates' }
+	| { type: 'firmware-install'; update: FirmwareUpdateInfo }
+	| { type: 'firmware-upload'; file: File }
+	| { type: 'set-rf-region'; region: number }
+	| { type: 'set-powerlevel'; powerlevel: number; measured0dBm: number }
+	| { type: 'set-max-lr-powerlevel'; maxLRPowerlevel: number }
+	| { type: 'refresh-controller-prop'; prop: string }
+	| { type: 'shutdown' }
+	| { type: 'soft-reset' }
+	| { type: 'factory-reset' }
+
+// ── Dialog system ─────────────────────────────────────────────
+
+export type DialogSize = 'sm' | 'md' | 'lg' | 'xl'
+
+export type DialogSeverity =
+	| 'default'
+	| 'info'
+	| 'success'
+	| 'warning'
+	| 'danger'
+
+// ZwButton's visual variants, shared so the dialog footer can map onto them
+export type ZwButtonVariant =
+	| 'primary'
+	| 'outline'
+	| 'ghost'
+	| 'mono-outline'
+	| 'danger'
+	| 'text'
+	| 'text-danger'
+
+export type DialogButtonKind = 'text' | 'filled' | 'outline'
+export type DialogButtonTone = 'accent' | 'danger' | 'neutral'
+
+// `all` = Esc, scrim and the X; `button` = the X only; `none` = no user dismissal
+export type DialogDismiss = 'all' | 'button' | 'none'
+
+interface DialogActionBase {
+	label: string
+	kind?: DialogButtonKind
+	tone?: DialogButtonTone
+	icon?: Component
+	autoFocus?: boolean
+}
+
+// Only a disabled action may omit the click handler
+export type DialogAction = DialogActionBase &
+	(
+		| { onClick: (e: MouseEvent) => void; disabled?: boolean }
+		| { onClick?: undefined; disabled: true }
+	)
+
+export function cancelAction(
+	onClick: (e: MouseEvent) => void,
+	overrides: Partial<DialogActionBase> = {},
+): DialogAction {
+	return {
+		label: 'Cancel',
+		kind: 'text',
+		tone: 'neutral',
+		onClick,
+		...overrides,
+	}
+}
+
+export function confirmAction(
+	label: string,
+	onClick: (e: MouseEvent) => void,
+	overrides: Partial<DialogActionBase> & { disabled?: boolean } = {},
+): DialogAction {
+	return { label, kind: 'filled', tone: 'accent', onClick, ...overrides }
+}
+
+// A footer action that is present but not yet actionable
+export function pendingAction(
+	label: string,
+	overrides: Partial<DialogActionBase> = {},
+): DialogAction {
+	return {
+		label,
+		kind: 'filled',
+		tone: 'accent',
+		disabled: true,
+		...overrides,
+	}
+}

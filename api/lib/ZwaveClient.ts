@@ -720,6 +720,7 @@ export type ZUINode = {
 	dbLink?: string
 	maxDataRate?: DataRate
 	interviewStage?: keyof typeof InterviewStage
+	/** 0–100 interview progress reported by the driver's granular events. */
 	interviewProgress?: number
 	status?: keyof typeof NodeStatus
 	inited: boolean

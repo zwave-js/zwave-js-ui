@@ -1,43 +1,35 @@
 <template>
-	<v-dialog @keydown.esc="$emit('close')" v-model="_value" max-width="800">
-		<v-card>
-			<v-card-title>
-				<v-row class="pa-3" align="center">
-					<span class="text-h5">{{ title }}</span>
-					<v-spacer></v-spacer>
-					<v-btn
-						icon="close"
-						aria-label="Close dialog"
-						@click="$emit('close')"
-					/>
-				</v-row>
-			</v-card-title>
-
-			<v-card-text>
-				<div :class="['action-grid', $vuetify.display.name]">
-					<div v-for="(a, i) in actions" :key="i">
-						<v-icon :color="a.color || 'primary'" size="x-large">{{
-							a.icon
-						}}</v-icon>
-						<div style="font-size: 1.1rem">{{ a.text }}</div>
-						<div class="action-desc">{{ a.desc }}</div>
-						<v-btn
-							v-for="(o, i) in a.options"
-							:key="i"
-							@click="$emit('action', o.action, o.args)"
-							variant="text"
-							:color="a.color || 'primary'"
-							>{{ o.name }}</v-btn
-						>
-					</div>
-				</div>
-			</v-card-text>
-		</v-card>
-	</v-dialog>
+	<ZwDialog
+		:model-value="_value"
+		size="lg"
+		:title="title"
+		@update:model-value="_value = $event"
+	>
+		<div :class="['action-grid', $vuetify.display.name]">
+			<div v-for="(a, i) in actions" :key="i">
+				<v-icon :color="a.color || 'primary'" size="x-large">{{
+					a.icon
+				}}</v-icon>
+				<div style="font-size: 1.1rem">{{ a.text }}</div>
+				<div class="action-desc">{{ a.desc }}</div>
+				<v-btn
+					v-for="(o, i) in a.options"
+					:key="i"
+					@click="$emit('action', o.action, o.args)"
+					variant="text"
+					:color="a.color || 'primary'"
+					>{{ o.name }}</v-btn
+				>
+			</div>
+		</div>
+	</ZwDialog>
 </template>
 
 <script>
+import ZwDialog from '@/components/dashboard/dialogs/ZwDialog.vue'
+
 export default {
+	components: { ZwDialog },
 	props: {
 		modelValue: Boolean, // show or hide
 		actions: Array,
@@ -46,7 +38,7 @@ export default {
 			default: 'Advanced',
 		},
 	},
-	emits: ['close'],
+	emits: ['update:modelValue', 'close', 'action'],
 	data() {
 		return {}
 	},
@@ -55,8 +47,10 @@ export default {
 			get() {
 				return this.modelValue
 			},
+			// Lowering the model is the only dismissal path, so `close` rides it
 			set(val) {
 				this.$emit('update:modelValue', val)
+				if (!val) this.$emit('close')
 			},
 		},
 	},
@@ -86,7 +80,7 @@ export default {
 }
 .action-desc {
 	font-size: 0.7rem;
-	color: #999;
+	color: var(--zw-muted);
 	line-height: 0.9rem;
 }
 </style>

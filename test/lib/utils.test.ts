@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect, afterEach, beforeEach } from 'vitest'
 import {
 	mkdtemp,
 	mkdir,
@@ -316,7 +316,7 @@ describe('#utils', () => {
 		})
 		it('rejects empty, non-string and malformed operations', () => {
 			expect(isValidOperation('')).to.equal(false)
-			expect(isValidOperation(undefined)).to.equal(false)
+			expect(isValidOperation(undefined as any)).to.equal(false)
 			expect(isValidOperation('10')).to.equal(false)
 			expect(isValidOperation('/')).to.equal(false)
 		})

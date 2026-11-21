@@ -77,13 +77,13 @@
 						>
 							<v-btn
 								value="physical"
-								v-tooltip:bottom="'Physical devices'"
+								v-zw-tooltip:bottom="'Physical devices'"
 							>
 								<v-icon>device_hub</v-icon>
 							</v-btn>
 							<v-btn
 								value="virtual"
-								v-tooltip:bottom="
+								v-zw-tooltip:bottom="
 									'Virtual devices (broadcast / multicast groups)'
 								"
 							>
@@ -164,7 +164,7 @@
 													!isSelected(item),
 												)
 											"
-											v-tooltip:bottom="
+											v-zw-tooltip:bottom="
 												item.raw.virtual
 													? 'Virtual devices cannot be selected'
 													: 'Click to select'
@@ -221,31 +221,21 @@
 										"
 									>
 										<div>
-											<v-tooltip location="bottom">
-												<template
-													#activator="{ props }"
-												>
-													<div
-														v-bind="props"
-														class="text-h4"
-													>
-														<rich-value
-															:value="
-																statusRichValue(
-																	item.raw,
-																)
-															"
-														/>
-													</div>
-												</template>
-												<span
-													style="
-														white-space: pre-wrap;
+											<div
+												class="text-h4"
+												v-zw-tooltip:bottom="
+													nodeInfo(item.raw)
+												"
+											>
+												<rich-value
+													no-tooltip
+													:value="
+														statusRichValue(
+															item.raw,
+														)
 													"
-													v-text="nodeInfo(item.raw)"
-												>
-												</span>
-											</v-tooltip>
+												/>
+											</div>
 
 											<reinterview-badge
 												:node="item.raw"
@@ -273,7 +263,7 @@
 											class="ma-1"
 											size="32"
 											color="primary"
-											v-tooltip:bottom="
+											v-zw-tooltip:bottom="
 												'Interview stage: ' +
 												item.raw.interviewStage
 											"
@@ -330,25 +320,15 @@
 			</template>
 		</v-data-iterator>
 
-		<v-dialog
-			:fullscreen="$vuetify.display.xs"
-			max-width="1200px"
-			v-model="expandedNodeDialog"
-			@keydown.exit="closeDialog()"
+		<ZwDialog
+			size="xl"
+			:model-value="expandedNodeDialog"
+			:title="expandedNode ? `Node ${expandedNode.id}` : ''"
+			@update:model-value="(v) => !v && closeDialog()"
+			@after-leave="expandedNode = null"
 		>
-			<v-card min-height="90vh">
-				<v-fab
-					style="position: absolute; right: 5px; top: 5px"
-					size="small"
-					variant="text"
-					@click="closeDialog()"
-					icon="close"
-				/>
-				<v-card-text class="pt-5">
-					<expanded-node :node="expandedNode" :socket="socket" />
-				</v-card-text>
-			</v-card>
-		</v-dialog>
+			<expanded-node :node="expandedNode" :socket="socket" />
+		</ZwDialog>
 	</v-container>
 </template>
 
@@ -383,12 +363,14 @@ import {
 import { mapState } from 'pinia'
 import useBaseStore from '../../stores/base.js'
 import { getBatteryDescription, jsonToList } from '../../lib/utils.js'
+import ZwDialog from '@/components/dashboard/dialogs/ZwDialog.vue'
 
 export default {
 	props: {
 		socket: Object,
 	},
 	components: {
+		ZwDialog,
 		ExpandedNode: defineAsyncComponent(
 			() => import('@/components/nodes-table/ExpandedNode.vue'),
 		),
@@ -497,6 +479,9 @@ export default {
 		},
 		nodeInfo(node) {
 			return jsonToList({
+				// The status icon's own tooltip is suppressed here, so this
+				// carries the label it would have shown
+				Status: node.virtual ? 'Virtual node' : node.status,
 				Manufacturer: node.manufacturer,
 				'Product Description': node.productDescription,
 				'Product Label': node.productLabel,
@@ -508,7 +493,6 @@ export default {
 			this.expandedNodeDialog = true
 		},
 		closeDialog() {
-			this.expandedNode = null
 			this.expandedNodeDialog = false
 		},
 		getProgress(node) {

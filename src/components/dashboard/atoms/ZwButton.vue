@@ -1,0 +1,133 @@
+<template>
+	<Button.Root
+		class="zw-btn zw-focus-ring"
+		:class="[`zw-btn--${variant}`, `zw-btn--${size}`]"
+		:disabled="disabled"
+		:autofocus="autofocus || undefined"
+		@click="emit('click', $event)"
+	>
+		<span v-if="$slots.icon" class="zw-btn__icon">
+			<slot name="icon" />
+		</span>
+		<slot />
+	</Button.Root>
+</template>
+
+<script setup lang="ts">
+import { Button } from '@vuetify/v0'
+import type { ZwButtonVariant } from '@/lib/dashboard-types'
+
+withDefaults(
+	defineProps<{
+		variant?: ZwButtonVariant
+		size?: 'sm' | 'md'
+		disabled?: boolean
+		autofocus?: boolean
+	}>(),
+	{ variant: 'primary', size: 'md', disabled: false, autofocus: false },
+)
+
+const emit = defineEmits<{ click: [MouseEvent] }>()
+</script>
+
+<style>
+.zw-btn {
+	appearance: none;
+	cursor: pointer;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 6px;
+	background: var(--btn-bg);
+	color: var(--btn-color);
+	border: 1px solid var(--btn-border, transparent);
+	box-shadow: var(--btn-shadow, none);
+	font-family: var(--zw-font);
+	font-weight: 600;
+	letter-spacing: 0.4px;
+	text-transform: uppercase;
+	border-radius: 6px;
+	transition:
+		background 0.12s,
+		border-color 0.12s,
+		color 0.12s,
+		box-shadow 0.12s;
+	white-space: nowrap;
+}
+
+.zw-btn[data-disabled='true'] {
+	opacity: 0.5;
+	pointer-events: none;
+}
+
+.zw-btn:hover:not([data-disabled='true']) {
+	background: var(--btn-bg-hover, var(--btn-bg));
+}
+
+.zw-btn--md {
+	padding: 7px 14px;
+	font-size: 12px;
+}
+
+.zw-btn--sm {
+	padding: 5px 10px;
+	font-size: 11px;
+}
+
+.zw-btn__icon {
+	display: inline-flex;
+	align-items: center;
+}
+
+.zw-btn--primary {
+	--btn-bg: var(--zw-accent);
+	--btn-bg-hover: var(--zw-accent-dark);
+	--btn-color: rgb(var(--v0-on-primary));
+	--btn-shadow: 0 1px 2px rgba(var(--v0-primary), 0.3);
+}
+
+.zw-btn--outline {
+	--btn-bg: var(--zw-card);
+	--btn-bg-hover: var(--zw-bg-soft);
+	--btn-color: rgba(var(--v0-on-surface), 0.78);
+	--btn-border: var(--zw-line);
+}
+
+.zw-btn--ghost {
+	--btn-bg: transparent;
+	--btn-bg-hover: rgba(var(--v0-on-surface), 0.04);
+	--btn-color: var(--zw-fg-soft);
+}
+
+/* node-details Advanced tab grid — mono caps on an outlined chip. */
+.zw-btn--mono-outline {
+	--btn-bg: var(--zw-card);
+	--btn-bg-hover: var(--zw-bg-soft);
+	--btn-color: var(--zw-fg);
+	--btn-border: var(--zw-line);
+	font: var(--zw-text-mono-small);
+	letter-spacing: 0.4px;
+}
+
+/* Solid-red destructive primary (dialog footers: Restore, Hard reset) */
+.zw-btn--danger {
+	--btn-bg: var(--zw-danger);
+	--btn-bg-hover: rgb(var(--v0-error-darken-1));
+	--btn-color: var(--zw-on-accent);
+	--btn-shadow: 0 1px 2px rgba(var(--v0-error), 0.3);
+}
+
+/* Text button, accent tone (dialog footer confirm-as-text). */
+.zw-btn--text {
+	--btn-bg: transparent;
+	--btn-bg-hover: var(--zw-accent-soft);
+	--btn-color: var(--zw-accent-dark);
+}
+
+/* Text button, danger tone (dialog footer "Leave"-style action). */
+.zw-btn--text-danger {
+	--btn-bg: transparent;
+	--btn-bg-hover: var(--zw-danger-soft);
+	--btn-color: var(--zw-danger);
+}
+</style>

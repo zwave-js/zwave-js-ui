@@ -1,7 +1,7 @@
 <template>
 	<v-btn
 		v-if="!!node.hasDeviceConfigChanged"
-		v-tooltip:bottom="
+		v-zw-tooltip:bottom="
 			'Auto-discovered functionality has changed since the last interview; re-interview to apply'
 		"
 		:style="bStyle"

@@ -1,7 +1,7 @@
 <template>
 	<v-btn
 		@click="pollValue"
-		v-tooltip:bottom="'Refresh this value'"
+		v-zw-tooltip:bottom="'Refresh this value'"
 		size="x-small"
 		variant="text"
 		icon

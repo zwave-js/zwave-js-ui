@@ -20,7 +20,7 @@
 							>
 								<template #append>
 									<v-btn
-										v-tooltip:bottom="'Invert selection'"
+										v-zw-tooltip:bottom="'Invert selection'"
 										@click="
 											invertLocationsFilter =
 												!invertLocationsFilter
@@ -54,7 +54,7 @@
 							>
 								<template #append>
 									<v-btn
-										v-tooltip:bottom="'Invert selection'"
+										v-zw-tooltip:bottom="'Invert selection'"
 										@click="
 											invertNodesFilter =
 												!invertNodesFilter
