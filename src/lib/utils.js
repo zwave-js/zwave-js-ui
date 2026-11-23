@@ -123,6 +123,21 @@ export function validDsk(dsk) {
 	return isValidDSK(dsk) || 'Code not valid'
 }
 
+/**
+ * Returns true when a string has the shape of a Z-Wave SmartStart QR code that
+ * zwave-js accepts. The header, checksum and DSK must be digits; characters
+ * after the DSK are tolerated because zwave-js 15.32.4 accepts a float
+ * artifact in the application version of some Heatit Z-TRM6 labels.
+ */
+export function isValidQRCodeString(value) {
+	return (
+		!!value &&
+		value.startsWith('90') &&
+		value.length > 52 &&
+		/^90\d{50}/.test(value)
+	)
+}
+
 export function jsonToList(obj, options = {}, level = 0) {
 	if (obj === null || obj === undefined) {
 		return ''

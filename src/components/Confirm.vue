@@ -241,7 +241,7 @@ import { highlight, languages } from 'prismjs/components/prism-core'
 import 'prismjs/components/prism-clike'
 import 'prismjs/components/prism-javascript'
 import 'prismjs/themes/prism-tomorrow.css'
-import { wrapFunc, noop } from '../lib/utils'
+import { wrapFunc, noop, isValidQRCodeString } from '../lib/utils'
 import { defineAsyncComponent } from 'vue'
 import { nextTick } from 'vue'
 
@@ -367,10 +367,7 @@ export default {
 			}
 
 			return (
-				(value &&
-					value.startsWith('90') &&
-					value.length > 52 &&
-					/^\d+$/.test(value)) ||
+				isValidQRCodeString(value) ||
 				'Not valid. Must be 52 digits long and starts with "90"'
 			)
 		},
