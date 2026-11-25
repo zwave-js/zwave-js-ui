@@ -149,195 +149,81 @@
 						</template>
 
 						<template #[`item.minPowerlevel`]="{ item }">
-							<strong
-								v-if="item.failedPingsController > 0"
-								class="text-error"
-								v-tooltip:bottom="noErrorFreePowerlevelHint"
-								>none</strong
-							>
-							<strong
-								v-else-if="item.minPowerlevel !== undefined"
-								:class="getPowerLevelColor(item.minPowerlevel)"
-								>{{ getPowerLevel(item.minPowerlevel) }}</strong
-							>
-							<em
-								v-else-if="item.rating !== undefined"
-								class="text-medium-emphasis"
-								v-tooltip:bottom="
-									noPowerlevelHint(activeNode.id)
+							<health-check-result
+								v-if="item.rating !== undefined"
+								:result="
+									powerlevelResult(
+										item.failedPingsController,
+										item.minPowerlevel,
+										noPowerlevelHint(activeNode.id),
+									)
 								"
-								>not measured</em
-							>
+							/>
 						</template>
 
 						<template #[`item.failedPingsNode`]="{ item }">
 							<template v-if="item.rating !== undefined">
-								<p class="mb-0">
-									{{ resultsTargetNode }} →
-									{{ activeNode.id }}:
-									<strong
-										:class="
-											getFailedPingsColor(
-												item.failedPingsNode,
-											)
-										"
-										>{{ item.failedPingsNode }}/10</strong
-									>
-								</p>
-								<p class="mb-0">
-									{{ resultsTargetNode }} ←
-									{{ activeNode.id }}:
-									<strong
-										v-if="
-											failedPingsToController(item) !==
-											undefined
-										"
-										:class="
-											getFailedPingsColor(
-												failedPingsToController(item),
-											)
-										"
-										>{{
-											failedPingsToController(item)
-										}}/10</strong
-									>
-									<em
-										v-else
-										class="text-medium-emphasis"
-										v-tooltip:bottom="
-											noPowerlevelHint(activeNode.id)
-										"
-										>not measured</em
-									>
-								</p>
+								<health-check-result
+									:label="`${resultsTargetNode} → ${activeNode.id}`"
+									:result="pingsResult(item.failedPingsNode)"
+								/>
+								<health-check-result
+									:label="`${resultsTargetNode} ← ${activeNode.id}`"
+									:result="
+										pingsResult(
+											failedPingsToController(item),
+											noPowerlevelHint(activeNode.id),
+										)
+									"
+								/>
 							</template>
 						</template>
 
 						<template #[`item.failedPingsToSource`]="{ item }">
 							<template v-if="item.rating !== undefined">
-								<p class="mb-0">
-									{{ resultsTargetNode }} →
-									{{ activeNode.id }}:
-									<strong
-										v-if="
-											item.failedPingsToSource !==
-											undefined
-										"
-										:class="
-											getFailedPingsColor(
-												item.failedPingsToSource,
-											)
-										"
-										>{{
-											item.failedPingsToSource
-										}}/10</strong
-									>
-									<em
-										v-else
-										class="text-medium-emphasis"
-										v-tooltip:bottom="targetPowerlevelHint"
-										>not measured</em
-									>
-								</p>
-								<p class="mb-0">
-									{{ resultsTargetNode }} ←
-									{{ activeNode.id }}:
-									<strong
-										v-if="
-											item.failedPingsToTarget !==
-											undefined
-										"
-										:class="
-											getFailedPingsColor(
-												item.failedPingsToTarget,
-											)
-										"
-										>{{
-											item.failedPingsToTarget
-										}}/10</strong
-									>
-									<em
-										v-else
-										class="text-medium-emphasis"
-										v-tooltip:bottom="
-											noPowerlevelHint(activeNode.id)
-										"
-										>not measured</em
-									>
-								</p>
+								<health-check-result
+									:label="`${resultsTargetNode} → ${activeNode.id}`"
+									:result="
+										pingsResult(
+											item.failedPingsToSource,
+											targetPowerlevelHint,
+										)
+									"
+								/>
+								<health-check-result
+									:label="`${resultsTargetNode} ← ${activeNode.id}`"
+									:result="
+										pingsResult(
+											item.failedPingsToTarget,
+											noPowerlevelHint(activeNode.id),
+										)
+									"
+								/>
 							</template>
 						</template>
 
 						<template #[`item.minPowerlevelSource`]="{ item }">
 							<template v-if="item.rating !== undefined">
-								<p class="mb-0">
-									Node {{ activeNode.id }}:
-									<strong
-										v-if="item.failedPingsToTarget > 0"
-										class="text-error"
-										v-tooltip:bottom="
-											noErrorFreePowerlevelHint
-										"
-										>none</strong
-									>
-									<strong
-										v-else-if="
-											item.minPowerlevelSource !==
-											undefined
-										"
-										:class="
-											getPowerLevelColor(
-												item.minPowerlevelSource,
-											)
-										"
-										>{{
-											getPowerLevel(
-												item.minPowerlevelSource,
-											)
-										}}</strong
-									>
-									<em
-										v-else
-										class="text-medium-emphasis"
-										v-tooltip:bottom="
-											noPowerlevelHint(activeNode.id)
-										"
-										>not measured</em
-									>
-								</p>
-								<p class="mb-0">
-									Node {{ resultsTargetNode }}:
-									<strong
-										v-if="item.failedPingsToSource > 0"
-										class="text-error"
-										v-tooltip:bottom="
-											noErrorFreePowerlevelHint
-										"
-										>none</strong
-									>
-									<strong
-										v-else-if="
-											item.minPowerlevelTarget !==
-											undefined
-										"
-										:class="
-											getPowerLevelColor(
-												item.minPowerlevelTarget,
-											)
-										"
-										>{{
-											getPowerLevel(
-												item.minPowerlevelTarget,
-											)
-										}}</strong
-									>
-									<em
-										v-else
-										class="text-medium-emphasis"
-										v-tooltip:bottom="targetPowerlevelHint"
-										>not measured</em
-									>
-								</p>
+								<health-check-result
+									:label="`Node ${activeNode.id}`"
+									:result="
+										powerlevelResult(
+											item.failedPingsToTarget,
+											item.minPowerlevelSource,
+											noPowerlevelHint(activeNode.id),
+										)
+									"
+								/>
+								<health-check-result
+									:label="`Node ${resultsTargetNode}`"
+									:result="
+										powerlevelResult(
+											item.failedPingsToSource,
+											item.minPowerlevelTarget,
+											targetPowerlevelHint,
+										)
+									"
+								/>
 							</template>
 						</template>
 					</v-data-table>
@@ -371,9 +257,11 @@ import { Protocols } from '@zwave-js/core'
 import useBaseStore from '../../stores/base.js'
 import InstancesMixin from '../../mixins/InstancesMixin.js'
 import { defineAsyncComponent } from 'vue'
+import HealthCheckResult from '../custom/HealthCheckResult.vue'
 
 export default {
 	components: {
+		HealthCheckResult,
 		DialogHealthCheckInfo: defineAsyncComponent(
 			() => import('./DialogHealthCheckInfo.vue'),
 		),
@@ -507,6 +395,31 @@ export default {
 		failedPingsToController(item) {
 			if (item.minPowerlevel === undefined) return undefined
 			return item.failedPingsController ?? 0
+		},
+		pingsResult(failedPings, missingHint) {
+			if (failedPings === undefined) {
+				return { missing: true, hint: missingHint }
+			}
+			return {
+				text: `${failedPings}/10`,
+				color: this.getFailedPingsColor(failedPings),
+			}
+		},
+		powerlevelResult(failedPings, powerlevel, missingHint) {
+			if (failedPings > 0) {
+				return {
+					text: 'none',
+					color: 'text-error',
+					hint: this.noErrorFreePowerlevelHint,
+				}
+			}
+			if (powerlevel === undefined) {
+				return { missing: true, hint: missingHint }
+			}
+			return {
+				text: this.getPowerLevel(powerlevel),
+				color: this.getPowerLevelColor(powerlevel),
+			}
 		},
 		getRatingColor(rating) {
 			if (rating === undefined) {

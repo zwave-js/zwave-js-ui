@@ -56,7 +56,9 @@
 						not ACKed. Lower = better, ideally 0. Pings sent
 						<em>by</em> a node can only be counted when that node
 						supports Powerlevel CC, otherwise the direction is shown
-						as <em>not measured</em>.</v-list-item-subtitle
+						as <em>not measured</em>. In a route check, the pings
+						from the target back to the source are also skipped when
+						the source is a sleeping node.</v-list-item-subtitle
 					>
 				</v-list-item>
 				<v-list-item>
@@ -67,8 +69,9 @@
 						controller. Lower = better, ideally -6dBm or less. Shown
 						as <em>none</em> when pings kept failing even at normal
 						power, and as <em>not measured</em> when the (source)
-						node doesn't support Powerlevel
-						CC.</v-list-item-subtitle
+						node doesn't support Powerlevel CC. In a route check,
+						the target's power level is also not measured when the
+						source is a sleeping node.</v-list-item-subtitle
 					>
 				</v-list-item>
 				<v-list-item>
