@@ -93,6 +93,7 @@ import MeshLegend from '@/components/custom/MeshLegend.vue'
 import { escapeHtml, plural } from '@/lib/utils.js'
 import {
 	GHOST_COLORS,
+	HEALTH_CHIP_TEXT,
 	HEALTH_COLORS,
 	LINE_STYLES,
 	NEIGHBOR_COLOR,
@@ -165,6 +166,7 @@ export default {
 			return {
 				'--floorplan-warn': HEALTH_COLORS.warn,
 				'--floorplan-bad': HEALTH_COLORS.bad,
+				'--floorplan-chip-text': HEALTH_CHIP_TEXT,
 				'--floorplan-ghost-fill': GHOST_COLORS.fill,
 				'--floorplan-ghost-stroke': this.dark
 					? GHOST_COLORS.strokeDark
@@ -1031,7 +1033,7 @@ export default {
 
 .floorplan-hopwarn {
 	border-radius: 50%;
-	color: #fff;
+	color: var(--floorplan-chip-text);
 	font-weight: bold;
 	font-size: 12px;
 	line-height: 16px;
@@ -1056,10 +1058,12 @@ export default {
 }
 
 .floorplan-batt.warn {
+	color: var(--floorplan-chip-text);
 	background: var(--floorplan-warn);
 }
 
 .floorplan-batt.bad {
+	color: var(--floorplan-chip-text);
 	background: var(--floorplan-bad);
 }
 

@@ -268,6 +268,7 @@ import MeshLegend from './MeshLegend.vue'
 import {
 	CONTROLLER_COLOR,
 	DEAD_COLOR,
+	HEALTH_CHIP_TEXT,
 	HEALTH_COLORS,
 	LINE_STYLES,
 	UNKNOWN_COLOR,
@@ -286,8 +287,6 @@ import { mapState } from 'pinia'
 const EDGE_FONT_COLOR = '#343434'
 const EDGE_FONT_BACKGROUND = 'none'
 const EDGE_FONT_STROKE = 2
-// black reads on both health colors (about 10:1 on amber, 5:1 on red)
-const WEAK_LABEL_TEXT = '#000000'
 
 const ReturnRouteKind = {
 	PRIORITY: 20,
@@ -1226,7 +1225,7 @@ export default {
 						// weak hop: a chip in its health color; healthy undoes it (updates merge font)
 						...(weakLevel
 							? {
-									color: WEAK_LABEL_TEXT,
+									color: HEALTH_CHIP_TEXT,
 									background: HEALTH_COLORS[weakLevel],
 									strokeWidth: 0,
 								}

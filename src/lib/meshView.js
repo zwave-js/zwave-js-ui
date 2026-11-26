@@ -66,6 +66,8 @@ export const HEALTH = {
 	fewNeighbors: 2,
 }
 export const HEALTH_COLORS = { warn: '#ff9800', bad: '#e53935' }
+// text on a health-colored chip: black reads on both (about 10:1 on amber, 5:1 on red)
+export const HEALTH_CHIP_TEXT = '#000000'
 
 // battery tags turn amber / red at or below these percentages
 export const BATTERY_LOW = { warn: 30, bad: 10 }

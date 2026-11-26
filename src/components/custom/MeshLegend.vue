@@ -134,7 +134,10 @@
 						<div class="mesh-legend-row">
 							<span
 								class="mesh-legend-bang"
-								:style="{ background: health.warn }"
+								:style="{
+									background: health.warn,
+									color: chipText,
+								}"
 								>!</span
 							>
 							{{
@@ -173,7 +176,10 @@
 							<div class="mesh-legend-row">
 								<span
 									class="mesh-legend-batt"
-									:style="{ background: health.warn }"
+									:style="{
+										background: health.warn,
+										color: chipText,
+									}"
 									>23%</span
 								>
 								Battery (amber ≤ {{ battery.warn }}%, red ≤
@@ -202,6 +208,7 @@ import {
 	BATTERY_LOW,
 	CONTROLLER_COLOR,
 	GHOST_COLORS,
+	HEALTH_CHIP_TEXT,
 	HEALTH_COLORS,
 	HOP_LEGEND,
 	LINE_STYLES,
@@ -271,6 +278,7 @@ export default {
 			open: false,
 			hops: HOP_LEGEND,
 			health: HEALTH_COLORS,
+			chipText: HEALTH_CHIP_TEXT,
 			battery: BATTERY_LOW,
 			ghost: GHOST_COLORS,
 			shapes: SHAPES,
@@ -343,7 +351,6 @@ export default {
 	height: 16px;
 	margin: 0 3px;
 	border-radius: 50%;
-	color: #fff;
 	font-weight: bold;
 	font-size: 12px;
 	line-height: 16px;
@@ -353,7 +360,6 @@ export default {
 .mesh-legend-batt {
 	padding: 0 3px;
 	border-radius: 3px;
-	color: #fff;
 	font-size: 10px;
 }
 </style>
