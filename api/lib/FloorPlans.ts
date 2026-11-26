@@ -630,12 +630,7 @@ export class FloorPlans {
 		})
 	}
 
-	/**
-	 * The floorplans part of a store restore, `dir` being the backup's
-	 * floorplans folder. A backup without one keeps the current maps. A
-	 * failure is logged and returned as a warning for the user, since the
-	 * rest of the store is already restored.
-	 */
+	/** Restore the backup's floorplans folder `dir`; returns a warning for the user, or null */
 	async restoreFromBackup(dir: string): Promise<string | null> {
 		if (!(await isDir(dir))) {
 			logger.info(
@@ -647,7 +642,6 @@ export class FloorPlans {
 			await this.restoreFrom(dir)
 			return null
 		} catch (error) {
-			// a refused backup needs no stack, a failed copy or move keeps it
 			const kept =
 				'Store restored, but the floorplans were not (the current ones are kept)'
 			if (error instanceof InputError) {
