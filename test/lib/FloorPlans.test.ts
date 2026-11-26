@@ -732,7 +732,9 @@ describe('#FloorPlans', () => {
 			],
 		]) {
 			await writeFile(backup.file, content)
-			await expect(fp.restoreFrom(backup.dir)).rejects.toThrow(error)
+			const refused = await fp.restoreFrom(backup.dir).catch((e) => e)
+			expect(refused).toBeInstanceOf(InputError)
+			expect(refused.message).toContain(error)
 			expect((await fp.load()).maps.map((x) => x.name)).toEqual(['Now'])
 			expect(leftovers(fp)).toEqual([])
 		}
