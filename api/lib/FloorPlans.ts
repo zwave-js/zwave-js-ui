@@ -829,7 +829,8 @@ export class FloorPlans {
 				if (old) files.removed.push(old)
 				map.background[field] = name
 			} else {
-				// nothing placed yet: the canvas takes the picture's size
+				// nothing placed yet: the canvas takes the picture's size (the fit
+				// only says how to move nodes, and there are none to move)
 				if (!map.placements.length) refitCanvas(map, size, 'keep')
 				map.background = {
 					image: dark ? null : name,
