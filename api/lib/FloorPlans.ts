@@ -5,15 +5,7 @@
 // pictures. Positions are canvas pixels: x right, y down, origin at the
 // canvas's top-left. Every image file belongs to exactly one map.
 
-import {
-	cp,
-	readdir,
-	readFile,
-	rename,
-	rm,
-	stat,
-	writeFile,
-} from 'node:fs/promises'
+import { cp, readdir, readFile, rename, rm, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { floorPlansDir } from '../config/app.ts'
 import { module } from './logger.ts'
@@ -412,12 +404,6 @@ export function checkData(
 	return raw as FloorPlansData
 }
 
-const isDir = (dir: string) =>
-	stat(dir).then(
-		(s) => s.isDirectory(),
-		() => false,
-	)
-
 /** Write a file atomically: temp file in the same dir, then rename over the target */
 async function writeAtomic(file: string, data: string | Buffer) {
 	await ensureDir(path.dirname(file))
@@ -552,12 +538,13 @@ export class FloorPlans {
 
 	/** Throw unless the maps.json in a restored folder is one this release can use */
 	private async checkRestored(dir: string) {
-		// a missing or unparsable file is a bad backup, other fs errors are ours
+		// a missing or unparsable file (or floorplans being a file) is a bad
+		// backup, other fs errors are ours
 		let text: string
 		try {
 			text = await readFile(path.join(dir, 'maps.json'), 'utf8')
 		} catch (error) {
-			if (error.code !== 'ENOENT') throw error
+			if (error.code !== 'ENOENT' && error.code !== 'ENOTDIR') throw error
 			throw new InputError("The backup's floorplans/maps.json is missing")
 		}
 		let raw: unknown
@@ -632,7 +619,7 @@ export class FloorPlans {
 
 	/** Restore the backup's floorplans folder `dir`; returns a warning for the user, or null */
 	async restoreFromBackup(dir: string): Promise<string | null> {
-		if (!(await isDir(dir))) {
+		if (!(await pathExists(dir))) {
 			logger.info(
 				'The restored backup has no floorplans, the current ones are kept',
 			)

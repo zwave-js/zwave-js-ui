@@ -751,6 +751,12 @@ describe('#FloorPlans', () => {
 		const missing = await fp.restoreFrom(backup.dir).catch((e) => e)
 		expect(missing).toBeInstanceOf(InputError)
 		expect(missing.message).toMatch(/maps\.json is missing/)
+		// a file where the floorplans folder should be
+		const stray = path.join(backup.dir, 'stray')
+		await writeFile(stray, 'x')
+		expect(await fp.restoreFrom(stray).catch((e) => e)).toBeInstanceOf(
+			InputError,
+		)
 		// a folder where the file should be: EISDIR, a server-side fault
 		await mkdir(backup.file)
 		const failure = await fp.restoreFrom(backup.dir).catch((e) => e)
@@ -817,7 +823,9 @@ describe('#FloorPlans', () => {
 			expect(warning).not.toMatch(/EIO|\.restore-/)
 			expect(error).toHaveBeenCalledWith(
 				'Store restored without its floorplans:',
-				expect.objectContaining({ message: expect.stringMatching(/^EIO/) }),
+				expect.objectContaining({
+					message: expect.stringMatching(/^EIO/),
+				}),
 			)
 			expect(warn).not.toHaveBeenCalled()
 		} finally {
