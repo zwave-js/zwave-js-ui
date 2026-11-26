@@ -436,7 +436,8 @@ export default {
 				)
 				return
 			}
-			// the server reads the size from the header; this is the fallback
+			// the server reads the size from the header; this is the fallback,
+			// null when the browser can't decode it (askImageFit then asks)
 			const size = await pictureSize(file).catch(() => null)
 			const fit = await this.askImageFit(map, size, dark)
 			if (!fit) return
@@ -468,23 +469,29 @@ export default {
 			const bg = map.background
 			const frame = bg?.imageRect ?? { w: map.widthPx, h: map.heightPx }
 			const mapSize = `${Math.round(frame.w)} × ${Math.round(frame.h)}`
-			if (size) {
-				const aspect = size.w / size.h / (frame.w / frame.h)
-				const tolerance = this.limits?.stretchTolerance ?? 0
-				if (Math.abs(aspect - 1) <= tolerance) return 'stretch'
-			}
+			const tolerance = this.limits?.stretchTolerance ?? 0
+			// how far the picture's shape is from the frame's (0 = same, unknown = ask)
+			const off = size
+				? Math.abs(size.w / size.h / (frame.w / frame.h) - 1)
+				: Infinity
+			if (off <= tolerance) return 'stretch'
 			const other = dark ? bg?.image : bg?.darkImage
 			if (!map.placements.length && !other) return 'scale'
+			const [title, said] = size
+				? [
+						'The picture has a different shape',
+						`It's ${size.w} × ${size.h} px, the map is ${mapSize}.`,
+					]
+				: [
+						'The picture may have a different shape',
+						`The browser couldn't read its size, the map is ${mapSize}.`,
+					]
+			const stretchesOther = other
+				? ` Using it as is also stretches the ${dark ? 'light' : 'dark'} theme picture to its shape.`
+				: ''
 			const { fit } = await this.app.confirm(
-				size
-					? 'The picture has a different shape'
-					: 'The picture may have a different shape',
-				(size
-					? `It's ${size.w} × ${size.h} px, the map is ${mapSize}.`
-					: `The browser couldn't read its size, the map is ${mapSize}.`) +
-					(other
-						? ` Using it as is also stretches the ${dark ? 'light' : 'dark'} theme picture to its shape.`
-						: ''),
+				title,
+				said + stretchesOther,
 				'info',
 				{
 					confirmText: 'Upload',
