@@ -6,6 +6,7 @@ import { tmpdir } from 'node:os'
 import path from 'node:path'
 import {
 	FloorPlans,
+	InputError,
 	imageSize,
 	sniffImage,
 	type Placement,
@@ -735,6 +736,20 @@ describe('#FloorPlans', () => {
 			expect((await fp.load()).maps.map((x) => x.name)).toEqual(['Now'])
 			expect(leftovers(fp)).toEqual([])
 		}
+	})
+
+	it('calls a missing maps.json a bad backup, but not a disk error', async () => {
+		const fp = await fresh()
+		const backup = await fresh()
+		await mkdir(backup.dir, { recursive: true })
+		const missing = await fp.restoreFrom(backup.dir).catch((e) => e)
+		expect(missing).toBeInstanceOf(InputError)
+		expect(missing.message).toMatch(/maps\.json is missing/)
+		// a folder where the file should be: EISDIR, a server-side fault
+		await mkdir(backup.file)
+		const failure = await fp.restoreFrom(backup.dir).catch((e) => e)
+		expect(failure.code).toBe('EISDIR')
+		expect(failure).not.toBeInstanceOf(InputError)
 	})
 
 	it('logs a refused backup as one warning line, without a stack', async () => {

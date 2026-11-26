@@ -552,11 +552,17 @@ export class FloorPlans {
 
 	/** Throw unless the maps.json in a restored folder is one this release can use */
 	private async checkRestored(dir: string) {
+		// a missing or unparsable file is a bad backup, other fs errors are ours
+		let text: string
+		try {
+			text = await readFile(path.join(dir, 'maps.json'), 'utf8')
+		} catch (error) {
+			if (error.code !== 'ENOENT') throw error
+			throw new InputError("The backup's floorplans/maps.json is missing")
+		}
 		let raw: unknown
 		try {
-			raw = JSON.parse(
-				await readFile(path.join(dir, 'maps.json'), 'utf8'),
-			)
+			raw = JSON.parse(text)
 		} catch (error) {
 			throw new InputError(
 				`The backup's floorplans/maps.json can't be read: ${error.message}`,
