@@ -173,6 +173,10 @@ describe('#FloorPlans', () => {
 						...bg('a.png'),
 						imageRect: { x: 0, y: 0, w: 0, h: 10 },
 					}),
+					map('short', {
+						...bg('a.png'),
+						imageRect: { x: 0, y: 0, w: 10, h: 0 },
+					}),
 					map('text-rect', {
 						...bg('a.png'),
 						imageRect: { x: 0, y: 0, w: '10', h: 10 },
