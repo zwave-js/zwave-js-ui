@@ -282,8 +282,10 @@ import {
 import useBaseStore from '../../stores/base.js'
 import { mapState } from 'pinia'
 
-// vis-network's own edge label color
+// vis-network's own edge label defaults
 const EDGE_FONT_COLOR = '#343434'
+const EDGE_FONT_BACKGROUND = 'none'
+const EDGE_FONT_STROKE = 2
 // black reads on both health colors (about 10:1 on amber, 5:1 on red)
 const WEAK_LABEL_TEXT = '#000000'
 
@@ -1221,16 +1223,18 @@ export default {
 						align: 'top',
 						size: weakLevel && showInOverview ? 12 : 0,
 						vadjust: routeKind === RouteKind.Application ? -5 : 0,
-						// a weak hop's label is a chip in its health color: colored
-						// text is unreadable on white, and vis's white halo
-						// swamps it on dark
+						// weak hop: a chip in its health color; healthy undoes it (updates merge font)
 						...(weakLevel
 							? {
 									color: WEAK_LABEL_TEXT,
 									background: HEALTH_COLORS[weakLevel],
 									strokeWidth: 0,
 								}
-							: { color: EDGE_FONT_COLOR }),
+							: {
+									color: EDGE_FONT_COLOR,
+									background: EDGE_FONT_BACKGROUND,
+									strokeWidth: EDGE_FONT_STROKE,
+								}),
 					}, //  multi: 'html'
 					// arrows: 'to from',
 					dashes,
