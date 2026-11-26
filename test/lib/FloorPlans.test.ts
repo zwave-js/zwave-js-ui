@@ -34,6 +34,10 @@ const SVG = Buffer.from(
 	'<svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script></svg>',
 )
 
+// a new map's canvas, which placements are clamped to
+const DEFAULT_W = 3000
+const DEFAULT_H = 2000
+
 const fresh = async () =>
 	new FloorPlans(await mkdtemp(path.join(tmpdir(), 'floorplans-')))
 const K = (n: number) => `zwave:cdfbb3c7:${n}`
@@ -234,8 +238,8 @@ describe('#FloorPlans', () => {
 		const fp = await fresh()
 		const m = await fp.addMap({ name: 'Workshop' })
 		expect([m.widthPx, m.heightPx, m.background]).toEqual([
-			3000,
-			2000,
+			DEFAULT_W,
+			DEFAULT_H,
 			null,
 		])
 
@@ -291,7 +295,7 @@ describe('#FloorPlans', () => {
 			evil: 'x',
 		} as any)
 		// clamped, one per node per map, unknown fields dropped
-		expect(moved).toEqual({ deviceKey: K(2), x: 3000, y: 0 })
+		expect(moved).toEqual({ deviceKey: K(2), x: DEFAULT_W, y: 0 })
 		await place(fp, b.id, { deviceKey: K(2), x: 90, y: 90 })
 		await fp.removePlacement(b.id, K(2))
 		expect((await mapOf(fp, a.id)).placements).toHaveLength(1)
@@ -868,7 +872,7 @@ describe('#FloorPlans', () => {
 		])
 		expect(out).toEqual([
 			{ deviceKey: K(2), x: 5, y: 5 },
-			{ deviceKey: K(3), x: 3000, y: 6 },
+			{ deviceKey: K(3), x: DEFAULT_W, y: 6 },
 		])
 		expect((await mapOf(fp, m.id)).placements).toHaveLength(2)
 		// all or nothing
