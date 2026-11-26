@@ -582,14 +582,12 @@ export class FloorPlans {
 					recursive: true,
 					verbatimSymlinks: true,
 				})
-				// no current folder (no maps yet) is fine
-				moved = await rename(this.dir, old).then(
-					() => true,
-					(error) => {
-						if (error.code === 'ENOENT') return false
-						throw error
-					},
-				)
+				try {
+					await rename(this.dir, old)
+					moved = true
+				} catch (error) {
+					if (error.code !== 'ENOENT') throw error
+				}
 				await rename(incoming, this.dir)
 			} catch (error) {
 				// put the current floorplans back, keeping `error` as the reason
