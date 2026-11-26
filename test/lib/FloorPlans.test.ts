@@ -776,6 +776,21 @@ describe('#FloorPlans', () => {
 		}
 	})
 
+	it('restores a backup through restoreFromBackup, and keeps the maps when it has none', async () => {
+		const fp = await fresh()
+		await fp.addMap({ name: 'Now' })
+		const backup = await fresh()
+		await backup.addMap({ name: 'Then' })
+		// no floorplans folder in the backup: nothing changes
+		const none = path.join(backup.dir, 'absent')
+		expect(await fp.restoreFromBackup(none)).toBeNull()
+		expect((await fp.load()).maps.map((x) => x.name)).toEqual(['Now'])
+		// a good one replaces the current maps
+		expect(await fp.restoreFromBackup(backup.dir)).toBeNull()
+		expect((await fp.load()).maps.map((x) => x.name)).toEqual(['Then'])
+		expect(leftovers(fp)).toEqual([])
+	})
+
 	it('logs a failed restore as an error, keeping its details out of the warning', async () => {
 		const fp = await fresh()
 		const backup = await fresh()
