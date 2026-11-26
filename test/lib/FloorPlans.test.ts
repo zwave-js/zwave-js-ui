@@ -776,6 +776,36 @@ describe('#FloorPlans', () => {
 		}
 	})
 
+	it('logs a failed restore as an error, keeping its details out of the warning', async () => {
+		const fp = await fresh()
+		const backup = await fresh()
+		await backup.addMap({ name: 'Then' })
+		const logger = module('FloorPlans')
+		const warn = vi.spyOn(logger, 'warn').mockReturnValue(logger)
+		const error = vi.spyOn(logger, 'error').mockReturnValue(logger)
+		const real = vi.mocked(fsp.rename).getMockImplementation()
+		vi.mocked(fsp.rename).mockImplementation(async (from, to) => {
+			if (String(from).includes('.restore-')) {
+				throw Error(`EIO ${from}`)
+			}
+			return real(from, to)
+		})
+		try {
+			const warning = await fp.restoreFromBackup(backup.dir)
+			expect(warning).toMatch(/The server log has the reason\.$/)
+			expect(warning).not.toMatch(/EIO|\.restore-/)
+			expect(error).toHaveBeenCalledWith(
+				'Store restored without its floorplans:',
+				expect.objectContaining({ message: expect.stringMatching(/^EIO/) }),
+			)
+			expect(warn).not.toHaveBeenCalled()
+		} finally {
+			vi.mocked(fsp.rename).mockImplementation(real)
+			warn.mockRestore()
+			error.mockRestore()
+		}
+	})
+
 	it('restores maps whose picture is missing from the backup', async () => {
 		const fp = await fresh()
 		const backup = await fresh()

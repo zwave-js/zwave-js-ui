@@ -648,14 +648,16 @@ export class FloorPlans {
 			return null
 		} catch (error) {
 			// a refused backup needs no stack, a failed copy or move keeps it
+			const kept =
+				'Store restored, but the floorplans were not (the current ones are kept)'
 			if (error instanceof InputError) {
 				logger.warn(
 					`Store restored without its floorplans: ${error.message}`,
 				)
-			} else {
-				logger.error('Store restored without its floorplans:', error)
+				return `${kept}: ${error.message}`
 			}
-			return `Store restored, but the floorplans were not (the current ones are kept): ${error.message}`
+			logger.error('Store restored without its floorplans:', error)
+			return `${kept}. The server log has the reason.`
 		}
 	}
 
